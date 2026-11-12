@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Deprecation shim — `mailwoman wof prepare` moved. One-minor-version courtesy redirect. remove after.
+ *   Deprecation shim — `mailwoman wof prepare` moved.
+ *   One-minor-version courtesy redirect. remove after.
  */
 
 import type { CommandSpec } from "#cli-kit"

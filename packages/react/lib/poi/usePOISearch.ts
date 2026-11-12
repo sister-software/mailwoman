@@ -71,6 +71,14 @@ export interface UsePOISearch {
 	result: POIExplorerResult | null
 
 	/**
+	 * Why the taxonomy runtime failed to load, or why classifying the current debounced text failed.
+	 *
+	 * `null` while both succeed or are pending, so a failure reads apart from a
+	 * classification still on its way.
+	 */
+	error: string | null
+
+	/**
 	 * The live-search state for the current debounced text, `idle` until a search runs.
 	 */
 	liveSearch: LiveSearchState
@@ -130,6 +138,8 @@ export function usePOISearch({
 	const [storedResult, setStoredResult] = useState<{ query: string; value: POIExplorerResult } | null>(null)
 
 	const [storedLive, setStoredLive] = useState<{ query: string; state: LiveSearchState } | null>(null)
+	const [runtimeError, setRuntimeError] = useState<string | null>(null)
+	const [storedClassifyError, setStoredClassifyError] = useState<{ query: string; message: string } | null>(null)
 
 	const debouncedText = useDebouncedValue(text, debounceMs)
 	const trimmedText = debouncedText.trim()
@@ -139,11 +149,18 @@ export function usePOISearch({
 	useEffect(() => {
 		let cancelled = false
 
-		void loadRuntimeEvent().then((loaded) => {
-			if (!cancelled) {
-				setRuntime(loaded)
+		loadRuntimeEvent().then(
+			(loaded) => {
+				if (!cancelled) {
+					setRuntime(loaded)
+				}
+			},
+			(error: unknown) => {
+				if (!cancelled) {
+					setRuntimeError(error instanceof Error ? error.message : String(error))
+				}
 			}
-		})
+		)
 
 		return () => {
 			cancelled = true
@@ -162,62 +179,75 @@ export function usePOISearch({
 		const input = { raw: trimmed, normalized: trimmed }
 		const shape = computeQueryShape(trimmed)
 
-		runtime.classify(input, shape).then((kindResult) => {
-			if (cancelled) return
+		runtime.classify(input, shape).then(
+			(kindResult) => {
+				if (cancelled) return
 
-			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, null, runtime.lexicon) : null
+				const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, null, runtime.lexicon) : null
 
-			if (!matched) {
-				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
+				if (!matched) {
+					setStoredResult({
+						query: trimmed,
+						value: { kindResult, subject: null, overpassQL: null, overpassError: null },
+					})
 
-				return
-			}
+					return
+				}
 
-			if ((matched.match.kind ?? "category") === "brand") {
+				if ((matched.match.kind ?? "category") === "brand") {
+					setStoredResult({
+						query: trimmed,
+						value: {
+							kindResult,
+							subject: {
+								kind: "brand",
+								name: matched.match.categoryID,
+								wikidata: matched.match.wikidata || null,
+								matchedPhrase: matched.match.matchedPhrase,
+								confidence: matched.match.confidence,
+								remainder: matched.remainder,
+							},
+							overpassQL: null,
+							overpassError: null,
+						},
+					})
+
+					return
+				}
+
+				const category = runtime.lookup.getPOICategory(matched.match.categoryID)
+
+				if (!category) {
+					setStoredResult({
+						query: trimmed,
+						value: { kindResult, subject: null, overpassQL: null, overpassError: null },
+					})
+
+					return
+				}
+
 				setStoredResult({
 					query: trimmed,
 					value: {
 						kindResult,
 						subject: {
-							kind: "brand",
-							name: matched.match.categoryID,
-							wikidata: matched.match.wikidata || null,
+							kind: "category",
+							category,
 							matchedPhrase: matched.match.matchedPhrase,
 							confidence: matched.match.confidence,
 							remainder: matched.remainder,
+							buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
 						},
-						overpassQL: null,
-						overpassError: null,
+						...buildOverpass(runtime, matched.match.categoryID),
 					},
 				})
+			},
+			(error: unknown) => {
+				if (cancelled) return
 
-				return
+				setStoredClassifyError({ query: trimmed, message: error instanceof Error ? error.message : String(error) })
 			}
-
-			const category = runtime.lookup.getPOICategory(matched.match.categoryID)
-
-			if (!category) {
-				setStoredResult({ query: trimmed, value: { kindResult, subject: null, overpassQL: null, overpassError: null } })
-
-				return
-			}
-
-			setStoredResult({
-				query: trimmed,
-				value: {
-					kindResult,
-					subject: {
-						kind: "category",
-						category,
-						matchedPhrase: matched.match.matchedPhrase,
-						confidence: matched.match.confidence,
-						remainder: matched.remainder,
-						buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
-					},
-					...buildOverpass(runtime, matched.match.categoryID),
-				},
-			})
-		})
+		)
 
 		return () => {
 			cancelled = true
@@ -225,6 +255,7 @@ export function usePOISearch({
 	}, [trimmedText, runtime])
 
 	const result = storedResult?.query === trimmedText ? storedResult.value : null
+	const error = runtimeError ?? (storedClassifyError?.query === trimmedText ? storedClassifyError.message : null)
 	const liveSearch: LiveSearchState = storedLive?.query === trimmedText ? storedLive.state : { status: "idle" }
 
 	const subject = result?.subject ?? null
@@ -284,5 +315,5 @@ export function usePOISearch({
 		}
 	}, [runLiveSearch, runtime, subject, brandLiveSearch, trimmedText])
 
-	return { runtimeReady: runtime !== null, result, liveSearch, canSearchLive, searchLive }
+	return { runtimeReady: runtime !== null, result, error, liveSearch, canSearchLive, searchLive }
 }

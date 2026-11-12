@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Admission for the API Worker's public routes: an allowed browser origin first, then a per-client request
- *   budget. A refused request costs the engine no work.
+ *   Admission for the API Worker's public routes: an allowed browser origin first,
+ *   then a per-client request budget.
+ *   A refused request costs the engine no work.
  */
 
 import type { MiddlewareHandler } from "hono"

@@ -80,8 +80,8 @@ const OK_BODY = {
  * Await a call that must reject and hand back its {@linkcode ResourceError}.
  *
  * Fails loudly if it resolves.
- * A `.catch(error => error)` inline would silently turn "it did not throw"
- * into an assertion against `undefined`.
+ * A `.catch(error => error)` inline would silently turn "it didn't throw" into
+ * an assertion against `undefined`.
  */
 async function captureError(promise: Promise<unknown>): Promise<ResourceErrorShape> {
 	try {
@@ -122,7 +122,7 @@ describe("createGoogleGeocoderClient", () => {
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
 		// This is what `APIClient` logs and what `delegateAxiosError` interpolates into
-		// timeout/DNS messages, so the key must not be in it.
+		// timeout/DNS messages, so the key mustn't be in it.
 		expect(transport.calls[0]).not.toContain(API_KEY)
 		expect(transport.calls[0]).toBe("https://maps.googleapis.com/maps/api/geocode/json")
 	})
@@ -220,7 +220,7 @@ describe("in-band status mapping", () => {
 		const error = await captureError(client.geocodeAddress("anywhere"))
 
 		expect(error.status).toBe(429)
-		// A stated ceiling: the caller requeues, the client does not spin.
+		// A stated ceiling: the caller requeues, the client doesn't spin.
 		expect(isTransientResourceError(error)).toBe(true)
 		expect(transport.calls).toHaveLength(2)
 	})

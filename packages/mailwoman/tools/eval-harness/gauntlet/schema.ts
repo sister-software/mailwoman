@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Gauntlet, a full-pipeline integration-test corpus (`input → expected assembled output`). This
- *   is the curated regression layer, the executable memory of fixed bugs. Its check is regression-only
- *   ("must not break what already passed"), and its pass-rate is never a ship gauge. Generalization
- *   is conditional elsewhere, in the held-out fresh-draw runner (`holdout.ts`) and the metamorphic
- *   invariants (`metamorphic.ts`), which need no stored expected values and so cannot be over-fit.
+ *   The Gauntlet, a full-pipeline integration-test corpus (`input → expected assembled output`).
  *
- *   The `source` and `address_kind` columns are required, since coverage is tracked by kind, so a
- *   total can never hide that every row is the same kind.
+ *   This is the curated regression layer, the executable memory of fixed bugs.
+ *   Its check is regression-only ("mustn't break what already passed"),
+ *   and its pass-rate is never a ship gauge.
+ *
+ *   Generalization is conditional elsewhere, in the held-out fresh-draw runner
+ *   (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which need
+ *   no stored expected values and so cannot be over-fit.
+ *
+ *   The `source` and `address_kind` columns are required, since coverage is tracked by kind,
+ *   so a total can never hide that every row is the same kind.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"

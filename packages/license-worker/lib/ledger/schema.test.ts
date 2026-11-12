@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ledger's table interfaces are written by hand beside the migrations. This applies every migration in order to
- *   a fresh D1 and reads the resulting columns back, so an interface that drifts from the DDL fails here.
+ *   The ledger's table interfaces are written by hand beside the migrations.
+ *
+ *   This applies every migration in order to a fresh D1 and reads the resulting columns back,
+ *   so an interface that drifts from the DDL fails here.
  */
 
 import { env } from "cloudflare:workers"

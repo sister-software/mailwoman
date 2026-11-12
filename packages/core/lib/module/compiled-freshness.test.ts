@@ -15,8 +15,8 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * The one workspace these fixtures build.
  *
- * A caller names its own set, so the tests name one rather than importing a list
- * from a package that happens to have one.
+ * A caller identifies its own set, so the tests name one rather than importing
+ * a list from a package that happens to have one.
  */
 const WORKSPACE = "packages/probe"
 

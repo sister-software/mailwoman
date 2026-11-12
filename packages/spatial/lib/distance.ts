@@ -5,7 +5,7 @@
  * @file Great-circle and segment distance math over plain numbers.
  *
  *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, which embeds its WebAssembly
- *   binary, and a caller that only measures a distance must not load that. The object-form distances
+ *   binary, and a caller that only measures a distance mustn't load that. The object-form distances
  *   that take a `GeoPointInput` live in `#geometries/point/distance`.
  */
 
@@ -111,7 +111,7 @@ export const M2_PER_KM2 = 1_000_000
  * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
  * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
  *
- * That is the difference between "two channels rendered the same edge slightly
+ * That's the difference between "two channels rendered the same edge slightly
  * differently" and "the conversion is wrong".
  *
  * The longitude scaling matters at the same scale: comparing raw degrees treats

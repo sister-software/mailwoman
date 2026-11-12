@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 # Regenerates portland.pmtiles from the hand-authored GeoJSON sources.
 # Requires tippecanoe (https://github.com/felt/tippecanoe). The output is
 # committed so tests and CI never need tippecanoe installed.

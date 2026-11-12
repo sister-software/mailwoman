@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The resolved-address → Nominatim-schema formatter: rendering a {@link ResolvedAddress} into a
- *   {@link NominatimResult} (`toNominatimResult`), the `format=geojson` FeatureCollection envelope
- *   (`toFeatureCollection`), and the `format=jsonld` schema.org projection
- *   (`nominatimResultToSchemaOrg`). Wire types + the engine interface live in `engine.ts`.
+ *   The resolved-address → Nominatim-schema formatter: rendering a {@link ResolvedAddress}
+ *   into a {@link NominatimResult} (`toNominatimResult`), the `format=geojson`
+ *   FeatureCollection envelope (`toFeatureCollection`), and the `format=jsonld`
+ *   schema.org projection (`nominatimResultToSchemaOrg`).
+ *   Wire types + the engine interface live in `engine.ts`.
  */
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"

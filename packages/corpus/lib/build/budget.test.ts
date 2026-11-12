@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import { describe, expect, it } from "vitest"
 
@@ -19,7 +22,7 @@ describe("defaultBuildJobs", () => {
 	})
 
 	it("builds serially when a resident adapter would not fit in a worker", () => {
-		// Two standard workers fit and a resident one does not.
+		// Two standard workers fit and a resident one doesn't.
 		const hostMemoryBytes = HOST_RESERVE_BYTES + Math.min(2 * standard, resident - 1)
 
 		expect(resident).toBeGreaterThan(2 * standard)

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The floating chrome's interface, at a desktop and a phone width, running on the canned `?runtime=fake` so no model is fetched and the suite stays fast.
+ * The floating chrome's interface, at a desktop and a phone width, running on the
+ * canned `?runtime=fake` so no model is fetched and the suite stays fast.
  */
 
 import {

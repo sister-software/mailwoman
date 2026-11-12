@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The document title: the app's name on its own, or the matched place's name before it, so a tab and a
- *   history entry read as the place they show.
+ *   The document title: the app's name on its own, or the matched place's name
+ *   before it, so a tab and a history entry read as the place they show.
  */
 
 /**

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the search records to a gzip-compressed SQLite file. The whole file is republished with every
- *   site deploy, so the writer builds from scratch in a temporary file and compresses the result.
+ *   Writes the search records to a gzip-compressed SQLite file.
+ *
+ *   The whole file is republished with every site deploy, so the writer builds from
+ *   scratch in a temporary file and compresses the result.
  */
 
 import { gzipSync } from "@mailwoman/core/fs/compression"

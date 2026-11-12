@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Draws a country's training rows from a complete adapter output so the sample spans the country's address forms
- *   rather than its densest streets, and measures the variety of both.
+ *   Draws a country's training rows from a complete adapter output so the sample spans the
+ *   country's address forms rather than its densest streets, and measures the variety of both.
  *
- *   An address source lists one house after another: a city street contributes every number along it, and a city
- *   contributes thousands of such streets. A model trained on that order sees the same street, locality and form
- *   repeated. The sample here keeps at most a few rows per street and at most a fixed number per place (a locality
- *   with its dependent locality), and fills each place round-robin across its forms (which components are present,
- *   the street type, the script) and its postcodes. Places are then filled in rounds, so every place is represented
- *   once before any is represented twice, until the country's ceiling. The ceiling keeps one country from dominating
- *   a mixture.
+ *   An address source lists one house after another: a city street contributes every
+ *   number along it, and a city contributes thousands of such streets.
+ *   A model trained on that order sees the same street, locality and form repeated.
+ *
+ *   The sample here keeps at most a few rows per street and at most a fixed number per place
+ *   (a locality with its dependent locality), and fills each place round-robin across its forms
+ *   (which components are present, the street type, the script) and its postcodes.
+ *   Places are then filled in rounds, so every place is represented once
+ *   before any is represented twice, until the country's ceiling.
+ *   The ceiling keeps one country from dominating a mixture.
  *
  *   The adapter output stays complete beside the sample, because the same rows feed retrieval.
  */
@@ -492,7 +495,7 @@ export interface VarietySampleReport {
 	limits: VarietySampleLimits
 	streetTypeLanguages: readonly string[] | "all"
 	/**
-	 * Lines that did not parse as a canonical row of the requested country.
+	 * Lines that didn't parse as a canonical row of the requested country.
 	 */
 	skipped: Record<string, number>
 	full: VarietyMeasures

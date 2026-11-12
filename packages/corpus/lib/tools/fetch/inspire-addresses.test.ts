@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The fixtures are trimmed from live responses, recorded 2026-09-30:
- * Slovakia's `rageo.minv.sk/geoserver/ad/wfs` and Flanders' `geo.api.vlaanderen.be/ad/wfs`.
+ * The fixtures are trimmed from live responses, recorded 2026-09-30: Slovakia's
+ * `rageo.minv.sk/geoserver/ad/wfs` and Flanders' `geo.api.vlaanderen.be/ad/wfs`.
  */
 
 import { stubFetchingBodies } from "@mailwoman/core/api/test-transport"
@@ -90,7 +90,7 @@ describe("reading an INSPIRE Addresses WFS", () => {
 
 	it("takes a type only from the feature-type list", async () => {
 		// `Name` also labels operation parameters and service contacts.
-		// One of those matching would publish a feature type the service does not serve,
+		// One of those matching would publish a feature type the service doesn't serve,
 		// and every page of it would fail.
 		const decoy = `<?xml version="1.0"?>
 <WFS_Capabilities version="2.0.0">

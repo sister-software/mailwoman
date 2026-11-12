@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   In-memory `PolicyRegistry`. Stores per-(component, locale) policy entries and applies them to a
- *   flat list of `ClassificationProposal`s.
+ *   In-memory `PolicyRegistry`.
  *
- *   The mutation API (`set`, `remove`) lives here so that locale profiles can install per-locale
- *   overrides at startup. Look-up and `apply` are pure.
+ *   Stores per-(component, locale) policy entries and applies them to a flat
+ *   list of `ClassificationProposal`s.
+ *
+ *   The mutation API (`set`, `remove`) lives here so that locale profiles can
+ *   install per-locale overrides at startup.
+ *   Look-up and `apply` are pure.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

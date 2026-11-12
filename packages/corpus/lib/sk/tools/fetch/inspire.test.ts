@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves what the Slovak harvester checks before it pages, how it assembles a document the adapter
- *   reads, and what it refuses.
+ *   Proves what the Slovak harvester checks before it pages, how it assembles a
+ *   document the adapter reads, and what it refuses.
  *
- *   The capabilities values are the service's real ones, measured 2026-10-03: `CountDefault` 5000,
- *   `ImplementsResultPaging` TRUE, five `ad:` feature types, and `application/gml+xml; version=3.2`
- *   among the advertised formats.
+ *   The capabilities values are the service's real ones, measured 2026-10-03:
+ *   `CountDefault` 5000, `ImplementsResultPaging` TRUE, five `ad:` feature types,
+ *   and `application/gml+xml; version=3.2` among the advertised formats.
  *
- *   `./inspire.integration.test.ts` reads the live service. This suite stubs the client's `fetch`,
- *   so no request leaves the process.
+ *   `./inspire.integration.test.ts` reads the live service.
+ *   This suite stubs the client's `fetch`, so no request leaves the process.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -244,7 +244,7 @@ describe("harvestSKInspireType", () => {
 		//
 		// The third body is the zero page `readCheckedWFSFeatureCount` asks for at `startIndex = reported`.
 		// A features answer would make core refuse the count as a floor.
-		// That is a different finding and would never reach the cap comparison this covers.
+		// That's a different finding and would never reach the cap comparison this covers.
 		const client = stubClient([
 			hits(5000),
 			postalPage(0, 5, 5000),

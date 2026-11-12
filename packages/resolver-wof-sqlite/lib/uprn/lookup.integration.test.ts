@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The uprn reader's probe interface, pinned over a fixture DB built by the same DDL + cell
- *   derivation the real builder uses (`uprn-schema.ts`) — so a fixture row and a production row can
- *   never disagree on which cell a coordinate keys to.
+ *   The uprn reader's probe interface, pinned over a fixture DB built by the same
+ *   DDL + cell derivation the real builder uses (`uprn-schema.ts`) — so a fixture row
+ *   and a production row can never disagree on which cell a coordinate keys to.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

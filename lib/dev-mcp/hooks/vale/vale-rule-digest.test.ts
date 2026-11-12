@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The listing withholds a banned rule's words, because it is injected into a session and naming the word is how it enters a reply.
+ *   The listing withholds a banned rule's words, because it is injected into a session
+ *   and naming the word is how it enters a reply.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -37,7 +38,7 @@ async function tokenPatterns(rule: string): Promise<RegExp[]> {
 		try {
 			patterns.push(new RegExp(`\\b(?:${token})\\b`, "iu"))
 		} catch {
-			// A token Vale's engine accepts and JavaScript's does not is skipped rather than failing the test.
+			// A token Vale's engine accepts and JavaScript's doesn't is skipped rather than failing the test.
 		}
 	}
 

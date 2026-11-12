@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build/probe consistency is the only interface the locale normalizer must hold: the OSM `addr:street`
- *   tag and the parser's `street` constituent must fold to the same key. These cases lock the FR/DE/NL
- *   folding (and the Paris acceptance key) so a future tweak can't silently desync the two sides.
+ *   Build/probe consistency is the only interface the locale normalizer must hold:
+ *   the OSM `addr:street` tag and the parser's `street` constituent must fold to the same key.
+ *
+ *   These cases lock the FR/DE/NL folding (and the Paris acceptance key)
+ *   so a future tweak can't silently desync the two sides.
  */
 
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"

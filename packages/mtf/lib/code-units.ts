@@ -16,7 +16,7 @@ export type CodeUnit = TextSpan
  * A run of ASCII letters and digits holding at least one digit, with a hyphen
  * allowed between two digits (`12345-6789`, `100-0005`).
  *
- * The run must not touch another ASCII letter or digit on either side, so `B2B` and `SW1A` are whole units.
+ * The run mustn't touch another ASCII letter or digit on either side, so `B2B` and `SW1A` are whole units.
  * A Han or Kana character next to a run is a boundary, because Japanese and Chinese
  * addresses write a block number straight after its place name (`丸の内1-9-1`).
  */

@@ -4,8 +4,9 @@
 /**
  *   What a comparison's two sides may be.
  *
- *   Spec §6.1 defines four `ArmSpec` members. This module builds a mailwoman configuration, an external endpoint, a
- *   metered reference geocoder and a stored past run.
+ *   Spec §6.1 defines four `ArmSpec` members.
+ *   This module builds a mailwoman configuration, an external endpoint,
+ *   a metered reference geocoder and a stored past run.
  *
  *   Each arm kind has its own schema branch. A bare {@link EngineConfig} remains valid shorthand for the older
  *   two-mailwoman-arms call. Zod objects strip unknown keys. Without an explicit branch, `{kind:"oracle",
@@ -55,7 +56,7 @@ interface MailwomanArm {
 }
 
 /**
- * An external arm — a geocoder this repo did not build, already running at an endpoint the caller names.
+ * An external arm — a geocoder this repo didn't build, already running at an endpoint the caller names.
  */
 export interface ExternalArm {
 	kind: "external"
@@ -64,7 +65,7 @@ export interface ExternalArm {
 	/**
 	 * What the caller believes is running there.
 	 *
-	 * Required only when the endpoint will not identify itself.
+	 * Required only when the endpoint won't identify itself.
 	 * See `external-arm.ts`'s identity probe for why an unidentified endpoint is refused rather than scored.
 	 */
 	version?: string
@@ -118,7 +119,7 @@ export interface WorktreeArm {
 export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | WorktreeArm
 
 /**
- * Which side of a stored run a recorded arm replays when the caller does not say.
+ * Which side of a stored run a recorded arm replays when the caller doesn't say.
  *
  * `mailwoman` because the question a recorded arm answers is almost always
  * "did OUR side change since that run".

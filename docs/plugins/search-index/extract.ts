@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads one built docs page into search records. A heading starts a record, a table row is a level-5
- *   record whose text is its first cell, and paragraph and list text joins the record of the heading above it.
+ *   Reads one built docs page into search records.
+ *
+ *   A heading starts a record, a table row is a level-5 record whose text is its first cell,
+ *   and paragraph and list text joins the record of the heading above it.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"

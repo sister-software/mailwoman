@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `AbstainPanel` — shown when the query has no POI intent (it parses as an address). Names the
- *   classifier's kind so the abstention is legible. Presentational.
+ *   `AbstainPanel` — shown when the query has no POI intent (it parses as an address).
+ *
+ *   Names the classifier's kind so the abstention is legible.
+ *   Presentational.
  */
 
 import type { ReactNode } from "react"

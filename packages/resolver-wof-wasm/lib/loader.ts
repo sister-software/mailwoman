@@ -4,13 +4,15 @@
 /**
  *   Loads a slim WOF SQLite distribution into an in-memory `@sqlite.org/sqlite-wasm` database.
  *
- *   V1 strategy: fetch the whole file (~35 MB for the default top-1k US slim) and open it via the OO1
- *   API's "opfs"-flavored constructor in transient mode. The full-fetch approach is fine for a
- *   bundle this size. The browser holds the slim database in RAM for the session.
+ *   V1 strategy: fetch the whole file (~35 MB for the default top-1k US slim)
+ *   and open it via the OO1 API's "opfs"-flavored constructor in transient mode.
+ *   The full-fetch approach is fine for a bundle this size.
+ *
+ *   The browser holds the slim database in RAM for the session.
  *   HTTP/2 and gzip reduce the 35 MB transfer to one RTT plus transfer time.
  *
- *   A database too large to hold in memory is read by range requests instead, through
- *   `openRangeDatabase` in `httpvfs/database.ts`.
+ *   A database too large to hold in memory is read by range requests instead,
+ *   through `openRangeDatabase` in `httpvfs/database.ts`.
  */
 
 import sqlite3InitModule, { type Database, type Sqlite3Static } from "@sqlite.org/sqlite-wasm"
@@ -105,7 +107,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 /**
  * The lifecycle boundary for sqlite-wasm.
  *
- * Its database exposes `close()` and does not use explicit resource management.
+ * Its database exposes `close()` and doesn't use explicit resource management.
  */
 export function disposeSlimWOFDatabase(db: Database): void {
 	db.close()

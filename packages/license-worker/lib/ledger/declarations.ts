@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every read and write against the declaration, issuance and download tables, so no route holds a query. The unique
- *   pair on `issuances(lid, seq)` and the partial unique index on an evaluation's email are the idempotency the routes
- *   rely on: `insertIssuance` inserts on no conflict and answers whether this caller's row landed, and a second
- *   evaluation for an address fails its insert with the unique violation the route turns into 409.
+ *   Every read and write against the declaration, issuance and download tables, so no route holds a query.
+ *
+ *   The unique pair on `issuances(lid, seq)` and the partial unique index on an evaluation's
+ *   email are the idempotency the routes rely on: `insertIssuance` inserts on no conflict
+ *   and answers whether this caller's row landed, and a second evaluation for an address
+ *   fails its insert with the unique violation the route turns into 409.
  */
 
 import type { Ledger } from "#ledger/client"
@@ -13,6 +15,7 @@ import type {
 	DeclarationRow,
 	EmailState,
 	IssuanceRow,
+	LicenseState,
 	NewDeclaration,
 	NewDownload,
 	NewIssuance,
@@ -82,17 +85,103 @@ export async function insertIssuance(ledger: Ledger, row: NewIssuance): Promise<
 	return Number(result.numInsertedOrUpdatedRows ?? 0) > 0 ? "inserted" : "present"
 }
 
+/**
+ * Move an issuance's email from the state its caller read to another, recording the provider's message id.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another send recorded its outcome first.
+ */
 export async function setIssuanceEmailState(
 	ledger: Ledger,
 	issuanceID: string,
-	state: EmailState,
+	transition: { from: EmailState; to: EmailState },
 	messageID: string | null
-): Promise<void> {
-	await ledger
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
 		.updateTable("issuances")
-		.set({ email_state: state, email_message_id: messageID })
+		.set({ email_state: transition.to, email_message_id: messageID })
 		.where("issuance_id", "=", issuanceID)
+		.where("email_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
+}
+
+/**
+ * Clear a declaration's plaintext refresh secret once the message that includes it has been sent.
+ */
+export async function clearDeclarationPendingSecret(ledger: Ledger, lid: string, at: string): Promise<void> {
+	await ledger
+		.updateTable("declarations")
+		.set({ refresh_secret_pending: null, updated_at: at })
+		.where("lid", "=", lid)
 		.execute()
+}
+
+/**
+ * Each emailed declaration's current issuance whose email is `pending` or `failed`.
+ *
+ * `pending` covers a crash between the mint and the send.
+ * `failed` is a provider refusal.
+ *
+ * Only the highest `seq` per declaration is listed, so a resend sends the token that's current.
+ */
+export async function issuancesAwaitingEmail(
+	ledger: Ledger
+): Promise<Array<{ declaration: DeclarationRow; issuance: IssuanceRow }>> {
+	const issuances = await ledger
+		.selectFrom("issuances as current")
+		.selectAll("current")
+		.innerJoin("declarations", "declarations.lid", "current.lid")
+		.where("declarations.email", "is not", null)
+		.where("current.email_state", "in", ["pending", "failed"])
+		.where(({ eb, selectFrom }) =>
+			eb(
+				"current.seq",
+				"=",
+				selectFrom("issuances as later")
+					.select(({ fn }) => fn.max("later.seq").as("seq"))
+					.whereRef("later.lid", "=", "current.lid")
+			)
+		)
+		.orderBy("current.issuance_id")
+		.execute()
+
+	const listed: Array<{ declaration: DeclarationRow; issuance: IssuanceRow }> = []
+
+	for (const issuance of issuances) {
+		const declaration = await findDeclaration(ledger, issuance.lid)
+
+		if (!declaration)
+			throw new Error(`issuance ${issuance.issuance_id} names declaration ${issuance.lid}, which has no row`)
+
+		listed.push({ declaration, issuance })
+	}
+
+	return listed
+}
+
+/**
+ * Move a declared license from the state its caller read to another.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another writer changed the state after the caller read it,
+ * and the row keeps that writer's values.
+ */
+export async function setDeclarationState(
+	ledger: Ledger,
+	lid: string,
+	transition: { from: LicenseState; to: LicenseState },
+	at: string
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
+		.updateTable("declarations")
+		.set({ license_state: transition.to, updated_at: at })
+		.where("lid", "=", lid)
+		.where("license_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
 }
 
 /**

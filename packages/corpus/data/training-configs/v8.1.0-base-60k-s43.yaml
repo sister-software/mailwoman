@@ -1,6 +1,6 @@
-# v8.1.0-base at seed 43, a diagnostic run that is not eligible for release. It is v8.1.0-base-60k.yaml with only
+# v8.1.0-base at seed 43, a diagnostic run that's not eligible for release. It is v8.1.0-base-60k.yaml with only
 # `train.seed`, `train.output_dir` and `train.trackio_run_name` changed, so its board result against the seed-42 run
-# (v810-base) measures seed variance on one fixed corpus and config. That variance has not been measured before.
+# (v810-base) measures seed variance on one fixed corpus and config. That variance hasn't been measured before.
 # The v8.1.0-base header follows unchanged.
 #
 # v8.1.0-base is the next training config, on corpus v0.8.1 (#2548). It is v8.0.0-postcode-move-p000-60k.yaml, the
@@ -544,7 +544,7 @@ data:
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

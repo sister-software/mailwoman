@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Diagnostic over the US region/locality recall flips between the shipped weights and a candidate
- *   (package-shaped cache dir). A "flip" = baseline extracted the gold value, candidate did not.
+ *   Diagnostic over the US region/locality recall flips between the shipped weights
+ *   and a candidate (package-shaped cache dir).
+ *
+ *   A "flip" = baseline extracted the gold value, candidate didn't.
  *   Buckets label the mechanism so the counterweight change is one variable.
- *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/us/recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
+ *
+ *   Run from the repo
+ *   root: `node packages/mailwoman/tools/dev-tools/us/recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"

@@ -6,13 +6,16 @@
  *
  * The lookup filters on text, placetype, limit, country alongside a bounding box, then re-ranks the
  * BM25 pool by exact-name tier and population weight using the shared helpers the Node resolver uses.
- * The slim artifact's `parent_id` chain is incomplete, so this lookup lacks `WOFSQLitePlaceLookup`'s
- * parentID descendant filter. It also lacks the near-proximity boost.
+ * The slim artifact's `parent_id` chain is incomplete, so this lookup lacks
+ * `WOFSQLitePlaceLookup`'s parentID descendant filter.
+ * It also lacks the near-proximity boost.
  *
- * Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. It issues SQL in the same
- * SQLite dialect as the Node implementation. The alias-bag parser, query fold,
- * FTS sanitizer and ranking weights are imported from `@mailwoman/resolver-wof-sqlite` so the two
- * backends share one implementation of each rather than a convention.
+ * Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`.
+ * It issues SQL in the same SQLite dialect as the Node implementation.
+ *
+ * The alias-bag parser, query fold, FTS sanitizer and ranking weights are
+ * imported from `@mailwoman/resolver-wof-sqlite` so the two backends share one
+ * implementation of each rather than a convention.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"

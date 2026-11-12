@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Input coercions shared by every operation schema. An adapter hands an operation `--key value` pairs with the value
- *   still a string, or `true` for a bare flag. the schema is the one place a type is decided, so these helpers are how a
- *   flag becomes a boolean and a comma list becomes an array.
+ *   Input coercions shared by every operation schema.
+ *
+ *   An adapter hands an operation `--key value` pairs with the value still a string,
+ *   or `true` for a bare flag. the schema is the one place a type is decided,
+ *   so these helpers are how a flag becomes a boolean and a comma list becomes an array.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

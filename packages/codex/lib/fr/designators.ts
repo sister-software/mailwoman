@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a French address uses: delivery services, premise and sub-premise words, floors, the
- *   number mark, and the relation words of a query.
+ *   The designators a French address uses: delivery services, premise and sub-premise words,
+ *   floors, the number mark, and the relation words of a query.
  *
- *   The premise words come from the line 2 and line 3 rules in `unit-line.ts`, which cite La Poste's SP 8855.
+ *   The premise words come from the line 2 and line 3 rules in `unit-line.ts`,
+ *   which cite La Poste's SP 8855.
  *   The `CEDEX` row stands for the phrase that `cedex.ts` matches.
  *
  * @see {@link https://www.laposte.fr/envoyer/abreviation-adresses-postales La Poste, Abréviations des adresses postales}

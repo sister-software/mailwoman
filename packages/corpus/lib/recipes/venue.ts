@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `venue` recipe. A real venue name written as the whole query, and the same name followed by a
- *   locality drawn from the country's admin tuples. The rows teach the model that
- *   `Manchester Art Gallery` is a venue rather than a locality and a region. The venue-head
- *   prior in `@mailwoman/neural` asserts the same reading, so the model and the prior agree.
+ *   `venue` recipe.
  *
- *   Venue names come from the Overture place-names Parquet file the venue-head table is built
- *   from. That file holds `name`, `category` and `country` for every place at confidence 0.85 or
- *   higher. The file has no locality column, so the locality row joins a name to a tuple of the
- *   same country and asserts no fact about where the venue stands, so its surface is
- *   `SurfaceOrigin.Composed`. The bare row is the publisher's own string, so its surface is
- *   `SurfaceOrigin.Attested`.
+ *   A real venue name written as the whole query, and the same name followed by
+ *   a locality drawn from the country's admin tuples.
+ *   The rows teach the model that `Manchester Art Gallery` is a venue rather than a locality and a region.
  *
- *   A bare row needs a name of two or more words. A one-word name such as `Blackwell` or `Roadside`
- *   is written as a bare query only beside a locality, because a lone unknown word is the shape of a
- *   bare locality and a row that labels it `venue` would teach against bare-locality recall.
+ *   The venue-head prior in `@mailwoman/neural` asserts the same reading, so the model and the prior agree.
  *
- *   A name that equals a locality of the country's tuples, or whose written row is an input on a
- *   gauntlet board, is refused.
+ *   Venue names come from the Overture place-names Parquet file the venue-head table is built from.
+ *   That file holds `name`, `category` and `country` for every place at confidence 0.85 or higher.
+ *
+ *   The file has no locality column, so the locality row joins a name to a tuple of the same country
+ *   and asserts no fact about where the venue stands, so its surface is `SurfaceOrigin.Composed`.
+ *   The bare row is the publisher's own string, so its surface is `SurfaceOrigin.Attested`.
+ *
+ *   A bare row needs a name of two or more words.
+ *   A one-word name such as `Blackwell` or `Roadside` is written as a bare query only
+ *   beside a locality, because a lone unknown word is the shape of a bare locality
+ *   and a row that labels it `venue` would teach against bare-locality recall.
+ *
+ *   A name that equals a locality of the country's tuples, or whose written row
+ *   is an input on a gauntlet board, is refused.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { isSpacelessScriptWord, venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
@@ -46,7 +50,7 @@ import { SurfaceOrigin } from "#types"
 /**
  * The Overture release the venue-head table is built from, so the two read one name population.
  */
-export const DEFAULT_VENUE_NAMES: PathBuilderLike = dataRootPath(
+export const DEFAULT_VENUE_NAMES: PathBuilderLike = snapshotSourcePath(
 	"overture",
 	"2026-09-23.1",
 	"place-names",
@@ -122,7 +126,7 @@ export const MIN_SPACELESS_BARE_CHARACTERS = 3
  * In a script written without spaces a name is one word, so it qualifies when it has three or more
  * characters and ends in a venue head the table holds for the country, as `国立西洋美術館` ends in `館`.
  *
- * A spaceless name the table does not recognize is written beside a locality only.
+ * A spaceless name the table doesn't recognize is written beside a locality only.
  */
 export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): boolean {
 	const words = name.trim().split(/\s+/u)

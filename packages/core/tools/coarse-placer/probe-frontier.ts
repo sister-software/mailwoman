@@ -2,20 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Placer-frontier probe. For the placer-recoverable countries (a country hint resolves them, so
- *   growing the placer is what would recover them), measure whether the deployed coarse placer can
- *   emit that country. Per query (`<City>, <Country>` from cities15000):
+ *   Placer-frontier probe.
  *
- *   - `in_class_set`  - is the true country even in the placer's class set? A class the model
+ *   For the placer-recoverable countries (a country hint resolves them, so growing the placer is
+ *   what would recover them), measure whether the deployed coarse placer can emit that country.
+ *   Per query (`<City>, <Country>` from cities15000):
+ *
+ *   - `in_class_set` - is the true country even in the placer's class set?
+ *     A class the model
  *                       cannot represent cannot be recovered by changing a threshold. This is a
  *                       data gap.
- *   - `top1_correct`  - did the placer's argmax land on the true country?
- *   - `prob_1`        - the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
+ *   - `top1_correct` - did the placer's argmax land on the true country?
+ *   - `prob_1` - the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
  *
  *   Branch: `in_class_set` false above 5% is a data gap, so defer to a class-set-widening retrain.
- *   In-set and top1 above 80% with median prob_1 below 0.9 is under-confident signal. In-set and
- *   top1 below 80% is low-quality signal, so defer. The probe is a linear model, so it is
- *   heat-safe.
+ *   In-set and top1 above 80% with median prob_1 below 0.9 is under-confident signal.
+ *
+ *   In-set and top1 below 80% is low-quality signal, so defer.
+ *   The probe is a linear model, so it is heat-safe.
  *
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */

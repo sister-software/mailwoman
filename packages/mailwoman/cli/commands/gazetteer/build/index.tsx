@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin` (WOF + Overture +
- *   GeoNames → verified, sealed admin gazetteer) then `build candidate` (the byte-range candidate
- *   table) from that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
- *   admin build already folds the full 161-country set upstream (a superset of the old fold list).
+ *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin`
+ *   (WOF + Overture + GeoNames → verified, sealed admin gazetteer) then `build candidate`
+ *   (the byte-range candidate table) from that fresh admin artifact.
+ *
+ *   The legacy standalone GeoNames fold is skipped here — the admin build already folds
+ *   the full 161-country set upstream (a superset of the old fold list).
  *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -27,17 +30,20 @@ export const spec = {
 	name: "build",
 	description: "Build the admin and candidate gazetteers.",
 	options: {
-		data: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
+		data: { type: "string", description: "WOF repos root. Default <cache-root>/sources/wof-repos" },
 		"skip-verify": { type: "boolean", default: false, description: "Skip the admin verify check (development only)" },
 	},
 } as const satisfies CommandSpec
 
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
-			await import("@mailwoman/gazetteer/tools/pipeline")
-
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			pipeline: { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		console.error("▸ build admin (staging)")
 

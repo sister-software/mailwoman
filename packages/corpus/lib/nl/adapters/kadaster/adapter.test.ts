@@ -5,16 +5,19 @@
  *   The fixture is Kadaster's own response text.
  *
  * `fixtures/nl-kadaster/addresses.gml` opens with the declaration and root element of
- * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz` as served, then nine
- * `gml:featureMember` elements holding the features twelve addresses reference, then those twelve
- * addresses, each copied byte for byte out of a ranged prefix of that download. The twelve are the
- * first six in document order plus two that write both number extensions, two that write only the
- * second and two whose postcode designator is present and empty. No byte was edited, so the
- * publisher's spelling, its void elements and its empty designators are the ones under test.
+ * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz` as served,
+ * then nine `gml:featureMember` elements holding the features twelve addresses reference,
+ * then those twelve addresses, each copied byte for byte out of a ranged prefix of that download.
+ * The twelve are the first six in document order plus two that write both number extensions,
+ * two that write only the second and two whose postcode designator is present and empty.
  *
- * The committed file is uncompressed so the bytes a reviewer reads in the diff are the bytes the
- * suite parses. One test gzips it into the scratch directory, because the published download is
- * `.gml.gz` and the reader's inflating path has to be exercised on the same bytes.
+ * No byte was edited, so the publisher's spelling, its void elements
+ * and its empty designators are the ones under test.
+ *
+ * The committed file is uncompressed so the bytes a reviewer reads in the diff
+ * are the bytes the suite parses.
+ * One test gzips it into the scratch directory, because the published download is `.gml.gz`
+ * and the reader's inflating path has to be exercised on the same bytes.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"
@@ -73,7 +76,7 @@ describe("nl-kadaster adapter against the fixture GML", () => {
 		// Kadaster's Locatieserver serves `weergavenaam` for the same `nummeraanduiding` ids,
 		// and these twelve strings are that field.
 		// They agreed with the reader on 12 of 12 when measured on 2026-10-02.
-		// They are recorded here rather than fetched, so the suite needs no network.
+		// They're recorded here rather than fetched, so the suite needs no network.
 		expect(rows.map((r) => r.raw)).toEqual([
 			"Snelgersmastraat 3, 9901AA Appingedam",
 			"Snelgersmastraat 5, 9901AA Appingedam",
@@ -225,7 +228,7 @@ describe("nl-kadaster adapter against the fixture GML", () => {
 		const text = (await readLocalBuffer(fixture)).toString("utf8")
 		const area = /<gml:featureMember><ad:AddressAreaName[\s\S]*?<\/gml:featureMember>/.exec(text)![0]
 		// The woonplaats moved behind every address.
-		// That is the one ordering that separates a reference that has not arrived
+		// That's the one ordering that separates a reference that's not arrived
 		// yet from one the publisher never wrote.
 		// The published document deferred 0 of 345,309 addresses, so only a rewrite reaches this path.
 		const reordered = scratch.path("reordered.gml")

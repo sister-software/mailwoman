@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Nicaraguan designators: apartado postal, premise words, floors and the landmark-relative locator, including
- *   the Managua directions `al lago`, `arriba` and `abajo` and the reference `de donde fue`. The Correos de
- *   Nicaragua sheet on the UPU site shows `Apartado postal` and the traditional address
- *   `Portón Cementerio General 1c Este, 1/2c Norte`. Distance units, directions and sides take dictionary
- *   entries and published descriptions of the address system as their sources, because no operator publishes a
- *   list of them.
+ *   Nicaraguan designators: apartado postal, premise words, floors and the landmark-relative locator,
+ *   including the Managua directions `al lago`, `arriba` and `abajo` and the reference `de donde fue`.
+ *
+ *   The Correos de Nicaragua sheet on the UPU site shows `Apartado postal`
+ *   and the traditional address `Portón Cementerio General 1c Este, 1/2c Norte`.
+ *   Distance units, directions and sides take dictionary entries and published descriptions
+ *   of the address system as their sources, because no operator publishes a list of them.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/nicEn.pdf UPU Nicaragua postal address sheet (Correos de Nicaragua)}
  * @see {@link https://www.kunc.org/2014-08-16/navigating-nicaragua-a-lesson-in-getting-lost KUNC, navigating Nicaragua}

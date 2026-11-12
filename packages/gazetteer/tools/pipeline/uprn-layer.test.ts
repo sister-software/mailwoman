@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Open uprn builder's interface: line-parser behavior at the input tail (truncated fields,
- *   `Number("")`-shaped traps), the versions.txt parse and a full fixture build through
- *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
- *   artifact back through the production reader.
+ *   The Open uprn builder's interface: line-parser behavior at the input tail
+ *   (truncated fields, `Number("")`-shaped traps), the versions.txt parse and a full
+ *   fixture build through `buildUPRNLayer` — DDL, checks, coverage, manifest, seal —
+ *   verified by reading the sealed artifact back through the production reader.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"

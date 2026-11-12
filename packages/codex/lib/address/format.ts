@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser. The order
- *   lives in `@mailwoman/codex/address/layouts`, as data. This module is the public surface over
- *   {@linkcode renderAddress}.
+ *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser.
+ *
+ *   The order lives in `@mailwoman/codex/address/layouts`, as data.
+ *   This module is the public surface over {@linkcode renderAddress}.
  */
 
 import {
@@ -15,6 +16,13 @@ import {
 	regionLayoutForCountry,
 	type AddressScript,
 } from "#address/layouts"
+import {
+	applyCasing,
+	dropAddressPunctuation,
+	postalStyleForCountry,
+	type AddressCasing,
+	type PostalStyle,
+} from "#address/postal-style"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
@@ -56,6 +64,22 @@ export interface FormatAddressOptions {
 	 * A country with no region position renders with its ordinary layout and reports the region unplaced.
 	 */
 	withRegion?: boolean
+
+	/**
+	 * Print the country's postal-authority form: its recorded casing and punctuation,
+	 * and the gap it leaves before the postcode.
+	 *
+	 * See {@linkcode postalStyleForCountry}.
+	 * A country with no recorded style renders in its ordinary form, with `casing` still applied.
+	 */
+	postal?: boolean
+
+	/**
+	 * The case to print in: `"upper"`, `"lower"`, or `null` to keep the case the components were given in.
+	 *
+	 * Unset, the postal form takes the country's recorded casing, and the ordinary form keeps the given case.
+	 */
+	casing?: AddressCasing
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
@@ -84,7 +108,7 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
 }
 
 /**
- * The components consulted to decide the script, in the order they are asked, with the postcode
+ * The components consulted to decide the script, in the order they're asked, with the postcode
  * never asked because it is digits in both registers and would abstain on every input.
  */
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
@@ -112,7 +136,7 @@ export function isLatinScriptText(value: string): boolean {
 /**
  * The script `components` are written in for `country`, read from the first witness that contains a letter.
  *
- * A witness without letters does not identify a script.
+ * A witness without letters doesn't identify a script.
  * All-digit or absent witnesses return `null`.
  * The country default then determines the address order.
  *
@@ -196,7 +220,7 @@ export interface AddressRow {
 	/**
 	 * The subset of the input dict the layout printed, with the caller's original values.
 	 *
-	 * This is the half a corpus row needs: a label whose text is not in `raw` cannot be aligned against it.
+	 * This is the half a corpus row needs: a label whose text isn't in `raw` cannot be aligned against it.
 	 */
 	readonly components: ComponentDict
 	/**
@@ -254,7 +278,8 @@ export function formatAddressRow(
 	const placed: ComponentDict = {}
 
 	for (const tag of rendering.placed) {
-		const value = components[tag]
+		// A slot with a fallback renders text the components lack, so its value is the text it printed.
+		const value = components[tag] || rendering.pieces.find((piece) => piece.tag === tag)?.text
 
 		if (value) {
 			placed[tag] = value
@@ -268,7 +293,53 @@ export function formatAddressRow(
 		placed.postcode = writtenPostcode
 	}
 
-	return { raw, components: placed, unplaced: rendering.unplaced, script }
+	const style = opts.postal ? postalStyleForCountry(country) : null
+	const casing = opts.casing !== undefined ? opts.casing : (style?.casing ?? null)
+
+	if (!style && !casing) return { raw, components: placed, unplaced: rendering.unplaced, script }
+
+	return { ...restyle(raw, placed, style, casing), unplaced: rendering.unplaced, script }
+}
+
+/**
+ * Applies a postal style and a casing to a rendered address and to its placed components
+ * alike, so each component's text still occurs in the rendered text.
+ */
+function restyle(
+	raw: string,
+	placed: ComponentDict,
+	style: PostalStyle | null,
+	casing: AddressCasing
+): { raw: string; components: ComponentDict } {
+	const transform = (value: string) => {
+		const cased = applyCasing(value, casing)
+
+		return style?.dropPunctuation ? dropAddressPunctuation(cased) : cased
+	}
+
+	const components: ComponentDict = {}
+
+	for (const [tag, value] of Object.entries(placed)) {
+		if (value) {
+			components[tag as ComponentTag] = transform(value)
+		}
+	}
+
+	let text = transform(raw)
+	const postcode = components.postcode
+
+	if (style && postcode) {
+		const at = text.lastIndexOf(postcode)
+		const before = text.slice(0, at)
+		const spaces = /[ \t]+$/.exec(before)
+
+		// A postcode starting its own line keeps that line break.
+		if (at > 0 && spaces) {
+			text = `${before.slice(0, spaces.index)}${style.postcodeGap}${text.slice(at)}`
+		}
+	}
+
+	return { raw: text, components }
 }
 
 /**

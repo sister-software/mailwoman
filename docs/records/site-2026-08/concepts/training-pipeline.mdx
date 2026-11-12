@@ -51,7 +51,7 @@ Adapters live under `corpus/src/adapters/`. Each adapter:
 
 - Reads its source's native format (CSV, NDJSON, JSON, shapefile).
 - Maps source-specific column names to Mailwoman's component vocabulary.
-- Composes a plausible `raw` string from the components when the source does not provide one.
+- Composes a plausible `raw` string from the components when the source doesn't provide one.
 - Sets the correct license on every row.
 
 There are currently 14 adapters: WOF (admin + postcode), BAN (France), TIGER (US Census), NPPES (US healthcare), HRSA, IMLS, NAD (US DOT), three state notary/contractor sources, and a few others. `corpus-v0.3.0` enabled 11 of them. Those 11 contributed 677 million aligned rows.
@@ -114,7 +114,7 @@ The eval report is committed to git as part of the ship PR. See [the latest Tier
 
 ## Stage 7 — Export to ONNX
 
-PyTorch's training graph does not run directly in JavaScript or other runtimes. **ONNX** (Open Neural Network Exchange) is a standardized model format that runs in several runtimes (`onnxruntime-node`, `onnxruntime-web`, ONNXRuntime for mobile, etc.). The export step:
+PyTorch's training graph doesn't run directly in JavaScript or other runtimes. **ONNX** (Open Neural Network Exchange) is a standardized model format that runs in several runtimes (`onnxruntime-node`, `onnxruntime-web`, ONNXRuntime for mobile, etc.). The export step:
 
 - Traces the model's forward pass with a sample batch.
 - Records each operation as an ONNX node.

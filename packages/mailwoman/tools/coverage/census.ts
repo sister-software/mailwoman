@@ -112,10 +112,10 @@ const COUNTRY_LESS_CODES = ["ZZ", "??"] as const
 const COUNTRY_LESS_READINGS: Readonly<Record<string, string>> = {
 	ZZ:
 		"The ISO 3166-1 user-assigned range. In `v0.6.0-register-surface` these are bare place names from " +
-		"`synth-fragment`, a recipe no longer in the tree, every one `locale: und`. Measured 2026-09-28 " +
-		"against the candidate gazetteer: 3,115 resolve to exactly one country, 1,646 to several, and 4 to " +
-		"none. The 3,115 are attributable at the next assembly. The other 1,650 stay country-less because " +
-		"the gazetteer does not settle them (#2358).",
+		"the retired `synth-fragment` recipe, every one `locale: und`. Measured 2026-09-28 against the " +
+		"candidate gazetteer: 3,115 resolve to exactly one country, 1,646 to several, and 4 to none. An " +
+		"assembly can attribute the 3,115 to their country. The other 1,650 stay country-less because " +
+		"the gazetteer doesn't settle them (#2358).",
 	"??": "A row whose `country` column is empty, which the training loader drops.",
 }
 
@@ -124,10 +124,10 @@ const COUNTRY_LESS_READINGS: Readonly<Record<string, string>> = {
  *
  * `ZZ` is the ISO 3166-1 user-assigned range and `??` marks a row whose `country` is empty.
  * The per-country table drops both, because a reader counting its rows would report
- * a jurisdiction the register does not enumerate.
+ * a jurisdiction the register doesn't enumerate.
  *
  * An unreported drop makes 4,765 rows of `v0.6.0-register-surface` invisible,
- * so they are reported here instead.
+ * so they're reported here instead.
  */
 export interface CountryLessRows {
 	code: string
@@ -365,7 +365,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 
 		if (!inBlock) continue
 
-		// A top-level key that is not a country code ends the block.
+		// A top-level key that's not a country code ends the block.
 		if (/^\s{0,2}\S/.test(line) && !/^\s*["']?[A-Za-z]{2}["']?\s*:/.test(line)) break
 
 		// A flow-style mapping writes several `CC: weight` pairs on one line, so every pair on the line is read.
@@ -519,7 +519,7 @@ export function resolveTrainingConfig(
  * Sets the weights family whose config answers an admission question when the caller gives no family.
  *
  * The Latin family is the default because its `country_weights` covers every
- * country that the character family does not train.
+ * country that the character family doesn't train.
  */
 export const DEFAULT_ADMISSION_FAMILY = "en-us"
 
@@ -643,7 +643,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	])
 
 	// Both codes leave the per-country table and are reported under `countryLess`, so the rows
-	// behind them are visible without reading as a jurisdiction the register does not enumerate.
+	// behind them are visible without reading as a jurisdiction the register doesn't enumerate.
 	const countryLess: CountryLessRows[] = []
 
 	for (const code of COUNTRY_LESS_CODES) {

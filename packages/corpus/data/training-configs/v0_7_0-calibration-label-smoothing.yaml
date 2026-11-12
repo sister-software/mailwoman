@@ -22,17 +22,17 @@
 #   - Harness pass rate (primary release metric) improves as overconfident
 #     hallucinations soften and lose decode arguments.
 #   - Per-tag recall on the held-out test split stays within 2pp of v0.6.0
-#     (calibration should not cost recall. label smoothing is a regularizer,
+#     (calibration shouldn't cost recall. label smoothing is a regularizer,
 #     not a capacity change).
 #
 # early-kill check (NaN protocol / budget stewardship): checkpoints land every
-# 2K steps. Inspect step-20000 (~20 min). If overconfidence has not dropped and
-# harness has not improved by 20K, kill — calibration is not the change and v0.7
+# 2K steps. Inspect step-20000 (~20 min). If overconfidence hasn't dropped and
+# harness hasn't improved by 20K, kill — calibration isn't the change and v0.7
 # pivots to structural (#41 char-level + larger model). This is recipe-tuning
 # iteration 1 of the 2-iteration cap.
 #
-# label_smoothing is a benign regularizer (will not NaN); CRF stays disabled so
-# this does not confound with the CRF precision question.
+# label_smoothing is a benign regularizer (won't NaN); CRF stays disabled so
+# this doesn't confound with the CRF precision question.
 #
 # Launch:
 #   node packages/mailwoman/tools/training/launch/launch.run.ts start --config v0_7_0-calibration-label-smoothing.yaml --fresh

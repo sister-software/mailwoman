@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `compare_checkpoints` fails on a tensor or a Fisher artifact that one checkpoint holds and the other does not, in
 //! either direction.
 

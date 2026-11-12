@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The spatial key and the positions of a dossier's buildings. A membership is a source's statement that a
- *   building lies in an extent. It writes the extent as a layer reading writes it, so a reading over that
+ *   The spatial key and the positions of a dossier's buildings.
+ *
+ *   A membership is a source's statement that a building lies in an extent.
+ *   It writes the extent as a layer reading writes it, so a reading over that
  *   extent can attach to the building.
  *
- *   A reading with a subject attaches to that building only. A reading without one attaches to each
- *   building that a membership places in the reading's extent, and to no building otherwise. A position
- *   is a source's latitude and longitude for a building. Two positions that state different locations
- *   leave the building's position unresolved, and the answer lists both. The dossier computes no
- *   geometry: each membership and each position is a source's statement.
+ *   A reading with a subject attaches to that building only.
+ *   A reading without one attaches to each building that a membership places in
+ *   the reading's extent, and to no building otherwise.
+ *
+ *   A position is a source's latitude and longitude for a building.
+ *   Two positions that state different locations leave the building's position
+ *   unresolved, and the answer lists both.
+ *
+ *   The dossier computes no geometry: each membership and each position is a source's statement.
  */
 
 import type { LayerReading } from "#coverage"

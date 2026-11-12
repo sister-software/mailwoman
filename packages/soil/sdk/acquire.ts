@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Downloads a region's soil survey areas and turns them into builder inputs. The catalogue's `saverest` date picks the archive and the host rejects `HEAD` and ignores `Range`.
+ *   Downloads a region's soil survey areas and turns them into builder inputs.
+ *
+ *   The catalogue's `saverest` date picks the archive and the host rejects `HEAD` and ignores `Range`.
  */
 
 import type { PathBuilderLike } from "path-ts"

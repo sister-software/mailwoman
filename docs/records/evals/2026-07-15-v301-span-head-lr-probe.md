@@ -9,8 +9,8 @@ title: v3.0.1 span-head re-probe — CHECK PASS, the arc's assumption is support
 > `seg@1 > token@1` on the parity corpus, via `scripts/eval_seg_at_1.py`.
 > v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers).
 > Secondary read: the span NLL must converge. If loss again ends ~17 and still falling, the
-> LR is not the binding constraint and the fork reopens.
-> If seg@1 STILL loses with a converged span loss: that is the falsification.
+> LR isn't the binding constraint and the fork reopens.
+> If seg@1 STILL loses with a converged span loss: that's the falsification.
 
 ## Verdict: **PASS**
 
@@ -36,7 +36,7 @@ Raw span NLL ~2.7 (1.37 ÷ the 0.5 weight) against v3.0.0's ~35. The LR **was** 
 constraint. A fresh head cannot train at a pretrained encoder's fine-tuning LR — the probe was
 mis-specified, exactly as diagnosed, and repairing it changed the answer completely.
 
-## Functional evidence (the aggregate is not the verdict)
+## Functional evidence (the aggregate isn't the verdict)
 
 ```
 'Korunni 810, Praha'  → Korunni:street  810:house_number  Praha:locality
@@ -60,9 +60,9 @@ token@1 went **0.348 → 0.4906** on the same channel-starved harness between v3
 val macro F1 went 0.7405 → **0.7479**. The two runs differ only in the head's LR, so the co-trained
 span objective is shaping the shared encoder to the BIO head's benefit — the same "span-consistency
 pressure helps" effect stage-1's aux head showed, but larger. Phase 2 should confirm it on production
-config. This page does not claim it as a shipped win.
+config. This page doesn't claim it as a shipped win.
 
-## What this does not establish
+## What this doesn't establish
 
 - **These absolutes are channel-starved.** `eval_seg_at_1.py` feeds no anchor/gazetteer/country
   channels and runs neither postcodeRepair nor the word-consistency heal (the #718 trap). Its token@1 reads 0.4906

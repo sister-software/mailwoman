@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The paid artifacts the download route serves, keyed by the scope entry a token names: a `tier:<name>` for an
- *   atlas tier or a package name for a weights overlay. Each entry gives the object key in the private bucket and the
- *   object's size when it is known. The catalog is code rather than a table, so a release states what it serves.
+ *   The paid artifacts the download route serves, keyed by the scope entry a token names:
+ *   a `tier:<name>` for an atlas tier or a package name for a weights overlay.
+ *
+ *   Each entry gives the object key in the private bucket and the object's size when it is known.
+ *   The catalog is code rather than a table, so a release states what it serves.
  */
 
 export interface PaidArtifact {

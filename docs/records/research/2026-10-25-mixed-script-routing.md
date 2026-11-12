@@ -68,7 +68,7 @@ On the five mixed inputs above, the current vocabulary writes 118 pieces with no
 pieces with 6 byte-fallback pieces (5.1%): `超` and `號`, three bytes each. C5 excludes CJK-dominant rows from its
 training text by design, so Han characters outside its seeded and sampled set fall back to bytes. On the Latin
 family's real traffic the cost is bounded by the 0.02–0.08% of names above. The CJK-country inputs, where the
-cost would be large, are the ones that should not reach the Latin family at all.
+cost would be large, are the ones that shouldn't reach the Latin family at all.
 
 ## Route selection design
 
@@ -79,7 +79,7 @@ Three options were considered.
    the input to that run's family. The other-script runs reach the chosen family as a name it already handles.
    This works for the Latin family today (`Four Seasons Inn 四季酒家`).
 2. **Run both families and keep the more confident parse.** This needs the two families' confidences on one scale.
-   They are calibrated separately, so the comparison is unknown without a calibration study, and it doubles the
+   They're calibrated separately, so the comparison is unknown without a calibration study, and it doubles the
    inference cost of every mixed input.
 3. **One model for both scripts.** This is the from-scratch merge of the character graph and the Latin graph.
    The vocabulary audit (2026-10-09) rejected it on cost.

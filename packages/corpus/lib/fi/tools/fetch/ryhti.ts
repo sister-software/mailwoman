@@ -4,36 +4,37 @@
 /**
  * Download Suomen ympäristökeskus' Ryhti built-environment address CSV for the `ryhti` adapter.
  *
- * SYKE publishes the whole country, Åland included, as one gzipped CSV at
- * `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`. There is no per-region
- * distribution and no API, so the harvest is one transfer rather than a paging loop.
+ * SYKE publishes the whole country, Åland included, as one gzipped CSV
+ * at `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz`.
+ * There's no per-region distribution and no API, so the harvest is one transfer rather than a paging loop.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
- * not declare.
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`, so this module sits beside `#fr/tools/fetch/ban`
+ * rather than in an `sdk/` root the workspace doesn't declare.
  *
- * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0 and states the
- * attribution as `Lähde: Syke Ryhti`. The address-source register elects that license. The manifest
- * records both, and `#fi/adapters/ryhti/adapter` records the license on every row.
+ * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0
+ * and states the attribution as `Lähde: Syke Ryhti`.
+ * The address-source register elects that license.
+ *
+ * The manifest records both, and `#fi/adapters/ryhti/adapter` records the license on every row.
  *
  * Four measured properties decide what this module does:
  *
- * 1. **The file is republished daily and its length changes with it.** The re-run check is a `HEAD`
- *    compared against the manifest, so one small request replaces the whole body and no length is a
- *    constant here.
- * 2. **The host ignores `Range`.** `bytes=0-4095` answers HTTP 200 with no `content-range` and the
- *    whole `content-length`, and `accept-ranges` is absent, so a resumed transfer is not available
+ * 1. **The file is republished daily and its length changes with it.** The re-run
+ *    check is a `HEAD` compared against the manifest, so one small request replaces
+ *    the whole body and no length is a constant here.
+ * 2. **The host ignores `Range`.** `bytes=0-4095` answers HTTP 200 with no `content-range` and
+ *    the whole `content-length`, and `accept-ranges` is absent, so a resumed transfer isn't available
  *    and an interrupted one restarts. {@linkcode resumableDownload} would refuse the response.
- * 3. **This module moves bytes and decodes none of them.** The body is streamed to disk compressed
- *    and then decompressed stream to stream, so no chunk boundary is interpreted as a character
- *    boundary. A `chunk.toString("utf8")` per gzip chunk would write U+FFFD at every split
- *    multi-byte character.
- * 4. **The decompressed CSV is what the adapter can read.** `#fi/adapters/ryhti/adapter` hands
- *    `opts.inputPath` to `CSVSpliterator.fromAsync`, which reads the bytes on disk. A path to the
- *    `.gz` would be parsed as CSV over gzip bytes, so the `.gz` is removed once the CSV is written.
- *    A caller that wants the compressed copy kept passes
- *    {@linkcode FetchRyhtiOptions.keepCompressed}.
+ * 3. **This module moves bytes and decodes none of them.** The body is streamed to disk compressed and
+ *    then decompressed stream to stream, so no chunk boundary is interpreted as a character boundary.
+ *    A `chunk.toString("utf8")` per gzip chunk would write U+FFFD at every split multi-byte character.
+ * 4. **The decompressed CSV is what the adapter can read.** `#fi/adapters/ryhti/adapter`
+ *    hands `opts.inputPath` to `CSVSpliterator.fromAsync`, which reads the bytes on disk.
+ *    A path to the `.gz` would be parsed as CSV over gzip bytes, so the `.gz`
+ *    is removed once the CSV is written.
+ *    A caller that wants the compressed copy kept passes {@linkcode FetchRyhtiOptions.keepCompressed}.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -114,7 +115,7 @@ export const FI_RYHTI_REQUIRED_COLUMNS: readonly string[] = [
  * {@linkcode SourceManifest}'s five fields describe the decompressed CSV.
  * That file is what the adapter reads and what the digest covers.
  *
- * The three added fields describe the transfer, and they are what the re-run
+ * The three added fields describe the transfer, and they're what the re-run
  * check compares before it downloads 351 MB.
  */
 export interface RyhtiManifest extends SourceManifest {
@@ -150,9 +151,9 @@ export interface RyhtiHead {
  * Read what the host states about the file.
  *
  * Through `APIClient`, which is the interface for a repeated request with a small response.
- * The body itself is not taken this way: `APIClient` buffers a response, and this one is 351 MB.
+ * The body itself isn't taken this way: `APIClient` buffers a response, and this one is 351 MB.
  *
- * A header the host does not send is reported as `null` rather than raised on,
+ * A header the host doesn't send is reported as `null` rather than raised on,
  * and the caller then downloads rather than treating the absence as a match.
  */
 export async function readRyhtiHead(client: Pick<APIClient, "fetch">, url = FI_RYHTI_CSV_URL): Promise<RyhtiHead> {
@@ -180,7 +181,7 @@ export function readRyhtiColumns(path: PathBuilderLike): Promise<readonly string
 }
 
 /**
- * Refuse a header that does not name every column the adapter indexes.
+ * Refuse a header that doesn't name every column the adapter indexes.
  *
  * @throws Naming the columns that are absent, so a renamed column is a reported failure
  * rather than an empty string on every row the adapter emits.
@@ -246,7 +247,7 @@ export function ryhtiInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilde
  * The `HEAD` decides first, because the publisher rewrites the file daily
  * and states a new length and modification time when it does.
  * The file's own length is then checked, so a truncated local copy is re-fetched even
- * where the host has not changed.
+ * where the host hasn't changed.
  */
 async function isCurrent(
 	recorded: RyhtiManifest | null,
@@ -302,7 +303,7 @@ export async function downloadRyhti(
 	// MARK: Ask what the host holds
 	//
 	// One small request.
-	// It is what holds a re-run to this one request when the publisher has not republished,
+	// It is what holds a re-run to this one request when the publisher hasn't republished,
 	// and the publisher republishes daily.
 
 	const head = await readRyhtiHead(client, FI_RYHTI_CSV_URL)
@@ -323,7 +324,7 @@ export async function downloadRyhti(
 	// MARK: Transfer the compressed body
 	//
 	// Raw streaming rather than `APIClient`: the body is 351 MB, and `APIClient`
-	// buffers a response it does not stream.
+	// buffers a response it doesn't stream.
 	// The host ignores `Range`, so an interrupted transfer restarts rather than resumes,
 	// and `withRetries` is what bounds that.
 

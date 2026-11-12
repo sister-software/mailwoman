@@ -3,26 +3,27 @@
 
 /**
  *   Split-conformal confidence wrapper for the street-level coordinate tier (heuristic-radius variant).
- *   The interpolation tier stamps an `uncertainty_m` radius on each hit (half the matched tiger segment
- *   length) and the exact address-point tier stamps no radius, since it is a real situs point assigned
- *   a fixed 10 m floor (building-centroid precision).
  *
- *   The heuristic radius is a prior. This script turns it into a conformally calibrated interval: the
- *   conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now have a 90% coverage
- *   guarantee on held-out data."
+ *   The interpolation tier stamps an `uncertainty_m` radius on each hit
+ *   (half the matched tiger segment length) and the exact address-point tier stamps no radius,
+ *   since it is a real situs point assigned a fixed 10 m floor (building-centroid precision).
+ *
+ *   The heuristic radius is a prior.
+ *   This script turns it into a conformally calibrated interval: the conformal threshold Q̂ tells you
+ *   "multiply the claimed radius by Q̂ and you now have a 90% coverage guarantee on held-out data."
  *
  *   Recipe:
  *
- *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set. For each
- *        resolved street-level row capture: (a) coordinate error in meters (haversine to the true
- *        lat/lon) (b) claimed radius in meters (uncertainty_m for interp hits. 10 m fixed floor for
- *        situs hits)
+ *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set.
+ *      For each resolved street-level row capture: (a) coordinate error in
+ *      meters (haversine to the true lat/lon) (b) claimed radius in meters
+ *      (uncertainty_m for interp hits. 10 m fixed floor for situs hits)
  *   2. Nonconformity score per row: s_i = error_m / claimed_radius_m
- *   3. Conformal threshold Q̂ = the ⌈(n_cal + 1) × 0.9⌉ / n_cal empirical quantile of {s_i} over a
- *        calibration split (split the holdout ≈50/50, deterministic seed).
+ *   3. Conformal threshold Q̂ = the ⌈(n_cal + 1) × 0.9⌉ / n_cal empirical quantile of
+ *      {s_i} over a calibration split (split the holdout ≈50/50, deterministic seed).
  *   4. Calibrated 90% interval at inference = claimed_radius × Q̂.
  *   5. Validate on the test split: empirical coverage = fraction where error_m ≤ calibrated_radius.
- *        Target ≈ 90%.
+ *      Target ≈ 90%.
  *
  *   calibration data (pre-built, Texas E-911 Travis County):
  *
@@ -30,8 +31,8 @@
  *   - Situs : /tmp/tx-situs.db (--address-points)
  *   - Interp : /tmp/tx-metro-interp.db (--interpolation)
  *
- *   output: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
- *   calibration summary.
+ *   output: threshold Q̂, empirical 90% coverage, median calibrated radius per tier,
+ *   plus a 3-line calibration summary.
  *
  *   Run (no pre-compile needed): node packages/mailwoman/tools/dev-tools/conformal-calibrate.run.ts\
  *   [--holdout /tmp/ood-truth.jsonl]\
@@ -43,12 +44,14 @@
  *   [--wof $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
- *   Do not change the resolver or parser. This script only reads stamped metadata.
+ *   Do not change the resolver or parser.
+ *   This script only reads stamped metadata.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -194,7 +197,7 @@ interface HoldoutRow {
  *
  * Mirrors `oa-resolver-eval.ts`'s construction exactly.
  * The whole point of a conformal threshold is that it was fitted against the same
- * stack that will later apply it, so the two must not drift.
+ * stack that will later apply it, so the two mustn't drift.
  */
 async function buildCascade(paths: {
 	modelPath: string
@@ -204,9 +207,16 @@ async function buildCascade(paths: {
 	addressPointsDB: string
 	interpolationDB: string
 }) {
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const {
+		neural: { NeuralAddressClassifier },
+		onnxRunner: { ONNXRunner },
+		tokenizer: { MailwomanTokenizer },
+	} = await allKeyed({
+		neural: import("@mailwoman/neural"),
+		onnxRunner: import("@mailwoman/neural/onnx-runner"),
+		tokenizer: import("@mailwoman/neural/tokenizer"),
+	})
+
 	const modelCard = await readLocalJSONFile<{ labels: string[] }>(paths.modelCardPath)
 
 	const [tokenizer, runner] = await Promise.all([

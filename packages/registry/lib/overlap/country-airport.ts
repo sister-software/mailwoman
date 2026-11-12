@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The country/airport collision index: codes that are both an officially assigned ISO 3166-1 alpha-3 code and an
- *   IATA airport code in the profile.
+ *   The country/airport collision index: codes that are both an officially assigned
+ *   ISO 3166-1 alpha-3 code and an IATA airport code in the profile.
  *
- *   `isCountryAirportCollision` reads only the 2,197-byte collision bitset. `interpretCountryOrAirportCode` reads the
- *   records artifacts and answers every interpretation as a discriminated union, each branch with its own brand and
- *   entity, so `AUS` is Australia under one namespace and an airport in the United States under another. The two
- *   relations are separate: `same-spelling-as` is the collision, `located-in` is each branch's `country`. The caller
- *   ranks the interpretations, and the resolver in Mailwoman does it.
+ *   `isCountryAirportCollision` reads only the 2,197-byte collision bitset.
+ *   `interpretCountryOrAirportCode` reads the records artifacts and answers every
+ *   interpretation as a discriminated union, each branch with its own brand and entity,
+ *   so `AUS` is Australia under one namespace and an airport in the United States under another.
+ *
+ *   The two relations are separate: `same-spelling-as` is the collision,
+ *   `located-in` is each branch's `country`.
+ *   The caller ranks the interpretations, and the resolver in Mailwoman does it.
  */
 
 import { countryAirportCollisionArtifact } from "#artifacts/country-airport-collision"
@@ -68,9 +71,9 @@ export type CodeMatch =
 /**
  * Every namespace that holds the spelling, in namespace order: country first, then airport.
  *
- * The order is the namespace list's and is not a ranking.
+ * The order is the namespace list's and isn't a ranking.
  * An empty array is `not-found-in-snapshot` in every namespace, and a former country code
- * is not an interpretation here because the current-assignment brand leaves it out.
+ * isn't an interpretation here because the current-assignment brand leaves it out.
  */
 export function interpretCountryOrAirportCode(input: string): CodeMatch[] {
 	const matches: CodeMatch[] = []

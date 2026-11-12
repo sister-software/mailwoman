@@ -1,7 +1,7 @@
 # === v4.2.0-base-anchor-v2 — draft rather than launch-ready. The base rebuild that closes the GB anchor hole. ===
 #
 # naming: the next base in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
-# GB-venue fine-tunes off v4.0.1). No version number in this file is the npm major. That is a separate number.
+# GB-venue fine-tunes off v4.0.1). No version number in this file is the npm major. That's a separate number.
 #
 # why this RUN exists. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
 # anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
@@ -62,7 +62,7 @@
 #     with the channel on. Holding it with the channel on is the purpose of this run).
 #   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
 #   - Anchor-ablation delta: score the resulting model anchor-on vs anchor-off on gb-golden. A
-#     delta of zero means slot 4 still took no gradient and the lookup swap did not land.
+#     delta of zero means slot 4 still took no gradient and the lookup swap didn't land.
 #   stop rule: a gb-golden miss with the channel fed => diagnose before a second launch.
 
 data:

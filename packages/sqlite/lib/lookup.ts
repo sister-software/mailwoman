@@ -3,8 +3,9 @@
 
 /**
  *   The shared shape of a reader over one SQLite artifact.
- *   A lookup either opens the file it is given or adopts a connection already held by the caller.
- *   and it closes on disposal only what it opened.
+ *
+ *   A lookup either opens the file it is given or adopts a connection already held
+ *   by the caller. and it closes on disposal only what it opened.
  */
 
 import type { PathBuilderLike } from "path-ts"

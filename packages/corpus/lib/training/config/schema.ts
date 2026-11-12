@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The training run config: every section, field and default of the deleted Python schema (`config/schema.py`),
- *   in its declaration order, and the zod schema of the resolved config the Rust trainer and sampler read.
+ *   The training run config: every section, field and default of the deleted Python
+ *   schema (`config/schema.py`), in its declaration order, and the zod schema of
+ *   the resolved config the Rust trainer and sampler read.
  *
- *   Each field records its Python annotation because the loader's coercion reads it. A numeric string converts
- *   only for a field annotated exactly `int` or `float`, so `5e-4` under `learning_rate` becomes a float while the
- *   same string under `span_head_learning_rate`, annotated `float | None`, stays a string. An integer default is a
- *   `bigint` because the loader tests the Python type of each receipt and coverage minimum.
+ *   Each field records its Python annotation because the loader's coercion reads it.
+ *   A numeric string converts only for a field annotated exactly `int` or `float`,
+ *   so `5e-4` under `learning_rate` becomes a float while the same string under
+ *   `span_head_learning_rate`, annotated `float | None`, stays a string.
+ *
+ *   An integer default is a `bigint` because the loader tests the Python type
+ *   of each receipt and coverage minimum.
  */
 
 import { z } from "zod"
@@ -79,7 +83,7 @@ const optionalFloatMap = () => ({
 })
 
 /**
- * The zod object a section's resolved values form, refusing a key the section does not declare.
+ * The zod object a section's resolved values form, refusing a key the section doesn't declare.
  */
 function sectionOutput<Fields extends Record<string, ConfigFieldSpec>>(fields: Fields) {
 	const shape = Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, field.output])) as {

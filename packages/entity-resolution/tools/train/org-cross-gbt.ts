@@ -2,15 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the organization-level cross-source link scorer. The practitioner cross-source GBT does
- *   not transfer to organization records because its person-name features go dark. The organization
- *   cross-dataset flows therefore pin the FS baseline. CMS Provider of Services joins Care Compare
- *   by CCN. Each system represents the same facility and maintains its name and address separately.
+ *   Train the organization-level cross-source link scorer.
  *
- *   The pipeline runs a national CCN join into one record per source per facility, then the shared
- *   `trainCrossSourceModel` geocodes the rows and blocks the union. It keeps cross-source pairs.
+ *   The practitioner cross-source GBT doesn't transfer to organization records
+ *   because its person-name features go dark.
+ *   The organization cross-dataset flows therefore pin the FS baseline.
+ *
+ *   CMS Provider of Services joins Care Compare by CCN.
+ *   Each system represents the same facility and maintains its name and address separately.
+ *
+ *   The pipeline runs a national CCN join into one record per source per facility,
+ *   then the shared `trainCrossSourceModel` geocodes the rows and blocks the union.
+ *   It keeps cross-source pairs.
+ *
  *   It featurizes them with the shared featurizer and labels them by CCN.
  *   Calibration uses held-out CCNs.
+ *
  *   The function emits `registry/models/org-crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, direct CSVs):

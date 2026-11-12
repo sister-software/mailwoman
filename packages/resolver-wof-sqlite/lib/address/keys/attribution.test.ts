@@ -90,4 +90,46 @@ describe("writeAddressLayerAttribution", () => {
 		expect(await readLocalJSONFile(path)).toEqual(expected)
 		expect(path.toString()).toBe(dir.path("addresses", "us-wi", "test", "ATTRIBUTION.json").toString())
 	})
+
+	it("folds a source whose authority values each name one record into one entry, and counts them", async () => {
+		await using dir = await temporaryDirectory("address-attribution-ids-")
+		const files = addressLayerFiles(dir.path(), "us-id", "test")
+
+		await buildAddressLayer({
+			records: stream([
+				record("usgov-nad", "13000255", "1"),
+				record("usgov-nad", "13000256", "2"),
+				record("usgov-nad", "13000257", "3"),
+			]),
+			sources: new Map([["usgov-nad", { license: "public-domain", authority: "U.S. Department of Transportation" }]]),
+			manifest: {
+				name: "addresses-us-id",
+				version: "test",
+				tier: LayerTier.Shipped,
+				license: "CC0-1.0",
+				attribution: null,
+				source: "fixture",
+				sourceVintage: "test",
+				buildCmd: "vitest",
+				buildSHA: "0000000",
+				freshnessPolicy: LayerFreshnessPolicy.Sealed,
+				createdAt: "2026-11-08T00:00:00Z",
+			},
+			lookupPath: files.lookup,
+			detailPath: files.detail,
+		})
+
+		const { entries } = await writeAddressLayerAttribution(dir.path(), "us-id", "test")
+
+		expect(entries).toEqual([
+			{
+				source: "usgov-nad",
+				authority: null,
+				records: 3,
+				license: "public-domain",
+				recorded: null,
+				omittedAuthorities: 3,
+			},
+		])
+	})
 })

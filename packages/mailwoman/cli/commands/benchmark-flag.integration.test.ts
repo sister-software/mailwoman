@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CLI `--benchmark` flag tests. Validates the schema and exercises the runner end-to-end against
- *   the compiled CLI with `--degraded`, so no encoder loads and the run stays deterministic + fast.
+ *   CLI `--benchmark` flag tests.
+ *
+ *   Validates the schema and exercises the runner end-to-end against the compiled CLI
+ *   with `--degraded`, so no encoder loads and the run stays deterministic + fast.
  *
  *   `--degraded` is the flag that skips the encoder load on the benchmark path.
  */

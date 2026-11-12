@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus ingest-csv --input <path.csv> [--table <name>] [--out <path.db>]` — CSV →
- *   SQLite ingestion with sampled type inference. `--dry-run` prints the inferred create table
- *   without importing.
+ *   `mailwoman corpus ingest-csv --input <path.csv> [--table <name>] [--out <path.db>]` —
+ *   CSV → SQLite ingestion with sampled type inference.
+ *
+ *   `--dry-run` prints the inferred create table without importing.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

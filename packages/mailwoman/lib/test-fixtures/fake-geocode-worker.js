@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * A fake geocode worker (no real model/DB) that proves geocodeStream's wiring: workerData config and
- * the record both arrive, and results flow back. It tags each record's address with the config locale
- * and the mapped-address column count.
+ * A fake geocode worker (no real model/DB) that proves geocodeStream's wiring:
+ * workerData config and the record both arrive, and results flow back.
+ *
+ * It tags each record's address with the config locale and the mapped-address column count.
  */
 
 import { workerData } from "node:worker_threads"

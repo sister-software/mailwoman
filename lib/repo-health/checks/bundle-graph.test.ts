@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The bundle-graph check against the tree this test sits in, plus a row that must fail because
- * `@mailwoman/core/fs/readers` imports `node:fs/promises` statically by design.
+ * The bundle-graph check against the tree this test sits in, plus a row that must fail
+ * because `@mailwoman/core/fs/readers` imports `node:fs/promises` statically by design.
  */
 
 import { describe, expect, test } from "vitest"

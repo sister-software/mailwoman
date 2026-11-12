@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The locality reading against this checkout and against scratch trees marked by a `.git` file, the shape a
- *   worktree's root has. The integration test runs the guard in a real worktree without node_modules.
+ *   The locality reading against this checkout and against scratch trees marked
+ *   by a `.git` file, the shape a worktree's root has.
+ *
+ *   The integration test runs the guard in a real worktree without node_modules.
  */
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"

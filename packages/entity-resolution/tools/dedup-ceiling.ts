@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dedup ceiling measurement, answering how good is good enough for dedup from the data rather
- *   than from a round number. The residual dedup error is over-merge: distinct co-located providers
- *   (different NPIs at one address) fused because a shared address outvotes a disagreeing name. The
- *   irreducible part is the set of co-located distinct-NPI pairs whose name text is also near
- *   identical, so no name or organization feature can separate them.
+ *   Dedup ceiling measurement, answering how good is good enough for dedup from the data
+ *   rather than from a round number.
  *
- *   This measures that floor directly and without labels, using NPI as the distinctness truth. It
- *   is geocode-free on purpose, so it can run at large N in seconds. "Same address" uses the
- *   matcher's own `addressFrequencyKey`, and "same name" uses a normalized token Jaccard over the
- *   legal business name.
+ *   The residual dedup error is over-merge: distinct co-located providers
+ *   (different NPIs at one address) fused because a shared address outvotes a disagreeing name.
+ *   The irreducible part is the set of co-located distinct-NPI pairs whose name text is
+ *   also near identical, so no name or organization feature can separate them.
+ *
+ *   This measures that floor directly and without labels, using NPI as the distinctness truth.
+ *   It is geocode-free on purpose, so it can run at large N in seconds.
+ *
+ *   "Same address" uses the matcher's own `addressFrequencyKey`, and "same name"
+ *   uses a normalized token Jaccard over the legal business name.
  *
  *   Run: `mailwoman registry dedup-ceiling [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7]
  *   [--out-md <md>]`
@@ -135,7 +138,7 @@ export async function dedupCeiling(
 	// The irreducible false-merge rate among co-located distinct pairs is collide/pairs.
 	// Report the collision rate directly with a precision-ceiling band: optimistic counts
 	// only `collide`, and conservative counts `collide` plus half of `mid`.
-	// Recall is not binding here, so the F1 ceiling tracks the precision ceiling.
+	// Recall isn't binding here, so the F1 ceiling tracks the precision ceiling.
 	const pct = formatPercent
 
 	const lines: string[] = [

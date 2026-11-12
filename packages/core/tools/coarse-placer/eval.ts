@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Evaluate the coarse-placer's in-distribution accuracy, per-class results and calibration (ECE)
- *   on the held-out test split. Also report abstention on the multi-script set. Off-map scripts
- *   (Cyrillic, Arabic, Thai, …) should draw low confidence and abstain, the "probably off my loaded
- *   map" behavior the design wants.
+ *   Evaluate the coarse-placer's in-distribution accuracy, per-class results
+ *   and calibration (ECE) on the held-out test split.
+ *
+ *   Also report abstention on the multi-script set.
+ *   Off-map scripts (Cyrillic, Arabic, Thai, …) should draw low confidence and abstain,
+ *   the "probably off my loaded map" behavior the design wants.
  *
  *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
  */

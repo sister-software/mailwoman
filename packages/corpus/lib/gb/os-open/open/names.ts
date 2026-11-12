@@ -4,13 +4,16 @@
 /**
  *   Reads the road rows of OS Open Names.
  *
- *   The CSV product is 819 files, one per 10 km National Grid square, with no header row. OS ships
- *   the 34 column names in `Doc/OS_Open_Names_Header.csv`. The first data row of each file opens
- *   with a byte-order mark. This reader strips that mark from the `ID` value.
+ *   The CSV product is 819 files, one per 10 km National Grid square, with no header row.
+ *   OS ships the 34 column names in `Doc/OS_Open_Names_Header.csv`.
  *
- *   A road row's `ID` is the roadNameTOID that OS Open Roads links reference, such as
- *   `osgb4000000010927776`. The road-specific `LOCAL_TYPE` values distinguish a complete road from
- *   a section split at a postcode district or settlement.
+ *   The first data row of each file opens with a byte-order mark.
+ *   This reader strips that mark from the `ID` value.
+ *
+ *   A road row's `ID` is the roadNameTOID that OS Open Roads links reference,
+ *   such as `osgb4000000010927776`.
+ *   The road-specific `LOCAL_TYPE` values distinguish a complete road from a
+ *   section split at a postcode district or settlement.
  */
 
 import { CSVSpliterator } from "spliterator"
@@ -97,7 +100,7 @@ export interface OpenNamesRoad {
 }
 
 /**
- * Counts from a read, with a reason for each row that did not yield.
+ * Counts from a read, with a reason for each row that didn't yield.
  */
 export interface OpenNamesReadStats {
 	/**

@@ -3,15 +3,16 @@
 
 /**
  *   Download Google and Chromium's per-country `ssl-address` metadata.
+ *
  *   This is the {@link https://github.com/google/libaddressinput libaddressinput} AddressValidationMetadata.
  *   It supplies each locale's field order and required fields.
  *   It also supplies upper-casing conventions.
  *
  *   See: https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
  *
- *   Replaces the bash `ssl-address-download.sh` (curl + jq). The country list lives at
- *   `…/ssl-address/data` as a `~`-delimited `.countries` string. each country's record is then
- *   fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
+ *   Replaces the bash `ssl-address-download.sh` (curl + jq).
+ *   The country list lives at `…/ssl-address/data` as a `~`-delimited `.countries` string. each country's
+ *   record is then fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
  *
  *   ## Usage
  *
@@ -42,7 +43,7 @@ const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
  * That result was indistinguishable from a country absent from the source.
  * This tool uses a concurrency-wide burst and has no `minRequestIntervalMs` setting.
  *
- * The host has not objected to that request pattern.
+ * The host hasn't objected to that request pattern.
  * A rate limit without supporting measurements would slow the tool.
  */
 const sslAddressClient = new APIClient({

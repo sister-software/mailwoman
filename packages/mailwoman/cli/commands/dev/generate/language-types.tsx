@@ -4,7 +4,8 @@
 /**
  *   `mailwoman dev generate language-types` — regenerate `core/resources/languages/types.gen.ts`
  *   (the ISO 639-1/639-2b language-code types + label maps) from the committed
- *   `internal/languages.csv` resource dictionary. Offline codegen.
+ *   `internal/languages.csv` resource dictionary.
+ *   Offline codegen.
  */
 
 import { Text } from "ink"

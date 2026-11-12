@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map's initial center: the tile worker's `/geolocate` answer for the visitor's connection, or the contiguous
- *   United States when that answer does not arrive. The map never waits on it. the hook answers null until one of the
- *   two is known. The caller renders at the default in the meantime.
+ *   The map's initial center: the tile worker's `/geolocate` answer for the visitor's
+ *   connection, or the contiguous United States when that answer doesn't arrive.
+ *
+ *   The map never waits on it. the hook answers null until one of the two is known.
+ *   The caller renders at the default in the meantime.
  */
 
 import type { Coordinates2D, GeoFeature, PointLiteral } from "@mailwoman/spatial"

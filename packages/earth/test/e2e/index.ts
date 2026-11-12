@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Playwright e2e test helpers for the mailwoman /demo page. Mirrors the authentik web/e2e/ structure: re-export a
  *   `test` object extended with extra fixtures, plus the standard `expect`. Spec files import as `import { expect, test

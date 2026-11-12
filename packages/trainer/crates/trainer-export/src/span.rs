@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The span scorer's segment types and the `semi-crf-transitions.json` sidecar beside a span-scorer graph.
 //!
 //! The graph's `span_scores` output carries no transition table, so the browser decoder (`@mailwoman/neural`'s

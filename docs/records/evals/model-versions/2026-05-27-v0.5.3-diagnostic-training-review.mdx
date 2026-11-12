@@ -11,7 +11,7 @@ title: "v0.5.3 diagnostic training review"
 Initial analysis compared val_macro_f1 (0.579 vs 0.638) and concluded v0.5.3 regressed. **This was wrong.** The F1 numbers are not directly comparable — different tokenizers, different val sets, different label distributions. When tested on demo presets, v0.5.3 achieves **6/6 correct** including locality=Washington/region=DC and locality=New York/region=NY — the stubborn failures that persisted across all prior models. The tree structure uses proper containment nesting (house_number inside street inside locality inside region). DeepSeek's recommendation to revert was based on the same misleading F1 comparison.
 :::
 
-v0.5.3 peaked at val_macro_f1 = **0.579** (step 28K). v0.5.1 reached **0.638**. Every recipe change since v0.5.1 — wof-admin downweight, cosine LR, label smoothing — has regressed. The model is not capacity-limited. The recipe is wrong.
+v0.5.3 peaked at val_macro_f1 = **0.579** (step 28K). v0.5.1 reached **0.638**. Every recipe change since v0.5.1 — wof-admin downweight, cosine LR, label smoothing — has regressed. The model isn't capacity-limited. The recipe is wrong.
 
 ## Model-fit curve
 
@@ -54,7 +54,7 @@ The locality/region confusion was better addressed at inference time:
 
 These inference-time fixes compose correctly without degrading the model's ability to emit diverse tags.
 
-## Model size is not the bottleneck
+## Model size isn't the bottleneck
 
 29M parameters (h384, 6 layers, 6 heads) reached 0.638 on the v0.5.1 recipe. The model overfits past step 65K on this corpus — a larger model (h512, ~68M) would overfit faster rather than break through the ceiling. The bottleneck is:
 
@@ -141,7 +141,7 @@ The pipeline path reveals the truth: the grouper-audit fills those gaps with pro
 
 1. **The v0.5.2 model barely emits non-region tags.** On the Washington preset, 2 of ~16 tokens get typed. The rest are O. This is the tag collapse caused by the wof-admin downweight.
 2. **The phrase grouper's structural proposals are low quality for these gaps.** It proposes `LOCALITY_PHRASE("Pennsylvania")` based on capitalization rather than semantics. When injected at 0.55 × grouper confidence, these wrong provisional nodes appear in the output.
-3. **The JSON dedup (first-occurrence-wins) is not the issue.** The grouper-audit nodes aren't competing with neural nodes — they're filling spans the neural model left completely empty.
+3. **The JSON dedup (first-occurrence-wins) isn't the issue.** The grouper-audit nodes aren't competing with neural nodes — they're filling spans the neural model left completely empty.
 
 The 4/6 "correct" neural-only results for v0.5.2 are correct by omission. The model gets the tags it does emit right but doesn't emit tags for most of the address.
 
@@ -223,7 +223,7 @@ This session had measured thrashing. This section records confusion points for f
 
 Every confusion point shares one root cause: **trusted a summary number over direct observation.** val_macro_f1 over demo presets. `decodeAsJSON` over raw BIO stream. `tree.roots` over tree traversal. "29M params" over counting the embedding table.
 
-The fix is not more metrics. It's a mandatory step where you look at the actual output before trusting the summary. One demo preset run (30 seconds) would have prevented every error.
+The fix isn't more metrics. It's a mandatory step where you look at the actual output before trusting the summary. One demo preset run (30 seconds) would have prevented every error.
 
 ### Process changes adopted
 

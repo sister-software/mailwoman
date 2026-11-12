@@ -7,44 +7,51 @@
  *
  *   Provenance, all retrieved 2026-10-05:
  *
- *   - NYC DOB NOW: Build — Job Application Filings (Socrata w9ak-ipjd), filing B00520132-I1, the new
- *     building: filed 2021-09-16, approved 2022-11-11, first permit 2022-11-15. The DOB NOW Public
- *     Portal has published NB filings, searchable by address, since the 2021-03-01 expansion that added
- *     the New Building job type (nyc.gov DOB NOW guidance, and PincusCo, 2021-09-03), so a filing's
- *     `availableAt` is its filing date and each dated status's `availableAt` is that status's date.
- *   - NYC DOB Job Application Filings (Socrata ic3t-wcy2, the legacy BIS mirror), builders pavement plan
- *     filings 3314476 and 3314484. Their `dobrundate` (2022-05-03) is the dataset's own publication
- *     stamp and serves as `availableAt`.
- *   - NYC DCP PLUTO 26v2 (Socrata 64uk-42ks, rowsUpdatedAt 2026-08-24): 375 residential units, 379
- *     total, 13 floors, year built 2022, owner of record International Baptist Church (the ground
- *     lessor. JEMB Realty is the development entity the DOB filings list as owner).
- *   - NYC Planning Geosearch (PAD 26c), live lookup: address 11 Ocean Parkway ↔ BIN 3429422 ↔ BBL
- *     3053220010, at the point [-73.97264, 40.65017] (longitude, latitude), which is the building's
- *     position below. A live service, so `availableAt` is the retrieval date. The lookup is the evidence
- *     for the building's BIN and the tax lot's BBL, so a dossier dated before the retrieval shows neither.
- *   - FCC Broadband Data Collection, through the National Broadband Map Public Data API
- *     (bdc.fcc.gov, credentialed). Three files, all NY state location coverage: cable as of
- *     2022-06-30 (file bdc_36_Cable_fixed_broadband_J22_10may2024) and fiber-to-the-premises as of
- *     2022-06-30 (bdc_36_FibertothePremises_fixed_broadband_J22_10may2024) and as of 2025-12-31
- *     (bdc_36_FibertothePremises_fixed_broadband_D25_29sep2026). The 2022-06-30 vintage first became
- *     public with the National Broadband Map launch on 2022-11-18, so its `availableAt` is that launch
- *     date: a dossier built for mid-2022 cannot have known it. Rows are provider-filed claims, so a
- *     block with no row is `source_present` empty, never established absence. Readings are block- and
- *     tract-scoped because the location id was not joined to the Fabric on this pass. Provider
- *     availability below therefore reads at census-block granularity rather than per-premises, and each
- *     availability record states the building's census block as its `extent`. The building is each
- *     reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc` writes a reading of a building's block.
+ *   - NYC DOB NOW: Build — Job Application Filings (Socrata w9ak-ipjd), filing B00520132-I1,
+ *     the new building: filed 2021-09-16, approved 2022-11-11, first permit 2022-11-15.
+ *     The DOB NOW Public Portal has published NB filings, searchable by address,
+ *     since the 2021-03-01 expansion that added the New Building job type
+ *     (nyc.gov DOB NOW guidance, and PincusCo, 2021-09-03), so a filing's `availableAt`
+ *     is its filing date and each dated status's `availableAt` is that status's date.
+ *   - NYC DOB Job Application Filings (Socrata ic3t-wcy2, the legacy BIS mirror),
+ *     builders pavement plan filings 3314476 and 3314484.
+ *     Their `dobrundate` (2022-05-03) is the dataset's own publication stamp and serves as `availableAt`.
+ *   - NYC DCP PLUTO 26v2 (Socrata 64uk-42ks, rowsUpdatedAt 2026-08-24): 375 residential units,
+ *     379 total, 13 floors, year built 2022, owner of record International Baptist Church
+ *     (the ground lessor. JEMB Realty is the development entity the DOB filings list as owner).
+ *   - NYC Planning Geosearch (PAD 26c), live lookup: address 11 Ocean Parkway ↔ BIN
+ *     3429422 ↔ BBL 3053220010, at the point [-73.97264, 40.65017] (longitude, latitude),
+ *     which is the building's position below.
+ *     A live service, so `availableAt` is the retrieval date.
+ *     The lookup is the evidence for the building's BIN and the tax lot's BBL,
+ *     so a dossier dated before the retrieval shows neither.
+ *   - FCC Broadband Data Collection, through the National Broadband Map Public
+ *     Data API (bdc.fcc.gov, credentialed).
+ *     Three files, all NY state location coverage: cable as of 2022-06-30
+ *     (file bdc_36_Cable_fixed_broadband_J22_10may2024) and fiber-to-the-premises
+ *     as of 2022-06-30 (bdc_36_FibertothePremises_fixed_broadband_J22_10may2024)
+ *     and as of 2025-12-31 (bdc_36_FibertothePremises_fixed_broadband_D25_29sep2026).
+ *     The 2022-06-30 vintage first became public with the National Broadband Map launch on 2022-11-18,
+ *     so its `availableAt` is that launch date: a dossier built for mid-2022 cannot have known it.
+ *     Rows are provider-filed claims, so a block with no row is `source_present` empty,
+ *     never established absence.
+ *     Readings are block- and tract-scoped because the location id was not
+ *     joined to the Fabric on this pass.
+ *     Provider availability below therefore reads at census-block granularity rather than per-premises,
+ *     and each availability record states the building's census block as its `extent`.
+ *     The building is each reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc`
+ *     writes a reading of a building's block.
  *
- *   PLUTO's `bctcb2020` (30504012000) and `bct2020` (3050401) place the tax lot in census block
- *   360470504012000 and census tract 36047050401. They are the building's memberships, admitted from
- *   PLUTO 26v2's availability date.
+ *   PLUTO's `bctcb2020` (30504012000) and `bct2020` (3050401) place the tax lot in
+ *   census block 360470504012000 and census tract 36047050401.
+ *   They're the building's memberships, admitted from PLUTO 26v2's availability date.
  *
- *   Claims in a dossier are scoped to record fields dated on or before the cutoff, so a row retrieved
- *   today does not leak its later statuses into an earlier `asOf`.
+ *   Claims in a dossier are scoped to record fields dated on or before the cutoff,
+ *   so a row retrieved today doesn't leak its later statuses into an earlier `asOf`.
  *
- *   The fiber check is the demonstration's question rather than a public record. It asks whether the
- *   FCC's fiber-to-the-premises filings hold service at the building's census block, the extent at
- *   which the readings above are keyed.
+ *   The fiber check is the demonstration's question rather than a public record.
+ *   It asks whether the FCC's fiber-to-the-premises filings hold service at the building's
+ *   census block, the extent at which the readings above are keyed.
  */
 
 import type { ProviderAvailability } from "#availability"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The Mailwoman training loops over `trainer-model`.
 //!
 //! The supervised loop ports the Python trainer's `train/loop.py` and the MLM loop its `train/pretrain.py`.

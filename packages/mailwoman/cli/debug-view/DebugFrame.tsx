@@ -63,7 +63,7 @@ export interface DebugFrameProps {
 	/**
 	 * Map-pane SGR color.
 	 *
-	 * Callers pass `!$public.NO_COLOR` because raw SGR does not honor `NO_COLOR` the way Ink/chalk do.
+	 * Callers pass `!$public.NO_COLOR` because raw SGR doesn't honor `NO_COLOR` the way Ink/chalk do.
 	 */
 	color: boolean
 }

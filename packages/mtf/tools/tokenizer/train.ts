@@ -4,10 +4,11 @@
 /**
  *   Train a versioned SentencePiece tokenizer from a corpus's train split, and write its model card.
  *
- *   The training lines are a balanced sample: a reservoir of `perCountrySample` raws per country, drawn with CPython's
- *   generator in the order `tokenizer/train.py` drew, then shuffled. The card records what reproduces the model: the
- *   corpus files read and their order, the SHA-256 of the training input and of the symbol list, the SentencePiece
- *   release, every flag, and the model's SHA-256.
+ *   The training lines are a balanced sample: a reservoir of `perCountrySample` raws per country,
+ *   drawn with CPython's generator in the order `tokenizer/train.py` drew, then shuffled.
+ *   The card records what reproduces the model: the corpus files read and their order,
+ *   the SHA-256 of the training input and of the symbol list, the SentencePiece release,
+ *   every flag, and the model's SHA-256.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

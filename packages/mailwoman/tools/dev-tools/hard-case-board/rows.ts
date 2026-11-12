@@ -5,17 +5,26 @@
  *   The hard-case board's fragment-register rows — inputs whose difficulty is their shape.
  *
  *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons.
- *   They also change at different rates. The builder reads a WOF point and walks two FST binaries.
- *   It emits JSONL.
- *   This file holds editorial content: the inputs that pin each discrimination case and the reasons.
- *   A row here includes no coordinates or bias numbers. The build measures those from primary data.
- *   A curator can get the choice wrong. Review choices when changing the board.
+ *   They also change at different rates.
  *
- *   `comma_free` is the register the FST prior was designed for: a two-toponym fragment with no
- *   punctuation to segment it. `comma_control` is its twin with the comma restored — same truth, same
- *   expected place — so a move on one and not the other localizes the effect to the missing
- *   punctuation rather than to the toponym. The toponym-ambiguity half of the board lives in
- *   `rows/toponym.ts`; both are concatenated by the builder.
+ *   The builder reads a WOF point and walks two FST binaries.
+ *   It emits JSONL.
+ *
+ *   This file holds editorial content: the inputs that pin each discrimination case and the reasons.
+ *   A row here includes no coordinates or bias numbers.
+ *
+ *   The build measures those from primary data.
+ *   A curator can get the choice wrong.
+ *   Review choices when changing the board.
+ *
+ *   `comma_free` is the register the FST prior was designed for: a two-toponym
+ *   fragment with no punctuation to segment it.
+ *   `comma_control` is its twin with the comma restored — same truth,
+ *   same expected place — so a move on one and not the other localizes the effect
+ *   to the missing punctuation rather than to the toponym.
+ *
+ *   The toponym-ambiguity half of the board lives in `rows/toponym.ts`;
+ *   both are concatenated by the builder.
  *
  *   Every entry's `note` is the row's justification and ends up verbatim in the emitted board.
  */
@@ -61,7 +70,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	// #region comma_free
 	// The FST prior's design register: a two-toponym fragment with no punctuation. Each is paired with its
 	// `comma_control` twin below — same truth, comma restored. A `comma_free` row that moves while its
-	// control does not is the bias acting exactly where it was designed to.
+	// control doesn't is the bias acting exactly where it was designed to.
 	{
 		id: "us-cf-moscow-idaho",
 		input: "Moscow Idaho",
@@ -268,7 +277,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	// #endregion
 
 	// #region comma_control
-	// The byte-stability twins. These must not be where an arm warrants its score.
+	// The byte-stability twins. These mustn't be where an arm warrants its score.
 	{
 		id: "us-cc-moscow-idaho",
 		input: "Moscow, Idaho",

@@ -59,7 +59,7 @@ of these.
 
 You cannot tell how stale a geocoder's data is from its answers, so `/status` reports it. `data_updated` is the
 Nominatim-compatible field — the newest build date across the databases this process opened — and the native
-`mailwoman` block names each one:
+`mailwoman` block lists each one:
 
 ```jsonc
 {
@@ -110,12 +110,12 @@ register's stamp and the gazetteer credit only. A deployment without an OpenStre
 OpenStreetMap data and never emits either. The OpenStreetMap Foundation's Geocoding Guideline asks a
 public geocoder serving its data for a service-level credit, so a public deployment with a layer
 attached also states the credit in its own documentation or interface. `format=jsonld` includes neither
-field. See the [HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
+field. See the [HTTP interfaces reference](https://mailwoman.post/docs/reference/http).
 
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`
-is not yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
+isn't yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
 query contains them. For example, `1600 Pennsylvania Avenue NW, Washington, DC 20500` resolves to the rooftop
 (`38.897, -77.037`) with `house_number`, `road`, `city`, `state`, `postcode`, and `country_code`.
 

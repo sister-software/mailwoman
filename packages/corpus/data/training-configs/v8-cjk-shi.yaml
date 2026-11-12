@@ -14,7 +14,7 @@
 # --- what the RUN must show (pre-registered, same scorer as the kana read) ---------------------------------------
 #   * `中新川郡上市町` on the JP board: failed rows of 136, against 121 (kana) / 66 (shared head). Fewer than 66 is the
 #     reading that shows the weight reached the held-out name. fewer than 30 shows it closed the class.
-#   * `かすみがうら市` failed rows ≤ 5 of 823 (kana: 0) — the weight must not undo the kana register.
+#   * `かすみがうら市` failed rows ≤ 5 of 823 (kana: 0) — the weight mustn't undo the kana register.
 #   * JP board blended ≥ 0.9924 − 0.002 and municipality macro ≥ 0.9821. more than 0.5 pp under either is the finding.
 #   * CN board `locality_unit` ≥ 11 of 14.
 #   * Score the kana checkpoint beside it on the same scorer in the same session.

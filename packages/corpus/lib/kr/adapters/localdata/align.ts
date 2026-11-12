@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Align one permit-registry address string to the address register's key, or answer null. Alignment
- * is exact against {@link KeyIndex} rather than fuzzy, so a string that satisfies the whole key becomes
- * a training row of matched spans and one that does not becomes a board row.
+ * Align one permit-registry address string to the address register's key, or answer null.
+ *
+ * Alignment is exact against {@link KeyIndex} rather than fuzzy, so a string that satisfies the
+ * whole key becomes a training row of matched spans and one that doesn't becomes a board row.
  */
 
 import { unitKey } from "#cjk/builder"
@@ -90,7 +91,7 @@ function tokenPositions(text: string, tokens: readonly string[], from = 0): numb
 }
 
 /**
- * The index of the first unit-shaped token, or the length when there is none.
+ * The index of the first unit-shaped token, or the length when there's none.
  */
 function firstUnitIndex(tokens: readonly string[]): number {
 	const found = tokens.findIndex((token) => UNIT_TOKEN.test(token))

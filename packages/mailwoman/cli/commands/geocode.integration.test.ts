@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests that run only when live database files are present.
+ *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus
+ *   DB-conditional integration tests that run only when live database files are present.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

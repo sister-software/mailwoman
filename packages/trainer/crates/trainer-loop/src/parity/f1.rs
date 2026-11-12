@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! F1: one pre-norm block, AdamW and the cosine `LambdaLR`, against `trainer_parity f1`'s record.
 
 use crate::compare::{diff, Record, StageResult, Tolerance};

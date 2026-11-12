@@ -282,8 +282,8 @@ export interface HoldoutSpanFinding {
 	country: string
 	/**
 	 * - `region-key`: the policy lists a region, a closed-vocabulary label, as a key.
-	 * - `locality-in-train`: train rows the retention table does not keep still have a declared locality.
-	 * - `postcode-in-train`: train rows the retention table does not keep still
+	 * - `locality-in-train`: train rows the retention table doesn't keep still have a declared locality.
+	 * - `postcode-in-train`: train rows the retention table doesn't keep still
 	 *   have a declared postcode prefix.
 	 * - `region-supply`: a region surface whose train share falls below
 	 *   {@linkcode REGION_TRAIN_SHARE_FLOOR} of its country's median.

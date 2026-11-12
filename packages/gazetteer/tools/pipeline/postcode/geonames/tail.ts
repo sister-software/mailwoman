@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The GeoNames-postal tail database (`postalcode-geonames-tail-<date>.db`), postcode coverage for the
- *   countries without a WOF `whosonfirst-data-postalcode-<cc>` repo, reproducing the frozen artifact's
- *   ingest order so its ids stay comparable.
+ *   The GeoNames-postal tail database (`postalcode-geonames-tail-<date>.db`), postcode
+ *   coverage for the countries without a WOF `whosonfirst-data-postalcode-<cc>` repo,
+ *   reproducing the frozen artifact's ingest order so its ids stay comparable.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -13,6 +13,7 @@ import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { isoDate } from "@mailwoman/core/utils"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -166,11 +167,14 @@ export async function buildPostcodeGeonamesTail(
 		)
 	}
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
-		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-
-	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames")
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	const {
+		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
+		geonames: { ingestGeonamesPostal },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+	})
 
 	const ingestPath = out + ".ingest"
 	await removeStagingArtifacts(ingestPath)
@@ -297,7 +301,7 @@ async function collectSourceFacts(
 const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © GeoNames contributors, CC-BY 4.0"
 
 /**
- * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
+ * GB isn't plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
  *
  * A redistributor must include the OS attribution block.
  * The ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.

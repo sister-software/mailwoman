@@ -4,11 +4,12 @@
 /**
  *   Add or remove a country in one of `defaults.ts`'s coverage lists, as a text transformation.
  *
- *   Use text edits rather than an AST rewrite. A codemod could reproduce the array values but lose
- *   the comments above each entry. Those comments explain why the entries are defensible.
+ *   Use text edits rather than an AST rewrite.
+ *   A codemod could reproduce the array values but lose the comments above each entry.
+ *   Those comments explain why the entries are defensible.
  *
- *   A removal that would orphan a comment block is refused with the lines quoted rather than guessed at.
- *   a person moves the prose.
+ *   A removal that would orphan a comment block is refused with the lines quoted
+ *   rather than guessed at. a person moves the prose.
  *
  *   No step here writes to disk — the caller gets the new source and decides whether to apply it.
  */

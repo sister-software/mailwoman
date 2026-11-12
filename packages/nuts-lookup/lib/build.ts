@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the nuts polygon DB from a Eurostat gisco nuts GeoJSON (`NUTS_RG_*_4326.geojson`: features
- *   of `{ properties: { NUTS_ID, LEVL_CODE }, geometry: Polygon|MultiPolygon }`). One row per
- *   region, with its level and bounding box for the lookup's prefilter.
+ *   Build the nuts polygon DB from a Eurostat gisco nuts GeoJSON (`NUTS_RG_*_4326.geojson`:
+ *   features of `{ properties: { NUTS_ID, LEVL_CODE }, geometry: Polygon|MultiPolygon }`).
+ *
+ *   One row per region, with its level and bounding box for the lookup's prefilter.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

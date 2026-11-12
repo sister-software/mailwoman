@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-country street span convention: whether a country's labels write the street type and
- *   directional as their own `street_prefix` / `street_suffix` spans or keep the whole street in one
- *   `street` span.
+ *   The per-country street span convention: whether a country's labels write the
+ *   street type and directional as their own `street_prefix` / `street_suffix` spans
+ *   or keep the whole street in one `street` span.
  *
- *   `docs/engineering/reference/SCHEMA.mdx` makes the split canonical for the US, where the USPS Pub 28
- *   Appendix C table in `#us/street/suffix` defines it. Every other country keeps the street whole. The
- *   corpus adapters emit that form outside the US, and golden v0.1.3's `MANIFEST.json` declares the same
- *   table in `convention.street_convention` (`{ US: "split", "*": "folded" }`).
+ *   `docs/engineering/reference/SCHEMA.mdx` makes the split canonical for the US,
+ *   where the USPS Pub 28 Appendix C table in `#us/street/suffix` defines it.
+ *   Every other country keeps the street whole.
+ *
+ *   The corpus adapters emit that form outside the US, and golden v0.1.3's `MANIFEST.json`
+ *   declares the same table in `convention.street_convention` (`{ US: "split", "*": "folded" }`).
  */
 
 /**

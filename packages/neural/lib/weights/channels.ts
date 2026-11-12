@@ -111,7 +111,7 @@ export interface DeclaredArtifact {
  * An overlay may therefore require a channel and still deliberately ship no artifact for it.
  *
  * Only the package's own card is read.
- * An overlay without a card makes no claim about its files and must not inherit the base package's list.
+ * An overlay without a card makes no claim about its files and mustn't inherit the base package's list.
  *
  * @returns `null` when the package has no card, the card has no `files` block,
  * or none of `keys` appears there.
@@ -192,7 +192,7 @@ export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: 
 export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
 
 /**
- * One required channel that `loadFromWeights` could not feed, as the loaded classifier reports it.
+ * One required channel that `loadFromWeights` couldn't feed, as the loaded classifier reports it.
  *
  * The console warning is deduplicated per process.
  * This record is kept on every classifier it applies to, so a caller that must
@@ -205,7 +205,7 @@ export interface UnfedChannelReport {
 	 */
 	weightsPackage: string
 	/**
-	 * Why the channel is unfed, such as the declared file that is missing.
+	 * Why the channel is unfed, such as the declared file that's missing.
 	 */
 	detail: string
 }
@@ -241,10 +241,9 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
 }
 
 /**
- * Returns the reason an unfed anchor channel deserves a warning for this package,
- * or `null` when it does not.
+ * Returns the reason an unfed anchor channel deserves a warning for this package, or `null` when it doesn't.
  *
- * A package whose card lists an anchor file that is missing or empty is broken, so it gets a warning.
+ * A package whose card lists an anchor file that's missing or empty is broken, so it gets a warning.
  * A package whose card lists no anchor file has chosen not to ship one, so it gets none.
  *
  * The `requires` block cannot decide this because overlays inherit it from the base model.
@@ -295,7 +294,7 @@ export async function readRequiredChannels(
 
 	const obj = requires as Record<string, unknown>
 
-	// Each channel entry that is present must have a boolean `required` field.
+	// Each channel entry that's present must have a boolean `required` field.
 	for (const channel of [
 		"anchor",
 		"gazetteer",
@@ -384,7 +383,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  *
  * Malformed cells inside the block are ignored by `lookupTagCapability`.
  *
- * @throws When the field is present but is not an object.
+ * @throws When the field is present but isn't an object.
  */
 export async function readCapabilityManifest(
 	modelCardPath: PathBuilderLike | null | undefined
@@ -480,7 +479,7 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | null | undef
  * It returns `null` when the file is missing, unreadable or has no `labels` field.
  * Callers then use their built-in default labels.
  *
- * @throws When `labels` is present but is not a non-empty array of strings.
+ * @throws When `labels` is present but isn't a non-empty array of strings.
  */
 export async function readLabelsFromModelCard(
 	modelCardPath: PathBuilderLike | null | undefined

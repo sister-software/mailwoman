@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The opportunity map application. It holds three pieces of state: the selected buildings, the applied control
- *   values and the map scale. Every value on the page comes from one `opportunityView` of the Example District for
- *   those values and that selection.
+ *   The opportunity map application.
  *
- *   The keyboard path runs in document order: the scale control, the building list, the clear button, the map, the
- *   figures and their evidence links, the scenario controls, and the evidence itself.
+ *   It holds three pieces of state: the selected buildings, the applied control values and the map scale.
+ *   Every value on the page comes from one `opportunityView` of the Example
+ *   District for those values and that selection.
+ *
+ *   The keyboard path runs in document order: the scale control, the building list, the clear button,
+ *   the map, the figures and their evidence links, the scenario controls, and the evidence itself.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -16,7 +18,7 @@ import "./styles/app.css"
 import type { EntityID } from "@mailwoman/dossier"
 import { type ReactNode, useCallback, useMemo, useState } from "react"
 
-import { basemapStyle } from "#basemap"
+import { opportunityMapStyle } from "#basemap"
 import { controlDefaults, type ControlValues } from "#controls"
 import { MapScale, OpportunityMap } from "#map/OpportunityMap"
 import { BuildingList } from "#panels/BuildingList"
@@ -47,7 +49,7 @@ export function App(): ReactNode {
 	const [selected, setSelected] = useState<ReadonlySet<EntityID>>(() => new Set())
 	const [scale, setScale] = useState<MapScale>(MapScale.Buildings)
 	const [basemapURL] = useState(() => __OPPORTUNITY_BASEMAP_URL__)
-	const mapStyle = useMemo(() => basemapStyle(basemapURL), [basemapURL])
+	const mapStyle = useMemo(() => opportunityMapStyle(basemapURL), [basemapURL])
 	const view = useMemo(() => opportunityView(dataset, values, selected), [dataset, values, selected])
 
 	const toggle = useCallback((building: EntityID) => {

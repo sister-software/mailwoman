@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
- * opens. The definitions are pinned here because a v1 classifier's value is that they are readable.
+ * The account assembly and the shape predicates, driven off hand-built facts
+ * so no weights load and no gazetteer opens.
+ *
+ * The definitions are pinned here because a v1 classifier's value is that they're readable.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
@@ -784,7 +786,7 @@ function evidenceOf(channels: Partial<NeuralParseTrace>) {
 describe("rows_cap", () => {
 	it("caps the emitted rows non-clean-first while the aggregates cover every row", async () => {
 		// Structural: exercise the partition and cap arithmetic without an engine,
-		// because the pure tail of `runDiagnose` is not separable.
+		// because the pure tail of `runDiagnose` isn't separable.
 		const rows = [
 			{ id: "a", shapes: ["clean"] },
 			{ id: "b", shapes: ["evidence_starved"] },

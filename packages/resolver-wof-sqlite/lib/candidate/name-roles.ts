@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Pass 3c of the candidate build — the `name_role` detectors and the thresholds they are judged by.
+ * @file Pass 3c of the candidate build — the `name_role` detectors and the thresholds they're judged by.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"

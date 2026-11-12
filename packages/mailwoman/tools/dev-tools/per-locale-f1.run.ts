@@ -36,8 +36,8 @@ async function main(): Promise<void> {
 	// The old parseArgs() only assigned a field when the flag was present (`!= null`),
 	// leaving the module's own default in place otherwise.
 	// Boolean flags were set to `true` on presence regardless of value.
-	// A conditional spread here reproduces both behaviors exactly: an absent flag must
-	// not arrive as `undefined` where that would override a default.
+	// A conditional spread here reproduces both behaviors exactly: an absent flag mustn't
+	// arrive as `undefined` where that would override a default.
 	await perLocaleF1({
 		...(values["golden-dir"] ? { goldenDir: values["golden-dir"] } : {}),
 		...(values.files ? { files: extractDelimited(values.files) } : {}),

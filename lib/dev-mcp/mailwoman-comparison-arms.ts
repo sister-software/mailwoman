@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 
@@ -41,8 +44,9 @@ export async function prepareMailwomanArms(
 	const effectiveB = resolveConfig(configB)
 
 	if (executionPath === "single-config") {
-		const engineA = await registry.acquire(configA)
-		const engineB = await registry.acquire(configB)
+		// The leases join the stack the caller disposes, so both engines stay open for the whole comparison.
+		const engineA = resources.use(await registry.acquire(configA))
+		const engineB = resources.use(await registry.acquire(configB))
 		const confounds = checkConfounds(engineA.effective, engineB.effective, declared)
 
 		if (engineA.fingerprint.digest !== engineB.fingerprint.digest) {

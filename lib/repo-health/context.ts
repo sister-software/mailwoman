@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one place a `RepoContext` is collected from a live checkout, and the source text and syntax trees it holds.
- *   Adapters and tests call this rather than spawning `git ls-files` themselves, so every check reads the same file set,
- *   and a check that reads a source calls {@linkcode readContextSource} or {@linkcode parseContextSource}, so the checks
- *   one invocation runs read and parse each file once between them.
+ *   The one place a `RepoContext` is collected from a live checkout,
+ *   and the source text and syntax trees it holds.
+ *
+ *   Adapters and tests call this rather than spawning `git ls-files` themselves,
+ *   so every check reads the same file set.
+ *   A check that reads a source calls {@linkcode readContextSource} or {@linkcode parseContextSource}.
+ *
+ *   The checks one invocation runs then read and parse each file once between them.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -63,7 +67,7 @@ interface ContextSources {
  * Held by the context object, so the cache lives exactly as long as the context.
  * A context built by spreading another starts empty.
  *
- * A cached read assumes the tree does not change while its context is in use.
+ * A cached read assumes the tree doesn't change while its context is in use.
  * A check only reads, and `mwops health fix` builds a new context for each pass.
  *
  * A source written and read again through one context reads as it was before the write.

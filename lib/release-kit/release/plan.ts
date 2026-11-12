@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The plan → execute interface for external writes. `computeReleasePlan` describes what a release of
- *   this checkout would publish — head, version, each release workspace's manifest version,
- *   weights artifacts the checkout does not contain, plus destinations — then seals it under a
- *   digest. An external-write operation reads the plan file and recomputes the plan from its checkout.
- *   It refuses when head is dirty, head moved, or the digest
- *   differs: the tree being published is then not the tree that was planned.
+ *   The plan → execute interface for external writes.
+ *
+ *   `computeReleasePlan` describes what a release of this checkout would publish — head,
+ *   version, each release workspace's manifest version, weights artifacts the checkout
+ *   doesn't contain, plus destinations — then seals it under a digest.
+ *   An external-write operation reads the plan file and recomputes the plan from its checkout.
+ *
+ *   It refuses when head is dirty, head moved, or the digest differs: the tree
+ *   being published is then not the tree that was planned.
  *
  *   The digest covers everything but itself, over canonical JSON (sorted keys), so two checkouts of
  *   the same commit with the same manifests produce the same plan regardless of where they live.
@@ -51,7 +54,7 @@ export interface ReleasePlan {
 		filename: string
 		origin: ArtifactOrigin["kind"]
 		/**
-		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` —
+		 * The bucket directory a `hf` artifact is read from when it isn't `destinations.hfBase` —
 		 * a character-path family's own directory.
 		 */
 		base: string | null

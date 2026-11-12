@@ -3,6 +3,7 @@
 
 /**
  *   Show loading progress at the top of the viewport.
+ *
  *   Use a determinate bar when progress is known, otherwise an indeterminate bar.
  */
 
@@ -25,7 +26,7 @@ export interface MapProgressBarProps {
 	fraction?: number | null
 	/**
 	 * The bar's accessible name.
-	 * What is loading, in a few words.
+	 * What's loading, in a few words.
 	 */
 	label: string
 	className?: string

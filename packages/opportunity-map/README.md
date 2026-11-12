@@ -31,7 +31,7 @@ synthetic position is labeled synthetic.
 
 The service evidence lists each provider available on the dossier date once for each extent that the
 records current on that date state, with the extent as data. A reason states a provider with an extent as
-available over that extent, because the record does not say which premises in the extent are served. A
+available over that extent, because the record doesn't say which premises in the extent are served. A
 record without an extent states availability for the building, and its reason reads as available.
 
 ## The district scale

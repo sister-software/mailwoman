@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for the street-morphology emission bias function. Asserts the two-pass behavior:
- *   matched affix tokens get positive bias on street_prefix/street_suffix. adjacent name tokens get
- *   positive bias on street and negative bias on dependent_locality.
+ *   Unit tests for the street-morphology emission bias function.
+ *
+ *   Asserts the two-pass behavior: matched affix tokens get positive bias on street_prefix/street_suffix.
+ *   adjacent name tokens get positive bias on street and negative bias on dependent_locality.
  */
 
 import type { AncestrieMatch } from "@mailwoman/ancestrie"

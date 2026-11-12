@@ -41,7 +41,7 @@ export type USStreetLineComponents = { po_box: string } | { house_number?: strin
 /**
  * Splits one US street line, as a register writes it, into its address components.
  *
- * A whole line that is a box designator and an identifier holding a digit
+ * A whole line that's a box designator and an identifier holding a digit
  * (`PO BOX 846`, `P.O. Box 10240`) becomes `po_box`.
  * The digit requirement keeps a street such as `BOX ELDER RD` a street.
  *

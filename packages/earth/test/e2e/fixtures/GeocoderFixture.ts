@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Page object for geocoder input, result read-back and controls for themes and examples.
  * Assertions live in the spec files. This class performs actions and reads state.
@@ -34,7 +37,7 @@ export class GeocoderFixture {
 	/**
 	 * Navigate to the geocoder and wait until the classifier is loaded.
 	 *
-	 * Network-idle is not the signal because the gazetteer's warm-up range reads keep
+	 * Network-idle isn't the signal because the gazetteer's warm-up range reads keep
 	 * the network busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {

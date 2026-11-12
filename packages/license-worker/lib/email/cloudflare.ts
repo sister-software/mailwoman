@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Cloudflare's email sending, through the worker's `send_email` binding. It uses no API key. The sending domain is the
- *   zone's. The binding takes no idempotency key, so a retried send after a failed ledger write can deliver twice. the
- *   ledger's `email_state` is what keeps that window to the crash between the provider's answer and the row.
+ *   Cloudflare's email sending, through the worker's `send_email` binding.
+ *
+ *   It uses no API key.
+ *   The sending domain is the zone's.
+ *
+ *   The binding takes no idempotency key, so a retried send after a failed ledger
+ *   write can deliver twice. the ledger's `email_state` is what keeps that window
+ *   to the crash between the provider's answer and the row.
  */
 
 import type { SendEmail } from "@cloudflare/workers-types"

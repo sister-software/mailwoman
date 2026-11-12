@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture under `fixtures/vlaanderen/` is a harvest of nine addresses and the component
- *   entries they reference.
+ *   The fixture under `fixtures/vlaanderen/` is a harvest of nine addresses
+ *   and the component entries they reference.
  *
  *   Every byte of every value is the service's own, taken on 2026-10-02 from
- *   `https://geo.api.vlaanderen.be/ad/wfs`: the five `adres_204231xx` addresses are one real page at
- *   `startIndex=1200000`, and each component feature is one real `resourceId` response. The literal
- *   `?` in `Rue du Ch?teau_` and `Assembl?e de la Commission Communautaire Fran?aise` is what the
- *   service sends, in a document declaring `encoding="UTF-8"`.
+ *   `https://geo.api.vlaanderen.be/ad/wfs`: the five `adres_204231xx` addresses are one real
+ *   page at `startIndex=1200000`, and each component feature is one real `resourceId` response.
+ *   The literal `?` in `Rue du Ch?teau_` and `Assembl?e de la Commission Communautaire Fran?aise`
+ *   is what the service sends, in a document declaring `encoding="UTF-8"`.
  *
- *   The four `adres_9000000x` members are hand-authored from a real member's bytes, changing only
- *   the `gml:id`, the `gml:identifier` and the component references, so each defect the service
- *   has is exercised against one address: a lost character, a void designator, a reference the
- *   harvest cannot answer, and a street name holding a homonym discriminator. Each member sits on
- *   its own line, where the service writes one member per line. Element and attribute bytes are
- *   unchanged.
+ *   The four `adres_9000000x` members are hand-authored from a real member's bytes, changing
+ *   only the `gml:id`, the `gml:identifier` and the component references, so each defect
+ *   the service has is exercised against one address: a lost character, a void designator,
+ *   a reference the harvest cannot answer, and a street name holding a homonym discriminator.
+ *   Each member sits on its own line, where the service writes one member per line.
+ *   Element and attribute bytes are unchanged.
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
@@ -178,7 +178,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 
 		const rows = await readCanonicalRows(scratch.path, VLAANDEREN_ADAPTER_ID)
 
-		// `straatnaam_999999` is in no component file, so the street could not be read.
+		// `straatnaam_999999` is in no component file, so the street couldn't be read.
 		expect(rows.some((r) => r.source_id === "vlaanderen-adres_90000003")).toBe(false)
 		expect(rows.every((r) => Boolean(r.components.street))).toBe(true)
 	})

@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The district scale of the map: buildings clustered by an extent kind the caller chooses, such as
- *   `census-tract`. An extent's kind is its text before the first colon, so `census-tract:36047050401` has
- *   the kind `census-tract`.
+ *   The district scale of the map: buildings clustered by an extent kind the
+ *   caller chooses, such as `census-tract`.
  *
- *   A building joins a cluster when exactly one admitted membership of the kind places it. A building with
- *   none goes into one unplaced feature, and a building with two or more goes into one ambiguous feature,
- *   so no building is counted twice and every building is counted once. A cluster reports what it cannot
- *   sum: the sum of its resolved unit totals, the count of its buildings whose total is unresolved, and the
- *   count of its buildings in each state. The district features therefore add up to the building scale's
- *   building count, resolved units, unresolved totals and states.
+ *   An extent's kind is its text before the first colon, so `census-tract:36047050401`
+ *   has the kind `census-tract`.
+ *
+ *   A building joins a cluster when exactly one admitted membership of the kind places it.
+ *   A building with none goes into one unplaced feature, and a building with two or more goes into
+ *   one ambiguous feature, so no building is counted twice and every building is counted once.
+ *
+ *   A cluster reports what it cannot sum: the sum of its resolved unit totals, the count of
+ *   its buildings whose total is unresolved, and the count of its buildings in each state.
+ *   The district features therefore add up to the building scale's building count,
+ *   resolved units, unresolved totals and states.
  */
 
 import type { Dossier, EntityID, UnitStage } from "@mailwoman/dossier"

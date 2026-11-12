@@ -192,8 +192,8 @@ const PROMOTABLE_CAPITAL_LEVEL = 2
 export const NATIONAL_CAPITAL_MARGIN_LOG10 = 2
 
 /**
- * Moves the first national capital in the leading match tier above each preceding row that
- * is at most {@link NATIONAL_CAPITAL_MARGIN_LOG10} larger, stopping at another capital.
+ * Moves the first national capital in the leading match tier above each preceding row
+ * that's at most {@link NATIONAL_CAPITAL_MARGIN_LOG10} larger, stopping at another capital.
  *
  * It runs after {@link rankByImportance} and never moves a capital across the exact-match boundary.
  */

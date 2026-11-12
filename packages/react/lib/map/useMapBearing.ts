@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map's rotation as React state, read through `useSyncExternalStore` and subscribed to `move` as well as `rotate`, since a `flyTo` or `easeTo` carrying a direction fires no rotate event.
+ *   The map's rotation as React state, read through `useSyncExternalStore` and subscribed to `move`
+ *   as well as `rotate`, since a `flyTo` or `easeTo` carrying a direction fires no rotate event.
  */
 
 import { useCallback, useSyncExternalStore } from "react"
@@ -14,12 +15,12 @@ import type { MapInstance } from "react-map-gl/maplibre"
 export interface UseMapBearing {
 	/**
 	 * Degrees off north, as MapLibre reports it.
-	 * Zero while there is no map.
+	 * Zero while there's no map.
 	 */
 	bearing: number
 	/**
 	 * Rotate the map back to north.
-	 * A no-op while there is no map.
+	 * A no-op while there's no map.
 	 */
 	resetNorth: () => void
 }

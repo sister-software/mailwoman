@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scores the held-out non-native postcode-order sweep, the golden `{raw, components, country}` rows
- *   `non-native-postcode-order-eval.run.ts` writes from a corpus `test` split.
+ *   Scores the held-out non-native postcode-order sweep, the golden `{raw, components, country}`
+ *   rows `non-native-postcode-order-eval.run.ts` writes from a corpus `test` split.
  *
- *   Each `raw` is parsed on the geocode path (`parseForGeocode`, which builds its options with
- *   `geocodeParseInputs`) under the geocode session's default priors, rather than with a bare
- *   `classifier.parse`. The prediction is folded into the golden vocabulary and compared with the
- *   per-locale check's own fold and exact-match, so a row scores the same here as it would there.
+ *   Each `raw` is parsed on the geocode path (`parseForGeocode`, which builds its
+ *   options with `geocodeParseInputs`) under the geocode session's default priors,
+ *   rather than with a bare `classifier.parse`.
+ *   The prediction is folded into the golden vocabulary and compared with the per-locale
+ *   check's own fold and exact-match, so a row scores the same here as it would there.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"

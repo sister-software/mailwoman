@@ -1,14 +1,12 @@
 ---
-title: Placetype evidence — the projection table and the census design
+title: Placetype evidence
 ---
 
-# Placetype evidence — the projection table and the census design
+# Placetype evidence
 
 This page describes how the WOF placetype vocabulary maps onto the `ComponentTag` grammar, why the
 decoder takes _nudges_ from the hierarchy rather than constraints, and the design that the pair
-index first put into production. It was written on 2026-08-01 from the hierarchy-evidence
-conversations (the "Queens under New York" formulation) and the measurements from the GB
-dependent-locality work.
+index first put into production. The measurements come from the GB dependent-locality work.
 
 ## The two ontologies
 
@@ -16,7 +14,7 @@ WOF placetypes (~33: `borough`, `microhood`, `dependency`, `concourse`, …) des
 **is**. `ComponentTag` (see [SCHEMA](./SCHEMA.mdx)) describes the role a span plays in an
 address's **grammar**. A **projection** maps several placetypes onto each tag, and the
 decoder can use the projection but not the placetype itself. SCHEMA.mdx already gives the
-canonical example: `borough` is not a tag, and `dependent_locality` is the umbrella term that
+canonical example: `borough` isn't a tag, and `dependent_locality` is the umbrella term that
 borough projects onto.
 
 **The rule: no placetype gets its own tag. Every placetype gets a projection, and hierarchy
@@ -40,7 +38,7 @@ evidence is computed over projections.**
 
 ## From pairs to the census
 
-The shipped **placetype-pair index** (`pair-index-gb.bin`, `pair-index-nz.bin`) is the most
+The shipped **placetype-pair index** (`pair-index-<cc>.bin`, one per locale in the coverage table below) is the most
 specific form of the general idea. It stores known (child surface, parent surface) memberships and
 applies them as a soft logit bias at decode time. Its three-way ablation shows that the model and
 the index work in combination: 0/69 for the model without the index, 3/69 for the index without the model, and 69/69
@@ -48,14 +46,14 @@ together.
 
 The general form is the **placetype census**. For each gazetteer node, it records the distribution
 of its children's _projected_ tags ("this parent: 5 borough-children, 90 `neighbourhood` rows, 0
-dependent localities"). The census turns a tag that is rare globally into one that is common in the
+dependent localities"). The census turns a tag that's rare globally into one that's common in the
 right context. `dependent_locality`'s global prior is tiny, but its prior _given this subtree_ is
 large.
 
-**Built 2026-08-01** (hierarchy campaign R4c) as **PCN1**. `neural/placetype-census.ts` holds both
+**Built 2026-08-01** (hierarchy campaign R4c) as **PCN1**. `packages/neural/lib/placetype/census.ts` holds both
 the writer and the reader, following the same convention as PIX1 and PCB1. `mailwoman gazetteer
 census` builds the census from the WOF admin DB through the projection table above. The table is
-executable as `PLACETYPE_PROJECTION` in `mailwoman/gazetteer-pipeline/placetype-census.ts`, so a
+executable as `PLACETYPE_PROJECTION` in `packages/gazetteer/tools/pipeline/placetype-census.ts`, so a
 placetype missing from the table makes the build throw instead of silently going uncounted. The GB
 artifact has 5,577 nodes (137 KB) over 33,899 counted child links.
 
@@ -72,7 +70,6 @@ The offline probe measured the following, with these limits:
   board, where directional `neighbourhood` surfaces begin venue names, every row shares the London
   parent with the true positives. The census therefore has dependent-locality mass on 100% of them.
   A census bias with no other evidence would raise the venue span exactly as much as the real dependent locality.
-  This is a limit of the artifact, and tuning cannot remove it.
 
 The census therefore ships **without a `delta`**. The header field exists and is optional, and it
 stays unset until a calibration step combines the census with span-level evidence and measures a
@@ -80,15 +77,15 @@ magnitude. The share within a node turned out to hold no information, because WO
 locality under a locality, so covered nodes read ~100% dependent-locality everywhere. The useful
 statistics are presence and magnitude across the parent population.
 
-**The observability step (2026-08-05).** The census is now loaded and probed at runtime, and it
-still applies no bias. `resolvePlacetypeCensusPath` (`neural/weights.ts`) finds
-`placetype-census-<cc>.bin` at the build-local data root. The file is deliberately left out of the
-weights tarballs, where it would add 137–165 KB per locale for an artifact that no code reads back.
+The census is loaded and probed at runtime, and it applies no bias. `resolvePlacetypeCensusPath`
+(`packages/neural/lib/weights.ts`) finds `placetype-census-<cc>.bin` at the build-local data root.
+The file is deliberately left out of the weights tarballs, where it would add 137–165 KB per locale
+for an artifact that no decode path uses.
 The placetype-pair prior probes the census for the parent half of every (child, parent) candidate
 it tries, using the same fold. The result is a `placetypeCensus` record on the parse trace
 (`{parent, childTagsPresent, lift}` per known parent, plus the probed-parent count as the
 denominator), and its `applied` field is hard-coded to `false`. The decode is byte-identical with
-or without the census, and `neural/placetype-census-observability.test.ts` asserts this at both the
+or without the census, and `packages/neural/lib/placetype/census-observability.test.ts` asserts this at both the
 prior level and the full-decode level. That test defines the interface: a calibration δ must be
 measured from these traces and cannot be added without that measurement.
 
@@ -98,17 +95,17 @@ on `dependent_locality`, so the evidence is present and points in the right dire
 no census node, because `PARENT_PLACETYPES` is `["locality", "localadmin"]` and Queens is a
 `borough`. The US pair index's characteristic edge, a dependent locality under a borough, is the
 case PIX2 was built to express. That edge is currently outside the census's parent vocabulary. A
-calibration step that reads only GB traces will not detect this. (Re-measured on the post-rebuild
+calibration step that reads only GB traces won't detect this. (Re-measured on the post-rebuild
 gazetteer, 2026-08-05: GB 5,577 nodes / 136,675 bytes / 33,936 links, and US 7,532 nodes / 164,764
 bytes / 123,909 links.)
 
-The census does not become more pair entries for the following reason. A pair entry _asserts_ that
-a surface is a dependent locality, so each batch needs a venue-confound board before it ships. A
-census node makes no statement about any surface. It can only shift a reading that the model already
-considers, under a parent the model already identified. That property makes it safe for covering a
-tail that a batch-by-batch board process would never finish.
+The census stays a separate artifact from the pair entries. A pair entry _asserts_ that a surface is a
+dependent locality, so each batch needs a venue-confound board before it ships. A census node makes
+no statement about any surface. It can only shift a reading that the model already considers, under
+a parent the model already identified. So the census can cover the long tail without a
+venue-confound board per batch.
 
-## The doctrine constraints (standing, non-negotiable)
+## Constraints on hierarchy evidence
 
 1. **Use positive evidence only.** Presence boosts a tag, and absence stays neutral. A subtree
    without boroughs must never _forbid_ borough, because absence from the gazetteer can reflect
@@ -118,28 +115,28 @@ tail that a batch-by-batch board process would never finish.
    and the constrained segment mode keeps the shipped floor below 2%).
 3. **Per-locale conventions still decide expectations.** One model serves every locale, and each
    locale's conventions (codex address-system conventions) govern what it _expects_ to emit.
-4. **Locale-scoped artifacts must be inert elsewhere, and a test must show it.** en-us ships no pair index, and a
-   dedicated test asserts that GB-shaped input receives no pair bias through en-us. That test is a
-   packaging safeguard rather than doctrine. The US joins the census program through its own instances,
-   starting with boroughs. The other direction was measured on 2026-08-01 too: an experimental US
-   index misses all five GB canonical pairs (Shoreditch/London, Nine Elms/London, Clapham/London,
-   Camden/London, Didsbury/Manchester). The browser's `us` fallback for postcode-less queries would
-   therefore not produce GB bias if a US artifact shipped.
+4. **Locale-scoped artifacts must be inert elsewhere, and a test must show it.** en-us ships its own
+   US-conditional pair index, and a dedicated test asserts that GB-shaped input receives no pair bias
+   through en-us. That test is a packaging safeguard rather than doctrine. The US joins the census
+   program through its own instances, starting with boroughs. The other direction was measured on
+   2026-08-01 too: an experimental US index misses all five GB canonical pairs (Shoreditch/London,
+   Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester), so the browser's `us`
+   fallback for postcode-less queries doesn't produce GB bias through a US artifact.
 
-## Why en-us has no pair index today (and why that's sequencing rather than doctrine)
+## The US pair index
 
 The GB/NZ indexes exist because those postal formats include a dependent-locality or suburb line,
 and national registers such as LINZ provide millions of pair rows. GB's register, HM Land Registry
 Price Paid Data, was removed from the index on 2026-10-17 because its address fields are outside its
 open license. The US format has
 no such line, because USPS routes by city/state/ZIP. The US therefore has no postal register to
-harvest, and mail delivery does not depend on the line. The schema's umbrella term still means that
+harvest, and mail delivery doesn't depend on the line. The schema's umbrella term still means that
 US dependent localities exist (NYC's five boroughs), and WOF supplies the pairs directly (211
 boroughs with parents, globally).
 
-**Corrected 2026-08-01 (campaign R5).** This section previously said the US instance depended on
-"the tag's _contextual_ aliveness for US". That claim was wrong for the US and for GB. Three
-measurements show why, in the order that determines the result:
+Three measurements from campaign R5 (2026-08-01) show that neither the US instance nor the GB one
+depends on the tag's _contextual_ aliveness, and that the US instance depends on shipping an
+artifact. The list follows the order that determines the result:
 
 1. **No mechanism suppresses the tag per country.** The decoder has exactly one hard emission mask
    (`-1e9`), and it has a single row: FR `street_suffix`. `dependent_locality` appears in no
@@ -151,7 +148,7 @@ measurements show why, in the order that determines the result:
    _more_ raw mass than the GB surfaces that work. The en-GB model card had already measured the
    deficit as "large but UNIFORM (~7.0 logits mean)". It comes from a 0.3 class weight on
    `B/I-dependent_locality` used from v0.5.1 through v0.8.0. The weight has since been corrected to
-   1.0, but the shipped lineage has not been retrained with it.
+   1.0, but the shipped lineage hasn't been retrained with it.
 3. **GB emits the tag because an artifact overcomes a deficit that applies in every locale.** A US pair index built from WOF (49,033 pairs, with `borough`
    admitted as a parent placetype because WOF parents US `neighbourhood` rows to the locality
    rather than the borough) makes the US behave exactly like GB.
@@ -161,16 +158,16 @@ measurements show why, in the order that determines the result:
    is 60/60 tag-correct.
 
 The US instance therefore depends on shipping an artifact rather than on training, and the same
-holds for every other locale in the campaign's wave 2–4 list. Whether `pair-index-us.bin`
-ships inside the flagship en-us package is a packaging and defaults decision, because it changes
-US parse output for every consumer. It is not a question about the model.
+holds for every other locale in the campaign's wave 2–4 list. `pair-index-us.bin` ships inside
+the flagship en-us package. The choice to put it there was a packaging and defaults decision, because it
+changes US parse output for every consumer. It wasn't a question about the model.
 
-## Coverage boundaries measured so far (2026-08-01 probe set)
+## Pair-index coverage by locale
 
-The GB pair source (PPD) covers England and Wales and leaves the city field empty for London. By
-the source's own construction, London `neighbourhood` rows, estates, Northern Ireland and the
-Republic all fell outside the shipped index. **Great Britain is now covered end to end**, entirely
-from open data:
+The first GB pair source (PPD) covers England and Wales and leaves the city field empty for London.
+By the source's own construction, London `neighbourhood` rows, estates, Northern Ireland and the
+Republic all fell outside an index built from it. Later rungs added the rest of GB. The rung counts
+below are from the 2026-08-01 probe set, when the baseline rung was still part of the index:
 
 | rung     | source                                        | pairs      |
 | -------- | --------------------------------------------- | ---------- |
@@ -184,23 +181,22 @@ from open data:
 Every increment after the baseline passed a venue-confound board before shipping, and no board has
 recorded a false positive.
 
-**The baseline rung was removed on 2026-10-17 (#2635).** Price Paid Data's address fields are Royal
-Mail data that HM Land Registry's download page excludes from the Open Government Licence, so
-"entirely from open data" did not hold for that rung. The GB index is now only the R2–R8 rungs,
-13,380 pairs after a Who's On First snapshot refresh. On the 190-row GB board, against the index
+The baseline rung was removed on 2026-10-17 (#2635). Price Paid Data's address fields are Royal
+Mail data that HM Land Registry's download page excludes from the Open Government Licence. The
+shipped GB index is the R2–R8 rungs only, all from open data: 13,380 pairs after a Who's On First
+snapshot refresh. On the 190-row GB board, against the index
 staged for 10.1.0, one row improved and one regressed:
 `Mischicks Day Spa - St Andrews Lakes - Rochester, Kent, Quarry Grv, Halling, Rochester ME2 1FW`
-no longer reads `Halling` as a dependent locality. The cost the board does not show is the
+no longer reads `Halling` as a dependent locality. The cost the board doesn't show is the
 village-under-post-town class the baseline covered, because no open source states the Royal Mail
 post town. OS Open Names settlements inside a town's bounding rectangle were measured as a
 replacement and regressed more rows.
 
-**Northern Ireland's blocker turned out not to exist.** Its pairs were deferred for months on the premise
-that "the pair parent needs post towns", which requires a licensed Royal Mail table. That premise
-came from the shape of GB's source (PPD's parent column happens to be the post town), not from what
-a pair requires. WOF parents NI `neighbourhood` rows to Belfast, Newtownabbey, Londonderry and
-Lisburn. Those parents _are_ the post towns. When a premise changes, re-check any blocker that depended
-on it.
+Northern Ireland's pairs were deferred for months on the premise that "the pair parent needs post
+towns", which requires a licensed Royal Mail table. That premise came from the shape of GB's source
+(PPD's parent column happens to be the post town), not from what a pair requires. WOF parents NI
+`neighbourhood` rows to Belfast, Newtownabbey, Londonderry and Lisburn, and those parents _are_ the
+post towns, so NI needed no licensed table.
 
 The GB work had to make two differences between register spellings and written addresses
 explicit. Both apply generally:
@@ -212,11 +208,10 @@ explicit. Both apply generally:
   name only. The register uses that form for the parish, but an address reads `Pontypridd`. Strip
   the suffix instead of dropping the pair. A drop would have discarded 1,545 Welsh pairs.
 
-**Every locale on the original wave 2–4 list has now shipped.** Data availability was never the
-blocker. The pair index only fires for the resolved locale's country, so an artifact inside another
-locale's package can never fire. Each locale needed its own **carrier package**, a ~6-file
-data-only overlay that declares `baseWeights`. After that requirement was understood, the
-remaining work was routine.
+A pair index ships for every locale on the original wave 2–4 list. For those locales the blocker
+was packaging work, and the data was already available. The pair index only fires for the
+resolved locale's country, and an artifact inside another locale's package can never fire, so each
+locale needed its own **carrier package**: a ~6-file data-only overlay that declares `baseWeights`.
 
 | locale |   pairs | source       | note                                                  |
 | ------ | ------: | ------------ | ----------------------------------------------------- |
@@ -229,9 +224,8 @@ remaining work was routine.
 | IT     |   4,026 | WOF          |                                                       |
 | NZ     |       — | LINZ         | shipped earlier                                       |
 
-**Ireland is the only locale left, and it is the only one ever blocked by something other than
-packaging work.** Its sources (Tailte Éireann, logainm) need a license survey before anything can
-be harvested.
+Ireland is the only locale left without a pair index. Its sources (Tailte Éireann, logainm) need a license survey before
+anything can be harvested.
 
 The non-GB instances established three things that the GB work never encountered:
 
@@ -242,7 +236,7 @@ The non-GB instances established three things that the GB work never encountered
   `12210 Montpeyroux`, so a parent segment folds to a key that no bare-locality entry matches. Each
   country needed a `LEADING_POSTCODE_COUNTRIES` entry. In every case, the artifact built correctly
   but had no effect until that entry was added.
-- **WOF's preferred name is not always the written one.** WOF stores `Bangalore` for a city written
-  `Bengaluru` and `Rome` for one written `Roma`. The fold does not strip accents, so `Cordoba`
+- **WOF's preferred name isn't always the written one.** WOF stores `Bangalore` for a city written
+  `Bengaluru` and `Rome` for one written `Roma`. The fold doesn't strip accents, so `Cordoba`
   never matches `Córdoba`. Parent-alias expansion draws from names in the country's official
   languages plus English, restricted to Latin script.

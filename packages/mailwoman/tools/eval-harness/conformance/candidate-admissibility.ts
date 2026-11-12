@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares resolver candidate tables for a base query and a refined query. A refinement may reorder candidates, add
- *   them, or remove ones that the added information contradicts. Every other removal must be explained by a hierarchy
- *   re-scope or a full fetch window.
+ *   Compares resolver candidate tables for a base query and a refined query.
+ *
+ *   A refinement may reorder candidates, add them, or remove ones that the added information contradicts.
+ *   Every other removal must be explained by a hierarchy re-scope or a full fetch window.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

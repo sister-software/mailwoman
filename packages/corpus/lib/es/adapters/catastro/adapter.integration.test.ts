@@ -15,7 +15,7 @@
  *   figures are in this suite's own assertions. The service answers HTTP 403 after a few hundred
  *   consecutive requests from one address, so {@link SAMPLE} is small and {@link DELAY_MS} is a
  *   second. An answer of `NO EXISTE NINGÚN INMUEBLE CON LOS PARÁMETROS INDICADOS` is a reference
- *   the AD theme publishes and the property query does not resolve, and it is counted as unreadable
+ *   the AD theme publishes and the property query doesn't resolve, and it is counted as unreadable
  *   rather than as a disagreement.
  */
 
@@ -154,7 +154,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-catastro rows against the OVC Consulta_
 				}
 			}
 
-			// A run that reached none of the sample states a service this test could not read
+			// A run that reached none of the sample states a service this test couldn't read
 			// rather than a reader it checked.
 			// The service enforces an hourly quota per address and answers past it with HTTP 403
 			// and `Peticion denegada. Ha superado el limite de peticiones por hora.`,
@@ -185,7 +185,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-catastro rows against the OVC Consulta_
 
 			// The archive is 354,647 bytes as the register recorded it.
 			// The assertion is that the publisher still serves an archive of the same shape
-			// rather than that its size has not moved, because the Cadastre reissues a
+			// rather than that its size hasn't moved, because the Cadastre reissues a
 			// municipality whenever its register changes.
 			expect(bytes.byteLength).toBeGreaterThan(100_000)
 			expect(Buffer.from(bytes.subarray(0, 2)).toString("latin1")).toBe("PK")

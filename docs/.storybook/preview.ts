@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Global Storybook preview config. Loads what the Docusaurus theme loads on the site — the Go faces, the Sister
- *   Software tokens and the generated Infima bridge — so the docs components' `var(--ifm-…)` and `var(--ss-…)` lookups
- *   resolve to the same values in isolation. The backgrounds toggle sets `data-theme` on the root as well, because that
+ *   Global Storybook preview config.
+ *
+ *   Loads what the Docusaurus theme loads on the site — the Go faces, the Sister Software
+ *   tokens and the generated Infima bridge — so the docs components' `var(--ifm-…)`
+ *   and `var(--ss-…)` lookups resolve to the same values in isolation.
+ *   The backgrounds toggle sets `data-theme` on the root as well, because that
  *   attribute is what the dark tokens are keyed to.
  */
 

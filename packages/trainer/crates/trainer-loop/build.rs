@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Gives the crate's tests an rpath to libtorch's shared libraries, so they load with no `LD_LIBRARY_PATH`.
 //!
 //! `LIBTORCH` is the root the root `.cargo/config.toml` sets, or the one the environment sets in its place.

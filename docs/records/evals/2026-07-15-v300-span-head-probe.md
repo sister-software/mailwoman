@@ -2,7 +2,7 @@
 title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained) rather than falsified
 ---
 
-# v3.0.0-span-head 2k probe — the head never trained, so the check does not adjudicate
+# v3.0.0-span-head 2k probe — the head never trained, so the check doesn't adjudicate
 
 **Check (config-canonical, quoted verbatim from `v3.0.0-span-head.yaml`):**
 
@@ -14,7 +14,7 @@ If seg@1 < token@1: do not tune span_loss_weight and re-run. That is the treadmi
 diagnostic (is the loss decreasing?), then fork to the operator.
 ```
 
-**Result: the check reads fail, but it does not adjudicate the arc.** Per the pre-registered
+**Result: the check reads fail, but it doesn't adjudicate the arc.** Per the pre-registered
 diagnostic, this is **under-trained rather than falsified**. The direct call is the fork, so
 this doc exists in place of a relaunch.
 
@@ -85,14 +85,14 @@ Phase-1 re-run should either feed the channels or accept that only the compariso
 Two harness bugs were found and fixed getting here, both by refusing to accept a token@1 that
 couldn't reproduce a known baseline:
 
-1. `from_pretrained()` never passed `map_location`, so a GPU-trained checkpoint **could not load on a
+1. `from_pretrained()` never passed `map_location`, so a GPU-trained checkpoint **couldn't load on a
    CPU-only box at all**. This affects every local grading run, notthis one.
 2. The check concatenated street-family _pieces_, dropping the `O`-labeled bare `▁` separator and
    welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now takes the substring by char offsets. token@1 0.285 → 0.348.
 
 ## The fork (operator's call, per the pre-registration)
 
-The arc is **not** falsified. The question the probe was meant to answer is still open. Options:
+The arc **isn't** falsified. The question the probe was meant to answer is still open. Options:
 
 1. **Re-probe with a head-appropriate LR** — e.g. a param-group LR for `span_scorer`/`semi_crf` at
    1e-3 while the encoder stays at 1e-5. This is standard for a fresh head on a pretrained encoder,

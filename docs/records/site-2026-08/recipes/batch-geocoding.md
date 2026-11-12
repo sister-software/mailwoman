@@ -8,7 +8,7 @@ prerequisites: a running mailwoman serve instance with gazetteer data
 verified-with: mailwoman v6.1.0
 ---
 
-Suppose you have ten thousand addresses, from a spreadsheet, a CSV a colleague shared, or a nightly CRM export, and you want a coordinate for every row. Ten thousand individual requests would work, but most of the wall-clock time would go to HTTP overhead, and you would have to write the concurrency control yourself. The Mailwoman server has a bulk endpoint for this case. This recipe builds one `curl` command that turns a list of addresses into an ordered list of coordinates and handles the failure cases.
+Suppose you have ten thousand addresses, from a spreadsheet, a CSV a colleague shared, or a nightly CRM export, and you want a coordinate for every row. Ten thousand individual requests would work, but most of the wall-clock time would go to HTTP overhead, and you'd have to write the concurrency control yourself. The Mailwoman server has a bulk endpoint for this case. This recipe builds one `curl` command that turns a list of addresses into an ordered list of coordinates and handles the failure cases.
 
 ## The endpoint
 
@@ -113,7 +113,7 @@ The guaranteed order is what makes the bulk endpoint easy to use. You can match 
 
 ## Rows fail independently
 
-Most malformed input does not cause an error. An address without a recognizable component, such as an empty string, resolves normally with every field `null` and the tier at `admin`. A row throws only when it exceeds the classifier's token budget. The model tokenizes into a fixed 128-token window. A longer row, such as one where a CSV escaping bug concatenated an entire delivery note into the address column, throws inside the classifier instead of being truncated. Batch isolation handles that case. The server catches the error, puts it in that row's own `{ input, error }` slot, and still returns the rest of the batch.
+Most malformed input doesn't cause an error. An address without a recognizable component, such as an empty string, resolves normally with every field `null` and the tier at `admin`. A row throws only when it exceeds the classifier's token budget. The model tokenizes into a fixed 128-token window. A longer row, such as one where a CSV escaping bug concatenated an entire delivery note into the address column, throws inside the classifier instead of being truncated. Batch isolation handles that case. The server catches the error, puts it in that row's own `{ input, error }` slot, and still returns the rest of the batch.
 
 ```bash
 # the second "address" is a 106-word, 600+ character delivery note that a CSV
@@ -210,7 +210,7 @@ for await (const row of rows) {
 
 `enableQuoteHandling` keeps a quoted `"350 5th Ave, New York"` from splitting on its own comma. Without it, a street name can end up in the city column. `normalizeKeys` lowercases the header, so `Full Address` arrives as `full_address`.
 
-This loop is single-threaded and processes about 300 addresses/second on one core. Worker threads should help here in principle, because there is no database to contend for, but the project has not measured it. Read the performance reference before you build that.
+This loop is single-threaded and processes about 300 addresses/second on one core. Worker threads should help here in principle, because there's no database to contend for, but the project hasn't measured it. Read the performance reference before you build that.
 
 ### Full geocoding, across worker threads
 

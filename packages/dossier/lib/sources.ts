@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A source record is the document a claim cites. It records the publisher, a title, and the three time
- *   concepts, so a dossier can say when a fact was observed, when the record became available, and when
- *   this application read it.
+ *   A source record is the document a claim cites.
+ *
+ *   It records the publisher, a title, and the three time concepts, so a dossier can say
+ *   when a fact was observed, when the record became available, and when this application read it.
  */
 
 import type { SourceTime } from "#time"

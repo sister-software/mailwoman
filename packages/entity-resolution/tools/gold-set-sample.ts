@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Gold-set sampling for adjudication. The programmatic entity truth
- *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart plus parent
- *   LBN/TIN), so it cannot settle the ambiguous co-located collisions: distinct NPIs at
- *   one address with near-identical name text and no subpart flag for the same parent.
- *   NPI truth and programmatic rules may disagree on these pairs. A frozen
- *   adjudicated gold set must cover.
+ *   Gold-set sampling for adjudication.
+ *
+ *   The programmatic entity truth (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts
+ *   (Is-Subpart plus parent LBN/TIN), so it cannot settle the ambiguous co-located collisions:
+ *   distinct NPIs at one address with near-identical name text and no subpart flag for the same parent.
+ *   NPI truth and programmatic rules may disagree on these pairs.
+ *   A frozen adjudicated gold set must cover.
  *
  *   This scans the full TX registry without geocoding and writes each pair as a JSONL row containing
- *   both records' fields (org name, address, authorized official, taxonomy, subpart and parent
- *   flags) plus the programmatic verdict. An adjudicator (human or LLM-as-judge, flagged as such)
- *   can then label same real-world entity or not.
+ *   both records' fields (org name, address, authorized official, taxonomy, subpart and parent flags)
+ *   plus the programmatic verdict.
+ *   An adjudicator (human or LLM-as-judge, flagged as such) can then label same real-world entity or not.
  *
  *   Run: `mailwoman registry gold-set-sample [--cap 200000] [--state TX] [--tau 0.7] [--n 300]
  *   [--out-jsonl <path>]`

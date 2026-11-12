@@ -12,7 +12,7 @@ out.
 
 The deciding-site measurement (the #1729 method, applied before designing): `Weimar, Thüringen`
 under the default en-US locale probes the locality table with a hard `country = US` filter, so
-Weimar DE **is not in the candidate list**. No reorder of the returned rows can reach it. The
+Weimar DE **isn't in the candidate list**. No reorder of the returned rows can reach it. The
 change therefore injects contained same-key candidates (additive, never a filter — recall only
 widens) and partitions contained-first via one shared function at both deciding sites (backend
 pre-window and the walk's post-importance re-rank). It stands down entirely under an explicit
@@ -52,8 +52,8 @@ session's resolved options).
 
 - The verdict layer keeps its fold-equality bound: `Weimar, Thüringen` now RESOLVES to Weimar DE
   (50.978, 11.318) while its `admin_coherence.region` still reads `contradicted` (`Thüringen` vs
-  stored `Thuringia`) — the change bridges via the artifact's alias keys, the flag-only verdict does
-  not. The coordinate is right and the verdict is stale. Exonym bridging for the verdicts is the follow-up recorded on
+  stored `Thuringia`) — the change bridges via the artifact's alias keys, the flag-only verdict doesn't
+  . The coordinate is right and the verdict is stale. Exonym bridging for the verdicts is the follow-up recorded on
   #1717.
 - 12 board contradictions remain, each with a stated non-change reason (4 fold/codex-bounded
   verdicts on correct coordinates, 4 IE townland keys absent from candidate.db, 3 parse mislabels —

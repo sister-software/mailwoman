@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Splits the quantized token-embedding table out of an int8 `model.onnx`.
 //!
 //! The quantized graph reads its embedding table in two nodes: a `Gather` of `input_ids` over a UINT8

@@ -51,14 +51,14 @@ GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
 
 1. Do the **KOGL** grants on the specific `localdata.go.kr` datasets we'd ingest cover commercial
    use and derivatives (KOGL Type 1)? Does anything in the 도로명주소법 framework reach
-   business-permit address data? We believe it does not, because the export pledge attaches to the juso
+   business-permit address data? We believe it doesn't, because the export pledge attaches to the juso
    register downloads.
 2. The **juso plug-and-play layer** (framework decided 2026-07-30): we ship a builder, the
    customer downloads juso under their own grant and builds in-country, and the layer manifest states
    the obligations as a notice. Check the notice language and confirm that this arrangement keeps us
    entirely outside the pledge.
 3. If a KR rooftop engagement ever needs our own involvement, do weights trained in-country on juso
-   data count as an "export" of the data? The current framework does not need an answer. This is a future-partner
+   data count as an "export" of the data? The current framework doesn't need an answer. This is a future-partner
    question.
 
 **Facts (chain of custody, read 2026-09-07):**
@@ -70,11 +70,11 @@ GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
   lists every `kr/<province>/provincewide` as `License: Unknown`, `Required attribution: Ministry of
   the Interior`. The source definition (`sources/kr/11/provincewide.json`) points at a contributor
   upload, `korea-feb2017.zip`, and its `license` field holds only an attribution name. The pull
-  request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) states "I did not see a
+  request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) states "I didn't see a
   clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).
 - What that product is at the source: the ministry's 도로명주소 위치정보 요약DB (entrance coordinates) and
   도로명주소 전자지도. On data.go.kr both are licensed under 공공누리 제1유형 (attribution required, commercial use and
-  derivatives permitted) and the note that they are provided only after a separate application and a
+  derivatives permitted) and the note that they're provided only after a separate application and a
   purpose-of-use review by the local government or the ministry (시행령 제46조, 시행규칙 제53조,
   별지 제32호서식). No party in the chain above applied. The application form's wording is unread.
 - The export rule: 도로명주소법 제25조 제10항 forbids taking a 주소정보기본도 or 주소정보안내도 that contains
@@ -124,7 +124,7 @@ no sale closes self-serve. The text should still be the first item counsel revie
 
 The AU G-NAF EULA bars compiling mailing lists without deliverability verification. Parser training
 is unaffected. The clause matters only if a customer uses our output to generate mailing lists.
-It calls for a terms-of-use rider on our license docs and does not block anything.
+It calls for a terms-of-use rider on our license docs and doesn't block anything.
 
 ## 9. Lite artifact line (GTM D1 — the six L-markers)
 
@@ -134,7 +134,7 @@ on the free channel) and marks every point where an instrument would be needed.
 
 1. **L1 — registration-form data collection.** The Lite key form collects name, email, and company,
    so it collects personal data. Counsel should settle the notice text at the point of collection, the retention period for
-   the download log, and whether the privacy page's "architecturally does not collect" wording
+   the download log, and whether the privacy page's `architecturally does not collect` wording
    needs a written carve-out. The form cannot go live until these are settled.
 2. **L2 — the instrument the Lite key is issued under.** It cannot be the AGPL. The AGPL governs our code and not
    a compiled database, and it cannot be the commercial license. The key needs a short data-use notice that states the
@@ -153,7 +153,7 @@ on the free channel) and marks every point where an instrument would be needed.
    redistributed is unknown. This also needs fact-finding first.
 6. **L6 — co-location with ODbL artifacts.** Confirm that building a
    permissively-sourced artifact in the same pipeline, data root, or publish path as ODbL
-   artifacts does not create a derivative-database relationship. The architecture already assumes it does not
+   artifacts doesn't create a derivative-database relationship. The architecture already assumes it doesn't
    (item 1's quarantine mechanisms), so this item asks counsel to confirm an existing assumption.
 
 **Interim posture:** no artifact ships on the Lite line. The prerequisites that need no lawyer (L4

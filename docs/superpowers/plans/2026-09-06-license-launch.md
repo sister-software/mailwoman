@@ -24,7 +24,7 @@
 
 ## Global Constraints
 
-- Live-mode writes go through `mwops shop provision --mode live`, which reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any key that is not `sk_live_`. No live object is created by hand.
+- Live-mode writes go through `mwops shop provision --mode live`, which reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any key that's not `sk_live_`. No live object is created by hand.
 - Secrets enter the worker only through `wrangler secret put`. The webhook signing secret appears once, in the provisioning report, and is stored the same minute.
 - Production deploys with `ISSUANCE_ENABLED = "false"` and flips only after the checklist at the end.
 - The sandbox key never enters the register. The production key enters it as `active` and ships in a release before any live sale.
@@ -88,9 +88,9 @@ Expected within seconds of the redirect: `{"status":"issued","token":"mwl1.…",
 MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev node packages/mailwoman/out/cli.js license verify --key "mwl1.…" --online
 ```
 
-Expected: `status: unknown_key` (the shipped register does not list `v9-ac522cf3`) and `license lic_…: active`. Those two lines show the spec's claim that trust is bound to the release. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
+Expected: `status: unknown_key` (the shipped register doesn't list `v9-ac522cf3`) and `license lic_…: active`. Those two lines show the spec's claim that trust is bound to the release. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
 
-- [x] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, and exits 1. The CLI refuses a token signed by a key that the release does not trust.
+- [x] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, and exits 1. The CLI refuses a token signed by a key that the release doesn't trust.
 - [x] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`. The reconciliation cron logs only the ids.
 - [x] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again. The webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, and refresh still answers. Flip back, and the next reconciliation mints the missed invoice.
 
@@ -152,13 +152,13 @@ corrects that license at the next pass after the fix deploys.
 
 The run also found that Cloudflare's browser integrity check on `workers.dev` refuses a request whose user agent is
 `Python-urllib` with error 1010 before the worker sees it. Requests from curl and the CLI's axios agent pass. The production zone
-owns that setting, so Task 7 confirms it does not refuse the CLI.
+owns that setting, so Task 7 confirms it doesn't refuse the CLI.
 
 ### Task 4: the production signing key and the trust release
 
 **Files:** `packages/core/lib/license/register.ts`, `docs/static/.well-known/mailwoman/license-keys.json`
 
-- [x] **Step 1 (operator):** generate the pair offline with `mailwoman license keygen` under a config root that is not the lab's, and keep the private half off every machine but the one that runs `wrangler secret put`.
+- [x] **Step 1 (operator):** generate the pair offline with `mailwoman license keygen` under a config root that's not the lab's, and keep the private half off every machine but the one that runs `wrangler secret put`.
 - [x] **Step 2:** add the public half to `LICENSE_SIGNING_KEYS` as `active`, then run `mailwoman license register --write`. The `license-register` health check holds the well-known file to the register. Open the PR, merge it, and publish the release (`RELEASING.md`).
 - [ ] **Step 3:** confirm the published tarball and `https://mailwoman.post/.well-known/mailwoman/license-keys.json` both list the new kid.
 
@@ -166,7 +166,7 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 - [ ] The clickwrap agreement as `docs/src/pages/license/terms/commercial-2026-10.mdx`, never edited after publication. A new version is a new page and a new `AGREEMENT_VERSION` in `lib/shop/catalog.ts`.
 - [ ] The Stripe account's legal name matches the licensor the terms name, and the terms URL sits under the account's public details.
-- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`. The command writes the production Price ids into `wrangler.toml` and the Payment Links into `packages/license-worker/lib/sdk/constants.ts`, the module the site reads. Commit both. The Purchase section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `constants.ts` by hand: it is not an API object.
+- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`. The command writes the production Price ids into `wrangler.toml` and the Payment Links into `packages/license-worker/lib/sdk/constants.ts`, the module the site reads. Commit both. The Purchase section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `constants.ts` by hand: it isn't an API object.
 
 ### Task 6 (operator): the email account
 

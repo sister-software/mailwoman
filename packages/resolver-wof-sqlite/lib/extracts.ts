@@ -5,8 +5,10 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- *   Multi-extract support for `WOFSQLitePlaceLookup`. It opens multiple WOF SQLite distributions
- *   on one connection with `attach database`. It routes queries by placetype.
+ *   Multi-extract support for `WOFSQLitePlaceLookup`.
+ *
+ *   It opens multiple WOF SQLite distributions on one connection with `attach database`.
+ *   It routes queries by placetype.
  *
  *   SQLite parses a schema-qualified table on the left of `match` as "column place_search of table
  *   pc", so the working form is schema-qualified in `from` and a bare table name in `match`:
@@ -15,8 +17,9 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
  *   select … from pc.place_search where place_search match ?
  * ```
  *
- *   Identical table names across attached extracts are fine, because the bare-name `match` resolves
- *   against `from` scope. Every extract ships its own `place_search` and `place_bbox`.
+ *   Identical table names across attached extracts are fine, because the bare-name
+ *   `match` resolves against `from` scope.
+ *   Every extract ships its own `place_search` and `place_bbox`.
  */
 
 /**
@@ -65,7 +68,7 @@ export interface ExtractConfig {
 	/**
 	 * Override the auto-derived schema name.
 	 *
-	 * Useful when the filename does not match WOF convention or when you want a memorable handle.
+	 * Useful when the filename doesn't match WOF convention or when you want a memorable handle.
 	 * Must be a valid SQLite identifier matching `[a-zA-Z_][a-zA-Z0-9_]*`.
 	 */
 	schemaName?: string
@@ -204,7 +207,7 @@ export function pickExtractsForPlacetype(
  *    (e.g. `postalcode_us` matches `postalcode`), use it.
  * 3. Otherwise, fall back to `main`.
  *
- * This deliberately does not union across extracts.
+ * This deliberately doesn't union across extracts.
  * BM25 scores are not comparable across separately indexed corpora.
  * A typical mailwoman query has one placetype.
  *

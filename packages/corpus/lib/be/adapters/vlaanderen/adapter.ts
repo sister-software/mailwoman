@@ -2,35 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `vlaanderen`: the INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen, read from a
- * local harvest of its WFS 2.0 download service at `https://geo.api.vlaanderen.be/ad/wfs`.
+ * `vlaanderen`: the INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen, read from
+ * a local harvest of its WFS 2.0 download service at `https://geo.api.vlaanderen.be/ad/wfs`.
  *
- * Coverage is the Flemish Region rather than Belgium. Brussels and Wallonia publish the same theme
- * through their own services, so this adapter emits `BE` on every row it yields, and a Belgian build needs
- * two more sources beside it.
+ * Coverage is the Flemish Region rather than Belgium.
+ * Brussels and Wallonia publish the same theme through their own services, so this adapter
+ * emits `BE` on every row it yields, and a Belgian build needs two more sources beside it.
  *
- * The schema-level reading is `#inspire/address`. That module owns every part of an `ad:Address` the
- * publishers spell alike. This module holds only Flanders' own additions: the `resourceId` rewrite
- * its references need, the homonym discriminator appended to its street names, and the lost
- * characters in its values.
+ * The schema-level reading is `#inspire/address`.
+ * That module owns every part of an `ad:Address` the publishers spell alike.
  *
- * The adapter records `Modellicentie voor gratis hergebruik Vlaanderen` on every row, the terms the
- * address-source register elects for `be-property-building-1` in `electedTerms`. Article 3 grants
- * reproduction, adaptation and commercial exploitation for any lawful purpose. Article 4 makes
- * attribution the only condition, in the form the licensor specifies, so the model card must state
- * `Bron: Digitaal Vlaanderen`.
+ * This module holds only Flanders' own additions: the `resourceId` rewrite its references need,
+ * the homonym discriminator appended to its street names, and the lost characters in its values.
  *
- * The capabilities document's `ows:Fees` and `ows:AccessConstraints` state what calling the service
- * costs and who may call it. They describe the service rather than licensing the data, so the
- * license comes from the register and this adapter reads the capabilities only for feature types.
+ * The adapter records `Modellicentie voor gratis hergebruik Vlaanderen` on every row,
+ * the terms the address-source register elects for `be-property-building-1` in `electedTerms`.
+ * Article 3 grants reproduction, adaptation and commercial exploitation for any lawful purpose.
+ *
+ * Article 4 makes attribution the only condition, in the form the licensor specifies,
+ * so the model card must state `Bron: Digitaal Vlaanderen`.
+ *
+ * The capabilities document's `ows:Fees` and `ows:AccessConstraints` state what
+ * calling the service costs and who may call it.
+ * They describe the service rather than licensing the data, so the license comes from
+ * the register and this adapter reads the capabilities only for feature types.
  *
  * ## Why the input is a harvest rather than the service
  *
- * An `ad:Address` states its house number inline and everything else by reference. Each address
- * holds exactly four `ad:component/@xlink:href` values, measured over 1,000 addresses at six
- * `startIndex` offsets with all four prefixes occurring 1,000 times each. The references are
- * absolute URIs that resolve back into the same service under the `resourceId` rewrite that
- * {@linkcode componentResourceID} performs:
+ * An `ad:Address` states its house number inline and everything else by reference.
+ * Each address holds exactly four `ad:component/@xlink:href` values, measured over 1,000
+ * addresses at six `startIndex` offsets with all four prefixes occurring 1,000 times each.
+ *
+ * The references are absolute URIs that resolve back into the same service under the
+ * `resourceId` rewrite that {@linkcode componentResourceID} performs:
  *
  * | reference                                          | `resourceId`         | feature type          |
  * | -------------------------------------------------- | -------------------- | --------------------- |
@@ -39,9 +43,10 @@
  * | `https://data.vlaanderen.be/id/gemeentenaam/44083` | `gemeentenaam_44083` | `ad:AdminUnitName`    |
  * | `http://vocab.belgif.be/auth/refnis1995/1000#id`   | `refnis1995_1000`    | `ad:AdminUnitName`    |
  *
- * A per-address resolution would cost four requests per row against 4,563,062 addresses. The component
- * types are small — 167,218 thoroughfare names, 1,190 postal descriptors, 609 administrative-unit
- * names — so the harvest takes each component type whole and the adapter joins locally.
+ * A per-address resolution would cost four requests per row against 4,563,062 addresses.
+ * The component types are small — 167,218 thoroughfare names, 1,190 postal descriptors,
+ * 609 administrative-unit names — so the harvest takes each component type whole
+ * and the adapter joins locally.
  *
  * `ad:AddressRepresentation` is the one denormalized type, carrying street, postcode and post name
  * inline, and it cannot be harvested: any `startIndex`, `startIndex=0` included, answers HTTP 400
@@ -51,16 +56,20 @@
  *
  * ## What the harvest records, and why it has to
  *
- * `sortBy=gml:identifier` answers HTTP 504, so no stable ordering can be requested and a paged
- * harvest has no ordering guarantee. Two harvests may hold the same addresses in a different order.
- * The harvest manifest lists its pages and the adapter reads them in that listed order, so one
- * harvest reproduces its own bytes even though a second harvest need not match it.
+ * `sortBy=gml:identifier` answers HTTP 504, so no stable ordering can be requested
+ * and a paged harvest has no ordering guarantee.
+ * Two harvests may hold the same addresses in a different order.
  *
- * A bare `resultType=hits` answers `numberMatched="10000"` and stays there under `count=1000000`:
- * that is a per-request cap rather than a count. The same request with `startIndex=1` answers
- * `numberMatched="4563062"`, which agrees with the bisected tail — `startIndex=4563061` returns one
- * feature and `startIndex=4563062` returns none. Every results page reports
- * `numberMatched="unknown"`. Page size caps at 10,000, so a full harvest is 457 pages.
+ * The harvest manifest lists its pages and the adapter reads them in that listed order,
+ * so one harvest reproduces its own bytes even though a second harvest need not match it.
+ *
+ * A bare `resultType=hits` answers `numberMatched="10000"` and stays there under
+ * `count=1000000`: that's a per-request cap rather than a count.
+ * The same request with `startIndex=1` answers `numberMatched="4563062"`, which agrees with the
+ * bisected tail — `startIndex=4563061` returns one feature and `startIndex=4563062` returns none.
+ *
+ * Every results page reports `numberMatched="unknown"`.
+ * Page size caps at 10,000, so a full harvest is 457 pages.
  *
  * The adapter honors `opts.limit` and `opts.signal`, and refuses any `opts.country` but `BE`.
  */
@@ -257,8 +266,8 @@ export class VlaanderenHarvestError extends Error {
  * `gml:id` built from the URI's last two path segments joined with `_`.
  * A fragment is dropped, because `…/refnis1995/1000#id` addresses `refnis1995_1000`.
  *
- * @returns The id, or `null` when the href is not a URL with at least two path segments.
- * A caller treats `null` as a reference it could not read rather than as a
+ * @returns The id, or `null` when the href isn't a URL with at least two path segments.
+ * A caller treats `null` as a reference it couldn't read rather than as a
  * reference the publisher left blank.
  */
 export function componentResourceID(href: string): string | null {
@@ -281,7 +290,7 @@ export function componentResourceID(href: string): string | null {
  * A Flemish street name read apart from the homonym discriminator that follows it.
  *
  * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name,
- * an underscore, and a discriminator that is empty in most identifiers.
+ * an underscore, and a discriminator that's empty in most identifiers.
  * Over 20,000 values at twenty offsets, 19,979 end with `_` and the remaining
  * 21 have a discriminator after it.
  *
@@ -437,7 +446,7 @@ async function readComponentIndex(
 }
 
 /**
- * Reads the harvest manifest and checks that it names what the adapter needs.
+ * Reads the harvest manifest and checks that it states what the adapter needs.
  */
 export async function readVlaanderenHarvest(root: PathBuilder): Promise<VlaanderenHarvest> {
 	const manifestPath = root("harvest.json")
@@ -482,7 +491,7 @@ interface Refusals {
 	 */
 	lostCharacter: number
 	/**
-	 * An address the codex could not render into a line.
+	 * An address the codex couldn't render into a line.
 	 */
 	unrendered: number
 }
@@ -572,12 +581,12 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 							}
 
 							// A country-level `ad:AdminUnitName` is indexed out, so `refnis1995_1000`
-							// reaches here with no municipality and is not a defect.
+							// reaches here with no municipality and isn't a defect.
 							locality = index.municipalities.get(id) ?? locality
 						}
 
 						// A reference the harvest cannot answer is a street, postcode
-						// or locality this run could not read.
+						// or locality this run couldn't read.
 						// A row emitted without it would record an absence the publisher never stated.
 						if (unreadable || !street || !postcode || !locality) {
 							refused.unjoined++
@@ -631,7 +640,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 						emitted++
 					}
 
-					// A short page is a page this run could not read whole.
+					// A short page is a page this run couldn't read whole.
 					// A smaller-page read would drop its tail silently, and a harvest of
 					// 457 pages hides one missing tail.
 					const bounded = opts.limit || Boolean(opts.signal?.aborted)

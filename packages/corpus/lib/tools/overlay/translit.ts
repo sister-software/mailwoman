@@ -2,24 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build per-script parquet files from the DeepSeek-generated transliteration jsonl and emit the
- *   corpus-v0.4.0 manifest that combines them with the existing kryptonite + v0.3.0 files.
+ *   Build per-script parquet files from the DeepSeek-generated transliteration jsonl and emit
+ *   the corpus-v0.4.0 manifest that combines them with the existing kryptonite + v0.3.0 files.
  *
- *   This module sits beside `kryptonite.ts`. Both modules use the same composition pattern: take a
- *   base manifest, append new parquet files, write a combined manifest. Differences specific to
- *   transliteration:
+ *   This module sits beside `kryptonite.ts`.
+ *   Both modules use the same composition pattern: take a base manifest,
+ *   append new parquet files, write a combined manifest.
+ *   Differences specific to transliteration:
  *
- *   - One jsonl contains rows from N target scripts (source = `deepseek-translit-<slug>`). We bucket by
- *       `source` and write one parquet file per script so `audit.ts` can attribute each file to its
- *       synthetic source without relying on filename-prefix inference.
- *   - Each file is written to `train/part-translit-<slug>.parquet` (distinct from kryptonite's
- *       `part-0000.parquet`, which v0.4.0's first builder already produced).
- *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem: v0.3.0 file paths are
- *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined manifest so
- *       all paths share one container-friendly form.
+ *   - One jsonl contains rows from N target scripts (source = `deepseek-translit-<slug>`).
+ *     We bucket by `source` and write one parquet file per script so `audit.ts` can attribute
+ *     each file to its synthetic source without relying on filename-prefix inference.
+ *   - Each file is written to `train/part-translit-<slug>.parquet`
+ *     (distinct from kryptonite's `part-0000.parquet`, which v0.4.0's first builder already produced).
+ *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem:
+ *     v0.3.0 file paths are rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in
+ *     the combined manifest so all paths share one container-friendly form.
  *
- *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model and the
- *   reproducibility interface.
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model
+ *   and the reproducibility interface.
  *
  *   Invoke via `mailwoman corpus recipe translit \
  *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl \
@@ -63,7 +64,7 @@ export interface TranslitOverlayOptions {
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
 	 * Pass it explicitly when translating a manifest generated under a different
-	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
+	 * `$MAILWOMAN_DATA_ROOT` than the one you're running with.
 	 *
 	 * @defaultValue `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 */

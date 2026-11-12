@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<Compare>` — the host-side compare panel, injected into the geocoder via `GeocoderPanels.compare`. The package owns
- *   only the compare toggle + version selection (`useCompareState`); the second parse stays host-side by design, so
- *   this component loads its own compare classifier and re-parses the current input whenever the primary result
- *   changes — then renders the `<VersionCompare>` diff.
+ *   `<Compare>` — the host-side compare panel, injected into the geocoder via `GeocoderPanels.compare`.
+ *
+ *   The package owns only the compare toggle + version selection (`useCompareState`);
+ *   the second parse stays host-side by design, so this component loads its own compare
+ *   classifier and re-parses the current input whenever the primary result changes —
+ *   then renders the `<VersionCompare>` diff.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
@@ -147,7 +149,7 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 		const loaded = classifier
 
 		if (!compareMode || !loaded || !primaryInput) {
-			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that is no longer active.
+			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that's no longer active.
 			setCompareResult(null)
 
 			return

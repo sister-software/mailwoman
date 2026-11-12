@@ -8,7 +8,7 @@
  */
 export interface TileJSON {
 	/**
-	 * The version of the TileJSON spec that is implemented by this JSON object.
+	 * The version of the TileJSON spec that's implemented by this JSON object.
 	 *
 	 * @defaultValue `"3.0.0"`
 	 */

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Zod wire schemas for the libpostal-compatible surface. Key names and error bodies are the
- *   vendor interface — immutable. Presence of `query`/`address` is enforced in the handlers (not
- *   the schemas) so validation failures keep libpostal's exact `{ error: "…" }` shape.
+ *   Zod wire schemas for the libpostal-compatible surface.
+ *
+ *   Key names and error bodies are the vendor interface — immutable.
+ *   Presence of `query`/`address` is enforced in the handlers (not the schemas)
+ *   so validation failures keep libpostal's exact `{ error: "…" }` shape.
  */
 
 import { z } from "@hono/zod-openapi"

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry gold-set-sample`: sample the hard co-located name-collision stratum as
- *   jsonl rows for adjudication. Without `--out-jsonl` the first 10 rows print to stdout.
+ *   `mailwoman registry gold-set-sample`: sample the hard co-located name-collision
+ *   stratum as jsonl rows for adjudication.
+ *   Without `--out-jsonl` the first 10 rows print to stdout.
  */
 
 import { Text } from "ink"

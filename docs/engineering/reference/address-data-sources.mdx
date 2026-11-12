@@ -1,14 +1,14 @@
-# Address Data Sources for NER Training
+# Address data sources for NER training
 
 This page catalogs public-domain and openly licensed data sources that contain facility names and addresses, for use as raw material when training a token-classification (BIO-tagging) postal address parser. It complements the federal and aggregator sources (OpenAddresses, OSM, NAD, TIGER, NPI, IRS BMF, etc.). This list focuses on **state-level** sources. They add component-level variety, residential coverage, and venue-name-paired records that the federal sources lack.
 
-The canonical agency URLs were verified by web search. Some per-state entries in the Regulated Facilities section are based on known agency patterns rather than direct URL verification, and those entries say so inline.
+The canonical agency URLs were verified by web search. Some per-state entries in the Regulated Facilities section are based on known agency patterns rather than direct URL verification. Those entries aren't marked yet.
 
-## Why state sources matter for an address NER model
+## What state sources add over federal sources
 
-1. **Component supervision is automatic.** State directories are typically already field-structured, with separate columns for street, city, postcode, etc. Each token's BIO tag comes from the column it was taken from, so no manual labeling is required.
-2. **Formats vary by state.** 50 states plus DC give 50+ schema variants, abbreviation conventions, and transcription styles. That variety is useful for training format robustness.
-3. **Venue+address pairs are common.** Every facility, professional, or establishment listing pairs an organization name with a structured address. Each pair gives natural `B-venue` / `I-venue` training spans.
+1. **Component labels.** State directories are typically already field-structured, with separate columns for street, city, postcode, etc. Each token's BIO tag comes from the column it was taken from, so no manual labeling is required.
+2. **Format variety.** 50 states plus DC give 50+ schema variants, abbreviation conventions, and transcription styles. That variety is useful for training format robustness.
+3. **Venue and address pairs.** Every facility, professional, or establishment listing pairs an organization name with a structured address. Each pair gives natural `B-venue` / `I-venue` training spans.
 4. **Residential coverage.** Real estate, contractor, cosmetology, notary, and license-lookup tools expose home and office addresses that federal facility datasets miss.
 
 ## Formats to watch for beyond CSV
@@ -35,7 +35,7 @@ Most state ArcGIS Hubs publish data under CC-BY or equivalent open terms. Check 
 
 ## License constraints
 
-State records are not "public domain" in the IP sense, but factual data (name + address) is not copyrightable under _Feist v. Rural Telephone_. Some caveats apply:
+State records are not "public domain" in the IP sense, but factual data (name + address) isn't copyrightable under _Feist v. Rural Telephone_. Some caveats apply:
 
 - **Washington OSPI school directory**: state law forbids commercial use of directory data.
 - **OSM (ODbL)**: share-alike obligations may extend to models trained on it. The question is unsettled, but it is a risk if the corpus is republished.
@@ -50,7 +50,7 @@ For the safest licensing on published model weights, restrict training to US-fed
 
 Everything after this section is **corpus** material: address _strings_ and name/address pairs to train the BIO parser. This section covers the other half, the **gazetteer** that the resolver and the postcode anchor consume. These datasets turn a parsed span into a place and a coordinate. The requirements differ from the corpus, and this is where WOF's gaps cause problems (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
-WOF is an excellent **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**. Those two properties made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL have their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
+WOF works well as an **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**. Those two properties made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL have their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
 
 ### By gap layer
 
@@ -70,19 +70,15 @@ This probe measured GeoNames postal against the gap in the WOF postcode data (th
 | ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
 | NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
 
-GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half of DE's remaining gap, and it also corrects WOF's Italian mis-links. The integration follows the rules in the Integrity discipline section below: match on the postcode string, keep the WOF id, and write the GeoNames lat/lon as the centroid. (Overture was not probed. For _postcodes_ it includes OpenAddresses, and we already use OpenAddresses directly. Overture's additional value is therefore the POI layer. A POI probe needs a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, but not for postcodes.)
+GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half of DE's remaining gap, and it also corrects WOF's Italian mis-links. The integration follows the rules in "Keep supplemental data keyed to WOF ids" below: match on the postcode string, keep the WOF id, and write the GeoNames lat/lon as the centroid. (Overture was not probed. For _postcodes_ it includes OpenAddresses, and we already use OpenAddresses directly. Overture's additional value is therefore the POI layer. A POI probe needs a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, but not for postcodes.)
 
-### The modern entrant: Overture Maps
+### Overture Maps
 
 Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the corpus catalog below). Its **Places** theme is a large open POI dataset, and its **Addresses** theme includes OpenAddresses. It therefore covers two of our three gaps in one source, with stable **GERS** entity IDs. It is distributed as cloud parquet (DuckDB/S3). Probe it before committing to per-source OSM imports.
 
 ### License gradient
 
 For an AGPL product, license terms matter more than coverage:
-
-Overture licenses each theme separately, so a row that gives Overture one license reports the wrong terms
-for every theme but one. Its attribution page, read 2026-09-25, gives a `License for theme:` line per
-theme, and the themes this repository reads differ:
 
 | Source               | License                 | Friction for a shipped DB                                                              |
 | -------------------- | ----------------------- | -------------------------------------------------------------------------------------- |
@@ -97,6 +93,10 @@ theme, and the themes this repository reads differ:
 The licenses favor **GeoNames + Overture Places + OpenAddresses** as the supplements. Use OSM and
 Overture Divisions with care, for derived signals rather than in the shipped DB.
 
+Overture licenses each theme separately, so the table gives it one row per theme. Its attribution page, read
+2026-09-25, gives a `License for theme:` line per theme, and the themes this repository reads differ. A
+single Overture row would report the wrong terms for every theme but one.
+
 The Addresses row reads per-source because Overture's theme line for it is prose rather than an
 identifier. It states that the addresses data comes from more than one source and that each source has a permissive open
 license. The
@@ -110,13 +110,13 @@ on that page sits under Places. Three per-country entries read from it verbatim:
 CC BY 4.0, Italy's ANNCSU under CC BY 4.0, and all 18 of Taiwan's county and city Civil Affairs bodies
 under CC BY 4.0.
 
-The Divisions row matters because `candidate.db` derives from a gazetteer that reads that theme, and the
-share-alike consequence of it is unresolved. `docs/engineering/reference/artifact-rights-inventory.mdx`
+`candidate.db` derives from a gazetteer that reads the Divisions theme, and its share-alike consequence is
+unresolved. `docs/engineering/reference/artifact-rights-inventory.mdx`
 records the current state.
 
-### Integrity discipline
+### Keep supplemental data keyed to WOF ids
 
-Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Overture's GERS ids (or any parallel id space) would break WOF-id-keyed resolver evals as primary keys. That is the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Overture's GERS ids (or any parallel id space) would break WOF-id-keyed resolver evals as primary keys. That's the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
 
 ---
 
@@ -403,7 +403,7 @@ This section lists state-level public databases of licensed professionals, with 
 - Medical: IL Medical Board (via IDFPR)
 - Nursing: IL Board of Nursing (via IDFPR)
 - Real estate: IL Division of Real Estate (via IDFPR)
-- Contractor: Illinois does not have a statewide general contractor license — local-only at GC level. IDFPR licenses roofing & plumbing
+- Contractor: Illinois doesn't have a statewide general contractor license — local-only at GC level. IDFPR licenses roofing & plumbing
 
 #### Indiana
 
@@ -682,7 +682,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Notes on scope and quirks
 
-- Business entity searches: every state offers free name/agent query. Only a minority offer bulk downloads (FL, OR partial via open data, LA via paid API, HI by-record paid). DE does not publish principal addresses. NV charges for some access. TX SOSDirect charges $1/search.
+- Business entity searches: every state offers free name/agent query. Only a minority offer bulk downloads (FL, OR partial via open data, LA via paid API, HI by-record paid). DE doesn't publish principal addresses. NV charges for some access. TX SOSDirect charges $1/search.
 - Notary registries: most states publish searchable directories. NH, TN, WY publish only PDF lists or none. GA notaries are commissioned by county clerks but indexed centrally by GSCCCA.
 - Charity registries: typically AG. The SoS holds the registry in CO, GA, MD, MS, NC, ND, OK, PA, SC, TN, WA and WV. Other registrars by state: DBR in RI, DCP in CT, DLCP in DC, VDACS in VA, DPFR in ME, DFI in WI, FDACS in FL, and DCP in UT (transitioning to DCCC). DE, ID, MT, SD, WY have no state-level charity registration (only fundraisers in some). AZ repealed charity registration in 2013 (veterans + fundraisers still register).
 - Lobbyist registries: SoS for most states. The Ethics Commission holds the registry for AL, GA, HI, KS, MO, OK, SC, TN, TX, WI and WV, and the Legislature holds it for IA, NE and NV. Single-state registrars: PIC for DE, APOC for AK, DLS Ethics Council for VA, PDC for WA, OGEC for OR, ELEC for NJ, BEGA for DC, JLEC/OLIG for OH, KLEC for KY, LREC/ILRC for IN, ME Ethics, MA SoC, NH SoS, and MD SEC.
@@ -740,9 +740,9 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### Delaware
 
-- Business entity search: Delaware Division of Corporations — https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx — query-only — NOTE: Delaware does not publish full principal/officer addresses publicly, only registered agent. Detailed status $10–$20/entity
+- Business entity search: Delaware Division of Corporations — https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx — query-only — NOTE: Delaware doesn't publish full principal/officer addresses publicly, only registered agent. Detailed status $10–$20/entity
 - Notary registry: Delaware Notary Public (Department of State) — https://notary.delaware.gov/ ; bulk dataset at https://data.delaware.gov/Licenses-and-Certifications/Notaries-Commissioned-in-Delaware/q8dr-mj6p — bulk available
-- Charity registry: Delaware does not require general charity registration. No public registry. Private foundations file 990-PF with AG. Investigate manually: https://attorneygeneral.delaware.gov/tag/charities/
+- Charity registry: Delaware doesn't require general charity registration. No public registry. Private foundations file 990-PF with AG. Investigate manually: https://attorneygeneral.delaware.gov/tag/charities/
 - Lobbyist registry: Delaware Public Integrity Commission (PIRS) — https://pirs.delaware.gov/ — query-only
 
 ### District of Columbia
@@ -791,7 +791,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 - Business entity search: Indiana Secretary of State (INBiz) — https://bsd.sos.in.gov/publicbusinesssearch — query-only
 - Notary registry: Indiana Secretary of State (INBiz) — https://inbiz.in.gov/certification/notary — query-only
-- Charity registry: Indiana does not register charities themselves. Only professional solicitors register with AG — https://www.in.gov/attorneygeneral/consumer-protection-division/charities-and-donors/charitable-fundraising/ — query-only for fundraisers
+- Charity registry: Indiana doesn't register charities themselves. Only professional solicitors register with AG — https://www.in.gov/attorneygeneral/consumer-protection-division/charities-and-donors/charitable-fundraising/ — query-only for fundraisers
 - Lobbyist registry: Indiana Lobby Registration Commission (ILRC) — https://www.in.gov/ilrc/ ; lobbying data at https://www.in.gov/ilrc/lobbying-data/ — query-only
 
 ### Iowa
@@ -839,7 +839,7 @@ This section lists state-level public databases of licensed professionals, with 
 ### Massachusetts
 
 - Business entity search: Massachusetts Secretary of the Commonwealth (Corporations Division) — https://corp.sec.state.ma.us/corpweb/CorpSearch/CorpSearch.aspx — query-only
-- Notary registry: Massachusetts does not publish a public notary search. Contact Public Records Division, Secretary of the Commonwealth — https://www.mass.gov/info-details/find-a-notary-public — Not searchable online. Investigate manually
+- Notary registry: Massachusetts doesn't publish a public notary search. Contact Public Records Division, Secretary of the Commonwealth — https://www.mass.gov/info-details/find-a-notary-public — Not searchable online. Investigate manually
 - Charity registry: Massachusetts Attorney General (Non-Profit Organizations/Public Charities Division) — https://masscharities.my.site.com/FilingSearch/s/ — query-only
 - Lobbyist registry: Massachusetts Secretary of the Commonwealth (Lobbyist Division) — https://www.sec.state.ma.us/lobbyistpublicsearch/ — query-only
 

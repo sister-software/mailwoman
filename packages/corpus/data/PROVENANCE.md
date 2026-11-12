@@ -2,7 +2,7 @@
 
 ## `address-source-register.json` — the address-source register (#2323)
 
-Which jurisdictions exist, what research has resolved for each, and what is known about every
+Which jurisdictions exist, what research has resolved for each, and what's known about every
 source's terms. The file is generated, and a hand edit to it is refused.
 
 ### Regenerate
@@ -20,11 +20,11 @@ mailwoman corpus source-register \
 yarn format
 ```
 
-That is the command that produced the committed copy. The two CSVs are research working documents and
+That's the command that produced the committed copy. The two CSVs are research working documents and
 live in the `mailwoman-internal` repository under `research/`, so regenerating needs a checkout of it.
 That repository is checked out at `internal/`, which `.git/info/exclude` keeps out of this one, and
 the paths above read from there. They were under this repository's gitignored `.notes/` until 2026-09-20. No
-version control tracked them there. A reviewer could not determine which copy produced the register. The
+version control tracked them there. A reviewer couldn't determine which copy produced the register. The
 register is the committed record here. It stores every field a reader needs to check a row: the
 publisher, the retrieved URL, and the research pass.
 
@@ -55,7 +55,7 @@ Hand-maintained. Maps each `source` value of the `address-points-us-*.db` databa
 comes from: `overture:NAD` to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to that body's
 own row and Overture. The house-venue tuple reader keeps a row only when every row its value maps to holds an
 elected decision permitting transform and train. The bodies were read on 2026-10-17 under the US factual-data
-reading. The bare `openaddresses` value of the Hawaii database names no body and has no entry.
+reading. The bare `openaddresses` value of the Hawaii database identifies no body and has no entry.
 
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 
@@ -72,15 +72,15 @@ reproduce that formatting. The generator is deterministic, so the artifact is re
 Regeneration is the only thing that catches a hand edit to a generated artifact, and regeneration
 needs the two CSVs in `mailwoman-internal/research/`. A CI runner for this repository has no checkout
 of that one, so the register's correctness rests on whoever last ran the command above, and
-`auditAddressSourceRegister` does not change that: it checks the file's structure, and a publisher's
-name rewritten to something that names no institution is structurally sound.
+`auditAddressSourceRegister` doesn't change that: it checks the file's structure, and a publisher's
+name rewritten to something that identifies no institution is structurally sound.
 
 The inputs have been versioned since 2026-09-20. A reviewer can diff the CSV that
 produced the register against the one a later build reads, and a research pass that moves a
 publisher's name leaves a commit that records the move. A check that the committed register matches
 its inputs still requires a run of the command with both repositories checked out.
 
-A committed digest would not close it either. A sweep that edits the artifact and the digest together
+A committed digest wouldn't close it either. A sweep that edits the artifact and the digest together
 passes, and one that edits only the artifact fails without saying which side is right.
 
 This is the arrangement that let a prose sweep rewrite `Contracts Finder / Find a Tender` to
@@ -91,33 +91,33 @@ concluding the publisher renamed itself.
 
 ### Inputs, as of the committed build
 
-| file                                           |  rows | what is read                                                           |
+| file                                           |  rows | what's read                                                            |
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
 | `global-functional-authority-corpora-v2.csv`   | 2,426 | the 426 rows naming a national source. 2,000 are dropped               |
 | `source-additions.json`                        |   156 | all 156 rows, after the CSV's                                          |
 
-The 2,000 dropped rows have `origin = global_research_rail`. They are eight global discovery lookups the
+The 2,000 dropped rows have `origin = global_research_rail`. They're eight global discovery lookups the
 pass repeated once per jurisdiction. With the `iso2` and `jurisdiction` columns ignored, they collapse
-to eight distinct row bodies. They name a lookup to perform rather than a source, so they are the
+to eight distinct row bodies. They name a lookup to perform rather than a source, so they're the
 README's procedure and not rows here.
 
 ### Why three columns of the CSV reach no register field
 
 `global-functional-authority-corpora-v2.csv` has an `address_role`, a `coverage` and an `upstream`
-column, and the register declares all three unresolved. That is not the build dropping usable data.
+column, and the register declares all three unresolved. That's not the build dropping usable data.
 Over the 426 rows it keeps, `address_role` reads `varies` on all 426 and `coverage` reads
 `country-specific` on all 426. `upstream` is empty on 407 of them: the nineteen rows the 2026-10-01
 rights review added name their own upstream, as `adresse.data.gouv.fr`'s department directory and
 Geonorge's area codelist. The first two values are the research
-pass's record that it did not determine the field per source.
+pass's record that it didn't determine the field per source.
 
 The build reads the columns and refuses to copy a placeholder, because
 `ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
 measured" as two of its five conditions. The others are the unreviewed license decision, the absent
 personal-data review, and a status that records the source as uninspected. A `varies` written
 into `addressRole` would stop both from firing and would resolve no field. A value outside the declared
-placeholder set is copied through, and an `address_role` that is neither a placeholder nor an
+placeholder set is copied through, and an `address_role` that's neither a placeholder nor an
 `AddressRole` fails the build rather than being dropped.
 
 ### How an edit to the committed file is detected
@@ -127,7 +127,7 @@ The register stores `contentDigest`, a sha256 the build writes over every other 
 naming the regenerate command above.
 
 It exists because no check can regenerate this artifact and compare. The two research CSVs are
-working documents under `.notes/`, which is not committed, so a CI job has no input to rebuild from.
+working documents under `.notes/`, which isn't committed, so a CI job has no input to rebuild from.
 Without a recorded digest, a hand edit to a generated file is invisible: a prose sweep rewrote
 `Contracts Finder / Find a Tender` to `Interfaces Finder / Find a Tender` and two other publisher
 names, and the structural audit passed, because it checks shape rather than whether a name is the
@@ -169,9 +169,9 @@ list happens to be empty, and no reader could tell which they were looking at.
 | `unexamined`   |             3 | no source resolved and no source ruled out                    |
 
 `exception` and `unexamined` are separate values on purpose. A researched absence is a finding and
-an unexamined jurisdiction is not. If the two were merged, a consumer would read "we could not look"
+an unexamined jurisdiction isn't. If the two were merged, a consumer would read "we couldn't look"
 as "no registry exists there". Every non-`seeded` row has a `stateReason`, and the audit refuses
-one that does not.
+one that doesn't.
 
 | source status           | rows | meaning                                                                 |
 | ----------------------- | ---: | ----------------------------------------------------------------------- |
@@ -184,19 +184,19 @@ The `A`/`A~`/`B`/`C`/`D` column is `backboneState`, and it is deliberately not c
 repository already has locale tiers 1 through 5 in `scope.config.json` and the
 `shipped` / `build-local` / `private` tiers in the layer interface.
 
-### Three things the research pass did not resolve, on any row
+### Three things the research pass didn't resolve, on any row
 
-This section lists them so a reader does not have to discover them by querying:
+This section lists them so a reader doesn't have to discover them by querying:
 
 - **`addressRole` — 0 of 426.** Every row reads `varies`. The specification's section 2 asks for a
   role per source and the pass recorded none, so the research CSV cannot say whether any of these
   sources holds premises, registered offices or mailing addresses.
 - **`upstreamLineage` — 19 of 426.** The 2026-09-18 pass recorded none, so two databases built from one
-  upstream submission could not be collapsed into the single observation they are. The 2026-10-01
+  upstream submission couldn't be collapsed into the single observation they're. The 2026-10-01
   rights review fills the column as it goes, and the nineteen rows it added name the directory or
   codelist the source was found through.
 - **`coverage` — 0 of 426.** Every row reads `country-specific`, which is a scope rather than a
-  measurement. A national portal is not evidence of national coverage.
+  measurement. A national portal isn't evidence of national coverage.
 
 A later review resolves these per source in `source-resolutions.json`, and the register's `unresolved`
 array lists any field no row has yet. The audit checks that claim in both directions: a field
@@ -239,7 +239,7 @@ fetch returned. Each file is written by hand from a fetch rather than by a build
 edited after retrieval. A correction is a new retrieval.
 
 The directory has its own `PROVENANCE.md`. That file lists the directory's contents, the texts that
-could not be retrieved, and the two readings a retrieval moved. This section points to it so a reader
+couldn't be retrieved, and the two readings a retrieval moved. This section points to it so a reader
 of this file knows the directory is accounted for rather than overlooked.
 
 `ElectedLicense.retrievedCopy` in the source register holds the path of a file there. Through that
@@ -247,8 +247,8 @@ path, a decision recorded in `license-decisions.json` points at the text it was 
 
 ## `license-decisions.json` — license decisions a reviewer made by reading terms (#2351)
 
-Hand-written, and the only file in this directory that is. `address-source-register.json` is
-generated and rewritten whole on every build, so a decision recorded there is erased by the next run
+Hand-written, and the only file in this directory that's. `address-source-register.json` is
+generated and rewritten whole on every build, so a decision recorded there's erased by the next run
 with no error and a normal-looking count. This file is an input to that build instead.
 
 Each key is a `licenseID` the register already declares. Each value is an `ElectedLicense` or a
@@ -292,10 +292,10 @@ A decision may name a body declared once under `sharedReadings` rather than rest
 can hold a license over several jurisdictions, and a decision is scoped to one publisher in one
 jurisdiction, so one reading of INSEE's terms produces nine decisions. Each license id still has its
 own decision, so no election spans two jurisdictions. The shared body removes the risk of nine hand-maintained
-copies drifting. The build refuses a `sameAs` naming a reading the file does not declare.
+copies drifting. The build refuses a `sameAs` naming a reading the file doesn't declare.
 
 An election of terms is necessary and not sufficient. `ingestEligibilityProblems` also requires a
-resolved address role per column, measured coverage, and a personal-data review that does not read
+resolved address role per column, measured coverage, and a personal-data review that doesn't read
 `present`. A license decision touches none of these. They live in `source-resolutions.json`. **Sixteen
 sources have exactly one blocking condition left, and for fifteen of the sixteen that condition is the
 personal-data reading.** The personal-data question is therefore one decision that blocks fifteen
@@ -316,13 +316,13 @@ same pass gave them three rows of their own. The 2026-09-30 rights review split 
 Each row's scope then moved onto its own publisher. The scoping works only when a row identifies one
 publisher, and a row that lists two defeats it.
 
-The jurisdiction is part of the scope because a publisher name is not unique across states. The pass
+The jurisdiction is part of the scope because a publisher name isn't unique across states. The pass
 wrote `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry`
 for five countries, and `Commercial-registration authority` as a description rather than a name.
 
 The cost falls on a publisher that serves several jurisdictions. INSEE covers mainland
 France and nine overseas territories, so it holds ten decisions, and a reviewer who reads its terms
-once records that conclusion ten times. That is the direction to err in: an over-wide election is the
+once records that conclusion ten times. That's the direction to err in: an over-wide election is the
 failure review cannot undo.
 
 ## `source-resolutions.json` — source fields a review resolved (#2323)
@@ -332,8 +332,8 @@ build rewrites the register whole.
 
 Each key is a `sourceID` the register declares, and each value holds any of `addressRoles`,
 `coverage`, `upstreamLineage` and `personalDataReview`. `buildSourceRegister` applies these over the
-rows it derives from the research CSV and refuses a resolution naming a source the register does not
-declare, because a resolution that resolves no row is a typo or a source that has been removed.
+rows it derives from the research CSV and refuses a resolution naming a source the register doesn't
+declare, because a resolution that resolves no row is a typo or a source that's been removed.
 
 The fields live here rather than in the CSV because the CSV is the record of a research pass. All 390
 of its non-rail rows write `varies` for `address_role`, `country-specific` for `coverage` and an empty
@@ -377,7 +377,7 @@ of a chunked reader that re-scans its own overlap.
 **Seventeen sources are ingest-eligible and fifteen have one blocking condition each.** Fourteen of the
 fifteen read `personalDataReview: present`. The fifteenth is Uruguay, refused on its address role: no
 party object in 127,885 has an address field of any kind, so that publication is reachable in bulk
-and is not an address source.
+and isn't an address source.
 
 Sixteen of the seventeen eligible sources are national or regional address publications of European
 states: Spain's Dirección General del Catastro, the three foral cadastres of Bizkaia, Gipuzkoa and
@@ -389,7 +389,7 @@ Walloon Region's Service public de Wallonie under CC BY 4.0, Finland's Suomen ym
 CC BY 4.0, France's IGN under Licence Ouverte 2.0, Luxembourg's Administration du cadastre et de
 la topographie under CC0 1.0, and Norway's Kartverket under CC BY 4.0.
 
-**An elected license does not make a source eligible, and Switzerland is the worked case.** swisstopo's
+**An elected license doesn't make a source eligible, and Switzerland is the worked case.** swisstopo's
 own terms grant use, distribution, enrichment, processing and commercial use against a mandatory
 source reference, so its license is elected. Its `personalDataReview` reads `present`, and
 `ingestEligibilityProblems` refuses on that condition by itself, so the 3,303,210-row directory stays
@@ -402,7 +402,7 @@ Slovakia's 1,704,196. The INSPIRE Addresses model has no element for a party, so
 harmonized publication only through a free-text name element. INSPIRE Annex I makes Addresses a
 mandatory theme for every EU member state, so the remaining states are the place to look for more.
 
-**Belgium takes three rows and Finland's is not an INSPIRE service at all.** Belgium's regions publish
+**Belgium takes three rows and Finland's isn't an INSPIRE service at all.** Belgium's regions publish
 separately, so Flanders, Wallonia and Brussels each need their own row, of which the first two are
 recorded. Finland's eligible publication is a pair of bulk files on the publisher's own host rather
 than a WFS or an ATOM feed. For that reason `addressRoles` keys it by two CSV columns, `address_fin` and
@@ -426,9 +426,9 @@ cadastres.
 1,158 matching a two-capitalized-word shape, 684 contain a structure word and 474 do not, and **at least
 twelve of those 474 are a surname and a given name on a row whose category reads `residential`** —
 `Chaignat Aimée` in Jura, `Rutz Nelly` and `Frigerio Cesare Vittorio` in Ticino, `NB EFH Lauber Jörg`
-in Valais among them. That is a natural person at their home. On 2026-09-30 this repository
-decided it would not include such a row. Every other address publication's name element has read as a place,
-farm or building name. This one does not, and a reader that had assumed the element empty would have
+in Valais among them. That's a natural person at their home. On 2026-09-30 this repository
+decided it wouldn't include such a row. Every other address publication's name element has read as a place,
+farm or building name. This one doesn't, and a reader that had assumed the element empty would have
 admitted it.
 
 `AD:LocatorName` is that free-text element in the INSPIRE model, typed `GeographicalName`, and each
@@ -448,7 +448,7 @@ the path to `locator_addresslocator_name_locatorname_name_spelling_text`. One tr
 both would report one of them wrongly. For that reason each service's measurement states the shape
 it read, and Slovakia's traversal was checked against Estonia before its 0 was recorded.
 
-Those publishers state seven different grants, so a mandatory EU theme does not come with uniform
+Those publishers state seven different grants, so a mandatory EU theme doesn't come with uniform
 terms. Kadaster and Maa- ja Ruumiamet dedicate to the public
 domain, Denmark, Navarra, Wallonia and Finland's SYKE license under CC BY 4.0, Gipuzkoa under
 CC BY-SA 4.0, ČÚZK, the Slovak Ministerstvo vnútra and Poland's GUGiK state the INSPIRE controlled
@@ -506,18 +506,18 @@ rather than a title match.
 
 **A dataset record may state more than one instrument, in separate constraint blocks that answer
 different questions.** The Flemish Adressen record states `Geen beperkingen op de publieke toegang` in
-its access block, and in its re-use block names four things: the model license for no-charge re-use, two
+its access block, and in its re-use block lists four things: the model license for no-charge re-use, two
 instruments governing public-task use by GDI-Vlaanderen participants and by bodies that are not
 participants, and the attribution string the licensor requires, `Bron: Digitaal Vlaanderen`. A reader
 that flattens those blocks loses which instrument governs which re-user.
 
-**An identifier that will not serve its own text may serve it under a file extension.** The Flemish
+**An identifier that won't serve its own text may serve it under a file extension.** The Flemish
 license identifier answers `text/html`, `text/turtle`, `application/ld+json` and `application/rdf+xml`
 with one 541,080-byte application rendering to its title. The same path with `.ttl` appended returns
 the RDF. The RDF states `cc:requires cc:Attribution`, and the record's `rdfs:seeAlso` gives the page
 that publishes the nine articles.
 
-Denmark also shows that the theme is not always GML: it serves a GeoPackage, so its `addressRoles`
+Denmark also shows that the theme isn't always GML: it serves a GeoPackage, so its `addressRoles`
 is keyed by a table name rather than an element name.
 
 The eighth is Italy's ANAC procurement release, and it is eligible for a different reason.
@@ -545,7 +545,7 @@ rather than one role per source.
   on the next.
 - An OCDS release keys addresses by party role, and the roles differ per publisher. Germany uses fifteen
   where AusTender uses two. Italy's `supplier` role has no address at all, so its addresses are a
-  `buyer`'s and a `payer`'s. That is AusTender's shape inverted. Chile records a region and neither a
+  `buyer`'s and a `payer`'s. That's AusTender's shape inverted. Chile records a region and neither a
   postcode nor a locality on any of 544,754 party objects.
 
 An OCDS role takes a role here only where OCDS's own codelist defines it. Germany's eight extension roles
@@ -581,12 +581,12 @@ sources, 118,938,779 rows, profile `exploratory`, no refusals.
 ## `builds/<version>/inputs.json` — which adapter read which input (#2375)
 
 The adapter inputs of one base corpus build. `corpus build --inputs <path>` reads this file when the
-argument is not JSON text, and `readBuildInputs` resolves each `inputPath` against `$MAILWOMAN_DATA_ROOT`.
+argument isn't JSON text, and `readBuildInputs` resolves each `inputPath` against `$MAILWOMAN_DATA_ROOT`.
 The paths are data-root-relative because the predecessor record,
 `/mnt/mw/corpus/build-logs/v0.5.0-inputs.json`, names paths under `/mnt/playpen/mailwoman-data/`. Those paths
 stopped resolving when the data root moved to `/mnt/mw` on 2026-09-23.
 
-The source data itself is not committed and not reproducible from this repository. What the record
+The source data itself isn't committed and not reproducible from this repository. What the record
 establishes is which path each adapter was pointed at. A corpus `MANIFEST.json` states that for no adapter.
 
 `builds/<version>/OVERLAY_PLAN.json` holds what an overlay assembly was asked to add: each file's
@@ -621,7 +621,7 @@ output, and `mwops release rights-audit` reads `<corpus_version>.effective.json`
 
 Each row records the corpus row count, the config weight, the rows drawn, the rows emitted after
 augmentation, and the reason an excluded source was excluded. `emittedButUnrecorded` holds the sources the
-epoch emitted that the frozen manifest does not name, with their row counts.
+epoch emitted that the frozen manifest doesn't name, with their row counts.
 
 `v0.7.0-de-holdout.effective.json` reads the corpus through
 `packages/corpus/data/training-configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
@@ -691,7 +691,7 @@ class by decode weight would take a bias scale near 11 nats where the stronger d
 needed 6.
 
 The one hand-authored input is `corpus/src/tools/sub-venue-promotions.ts`, the curation ledger. The
-builder cannot decide that Spanish `terminal` is safe and British `hall` is not, because that is a
+builder cannot decide that Spanish `terminal` is safe and British `hall` isn't, because that's a
 judgment about a language's confounds. The builder applies those decisions.
 
 ### Regenerate
@@ -740,7 +740,7 @@ The extract JSONLs and the `.osm.pbf` files are build inputs under
 contains no OSM geometry and no OSM row. What survives the OSM read is surface counts, such as the count of 1,215
 Japanese feature names that contain the token `ターミナル`. The `identifierShapes` distribution also
 survives. Its `examples` are `aeroway=gate` `ref` strings (`B32`, `1A`, `16-18`). Facts and short
-factual strings are not a substantial extraction from a database, so this table is not treated as a
+factual strings are not a substantial extraction from a database, so this table isn't treated as a
 Derived Database. That reading matches `osm/README.md`'s position that the ODbL obligation attaches to
 the built recipe output rather than to code. **Whether a corpus recipe output built from OSM rows is a
 derived work is still an open question.** That question blocks step 4 rather than this table.
@@ -761,7 +761,7 @@ Overture and OSM fail differently, so the build reads both.
   bus stop takes its name from the village hall it stands outside.
 
 The Overture category set is measured rather than guessed. A scan of all 13,681,698 rows counted, per
-category, the rows with a name that contain a designator token. The ranking does not follow what a
+category, the rows with a name that contain a designator token. The ranking doesn't follow what a
 category name predicts. `gas_station` leads the entire table with 12,996 hits, every one of them `station` inside
 "Holiday Station" or "Chevron Station Seward", and `shoe_store` contributes 708 hits of `wing` because
 Red Wing sells boots. Four categories survived reading the distribution — `airport_terminal`,
@@ -789,7 +789,7 @@ surface. Two derivations run before the harvest:
   the designator's own id. `terminal aeroportuaria` → `terminal`, `letištní terminál` → `terminál`,
   `havalimanı terminali` → `terminali`. An earlier rule matched against any single-token surface of
   the record and, because Dutch `universiteit` is one, derived `universitario`, `universitaire` and
-  twenty more as head nouns of `campus`. Those are the modifier half, and they would have taught the
+  twenty more as head nouns of `campus`. Those are the modifier half, and they'd have taught the
   harvest to read "Ciudad Universitaria" as sub-venue structure.
 - **Han / Kana / Hangul — the shared-substring test.** Every substring of length ≥ 2 that occurs in two or
   more surfaces of the same record and language, maximal-only, capped at six. `ターミナル` is in none
@@ -805,7 +805,7 @@ scripts where it works.
 
 The harvest also gained a script-aware match. `第1ターミナル` has no word boundaries, so the
 token-boundary rule that keeps Latin script from matching `Briggate` finds no match at all in Japanese.
-For Han and Kana the match is a substring test, and the Germanic-compound objection does not transfer.
+For Han and Kana the match is a substring test, and the Germanic-compound objection doesn't transfer.
 
 ### The curation ledger
 
@@ -815,7 +815,7 @@ designator, a phrase and a locale. The locale is part of the decision because th
 
 Every decision below is backed by a census in that locale's own data. `real` counts occurrences in
 venue-interior naming. `confound` counts the rest, and the note states what the rest is. A bare
-number is not a board, and "3,273 hits" did not tell a reader that 3,204 of them were bus stops.
+number isn't a board, and "3,273 hits" didn't tell a reader that 3,204 of them were bus stops.
 
 | designator | phrase       | locale |  real | confound | what the confound is                                                 |
 | ---------- | ------------ | ------ | ----: | -------: | -------------------------------------------------------------------- |
@@ -858,11 +858,11 @@ list.
 **A rejection of a shipped designator is advisory.** `neural/venue-structure.ts` holds a flat
 English vocabulary with no per-locale filter, and `wing`, `terminal` and `concourse` are in it. This table
 cannot un-ship them: the `wing` / en-US rejection tells a recipe author which locale to leave out of a
-generated line, and it does not stop the span proposer from firing on "Red Wing". A per-locale filter on the shipped
+generated line, and it doesn't stop the span proposer from firing on "Red Wing". A per-locale filter on the shipped
 vocabulary belongs to step 4. It is the largest missing piece the recipe will need.
 
 The ledger does apply to every surface the lexicon adds. `pier` is promoted for en-GB and rejected for
-en-US, and because it is not in the shipped list, the rejection has teeth: the region-free English
+en-US, and because it isn't in the shipped list, the rejection has teeth: the region-free English
 `pier` surface stays `curated: false` and only the 164 Great Britain attestations are marked usable.
 
 ### Identifier shapes are per-region now
@@ -883,12 +883,12 @@ so a recipe that generates `Gate <ref>` for a French address has to sample Franc
 Britain and Japan use bare numbers for `aeroway=gate` refs. France and Germany use a letter and then
 a number (`A37`, `B05`). Spain is the outlier: a third of its refs are a range (`B18-B20`, `D42-D43`).
 No other country uses ranges at that rate. A generator that samples Great Britain's 71%-bare-digit shape into a Spanish line
-produces a plausible string that is wrong about Spain.
+produces a plausible string that's wrong about Spain.
 
 ### The seed duplicates `neural/venue-structure.ts`
 
-`@mailwoman/corpus` does not depend on `@mailwoman/neural`, so the shipped designator and modifier
-lists are re-declared in `sub-venue-lexicon.ts`. That is a drift surface, and
+`@mailwoman/corpus` doesn't depend on `@mailwoman/neural`, so the shipped designator and modifier
+lists are re-declared in `sub-venue-lexicon.ts`. That's a drift surface, and
 `sub-venue-lexicon.test.ts` pins both lists literally so a change in either place fails a test rather
 than passing silently. The planned change is still the reverse direction: have `neural/venue-structure.ts`
 read a committed lexicon extract and delete both copies.

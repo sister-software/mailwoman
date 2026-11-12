@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generates address pairs in which context decides whether a leading five-digit token is a house number or a postcode.
+ *   Generates address pairs in which context decides whether a leading five-digit
+ *   token is a house number or a postcode.
  */
 
 /* oxlint-disable mailwoman/prefer-home -- every tuple comes from the hardcoded US `US_TUPLES` list.
@@ -50,7 +51,7 @@ export interface AnchorAbsorptionSynthesisOpts {
 	/**
 	 * Real US ZIP codes from the postcode-anchor lookup.
 	 *
-	 * The templates place them where the anchor fires on a token that is really a house number.
+	 * The templates place them where the anchor fires on a token that's really a house number.
 	 *
 	 * @defaultValue the postcodes of the built-in US tuples.
 	 */

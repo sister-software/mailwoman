@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Over the fixture built by the astrogeology package's `buildSearchIndex` from its five Moon fixture features: Marco
- *   Polo P (28 km), Tycho (85 km), Marvin (4.6 km), Buys-Ballot H (24 km, clean name "Buys Ballot H") and Planitia
- *   Descensus (no diameter).
+ *   Over the fixture built by the astrogeology package's `buildSearchIndex` from its
+ *   five Moon fixture features: Marco Polo P (28 km), Tycho (85 km), Marvin (4.6 km),
+ *   Buys-Ballot H (24 km, clean name "Buys Ballot H") and Planitia Descensus (no diameter).
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

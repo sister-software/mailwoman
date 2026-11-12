@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Storybook (Vite builder) for the docs workspace. Lets the React components in `src/components/`
- *   be developed and reviewed in isolation — outside the Docusaurus/MapLibre/ONNX runtime — which
- *   is what makes the leaf components safely refactorable. Docusaurus itself stays on webpack.
+ *   Storybook (Vite builder) for the docs workspace.
+ *
+ *   Lets the React components in `src/components/` be developed and reviewed in isolation — outside the
+ *   Docusaurus/MapLibre/ONNX runtime — which is what makes the leaf components safely refactorable.
+ *   Docusaurus itself stays on webpack.
+ *
  *   Storybook runs an independent Vite pipeline so the two don't interfere.
  */
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   China designators in Simplified Chinese: the delivery service, premise, sub-premise, floor and relation
- *   words that a mainland address or query uses.
+ *   China designators in Simplified Chinese: the delivery service, premise, sub-premise,
+ *   floor and relation words that a mainland address or query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/chnEn.pdf UPU China addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/邮政信箱 Wiktionary 邮政信箱}

@@ -193,7 +193,7 @@ export function rankCandidates<DB>(
 
 			// With proximity hints, prominence replaces raw population as the within-tier key.
 			// Without them, referential ordering decides.
-			// Encyclopedic importance does not affect this order.
+			// Encyclopedic importance doesn't affect this order.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 			candidates.sort((a, b) => {

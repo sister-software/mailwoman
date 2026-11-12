@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /**
  * Record-class chrome (see ./index.tsx). The Infima `alert alert--warning|info` classes carry the
  * light/dark palette; this module only slims the banner down from admonition scale to chrome

@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The closed plan catalog. A Price outside it mints no license. `shop/ids.json` provides Price IDs by environment Stripe mode because sandbox and production use different Stripe objects for the same two plans.
+ * The closed plan catalog.
+ *
+ * A Price outside it mints no license.
+ * `shop/ids.json` provides Price IDs by environment Stripe mode because sandbox
+ * and production use different Stripe objects for the same two plans.
  */
 
 import type { LicenseWorkerEnv } from "#env"

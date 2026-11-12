@@ -81,7 +81,10 @@ function filenameFor(name: string, datasetID: string): string {
 /**
  * Downloads every dataset in the ACRA collection and writes a collection manifest after each file.
  *
- * The function skips a file that the previous manifest lists and that still exists on disk.
+ * Each dataset's metadata states `lastUpdatedAt`, which data.gov.sg moves
+ * when ACRA republishes the file (monthly).
+ * The manifest records it as `publisher_version`, and a file is skipped only when it is on disk
+ * and the metadata still states the version the manifest recorded for it.
  */
 export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = options.outRoot(SLUG)
@@ -104,8 +107,9 @@ export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: s
 		const filename = filenameFor(name, datasetID)
 		const dest = destDir(filename)
 		const before = previous.get(filename)
+		const version = metadata.data?.lastUpdatedAt ?? null
 
-		if (before && (await pathExists(dest))) {
+		if (version != null && before?.publisher_version === version && (await pathExists(dest))) {
 			files.set(filename, before)
 
 			skipped++
@@ -113,7 +117,10 @@ export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: s
 			continue
 		}
 
-		report?.(`--- ${name} (${datasetID})`)
+		report?.(
+			`--- ${name} (${datasetID}): lastUpdatedAt ${version ?? "absent"}, recorded ${before?.publisher_version ?? "none"}`
+		)
+
 		let bytes: number
 
 		try {
@@ -134,6 +141,11 @@ export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: s
 			report?.(`  ✗ ${(error as Error).message}`)
 			failedCodes.push(datasetID)
 
+			// The transfer writes a `.tmp` sibling, so a failed one leaves the earlier file and its entry true.
+			if (before && (await pathExists(dest))) {
+				files.set(filename, before)
+			}
+
 			continue
 		}
 
@@ -152,6 +164,7 @@ export async function fetchACRASG(options: FetchACRASGOptions, report?: (line: s
 			filename,
 			sha256: sha,
 			bytes,
+			...(version != null ? { publisher_version: version } : {}),
 		})
 
 		fetched++

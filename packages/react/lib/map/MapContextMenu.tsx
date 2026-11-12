@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map's right-click menu: a glass panel at the pointer with rows the host supplies, each a label,
- *   a value and a copy button, and actions beneath them. {@link useMapContextMenu} reads the map's
- *   `contextmenu` event and closes the menu when the map moves. The menu itself closes on Escape and on a
- *   pointer press outside it, as the footer's sources popover does.
+ *   The map's right-click menu: a glass panel at the pointer with rows the host supplies,
+ *   each a label, a value and a copy button, and actions beneath them. {@link useMapContextMenu}
+ *   reads the map's `contextmenu` event and closes the menu when the map moves.
+ *
+ *   The menu itself closes on Escape and on a pointer press outside it,
+ *   as the footer's sources popover does.
  */
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"

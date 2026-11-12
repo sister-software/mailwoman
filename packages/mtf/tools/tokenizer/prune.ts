@@ -4,10 +4,12 @@
 /**
  *   Prune a tokenizer's unused pieces and the matching rows of an int8 model's embedding table.
  *
- *   A piece that never won a Viterbi path contributes no score to any other path, so segmentation is unchanged for
- *   every input whose best path avoided the pruned pieces. The kept pieces stay in their order. The embedding rows
- *   are gathered by the old-to-new id map with the scale and zero point untouched, so each kept row stays the same
- *   bytes.
+ *   A piece that never won a Viterbi path contributes no score to any other path,
+ *   so segmentation is unchanged for every input whose best path avoided the pruned pieces.
+ *   The kept pieces stay in their order.
+ *
+ *   The embedding rows are gathered by the old-to-new id map with the scale
+ *   and zero point untouched, so each kept row stays the same bytes.
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -59,8 +61,8 @@ export interface PruneOptions {
 }
 
 /**
- * The pieces to keep: every piece the training corpus or the evaluation surface used, every
- * piece that is not a normal piece (control, unknown, user-defined, unused and byte pieces),
+ * The pieces to keep: every piece the training corpus or the evaluation surface used,
+ * every piece that's not a normal piece (control, unknown, user-defined, unused and byte pieces),
  * and every piece of at most one code point once a leading `▁` is removed.
  * This keeps every character reachable.
  */

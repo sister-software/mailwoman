@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `bsp-gu`: Guam address points published by the Bureau of Statistics & Plans GIS on the Government of
- * Guam GISWEB Portal as the ArcGIS layer `Address_Point_(Public_View)`.
+ * `bsp-gu`: Guam address points published by the Bureau of Statistics & Plans GIS on the
+ * Government of Guam GISWEB Portal as the ArcGIS layer `Address_Point_(Public_View)`.
  *
- * The input is the layer's GeoJSON query pages, one file or a directory of them. The adapter reads
- * `HOUSE_NUM` as the house number, `PRE_DIR` as the street prefix, `STREETNAME` as the street (or the
- * assembled `FullRdNm` when `STREETNAME` is blank), `STR_TYPE` as the street suffix, `UNIT` as the unit
- * and `CITY` (or `PLACENAME` when `CITY` is blank) as the locality. Route roads read `ROUTE 10` with the
- * type `HWY`, which is how the layer's own `FullRdNm` writes them.
+ * The input is the layer's GeoJSON query pages, one file or a directory of them.
+ * The adapter reads `HOUSE_NUM` as the house number, `PRE_DIR` as the street prefix, `STREETNAME` as
+ * the street (or the assembled `FullRdNm` when `STREETNAME` is blank), `STR_TYPE` as the street
+ * suffix, `UNIT` as the unit and `CITY` (or `PLACENAME` when `CITY` is blank) as the locality.
+ *
+ * Route roads read `ROUTE 10` with the type `HWY`, which is how the layer's own `FullRdNm` writes them.
  *
  * The layer has no postcode: its NG911 `Post_Code` column is blank on every feature.
  *
- * `HOUSE_NUM` sometimes pairs the number with a building-permit number (`120 / B19000483`); the number is
- * kept and the permit dropped. `CITY` writes Guam's villages with Chamorro and English spellings
- * (`HAGÅTÑA`, `HAGATNA`; `INARAJAN`, `INALAHAN`) and with typing slips (`BARRIGDAA`, `MANGIL.AO`), so a
- * value is kept only when each of its parts is a village, or a community the villages contain,
- * listed in {@link GUAM_PLACE_NAMES}. A road written `(OFF OF) ROUTE 4A HWY` locates a point near a road
- * rather than on it, and a street naming two roads (`AGUILAR RD / RT 17`) states no single street, so both
- * are refused.
+ * `HOUSE_NUM` sometimes pairs the number with a building-permit number (`120 / B19000483`);
+ * the number is kept and the permit dropped.
+ * `CITY` writes Guam's villages with Chamorro and English spellings
+ * (`HAGÅTÑA`, `HAGATNA`; `INARAJAN`, `INALAHAN`) and with typing slips
+ * (`BARRIGDAA`, `MANGIL.AO`), so a value is kept only when each of its parts is a village,
+ * or a community the villages contain, listed in {@link GUAM_PLACE_NAMES}.
  *
- * The layer states no license. Under the United States position in `packages/corpus/lib/us/AGENTS.md`
- * (Feist), a US public body's address file published without terms restricting its use is elected,
+ * A road written `(OFF OF) ROUTE 4A HWY` locates a point near a road rather than on it, and a
+ * street naming two roads (`AGUILAR RD / RT 17`) states no single street, so both are refused.
+ *
+ * The layer states no license.
+ * Under the United States position in `packages/corpus/lib/us/AGENTS.md` (Feist),
+ * a US public body's address file published without terms restricting its use is elected,
  * and the rows use the same label as the US public-body adapters.
  */
 
@@ -139,7 +143,7 @@ export const GUAM_PLACE_NAMES: ReadonlySet<string> = new Set([
 
 /**
  * Whether every part of a place value, split at commas, slashes, hyphens and parentheses,
- * is a listed place: `CHALAN PAGO - ORDOT` and `AGANA HEIGHTS (PAASAN)` are, `RADIO, BARRIGADA` is not.
+ * is a listed place: `CHALAN PAGO - ORDOT` and `AGANA HEIGHTS (PAASAN)` are, `RADIO, BARRIGADA` isn't.
  */
 export function isGuamPlaceName(value: string): boolean {
 	const parts = upperFold(value)
@@ -163,7 +167,7 @@ const PERMIT_NUMBER = /^[A-Z]{1,2}\d{2}-?\d{3,}$/iu
 
 /**
  * The house number `HOUSE_NUM` states, with a building-permit number written beside
- * it removed, or null when the value is not a house number.
+ * it removed, or null when the value isn't a house number.
  */
 export function guamHouseNumber(value: string): string | null {
 	if (HOUSE_NUMBER.test(value)) return value
@@ -263,7 +267,7 @@ export function componentsForGuamRecord(
 
 	const components: CanonicalRow["components"] = { house_number: houseNumber, street }
 
-	// `FullRdNm` already holds the direction and the type, so they are read beside `STREETNAME` only.
+	// `FullRdNm` already holds the direction and the type, so they're read beside `STREETNAME` only.
 	if (name) {
 		const direction = present(record.PRE_DIR)?.toUpperCase()
 

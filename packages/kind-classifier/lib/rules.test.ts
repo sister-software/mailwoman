@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { KnownFormat, NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"

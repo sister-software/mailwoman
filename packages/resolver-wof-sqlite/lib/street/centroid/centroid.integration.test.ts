@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests for the street-centroid tier: the shared `stripArrondissement` folder and the
- * `StreetCentroidSqliteLookup` reader.
+ * Tests for the street-centroid tier: the shared `stripArrondissement` folder
+ * and the `StreetCentroidSqliteLookup` reader.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

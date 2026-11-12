@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The baseline is replayed from the shipped rules rather than snapshotted, so this can only fail because an intent kind displaced an incumbent.
+ *   The baseline is replayed from the shipped rules rather than snapshotted,
+ *   so this can only fail because an intent kind displaced an incumbent.
  */
 
 import { deriveInputMode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"

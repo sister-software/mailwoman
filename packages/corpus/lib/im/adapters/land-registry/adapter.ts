@@ -2,25 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `landregistry-im`: property addresses from the Isle of Man Land Registry's land transactions. The Isle of
- * Man Government publishes one CSV on gov.im with every registered sale since 2000.
+ * `landregistry-im`: property addresses from the Isle of Man Land Registry's land transactions.
  *
- * Each row is a sale, so one property appears once per sale. The adapter emits each distinct address
- * once, comparing the emitted components case-folded and keeping the first. It reads only the address
- * columns and never the price or date columns.
+ * The Isle of Man Government publishes one CSV on gov.im with every registered sale since 2000.
  *
- * `SubUnit_Name` is the flat or apartment (`Flat 2`, `Apartment 5`), `House_Number` the door number,
- * `House_Name` the house's given name (`Ballacain Farm`) or the building's (`Spectrum Apartments`),
- * `Street_Name` the street, `Locality` the estate or village inside the town, and `Town` the post town.
- * The IM layout prints no region, so `Parish_` is not read.
+ * Each row is a sale, so one property appears once per sale.
+ * The adapter emits each distinct address once, comparing the emitted components
+ * case-folded and keeping the first.
  *
- * The register also records sales of land that has no postal address. Such a row describes the land
- * (`Field North Of Ballawhannel Farm`, `Parcel Of Land`, `Land Adjacent To Mostyn Ville`) in place of
- * naming a property, and the adapter refuses it, as it refuses a garage, a parking space or a substation
- * sold on its own.
+ * It reads only the address columns and never the price or date columns.
+ *
+ * `SubUnit_Name` is the flat or apartment (`Flat 2`, `Apartment 5`), `House_Number`
+ * the door number, `House_Name` the house's given name (`Ballacain Farm`) or the
+ * building's (`Spectrum Apartments`), `Street_Name` the street, `Locality` the estate
+ * or village inside the town, and `Town` the post town.
+ * The IM layout prints no region, so `Parish_` isn't read.
+ *
+ * The register also records sales of land that has no postal address.
+ * Such a row describes the land (`Field North Of Ballawhannel Farm`, `Parcel Of Land`,
+ * `Land Adjacent To Mostyn Ville`) in place of naming a property, and the adapter refuses it,
+ * as it refuses a garage, a parking space or a substation sold on its own.
  *
  * The Isle of Man Government publishes the dataset under the Isle of Man Open Government Licence.
- * The license requires the attribution statement below. Every row records that license.
+ * The license requires the attribution statement below.
+ * Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -48,7 +53,7 @@ import {
 export const LANDREGISTRY_IM_ADAPTER_ID = "landregistry-im"
 
 /**
- * The Isle of Man Open Government Licence (the dataset page does not state its version).
+ * The Isle of Man Open Government Licence (the dataset page doesn't state its version).
  * It has no SPDX identifier.
  */
 export const LANDREGISTRY_IM_LICENSE = "LicenseRef-IM-OGL"
@@ -124,7 +129,7 @@ const UNIT_DESIGNATOR =
 const HOUSE_NUMBER = /^\d+[A-Z]?(?:\s*-\s*\d+[A-Z]?)?$/iu
 
 /**
- * A second-line value that is a thoroughfare (`Main Road`, `Off Clifton Drive`) rather than a place.
+ * A second-line value that's a thoroughfare (`Main Road`, `Off Clifton Drive`) rather than a place.
  */
 const THOROUGHFARE =
 	/^off\b|\b(?:road|street|lane|avenue|drive|promenade|terrace|crescent|quay|way|close|parade|square)$/iu

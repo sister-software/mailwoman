@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal/guideline"
 import { describe, expect, it } from "vitest"
 
@@ -24,7 +27,7 @@ const NAMES = SYLLABLES.flatMap((first) =>
 const IT_HELD_LOCALITIES = holdoutPolicyFor(defaultHoldouts().IT ?? null).localities ?? []
 
 const PLACES = new Map<string, PostalGuidelinePlace[]>([
-	// `02` is the declared DE street-level holdout and `10` is not.
+	// `02` is the declared DE street-level holdout and `10` isn't.
 	[
 		"DE",
 		NAMES.slice(0, 60).map((locality, index) => ({
@@ -32,7 +35,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "02" : "10"}${String(600 + index).padStart(3, "0")}`,
 		})),
 	],
-	// Every odd place is a declared IT locality holdout and every even place is not.
+	// Every odd place is a declared IT locality holdout and every even place isn't.
 	[
 		"IT",
 		NAMES.slice(0, 60).map((locality, index) => ({
@@ -41,7 +44,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			region: index % 2 ? "CA" : "AQ",
 		})),
 	],
-	// `733` is a declared AU district holdout and `284` is not.
+	// `733` is a declared AU district holdout and `284` isn't.
 	[
 		"AU",
 		NAMES.slice(0, 60).map((locality, index) => ({

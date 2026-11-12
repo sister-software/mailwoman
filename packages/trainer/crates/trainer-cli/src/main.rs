@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `trainer`: train from a resolved config, convert a Python checkpoint, and run the staged comparison.
 //!
 //! The resolved config is what `mailwoman train config resolve <config.yaml> --out <resolved.json>` writes. The

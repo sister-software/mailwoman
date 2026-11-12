@@ -1,6 +1,6 @@
 # Production functional smoke for Mailwoman Earth, the geocoder at earth.mailwoman.post.
 #
-# Version parity is not functional parity: a deployment can serve the right model version while its gazetteer,
+# Version parity isn't functional parity: a deployment can serve the right model version while its gazetteer,
 # FST or street tier returns no answer, and every one of those failures produces zero console errors. This runs
 # the `@smoke` browser spec against the deployed app (`MAILWOMAN_EARTH_URL`) and grades the results (the
 # address_point tier, the WOF cascade, the markers), so a functional regression is visible the day it ships.

@@ -4,17 +4,20 @@
 /**
  *   Counts the gold span edges a vocabulary cannot reach.
  *
- *   The model labels whole pieces, so a span edge that falls strictly inside one piece is outside every
- *   output the model can produce, whatever its weights.
+ *   The model labels whole pieces, so a span edge that falls strictly inside one piece
+ *   is outside every output the model can produce, whatever its weights.
  *
- *   An edge where the character class changes, such as `HR-` before `23211` or `S.A.` before a comma, is
- *   reachable by construction when the vocabulary keeps digits and punctuation in pieces of their own. A
- *   vocabulary change is admitted only when no such edge falls inside a piece. An edge between two letters
- *   with no space between them, as in the run-together rendering `CHINAGANSU` + `DUJIACHUAN`, is reachable
- *   only if piece frequencies happen to split there, so it is counted and reported without deciding admission.
+ *   An edge where the character class changes, such as `HR-` before `23211` or `S.A.`
+ *   before a comma, is reachable by construction when the vocabulary keeps digits
+ *   and punctuation in pieces of their own.
+ *   A vocabulary change is admitted only when no such edge falls inside a piece.
  *
- *   Rows the script router sends to a character-path family are left out and counted separately, because
- *   that path labels each character.
+ *   An edge between two letters with no space between them, as in the run-together
+ *   rendering `CHINAGANSU` + `DUJIACHUAN`, is reachable only if piece frequencies happen
+ *   to split there, so it is counted and reported without deciding admission.
+ *
+ *   Rows the script router sends to a character-path family are left out
+ *   and counted separately, because that path labels each character.
  */
 
 import { scriptFamilyForText } from "@mailwoman/neural/classifier/script-router"

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Per-package vitest config that resolves @mailwoman/core subpath imports to source. Mirrors the
- *   layout used in core/vitest.config.ts.
+ *   Per-package vitest config that resolves @mailwoman/core subpath imports to source.
+ *   Mirrors the layout used in core/vitest.config.ts.
  */
 
 import { resolvePath } from "path-ts"

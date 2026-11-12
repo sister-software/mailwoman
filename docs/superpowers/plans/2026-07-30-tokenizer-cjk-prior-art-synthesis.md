@@ -34,7 +34,7 @@ records every required finding. Verdicts come first and receipts after.
 5. **⚠ KR is legally conditional, and TW is the clean second CJK locale.** The juso bulk DB
    requires a signed pledge of 국외 반출 금지 (no export from Korea), and its ToS forbid commercial
    use and redistribution. The 6.17M juso rows we acquired need counsel review before any training
-   uses them (G1 agenda item). OpenAddresses KR has been frozen since 2017, and Overture does not
+   uses them (G1 agenda item). OpenAddresses KR has been frozen since 2017, and Overture doesn't
    cover KR. Taiwan has OGDL-Taiwan-1.0 (CC BY 4.0-compatible), current OpenAddresses data, and
    9.7M rows already on disk. **Recommendation: re-weight Phase 6 from KR-next to TW-next unless
    counsel clears juso.**
@@ -47,7 +47,7 @@ records every required finding. Verdicts come first and receipts after.
 - **Normalization tables** (Geolonia and ABR are canonical):
   - The two-register numeral convention. 町丁目 digits become kanji numerals, and 番地/号 become
     Arabic numerals with 番地/番/号 → `-`, so `1番3号` ≡ `1-3`.
-  - Variant folding that NFKC does not do (ヶ/ケ/が/ガ, 之/ノ/の, 新字体↔旧字体).
+  - Variant folding that NFKC doesn't do (ヶ/ケ/が/ガ, 之/ノ/の, 新字体↔旧字体).
   - Prefecture and county completion.
   - The non-丁目 tail (Sapporo 条, Iwate 地割, 甲乙丙/いろは, 無番地).
   - Half-width katakana folding, including dakuten composition. That composition changes string length.
@@ -80,14 +80,14 @@ records every required finding. Verdicts come first and receipts after.
   a hyphen) and U+2010/2015/FE63/FF70 all survive** in real JP input. The normalizer needs a
   hyphen-equivalence class.
 - The JP char vocab must be rebuilt from the full Phase-3 extract. The probe vocab has 1,918 kanji,
-  and the full MLIT data has 2,640 distinct kanji. The missing tail is proper-noun kanji. That is
+  and the full MLIT data has 2,640 distinct kanji. The missing tail is proper-noun kanji. That's
   the class an address parser exists to handle. A hash-bucket OOV fallback is under consideration
   as an alternative.
 - Non-BMP correctness: 49.5% of Japan's official administrative character set is outside the BMP.
   Two Plane-2 kanji (𨦻 𨫤) are verified real place names in Overture-JP. The TS decode path must
   work on code points. The lesson from #519 applies here too.
 
-## Latin-side exclusions (with receipts, so a later reader does not reopen them without new evidence)
+## Latin-side exclusions (with receipts, so a later reader doesn't reopen them without new evidence)
 
 - Learned/dynamic chunking: static boundaries beat learned ones at our scale (a 41M-param study
   with WikiANN static 66.79, learned ≤66.57, BPE 61.39).
@@ -120,26 +120,26 @@ GREEN data.
 | Region | Verdict             | Note                                                                                                                                                                                                                                           |
 | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | JP     | GREEN               | ABR PDL-1.0 (CC BY 4.0-compatible, modification notice required), MLIT PDL-1.0, Geolonia CC BY 4.0, KEN_ALL copyright expressly disclaimed. Parcel-level (地番) is AMBER (a second MoJ grant applies).                                         |
-| KR     | RED pending counsel | juso ToS + the export pledge. Portal metadata saying "no restriction" does not override the statute. VWorld unverifiable from here.                                                                                                            |
+| KR     | RED pending counsel | juso ToS + the export pledge. Portal metadata saying "no restriction" doesn't override the statute. VWorld unverifiable from here.                                                                                                             |
 | TW     | GREEN               | OGDL-Taiwan-1.0 with a per-agency attribution manifest (~21 entries) shipped in the package. Attribution failure voids ab initio. Pin/archive against §5.2 withdrawal. Chunghwa Post 3+3 postcodes are RED (no distribution/adaptation grant). |
 | CN     | RED                 | Law rather than licensing.                                                                                                                                                                                                                     |
 | HK     | AMBER               | ALS bulk exists, with terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                    |
 
 ## Addendum 2026-07-30 — the KR alternative path (operator prompt: WOF + the data-sources vein)
 
-The RED verdict above applies only to the **juso bulk address register**. It does not cover Korea as a whole. Two
+The RED verdict above applies only to the **juso bulk address register**. It doesn't cover Korea as a whole. Two
 assets we already hold change the Phase-6 picture:
 
 1. **WOF-KR is already in our shipped admin DB** (`admin-global-priority.db`). It has 18 regions,
    308 counties, 1,482 localadmins, 50,465 localities and 693 neighborhoods, with centroids and
    68,658 Korean-language name records (Hangul 충청북도, the alias 충북, and hanja 忠淸北道). Its
    license is clean (the WOF CC0/CC-BY family). WOF-KR covers the admin and resolve side. WOF has
-   no streets or house numbers anywhere. That is the known hierarchy gap.
+   no streets or house numbers anywhere. That's the known hierarchy gap.
 2. **`.notes/data-sources.md` already lists the corpus source: localdata.go.kr.** It covers every
    permitted business in Korea under KOGL (attribution required, commercial use and derivatives
    allowed). Each record has both the road-name and the jibun address. That pair is the dual-system
    pairing signal the notes point out. This is a different legal object from the juso register.
-   It is business-permit disclosure data published for public release, and it is not covered by
+   It is business-permit disclosure data published for public release, and it isn't covered by
    the 도로명주소법 pledge that binds the address DB. HIRA, NEIS and FSS are the cross-check
    registries, per the notes' triangulation principle.
 

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Shape inference for the operators the exporter and the quantizer emit, written as `value_info`.
 //!
 //! `quantize_dynamic` saves its output after onnx's shape inference (`onnx.shape_inference.infer_shapes`, no data

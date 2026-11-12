@@ -2,21 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Codex-backed lexicon for the Stage 2.7 span proposer (`@mailwoman/core/pipeline`'s
- *   `proposeSpans`). Core stays codex-free. this module assembles the proposer's designator
- *   vocabulary from the provenance-tracked `@mailwoman/codex` tables — USPS Pub-28 C2 secondary
- *   unit designators, USPS PO-box designators, Australia Post amas delivery types, NZ Post ADV358
- *   delivery-service types. Which systems are loaded conditions the proposer's locale-dependent
- *   readings (the AU/NZ `Flat 2/14` split exists only when those tables are present).
+ *   Codex-backed lexicon for the Stage 2.7 span proposer (`@mailwoman/core/pipeline`'s `proposeSpans`).
  *
- *   No entry here is hand-invented (the provenance-first rule): every token/pattern derives from a
- *   codex table row. AU `MS` (Mail Service) and the identifier-less counter types (care PO, CMA,
- *   CPA, Counter Delivery, Poste Restante) are excluded from the mid-text scan regex — a bare
- *   two-letter designator with no required number is exactly the false-positive shape ("Ms Smith")
- *   the AU matcher special-cases. the scan keeps only number-carrying forms.
+ *   Core stays codex-free. this module assembles the proposer's designator vocabulary from the
+ *   provenance-tracked `@mailwoman/codex` tables — USPS Pub-28 C2 secondary unit designators,
+ *   USPS PO-box designators, Australia Post amas delivery types, NZ Post ADV358 delivery-service types.
+ *   Which systems are loaded conditions the proposer's locale-dependent readings
+ *   (the AU/NZ `Flat 2/14` split exists only when those tables are present).
+ *
+ *   No entry here is hand-invented (the provenance-first rule): every token/pattern
+ *   derives from a codex table row.
+ *   AU `MS` (Mail Service) and the identifier-less counter types
+ *   (care PO, CMA, CPA, Counter Delivery, Poste Restante) are excluded from the mid-text scan regex —
+ *   a bare two-letter designator with no required number is exactly the false-positive shape
+ *   ("Ms Smith") the AU matcher special-cases. the scan keeps only number-carrying forms.
  */
 
-import { au, nz, us, type SystemCode } from "@mailwoman/codex"
+import type { SystemCode } from "@mailwoman/codex"
+import { AU_DELIVERY_SERVICE_DESIGNATORS } from "@mailwoman/codex/au/delivery/service"
+import { NZ_DELIVERY_SERVICE_TYPES } from "@mailwoman/codex/nz/delivery-service"
+import { US_PO_BOX_DESIGNATORS } from "@mailwoman/codex/us/po-box"
+import { US_UNIT_DESIGNATOR_VARIANTS, type USUnitDesignator } from "@mailwoman/codex/us/unit/designator"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
@@ -98,7 +104,7 @@ function phraseToPattern(phrase: string): string {
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
 	// Venue-interior designators (WOF placetypes + OSM aeroway) join the unit vocabulary
-	// unconditionally: unlike the postal tables above they are not a property of any mail
+	// unconditionally: unlike the postal tables above they're not a property of any mail
 	// system, so keying them on a codex `system` would make "Terminal 5" parse in the US
 	// and not in the UK for no reason anyone could defend.
 	// The formatter still renders through Pub 28.
@@ -110,8 +116,8 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	const deliveryPhrases = new Set<string>()
 
 	if (sys.has("us")) {
-		for (const canonical of Object.keys(us.US_UNIT_DESIGNATOR_VARIANTS)) {
-			const variants = [canonical, ...us.US_UNIT_DESIGNATOR_VARIANTS[canonical as us.USUnitDesignator]]
+		for (const canonical of Object.keys(US_UNIT_DESIGNATOR_VARIANTS)) {
+			const variants = [canonical, ...US_UNIT_DESIGNATOR_VARIANTS[canonical as USUnitDesignator]]
 			const target = LEVEL_CANONICALS.has(canonical) ? levelDesignators : unitDesignators
 
 			for (const v of variants) {
@@ -123,13 +129,13 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 			}
 		}
 
-		for (const phrase of us.US_PO_BOX_DESIGNATORS) {
+		for (const phrase of US_PO_BOX_DESIGNATORS) {
 			deliveryPhrases.add(phrase)
 		}
 	}
 
 	if (sys.has("au")) {
-		for (const row of au.AU_DELIVERY_SERVICE_DESIGNATORS) {
+		for (const row of AU_DELIVERY_SERVICE_DESIGNATORS) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.abbreviation)) continue
 
 			if (!row.requiresNumber) continue
@@ -139,7 +145,7 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	}
 
 	if (sys.has("nz")) {
-		for (const row of nz.NZ_DELIVERY_SERVICE_TYPES) {
+		for (const row of NZ_DELIVERY_SERVICE_TYPES) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.type)) continue
 
 			if (row.identifier === "not-used") continue

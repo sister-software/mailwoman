@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes and checks the preflight receipt: the file a CPU preflight leaves once every audit a config declares has
- *   passed, and which a GPU run requires before it trains.
+ *   Writes and checks the preflight receipt: the file a CPU preflight leaves once every
+ *   audit a config declares has passed, and which a GPU run requires before it trains.
  *
- *   `key` prints the receipt key for a config and corpus. `write` writes the receipt for the audits selected with
- *   `--audit <name>=<report path>` and prints its key, the token the GPU run presents. `verify` refuses unless the
- *   token is this config and corpus's key and the receipt records a pass for each `--require <name>`.
+ *   `key` prints the receipt key for a config and corpus.
+ *   `write` writes the receipt for the audits selected with `--audit <name>=<report path>`
+ *   and prints its key, the token the GPU run presents.
+ *
+ *   `verify` refuses unless the token is this config and corpus's key and the
+ *   receipt records a pass for each `--require <name>`.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/audits/preflight.run.ts key --config <yaml> --corpus-dir <dir>

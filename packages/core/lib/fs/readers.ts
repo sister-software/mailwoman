@@ -31,11 +31,11 @@ export type { FileHandle } from "node:fs/promises"
  * That size is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.
- * @throws Enoent when the file does not exist.
+ * @throws Enoent when the file doesn't exist.
  */
 export async function readFileHead(path: PathBuilderLike, byteSize: number): Promise<string> {
 	// `try`/`finally` rather than `await using`: this module is on the Docusaurus config loader's import path.
-	// Its transform does not parse explicit resource management.
+	// Its transform doesn't parse explicit resource management.
 	const handle = await open(path, "r")
 
 	try {
@@ -59,7 +59,7 @@ export async function readFileHead(path: PathBuilderLike, byteSize: number): Pro
  * The count can be smaller than the requested size.
  * The result is shorter than `length` at end of file.
  *
- * @throws Enoent when the file does not exist.
+ * @throws Enoent when the file doesn't exist.
  */
 export async function readFileRange(path: PathBuilderLike, offset: number, length: number): Promise<Buffer> {
 	const handle = await open(path.toString(), "r")
@@ -129,8 +129,8 @@ export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}
 /**
  * Read a local JSON file.
  *
- * This parser is strict: a file that is not JSON throws here rather than
- * returning `undefined` several frames later.
+ * This parser is strict: a file that's not JSON throws here rather than returning
+ * `undefined` several frames later.
  *
  * @category Files
  * @runtime node
@@ -150,9 +150,9 @@ export function readLocalJSONFile<
 }
 
 /**
- * Read a local JSON file, answering `null` when the file does not exist.
+ * Read a local JSON file, answering `null` when the file doesn't exist.
  *
- * This parser is strict: a file that is not JSON throws here rather than
+ * This parser is strict: a file that's not JSON throws here rather than
  * returning `null` several frames later.
  *
  * @category Files

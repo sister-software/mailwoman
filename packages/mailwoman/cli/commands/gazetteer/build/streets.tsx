@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build streets` — the street table, merged streets and their crossings tied to the gazetteer's
- *   places, from a road network source. Sealed 0444.
+ *   `mailwoman gazetteer build streets` — the street table, merged streets and their
+ *   crossings tied to the gazetteer's places, from a road network source.
+ *   Sealed 0444.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -21,7 +23,7 @@ export const spec = {
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/streets-gb-os-open-roads.db" },
 		input: {
 			type: "string",
-			description: "Directory of Open Roads GML. Default <data-root>/corpus/sources/gb-os-open/open-roads/data",
+			description: "Directory of Open Roads GML. Default <cache-root>/sources/gb-os-open/open-roads/data",
 		},
 		boundaries: { type: "string", description: "Boundary file. Default <data-root>/db/wof/wof-polygons.db" },
 	},
@@ -29,13 +31,20 @@ export const spec = {
 
 const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetTable } = await import("@mailwoman/gazetteer/tools/pipeline/streets")
-		const { readOpenRoadsEdges } = await import("@mailwoman/gazetteer/tools/pipeline/streets/gb-os-open-roads")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			streets: { buildStreetTable },
+			gbOsOpenRoads: { readOpenRoadsEdges },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			streets: import("@mailwoman/gazetteer/tools/pipeline/streets"),
+			gbOsOpenRoads: import("@mailwoman/gazetteer/tools/pipeline/streets/gb-os-open-roads"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
+
 		const out = options.out ?? wofDatabasePath("streets-gb-os-open-roads.db")
 
 		const counts = await buildStreetTable({
-			edges: readOpenRoadsEdges(options.input ?? dataRootPath("corpus/sources/gb-os-open/open-roads/data")),
+			edges: readOpenRoadsEdges(options.input ?? currentSourcePath("gb-os-open", "open-roads", "data")),
 			countries: ["GB"],
 			boundariesPath: options.boundaries ?? wofDatabasePath("wof-polygons.db"),
 			out,

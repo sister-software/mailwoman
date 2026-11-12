@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The countries whose addresses number a building inside a settlement, estate, block or neighborhood that has no
- *   street, so a house number in a parse with no street belongs under the dependent locality or the locality.
+ *   The countries whose addresses number a building inside a settlement, estate,
+ *   block or neighborhood that has no street, so a house number in a parse with no
+ *   street belongs under the dependent locality or the locality.
  *
- *   The address tree's containment rule reads this table. Outside these countries a house number's only parents are
- *   a street and a `locality_unit`, and a number with neither stays a root.
+ *   The address tree's containment rule reads this table.
+ *   Outside these countries a house number's only parents are a street
+ *   and a `locality_unit`, and a number with neither stays a root.
  */
 
 import type { ComponentTag } from "#component"
@@ -71,7 +73,7 @@ export const CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES: Readonly<Record<string, st
  * Whether a country's addresses number a building inside a settlement that has no street.
  *
  * Only a country with a cited source is listed. #2880 records, for each country whose held-out
- * suite rows show the form, the source that admitted it or the documents that did not show it.
+ * suite rows show the form, the source that admitted it or the documents that didn't show it.
  */
 export function numbersHousesInSettlements(country: string | null | undefined): boolean {
 	return typeof country === "string" && Object.hasOwn(CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES, country.toUpperCase())

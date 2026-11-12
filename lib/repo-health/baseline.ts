@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one mutation this package performs is not a check: rewriting `baseline.json` after a reviewed reduction, called only by `mwops health baseline debt`.
+ *   The one mutation this package performs isn't a check: rewriting `baseline.json`
+ *   after a reviewed reduction, called only by `mwops health baseline debt`.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

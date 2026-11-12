@@ -1,0 +1,87 @@
+---
+title: Install the Mailwoman skill for Claude Code
+description: Install, verify, update, and restore the packaged Mailwoman project skill without losing local edits.
+role: guide
+verified-with: mailwoman v11.0.0, Claude Code v2.1.319
+---
+
+# Install the Mailwoman skill for Claude Code
+
+The published `mailwoman@11.0.0` package contains `skills/mailwoman/SKILL.md`. Its `mailwoman skill install` command copies that directory into a project's <code>.claude/skills/mailwoman/</code> directory. [Claude Code's project-skill documentation](https://code.claude.com/docs/en/skills#choose-where-skills-load) identifies that location as a project skill. This procedure was tested with npm 11.19.1 and Claude Code 2.1.319 in a disposable project directory, where Claude Code skill validation passed. That test covered installation and validation, and interactive skill use remains untested.
+
+The installer **removes the entire destination skill directory before copying the packaged version**. It doesn't merge local edits and has no built-in rollback command. Back up an existing <code>.claude/skills/mailwoman/</code> directory before either installation or update. The published 11.0.0 skill also gives confidence-calibration advice based on older artifacts. Its bundled `calibration.json` identifies model version 5.3.0, while the published en-US model card identifies model 10.8.0. Use the [confidence and limits explanation](../explanation/confidence-and-limits.mdx) for score decisions.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+- A project that runs Claude Code.
+
+Run the commands from that project's root. Install the pinned package when the project lacks it:
+
+```bash
+npm install mailwoman@11.0.0
+```
+
+If <code>.claude/skills/mailwoman/</code> already exists, save its current contents before running the installer. The block stops without copying if an earlier backup already exists:
+
+```bash
+if test -d .claude/skills/mailwoman && test ! -e .claude/skills/mailwoman.before-update; then
+	cp -R .claude/skills/mailwoman .claude/skills/mailwoman.before-update
+else
+	printf '%s\n' 'Backup stopped: skill missing or backup path occupied.' >&2
+	false
+fi
+```
+
+Skip those backup commands on a first install, when <code>.claude/skills/mailwoman/</code> doesn't exist. Keep the backup until you've checked the replacement. A failed copy can leave the destination absent because removal happens first.
+
+## 1. Install the packaged skill
+
+From the project root, run the installed 11.0.0 CLI:
+
+```bash
+npx --no-install mailwoman skill install --dest "$PWD"
+```
+
+`--dest` takes a project directory. The command writes to that directory's <code>.claude/skills/mailwoman/</code> directory, regardless of the command's current working directory. In the disposable test directory, it exited 0 and reported `PASS (1/1 checks)` with the installed path. The destination contained one file, `SKILL.md`.
+
+## 2. Verify the copy
+
+Check that the file exists and matches the copy in the installed package:
+
+```bash
+test -s .claude/skills/mailwoman/SKILL.md
+cmp node_modules/mailwoman/skills/mailwoman/SKILL.md .claude/skills/mailwoman/SKILL.md
+```
+
+Both commands exited 0 in the disposable test. The installed file begins with `name: mailwoman` and a description of parsing, geocoding, validation, setup, and bug reporting. If Claude Code 2.1.233 or later is available, validate the project skill directory:
+
+```bash
+claude plugin validate .claude/skills
+```
+
+Claude Code 2.1.319 printed `Validation passed` for the disposable installation. Validation checks the skill's structure. It doesn't verify the Mailwoman advice against the current model or run the skill in an interactive session. Claude Code can load the project skill in sessions started in that project. Commit the reviewed skill file if the project should share it with other contributors.
+
+## 3. Update or restore it
+
+After upgrading the project's `mailwoman` package, back up the existing skill as shown in Prerequisites, then rerun the install and verification commands. The installer copies the skill from the version currently installed in `node_modules/mailwoman`. A test reinstall removed a locally added file from the destination and restored `SKILL.md` to the packaged bytes. Review local edits before deciding whether to reapply them.
+
+If the replacement is unsuitable, restore the saved directory from the project root. The following block moves the skill only when <code>.claude/skills/mailwoman.before-update/</code> exists and <code>.claude/skills/mailwoman.updated/</code> is free:
+
+```bash
+if test -d .claude/skills/mailwoman.before-update && test ! -e .claude/skills/mailwoman.updated; then
+	if test -e .claude/skills/mailwoman; then
+		mv .claude/skills/mailwoman .claude/skills/mailwoman.updated
+	fi
+	mv .claude/skills/mailwoman.before-update .claude/skills/mailwoman
+else
+	printf '%s\n' 'Restore stopped: backup missing or updated path occupied.' >&2
+	false
+fi
+```
+
+When a replacement exists, the commands keep it in <code>.claude/skills/mailwoman.updated/</code> for inspection. The saved skill returns to Claude Code's project path when the replacement exists or a failed copy left it absent. The disposable rollback restored an edited `SKILL.md` and a locally added file. The absent-destination test also restored the saved file. These commands move only the project skill directories. They leave the installed npm package in place.
+
+## What the skill covers
+
+The packaged file describes `mailwoman doctor`, a parse call, geocoding setup, and the fields to include in a bug report. It supplies instructions to Claude Code rather than an executable Mailwoman tool. [Report a problem](./report-a-problem.mdx) gives the current reporting procedure. Its confidence paragraph cites an older score study and has the calibration mismatch described at the top of this guide, so treat that paragraph as unverified for release 11.0.0.

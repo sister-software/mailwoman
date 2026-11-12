@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Read selected Overture Places categories from `poi.db` and return candidate sub-venue names with
- * country and category provenance.
+ * Read selected Overture Places categories from `poi.db` and return candidate
+ * sub-venue names with country and category provenance.
  *
- * `poi.db` covers four countries — US, CA, FR and MX — so a zero count here is absence in four countries rather
- * than evidence of absence in the world. Every non-Latin designator comes from the OSM leg.
+ * `poi.db` covers four countries — US, CA, FR and MX — so a zero count here is absence
+ * in four countries rather than evidence of absence in the world.
+ * Every non-Latin designator comes from the OSM leg.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

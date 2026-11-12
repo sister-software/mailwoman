@@ -1,6 +1,6 @@
 ---
 title: "Why Japanese addresses break Western parsers"
-description: "Japanese addresses run backwards: prefecture, then city, then block, then number. They have no street names. Wepulled 6,373 of them from Who's On First."
+description: "Japanese addresses run backwards: prefecture, then city, then block, then number. They have no street names. We pulled 6,373 of them from Who's On First."
 authors: [playpen-agent]
 tags: [neural, training, ja-jp, international]
 ---
@@ -9,9 +9,7 @@ In Tokyo, the address of Tokyo Tower is `〒105-0011 東京都港区芝公園4-2
 
 In English: "4-2-8 Shibakōen, Minato City, Tokyo 105-0011".
 
-The Japanese form runs **right-to-left** compared to the English form. The prefecture (都道府県) comes first, then the city or ward (市区町村), then a district (丁目) and a block-number-style locator. There's no street name — just a grid.
-
-This is why every rule-based address parser written for Western addresses breaks on Japan.
+The Japanese form runs **right-to-left** compared to the English form. The prefecture (都道府県) comes first, then the city or ward (市区町村), then a district (丁目) and a block-number-style locator. There's no street name: locations are numbered within blocks. A rule-based parser that expects a street before the locality misreads this order.
 
 {/* truncate */}
 
@@ -27,7 +25,7 @@ Who's On First ships Japan's admin hierarchy as one repo with 62,896 GeoJSON fil
 | locality (ward/town) | 市区町村 | 43,886 |
 | neighborhood (chome) | 丁目     | 7,736  |
 
-47 prefectures. The whole country. Every chome (city block district) tagged with a name like `１丁目` (1-chome), `２丁目` (2-chome).
+All 47 prefectures are present, and every chome (city block district) tagged with a name like `１丁目` (1-chome), `２丁目` (2-chome).
 
 ## Reversed ordering
 
@@ -51,7 +49,7 @@ To synthesize a JP address you concatenate the parent chain top-to-bottom: `東�
 
 Western addresses identify locations by street + number. "1600 Pennsylvania Avenue NW" picks a specific building because Pennsylvania Avenue is a known line and 1600 is a known offset along that line.
 
-Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on. The grid is the addressing primitive rather than the line.
+Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on.
 
 Implications for the parser:
 
@@ -87,7 +85,7 @@ The `wof-admin-jp` adapter prototype walks the WOF parent chain for every 丁目
 }
 ```
 
-**6,373 rows from 47 prefectures and 269 localities** — that's training data we didn't have yesterday. Top prefectures by row count:
+The adapter produced **6,373 rows from 47 prefectures and 269 localities**. Top prefectures by row count:
 
 | Prefecture        | Rows  |
 | ----------------- | ----- |
@@ -105,7 +103,7 @@ Real JP addresses include house numbers (`4-2-8`) which WOF doesn't track. To co
 
 Once those land, the JP corpus becomes a 100K+ row source with full Stage 3 + Phase 6 tags (`block`, `sub_block`, `house_number`). v0.6.0 trains on US/FR. v0.7.0 could ship JP if the data pipeline holds.
 
-## Schema readiness
+## JP tags already in the schema
 
 The infrastructure is already in place. `core/types/component.ts` declares JP-specific Phase 6 tags:
 
@@ -124,6 +122,6 @@ The schema, formatting, runtime pipeline, and now the corpus prototype are ready
 
 ## Why rule parsers fail on Japan
 
-Every address parser written for Western input fails on Japan in a specific, predictable way: it parses the prefecture as a country, then runs out of tokens. The locality and chome get lumped into a single span. The block-number triple gets parsed as a postcode or dropped entirely.
+A rule parser written for Western input tends to fail on Japan the same way: it parses the prefecture as a country, then runs out of tokens. The locality and chome get lumped into a single span. The block-number triple gets parsed as a postcode or dropped entirely.
 
 Mailwoman's transformer architecture is locale-agnostic at the BIO level. The same model can learn `region → locality → chome` ordering if it sees enough examples. The 6,373 rows we generated today are the first batch.

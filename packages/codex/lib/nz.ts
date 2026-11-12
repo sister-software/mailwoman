@@ -3,8 +3,9 @@
 
 /**
  *   The New Zealand address system (NZ Post / ISO 3166-2:NZ. ADV358 Address Standards):
- *   delivery-service types (PO Box, Private Bag, CMB, Response Bag, Counter Delivery, Poste
- *   Restante) and the 4-digit postcode. NZ addresses have no state/region line.
+ *   delivery-service types (PO Box, Private Bag, CMB, Response Bag, Counter Delivery, Poste Restante)
+ *   and the 4-digit postcode.
+ *   NZ addresses have no state/region line.
  */
 
 export * from "#nz/delivery-service"

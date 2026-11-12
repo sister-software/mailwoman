@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build polygons` — the boundary file, one simplified polygon per place the gazetteer holds, from
- *   the Who's On First clones. Sealed 0444.
+ *   `mailwoman gazetteer build polygons` — the boundary file, one simplified polygon
+ *   per place the gazetteer holds, from the Who's On First clones.
+ *   Sealed 0444.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

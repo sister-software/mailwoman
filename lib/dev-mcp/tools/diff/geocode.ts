@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The `mwdev_diff_geocode` tool definition. The diff itself is `mailwoman/geocode`'s `diffGeocode`, and this file's
- * job is to put the attribution in front of the distance.
+ * The `mwdev_diff_geocode` tool definition.
+ *
+ * The diff itself is `mailwoman/geocode`'s `diffGeocode`, and this file's job is
+ * to put the attribution in front of the distance.
  */
 
 import { diffGeocode, type GeocodeArm, type GeocodeRun, renderGeocodeDiff } from "mailwoman/geocode"
@@ -62,7 +64,7 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 		const locale = args["locale"] as string | undefined
 		const changesOnly = args["changes_only"] !== false
 
-		const arms = await acquireTwoArms(deps.registry, { locale, weightsCache })
+		using arms = await acquireTwoArms(deps.registry, { locale, weightsCache })
 
 		if (arms.error) return arms.error
 

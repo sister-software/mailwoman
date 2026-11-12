@@ -3,9 +3,11 @@
 
 /**
  *   `@mailwoman/un-locode-lookup` — place → UN/locode (unece Code for Trade and Transport Locations).
- *   Two ways in: by country + place name (exact, diacritic-folded), or by nearest coordinate (for
- *   the ~⅓ of entries that have one). Backed by a `node:sqlite` table built from the unece code
- *   list. An `@mailwoman/annotations` `Annotator`.
+ *
+ *   Two ways in: by country + place name (exact, diacritic-folded), or by nearest
+ *   coordinate (for the ~⅓ of entries that have one).
+ *   Backed by a `node:sqlite` table built from the unece code list.
+ *   An `@mailwoman/annotations` `Annotator`.
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"

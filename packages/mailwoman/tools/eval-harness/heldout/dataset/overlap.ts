@@ -2,30 +2,47 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Audits a held-out dataset against the training and development data of the compared models. The audit assigns
- *   each row `known_overlap`, `verified_unseen`, `unseen_by_candidate` or `unknown` for
- *   `heldout/per/country.run.ts --provenance`. A row is `unseen_by_candidate` when the candidate model card is listed,
- *   the audit reads its corpus and finds no match, and the row is not `verified_unseen`. The published model trained
- *   on the row or its history is unestablished. Release minimum checks may read these rows.
+ *   Audits a held-out dataset against the training and development data of the compared models.
  *
- *   DuckDB reads the train and val files from each corpus manifest and projects only `source`, `source_id` and
- *   `base_source_id`. A training row overlaps a held-out row when their identities (`<source>:<source_id>`) or groups
- *   match. The group is `base_source_id`, when present, or `source_id` read up to the last `#`, as
- *   `heldoutRowGroup` defines it. Rows derived from the same base row therefore count as overlaps. The audit lists and
- *   skips test files. It reads a file assigned to a split by an attribute file in full, then excludes rows that the
- *   attribute assigns to `test`.
+ *   The audit assigns each row `known_overlap`, `verified_unseen`, `unseen_by_candidate`
+ *   or `unknown` for `heldout/per/country.run.ts --provenance`.
+ *   A row is `unseen_by_candidate` when the candidate model card is listed, the audit
+ *   reads its corpus and finds no match, and the row isn't `verified_unseen`.
  *
- *   The audit refuses a partial read: a missing file, a file lacking an id column, a row count that differs
- *   from the manifest's record, an attribute file whose sha256 differs, or a file entry with no split throws,
- *   naming the file. A row is `verified_unseen` only when no corpus read contains it and each model card's
- *   model card's `training.corpus_version` identifies a corpus that was read. For a model whose card does not
- *   record its corpus, the caller passes its training config instead. The config's `data.corpus_dir` must then
- *   identify a corpus that was read. Otherwise a row without overlap is `unknown`, and the audit records why.
+ *   The published model trained on the row or its history is unestablished.
+ *   Release minimum checks may read these rows.
  *
- *   Limits: overlap is decided by identity and group. The audit never compares text. A training row holding
- *   the same address text under another source or id goes undetected. A model card records the corpus of its
- *   final training run only. A card that records an `init_from`, or a config that sets `train.init_from`, is
- *   refused for `verified_unseen`, because the ancestry's corpora are unrecorded.
+ *   DuckDB reads the train and val files from each corpus manifest and projects
+ *   only `source`, `source_id` and `base_source_id`.
+ *   A training row overlaps a held-out row when their identities (`<source>:<source_id>`) or groups match.
+ *
+ *   The group is `base_source_id`, when present, or `source_id` read up to the last `#`,
+ *   as `heldoutRowGroup` defines it.
+ *   Rows derived from the same base row therefore count as overlaps.
+ *
+ *   The audit lists and skips test files.
+ *   It reads a file assigned to a split by an attribute file in full,
+ *   then excludes rows that the attribute assigns to `test`.
+ *
+ *   The audit refuses a partial read: a missing file, a file lacking an id column,
+ *   a row count that differs from the manifest's record, an attribute file whose sha256
+ *   differs, or a file entry with no split throws, naming the file.
+ *   A row is `verified_unseen` only when no corpus read contains it and each model card's
+ *   model card's `training.corpus_version` identifies a corpus that was read.
+ *
+ *   For a model whose card doesn't record its corpus, the caller passes its training config instead.
+ *   The config's `data.corpus_dir` must then identify a corpus that was read.
+ *
+ *   Otherwise a row without overlap is `unknown`, and the audit records why.
+ *
+ *   Limits: overlap is decided by identity and group.
+ *   The audit never compares text.
+ *
+ *   A training row holding the same address text under another source or id goes undetected.
+ *   A model card records the corpus of its final training run only.
+ *
+ *   A card that records an `init_from`, or a config that sets `train.init_from`,
+ *   is refused for `verified_unseen`, because the ancestry's corpora are unrecorded.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -62,7 +79,7 @@ export interface OverlapFileRecord {
 	sha256: string | null
 	sha256Verified: boolean
 	/**
-	 * Rows the split attribute assigned to `test` and the audit therefore did not count as training data.
+	 * Rows the split attribute assigned to `test` and the audit therefore didn't count as training data.
 	 */
 	excludedTestRows?: number
 	/**
@@ -89,7 +106,7 @@ export const OverlapModelSource = {
 	ModelCard: "model-card",
 	/**
 	 * The training config's `data.corpus_dir` and `train.init_from`, for a model
-	 * whose card does not record its corpus.
+	 * whose card doesn't record its corpus.
 	 */
 	TrainingConfig: "training-config",
 } as const
@@ -159,7 +176,7 @@ async function loadKeys(db: Awaited<ReturnType<typeof openDuckDB>>, table: strin
 /**
  * The corpus read whose `corpus_version` a model's recorded corpus names, or `null`.
  *
- * A card or config names its corpus as `v<version>` (the training-manifest key)
+ * A card or config identifies its corpus as `v<version>` (the training-manifest key)
  * while a MANIFEST.json records `<version>`.
  */
 function corpusReadAs(corpusVersion: string, corporaRead: ReadonlySet<string>): string | null {
@@ -229,7 +246,7 @@ async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Pr
  * Reads one training config's corpus identity: `data.corpus_dir`'s version and
  * whether `train.init_from` is set.
  *
- * @throws {TrainingConfigError} When the config does not load as the trainer loads it.
+ * @throws {TrainingConfigError} When the config doesn't load as the trainer loads it.
  */
 async function readTrainingConfigCorpus(
 	path: string,

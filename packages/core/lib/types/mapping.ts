@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Bridge between Mailwoman's legacy `Classification` set (40+ internal labels including
- *   non-component states like `alpha`, `numeric`, `stop_word`) and the canonical `ComponentTag`
- *   schema used by the neural classifier.
+ *   Bridge between Mailwoman's legacy `Classification` set
+ *   (40+ internal labels including non-component states like `alpha`, `numeric`, `stop_word`)
+ *   and the canonical `ComponentTag` schema used by the neural classifier.
  *
  *   The parity-fixture converter in `packages/mailwoman/lib/dev-tools` reads
- *   `legacyClassificationToComponentTag` to translate a `Classification`-keyed golden row into a
- *   `ComponentTag`-keyed eval fixture.
+ *   `legacyClassificationToComponentTag` to translate a `Classification`-keyed
+ *   golden row into a `ComponentTag`-keyed eval fixture.
  *
- *   Not every legacy classification maps to a `ComponentTag`. Internal states (`alpha`, `area`,
- *   `start_token`, etc.) return `null`, and the converter records the row as dropped.
+ *   Not every legacy classification maps to a `ComponentTag`.
+ *   Internal states (`alpha`, `area`, `start_token`, etc.) return `null`,
+ *   and the converter records the row as dropped.
  *
- *   Intersection handling is coarse: the legacy `intersection` tag becomes `intersection_a`, because
- *   the legacy label contains no position that would distinguish `intersection_a` from
- *   `intersection_b`.
+ *   Intersection handling is coarse: the legacy `intersection` tag becomes `intersection_a`, because the
+ *   legacy label contains no position that would distinguish `intersection_a` from `intersection_b`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the one reader of
- *   the dev/release weights recipe.
+ *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths —
+ *   the one reader of the dev/release weights recipe.
  *
- *   Each key has its own base directory. The JSON does not record that choice. The model and tokenizer
- *   resolve against the data root. Three of the four lexicons resolve against the repo. They are
- *   generated and committed. `localitySurfaceLexicon` resolves against the data root because it is built.
- *   The postcode databases resolve under the data root's `wof/`. A reader that guessed one rule would
- *   silently resolve four of the seven artifact classes to nonexistent paths.
+ *   Each key has its own base directory.
+ *   The JSON doesn't record that choice.
+ *
+ *   The model and tokenizer resolve against the data root.
+ *   Three of the four lexicons resolve against the repo.
+ *
+ *   They're generated and committed.
+ *   `localitySurfaceLexicon` resolves against the data root because it is built.
+ *
+ *   The postcode databases resolve under the data root's `wof/`.
+ *   A reader that guessed one rule would silently resolve four of the seven
+ *   artifact classes to nonexistent paths.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -50,7 +57,7 @@ export interface BuildableArtifact {
 	inputPath: string
 	/**
 	 * The CLI verb that produces `shippedName` from `inputPath`, for a consumer
-	 * that reports what it did not build.
+	 * that reports what it didn't build.
 	 */
 	buildCommand: string
 }
@@ -155,8 +162,8 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts`
-		// does not ship them, so their absence is not a lean install.
+		// The FSTs are DEV-only: `release.config.json` doesn't name them and `copy-weights.ts`
+		// doesn't ship them, so their absence isn't a lean install.
 		// It silently resolves the gazetteer and street-context priors off, a scoring change with no error.
 		out.push(
 			{

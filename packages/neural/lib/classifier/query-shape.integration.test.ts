@@ -4,8 +4,8 @@
 /**
  *   Integration test for the QueryShape soft-prior path in `NeuralAddressClassifier.parse()`.
  *
- *   Uses a fake `NeuralRunner` so the test runs in milliseconds without a real model file. Pins
- *   specific logit shapes and verifies the queryShape opt nudges the Viterbi decoder's choices.
+ *   Uses a fake `NeuralRunner` so the test runs in milliseconds without a real model file.
+ *   Pins specific logit shapes and verifies the queryShape opt nudges the Viterbi decoder's choices.
  */
 
 import { walkNodes } from "@mailwoman/core/decoder"

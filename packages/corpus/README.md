@@ -64,7 +64,7 @@ the same pattern. Public subpaths use this same locale-first layout.
 ## Build-time tooling
 
 Every entry point is a `mailwoman` command. This package has no `scripts/` directory, and the
-`no-root-scripts` health check refuses a path that names one.
+`no-root-scripts` health check refuses a path that identifies one.
 
 ```bash
 # Build one recipe's output
@@ -72,7 +72,18 @@ mailwoman corpus recipe boundary-stress --count 10000 --out /tmp/boundary-stress
 
 # Acquire a source named in the fetch registry
 mailwoman corpus fetch geonames-postal
+
+# Acquire one vintage of a snapshot source, replacing it if it is already on disk
+mailwoman corpus fetch juso-kr --vintage 2026-08 --force
 ```
+
+Each source directory has a storage class, recorded in `lib/tools/fetch/storage.ts`. A current
+source is written under `$MAILWOMAN_CACHE_ROOT/sources/<source>/`, and a fetch brings it up to date in place.
+A snapshot, one dated vintage that's read-only once written, is written under
+`$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`. The fetcher resolves the vintage from the
+publisher, such as the date in a file's name, and refuses to replace a vintage on disk unless the
+command states it with `--vintage` and passes `--force`. `--out-root <dir>` writes both classes under
+one root instead.
 
 ## Design
 
@@ -132,7 +143,7 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 ## The address-source register
 
 `data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
-jurisdictions exist, what research has resolved for each, and what is known about every source's
+jurisdictions exist, what research has resolved for each, and what's known about every source's
 terms. It is a backlog made checkable: **twenty-nine rows of 426 are ingest-eligible today**, and
 `ingestEligibilityProblems()` answers for the other 397 with the reasons rather than a bare `false`.
 
@@ -149,7 +160,7 @@ and the three fields no row resolved.
 
 The research pass recorded eight global discovery lookups once per jurisdiction — 2,000 of the
 2,389 rows it produced, collapsing to eight distinct bodies. They name a lookup to perform rather
-than a national source, so they are this procedure and not register rows. Work them in order for a
+than a national source, so they're this procedure and not register rows. Work them in order for a
 jurisdiction the register calls `unexamined`, and promote what you resolve into a source row.
 
 | Sector               | Lookup                                                                                                                                         |

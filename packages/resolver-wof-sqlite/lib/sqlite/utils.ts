@@ -67,7 +67,7 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
  * at construction and leave the column out of their queries when it is missing.
  * Avoid calling it per query, because it runs a pragma.
  *
- * The pragma does not accept bound parameters, so `table` is interpolated into the SQL.
+ * The pragma doesn't accept bound parameters, so `table` is interpolated into the SQL.
  * Pass only constants.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {

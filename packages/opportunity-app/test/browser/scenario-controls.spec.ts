@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Item 4 of #2289: "Scenario controls update investment, value, evidence, dates, and assumptions." Each case
- *   changes one control with Example Buildings A, B and C selected. The test builds the changed scenario itself,
- *   asks `selectionEconomics` for its figures, and compares every displayed figure with them. When the model
- *   refuses the changed scenario, the page must show the refusal's message in place of figures.
+ *   Item 4 of #2289: "Scenario controls update investment, value, evidence, dates, and assumptions."
  *
- *   The two evidence controls also change each building's state and denominator, and each district's sums, so
- *   those cases compare the building list and the district table with `buildingFeatures` and `districtFeatures`.
+ *   Each case changes one control with Example Buildings A, B and C selected.
+ *   The test builds the changed scenario itself, asks `selectionEconomics` for its figures,
+ *   and compares every displayed figure with them.
+ *
+ *   When the model refuses the changed scenario, the page must show the refusal's
+ *   message in place of figures.
+ *
+ *   The two evidence controls also change each building's state and denominator,
+ *   and each district's sums, so those cases compare the building list and the
+ *   district table with `buildingFeatures` and `districtFeatures`.
  */
 
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"

@@ -4,38 +4,41 @@
 /**
  * Fetch Denmark's INSPIRE Addresses GeoPackage for the `dk-inspire` adapter.
  *
- * Denmark is one of the member states that serves the Addresses (AD) theme as a predefined-dataset
- * ATOM feed rather than as a WFS, so `#tools/fetch/inspire-addresses` — which pages a WFS and joins
- * its feature types locally — does not reach it. This module reads the feed, downloads the one
- * dataset it offers and extracts the GeoPackage.
+ * Denmark is one of the member states that serves the Addresses (AD) theme as a
+ * predefined-dataset ATOM feed rather than as a WFS, so `#tools/fetch/inspire-addresses` —
+ * which pages a WFS and joins its feature types locally — doesn't reach it.
+ * This module reads the feed, downloads the one dataset it offers and extracts the GeoPackage.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
- * not declare.
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`, so this module sits beside `#fr/tools/fetch/ban`
+ * rather than in an `sdk/` root the workspace doesn't declare.
  *
- * Klimadatastyrelsen states CC BY 4.0 for this theme, and the address-source register elects it. The
- * model card must attribute Klimadatastyrelsen.
+ * Klimadatastyrelsen states CC BY 4.0 for this theme, and the address-source register elects it.
+ * The model card must attribute Klimadatastyrelsen.
  *
  * Five properties of this host were measured, and each one breaks a reader that assumes otherwise:
  *
- * 1. `content-length` on the feed is the gzip-compressed length. The header reports 1,455 while 3,130
- *    bytes are delivered, so a reader that trusts it truncates the feed. Every byte count here is
- *    counted off the delivered body.
- * 2. The entry's `rel="alternate"` href is a Wing FTP weblink landing page, HTTP 200 `text/html`,
- *    3,811 bytes. The file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended. That query answers
- *    HTTP 200 `application/zip`.
- * 3. The host ignores `Range`. `bytes=0-4095` answers HTTP 200 with no `content-range` and the whole
- *    101 MB body, so the one-byte range GET that sizes an OpenAddresses source cannot be used here.
- * 4. The entry's own `length="4291699"` understates the real 101,406,038 bytes by 23 times. The
- *    download is never sized from the feed.
+ * 1. `content-length` on the feed is the gzip-compressed length.
+ *    The header reports 1,455 while 3,130 bytes are delivered, so a reader
+ *    that trusts it truncates the feed.
+ *    Every byte count here is counted off the delivered body.
+ * 2. The entry's `rel="alternate"` href is a Wing FTP weblink landing page,
+ *    HTTP 200 `text/html`, 3,811 bytes.
+ *    The file needs `&realfilename=DK_INSPIRE_Addresses.zip` appended.
+ *    That query answers HTTP 200 `application/zip`.
+ * 3. The host ignores `Range`.
+ *    `bytes=0-4095` answers HTTP 200 with no `content-range` and the whole 101 MB body,
+ *    so the one-byte range GET that sizes an OpenAddresses source cannot be used here.
+ * 4. The entry's own `length="4291699"` understates the real 101,406,038 bytes by 23 times.
+ *    The download is never sized from the feed.
  * 5. The feed's `<updated>` is 2020-12-24 and the entry's 2022-10-06, both stale against the file's
- *    own 2026-09-27 modification date, so a freshness check cannot read the feed's timestamps. This
- *    module compares the downloaded zip's sha256 against its manifest instead.
+ *    own 2026-09-27 modification date, so a freshness check cannot read the feed's timestamps.
+ *    This module compares the downloaded zip's sha256 against its manifest instead.
  *
- * The linked OpenSearch description parameterises only `spatial_dataset_identifier_code`, `crs` and
- * `language`, and offers no spatial subsetting, so there is no way to fetch part of Denmark. The
- * feed holds one entry covering the whole country.
+ * The linked OpenSearch description parameterises only `spatial_dataset_identifier_code`, `crs`
+ * and `language`, and offers no spatial subsetting, so there's no way to fetch part of Denmark.
+ * The feed holds one entry covering the whole country.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -166,8 +169,8 @@ export async function readAddressesFeed(xml: string, feedURL: string): Promise<A
 /**
  * Name the zip member on a weblink URL, so the host serves the file instead of its landing page.
  *
- * A URL that already names one is answered unchanged, so a publisher that starts writing
- * the complete URL into the feed does not get the parameter twice.
+ * A URL that already identifies one is answered unchanged, so a publisher that starts
+ * writing the complete URL into the feed doesn't get the parameter twice.
  */
 export function datasetURLOf(href: string): string {
 	if (href.includes(`${REAL_FILENAME_PARAMETER}=`)) return href

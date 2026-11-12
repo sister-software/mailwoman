@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Error responses for the Workers. A Worker's own failure answers JSON with a status that identifies it, so a
- *   client can tell a refused request, an unavailable backend and a server fault apart without reading prose.
+ *   Error responses for the Workers.
+ *
+ *   A Worker's own failure answers JSON with a status that identifies it, so a client can tell
+ *   a refused request, an unavailable backend and a server fault apart without reading prose.
  */
 
 import { ResourceError } from "@mailwoman/core/errors"

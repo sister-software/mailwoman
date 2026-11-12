@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The street route's interface: the Worker answers it, and a browser reads it through {@linkcode RemoteStreetTable}.
+ *   The street route's interface: the Worker answers it, and a browser reads it
+ *   through {@linkcode RemoteStreetTable}.
+ *
  *   The tier below chooses one answer from the table's rows, the same way for every country.
  */
 

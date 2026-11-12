@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `runInvarianceSuite` takes an injectable `ParseFn`, so these tests run weightless in CI with a fake
- *   parser instead of a real model.
+ *   `runInvarianceSuite` takes an injectable `ParseFn`, so these tests run weightless
+ *   in CI with a fake parser instead of a real model.
  */
 
 import { describe, expect, it } from "vitest"
@@ -44,7 +44,7 @@ describe("loadSuite", () => {
 	})
 
 	it("every declared transform id is a real transform (no fixture typos)", async () => {
-		// `loadSuite` does not validate transform ids — `runInvarianceSuite` does — so exercising
+		// `loadSuite` doesn't validate transform ids — `runInvarianceSuite` does — so exercising
 		// it with a no-op parser makes a fixture typo fail here rather than in a grading run.
 		const rows = await loadSuite()
 		const noop: ParseFn = async (): Promise<Record<string, string>> => ({})
@@ -292,7 +292,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			},
 		]
 
-		// Transformed raws will not equal any original raw, so key on a token each row
+		// Transformed raws won't equal any original raw, so key on a token each row
 		// keeps under every transform, matched case-insensitively.
 		const localeByToken = new Map([
 			["montmartre", "fr-FR"],
@@ -386,13 +386,13 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		const commaDrop = result.results.find((o) => o.transformID === "comma-drop")!
 		expect(commaDrop.verdict).toBe("LOST")
 		expect(commaDrop.gainedCapability).toBe(true)
-		expect(commaDrop.preExisting).toBe(false) // not "the baseline also violates" — it could not
+		expect(commaDrop.preExisting).toBe(false) // not "the baseline also violates" — it couldn't
 
 		const caseFold = result.results.find((o) => o.transformID === "case-fold")!
 		expect(caseFold.verdict).toBe("DEGRADED")
 		expect(caseFold.gainedCapability).toBe(true)
 
-		// The register-flat tail does not touch the check: no row is new.
+		// The register-flat tail doesn't touch the check: no row is new.
 		expect(result.newCounts.lost).toBe(0)
 		expect(result.newCounts.degraded).toBe(0)
 		expect(result.pass).toBe(true)

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Base64url and UTF-8 on the web platform's own primitives, so the license key format has no `Buffer` in it and the
- *   same module runs under Node, a Cloudflare Worker and a browser.
+ *   Base64url and UTF-8 on the web platform's own primitives, so the license key format has
+ *   no `Buffer` in it and the same module runs under Node, a Cloudflare Worker and a browser.
  */
 
 export function toBase64URL(bytes: Uint8Array<ArrayBuffer>): string {

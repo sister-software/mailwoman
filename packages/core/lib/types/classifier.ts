@@ -4,10 +4,12 @@
 /**
  *   Interfaces between a classifier and the policy layer.
  *
- *   A classifier is pull-based and async: given a section of the input, it returns a list of
- *   `ClassificationProposal` objects keyed by the canonical `ComponentTag` union. The policy registry
- *   filters those proposals by component and locale. The decoder converts the survivors into an
- *   `AddressTree`. `@mailwoman/neural` provides the one classifier implementation.
+ *   A classifier is pull-based and async: given a section of the input, it returns a list
+ *   of `ClassificationProposal` objects keyed by the canonical `ComponentTag` union.
+ *   The policy registry filters those proposals by component and locale.
+ *
+ *   The decoder converts the survivors into an `AddressTree`.
+ *   `@mailwoman/neural` provides the one classifier implementation.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -142,7 +144,7 @@ export interface ProposalClassifier {
 	/**
 	 * Classify a section.
 	 *
-	 * Implementations must not throw.
+	 * Implementations mustn't throw.
 	 * They return an empty array on failure and log via the project logger.
 	 */
 	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>

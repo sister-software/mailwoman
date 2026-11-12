@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The volume spec every storage operation shares: which disk, mounted where and which subtrees opt out of
- *   compression.
+ *   The volume spec every storage operation shares: which disk, mounted where
+ *   and which subtrees opt out of compression.
  *
- *   btrfs compresses in 128 KiB extents while a SQLite page read is 4 KiB, so a random page read decompresses the
- *   whole extent. The retrieval databases are built once and then read randomly. That access pattern pays the
- *   amplification on every read, so they opt out through a btrfs property. The property leaves copy-on-write and
- *   checksums in place, where `chattr +C` drops both.
+ *   btrfs compresses in 128 KiB extents while a SQLite page read is 4 KiB,
+ *   so a random page read decompresses the whole extent.
+ *   The retrieval databases are built once and then read randomly.
  *
- *   One entry rather than a list of every directory that happens to hold a database. The property propagates to
- *   children created after it is set, at any depth, so a database written into `db/` next year is uncompressed
- *   without anyone remembering to extend a list. The flat alternative was already wrong when it was written: it
- *   listed eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
+ *   That access pattern pays the amplification on every read, so they opt out through a btrfs property.
+ *   The property leaves copy-on-write and checksums in place, where `chattr +C` drops both.
+ *
+ *   One entry rather than a list of every directory that happens to hold a database.
+ *   The property propagates to children created after it is set, at any depth, so a database
+ *   written into `db/` next year is uncompressed without anyone remembering to extend a list.
+ *
+ *   The flat alternative was already wrong when it was written: it listed eight directories
+ *   and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
  */
 
 import type { ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"

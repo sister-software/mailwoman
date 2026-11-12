@@ -6,23 +6,29 @@
  * Gebäudeadressen`, which the Liechtensteinische Landesverwaltung publishes on
  * `service.geo.llv.li/download/` as one ZIP (`getfile.php?theme=officialAdress`).
  *
- * The ZIP holds `dataset.csv`, a shapefile of the same records and the license PDF. The CSV is
- * Windows-1252 (`Äussere Wiesen` reads `\xc4ussere Wiesen`), CRLF-terminated and `;`-separated, with no
- * quoting. The adapter reads `dataset.csv` from the ZIP, or from a path to the extracted CSV.
+ * The ZIP holds `dataset.csv`, a shapefile of the same records and the license PDF.
+ * The CSV is Windows-1252 (`Äussere Wiesen` reads `\xc4ussere Wiesen`),
+ * CRLF-terminated and `;`-separated, with no quoting.
  *
- * The adapter reads `STN_NAME` as the street and `ADR_NUMBER` as the house number, including its
- * lower-case letter suffix (`12c`). It reads `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
- * `COM_FOSNR` is the municipality's number and no column holds its name, so no region is emitted. The LI
- * layout prints no region in any case.
+ * The adapter reads `dataset.csv` from the ZIP, or from a path to the extracted CSV.
  *
- * `STATUS` reads `real` or `planned`. A planned address is one assigned to a building not yet built, so
- * the adapter refuses it. `OFFICIAL` reads `TRUE` or `FALSE`; an address the register marks as not
- * official is refused too, because its text is not the designation the municipality assigned.
+ * The adapter reads `STN_NAME` as the street and `ADR_NUMBER` as the house number,
+ * including its lower-case letter suffix (`12c`).
+ * It reads `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
  *
- * The publisher grants reproduction, redistribution, enrichment, editing, combination and commercial use
- * under its `ABI/OGD-Version 2 vom 5.2.2021` terms, on condition that the source
- * `Liechtensteinische Landesverwaltung` is stated and the terms are enclosed or linked. Every row
- * records that license.
+ * `COM_FOSNR` is the municipality's number and no column holds its name, so no region is emitted.
+ * The LI layout prints no region in any case.
+ *
+ * `STATUS` reads `real` or `planned`.
+ * A planned address is one assigned to a building not yet built, so the adapter refuses it.
+ *
+ * `OFFICIAL` reads `TRUE` or `FALSE`; an address the register marks as not official is
+ * refused too, because its text isn't the designation the municipality assigned.
+ *
+ * The publisher grants reproduction, redistribution, enrichment, editing, combination
+ * and commercial use under its `ABI/OGD-Version 2 vom 5.2.2021` terms, on condition that the
+ * source `Liechtensteinische Landesverwaltung` is stated and the terms are enclosed or linked.
+ * Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

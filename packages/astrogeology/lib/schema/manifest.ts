@@ -41,7 +41,7 @@ export type LockedSource = z.infer<typeof LockedSourceSchema>
 export type SourcesLock = z.infer<typeof SourcesLockSchema>
 
 /**
- * The coordinate convention of a source, recorded so that a consumer does not have to guess it.
+ * The coordinate convention of a source, recorded so that a consumer doesn't have to guess it.
  */
 export const SourceCoordinatesSchema = z.object({
 	longitudeDirection: z.enum(["east", "west"]),

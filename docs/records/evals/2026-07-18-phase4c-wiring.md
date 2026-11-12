@@ -4,12 +4,12 @@ Day-shift continuation of the #727 stage-2 arc. The night landed three pieces on
 decode surface (#1154), the `StreetLocalityEvidence` arbiter (#1156), the P1 design (#1152) — and
 measured the name-evidence rerank at +6.0pp street@1 on the FR fragment board. This is the wiring:
 compose them into one production entry point, `rerankByStreetEvidence`, and — the part the board
-did not do — check what the rerank costs the REST of the parse.
+didn't do — check what the rerank costs the REST of the parse.
 
 ## The board measured street in isolation, and the wiring measured the whole tree
 
 The night's board scored only the street tag. The real parse route (segmentation → tree)
-surfaced a hazard the board could not see: **the span head is a street-boundary specialist, and its
+surfaced a hazard the board couldn't see: **the span head is a street-boundary specialist, and its
 full segmentation decode is far worse than the BIO argmax head on every other tag.** The segmentation
 argmax tree with the segmentation decode:
 

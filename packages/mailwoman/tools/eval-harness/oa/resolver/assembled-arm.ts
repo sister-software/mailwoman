@@ -14,7 +14,7 @@ import type { buildParseRig } from "#tools/eval-harness/oa/resolver/parse-rig"
 
 /**
  * The rig pieces the assembled pipeline shares with the bare neural arm,
- * so an arm-to-arm delta does not also swap the classifier or the gazetteer.
+ * so an arm-to-arm delta doesn't also swap the classifier or the gazetteer.
  */
 type SharedRig = Pick<Awaited<ReturnType<typeof buildParseRig>>, "neural" | "resolver">
 

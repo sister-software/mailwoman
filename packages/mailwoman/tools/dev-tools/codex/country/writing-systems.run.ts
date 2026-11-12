@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regenerates the committed `codex/country/writing-systems.ts` table: the written scripts of each territory's official
- *   languages, from Unicode CLDR supplemental `territoryInfo` and `likelySubtags`.
+ *   Regenerates the committed `codex/country/writing-systems.ts` table: the written scripts of each
+ *   territory's official languages, from Unicode CLDR supplemental `territoryInfo` and `likelySubtags`.
  *
- *   A `territoryInfo` key with a script subtag (`sr_Latn`, `zh_Hant`) takes that script. A bare language key
- *   takes the script of `likelySubtags` for the language in that territory (`sr-ME` → Latn), then for the bare
- *   language (`sr` → Cyrl). The ISO 15924 codes for a combination of scripts expand to the Unicode Script property
- *   values a text is written in, so `Jpan` gives Hani, Hira and Kana. Only `official` and `de_facto_official`
- *   languages count, as in `OFFICIAL_LANGUAGES`, and the tool refuses a territory the two tables disagree on.
+ *   A `territoryInfo` key with a script subtag (`sr_Latn`, `zh_Hant`) takes that script.
+ *   A bare language key takes the script of `likelySubtags` for the language in that
+ *   territory (`sr-ME` → Latn), then for the bare language (`sr` → Cyrl).
  *
- *   Run: node packages/mailwoman/tools/dev-tools/codex/country/writing-systems.run.ts [--cldr-dir <dir>] [--out <file>]
+ *   The ISO 15924 codes for a combination of scripts expand to the Unicode Script
+ *   property values a text is written in, so `Jpan` gives Hani, Hira and Kana.
+ *   Only `official` and `de_facto_official` languages count, as in `OFFICIAL_LANGUAGES`,
+ *   and the tool refuses a territory the two tables disagree on.
+ *
+ *   Run: node packages/mailwoman/tools/dev-tools/codex/country/writing-systems.run.ts
+ *   [--cldr-dir <dir>] [--out <file>]
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
@@ -22,6 +26,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { countInto } from "@mailwoman/core/stats"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
@@ -38,7 +43,8 @@ const DEFAULT_CLDR_VERSION = "47.0.0"
  *
  * ISO 15924 defines `Jpan` as Han with Hiragana and Katakana, `Kore` as Hangul with Han
  * and `Hanb` as Han with Bopomofo.
- * `Hans` and `Hant` are variants of Han, which the Unicode Script property writes `Hani`.
+ * `Hans` and `Hant` are variants of Han.
+ * The Unicode Script property writes Han as `Hani`.
  */
 const SCRIPT_COMBINATIONS: Readonly<Record<string, readonly string[]>> = {
 	Jpan: ["Hani", "Hira", "Kana"],
@@ -181,11 +187,7 @@ function renderModule(table: Readonly<Record<string, readonly string[]>>, cldrVe
 		.map(([cc, values]) => `\t${cc}: [${values.map((s) => `"${s}"`).join(", ")}],`)
 		.join("\n")
 
-	return `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+	return `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   Generated, so do not edit by hand. The written scripts of each ISO 3166-1 territory's official languages,
  *   derived from Unicode CLDR ${cldrVersion} supplemental territoryInfo and likelySubtags. A combined ISO 15924
  *   code expands to the Unicode Script property values it covers, so Japanese gives Hani, Hira and Kana.

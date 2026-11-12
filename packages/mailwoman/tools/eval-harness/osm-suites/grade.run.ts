@@ -2,18 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Grades one or more models on the frozen OpenStreetMap suites `build.run.ts` wrote, parsing each suite across
- *   worker threads with `gradeOSMSuite`, and writes `<out>.json` (every arm's per-suite and per-country exact
- *   parse totals) and `<out>.md` (the per-suite table).
+ *   Grades one or more models on the frozen OpenStreetMap suites `build.run.ts` wrote,
+ *   parsing each suite across worker threads with `gradeOSMSuite`, and writes `<out>.json`
+ *   (every arm's per-suite and per-country exact parse totals) and `<out>.md` (the per-suite table).
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/osm-suites/grade.run.ts \
  *     --suites <directory build.run.ts wrote> --arm shipped=<weights cache> --arm b42=<weights cache> \
  *     --out <report prefix> [--workers 3] [--threads 2]
  *
- *   Each weights cache is package-shaped and holds every locale package the release configuration maps a
- *   country to (the `full-cache` layout the comparison battery reads). A row is exact when every annotated
- *   span matches under the country's street convention, as the held-out grader scores it.
+ *   Each weights cache is package-shaped and holds every locale package the release
+ *   configuration maps a country to (the `full-cache` layout the comparison battery reads).
+ *   A row is exact when every annotated span matches under the country's street
+ *   convention, as the held-out grader scores it.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -37,6 +38,11 @@ const { values } = parseArguments({
 		out: { type: "string", description: "Report prefix; writes <out>.json and <out>.md" },
 		workers: { type: "string", default: "3", description: "Parse worker threads" },
 		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
+		"no-hint": {
+			type: "boolean",
+			default: false,
+			description: "Parse without the row's country as the classifier's locale hint, as the runtime pipeline does",
+		},
 	},
 })
 
@@ -109,7 +115,16 @@ for (const shape of Object.values(OSMSuiteShape)) {
 		const started = performance.now()
 
 		const outcomes = await Array.fromAsync(
-			gradeOSMSuite(rows as OSMSuiteRow[], { cacheRoot: arm.cache, packages, intraOpNumThreads: threads }, workers)
+			gradeOSMSuite(
+				rows as OSMSuiteRow[],
+				{
+					cacheRoot: arm.cache,
+					packages,
+					intraOpNumThreads: threads,
+					localeHint: values["no-hint"] ? "none" : "row-country",
+				},
+				workers
+			)
 		)
 
 		if (outcomes.length !== rows.length) {
@@ -152,6 +167,10 @@ await writeLocalTextFile(
 		"",
 		`Suites from \`${values.suites}\`. ${workers} workers × ${threads} ONNX threads. Each cell is the share of rows ` +
 			"parsed exactly, with the exact count.",
+		"",
+		values["no-hint"]
+			? "Parsed without a locale hint, as the runtime pipeline parses."
+			: "Parsed with each row's country as the classifier's locale hint.",
 		"",
 		...report.arms.map(
 			(arm) => `- \`${arm.name}\`: \`${arm.cache}\`, en-US card version ${arm.model.version ?? "unrecorded"}`

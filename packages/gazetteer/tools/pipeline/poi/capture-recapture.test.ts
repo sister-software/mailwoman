@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit cover for the capture-recapture instrument. Everything here runs over synthetic points — the
- *   estimator's job is to be checkable without an extract in the loop.
+ *   Unit cover for the capture-recapture instrument.
+ *
+ *   Everything here runs over synthetic points — the estimator's job is to be
+ *   checkable without an extract in the loop.
  */
 
 import { describe, expect, it } from "vitest"

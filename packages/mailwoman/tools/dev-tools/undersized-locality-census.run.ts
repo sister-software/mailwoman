@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ratio by itself does not separate a mis-recorded city from a namesake village under a large
+ *   The ratio by itself doesn't separate a mis-recorded city from a namesake village under a large
  *   district: what separates them is how common the name is and whether a second register agrees.
  */
 
@@ -34,7 +34,7 @@ const RARE_NAME_MAX = Number(args.bearers ?? 3)
 /**
  * Placetypes a locality's same-name parent may be.
  *
- * A locality inside a same-name `region` is the ordinary capital-of-its-region shape and is not this defect.
+ * A locality inside a same-name `region` is the ordinary capital-of-its-region shape and isn't this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 

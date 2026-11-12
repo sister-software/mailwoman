@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `postal-unit-guideline` recipe: rows that write a flat, unit, floor, staircase or building
- *   designator as the postal operator's published guideline states it. It runs the `postal-guideline`
- *   generator over unit legs, so every row goes through the aligner and takes the split its place
- *   gives it.
+ *   The `postal-unit-guideline` recipe: rows that write a flat, unit, floor, staircase
+ *   or building designator as the postal operator's published guideline states it.
  *
- *   The rows get their own source, `invented-postal-unit-guideline`, rather than the PO-box rows'
- *   `invented-postal-guideline`: a release capability selects rows by source, so a separate source
- *   keeps `po_box_cedex` and `postal_unit` from reading each other's rows.
+ *   It runs the `postal-guideline` generator over unit legs, so every row goes
+ *   through the aligner and takes the split its place gives it.
  *
- *   Six countries have a cited unit table in the codex. Five of them have a leg: FR, GB, IT, AU and
- *   NZ. US has none, because every Pub 28 Appendix C2 designator is one `spliced-unit` or
- *   `synthetic-secondary` writes in training. DE has none, because the Deutsche Post page states no
- *   unit rule.
+ *   The rows get their own source, `invented-postal-unit-guideline`, rather than the
+ *   PO-box rows' `invented-postal-guideline`: a release capability selects rows by source,
+ *   so a separate source keeps `po_box_cedex` and `postal_unit` from reading each other's rows.
+ *
+ *   Six countries have a cited unit table in the codex.
+ *   Five of them have a leg: FR, GB, IT, AU and NZ.
+ *
+ *   US has none, because every Pub 28 Appendix C2 designator is one `spliced-unit`
+ *   or `synthetic-secondary` writes in training.
+ *   DE has none, because the Deutsche Post page states no unit rule.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

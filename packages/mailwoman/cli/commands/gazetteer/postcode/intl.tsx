@@ -2,32 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data
- *   for countries WhosOnFirst does not cover. The canonical pipeline treats GeoNames as a coordinate
- *   source keyed by string onto WOF-sourced postcode records. Where WOF ships no postcode records there
- *   is no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
+ *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from
+ *   GeoNames postal data for countries WhosOnFirst doesn't cover.
  *
- *   It emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
- *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
- *   alongside `postalcode-intl.db` with no other change.
+ *   The canonical pipeline treats GeoNames as a coordinate source keyed by
+ *   string onto WOF-sourced postcode records.
+ *   Where WOF ships no postcode records there's no record to backfill onto,
+ *   so GeoNames must supply the record as well as the coordinate.
  *
- *   GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute "GeoNames
- *   (CC-BY 4.0)". These records have no WOF id and get synthetic ids that can never collide with one.
+ *   It emits a standalone `spr` database in the exact schema `build-candidate`'s
+ *   `--postcodes` pass consumes (placetype='postalcode', real centroid + bbox),
+ *   so it drops into a candidate rebuild alongside `postalcode-intl.db` with no other change.
  *
- *   A postcode is stored under both its written forms so the candidate name_key matches whichever form
- *   the parse emits — PL writes "26-300" (hyphen) while CZ writes "58001" though GeoNames stores
- *   "580 01".
+ *   GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute "GeoNames (CC-BY 4.0)".
+ *   These records have no WOF id and get synthetic ids that can never collide with one.
  *
- *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy of an
- *   existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild. The database
- *   itself is the durable artifact for the canonical rebuild.
+ *   A postcode is stored under both its written forms so the candidate name_key
+ *   matches whichever form the parse emits — PL writes "26-300" (hyphen)
+ *   while CZ writes "58001" though GeoNames stores "580 01".
  *
- *   `--out` is written directly. The command drops and recreates its table in place on re-run.
- *   `--fold-out` builds a copy of `--fold-into`. Neither option uses an atomic temp-swap.
+ *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy
+ *   of an existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild.
+ *   The database itself is the durable artifact for the canonical rebuild.
+ *
+ *   `--out` is written directly.
+ *   The command drops and recreates its table in place on re-run.
+ *
+ *   `--fold-out` builds a copy of `--fold-into`.
+ *   Neither option uses an atomic temp-swap.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
@@ -278,7 +285,7 @@ async function foldIntoCandidate(
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
 
-	// country code → id, inserting any code the candidate DB does not already contain.
+	// country code → id, inserting any code the candidate DB doesn't already contain.
 	const ccCache = new Map<string, number>()
 	const getCc = out.prepare("SELECT id FROM country_codes WHERE code=?")
 	const maxCc = getRow<{ m: number }>(out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes"))!
@@ -355,8 +362,13 @@ async function foldIntoCandidate(
 
 const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? wofDatabasePath("postalcode-geonames-intl.db")

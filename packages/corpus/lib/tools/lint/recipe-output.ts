@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Corpus linter. Compares a new recipe output (one parquet file) against pre-computed corpus statistics and
- * flags token-label distribution outliers, label-vacuum tokens, bigram-label collisions, anti-pattern rule
- * matches and basic sanity problems.
+ * Corpus linter.
  *
- * The markdown report goes to stdout, with optional markdown and JSON sidecars. The command exits 0 when no
- * errors are found and 1 when any are, because warnings do not refuse. A flagged recipe output should include
- * `lint_acknowledged: true` in its manifest before training consumes it.
+ * Compares a new recipe output (one parquet file) against pre-computed corpus statistics
+ * and flags token-label distribution outliers, label-vacuum tokens, bigram-label collisions,
+ * anti-pattern rule matches and basic sanity problems.
+ *
+ * The markdown report goes to stdout, with optional markdown and JSON sidecars.
+ * The command exits 0 when no errors are found and 1 when any are, because warnings do not refuse.
+ *
+ * A flagged recipe output should include `lint_acknowledged: true` in its manifest
+ * before training consumes it.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -47,7 +51,7 @@ const ALL_O_RATIO_CEILING = 0.9
 /**
  * Default `lint-rules.json` path — the rules ship beside this module in the source tree.
  *
- * Tsc does not emit readFileSync'd JSON into `out/`, so the compiled tree falls back
+ * Tsc doesn't emit readFileSync'd JSON into `out/`, so the compiled tree falls back
  * to the source-tree copy (corpus/out/src/tools/ → corpus/src/tools/).
  *
  * In-repo the `node` exports condition loads this module from source anyway,

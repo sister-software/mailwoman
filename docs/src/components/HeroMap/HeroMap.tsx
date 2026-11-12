@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The home page's full-bleed map. It flies between the tour stops, switches the labels to each stop's
- *   language, and drops a marker on the answer Earth recorded.
+ *   The home page's full-bleed map.
+ *
+ *   It flies between the tour stops, switches the labels to each stop's language,
+ *   and drops a marker on the answer Earth recorded.
  *   Client-only: the home page loads it after hydration, behind a static ground of the same color.
  */
 

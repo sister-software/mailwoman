@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A property spelled any way other than the one `optionPropertyName` derives is never written to, so the flag parses and has no effect.
+ *   A property spelled any way other than the one `optionPropertyName` derives is
+ *   never written to, so the flag parses and has no effect.
  */
 
 import { OPTION_INITIALISMS, optionPropertyName } from "@mailwoman/core/scripting/arguments"
@@ -31,7 +32,7 @@ type Options = OptionsOf<typeof fixture>
 
 /**
  * The type and the runtime are checked against this list rather than against each other,
- * so a failure names which half moved.
+ * so a failure states which half moved.
  */
 const EXPECTED_PROPERTIES = [
 	"locale",

@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Completion per postal jurisdiction. A postal jurisdiction is the unit a parser is built for: address systems
- *   follow postal, cadastral and administrative boundaries rather than sovereignty. A dependency therefore cannot
- *   inherit its sovereign state's parser.
+ *   Completion per postal jurisdiction.
  *
- *   This enumerates every ISO 3166-1 alpha-2 code first and joins the registers onto it, so a jurisdiction absent
- *   from all of them is a row reading zero rather than a row that does not exist.
+ *   A postal jurisdiction is the unit a parser is built for: address systems follow postal,
+ *   cadastral and administrative boundaries rather than sovereignty.
+ *   A dependency therefore cannot inherit its sovereign state's parser.
  *
- *   Each dimension is reported on its own, because they are missing in different combinations.
+ *   This enumerates every ISO 3166-1 alpha-2 code first and joins the registers onto it, so a
+ *   jurisdiction absent from all of them is a row reading zero rather than a row that doesn't exist.
+ *
+ *   Each dimension is reported on its own, because they're missing in different combinations.
  *
  *   Run:
  *

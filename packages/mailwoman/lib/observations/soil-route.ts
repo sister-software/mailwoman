@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Attaches a soil-survey land capability reading to a geocode answer as an observation. The route
- *   never changes answer selection.
+ *   Attaches a soil-survey land capability reading to a geocode answer as an observation.
+ *   The route never changes answer selection.
  */
 
 import {
@@ -83,7 +83,7 @@ export const SOIL_DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The capability there is unknown.
+	 * The capability there's unknown.
 	 * Never report it as low.
 	 */
 	"outside_surveyed_area",

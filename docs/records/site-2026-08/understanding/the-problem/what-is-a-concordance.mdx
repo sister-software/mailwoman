@@ -1,6 +1,6 @@
 ---
 sidebar_position: 7
-title: What is a concordance?
+title: What's a concordance?
 tags:
   - domain
   - concepts
@@ -11,22 +11,22 @@ tags:
   - region
 ---
 
-# What is a concordance?
+# What's a concordance?
 
-In Mailwoman's architecture, a **concordance** is the resolver's answer to the question: "Do these parsed components form a coherent place in the real world?" It prevents the parser from emitting a parse that is structurally valid but geographically impossible, such as "Paris, Texas" labeled as "Paris, Île-de-France" or "NY-NY Steakhouse, Houston TX" with "NY" tagged as a region.
+In Mailwoman's architecture, a **concordance** is the resolver's answer to the question: "Do these parsed components form a coherent place in the real world?" It prevents the parser from emitting a parse that's structurally valid but geographically impossible, such as "Paris, Texas" labeled as "Paris, Île-de-France" or "NY-NY Steakhouse, Houston TX" with "NY" tagged as a region.
 
 ## Why concordance exists
 
-Traditional address parsers validate their output structurally. The parse must have at most one of each component, spans must not overlap, and the BIO tag sequence must be valid. Structural validity does not guarantee geographical validity:
+Traditional address parsers validate their output structurally. The parse must have at most one of each component, spans mustn't overlap, and the BIO tag sequence must be valid. Structural validity doesn't guarantee geographical validity:
 
-| Parse                                  | Structurally valid? | Geographically valid?                     |
-| -------------------------------------- | ------------------- | ----------------------------------------- |
-| `locality=Paris, region=TX`            | Yes                 | Yes — Paris, Texas exists                 |
-| `locality=Paris, region=Île-de-France` | Yes                 | Yes — Paris, France exists                |
-| `locality=NY, region=TX`               | Yes                 | **No** — NY is not a locality in Texas    |
-| `locality=Houston, region=NY`          | Yes                 | **No** — Houston is not in New York state |
-| `locality=Springfield, region=IL`      | Yes                 | Yes — Springfield, IL exists              |
-| `locality=Springfield, region=MA`      | Yes                 | Yes — Springfield, MA ALSO exists         |
+| Parse                                  | Structurally valid? | Geographically valid?                    |
+| -------------------------------------- | ------------------- | ---------------------------------------- |
+| `locality=Paris, region=TX`            | Yes                 | Yes — Paris, Texas exists                |
+| `locality=Paris, region=Île-de-France` | Yes                 | Yes — Paris, France exists               |
+| `locality=NY, region=TX`               | Yes                 | **No** — NY isn't a locality in Texas    |
+| `locality=Houston, region=NY`          | Yes                 | **No** — Houston isn't in New York state |
+| `locality=Springfield, region=IL`      | Yes                 | Yes — Springfield, IL exists             |
+| `locality=Springfield, region=MA`      | Yes                 | Yes — Springfield, MA ALSO exists        |
 
 The last two rows are the hard case, because both parses are structurally and geographically valid. The parser cannot tell them apart from the text by itself. "Springfield" without a state is ambiguous. "Springfield, IL" and "Springfield, MA" are unambiguous, but telling them apart requires knowing which states contain a Springfield. That knowledge lives in the gazetteer rather than the parser.
 
@@ -69,7 +69,7 @@ Concordance is part of the parsing decision itself rather than a separate check 
 score = phrase_conf × classifier_score × resolver_score × concordance_bonus
 ```
 
-The concordance bonus is a log-space reward for parent-chain consistency. A fully consistent WOF parent chain contributes `+concordanceWeight` (default 1.0). An explicit contradiction, where the parsed region is not in the locality's WOF parent chain, is a hard veto.
+The concordance bonus is a log-space reward for parent-chain consistency. A fully consistent WOF parent chain contributes `+concordanceWeight` (default 1.0). An explicit contradiction, where the parsed region isn't in the locality's WOF parent chain, is a hard veto.
 
 The reconciler can therefore pick a less-confident classifier output over a more-confident one if the more-confident one fails concordance. The concrete example from Mailwoman's kryptonite catalogue:
 
@@ -88,11 +88,11 @@ The argmax path tags both as `region`. That result is highly confident, structur
 
 1. `{NY:region, NY:region, Houston:locality, TX:region}` → This parse has two regions ("NY" and "TX"). No WOF hierarchy contains both as regions containing Houston. **Vetoed.**
 
-2. `{NY:venue, NY:venue, Houston:locality, TX:region}` → Houston, TX exists in WOF. "NY-NY" as a venue does not need a parent chain, because venues don't participate in the administrative hierarchy. **Concordant.**
+2. `{NY:venue, NY:venue, Houston:locality, TX:region}` → Houston, TX exists in WOF. "NY-NY" as a venue doesn't need a parent chain, because venues don't participate in the administrative hierarchy. **Concordant.**
 
 The reconciler picks option 2 because it is joint-coherent, even though the per-token classifier was more confident about option 1.
 
-## Why concordance is not post-processing
+## Why concordance isn't post-processing
 
 A naive approach would parse first, then check concordance, then fall back if the check fails. This works for simple cases but fails for adversarial ones:
 
@@ -101,11 +101,11 @@ A naive approach would parse first, then check concordance, then fall back if th
 
 Joint decoding avoids this by keeping the top-K alternatives alive through the concordance check. The resolver sees multiple interpretations and picks the geographically coherent one, rather than receiving one interpretation and saying "yes" or "no."
 
-## What concordance does not do
+## What concordance doesn't do
 
-- It does not guarantee correctness. If the gazetteer is wrong (wrong parent_id chain, missing locality, outdated boundaries), concordance can reward wrong parses and punish correct ones. This is why the WOF parent-id spot check exists as a diagnostic step.
-- It does not resolve ambiguity by itself. When two parses are both concordant (Springfield IL vs Springfield MA), the downstream application must decide by population prior, user context, or an explicit "did you mean?" prompt.
-- It does not replace the classifier. If the classifier never emits the correct tag in its top K, concordance cannot recover it. The reconciler only re-ranks candidates and never invents new ones.
+- It doesn't guarantee correctness. If the gazetteer is wrong (wrong parent_id chain, missing locality, outdated boundaries), concordance can reward wrong parses and punish correct ones. This is why the WOF parent-id spot check exists as a diagnostic step.
+- It doesn't resolve ambiguity by itself. When two parses are both concordant (Springfield IL vs Springfield MA), the downstream application must decide by population prior, user context, or an explicit "did you mean?" prompt.
+- It doesn't replace the classifier. If the classifier never emits the correct tag in its top K, concordance cannot recover it. The reconciler only re-ranks candidates and never invents new ones.
 
 ## See also
 

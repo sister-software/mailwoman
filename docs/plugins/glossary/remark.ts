@@ -2,27 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Wrapper around docusaurus-plugin-glossary's remark auto-linker that removes two classes of false
- *   positive after the fact. The upstream matcher is case-insensitive with a plural allowance, so
- *   common-noun terms and aliases ("city" → locality, "state" → region) also match inside proper
- *   nouns: "New York City" tooltips "City", "United States of America" tooltips "States".
+ *   Wrapper around docusaurus-plugin-glossary's remark auto-linker that removes
+ *   two classes of false positive after the fact.
  *
- *   guard 1 — proper nouns. Un-links a GlossaryTerm node when all of the following hold:
+ *   The upstream matcher is case-insensitive with a plural allowance, so common-noun terms
+ *   and aliases ("city" → locality, "state" → region) also match inside proper nouns:
+ *   "New York City" tooltips "City", "United States of America" tooltips "States".
  *
- *   1. The glossary term is a common noun (starts lowercase) — acronym/name terms (FST, BAN, WOF)
- *      are exempt so "admin FST" keeps its tooltip.
+ *   guard 1 — proper nouns.
+ *   Un-links a GlossaryTerm node when all of the following hold:
+ *
+ *   1. The glossary term is a common noun (starts lowercase) — acronym/name terms
+ *      (FST, BAN, WOF) are exempt so "admin FST" keeps its tooltip.
  *   2. The matched display text is capitalized — lowercase usage ("the city of…") keeps its tooltip.
- *   3. An adjacent word is also capitalized. The match is the interior/tail of a multi-word proper
- *      noun ("New York City", "United States of America", "State Street"). A capitalized match at a
- *      plain sentence start has no capitalized neighbor and keeps its tooltip.
+ *   3. An adjacent word is also capitalized.
+ *      The match is the interior/tail of a multi-word proper noun
+ *      ("New York City", "United States of America", "State Street").
+ *      A capitalized match at a plain sentence start has no capitalized neighbor and keeps its tooltip.
  *
- *   guard 2 — homonyms. Un-links a node whose matched surface (not its term) is listed in the
- *   `noAutoLink` option. This is a surface-level suppression, so the term itself keeps its tooltip
- *   wherever it is written in full: suppressing "state" leaves "region" linking. It also leaves the FST
- *   alias "finite-state transducer" linking too, even though it contains "state". See the option's
- *   comment in docusaurus.config.ts for the two false-positive classes it exists for. Surfaces are
- *   compared lowercased, with the same "s"/"es" plural allowance the upstream matcher applies, so one
- *   entry covers "State", "states" and "States".
+ *   guard 2 — homonyms.
+ *   Un-links a node whose matched surface (not its term) is listed in the `noAutoLink` option.
+ *
+ *   This is a surface-level suppression, so the term itself keeps its tooltip wherever
+ *   it is written in full: suppressing "state" leaves "region" linking.
+ *   It also leaves the FST alias "finite-state transducer" linking too, even though it contains "state".
+ *
+ *   See the option's comment in docusaurus.config.ts for the two false-positive classes it exists for.
+ *   Surfaces are compared lowercased, with the same "s"/"es" plural allowance the upstream
+ *   matcher applies, so one entry covers "State", "states" and "States".
  */
 
 import { remarkPlugin as baseRemarkPlugin } from "docusaurus-plugin-glossary"
@@ -61,7 +68,7 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
  * Generated forward from the entry.
  * The matcher also runs in this direction.
  *
- * An inverse ("strip a trailing es, else strip a trailing s") is not the inverse:
+ * An inverse ("strip a trailing es, else strip a trailing s") isn't the inverse:
  * it takes "states" to "stat", and the first build with one shipped a guard that
  * suppressed `state` on every page while leaving `states` linking on 26.
  */

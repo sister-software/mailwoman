@@ -4,9 +4,12 @@
 /**
  * `openaddresses`: line-delimited GeoJSON adapter for openaddresses.io exports.
  *
- * Country must be explicit because OpenAddresses organizes files by country while the row data
- * has no country code. A per-row `LICENSE` property wins where present and the configured
- * `defaultLicense` covers the remaining rows. `district` stays unmapped because US data uses it for a borough or county.
+ * Country must be explicit because OpenAddresses organizes files by country
+ * while the row data has no country code.
+ * A per-row `LICENSE` property wins where present and the configured
+ * `defaultLicense` covers the remaining rows.
+ *
+ * `district` stays unmapped because US data uses it for a borough or county.
  * The adapter omits that field because mapping it would inflate alignment quarantine.
  */
 

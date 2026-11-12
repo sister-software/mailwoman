@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module defines the structure-source register's types. A structure source is a published dataset of building
- *   footprints, 3D building models, landmark meshes or tree heights that a basemap or a 3D layer draws.
+ *   This module defines the structure-source register's types.
  *
- *   License decisions use the shape `@mailwoman/core/license/decision` defines for every register of third-party
- *   data, with {@link StructureOperation} as the operation list.
+ *   A structure source is a published dataset of building footprints, 3D building models,
+ *   landmark meshes or tree heights that a basemap or a 3D layer draws.
+ *
+ *   License decisions use the shape `@mailwoman/core/license/decision` defines for every
+ *   register of third-party data, with {@link StructureOperation} as the operation list.
  */
 
 import type { LicenseDecision } from "@mailwoman/core/license/decision"

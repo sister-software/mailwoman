@@ -2,24 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Fetches the vital places inventory (#2911): the most-viewed Wikidata items that are places, with their
- * classes, country, coordinate, population, sitelink count, and labels and aliases in a language list.
- * Every input is CC0: QRank ranks the candidates, the Wikidata API describes them, and the query service
- * classifies their classes.
+ * Fetches the vital places inventory (#2911): the most-viewed Wikidata items that
+ * are places, with their classes, country, coordinate, population, sitelink count,
+ * and labels and aliases in a language list.
+ *
+ * Every input is CC0: QRank ranks the candidates, the Wikidata API describes them,
+ * and the query service classifies their classes.
  *
  * Four phases run in order under `<outRoot>/wikidata-vital-places/`, each resuming from its own file:
  *
  * 1. `qrank.csv.gz` and `qrank.json`: the ranked list and its receipt ({@linkcode downloadQRank}).
- * 2. `entities.jsonl`: one record per ranked id, appended as each request answers ({@linkcode fetchVitalEntities}).
- *    These requests skip the HTTP cache, and go out logged in when `WIKIDATA_BOT_USERNAME` and
- *    `WIKIDATA_BOT_PASSWORD` are set.
- * 3. `countries.json` and `class-roots.v3.json`: the country codes and the class verdicts, cached
- *    ({@linkcode readCountryCodes}, {@linkcode classifyClasses}).
+ * 2. `entities.jsonl`: one record per ranked id, appended as each request
+ *    answers ({@linkcode fetchVitalEntities}).
+ *    These requests skip the HTTP cache, and go out logged in when `WIKIDATA_BOT_USERNAME`
+ *    and `WIKIDATA_BOT_PASSWORD` are set.
+ * 3. `countries.json` and `class-roots.v3.json`: the country codes and the class verdicts,
+ *    cached ({@linkcode readCountryCodes}, {@linkcode classifyClasses}).
  * 4. `places.jsonl`, `counts.json` and `MANIFEST.json`: the inventory, rewritten from the files above.
  *
- * A world-scale selection by class through the query service is not possible: on 2026-11-03, 27 of 29
- * per-class `GROUP BY` counts timed out after about 135 s each, as did the per-country selection queries,
- * while `wbgetentities` described 5,171 items without a timeout.
+ * A world-scale selection by class through the query service isn't possible: on 2026-11-03,
+ * 27 of 29 per-class `GROUP BY` counts timed out after about 135 s each, as did the per-country
+ * selection queries, while `wbgetentities` described 5,171 items without a timeout.
  */
 
 import { APIClient } from "@mailwoman/core/api"

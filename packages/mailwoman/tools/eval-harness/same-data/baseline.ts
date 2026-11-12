@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Baseline resolver for the same-data benchmark. It scores candidates from fixture data only and uses
- *   neither population nor prominence.
+ *   Baseline resolver for the same-data benchmark.
+ *
+ *   It scores candidates from fixture data only and uses neither population nor prominence.
  */
 
 import { collectNodes, type AddressTree } from "@mailwoman/core/decoder"

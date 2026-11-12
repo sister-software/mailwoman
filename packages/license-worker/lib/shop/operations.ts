@@ -2,23 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shop's operations for `mwops shop <operation>`: the same interface as the release registry (an id, a declared
- *   effect, zod input and output, `run`), so the operator CLI is a view over this list the way it is over the other
- *   two. `status` reads; `provision` writes to Stripe and, with `--apply`, to `shop/ids.json`, the one file that
- *   records what Stripe answered. The mode picks the key: `test` reads `MAILWOMAN_STRIPE_SECRET_KEY` and refuses
- *   anything but an `sk_test_` key; `live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses anything but
- *   `sk_live_`.
+ *   The shop's operations for `mwops shop <operation>`: the same interface as the
+ *   release registry (an id, a declared effect, zod input and output, `run`),
+ *   so the operator CLI is a view over this list the way it is over the other two.
+ *
+ *   `status` reads; `provision` writes to Stripe and, with `--apply`, to `shop/ids.json`,
+ *   the one file that records what Stripe answered.
+ *   The mode picks the key: `test` reads `MAILWOMAN_STRIPE_SECRET_KEY` and refuses anything but an
+ *   `sk_test_` key; `live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses anything but `sk_live_`.
  */
 
+import { executeD1WithWrangler } from "@mailwoman/core/cloudflare"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isIdentical } from "@mailwoman/core/identical"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
+import { OperationEffect } from "@mailwoman/core/scripting"
+import { applyStep, type StateCarrier } from "@mailwoman/core/state-machine"
+import { defineOperation, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"
 
+import { declarationMachine } from "#ledger/machines"
+import { LicenseState } from "#ledger/schema"
 import { SHOP_PLAN_CODES, SHOP_PLANS } from "#shop/catalog"
+import { declarationStateStatement } from "#shop/declaration-state"
 import { $private } from "#shop/env"
 import { type ShopIDsByMode, type ShopMode, withShopIDs } from "#shop/ids"
 import { type ProvisionReport, ProvisionReportSchema, provisionShop } from "#shop/provision"
@@ -213,6 +221,55 @@ const rehearseRenewalOperation = defineOperation({
 	},
 })
 
+const LicenseStateSchema = z.enum(Object.values(LicenseState) as [LicenseState, ...LicenseState[]])
+
+const declarationStateOperation = defineOperation({
+	id: "shop.declaration-state",
+	description:
+		"Move a declared license from one state to another on the remote ledger, applied only while the row still holds --from. Prints the statement; --apply runs it through wrangler d1 execute and reports whether the row moved.",
+	effect: OperationEffect.ExternalWrite,
+	options: { lid: { type: "string" }, from: { type: "string" }, to: { type: "string" }, apply: { type: "boolean" } },
+	inputSchema: z.object({
+		lid: z.string(),
+		from: LicenseStateSchema,
+		to: LicenseStateSchema,
+		apply: z.boolean().optional(),
+	}),
+	outputSchema: z.object({
+		statement: z.string(),
+		outcome: z.enum(["updated", "unchanged", "conflict"]).nullable(),
+	}),
+	async run(input, context) {
+		const at = new Date().toISOString()
+		const event = { kind: "operator-set", to: input.to } as const
+		const step = declarationMachine.transition(input.from, event)
+		const statement = declarationStateStatement(input.lid, input.from, step.next, at)
+
+		if (input.apply !== true || context.dryRun) {
+			context.log("dry run; pass --apply to run the statement against the remote ledger")
+
+			return { statement, outcome: null }
+		}
+
+		const remoteLedger: StateCarrier<LicenseState, object> = {
+			async compareAndSet(from, to) {
+				const { changes } = await executeD1WithWrangler({
+					database: "LICENSE_LEDGER",
+					config: resolvePackagePath("@mailwoman/license-worker", "wrangler.toml").toString(),
+					command: declarationStateStatement(input.lid, from, to, at),
+				})
+
+				return changes > 0
+			},
+		}
+
+		const outcome = await applyStep(declarationMachine, remoteLedger, input.from, event)
+
+		// A conflict means the row no longer holds --from, or no declaration has the id.
+		return { statement, outcome: outcome.status === "applied" ? "updated" : outcome.status }
+	},
+})
+
 /**
  * The registry `mwops shop` is a view over, in the order the usage lists them.
  */
@@ -221,4 +278,5 @@ export const shopOperations: ReadonlyArray<ReleaseOperation<unknown, unknown>> =
 	provisionOperation,
 	rehearseOperation,
 	rehearseRenewalOperation,
+	declarationStateOperation,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>

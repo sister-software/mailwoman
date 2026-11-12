@@ -648,7 +648,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// The base's counts are net of its own deletions, so they are added back before every
+	// The base's counts are net of its own deletions, so they're added back before every
 	// deletion this version keeps is counted again over the files it now lists.
 	const baseDeleted: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 

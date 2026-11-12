@@ -4,10 +4,13 @@
 /**
  *   The 404 body, ejected from `@docusaurus/theme-classic`.
  *
- *   Upstream's copy is "Please contact the owner of the site that linked you to the original URL and let them know
- *   their link is broken." On our own 404s the owner is us, so that sentence asks the visitor to report the problem to
- *   the wrong person and offers them nowhere to go. This explains what happened and hands over the four doors plus the
- *   routes people guess — `/pricing` and `/license` now redirect, but a mistyped doc path still lands here.
+ *   Upstream's copy is "Please contact the owner of the site that linked you to the
+ *   original URL and let them know their link is broken."
+ *   On our own 404s the owner is us, so that sentence asks the visitor to report the
+ *   problem to the wrong person and offers them nowhere to go.
+ *
+ *   This explains what happened and hands over the four doors plus the routes people guess —
+ *   `/pricing` and `/license` now redirect, but a mistyped doc path still lands here.
  */
 
 import Link from "@docusaurus/Link"
@@ -26,9 +29,9 @@ interface Destination {
 
 const DESTINATIONS: readonly Destination[] = [
 	{
-		to: "/docs/developers/get-started/what-mailwoman-is",
+		to: "/docs/start",
 		label: "Get started",
-		blurb: "What Mailwoman is, installed and parsing in ten minutes.",
+		blurb: "Install Mailwoman and inspect a first parse.",
 	},
 	{
 		to: "/pricing",
@@ -36,7 +39,7 @@ const DESTINATIONS: readonly Destination[] = [
 		blurb: "Free under the AGPL, or a flat commercial license.",
 	},
 	{
-		to: "/docs/developers/reference/http-apis",
+		to: "/docs/reference/http",
 		label: "Reference",
 		blurb: "The CLI, the HTTP APIs and the runtime flags.",
 	},

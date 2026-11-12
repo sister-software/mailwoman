@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<ResultPanel>` over a fake parse result — the resolved case (component table + resolved place +
- *   candidate picker, switchable) and the no-resolve case (the injected `failure` slot). Reuses the shared
- *   pipeline units. no maplibre.
+ *   `<ResultPanel>` over a fake parse result — the resolved case
+ *   (component table + resolved place + candidate picker, switchable)
+ *   and the no-resolve case (the injected `failure` slot).
+ *   Reuses the shared pipeline units. no maplibre.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

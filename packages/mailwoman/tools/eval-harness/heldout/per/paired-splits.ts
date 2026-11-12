@@ -4,10 +4,13 @@
 /**
  *   Splits paired held-out outcomes by row kind and by training-overlap provenance.
  *
- *   A pooled exact-parse difference mixes rows that answer different questions. Gazetteer name strings are scored
- *   beside addresses, and rows the published model trained on are scored beside rows neither model saw. Each split
- *   here reports the baseline's exact-parse rate, each candidate's rate, the difference in points, and the rows
- *   only the candidate gets right (fixes) and only the baseline gets right (breaks).
+ *   A pooled exact-parse difference mixes rows that answer different questions.
+ *   Gazetteer name strings are scored beside addresses, and rows the published model
+ *   trained on are scored beside rows neither model saw.
+ *
+ *   Each split here reports the baseline's exact-parse rate, each candidate's rate,
+ *   the difference in points, and the rows only the candidate gets right (fixes)
+ *   and only the baseline gets right (breaks).
  */
 
 import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tools/eval-harness/heldout/per/country"
@@ -18,11 +21,11 @@ import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tool
 export interface PairedSplitArm {
 	exact: number
 	/**
-	 * Rows the candidate parses exactly and the baseline does not.
+	 * Rows the candidate parses exactly and the baseline doesn't.
 	 */
 	fixes: number
 	/**
-	 * Rows the baseline parses exactly and the candidate does not.
+	 * Rows the baseline parses exactly and the candidate doesn't.
 	 */
 	breaks: number
 }

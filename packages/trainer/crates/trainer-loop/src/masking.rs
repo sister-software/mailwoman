@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `data/masking.py`'s `mask_tokens`: BERT's 80/10/10 masking, drawn from the MLM loop's own generator.
 
 use crate::Result;

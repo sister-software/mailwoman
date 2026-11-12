@@ -2,31 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   ISO 3166-2 subdivision → country reference, the cross-country complement to `country.ts`'s
- *   ISO 3166-1 `matchCountry`. A subdivision token ("QC", "Ontario", "Illinois") names a first-level
- *   admin unit whose country is the piece the resolver needs when a region qualifier is the only
- *   signal that the locale-inferred default country is wrong ("Montreal QC" under a US locale).
+ *   ISO 3166-2 subdivision → country reference, the cross-country complement to
+ *   `country.ts`'s ISO 3166-1 `matchCountry`.
  *
- *   Scope is deliberately minimal: the two subdivision systems whose two-letter codes people write
- *   on the address line and whose homonymous localities collide across the border — US states
- *   (`us/state.ts`) and Canadian provinces (`ca/province.ts`). Both directions are covered: the ISO
- *   code (`QC` → Quebec) and the full name (`Quebec` / `Québec` → the `QC` record), so a resolver
- *   can expand the abbreviation the gazetteer FTS index lacks ("QC" is not an alt-name of Québec)
- *   into the full name it does contain. This is a soft prior rather than a routing decision. The gazetteer
- *   still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
+ *   A subdivision token ("QC", "Ontario", "Illinois") names a first-level admin unit whose
+ *   country is the piece the resolver needs when a region qualifier is the only signal
+ *   that the locale-inferred default country is wrong ("Montreal QC" under a US locale).
  *
- *   The combined lookup also holds the names of the four UK constituent countries (`gb/country.ts`),
- *   because England, Scotland, Wales and Northern Ireland are subdivisions of GB rather than countries in
- *   ISO 3166-1.
+ *   Scope is deliberately minimal: the two subdivision systems whose two-letter codes people
+ *   write on the address line and whose homonymous localities collide across the border —
+ *   US states (`us/state.ts`) and Canadian provinces (`ca/province.ts`).
+ *   Both directions are covered: the ISO code (`QC` → Quebec) and the full name
+ *   (`Quebec` / `Québec` → the `QC` record), so a resolver can expand the abbreviation the gazetteer
+ *   FTS index lacks ("QC" isn't an alt-name of Québec) into the full name it does contain.
  *
- *   The US and Canadian code sets are disjoint. No two-letter code or full name collides between them, so the
- *   combined lookup below is unambiguous. `CA` resolves to California the
- *   US state (Canada's provinces have no `CA` subdivision code), never to Canada the country —
- *   country recognition stays with `matchCountry`.
+ *   This is a soft prior rather than a routing decision.
+ *   The gazetteer still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
  *
- *   Source: the underlying `US_STATE_BY_ABBREVIATION` (USPS Publication 28, Appendix B) and
- *   `CA_PROVINCES` (ISO 3166-2:CA) tables. No new provenance is introduced here — this module only
- *   re-keys those two existing tables into one subdivision→country view.
+ *   The combined lookup also holds the names of the four UK constituent countries
+ *   (`gb/country.ts`), because England, Scotland, Wales and Northern Ireland are
+ *   subdivisions of GB rather than countries in ISO 3166-1.
+ *
+ *   The US and Canadian code sets are disjoint.
+ *   No two-letter code or full name collides between them, so the combined lookup below is unambiguous.
+ *
+ *   `CA` resolves to California the US state (Canada's provinces have no `CA` subdivision code),
+ *   never to Canada the country — country recognition stays with `matchCountry`.
+ *
+ *   Source: the underlying `US_STATE_BY_ABBREVIATION` (USPS Publication 28, Appendix B)
+ *   and `CA_PROVINCES` (ISO 3166-2:CA) tables.
+ *   No new provenance is introduced here — this module only re-keys those two
+ *   existing tables into one subdivision→country view.
  */
 
 import { AU_STATE_ABBREVIATIONS } from "#au/state"

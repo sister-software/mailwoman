@@ -4,11 +4,13 @@
 /**
  *   Italian postcodes (Codice di Avviamento Postale, CAP): the branded type and the shape.
  *
- *   Five digits like the Spanish, French and German forms, but do not infer a province from the
- *   leading digits the way `es/codigo-postal.ts` documents for Spain. Italy's large cities are
- *   assigned ranges rather than a single code (Rome spans 00118–00199, Milan 20121–20162), and
- *   several provinces share leading digits, so the CAP narrows geography without identifying a
- *   province. It is the same trap German PLZ Leitzonen set, in a different disguise.
+ *   Five digits like the Spanish, French and German forms, but do not infer a province
+ *   from the leading digits the way `es/codigo-postal.ts` documents for Spain.
+ *   Italy's large cities are assigned ranges rather than a single code
+ *   (Rome spans 00118–00199, Milan 20121–20162), and several provinces share leading digits,
+ *   so the CAP narrows geography without identifying a province.
+ *
+ *   It is the same trap German PLZ Leitzonen set, in a different disguise.
  */
 
 import type { Tagged } from "type-fest"
@@ -32,7 +34,7 @@ export const CAP_PATTERN = /^\d{5}$/
  * Normalize a CAP surface form to the bare five digits: trim surrounding
  * whitespace (`" 00184 "` → `"00184"`).
  *
- * @returns Null when the result is not a five-digit code.
+ * @returns Null when the result isn't a five-digit code.
  */
 export function normalizeCAP(raw: unknown): CAP | null {
 	if (typeof raw !== "string") return null
@@ -49,7 +51,7 @@ export function isCAP(input: unknown): input is CAP {
 }
 
 /**
- * Narrow a string to a {@link CAP}, or `null` when it is not one.
+ * Narrow a string to a {@link CAP}, or `null` when it isn't one.
  *
  * @deprecated Use {@link normalizeCAP}.
  */

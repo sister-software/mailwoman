@@ -4,14 +4,17 @@
 /**
  *   Builds the sealed `coastal-england.db` from the Environment Agency's NCERM geodatabase.
  *
- *   NCERM publishes no coverage statement, so a point without an erosion polygon may be inland or on
- *   an unmapped coast. Coverage rows therefore use the `source_present` basis and cover only the cells
- *   the polygons reach. {@linkcode assertNoNegativeClaim} rejects any stronger basis.
+ *   NCERM publishes no coverage statement, so a point without an erosion polygon
+ *   may be inland or on an unmapped coast.
+ *   Coverage rows therefore use the `source_present` basis and cover only the cells the
+ *   polygons reach. {@linkcode assertNoNegativeClaim} rejects any stronger basis.
  *
  *   Each cell row refers to one polygon, so rows are final when written and need no resolve pass.
  *   The ingest still runs in bounded child processes because h3's wasm heap cannot be reset.
- *   It fails after enough polyfill calls. The area cross-check catches a hole read as an exterior ring.
- *   That error would cover ground the source did not map.
+ *
+ *   It fails after enough polyfill calls.
+ *   The area cross-check catches a hole read as an exterior ring.
+ *   That error would cover ground the source didn't map.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers/stat"

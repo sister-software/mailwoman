@@ -46,7 +46,7 @@ import {
 	worktreePairReading,
 	worktreeTreeDelta,
 } from "#dev-mcp/confound"
-import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
+import type { Engine, EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "#dev-mcp/external-arm"
 import {
 	DISTANCE_THRESHOLDS_KM,
@@ -268,7 +268,7 @@ async function compareMailwomanArms(
 		ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 	}
 
-	// If there is no truth, this run can only report differences.
+	// If there's no truth, this run can only report differences.
 	const mode = resolveGradeMode(options.grade, gradeable.length > 0, "no row in this set carries expectations")
 
 	const test = significance(
@@ -367,13 +367,7 @@ async function compareMailwomanArms(
 /**
  * Project a mailwoman arm into the external-answer shape.
  */
-async function mailwomanRunner(
-	registry: EngineRegistryLike,
-	config: EngineConfig,
-	set: ResolvedInputSet
-): Promise<ArmRunner> {
-	const engine = await registry.acquire(config)
-
+function mailwomanRunner(engine: Engine, set: ResolvedInputSet): ArmRunner {
 	return {
 		label: "mailwoman",
 		provenance: { ...provenanceFor(engine, set) },
@@ -533,7 +527,7 @@ async function externalRunner(
 }
 
 /**
- * Compare two arms when at least one is not mailwoman.
+ * Compare two arms when at least one isn't mailwoman.
  */
 async function compareAcrossEngines(
 	registry: EngineRegistryLike,
@@ -548,7 +542,14 @@ async function compareAcrossEngines(
 	const meter = deps.oracleMeter ?? (await OracleMeter.create())
 
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
-		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
+		if (arm.kind === "mailwoman") {
+			const lease = await registry.acquire(arm.config)
+
+			// The lease is released with the other arms' clients once scoring ends.
+			clients.push({ [Symbol.asyncDispose]: async () => lease[Symbol.dispose]() })
+
+			return mailwomanRunner(lease, set)
+		}
 
 		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
 

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal/guideline"
 import { US_UNIT_DESIGNATOR_VARIANTS, US_UNIT_GUIDELINE_RULES } from "@mailwoman/codex/us"
 import { beforeAll, describe, expect, it } from "vitest"
@@ -34,7 +37,7 @@ const IT_HELD_LOCALITIES = (holdoutPolicyFor(defaultHoldouts().IT ?? null).local
 )
 
 const PLACES = new Map<string, PostalGuidelinePlace[]>([
-	// `23` is a declared FR holdout and `75` is not.
+	// `23` is a declared FR holdout and `75` isn't.
 	[
 		"FR",
 		NAMES.slice(0, 80).map((locality, index) => ({
@@ -42,7 +45,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "23" : "75"}${String(100 + index).padStart(3, "0")}`,
 		})),
 	],
-	// `TR` is a declared GB holdout and `AL` is not.
+	// `TR` is a declared GB holdout and `AL` isn't.
 	[
 		"GB",
 		NAMES.slice(0, 80).map((locality, index) => ({
@@ -50,7 +53,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "TR" : "AL"}${1 + (index % 9)} ${1 + (index % 7)}AB`,
 		})),
 	],
-	// Every odd place is a declared IT locality holdout and every even place is not.
+	// Every odd place is a declared IT locality holdout and every even place isn't.
 	[
 		"IT",
 		NAMES.slice(0, 80).map((locality, index) => ({
@@ -59,7 +62,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			region: index % 2 ? "CA" : "AQ",
 		})),
 	],
-	// `733` is a declared AU district holdout and `284` is not.
+	// `733` is a declared AU district holdout and `284` isn't.
 	[
 		"AU",
 		NAMES.slice(0, 80).map((locality, index) => ({
@@ -68,7 +71,7 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			region: index % 2 ? "TAS" : "NSW",
 		})),
 	],
-	// Every odd place is a declared NZ locality holdout and every even place is not.
+	// Every odd place is a declared NZ locality holdout and every even place isn't.
 	[
 		"NZ",
 		NAMES.slice(0, 80).map((locality, index) => ({

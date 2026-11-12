@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The search artifact: one `@mailwoman/ancestrie` entry per feature name, one more per alias, ranked by diameter so
- *   a larger feature sorts first at an equal prefix. The trie stores no ancestry (nomenclature has no containment
- *   graph). It gives the app a prefix walk over names with the feature's id and position as payload.
+ *   The search artifact: one `@mailwoman/ancestrie` entry per feature name, one more per alias,
+ *   ranked by diameter so a larger feature sorts first at an equal prefix.
  *
- *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles. the build calls the same one.
+ *   The trie stores no ancestry (nomenclature has no containment graph).
+ *   It gives the app a prefix walk over names with the feature's id and position as payload.
+ *
+ *   The tokenizer lives in `#search/tokens`, the platform-free half an app
+ *   bundles. the build calls the same one.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie"

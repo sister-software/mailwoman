@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Streams unit-postcode rows from extracted Code-Point Open CSVs and converts their OSGB36
- *   coordinates to WGS84.
+ *   Streams unit-postcode rows from extracted Code-Point Open CSVs and converts
+ *   their OSGB36 coordinates to WGS84.
  */
 
 import { normalizePostcodeDisplay } from "@mailwoman/postcode/display-form"
@@ -27,7 +27,7 @@ const CODEPOINT_COLUMNS = 10
 /**
  * The ONS country codes in Code-Point Open, mapped to ISO 3166-2 subdivisions.
  *
- * Northern Ireland has no code because the product does not cover it.
+ * Northern Ireland has no code because the product doesn't cover it.
  */
 export const CODEPOINT_COUNTRY_CODES = {
 	E92000001: "ENG",

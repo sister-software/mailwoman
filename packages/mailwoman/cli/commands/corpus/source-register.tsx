@@ -4,8 +4,8 @@
 /**
  *   Deterministic: the same research CSVs produce byte-identical output.
  *
- *   The build refuses to write a register that fails its own audit, so an unseeded jurisdiction or an undeclared
- *   license decision fails here rather than in a consumer.
+ *   The build refuses to write a register that fails its own audit, so an unseeded jurisdiction
+ *   or an undeclared license decision fails here rather than in a consumer.
  */
 
 import { Text } from "ink"

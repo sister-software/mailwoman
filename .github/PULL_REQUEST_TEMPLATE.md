@@ -17,7 +17,7 @@ judgment word stands where a fact belongs
 ## Why chain
 
 When the PR fixes a defect: the compressed chain, or "cause direct: <one line>".
-Delete this section when the change is not a fix.
+Delete this section when the change isn't a fix.
 
 ## Completion assertions
 

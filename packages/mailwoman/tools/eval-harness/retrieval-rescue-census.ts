@@ -4,6 +4,7 @@
 /**
  *   Report whether a correct answer was already available for each coordinate-truth row:
  *   through the entity layer or among unselected resolver candidates.
+ *
  *   This census classifies rows but makes no decision about changing checks or behavior.
  */
 

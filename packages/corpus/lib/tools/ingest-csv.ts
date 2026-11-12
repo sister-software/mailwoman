@@ -6,26 +6,23 @@
  *
  * The tool reads a CSV and samples rows to infer column types.
  * It creates a SQLite table and imports all rows.
+ *
  * It handles quoted fields, null-like values and duplicate column names.
  *
  * ## Usage
  *
  *   ```sh
  *   mailwoman corpus ingest-csv \
- *   --input /data/corpus/sources/usgov-nppes/npidata_pfile.csv \
+ *   --input $MAILWOMAN_DATA_ROOT/snapshots/usgov-nppes/2026-05/npidata_pfile.csv \
  *   --table nppes_providers \
- *   --output /data/corpus/sources/usgov-nppes/nppes.db
+ *   --output $MAILWOMAN_DATA_ROOT/db/nppes/nppes.db
  * ```
  *
- * Options:
- * --input <path> Required CSV path
- * --table <name> Table name (default: from filename)
- * --output <path> DB path (default: input dir/<table>.db)
- * --sample <n> Rows used for type inference (default: 100)
- * --separator <char> Field delimiter (default: ,)
- * --skip <n> Lines to skip before header (default: 0)
- * --no-header Treat CSV as headerless (col_0, col_1, ...)
- * --dry-run Print inferred schema, skip import
+ * Options: --input <path> Required CSV path --table <name> Table name (default: from filename)
+ * --output <path> DB path (default: input dir/<table>.db) --sample <n> Rows used
+ * for type inference (default: 100) --separator <char> Field delimiter (default: ,)
+ * --skip <n> Lines to skip before header (default: 0) --no-header Treat CSV as headerless
+ * (col_0, col_1, ...) --dry-run Print inferred schema, skip import
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -348,7 +345,7 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
  *
- * @throws When `input` does not exist.
+ * @throws When `input` doesn't exist.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!(await pathExists(options.input))) {

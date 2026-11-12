@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Jurisdiction coverage overlays rendered from the `mailwoman coverage jurisdictions` tile set: one
- *   Natural Earth map unit per jurisdiction, filled by what the training run drew from it, the
- *   address sources the register holds for it, its address system, or the variety of address shapes
- *   among its drawn rows. Each fill is a default-off layer. Tiles are served from `jurisdictions-v1.pmtiles`.
+ *   Jurisdiction coverage overlays rendered from the `mailwoman coverage jurisdictions`
+ *   tile set: one Natural Earth map unit per jurisdiction, filled by what the training
+ *   run drew from it, the address sources the register holds for it, its address system,
+ *   or the variety of address shapes among its drawn rows.
+ *
+ *   Each fill is a default-off layer.
+ *   Tiles are served from `jurisdictions-v1.pmtiles`.
  */
 
 import type {

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module measures a training run's step rate from its `train_log.csv`. The measured seconds per 100 steps is
- *   the unit `OBSERVED_SECONDS_PER_100_STEPS` in `tools/training/launch/wall-clock.ts` records.
+ *   This module measures a training run's step rate from its `train_log.csv`.
+ *
+ *   The measured seconds per 100 steps is the unit `OBSERVED_SECONDS_PER_100_STEPS`
+ *   in `tools/training/launch/wall-clock.ts` records.
  */
 
 import { TextSpliterator } from "spliterator"

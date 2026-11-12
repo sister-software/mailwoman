@@ -7,15 +7,15 @@ title: v0.5.0 — as shipped
 
 This page summarizes the v0.5.0 fresh-slate work for readers catching up on it.
 
-The v0.5.0 plan ([`PHASE_8_v0_5_0_fresh_slate.md`](./phases/PHASE_8_v0_5_0_fresh_slate.mdx)) split the work into six threads (A through F). All six landed in `main` by 2026-05-24. This article lists what is now in the tree, how the pieces fit together, and what training work remains.
+The v0.5.0 plan ([`PHASE_8_v0_5_0_fresh_slate.md`](./phases/PHASE_8_v0_5_0_fresh_slate.mdx)) split the work into six threads (A through F). All six landed in `main` by 2026-05-24. This article lists what's now in the tree, how the pieces fit together, and what training work remains.
 
 ## Why v0.5.0 exists
 
-The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) ended with three structural ceilings that small recipe tweaks could not clear:
+The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) ended with three structural ceilings that small recipe tweaks couldn't clear:
 
 1. The v0.1.0 tokenizer's byte-fallback rate on non-Latin scripts caused 92% of country FN in the golden eval.
 2. The classifier did boundary discovery and type classification at the same time via BIO labels. This caused the bio_slip class on `", 22220"` for `22220`.
-3. Stage 5 reconcile only sorted spans. It could not catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
+3. Stage 5 reconcile only sorted spans. It couldn't catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
 
 An individual patch for each ceiling would have taken three medium iterations. v0.5.0 bundles them into one **fresh-slate** release. That release pays the retraining cost once and addresses all three.
 
@@ -75,7 +75,7 @@ A0 could then ship in parallel with B, E, and the scaffolds instead of waiting f
 
 The other parallelizing change was to build **C-s and D-s as scaffolds**. The plan had C and D as serial training and integration work that needed real classifier output to validate. We moved the _code_ portion to t0 (forward-pass tests against stub data, mocked top-k for Stage 5) and deferred only the training run. The only mandatory serial chain left was `B → A1 → C-train`.
 
-## What is still cooking
+## What's still cooking
 
 | Item                            | State                                                                                                                                        | ETA                |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
@@ -90,7 +90,7 @@ Three smaller follow-ups remain open from postmortems:
 
 ## Where to read next
 
-If you are catching up on the architecture, read in this order:
+If you're catching up on the architecture, read in this order:
 
 1. [The knowledge ladder](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx) explains why the two new layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile) exist.
 2. [The staged pipeline](../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) describes the runtime composition end to end.

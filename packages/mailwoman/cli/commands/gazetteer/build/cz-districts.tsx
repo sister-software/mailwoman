@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build cz-districts` — the Prague municipal-district locality database (the
- *   `Praha 9` coherence class) from the GeoNames CZ places file (CC-BY 4.0, attribution GeoNames).
- *   Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
- *   `@mailwoman/resolver-wof-sqlite` peer.
+ *   `mailwoman gazetteer build cz-districts` — the Prague municipal-district locality database
+ *   (the `Praha 9` coherence class) from the GeoNames CZ places file (CC-BY 4.0, attribution GeoNames).
+ *
+ *   Sealed 0444.
+ *   The pipeline module is lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

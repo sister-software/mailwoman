@@ -6,6 +6,7 @@
  */
 
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
@@ -25,6 +26,11 @@ export const spec = {
 	description: "Build the US address layer, one lookup.db and detail.db per state",
 	options: {
 		"layer-version": { type: "string", description: "The layer version, an ISO date such as 2026-11-08" },
+		"base-version": {
+			type: "string",
+			description:
+				"The published version whose regions a new version's first build keeps for the states it does not rebuild",
+		},
 		states: { type: "string", description: "Comma-separated USPS state codes to build (default: every state and DC)" },
 		omit: {
 			type: "string",
@@ -36,6 +42,16 @@ export const spec = {
 			description: "Overture release whose addresses-us.parquet supplies the non-NAD rows",
 		},
 		plan: { type: "string", description: "OpenAddresses plan JSON listing each run's member and recorded license" },
+		jobs: {
+			type: "number",
+			default: 1,
+			description: "States to build at once, each in its own worker process of up to 6 GB heap",
+		},
+		resume: {
+			type: "boolean",
+			default: false,
+			description: "Keep each region this version already holds, from its build.json, and build the others",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -53,26 +69,39 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!options.plan) throw new CommandError("--plan is required: the OpenAddresses plan JSON")
 
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { repoRootPath } = await import("@mailwoman/core/paths")
-		const { buildSHA } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
-		const { nadReleaseParquetPath } = await import("@mailwoman/corpus/us/tools/fetch/nad")
-		const { buildUSAddressLayer } = await import("@mailwoman/corpus/us/address-records/layer")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { currentSourcePath, dataRootPath, snapshotSourcePath },
+			readers: { readLocalJSONFile },
+			paths: { repoRootPath },
+			stampManifest: { buildSHA },
+			nad: { nadReleaseParquetPath },
+			layer: { buildUSAddressLayer },
+			paths2: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			readers: import("@mailwoman/core/fs/readers"),
+			paths: import("@mailwoman/core/paths"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			nad: import("@mailwoman/corpus/us/tools/fetch/nad"),
+			layer: import("@mailwoman/corpus/us/address-records/layer"),
+			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const lines: string[] = []
 
 		const result = await buildUSAddressLayer({
 			root: dataRootPath("db"),
 			version,
-			nadParquet: await nadReleaseParquetPath(dataRootPath("corpus", "sources")),
-			overtureParquet: dataRootPath("overture", options.release, "addresses-us.parquet"),
-			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: dataRootPath("oa-cache") },
+			...(options.baseVersion ? { baseVersion: options.baseVersion } : {}),
+			nadParquet: await nadReleaseParquetPath(),
+			overtureParquet: snapshotSourcePath("overture", options.release, "addresses-us.parquet"),
+			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: currentSourcePath("openaddresses") },
 			...(options.states ? { states: extractDelimited(options.states) } : {}),
 			...(options.omit ? { omitFromManifest: extractDelimited(options.omit) } : {}),
 			buildSHA: buildSHA(repoRootPath()),
 			adminDatabase: wofDatabasePath("admin-global-priority.db"),
+			jobs: options.jobs,
+			resume: options.resume,
 			onState: (build) => {
 				const refused: Record<string, number> = {}
 

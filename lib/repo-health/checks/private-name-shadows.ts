@@ -12,7 +12,7 @@
  *
  *       // repo-health-ignore private-name-shadows-export -- <reason>
  *
- *   The `debt` check pins the count so the number ratchets down. this check names each site.
+ *   The `debt` check pins the count so the number ratchets down. this check lists each site.
  */
 
 import { relative } from "path-ts"

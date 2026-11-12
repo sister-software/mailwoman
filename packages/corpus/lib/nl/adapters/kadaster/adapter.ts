@@ -4,37 +4,44 @@
 /**
  * `nl-kadaster`: the INSPIRE Addresses theme Kadaster publishes, read from its national GML.
  *
- * Kadaster serves the whole country in one file. The ATOM service document at
- * `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`, 2,247 bytes, holds
- * one entry, and its `rel="alternate"` link is
- * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes. It
- * inflates to 29,677,448,685 bytes of GML holding 10,066,060 address features. The sibling feed URL
- * the entry's own `<id>` names answers HTTP 404, so the download link is the only live one.
+ * Kadaster serves the whole country in one file.
+ * The ATOM service document at `https://service.pdok.nl/kadaster/ad/atom/adressen_inspire_geharmoniseerd.xml`,
+ * 2,247 bytes, holds one entry, and its `rel="alternate"` link is
+ * `https://service.pdok.nl/kadaster/ad/atom/downloads/addresses.gml.gz`, 819,465,603 bytes.
  *
- * The size decides the shape of the reader. The document is never buffered: the adapter opens the
- * local `.gml.gz`, inflates it as a byte stream and takes one feature subtree at a time. Each feature
- * an address references contributes a value rather than its subtree, so the index is
- * bounded by a string per street and per place name rather than by the document.
+ * It inflates to 29,677,448,685 bytes of GML holding 10,066,060 address features.
+ * The sibling feed URL the entry's own `<id>` names answers HTTP 404,
+ * so the download link is the only live one.
  *
- * Four things separate this publisher from the Czech one the shared primitives were first written
- * against, and each was measured over a 40,000,000-byte ranged prefix of the download, read in one
- * streaming pass:
+ * The size decides the shape of the reader.
+ * The document is never buffered: the adapter opens the local `.gml.gz`,
+ * inflates it as a byte stream and takes one feature subtree at a time.
  *
- * 1. The wrapper is `gml:FeatureCollection` with `gml:featureMember`, where ČÚZK writes
- *    `base:SpatialDataSet` with `base:member`.
- * 2. Every `ad:component` reference is a local `#` fragment naming a `gml:id` in the same document,
- *    and 0 of them went unresolved.
- * 3. The postcode is inline. The prefix holds 0 `ad:PostalDescriptor` features, and the postcode
- *    arrives as a locator designator typed `postalDeliveryIdentifier`. Its element is present on all
- *    40,000 addresses read in the final pass and empty on 1,769 of them, so an address with no
- *    postcode is ordinary here and the publisher's own rendering agrees: Kadaster's Locatieserver
- *    writes `De Paasweide 72g-11, Appingedam` for one of them, with no postcode.
+ * Each feature an address references contributes a value rather than its subtree, so the
+ * index is bounded by a string per street and per place name rather than by the document.
+ *
+ * Four things separate this publisher from the Czech one the shared primitives
+ * were first written against, and each was measured over a 40,000,000-byte ranged
+ * prefix of the download, read in one streaming pass:
+ *
+ * 1. The wrapper is `gml:FeatureCollection` with `gml:featureMember`, where ČÚZK
+ *    writes `base:SpatialDataSet` with `base:member`.
+ * 2. Every `ad:component` reference is a local `#` fragment naming a `gml:id` in
+ *    the same document, and 0 of them went unresolved.
+ * 3. The postcode is inline.
+ *    The prefix holds 0 `ad:PostalDescriptor` features, and the postcode arrives as
+ *    a locator designator typed `postalDeliveryIdentifier`.
+ *    Its element is present on all 40,000 addresses read in the final pass
+ *    and empty on 1,769 of them, so an address with no postcode is ordinary here
+ *    and the publisher's own rendering agrees: Kadaster's Locatieserver writes
+ *    `De Paasweide 72g-11, Appingedam` for one of them, with no postcode.
  * 4. The number is typed `addressNumber`, and two further types hold the rest of it.
  *
- * The number is assembled from three designators, and Kadaster's own rendering of the same records
- * fixes how. BAG's `huis_nlt` is the house number as Kadaster writes it, and the Locatieserver serves
- * it beside the `nummeraanduiding` id that this theme's `base:localId` repeats. Three records of the
- * fixture, matched by that id:
+ * The number is assembled from three designators, and Kadaster's own rendering
+ * of the same records fixes how.
+ * BAG's `huis_nlt` is the house number as Kadaster writes it, and the Locatieserver serves
+ * it beside the `nummeraanduiding` id that this theme's `base:localId` repeats.
+ * Three records of the fixture, matched by that id:
  *
  * | `gml:id` | `addressNumber` | `addressNumberExtension` | `addressNumber2ndExtension` | `huis_nlt` |
  * | --- | --- | --- | --- | --- |
@@ -42,38 +49,53 @@
  * | `…address.0003200000134065` | `10` | (empty) | `I` | `10-I` |
  * | `…address.0003200000134593` | `4` | (empty) | `01` | `4-01` |
  *
- * So the extension joins the number with no separator and the second extension follows a hyphen.
- * 305,542 of 345,309 addresses in the prefix write an `addressNumberExtension` that is present and
- * empty, spelled `<ad:designator/>`. That states an address with no extension. That condition differs
- * from void.
+ * So the extension joins the number with no separator and the second extension follows a
+ * hyphen. 305,542 of 345,309 addresses in the prefix write an `addressNumberExtension`
+ * that's present and empty, spelled `<ad:designator/>`.
+ * That states an address with no extension.
+ * That condition differs from void.
  *
- * The place name comes from `ad:AddressAreaName`, the BAG *woonplaats*. The prefix holds exactly one
- * `ad:AdminUnitName` feature and it is the country, `Nederland` at `1stOrder`, so this feed publishes
- * no municipality name and the woonplaats is the finest place name available. An address references
- * that country feature, so the adapter indexes the type and reads no place name from it.
+ * The place name comes from `ad:AddressAreaName`, the BAG *woonplaats*.
+ * The prefix holds exactly one `ad:AdminUnitName` feature and it is the country,
+ * `Nederland` at `1stOrder`, so this feed publishes no municipality name
+ * and the woonplaats is the finest place name available.
  *
- * One published defect shapes what the adapter refuses to do. `ad:situatedWithin` on an
- * `ad:ThoroughfareName` writes its target with a hyphen where every `gml:id` uses a dot:
- * `#nl-imbag-ad-addressareaname-3386` against `gml:id="nl-imbag-ad-addressareaname.1000"`. Measured
- * over a 5,000,000-character window, 479 local fragments resolved to no feature, all of that shape,
- * against 2,622 dot-form ids and 0 hyphen-form ids. The same element on an `ad:AddressAreaName` uses
- * the dot form and resolves. A reader walking `ThoroughfareName → situatedWithin → AddressAreaName`
- * would therefore read an empty locality for every street and report no failure. So the adapter reads
- * the street and the place from the address's own `ad:component` references, and those use the dot
- * form. It never follows `ad:situatedWithin`. Every reference it does follow raises when it resolves to no
- * feature, so the hyphen form reaching an `ad:component` would be reported rather than dropped.
+ * An address references that country feature, so the adapter indexes the type
+ * and reads no place name from it.
+ *
+ * One published defect shapes what the adapter refuses to do.
+ * `ad:situatedWithin` on an `ad:ThoroughfareName` writes its target with a hyphen where every `gml:id`
+ * uses a dot: `#nl-imbag-ad-addressareaname-3386` against `gml:id="nl-imbag-ad-addressareaname.1000"`.
+ *
+ * Measured over a 5,000,000-character window, 479 local fragments resolved to no feature,
+ * all of that shape, against 2,622 dot-form ids and 0 hyphen-form ids.
+ * The same element on an `ad:AddressAreaName` uses the dot form and resolves.
+ *
+ * A reader walking `ThoroughfareName → situatedWithin → AddressAreaName` would therefore
+ * read an empty locality for every street and report no failure.
+ * So the adapter reads the street and the place from the address's own `ad:component`
+ * references, and those use the dot form.
+ *
+ * It never follows `ad:situatedWithin`.
+ * Every reference it does follow raises when it resolves to no feature, so the hyphen
+ * form reaching an `ad:component` would be reported rather than dropped.
  *
  * Unlike Czechia, this publisher offers no string to check a whole rendered line against.
- * `ad:alternativeIdentifier` is void on every address. The Locatieserver's `weergavenaam` is the
- * nearest equivalent, and `adapter.test.ts` pins the twelve fixture rows against it.
+ * `ad:alternativeIdentifier` is void on every address.
  *
- * Kadaster states one license and states it as a URL. Both `rights` elements of the ATOM service
- * document read `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`, the Dutch deed page for
- * CC0 1.0 Universal. The address-source register elected it with `spdx` `CC0-1.0`. CC0 reserves no
- * act, so every row records that identifier and no attribution clause is owed, although crediting
- * Kadaster stays good practice.
+ * The Locatieserver's `weergavenaam` is the nearest equivalent, and `adapter.test.ts`
+ * pins the twelve fixture rows against it.
  *
- * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `NL`.
+ * Kadaster states one license and states it as a URL.
+ * Both `rights` elements of the ATOM service document read
+ * `https://creativecommons.org/publicdomain/zero/1.0/deed.nl`, the Dutch deed page for CC0 1.0 Universal.
+ *
+ * The address-source register elected it with `spdx` `CC0-1.0`.
+ * CC0 reserves no act, so every row records that identifier and no attribution clause
+ * is owed, although crediting Kadaster stays good practice.
+ *
+ * The adapter honors `opts.limit` and `opts.signal`.
+ * `opts.country` is optional and accepts only `NL`.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -236,7 +258,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 				// The published document writes 300,318 referenced features ahead of its first address
 				// and held 0 of 345,309 measured, so the driver's holding list stays empty here.
 				// It exists because only the document's own ordering separates a reference
-				// that has not arrived yet from one the publisher never wrote.
+				// that's not arrived yet from one the publisher never wrote.
 				for await (const row of streamInspireRows<ReferencedValue>({
 					chunks: documentChunks(documentPath),
 					componentElements: COMPONENT_TYPES,
@@ -257,10 +279,10 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 
 /**
  * One address's row, `null` when it holds too little to render, or `"deferred"`
- * when a reference it states is not indexed yet.
+ * when a reference it states isn't indexed yet.
  *
  * With `final` set the document has ended, so an unresolved reference is a value the reader
- * asked for and could not read, and it raises rather than rendering the address without it.
+ * asked for and couldn't read, and it raises rather than rendering the address without it.
  */
 function composeRow(
 	address: MarkupElement,

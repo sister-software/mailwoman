@@ -86,7 +86,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 		const keep = fields ? new Set<RunRowField>(fields) : null
 
 		const set = await resolveInputSet(ref)
-		const engine = await registry.acquire(config)
+		using engine = await registry.acquire(config)
 		const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
 		const startedAt = Date.now()

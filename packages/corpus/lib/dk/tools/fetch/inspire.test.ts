@@ -91,7 +91,7 @@ describe("datasetURLOf", () => {
 	it("leaves a URL that already names the member unchanged", () => {
 		const named = "https://ftp.sdfe.dk/main.html?download&weblink=abc&realfilename=DK_INSPIRE_Addresses.zip"
 
-		// A publisher that starts writing the complete URL into the feed must not get the parameter twice.
+		// A publisher that starts writing the complete URL into the feed mustn't get the parameter twice.
 		expect(datasetURLOf(named)).toBe(named)
 	})
 })

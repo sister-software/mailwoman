@@ -49,8 +49,8 @@ test("resolveCandidateDBPath: falls back to the convention path under the data r
 
 	await expect(resolveCandidateDBPath(THIS_FILE)).resolves.toBe(THIS_FILE)
 
-	// `none` must beat the convention path, or there is no way back to the FTS
-	// backend on a machine that has pulled the gazetteer.
+	// `none` must beat the convention path, or there's no way back to the FTS backend
+	// on a machine that's pulled the gazetteer.
 	await expect(resolveCandidateDBPath("none")).resolves.toBeNull()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	await expect(resolveCandidateDBPath()).resolves.toBeNull()

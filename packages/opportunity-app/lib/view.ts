@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Everything the page shows for one set of control values and one selection, computed by the model. The
- *   collections come from `buildingFeatures`, `districtFeatures` and `routeFeatures`, the figures from
- *   `selectionEconomics`, and the report text from `reportLines` and `renderScenarioReport`. Every figure on the
- *   page is one of those functions' values, and this module adds, averages and estimates no figure of its own.
+ *   Everything the page shows for one set of control values and one selection, computed by the model.
  *
- *   A model function that refuses its input throws. The view keeps that refusal as the error's name and message,
- *   and the page shows the message in place of what the function would have returned. A selection holds the
- *   selected buildings in the dossier's building order, so a figure never depends on the order of the clicks.
+ *   The collections come from `buildingFeatures`, `districtFeatures` and `routeFeatures`, the figures
+ *   from `selectionEconomics`, and the report text from `reportLines` and `renderScenarioReport`.
+ *   Every figure on the page is one of those functions' values, and this module adds,
+ *   averages and estimates no figure of its own.
+ *
+ *   A model function that refuses its input throws.
+ *   The view keeps that refusal as the error's name and message, and the page shows
+ *   the message in place of what the function would have returned.
+ *
+ *   A selection holds the selected buildings in the dossier's building order,
+ *   so a figure never depends on the order of the clicks.
  */
 
 import { type Dossier, type DossierRecords, type EntityID, reportLines } from "@mailwoman/dossier"

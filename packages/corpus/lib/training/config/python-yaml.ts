@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parses a training config the way PyYAML's `yaml.safe_load` does, so the TypeScript resolver reads every
- *   committed YAML file into the values the Python loader reads.
+ *   Parses a training config the way PyYAML's `yaml.safe_load` does, so the TypeScript
+ *   resolver reads every committed YAML file into the values the Python loader reads.
  *
- *   PyYAML implements YAML 1.1 with its own implicit resolvers, and the `yaml` package's 1.1 schema differs from
- *   them in three places that change a config. PyYAML reads `5e-4` and `1.0e3` as strings, because its float
- *   pattern requires a dot and a signed exponent. It reads `y` and `n` as strings where the 1.1 schema reads
- *   booleans. It also reads an integer and a float as different types. The receipt and coverage validations
- *   test. This module replaces the scalar tags with PyYAML's patterns and constructors: an integer becomes a
- *   `bigint`, a float a `number`, and `NO`, `yes`, `on` and `off` booleans.
+ *   PyYAML implements YAML 1.1 with its own implicit resolvers, and the `yaml` package's
+ *   1.1 schema differs from them in three places that change a config.
+ *   PyYAML reads `5e-4` and `1.0e3` as strings, because its float pattern
+ *   requires a dot and a signed exponent.
+ *
+ *   It reads `y` and `n` as strings where the 1.1 schema reads booleans.
+ *   It also reads an integer and a float as different types.
+ *
+ *   The receipt and coverage validations test.
+ *   This module replaces the scalar tags with PyYAML's patterns and constructors: an integer
+ *   becomes a `bigint`, a float a `number`, and `NO`, `yes`, `on` and `off` booleans.
  */
 
 import { parseDocument, type ScalarTag, type Tags } from "yaml"
@@ -156,7 +161,7 @@ function pythonYAMLTags(defaults: Tags): Tags {
  *
  * A repeated key keeps its first position and its last value, as a Python dict assignment does.
  *
- * @throws When the document does not parse, or holds a timestamp or a bare `=`.
+ * @throws When the document doesn't parse, or holds a timestamp or a bare `=`.
  */
 export function parsePythonYAML(text: string, source = "<string>"): PythonValue {
 	const document = parseDocument(text, {

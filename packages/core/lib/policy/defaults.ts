@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Default policy table: every component starts at `neural_only`, and a per-component change is
- *   recorded here with its rationale in the commit message.
+ *   Default policy table: every component starts at `neural_only`, and a per-component
+ *   change is recorded here with its rationale in the commit message.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"

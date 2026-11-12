@@ -1,0 +1,78 @@
+# Push `main` and every tag to the two GitLab mirrors:
+#
+#   - gitlab.com/sister-software/mailwoman, with the `GITLAB_MIRROR_TOKEN` secret
+#   - gitlab.opencode.de/sister-software/mailwoman, with the `OPENCODE_MIRROR_TOKEN` secret
+#
+# Commits land on GitHub first, and each GitLab receives copies. GitLab.com's Free tier can't pull
+# from GitHub, so this job pushes instead. Each secret is a GitLab personal token with only the
+# `write_repository` scope. GitLab accepts any non-empty HTTPS username alongside a personal token,
+# so the username in each target identifies the token's owner for a reader of the remote's logs.
+# Each token has an expiry date. After it expires, that target's job fails at the push step until
+# its secret is replaced.
+#
+# The targets run as separate matrix jobs with `fail-fast: false`, so an outage or expired token on
+# one GitLab leaves the other mirror updating.
+#
+# The push is a fast-forward push. If GitHub's `main` is ever rewritten, or someone commits on a
+# GitLab side, that GitLab refuses the push and the job fails, leaving its history untouched.
+#
+# The job pushes explicit refspecs rather than `--mirror`. A GitHub clone holds `refs/pull/*` for
+# every pull request, and the mirrors keep only `main` and the tags.
+name: GitLab mirror
+
+on:
+  push:
+    branches: [main]
+    tags: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs queue in order. A cancelled run could leave a tag unpushed until the next push to main.
+concurrency:
+  group: gitlab-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: github.repository == 'sister-software/mailwoman'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gitlab.com
+            host: gitlab.com
+            username: GirlBossRush
+            secret: GITLAB_MIRROR_TOKEN
+          - name: openCode
+            host: gitlab.opencode.de
+            username: oauth2
+            secret: OPENCODE_MIRROR_TOKEN
+    name: mirror (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The full history and every tag, so the first push can send everything GitLab lacks.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push main and tags to ${{ matrix.host }}
+        env:
+          MIRROR_TOKEN: ${{ secrets[matrix.secret] }}
+          MIRROR_HOST: ${{ matrix.host }}
+          MIRROR_USERNAME: ${{ matrix.username }}
+        run: |
+          set -euo pipefail
+          # A token pasted into the secrets form can keep the line break that followed it, and a
+          # newline inside the URL's password stops git before it connects.
+          token="$(printf '%s' "$MIRROR_TOKEN" | tr -d '\r\n')"
+          # GitHub masks the secret as stored. The stripped value is a different string, so it
+          # gets its own mask before anything can print it.
+          echo "::add-mask::${token}"
+          git push \
+            "https://${MIRROR_USERNAME}:${token}@${MIRROR_HOST}/sister-software/mailwoman.git" \
+            "refs/remotes/origin/main:refs/heads/main" \
+            "refs/tags/*:refs/tags/*"

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Round-trip tests for the browser flat-binary postcode resolver: serialize entries, load the
- *   bytes. Assert exact-match, multi-country runs, coordinate-less membership, grouping and quantization
- *   fidelity.
+ *   Round-trip tests for the browser flat-binary postcode resolver: serialize entries, load the bytes.
+ *
+ *   Assert exact-match, multi-country runs, coordinate-less membership, grouping and quantization fidelity.
  */
 
 import { describe, expect, it } from "vitest"

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Handlers for the native operations. Each operation is defined in `#operations/*`. The
- *   OpenAPI document is emitted from those definitions, so there is no handwritten spec.
+ *   Handlers for the native operations.
+ *
+ *   Each operation is defined in `#operations/*`.
+ *   The OpenAPI document is emitted from those definitions, so there's no handwritten spec.
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"

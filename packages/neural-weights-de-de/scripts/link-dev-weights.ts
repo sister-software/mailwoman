@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dev-weights linker for `@mailwoman/neural-weights-de-de`: it builds the index that makes
- *   `resolveWeights({locale: "de-de"})` surface `pairIndexPath` in local dev.
+ *   Dev-weights linker for `@mailwoman/neural-weights-de-de`: it builds the index that
+ *   makes `resolveWeights({locale: "de-de"})` surface `pairIndexPath` in local dev.
  *
  *   The index is inert without the `de` entry in `LEADING_POSTCODE_COUNTRIES`
- *   (`neural/pair/prior-windows.ts`): German addresses write the PLZ
- *   first ("50733 Köln"), so a parent segment folds to a key no bare-Gemeinde entry matches.
+ *   (`neural/pair/prior-windows.ts`): German addresses write the PLZ first ("50733 Köln"),
+ *   so a parent segment folds to a key no bare-Gemeinde entry matches.
  */
 
 import {

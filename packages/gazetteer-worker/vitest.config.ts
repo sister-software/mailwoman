@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Worker's tests run under the Workers runtime through Miniflare, with a local R2 bucket in place of
- *   `mailwoman-public`. Node builds a small candidate database here and passes its bytes as a binding, and each test
- *   puts them into the bucket. The root Vitest sweep excludes this workspace. CI runs it as its own step.
+ *   The Worker's tests run under the Workers runtime through Miniflare,
+ *   with a local R2 bucket in place of `mailwoman-public`.
+ *
+ *   Node builds a small candidate database here and passes its bytes as a binding,
+ *   and each test puts them into the bucket.
+ *   The root Vitest sweep excludes this workspace.
+ *   CI runs it as its own step.
  */
 
 import { cloudflareTest } from "@cloudflare/vitest-plugin"

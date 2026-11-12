@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Release-time exposure checks: a preflight before compute is spent, and a completed-run check before promotion.
+ *   Release-time exposure checks: a preflight before compute is spent,
+ *   and a completed-run check before promotion.
  *
- *   A claim is a `(jurisdiction, phenomenon)` pair a shipped locale asserts it handles. A floor is the smallest
- *   realized exposure at which an exposure curve showed the phenomenon's behavior stable, with the report that
- *   established it. `floors.json` beside this module holds the floors. A floor is added only from an exposure-curve
- *   report. A claim without one reads `no-floor`: the check reports its exposure and leaves the verdict to the
- *   contrast board.
+ *   A claim is a `(jurisdiction, phenomenon)` pair a shipped locale asserts it handles.
+ *   A floor is the smallest realized exposure at which an exposure curve showed the
+ *   phenomenon's behavior stable, with the report that established it.
  *
- *   The preflight reads expected draws, the epoch-1 replay of the mixture times the epoch count. It refuses a config
- *   whose expected draws for a claimed phenomenon are zero, and applies no floor, because expected draws estimate
- *   realized exposure.
+ *   `floors.json` beside this module holds the floors.
+ *   A floor is added only from an exposure-curve report.
  *
- *   The completed-run check reads realized draws when the trainer logged them, and otherwise reports realized
- *   exposure as unmeasured rather than substituting the expectation. It refuses a claim under its floor, and any
- *   contrast group with a failing arm.
+ *   A claim without one reads `no-floor`: the check reports its exposure
+ *   and leaves the verdict to the contrast board.
+ *
+ *   The preflight reads expected draws, the epoch-1 replay of the mixture times the epoch count.
+ *   It refuses a config whose expected draws for a claimed phenomenon are zero,
+ *   and applies no floor, because expected draws estimate realized exposure.
+ *
+ *   The completed-run check reads realized draws when the trainer logged them, and otherwise
+ *   reports realized exposure as unmeasured rather than substituting the expectation.
+ *   It refuses a claim under its floor, and any contrast group with a failing arm.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

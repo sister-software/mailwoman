@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves how the Wallonia fetcher resolves two Atom feeds to one archive, and what it does where a
- *   feed states less than it needs.
+ *   Proves how the Wallonia fetcher resolves two Atom feeds to one archive,
+ *   and what it does where a feed states less than it needs.
  *
- *   The bodies are the shapes the Service public de Wallonie serves, reduced to the elements this
- *   fetcher reads. Byte counts and the sha256 are the publisher's real values, recorded when the
- *   reader was written, so a change in what the fetcher resolves shows up against them.
+ *   The bodies are the shapes the Service public de Wallonie serves,
+ *   reduced to the elements this fetcher reads.
+ *   Byte counts and the sha256 are the publisher's real values, recorded when the reader
+ *   was written, so a change in what the fetcher resolves shows up against them.
  *
- *   `./wallonie.integration.test.ts` would read the live service. This suite stubs the transport and
- *   runs the real `APIClient` over it, so the requests go through the same adapter and error mapping
- *   they do against the publisher.
+ *   `./wallonie.integration.test.ts` would read the live service.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the requests
+ *   go through the same adapter and error mapping they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"

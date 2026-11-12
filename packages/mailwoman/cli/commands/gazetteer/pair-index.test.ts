@@ -3,8 +3,10 @@
 
 /**
  *   Unit tests for the placetype-pair-prior arc's row→pair fold/dedupe/skip logic:
- *   {@link PairIndexBuilder} + {@link nearestRankPercentile}. Fixture rows are (child, parent) place-name
- *   pairs passed straight to the builder, without touching a CSV or JSONL read path.
+ *   {@link PairIndexBuilder} + {@link nearestRankPercentile}.
+ *
+ *   Fixture rows are (child, parent) place-name pairs passed straight to the builder,
+ *   without touching a CSV or JSONL read path.
  */
 
 import {

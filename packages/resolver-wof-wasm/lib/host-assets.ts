@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What a host must stage to serve the httpvfs readers: this package's compiled range worker and the
- *   `@sqlite.org/sqlite-wasm` runtime it imports, all loaded at run time by URL, so no bundler ever sees them.
- *   Node-side, a build step, never the browser. `syncArtifact` is the idempotent copy every staged asset goes
- *   through: a byte-identical destination remains unchanged so a dev server watching it sees no change.
+ *   What a host must stage to serve the httpvfs readers: this package's
+ *   compiled range worker and the `@sqlite.org/sqlite-wasm` runtime it imports,
+ *   all loaded at run time by URL, so no bundler ever sees them.
+ *
+ *   Node-side, a build step, never the browser.
+ *   `syncArtifact` is the idempotent copy every staged asset goes through: a byte-identical
+ *   destination remains unchanged so a dev server watching it sees no change.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -113,7 +116,7 @@ export async function stageSQLiteRuntimeAssets(destDir: PathBuilderLike): Promis
 		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,
 		// the watcher sees a "change" and reloads, loadContent() re-runs and re-copies… a
 		// reload loop that shows up as the /demo page flickering during `start`.
-		// A no-op copy breaks the cycle when the host does not skip it.
+		// A no-op copy breaks the cycle when the host doesn't skip it.
 		// (Prod `build` runs loadContent once, so the loop is a dev-server-only hazard.)
 		if (await syncArtifact(src, dest, `range reader ${f}`)) {
 			copied++

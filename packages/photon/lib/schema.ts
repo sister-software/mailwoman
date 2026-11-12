@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Zod schemas for the Photon-compatible API. Key names and envelopes match Photon and must not
- *   change. The query schemas accept any string or string array, so validation never fails. The
- *   handlers in `routes.ts` do the actual parsing.
+ *   Zod schemas for the Photon-compatible API.
+ *
+ *   Key names and envelopes match Photon and mustn't change.
+ *   The query schemas accept any string or string array, so validation never fails.
+ *   The handlers in `routes.ts` do the actual parsing.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -65,7 +67,7 @@ export const PhotonFeatureCollectionSchema =
 
 /**
  * The error envelope is an empty FeatureCollection with a message.
- * Photon does not use an `{ error }` body.
+ * Photon doesn't use an `{ error }` body.
  */
 export const PhotonMessageCollectionSchema = z
 	.object({

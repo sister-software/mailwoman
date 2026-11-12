@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parity-campaign probe: where does the kind-classifier route fragment-class inputs? Classes are
- *   derived from the parity fixtures own gold tags (no synthesis bias). Run from the repo root:
- *   `node packages/mailwoman/tools/dev-tools/router-kind-probe.run.ts`
+ *   Parity-campaign probe: where does the kind-classifier route fragment-class inputs?
+ *
+ *   Classes are derived from the parity fixtures own gold tags (no synthesis bias).
+ *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/router-kind-probe.run.ts`
  */
 import { classifyKind } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"

@@ -45,7 +45,7 @@ the claim's own `observedAt`, else its source record's `observedAt`, else the wo
 availability and retrieval dates never date a claim. A derived or inferred claim also lists the claims it
 derives from, and an inferred claim gives its explanation.
 
-`validateRecords` reports a `derivedFrom` identifier that names no supplied claim as an `unknown_claim`
+`validateRecords` reports a `derivedFrom` identifier that identifies no supplied claim as an `unknown_claim`
 error. A dossier admits a derived or inferred claim only when it admits every claim that the claim derives
 from, whatever the date of the claim's own record.
 
@@ -116,7 +116,7 @@ over the fixture records. The fixture's readings have no `subject`, so each atta
 membership. The survey places Example House in cell-1, and the permit places Example House and Example
 Annex in district-1. The Annex therefore shows only the district reading. No record places a building in
 cell-3, so the report lists the cable reading there as unplaced, and the route explanation for Example
-House does not cite it. Every position is synthetic, and the permit and the survey state two different
+House doesn't cite it. Every position is synthetic, and the permit and the survey state two different
 positions for the Annex. Example House's inferred claim c2 derives from its observed claim c1. The
 evidence of c2 states no observation date, so the survey's observation date, 2022-03-15, dates it. The
 permit states each building's identification number, so each identifier cites the permit.

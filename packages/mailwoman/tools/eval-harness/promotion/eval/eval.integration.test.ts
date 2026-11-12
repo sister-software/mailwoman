@@ -146,7 +146,7 @@ describe("resolveThresholdSpecPath", () => {
 	})
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
-		// tsc does not emit the spec JSON files, so package.json `files` must include them.
+		// tsc doesn't emit the spec JSON files, so package.json `files` must include them.
 		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
 		const { files } = pkg
 

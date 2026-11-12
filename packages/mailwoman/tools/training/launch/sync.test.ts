@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the staging script under bash against a fake `rclone` over a local directory that stands in for the bucket.
+ *   Runs the staging script under bash against a fake `rclone` over a local
+ *   directory that stands in for the bucket.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

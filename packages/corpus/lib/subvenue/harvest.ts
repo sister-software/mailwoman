@@ -5,24 +5,35 @@
  *   @file This module defines harvestable source rows and reads them from files. Each pass extracts
  *   attested surfaces and measures the identifier half of each designator.
  *
- *   {@link SubVenueHarvestRow} accepts rows from any source. An Overture Places row in the
- *   `airport_terminal` category has the shape `{ designatorID, name }` and fits unchanged. The type is
- *   declared here so the builder can read source rows without importing `@mailwoman/osm`. The corpus
- *   package has no dependency on that package.
+ *   {@link SubVenueHarvestRow} accepts rows from any source.
+ *   An Overture Places row in the `airport_terminal` category has the shape
+ *   `{ designatorID, name }` and fits unchanged.
  *
- *   Two measurements shape {@link extractAttestedPhrases}. They show why it can run over raw OSM:
+ *   The type is declared here so the builder can read source rows without importing `@mailwoman/osm`.
+ *   The corpus package has no dependency on that package.
  *
- *   **Most feature names describe the venue.** In the Berlin extract, 2,060 matched features include a
- *   `railway=platform` with the name `Stendaler Straße`. An `amenity=university` has the name `Hertie School`.
- *   Among 250,116 Great Britain features with names, 6,003 (2.40%) contain a designator token. A name adds a surface
- *   when it contains a phrase already in the surface index. `Terminal E (Untere Ebene)` qualifies. The full
- *   venue name `Otto Lilienthal Flughafen Berlin Tegel` does not.
+ *   Two measurements shape {@link extractAttestedPhrases}.
+ *   They show why it can run over raw OSM:
  *
- *   **The matched phrase determines which record receives the surface.** Every hit attributed to
- *   `row.designatorID`, the rule that matched the feature, produced `west → platform`, `hall → platform`, and
- *   `biggin → platform` on the GB extract. A bus stop tagged `public_transport=platform` can have the label
- *   "Village Hall" or "West Kensington". Of 133 OSM-derived surfaces, 108 referred to records other than the
- *   ones identified by the phrases. Attribution now follows the surface index. The row's designator stays in `context`.
+ *   **Most feature names describe the venue.** In the Berlin extract, 2,060 matched
+ *   features include a `railway=platform` with the name `Stendaler Straße`.
+ *   An `amenity=university` has the name `Hertie School`.
+ *
+ *   Among 250,116 Great Britain features with names, 6,003 (2.40%) contain a designator token.
+ *   A name adds a surface when it contains a phrase already in the surface index.
+ *
+ *   `Terminal E (Untere Ebene)` qualifies.
+ *   The full venue name `Otto Lilienthal Flughafen Berlin Tegel` doesn't.
+ *
+ *   **The matched phrase determines which record receives the surface.** Every hit attributed
+ *   to `row.designatorID`, the rule that matched the feature, produced `west → platform`,
+ *   `hall → platform`, and `biggin → platform` on the GB extract.
+ *   A bus stop tagged `public_transport=platform` can have the label "Village Hall" or "West Kensington".
+ *
+ *   Of 133 OSM-derived surfaces, 108 referred to records other than the ones identified by the phrases.
+ *   Attribution now follows the surface index.
+ *
+ *   The row's designator stays in `context`.
  *   A confound board can then distinguish `hall` found on a platform from `hall` found on a terminal.
  */
 
@@ -40,11 +51,11 @@ import type { IdentifierShape, SubVenueSurface } from "#subvenue/table"
  * An Overture Places row in the `airport_terminal` category has the shape
  * `{ designatorID, name }` and fits unchanged.
  *
- * The harvest function's hardcoded `osm:name` source stamp did not fit that input.
+ * The harvest function's hardcoded `osm:name` source stamp didn't fit that input.
  * See `overture-subvenue.ts` for the source handling.
  *
- * Declared locally so the builder does not import `@mailwoman/osm`
- * (which `@mailwoman/corpus` does not depend on) just to name a shape it reads from a file.
+ * Declared locally so the builder doesn't import `@mailwoman/osm`
+ * (which `@mailwoman/corpus` doesn't depend on) just to name a shape it reads from a file.
  */
 export interface SubVenueHarvestRow {
 	/**
@@ -58,7 +69,7 @@ export interface SubVenueHarvestRow {
 	/**
 	 * `venue` (station, airport, campus) or `sub_venue`, when the source's rule assigns one.
 	 *
-	 * The harvest itself does not read it.
+	 * The harvest itself doesn't read it.
 	 * The sub-venue recipe fills its venue slot from it.
 	 */
 	tier?: string
@@ -98,7 +109,7 @@ export function classifyIdentifier(ref: string): string {
  * The field exists so a recipe author can see what a class contains.
  *
  * GB's `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`),
- * which one example would have hidden and which the class name does not say.
+ * which one example would have hidden and which the class name doesn't say.
  *
  * Eight fits a terminal line and covers the variety inside every class the GB extract produced.
  * The count lives in `observations`; this is a sample rather than a census.
@@ -231,7 +242,7 @@ export function extractAttestedPhrases(
  * Read a jsonl file of {@link SubVenueHarvestRow}s.
  *
  * The reader skips blank lines and rows it cannot parse.
- * A malformed line does not stop lexicon generation.
+ * A malformed line doesn't stop lexicon generation.
  */
 export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRow[]> {
 	const out: SubVenueHarvestRow[] = []

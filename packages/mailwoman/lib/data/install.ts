@@ -73,6 +73,7 @@ import {
 	ProblemKind,
 } from "#data/plan"
 import { PUBLISHED_SCHEMA_VERSION } from "#data/registry"
+import { dataClientHeaders } from "#data/remote"
 
 /**
  * What happened to one planned artifact.
@@ -97,11 +98,11 @@ export interface ArtifactResult {
 	outcome: ArtifactOutcome
 	detail: string
 	/**
-	 * The artifact's installed or conventional path, or `null` when it did not install.
+	 * The artifact's installed or conventional path, or `null` when it didn't install.
 	 */
 	path: string | null
 	/**
-	 * What kind of failure a failed or cancelled artifact met, or `null` when it did not fail.
+	 * What kind of failure a failed or cancelled artifact met, or `null` when it didn't fail.
 	 */
 	problem: ProblemKind | null
 }
@@ -130,7 +131,7 @@ export interface InstallationResult {
 	 */
 	refusedBundles: Array<{ bundle: string; lines: string[] }>
 	/**
-	 * The generation this run wrote, or `null` when the selection did not change.
+	 * The generation this run wrote, or `null` when the selection didn't change.
 	 */
 	selection: ActiveSelection | null
 	/**
@@ -160,9 +161,9 @@ const SQLITE_HEADER = "SQLite format 3\u0000"
 
 /**
  * The manifest of a downloaded SQLite artifact, from its sealed bytes, its own `layer_manifest`
- * when it has one, and the registry's record for the fields the file does not record.
+ * when it has one, and the registry's record for the fields the file doesn't record.
  *
- * @throws When the file is not SQLite or cannot be opened.
+ * @throws When the file isn't SQLite or cannot be opened.
  */
 async function manifestForDownload(
 	path: string,
@@ -260,7 +261,7 @@ async function holdsIdenticalArtifact(
 	fileName: string,
 	manifest: ArtifactManifest
 ): Promise<boolean> {
-	// An unreadable manifest is not reused.
+	// An unreadable manifest isn't reused.
 	// The caller then replaces the directory with the staged copy and its manifest.
 	const installed = await readInstalledManifest(destination).catch(() => null)
 
@@ -352,8 +353,11 @@ async function acquire(
 		remotePath: planned.artifact.remotePath,
 		identity,
 		...(downloadURL ? { downloadURL } : {}),
-		// A plain GET against the public bucket answers Cloudflare's block page, while a ranged GET streams the object.
-		headers: { range: "bytes=0-" },
+		// A plain GET against the public bucket answers Cloudflare's block page,
+		// while a ranged GET streams the object.
+		// The client header is what the bucket's firewall rule admits from a request
+		// with no browser fetch headers.
+		headers: { range: "bytes=0-", ...(downloadURL ? {} : await dataClientHeaders()) },
 		...(options.signal ? { signal: options.signal } : {}),
 		...(options.onProgress ? { onProgress: options.onProgress } : {}),
 		...(options.onTransfer
@@ -377,6 +381,9 @@ export async function executeInstallation(
 	options: ExecuteOptions
 ): Promise<InstallationResult> {
 	const installLock = catalogPaths(plan.dataRoot).installLock
+
+	// A first pull may name a data root that doesn't exist yet, and the lock is a directory inside it.
+	await makeDirectories(plan.dataRoot)
 
 	// One installer runs per data root.
 	// A second refuses before any transfer, so the first completes rather than both

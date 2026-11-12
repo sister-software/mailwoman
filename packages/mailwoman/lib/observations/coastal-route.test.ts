@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The coastal-erosion route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
+ *   The coastal-erosion route on the geocode path, exercised through `geocodeAddress`
+ *   with mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   The first test checks the rollback contract.
+ *   With the layer absent, the geocode result must match a run where the field was never built.
  *   Rollback satisfies that contract by removing the argument.
  *
  *   A designation becomes one additive marker that reports the verdict's top kind.
  *   A location with no erosion polygon produces no marker.
+ *
  *   Unlike the flood route, NCERM publishes no definition that treats silence as an advisory.
  */
 
@@ -36,7 +39,7 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 
 /**
  * The kind the mock classifier reports: a designation marker must name the verdict's
- * own top kind because a designation is not raised by intent.
+ * own top kind because a designation isn't raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 

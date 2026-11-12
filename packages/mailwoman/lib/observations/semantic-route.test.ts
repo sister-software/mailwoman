@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { ActivityPhraseEntry, ActivityPhraseLexicon } from "@mailwoman/activity-lexicon"
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import type { CompiledGeographicModel, RelationAssertion } from "@mailwoman/geographic-model"

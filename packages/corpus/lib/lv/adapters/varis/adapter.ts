@@ -2,29 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `lv-varis`: Latvia's State Address Register (`Valsts adrešu reģistrs`), read from the open data
- * Valsts zemes dienests publishes as the data.gov.lv dataset `varis-atvertie-dati`.
+ * `lv-varis`: Latvia's State Address Register (`Valsts adrešu reģistrs`), read from the open
+ * data Valsts zemes dienests publishes as the data.gov.lv dataset `varis-atvertie-dati`.
  *
  * Input is the directory `fetchVaris` writes: six of the dataset's CSV tables, each under the file
- * name the portal serves it as, `aw_eka.csv` and the five tables its parent codes point into. Every table is
- * UTF-8 with a byte-order mark, comma-separated, and quotes every field, doubling a quote inside a
- * value. The column metadata the publisher posts beside each table declares `ISO-8859-1`; the bytes
- * are UTF-8, and the reader decodes them as UTF-8. Over the 2026-09-30 edition no value in
- * `aw_eka.csv` holds a line break, 0 of 610,876 records.
+ * name the portal serves it as, `aw_eka.csv` and the five tables its parent codes point into.
+ * Every table is UTF-8 with a byte-order mark, comma-separated, and quotes every field,
+ * doubling a quote inside a value.
+ *
+ * The column metadata the publisher posts beside each table declares `ISO-8859-1`;
+ * the bytes are UTF-8, and the reader decodes them as UTF-8.
+ * Over the 2026-09-30 edition no value in `aw_eka.csv` holds a line break, 0 of 610,876 records.
  *
  * ## One row per building or land-unit address
  *
- * `aw_eka.csv` holds the addresses of buildings and of land units intended for building, one record
- * per address. Of its 610,876 records, `STATUSS` is `EKS` (existing) on 550,652, `DEL` (removed) on
- * 32,448 and `ERR` (erroneous) on 27,776. Only `EKS` records become rows. The two other states are
- * counted under {@linkcode VarisRefusal}.
+ * `aw_eka.csv` holds the addresses of buildings and of land units intended for
+ * building, one record per address.
+ * Of its 610,876 records, `STATUSS` is `EKS` (existing) on 550,652, `DEL` (removed)
+ * on 32,448 and `ERR` (erroneous) on 27,776.
  *
- * Each record names its immediate parent by `VKUR_CD` and `VKUR_TIPS`, and the parent names its own
- * the same way, up to the country. The type codes are the register's: `104` city (`pilsēta`), `105`
- * parish (`pagasts`), `106` village (`ciems`), `107` street (`iela`), `113` municipality (`novads`)
- * and `101` Latvia. No table read lists its code `100000000` as a row. Over the 550,652 active records the
- * chains take seven shapes, written from the parent upward. The rows column counts what the adapter
- * emits after the refusals below:
+ * Only `EKS` records become rows.
+ * The two other states are counted under {@linkcode VarisRefusal}.
+ *
+ * Each record identifies its immediate parent by `VKUR_CD` and `VKUR_TIPS`,
+ * and the parent identifies its own the same way, up to the country.
+ * The type codes are the register's: `104` city (`pilsēta`), `105` parish (`pagasts`),
+ * `106` village (`ciems`), `107` street (`iela`), `113` municipality (`novads`) and `101` Latvia.
+ *
+ * No table read lists its code `100000000` as a row.
+ * Over the 550,652 active records the chains take seven shapes, written from the parent upward.
+ *
+ * The rows column counts what the adapter emits after the refusals below:
  *
  * | Chain                         | Records |    Rows | {@linkcode VarisAddressType}  |
  * | ----------------------------- | ------: | ------: | ----------------------------- |
@@ -40,72 +48,86 @@
  *
  * ## The written form is the publisher's
  *
- * `STD` holds the register's own full address string: `Krišjāņa Barona iela 1, Rīga, LV-1050` or
- * `"Riņņi", Vecates pag., Valmieras nov., LV-4211`. Each
- * part is the `NOSAUKUMS` of one object in the chain, in chain order, joined by a comma and a space,
- * with the postcode `ATRIB` last. A building on a street writes the street name and the house number
- * as one part, and a building with its own name writes it inside ASCII double quotes. The adapter composes
- * that string from the chain and compares it with `STD`. Over the 550,637 active records the adapter
- * does not refuse first, the two are equal on 550,637. A record where they differ is refused, so every
- * row's `raw` is `STD` unchanged and every component's position in it is known. The row's surface is
- * `attested`. `alignRow` aligns the 550,637 rows at edit distance 0, quarantines none, and places
- * every component in the order above.
+ * `STD` holds the register's own full address string: `Krišjāņa Barona iela 1, Rīga, LV-1050`
+ * or `"Riņņi", Vecates pag., Valmieras nov., LV-4211`.
+ * Each part is the `NOSAUKUMS` of one object in the chain, in chain order,
+ * joined by a comma and a space, with the postcode `ATRIB` last.
  *
- * The comparison reads values as stored. 25 building names end in a space, and `STD` keeps it inside the
- * quotes, `"Vilidža "`, so the reader turns off the CSV reader's trimming, composes from the stored
- * values and trims only the labels.
+ * A building on a street writes the street name and the house number as one part,
+ * and a building with its own name writes it inside ASCII double quotes.
+ * The adapter composes that string from the chain and compares it with `STD`.
+ *
+ * Over the 550,637 active records the adapter doesn't refuse first, the two are equal on 550,637.
+ * A record where they differ is refused, so every row's `raw` is `STD` unchanged
+ * and every component's position in it is known.
+ *
+ * The row's surface is `attested`.
+ * `alignRow` aligns the 550,637 rows at edit distance 0, quarantines none,
+ * and places every component in the order above.
+ *
+ * The comparison reads values as stored. 25 building names end in a space, and `STD` keeps
+ * it inside the quotes, `"Vilidža "`, so the reader turns off the CSV reader's trimming,
+ * composes from the stored values and trims only the labels.
  *
  * The codex renderer cannot produce this order. libaddressinput's Latvian layout prints the region
  * line before the locality, `Siguldas nov., Sigulda, LV-2150`, where the register writes `Sigulda,
- * Siguldas nov., LV-2150`, so `formatAddressRow` is not called.
+ * Siguldas nov., LV-2150`, so `formatAddressRow` isn't called.
  *
  * ## Which tag each part takes
  *
- * - The street's `NOSAUKUMS` is `street`, type word included: `Brīvības iela`, `Vidusceļš`. No Latvian
- *   street-type split exists in this repository, and the register stores the name whole.
- * - The house number is `house_number`, its building-block suffix included: `195 k-1` is house 195,
- *   block (`korpuss`) 1, one address in the register. Over the 323,316 street addresses, 249,783 are
- *   bare digits and 56,374 digits and a letter. 15 hold no digit, such as `Bauskas iela Ozoli`, where
- *   a house name stands in the number's place. Those are refused, because the name is not a number
- *   and labeling it a venue would place a venue after a street. No other Latvian row does that.
- * - A building's name is `venue`. SCHEMA.mdx defines `venue` as a place with a name and keeps
- *   `building_name` for Japan, and the Estonian register adapter labels a farm name `venue` for the same
- *   reason. The quotes are punctuation and lie outside the span. 236 names hold a quote of their own,
+ * - The street's `NOSAUKUMS` is `street`, type word included: `Brīvības iela`, `Vidusceļš`.
+ *   No Latvian street-type split exists in this repository, and the register stores the name whole.
+ * - The house number is `house_number`, its building-block suffix included:
+ *   `195 k-1` is house 195, block (`korpuss`) 1, one address in the register.
+ *   Over the 323,316 street addresses, 249,783 are bare digits and 56,374 digits and a letter. 15
+ *   hold no digit, such as `Bauskas iela Ozoli`, where a house name stands in the number's place.
+ *   Those are refused, because the name isn't a number and labeling it a venue
+ *   would place a venue after a street.
+ *   No other Latvian row does that.
+ * - A building's name is `venue`.
+ *   SCHEMA.mdx defines `venue` as a place with a name and keeps `building_name` for Japan,
+ *   and the Estonian register adapter labels a farm name `venue` for the same reason.
+ *   The quotes are punctuation and lie outside the span. 236 names hold a quote of their own,
  *   such as `Stacija "Biksti"`, which the register writes `"Stacija "Biksti""`.
- * - A city and a parish are `locality`. Both are direct parts of a municipality, so they are the same
- *   tier, and a rural address without a village still writes the parish it lies in. The
- *   parish is written with the register's abbreviation, `Vecates pag.`, and the span includes it, as a
- *   `subregion` of `Multnomah County` includes `County`.
- * - A village is `dependent_locality`. It lies inside a parish, and the Estonian adapter labels a
- *   village inside a rural municipality the same way.
- * - A municipality is `region`, abbreviation included: `Valmieras nov.`. The register holds no tier
- *   above it: the parent of all 35 active municipalities is Latvia. The 7 active cities whose parent is
- *   Latvia, the state cities such as Rīga and Daugavpils, write no municipality, so their rows have no
- *   region.
+ * - A city and a parish are `locality`.
+ *   Both are direct parts of a municipality, so they're the same tier, and a rural
+ *   address without a village still writes the parish it lies in.
+ *   The parish is written with the register's abbreviation, `Vecates pag.`, and the span
+ *   includes it, as a `subregion` of `Multnomah County` includes `County`.
+ * - A village is `dependent_locality`.
+ *   It lies inside a parish, and the Estonian adapter labels a village inside
+ *   a rural municipality the same way.
+ * - A municipality is `region`, abbreviation included: `Valmieras nov.`.
+ *   The register holds no tier above it: the parent of all 35 active municipalities is Latvia.
+ *   The 7 active cities whose parent is Latvia, the state cities such as Rīga
+ *   and Daugavpils, write no municipality, so their rows have no region.
  * - `ATRIB` is `postcode`, prefix included: `LV-4211`.
  *
  * ## Premises and apartments
  *
- * The register's premises table, `aw_dziv.csv`, holds 868,669 active apartment and premises addresses
- * in 57,285 buildings, more than the 550,652 building addresses. A tenth of those buildings hold 50.1%
- * of the apartments, and one building holds 681. Rows for every apartment would make a few large blocks
- * the commonest Latvian address, so the adapter reads no premises.
+ * The register's premises table, `aw_dziv.csv`, holds 868,669 active apartment
+ * and premises addresses in 57,285 buildings, more than the 550,652 building addresses.
+ * A tenth of those buildings hold 50.1% of the apartments, and one building holds 681.
+ *
+ * Rows for every apartment would make a few large blocks the commonest Latvian address,
+ * so the adapter reads no premises.
  *
  * ## Personal data, identity and license
  *
- * The register records places and names no owner or occupant, so no row has a natural person's
- * name. A building name is the name of the property, as on a map.
+ * The register records places and identifies no owner or occupant, so no row has a natural person's name.
+ * A building name is the name of the property, as on a map.
  *
- * The row id is the register's own object code, `lv-varis-<KODS>`. Five `STD` strings are each written
- * by two codes, so two rows can share a `raw` while their ids differ.
+ * The row id is the register's own object code, `lv-varis-<KODS>`.
+ * Five `STD` strings are each written by two codes, so two rows can share a `raw` while their ids differ.
  *
- * data.gov.lv publishes the dataset under `CC-BY-4.0`, the `license_id` its CKAN record names for the
- * publisher Valsts zemes dienests, and the column metadata posted beside `aw_dziv.csv` names
- * `https://creativecommons.org/licenses/by/4.0/` as `dc:license`. CC BY 4.0 requires credit, a link to the license and
- * a statement that changes were made, so every row records the license and
- * {@linkcode LV_VARIS_ATTRIBUTION} is the credit the model card states.
+ * data.gov.lv publishes the dataset under `CC-BY-4.0`, the `license_id` its CKAN record
+ * names for the publisher Valsts zemes dienests, and the column metadata posted beside
+ * `aw_dziv.csv` names `https://creativecommons.org/licenses/by/4.0/` as `dc:license`.
+ * CC BY 4.0 requires credit, a link to the license and a statement that changes were made, so every row
+ * records the license and {@linkcode LV_VARIS_ATTRIBUTION} is the credit the model card states.
  *
- * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `LV`.
+ * The adapter honors `opts.limit` and `opts.signal`.
+ * `opts.country` is optional and accepts only `LV`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -179,7 +201,7 @@ export type VarisObjectType = (typeof VarisObjectType)[keyof typeof VarisObjectT
 const ACTIVE = "EKS"
 
 /**
- * Why a building record did not become a row.
+ * Why a building record didn't become a row.
  */
 export const VarisRefusal = {
 	/**
@@ -191,15 +213,15 @@ export const VarisRefusal = {
 	 */
 	Erroneous: "row:status-erroneous",
 	/**
-	 * `STATUSS` holds a value the register's documentation does not list.
+	 * `STATUSS` holds a value the register's documentation doesn't list.
 	 */
 	UnknownStatus: "row:status-unknown",
 	/**
-	 * A code in the parent chain names no object in the tables read.
+	 * A code in the parent chain identifies no object in the tables read.
 	 */
 	ParentUnresolved: "row:parent-unresolved",
 	/**
-	 * An object in the parent chain is not active.
+	 * An object in the parent chain isn't active.
 	 */
 	AncestorInactive: "row:ancestor-inactive",
 	/**

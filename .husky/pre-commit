@@ -107,9 +107,9 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			exit 1
 		fi
 		node docs/scripts/generate-cli-reference.mts
-		if ! git diff --quiet -- docs/articles/developers/reference/cli.mdx; then
+		if ! git diff --quiet -- docs/articles/reference/cli.mdx; then
 			echo "pre-commit: the CLI reference moved — it has been regenerated in your worktree; stage it and retry:" >&2
-			echo "  git add docs/articles/developers/reference/cli.mdx" >&2
+			echo "  git add docs/articles/reference/cli.mdx" >&2
 			exit 1
 		fi
 		# Also enforce man-page freshness with same remediation pattern.

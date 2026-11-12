@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Taiwan designators in Traditional Chinese: the delivery service, premise, sub-premise, floor and relation
- *   words that a Taiwanese address or query uses.
+ *   Taiwan designators in Traditional Chinese: the delivery service, premise, sub-premise,
+ *   floor and relation words that a Taiwanese address or query uses.
  *
  * @see {@link https://en.wiktionary.org/wiki/郵政信箱 Wiktionary 郵政信箱}
  * @see {@link https://en.wiktionary.org/wiki/信箱 Wiktionary 信箱}

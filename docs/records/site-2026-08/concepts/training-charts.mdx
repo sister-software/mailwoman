@@ -22,7 +22,7 @@ Each chart has a **Linear / Log** toggle. Use the log scale to examine small val
 
 <TrainingChart src="/img/training-charts/v06x-val-loss.svg" alt="v0.6.2 vs v0.6.2b val_loss" />
 
-Both runs spike into the 0.4–0.7 range periodically. I first read this as overconfidence drift on v0.6.2. The [v0.6.2 confidence probe](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) ruled that out: the per-token confidence distributions of the two runs are essentially identical, with 81.2% vs 81.8% of wrong predictions at ≥0.9 confidence. The val_loss fluctuation comes from per-batch sample variance. It does not indicate a model-level change.
+Both runs spike into the 0.4–0.7 range periodically. I first read this as overconfidence drift on v0.6.2. The [v0.6.2 confidence probe](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) ruled that out: the per-token confidence distributions of the two runs are essentially identical, with 81.2% vs 81.8% of wrong predictions at ≥0.9 confidence. The val_loss fluctuation comes from per-batch sample variance. It doesn't indicate a model-level change.
 
 **val macro_f1 over training steps:**
 
@@ -67,7 +67,7 @@ The `<TrainingChart>` component implements the **Linear / Log** toggle by switch
 ## When to read which chart
 
 - **val_loss** is noisy in the short term, so read the trend rather than any single eval. Switch to **log scale** to examine the low-loss floor, and back to **linear** to compare spike magnitudes with the axis range.
-- **macro_f1** is the steady-state quality signal. v0.6.x runs reach about 0.40–0.42 by step 20K and change little after that. A meaningful improvement shows as a sustained higher band. A single high reading does not indicate one.
+- **macro_f1** is the steady-state quality signal. v0.6.x runs reach about 0.40–0.42 by step 20K and change little after that. A meaningful improvement shows as a sustained higher band. A single high reading doesn't indicate one.
 - **train_loss** is for diagnostics only. It always drops monotonically, with small fluctuations, and a NaN or a step change appears here first. **Log scale** shows the asymptotic tail.
 
 The v0.6.x training loop writes an eval row every 2K steps and a train_loss row every 50 steps. A 100K-step run produces ~50 eval points and ~2000 train-loss points.

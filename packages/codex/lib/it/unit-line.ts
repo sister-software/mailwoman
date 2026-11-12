@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Poste Italiane rule for the building line: the optional third line of an address gives the
- *   staircase (`scala`), the floor (`piano`) and the door (`interno`). The fourth line is the street
- *   and civic number, and the fifth the CAP, the locality and the province abbreviation, as
- *   `IT_CASELLA_POSTALE_RULES` cites.
+ *   The Poste Italiane rule for the building line: the optional third line of an address
+ *   gives the staircase (`scala`), the floor (`piano`) and the door (`interno`).
+ *
+ *   The fourth line is the street and civic number, and the fifth the CAP, the locality
+ *   and the province abbreviation, as `IT_CASELLA_POSTALE_RULES` cites.
  *
  *   The document writes the three words in lower case and in that order, and gives no abbreviation.
  *

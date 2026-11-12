@@ -9,7 +9,7 @@ that sits over all of them. #484 (reverse) ships and continues on its own issue.
 ## The principle, and the ladder
 
 Prefer exact locations. Interpolate only as a fallback. Expose confidence and provenance on
-every answer. That has been this project's posture all along (`resolution_tier`,
+every answer. That's been this project's posture all along (`resolution_tier`,
 `interpolated: true`, `uncertaintyM`, `approximate` containment, `source`/`release` per row).
 The musings contributed a shared vocabulary for the whole ladder, and we adopt it:
 
@@ -69,7 +69,7 @@ Order of work:
    Use the same direct-eval harness and the same gold, and interpolate held-out points only from
    non-held-out neighbors (non-circular by construction).
 3. **Side-of-street offset** (~10 m perpendicular on parity match) comes only after the above,
-   because it is not the dominant term.
+   because it isn't the dominant term.
 4. ZIP+4 snapping stays deferred behind #525.
 
 The check changes only by stated decision. A second miss gets its own postmortem.
@@ -121,7 +121,7 @@ informative features are segment-local (bracketing-number positions, density, fo
 geometry). SatCLIP's own card rules out fine-grained several-close-location use. Second, the
 baseline to beat is Method 2 itself. Method 2 is already nearest-neighbor regression on real
 data. A learned model must beat it per density stratum on the same held-out gold, with the deterministic
-tier as the abstain fallback. There is no ship commitment until it does.
+tier as the abstain fallback. There's no ship commitment until it does.
 
 ## Sequence
 

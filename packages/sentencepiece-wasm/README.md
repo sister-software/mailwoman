@@ -43,7 +43,7 @@ success and returns a status message on failure. Pass binary bytes directly.
 A conversion to a JavaScript string changes the model bytes' encoding.
 
 `encodeWithOffsets` returns piece strings, token IDs and corresponding
-`begins`/`ends` arrays. Offsets count UTF-8 bytes in the input. They are not
+`begins`/`ends` arrays. Offsets count UTF-8 bytes in the input. They're not
 JavaScript UTF-16 string indexes. Convert them before indexing a JavaScript
 string, or index the UTF-8 bytes directly.
 

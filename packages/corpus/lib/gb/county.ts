@@ -4,15 +4,17 @@
 /**
  *   The county or unitary authority of a GB postcode, read from the unit-postcode entries of OS Open Names.
  *
- *   A GB address commonly ends its locality with a county, as in `King's Lynn, Norfolk` or
- *   `38 High Street, Maidstone, Kent ME14 1JH`. The rows a corpus renders from `gb-os-open` take their
- *   region from {@link openConstituentCountryReader}, which answers England, Scotland or Wales, so a model
- *   A model trained only on these rows sees no county in the region position and reads `Norfolk` as a locality.
- *   OS Open Names publishes one entry per unit postcode with its `COUNTY_UNITARY`, under the same
- *   Open Government Licence as the other two products the adapter reads.
+ *   A GB address commonly ends its locality with a county, as in `King's Lynn, Norfolk`
+ *   or `38 High Street, Maidstone, Kent ME14 1JH`.
+ *   The rows a corpus renders from `gb-os-open` take their region from {@link openConstituentCountryReader},
+ *   which answers England, Scotland or Wales, so a model A model trained only on these
+ *   rows sees no county in the region position and reads `Norfolk` as a locality.
+ *
+ *   OS Open Names publishes one entry per unit postcode with its `COUNTY_UNITARY`,
+ *   under the same Open Government Licence as the other two products the adapter reads.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -23,14 +25,14 @@ import { createOpenNamesReadStats, readOpenNamesPostcodeCounties } from "#gb/os-
  * The Open Names product the `gb-os-open` fetch writes under the data root.
  */
 export function gbOpenNamesDirectory(): PathBuilder {
-	return dataRootPath("corpus", "sources", GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_PRODUCT_DIRECTORIES.openNames)
+	return currentSourcePath(GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_PRODUCT_DIRECTORIES.openNames)
 }
 
 /**
  * Reads every unit postcode of OS Open Names and returns a map from the postcode
  * to its county or unitary authority.
  *
- * A postcode whose entry names no county is left out of the map.
+ * A postcode whose entry identifies no county is left out of the map.
  *
  * @throws When the directory holds no `Data/*.csv`, so a missing product reports itself
  * rather than reading as a map with no county.

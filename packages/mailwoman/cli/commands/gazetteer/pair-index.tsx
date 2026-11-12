@@ -5,6 +5,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
@@ -23,7 +24,7 @@ import {
  * Every US pair comes from WOF, so a snapshot refresh can legitimately change this number.
  * Update it after inspecting the difference rather than relaxing the check.
  */
-const EXPECTED_US_PAIR_COUNT = 47_878
+const EXPECTED_US_PAIR_COUNT = 50_250
 
 /**
  * Known (child, parent) pairs probed after write, keyed by country code.
@@ -70,7 +71,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
- * The parent tag for each source that does not report one itself: the `--source` CSV's
+ * The parent tag for each source that doesn't report one itself: the `--source` CSV's
  * `district` column is the town above the suburb in NZ, while `--borough-db` and `--ban-dir`
  * supply a tag per pair and a `--pairs-jsonl` line may override its default with `parentTag`.
  */
@@ -117,13 +118,23 @@ export const spec = {
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
-		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
-		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("@mailwoman/gazetteer/tools/pipeline/pair")
-		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
-		const { extractBoroughPairs } = await import("@mailwoman/gazetteer/tools/pipeline/borough-pairs")
-		const { extractLieuDitPairs } = await import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs")
+		const {
+			utils: { md5File, md5Hex },
+			fstPrior: { normalizeFSTToken },
+			pair: { PairIndexResolver, serializePairIndex },
+			pair2: { PairIndexBuilder, applyPairIndexHoldout },
+			spliterator: { CSVSpliterator, JSONSpliterator },
+			boroughPairs: { extractBoroughPairs },
+			lieuditPairs: { extractLieuDitPairs },
+		} = await allKeyed({
+			utils: import("@mailwoman/core/utils"),
+			fstPrior: import("@mailwoman/neural/fst-prior"),
+			pair: import("@mailwoman/neural/pair"),
+			pair2: import("@mailwoman/gazetteer/tools/pipeline/pair"),
+			spliterator: import("spliterator"),
+			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/borough-pairs"),
+			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs"),
+		})
 
 		const country = options.country.toLowerCase()
 
@@ -157,7 +168,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		let cityIx = -1
 		let districtIx = -1
 
-		// The parser does not consume the header row, so the first row supplies the column indexes.
+		// The parser doesn't consume the header row, so the first row supplies the column indexes.
 		if (sourcePath) {
 			for await (const cells of CSVSpliterator.fromAsync<string[]>(openReadStream(sourcePath), {
 				mode: "array",

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CLI-facing orchestration for `mailwoman eval conformance`: audit the law suites before loading the engine, then run every row through the Gauntlet's own deps.
+ *   CLI-facing orchestration for `mailwoman eval conformance`: audit the law suites
+ *   before loading the engine, then run every row through the Gauntlet's own deps.
  */
 
 import { type ConformanceFixture, loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
@@ -82,7 +83,7 @@ export interface ConformanceLawMeasurement {
 
 /**
  * What one conformance run measured, with `measured` absent exactly when `problems` is
- * non-empty so a refused run is not read as a suite that passed no case.
+ * non-empty so a refused run isn't read as a suite that passed no case.
  */
 export interface ConformanceMeasurement {
 	laws: string[]

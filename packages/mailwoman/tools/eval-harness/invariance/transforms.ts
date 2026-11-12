@@ -16,7 +16,7 @@ export interface Transform {
 	 */
 	literatureAnchor: string
 	/**
-	 * Returns the perturbed string, or `null` when the perturbation does not apply to the input.
+	 * Returns the perturbed string, or `null` when the perturbation doesn't apply to the input.
 	 */
 	apply: (raw: string) => string | null
 }
@@ -122,7 +122,7 @@ function abbreviationSwap(raw: string): string | null {
 }
 
 /**
- * Expands every supported abbreviation so that an abbreviation swap does not register as a component change.
+ * Expands every supported abbreviation so that an abbreviation swap doesn't register as a component change.
  */
 export function canonicalizeAbbreviations(value: string): string {
 	return value

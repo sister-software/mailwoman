@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `node:sqlite` → typed-row boundary, in one place: `node:sqlite` types every result as
- *   `Record<string, SQLOutputValue>`, so every raw read needs an assertion. The assertion belongs here rather than at
- *   each query site. An inline cast is invisible to review and indistinguishable from one defeating a real check.
+ *   The `node:sqlite` → typed-row boundary, in one place: `node:sqlite` types every result
+ *   as `Record<string, SQLOutputValue>`, so every raw read needs an assertion.
  *
- *   It lives in `core` because `@mailwoman/resolver-wof-sqlite` is an optional peer of `mailwoman`, and a static
+ *   The assertion belongs here rather than at each query site.
+ *   An inline cast is invisible to review and indistinguishable from one defeating a real check.
+ *
+ *   It lives in `core` because `@mailwoman/resolver-wof-sqlite` is an optional
+ *   peer of `mailwoman`, and a static
  *   import from there would break installing the CLI without the gazetteer backend. The type-only import keeps
  *   `node:sqlite` out of the emitted graph, so the module stays safe to reach from the browser tier.
  */

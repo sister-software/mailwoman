@@ -5,8 +5,8 @@
  *   Downloads the GEBCO undersea gazetteer and builds the sealed layer database and Earth's browser asset.
  *
  *   Usage: `node packages/undersea/tools/build.run.ts [--source <download dir>] [--out <db path>]`.
- *   Without `--source`, the run reads the service and keeps the download under
- *   `$MAILWOMAN_DATA_ROOT/src/undersea/<date>/`.
+ *   Without `--source`, the run reads the service and keeps the download
+ *   under `$MAILWOMAN_DATA_ROOT/snapshots/undersea/<date>/`.
  */
 
 import { gitHead } from "@mailwoman/core/git"

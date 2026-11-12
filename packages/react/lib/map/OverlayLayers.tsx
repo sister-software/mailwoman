@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<OverlayLayers>` — renders the host-supplied {@link OverlaySpec}s (coverage "fog of war",
- *   race-dots, …) as declarative `<Source>` + `<Layer>`s. This replaces the demo's imperative
- *   `map.addSource` / `map.addLayer` overlay loops (and their `isStyleLoaded()` / `styledata` guards):
- *   the host composes the specs, the package renders them, react-map-gl owns the add/remove lifecycle.
+ *   `<OverlayLayers>` — renders the host-supplied {@link OverlaySpec}s
+ *   (coverage "fog of war", race-dots, …) as declarative `<Source>` + `<Layer>`s.
  *
- *   Each overlay's `visible` flag flips the layers' `visibility` layout property — the declarative control a
- *   layer-toggle control drives in a later phase. node-import safety: imports `react-map-gl/maplibre` —
- *   reachable only via `@mailwoman/react/map`.
+ *   This replaces the demo's imperative `map.addSource` / `map.addLayer` overlay loops
+ *   (and their `isStyleLoaded()` / `styledata` guards): the host composes the specs,
+ *   the package renders them, react-map-gl owns the add/remove lifecycle.
+ *
+ *   Each overlay's `visible` flag flips the layers' `visibility` layout property —
+ *   the declarative control a layer-toggle control drives in a later phase. node-import safety:
+ *   imports `react-map-gl/maplibre` — reachable only via `@mailwoman/react/map`.
  */
 
 import { Fragment, type ReactNode } from "react"

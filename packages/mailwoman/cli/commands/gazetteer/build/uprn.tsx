@@ -15,6 +15,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -40,9 +41,15 @@ export const spec = {
 
 const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPath } = await import("@mailwoman/core/paths")
-		const { buildSHA } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
-		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("@mailwoman/gazetteer/tools/pipeline/uprn-layer")
+		const {
+			paths: { repoRootPath },
+			stampManifest: { buildSHA },
+			uprnLayer: { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE },
+		} = await allKeyed({
+			paths: import("@mailwoman/core/paths"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			uprnLayer: import("@mailwoman/gazetteer/tools/pipeline/uprn-layer"),
+		})
 
 		const result = await buildUPRNLayer({
 			sourceDir: options.sourceDir,

@@ -2,13 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
- *   build (FTS5-trigram fuzzy index baked in), in one command. This command sets every choice required
- *   by the 2026-06-27 manual rebuild, including folded countries, postcode databases and FTS. Progress
- *   streams to stderr. The final summary goes to stdout. See releasing.md Step 5.
+ *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range
+ *   candidate build (FTS5-trigram fuzzy index baked in), in one command.
+ *
+ *   This command sets every choice required by the 2026-06-27 manual rebuild,
+ *   including folded countries, postcode databases and FTS.
+ *   Progress streams to stderr.
+ *
+ *   The final summary goes to stdout.
+ *   See releasing.md Step 5.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import {
 	foldSourceAdminPath,
 	foldStaleness,
@@ -68,12 +74,21 @@ export const spec = {
 
 const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-
-		const { buildCandidate, DEFAULT_ADMIN_DB, foldGeonamesIntoAdmin, resolveImportanceDB, resolvePostcodeDatabases } =
-			await import("@mailwoman/gazetteer/tools/pipeline")
-
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			pipeline: {
+				buildCandidate,
+				DEFAULT_ADMIN_DB,
+				foldGeonamesIntoAdmin,
+				resolveImportanceDB,
+				resolvePostcodeDatabases,
+			},
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const root = dataRootPath()
 		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)

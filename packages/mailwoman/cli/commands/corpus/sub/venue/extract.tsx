@@ -5,9 +5,12 @@
  *   `mailwoman corpus sub-venue-extract` — run the sub-venue structure extractor over one Geofabrik
  *   `.osm.pbf` and write the rows as jsonl, the input `mailwoman corpus sub-venue-lexicon` reads.
  *
- *   Wave 1 used an ad-hoc script because it ran once. Wave 2 runs the extractor per locale.
- *   The file does not encode its country, so the caller must provide the country stamp. A Geofabrik
- *   extract's country belongs to the invocation rather than to a feature. A flag records it explicitly.
+ *   Wave 1 used an ad-hoc script because it ran once.
+ *   Wave 2 runs the extractor per locale.
+ *
+ *   The file doesn't encode its country, so the caller must provide the country stamp.
+ *   A Geofabrik extract's country belongs to the invocation rather than to a feature.
+ *   A flag records it explicitly.
  *
  *   ```sh
  *   mailwoman corpus sub-venue-extract \
@@ -16,8 +19,8 @@
  *     --country JP
  *   ```
  *
- *   Needs `ogr2ogr` on path (gdal 3.8.4 on the lab box). Runtime is dominated by gdal: 44 s for a
- *   340 MB extract, 371 s for Japan's 2.5 GB.
+ *   Needs `ogr2ogr` on path (gdal 3.8.4 on the lab box).
+ *   Runtime is dominated by gdal: 44 s for a 340 MB extract, 371 s for Japan's 2.5 GB.
  */
 
 import { Text } from "ink"

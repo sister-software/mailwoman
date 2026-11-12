@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Standalone entry for the FR bare-street parse-recall leg. The measurement lives in
- *   `#tools/eval-harness/fr/parse-recall` and `promotion-eval.ts` calls it IN-process. this file exists so
- *   the leg can be run on its own — the `fr.bare_street_intact` floor's provenance in the promotion
- *   specs (`v2.3.0-nl-postcode.json`, `v5.3.0-family.json`) names it.
+ *   Standalone entry for the FR bare-street parse-recall leg.
  *
- *   The module returns the floor verdict. This entry maps a miss to exit 1, as `--floor` specifies.
+ *   The measurement lives in `#tools/eval-harness/fr/parse-recall` and `promotion-eval.ts`
+ *   calls it IN-process. this file exists so the leg can be run on its own —
+ *   the `fr.bare_street_intact` floor's provenance in the promotion specs
+ *   (`v2.3.0-nl-postcode.json`, `v5.3.0-family.json`) names it.
+ *
+ *   The module returns the floor verdict.
+ *   This entry maps a miss to exit 1, as `--floor` specifies.
  *   Keep logic in the module.
  *
  *   Run: node packages/mailwoman/tools/dev-tools/fr/parse-recall.run.ts [--floor 75]

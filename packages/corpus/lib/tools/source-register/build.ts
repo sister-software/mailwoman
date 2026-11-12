@@ -4,7 +4,8 @@
 /**
  * Derive the committed address-source register from a research pass's two CSVs.
  *
- * The second input is mostly not input: the eight global discovery lookups repeat once per jurisdiction and are dropped, because they name a lookup rather than a national source.
+ * The second input is mostly not input: the eight global discovery lookups repeat once per
+ * jurisdiction and are dropped, because they name a lookup rather than a national source.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -106,8 +107,8 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 /**
  * The research pass writes a source's propositions as one string.
  *
- * The table is closed, because a spelling it does not include is a vocabulary the
- * register has not agreed to rather than a row to guess at.
+ * The table is closed, because a spelling it doesn't include is a vocabulary the
+ * register hasn't agreed to rather than a row to guess at.
  */
 const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["asserts"][number][]>> = {
 	"IDENTITY + OBSERVATION": ["identity", "observation"],
@@ -250,7 +251,7 @@ export interface BuildSourceRegisterOptions {
 	 *
 	 * An input rather than an edit of the output, because the register is generated
 	 * and {@linkcode buildSourceRegister} rewrites it whole.
-	 * A path that does not exist is read as no decisions recorded.
+	 * A path that doesn't exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
 	/**
@@ -258,7 +259,7 @@ export interface BuildSourceRegisterOptions {
 	 *
 	 * An input rather than an edit of the output, for the same reason as {@linkcode
 	 * BuildSourceRegisterOptions.decisionsPath}: this build rewrites the register whole.
-	 * A path that does not exist is read as no resolutions recorded.
+	 * A path that doesn't exist is read as no resolutions recorded.
 	 */
 	resolutionsPath?: PathBuilderLike
 	/**
@@ -266,8 +267,8 @@ export interface BuildSourceRegisterOptions {
 	 *
 	 * `source-additions.json` holds the publications a corpus source reads that no research pass recorded.
 	 * They sit in this repository because the corpus-source table that names them does,
-	 * and they are read as CSV rows so their ids and license scopes come from the same derivation.
-	 * A path that does not exist is read as no additions.
+	 * and they're read as CSV rows so their ids and license scopes come from the same derivation.
+	 * A path that doesn't exist is read as no additions.
 	 */
 	additionsPath?: PathBuilderLike
 	version: string
@@ -557,7 +558,7 @@ async function readSources(
 		const role = readUnresolvedColumn(record["address_role"], "address_role", row)
 
 		if (role) {
-			// The research pass records one role for a whole source and names no column,
+			// The research pass records one role for a whole source and identifies no column,
 			// so the role is filed under the record's address field.
 			// A source carrying two roles on one record gets a column-by-column reading
 			// in `source-resolutions.json` instead.
@@ -583,7 +584,7 @@ async function readSources(
 }
 
 /**
- * Values the research pass wrote into a column it did not resolve per source.
+ * Values the research pass wrote into a column it didn't resolve per source.
  *
  * A copy onto a record would turn "uninspected" into a value a consumer reads as an answer.
  */
@@ -699,7 +700,7 @@ async function readSourceResolutions(
  * Merges each recorded resolution onto the source whose id it holds.
  *
  * @throws When a resolution's source id is absent from the register.
- * Such an entry is a typo or a source that has been removed.
+ * Such an entry is a typo or a source that's been removed.
  * An entry kept silently would leave a review whose fields reach no row.
  * That reads as work already done.
  */

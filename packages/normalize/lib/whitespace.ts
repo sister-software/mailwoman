@@ -2,19 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Whitespace collapse, where a run of inline whitespace (`[ \t]`) becomes one ascii space at every
- *   run length so a lone tab normalizes exactly as a doubled one does. Newlines (`\n`/`\r`) are
- *   preserved because QueryShape's segmentation grammar reads one as a segment separator on a par
- *   with a comma. It reads a raw tab the same way, so folding every tab here keeps a
- *   tab-separated export from re-segmenting the query.
+ *   Whitespace collapse, where a run of inline whitespace (`[ \t]`) becomes one ascii
+ *   space at every run length so a lone tab normalizes exactly as a doubled one does.
+ *
+ *   Newlines (`\n`/`\r`) are preserved because QueryShape's segmentation grammar
+ *   reads one as a segment separator on a par with a comma.
+ *   It reads a raw tab the same way, so folding every tab here keeps a tab-separated
+ *   export from re-segmenting the query.
  *
  *   The trailing trim drops trailing sentence-punctuation noise, since a trailing full stop, comma,
- *   semicolon or colon glues onto the last token and drops the street tier (`address_point` to
- *   `admin`). The function trims trailing punctuation only. It uses a conservative set because leading punctuation and
- *   quotes or brackets can be meaningful.
+ *   semicolon or colon glues onto the last token and drops the street tier (`address_point` to `admin`).
+ *   The function trims trailing punctuation only.
  *
- *   Offset-map-correct via the same substring step as the whitespace trim, so span alignment
- *   survives.
+ *   It uses a conservative set because leading punctuation and quotes or brackets can be meaningful.
+ *
+ *   Offset-map-correct via the same substring step as the whitespace trim, so span alignment survives.
  */
 
 import { identityMap } from "#offset-map"
@@ -38,7 +40,7 @@ export interface WhitespaceResult {
 	 *
 	 * A run longer than one character, or a one-character run that was not already an ascii space.
 	 *
-	 * A run that was already a single space is not one of them.
+	 * A run that was already a single space isn't one of them.
 	 */
 	runs: number
 }
@@ -71,9 +73,9 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an
-			// ascii space, since the tab-to-space rewrite emitted above is a real edit
-			// and `changed` decides whether the caller receives it.
+			// A one-character run counts too when the character isn't already an ascii space,
+			// since the tab-to-space rewrite emitted above is a real edit and `changed` decides
+			// whether the caller receives it.
 			// The early return below otherwise hands back the untouched input.
 			if (i - start > 1 || ch !== " ") {
 				changed = true

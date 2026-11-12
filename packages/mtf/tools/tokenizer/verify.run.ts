@@ -4,11 +4,12 @@
 /**
  *   Check a tokenizer.
  *
- *   `byte-fallback` encodes a held-out fixture (JSONL with `raw`, `text` or `input`, or plain text) and prints the
- *   byte-fallback rate overall and per script.
+ *   `byte-fallback` encodes a held-out fixture (JSONL with `raw`, `text` or `input`, or plain text)
+ *   and prints the byte-fallback rate overall and per script.
  *
- *   `prune` runs the two release checks of a pruned tokenizer and model, segmentation identity (B1) and bit-equal
- *   logits (B2), writes `verify-report.json` into the pruned directory, and exits non-zero unless both pass.
+ *   `prune` runs the two release checks of a pruned tokenizer and model,
+ *   segmentation identity (B1) and bit-equal logits (B2), writes `verify-report.json`
+ *   into the pruned directory, and exits non-zero unless both pass.
  *
  *   Usage:
  *

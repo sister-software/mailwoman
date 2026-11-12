@@ -4,9 +4,12 @@
 /**
  * Past runs on disk, so a `{kind: "recorded"}` arm can be replayed rather than re-measured.
  *
- * This is a cache. `evals/scores-by-version.json` and `docs/records/evals/` are the record.
- * A pruned run has to be re-measured. A run whose `tree_fingerprint` no longer matches the working tree
- * remains evidence about that tree. `{kind:"recorded"}` refuses to compare across fingerprints.
+ * This is a cache.
+ * `evals/scores-by-version.json` and `docs/records/evals/` are the record.
+ *
+ * A pruned run has to be re-measured.
+ * A run whose `tree_fingerprint` no longer matches the working tree remains evidence about that tree.
+ * `{kind:"recorded"}` refuses to compare across fingerprints.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

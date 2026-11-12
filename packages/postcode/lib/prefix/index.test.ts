@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"

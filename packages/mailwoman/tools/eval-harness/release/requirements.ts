@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The release-requirement specification: the versioned, committed declaration a release candidate is
- *   evaluated against. It is independent of `scope.config.json`, which describes training coverage.
+ *   The release-requirement specification: the versioned, committed declaration
+ *   a release candidate is evaluated against.
  *
- *   A numerical threshold is `null` until it is registered. A `null` threshold never defaults to a value: the
- *   evaluator reports the check it governs as insufficient evidence. The reader refuses a malformed
- *   specification rather than filling a field.
+ *   It is independent of `scope.config.json`, which describes training coverage.
+ *
+ *   A numerical threshold is `null` until it is registered.
+ *   A `null` threshold never defaults to a value: the evaluator reports the
+ *   check it governs as insufficient evidence.
+ *
+ *   The reader refuses a malformed specification rather than filling a field.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -33,7 +37,7 @@ export type MultipleComparisonMethod = (typeof MultipleComparisonMethod)[keyof t
 /**
  * Every held-out provenance class, in report order.
  *
- * It lives here rather than beside the type so a spec reader does not load the scorer's model runtime.
+ * It lives here rather than beside the type so a spec reader doesn't load the scorer's model runtime.
  */
 export const HELDOUT_PROVENANCE_CLASSES = [
 	"verified_unseen",
@@ -155,14 +159,14 @@ export interface ReleaseRequirementSpec {
 		/**
 		 * The resampling unit.
 		 *
-		 * `group`: a row's grouping metadata within its country names its independent unit.
+		 * `group`: a row's grouping metadata within its country identifies its independent unit.
 		 */
 		samplingUnit: "group"
 		/**
 		 * Whether the rows are declared independent, so that a row without grouping metadata is its own unit.
 		 *
 		 * `false` makes any check that reads an ungrouped row insufficient evidence.
-		 * There is no default: the reader refuses a specification that omits it.
+		 * There's no default: the reader refuses a specification that omits it.
 		 */
 		rowsIndependent: boolean
 		groupingAssumption: string

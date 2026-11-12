@@ -5,8 +5,8 @@
  *   The TypeScript loader for the Multilingual Token Framework's WebAssembly runtime.
  *
  *   The module's import has no side effects: the WASM fetch and instantiation happen in the caller.
- *   The caller obtains the WASM bytes or a compiled `WebAssembly.Module` (Workers supply the latter)
- *   and passes it to {@linkcode MTFRuntime.instantiate}.
+ *   The caller obtains the WASM bytes or a compiled `WebAssembly.Module`
+ *   (Workers supply the latter) and passes it to {@linkcode MTFRuntime.instantiate}.
  *   {@linkcode mtfWASMURL} locates the committed binary beside this package.
  *   A loaded model's encode and decode methods are synchronous.
  */
@@ -122,7 +122,7 @@ export class MTFRuntime {
 	/**
 	 * Loads a serialized SentencePiece unigram model.
 	 *
-	 * @throws When the bytes are malformed or the model uses a feature the runtime does not implement.
+	 * @throws When the bytes are malformed or the model uses a feature the runtime doesn't implement.
 	 */
 	loadModel(bytes: Uint8Array): MTFModel {
 		const handle = this.#withInput(bytes, (ptr, len) => this.#exports.mtf_model_load(ptr, len))

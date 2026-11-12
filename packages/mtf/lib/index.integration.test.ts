@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the committed `wasm/mtf.wasm` through the TypeScript loader against every row of the v0.2.2
- *   reference fixture.
+ *   Runs the committed `wasm/mtf.wasm` through the TypeScript loader against
+ *   every row of the v0.2.2 reference fixture.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

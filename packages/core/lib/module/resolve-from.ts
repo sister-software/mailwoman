@@ -2,13 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Resolves packages relative to the caller. Every helper takes `base`, the caller's `import.meta.url`, so a package
- *   resolves through the dependency graph of the calling workspace. The sibling `resolvers.ts` resolves from
- *   `@mailwoman/core`. That package cannot see a dependency declared only by a docs plugin or hook.
+ *   Resolves packages relative to the caller.
  *
- *   Docusaurus loads plugins through jiti's CommonJS transform. That transform rejects a bare `import.meta` and
- *   `import … with { type: "json" }`. This module avoids both constructs. Docusaurus plugins must import
- *   it instead of `resolvers.ts`.
+ *   Every helper takes `base`, the caller's `import.meta.url`, so a package resolves
+ *   through the dependency graph of the calling workspace.
+ *   The sibling `resolvers.ts` resolves from `@mailwoman/core`.
+ *
+ *   That package cannot see a dependency declared only by a docs plugin or hook.
+ *
+ *   Docusaurus loads plugins through jiti's CommonJS transform.
+ *   That transform rejects a bare `import.meta` and `import … with { type: "json" }`.
+ *
+ *   This module avoids both constructs.
+ *   Docusaurus plugins must import it instead of `resolvers.ts`.
  */
 
 import { createRequire, findPackageJSON } from "node:module"
@@ -22,7 +28,7 @@ import { readLocalJSONFile } from "#fs/readers"
  * Returns the path to a package's `package.json`.
  *
  * @param base The caller's `import.meta.url`.
- * @throws When the package is not installed where `base` can see it.
+ * @throws When the package isn't installed where `base` can see it.
  */
 export function resolvePackageJSON(base: string, packageName: string): string {
 	try {
@@ -95,7 +101,7 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
  * Resolves a package subpath to a filesystem path through the package's `exports` map.
  *
  * @param base The caller's `import.meta.url`.
- * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.
+ * @throws `ERR_MODULE_NOT_FOUND` when the specifier doesn't resolve.
  */
 export function resolvePackageSpecifier(base: string, packageName: string, ...subpaths: (string | null)[]): string {
 	return createRequire(base).resolve(
@@ -104,7 +110,7 @@ export function resolvePackageSpecifier(base: string, packageName: string, ...su
 }
 
 /**
- * Behaves like {@link resolvePackageSpecifier} but returns `null` when the specifier does not resolve.
+ * Behaves like {@link resolvePackageSpecifier} but returns `null` when the specifier doesn't resolve.
  */
 export function tryResolvePackageSpecifier(
 	base: string,

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `boundary-stress` recipe, the boundary-instability augmentation. Self-generates `--count` rows
- *   from {@link synthesizeBoundaryStressRow}'s weighted template mix. It aligns each to BIO and emits a
- *   labeled jsonl.
+ *   `boundary-stress` recipe, the boundary-instability augmentation.
+ *
+ *   Self-generates `--count` rows from {@link synthesizeBoundaryStressRow}'s weighted template mix.
+ *   It aligns each to BIO and emits a labeled jsonl.
  *
  *   `synthesizeBoundaryStressRow` is imported directly here.
  */

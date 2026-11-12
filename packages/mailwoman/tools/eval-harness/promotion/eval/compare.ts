@@ -3,9 +3,11 @@
 
 /**
  *   Compare two `mailwoman eval promote` output directories before accepting a performance change.
- *   Every file is part of the receipt. Some fields record receipt location or elapsed wall time rather than a property
- *   of the evaluated artifact: `verdict.json.generated_at_dir`, the first `provenance.txt` line (`graded at ...`), and
- *   arena narration's paths under its own output directory and elapsed-time progress messages.
+ *
+ *   Every file is part of the receipt.
+ *   Some fields record receipt location or elapsed wall time rather than a property of the evaluated
+ *   artifact: `verdict.json.generated_at_dir`, the first `provenance.txt` line (`graded at ...`),
+ *   and arena narration's paths under its own output directory and elapsed-time progress messages.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -101,7 +103,7 @@ async function listFiles(directory: PathBuilderLike, prefix = ""): Promise<strin
 /**
  * Compare every top-level promotion output.
  *
- * JSON files receive a field-level comparison so a changed score names its field.
+ * JSON files receive a field-level comparison so a changed score identifies its field.
  * Markdown and provenance files compare byte-for-byte.
  */
 export async function comparePromotionOutputs(

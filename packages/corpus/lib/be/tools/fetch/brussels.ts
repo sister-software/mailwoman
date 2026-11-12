@@ -6,24 +6,26 @@
  *
  *   ## What the publisher offers
  *
- *   One archive at a bare HTTPS URL, `URBIS_ADM_Adresses.zip`, holding a single member
- *   `UrbAdm_Adresses.gml`. Paradigm publishes no INSPIRE ATOM feed for this theme, so there is no
- *   `<updated>` element to poll and no dataset feed to resolve: the URL is the whole acquisition
- *   path. `last-modified` is the one freshness signal the service offers, and this fetcher records it
+ *   One archive at a bare HTTPS URL, `URBIS_ADM_Adresses.zip`, holding a single
+ *   member `UrbAdm_Adresses.gml`.
+ *   Paradigm publishes no INSPIRE ATOM feed for this theme, so there's no `<updated>`
+ *   element to poll and no dataset feed to resolve: the URL is the whole acquisition path.
+ *
+ *   `last-modified` is the one freshness signal the service offers, and this fetcher records it
  *   in the manifest so a later run can tell a refreshed archive from the one it already holds.
  *
  *   ## Why the archive stays compressed
  *
- *   `#be/adapters/brussels/adapter` reads the member through `inspireGMLChunks`, which inflates it
- *   through the zip reader rather than from disk. The member is 474,245,978 bytes against the
- *   archive's 11,521,182, so unpacking it here would cost 41 times the disk for no reader that wants
- *   it.
+ *   `#be/adapters/brussels/adapter` reads the member through `inspireGMLChunks`,
+ *   which inflates it through the zip reader rather than from disk.
+ *   The member is 474,245,978 bytes against the archive's 11,521,182, so unpacking it
+ *   here would cost 41 times the disk for no reader that wants it.
  *
  *   ## Two hostnames that do not serve it
  *
  *   `urbis.brussels` and `urbisonline.brussels` both fail TLS with `ERR_TLS_CERT_ALTNAME_INVALID`,
- *   because the certificate's altnames are `*.irisnet.be` and `irisnet.be`. The services live on
- *   `irisnet.be` and the download lives on `datastore.brussels`.
+ *   because the certificate's altnames are `*.irisnet.be` and `irisnet.be`.
+ *   The services live on `irisnet.be` and the download lives on `datastore.brussels`.
  */
 
 import { APIClient } from "@mailwoman/core/api"

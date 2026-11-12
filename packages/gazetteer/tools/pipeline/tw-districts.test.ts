@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pure half of `gazetteer build tw-districts`: the 縣市 → WOF region match and the 臺/台 name twins, over the admin artifact's own Han names for the four regions whose names collide or drifted.
+ *   The pure half of `gazetteer build tw-districts`: the 縣市 → WOF region match and the 臺/台 name twins,
+ *   over the admin artifact's own Han names for the four regions whose names collide or drifted.
  */
 
 import { describe, expect, test } from "vitest"
@@ -46,7 +47,7 @@ describe("matchTaiwanRegion", () => {
 
 	test("a 縣市 no region answers to is an absence, not a guess", () => {
 		expect(matchTaiwanRegion("宜蘭縣", REGIONS)).toBeNull()
-		// The stem 新竹 names two regions, so it is ambiguous.
+		// The stem 新竹 lists two regions, so it is ambiguous.
 		expect(matchTaiwanRegion("新竹", REGIONS)).toBeNull()
 	})
 })

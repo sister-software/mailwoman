@@ -5,33 +5,35 @@
  * Download ANAC's OCDS contract releases for the `it-anac` adapter.
  *
  * The Open Contracting Partnership's Data Registry serves publication 117 at
- * `https://data.open-contracting.org/en/publication/117/download?name=<edition>.jsonl.gz`, where an
- * edition is a year, `undated`, or `full` for every year in one file. Each file is JSON Lines, one
- * OCDS release per line. That is the shape `#it/adapters/anac/adapter` reads.
+ * `https://data.open-contracting.org/en/publication/117/download?name=<edition>.jsonl.gz`,
+ * where an edition is a year, `undated`, or `full` for every year in one file.
+ * Each file is JSON Lines, one OCDS release per line.
+ * That's the shape `#it/adapters/anac/adapter` reads.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
- * not declare.
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`, so this module sits beside `#fi/tools/fetch/ryhti`
+ * rather than in an `sdk/` root the workspace doesn't declare.
  *
  * Three host behaviors decide what this module does:
  *
- * 1. **The host honors `Range`.** It answers `accept-ranges: bytes`, so an interrupted transfer
- *    resumes through {@linkcode resumableDownload} rather than restarting. That matters most for
- *    the `full` edition.
+ * 1. **The host honors `Range`.** It answers `accept-ranges: bytes`, so an interrupted
+ *    transfer resumes through {@linkcode resumableDownload} rather than restarting.
+ *    That matters most for the `full` edition.
  * 2. **An edition's length and modification time are both served by `HEAD`.** The re-run check
  *    compares the pair against the manifest, so one small request per edition replaces the body.
- * 3. **This module moves bytes and decodes none of them.** The compressed body is streamed to disk
- *    and then decompressed stream to stream, so no chunk boundary is interpreted as a character
- *    boundary. ANAC's data holds accented Italian place names, and a `chunk.toString("utf8")` per
+ * 3. **This module moves bytes and decodes none of them.** The compressed body is streamed to disk and
+ *    then decompressed stream to stream, so no chunk boundary is interpreted as a character boundary.
+ *    ANAC's data holds accented Italian place names, and a `chunk.toString("utf8")` per
  *    gzip chunk would write U+FFFD at every split multi-byte character.
  *
- * ANAC updates the publication monthly, on the second of the month. The current year's
- * edition is re-fetched on a `HEAD` disagreement rather than treated as final.
+ * ANAC updates the publication monthly, on the second of the month.
+ * The current year's edition is re-fetched on a `HEAD` disagreement rather than treated as final.
  *
- * The registry publishes this release under CC BY 4.0. The address-source register elected it.
- * The manifest records the license and the attribution, and the adapter records the license on every
- * row.
+ * The registry publishes this release under CC BY 4.0.
+ * The address-source register elected it.
+ *
+ * The manifest records the license and the attribution, and the adapter records the license on every row.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -111,7 +113,7 @@ export interface ANACEditionHead {
  * Through `APIClient`, which is the interface for a repeated request with a small response.
  * The bodies are not taken this way: `APIClient` buffers a response, and the `full` edition is 184 MB.
  *
- * A header the host does not send is reported as `null` rather than raised on,
+ * A header the host doesn't send is reported as `null` rather than raised on,
  * and the caller then downloads rather than reading the absence as a match.
  */
 export async function readANACEditionHead(client: Pick<APIClient, "fetch">, edition: string): Promise<ANACEditionHead> {
@@ -177,7 +179,7 @@ export function itANACInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuild
  * The `HEAD` decides first, because ANAC republishes the publication monthly
  * and the host states a new length and modification time when it does.
  * The file's own length is then checked, so a truncated local copy is re-fetched even
- * where the host has not changed.
+ * where the host hasn't changed.
  *
  * Exported so a test can exercise the decision without a transfer: the alternative is
  * letting {@linkcode downloadITANAC} reach the host to find out which branch it took.

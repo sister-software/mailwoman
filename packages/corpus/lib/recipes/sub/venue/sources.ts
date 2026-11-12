@@ -200,7 +200,7 @@ export function isSignIdentifier(value: string): boolean {
  * Reports whether a lowercased name uses a promoted phrase as `<phrase> <identifier>`,
  * or as an English `<modifier> <phrase>` when the designator allows it.
  *
- * A bare mention of the phrase returns `false` because it does not show that the name is a sub-venue.
+ * A bare mention of the phrase returns `false` because it doesn't show that the name is a sub-venue.
  */
 export function hasPromotedShape(
 	lowerName: string,

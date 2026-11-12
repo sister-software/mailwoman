@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The country–shape supply pass behind the retention table (HOLDOUT_AND_EVALUATION
- * section 5.1): count every combination's distinct groups per split under the current
- * policy, and register the combinations whose training remainder falls below the floor.
+ * The country–shape supply pass behind the retention table (HOLDOUT_AND_EVALUATION section 5.1):
+ * count every combination's distinct groups per split under the current policy,
+ * and register the combinations whose training remainder falls below the floor.
  */
 
 import {

@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /**
  * The license pages' components: the Purchase section's two plan cards and the claim page's key and secret blocks. Every
  * color comes from Infima vars so both themes hold without theme-specific rules; the plan cards follow the pricing

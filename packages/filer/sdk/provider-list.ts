@@ -14,7 +14,7 @@ import { toFRN, type FRN } from "#frn"
 /**
  * Required columns.
  *
- * The parser finds them by header name, so their order does not matter.
+ * The parser finds them by header name, so their order doesn't matter.
  */
 const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"] as const satisfies readonly string[]
 

@@ -2,28 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer postal-alias` — build the postal-city alias table from the
- *   pinned-release Overture US Parquet: per-address ground truth for the
- *   postal-city/geographic-city split that the resolver's coordinate-first soft-scorer currently
- *   approximates geometrically.
+ *   `mailwoman gazetteer postal-alias` — build the postal-city alias table from the pinned-release
+ *   Overture US Parquet: per-address ground truth for the postal-city/geographic-city split
+ *   that the resolver's coordinate-first soft-scorer currently approximates geometrically.
  *
- *   The signal: 45.9M US rows contain both `postal_city` (what the postal system calls the place — USPS
- *   "acceptable city names", vanity cities) and a geographic locality (`address_levels[2]`). 16.0M
- *   of them (34.9%) diverge. Aggregated per `(postcode, postal_city, geo_locality)` with observed
- *   counts, that divergence is the alias evidence: "postcode 10954's mail lists Nanuet. the polygon
- *   lists Clarkstown".
+ *   The signal: 45.9M US rows contain both `postal_city`
+ *   (what the postal system calls the place — USPS "acceptable city names", vanity cities)
+ *   and a geographic locality (`address_levels[2]`). 16.0M of them (34.9%) diverge.
+ *   Aggregated per `(postcode, postal_city, geo_locality)` with observed counts, that divergence
+ *   is the alias evidence: "postcode 10954's mail lists Nanuet. the polygon lists Clarkstown".
  *
  *   sibling table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
- *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia). A
- *   count floor drops typo noise. everything kept is observed-in-the-wild N times, with N
- *   recorded.
+ *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia).
+ *   A count floor drops typo noise. everything kept is observed-in-the-wild N times, with N recorded.
  *
- *   Writes the output DB directly (deletes any prior file, then builds in place). Progress streams
- *   to stderr. The final summary is on stdout. @duckdb/node-api is an optional peer, imported
- *   dynamically inside the build.
+ *   Writes the output DB directly (deletes any prior file, then builds in place).
+ *   Progress streams to stderr.
+ *
+ *   The final summary is on stdout. @duckdb/node-api is an optional peer,
+ *   imported dynamically inside the build.
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { dirname } from "path-ts"
 
@@ -55,19 +56,25 @@ export const spec = {
 
 const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			client: { DatabaseClient },
+			dataRoot: { snapshotSourcePath },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
-		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
+		const parquet = snapshotSourcePath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
 		await makeDirectories(dirname(out))
 		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an optional peer dep. Import it dynamically so merely loading this
-		// command (e.g. `mailwoman --help`) does not fault when the peer is not installed. That command eagerly imports every command.
+		// command (e.g. `mailwoman --help`) doesn't fault when the peer isn't installed. That command eagerly imports every command.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The wire shapes of the license worker's declaration, evaluation, claim and download routes, and the one
- *   constant both ends read. This module imports only types, so the worker bundles it under the `workerd`
- *   condition and the CLI's client in `status.ts` reads the same shapes.
+ *   The wire shapes of the license worker's declaration, evaluation, claim
+ *   and download routes, and the one constant both ends read.
+ *
+ *   This module imports only types, so the worker bundles it under the `workerd` condition
+ *   and the CLI's client in `status.ts` reads the same shapes.
  */
 
 import type { LicenseIntent } from "#license/key"
@@ -69,7 +71,7 @@ export interface DownloadRequest {
 /**
  * What the download route answers.
  *
- * `unavailable` is a worker whose bucket is not yet provisioned.
+ * `unavailable` is a worker whose bucket isn't yet provisioned.
  */
 export type DownloadAnswer =
 	| { status: "granted"; url: string; expires: string; bytes: number | null }

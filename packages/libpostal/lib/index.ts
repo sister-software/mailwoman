@@ -4,8 +4,8 @@
 /**
  *   Serves a libpostal-compatible parse and expand HTTP API over Mailwoman's parser.
  *
- *   The `/parse` endpoint returns labeled spans without gazetteer or resolver lookups. The mapping to
- *   libpostal labels lives in `engine.ts`.
+ *   The `/parse` endpoint returns labeled spans without gazetteer or resolver lookups.
+ *   The mapping to libpostal labels lives in `engine.ts`.
  */
 
 export * from "#app"

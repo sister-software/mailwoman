@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@link explodeAliasBags}, pass 2 of the candidate build. The function turns each place's
- *   `place_search.alt_names` bag into distinct-key alias rows and counts the distinct keys a place
- *   ends up carrying.
+ *   Tests for {@link explodeAliasBags}, pass 2 of the candidate build.
  *
- *   The gloss detector uses the key count as its only volume signal. The interface defines "distinct" as folded.
- *   That count includes the primary key and deduplicates keys within the bag. These tests assert that behavior directly.
+ *   The function turns each place's `place_search.alt_names` bag into distinct-key alias rows
+ *   and counts the distinct keys a place ends up carrying.
+ *
+ *   The gloss detector uses the key count as its only volume signal.
+ *   The interface defines "distinct" as folded.
+ *
+ *   That count includes the primary key and deduplicates keys within the bag.
+ *   These tests assert that behavior directly.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -128,7 +132,7 @@ describe("explodeAliasBags", () => {
 
 		expect(nAlias).toBe(2)
 		// toledo + tolete + toletum.
-		// The repeat does not inflate the gloss detector's signal.
+		// The repeat doesn't inflate the gloss detector's signal.
 		expect(keyCounts.get(204)).toBe(3)
 	})
 

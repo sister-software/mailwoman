@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `torch.optim.AdamW` on the CPU path, `clip_grad_norm_`, and `optim/groups.py`'s parameter groups.
 //!
 //! The step is torch 2.13's `_single_tensor_adam` with decoupled weight decay, the path a CPU parameter takes:

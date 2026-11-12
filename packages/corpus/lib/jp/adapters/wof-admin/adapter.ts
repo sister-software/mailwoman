@@ -4,15 +4,15 @@
 /**
  *   `wof-admin-jp`: Japanese admin-hierarchy adapter.
  *
- *   prototype — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
- *   synthesizes BIO-labeled training rows from the global WOF SQLite.
+ *   prototype — not yet wired into the Stage 3 training corpus.
+ *   Demonstrates the JP address shape and synthesizes BIO-labeled training rows from the global WOF SQLite.
  *
  *   JP addresses differ from US/EU in three ways:
  *
- *   1. **Reversed ordering** — region → county → locality → block → house_number "東京都世田谷区南町1-2-3" not
- *        "1-2-3 Minamicho, Setagaya, Tokyo"
- *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighborhood"
- *        placetype (丁目) is the closest analog to a street but is a grid cell.
+ *   1. **Reversed ordering** — region → county → locality → block → house_number
+ *      "東京都世田谷区南町1-2-3" not "1-2-3 Minamicho, Setagaya, Tokyo"
+ *   2. **No street names** — most JP addresses use a block/sub-block grid system.
+ *      The "neighborhood" placetype (丁目) is the closest analog to a street but is a grid cell.
  *   3. **Postcode-first convention** — addresses can be prefixed with `〒NNN-nnnn`.
  *
  *   Schema mapping to ComponentTags (subset of Stage 3 + JP-specific Phase 6 tags):
@@ -23,9 +23,9 @@
  *   丁目 (chome) | neighborhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
  *   (gō) | (synth) | house_number | | 〒 (postcode prefix) | — | postcode |
  *
- *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
- *   sub-blocks require a different data source (JP postcode database or real-world address dumps
- *   from mlit/JapanPost).
+ *   This adapter currently emits only the admin chain (region → locality → block).
+ *   House numbers and sub-blocks require a different data source
+ *   (JP postcode database or real-world address dumps from mlit/JapanPost).
  */
 
 import { isPresent } from "@mailwoman/core/objects"

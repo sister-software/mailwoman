@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Case-folding invariance suite. It asserts that case-only variants of an address parse equivalently.
+ *   Case-folding invariance suite.
+ *
+ *   It asserts that case-only variants of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

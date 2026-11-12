@@ -2,19 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reports the token patterns a corpus labels differently depending on the address system the row
- *   came from. It also reports the share of each country's rows in each shape.
+ *   Reports the token patterns a corpus labels differently depending on the
+ *   address system the row came from.
+ *
+ *   It also reports the share of each country's rows in each shape.
  *
  *   A shape is the sequence of token character classes — `alpha alpha digit punct alpha punct digit`
- *   for `Main Street 12, Springfield, 62701`. A labeling is the tag sequence the corpus assigns those
- *   same tokens. One shape with two labelings across two countries is a pattern a single decoder
- *   has to resolve from context. A row whose context does not settle it is a row the decoder can
- *   only get right for one of the two systems.
+ *   for `Main Street 12, Springfield, 62701`.
+ *   A labeling is the tag sequence the corpus assigns those same tokens.
  *
- *   This measures that conflict rather than corpus volume. When rows are added to a country, the
- *   dominant labeling can change. The shape remains conflicted.
+ *   One shape with two labelings across two countries is a pattern a single
+ *   decoder has to resolve from context.
+ *   A row whose context doesn't settle it is a row the decoder can only get
+ *   right for one of the two systems.
  *
- *   A sample can estimate the reported rate over shapes. A sample cannot estimate a distinct count.
+ *   This measures that conflict rather than corpus volume.
+ *   When rows are added to a country, the dominant labeling can change.
+ *   The shape remains conflicted.
+ *
+ *   A sample can estimate the reported rate over shapes.
+ *   A sample cannot estimate a distinct count.
  *   This report contains no distinct count.
  *
  *   Usage:

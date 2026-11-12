@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Downloads the State Address Register's open data (`Valsts adrešu reģistra atvērtie dati`) for the
- * `lv-varis` adapter.
+ * Downloads the State Address Register's open data (`Valsts adrešu reģistra atvērtie dati`)
+ * for the `lv-varis` adapter.
  *
- * Valsts zemes dienests republishes every table of the dataset `varis-atvertie-dati` on data.gov.lv,
- * and a republish can move a resource's URL. The fetcher therefore asks the portal's CKAN API for the
- * dataset's resources and picks each table by the file name its URL ends in, rather than holding URLs
- * that the next republish may retire. The manifest records, per file, the resource URL, the CKAN
- * `last_modified`, the byte count and the SHA-256, and once for the dataset the license id the portal
+ * Valsts zemes dienests republishes every table of the dataset `varis-atvertie-dati`
+ * on data.gov.lv, and a republish can move a resource's URL.
+ * The fetcher therefore asks the portal's CKAN API for the dataset's resources and picks each table
+ * by the file name its URL ends in, rather than holding URLs that the next republish may retire.
+ *
+ * The manifest records, per file, the resource URL, the CKAN `last_modified`,
+ * the byte count and the SHA-256, and once for the dataset the license id the portal
  * states, so a corpus row traces to one publication.
  */
 

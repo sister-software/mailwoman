@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Distribution functions the release evaluator's confidence bounds need: the regularized incomplete beta
- *   function, its inverse, the Clopper–Pearson interval on a possibly fractional effective count, and the
- *   Student t quantile.
+ *   Distribution functions the release evaluator's confidence bounds need:
+ *   the regularized incomplete beta function, its inverse, the Clopper–Pearson interval
+ *   on a possibly fractional effective count, and the Student t quantile.
  */
 
 /**

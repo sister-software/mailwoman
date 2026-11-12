@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where a country's address-layer files live, how a country is split into them, and the manifest that lists them.
+ *   Where a country's address-layer files live, how a country is split into them,
+ *   and the manifest that lists them.
  *
- *   Each file sits under a dated prefix, `addresses/<region>/<version>/`, and is never overwritten. A reader learns a
- *   country's files from its manifest, `addresses/<cc>/<version>/manifest.json`, so code holds no list of countries
- *   or subdivisions.
+ *   Each file sits under a dated prefix, `addresses/<region>/<version>/`, and is never overwritten.
+ *   A reader learns a country's files from its manifest, `addresses/<cc>/<version>/manifest.json`,
+ *   so code holds no list of countries or subdivisions.
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
@@ -18,7 +19,7 @@ import { relative, resolvePathBuilder, type PathBuilder, type PathBuilderLike } 
 /**
  * The row count above which a country is written one file per first-level subdivision.
  *
- * At 10 M, France (26.0 M rows) and Germany (20.3 M) split and Taiwan (9.7 M) does not.
+ * At 10 M, France (26.0 M rows) and Germany (20.3 M) split and Taiwan (9.7 M) doesn't.
  */
 export const ADDRESS_LAYER_SPLIT_ROWS = 10_000_000
 

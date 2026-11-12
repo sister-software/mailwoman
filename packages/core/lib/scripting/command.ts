@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Dependency-light lifecycle and error primitives for user-facing CLI commands. This is intentionally separate from
- * `scripting/utils`, whose service disposal and structured logging are appropriate for long-running scripts.
+ * Dependency-light lifecycle and error primitives for user-facing CLI commands.
+ *
+ * This is intentionally separate from `scripting/utils`, whose service disposal
+ * and structured logging are appropriate for long-running scripts.
  */
 
 /**

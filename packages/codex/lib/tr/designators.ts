@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Turkish postal designators: the delivery service, premise, sub-premise, floor, number mark and relation
- *   words an address or a query uses.
+ *   Turkish postal designators: the delivery service, premise, sub-premise, floor,
+ *   number mark and relation words an address or a query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/turEn.pdf UPU Türkiye addressing sheet (PTT)}
  * @see {@link https://en.wiktionary.org/wiki/daire Wiktionary: daire}

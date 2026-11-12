@@ -11,8 +11,8 @@ mwops health debt
 mwops health baseline debt
 ```
 
-Each operation declares its flags as a `parseArgs` options config beside its input schema. A flag the operation does
-not declare exits 2. A boolean flag is turned off with its `--no-` form.
+Each operation declares its flags as a `parseArgs` options config beside its input schema. A flag the operation doesn't
+declare exits 2. A boolean flag is turned off with its `--no-` form.
 
 The Cloudflare tokens start from `mwops release cloudflare-tokens`, which verifies each role's token and prints a
 dashboard link that pre-fills its permissions. Create the minter from its link and set `CLOUDFLARE_TOKEN_MINTER`, or set
@@ -24,6 +24,6 @@ from the current readings, after a reviewed reduction. Every other `health` invo
 
 Workflows call these commands and never a `lib/*.ts` path. Agents reach the same operations through the release MCP
 server. That server is enabled separately from the development MCP server because publishing uses credentials and has irreversible
-effects that a diagnostic server must not imply.
+effects that a diagnostic server mustn't imply.
 
 Record: `docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md`.

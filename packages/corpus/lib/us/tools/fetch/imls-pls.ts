@@ -2,24 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Re-fetch the IMLS Public Libraries Survey outlet-level data — one row per US public library branch —
- * for the `usgov-imls-pls` adapter. The source is US Public Domain (a federal statistical survey).
- * Extracts the outlet-level CSV from IMLS's single ZIP and discards the rest. The system-level CSV is
- * skipped for having no per-branch address detail.
+ * Re-fetch the IMLS Public Libraries Survey outlet-level data — one row per US
+ * public library branch — for the `usgov-imls-pls` adapter.
+ *
+ * The source is US Public Domain (a federal statistical survey).
+ * Extracts the outlet-level CSV from IMLS's single ZIP and discards the rest.
+ *
+ * The system-level CSV is skipped for having no per-branch address detail.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { basename } from "path-ts"
+import { basename, type PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 /**
  * The PLS FY 2023 bulk CSV ZIP.
@@ -28,33 +32,44 @@ import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/downlo
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"
 
-export type FetchIMLSPLSOptions = BaseFetchOptions
+export type FetchIMLSPLSOptions = SnapshotFetchOptions
 
+/**
+ * The survey year a PLS archive link names, as the vintage `fy23` the survey's own file names use.
+ *
+ * @throws When the link identifies no `pls_fy<year>` archive.
+ */
+export function imlsPLSVintage(url: string): string {
+	const year = /pls_fy(\d{4})_/u.exec(url)?.[1]
+
+	if (!year) throw new Error(`${SLUG}: ${url} names no pls_fy<year> archive, so its survey year is unknown`)
+
+	return `fy${year.slice(2)}`
+}
+
+/**
+ * Downloads the pinned survey year into its snapshot, `usgov-imls-pls/<fy..>/`.
+ *
+ * The vintage comes from the pinned link, so it is known before the download.
+ */
 export async function fetchIMLSPLS(
 	options: FetchIMLSPLSOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = options.outRoot(SLUG)
-	await makeDirectories(destDir)
-
-	const zipDest = destDir(basename(ZIP_URL))
-	const manifestPath = destDir("MANIFEST.json")
-
 	report?.(`=== ${SLUG}`)
 
-	// MARK: Idempotency check
+	return fetchSnapshot(
+		options.snapshots,
+		SLUG,
+		imlsPLSVintage(ZIP_URL),
+		(destDir) => downloadIMLSPLS(destDir, report),
+		report
+	)
+}
 
-	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
-
-	if (recorded?.sha256 && recorded.filename) {
-		const recordedPath = destDir(recorded.filename)
-
-		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
-			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
-
-			return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
-		}
-	}
+async function downloadIMLSPLS(destDir: PathBuilder, report?: (line: string) => void): Promise<FetchSummary> {
+	const zipDest = destDir(basename(ZIP_URL))
+	const manifestPath = destDir("MANIFEST.json")
 
 	// MARK: Download ZIP
 

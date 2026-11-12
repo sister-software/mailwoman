@@ -16,6 +16,7 @@ import {
 	directionalExpand,
 	doubleSpace,
 	dropCommas,
+	lineBreaks,
 	particleStrip,
 	stateAbbreviate,
 	stateExpand,
@@ -96,7 +97,7 @@ describe("universal augmentations", () => {
 
 		expect(out.raw).toBe("Champs  Élysées,  Paris,  France")
 		// Components must double-space too: alignment substring-searches each component in raw,
-		// so single-spaced "Champs Élysées" would not appear in the double-spaced raw.
+		// so single-spaced "Champs Élysées" wouldn't appear in the double-spaced raw.
 		expect(out.components.street).toBe("Champs  Élysées")
 		expect(out.components.locality).toBe("Paris")
 		expect(out.components.country).toBe("France")
@@ -125,6 +126,51 @@ describe("universal augmentations", () => {
 	it("accentStrip returns null when no accents present", () => {
 		const out = accentStrip(baseRow({ raw: "Paris", components: { locality: "Paris" } }))
 		expect(out).toBeNull()
+	})
+
+	describe("lineBreaks", () => {
+		const address = {
+			raw: "206 Saint Clair Street, Fort Recovery, OH 45846",
+			components: {
+				house_number: "206",
+				street: "Saint Clair Street",
+				locality: "Fort Recovery",
+				region: "OH",
+				postcode: "45846",
+			},
+		}
+
+		const ids = Array.from({ length: 64 }, (_, i) => `t-${i}`)
+		const selected = ids.filter((id) => lineBreaks(baseRow({ ...address, source_id: id })))
+
+		it("renders a chosen row on its layout's envelope lines, and the variant aligns with every component", () => {
+			const out = lineBreaks(baseRow({ ...address, source_id: selected[0]! }))!
+
+			expect(out.raw).toBe("206 Saint Clair Street\nFort Recovery, OH 45846")
+			expect(out.augmentation?.name).toBe("line-breaks")
+
+			const aligned = alignRow(out)
+
+			expect(aligned.kind).toBe("labeled")
+
+			if (aligned.kind !== "labeled") return
+
+			expect(new Set(aligned.row.labels.filter((label) => label !== "O").map((label) => label.slice(2)))).toEqual(
+				new Set(Object.keys(address.components))
+			)
+		})
+
+		it("chooses a row by its source id alone, the same way every time", () => {
+			expect(selected.length).toBeGreaterThan(0)
+			expect(selected.length).toBeLessThan(ids.length)
+			expect(ids.filter((id) => lineBreaks(baseRow({ ...address, source_id: id })))).toEqual(selected)
+		})
+
+		it("leaves a row that already holds a line break alone", () => {
+			expect(
+				lineBreaks(baseRow({ ...address, raw: "206 Saint Clair Street\nFort Recovery", source_id: selected[0]! }))
+			).toBeNull()
+		})
 	})
 })
 
@@ -819,6 +865,8 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		// The dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
+		// The fixture's source id `t-1` is one the line-break variant selects.
+		["line-breaks", poBoxRow(), "P.O. Box 5"],
 		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.
 		["typo-inject", poBoxRow(), "P.O. Box 5"],
 		[

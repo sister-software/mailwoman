@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase-0: golden `/search` wire responses from the current nominatim drop-in (neural geocode +
- *   rules streetParts recovery). Spawns its own server child on a scratch port and kills only that
- *   PID (house rule: never kill by pattern). Needs the lab data-root (weights + gazetteer).
- *   Run from the repo root after `yarn compile`:
- *   `node nominatim/dev-tools/capture-search-golden.run.ts`
+ *   Phase-0: golden `/search` wire responses from the current nominatim drop-in
+ *   (neural geocode + rules streetParts recovery).
+ *
+ *   Spawns its own server child on a scratch port and kills only that PID
+ *   (house rule: never kill by pattern).
+ *   Needs the lab data-root (weights + gazetteer).
+ *
+ *   Run from the repo root after `yarn compile`: `node nominatim/dev-tools/capture-search-golden.run.ts`
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

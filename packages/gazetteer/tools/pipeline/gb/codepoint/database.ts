@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `postalcode-gb-codepoint-<date>.db` from Ordnance Survey Code-Point Open, the licensed
- *   replacement for the GeoNames `GB_full` rows in `postalcode-geonames-tail.db`.
+ *   Build `postalcode-gb-codepoint-<date>.db` from Ordnance Survey Code-Point Open,
+ *   the licensed replacement for the GeoNames `GB_full` rows in `postalcode-geonames-tail.db`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -154,7 +155,7 @@ export async function buildPostcodeCodePoint(
 	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
-	// An offline build must not record blank provenance.
+	// An offline build mustn't record blank provenance.
 	// The `acquisition.json` sidecar supplies the release label and MD5.
 	// The build records a missing sidecar in words rather than an empty string.
 	let archiveMD5: string
@@ -185,11 +186,14 @@ export async function buildPostcodeCodePoint(
 		`${extracted.metadata.totalRows.toLocaleString()} rows claimed across ${extracted.csvPaths.length} areas`
 	)
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
-		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-
-	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	const {
+		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
+		geonames: { normalizePostcodeName },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+	})
 
 	const ingestPath = `${out}.ingest`
 	await removeStagingArtifacts(ingestPath)

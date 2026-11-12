@@ -4,21 +4,25 @@
 /**
  *   Compares two groups of trained runs on a battery report: a control recipe's seeds against a candidate's.
  *
- *   A single run of a recipe is one draw from its training noise. Two runs of one config and one seed on the A100
- *   disagreed on 5.1% of battery rows, and two seeds on 6.5% to 7.6% (#2869). A difference between arms is therefore
- *   read against the spread between runs of the same arm. The comparison reports, per suite and per country:
+ *   A single run of a recipe is one draw from its training noise.
+ *   Two runs of one config and one seed on the A100 disagreed on 5.1% of battery rows,
+ *   and two seeds on 6.5% to 7.6% (#2869).
+ *
+ *   A difference between arms is therefore read against the spread between runs of the same arm.
+ *   The comparison reports, per suite and per country:
  *
  *   - each group's mean rate and the difference between them;
- *   - the spread between runs inside each group, as the pooled standard deviation of the run rates and the mean share
- *     of rows on which two runs of one group disagree;
+ *   - the spread between runs inside each group, as the pooled standard deviation of the
+ *     run rates and the mean share of rows on which two runs of one group disagree;
  *   - the rows that move under the agreement rule of {@linkcode agreementQuorum};
- *   - a t statistic whose standard error adds the between-run variance of the two group means to the row-sampling
- *     variance of their difference, with `k_a + k_b - 2` degrees of freedom, and its two-sided p value;
+ *   - a t statistic whose standard error adds the between-run variance of
+ *     the two group means to the row-sampling variance of their difference,
+ *     with `k_a + k_b - 2` degrees of freedom, and its two-sided p value;
  *   - for countries, Holm-adjusted p values over every country with enough rows.
  *
- *   It also reports the smallest difference a comparison with `k` runs per arm could detect, and the difference of
- *   every regrouping of the pooled runs into groups of the same sizes. Those regroupings give the spread that the
- *   choice of split produces by itself.
+ *   It also reports the smallest difference a comparison with `k` runs per arm could detect,
+ *   and the difference of every regrouping of the pooled runs into groups of the same sizes.
+ *   Those regroupings give the spread that the choice of split produces by itself.
  */
 
 import { formatPercent, mean } from "@mailwoman/core/stats"
@@ -271,7 +275,7 @@ function combinations<T>(items: readonly T[], size: number): T[][] {
 /**
  * Compares two run groups across a battery report's decision rows.
  *
- * @throws When a run is not an arm of the report, or a run appears in both groups.
+ * @throws When a run isn't an arm of the report, or a run appears in both groups.
  */
 export function compareRunGroups(
 	report: BatteryReport,

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the release-evaluator simulation over a scenario file and writes the per-scenario report JSON,
- *   printing a Markdown table. Every threshold in the scenario file is a simulation parameter.
+ *   Runs the release-evaluator simulation over a scenario file and writes the
+ *   per-scenario report JSON, printing a Markdown table.
+ *
+ *   Every threshold in the scenario file is a simulation parameter.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/release/simulate.run.ts \

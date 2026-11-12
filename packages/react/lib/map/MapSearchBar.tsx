@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Presentational search pill for map UIs. The host supplies the input and icons.
+ *   Presentational search pill for map UIs.
+ *
+ *   The host supplies the input and icons.
  *   Busy state uses a bottom-edge indicator to avoid changing the pill layout.
  */
 

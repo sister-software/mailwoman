@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A claim is one statement about one entity on one axis, with the record that supports it and the
- *   status that records how it was established. The status is the discriminant of the union, so an inferred
- *   claim states its explanation and derivation and can never be assigned where an observed claim is
- *   expected.
+ *   A claim is one statement about one entity on one axis, with the record that supports it
+ *   and the status that records how it was established.
  *
- *   A derived or inferred claim rests on the claims it derives from. A dossier therefore admits it only
- *   when it admits each of those claims, whatever the date of the claim's own source record.
+ *   The status is the discriminant of the union, so an inferred claim states its explanation
+ *   and derivation and can never be assigned where an observed claim is expected.
+ *
+ *   A derived or inferred claim rests on the claims it derives from.
+ *   A dossier therefore admits it only when it admits each of those claims,
+ *   whatever the date of the claim's own source record.
  */
 
 import type { EpistemicStatus } from "@mailwoman/evidence"
@@ -74,7 +76,7 @@ export function derivationOf(claim: Claim): readonly string[] {
  *
  * A claim is admitted when its source record is admitted.
  * A derived or inferred claim is admitted only when every claim it derives from is admitted too,
- * so a claim derived from a claim that is dropped or never supplied is dropped as well.
+ * so a claim derived from a claim that's dropped or never supplied is dropped as well.
  */
 export function admittedClaims(claims: readonly Claim[], admittedSources: ReadonlySet<SourceRecordID>): Claim[] {
 	let admitted = claims.filter((claim) => admittedSources.has(claim.evidence.source))

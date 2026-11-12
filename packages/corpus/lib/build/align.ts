@@ -99,7 +99,7 @@ export interface AlignPhaseResult {
 	 * Rows the license policy refused, counted per `source`.
 	 *
 	 * A source here contributed zero rows to the corpus whatever its adapter reported writing.
-	 * That is the distinction between a source present in corpus provenance
+	 * That's the distinction between a source present in corpus provenance
 	 * and one present in model provenance.
 	 */
 	refusedBySource: Map<string, number>
@@ -263,7 +263,7 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			// Counted per source as well as per refusal kind, because an adapter's own `written`
 			// count records what it emitted rather than what entered the corpus.
 			// A source refused here contributed no row, and model provenance generated from model provenance
-			// generated from `adapters[].written` only would credit it with rows it did not supply.
+			// generated from `adapters[].written` only would credit it with rows it didn't supply.
 			result.refusedBySource.set(row.source, (result.refusedBySource.get(row.source) ?? 0) + 1)
 
 			return

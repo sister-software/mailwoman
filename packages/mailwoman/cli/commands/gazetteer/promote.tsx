@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer promote [<candidate-db>]` — point the drop-in convention path
- *   `<data-root>/db/wof/candidate.db` at a candidate build (a symlink — a pointer swap, never a DB
- *   mutation). The nominatim/photon CLIs auto-use this path for worldwide resolution. Defaults to
- *   the canonical `candidate-global.db`.
+ *   `mailwoman gazetteer promote [<candidate-db>]` — point the drop-in
+ *   convention path `<data-root>/db/wof/candidate.db` at a candidate build
+ *   (a symlink — a pointer swap, never a DB mutation).
+ *
+ *   The nominatim/photon CLIs auto-use this path for worldwide resolution.
+ *   Defaults to the canonical `candidate-global.db`.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
@@ -29,9 +32,15 @@ export const spec = {
 
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { promoteCandidate } = await import("@mailwoman/gazetteer/tools/pipeline")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			pipeline: { promoteCandidate },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const root = dataRootPath()
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)

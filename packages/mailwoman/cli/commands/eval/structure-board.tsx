@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval structure-board`: the held-out structure board of #2857. WOF structure cells kept out of every
- *   training arm, query shapes, relation-word pairs, mixed-script venues, romaji in Western order and typos, with
- *   confidence intervals per class and per minimal pair. Informational: always exits 0.
+ *   `mailwoman eval structure-board`: the held-out structure board of #2857.
+ *
+ *   WOF structure cells kept out of every training arm, query shapes,
+ *   relation-word pairs, mixed-script venues, romaji in Western order and typos,
+ *   with confidence intervals per class and per minimal pair.
+ *   Informational: always exits 0.
  */
 
 import { caseNormalizationOf } from "@mailwoman/core/pipeline"

@@ -3,20 +3,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Materialize the fr-fr overlay's dev artifacts through
- *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.
+ *   Materialize the fr-fr overlay's dev artifacts
+ *   through `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.
  *
- *   fr-fr declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and inherits the model,
- *   so this overlay links no model or tokenizer and removes any leftover local pair.
+ *   fr-fr declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and inherits the
+ *   model, so this overlay links no model or tokenizer and removes any leftover local pair.
  *
- *   `pair-index-fr.bin` is built from BAN's `nom_ld` (lieu-dit) through `ban/sdk`'s `cleanLieuDit`,
- *   rather than WOF. Its French neighborhood records are Paris quartiers that never appear in a postal
- *   address. BAN is a directory of 101 département files, so the guard md5s no file and instead
- *   refuses an artifact below `minimumPlausibleBytes` (the BAN-derived index is ~6 MB, the
- *   admin-DB borough recipe ~1.9 kB).
+ *   `pair-index-fr.bin` is built from BAN's `nom_ld` (lieu-dit) through `ban/sdk`'s
+ *   `cleanLieuDit`, rather than WOF.
+ *   Its French neighborhood records are Paris quartiers that never appear in a postal address.
+ *
+ *   BAN is a directory of 101 département files, so the guard md5s no file
+ *   and instead refuses an artifact below `minimumPlausibleBytes`
+ *   (the BAN-derived index is ~6 MB, the admin-DB borough recipe ~1.9 kB).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
@@ -31,7 +33,7 @@ import {
  *
  * A directory belongs in `inputs` (existence only), not `sources` (md5).
  */
-const BAN_DIR = dataRootPath("corpus", "sources", "ban")
+const BAN_DIR = currentSourcePath("ban")
 
 const softFeed = await committedSoftFeedLinks()
 

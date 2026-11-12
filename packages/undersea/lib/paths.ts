@@ -5,7 +5,7 @@
  *   Where the undersea layer database and the downloaded gazetteer live under the data root.
  */
 
-import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath, snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 /**
@@ -23,7 +23,7 @@ export function underseaDatabaseRoot(dataRoot: PathBuilderLike): PathBuilder {
 export const underseaDatabasePath: PathBuilder = underseaDatabaseRoot(dataRootPath())
 
 /**
- * `$MAILWOMAN_DATA_ROOT/src/undersea`, where each download is kept in a directory
- * such as `2026-11-02/`, one per download date.
+ * `$MAILWOMAN_DATA_ROOT/snapshots/undersea`, where each download is kept as a snapshot
+ * vintage such as `2026-11-02/`, one per download date.
  */
-export const underseaSourcePath: PathBuilder = dataRootPath("src", "undersea")
+export const underseaSourcePath: PathBuilder = snapshotSourceDirectory("undersea")

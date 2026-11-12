@@ -2,27 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Statistical validation of the release evaluator. A scenario fixes the true per-country exact parse rates of
- *   the published and candidate models, the rows per country, the group size and within-group correlation of
- *   derived variants, and the discordance between the arms. The harness draws paired outcomes from that truth,
- *   evaluates a synthetic specification through `evaluateReleaseSpec`, and repeats with distinct seeds.
+ *   Statistical validation of the release evaluator.
  *
- *   Every threshold a scenario uses is a simulation parameter. The release specification registers none of them as requirements.
+ *   A scenario fixes the true per-country exact parse rates of the published
+ *   and candidate models, the rows per country, the group size and within-group
+ *   correlation of derived variants, and the discordance between the arms.
+ *   The harness draws paired outcomes from that truth, evaluates a synthetic specification
+ *   through `evaluateReleaseSpec`, and repeats with distinct seeds.
+ *
+ *   Every threshold a scenario uses is a simulation parameter.
+ *   The release specification registers none of them as requirements.
  *
  *   Generative model, per country:
  *
- *   - The joint distribution of one row's (published, candidate) pair follows from the two true rates and the
- *       discordance d = P(published != candidate): P(1, 0) = (d - delta) / 2 and P(0, 1) = (d + delta) / 2, with
- *       delta the true candidate minus published rate.
- *   - Rows come in groups of `groupSize`. With probability `correlation` a group shares one pair for every
- *       member, as derived variants of one address would. Otherwise each member draws its own pair. Each arm's
- *       marginal rate is preserved, and the within-group correlation of either arm's outcome is `correlation`.
- *   - `grouping: "metadata"` gives every row its group id; `"row_identity"` omits it, so the evaluator treats
- *       every row as independent.
+ *   - The joint distribution of one row's (published, candidate) pair follows from the two
+ *     true rates and the discordance d = P(published != candidate): P(1, 0) = (d - delta) / 2
+ *     and P(0, 1) = (d + delta) / 2, with delta the true candidate minus published rate.
+ *   - Rows come in groups of `groupSize`.
+ *     With probability `correlation` a group shares one pair for every member,
+ *     as derived variants of one address would.
+ *     Otherwise each member draws its own pair.
+ *     Each arm's marginal rate is preserved, and the within-group correlation
+ *     of either arm's outcome is `correlation`.
+ *   - `grouping: "metadata"` gives every row its group id; `"row_identity"` omits it,
+ *     so the evaluator treats every row as independent.
  *
- *   Repeated selection (`selection.candidates = k`) draws k candidates with the same truth against one set of
- *   published outcomes, keeps the one whose measured Q improvement is largest, and evaluates it either on the
- *   same rows (`confirmation: "same"`) or on freshly drawn rows (`"fresh"`).
+ *   Repeated selection (`selection.candidates = k`) draws k candidates with the same truth against one
+ *   set of published outcomes, keeps the one whose measured Q improvement is largest, and evaluates
+ *   it either on the same rows (`confirmation: "same"`) or on freshly drawn rows (`"fresh"`).
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
@@ -127,7 +134,7 @@ export interface ScenarioReport {
 	 */
 	erroneousApproval: Rate | null
 	/**
-	 * Fail while the truth meets every requirement; `null` when it does not.
+	 * Fail while the truth meets every requirement; `null` when it doesn't.
 	 */
 	erroneousFail: Rate | null
 	/**
@@ -137,7 +144,7 @@ export interface ScenarioReport {
 	checks: CheckCoverage[]
 	/**
 	 * Evaluations in which some check had no bounds, such as ungrouped rows the
-	 * specification does not declare independent.
+	 * specification doesn't declare independent.
 	 * Such a check counts as not covering its truth.
 	 */
 	unbounded: number

@@ -15,7 +15,7 @@ This system applies one idea at two different scales. This page describes it onc
 
 The instinct is: **model what you'd expect, then treat the deviation as signal.**
 
-At the value level, the question is: "how surprised am I that these two records agree?" At the regional level, the question is: "how surprised am I that there is — or isn't — a facility here?" The math is different, the zoom level is different, but the engine is the same. And that's not a coincidence you should let pass without noting, because understanding the connection tells you what we're building toward and why the geocoder's population-ranking isn't a separate concern from the coverage product.
+At the value level, the question is: "how surprised am I that these two records agree?" At the regional level, the question is: "how surprised am I that there's — or isn't — a facility here?" The math is different, the zoom level is different, but the engine is the same. And that's not a coincidence you should let pass without noting, because understanding the connection tells you what we're building toward and why the geocoder's population-ranking isn't a separate concern from the coverage product.
 
 ---
 
@@ -45,7 +45,7 @@ Zoom out from a pair of records to a region, and the question changes from "shou
 
 This question has a long quantitative history.
 
-**Central Place Theory** (Christaller, 1933) formalized the observation that service centers arrange themselves in a hierarchy: small settlements offer basic services, larger ones add specialized ones, and you need a minimum population — a "threshold" — to support each tier. Healthcare facilities follow this pattern. Primary care is a low-order service (it should be dispersed, close to where people are). Specialized surgery is a high-order service (it concentrates in fewer, larger centers). A rural county with 4,000 residents that has no primary care practice is a deviation from the expected hierarchy. That same county having no neurosurgery center is not. (Christaller, 1933, and Openshaw and Veneris, 2003, on medical facility hierarchies.)
+**Central Place Theory** (Christaller, 1933) formalized the observation that service centers arrange themselves in a hierarchy: small settlements offer basic services, larger ones add specialized ones, and you need a minimum population — a "threshold" — to support each tier. Healthcare facilities follow this pattern. Primary care is a low-order service (it should be dispersed, close to where people are). Specialized surgery is a high-order service (it concentrates in fewer, larger centers). A rural county with 4,000 residents that has no primary care practice is a deviation from the expected hierarchy. That same county having no neurosurgery center isn't. (Christaller, 1933, and Openshaw and Veneris, 2003, on medical facility hierarchies.)
 
 **Gravity and spatial interaction models** (Wilson, 1970s) quantified how population generates demand for facilities: locations with greater services and greater population pull harder, in proportion. The basic gravity formulation is `Iᵢⱼ ∝ Pᵢ × Sⱼ / dᵢⱼ²`, where `Pᵢ` is the population at demand point `i`, `Sⱼ` is supply at facility `j`, and `d` is distance.
 
@@ -75,7 +75,7 @@ The IMU and HPSA score are, in the terminology of this system, _expected-density
 
 The next paragraphs state the boundary that the rest of this page depends on.
 
-The geocoder's resolver already implements a "where is something likely to be given the population?" prior. When two candidate localities have the same name and the parser can't resolve the ambiguity, the resolver ranks by population (primary) and centroid distance (tiebreak):
+The geocoder's resolver already implements a "where's something likely to be given the population?" prior. When two candidate localities have the same name and the parser can't resolve the ambiguity, the resolver ranks by population (primary) and centroid distance (tiebreak):
 
 ```ts
 // core/resolver/resolve.ts
@@ -84,14 +84,14 @@ const ranked = [...candidates].sort((a, b) => b.population - a.population || a.d
 
 The coarse-placer (#244) extends this to the country level: a tiny linear classifier infers the probable country from the address text and injects that as a soft `anchorPosterior` into the resolver's re-ranking (`core/coarse-placer/coarse-placer.ts`, `core/pipeline/runtime-pipeline.ts`). Population data lives in `place_population` (built from WOF `wof:population` / `gn:population` during `scripts/build-unified-wof.ts`). The resolver's `populationBoost: 4.0` is a calibrated prior that encodes this rule: the more people live there, the more likely an address is there.
 
-That is already a spatial expectation model. It is already live.
+That's already a spatial expectation model. It is already live.
 
 What changes at the matcher scale is that "spatial expectation" operates not on individual place candidates but on facility counts across a region. Instead of "which Berlin is the right one?" you're asking "what primary-care count fits a county with 40,000 residents and a median income below the federal poverty level?" The data is coarser, and the question is about a distribution rather than a point.
 
 The connection between the two scales is that both are the same Bayesian move applied at different granularities:
 
 - The resolver asks: given a population, what candidate is the most probable referent of this address?
-- The coverage analysis asks: given a population and its demographics, what is the expected number of facilities of this type, and how far does the observed count deviate from it?
+- The coverage analysis asks: given a population and its demographics, what's the expected number of facilities of this type, and how far does the observed count deviate from it?
 
 Population is already in the system. The admin hierarchy is already in the system. Census data is available at `$MAILWOMAN_DATA_ROOT/census/` (including the 2024 ZIP Code Tabulation Area gazetteer at `2024_Gaz_zcta_national.txt`). The spatial implementation needed to answer "how surprised should I be that there are no providers here?" is substantially the same implementation that already answers "how surprised should I be that these two records agree?"
 
@@ -99,7 +99,7 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## Where this lands in the open work
 
-**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible rather than enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations provide this measure in advance as a data column (the FCC forms explicitly reference HPSA status). The system can use those designations directly rather than recomputing expected density.
+**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible rather than enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That's already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations provide this measure in advance as a data column (the FCC forms explicitly reference HPSA status). The system can use those designations directly rather than recomputing expected density.
 
 **`#618` — multi-source cross-dataset correlation** is where inverse-address-frequency weighting does its heaviest work. The NPPES registry by itself has 4.8 GB of provider records, several at shared institutional addresses (hospitals, clinics, care systems). A shared address among several records is a high-frequency value and should contribute near-zero evidence to a match decision. The `withTermFrequency` mechanism in `match/tf.ts` and `match/fellegi-sunter.ts` handles this automatically — the term-frequency table is built from the dataset at match time, so a shared-building address automatically gets its weight suppressed without any hand-tuning.
 
@@ -111,9 +111,9 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## What to build, and in what order
 
-The density model is not on the critical path. The critical path is: get the classical Fellegi-Sunter core working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
+The density model isn't on the critical path. The critical path is: get the classical Fellegi-Sunter core working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
 
-Two specific pieces should be built early because the anti-join cannot be interpreted without them. They are not analytical color:
+Two specific pieces should be built early because the anti-join cannot be interpreted without them. They're not analytical color:
 
 1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column. A standard federal signal the data consumer can use to prioritize. This is a join rather than a model.
 
@@ -127,7 +127,7 @@ The 2SFCA accessibility index and a full Central Place Theory-based expected-fac
 
 Every number this system produces — the accessibility index, the anti-join membership, the deviation from expected facility density — is a measurement. What a coverage gap means, what causes it, or what should be done about it is the data consumer's domain rather than ours. We surface candidate links and reconciled entity sets. The analyst decides what the deviation implies.
 
-That line reflects the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) makes that analysis tractable. It does not answer the question for the analyst. It states the question precisely.
+That line reflects the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) makes that analysis tractable. It doesn't answer the question for the analyst. It states the question precisely.
 
 The spatial expectation model, at both scales, keeps that line exact: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. The analyst interprets that departure.
 

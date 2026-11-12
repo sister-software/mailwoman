@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The model and tokenizer are fetched beside the model card, and the postcode binaries and pair indexes beside the
- *   model group.
+ *   The model and tokenizer are fetched beside the model card, and the postcode binaries
+ *   and pair indexes beside the model group.
+ *
  *   The runner hands a caller's early ORT wasm download to onnxruntime-web before the session is created.
  */
 

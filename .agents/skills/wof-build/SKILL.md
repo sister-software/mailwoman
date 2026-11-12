@@ -117,7 +117,7 @@ for (const p of r.accepting.slice(0, 3)) console.log(' ', p.placetype, p.name, '
 has no `place_importance` table, and no admin DB has ever contained one (#1142) — so the FST's
 `importance` field is population-scaled rather than Wikipedia importance, and the provenance field counts
 population rows rather than importance matches. Step 2 exists to fix that. Until it runs against the
-live DB, that is what the number means.
+live DB, that's what the number means.
 
 ## The candidate database rebuild
 
@@ -172,5 +172,5 @@ parents existed to walk through.
 - After refreshing wikimedia-importance scores
 - Before a model release (ensures demo assets are current)
 - After changing the FST builder or serialization format
-- **After any `admin-global-priority.db` swap** — that is what invalidates every FST, and step 5's
+- **After any `admin-global-priority.db` swap** — that's what invalidates every FST, and step 5's
   freshness check is what tells you it happened

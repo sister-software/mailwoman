@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The landmark layer: Wikidata places keyed by every name and alias they are written with, ranked by the number of
- *   Wikipedia language editions that describe them. The source is CC0, so the database may ship.
+ *   The landmark layer: Wikidata places keyed by every name and alias they're written with,
+ *   ranked by the number of Wikipedia language editions that describe them.
+ *   The source is CC0, so the database may ship.
  */
 
 import type { LandmarkHit, LandmarkLookup } from "@mailwoman/core/resolver"

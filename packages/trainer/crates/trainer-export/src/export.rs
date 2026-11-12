@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Writes the coarse encoder's forward pass as an opset-17 ONNX graph.
 //!
 //! The graph computes `MailwomanCoarseEncoder.forward` in eval mode (every dropout is the identity) for the channel

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measure one-setting-at-a-time counterfactuals for selected rows. Unavailable flips are reported with reasons.
+ *   Measure one-setting-at-a-time counterfactuals for selected rows.
+ *
+ *   Unavailable flips are reported with reasons.
  *   Runs are grouped by setting so rows can reuse each constructed engine.
  */
 
@@ -85,7 +87,7 @@ export interface CounterfactualFlip {
 }
 
 /**
- * A setting that could not be flipped for a row, plus the reason.
+ * A setting that couldn't be flipped for a row, plus the reason.
  */
 export interface SettingSkip {
 	setting: CounterfactualSetting
@@ -270,7 +272,7 @@ export async function runCounterfactuals(
 
 	for (const { flip, targets: batched } of batches.values()) {
 		// Disable tracing because this pass compares answers only.
-		const engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
+		using engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
 
 		for (const target of batched) {
 			const row = byRow.get(target.id)!

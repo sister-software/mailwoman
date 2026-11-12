@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The file names of PFX1 postcode-prefix indexes. The data root holds one dated file per build
- *   under `postcode-prefix/`, and a weights package ships the newest of each scope under the
- *   scope's own name. The loaders, the dev overlay linker and the release copy read the same
- *   listing here so they agree on which file a scope resolves to.
+ *   The file names of PFX1 postcode-prefix indexes.
+ *
+ *   The data root holds one dated file per build under `postcode-prefix/`, and a weights
+ *   package ships the newest of each scope under the scope's own name.
+ *   The loaders, the dev overlay linker and the release copy read the same listing here
+ *   so they agree on which file a scope resolves to.
  */
 
 import { PathBuilder, type PathBuilderLike } from "path-ts"

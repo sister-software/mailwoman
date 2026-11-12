@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests for {@link SQLiteStreetNameLookup} against a fixture DB built with the interface fold
- * (`foldStreetSurface`).
+ * Tests for {@link SQLiteStreetNameLookup} against a fixture DB built with the
+ * interface fold (`foldStreetSurface`).
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

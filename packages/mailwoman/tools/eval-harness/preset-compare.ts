@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Quick comparison of demo presets between two models (`mailwoman eval preset-compare`). Baseline
- *   = the shipped dev weights. pass `modelPath` to also print a candidate's parses. The promotion
- *   check captures this report into `<out-dir>/presets.md` via the `report` sink.
+ *   Quick comparison of demo presets between two models (`mailwoman eval preset-compare`).
+ *
+ *   Baseline = the shipped dev weights. pass `modelPath` to also print a candidate's parses.
+ *   The promotion check captures this report into `<out-dir>/presets.md` via the `report` sink.
  */
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"

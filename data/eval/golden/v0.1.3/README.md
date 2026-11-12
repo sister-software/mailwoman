@@ -19,9 +19,9 @@ check on `us.street` because of the labeling convention. Its parse was not the c
 `mailwoman corpus golden-relabel` (`corpus/src/tools/golden-relabel-street.ts`) produced this
 version from v0.1.2 by splitting on the USPS Pub-28 table in `@mailwoman/codex/us`. The relabel
 changed 1,907 of 2,956 US rows, and 140 rows have a review flag. **FR rows are byte-identical to
-v0.1.2.** This relabel did not address French street typology.
+v0.1.2.** This relabel didn't address French street typology.
 
-A scorer that folds `street_prefix`/`street`/`street_suffix` back together does not grade against
+A scorer that folds `street_prefix`/`street`/`street_suffix` back together doesn't grade against
 this answer key. `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts` reads the declaration in
 `MANIFEST.json` and scores split-convention rows without folding them.
 

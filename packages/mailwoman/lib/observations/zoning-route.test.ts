@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The zoning route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
+ *   The zoning route on the geocode path, exercised through `geocodeAddress` with
+ *   mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   The first test checks the rollback contract.
+ *   With the layer absent, the geocode result must match a run where the field was never built.
  *   Rollback satisfies that contract by removing the argument.
  *
- *   A designation becomes one additive marker with the verdict's top kind, authority code, plus generic type.
+ *   A designation becomes one additive marker with the verdict's top kind,
+ *   authority code, plus generic type.
  *   A location with no zoning polygon produces no marker.
- *   The publisher records `UNZ - Unzoned` as a positive value, so the route must distinguish that designation from missing coverage.
+ *
+ *   The publisher records `UNZ - Unzoned` as a positive value, so the route must
+ *   distinguish that designation from missing coverage.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -36,7 +41,7 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 
 /**
  * The kind the mock classifier reports: a designation marker must name the verdict's
- * own top kind because a designation is not raised by intent.
+ * own top kind because a designation isn't raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 

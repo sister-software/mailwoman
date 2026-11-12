@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the prominence-floor definition audit. Each case supplies a definition the runner cannot execute.
+ *   Tests the prominence-floor definition audit.
+ *
+ *   Each case supplies a definition the runner cannot execute.
  *   The audit reports the reason for each refusal.
  *
- *   Band edges define the measurement. Two bands that overlap would count a row twice in per-band results.
+ *   Band edges define the measurement.
+ *   Two bands that overlap would count a row twice in per-band results.
+ *
  *   A row without a recorded population must stay unbucketed rather than count as a zero-population member.
  */
 
@@ -66,7 +70,7 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a band whose ceiling sits below its floor", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// Use the second band so the inverted ceiling is not 0.
+				// Use the second band so the inverted ceiling isn't 0.
 				// Zero means unbounded, so another check would refuse that value first.
 				draft.populationBands[1]!.max = draft.populationBands[1]!.min - 1
 			})

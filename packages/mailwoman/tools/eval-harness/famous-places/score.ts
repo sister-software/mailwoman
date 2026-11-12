@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scores the frozen famous-places test set: national capitals, landmarks and natural features, each written bare,
- *   with its country and in a local language. A capital expects `locality` and every other place expects `venue`.
+ *   Scores the frozen famous-places test set: national capitals, landmarks and natural
+ *   features, each written bare, with its country and in a local language.
  *
- *   A model may have trained on these places, so the set measures recall of known places. An entity-level holdout
- *   measures unseen places, and the two are reported apart.
+ *   A capital expects `locality` and every other place expects `venue`.
+ *
+ *   A model may have trained on these places, so the set measures recall of known places.
+ *   An entity-level holdout measures unseen places, and the two are reported apart.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"

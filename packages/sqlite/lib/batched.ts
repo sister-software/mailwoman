@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Batched bulk-write transactions — the `commit`/`begin` cadence every streaming ingest repeats around its
- *   raw prepared-statement loop.
+ *   Batched bulk-write transactions — the `commit`/`begin` cadence every streaming
+ *   ingest repeats around its raw prepared-statement loop.
  */
 
 /**

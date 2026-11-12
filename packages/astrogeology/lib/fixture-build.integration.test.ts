@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The whole build chain over tiny fixtures with no network: five Moon rows through normalization, ndjson, tippecanoe
- *   and the metadata block. a synthetic DEM through the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *   The whole build chain over tiny fixtures with no network: five Moon rows through
+ *   normalization, ndjson, tippecanoe and the metadata block. a synthetic DEM through
+ *   the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *
  *   The tools (`tippecanoe`, `pmtiles`, gdal) are the lab's. a missing one fails with its name in the error.
  *
- *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings: 1024×512 Int16 over the whole globe in
- *   epsg:4326, deflate-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` meters. Its range sits inside
- *   terrarium's ±32,768 m envelope, so the encode has valid values at both ends. 1024 pixels across lands the
- *   MBTiles step at zoom 2, where the pyramid has levels to build.
+ *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings:
+ *   1024×512 Int16 over the whole globe in epsg:4326, deflate-compressed,
+ *   elevation `sin(row·π/8) · (row / 511) · 30000` meters.
+ *   Its range sits inside terrarium's ±32,768 m envelope, so the encode has valid values at both
+ *   ends. 1024 pixels across lands the MBTiles step at zoom 2, where the pyramid has levels to build.
  */
 
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
@@ -123,7 +126,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 /**
  * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89)
  * reads as the replacement character and the seven bytes after it survive verbatim.
- * That is enough to tell a PNG from anything else.
+ * That's enough to tell a PNG from anything else.
  */
 const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
 
@@ -155,7 +158,7 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 	])
 
 	// Overviews must decimate.
-	// An average of base-256 numerals gives a height that is not a terrain sample.
+	// An average of base-256 numerals gives a height that's not a terrain sample.
 	const overviews = commands.find((command) => command[0] === "gdaladdo")
 	expect(overviews).toContain("nearest")
 	expect(overviews).not.toContain("average")

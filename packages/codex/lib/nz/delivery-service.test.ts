@@ -29,7 +29,7 @@ describe("NZ_DELIVERY_SERVICE_TYPES", () => {
 
 describe("NZ_PRIVATE_BOX_ALIAS", () => {
 	it("is marked officiallyInvalid — not a valid ADV358 Delivery Service Type", () => {
-		// ADV358 (June 2011) lists exactly six types; 'Private Box' is not among them.
+		// ADV358 (June 2011) lists exactly six types; 'Private Box' isn't among them.
 		// Source: nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf (accessed 2026-06-11).
 		// Operator ruling 2026-06-11: recognize-as-used with this citation.
 		expect(NZ_PRIVATE_BOX_ALIAS.officiallyInvalid).toBe(true)
@@ -73,7 +73,7 @@ describe("matchNZDeliveryService", () => {
 	})
 
 	it("recognizes 'Private Box' as the colloquial NZ alias — operator ruling 2026-06-11", () => {
-		// 'Private Box' is not a valid ADV358 type.
+		// 'Private Box' isn't a valid ADV358 type.
 		// NZ Post's live standards pages do not list it.
 		// Source: adv358-address-standards.pdf (June 2011) + nzpost.co.nz/business/shipping-in-nz/
 		// addressing-standards (accessed 2026-06-11).

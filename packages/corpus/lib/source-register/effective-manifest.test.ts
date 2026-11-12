@@ -162,7 +162,7 @@ describe("deriveEffectiveTrainingManifest", () => {
 		const manifest = derive()
 
 		// `overlay` is emitted and absent from the frozen manifest.
-		// That is what an overlay merged after the build looks like.
+		// That's what an overlay merged after the build looks like.
 		// Over `v0.6.0-register-surface` that set is 39 sources and 890,666 of 1,000,000 rows.
 		expect(manifest.emittedButUnrecorded).toEqual({ overlay: 200 })
 		expect(manifest.trainingSources).toEqual(["drawn"])

@@ -2,18 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module processes a source range as a streaming pass. It writes every feature to `flood_zone_area`
- *   and to the build's touch table.
+ *   This module processes a source range as a streaming pass.
+ *
+ *   It writes every feature to `flood_zone_area` and to the build's touch table.
  *
  *   This work runs in chunks because h3's wasm heap cannot be reset from JavaScript.
- *   It also fails after an unbounded number of polyfill calls. In the production input, runs died after
- *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process.
- *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
- *   {@linkcode buildFloodDatabase} bounds classification by running one chunk for each range of authority feature ids.
- *   It runs each chunk in a separate process, so each starts with an empty heap. The call-removal shortcuts in `cells.ts`
- *   improve speed. Chunks provide the correctness guarantee.
+ *   It also fails after an unbounded number of polyfill calls.
  *
- *   The chunk appends rows to a database created and sealed by its parent. It returns counts for the parent to add.
+ *   In the production input, runs died after roughly 510,000 and 798,000 features on
+ *   geometry that classifies in milliseconds in a fresh process.
+ *   A build that completes only when fragmentation happens to stay low isn't a
+ *   reproducible build, so {@linkcode buildFloodDatabase} bounds classification by
+ *   running one chunk for each range of authority feature ids.
+ *
+ *   It runs each chunk in a separate process, so each starts with an empty heap.
+ *   The call-removal shortcuts in `cells.ts` improve speed.
+ *   Chunks provide the correctness guarantee.
+ *
+ *   The chunk appends rows to a database created and sealed by its parent.
+ *   It returns counts for the parent to add.
+ *
  *   Chunks run sequentially against the file, so the build has one writer and requires no locking.
  */
 

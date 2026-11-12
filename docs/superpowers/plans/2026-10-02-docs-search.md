@@ -29,7 +29,7 @@
 
 1. User text containing FTS5 syntax (`"`, `*`, `:`, `-`, `AND`, `NEAR(`, `(`, `^`) returns hits or an empty list, never a thrown FTS5 syntax error. Test in Task 3.
 2. Text of punctuation only (`--`, `***`) returns zero hits without a query reaching the database. Test in Task 3.
-3. A response for an earlier query that resolves after a later query's response does not replace the later results in the modal. Test in Task 5.
+3. A response for an earlier query that resolves after a later query's response doesn't replace the later results in the modal. Test in Task 5.
 4. A page with two headings sharing an `id`, or a heading without an `id`, yields distinct record ids and the build succeeds. Test in Task 2.
 5. The gzip file is corrupt or truncated on the server: the worker rejects the open with the SQLite error text, and the modal states that search is unavailable. The worker half runs only in a browser and is covered by the Playwright test in Task 6. The modal's failure text is tested in Task 5.
 
@@ -171,7 +171,7 @@ Check how this package's other tests run (its `vitest.config.ts` or the root swe
 - [ ] **Step 2: Run the test and confirm it fails**
 
 Run: `yarn vitest run packages/resolver-wof-wasm/lib/httpvfs/database.test.ts`
-Expected: fail. `openWholeDatabase` is not exported, and the posted request has no `strategy`.
+Expected: fail. `openWholeDatabase` isn't exported, and the posted request has no `strategy`.
 
 - [ ] **Step 3: Extend the protocol and the worker**
 
@@ -456,7 +456,7 @@ describe("extractRecords", () => {
 - [ ] **Step 3: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/plugins/search-index/extract.test.ts`
-Expected: fail. `./extract.ts` does not exist.
+Expected: fail. `./extract.ts` doesn't exist.
 
 - [ ] **Step 4: Implement the extractor**
 
@@ -744,7 +744,7 @@ Check the names of the binary reader and writer in `@mailwoman/core/fs/readers` 
 - [ ] **Step 7: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/plugins/search-index/write-index.test.ts`
-Expected: fail. `./write-index.ts` does not exist.
+Expected: fail. `./write-index.ts` doesn't exist.
 
 - [ ] **Step 8: Implement the schema and the writer**
 
@@ -1263,7 +1263,7 @@ Confirm the stemmed vocabulary against the fixture database with `SELECT term FR
 - [ ] **Step 6: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/src/search/correct.test.ts`
-Expected: fail. `./correct.ts` does not exist.
+Expected: fail. `./correct.ts` doesn't exist.
 
 - [ ] **Step 7: Implement `correct.ts`**
 
@@ -1415,7 +1415,7 @@ describe("snippet", () => {
 ```
 
 Run: `yarn vitest run docs/src/search/snippet.test.ts`
-Expected: fail. `./snippet.ts` does not exist.
+Expected: fail. `./snippet.ts` doesn't exist.
 
 `docs/src/search/snippet.ts`:
 
@@ -1532,7 +1532,7 @@ describe("search", () => {
 ```
 
 Run: `yarn vitest run docs/src/search/search.test.ts`
-Expected: fail. `./search.ts` does not exist.
+Expected: fail. `./search.ts` doesn't exist.
 
 - [ ] **Step 11: Implement `search.ts`**
 
@@ -2300,7 +2300,7 @@ export default function SearchBar() {
 }
 ```
 
-Confirm that `docs/plugins/runtime-assets/plugin.ts` stages into `static/mailwoman/sqlite`, which the site serves at `/mailwoman/sqlite/`. Confirm the docs site loads `@mailwoman/react/styles.css`; add the import beside the other `@mailwoman/react` style imports when it does not.
+Confirm that `docs/plugins/runtime-assets/plugin.ts` stages into `static/mailwoman/sqlite`, which the site serves at `/mailwoman/sqlite/`. Confirm the docs site loads `@mailwoman/react/styles.css`; add the import beside the other `@mailwoman/react` style imports when it doesn't.
 
 - [ ] **Step 3: Write the Playwright test**
 

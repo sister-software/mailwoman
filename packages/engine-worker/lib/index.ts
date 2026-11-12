@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The engine Worker's entry: `createMailwomanAPI` over {@link createEngineWorkerEngine}, with the release pipeline
- *   loaded once per isolate and each gazetteer query sent to the `GAZETTEER` service binding.
+ *   The engine Worker's entry: `createMailwomanAPI` over {@link createEngineWorkerEngine},
+ *   with the release pipeline loaded once per isolate and each gazetteer query
+ *   sent to the `GAZETTEER` service binding.
  *
- *   The API Worker binds this Worker as `API_BACKEND`, so admission, CORS and rate limiting stay in the API Worker.
+ *   The API Worker binds this Worker as `API_BACKEND`, so admission, CORS
+ *   and rate limiting stay in the API Worker.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"

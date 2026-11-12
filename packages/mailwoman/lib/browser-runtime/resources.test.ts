@@ -4,9 +4,11 @@
 /**
  *   Pair-index asset URL construction.
  *
- *   The pair-index objects hold `immutable` Cache-Control, so a CDN keeps serving whatever bytes a URL
- *   first returned. Each generation therefore lives under its own `pair-index/<PAIR_INDEX_VERSION>/`
- *   segment, and the site reads the version constant. These tests pin that scheme.
+ *   The pair-index objects hold `immutable` Cache-Control, so a CDN keeps serving
+ *   whatever bytes a URL first returned.
+ *   Each generation therefore lives under its own `pair-index/<PAIR_INDEX_VERSION>/`
+ *   segment, and the site reads the version constant.
+ *   These tests pin that scheme.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

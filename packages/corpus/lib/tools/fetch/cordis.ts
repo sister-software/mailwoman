@@ -5,15 +5,17 @@
  * Download the CORDIS project archives for the `cordis` adapter.
  *
  * CORDIS serves one CSV archive per framework programme at
- * `https://cordis.europa.eu/data/cordis-<programme>projects-csv.zip`, where the programme is `fp7`,
- * `h2020` or `HORIZON` (Horizon Europe), the spelling the host serves. These are the distributions the
- * data.europa.eu records `cordisfp7projects`, `cordish2020projects` and
- * `cordis-eu-research-projects-under-horizon-europe-2021-2027` link. Each archive holds an
- * `organization.csv` beside the project, topic and link tables, and the adapter reads that member
- * straight out of the archive, so the archive is what this module keeps.
+ * `https://cordis.europa.eu/data/cordis-<programme>projects-csv.zip`, where the programme
+ * is `fp7`, `h2020` or `HORIZON` (Horizon Europe), the spelling the host serves.
+ * These are the distributions the data.europa.eu records `cordisfp7projects`,
+ * `cordish2020projects` and `cordis-eu-research-projects-under-horizon-europe-2021-2027` link.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`.
+ * Each archive holds an `organization.csv` beside the project, topic and link tables, and the
+ * adapter reads that member straight out of the archive, so the archive is what this module keeps.
+ *
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`.
  *
  * Measured on 2026-10-03, the host answers `HEAD` with `accept-ranges: bytes`, a `content-length`
  * and a `last-modified` for each archive: `fp7` 32,953,397 bytes last modified `Thu, 02 Jan 2025
@@ -22,8 +24,8 @@
  * one small request per archive, and an interrupted transfer resumes through
  * {@linkcode resumableDownload}.
  *
- * A delivered archive is checked for its `organization.csv` member before the manifest records it,
- * so an error page served under the archive's name never reaches the adapter.
+ * A delivered archive is checked for its `organization.csv` member before the manifest
+ * records it, so an error page served under the archive's name never reaches the adapter.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -98,7 +100,7 @@ export interface CORDISArchiveHead {
 /**
  * Read what the host states about one archive.
  *
- * A header the host does not send is reported as `null` rather than raised on,
+ * A header the host doesn't send is reported as `null` rather than raised on,
  * and the caller then downloads rather than reading the absence as a match.
  */
 export async function readCORDISArchiveHead(

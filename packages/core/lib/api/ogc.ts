@@ -3,8 +3,10 @@
 
 /**
  *   Layer products share three OGC service reads.
+ *
  *   They use an API Features bbox probe and a collection's declared extent.
  *   They also use a WFS `resultType=hits` feature count.
+ *
  *   Every two-path agreement check re-asks the count through the second distribution channel.
  */
 
@@ -18,7 +20,7 @@ import { stringifyJSON } from "#json"
  * The error an OGC `ServiceExceptionReport` becomes.
  *
  * The report arrives on an http 200, so no upstream layer maps it and a caller that
- * does not ask reads the exception body as an empty answer.
+ * doesn't ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
 	public readonly serviceException: string
@@ -131,7 +133,7 @@ function owsExceptionText(body: string): string | null {
 }
 
 /**
- * The exception message inside an OGC or OWS exception report, or `null` for a body that is neither.
+ * The exception message inside an OGC or OWS exception report, or `null` for a body that's neither.
  *
  * Both dialects are read, because a report shares the HTTP status a real answer arrives on
  * and a caller that recognizes one spelling parses the other as data.
@@ -160,7 +162,7 @@ export function readOGCServiceException(body: string): string | null {
 }
 
 /**
- * Refuse a text body that is an OGC exception report.
+ * Refuse a text body that's an OGC exception report.
  *
  * Every OGC text read a layer product makes goes through this before it parses,
  * because the report shares the http 200 a real answer arrives on.
@@ -176,8 +178,7 @@ export function assertNoOGCServiceException(body: string, context: string): void
 /**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`.
  *
- * A shorter array is a 3D extent this reader does not understand rather than
- * a 2D one with something missing.
+ * A shorter array is a 3D extent this reader doesn't understand rather than a 2D one with something missing.
  */
 const BBOX_ORDINATES = 4
 
@@ -333,7 +334,7 @@ export async function readWFSFeatureCount(
 
 	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
 	// rather than a count of zero.
-	// The message must say that the attribute could not be read.
+	// The message must say that the attribute couldn't be read.
 	// The value 0 would invent a count.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
@@ -442,7 +443,7 @@ export async function readCheckedWFSFeatureCount(
 	}
 
 	// A page no larger than the reported count agrees with it whatever the truth is,
-	// so agreement does not establish that the count describes the type.
+	// so agreement doesn't establish that the count describes the type.
 	// One request does: asking for one feature at the reported index.
 	// A service holding exactly the reported number of features returns none there.
 	//

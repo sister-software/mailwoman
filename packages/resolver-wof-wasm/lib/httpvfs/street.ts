@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Street-level (situs and interpolation) lookups over a range-read database, the browser twins of
- * `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` and `StreetInterpolator`. They run the
- * same SQL and shared normalizers as the node classes, async over a {@link RangeDatabase}.
- * `HTTPVFSInterpolator` must keep its parity preference and range scoping in lockstep with
- * `StreetInterpolator`.
+ * Street-level (situs and interpolation) lookups over a range-read database, the browser twins
+ * of `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` and `StreetInterpolator`.
+ *
+ * They run the same SQL and shared normalizers as the node classes, async over a {@link RangeDatabase}.
+ * `HTTPVFSInterpolator` must keep its parity preference and range scoping in
+ * lockstep with `StreetInterpolator`.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -20,7 +22,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 
-import { memoizeResettable, type RangeDatabase, tableExists } from "#httpvfs/database"
+import { type RangeDatabase, tableExists } from "#httpvfs/database"
 
 const ADDRESS_POINT_BY_POSTCODE =
 	"SELECT lat, lon, source, release FROM address_point WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1"

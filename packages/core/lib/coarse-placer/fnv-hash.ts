@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   FNV-1a hashing for the coarse-placer: feature bucketing in {@link featurize} and deterministic
- *   dataset ordering/variant selection in the dataset builders. Pure, zero deps — safe for the
- *   always-resident inference path and the browser bundle.
+ *   FNV-1a hashing for the coarse-placer: feature bucketing in {@link featurize}
+ *   and deterministic dataset ordering/variant selection in the dataset builders.
+ *
+ *   Pure, zero deps — safe for the always-resident inference path and the browser bundle.
  */
 
 /**

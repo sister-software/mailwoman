@@ -23,7 +23,10 @@
 		"!test/**"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./tools/**/*.run.ts",
+		"./out/tools/**/*.run.js"
+	],
 	"imports": {
 		"#tools/*": {
 			"types": "./out/tools/*.d.ts",

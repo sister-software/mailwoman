@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the pipeline (parse + resolve) explorer. The runtime is injected as a {@link PipelineRuntime},
- *   keeping onnxruntime-web, sqlite-wasm and node builtins out of this package's browser graph.
+ *   Types for the pipeline (parse + resolve) explorer.
+ *
+ *   The runtime is injected as a {@link PipelineRuntime}, keeping onnxruntime-web,
+ *   sqlite-wasm and node builtins out of this package's browser graph.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

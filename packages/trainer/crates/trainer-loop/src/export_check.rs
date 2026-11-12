@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The export's check against the model: the Rust forward pass on recorded batches, written as ONNX feeds with
 //! their expected outputs.
 //!

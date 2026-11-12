@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generates rows that tag venue-interior strings such as `Terminal 5` or `North Gate` as `unit` beside a `venue`,
- *   with confound rows as negatives.
+ *   Generates rows that tag venue-interior strings such as `Terminal 5` or `North Gate`
+ *   as `unit` beside a `venue`, with confound rows as negatives.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

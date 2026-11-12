@@ -3,11 +3,12 @@
 
 /**
  *   The candidate backend end to end: a fixture candidate.db built through the real
- *   {@link buildCandidateTable} with its ancestors sidecar, behind the real resolver walk, with the
- *   admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult` reads them.
- *   The sidecar moves the Weimar-class winner's `region` verdict from `unverifiable` to a decided
- *   verdict, while the ranking itself stays untouched. The wrong winner still wins and the verdict
- *   now reports that result.
+ *   {@link buildCandidateTable} with its ancestors sidecar, behind the real resolver walk, with
+ *   the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult` reads them.
+ *
+ *   The sidecar moves the Weimar-class winner's `region` verdict from `unverifiable`
+ *   to a decided verdict, while the ranking itself stays untouched.
+ *   The wrong winner still wins and the verdict now reports that result.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"

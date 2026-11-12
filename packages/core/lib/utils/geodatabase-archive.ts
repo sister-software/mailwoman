@@ -4,11 +4,14 @@
 /**
  *   Downloads one vintage of a published file geodatabase and unzips it into a `.gdb` directory for GDAL.
  *
- *   The publishers put the geodatabase files at the archive root. GDAL recognizes a file geodatabase by its
- *   `.gdb` directory suffix, so the archive is extracted into a directory with that suffix.
+ *   The publishers put the geodatabase files at the archive root.
+ *   GDAL recognizes a file geodatabase by its `.gdb` directory suffix,
+ *   so the archive is extracted into a directory with that suffix.
  *
- *   The cache is keyed on the catalogue's revision date. The hosts reject `HEAD` requests and ignore `Range`, so
- *   checking the remote size would download the whole file. Each vintage gets its own directory.
+ *   The cache is keyed on the catalogue's revision date.
+ *   The hosts reject `HEAD` requests and ignore `Range`, so checking the remote
+ *   size would download the whole file.
+ *   Each vintage gets its own directory.
  */
 
 import { PathBuilder, type PathBuilderLike } from "path-ts"

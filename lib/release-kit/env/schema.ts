@@ -94,6 +94,11 @@ export const PrivateReleaseEnvSchema = z.object({
 		title: "Cloudflare cache-purge token",
 		description: "Purges cached URLs on mailwoman.post. `mwops release mint-cloudflare-tokens` mints it.",
 	}),
+	CLOUDFLARE_FIREWALL_TOKEN: z.string().optional().meta({
+		title: "Cloudflare firewall-rules token",
+		description:
+			"Reads and writes mailwoman.post's custom firewall rules, for the bucket's browser-only access rule. `mwops release mint-cloudflare-tokens` mints it.",
+	}),
 	CLOUDFLARE_TOKEN_MINTER: z.string().optional().meta({
 		title: "Cloudflare token minter",
 		description:

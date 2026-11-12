@@ -3,19 +3,24 @@
 
 /**
  *   Run one bounded child process and read its result from stdout.
+ *
  *   Chunked layer builds use this to bound a polyfill's heap.
  *   JavaScript cannot reset h3's wasm heap.
- *   The heap does not survive unbounded polyfill calls.
+ *
+ *   The heap doesn't survive unbounded polyfill calls.
  *   The process boundary gives each range an interpreter that starts empty.
  *
- *   Stdout contains only the result. Stderr is inherited so progress passes through.
+ *   Stdout contains only the result.
+ *   Stderr is inherited so progress passes through.
+ *
  *   The function reads only the last stdout line, so a child can print diagnostics before its result.
  *
  *   A non-zero exit throws.
  *   A chunk that exits with code 0 without rows also throws.
+ *
  *   A chunk that dies mid-range has already written part of its rows into the shared artifact.
- *   The parent process must stop before it seals a database
- *   missing rows without identifiers.
+ *   The parent process must stop before it seals a database missing rows without identifiers.
+ *
  *   Downstream code reads the incomplete database as a smaller source rather than as a failure.
  */
 
@@ -45,8 +50,8 @@ export interface RunChunkProcessOptions {
 
 /**
  * The shared argv for a layer ingest chunk — the temp artifact, the caller's own flags,
- * then the two resolutions — where each child opens the same file and appends and chunks run one
- * at a time, so there is exactly one writer at every instant and no locking to reason about.
+ * then the two resolutions — where each child opens the same file and appends and chunks run
+ * one at a time, so there's exactly one writer at every instant and no locking to reason about.
  */
 export function ingestChunkArguments(options: {
 	database: string

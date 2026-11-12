@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Lists country names in every language available in the runtime's ICU data through `Intl.DisplayNames`. The gazetteer
- *   build decides which of these candidate names to store.
+ *   Lists country names in every language available in the runtime's ICU data through `Intl.DisplayNames`.
+ *
+ *   The gazetteer build decides which of these candidate names to store.
  */
 
 /**
@@ -89,7 +90,7 @@ export function* enumerateCountryDisplayNames(
 			try {
 				return { locale, formatter: new Intl.DisplayNames([locale], { type: "region", style }) }
 			} catch {
-				// The runtime does not support this locale.
+				// The runtime doesn't support this locale.
 				return null
 			}
 		}).filter((f) => f !== null)

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import {
 	constants,
 	createZstdCompress,
@@ -8,7 +11,7 @@ import {
 } from "node:zlib"
 
 /**
- * A `node:zlib` zstd transform is a duplex that is async-iterable over bytes.
+ * A `node:zlib` zstd transform is a duplex that's async-iterable over bytes.
  * A spliterator accepts that shape as a source.
  */
 type ZlibTransform = ZstdCompress
@@ -86,7 +89,7 @@ export { crc32, gzipSync } from "node:zlib"
  * Compresses one bounded input with zstd.
  *
  * `node:zlib` rather than a `CompressionStream`, because the web streams take a fixed enum
- * of formats and zstd is not among them — `new CompressionStream("zstd")` throws on Node 26.
+ * of formats and zstd isn't among them — `new CompressionStream("zstd")` throws on Node 26.
  */
 export function zstd(input: CompressionInput, level = 6): Uint8Array {
 	return new Uint8Array(zstdCompressSync(inputBytes(input), { params: { [constants.ZSTD_c_compressionLevel]: level } }))
@@ -102,8 +105,8 @@ export function unzstd(input: CompressionInput): Uint8Array {
 /**
  * A zstd decompressor as a byte stream, for handing to a spliterator.
  *
- * Returned as a `node:stream` duplex rather than a `ReadableStream` because that is
- * what `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node
+ * Returned as a `node:stream` duplex rather than a `ReadableStream` because that's what
+ * `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node
  * `Readable` (child-process stdout, a gunzip pipe)" explicitly — so a file can be piped in
  * and passed straight to `JSONSpliterator.fromAsync`.
  *

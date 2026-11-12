@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Australian designators: Postal Delivery Types, sub-unit types, level types and the English relation words.
- *   Every row reads from `delivery-service.ts`, `unit-type.ts` and `level-designator.ts`, grouping the
- *   delivery types that share an abbreviation (`CARE PO`, `RMB`).
+ *   Australian designators: Postal Delivery Types, sub-unit types, level types
+ *   and the English relation words.
+ *
+ *   Every row reads from `delivery-service.ts`, `unit-type.ts` and `level-designator.ts`,
+ *   grouping the delivery types that share an abbreviation (`CARE PO`, `RMB`).
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet}
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
@@ -73,13 +75,16 @@ function row(
 	}
 }
 
-const namesByAbbreviation = new Map<AuDeliveryServiceAbbreviation, string[]>()
-const requiresNumberByAbbreviation = new Map<AuDeliveryServiceAbbreviation, boolean>()
+const namesByAbbreviation = new Map<AuDeliveryServiceAbbreviation, string[]>(
+	[...Map.groupBy(AU_DELIVERY_SERVICE_DESIGNATORS, (designator) => designator.abbreviation)].map(
+		([abbreviation, designators]) => [abbreviation, designators.map((designator) => designator.name)]
+	)
+)
 
-for (const { name, abbreviation, requiresNumber } of AU_DELIVERY_SERVICE_DESIGNATORS) {
-	namesByAbbreviation.set(abbreviation, [...(namesByAbbreviation.get(abbreviation) ?? []), name])
-	requiresNumberByAbbreviation.set(abbreviation, requiresNumber)
-}
+// A later designator with the same abbreviation sets its flag, as `Map` keeps the last value per key.
+const requiresNumberByAbbreviation = new Map<AuDeliveryServiceAbbreviation, boolean>(
+	AU_DELIVERY_SERVICE_DESIGNATORS.map((designator) => [designator.abbreviation, designator.requiresNumber])
+)
 
 const DELIVERY_ROWS = [...namesByAbbreviation].map(([abbreviation, names]) =>
 	row(abbreviation, DELIVERY_CONCEPTS[abbreviation], BOOKLET, {

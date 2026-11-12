@@ -3,11 +3,12 @@
 
 /**
  *   Render an Ink tree to a plain string once, without TTY or timers.
+ *
  *   Used for `DebugFrame` tests and static, non-interactive capture.
  *
  *   On Ink 7.1.1, the final non-TTY `write()` happens before `render()` returns.
- *   If a future Ink version delays that write, add
- *   `await new Promise((r) => setImmediate(r))` before `instance.unmount()`.
+ *   If a future Ink version delays that write, add `await new Promise((r) => setImmediate(r))`
+ *   before `instance.unmount()`.
  */
 
 import { Duplex } from "@mailwoman/core/fs/streams"

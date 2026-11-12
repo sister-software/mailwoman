@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate French training rows that distinguish a département (`region`) from a commune
- *   (`locality`). Forms include bare, comma-separated and space-separated names.
- *   Derive the département from each real BAN postcode. Input rows are tab-separated commune, postcode, longitude and latitude.
+ *   Generate French training rows that distinguish a département (`region`) from a commune (`locality`).
+ *
+ *   Forms include bare, comma-separated and space-separated names.
+ *   Derive the département from each real BAN postcode.
+ *
+ *   Input rows are tab-separated commune, postcode, longitude and latitude.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

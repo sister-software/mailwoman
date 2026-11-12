@@ -64,11 +64,11 @@ step 2,000. That F1 was never compatible with a 0.18 span match on the same boar
 reading above: the head learns municipality by step 2,000 rather than "at 24k"; the cosine-anneal explanation
 was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its comparison arm.
 
-## 5. What this does not decide
+## 5. What this doesn't decide
 
 - Ship status. This is a training-check record rather than a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
-  keys by shipped npm model versions and does not take this row.
+  keys by shipped npm model versions and doesn't take this row.
 - The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged
   with it. No measurement in this record isolates its contribution. The A/B the probe config describes (delete the
   key, diff per-label F1) remains unrun and optional.

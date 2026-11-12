@@ -1,0 +1,108 @@
+---
+title: Install Mailwoman and inspect a first parse
+description: Install the Node library, parse one address, and read its labeled tree and source spans.
+role: tutorial
+verified-with: mailwoman v11.0.0
+---
+
+# Install Mailwoman and inspect a first parse
+
+You'll make a small TypeScript script that parses one address and prints each labeled part with its position in the text. The exercise uses the published Mailwoman 11.0.0 packages and takes about ten minutes, plus package download time.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+- An empty project directory with room for the packages and the English model. This exercise reads no geocoding database.
+
+## 1. Set up the project
+
+Run these commands in the empty project directory. The second one marks the project as an ECMAScript module project. Node needs that setting to run the script's `import` statements and top-level `await`:
+
+```bash
+npm init -y
+npm pkg set type=module
+```
+
+## 2. Install the packages
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+`mailwoman` supplies the pipeline, `@mailwoman/neural` runs the classifier, and `@mailwoman/neural-weights-en-us` supplies the English model files. npm reports its download progress and dependency count for your environment. Check the installed Mailwoman version:
+
+```bash
+node -p "require('mailwoman/package.json').version"
+```
+
+```text
+11.0.0
+```
+
+## 3. Write the parser script
+
+Save the following complete file as `parse.ts` in the same directory:
+
+```ts
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+const result = await parse("apt 4b 350 5th ave new york ny 10118")
+
+type TreeNode = (typeof result)["tree"]["roots"][number]
+
+console.log("input:", result.input)
+console.log("normalized:", result.tree.raw)
+console.log("locale:", result.locale.locale)
+console.log("kind:", result.kind.kind)
+
+function printNode(node: TreeNode, depth = 0): void {
+	const indent = "  ".repeat(depth)
+	console.log(`${indent}${node.tag} [${node.start}, ${node.end}): ${JSON.stringify(node.value)}`)
+	for (const child of node.children) printNode(child, depth + 1)
+}
+
+for (const root of result.tree.roots) printNode(root)
+```
+
+The address is lowercase, has no commas, and places the apartment before the street number. The script loads one model, builds one parser, and gives that parser the address. `TreeNode` takes its type from the parse result, so the script needs no type import.
+
+## 4. Run the script
+
+Node runs the TypeScript file directly:
+
+```bash
+node parse.ts
+```
+
+```text
+input: apt 4b 350 5th ave new york ny 10118
+normalized: Apt 4B 350 5TH Ave New York NY 10118
+locale: en-US
+kind: structured_address
+region [28, 30): "NY"
+  locality [19, 27): "New York"
+    street [11, 14): "5TH"
+      unit [0, 6): "Apt 4B"
+      house_number [7, 10): "350"
+      street_suffix [15, 18): "Ave"
+    postcode [31, 36): "10118"
+```
+
+The printed indentation shows the returned tree. Each node has a component tag, such as `street` or `postcode`, and a value. The `[start, end)` span selects text from `result.tree.raw`. For example, `result.tree.raw.slice(19, 27)` returns `"New York"`. Read spans against `tree.raw`, the case-adjusted text that the classifier returns with the tree. The script prints it on the `normalized:` line.
+
+The `locale` and `kind` lines report the pipeline's decisions for this input. This script returns labeled address components. Forward geocoding reads a separate geographic data layer. [Geocode a file of addresses](./tutorials/geocode-a-file.mdx) installs one.
+
+## What you have now
+
+The `parse.ts` file runs a local parse and prints the case-adjusted text, classification, and component tree. You can replace the input string with another address and inspect its returned tags and spans with the same script.
+
+## Next
+
+[Inspect the decisions behind a parse](./tutorials/inspect-a-parse.mdx) uses the same address to show the query-shape matches, locale and kind decisions, and node scores behind this tree.
+
+[Parse and geocode result schema](./reference/schema.mdx) defines the tags and span fields used in the output.
+
+[Library API](./reference/library.mdx) lists the import paths and call options for this script.

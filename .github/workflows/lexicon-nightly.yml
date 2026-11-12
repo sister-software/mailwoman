@@ -7,7 +7,7 @@
 #
 # This job is also the control FOR the fixture layer. Since 2026-08-02 the every-PR coverage of the
 # four-law selectivity is `evidence-lexicons.fixture.test.ts`, a seeded DB that by construction does
-# not move when the real data moves. That is what makes it cheap, and it is also its one weakness: a
+# not move when the real data moves. That's what makes it cheap, and it is also its one weakness: a
 # fixture that stops representing reality is a check that passes without testing the real data. This run
 # reports that divergence.
 #
@@ -27,7 +27,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   # Same reason as test.yml: onnxruntime-node's postinstall pulls optional GPU providers from an
-  # Akamai edge that is intermittently unreachable from the lab.
+  # Akamai edge that's intermittently unreachable from the lab.
   ONNXRUNTIME_NODE_INSTALL: skip
 
 concurrency:
@@ -40,7 +40,7 @@ jobs:
   full-build:
     # not portable: reads the 4.9 GB WOF admin DB. The `mailwoman-data` label means
     # "$MAILWOMAN_DATA_ROOT is present and populated". If the fleet is down this job queues rather
-    # than running — which for a nightly is the right failure: it is not blocking anything, and a
+    # than running — which for a nightly is the right failure: it isn't blocking anything, and a
     # skipped nightly that silently reported green would defeat the point of having it.
     runs-on:
       - self-hosted
@@ -79,5 +79,5 @@ jobs:
             echo "- If the gazetteer was rebuilt, the lexicon's expectations may need re-measuring."
             echo "- If it was not, \`evidence-lexicons.fixture.test.ts\` may have drifted from reality."
             echo ""
-            echo "The every-PR fixture layer is still green either way. That is exactly why this job exists."
+            echo "The every-PR fixture layer is still green either way. That's exactly why this job exists."
           } >> "$GITHUB_STEP_SUMMARY"

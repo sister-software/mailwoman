@@ -3,6 +3,7 @@
 
 /**
  *   This module defines the regression-corpus case type and its Zod schema.
+ *
  *   Compile-time checks keep the type and schema aligned with {@linkcode SEED_CASE_KEY_ORDER}.
  */
 
@@ -28,7 +29,7 @@ export interface SeedCase {
 	defaultCountry?: string
 	/**
 	 * CLI locale for the row, such as `en-NZ`; it selects the weights overlay from
-	 * its region subtag and does not constrain `country`.
+	 * its region subtag and doesn't constrain `country`.
 	 */
 	locale?: string
 	/**

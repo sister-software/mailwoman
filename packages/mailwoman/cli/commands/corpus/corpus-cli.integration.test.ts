@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Integration test for `npx mailwoman corpus list` + `corpus run`. Spawns the compiled CLI binary
- *   and verifies exit codes + output shape. While the database registry ships empty, the only behavior
- *   there is to assert is the empty-registry messaging.
+ *   Integration test for `npx mailwoman corpus list` + `corpus run`.
+ *
+ *   Spawns the compiled CLI binary and verifies exit codes + output shape.
+ *   While the database registry ships empty, the only behavior there's to assert
+ *   is the empty-registry messaging.
  */
 
 import { runFile } from "@mailwoman/core/process"

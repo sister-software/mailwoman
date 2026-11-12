@@ -72,7 +72,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  *
  * The street node and its street-name children collapse into one `street` match
  * (libpostal's `road` is the full name); other children (house_number, unit) emit as their own matches.
- * Values join with a single space — original inter-part punctuation is not reconstructed.
+ * Values join with a single space — original inter-part punctuation isn't reconstructed.
  */
 export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 	const spans: Array<{ start: number; classification: string; value: string }> = []

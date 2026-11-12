@@ -2,33 +2,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
- *   the rows injection point directly against `poi-schema.ts` — the same idiom
- *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
- *   without DuckDB or network access) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
- *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
- *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular). `bdc`'s only POI-side
- *   dependency is `@mailwoman/resolver-wof-sqlite`, and the injected-rows idiom (inject synthetic rows, skip
- *   DuckDB entirely) is preserved exactly.
+ *   Tests for {@link nearestInfrastructure} (decision 7).
  *
- *   Fixture rows, all telecom_exchange/tower_comms (`@mailwoman/poi-taxonomy` categories) except one
- *   deliberate non-telecom trap:
+ *   The fixture `poi.db` is built via the rows injection point directly against
+ *   `poi-schema.ts` — the same idiom `resolver-wof-sqlite/poi-lookup.test.ts` uses
+ *   (a tiny hand-built `poi`/`poi_category_codes` fixture, without DuckDB or network access) —
+ *   rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s `buildPOIDatabase`:
+ *   `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package already
+ *   depends on `@mailwoman/bdc`, so the reverse edge would be circular).
+ *   `bdc`'s only POI-side dependency is `@mailwoman/resolver-wof-sqlite`, and the
+ *   injected-rows idiom (inject synthetic rows, skip DuckDB entirely) is preserved exactly.
  *
- *   - Two rows a few hundred meters from a Springfield, IL center (`TELECOM_EXCHANGE_NEAR` closer,
- *     `TOWER_COMMS_NEAR` further).
- *   - One `telecom_exchange` row at exactly res-9 gridDistance 20 from the center — inside this module's
- *     32-ring default (covers gridDistance ≤ 31) but outside `POILookup`'s own internal default of 16
- *     rings (covers gridDistance ≤ 15). This is the direct acceptance test for this module's `maxRings`
- *     default of 32 overriding `POILookup`'s own — see `nearest-infrastructure.ts`'s docstring.
- *   - A `cafe` row (non-telecom) right next to the near rows, proving `categoryIDs` filtering isn't
- *     accidentally permissive.
+ *   Fixture rows, all telecom_exchange/tower_comms (`@mailwoman/poi-taxonomy` categories)
+ *   except one deliberate non-telecom trap:
  *
- *   `schemadb` fixtures are separate, minimal `layerschemadatabase`-only databases (no `poi` table at
- *   all) — proving the coverage join runs against whatever database the caller passes rather than poi.db's own
- *   coverage. One fixture's `layer_coverage` is left completely empty (every hit must report
- *   `coverage: null`, the meaning-of-zero rule); another has coverage written for exactly the res-6
- *   cells the hits land in (computed via the same `res9ShortCellToRes6Parent`
- *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
+ *   - Two rows a few hundred meters from a Springfield, IL center
+ *     (`TELECOM_EXCHANGE_NEAR` closer, `TOWER_COMMS_NEAR` further).
+ *   - One `telecom_exchange` row at exactly res-9 gridDistance 20 from the center —
+ *     inside this module's 32-ring default (covers gridDistance ≤ 31) but outside
+ *     `POILookup`'s own internal default of 16 rings (covers gridDistance ≤ 15).
+ *     This is the direct acceptance test for this module's `maxRings` default of 32
+ *     overriding `POILookup`'s own — see `nearest-infrastructure.ts`'s docstring.
+ *   - A `cafe` row (non-telecom) right next to the near rows, proving `categoryIDs`
+ *     filtering isn't accidentally permissive.
+ *
+ *   `schemadb` fixtures are separate, minimal `layerschemadatabase`-only databases
+ *   (no `poi` table at all) — proving the coverage join runs against whatever database
+ *   the caller passes rather than poi.db's own coverage.
+ *   One fixture's `layer_coverage` is left completely empty
+ *   (every hit must report `coverage: null`, the meaning-of-zero rule);
+ *   another has coverage written for exactly the res-6 cells the hits land in
+ *   (computed via the same `res9ShortCellToRes6Parent` {@link nearestInfrastructure}
+ *   itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -115,7 +120,7 @@ const TELECOM_EXCHANGE_MID_RING: FixtureRow = {
 }
 
 // A non-telecom row right next to the near rows — proves categoryIDs filtering isn't accidentally
-// permissive (a plain nearest-POI scan would surface this. nearestInfrastructure must not).
+// permissive (a plain nearest-POI scan would surface this. nearestInfrastructure mustn't).
 const CAFE_TRAP: FixtureRow = {
 	name: "Cafe Not Infrastructure",
 	category: "cafe",

@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reader for `coastal-england.db`, which reports the Environment Agency's coastal erosion zones at a
- *   coordinate under the selected scenario.
+ *   Reader for `coastal-england.db`, which reports the Environment Agency's coastal
+ *   erosion zones at a coordinate under the selected scenario.
  *
- *   A reading is `designated` when an erosion polygon for that scenario contains the point. Otherwise it is `unknown`.
+ *   A reading is `designated` when an erosion polygon for that scenario contains the point.
+ *   Otherwise it is `unknown`.
+ *
  *   The source publishes no coverage statement, so an empty answer cannot mean "not at risk".
- *   A point with no polygon may be inland or on an unmapped coast. The constructor therefore refuses
- *   any coverage row whose basis would support an exclusion.
+ *   A point with no polygon may be inland or on an unmapped coast.
  *
- *   The layer describes the authority's map. The Environment Agency states that its data
- *   "cannot provide details for individual properties", and every reading includes the product limits.
+ *   The constructor therefore refuses any coverage row whose basis would support an exclusion.
  *
- *   A lookup walks the H3 ancestor chain first. Only a cell that a boundary crosses leads to a ray cast
- *   against the polygons indexed for that cell and scenario.
+ *   The layer describes the authority's map.
+ *   The Environment Agency states that its data "cannot provide details for individual
+ *   properties", and every reading includes the product limits.
+ *
+ *   A lookup walks the H3 ancestor chain first.
+ *   Only a cell that a boundary crosses leads to a ray cast against the polygons
+ *   indexed for that cell and scenario.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -60,7 +65,7 @@ export const CoastalReadingKind = {
 	Designated: "designated",
 	/**
 	 * No erosion polygon of that scenario contains the point.
-	 * This does not mean the location is safe.
+	 * This doesn't mean the location is safe.
 	 */
 	Unknown: "unknown",
 } as const
@@ -120,7 +125,7 @@ export interface CoastalDesignation {
 	 * Publication year as published.
 	 *
 	 * Some source rows contain 0 with blank policy and defense fields.
-	 * The source does not explain them.
+	 * The source doesn't explain them.
 	 */
 	publishedYear: number | null
 	/**
@@ -161,7 +166,7 @@ export interface CoastalErosionReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words.
+	 * What the product doesn't cover, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
 	/**
@@ -307,7 +312,7 @@ export class CoastalErosionLookup implements Disposable {
 	/**
 	 * Return the erosion reading at a coordinate under one scenario.
 	 *
-	 * @throws {Error} When the layer does not hold `scenarioKey`.
+	 * @throws {Error} When the layer doesn't hold `scenarioKey`.
 	 * An empty reading would hide the typo.
 	 */
 	public lookup(latitude: number, longitude: number, scenarioKey: string): CoastalErosionReading {

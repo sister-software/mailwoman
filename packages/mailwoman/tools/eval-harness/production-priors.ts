@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The production parse priors for a battery leg. A leg that parses with the classifier and no
- *   prior grades a configuration production never runs, so every floored leg loads the gazetteer FST,
- *   the street-morphology matcher and the venue-head lexicon through the loader the geocode
- *   session uses, under the session's default switches.
+ *   The production parse priors for a battery leg.
+ *
+ *   A leg that parses with the classifier and no prior grades a configuration production never runs,
+ *   so every floored leg loads the gazetteer FST, the street-morphology matcher and the venue-head
+ *   lexicon through the loader the geocode session uses, under the session's default switches.
  */
 
 import {

@@ -77,7 +77,7 @@ export async function acquireDirectoryLock(
 			// A half-written owner file reads as unreadable rather than throwing, and is refused below.
 			const held = await tryReadLocalJSONFile<DirectoryLockOwner>(ownerPath).catch(() => null)
 
-			// An owner file that is absent or unreadable belongs to a process between its `mkdir`
+			// An owner file that's absent or unreadable belongs to a process between its `mkdir`
 			// and its write, or to one killed in that window.
 			// Neither can be told apart from here, so the caller refuses.
 			if (held && held.host === owner.host && held.pid !== process.pid && !processExists(held.pid)) {

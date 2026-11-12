@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer inspect sync` — clone or refresh the Who's On First repositories that the gazetteer builds
- *   read, every one from its `mailwoman` fork, directly under the repos root.
+ *   `mailwoman gazetteer inspect sync` — clone or refresh the Who's On First repositories that the
+ *   gazetteer builds read, every one from its `mailwoman` fork, directly under the repos root.
  *
- *   The destination defaults to `<data-root>/src/wof-repos`, matching every consumer of these repositories
- *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
- *   default). The repositories already cloned there are always refreshed; `--repos`, `--countries` and `--all` add more.
- *   Which repositories to sync is decided in `plan.ts` before any network work, so a mistake is a message rather than
- *   a directory full of clones. `syncWOFRepo` in `@mailwoman/gazetteer` does the per-repository work.
+ *   The destination defaults to `<cache-root>/sources/wof-repos`, matching every
+ *   consumer of these repositories (`gazetteer build admin`, `gazetteer build`,
+ *   `build postcode-database`, `gazetteer polygons` all document that same default).
+ *   The repositories already cloned there are always refreshed; `--repos`,
+ *   `--countries` and `--all` add more.
  *
- *   The progress display reports repositories. Per-repository `▸` lines are required because a first
- *   clone of a large country runs for minutes. A counter that moves only on completion looks like a
- *   hang during that time. The lines go to stderr, so they survive the non-interactive Ink render that writes one frame
- *   at unmount.
+ *   Which repositories to sync is decided in `plan.ts` before any network work,
+ *   so a mistake is a message rather than a directory full of clones.
+ *   `syncWOFRepo` in `@mailwoman/gazetteer` does the per-repository work.
+ *
+ *   The progress display reports repositories.
+ *   Per-repository `▸` lines are required because a first clone of a large country runs for minutes.
+ *
+ *   A counter that moves only on completion looks like a hang during that time.
+ *   The lines go to stderr, so they survive the non-interactive Ink render that writes one frame at unmount.
  */
 
 import { ProgressBar } from "@inkjs/ui"
@@ -24,6 +29,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RepoSyncResult } from "@mailwoman/gazetteer/tools/pipeline/repos/sync"
@@ -75,7 +81,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "local-repo-directory",
-			description: "Repository root. Default <data-root>/src/wof-repos",
+			description: "Repository root. Default <cache-root>/sources/wof-repos",
 		},
 	],
 	options: {
@@ -193,8 +199,10 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"),
 			])
 
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-			const { parallelMap } = await import("spliterator")
+			const {
+				paths: { wofDatabasePath },
+				spliterator: { parallelMap },
+			} = await allKeyed({ paths: import("@mailwoman/resolver-wof-sqlite/paths"), spliterator: import("spliterator") })
 
 			const audit = await auditReposRoot(destination, { readCommits: false })
 

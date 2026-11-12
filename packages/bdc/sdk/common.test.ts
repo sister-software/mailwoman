@@ -105,7 +105,7 @@ test("parseRawBDCFile: State-category row with a null technology_code parses to 
 })
 
 test("parseRawBDCFile: null provider_id/provider_name/state_fips parse to safe defaults", () => {
-	// Plausible sibling nulls alongside technology_code — provider/state metadata is not
+	// Plausible sibling nulls alongside technology_code — provider/state metadata isn't
 	// always scoped to a specific provider or state depending on category/subcategory.
 	const raw: RawBDCFile = {
 		...rawFixture,

@@ -4,9 +4,10 @@
 /**
  *   The lookup table that resolves an adapter id to its implementation.
  *
- * `mailwoman corpus run <adapter-id>` and the `corpus build` pipeline both resolve `<adapter-id>`
- * through this registry. Adapters do not self-register at module load; `adapters.ts` adds each one
- * explicitly, so the dependency graph stays traceable.
+ * `mailwoman corpus run <adapter-id>` and the `corpus build` pipeline both
+ * resolve `<adapter-id>` through this registry.
+ * Adapters do not self-register at module load; `adapters.ts` adds each one explicitly,
+ * so the dependency graph stays traceable.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

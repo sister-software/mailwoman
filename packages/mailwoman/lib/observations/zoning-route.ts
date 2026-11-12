@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Attaches local-authority zoning designations to a geocode answer as an observation. The route
- *   never changes answer selection.
+ *   Attaches local-authority zoning designations to a geocode answer as an observation.
+ *   The route never changes answer selection.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

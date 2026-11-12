@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Draws a country's training rows from a complete adapter output, stratified across localities, forms and
- *   postcodes and capped so no country dominates a mixture, and prints the variety measures of the full output and
- *   of the sample. The report is written beside the sample as `<output>.variety.json`. The adapter output is left
- *   complete, because retrieval reads it whole.
+ *   Draws a country's training rows from a complete adapter output, stratified across
+ *   localities, forms and postcodes and capped so no country dominates a mixture,
+ *   and prints the variety measures of the full output and of the sample.
+ *
+ *   The report is written beside the sample as `<output>.variety.json`.
+ *   The adapter output is left complete, because retrieval reads it whole.
  *
  *   Usage:
  *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/variety-sample.run.ts \

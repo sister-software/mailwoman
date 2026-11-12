@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //
 // open-truth-three-arm — the scorer + query harness behind the 2026-08-18 open-truth three-arm
 // record (docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md).

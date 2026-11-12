@@ -4,7 +4,7 @@
 carrying confidence intervals per phenomenon class, and make it the grading set for the T2 extract.
 
 **Built, and its first read reframes the arc.** With a house number the shipped model scores **92.5%**;
-without one, **21.5%** on the same streets. The gap is not a difficulty gradient. The model has learned
+without one, **21.5%** on the same streets. The gap isn't a difficulty gradient. The model has learned
 that **a house number licenses a street reading at all** — remove it and a designator-led phrase parses
 as a _locality, designator included_.
 
@@ -47,8 +47,8 @@ The rates undersell it. The parses:
 
 **The designator is swallowed into the locality.** `Rue` is the most deterministic street signal in
 French. It can only mean street — and without a house number it is absorbed into a locality span. The
-arc's §2 framing ("the prior on bare toponyms is wrong") is confirmed and is understated: the model is
-not mislabelling an ambiguous toponym, it is mislabelling `Rue`.
+arc's §2 framing ("the prior on bare toponyms is wrong") is confirmed and is understated: the model isn't
+mislabelling an ambiguous toponym, it is mislabelling `Rue`.
 
 The date-name class shows the mechanism with the fewest confounds:
 
@@ -64,7 +64,7 @@ number** and fragments the street around the hole. 5.5% correct, the worst class
 
 ## 3. One mechanism explains every cell
 
-> **The house number is not a hint. It is the license.** The model has learned "digits ⇒ this is a
+> **The house number isn't a hint. It is the license.** The model has learned "digits ⇒ this is a
 > street address"; the street reading is conditioned on that license rather than on the designator.
 
 | class                | license?          | consequence                                   | rate  |
@@ -79,14 +79,14 @@ number** and fragments the street around the hole. 5.5% correct, the worst class
 
 **The negative class passes for the wrong reason.** `bare-locality` scores 0.980 not because the model
 recognises a commune, but because it calls _everything_ without a house number a locality, and on
-bare localities that is accidentally right. That is a standing prediction for T2: **teaching bare
+bare localities that's accidentally right. That's a standing prediction for T2: **teaching bare
 streets may regress `bare-locality`**, because the class currently passes only through the same broken
 default. This is precisely why the negative class is a guard and not a trophy.
 
 It also unifies the digit findings that looked like two bugs. T1a: the span decode pulls a digit **into**
 the street (`"korunní"` → `"korunní 8"`). T1c: the BIO decode pushes digits **out** of the street
 (`"Allee du 11 Novembre"` → `"Allee du Novembre"`). One confusion — the model cannot tell a digit that
-belongs to a street name from a digit that is a house number — surfacing from both sides.
+belongs to a street name from a digit that's a house number — surfacing from both sides.
 
 ## 4. Pre-registered targets for T2
 
@@ -95,13 +95,13 @@ The board is the grading set. These cells are registered as baselines. The extra
 **Must move** (the thesis): `bare-street` 0.215 · `street-particle` 0.273 · `admin-street-homonym`
 0.087 · `date-name` 0.055.
 
-**Must not regress** (the guards):
+**Mustn't regress** (the guards):
 
 - `street-housenumber` 0.925 and `alnum-housenumber` 0.925 — the contextful guard. A extract that fixes
   fragments by degrading normal addresses has moved the failure rather than fixed it.
 - `bare-locality` 0.980 — **the one to watch**, per §3. If it falls while the bare classes rise, the
   extract traded one default for another rather than teaching the distinction.
-- The global parity floor (`eval parity`) must hold. A move on board 2 without the parity floor is not a verdict.
+- The global parity floor (`eval parity`) must hold. A move on board 2 without the parity floor isn't a verdict.
 
 **Split discipline:** the board reserves its 2,400 street surfaces in `ban-fragments-fr.surfaces.txt`.
 The T2 extract must exclude every one — source-disjoint by normalized **surface**, never by record row.
@@ -113,7 +113,7 @@ claiming generalization to unseen streets.
 BAN's attached DBs retain only `locality_norm` / `locality_base`, so the negative class is
 accent-stripped (`Amelie-les-Bains-Palalda`). French title-casing is reconstructed. The accents cannot
 be. This makes `bare-locality` mildly out-of-distribution and may inflate its absolute difficulty. It
-does not affect the comparison the board exists for, since every model sees the identical input. Source
+doesn't affect the comparison the board exists for, since every model sees the identical input. Source
 commune surfaces from a register that keeps them if the absolute number ever matters.
 
 Note the two negative-class rates are **not** comparable across fixtures: the shipped model hallucinates

@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A corpus's train-split shapes and surfaces, counted once beside its manifest and queried per gauntlet row.
+ *   A corpus's train-split shapes and surfaces, counted once beside its manifest
+ *   and queried per gauntlet row.
  *
- *   Whether a corpus supported a row used to take a scan of every train row, about 8 minutes per 700 M-row
- *   corpus, through a reader written for the question. This index answers the three questions that scan
- *   answered: the train rows of a country that hold a given set of component tags, the rows that hold a
- *   surface under each tag, and the rows that hold a word at the head or tail of an open-class span.
+ *   Whether a corpus supported a row used to take a scan of every train row,
+ *   about 8 minutes per 700 M-row corpus, through a reader written for the question.
+ *   This index answers the three questions that scan answered: the train rows of a country
+ *   that hold a given set of component tags, the rows that hold a surface under each tag,
+ *   and the rows that hold a word at the head or tail of an open-class span.
  *
- *   Rows are attributed to the train split the way `countHoldoutSpans` attributes them, with the manifest's
- *   deletions removed, so a count here is a count the trainer read.
+ *   Rows are attributed to the train split the way `countHoldoutSpans` attributes them,
+ *   with the manifest's deletions removed, so a count here is a count the trainer read.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
@@ -449,7 +451,7 @@ export interface SupportRowReading {
 	tag_set: string
 	/**
 	 * Train rows of the country whose tag set is exactly `tag_set`, or `null`
-	 * when the row states no country and could not be probed.
+	 * when the row states no country and couldn't be probed.
 	 */
 	shape_rows: number | null
 	shape_sources: Array<{ source: string; rows: number }>

@@ -3,10 +3,15 @@
 
 /**
  *   A self-service license leaves two files under `$MAILWOMAN_CONFIG_ROOT/license/`.
- *   `verifyConfiguredLicenseKey` reads the key after `MAILWOMAN_LICENSE_KEY`, so a refreshed token applies without an
- *   environment change. The other file stores the refresh credentials: the license ID and per-license secret that
- *   `mailwoman license refresh` presents. It is created with mode 0600 because the secret fetches renewals.
- *   The key is a signed assertion. The ordinary writer stores it.
+ *
+ *   `verifyConfiguredLicenseKey` reads the key after `MAILWOMAN_LICENSE_KEY`,
+ *   so a refreshed token applies without an environment change.
+ *   The other file stores the refresh credentials: the license ID and per-license
+ *   secret that `mailwoman license refresh` presents.
+ *
+ *   It is created with mode 0600 because the secret fetches renewals.
+ *   The key is a signed assertion.
+ *   The ordinary writer stores it.
  */
 
 import { configRootPath } from "#data-root"

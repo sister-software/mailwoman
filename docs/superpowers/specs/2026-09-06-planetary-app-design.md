@@ -14,8 +14,8 @@ already admits both production origins. The preview serves on port 7771, the one
 
 The map primitives the repository already has (`MapCanvas`, the `StyleSpecificationComposer` in
 `@mailwoman/cartographer`, the PMTiles tile worker, `mailwoman tiles publish`) are Earth-only because
-they have only been used for Earth, rather than by design. Two small map products over other bodies are the
-cheapest way to find out which of them assume Earth, and they are products in their own right.
+they've only been used for Earth, rather than by design. Two small map products over other bodies are the
+cheapest way to find out which of them assume Earth, and they're products in their own right.
 
 ## Decisions taken
 

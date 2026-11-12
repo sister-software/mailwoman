@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // National US rooftop check.
 // With the 50-state situs/interp extracts hosted, an address in a newly-rolled
 // state must resolve to its building coordinate (the situs `address_point` coord)

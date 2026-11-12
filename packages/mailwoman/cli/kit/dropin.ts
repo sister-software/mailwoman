@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared helpers for the `mailwoman-libpostal`, `mailwoman-nominatim` and
- *   `mailwoman-photon` CLIs. They handle command dispatch, classifier and gazetteer
- *   setup plus startup output.
+ *   Shared helpers for the `mailwoman-libpostal`, `mailwoman-nominatim` and `mailwoman-photon` CLIs.
  *
- *   This module is in `mailwoman` because it uses the neural classifier and resolver
- *   backend. It is separate from `cli-kit/index.ts`, which loads Ink and React for
- *   interactive commands. The drop-in CLIs need no UI, so they use this module's
- *   standalone subpath instead.
+ *   They handle command dispatch, classifier and gazetteer setup plus startup output.
+ *
+ *   This module is in `mailwoman` because it uses the neural classifier and resolver backend.
+ *   It is separate from `cli-kit/index.ts`, which loads Ink and React for interactive commands.
+ *
+ *   The drop-in CLIs need no UI, so they use this module's standalone subpath instead.
  */
 
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
@@ -26,7 +26,7 @@ import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPa
 /**
  * The documentation page linked by missing-gazetteer messages.
  */
-const GAZETTEER_DOCS_PATH = "/docs/developers/get-started/ten-minute-trial"
+const GAZETTEER_DOCS_PATH = "/docs/reference/data-and-locales"
 
 /**
  * Print an error and exit with a non-zero status.
@@ -102,7 +102,7 @@ export interface GazetteerPaths {
 }
 
 /**
- * Find gazetteer databases, or exit with a clear error if they are unavailable.
+ * Find gazetteer databases, or exit with a clear error if they're unavailable.
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {

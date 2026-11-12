@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `verify_tokenizer_alignment` passes a corpus whose rows recover their tokens from `raw`, and names the row and
 //! file of one that does not.
 

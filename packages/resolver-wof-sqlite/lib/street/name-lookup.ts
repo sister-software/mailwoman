@@ -4,16 +4,18 @@
 /**
  *   The SQLite backend for {@link StreetLocalityEvidence}.
  *
- *   Reads a street-name index (the FR instance is BAN `street-centroids-fr.db`, a `street_centroid`
- *   table of `street_norm × locality_base × postcode` rows) and answers "does this street surface
- *   exist as a name" for the k-best rerank. It is sync-by-interface and read-only, uses prepared
- *   statements. It also degrades gracefully on a tableless extract, following the same reader discipline as
- *   `AddressPointSqliteLookup`.
+ *   Reads a street-name index (the FR instance is BAN `street-centroids-fr.db`,
+ *   a `street_centroid` table of `street_norm × locality_base × postcode` rows)
+ *   and answers "does this street surface exist as a name" for the k-best rerank.
+ *   It is sync-by-interface and read-only, uses prepared statements.
  *
- *   The fold interface: the surface is folded with {@link foldStreetSurface} (the shared function),
- *   so the DB's `street_norm` column must have been built with that same fold or every hyphenated
- *   or apostrophe'd street silently misses. The column also needs a `street_norm` index before this
- *   backend is wired in production.
+ *   It also degrades gracefully on a tableless extract, following the same reader
+ *   discipline as `AddressPointSqliteLookup`.
+ *
+ *   The fold interface: the surface is folded with {@link foldStreetSurface}
+ *   (the shared function), so the DB's `street_norm` column must have been built with
+ *   that same fold or every hyphenated or apostrophe'd street silently misses.
+ *   The column also needs a `street_norm` index before this backend is wired in production.
  */
 
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
@@ -86,7 +88,7 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 
 		// Scoped lookups tighten precision when the hypothesis includes a locality/postcode.
 		// A scoped miss falls back to the unscoped probe.
-		// The scope column may be incomplete, so a miss there does not establish absence.
+		// The scope column may be incomplete, so a miss there doesn't establish absence.
 		if (scope?.locality && this.#byNameLocality && this.#byNameLocality.get(norm, foldStreetSurface(scope.locality))) {
 			return true
 		}

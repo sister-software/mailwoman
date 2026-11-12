@@ -3,16 +3,18 @@
 
 /**
  *   Node reader over the postal-city alias table (`postal-city-alias-<cc>.db`) — the observed
- *   `postal_city → geo_locality` aliases per postcode (`build-postal-city-alias.ts`). Consumed by
- *   {@link WOFSQLitePlaceLookup}'s coordinate-first locality scorer: a user-typed postal city
- *   ("Antioch", postcode 37013) becomes a name-match alias for the geographic locality the postcode
- *   sits in ("Nashville"), so the right place tiers to the top instead of a place with the same name
- *   town in another state. Opt-in — the lookup is only constructed when a path is supplied.
- *   absent it the resolver is byte-identical.
+ *   `postal_city → geo_locality` aliases per postcode (`build-postal-city-alias.ts`).
  *
- *   The reader returns RAW divergent rows for a postcode. normalization + name-matching against the
- *   candidate localities is the scorer's job (it owns the case/diacritic fold the soft name score
- *   uses), keeping one normalizer in one place.
+ *   Consumed by {@link WOFSQLitePlaceLookup}'s coordinate-first locality scorer:
+ *   a user-typed postal city ("Antioch", postcode 37013) becomes a name-match alias for
+ *   the geographic locality the postcode sits in ("Nashville"), so the right place tiers
+ *   to the top instead of a place with the same name town in another state.
+ *   Opt-in — the lookup is only constructed when a path is supplied. absent
+ *   it the resolver is byte-identical.
+ *
+ *   The reader returns RAW divergent rows for a postcode. normalization +
+ *   name-matching against the candidate localities is the scorer's job
+ *   (it owns the case/diacritic fold the soft name score uses), keeping one normalizer in one place.
  */
 
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"

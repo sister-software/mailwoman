@@ -80,7 +80,7 @@ Do not pin `none` casually. The candidate backend ranks population-first, and on
 OpenAddresses rows per locale it is ahead on both tier-1 locales: US within-25 km 149/150 → 150/150
 with worst case 692 km → 20 km, FR within-25 km 126/150 → 145/150 with p90 144.2 km → 2.4 km.
 
-A `$MAILWOMAN_CANDIDATE_DB` that points at a missing file does **not** fall
+A `$MAILWOMAN_CANDIDATE_DB` that points at a missing file **doesn't** fall
 back to the convention path. The variable resolves to no database, and you land on the FTS backend. Unset it rather
 than fixing it.
 

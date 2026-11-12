@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The index resolution is measured from this layer's data. The share of cells that come out `partial`
- *   decides whether the index answers most probes on its own. This module streams the real source at each
- *   candidate resolution and reports the table used to choose the resolution.
+ *   The index resolution is measured from this layer's data.
  *
- *   The table is per scenario, because a pooled `partial` share averages a present-day designation together
- *   with a 2105 projection and describes neither.
+ *   The share of cells that come out `partial` decides whether the index answers most probes on its own.
+ *   This module streams the real source at each candidate resolution
+ *   and reports the table used to choose the resolution.
  *
- *   One stream covers every resolution. Memory is the cost. A caller that runs out of headroom runs the
- *   candidates in separate invocations.
+ *   The table is per scenario, because a pooled `partial` share averages a present-day
+ *   designation together with a 2105 projection and describes neither.
+ *
+ *   One stream covers every resolution.
+ *   Memory is the cost.
+ *
+ *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -46,7 +50,7 @@ const DEFAULT_PROGRESS_EVERY = 2000
 /**
  * Measure every candidate resolution over the real source, keeping the scenarios apart.
  *
- * @throws {Error} When a layer's streamed feature count does not match the count it declares.
+ * @throws {Error} When a layer's streamed feature count doesn't match the count it declares.
  * A short read produces a well-formed table describing a shorter coastline.
  * That partial result must throw.
  */

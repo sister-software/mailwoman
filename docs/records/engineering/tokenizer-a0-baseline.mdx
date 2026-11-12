@@ -47,7 +47,7 @@ Eval fixture: 43 hand-curated lines covering CJK / Cyrillic / Armenian / Greek /
 
 The v0.1.0 tokenizer was trained on a corpus that included **Who's On First admin-name variants**. WOF ships place names in dozens of scripts. Tokyo appears as `Tokyo`, `東京`, `Tōkyō`, and a Cyrillic transliteration, all in the same admin record. Mailwoman v0.1.0's training pipeline pulled these admin records to populate Stage 6 lookups, and the tokenizer training scanned the same data.
 
-As a result, v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero. The corpus did not cover those scripts. Instead, **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation set**.
+As a result, v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero. The corpus didn't cover those scripts. Instead, **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation set**.
 
 When we moved to `corpus-v0.3.0` (US DOT NAD + WOF postalcode + cleaner US/FR address rows), those admin-name variants left the tokenizer training set. A0 was trained on the same en-US + fr-FR mass without the WOF admin leakage, and it has effectively no non-Latin coverage. That explains the regressions in the table.
 
@@ -61,7 +61,7 @@ The headline metric is the **A1 vs A0 delta on each script**:
 
 - **Target**: A1 byte-fallback < 5% overall on the same fixture, with per-script rates approaching the v0.1.0 numbers (the leakage numbers) as a floor.
 - **Stretch**: per-script rates well below v0.1.0 on the scripts B2 explicitly covers (cjk, cyrillic, hangul, han, armenian).
-- **Anti-goal**: regression on Latin. A1 should not lose ground on the en-US + fr-FR mass.
+- **Anti-goal**: regression on Latin. A1 shouldn't lose ground on the en-US + fr-FR mass.
 
 The A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0`. It is deterministic with `--seed 42` and takes the same ~1 hour. The output writes to `/data/models/tokenizer/v0.5.0-a1/` and the model card has the same shape (a JSON file with sentencepiece flags, training-line count, training duration, byte-fallback per-script, and a SHA-256 of the `.model` file).
 
@@ -71,7 +71,7 @@ A0 validated three things:
 
 1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalization step (see [`SP UDS whitespace failure mode`](../../engineering/reference/sentencepiece-uds-whitespace.mdx), or, on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer/uds.py`), the model card writer, and the byte-fallback eval all worked. A1 requires no new code.
 2. **The eval fixture is validated.** 43 hand-curated multi-script lines is a small set, but the per-script breakdown shows _where_ a retrain helped or hurt. Future tokenizer iterations will use the same fixture and the same harness, so A0 / A1 / A2 numbers will be directly comparable.
-3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS: US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalization does not silently disable the UDS (the [SP UDS whitespace failure mode](../../engineering/reference/sentencepiece-uds-whitespace.mdx)). That substitution has kept the UDS active in every A-series harness run.
+3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS: US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalization doesn't silently disable the UDS (the [SP UDS whitespace failure mode](../../engineering/reference/sentencepiece-uds-whitespace.mdx)). That substitution has kept the UDS active in every A-series harness run.
 
 ## Model card schema
 

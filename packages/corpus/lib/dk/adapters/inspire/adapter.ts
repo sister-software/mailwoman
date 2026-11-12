@@ -4,45 +4,55 @@
 /**
  * `dk-inspire`: Klimadatastyrelsen's INSPIRE Addresses GeoPackage adapter, street-level over Denmark.
  *
- * Input is a local `ad_inspire.gpkg`, the one member of the `DK_INSPIRE_Addresses.zip` that
- * Denmark's ATOM download service serves. The download belongs to
- * `#dk/tools/fetch/inspire`; this module reads a file that is already on disk, as the CSV adapters do.
+ * Input is a local `ad_inspire.gpkg`, the one member of the `DK_INSPIRE_Addresses.zip`
+ * that Denmark's ATOM download service serves.
+ * The download belongs to `#dk/tools/fetch/inspire`; this module reads a file
+ * that's already on disk, as the CSV adapters do.
  *
- * Denmark serves the Addresses (AD) theme as a GeoPackage rather than as GML, so there is no XML to
- * parse. A GeoPackage is a SQLite database, and this adapter reads it through
- * `@mailwoman/sqlite`'s Kysely client. The file is a published artifact and is opened read-only.
+ * Denmark serves the Addresses (AD) theme as a GeoPackage rather than as GML, so there's no XML to parse.
+ * A GeoPackage is a SQLite database, and this adapter reads it through `@mailwoman/sqlite`'s Kysely client.
+ * The file is a published artifact and is opened read-only.
  *
- * The INSPIRE address model is normalized, so one address is a join rather than a row. The `address`
- * table holds the locator designators and a reference per component. The street name and the postcode
- * live in `thoroughfarename` and `postaldescriptor`, reached through `component_thoroughfarename` and
- * `component_postaldescriptor`. An unresolved reference raises
- * {@linkcode UnresolvedAddressComponentError} rather than yielding an address missing its street.
+ * The INSPIRE address model is normalized, so one address is a join rather than a row.
+ * The `address` table holds the locator designators and a reference per component.
  *
- * The adapter reads `locator_designator_1_designator` as `house_number`. That column already holds
- * any letter (`2A`, `68A`). It reads `thoroughfarename.name_name` as `street`, and
- * `postaldescriptor.postcode` and `postname` as `postcode` and `locality`. Denmark writes a floor
- * and a door after the house number, and the publisher splits them across
- * `locator_designator_2_designator` and `locator_designator_3_designator`. The adapter joins the two
- * into one `unit`, because the Danish address layout places `unit` and leaves `level` unplaced.
+ * The street name and the postcode live in `thoroughfarename` and `postaldescriptor`,
+ * reached through `component_thoroughfarename` and `component_postaldescriptor`.
+ * An unresolved reference raises {@linkcode UnresolvedAddressComponentError}
+ * rather than yielding an address missing its street.
  *
- * The file holds no region column that belongs in an address. `component_adminunitname_2` and
- * `_3` name a region and a municipality, neither of which a Danish address line states, so region
- * is left to the wof-postalcode and wof-admin cross-reference at corpus build time, as BAN's is.
+ * The adapter reads `locator_designator_1_designator` as `house_number`.
+ * That column already holds any letter (`2A`, `68A`).
  *
- * The address-source register lists this source as `dk-property-building-1`. Its
- * `unchecked-access-free-dk-klimadatastyrelsen` license holds `CC-BY-4.0` in `spdx`, an `elected`
- * state with `train` permitted. The adapter records that license on every row, and the model card
- * must attribute Klimadatastyrelsen.
+ * It reads `thoroughfarename.name_name` as `street`, and `postaldescriptor.postcode`
+ * and `postname` as `postcode` and `locality`.
+ * Denmark writes a floor and a door after the house number, and the publisher splits them
+ * across `locator_designator_2_designator` and `locator_designator_3_designator`.
  *
- * The adapter streams through Kysely's `.stream()`, so the `address` table never sits in memory, and
- * orders by `objectid` so two runs over one file emit the same rows in the same order. It honors
- * `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `DK`: the file covers
- * Denmark proper, and Greenland and the Faroe Islands are their own jurisdictions and are absent
- * from it.
+ * The adapter joins the two into one `unit`, because the Danish address layout
+ * places `unit` and leaves `level` unplaced.
  *
- * The measured file holds 599,999 `address` rows. That is one short of a round 600,000, while the
- * national register is several times larger, so treat the file as a possible export cap rather than
- * as Denmark's address count.
+ * The file holds no region column that belongs in an address.
+ * `component_adminunitname_2` and `_3` name a region and a municipality, neither of
+ * which a Danish address line states, so region is left to the wof-postalcode
+ * and wof-admin cross-reference at corpus build time, as BAN's is.
+ *
+ * The address-source register lists this source as `dk-property-building-1`.
+ * Its `unchecked-access-free-dk-klimadatastyrelsen` license holds `CC-BY-4.0` in `spdx`,
+ * an `elected` state with `train` permitted.
+ *
+ * The adapter records that license on every row, and the model card must attribute Klimadatastyrelsen.
+ *
+ * The adapter streams through Kysely's `.stream()`, so the `address` table never sits in memory,
+ * and orders by `objectid` so two runs over one file emit the same rows in the same order.
+ * It honors `opts.limit` and `opts.signal`.
+ *
+ * `opts.country` is optional and accepts only `DK`: the file covers Denmark proper,
+ * and Greenland and the Faroe Islands are their own jurisdictions and are absent from it.
+ *
+ * The measured file holds 599,999 `address` rows.
+ * That's one short of a round 600,000, while the national register is several times larger,
+ * so treat the file as a possible export cap rather than as Denmark's address count.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -85,8 +95,8 @@ export const DK_INSPIRE_COUNTRIES: readonly string[] = ["DK"]
  * It requires `gpkg_contents` to declare them.
  *
  * The GeoPackage declares five.
- * `addressareaname` holds a supplementary locality that a Danish address line does
- * not state, and `adminunitname` holds the region and municipality the adapter
+ * `addressareaname` holds a supplementary locality that a Danish address line
+ * doesn't state, and `adminunitname` holds the region and municipality the adapter
  * leaves to cross-reference, so neither is read.
  */
 export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postaldescriptor", "thoroughfarename"]
@@ -97,7 +107,7 @@ export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postal
 const STREAM_CHUNK_ROWS = 2000
 
 /**
- * Raised when the input is not a GeoPackage this adapter can read.
+ * Raised when the input isn't a GeoPackage this adapter can read.
  *
  * The message lists the tables that were declared, so a caller reads which file it opened
  * rather than receiving zero rows from a database with a different schema.
@@ -216,13 +226,13 @@ export function createDKInspireAdapter(): CorpusAdapter {
 			const missing = DK_INSPIRE_REQUIRED_TABLES.filter((table) => !declared.includes(table))
 
 			// A database that declares none of these tables is a different file
-			// rather than an empty one, and saying so names what was opened.
+			// rather than an empty one, and saying so states what was opened.
 			if (missing.length) {
 				throw new AddressGeoPackageSchemaError(inputPath, declared, missing)
 			}
 
 			// Left joins, deliberately: an inner join would drop an address whose
-			// component reference does not resolve.
+			// component reference doesn't resolve.
 			// That absence has to be reported rather than applied.
 			const stream = db
 				.selectFrom("address as a")
@@ -325,7 +335,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				// A row the layout could not render is a drop, so the count is stated
+				// A row the layout couldn't render is a drop, so the count is stated
 				// rather than left to be read off a smaller total.
 				if (unaligned > 0) {
 					process.stderr.write(

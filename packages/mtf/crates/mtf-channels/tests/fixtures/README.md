@@ -1,7 +1,7 @@
 # mtf-channels test fixtures
 
 Both files are records of the training encoder this crate replaced (#2870). They were written from
-that implementation before its deletion, so they are not regenerated. Each file states the source revision
+that implementation before its deletion, so they're not regenerated. Each file states the source revision
 it was recorded at.
 
 - `encode-row-reference.json` holds one row encoded by the Python `encode_row` with every soft-feed

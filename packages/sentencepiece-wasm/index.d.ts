@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Type surface of the committed `sentencepiece.mjs` artifact, google/sentencepiece **v0.2.2**
- *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`). Rebuilt only by
- *   `build.sh`. Bump the tag there and note it here.
+ *   Type surface of the committed `sentencepiece.mjs` artifact, google/sentencepiece
+ *   **v0.2.2** compiled to wasm with the native-offsets embind wrapper (`binding.cpp`).
+ *
+ *   Rebuilt only by `build.sh`.
+ *   Bump the tag there and note it here.
  */
 
 /**

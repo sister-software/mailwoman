@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   France's OpenStreetMap extraction policy. Geofabrik's `europe/france` extract holds metropolitan France.
+ *   France's OpenStreetMap extraction policy.
+ *
+ *   Geofabrik's `europe/france` extract holds metropolitan France.
  */
 
 import type { OSMExtractionPolicy } from "#extraction-policy"

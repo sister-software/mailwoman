@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // The autocast state `torch.autocast(device_type, dtype)` sets, for a device type `tch` does not reach.
 //
 // `tch::autocast` calls `at::autocast::set_enabled`, which switches CUDA autocast only. A CPU run under autocast,

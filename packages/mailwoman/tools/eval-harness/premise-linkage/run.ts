@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs each controlled row through production `geocodeAddress` twice. The first call uses the shipped product's
- *   dependencies. The second adds a configured authoritative provider. The arm-to-arm difference therefore measures
- *   the provider rather than the harness.
+ *   Runs each controlled row through production `geocodeAddress` twice.
  *
- *   The open arm has no authoritative namespace for identity. Its identifier result is `refused` on every row.
- *   The comparable metric is the coordinate table. A refusal, ambiguous answer and transport failure have distinct
- *   results: `refused`, a non-exact result and `errored`. A match without an identifier in the graded scheme is
- *   ungradable.
+ *   The first call uses the shipped product's dependencies.
+ *   The second adds a configured authoritative provider.
+ *
+ *   The arm-to-arm difference therefore measures the provider rather than the harness.
+ *
+ *   The open arm has no authoritative namespace for identity.
+ *   Its identifier result is `refused` on every row.
+ *
+ *   The comparable metric is the coordinate table.
+ *   A refusal, ambiguous answer and transport failure have distinct results:
+ *   `refused`, a non-exact result and `errored`.
+ *
+ *   A match without an identifier in the graded scheme is ungradable.
  */
 
 import type { AuthoritativeAssertion, GeocodeResult } from "@mailwoman/core/geocode"
@@ -167,7 +174,7 @@ function coordinateErrorFor(
 ): number | null {
 	// Three independent conditions exclude a row from the coordinate table: terms forbid
 	// publication, the row lacks a truth coordinate, or the arm produced no coordinate.
-	// The aggregate does not count these cases as zero.
+	// The aggregate doesn't count these cases as zero.
 	if (!row.coordinatePublishable) return null
 
 	if (row.expectedLat === null || row.expectedLon === null) return null

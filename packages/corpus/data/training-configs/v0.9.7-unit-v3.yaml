@@ -2,7 +2,7 @@
 # v0.9.6-v2 (format-diverse unit recipe output @ synth-unit 2.5) passed the real-designator check
 # (unit F1 0→95.4%, street +8pp negative-space) but breached the no-regression check: US
 # house_number 83.1→79.6 (-3.5, floor was -1pp. clean fp32 v1→v2 delta -1.5) and FR street/postcode/
-# locality -3..-4 (confounded by int8-vs-fp32 + FR noise. v1 did not hurt FR). DeepSeek's prescribed
+# locality -3..-4 (confounded by int8-vs-fp32 + FR noise. v1 didn't hurt FR). DeepSeek's prescribed
 # action for a tripped regression check: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes exactly
 # one variable vs v2 — the weight. Same format-diverse corpus (v0.4.5-unit-v2), same base/recipe/seed.
 # hypothesis: starving the unit source less aggressively trims the house_number/FR collateral while

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shape of `env` inside the test isolate: the worker's bindings plus the migrations the pool hands in from
- *   vitest.config.ts. Declared once so no test re-asserts it with a cast.
+ *   The shape of `env` inside the test isolate: the worker's bindings plus the
+ *   migrations the pool hands in from vitest.config.ts.
+ *   Declared once so no test re-asserts it with a cast.
  */
 
 import type { LicenseWorkerBindings } from "@mailwoman/license-worker/env"

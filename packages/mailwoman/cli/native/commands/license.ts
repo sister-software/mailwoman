@@ -2,14 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman license <keygen|issue|verify|register|adopt|refresh>` provides commands for license issuers,
- *   customers and installations. `keygen` creates an Ed25519 signing pair in the config root and prints the
- *   public key with its key id. `issue` signs a payload with the private key and prints the token.
- *   `verify` checks a token (or the configured token) offline against this build's register. With `--online`,
- *   it asks mailwoman.post whether the key id remains listed and asks the license worker whether the license is active.
- *   `register` prints the well-known file derived from the register. The `--write` flag writes it under `docs/static`.
+ *   `mailwoman license <keygen|issue|verify|register|adopt|refresh>` provides
+ *   commands for license issuers, customers and installations.
+ *
+ *   `keygen` creates an Ed25519 signing pair in the config root and prints the public key with its key id.
+ *   `issue` signs a payload with the private key and prints the token.
+ *
+ *   `verify` checks a token (or the configured token) offline against this build's register.
+ *   With `--online`, it asks mailwoman.post whether the key id remains listed
+ *   and asks the license worker whether the license is active.
+ *
+ *   `register` prints the well-known file derived from the register.
+ *   The `--write` flag writes it under `docs/static`.
+ *
  *   `adopt` writes a purchased token to the config-root key file and stores its refresh secret beside it.
- *   `refresh` exchanges that secret for the current token after renewal. Neither command writes a token this build cannot verify.
+ *   `refresh` exchanges that secret for the current token after renewal.
+ *   Neither command writes a token this build cannot verify.
  */
 
 import { configRootPath } from "@mailwoman/core/data-root"
@@ -379,7 +387,7 @@ function printAdopted(parsed: ParsedCommand, adopted: AdoptedKey, extraLines: re
 }
 
 /**
- * The exit code for a worker that did not answer.
+ * The exit code for a worker that didn't answer.
  * It differs from refusal (1) and success (0).
  */
 const EXIT_UNREACHABLE = 2

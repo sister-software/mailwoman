@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The claim page state is a pure reducer over the worker's claim route. One fetch supplies its input.
- *   Only `polling` changes state. Every other phase is terminal.
+ *   The claim page state is a pure reducer over the worker's claim route.
+ *
+ *   One fetch supplies its input.
+ *   Only `polling` changes state.
+ *
+ *   Every other phase is terminal.
  *   `pending` past the deadline means the page expects the email to arrive on its own.
+ *
  *   An unanswered worker past the deadline is `unreachable`; customers respond differently to that state.
- *   A 200 response with a body that is not a claim counts as unanswered.
+ *   A 200 response with a body that's not a claim counts as unanswered.
+ *
  *   The docs site is a browser bundle, so it uses plain `fetch`.
  *   The worker's exact-origin CORS admits this site and returns `no-store`.
  */

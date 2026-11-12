@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The evidence a selection links to: each selected building's part of the dossier report, and the cost and value
- *   report that `@mailwoman/route-scenarios` writes for the selection.
+ *   The evidence a selection links to: each selected building's part of the dossier report,
+ *   and the cost and value report that `@mailwoman/route-scenarios` writes for the selection.
  *
- *   `reportLines` returns the dossier report as line records, and each line of a building's section names that
- *   building. A building's part is the text of exactly those records, in the report's order, so the part shows
- *   each of the building's lines once and holds no line of another building.
+ *   `reportLines` returns the dossier report as line records, and each line of
+ *   a building's section names that building.
+ *   A building's part is the text of exactly those records, in the report's order,
+ *   so the part shows each of the building's lines once and holds no line of another building.
  */
 
 import type { EntityID, ReportLine } from "@mailwoman/dossier"

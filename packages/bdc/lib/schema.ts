@@ -5,15 +5,14 @@
  * Typed schema for `bdc.db`, the FCC BDC availability read-side layer.
  *
  * In default mode (`includeLocationIDs` off), `bdc_availability` stores one row per distinct
- * `(geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)` tuple
- * parsed from FCC provider CSVs, intentionally not collapsed to one row per
- * `(block, provider, technology)` when BSL-level speeds/flags differ. `bdc_provider` is a small
- * dictionary keyed by `provider_id`, populated later by the registry join.
+ * `(geoid, provider_id, technology_code, speeds, low_latency, business_residential_code)`
+ * tuple parsed from FCC provider CSVs, intentionally not collapsed to one row per
+ * `(block, provider, technology)` when BSL-level speeds/flags differ.
+ * `bdc_provider` is a small dictionary keyed by `provider_id`, populated later by the registry join.
  *
  * `bdc_availability` is a plain rowid table (mixed h3 range scans and geoid lookups fit better than
- * clustered composite-key storage); its `h3_cell` index is created with
- * {@link createBDCAvailabilityTable} and its `geoid` index after bulk load via
- * {@link createBDCGeoidIndex}.
+ * clustered composite-key storage); its `h3_cell` index is created with {@link createBDCAvailabilityTable}
+ * and its `geoid` index after bulk load via {@link createBDCGeoidIndex}.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -55,7 +54,7 @@ export interface BDCAvailabilityTable {
  * Provider dictionary keyed on `provider_id`, populated only when `BuildBDCOptions.providers` is supplied.
  * The default leaves it empty.
  *
- * No FK against `bdc_availability.provider_id`, since SQLite does not enforce FKs
+ * No FK against `bdc_availability.provider_id`, since SQLite doesn't enforce FKs
  * without `pragma foreign_keys` and the join happens at read time.
  *
  * An explicitly lossy denormalization rather than the canonical record.

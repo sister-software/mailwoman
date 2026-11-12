@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Poste Italiane rule for a casella postale address: the fourth line writes the words
- *   `CASELLA POSTALE`, the box number and the office that holds the box, in place of the street and
- *   civic number. The fifth line writes the CAP, the locality and the province abbreviation.
+ *   The Poste Italiane rule for a casella postale address: the fourth line writes
+ *   the words `CASELLA POSTALE`, the box number and the office that holds the box,
+ *   in place of the street and civic number.
+ *
+ *   The fifth line writes the CAP, the locality and the province abbreviation.
  *
  * @see {@link https://business.poste.it/business/files/1476488640071/posta-registrata-caratteristiche-standard-invii.pdf Poste Italiane, Caratteristiche standard degli invii – Posta Registrata (PRS.INDES.STA.1)}
  */

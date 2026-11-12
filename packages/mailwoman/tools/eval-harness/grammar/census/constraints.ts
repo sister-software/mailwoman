@@ -1,8 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * The C4 and C6 predicates of `decoder-grammar.mdx` §5, read together over one completed decode.
  *
  * This module observes a decode.
- * It does not score, repair, or replace it.
+ * It doesn't score, repair, or replace it.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -105,7 +108,7 @@ export interface ConstraintReading {
  * Read C4 and C6 over one decode.
  *
  * Two spans separated only by blank outside pieces are adjacent, so a bare `▁` piece the
- * tokenizer emits before a digit or a script change does not hide a boundary.
+ * tokenizer emits before a digit or a script change doesn't hide a boundary.
  */
 export function readConstraints(decode: ConstraintDecode, matches: ConstraintRegistryMatches): ConstraintReading {
 	const spans = spansFromBIO(decode.tokens)

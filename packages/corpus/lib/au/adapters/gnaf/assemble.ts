@@ -2,18 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
- * Address File, Geoscape Australia, Open G-NAF license). Any derived artifact must attribute
- * "Geoscape Australia". G-NAF is a relational PSV distribution whose street address reconstructs
- * by joining ADDRESS_DETAIL (number, postcode, the PIDs) to STREET_LOCALITY (street name and type)
- * and then to locality (suburb). State is the per-file prefix (ACT/NSW/…).
+ * Assemble a sampled, component-labeled Australian address set from G-NAF
+ * (the Geocoded National Address File, Geoscape Australia, Open G-NAF license).
  *
- * The two lookup tables load as Maps. ADDRESS_DETAIL streams once and is reservoir-sampled, so
- * memory stays bounded.
+ * Any derived artifact must attribute "Geoscape Australia".
+ * G-NAF is a relational PSV distribution whose street address reconstructs by joining ADDRESS_DETAIL
+ * (number, postcode, the PIDs) to STREET_LOCALITY (street name and type) and then to locality (suburb).
+ * State is the per-file prefix (ACT/NSW/…).
  *
- * No coordinates. The output feeds the parser. The parser needs the address string and its component
- * labels. Output is component tuples as jsonl. An optional held-out eval set is excluded by
- * (street, locality, postcode) so the training corpus never overlaps the benchmark.
+ * The two lookup tables load as Maps.
+ * ADDRESS_DETAIL streams once and is reservoir-sampled, so memory stays bounded.
+ *
+ * No coordinates.
+ * The output feeds the parser.
+ *
+ * The parser needs the address string and its component labels.
+ * Output is component tuples as jsonl.
+ *
+ * An optional held-out eval set is excluded by (street, locality, postcode)
+ * so the training corpus never overlaps the benchmark.
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"

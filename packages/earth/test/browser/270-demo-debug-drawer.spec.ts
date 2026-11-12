@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file The `/debug` route and the in-demo model-visualizer drawer. The drawer traces the same address
  *   geocoded on the map.

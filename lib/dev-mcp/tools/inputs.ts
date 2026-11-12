@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The `mwdev_inputs` tool definition provides the description and input schema an agent reads. It wires the handler over
- * the measurement in the package root.
+ * The `mwdev_inputs` tool definition provides the description and input schema an agent reads.
+ *
+ * It wires the handler over the measurement in the package root.
  */
 
 import { z } from "zod"
@@ -48,7 +49,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 			try {
 				expression = new RegExp(pattern, "iu")
 			} catch (error) {
-				// A malformed pattern must not read as "matches no row", a zero the caller would act on.
+				// A malformed pattern mustn't read as "matches no row", a zero the caller would act on.
 				throw new Error(`mwdev_inputs: \`matching\` is not a valid regular expression: ${(error as Error).message}`)
 			}
 

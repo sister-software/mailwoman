@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build-health check. Runs the real production build (`docusaurus build`) and asserts it both
- *   succeeds and emits no warnings/errors. This includes Docusaurus's broken-anchor and broken-link warnings.
- *   Those warnings surface during static-site generation rather than during
- *   typecheck or bundling.
+ *   Build-health check.
  *
- *   This runs as the Playwright `build` project (see playwright.config.mts), building into a throwaway
- *   dir so it never clobbers the `build/` output the webServer produces and serves to the browser
- *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
+ *   Runs the real production build (`docusaurus build`) and asserts it both succeeds
+ *   and emits no warnings/errors.
+ *   This includes Docusaurus's broken-anchor and broken-link warnings.
+ *
+ *   Those warnings surface during static-site generation rather than during typecheck or bundling.
+ *
+ *   This runs as the Playwright `build` project (see playwright.config.mts),
+ *   building into a throwaway dir so it never clobbers the `build/` output the
+ *   webServer produces and serves to the browser specs.
+ *   Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

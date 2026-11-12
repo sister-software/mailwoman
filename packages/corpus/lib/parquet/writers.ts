@@ -23,7 +23,7 @@
  *
  *   A file holds the rows of one source in one split. Its directory uses its derivation hash, over that
  *   source's extract hash and code hash, the build config with the file's source, split and part, and the builder
- *   version, so two builds that would write different bytes never share a path. The manifest names each
+ *   version, so two builds that would write different bytes never share a path. The manifest lists each
  *   file's split. The manifest preserves per-split routing without a split directory.
  *
  *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
@@ -369,7 +369,7 @@ export interface WriteParquetSplitsOptions {
 	 * Each file holds one source's rows, so its derivation covers only that source's inputs and code.
 	 * The writer adds the file's source, split, part and row cap to the config.
 	 *
-	 * Rows hold no corpus version, so the version is not a derivation input.
+	 * Rows hold no corpus version, so the version isn't a derivation input.
 	 * It calls this once per source.
 	 */
 	derivationFor: (source: string) => FileDerivation | Promise<FileDerivation>
@@ -439,7 +439,7 @@ export interface WriteParquetSplitsOptions {
  *
  * `counts` and `total_rows` are summed from the descriptors rather than from a running row counter,
  * so a manifest written between two files never claims the rows of the file being written.
- * Files are listed by split, then path, so the order does not depend on which file finished first.
+ * Files are listed by split, then path, so the order doesn't depend on which file finished first.
  */
 export function parquetManifestOf(
 	files: readonly ParquetFileDescriptor[],
@@ -565,7 +565,7 @@ interface OpenPart {
  * so two writers of one derivation never write the same file.
  *
  * A file whose store path already holds a file is kept when the two sha256 values agree,
- * since the path names its derivation and the bytes are the same.
+ * since the path identifies its derivation and the bytes are the same.
  * A disagreement throws, because one derivation wrote two different files.
  */
 export async function writeParquetSplits(
@@ -796,7 +796,7 @@ export async function writeParquetSplits(
 /**
  * The finished `.parquet` files an earlier run recorded, each verified against its file on disk.
  *
- * @throws When a recorded file names no source, is missing, or its size differs from the descriptor.
+ * @throws When a recorded file identifies no source, is missing, or its size differs from the descriptor.
  * The writer creates a descriptor only after closing the file.
  * Either case therefore means the file changed after its run.
  * The writer would produce a corpus whose manifest describes bytes the files

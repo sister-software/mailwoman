@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * A production-routed mailwoman grading arm. Unlike the warm session, the Gauntlet selects the weights overlay from
- * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
+ * A production-routed mailwoman grading arm.
+ *
+ * Unlike the warm session, the Gauntlet selects the weights overlay from each case's country.
+ * This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"

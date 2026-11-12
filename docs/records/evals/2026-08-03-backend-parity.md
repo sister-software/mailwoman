@@ -54,7 +54,7 @@ comparable — "Paris" gold is `101751119` (locality) while both backends legiti
 
 **Positive control** — `Chicago, Illinois`, first row of every run: all four arms returned
 `wof:85940195`, exact ID, **0.00 km**. The read path is confirmed live. (Resolved coordinates land
-on `node.lat`/`node.lon`; `node.resolved.latitude` does not exist anywhere in the codebase and would
+on `node.lat`/`node.lon`; `node.resolved.latitude` doesn't exist anywhere in the codebase and would
 have produced a false clean sweep.)
 
 | arm         | within 25 km | within 5 km | exact WOF ID | no hit |
@@ -163,7 +163,7 @@ The single failure is `cat-ca-02`, `"gas station near Ottawa ON"` — candidate 
 | brand-ca-01   | `Tim Hortons near Toronto ON` |        1.76 km ✅ |
 
 `Ottawa ON` fails, `Ottawa, ON` passes. The comma is the whole difference, and every other
-province-abbreviation anchor passes. It is not a gazetteer-content problem either: the candidate
+province-abbreviation anchor passes. It isn't a gazetteer-content problem either: the candidate
 table's own ranking already puts Ottawa CA on top (county 1,000,000 pop at `neg_rank` −6.000,
 locality 934,243 at −5.970) with Ottawa IL sixth at 18,752. Plain `mailwoman parse "Ottawa ON"`
 resolves correctly on **both** backends. The defect is confined to the POI anchor path. It needs its
@@ -199,7 +199,7 @@ The exonym wins, each one FTS landing on a US homonym:
 | Milan   | fail: Milan/US 7799 km  | pass: Milano/IT 0 km  |
 
 The candidate table stores alias `name_key` rows that map the English exonym onto the endonym
-place. FTS's FTS5 index does not, so it takes the highest-ranked literal-string match. In a
+place. FTS's FTS5 index doesn't, so it takes the highest-ranked literal-string match. In a
 US-heavy gazetteer that match is the American namesake. `Florence` still fails on both; `Gothenburg` and `Antwerp`
 no-hit on both.
 
@@ -265,11 +265,11 @@ No. `node.metadata.resolver_score`, correct vs wrong, within each backend on Ins
 | cand + none | n=38, 4.91–6.95, mean **6.07**    | n=2, 5.75–7.29, mean **6.52**    |
 
 In both backends the wrong answers' range sits **inside** the correct answers' range and their mean
-is **higher**. There is no threshold that checks errors without discarding correct answers, so a
+is **higher**. There's no threshold that checks errors without discarding correct answers, so a
 score-based abstention or confidence surface cannot be built on this field as it stands.
 
 The two scales are also not comparable to each other — FTS is bm25-derived (≈19–41), candidate is
-population/`neg_rank`-derived (≈5–7). Any consumer switching backends must not reuse a hardcoded
+population/`neg_rank`-derived (≈5–7). Any consumer switching backends mustn't reuse a hardcoded
 score threshold from the other backend.
 
 ## Structural note: the two databases hold different things
@@ -313,29 +313,29 @@ query shapes. The one loss is a reproducible singleton with a clear owner, and t
 p50 cost (1.5 → 2.4 km international) is real but small next to the coordinate improvement (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
-the country filter, or the change is untestable against these numbers. They are separate changes
+the country filter, or the change is untestable against these numbers. They're separate changes
 with separate risk, and it is the filter rather than the backend, that accounts for the +10 on bare
 international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change.
 To ship either change independently, the code must separate `resolverDefaultCountry`'s
 `candidateActive` branch from the backend selection.
 
-## What I did not measure
+## What I didn't measure
 
 - **Non-Latin scripts.** Zero JP/KR/CN/AR/TH coverage in any instrument. The exonym mechanism that
-  drives the coordinate is an alias-table property, so CJK behaviour does not follow from these
+  drives the coordinate is an alias-table property, so CJK behaviour doesn't follow from these
   numbers.
 - **GB, DE, ES, NL, the Nordics at scale.** The 1050-row international set is AT/CZ/FR/IT/LU/PL/PT.
   `oa-gb-coord-1k`, `oa-de/es/nl-*` and the `-1k` sets went unrun.
-- **Latency and memory.** Candidate is 1.65 GB against FTS's 5.28 GB and did not appear slower, but
+- **Latency and memory.** Candidate is 1.65 GB against FTS's 5.28 GB and didn't appear slower, but
   I ran no benchmark and report no p50/p99 timings.
 - **Postcode-only queries**, despite candidate holding 3.66M postcodes and FTS none. A likely large
   candidate win, entirely unquantified.
-- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point` rather than `node.lat`; my walker reads admin-grade coordinates only. This report does not measure
+- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point` rather than `node.lat`; my walker reads admin-grade coordinates only. This report doesn't measure
   address-point or interpolation resolution.
 - **`node.interpretations[]`.** Dual-role places (city-states) store a second resolved place there,
   and my primary-node pick ignores. Berlin-class rows may hide a second answer.
 - **Whether the dropped ~873k admin places are deprecated records or real coverage loss.**
-- **Reproducibility of `candidate-global-1026.db` itself** — it is a 2026-07-07 artifact. I did not
+- **Reproducibility of `candidate-global-1026.db` itself** — it is a 2026-07-07 artifact. I didn't
   verify it rebuilds identically from current main.
 - **Older candidate DBs.** I used `candidate-global-1026.db` throughout: newest (2026-07-07) and
   largest (12.16M rows / 7.71M distinct places, against 10.20M / 10.14M / 8.97M for
@@ -367,5 +367,5 @@ Instruments A and C used a throwaway 2×2 runner (both lookups in one process, `
   and `WOFCandidateTableLookup({ databasePath })` directly rather than through `createResolverBackend`
   (which reads `$MAILWOMAN_CANDIDATE_DB` and can only yield one backend per call), pass
   `resolveOpts.defaultCountry` per arm, and read results off `node.lat` / `node.lon` /
-  `node.placeID` / `node.metadata.resolver_{score,name,country}` — never `node.resolved.*`, which does
-  not exist and silently yields `undefined`.
+  `node.placeID` / `node.metadata.resolver_{score,name,country}` — never `node.resolved.*`, which doesn't
+  exist and silently yields `undefined`.

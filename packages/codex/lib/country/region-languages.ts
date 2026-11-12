@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Returns the languages used to write addresses in a region. The result combines the country's official languages
- *   with the region's co-official languages, using ISO 639-3 codes from the Who's On First names table. Corpus extraction
- *   uses this list to generate address surfaces from a region record. Unlike {@link isOfficialLanguage}, this function
- *   answers per region and excludes the country-wide `regional` list. That list can include languages official in other
- *   regions but not in the current one.
+ *   Returns the languages used to write addresses in a region.
  *
- *   Spain is the only country with a per-region table so far. Other countries return only their official languages.
- *   For GB and FR, those are the languages already used in source addresses. The same applies to DE, IT, NL and PT.
+ *   The result combines the country's official languages with the region's co-official
+ *   languages, using ISO 639-3 codes from the Who's On First names table.
+ *   Corpus extraction uses this list to generate address surfaces from a region record.
+ *
+ *   Unlike {@link isOfficialLanguage}, this function answers per region
+ *   and excludes the country-wide `regional` list.
+ *   That list can include languages official in other regions but not in the current one.
+ *
+ *   Spain is the only country with a per-region table so far.
+ *   Other countries return only their official languages.
+ *
+ *   For GB and FR, those are the languages already used in source addresses.
+ *   The same applies to DE, IT, NL and PT.
  */
 
 import { OFFICIAL_LANGUAGES } from "#country/official-languages"

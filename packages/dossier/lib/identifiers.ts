@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Identifiers for the physical objects a dossier describes. An external identifier keeps the namespace
- *   of the authority that issued it, so two systems' numbers for one building never collide. An entity
- *   id is the application's own key, used for objects that no authority has numbered yet.
+ *   Identifiers for the physical objects a dossier describes.
  *
- *   An external identifier cites the record that states it. A dossier admits the identifier by that
- *   record's availability date, as it admits every other record.
+ *   An external identifier keeps the namespace of the authority that issued it,
+ *   so two systems' numbers for one building never collide.
+ *   An entity id is the application's own key, used for objects that no authority has numbered yet.
+ *
+ *   An external identifier cites the record that states it.
+ *   A dossier admits the identifier by that record's availability date, as it admits every other record.
  */
 
 import type { Evidence } from "#links"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { describe, expect, it } from "vitest"
 
 import { AU_DELIVERY_GUIDELINE_RULES, AU_LOCALITY_LINE_RULE } from "#au/delivery/guideline"

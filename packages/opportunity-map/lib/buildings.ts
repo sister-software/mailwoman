@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The building scale of the map: one GeoJSON feature per dossier building, in one of five states. Each
- *   state is decided by a stated rule over the building's unit total at a stage the caller chooses, its
- *   providers' availability on the dossier date, and its availability checks. The rules apply in this
- *   order, and the first that matches decides the state:
+ *   The building scale of the map: one GeoJSON feature per dossier building, in one of five states.
+ *
+ *   Each state is decided by a stated rule over the building's unit total at a stage the caller
+ *   chooses, its providers' availability on the dossier date, and its availability checks.
+ *   The rules apply in this order, and the first that matches decides the state:
  *
  *   1. `unknown_unit_count`: the unit total is unresolved.
  *   2. `zero_premises`: the unit total resolves to 0.
- *   3. `partial_availability`: a provider is recorded as available on the dossier date, or the latest
- *      readings of one of the building's checks hold records. A dossier records availability for a
- *      building or its extent, and no record establishes service to every unit, so no state claims a
- *      fully served building. For a record that states an extent, the reason states that the provider is
- *      recorded as available over that extent, because such a record does not say which premises in
- *      the extent are served.
- *   4. `known_unserved`: the building has a check, the latest readings of every check establish absence,
- *      and no provider is recorded as available.
+ *   3. `partial_availability`: a provider is recorded as available on the dossier date,
+ *      or the latest readings of one of the building's checks hold records.
+ *      A dossier records availability for a building or its extent, and no record
+ *      establishes service to every unit, so no state claims a fully served building.
+ *      For a record that states an extent, the reason states that the provider is
+ *      recorded as available over that extent, because such a record doesn't say
+ *      which premises in the extent are served.
+ *   4. `known_unserved`: the building has a check, the latest readings of every check
+ *      establish absence, and no provider is recorded as available.
  *   5. `unknown_coverage`: every other building.
  *
- *   A feature holds its unit denominator, a number or the word `unresolved`, and the source records
- *   behind its state. Its units, service evidence and access records are separate groups, and it holds
- *   no economic figure: economics belong to a selection of buildings. Its geometry is a point at the
- *   building's resolved position, or `null` when the position is unresolved.
+ *   A feature holds its unit denominator, a number or the word `unresolved`,
+ *   and the source records behind its state.
+ *   Its units, service evidence and access records are separate groups, and it holds
+ *   no economic figure: economics belong to a selection of buildings.
+ *
+ *   Its geometry is a point at the building's resolved position, or `null` when the position is unresolved.
  */
 
 import {

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Singapore designators in English, Chinese and Malay: the block, the `#floor-unit` number and the relation
- *   words that a Singapore address or query uses.
+ *   Singapore designators in English, Chinese and Malay: the block, the `#floor-unit` number
+ *   and the relation words that a Singapore address or query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/sgpEn.pdf UPU Singapore addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/附近 Wiktionary 附近}

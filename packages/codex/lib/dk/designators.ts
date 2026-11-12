@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Danish postal designators: the delivery service, sub-premise, floor and relation words an address or a
- *   query uses.
+ *   Danish postal designators: the delivery service, sub-premise, floor
+ *   and relation words an address or a query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/dnkEn.pdf UPU Denmark addressing sheet (Post Danmark)}
  * @see {@link https://en.wiktionary.org/wiki/lejlighed Wiktionary: lejlighed}

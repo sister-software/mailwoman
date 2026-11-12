@@ -124,7 +124,7 @@ export class MapBrowser {
 
 	/**
 	 * The next `decodeInputChunk` call receives trailing bytes from an incomplete escape sequence
-	 * so a mouse report split across reads does not decode as an Esc keypress.
+	 * so a mouse report split across reads doesn't decode as an Esc keypress.
 	 */
 	private pendingInput = ""
 

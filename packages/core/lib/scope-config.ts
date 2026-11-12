@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads `scope.config.json`. It lists the countries in each locale tier, the shipping locales outside any tier,
- *   and the training config behind each shipped model. Tier membership grants no release privilege: release
- *   requirements are registered in `packages/mailwoman/tools/eval-harness/release/specs/`.
+ *   Reads `scope.config.json`.
  *
- *   The config holds membership only. `docs/engineering/scope.mdx` contains the evidence for each tier.
+ *   It lists the countries in each locale tier, the shipping locales outside any tier,
+ *   and the training config behind each shipped model.
+ *   Tier membership grants no release privilege: release requirements are registered
+ *   in `packages/mailwoman/tools/eval-harness/release/specs/`.
+ *
+ *   The config holds membership only.
+ *   `docs/engineering/scope.mdx` contains the evidence for each tier.
+ *
  *   The `repo-health` `locale-scope` check fails when the two disagree.
  */
 
@@ -17,7 +22,7 @@ import { repoRootPathBuilder } from "#paths"
 
 /**
  * The tier keys, numbered as in `scope.mdx`.
- * They are strings because JSON object keys are strings.
+ * They're strings because JSON object keys are strings.
  */
 export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const
 

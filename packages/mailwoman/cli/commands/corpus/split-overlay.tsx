@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus split-overlay --input <parquet> --out-dir <dir>` — route one overlay parquet
- *   through the holdout policy the base build applies, writing the split attribute file that decides
- *   each row's split by `source_id`, keyed by the policy's hash.
+ *   `mailwoman corpus split-overlay --input <parquet> --out-dir <dir>` — route one overlay
+ *   parquet through the holdout policy the base build applies, writing the split attribute
+ *   file that decides each row's split by `source_id`, keyed by the policy's hash.
  *
- *   A corpus overlay is appended to a manifest as a train file, so a country whose only rows of a given
- *   kind live in an overlay has no held-out row of that kind. Pass the attribute to
- *   `mailwoman corpus overlay-manifest --split-attribute` so the manifest records which rows are held out.
+ *   A corpus overlay is appended to a manifest as a train file, so a country whose only
+ *   rows of a given kind live in an overlay has no held-out row of that kind.
+ *   Pass the attribute to `mailwoman corpus overlay-manifest --split-attribute`
+ *   so the manifest records which rows are held out.
  */
 
 import { Box, Text } from "ink"

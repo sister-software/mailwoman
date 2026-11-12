@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Clockwise is exterior — the inverse of RFC 7946 — because the service encodes hole roles by
- *   orientation rather than nesting.
+ *   Clockwise is exterior — the inverse of RFC 7946 — because the service encodes
+ *   hole roles by orientation rather than nesting.
  */
 
 import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoman/spatial"
@@ -34,7 +34,7 @@ export interface ResolvedRingRoles {
 	nestedHoles: number
 	/**
 	 * Holes no exterior contains a majority of, placed under the smallest exterior
-	 * of the same feature and counted here: they are retained rather than dropped,
+	 * of the same feature and counted here: they're retained rather than dropped,
 	 * because dropping one would add ground the plan carved out.
 	 */
 	adjacentHoles: number

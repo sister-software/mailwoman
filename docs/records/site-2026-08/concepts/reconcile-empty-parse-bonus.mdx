@@ -40,7 +40,7 @@ Every factor we multiply is a negative number in log-space. So accepting any slo
 
 With `beamWidth = 1` (greedy), the empty beam dominates immediately and beam pruning keeps only it. With `beamWidth > 1`, the empty beam survives forever as the highest-scoring path and the search returns it as the winner.
 
-This is not specific to our use case — any joint decoder that composes confidences multiplicatively will hit it. It is what the reconciler is supposed to be doing (picking high-evidence interpretations), so the search needs a structural reason to _prefer_ accepting evidence over skipping it.
+This isn't specific to our use case — any joint decoder that composes confidences multiplicatively will hit it. It is what the reconciler is supposed to be doing (picking high-evidence interpretations), so the search needs a structural reason to _prefer_ accepting evidence over skipping it.
 
 ## Fix — inclusion bonus, scaled per word
 
@@ -63,13 +63,13 @@ The `2.5` is empirical. `e` (≈ 2.718) is the natural-log analogue, equivalent 
 The first implementation granted the bonus once per accepted slot. That design has two structural biases, both measured on the bare query `"New York City"` with no resolver wired (the live demo's configuration, 2026-06-11):
 
 1. **Fragments beat coverage.** The per-token logit aggregation gives interior fragments inflated confidence — `City` aggregates the I-locality mass of a token that sits _inside_ a locality, scoring `locality=0.92`, while the full `New York City` span scores `0.60`. With a flat per-slot bonus, the beam paid no penalty for leaving `New York` unexplained: the bare `locality="City"` won at `+0.475` over the full span's `+0.199`, and the grouper-audit then promoted the orphaned `York` proposal to a spurious `region` node. Final output: `{region: "York", locality: "City"}` — for an input the plain argmax path parses correctly.
-2. **More spans collect more bonuses.** Two interpretations covering the same words were not scored on evidence only — the one split into more slots banked one bonus per slot, a flat subsidy for fragmentation.
+2. **More spans collect more bonuses.** Two interpretations covering the same words weren't scored on evidence only — the one split into more slots banked one bonus per slot, a flat subsidy for fragmentation.
 
 A bonus scaled by the slot's word count rewards _coverage_. Equal-coverage interpretations collect equal bonus (only the evidence factors decide between them), and a covering interpretation out-scores one that silently drops words unless the extra evidence is weak. On the query above, the full span now wins at `+2.03` (three words' bonus) vs `+0.48` for the bare fragment.
 
 Word counting is whitespace-delimited with a floor of one — scripts without spaces (CJK) degrade to the old per-slot behavior rather than misbehaving.
 
-## Why this knob is not public
+## Why this knob isn't public
 
 `INCLUSION_LOG_BONUS` is a **module-level constant** rather than a configurable option. Reasons:
 
@@ -89,7 +89,7 @@ This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that
 
 Any future stage that composes confidences multiplicatively will need the same treatment:
 
-- The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_8_E_learned_span_proposer.mdx)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors does not change the trap.
+- The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_8_E_learned_span_proposer.mdx)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors doesn't change the trap.
 - The "optimal-cover" solver mentioned in earlier design notes (a candidate decoder that picks a non-overlapping set of spans to cover the input) is structurally identical. Same trap, same fix.
 - Any joint decoding over additional axes (e.g., `× alternative-language candidate`) needs the bonus scaled. The empty parse cost goes up as the axes multiply, so the bonus per accepted slot may need to grow with them.
 

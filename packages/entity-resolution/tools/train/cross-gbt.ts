@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the cross-source link scorer. The dedup GBT is trained on within-NPPES labels, so its
- *   strongest feature (`spatial-exact × name-disagree`) rejects the prototypical cross-source pair,
- *   the same provider under different operational text across registries.
- *   CMS Open Payments joins NPPES by NPI. That join provides ground-truth positive pairs labeled by a key the matcher never sees.
+ *   Train the cross-source link scorer.
  *
- *   The pipeline assembles NPPES and Open Payments TX records for the same NPI population, then the
- *   shared `trainCrossSourceModel` geocodes through the standard ingest and blocks the union. It keeps only
- *   cross-source candidate pairs. It trains the shipped model into
- *   `registry/models/crosssource-gbt-en-us.ts`.
+ *   The dedup GBT is trained on within-NPPES labels, so its strongest feature
+ *   (`spatial-exact × name-disagree`) rejects the prototypical cross-source pair,
+ *   the same provider under different operational text across registries.
+ *   CMS Open Payments joins NPPES by NPI.
+ *
+ *   That join provides ground-truth positive pairs labeled by a key the matcher never sees.
+ *
+ *   The pipeline assembles NPPES and Open Payments TX records for the same NPI population,
+ *   then the shared `trainCrossSourceModel` geocodes through the standard ingest and blocks the union.
+ *   It keeps only cross-source candidate pairs.
+ *
+ *   It trains the shipped model into `registry/models/crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, `.notes/data-sources.md`):
  *
  *   - `nppes_npi-registry_*.tsv`: the practice-location and primary-name records.
- *   - `openpayments_covered-recipient-profile_*.csv`: the OP profile supplement (NPI, profile
- *       first/last, profile practice address).
+ *   - `openpayments_covered-recipient-profile_*.csv`: the OP profile supplement
+ *     (NPI, profile first/last, profile practice address).
  *
  *   Run: `mailwoman registry train-scorer cross-gbt [--state TX] [--npis 2000]
  *   [--precision-bar 0.95] [--wof <admin.db>] [--data-root <dir>]

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coverage and provenance inspection: what an artifact's profile holds, read from its header and directory.
+ *   Coverage and provenance inspection: what an artifact's profile holds,
+ *   read from its header and directory.
  */
 
 import { type Artifact, type ArtifactHeader, Artifact as RGY1Artifact } from "#rgy1/reader"

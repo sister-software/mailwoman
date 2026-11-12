@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The committed snapshot of what the public bucket serves for each bundle in `BUNDLES` records the size the server
- *   reports per artifact and the tier and license expression in its `layer_manifest`. The snapshot also records when they were
- *   measured.
+ *   The committed snapshot of what the public bucket serves for each bundle in `BUNDLES` records the
+ *   size the server reports per artifact and the tier and license expression in its `layer_manifest`.
+ *   The snapshot also records when they were measured.
  *
- *   `BUNDLES` records `approxBytes` by hand. The docs site once restated those numbers by hand again. The
- *   artifacts themselves are gigabytes that neither a docs build nor a health check can download, so this file holds
- *   the measurement and `dev-tools/data/published-bundles.run.ts` is its one writer. The `published-bundles` check in
- *   The repository-health check compares it against the registry. The docs site renders it beside its date.
+ *   `BUNDLES` records `approxBytes` by hand.
+ *   The docs site once restated those numbers by hand again.
  *
- *   A value that could not be measured is recorded as unmeasured with the reason. It is never defaulted, because a
- *   default reads the same as a measurement to everyone downstream.
+ *   The artifacts themselves are gigabytes that neither a docs build nor a health check can download,
+ *   so this file holds the measurement and `dev-tools/data/published-bundles.run.ts` is its one writer.
+ *   The `published-bundles` check in The repository-health check compares it against the registry.
+ *   The docs site renders it beside its date.
+ *
+ *   A value that couldn't be measured is recorded as unmeasured with the reason.
+ *   It is never defaulted, because a default reads the same as a measurement to everyone downstream.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -23,7 +26,7 @@ import { isPlainObject } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Whether a snapshot value was read from the artifact or the server, or could not be.
+ * Whether a snapshot value was read from the artifact or the server, or couldn't be.
  */
 export const MeasurementStatus = {
 	Measured: "measured",
@@ -33,7 +36,7 @@ export const MeasurementStatus = {
 export type MeasurementStatus = (typeof MeasurementStatus)[keyof typeof MeasurementStatus]
 
 /**
- * A value the writer could not read, with the reason it records in place of a number.
+ * A value the writer couldn't read, with the reason it records in place of a number.
  */
 export interface UnmeasuredValue {
 	status: typeof MeasurementStatus.Unmeasured
@@ -120,12 +123,12 @@ export interface RightsComponent {
 }
 
 /**
- * What is known about a bundle's rights beyond its artifacts' flat expressions.
+ * What's known about a bundle's rights beyond its artifacts' flat expressions.
  *
  * `components` is empty when none was measured.
  * A component without a read record is absent.
  *
- * The code does not synthesize it from the flat expression.
+ * The code doesn't synthesize it from the flat expression.
  * This follows the same rule as an absent artifact.
  */
 export interface BundleRightsRecord {

@@ -332,7 +332,7 @@ describe("writeParquetFile", () => {
 	})
 
 	it("refuses a row whose source has no license id and writes no file", async () => {
-		// `synthetic-secondary` is mapped to authored inputs only, so no register decision names its terms.
+		// `synthetic-secondary` is mapped to authored inputs only, so no register decision identifies its terms.
 		const path = scratch.path("unlicensed.parquet")
 
 		await expect(

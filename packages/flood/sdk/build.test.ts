@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A point inside the authority's footprint but outside every polygon reads as the authority's Zone 1
- *   designation, while a point outside the footprint reads as unknown — the same empty geometry answer
- *   carrying opposite meanings.
+ *   A point inside the authority's footprint but outside every polygon reads as the
+ *   authority's Zone 1 designation, while a point outside the footprint reads as unknown —
+ *   the same empty geometry answer carrying opposite meanings.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"

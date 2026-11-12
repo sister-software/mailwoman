@@ -3,17 +3,25 @@
 
 /**
  *   Assemble a package-shaped weights directory under a `cacheRoot`, so a candidate model can be graded
- *   with its sibling channels fed — `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`, the
- *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
- *   `overlay-channel-smoke.ts` both take.
+ *   with its sibling channels fed — `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`,
+ *   the layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts`
+ *   and `overlay-channel-smoke.ts` both take.
  *
- *   A model includes more than its `.onnx` file. The card declares required channels. Other bundle artifacts provide them.
+ *   A model includes more than its `.onnx` file.
+ *   The card declares required channels.
+ *
+ *   Other bundle artifacts provide them.
  *   A model-file-only replacement would score it with the shipped bundle's channels.
  *
- *   By default, the command links each artifact. It writes no bytes and leaves the data root untouched.
- *   `--dereference` copies the artifacts. A board-routed `mwdev_compare` arm requires that copy
- *   because it refuses an artifact resolving outside the cache it was given.
- *   `--from` seeds the layout. `--file`, `--omit`, and `--card` then change it for an A/B comparison.
+ *   By default, the command links each artifact.
+ *   It writes no bytes and leaves the data root untouched.
+ *
+ *   `--dereference` copies the artifacts.
+ *   A board-routed `mwdev_compare` arm requires that copy because it refuses an
+ *   artifact resolving outside the cache it was given.
+ *
+ *   `--from` seeds the layout.
+ *   `--file`, `--omit`, and `--card` then change it for an A/B comparison.
  *
  *   Usage:
  *     yarn mwops release stage-weights-cache --out <dir> --locale en-gb \
@@ -123,7 +131,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			const source = fromDir(entry)
 
 			// Stage files only.
-			// A loader does not read package directories as artifacts.
+			// A loader doesn't read package directories as artifacts.
 			// A symlinked directory in the layout could make its walk stale.
 			if (await isFile(source)) {
 				staged.set(entry, source)

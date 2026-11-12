@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The GeoNames-anchored label-point choice. The rule table pins the census's four classes: the
- *   Washington shape, where the label is wrong and the geometric point sits at the settlement, the
- *   Chinese prefecture-city shape, where the label sits at the urban seat and the centroid is far,
- *   the anchorless record and the agreeing pair. It also pins the lazy country-file lookup's
- *   absence semantics.
+ *   The GeoNames-anchored label-point choice.
+ *
+ *   The rule table pins the census's four classes: the Washington shape,
+ *   where the label is wrong and the geometric point sits at the settlement,
+ *   the Chinese prefecture-city shape, where the label sits at the urban seat
+ *   and the centroid is far, the anchorless record and the agreeing pair.
+ *   It also pins the lazy country-file lookup's absence semantics.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -58,7 +60,7 @@ describe("choosePoint (#1905)", () => {
 		const geom = { latitude: 48.8566, longitude: 2.3522 }
 		const lbl = { latitude: 48.86, longitude: 2.35 }
 		// An anchor that would pick geom if consulted.
-		// It must not be.
+		// It mustn't be.
 		const chosen = choosePoint(geom, lbl, geom)
 
 		expect(chosen.choice).toBe("lbl")
@@ -66,7 +68,7 @@ describe("choosePoint (#1905)", () => {
 	})
 
 	it(`an anchor separating at less than ${ANCHOR_DECISIVE_RATIO}x keeps the label`, () => {
-		// Both points ~equidistant from the anchor: the anchor does not decide.
+		// Both points ~equidistant from the anchor: the anchor doesn't decide.
 		const geom = { latitude: 50, longitude: 10 }
 		const lbl = { latitude: 50, longitude: 10.2 }
 		const anchor = { latitude: 50, longitude: 10.1 }

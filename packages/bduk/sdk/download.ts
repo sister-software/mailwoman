@@ -4,14 +4,18 @@
 /**
  *   Acquire one region's archive of Building Digital UK's UPRN-level release and extract its CSV files.
  *
- *   GOV.UK publishes each region as one ZIP attachment of the release's publication page. The page's
- *   content item, `https://www.gov.uk/api/content/<page path>`, lists each attachment's URL and byte size.
- *   The URL holds an opaque media identifier, so the caller reads it from the content item rather than
- *   assembling it, and passes the stated size so that a short or altered transfer throws.
+ *   GOV.UK publishes each region as one ZIP attachment of the release's publication page.
+ *   The page's content item, `https://www.gov.uk/api/content/<page path>`,
+ *   lists each attachment's URL and byte size.
  *
- *   The archive is stored as published under `<root>/<release>/<region>/`, and its SHA-256 is computed in
- *   the pass that writes it. An archive already on disk is reused and hashed again, so every report states
- *   the bytes on disk. `streamToDisk` documents why the transfer uses `fetch` rather than `APIClient`.
+ *   The URL holds an opaque media identifier, so the caller reads it from the content item
+ *   rather than assembling it, and passes the stated size so that a short or altered transfer throws.
+ *
+ *   The archive is stored as published under `<root>/<release>/<region>/`,
+ *   and its SHA-256 is computed in the pass that writes it.
+ *   An archive already on disk is reused and hashed again, so every report states the bytes on disk.
+ *
+ *   `streamToDisk` documents why the transfer uses `fetch` rather than `APIClient`.
  */
 
 import { readFileSize, tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -85,7 +89,7 @@ export interface BDUKRegionDownload {
  * Every CSV member lands directly in the extracted directory under its own name,
  * where `readBDUKReleaseDirectory` reads it.
  *
- * @throws When the response is not OK, the archive's size differs from `expectedBytes`,
+ * @throws When the response isn't OK, the archive's size differs from `expectedBytes`,
  * the archive holds no CSV file, or two CSV members share a name.
  */
 export async function downloadBDUKRegion(options: DownloadBDUKRegionOptions): Promise<BDUKRegionDownload> {

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The excerpt a hit displays, with the character ranges that matched a query token. The match here is
- *   a case-insensitive substring search. It marks what to emphasize and takes no part in ranking.
+ *   The excerpt a hit displays, with the character ranges that matched a query token.
+ *
+ *   The match here is a case-insensitive substring search.
+ *   It marks what to emphasize and takes no part in ranking.
  */
 
 /**

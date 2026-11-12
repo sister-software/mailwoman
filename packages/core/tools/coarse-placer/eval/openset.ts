@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This command compares post-hoc rejection scores on a frozen coarse-placer model. It keeps routing fixed.
+ *   This command compares post-hoc rejection scores on a frozen coarse-placer model.
+ *
+ *   It keeps routing fixed.
  *   Thresholds are selected on one half of the data and reported on the other half.
  */
 

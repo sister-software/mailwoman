@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The nsul reader's probe interface, pinned over a fixture DB built by the same DDL + compact-postcode
- *   derivation the real builder uses (`nsul/schema.ts`) — so a fixture row and a production row can
- *   never disagree on the key a postcode probes by.
+ *   The nsul reader's probe interface, pinned over a fixture DB built by the same DDL +
+ *   compact-postcode derivation the real builder uses (`nsul/schema.ts`) — so a fixture row
+ *   and a production row can never disagree on the key a postcode probes by.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

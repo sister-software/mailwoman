@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   {@linkcode VirtualClock.runUntilSettled}'s stuck-work guard budgets real elapsed time with `performance.now()`, not the fakeable `Date`.
+ *   {@linkcode VirtualClock.runUntilSettled}'s stuck-work guard budgets real elapsed
+ *   time with `performance.now()`, not the fakeable `Date`.
  */
 
 import { describe, expect, it, vi } from "vitest"

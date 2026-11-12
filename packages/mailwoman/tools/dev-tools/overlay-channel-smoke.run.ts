@@ -8,12 +8,12 @@
  *   The script loads weights via `loadFromWeights` and rebuilds soft features for one input.
  *   It reports per-channel non-zero coverage.
  *
- *   `--cache-root` checks a package-shaped candidate:
- *   `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.
+ *   `--cache-root` checks a package-shaped
+ *   candidate: `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.
  *   If omitted, it checks the installed workspace package.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/overlay-channel-smoke.run.ts --locale en-gb [--cache-root <dir>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/overlay-channel-smoke.run.ts
+ *   --locale en-gb [--cache-root <dir>]
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The caller's approximate location from the geographic fields Cloudflare attaches to each request (`request.cf`).
- *   The tile Worker answers it at `/geolocate`, and the API Worker adds it to a geocode request as a weak bias.
+ *   The caller's approximate location from the geographic fields Cloudflare
+ *   attaches to each request (`request.cf`).
+ *
+ *   The tile Worker answers it at `/geolocate`, and the API Worker adds it to
+ *   a geocode request as a weak bias.
  */
 
 import type { Coordinates2D, GeoFeature, PointLiteral } from "@mailwoman/spatial"

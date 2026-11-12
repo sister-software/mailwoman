@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The London records against the host's data root. The flood suite reads `flood.db` and skips when the
- *   database is absent. The BDUK suite reads the London archive, its extracted files and `nsul.db`, and it
- *   skips when any of them is absent. `downloadBDUKRegion` from `@mailwoman/bduk/sdk/download` stores the
- *   archive and the extracted files.
+ *   The London records against the host's data root.
+ *
+ *   The flood suite reads `flood.db` and skips when the database is absent.
+ *   The BDUK suite reads the London archive, its extracted files and `nsul.db`,
+ *   and it skips when any of them is absent.
+ *
+ *   `downloadBDUKRegion` from `@mailwoman/bduk/sdk/download` stores the archive and the extracted files.
  */
 
 import { BDUK_EXTRACTED_DIRECTORY, type BDUKRow, bdukReleasePath, readBDUKReleaseDirectory } from "@mailwoman/bduk"

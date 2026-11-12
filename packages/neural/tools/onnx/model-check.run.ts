@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs recorded feeds through an ONNX graph and compares every output element with the outputs the model computed.
+ *   Runs recorded feeds through an ONNX graph and compares every output element
+ *   with the outputs the model computed.
  *
- *   The Rust trainer's `trainer export-feeds` writes the feeds (one row each: the token ids, the mask, every channel
- *   and the locale hint) together with the outputs its forward pass computed for them. This tool runs each feed
- *   through the graph on the CPU provider with the runner's session options and reports the largest absolute
- *   difference per output against `--tolerance`. It is the export's check against the model that `verify_parity`
- *   runs against torch in the Python exporter.
+ *   The Rust trainer's `trainer export-feeds` writes the feeds
+ *   (one row each: the token ids, the mask, every channel and the locale hint)
+ *   together with the outputs its forward pass computed for them.
+ *   This tool runs each feed through the graph on the CPU provider with the runner's session
+ *   options and reports the largest absolute difference per output against `--tolerance`.
+ *
+ *   It is the export's check against the model that `verify_parity` runs against
+ *   torch in the Python exporter.
  *
  *   Usage: `node packages/neural/tools/onnx/model-check.run.ts --model <model.onnx> --feeds <feeds.json>
  *   [--tolerance 1e-4] [--threads 4] [--out <receipt.json>]`

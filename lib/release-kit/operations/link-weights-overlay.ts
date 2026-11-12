@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { flag, text } from "#release-kit/operations/inputs"
 import { linkWeightsOverlay } from "#release-kit/weights/link-weights-overlay"
 

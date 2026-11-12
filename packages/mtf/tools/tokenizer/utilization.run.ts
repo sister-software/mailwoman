@@ -4,10 +4,12 @@
 /**
  *   Count each tokenizer piece's occurrences in the corpus train split that `prune.run.ts` reads.
  *
- *   The manifest's train paths are listed as built, so a path under the training volume (`/data/...`) is rewritten
- *   onto this host by `--data-root-remap <from>:<to>`, which defaults to `/data` onto the data root. Every file must
- *   exist after the rewrite. The tool writes `{counts, ...}` to `--out`, with the run's sidecar fields beside the
- *   counts.
+ *   The manifest's train paths are listed as built, so a path under the training volume
+ *   (`/data/...`) is rewritten onto this host by `--data-root-remap <from>:<to>`,
+ *   which defaults to `/data` onto the data root.
+ *   Every file must exist after the rewrite.
+ *
+ *   The tool writes `{counts, ...}` to `--out`, with the run's sidecar fields beside the counts.
  *
  *   Usage: `node packages/mtf/tools/tokenizer/utilization.run.ts --manifest <MANIFEST.json> --tokenizer <model>
  *   --out <json> [--workers <n>] [--data-root-remap <from>:<to>]`

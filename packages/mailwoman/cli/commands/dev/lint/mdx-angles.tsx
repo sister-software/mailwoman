@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev lint mdx-angles [files...]` — raw-angle-bracket MDX lint. A bare `<55` or
- *   `{word` in docs prose is a build-breaking MDX-JSX parse error. Checks staged docs markdown by
- *   default (the pre-commit mode), or the explicit paths when given. Exits 1 when any file is
- *   flagged.
+ *   `mailwoman dev lint mdx-angles [files...]` — raw-angle-bracket MDX lint.
+ *
+ *   A bare `<55` or `{word` in docs prose is a build-breaking MDX-JSX parse error.
+ *   Checks staged docs markdown by default (the pre-commit mode), or the explicit paths when given.
+ *   Exits 1 when any file is flagged.
  */
 
 import { Text } from "ink"

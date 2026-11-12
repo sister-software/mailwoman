@@ -2,23 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s must
- *   not block the whole classifier load.
+ *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary
+ *   that 404s mustn't block the whole classifier load.
  *
- *   `postcode-de.bin` returned 404 from production R2 for every shipped version. `postcode-us/fr`
- *   returned 200. The loader fetched postcode binaries with a throwing `Promise.all(...fetchBytes)`.
- *   One 404 rejected the whole `Promise.all`, so `loadNeuralClassifierFromURLs` rejected and
- *   the demo's `runtime.ready` never fired. The input stayed disabled even though the model, tokenizer
- *   and other postcode binaries were available.
+ *   `postcode-de.bin` returned 404 from production R2 for every shipped version.
+ *   `postcode-us/fr` returned 200.
  *
- *   The postcode anchor is a soft ranking channel rather than a required model input. This suite pins the
- *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
- *   anchors. all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
+ *   The loader fetched postcode binaries with a throwing `Promise.all(...fetchBytes)`.
+ *   One 404 rejected the whole `Promise.all`, so `loadNeuralClassifierFromURLs` rejected
+ *   and the demo's `runtime.ready` never fired.
  *
- *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real model file is
- *   needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts` (which need a real
- *   tokenizer.model) while keeping `PostcodeBinaryResolver` + `serializePostcodeBinary` real, so the
- *   postcode-load-and-merge path under test runs for real.
+ *   The input stayed disabled even though the model, tokenizer and other postcode binaries were available.
+ *
+ *   The postcode anchor is a soft ranking channel rather than a required model input.
+ *   This suite pins the fix: one 404 is skipped (with a loud warn) and the classifier
+ *   still loads with the survivors' anchors. all 404 collapses to the anchor-off
+ *   identity (undefined lookup) and still loads.
+ *
+ *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real
+ *   model file is needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts`
+ *   (which need a real tokenizer.model) while keeping `PostcodeBinaryResolver` +
+ *   `serializePostcodeBinary` real, so the postcode-load-and-merge path under test runs for real.
  */
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
@@ -76,7 +80,7 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 // Import after the mock declarations + reset.
-// `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
+// `postcode-binary-resolver.ts` isn't mocked, so the binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
 const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 

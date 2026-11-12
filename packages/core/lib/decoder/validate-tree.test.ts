@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the structural-validity checker. Trees are built through the real `buildAddressTree` so containment matches production, except the illegal-edge case, hand-constructed because the builder only produces legal edges by design.
+ *   Tests for the structural-validity checker.
+ *
+ *   Trees are built through the real `buildAddressTree` so containment matches production, except the
+ *   illegal-edge case, hand-constructed because the builder only produces legal edges by design.
  */
 
 import { describe, expect, test } from "vitest"
@@ -73,7 +76,7 @@ describe("validateTree", () => {
 	})
 
 	test("an illegal containment edge is detected", () => {
-		// Hand-built: house_number is not in `PARENT_OF[postcode]`, so nesting a postcode under one is an illegal edge.
+		// Hand-built: house_number isn't in `PARENT_OF[postcode]`, so nesting a postcode under one is an illegal edge.
 		const tree = {
 			raw: "x",
 			roots: [node("house_number", "100", [node("postcode", "90210")])],

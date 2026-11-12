@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Lanes, checks, denominators, bars, artifact pins and the one marker query all come from
- *   `decision-definition.json`. The loader refuses to hand it over if its content hash has moved.
+ *   Lanes, checks, denominators, bars, artifact pins and the one marker query
+ *   all come from `decision-definition.json`.
+ *
+ *   The loader refuses to hand it over if its content hash has moved.
  *
  *   A blocked lane is printed with what it will measure once unblocked and is scored nowhere.
  *
- *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded decision is a result
- *   rather than a failure.
+ *   Report-only by design: the exit code is non-zero only when the harness broke,
+ *   so a recorded decision is a result rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `storage.plan` — the actions `storage.prepare` would take on this device and each reason it would refuse.
+ *   `storage.plan` — the actions `storage.prepare` would take on this device
+ *   and each reason it would refuse.
  *
- *   Read-only and unprivileged on purpose: the operator should be able to see the guard verdict without first handing
- *   the process root.
+ *   Read-only and unprivileged on purpose: the operator should be able to see the
+ *   guard verdict without first handing the process root.
  */
 
 import { z } from "zod"

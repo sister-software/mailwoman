@@ -4,15 +4,20 @@
 /**
  *   Measures the readers on this host and prints a Markdown report for `docs/performance.md`.
  *
- *   Arms: a JavaScript `Set` of strings as the baseline, the TypeScript bitset reader, and the WebAssembly batch
- *   kernels, scalar and simd. Inputs: strings end to end, and packed bytes where an arm takes them. Batch sizes 1, 16,
- *   256, 4,096 and the whole 17,576-key domain. Distributions: hits, misses, and a shuffled sweep of the domain. Startup:
- *   module import, artifact decode and validation, wasm compile and instantiate, first query. Every result is consumed
- *   so the work is kept.
+ *   Arms: a JavaScript `Set` of strings as the baseline, the TypeScript bitset reader,
+ *   and the WebAssembly batch kernels, scalar and simd.
+ *   Inputs: strings end to end, and packed bytes where an arm takes them.
+ *
+ *   Batch sizes 1, 16, 256, 4,096 and the whole 17,576-key domain.
+ *   Distributions: hits, misses, and a shuffled sweep of the domain.
+ *
+ *   Startup: module import, artifact decode and validation, wasm compile and instantiate, first query.
+ *   Every result is consumed so the work is kept.
  *
  *   Usage: `node packages/registry/tools/bench.run.ts [--json]`
  *
- *   The numbers describe one host and one run. The report records the host, Node and the artifact digests beside them.
+ *   The numbers describe one host and one run.
+ *   The report records the host, Node and the artifact digests beside them.
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"

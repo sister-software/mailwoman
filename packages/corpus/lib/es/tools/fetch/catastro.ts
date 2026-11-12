@@ -2,61 +2,66 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Harvest the INSPIRE Addresses archives of the Dirección General del Catastro into the directory
- * `#es/adapters/catastro/adapter` reads.
+ * Harvest the INSPIRE Addresses archives of the Dirección General del Catastro into
+ * the directory `#es/adapters/catastro/adapter` reads.
  *
- * The service is a two-level ATOM download service. The national service document at
- * `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml` lists one entry per
- * territorial office, each entry links that office's province feed, and a province feed lists one
- * zipped GML per municipality:
+ * The service is a two-level ATOM download service.
+ * The national service document at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`
+ * lists one entry per territorial office, each entry links that office's province feed,
+ * and a province feed lists one zipped GML per municipality:
  *
  *     ES.SDGC.AD.atom.xml  →  ES.SDGC.ad.atom_<pp>.xml  →  A.ES.SDGC.AD.<ppmmm>.zip
  *
- * Measured 2026-10-03: the service document answered http 200 with 681,783 bytes holding 55
- * entries, sha256 `4342d37b6d5527eb7b8bebadc97966c90f1a041068ae9398b90183f2176898b9`.
+ * Measured 2026-10-03: the service document answered http 200 with 681,783 bytes holding
+ * 55 entries, sha256 `4342d37b6d5527eb7b8bebadc97966c90f1a041068ae9398b90183f2176898b9`.
  *
  * Five properties of this service decide the harvest's shape.
  *
  * 1. **Three of the entries belong to other publishers.** Fifty-two are titled
  *    `Territorial office <pp> <name>` and are the Dirección General del Catastro's own provinces.
- *    The other three are titled `Provincial Council of Bizkaia`, `… of Gipuzkoa` and
- *    `… of Navarra`, which publish their own cadastres through this feed and state their own terms.
- *    Each of those has its own address-source register row, its own license and its own adapter, so
- *    this harvest selects the territorial offices by a positive match on their title rather than by
- *    excluding three names. A feed that renames its offices then matches zero titles and raises.
+ *    The other three are titled `Provincial Council of Bizkaia`, `… of Gipuzkoa` and `… of Navarra`,
+ *    which publish their own cadastres through this feed and state their own terms.
+ *    Each of those has its own address-source register row, its own license
+ *    and its own adapter, so this harvest selects the territorial offices by a positive
+ *    match on their title rather than by excluding three names.
+ *    A feed that renames its offices then matches zero titles and raises.
  * 2. **A province feed declares ISO-8859-1 and means it, while the national feed declares UTF-8.**
  *    `ES.SDGC.ad.atom_15.xml` writes A Coruña's directory name with the byte `0xD1` for `Ñ`.
- *    A UTF-8 decode of that feed yields U+FFFD. The URL built from the replacement character then
- *    answers an html error page under http 200 rather than the archive. Both levels are therefore
- *    read as bytes and decoded through {@linkcode decodeDeclaredXML}. That function reads each
- *    document's own declaration.
- * 3. **An archive URL cannot be composed, and the href it is read from is not request-ready.** The
- *    directory segment is the municipality's own name, so Madrid sits under `28900-MADRID` while
- *    the composable `28079` answers an html page. The publisher writes that segment with literal
- *    spaces and with non-ASCII letters, and {@linkcode archiveRequestURL} percent-encodes both.
+ *    A UTF-8 decode of that feed yields U+FFFD.
+ *    The URL built from the replacement character then answers an html error
+ *    page under http 200 rather than the archive.
+ *    Both levels are therefore read as bytes and decoded through {@linkcode decodeDeclaredXML}.
+ *    That function reads each document's own declaration.
+ * 3. **An archive URL cannot be composed, and the href it is read from isn't
+ *    request-ready.** The directory segment is the municipality's own name, so Madrid
+ *    sits under `28900-MADRID` while the composable `28079` answers an html page.
+ *    The publisher writes that segment with literal spaces and with non-ASCII letters,
+ *    and {@linkcode archiveRequestURL} percent-encodes both.
  * 4. **The municipality code is stated twice, and the two are checked against each other.** An
- *    entry's title reads `55101-CEUTA addresses` and its archive file is
- *    `A.ES.SDGC.AD.55101.zip`. The file keeps the publisher's own name rather than one built from
- *    the code, so the code decides which entry is read and never where the file lands. A
- *    disagreement between the publisher's two statements of it is a change in the feed's layout
- *    rather than a municipality without a code.
- * 5. **Every entry of every feed states one `<updated>`, the edition's publication date.** All 55
- *    national entries and all 87 entries of `ES.SDGC.ad.atom_02.xml` read
- *    `2026-08-21T00:00:00Z`, so the value dates the publication rather than the file. It is still
- *    the freshness signal a re-run compares, because a new edition moves it. A skip requires the
- *    feed to state a value: where it states none, both sides read an empty string and an equality
- *    test would keep an archive of unknown age for as long as the feed stayed silent.
+ *    entry's title reads `55101-CEUTA addresses` and its archive file is `A.ES.SDGC.AD.55101.zip`.
+ *    The file keeps the publisher's own name rather than one built from the code,
+ *    so the code decides which entry is read and never where the file lands.
+ *    A disagreement between the publisher's two statements of it is a change in the
+ *    feed's layout rather than a municipality without a code.
+ * 5. **Every entry of every feed states one `<updated>`, the edition's publication
+ *    date.** All 55 national entries and all 87 entries of `ES.SDGC.ad.atom_02.xml` read
+ *    `2026-08-21T00:00:00Z`, so the value dates the publication rather than the file.
+ *    It is still the freshness signal a re-run compares, because a new edition moves it.
+ *    A skip requires the feed to state a value: where it states none, both sides read an empty string
+ *    and an equality test would keep an archive of unknown age for as long as the feed stayed silent.
  *
- * A full harvest is one request for the service document, 52 for the province feeds and one per
- * municipality. The archives are small enough to buffer: Ceuta is 354,647 bytes, A Coruña 907,574
- * and Madrid 7,104,627, measured 2026-10-03. The harvest is dispatched serially through one
- * `APIClient` at {@linkcode ES_CATASTRO_REQUEST_INTERVAL_MS}, and
- * {@linkcode HarvestESCatastroOptions.provinces} and {@linkcode HarvestESCatastroOptions.limit}
- * bound a run that is not harvesting the whole country.
+ * A full harvest is one request for the service document, 52 for the province feeds
+ * and one per municipality.
+ * The archives are small enough to buffer: Ceuta is 354,647 bytes, A Coruña 907,574
+ * and Madrid 7,104,627, measured 2026-10-03.
  *
- * The archives stay compressed. `#es/adapters/catastro/adapter` reads the GML member through
- * `inspireGMLChunks`, which inflates from the archive, and Ceuta's member is 11,861,975 bytes
- * against its archive's 354,647.
+ * The harvest is dispatched serially through one `APIClient` at
+ * {@linkcode ES_CATASTRO_REQUEST_INTERVAL_MS}, and {@linkcode HarvestESCatastroOptions.provinces}
+ * and {@linkcode HarvestESCatastroOptions.limit} bound a run that's not harvesting the whole country.
+ *
+ * The archives stay compressed.
+ * `#es/adapters/catastro/adapter` reads the GML member through `inspireGMLChunks`, which inflates
+ * from the archive, and Ceuta's member is 11,861,975 bytes against its archive's 354,647.
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
@@ -248,7 +253,7 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 	for (const entry of feed.entries) {
 		const titled = TERRITORIAL_OFFICE_TITLE.exec(entry.title.trim())
 
-		// An entry that is not a territorial office belongs to a foral cadastre with its own
+		// An entry that's not a territorial office belongs to a foral cadastre with its own
 		// register row, license and adapter, so it is left out rather than refused.
 		if (!titled) continue
 
@@ -441,7 +446,7 @@ export interface HarvestESCatastroOptions {
 	/**
 	 * Harvest only these two-digit province codes.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 * Without this every one of the 52 province feeds is read, at one request each.
 	 */
 	provinces?: readonly string[] | null
@@ -694,7 +699,7 @@ export async function harvestESCatastro(
 	}
 
 	// A municipality a caller requested and no selected province feed listed is reported rather than dropped.
-	// A municipality that is not published is a different condition from a
+	// A municipality that's not published is a different condition from a
 	// selection that lists no municipality.
 	for (const code of requested ?? []) {
 		if (found.has(code)) continue

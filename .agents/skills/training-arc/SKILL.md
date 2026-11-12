@@ -25,7 +25,7 @@ mwdev_arc candidate=<staged candidate dir> \
 
 It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
 before reporting a regression count, reads release eligibility from the `release_verdict` it is given, and prints the regressed ADDRESSES rather than only their number.
-A call that omits `control` or `null` does not skip the check silently. The result reports which control never ran
+A call that omits `control` or `null` doesn't skip the check silently. The result reports which control never ran
 and marks the number an upper bound.
 
 Read the rest of this file when a leg needs building, or when the tool's verdict needs auditing.
@@ -56,7 +56,7 @@ md5sum "$CAND/model.onnx"     # MUST differ from the shipped md5
 ## Step 2 — the PLACEBO run, once per BASE
 
 Fine-tune the base corpus with **no added data**, same steps, same seed, same brake. Export, quantize,
-grade it against shipped exactly as you would a candidate.
+grade it against shipped exactly as you'd a candidate.
 
 This is the placebo — pass it to `mwdev_arc` as `null=`. Measured on `v440-step-060000`: **10 of 649 rows
 regress with no new data**. The loss appears in the first 1,000 steps and is flat to 4,000: touching the
@@ -120,7 +120,7 @@ attribute a regression on its own. Attribute a regression with one of two instru
 Run the checkpoint trajectory before proposing a salvage. A treatment effect can be complete early
 in the run, and a salvage aimed at the final checkpoint then targets the wrong step.
 
-## Step 5 — the comparison is against the shipped model, and it is not the attribution
+## Step 5 — the comparison is against the shipped model, and it isn't the attribution
 
 The placebo is the right baseline for _attributing_ a regression. Release eligibility comes from the
 registered quality requirements instead (iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`):
@@ -157,18 +157,18 @@ measurement in this protocol.
 - **A corpus change carrying a hypothesis declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
   Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU. A missing source, or a label
-  order whose source is drawn zero times, must stop the run. A source file or rendering branch is not evidence that the sampler
+  order whose source is drawn zero times, must stop the run. A source file or rendering branch isn't evidence that the sampler
   reaches the target rows (#1869).
 
 ## The report — its structure is part of the protocol
 
 Lead with the addresses that changed and the attribution. Give the aggregate as a footer. If a control was
-not run, say so — an unattributed regression count is not a finding.
+not run, say so — an unattributed regression count isn't a finding.
 
 - Name runs by version and role: "the control run (v5.0.1)", "the treatment run (v5.0.2)". Never a
   minted name — the operator has banned `the null` and `the cure` from reports; `null=` survives only
   as the literal `mwdev_arc` parameter.
-- Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count states its
+- Every table identifies its comparison arm in its header ("vs shipped v4.4.0"), and every count states its
   denominator.
 - A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
   This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place rather than in a

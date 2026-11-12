@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Browser-safe aggregate of this package. It is the main entry minus `./weights.ts` and
- *   `./scorer.ts` — the only two modules left that statically reach `node:fs`, and so the only two a
- *   browser graph cannot contain. Everything else here is reachable from a bundle by construction:
- *   `neural/onnx-runner` resolves to a throwing browser counterpart under the `browser` condition.
+ *   Browser-safe aggregate of this package.
+ *
+ *   It is the main entry minus `./weights.ts` and `./scorer.ts` — the only two modules left
+ *   that statically reach `node:fs`, and so the only two a browser graph cannot contain.
+ *   Everything else here is reachable from a bundle by construction: `neural/onnx-runner`
+ *   resolves to a throwing browser counterpart under the `browser` condition.
  *   oxlint enforces the no-`node:*` rule for the rest.
  *
- *   The soft-feature channels below are not optional decoration. A gazetteer-, country-, or
- *   pair-trained model requires its channel fed at inference. a zero-filled clue is a train/inference
- *   mismatch rather than a neutral default (see CONTRIBUTING_MODEL_WORK.mdx, "zero-fill trap"). A browser
- *   caller fetches each lexicon alongside the model and feeds it.
+ *   The soft-feature channels below are not optional decoration.
+ *   A gazetteer-, country-, or pair-trained model requires its channel fed at
+ *   inference. a zero-filled clue is a train/inference mismatch rather than a neutral
+ *   default (see CONTRIBUTING_MODEL_WORK.mdx, "zero-fill trap").
+ *
+ *   A browser caller fetches each lexicon alongside the model and feeds it.
  */
 
 export * from "#anchor-inference"

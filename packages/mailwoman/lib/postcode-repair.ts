@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postcode-contradiction repair rung, firing only on a high-confidence letter-digit postcode shape whose span has no postcode node and whose every node is a wholly-contained street/house-number-family misread.
+ *   The postcode-contradiction repair rung, firing only on a high-confidence
+ *   letter-digit postcode shape whose span has no postcode node and whose every node
+ *   is a wholly-contained street/house-number-family misread.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

@@ -4,12 +4,13 @@
 /**
  *   This module reads an HTML fragment as text through `htmlparser2`, using one rule in two ways.
  *
- *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) decodes entities, survives a `<` inside an attribute
- *   value and leaves source whitespace runs intact, but `textContent` inserts no separator at an element boundary,
- *   so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as `"Acme FiberLLC"`, a name that
- *   appears nowhere in the document.
+ *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) decodes entities, survives a `<`
+ *   inside an attribute value and leaves source whitespace runs intact, but `textContent`
+ *   inserts no separator at an element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and
+ *   `<p>Acme Fiber</p><p>LLC</p>` as `"Acme FiberLLC"`, a name that appears nowhere in the document.
  *
- *   Reach for the sanitizer only from a module that already sanitizes: its Node build constructs a jsdom window at
+ *   Reach for the sanitizer only from a module that already sanitizes:
+ *   its Node build constructs a jsdom window at
  *   import (measured 422 ms, 71 MB, against `htmlparser2`'s 12 ms), priced for sanitizing rather than for reading
  *   a table.
  */
@@ -81,7 +82,7 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
  *
  * An element in `lineBreakElements` makes that separator a newline, unconditionally,
- * because a line boundary the document states is not a spacing judgment.
+ * because a line boundary the document states isn't a spacing judgment.
  */
 export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<string>): string {
 	let text = ""

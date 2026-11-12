@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev generate man-page` regenerates the committed `man/mailwoman.1` from the compiled CLI help tree.
- *   The command runs offline. The `tools/dev-tools/man-page.integration.test.ts` freshness test fails on drift. The pre-commit hook runs this command
- *   when a commit touches the command surface.
+ *   `mailwoman dev generate man-page` regenerates the committed `man/mailwoman.1`
+ *   from the compiled CLI help tree.
+ *
+ *   The command runs offline.
+ *   The `tools/dev-tools/man-page.integration.test.ts` freshness test fails on drift.
+ *
+ *   The pre-commit hook runs this command when a commit touches the command surface.
  */
 
 import { Text } from "ink"

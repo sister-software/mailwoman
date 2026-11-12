@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `PresetChips` is the "Try:" row of example buttons shared by both explorers. Presentational: it
- *   renders a labeled list and calls `onPick` with the chosen preset's value.
+ *   `PresetChips` is the "Try:" row of example buttons shared by both explorers.
+ *
+ *   Presentational: it renders a labeled list and calls `onPick` with the chosen preset's value.
  */
 
 import type { ReactNode } from "react"

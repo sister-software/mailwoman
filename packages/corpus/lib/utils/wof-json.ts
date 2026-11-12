@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters. They read the
- * per-record bundles published as `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>`
- * repos: a tree of `data/<3>/<3>/<3>/<wof-id>.geojson` files plus alternate-geometry siblings like
- * `<id>-alt-quattroshapes.geojson`, of which only the canonical record is consumed.
+ * Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters.
  *
- * `is_current` semantics follow WOF + Pelias: `mz:is_current` ∈ {`1`, `-1`} are live and `0` is
- * superseded. WOF's official postalcode distribution stamps every row `-1` ("unknown but treated as
- * active"), so an `is_current = 1` filter silently emits zero rows from the real corpus.
+ * They read the per-record bundles published as
+ * `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>` repos:
+ * a tree of `data/<3>/<3>/<3>/<wof-id>.geojson` files plus alternate-geometry siblings
+ * like `<id>-alt-quattroshapes.geojson`, of which only the canonical record is consumed.
+ *
+ * `is_current` semantics follow WOF + Pelias: `mz:is_current` ∈ {`1`, `-1`} are live and `0` is superseded.
+ * WOF's official postalcode distribution stamps every row `-1` ("unknown but treated as active"),
+ * so an `is_current = 1` filter silently emits zero rows from the real corpus.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -58,7 +60,7 @@ export interface WOFRecord {
 	 * The single-value case stays a string because an admin run holds over 13 million records resident.
 	 * This representation avoids allocating an array when a key has one value.
 	 *
-	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
+	 * The canonical `wof:name` isn't included — adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string | readonly string[]>
 	/**
@@ -130,8 +132,8 @@ export function preferredName(record: WOFRecord, language: string): string | nul
  * A historical attestation that some Who's On First names append after the name itself.
  *
  * `[a. 1240]` (and `[~ a. 1000]` for an approximate year) records the year a place is first attested.
- * It is not written in an address, so a corpus row that keeps it teaches the
- * model a locality that ends in a bracketed date.
+ * It isn't written in an address, so a corpus row that keeps it teaches the model
+ * a locality that ends in a bracketed date.
  */
 const ATTESTATION = /\s*\[\s*~?\s*a\.\s*\d{1,4}\s*\]/gu
 
@@ -298,7 +300,7 @@ export function isAtOrigin(props: Record<string, unknown>): boolean {
  * They do not represent new records.
  *
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
- * so one bad file does not poison a multi-gigabyte walk.
+ * so one bad file doesn't poison a multi-gigabyte walk.
  *
  * The libuv threadpool has four workers by default; `UV_THREADPOOL_SIZE` can change that count.
  * `parallelMap` reads files concurrently up to the threadpool capacity.
@@ -366,7 +368,7 @@ export const ANCESTOR_NAME_TAGS = ["locality", "subregion", "region", "country"]
 export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>
 
 /**
- * The ancestor names each record needs, keyed by `wof:id`.
+ * The ancestor names that each record needs, keyed by `wof:id`.
  *
  * The predecessor index held one array of record references per record, so a run over the 13,274,691
  * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
@@ -425,7 +427,7 @@ export function buildAncestorNameIndex(
  *
  * `tagOf` maps a WOF placetype to a component tag, or returns a value outside
  * {@linkcode ANCESTOR_NAME_TAGS} for a placetype no builder looks up.
- * It is a parameter because `placetypeToTag` lives with the adapters and this module does not import them.
+ * It is a parameter because `placetypeToTag` lives with the adapters and this module doesn't import them.
  *
  * The walk stops at the first `parent_id` absent from `byID`, and a cycle guard halts at any re-visit.
  * WOF data is acyclic by construction.

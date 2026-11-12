@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one npm write. Plan → execute: `--plan <file>` names a plan written by `release.plan --json`. The operation
- *   refuses when head is dirty, head moved, or the recomputed digest differs. release-it's per-workspace
- *   `publishCommand` hook has no plan to hand over, so `--allow-unplanned` keeps that path runnable — loudly.
+ *   The one npm write.
+ *
+ *   Plan → execute: `--plan <file>` names a plan written by `release.plan --json`.
+ *   The operation refuses when head is dirty, head moved, or the recomputed digest
+ *   differs. release-it's per-workspace `publishCommand` hook has no plan to hand over,
+ *   so `--allow-unplanned` keeps that path runnable — loudly.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { flag, text } from "#release-kit/operations/inputs"
 import { publishWorkspace, releaseItWorkspaceEnvironment } from "#release-kit/pack/publish/workspace"
 import { assertPlanHolds } from "#release-kit/release/plan"

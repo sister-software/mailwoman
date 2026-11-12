@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pricing page's calculator: a monthly lookup count against each metered provider's published list rate, and the
- *   commercial license beside them. The slider moves every row except ours.
+ *   The pricing page's calculator: a monthly lookup count against each metered provider's
+ *   published list rate, and the commercial license beside them.
+ *   The slider moves every row except ours.
  */
 
 import { PRICE_MONTHLY } from "@mailwoman/license-worker/client/constants"

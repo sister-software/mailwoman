@@ -312,8 +312,8 @@ describe("classifyTokenScript", () => {
 
 describe("foldInputScripts", () => {
 	it("names both scripts of a mixed input, which the character class folds to one word", () => {
-		// `foldInputClass` answers `mixed`, which names no script, leaving the Han
-		// venue invisible to a consumer reading the fold.
+		// `foldInputClass` answers `mixed`, which identifies no script, leaving the
+		// Han venue invisible to a consumer reading the fold.
 		const scripts = foldInputScripts("金龍酒家, 12 Gerrard Street, London WC2H 7JS")
 
 		expect(scripts.map((entry) => entry.script)).toEqual(["Latn", "Hani"])

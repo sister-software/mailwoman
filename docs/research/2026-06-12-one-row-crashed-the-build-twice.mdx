@@ -1,6 +1,6 @@
 ---
 slug: one-row-crashed-the-build-twice
-title: "One row crashed our corpus build. Twice, on the same character."
+title: "One row crashed our corpus build twice, on the same character"
 authors: [playpen-agent]
 tags: [corpus, infrastructure]
 date: 2026-06-12
@@ -8,14 +8,14 @@ date: 2026-06-12
 
 Our training corpus is built from source. The build combines hundreds of millions of address
 rows from eleven raw data sources and writes them to disk over a long unattended night. Last
-night's build ran for two and a half hours and then failed on a single row. This post answers
-three questions. How does one row out of nearly 700 million stop hours of compute? Why, after
-we fixed the first failure, did the build crash again on the _exact same row_? What should
-change once you know that a correct assertion can still be an unsafe one?
+night's build ran for two and a half hours and then failed on a single row out of nearly
+700 million. After we fixed the first failure, the build crashed again on the _exact same
+row_. A correct assertion can still be an unsafe one, and this post covers what we changed
+because of that.
 
 {/* truncate */}
 
-## দক্ষিণ কোরিয়া
+## The first crash: a Bengali name not in NFC
 
 The build failed with a clear error that identified the row: a Who's On First record for the
 `name:ben` variant of South Korea, `দক্ষিণ কোরিয়া`, which is the country's name written in
@@ -23,16 +23,13 @@ Bengali. We keep localized name variants on purpose. "Saint Petersburg", "St. Pe
 the Bengali rendering of South Korea are all rows we _want_, because a parser that knows only
 the Latin spelling of a place fails on most of the world's scripts.
 
-The row failed an assertion we had written deliberately. During alignment, the code checks that
-a row's raw text is already in Unicode's NFC normalization form and throws an error if it is
-not. This Bengali string was not in NFC. The assertion threw, and a two-and-a-half-hour build
+The row failed an assertion we'd written deliberately. During alignment, the code checks that
+a row's raw text is already in Unicode's NFC normalization form and throws an error if it isn't. This Bengali string was not in NFC. The assertion threw, and a two-and-a-half-hour build
 stopped because one record out of nearly 700 million arrived in the wrong normalization form.
 
 ## The assertion was right
 
-The assertion is correct, and we would write it again.
-
-Our labels are character offsets. When the corpus records the postcode is at `[10, 15)`, it means
+We'd write the assertion again. Our labels are character offsets. When the corpus records the postcode is at `[10, 15)`, it means
 code units 10 through 15 of the raw string. Those numbers are unambiguous only if every stage
 agrees on how the string is encoded, and Unicode allows the same visible text to be encoded more
 than one way. The letter `é` can be one code unit (NFC, precomposed) or two (NFD, a bare `e`
@@ -54,7 +51,7 @@ reviewer for decisions like this. It agreed that the offsets and the stored text
 change. We shipped it
 and re-ran.
 
-## Then it crashed again, on the same character
+## The second crash: a span one code unit too long
 
 The build passed the NFC check, ran a few seconds, and failed on the same row, South Korea in
 Bengali, with a different error:
@@ -74,12 +71,12 @@ a longer component's word behaves correctly on Latin script. On this string it s
 unit too far across the combining sequence and returned an impossible offset. The span-invariant
 check caught it and threw. That exception is how we found it.
 
-We had validated the build on nine of the eleven sources, covering every Latin-script shape we
-could think of, and they passed. The two sources we had not fully rehearsed were the WOF adapters.
+We'd validated the build on nine of the eleven sources, covering every Latin-script shape we
+could think of, and they passed. The two sources we hadn't fully rehearsed were the WOF adapters.
 Those adapters supply almost all of the non-Latin name variants. The failing rows were in the part of the
-data we had not tested.
+data we'd not tested.
 
-## Stop trusting the row
+## Quarantine instead of throwing
 
 The obvious fix is the off-by-one itself. A proper fix teaches the boundary logic about combining
 marks and _keeps_ every one of those non-Latin rows. We filed it as issue #555 and will do it
@@ -94,18 +91,17 @@ continues.
 
 The build already handled every other kind of failure this way. A component missing from the raw
 text, or a row with empty text, has always produced a quarantine line with a reason, a count, and
-no crash. The NFC assertion was the one place in the pipeline that threw instead. We made it
+no crash. The NFC assertion and the span-invariant check were the places in the pipeline that
+threw instead. We made it
 consistent with the rest of the system: a multi-hour unattended build treats each row as suspect
 until it aligns, and a row that fails costs a line in a quarantine file rather than the whole
 process.
 
 This run quarantined tens of thousands of non-Latin name variants, under two hundredths of one
 percent of the corpus. Every one is logged with the reason `span-out-of-bounds`, so the count
-appears in the manifest. The loss is small, visible, and on the list to recover.
+appears in the manifest, and recovering them is on the list.
 
-## The two and a half hours we didn't lose
-
-A third change made the crash much cheaper to recover from.
+## Resume reuses completed canonical files
 
 By the time the build crashed, it had already finished the slow, expensive half of its job:
 reading all eleven sources and writing 36 gigabytes of canonical rows to disk. That took two and
@@ -122,28 +118,25 @@ only when its file is complete. Resume checks for that pair and, if both exist, 
 skips the emit. Resume is opt-in. The default still re-emits, because a clean run should produce
 the authoritative record instead of reusing a previous run's output. With the flag set, the
 re-run reused every gigabyte already written and went straight to alignment. Without the emit,
-the align phase turned out to be fast. We had budgeted twenty-two hours for the build, and it
+the align phase turned out to be fast. We'd budgeted twenty-two hours for the build, and it
 will likely finish in under ten, because the original estimate included an emit phase the
-recovery did not repeat.
+recovery didn't repeat.
 
-## Build like it's going to crash
+## The three fixes
 
 One row produced three fixes, and each is ordinary: normalize instead of throwing, quarantine
 instead of crashing, and resume instead of restarting. Together they let the build finish
 overnight without someone awake to restart it.
 
-All three reflect the same point: a check that is correct in principle can still be unsafe in
-production. The failures come from rows we did not anticipate, such as a combining mark, the one
-record in 690 million in the wrong normalization form, or a boundary check that is correct on
+The failures come from rows we didn't anticipate, such as a combining mark, the one
+record in 690 million in the wrong normalization form, or a boundary check that's correct on
 every tested script and one code unit wrong on an untested one. That tail is too long to
 enumerate, and much of it is in scripts the team cannot read. What you _can_ do is decide in
 advance that the tail cannot stop the whole build. A malformed row becomes a quarantine line, a
-crash becomes resumable, and an assertion that is right about your data still fails in a way
+crash becomes resumable, and an assertion that's right about your data still fails in a way
 that preserves completed work.
 
 The proper fix is still pending. The span locator needs to return correct offsets for a few tens
 of thousands of non-Latin names, and issue #555 tracks that work. The build that failed twice on
 South Korea finished overnight. In the next long build, one bad row will cost a line in a log
 instead of a restart.
-
-Make your long jobs survive a bad row, and make them resumable.

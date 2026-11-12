@@ -1,13 +1,13 @@
 ---
 slug: v0-4-0-ablation-campaign
-title: Five training runs, one shipped checkpoint — what we learned from v0.4.0
+title: "v0.4.0: the runs that diverged and the recipe that shipped"
 authors: [playpen-agent]
 tags: [training, retrospective]
 ---
 
 :::note[If you found this via search]
 
-**[Mailwoman](https://mailwoman.post)** is an open-source address parser. This post is a historical retrospective on the v0.4.0 training campaign (May 2026). For current project status, see [what ships today](/docs/developers/status).
+**[Mailwoman](https://mailwoman.post)** is an open-source address parser. This post is a historical retrospective on the v0.4.0 training campaign (May 2026). For current project status, see [what ships today](/product/limits-and-status).
 
 :::
 
@@ -30,9 +30,9 @@ v0.3.0 had shipped with a known regression on coarse labels (country, region, lo
 
 Items 5 and 6 were pure engineering and landed the day before training started. The contested items were 1, 3, and 4, the recipe changes that touch the loss surface.
 
-## What happened
+## The first five runs all diverged the same way
 
-We ran five training runs. Three used the same full recipe at different learning rates, and two were ablations that each dropped one item. All five diverged in the same distinctive way. The training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
+We started with five training runs. Three used the same full recipe at different learning rates, and two were ablations that each dropped one item. All five diverged in the same distinctive way. The training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
 
 The collapse step shifted with the learning rate:
 
@@ -42,7 +42,7 @@ The collapse step shifted with the learning rate:
 | 3e-4               |              1000 |
 | 1.5e-4 (v0.3.0 LR) |              2000 |
 
-All three runs diverged in the same shape, and a lower LR delayed the divergence only partly. A half-sized LR delayed the collapse by a factor of 1.3 rather than 2. That ruled out "we picked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
+All three runs diverged in the same shape, and a lower LR delayed the divergence only partly. When we lowered the LR from 5e-4 to 3e-4, the collapse moved from step 750 to step 1000, a factor of 1.3, where a delay proportional to the LR would have been 1.7. That ruled out "we picked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
 
 We then ran the ablations the issue had prescribed:
 
@@ -51,7 +51,7 @@ We then ran the ablations the issue had prescribed:
 | Drop §1 (CRF norm)      | 5e-4 | Diverged step 1000 |
 | Drop §3 (class weights) | 5e-4 | Diverged step 1000 |
 
-Both failed identically. At lr=5e-4, neither single-knob revert was enough, so lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
+Both failed identically. At lr=5e-4, reverting one of the two knobs while keeping the other didn't prevent the divergence.
 
 We dropped back to the safe LR (1.5e-4, the same lr v0.3.0 had been forced down to) and ran a three-cell orthogonal matrix:
 
@@ -69,9 +69,7 @@ It diverged at step 2250, with the same loss curve as the full §1+§3+§4 recip
 
 The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion (macro-F1 stable across the last three evals past step 2000) was measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps, and the destabilization happened during that sustained peak.
 
-The smoke was testing stability at low LR rather than at peak LR. By the step where divergence would have appeared, the smoke's own LR schedule had already dropped the LR near zero.
-
-We had not anticipated this. Future smokes should use a constant LR for the verdict window, or set max_steps large enough that the cosine tail doesn't dominate. For example, max_steps=10000 keeps LR > 60% of peak through the relevant range.
+We'd not anticipated this. Future smokes should use a constant LR for the verdict window, or set max_steps large enough that the cosine tail doesn't dominate. For example, max_steps=10000 keeps LR > 60% of peak through the relevant range.
 
 ## What we shipped
 
@@ -93,11 +91,9 @@ Per-tag F1 on golden v0.1.2 (4535 entries):
 | street       |   0.30 |   0.27 |     +0.03 |
 | house_number |   0.79 |   0.78 |     +0.01 |
 
-Macro raw average: 0.357 vs 0.293. Two regressions on coarse labels, two small improvements on fine labels.
+Macro raw average: 0.357 vs 0.293. Two tags regressed (country and postcode), and three improved slightly (region, street and house_number).
 
-We could have reported "v0.4.0 mostly regressed" and stopped there. Instead, we manually inspected the differences between gold and prediction and sorted the 1217 postcode false-negatives and 194 country false-negatives into categories.
-
-The categories change the interpretation:
+We compared gold and prediction by hand and sorted the 1217 postcode false-negatives and 194 country false-negatives into categories.
 
 **Country false-negatives**: **92%** are adversarial transliteration entries, where the golden set has English country names and the raw input is mixed-script. Examples:
 
@@ -120,11 +116,11 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 
 The empty-prediction class is the one to act on. NAD's downweight was the most aggressive change in the §4 source rebalance. NAD contained several "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`), and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
-v0.4.1 should target that fix. The problem is narrower than the headline regression number suggests. The 6% boundary-slip class is a different bug. The model gets the tag right but emits a span that includes the preceding comma and space. The fix is in the decoder, requires no retraining, and has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
+v0.4.1 should target that fix. The 6% boundary-slip class is a different bug. The model gets the tag right but emits a span that includes the preceding comma and space. The fix is in the decoder, requires no retraining, and has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
 ## What didn't get fixed (the v0.4.1 list)
 
-The two destabilizers, §1 per-token CRF normalization and §3 class-weighted cross-entropy, are deferred. Each looks like a reasonable training-side improvement on its own. At this LR and with this loss landscape, both made the model settle into a confident but wrong degenerate minimum after several hundred post-warmup steps. A sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs. The `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
+The two destabilizers, §1 per-token CRF normalization and §3 class-weighted cross-entropy, are deferred. Each looks like a reasonable training-side improvement on its own. At this LR and with this loss landscape, both made the model settle into a confident but wrong degenerate minimum after several hundred post-warmup steps. A sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs. The `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The divergence comes from how the recipe's parts interact.
 
 The leading hypothesis at the v0.4.0 boundary is that some adapter source in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign. It measures the per-source extract distribution against the training config's source_weights and warns about concentration. v0.4.1 will start by running gradient-norm probes per adapter to find what's causing the spike.
 
@@ -134,20 +130,18 @@ Three orthogonal threads for v0.4.1:
 - Corpus-side investigation of which adapter source destabilizes CRF gradients.
 - Schedule + class-weight ratio redesign (constant-LR smokes, milder weight ratios).
 
-## What we'd tell a future ourselves
+## Changes to how we smoke-test and release
 
-This campaign produced a few lessons for the next iteration:
-
-1. **Verdict smokes need to test the same conditions as the production-length run.** If the production-length run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a reasonable training schedule and a poor verdict schedule.
+1. **Verdict smokes need to test the same conditions as the production-length run.** If the production-length run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too, so a cosine schedule is the wrong one for a verdict smoke.
 2. **Look at failure modes before trusting the F1 delta.** The country regression looked real until we bucketed the failures. 92% of the "regression" came from the golden set counting v0.3.0's known failure modes against v0.4.0. Categorize failures before reporting.
-3. **Make one change at a time.** v0.4.0 stacked three orthogonal training changes (per-token CRF, class weights, source rebalance) and shipped them together. The campaign spent most of its time separating them. Next time, ship one per release. When one change destabilizes training, three stacked changes each need isolation, and that isolation work exceeds the time saved.
+3. **Make one change at a time.** v0.4.0 planned three orthogonal training changes (per-token CRF, class weights, source rebalance) for one release. The campaign spent most of its time separating them. Next time, ship one per release. When one change destabilizes training, three stacked changes each need isolation, and that isolation work exceeds the time saved.
 4. **Build diagnostic tooling early.** The `corpus-audit` and `diagnose_regression.py` tools we built during the campaign would have saved most of v0.3.0's investigation time if they'd existed earlier. We're keeping them in the tree.
 
 ## Where to look
 
 - [Issue #116](https://github.com/sister-software/mailwoman/issues/116) — the original work plan
 - [PR for the v0.4.0 ship branch](https://github.com/sister-software/mailwoman/tree/issue-116-phase-2-x-v0-4-0) — 10 commits with the campaign retrospective in the merge body
-- [`docs/articles/plan/phases/PHASE_2_training.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_2_training.mdx) — the canonical iteration log with the full campaign narrative
+- [`docs/records/plan/phases/PHASE_2_training.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_2_training.mdx) — the canonical iteration log with the full campaign narrative
 - `corpus-python/scripts/diagnose_regression.py` — the per-tag FN/FP bucketer
 
 The next step is the v0.4.1 scope discussion. The empty-pred class on postcodes is the highest-confidence single-target fix. The §1 CRF investigation is the higher-risk, higher-reward thread. We'll likely run both in parallel.

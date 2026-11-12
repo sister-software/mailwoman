@@ -52,7 +52,7 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 
 /**
  * Rebuild a full H3 cell index from a short cell captured at `resolution`, throwing
- * when the resolution is out of range or the pair does not name a valid cell.
+ * when the resolution is out of range or the pair doesn't name a valid cell.
  */
 export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOLUTION): H3Cell {
 	if (!Number.isInteger(resolution) || resolution < 0 || resolution > H3_MAX_RESOLUTION) {
@@ -114,7 +114,7 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 				expandH3Cell(short, resolution)
 				valid.push(resolution)
 			} catch {
-				// A resolution the short cell does not expand at — every cell expands at exactly one.
+				// A resolution the short cell doesn't expand at — every cell expands at exactly one.
 			}
 		}
 

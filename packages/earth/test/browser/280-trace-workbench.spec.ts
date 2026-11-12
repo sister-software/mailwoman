@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file The `/trace` workbench. The top field traces as it is typed, the character band and the readings
  *   follow, the URL keeps the traced text, and a tile's removal rewrites the traced text.

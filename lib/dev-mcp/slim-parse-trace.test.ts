@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The slim-trace pin: the matrices go, every discrete diagnostic stays and the omission announces itself. The full
- *   payload measured in the thousands of floats per input and crowded the very context windows the trace exists to
- *   inform — inline numbers cost more than their reported value.
+ *   The slim-trace pin: the matrices go, every discrete diagnostic stays and the omission announces itself.
+ *
+ *   The full payload measured in the thousands of floats per input and crowded the very context
+ *   windows the trace exists to inform — inline numbers cost more than their reported value.
  */
 
 import type { NeuralParseTrace } from "@mailwoman/neural/trace"

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generates localized PO-box and private-mailbox rows in which the designator and number form one `po_box` span.
+ *   Generates localized PO-box and private-mailbox rows in which the designator
+ *   and number form one `po_box` span.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

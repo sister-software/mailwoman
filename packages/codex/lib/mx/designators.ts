@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Mexican designators: apartado, premise and sub-premise words, floors, number marks and Spanish relation
- *   words. Correos de México publishes its address layout through the UPU sheet. The sheet shows `Piso` and
- *   `Super Manzana`. The remaining words take a dictionary entry as their source.
+ *   Mexican designators: apartado, premise and sub-premise words, floors,
+ *   number marks and Spanish relation words.
+ *
+ *   Correos de México publishes its address layout through the UPU sheet.
+ *   The sheet shows `Piso` and `Super Manzana`.
+ *
+ *   The remaining words take a dictionary entry as their source.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mexEn.pdf UPU Mexico postal address sheet (Correos de México)}
  * @see {@link https://en.wiktionary.org/wiki/apartado Wiktionary, apartado}

@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `unit` recipe: injects a USPS Pub-28 C2 secondary-unit designator into real US OpenAddresses
- *   skeletons, varying the surface form and the unit's position per row.
+ *   `unit` recipe: injects a USPS Pub-28 C2 secondary-unit designator into real US
+ *   OpenAddresses skeletons, varying the surface form and the unit's position per row.
  *
- *   `--golden` emits the held-out Vermont eval (`{raw, components, country}`) with a different
- *   seed. Train uses every non-Vermont US source. `--count` bounds the output and leaves the input unbounded.
+ *   `--golden` emits the held-out Vermont eval (`{raw, components, country}`) with a different seed.
+ *   Train uses every non-Vermont US source.
+ *   `--count` bounds the output and leaves the input unbounded.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -107,7 +108,7 @@ export function makeUnit(random: () => number, oaUnit: string): string {
 	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : sample(SYNTH_IDS, random)
 
 	// Both spacings are emitted: attesting one leaves the other reachable only by
-	// generalization the model does not make here.
+	// generalization the model doesn't make here.
 	if (random() < SIGIL_WEIGHT) return random() < 0.5 ? `#${id}` : `# ${id}`
 
 	return `${designator} ${id}`
@@ -256,7 +257,7 @@ export const unitRecipe: CorpusRecipe = {
 
 		if (!pool.length) {
 			throw new Error(
-				`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")} and the NAD ` +
+				`No US tuples found — are the cached OA zips present in ${currentSourcePath("openaddresses")} and the NAD ` +
 					`skeletons in ${dataRootPath(NAD_SKELETON_DIRECTORY)}?`
 			)
 		}

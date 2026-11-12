@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Administrative-boundary extractor — pull one `boundary=administrative` multipolygon out of a
- *   Geofabrik `.osm.pbf` extract via gdal/ogr2ogr and hand back its GeoJSON geometry. Mirrors
- *   `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom. The extractor keeps the
- *   geometry rather than reducing it to a representative point. It refuses any result other than
- *   exactly one match.
+ *   Administrative-boundary extractor — pull one `boundary=administrative` multipolygon out
+ *   of a Geofabrik `.osm.pbf` extract via gdal/ogr2ogr and hand back its GeoJSON geometry.
  *
- *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle asserts survey over
- *   whatever the rectangle overhangs. A country/region extract is clipped to a polygon rather than a
- *   rectangle. `bboxCoverageCells` in the POI pipeline is correct for the rectangular extracts it was written
- *   for. an administrative region needs its own outline or the cells along its edge claim coverage
- *   the source never had.
+ *   Mirrors `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom.
+ *   The extractor keeps the geometry rather than reducing it to a representative point.
+ *   It refuses any result other than exactly one match.
  *
- *   The extractor rejects multiple matches because `name` is not unique in OSM even within one
- *   admin level. Silently taking the first row would key a completeness claim to whichever feature
- *   the driver happened to emit first. Downstream code could not distinguish it from the region the caller meant.
+ *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle
+ *   asserts survey over whatever the rectangle overhangs.
+ *   A country/region extract is clipped to a polygon rather than a rectangle.
+ *
+ *   `bboxCoverageCells` in the POI pipeline is correct for the rectangular
+ *   extracts it was written for. an administrative region needs its own outline
+ *   or the cells along its edge claim coverage the source never had.
+ *
+ *   The extractor rejects multiple matches because `name` isn't unique in OSM even within one admin level.
+ *   Silently taking the first row would key a completeness claim to whichever
+ *   feature the driver happened to emit first.
+ *
+ *   Downstream code couldn't distinguish it from the region the caller meant.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

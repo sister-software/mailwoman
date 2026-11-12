@@ -3,21 +3,31 @@
 
 /**
  *   A repeated hyphen prefix among a directory's children is a directory hierarchy encoded in names.
- *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. This directory boundary
- *   as a directory makes imports, file listings and editor trees show the same hierarchy.
  *
- *   A group contains two or more children that share their first hyphen-delimited segment. A sibling whose full name
- *   is the prefix joins the group. For example, `reliability.ts` belongs beside `reliability-report.ts` as the family's
- *   own module.
- *   The head stays where it is: a file keeps its name beside the new directory, and a directory is already the
- *   destination.
+ *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`.
+ *   This directory boundary as a directory makes imports, file listings
+ *   and editor trees show the same hierarchy.
  *
- *   Two conditions determine what counts as a child. A name can represent an interface instead of a layout. A
- *   workspace directory is an npm package name. `packages/neural-weights-en-gb` is published under that
- *   name and appears in the release list, so it cannot join a group. A subdirectory counts only when it contains a
- *   tracked TypeScript file. That distinguishes code families from data directories that mirror external names.
- *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository. `fixtures/.../whosonfirst-data-admin-fr/` is an upstream
- *   repository. This check does not arrange either external repository.
+ *   A group contains two or more children that share their first hyphen-delimited segment.
+ *   A sibling whose full name is the prefix joins the group.
+ *
+ *   For example, `reliability.ts` belongs beside `reliability-report.ts` as the family's own module.
+ *   The head stays where it is: a file keeps its name beside the new directory,
+ *   and a directory is already the destination.
+ *
+ *   Two conditions determine what counts as a child.
+ *   A name can represent an interface instead of a layout.
+ *
+ *   A workspace directory is an npm package name.
+ *   `packages/neural-weights-en-gb` is published under that name and appears in
+ *   the release list, so it cannot join a group.
+ *
+ *   A subdirectory counts only when it contains a tracked TypeScript file.
+ *   That distinguishes code families from data directories that mirror external names.
+ *
+ *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository.
+ *   `fixtures/.../whosonfirst-data-admin-fr/` is an upstream repository.
+ *   This check doesn't arrange either external repository.
  */
 
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
@@ -203,17 +213,17 @@ export function findPrefixGroups(
  *
  * A directory member expands into one move per tracked file beneath it,
  * because the move operation works in files.
- * That is what lets it repoint the specifiers naming each one.
+ * That's what lets it repoint the specifiers naming each one.
  */
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving includes its contents, so a group inside one
+	// A directory that's itself moving includes its contents, so a group inside one
 	// would claim the same file twice with two destinations.
 	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
 	// and a `command-` member in its own right.
 	// The outer move wins this pass and the check re-reads afterwards.
-	// That is what the fix's repeated passes are for.
+	// That's what the fix's repeated passes are for.
 	const movingDirectories = groups.flatMap((group) =>
 		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
 	)

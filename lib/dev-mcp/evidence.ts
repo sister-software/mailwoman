@@ -4,10 +4,12 @@
 /**
  *   What the model was fed, read off a parse trace.
  *
- *   A channel is **absent** (never configured), **silent** (fed all zeros), or **fired** (fed at least one nonzero
- *   feature); absent and silent must not be collapsed, because the repairs differ: wire the mechanism vs. extend its data.
+ *   A channel is **absent** (never configured), **silent** (fed all zeros),
+ *   or **fired** (fed at least one nonzero feature); absent and silent mustn't be collapsed,
+ *   because the repairs differ: wire the mechanism vs. extend its data.
  *
- *   `features` supplies the count because the model reads those values. `confidence` remains a separate trace field.
+ *   `features` supplies the count because the model reads those values.
+ *   `confidence` remains a separate trace field.
  */
 
 import type { ChannelPins, InputMode, SoftChannelName } from "@mailwoman/core/pipeline"
@@ -29,7 +31,7 @@ type ChannelReadings = Record<SoftChannelName, ChannelReading>
 export interface EvidenceCensus extends ChannelReadings {
 	/**
 	 * True only when at least one channel was present and every present one was silent.
-	 * A session with no channels is not starved.
+	 * A session with no channels isn't starved.
 	 */
 	silent: boolean
 	/**

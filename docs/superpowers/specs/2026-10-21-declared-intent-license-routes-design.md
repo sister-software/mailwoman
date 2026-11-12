@@ -12,8 +12,8 @@ distribution design (`2026-08-09-progressive-atlas-distribution-design.md`).
 
 Mailwoman is dual-licensed, `AGPL-3.0-only OR LicenseRef-Commercial`. Every published artifact is free at every depth,
 and the one thing a commercial subscription buys is release from the AGPL source offer. The product the operator
-intends has a free base tier that is complete and worldwide, deeper tiers that a licensed installation receives, and a
-license that is obtained by payment, by a declaration of intent, or by a thirty-day evaluation.
+intends has a free base tier that's complete and worldwide, deeper tiers that a licensed installation receives, and a
+license that's obtained by payment, by a declaration of intent, or by a thirty-day evaluation.
 
 The artifacts that exist today are these. `mailwoman data pull` fetches four bundles from R2, `candidate`, `poi`,
 `fr` and `us`, all free. Twelve weights overlays sit on public npm as `@mailwoman/neural-weights-*`. The atlas tiers
@@ -78,7 +78,7 @@ it, and the releases already published stay published.
 | `scope`   | `all`, or a list of package names and `tier:<name>` strings                    | the artifacts the token may download                                                     |
 
 A `tier:<name>` string is the vocabulary the atlas work fills. The schema accepts any name, and the worker's catalog
-decides which tier names each plan or intent grants. The signature covers the raw payload bytes, and an older release
+decides which tier names that each plan or intent grants. The signature covers the raw payload bytes, and an older release
 strips unknown keys, so a token with the new claims verifies on a release that predates them. A token whose `terms` is
 `AGPL-3.0-only` fails the literal in an older release, so the release that ships the union precedes the first declared
 token.
@@ -192,7 +192,7 @@ and the first withheld artifact. `RELEASING.md` records the ordering.
 
 ## Prerequisites the code cannot supply
 
-These are operator work, and the download route cannot run end to end before them. The implementation does not wait
+These are operator work, and the download route cannot run end to end before them. The implementation doesn't wait
 for them.
 
 1. A private R2 bucket per environment for paid artifacts. The only bucket any wrangler configuration binds today is

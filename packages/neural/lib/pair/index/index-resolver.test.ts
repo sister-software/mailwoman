@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"

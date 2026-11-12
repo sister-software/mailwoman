@@ -93,7 +93,7 @@ export const EA_FLOOD_LICENSE = "OGL-UK-3.0"
 export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The authority's coverage statement: the union of hazard polygons is not the mapped area,
+ * The authority's coverage statement: the union of hazard polygons isn't the mapped area,
  * so `flood_map_extent` must derive Zone 1 as the mapped area minus the polygons
  * rather than report it unmapped.
  */
@@ -107,8 +107,8 @@ export const EA_COVERAGE_STATEMENT =
 export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`
 
 /**
- * What the product does not cover, in the authority's own words, preserved in the
- * observation so a reading can be seen for what it is silent about.
+ * What the product doesn't cover, in the authority's own words, preserved in the observation
+ * so a reading can be seen for what it is silent about.
  */
 export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Flood Zones are a planning tool and they do not necessarily mean somewhere will or will not flood.",

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fail-closed cleanup primitives. Callers must supply the generated roots they are authorized to mutate. a path is
- *   never considered safe merely because it is not exactly the repository or workspace root.
+ *   Fail-closed cleanup primitives.
+ *
+ *   Callers must supply the generated roots they're authorized to mutate. a path is never
+ *   considered safe merely because it isn't exactly the repository or workspace root.
  */
 
 import type { Stats } from "node:fs"

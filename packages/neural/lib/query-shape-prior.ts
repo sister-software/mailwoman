@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Soft-prior emission biases derived from `QueryShape`: when the query-shape subsystem has
- *   identified a known-format span (US ZIP, UK postcode, PO box, etc.) this module produces an
- *   additive bias matrix that nudges the encoder's per-token emissions toward the matching BIO
- *   label without overriding the encoder. The encoder stays authoritative on context-dependent calls.
+ *   Soft-prior emission biases derived from `QueryShape`: when the query-shape subsystem
+ *   has identified a known-format span (US ZIP, UK postcode, PO box, etc.) this module
+ *   produces an additive bias matrix that nudges the encoder's per-token emissions
+ *   toward the matching BIO label without overriding the encoder.
+ *   The encoder stays authoritative on context-dependent calls.
  *
- *   The `QueryShape` value is consumed structurally and the format-name convention is imported from
- *   its owner rather than restated, because a restated convention drops the formats added after it.
+ *   The `QueryShape` value is consumed structurally and the format-name convention is imported from its
+ *   owner rather than restated, because a restated convention drops the formats added after it.
  */
 
 import type { CharRange } from "@mailwoman/query-shape"
@@ -57,7 +58,7 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_b
 
 /**
  * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
- * or `null` when the format names no label.
+ * or `null` when the format identifies no label.
  *
  * An uncovered format contributes zero bias and raises no error.
  */

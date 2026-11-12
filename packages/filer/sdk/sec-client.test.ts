@@ -173,7 +173,7 @@ describe("createSECClient: host allowlist", () => {
 		["subdomain-suffix", "https://www.sec.gov.attacker.example/x"],
 		["apex-suffix", "https://sec.gov.attacker.com/x"],
 		["prefix-hyphen lookalike", "https://evil-sec.gov/x"],
-		// The Cyrillic `с` punycodes to `www.xn--se-pmc.gov`, which is not the allowlisted host.
+		// The Cyrillic `с` punycodes to `www.xn--se-pmc.gov`, which isn't the allowlisted host.
 		["unicode homograph", "https://www.seс.gov/x"],
 		// U+3002 ideographic full stop normalizes to `.`, turning this into a subdomain-suffix attempt.
 		["ideographic full stop", "https://www.sec.gov。attacker.example/x"],

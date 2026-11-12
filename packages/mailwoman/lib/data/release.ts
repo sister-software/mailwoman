@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Databases are addressed as `db/<family>/<family>-us-<slug>-<version>.db`, with a `releases.json`
- *   manifest at the data root pinning each family to its current version, so a new build publishes
- *   alongside the old and flipping the manifest (one atomic file write) switches traffic over with the
- *   version travelling in the filename.
+ *   Databases are addressed as `db/<family>/<family>-us-<slug>-<version>.db`, with a
+ *   `releases.json` manifest at the data root pinning each family to its current version,
+ *   so a new build publishes alongside the old and flipping the manifest (one atomic file write)
+ *   switches traffic over with the version travelling in the filename.
  *
  *   With no manifest, or a family unlisted, resolution falls back to the legacy unversioned
  *   `<family>-us-<slug>.db`, so the current national build output works unchanged.

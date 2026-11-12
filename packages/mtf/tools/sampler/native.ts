@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mtf-node` addon: the training-row sampler and the row encoders of `crates/mtf-node`, loaded into Node.
+ *   The `mtf-node` addon: the training-row sampler and the row encoders of
+ *   `crates/mtf-node`, loaded into Node.
  *
- *   Cargo builds the addon from source the first time a process asks for it, under the root workspace's `node`
- *   profile and the toolchain the root `rust-toolchain.toml` pins, into the root `target/node/`. The build
- *   reads `mtf-sampler` with its parquet reader, so it stays out of the browser `wasm/mtf.wasm`, whose one dependency is
- *   `mtf-core`. The addon is built for the host it runs on: Linux and macOS, where Cargo writes the library to
- *   `libmtf_node.so` and `libmtf_node.dylib`.
+ *   Cargo builds the addon from source the first time a process asks for it,
+ *   under the root workspace's `node` profile and the toolchain the root
+ *   `rust-toolchain.toml` pins, into the root `target/node/`.
+ *   The build reads `mtf-sampler` with its parquet reader, so it stays out of the
+ *   browser `wasm/mtf.wasm`, whose one dependency is `mtf-core`.
+ *
+ *   The addon is built for the host it runs on: Linux and macOS, where Cargo writes
+ *   the library to `libmtf_node.so` and `libmtf_node.dylib`.
  */
 
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
@@ -133,7 +137,7 @@ export interface SplitColumnChunk {
 
 /**
  * The rows a split read keeps: those whose string column `column`, uppercased, is one of `values`.
- * A row whose value is null is not kept.
+ * A row whose value is null isn't kept.
  */
 export interface SplitKeep {
 	column: string
@@ -283,7 +287,7 @@ export interface PythonText {
 	 */
 	casefold(text: string): string
 	/**
-	 * The consecutive runs of letter scripts, every character that is not a letter skipped,
+	 * The consecutive runs of letter scripts, every character that's not a letter skipped,
 	 * as the mixed-script audit's `script_runs` names them.
 	 */
 	scriptRuns(text: string): string[]

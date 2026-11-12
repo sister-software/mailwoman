@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_sources` tool definition provides the description, input schema and handler wiring an agent reads.
+ *   The `mwdev_sources` tool definition provides the description, input schema
+ *   and handler wiring an agent reads.
+ *
  *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 
@@ -80,7 +82,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const rows = await Promise.all(paths.map(async (path) => censusArtifact(path, countries)))
 		const usable = rows.filter((row) => row.readable)
 
-		// Per country across artifacts, so "where is VE data" is one read rather than a scan of every row.
+		// Per country across artifacts, so "where's VE data" is one read rather than a scan of every row.
 		const byCountry: Record<string, Array<{ artifact: string; n: number; join: string[] }>> = {}
 
 		for (const row of usable) {
@@ -98,7 +100,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		// When the caller supplies country filters, an artifact holding none of them is noise —
 		// 29 lines of zeros buries the two that matter.
 		// The absence is still reported, in `summary` and by a country's empty `by_country` entry.
-		// What is dropped is the per-artifact restatement of it.
+		// What's dropped is the per-artifact restatement of it.
 		const relevant = countries
 			? rows.filter((row) => !row.readable || Object.values(row.countries ?? {}).some((n) => n > 0))
 			: rows

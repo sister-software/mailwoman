@@ -5,7 +5,7 @@
  * @file Hands onnxruntime-web's wasm binary to its runtime when a test runs the browser runner under Node.
  *
  *   The `onnxruntime-web/wasm` entry loads `ort-wasm-simd-threaded.wasm` with `fetch`, and Node's `fetch`
- *   does not read `file:` URLs. A test that drives `WebONNXRunner` under Node calls this before the first
+ *   doesn't read `file:` URLs. A test that drives `WebONNXRunner` under Node calls this before the first
  *   session is created.
  */
 

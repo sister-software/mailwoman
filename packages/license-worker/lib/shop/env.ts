@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The Stripe secret keys `mwops shop` reads on the operator's machine. These are process environment rather than worker
+ * The Stripe secret keys `mwops shop` reads on the operator's machine.
+ * These are process environment rather than worker
  *   bindings: the deployed worker reads `STRIPE_SECRET_KEY` from Wrangler (`#env`).
  */
 

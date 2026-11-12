@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   generated — do not edit by hand. Sample localities and postcodes for each US state whose code is also
- *   another country's ISO 3166-1 alpha-2 code: the three most populous current localities under the state's
- *   region record in Who's On First's admin database, each with the postcode nearest its point among those
- *   whose parent is that locality in the US postcode database. The states are the codex-computed
- *   US_STATE_CODES_READ_AS_COUNTRIES.
+ *   generated — do not edit by hand.
+ *
+ *   Sample localities and postcodes for each US state whose code is also another country's
+ *   ISO 3166-1 alpha-2 code: the three most populous current localities under the state's
+ *   region record in Who's On First's admin database, each with the postcode nearest its
+ *   point among those whose parent is that locality in the US postcode database.
+ *   The states are the codex-computed US_STATE_CODES_READ_AS_COUNTRIES.
+ *
  *   Regenerate with: mailwoman dev generate corpus-us-abbrev-region-samples
  */
 

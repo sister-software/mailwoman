@@ -67,7 +67,7 @@ mints. Secrets are set only through `wrangler secret put`. `.dev.vars.example` l
 
 Two prerequisites must hold before the worker can mint anything. The worker's public key must be an `active` entry of
 `LICENSE_SIGNING_KEYS` in `@mailwoman/core`, and a mailwoman release that contains it must be published. No
-installation accepts a token signed by a key that its release does not trust, so the self-test refuses to start
+installation accepts a token signed by a key that its release doesn't trust, so the self-test refuses to start
 before that.
 
 1. Create the D1 database and the three rate-limit namespaces in the Cloudflare account. Write the database id into
@@ -110,7 +110,7 @@ before that.
    ```
 
 6. Confirm that `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok","email":"ok"}`. It
-   answers 503 when the ledger does not respond.
+   answers 503 when the ledger doesn't respond.
 7. Create the webhook destination against the deployed origin, and store the secret that Stripe returns once:
 
    ```bash
@@ -156,7 +156,7 @@ section below explains why).
 ## Reconciliation
 
 A Cron Trigger runs `lib/reconcile.ts` every six hours. It mints a token for any paid invoice without one, through the
-same path the webhook takes. It re-sends a token whose email is not confirmed as sent (`pending` after a crash, or
+same path the webhook takes. It re-sends a token whose email isn't confirmed as sent (`pending` after a crash, or
 `failed`) under the same invoice id. It also corrects a license whose state disagrees with its subscription, including
 a dispute that Stripe has since ruled won and a subscription that ended once its token's date has passed. The report in
 the worker log contains ids only. A failure on one item is recorded against that item and never stops the sweep for

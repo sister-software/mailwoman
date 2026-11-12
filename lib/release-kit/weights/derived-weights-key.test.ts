@@ -4,12 +4,12 @@
 /**
  *   The derived-weights store's content key.
  *
- *   The 2026-08-02 currency-filter incident is why this has its own test: the workflow cache key
- *   hashed only `release.config.json` and `data/gazetteer/*`.
+ *   The 2026-08-02 currency-filter incident is why this has its own test: the workflow
+ *   cache key hashed only `release.config.json` and `data/gazetteer/*`.
  *   An extractor change produced new artifacts while the cache served old ones.
- *   The pair-index↔card parity guard then failed with
- *   `expected 47878 to be 49033`. A key that omits the code generating the cached thing is a
- *   stale-artifact machine.
+ *
+ *   The pair-index↔card parity guard then failed with `expected 47878 to be 49033`.
+ *   A key that omits the code generating the cached thing is a stale-artifact machine.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -99,7 +99,7 @@ describe("derivedWeightsKeyFrom", () => {
 		const empty = scratch.path("empty.json")
 		await writeLocalTextFile("", empty)
 
-		// Absence is not zero: a file that is gone must not hash like a file that is empty.
+		// Absence isn't zero: a file that's gone mustn't hash like a file that's empty.
 		expect(absent).not.toBe(present)
 		expect(absent).not.toBe(await derivedWeightsKeyFrom([at(empty)]))
 	})

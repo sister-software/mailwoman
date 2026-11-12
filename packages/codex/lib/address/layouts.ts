@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-country layout table lists entries in print order. Readers can check a country by inspecting an address
- *   shape instead of tracing nested calls.
+ *   The per-country layout table lists entries in print order.
  *
- *   The line skeletons come from libaddressinput, Google's address metadata. This repository ships the data at
- *   `packages/dictionaries/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
- *   This repository supplies the `%A` expansion into its street tags, the line-join policy, the country line and the
- *   post-office box.
+ *   Readers can check a country by inspecting an address shape instead of tracing nested calls.
+ *
+ *   The line skeletons come from libaddressinput, Google's address metadata.
+ *   This repository ships the data at `packages/dictionaries/data/chromium-i18n/ssl-address/`
+ *   (252 countries, Apache-2.0).
+ *
+ *   Its `fmt` field is the print order.
+ *   This repository supplies the `%A` expansion into its street tags, the line-join
+ *   policy, the country line and the post-office box.
  */
 
 import {
@@ -157,7 +161,7 @@ export function isLargestFirstSystem(countryCode: string | null, script?: Addres
 
 /**
  * Which order a layout prints: `true` when its `region` line precedes its street line,
- * or `null` when the layout names no region or no street.
+ * or `null` when the layout identifies no region or no street.
  *
  * A layout and {@link isLargestFirstSystem} can disagree, in which case an address
  * prints one system's sequence with another's separators; `layouts.test.ts`
@@ -409,7 +413,7 @@ export function regionLayoutForCountry(countryCode: string | null, script?: Addr
  * A gazetteer hierarchy string represents a query and belongs to this API.
  *
  * Of the 197 layouts, 122 omit both a region and a street.
- * They are absent here.
+ * They're absent here.
  * Callers treat them as small-first.
  */
 export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
@@ -468,7 +472,7 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
  *
  * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
  * whose stance is `unread`: an approved crosswalk of its address semantics exists,
- * and this repository has not retrieved it.
+ * and this repository hasn't retrieved it.
  * A jurisdiction outside that inventory contributes none.
  *
  * That states that no crosswalk exists, rather than that one went unread.
@@ -666,7 +670,9 @@ export function lineJoinForCountry(countryCode: string | null, script?: AddressS
 const SYSTEM_KEY_IGNORED_TAGS: ReadonlySet<ComponentTag> = new Set(["attention", "venue", "country"])
 
 function systemKeyTokens(atom: AddressAtom): string[] {
-	if (isSlot(atom)) return SYSTEM_KEY_IGNORED_TAGS.has(atom.tag) ? [] : [atom.tag]
+	// A slot with fixed text, such as Puerto Rico's `PR`, prints the skeleton's literal, so it
+	// counts like a connector and leaves the country's system id where the trainer assigned it.
+	if (isSlot(atom)) return SYSTEM_KEY_IGNORED_TAGS.has(atom.tag) || atom.fallback ? [] : [atom.tag]
 
 	if (isLayout(atom)) return atom.lines.flatMap((line) => line.flatMap(systemKeyTokens))
 
@@ -735,7 +741,7 @@ export function addressSystemMembers(): AddressSystemMember[] {
 }
 
 /**
- * Returns the script used by {@link layoutForCountry} when the caller does not choose one.
+ * Returns the script used by {@link layoutForCountry} when the caller doesn't choose one.
  *
  * It returns `local` except for Hong Kong.
  * Hong Kong's default layout follows the order from its Latin skeleton.

@@ -37,7 +37,7 @@ describe("optionPropertyName", () => {
 		expect(scriptingUtils.optionPropertyName(flag)).toBe(property)
 	})
 
-	// An acronym segment the derivation does not know title-cases instead,
+	// An acronym segment the derivation doesn't know title-cases instead,
 	// filling a property no command declares.
 	// The flag parses and validates, then has no effect.
 	// Each row below is a flag a command ships.

@@ -3,8 +3,9 @@
 
 /**
  *   The layer-absent guards are pure and transport-independent, so they live outside `cli.ts`.
- *   Each guard is exercised on three branches: path `undefined`, path set with a missing file and
- *   path set with a present file.
+ *
+ *   Each guard is exercised on three branches: path `undefined`, path set with a
+ *   missing file and path set with a present file.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

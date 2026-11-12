@@ -30,7 +30,7 @@ function run(country?: string) {
 
 describe("ryhti adapter against fixture sample.csv", () => {
 	it("emits one row per published record under SYKE's CC BY 4.0", async () => {
-		// Fourteen records, one of which names no street in either language and is refused.
+		// Fourteen records, one of which identifies no street in either language and is refused.
 		// The two records that publish a Finnish and a differing Swedish name emit the Finnish one.
 		const manifest = await run()
 

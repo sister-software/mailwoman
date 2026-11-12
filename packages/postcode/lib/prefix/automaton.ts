@@ -4,23 +4,32 @@
 /**
  *   A prefix test for a postcode syntax pattern.
  *
- *   A `RegExp` answers whether a whole string matches. Completion asks a different question: whether some
- *   suffix exists that makes the string match. This module answers it by compiling the pattern's source into a
- *   Thompson NFA and running the NFA over the prefix. The prefix can complete exactly when at least one state is
- *   still live once the prefix is consumed, because every state of the automaton can reach the accepting state:
- *   each character class the postcode data uses admits at least one character, and no pattern places a
- *   consuming step after `$`.
+ *   A `RegExp` answers whether a whole string matches.
+ *   Completion asks a different question: whether some suffix exists that makes the string match.
  *
- *   The parser covers the regex subset the libaddressinput data and `written-forms.ts` use: literals, escapes
- *   (`\d`, `\s`, `\w`, `\b`, an escaped punctuation character), character classes with ranges and negation,
- *   capturing and non-capturing groups, alternation, the quantifiers `?`, `*`, `+` and `{n}`, `{n,}`,
- *   `{n,m}`, and the anchors `^` and `$`. Any other construct throws, so a new pattern outside the subset fails
- *   the test that compiles every country rather than answering wrongly. The automaton ignores case, as
- *   `postcodeSyntax` compiles it.
+ *   This module answers it by compiling the pattern's source into a Thompson NFA
+ *   and running the NFA over the prefix.
+ *   The prefix can complete exactly when at least one state is still live once the prefix
+ *   is consumed, because every state of the automaton can reach the accepting state:
+ *   each character class the postcode data uses admits at least one character,
+ *   and no pattern places a consuming step after `$`.
  *
- *   One assertion is approximated. A `\b` or `$` reached at the end of the prefix depends on the character that
- *   follows. The prefix does not contain that character, so the automaton lets the assertion pass. That can only widen the answer:
- *   no completable prefix is refused. Bahrain's pattern is the one that uses `\b`, at its two ends.
+ *   The parser covers the regex subset the libaddressinput data and `written-forms.ts` use:
+ *   literals, escapes (`\d`, `\s`, `\w`, `\b`, an escaped punctuation character), character
+ *   classes with ranges and negation, capturing and non-capturing groups, alternation,
+ *   the quantifiers `?`, `*`, `+` and `{n}`, `{n,}`, `{n,m}`, and the anchors `^` and `$`.
+ *   Any other construct throws, so a new pattern outside the subset fails the test
+ *   that compiles every country rather than answering wrongly.
+ *
+ *   The automaton ignores case, as `postcodeSyntax` compiles it.
+ *
+ *   One assertion is approximated.
+ *   A `\b` or `$` reached at the end of the prefix depends on the character that follows.
+ *
+ *   The prefix doesn't contain that character, so the automaton lets the assertion pass.
+ *   That can only widen the answer: no completable prefix is refused.
+ *
+ *   Bahrain's pattern is the one that uses `\b`, at its two ends.
  */
 
 type CharTest = (c: string) => boolean

@@ -4,15 +4,18 @@
 /**
  * Fastify plugin for mailwoman's local parsing, geocoding, and POI pipeline.
  *
- * Routes are the shared `@mailwoman/api` operations: `GET`/`POST /v1/parse`, `POST /v1/geocode`, `POST /v1/poi`, and `GET /health`.
+ * Routes are the shared `@mailwoman/api` operations: `GET`/`POST /v1/parse`,
+ * `POST /v1/geocode`, `POST /v1/poi`, and `GET /health`.
  * The `fastify.mailwoman` decorator also exposes parse, geocode, and POI methods.
  *
- * Provide a ready-to-use pipeline with `pipeline`, or let the plugin build one
- * lazily on the first request. Lazy setup uses `locale` and the optional database
- * paths. The plugin resolves model weights and gazetteer data as the CLI does.
+ * Provide a ready-to-use pipeline with `pipeline`, or let the plugin build one lazily on the first request.
+ * Lazy setup uses `locale` and the optional database paths.
+ *
+ * The plugin resolves model weights and gazetteer data as the CLI does.
  *
  * The decorator's parse result extends `@mailwoman/api`'s parse response with the pipeline path.
- * Geocode returns a `GeocodeResult`. Errors use `{ error, detail }`.
+ * Geocode returns a `GeocodeResult`.
+ * Errors use `{ error, detail }`.
  */
 
 import { GeocodeAddressOperation } from "@mailwoman/api/operations/geocode/address"
@@ -22,6 +25,7 @@ import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/heal
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
 import type { PipelineOpts } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { Resolver } from "@mailwoman/core/resolver/types"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
@@ -119,12 +123,13 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	const { decodeAsTuples, extractGeocodeResult } = await loadHelpers()
 
 	// The pipeline loads model weights, so it is built on the first request rather than at registration.
-	let pipelinePromise: Promise<RuntimePipeline> | null = null
+	// A failed build is retried by the next request, so installing the data needs no restart.
+	const loadPipeline = memoizeResettable(() => buildPipeline(opts, locale))
 
 	const getPipeline = (): Promise<RuntimePipeline> => {
 		if (opts.pipeline) return Promise.resolve(opts.pipeline)
 
-		return (pipelinePromise ??= buildPipeline(opts, locale))
+		return loadPipeline()
 	}
 
 	const mailwoman: MailwomanDecorator = {

@@ -139,7 +139,7 @@ describe("readLicenseRecord", () => {
 
 	it("resolves the two publisher terms documents that name no SPDX license", () => {
 		// Both retrieved 2026-09-27 and retained under internal/strategy/rights-receipts/mx-gb-2026-09-27/.
-		// INEGI's document names no Creative Commons license and gives no version.
+		// INEGI's document identifies no Creative Commons license and gives no version.
 		// The ONS licenses page spells OGL v3.0 with a dot after the v.
 		const inegi = readLicenseRecord("Términos de Libre Uso de la Información del INEGI")
 		const ons = readLicenseRecord("Open Government Licence v.3.0")
@@ -184,15 +184,15 @@ describe("licenseNamedIn", () => {
 	it("returns null for an entry stating its grant outside every parenthetical", () => {
 		// `KOGL Type 1` is the grant and sits in the prose, so this reader finds no license
 		// and the caller keeps the verbatim entry.
-		// That is a gap to report rather than an answer.
+		// That's a gap to report rather than an answer.
 		expect(licenseNamedIn("Korean permit registry (지방행정인허가데이터) under KOGL Type 1")).toBeNull()
 	})
 
 	it("returns null for a parenthetical that describes access rather than a grant", () => {
 		// The OA PL entry.
 		// `public` states that the download costs no fee.
-		// It does not identify a license.
-		// The parser would report a grant that the entry does not contain if it classified this as a license.
+		// It doesn't identify a license.
+		// The parser would report a grant that the entry doesn't contain if it classified this as a license.
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
 
@@ -202,7 +202,7 @@ describe("licenseNamedIn", () => {
 
 	it("reads the six families the `mailwoman` copy of this reader did not know", () => {
 		// PDDL, OGDL, KOGL, CDLA, Etalab and Lizenz were absent from the `publish-hf.ts` list,
-		// so a card entry citing one read as stating no license and printed a warning it had not earned.
+		// so a card entry citing one read as stating no license and printed a warning it hadn't earned.
 		for (const family of ["PDDL", "OGDL", "KOGL", "CDLA", "Etalab", "Lizenz"]) {
 			expect(licenseNamedIn(`A source (${family}): rows`), family).toBe(family)
 		}

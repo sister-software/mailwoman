@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Photon engine interface + wire types the router delegates to. Feature/collection
- *   construction lives here too (`photonFeature`, `photonCollection`) since every projection
- *   builds on them. the resolved-place → {@link PhotonProperties} projection itself lives in
- *   `projection.ts`.
+ *   The Photon engine interface + wire types the router delegates to.
+ *
+ *   Feature/collection construction lives here too (`photonFeature`, `photonCollection`)
+ *   since every projection builds on them. the resolved-place → {@link PhotonProperties}
+ *   projection itself lives in `projection.ts`.
  */
 
 import type { CoordinateSource } from "@mailwoman/core/geocode"

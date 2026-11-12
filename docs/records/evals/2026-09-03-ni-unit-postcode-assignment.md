@@ -9,7 +9,7 @@ the #1975 comment "Northern Ireland run — pre-registration", posted before the
 ## Question
 
 Section 7 asks whether the nearest-centroid assignment measured on the `PO` area (69.6% exact against
-NSUL) can be run and graded in Northern Ireland, where there is no Open UPRN and no NSUL. Two things
+NSUL) can be run and graded in Northern Ireland, where there's no Open UPRN and no NSUL. Two things
 had to be found first: what geometry the BT unit postcodes on the data root have, and which openly
 attested BT points exist to grade against.
 
@@ -22,7 +22,7 @@ attested BT points exist to grade against.
 | Attested BT points (truth)               | the same 12,327 elements: each has `addr:postcode` and a coordinate                                                        | 12,326 after 1 malformed value (`BT36 4RU,`); 0 without a coordinate  | as above                                                                                                                                         |
 | Second path for the point count          | `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ireland-and-northern-ireland-latest.osm.pbf` (2026-07-05 snapshot), GDAL OSM driver | 12,292 rows with `addr:postcode LIKE 'BT%'`, 4,743 distinct units     | md5 `2e65f8e36046c914cbaf947528d90f9a`; ODbL 1.0                                                                                                 |
 | Open UPRN-equivalent for NI              | none                                                                                                                       | —                                                                     | Pointer (LPS) is licensed · ONSPD/NSPL carve BT out of OGL · NSUL excludes BT · Code-Point Open has zero BT units (its own meta records the gap) |
-| Buildings                                | not run                                                                                                                    | —                                                                     | OSM footprints are in the same PBF, but the GB footprint rule lifted exact assignment by −0.06 pp, so they were not spent here                   |
+| Buildings                                | not run                                                                                                                    | —                                                                     | OSM footprints are in the same PBF, but the GB footprint rule lifted exact assignment by −0.06 pp, so they weren't spent here                    |
 
 **Geometry grade.** Every BT unit postcode we hold is a unit-grade point, but it is the medoid of the
 OpenStreetMap elements that are themselves the only openly attested BT points. The centroid source and
@@ -33,7 +33,7 @@ that plan read rather than absent from the acquisition, and "census" there meant
 **Consequence before any number.** The test section 7 describes — an independent centroid source graded
 against attested points — cannot be run from open NI inputs. Unit-grade exact assignment from
 independent open inputs is UNMEASURABLE in Northern Ireland. What can be run is the leave-one-out
-version below. It measures the internal consistency of the OSM attestation and does not measure the
+version below. It measures the internal consistency of the OSM attestation and doesn't measure the
 register.
 
 **Coverage of the truth.** 4,757 attested units of 50,032 live NI postcodes (9.5%, the figure baked
@@ -94,7 +94,7 @@ own edge, and any small unit beside it wins those edge points.
   under Reading.
 - **All points 58.59% exact:** above the pre-registered 35–55% expectation, for the same reason.
 - **Below the 80% floor on both denominators.** No runtime surface for an NI assignment. The in-sample
-  86.78% is over the floor but does not decide the verdict. It was pre-registered as optimistic by construction.
+  86.78% is over the floor but doesn't decide the verdict. It was pre-registered as optimistic by construction.
 
 ## How to read the results
 

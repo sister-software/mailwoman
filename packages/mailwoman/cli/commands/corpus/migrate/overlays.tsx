@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto the current row
- *   schema, where an overlay parquet is a file the corpus manifest lists and its base manifest does not, compared
- *   by `sha256`.
+ *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto
+ *   the current row schema, where an overlay parquet is a file the corpus manifest lists
+ *   and its base manifest doesn't, compared by `sha256`.
  *
- *   Each migrated file is written beside its original as `<name>.migrated.parquet` and no file is swapped, so the
- *   existing corpus stays readable by the code that built it. Pass the migrated files to
- *   `mailwoman corpus overlay-manifest` to assemble the new corpus.
+ *   Each migrated file is written beside its original as `<name>.migrated.parquet`
+ *   and no file is swapped, so the existing corpus stays readable by the code that built it.
+ *   Pass the migrated files to `mailwoman corpus overlay-manifest` to assemble the new corpus.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -33,9 +34,15 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { baseManifestFiles, localManifestFilePath } = await import("@mailwoman/corpus/tools/overlay/manifest")
-		const { migrateOverlayParquet } = await import("@mailwoman/corpus/tools/migrate/overlay-parquet")
+		const {
+			readers: { readLocalJSONFile },
+			manifest: { baseManifestFiles, localManifestFilePath },
+			overlayParquet: { migrateOverlayParquet },
+		} = await allKeyed({
+			readers: import("@mailwoman/core/fs/readers"),
+			manifest: import("@mailwoman/corpus/tools/overlay/manifest"),
+			overlayParquet: import("@mailwoman/corpus/tools/migrate/overlay-parquet"),
+		})
 
 		type Manifest = Parameters<typeof baseManifestFiles>[0]
 

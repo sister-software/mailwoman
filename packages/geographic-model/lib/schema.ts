@@ -5,15 +5,16 @@
  *   Defines the authored record schema for `@mailwoman/geographic-model`: identifiers, closed
  *   vocabularies and the shapes of concepts, relations, mappings, observations and derived facts.
  *
- *   The schema has no numeric fields. {@link Modality} is a vocabulary of words with no exported order,
- *   because ranking weights belong to `@mailwoman/resolver` and `@mailwoman/neural`.
+ *   The schema has no numeric fields. {@link Modality} is a vocabulary of words with no exported
+ *   order, because ranking weights belong to `@mailwoman/resolver` and `@mailwoman/neural`.
  *
- *   Authored assertions, source observations and derived facts are separate types with separately
- *   branded identifiers. A derived fact has no {@link SourceProvenance}. Its `derivation` and `inputs`
- *   serve as its provenance.
+ *   Authored assertions, source observations and derived facts are separate
+ *   types with separately branded identifiers.
+ *   A derived fact has no {@link SourceProvenance}.
+ *   Its `derivation` and `inputs` serve as its provenance.
  *
- *   Each table has its own identifier namespace, so a {@link ConceptID} and a {@link RelationID} may hold
- *   the same string.
+ *   Each table has its own identifier namespace, so a {@link ConceptID}
+ *   and a {@link RelationID} may hold the same string.
  */
 
 import type { POICategoryID } from "@mailwoman/poi-taxonomy/types"
@@ -156,7 +157,7 @@ export const RelationSemantics = {
 	 */
 	Hard: "hard",
 	/**
-	 * An exception is expected and does not falsify the relation.
+	 * An exception is expected and doesn't falsify the relation.
 	 */
 	Defeasible: "defeasible",
 } as const
@@ -288,7 +289,7 @@ export interface ConceptRecord {
 	kind: ConceptKind
 	/**
 	 * Broader concepts that this concept is a kind of.
-	 * The list may be empty but must not form a cycle.
+	 * The list may be empty but mustn't form a cycle.
 	 */
 	isA: ConceptID[]
 	assertions: RelationAssertion[]

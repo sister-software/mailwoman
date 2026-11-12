@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Chooses between a WOF record's label point and geometry point by comparing both with a GeoNames
- *   anchor.
+ *   Chooses between a WOF record's label point and geometry point by comparing both with a GeoNames anchor.
  */
 
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
@@ -39,7 +38,7 @@ export interface AdjudicatedPoint extends GeoCoordinate {
 /**
  * Looks up the GeoNames coordinate for a `gn:id` concordance within a country.
  *
- * It returns `null` when there is no anchor.
+ * It returns `null` when there's no anchor.
  * The caller then keeps the label point.
  */
 export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<GeoCoordinate | null>

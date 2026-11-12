@@ -4,11 +4,13 @@
 /**
  *   `mailwoman eval gauntlet-build <artifact>` — build the Gauntlet's data artifacts:
  *
- *   - `fdic-holdout` — the US verified-coord held-out pool (fdic BankFind → fdic-us.csv, the fast
- *       fresh-draw source for `eval gauntlet --layer holdout --source us`).
- *   - `regression-db` — the curated regression corpus (`cases/<cc>/*.jsonl` →
- *       `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
+ *   - `fdic-holdout` — the US verified-coord held-out pool (fdic BankFind → fdic-us.csv,
+ *     the fast fresh-draw source for `eval gauntlet --layer holdout --source us`).
+ *   - `regression-db` — the curated regression corpus
+ *     (`cases/<cc>/*.jsonl` → `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
  */
+
+import { allKeyed } from "@mailwoman/core/promises"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -34,8 +36,13 @@ const EvalGauntletBuild: ParsedCommandComponent<Record<string, never>, ["fdic-ho
 	args,
 }) => {
 	const state = useCommandTask(async () => {
-		const { buildFDICHoldout } = await import("#tools/eval-harness/gauntlet/build/fdic-holdout")
-		const { buildRegressionDB } = await import("#tools/eval-harness/gauntlet/build/regression-db")
+		const {
+			fdicHoldout: { buildFDICHoldout },
+			regressionDb: { buildRegressionDB },
+		} = await allKeyed({
+			fdicHoldout: import("#tools/eval-harness/gauntlet/build/fdic-holdout"),
+			regressionDb: import("#tools/eval-harness/gauntlet/build/regression-db"),
+		})
 
 		switch (args[0]) {
 			case "fdic-holdout":

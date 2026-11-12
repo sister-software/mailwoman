@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What is this string made OF — mailwoman's reading against libpostal's, on the same input.
+ *   What's this string made OF — mailwoman's reading against libpostal's, on the same input.
  *
- *   `mwdev_compare` grades geocoders on a coordinate. libpostal produces no coordinate, so this gets its own surface
- *   rather than a column in a distance table. Pelias's parser with `@mailwoman/libpostal` implements its exact `/parse`
- *   interface. That is the only like-for-like parse comparison available.
+ *   `mwdev_compare` grades geocoders on a coordinate. libpostal produces no coordinate,
+ *   so this gets its own surface rather than a column in a distance table.
+ *   Pelias's parser with `@mailwoman/libpostal` implements its exact `/parse` interface.
+ *   That's the only like-for-like parse comparison available.
  *
  *   Both sides are expressed in libpostal's label vocabulary using the drop-in's own converter,
- *   `treeToParseMatches` + `toLibpostalComponents`, and that map sends several tags to one label — `neighbourhood` and
- *   `dependent_locality` both become `suburb` — so label agreement is not tag agreement and the mailwoman side retains
- *   its original tag.
+ *   `treeToParseMatches` + `toLibpostalComponents`, and that map sends several tags
+ *   to one label — `neighbourhood` and `dependent_locality` both become `suburb` —
+ *   so label agreement isn't tag agreement and the mailwoman side retains its original tag.
  *
- *   Values are compared case-folded because libpostal lowercases its output and mailwoman preserves the input's case.
+ *   Values are compared case-folded because libpostal lowercases its output
+ *   and mailwoman preserves the input's case.
  *
- *   No winner is declared. A disagreement between two parsers shows where to look. A libpostal score against mailwoman's tag
- *   vocabulary would apply the lossy map in the direction that loses.
+ *   No winner is declared.
+ *   A disagreement between two parsers shows where to look.
+ *
+ *   A libpostal score against mailwoman's tag vocabulary would apply the lossy
+ *   map in the direction that loses.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -43,8 +48,7 @@ export interface LabelledSpan {
 /**
  * `agree` and `value-differs` both mean both parsers produced the label.
  *
- * The `*-only` pair means one did not, a different kind of disagreement that
- * is never blended with the other.
+ * The `*-only` pair means one didn't, a different kind of disagreement that's never blended with the other.
  */
 export const SpanVerdict = {
 	Agree: "agree",
@@ -62,7 +66,7 @@ export interface SpanDiff {
 	libpostal: string | null
 	/**
 	 * Non-null when several mailwoman tags map onto this one label, so a reader
-	 * does not take the agreement at face value.
+	 * doesn't take the agreement at face value.
 	 */
 	collapsed_from: string[] | null
 }

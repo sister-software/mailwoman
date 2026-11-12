@@ -32,7 +32,7 @@ export interface CoveragePoint {
 
 /**
  * Which communes the register declares whole: every point has `certified = 1`, and a commune
- * with a null flag anywhere is not whole, because an absent statement is not a statement.
+ * with a null flag anywhere isn't whole, because an absent statement isn't a statement.
  *
  * @param flags Per commune, the minimum of its points' `certified` values with null treated as the minimum.
  */

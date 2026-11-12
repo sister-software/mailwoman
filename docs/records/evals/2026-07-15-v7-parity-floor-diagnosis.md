@@ -18,7 +18,7 @@ Package-shaped grade (`eval parity --weights-cache`, the #718-safe path), v264 =
 | postcode        | 0.986 |            0.986 |      0.97 | PASS    |
 
 v264 is a hair **better** than v257 on street (0.543 vs 0.536) and identical on hn/postcode, so the
-v261 span-boundary head and the v263/v264 country channel did **not** erode fragment parsing. The
+v261 span-boundary head and the v263/v264 country channel **didn't** erode fragment parsing. The
 plateau is old: v255 peaked at street 0.596 @ 2k but was unstable (the bare-locality↔US-admin
 treadmill, #1102), and v257's gentle 8k traded that peak for a stable 0.536. No run since has moved
 it.
@@ -77,9 +77,9 @@ I split the 321 live fixtures by whether the gold has admin context (locality/re
 | contextful | 192 |  0.514 |        0.778 |    0.971 |
 | bare       | 129 |  0.580 |        0.754 |    1.000 |
 
-Street fails ~0.5 on **both**. The contextful subset is not meaningfully better. The gap is a
+Street fails ~0.5 on **both**. The contextful subset isn't meaningfully better. The gap is a
 pervasive street-parsing quality problem (boundary-absorption, FR/Romance street-type-prefix drop,
-accent, city-absorption) that holds whether or not the input includes admin context. It would not
+accent, city-absorption) that holds whether or not the input includes admin context. It wouldn't
 vanish on production traffic.
 
 ## Coordinate parity — measured
@@ -109,7 +109,7 @@ The signal is two-sided:
   Maryland, `Texas 76013` → Michigan, bare `6000, NSW, Australia` → the AU country centroid. These are
   the bare-fragment / US-highway / bare-state-name classes.
 
-A **pure** coordinate re-check does not hold: it ships that tail. The tail lands on input classes the
+A **pure** coordinate re-check doesn't hold: it ships that tail. The tail lands on input classes the
 pipeline can already detect. The recommended path below uses that detection.
 
 Caveats: this measures neural-vs-rules divergence rather than accuracy against ground truth. The corpus
@@ -143,7 +143,7 @@ model work. Stage-2 is the change that removes that residual.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
 coordinate re-check would. **#727 stage-2 (FSemi-CRF span head)** stays the model change for the ~39%
-boundary class and shrinks the fallback further. A **29M extract campaign is not recommended as the
+boundary class and shrinks the fallback further. A **29M extract campaign isn't recommended as the
 lead**: the plateau evidence predicts that it re-plateaus.
 
 ## Reproduction

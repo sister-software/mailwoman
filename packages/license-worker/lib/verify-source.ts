@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   An open-source declaration gives a public source URL. On each re-issuance the worker reads the repository's license
- *   file and records whether it found an AGPL-compatible license. The reading is a record for the operator and never
- *   decides the token: an unverified declaration stays valid.
+ *   An open-source declaration gives a public source URL.
+ *
+ *   On each re-issuance the worker reads the repository's license file and records
+ *   whether it found an AGPL-compatible license.
+ *   The reading is a record for the operator and never decides the token:
+ *   an unverified declaration stays valid.
  */
 
 import type { SourceVerification } from "#ledger/schema"
@@ -46,7 +49,7 @@ export function licenseFileCandidates(url: string): string[] {
 }
 
 /**
- * Whether a license file at the declared source URL names an AGPL-compatible license.
+ * Whether a license file at the declared source URL identifies an AGPL-compatible license.
  *
  * A fetch failure, a response outside the 200 range, and a body that matches no entry all read `unverified`.
  */

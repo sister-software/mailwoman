@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The sheet owns the disclosure. Groups use layer-ID patterns from the Protomaps theme and the layers Earth adds.
- *   Each group is a `<details>` element: its summary switches the whole group, and its body lists every layer
- *   with a switch of its own.
+ *   The sheet owns the disclosure.
+ *
+ *   Groups use layer-ID patterns from the Protomaps theme and the layers Earth adds.
+ *   Each group is a `<details>` element: its summary switches the whole group,
+ *   and its body lists every layer with a switch of its own.
+ *
  *   A layer with no matching pattern appears in the catch-all "Other" group.
  */
 

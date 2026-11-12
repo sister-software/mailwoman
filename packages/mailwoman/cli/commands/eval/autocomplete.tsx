@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval autocomplete` is the autocomplete ladder. Every board row is truncated at every
- *   prefix boundary and graded at each rung against the row's own truth, on the parse and resolve arm
- *   and the FST autocomplete arm. The command is report-only, so a non-zero exit means the harness
- *   broke rather than a rung missing.
+ *   `mailwoman eval autocomplete` is the autocomplete ladder.
+ *
+ *   Every board row is truncated at every prefix boundary and graded at each rung against
+ *   the row's own truth, on the parse and resolve arm and the FST autocomplete arm.
+ *   The command is report-only, so a non-zero exit means the harness broke rather than a rung missing.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

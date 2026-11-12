@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The output pane's line list: section order and which sections disappear when their source has no content.
+ *   The output pane's line list: section order and which sections disappear
+ *   when their source has no content.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

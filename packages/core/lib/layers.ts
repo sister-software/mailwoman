@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The spatial-layer interface: manifest/coverage schema + IO. Every layer database — shipped,
- *   build-local, or private — embeds these tables.
+ *   The spatial-layer interface: manifest/coverage schema + IO.
+ *
+ *   Every layer database — shipped, build-local, or private — embeds these tables.
  */
 
 export * from "#layers/artifact"

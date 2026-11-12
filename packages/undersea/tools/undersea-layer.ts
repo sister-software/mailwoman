@@ -4,13 +4,17 @@
 /**
  *   Builds the sealed undersea layer database and Earth's browser asset from one gazetteer download.
  *
- *   The build reads the three GeoJSON files a download wrote, checks each against the download's receipt,
- *   and writes one row per record and geometry kind. A record without a name, a generic term or an id is
- *   left out and counted. The result reports the source's record count and the layer's row count per kind.
+ *   The build reads the three GeoJSON files a download wrote, checks each against the
+ *   download's receipt, and writes one row per record and geometry kind.
+ *   A record without a name, a generic term or an id is left out and counted.
  *
- *   Coverage rows use the `source_present` basis. A cell holds a row when a gazetteer feature's label point
- *   lies in it. The gazetteer lists only the features a naming authority accepted, so a cell without a row
- *   leaves open whether the sea floor there has features.
+ *   The result reports the source's record count and the layer's row count per kind.
+ *
+ *   Coverage rows use the `source_present` basis.
+ *   A cell holds a row when a gazetteer feature's label point lies in it.
+ *
+ *   The gazetteer lists only the features a naming authority accepted, so a cell
+ *   without a row leaves open whether the sea floor there has features.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

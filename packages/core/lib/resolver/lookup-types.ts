@@ -3,8 +3,10 @@
 
 /**
  *   This module defines the synchronous street-tier lookup interfaces used by the resolution ladder.
+ *
  *   The ladder checks address points and interpolation results.
  *   It also checks street centroids and postcode prefixes.
+ *
  *   These interfaces stay synchronous because `@mailwoman/neural` calls into the ladder.
  *   An asynchronous member would require asynchronous implementers and package boundaries.
  */

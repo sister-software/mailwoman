@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev lint recipe-vocab --parquet <recipe-output.parquet>` is the base-consistency lint,
- *   country-scoped (v2). It flags any token a synthetic recipe output labels one tag while the base
- *   corpus dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix
- *   against the base "street") are surfaced separately. The loader's affix-relabel handles them.
+ *   `mailwoman dev lint recipe-vocab --parquet <recipe-output.parquet>` is the
+ *   base-consistency lint, country-scoped (v2).
+ *
+ *   It flags any token a synthetic recipe output labels one tag while the base
+ *   corpus dominantly labels it another.
+ *   Affix-split rows (the recipe output's street_suffix/_prefix against the base "street")
+ *   are surfaced separately.
+ *
+ *   The loader's affix-relabel handles them.
  *   It exits 1 on any real contradiction.
  *
- *   The command keeps its name because the router resolves it by file path. Unlike a flag, a renamed
- *   command has no `deprecatedName` alias. Scripts and runbooks that use the old name would break silently.
+ *   The command keeps its name because the router resolves it by file path.
+ *   Unlike a flag, a renamed command has no `deprecatedName` alias.
+ *
+ *   Scripts and runbooks that use the old name would break silently.
  */
 
 import { Text } from "ink"

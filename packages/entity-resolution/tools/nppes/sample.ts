@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The NPPES benchmark's input sample: the variation-rich multi-record set per NPI, plus the
- *   corpus-wide address-frequency table built in the same pass. One registry pass serves any number
- *   of states, so the cross-state eval samples two at once.
+ *   The NPPES benchmark's input sample: the variation-rich multi-record set per NPI,
+ *   plus the corpus-wide address-frequency table built in the same pass.
+ *
+ *   One registry pass serves any number of states, so the cross-state eval samples two at once.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -182,7 +183,7 @@ export async function buildNPPESStateSamples(
 
 				// Entity-level (site) truth is the same org and the same physical address.
 				// Subparts (NPPES "Is Organization Subpart" plus parent LBN/TIN) collapse to their parent,
-				// so the matcher is not charged for correctly fusing one org's subpart-NPIs at a site.
+				// so the matcher isn't charged for correctly fusing one org's subpart-NPIs at a site.
 				// An NPI's mailing and practice records stay distinct sites.
 				// `orgKey` is the parent identity for a subpart, else the NPI,
 				// so independent orgs sharing an address stay distinct.

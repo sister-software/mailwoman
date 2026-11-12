@@ -242,7 +242,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			transitionAdjustments: [{ timestep: 1, toLabel: 2, bonus: 50 }],
 		})
 
-		// Whatever wins, it is not an orphan I-locality after O.
+		// Whatever wins, it isn't an orphan I-locality after O.
 		expect(boosted.path.map((k) => LABELS[k])).not.toEqual(["O", "I-locality"])
 	})
 
@@ -251,7 +251,7 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 			emissions: FUSION_EMISSIONS,
 			transitions: buildBIOTransitionMask(LABELS),
 			startTransitions: buildBIOStartMask(LABELS),
-			// Two entries of 2 each: summed (4) would flip, max'd (2) must not.
+			// Two entries of 2 each: summed (4) would flip, max'd (2) mustn't.
 			transitionAdjustments: [
 				{ timestep: 1, toLabel: 3, bonus: 2 },
 				{ timestep: 1, toLabel: 3, bonus: 2 },

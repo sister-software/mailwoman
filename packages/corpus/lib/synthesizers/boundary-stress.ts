@@ -348,7 +348,7 @@ export function synthesizeBoundaryStressRow(
 		// The layout renders the tail in the country's order: `75005 Paris` for FR
 		// and `Boston, MA 02116` for the US.
 		// The synthesizer drops the layout's commas.
-		// That is a surface perturbation that applies to any country.
+		// That's a surface perturbation that applies to any country.
 		const tail = layoutAdminTail(b.country, {
 			locality: b.locality,
 			region: b.region,

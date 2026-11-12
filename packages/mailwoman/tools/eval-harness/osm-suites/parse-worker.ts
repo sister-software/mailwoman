@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker module `gradeOSMSuite` runs under `parallelMapWorkers`. Each worker loads the classifier of a
- *   row's weights locale once, from the weights cache `workerData.userData` names, and scores every row it is
- *   handed as the held-out grader scores it: exact parse correctness under the country's street convention.
+ *   The worker module `gradeOSMSuite` runs under `parallelMapWorkers`.
+ *
+ *   Each worker loads the classifier of a row's weights locale once, from the weights
+ *   cache `workerData.userData` names, and scores every row it is handed as the held-out
+ *   grader scores it: exact parse correctness under the country's street convention.
  */
 
 import { workerUserData } from "@mailwoman/core/workers"
@@ -33,9 +35,16 @@ export interface SuiteParseWorkerData {
 	 * ONNX intra-op threads per worker, so the pool's threads stay within the cores it is given.
 	 */
 	intraOpNumThreads: number
+	/**
+	 * Whether each row's country is the classifier's locale hint (`row-country`)
+	 * or no hint is passed (`none`, as the runtime pipeline parses).
+	 *
+	 * @defaultValue `"row-country"`
+	 */
+	localeHint?: "row-country" | "none"
 }
 
-const { cacheRoot, packages, intraOpNumThreads } = workerUserData<SuiteParseWorkerData>()
+const { cacheRoot, packages, intraOpNumThreads, localeHint = "row-country" } = workerUserData<SuiteParseWorkerData>()
 const localePackages = new Map(packages)
 const classifiers = new Map<string, Promise<HeldoutClassifier>>()
 
@@ -60,7 +69,7 @@ export async function handleItem(row: OSMSuiteRow): Promise<HeldoutRowOutcome> {
 
 	const tree = await classifier.parse(row.raw, {
 		postcodeRepair: true,
-		...(row.country ? { localeHint: row.country } : {}),
+		...(row.country && localeHint === "row-country" ? { localeHint: row.country } : {}),
 	})
 
 	return scoreHeldoutRow(row, tree)

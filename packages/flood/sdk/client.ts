@@ -6,9 +6,11 @@
  *
  *   The geodatabase download bypasses these clients and streams to disk in `download.ts`.
  *
- *   Freshness comes from the catalogue's revision date. The EA download host rejects `HEAD` with 405 and
- *   ignores `Range`, so any size probe downloads the whole file. The EA dataset page renders client-side,
- *   so a fetch returns no metadata.
+ *   Freshness comes from the catalogue's revision date.
+ *   The EA download host rejects `HEAD` with 405 and ignores `Range`,
+ *   so any size probe downloads the whole file.
+ *
+ *   The EA dataset page renders client-side, so a fetch returns no metadata.
  */
 
 import {
@@ -224,7 +226,7 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 /**
  * Creates an {@link ONSBoundaryClient} with a one-year cache.
  *
- * ONS publishes each boundary vintage under a new service name, so the content at one URL does not change.
+ * ONS publishes each boundary vintage under a new service name, so the content at one URL doesn't change.
  */
 export function createONSBoundaryClient(options: CreateFloodClientOptions = {}): ONSBoundaryClient {
 	return createPacedCachedClient(

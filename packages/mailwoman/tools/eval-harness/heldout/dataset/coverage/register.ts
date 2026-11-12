@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The evaluation coverage register: for one dataset version, one row per intended country with its
- *   requirement status from the release specification, its available and sampled addresses and place names,
- *   its independent groups, its source composition, its provenance-class counts and its evaluation status.
+ *   The evaluation coverage register: for one dataset version, one row per intended
+ *   country with its requirement status from the release specification, its available
+ *   and sampled addresses and place names, its independent groups, its source composition,
+ *   its provenance-class counts and its evaluation status.
  *
- *   The country set is every country the specification names (a country requirement, the objective set, a
- *   capability selector) together with every country the dataset's availability count holds, so a required
- *   country with no test rows still gets a row. Evidence that was not measured is `null` and renders as
- *   insufficient evidence. It is never written as zero. A required or objective country with no sampled
- *   address rows is insufficient evidence. An experimental country stays visibly unqualified.
+ *   The country set is every country the specification names (a country requirement,
+ *   the objective set, a capability selector) together with every country the dataset's
+ *   availability count holds, so a required country with no test rows still gets a row.
+ *   Evidence that was not measured is `null` and renders as insufficient evidence.
+ *
+ *   It is never written as zero.
+ *   A required or objective country with no sampled address rows is insufficient evidence.
+ *   An experimental country stays visibly unqualified.
  */
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"

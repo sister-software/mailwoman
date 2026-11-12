@@ -151,7 +151,7 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 				rows: Math.ceil(regionRows * cap) + 1,
 			},
 			...small.map((town) => ({ country: "KE", place: `locality:${town.toLowerCase()}`, region: "nairobi", rows: 10 })),
-			// A place that is all of a region under the minimum is not checked.
+			// A place that's all of a region under the minimum isn't checked.
 			{ country: "KE", place: `locality:${small[0]!.toLowerCase()}`, region: "lamu", rows: HOLDOUT_CAP_MIN_ROWS - 1 },
 		]
 
@@ -310,7 +310,7 @@ describe("defaultHoldouts", () => {
 	it("declares a holdout for every OSM country the decoder-exposure config admits, or leaves it to the hashed one", () => {
 		// A country admitted to train with no holdout would have zero val and zero test rows.
 		// CN and IN reach val and test through the hashed place holdout, because their Each
-		// locality span is short, so the test does not list the spans individually.
+		// locality span is short, so the test doesn't list the spans individually.
 		expect(defaultHoldouts()["CN"]).toBeUndefined()
 		expect(defaultHoldouts()["IN"]).toBeUndefined()
 

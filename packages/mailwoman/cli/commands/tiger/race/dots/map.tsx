@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman tiger race-dots-map` — render a race-dots PMTiles tileset as a standalone MapLibre
- *   page (Protomaps basemap under the dot layer). `--serve` also serves the output directory with
- *   http Range support (PMTiles reads via Range) and holds the process open — the long-running
- *   posture of `mailwoman serve`.
+ *   `mailwoman tiger race-dots-map` — render a race-dots PMTiles tileset as a standalone
+ *   MapLibre page (Protomaps basemap under the dot layer).
+ *
+ *   `--serve` also serves the output directory with http Range support (PMTiles reads via Range)
+ *   and holds the process open — the long-running posture of `mailwoman serve`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

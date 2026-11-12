@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The words the application shows for the model's values. Each building state, segment status, selection and
- *   synthetic figure has a word that a screen reader reads and a search of the page text finds, so color
- *   never provides one of them on its own. An unresolved unit total is written as the word unresolved and
- *   never as a number.
+ *   The words the application shows for the model's values.
+ *
+ *   Each building state, segment status, selection and synthetic figure has a word that a screen
+ *   reader reads and a search of the page text finds, so color never provides one of them on its own.
+ *   An unresolved unit total is written as the word unresolved and never as a number.
  */
 
 import { type EntityID, type ISODate, proseList } from "@mailwoman/dossier"

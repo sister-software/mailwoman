@@ -16,7 +16,7 @@ import { PLACETYPE_PROJECTION } from "#tools/pipeline/placetype-census"
 
 /**
  * The containment rungs from broadest to deepest.
- * Postcode is not a rung.
+ * Postcode isn't a rung.
  */
 export const LADDER: readonly ComponentTag[] = [
 	"country",

@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shared ancestor-lineage walk over the WOF `ancestors` table: one place's containment chain
- *   joined with `spr` for canonical names and centroids, ordered nearest-first with the deepest
- *   placetype first and the country last.
+ *   The shared ancestor-lineage walk over the WOF `ancestors` table: one place's
+ *   containment chain joined with `spr` for canonical names and centroids,
+ *   ordered nearest-first with the deepest placetype first and the country last.
  *
- *   The reverse geocoder and `WOFSQLitePlaceLookup.ancestors()` share this walk. Placetype
- *   specificity lives here in `PLACETYPE_DEPTH`, a single TypeScript map that extends below
- *   `localadmin` so locality, borough, neighborhood and microhood rank correctly. Forward
- *   resolution rarely sees those as ancestor placetypes, while reverse geocoding always does.
+ *   The reverse geocoder and `WOFSQLitePlaceLookup.ancestors()` share this walk.
+ *   Placetype specificity lives here in `PLACETYPE_DEPTH`, a single TypeScript map that extends
+ *   below `localadmin` so locality, borough, neighborhood and microhood rank correctly.
+ *
+ *   Forward resolution rarely sees those as ancestor placetypes, while reverse geocoding always does.
  */
 
 import { allRows } from "@mailwoman/core/utils"

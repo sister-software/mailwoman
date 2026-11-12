@@ -12,7 +12,9 @@ import {
 	findDeclarationByClaim,
 	findEvaluationByEmail,
 	insertIssuance,
+	issuancesAwaitingEmail,
 	recordDownload,
+	setDeclarationState,
 	setDeclarationVerification,
 	setIssuanceEmailState,
 } from "#ledger/declarations"
@@ -88,7 +90,7 @@ test("an issuance inserts once per (lid, seq), and the current issuance is the h
 
 	expect(current).toMatchObject({ seq: 2, expires: "2027-06-10", email_state: "pending" })
 
-	await setIssuanceEmailState(ledger, current!.issuance_id, "sent", "msg_1")
+	await setIssuanceEmailState(ledger, current!.issuance_id, { from: "pending", to: "sent" }, "msg_1")
 
 	await expect(currentIssuance(ledger, row.lid)).resolves.toMatchObject({
 		email_state: "sent",
@@ -135,6 +137,53 @@ test("source verification is recorded with its time", async () => {
 		verification: "verified",
 		verified_at: "2027-03-01T00:00:00.000Z",
 	})
+})
+
+test("a declaration's state moves only from the state the caller read", async () => {
+	const ledger = openLedger(env.LICENSE_LEDGER)
+	const row = declaration("s")
+
+	await createDeclaration(ledger, row)
+
+	await expect(
+		setDeclarationState(
+			ledger,
+			row.lid,
+			{ from: LicenseState.Active, to: LicenseState.Revoked },
+			"2026-11-10T00:00:00Z"
+		)
+	).resolves.toBe("updated")
+
+	await expect(
+		setDeclarationState(ledger, row.lid, { from: LicenseState.Active, to: LicenseState.Lapsed }, "2026-11-10T00:00:00Z")
+	).resolves.toBe("conflict")
+
+	expect((await findDeclaration(ledger, row.lid))?.license_state).toBe(LicenseState.Revoked)
+})
+
+test("the issuances awaiting email are each emailed declaration's current issuance whose send did not succeed", async () => {
+	const ledger = openLedger(env.LICENSE_LEDGER)
+	const emailed = { ...declaration("m"), intent: "academic" as const, email: "awaiting@example.edu" }
+	const answered = declaration("n")
+
+	await createDeclaration(ledger, emailed)
+	await createDeclaration(ledger, answered)
+
+	// An earlier issuance that failed is superseded by the current one, so only the current one is resent.
+	await insertIssuance(ledger, issuance(emailed.lid, 1, "2027-01-01"))
+	await setIssuanceEmailState(ledger, `iss_m1`, { from: "pending", to: "failed" }, null)
+	await insertIssuance(ledger, issuance(emailed.lid, 2, "2027-04-01"))
+	// An open-source declaration has no address, so its pending issuance isn't mail to resend.
+	await insertIssuance(ledger, issuance(answered.lid, 1, "2027-01-01"))
+
+	const awaiting = await issuancesAwaitingEmail(ledger)
+
+	expect(awaiting.map((entry) => entry.issuance.issuance_id)).toEqual(["iss_m2"])
+	expect(awaiting[0]?.declaration.lid).toBe(emailed.lid)
+
+	await setIssuanceEmailState(ledger, "iss_m2", { from: "pending", to: "sent" }, "msg_m2")
+
+	await expect(issuancesAwaitingEmail(ledger)).resolves.toEqual([])
 })
 
 test("a download is recorded with or without a lid", async () => {

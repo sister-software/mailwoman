@@ -20,7 +20,7 @@ import {
 	type SourceID,
 	type SourceLock,
 	type SourceLockEntry,
-	sourcePath,
+	pinnedSourceFile,
 	SOURCES,
 } from "#sdk/sources"
 
@@ -68,7 +68,7 @@ export interface DownloadedSource {
  */
 export async function retrieveRegistrySource(source: SourceDefinition, client: APIClient): Promise<DownloadedSource> {
 	const response = await client.fetch<string>({ url: source.url })
-	const path = sourcePath(source)
+	const path = pinnedSourceFile(source)
 	const body = typeof response.data === "string" ? response.data : stringifyJSON(response.data)
 
 	await writeLocalFile(body, path)
@@ -110,7 +110,7 @@ export function createRegistrySourceClient(): APIClient {
  *
  * With `repin`, the lock is rewritten from what was downloaded.
  * Without it, a downloaded digest that differs from the lock is an error naming the source,
- * because the build would otherwise read bytes the lock does not describe.
+ * because the build would otherwise read bytes the lock doesn't describe.
  */
 export async function retrieveRegistrySources(options: { repin: boolean }): Promise<SourceLock> {
 	const client = createRegistrySourceClient()

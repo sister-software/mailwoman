@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `detectLocale` — Stage 2 entry point. It is synchronous and pure.
+ * `detectLocale` — Stage 2 entry point.
+ *
+ * It is synchronous and pure.
  * When `opts.hint` is provided, it wins with confidence 1.0 and `source="caller"`.
  * The rules still run to populate `alternatives`.
  */

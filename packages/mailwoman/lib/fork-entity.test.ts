@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The savile row
- *   hijack guard is the required one: poi.db really does hold exactly one poi whose name is
- *   `savile row`, and without check 2 the famous London street would resolve to it — the board row
- *   `gb-fork-entity-savile-row-guard` tracks the live behavior. this test is the blocking half.
+ *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup.
+ *
+ *   The savile row hijack guard is the required one: poi.db really does hold exactly
+ *   one poi whose name is `savile row`, and without check 2 the famous London street
+ *   would resolve to it — the board row `gb-fork-entity-savile-row-guard` tracks
+ *   the live behavior. this test is the blocking half.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -117,7 +119,7 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 		const lookup = stubLookup([
 			// The local bearer plus an entity with the same name in another city:
 			// the fork probe would abstain on this pair.
-			// The anchored probe must not, because the anchor separates them.
+			// The anchored probe mustn't, because the anchor separates them.
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
 		])

@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CLI entry point. Runs the preamble before dynamically importing command code.
+ *   CLI entry point.
+ *
+ *   Runs the preamble before dynamically importing command code.
  */
 
 import { enableCompileCache } from "@mailwoman/core/module/runtime"
@@ -82,7 +84,7 @@ const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
 // Print the notice only in the cluster primary.
 // Notice failures go to stderr and do not change the command's exit code.
 // Use a builtin to avoid another static import.
-// Workers should not print duplicate notices.
+// Workers shouldn't print duplicate notices.
 if (process.getBuiltinModule("node:cluster").isPrimary) {
 	try {
 		const { printLicenseNotice, resolveEngineStamp } = await import("#cli/kit/engine-stamp")

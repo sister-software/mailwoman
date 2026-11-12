@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The decode-time priors a production parse feeds the classifier: the gazetteer FST that ships
- *   beside the weights, the street-morphology matcher, and the venue-head lexicon of the input's
- *   country. The geocode session, the runtime pipeline, the gauntlet harness and the promotion
- *   battery load them through this module, so a switch graded on one path is the switch the other
- *   paths run.
+ *   The decode-time priors a production parse feeds the classifier: the gazetteer FST that ships beside
+ *   the weights, the street-morphology matcher, and the venue-head lexicon of the input's country.
+ *
+ *   The geocode session, the runtime pipeline, the gauntlet harness and the promotion battery load
+ *   them through this module, so a switch graded on one path is the switch the other paths run.
  */
 
 import { isCountryToken } from "@mailwoman/codex/country"
@@ -88,7 +88,7 @@ export interface LoadParsePriorsOptions {
 	 */
 	label?: string
 	/**
-	 * Receives one message for each requested prior that could not be loaded.
+	 * Receives one message for each requested prior that couldn't be loaded.
 	 *
 	 * @defaultValue `console.warn`
 	 */
@@ -106,11 +106,11 @@ export interface LoadParsePriorsOptions {
  */
 export interface ParsePriors {
 	/**
-	 * The gazetteer FST, or `null` when it was not requested or its artifact did not load.
+	 * The gazetteer FST, or `null` when it was not requested or its artifact didn't load.
 	 */
 	fst: FSTMatcherLike | null
 	/**
-	 * The street-morphology matcher, or `null` when the FST is absent or the matcher did not load.
+	 * The street-morphology matcher, or `null` when the FST is absent or the matcher didn't load.
 	 *
 	 * The street-context check needs both matchers, so the matcher is loaded only beside an FST.
 	 */

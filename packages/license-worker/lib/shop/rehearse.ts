@@ -4,10 +4,13 @@
 /**
  *   Runs a rehearsal purchase and renewal against a deployed worker in Stripe test mode.
  *
- *   The rehearsal creates a customer on a Stripe test clock and a Checkout Session with the same
- *   `checkoutCollection` settings as the Payment Link. A person pays in a browser with the test card.
- *   The rehearsal advances the clock past the period end. Stripe delivers the renewal's
- *   `invoice.paid` event to the worker. The claim route should then return the renewed token.
+ *   The rehearsal creates a customer on a Stripe test clock and a Checkout Session
+ *   with the same `checkoutCollection` settings as the Payment Link.
+ *   A person pays in a browser with the test card.
+ *
+ *   The rehearsal advances the clock past the period end.
+ *   Stripe delivers the renewal's `invoice.paid` event to the worker.
+ *   The claim route should then return the renewed token.
  *
  *   Payment Links cannot use a test clock, so the rehearsal creates its own Checkout Session.
  */

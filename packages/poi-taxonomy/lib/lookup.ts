@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-filtering shape as
- *   `@mailwoman/variant-aliases` (its slang table resolves into these category ids). The matcher uses
- *   exact-phrase over a lowercased index. n-gram extraction from longer queries is the kind
- *   classifier's job rather than this package's.
+ *   Phrase → category lookup over `data/taxonomy.json`.
  *
- *   The pure index/matching core lives in `lookup-core.ts` and is shared with the browser-safe `./table` entry
- *   (`table.ts`) — this module only owns the `node:fs` load + the module-level singleton.
+ *   Same loader + locale-filtering shape as `@mailwoman/variant-aliases`
+ *   (its slang table resolves into these category ids).
+ *   The matcher uses exact-phrase over a lowercased index. n-gram extraction from longer
+ *   queries is the kind classifier's job rather than this package's.
+ *
+ *   The pure index/matching core lives in `lookup-core.ts` and is shared with the browser-safe `./table`
+ *   entry (`table.ts`) — this module only owns the `node:fs` load + the module-level singleton.
  */
 
 import { createLookupCore } from "#lookup/core"

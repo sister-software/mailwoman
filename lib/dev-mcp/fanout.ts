@@ -4,10 +4,12 @@
 /**
  *   `mwdev_fanout`: runs one input set through several mailwoman arms and reports each row's stability.
  *
- *   `mwdev_compare` grades two arms against each other. A model comparison has a prior question: does the row
- *   read the same way across every staged candidate, or is it in the flip set? This module answers it with one
- *   line per row, every arm's reading side by side and a stability kind, so a regression claim about a row starts
- *   from whether the row is stable at all.
+ *   `mwdev_compare` grades two arms against each other.
+ *   A model comparison has a prior question: does the row read the same way across
+ *   every staged candidate, or is it in the flip set?
+ *
+ *   This module answers it with one line per row, every arm's reading side by side and a stability
+ *   kind, so a regression claim about a row starts from whether the row is stable at all.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -18,7 +20,7 @@ import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harn
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type ExpectationReading, gradeGauntletResult } from "#dev-mcp/diagnose/expectation"
-import type { Engine, EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
+import type { EngineConfig, EngineLease, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { type InputSetRef, type ResolvedInput, resolveInputSet } from "#dev-mcp/input-sets"
 import { buildRoutedMailwomanArm } from "#dev-mcp/routed-mailwoman-arm"
 import { inputSetProvenance, type Provenance } from "#dev-mcp/tool-kit"
@@ -385,7 +387,7 @@ function prepareSessionArms(
 	const opened: Array<{ label: string; engineID: string; digest: string }> = []
 
 	const arms = specs.map((spec): PreparedArm => {
-		let engine: Engine | null = null
+		let engine: EngineLease | null = null
 
 		return {
 			label: spec.label,
@@ -427,7 +429,11 @@ function prepareSessionArms(
 				return toGauntletResult((await engine.session.geocode(item.input)).result)
 			},
 			// The registry owns the session.
-			[Symbol.dispose]() {},
+			// The released lease lets an evicted session close.
+			[Symbol.dispose]() {
+				engine?.[Symbol.dispose]()
+				engine = null
+			},
 		}
 	})
 

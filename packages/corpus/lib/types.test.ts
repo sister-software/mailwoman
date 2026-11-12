@@ -86,7 +86,7 @@ describe("corpus types", () => {
 
 		// A template composed the first surface from fields Ordnance Survey published,
 		// so the row is a real street and postcode written in the recipe's order.
-		// The second names no published record at all.
+		// The second identifies no published record at all.
 		expect(composed.register).toBe("gb-os-opendata")
 		expect(composed.surface).toBe("composed")
 		expect(invented.register).toBeNull()

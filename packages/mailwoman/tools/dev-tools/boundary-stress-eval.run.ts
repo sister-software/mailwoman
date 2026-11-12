@@ -2,18 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Boundary-stress eval: the promote/no-promote verdict for a boundary-instability retrain. Same four
- *   stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded against the recipe's
- *   pre-registered targets. It also applies the shared street-span floor.
- *   The tool emits a per-shape table and one promote / no-promote line.
- *   Exit 0 means every target passed. Exit 1 means at least one target missed.
+ *   Boundary-stress eval: the promote/no-promote verdict for a boundary-instability retrain.
  *
- *   Unlike the baseline, this accepts an explicit model so it can grade a freshly-trained checkpoint
- *   without touching the neural-weights symlink (which yarn test re-creates). The classifier is built
- *   via the canonical `createScorer` in strict mode, so the model is fed the full ship-config it was
- *   trained against. Its `requires` block lists the anchor plus the gazetteer plus conventions.
- *   The eval fails closed if it cannot supply a declared channel. A custom model therefore requires
- *   the model-card. `createScorer` reads its label vocabulary and `requires` field.
+ *   Same four stress shapes as the "before" baseline (boundary-stress-baseline.ts),
+ *   graded against the recipe's pre-registered targets.
+ *   It also applies the shared street-span floor.
+ *
+ *   The tool emits a per-shape table and one promote / no-promote line.
+ *   Exit 0 means every target passed.
+ *   Exit 1 means at least one target missed.
+ *
+ *   Unlike the baseline, this accepts an explicit model so it can grade a freshly-trained
+ *   checkpoint without touching the neural-weights symlink (which yarn test re-creates).
+ *   The classifier is built via the canonical `createScorer` in strict mode,
+ *   so the model is fed the full ship-config it was trained against.
+ *
+ *   Its `requires` block lists the anchor plus the gazetteer plus conventions.
+ *   The eval fails closed if it cannot supply a declared channel.
+ *
+ *   A custom model therefore requires the model-card.
+ *   `createScorer` reads its label vocabulary and `requires` field.
  *
  *   Run (baseline, dev weights): node packages/mailwoman/tools/dev-tools/boundary-stress-eval.run.ts
  *   Run (a fetched v1.6.0 bundle): node
@@ -68,8 +76,8 @@ if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when
 if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
-// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets concrete
-// model/tokenizer/model-card paths and does not fall back to the symlink auto-resolve.
+// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets
+// concrete model/tokenizer/model-card paths and doesn't fall back to the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: await resolveWeights({ locale: "en-us" })

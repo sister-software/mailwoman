@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures the code-unit arm (#2845) on a corpus split: code units per address and the share where a
- *   house-number or postcode span is exactly one unit, and how well a unit's shape separates the two.
+ *   Measures the code-unit arm (#2845) on a corpus split: code units per address
+ *   and the share where a house-number or postcode span is exactly one unit,
+ *   and how well a unit's shape separates the two.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/tokenizer/code-units.run.ts --manifest <MANIFEST.json>
- *   [--rows 200000] [--out <report.json>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/tokenizer/code-units.run.ts
+ *   --manifest <MANIFEST.json> [--rows 200000] [--out <report.json>]
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -31,7 +32,7 @@ if (!values.manifest) throw new Error("--manifest is required")
 const rowLimit = Number(values.rows)
 const manifest = await readLocalJSONFile<object>(values.manifest)
 // A corpus whose files hold every split assigns rows through split attributes.
-// A unit's shape does not depend on the split, so every listed file is read.
+// A unit's shape doesn't depend on the split, so every listed file is read.
 const files = baseManifestFiles<{ path: string }>(manifest).map((file) => localManifestFilePath(file.path))
 
 if (!files.length) throw new Error(`${values.manifest} lists no file`)

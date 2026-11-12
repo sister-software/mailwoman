@@ -4,7 +4,9 @@
 /**
  * Pairwise grouping precision/recall/F1 over unordered id pairs.
  *
- * A zero denominator reports `null`. "The prediction made no positive calls" and "every positive call was wrong" are different facts. `f1` propagates `null` rather than collapsing it.
+ * A zero denominator reports `null`.
+ * "The prediction made no positive calls" and "every positive call was wrong" are different facts.
+ * `f1` propagates `null` rather than collapsing it.
  */
 
 /**
@@ -17,11 +19,11 @@ export interface PairwiseGroupingScore {
 	 */
 	truePositivePairs: number
 	/**
-	 * Pairs the prediction puts together that the truth partition does not.
+	 * Pairs the prediction puts together that the truth partition doesn't.
 	 */
 	falsePositivePairs: number
 	/**
-	 * Pairs the truth partition puts together that the prediction does not.
+	 * Pairs the truth partition puts together that the prediction doesn't.
 	 */
 	falseNegativePairs: number
 	/**

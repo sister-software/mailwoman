@@ -6,7 +6,9 @@
  *
  *   The asset is one GeoJSON feature collection with one feature per gazetteer record.
  *   A line record keeps its line, so a map label can follow a trench.
- *   A point or polygon record is reduced to its label point, and its bounding box is stored in the properties.
+ *
+ *   A point or polygon record is reduced to its label point, and its bounding
+ *   box is stored in the properties.
  *   The module reads no file and no network, so it runs in the browser and in Node alike.
  */
 

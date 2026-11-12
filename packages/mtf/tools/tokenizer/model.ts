@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A SentencePiece model's vocabulary, read and edited through `mtf-tokenizer`, and an encoder over it through the
- *   `@mailwoman/mtf` runtime.
+ *   A SentencePiece model's vocabulary, read and edited through `mtf-tokenizer`,
+ *   and an encoder over it through the `@mailwoman/mtf` runtime.
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"

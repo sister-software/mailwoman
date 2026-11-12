@@ -24,7 +24,7 @@ confirmation has gone to GEBCO, and if its reply restricts reuse, the layer move
 yarn workspace @mailwoman/undersea build:layer
 ```
 
-The run reads the three service layers into `$MAILWOMAN_DATA_ROOT/src/undersea/<date>/`, with a
+The run reads the three service layers into `$MAILWOMAN_DATA_ROOT/snapshots/undersea/<date>/`, with a
 `receipt.json` holding each file's record count and SHA-256. It refuses a pull whose count differs from the
 count the service declares. `--source <dir>` rebuilds from a kept download.
 
@@ -38,8 +38,8 @@ It writes two files under `$MAILWOMAN_DATA_ROOT/db/undersea/`:
 
 ## Depths
 
-The service records no depth. The build reads one from the terrarium elevation tiles the map draws, which
-hold NOAA ETOPO1 bathymetry offshore at about 1.8 km per sample, through the tile worker at z8. Only a
+The service records no depth. The build reads one through the tile worker at z8, from the terrarium elevation tiles the map draws.
+Those tiles hold NOAA ETOPO1 bathymetry offshore at about 1.8 km per sample. Only a
 depression gets a depth: a deep, hole, trench, trough, basin, plain, canyon, valley or caldera reports its
 deepest sample. The grid reads Challenger Deep at −10,763 m against about −10,920 m surveyed, so a depth is
 the grid's value rather than a sounding. A rise gets none, because the grid smooths a summit away: Vema

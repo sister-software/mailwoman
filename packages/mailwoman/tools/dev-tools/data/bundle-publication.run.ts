@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ask every bundle's own artifacts whether publication is allowed. Report each refusal.
+ *   Ask every bundle's own artifacts whether publication is allowed.
+ *   Report each refusal.
  *
- *   `BUNDLES` defines what `mailwoman data pull` fetches. Each artifact is a sealed database containing a
- *   `layer_manifest` whose `tier` states whether this project publishes it. No earlier reader compared those values.
- *   `candidate.db` ships as the `candidate` bundle while its manifest records
- *   `tier = build-local`, which `LayerTier` defines as the tier a share-alike source requires.
+ *   `BUNDLES` defines what `mailwoman data pull` fetches.
+ *   Each artifact is a sealed database containing a `layer_manifest` whose `tier` states
+ *   whether this project publishes it.
+ *
+ *   No earlier reader compared those values.
+ *   `candidate.db` ships as the `candidate` bundle while its manifest records `tier = build-local`,
+ *   which `LayerTier` defines as the tier a share-alike source requires.
  *
  *   `refusalsForPublication` reads manifests and makes no judgment about their source.
- *   This command supplies manifests from databases on disk and prints the values it read,
- *   including the artifacts it could not read: an absent database is an unanswered question rather than
- *   a pass. The command reports it as unanswered.
+ *   This command supplies manifests from databases on disk and prints the values it read, including
+ *   the artifacts it couldn't read: an absent database is an unanswered question rather than a pass.
+ *   The command reports it as unanswered.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/data/bundle-publication.run.ts [--bundle <name>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/bundle-publication.run.ts [--bundle <name>]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

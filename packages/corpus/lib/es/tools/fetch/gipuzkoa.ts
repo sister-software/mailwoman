@@ -2,38 +2,43 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Downloads the INSPIRE Addresses theme the Diputación Foral de Gipuzkoa publishes for the whole
- *   province.
+ *   Downloads the INSPIRE Addresses theme the Diputación Foral de Gipuzkoa publishes for the whole province.
  *
  *   ## One feed, one entry, one archive
  *
- *   The ATOM download service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` holds a
- *   single entry covering the province rather than one entry per municipality, so the resolution is
- *   one request:
+ *   The ATOM download service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml`
+ *   holds a single entry covering the province rather than one entry per municipality,
+ *   so the resolution is one request:
  *
  *       addresses.xml  →  GML/ES.GFA.AD.zip
  *
- *   That entry links its dataset through `rel="alternate"`. It holds no `rel="enclosure"` link at
- *   all, and the `rel="describedby"` link beside the alternate is the ISO 19139 metadata record. A
- *   reader that looks for an enclosure therefore finds no dataset here, and a reader that takes the
- *   first link of any relation downloads the metadata record instead of 7,959,103 bytes of
- *   addresses. {@linkcode resolveGipuzkoaArchive} asks for the alternate by name.
+ *   That entry links its dataset through `rel="alternate"`.
+ *   It holds no `rel="enclosure"` link at all, and the `rel="describedby"` link
+ *   beside the alternate is the ISO 19139 metadata record.
  *
- *   ## The entry's `<updated>` is not a freshness signal
+ *   A reader that looks for an enclosure therefore finds no dataset here, and a reader that
+ *   takes the first link of any relation downloads the metadata record instead of 7,959,103
+ *   bytes of addresses. {@linkcode resolveGipuzkoaArchive} asks for the alternate by name.
  *
- *   The entry states `<updated>2017-01-01T08:08:00Z</updated>` while the archive it links was last
- *   modified 2026-08-08, and the entry's own summary states a weekly refresh. The feed's value has
- *   therefore not moved across at least one refresh, so comparing it against a recorded copy would
- *   keep one archive forever. The archive's HTTP `last-modified` is the signal this fetcher compares,
- *   and {@linkcode gipuzkoaPublicationIsRecorded} requires the publisher to state one before it
- *   agrees to skip a download. The feed's value is recorded beside it, unused, because it is what
- *   the publisher states about the dataset.
+ *   ## The entry's `<updated>` isn't a freshness signal
+ *
+ *   The entry states `<updated>2017-01-01T08:08:00Z</updated>` while the archive it links
+ *   was last modified 2026-08-08, and the entry's own summary states a weekly refresh.
+ *   The feed's value has therefore not moved across at least one refresh,
+ *   so comparing it against a recorded copy would keep one archive forever.
+ *
+ *   The archive's HTTP `last-modified` is the signal this fetcher compares,
+ *   and {@linkcode gipuzkoaPublicationIsRecorded} requires the publisher to state one
+ *   before it agrees to skip a download.
+ *   The feed's value is recorded beside it, unused, because it is what the
+ *   publisher states about the dataset.
  *
  *   ## Why the archive stays compressed
  *
- *   `#es/adapters/gipuzkoa/adapter` reads the member through `inspireGMLChunks`, which inflates from
- *   the archive. The member `ES.GFA.AD.gml` is 313,162,472 bytes against the archive's 7,959,103, so
- *   unpacking it here would cost 39 times the disk for no reader that wants it.
+ *   `#es/adapters/gipuzkoa/adapter` reads the member through `inspireGMLChunks`,
+ *   which inflates from the archive.
+ *   The member `ES.GFA.AD.gml` is 313,162,472 bytes against the archive's 7,959,103,
+ *   so unpacking it here would cost 39 times the disk for no reader that wants it.
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
@@ -74,7 +79,7 @@ const SLUG = ES_GIPUZKOA_ADAPTER_ID
  *
  * `last_modified` is the header the download was decided on.
  * `feed_updated` is the entry's own `<updated>`, recorded rather than compared,
- * because this publisher's value has not moved since 2017.
+ * because this publisher's value hasn't moved since 2017.
  */
 export interface GipuzkoaManifest extends SourceManifest {
 	service_url: string

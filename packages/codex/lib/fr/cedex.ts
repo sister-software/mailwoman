@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   cedex, Courrier d'Entreprise à Distribution EXceptionnelle (La Poste business routing, NF Z
- *   10-011 §3.4). The component is the `cedex [NN]` phrase itself, while the preceding postcode
+ *   cedex, Courrier d'Entreprise à Distribution EXceptionnelle (La Poste business routing, NF Z 10-011 §3.4).
+ *
+ *   The component is the `cedex [NN]` phrase itself, while the preceding postcode
  *   and locality keep their own tags.
  */
 

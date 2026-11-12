@@ -7,11 +7,12 @@
  *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/openaddresses.run.ts \
  *   --plan <plan.json> --release <date> [--states nh,nv]
  *
- *   The plan is a JSON array of `{ member, license }`, such as `{ "member": "us/nh/statewide", "license": null }`.
+ *   The plan is a JSON array of `{ member, license }`, such
+ *   as `{ "member": "us/nh/statewide", "license": null }`.
  *   Each state builds beside its database and swaps into place once sealed.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
@@ -44,7 +45,7 @@ if (!values.plan || !values.release) throw new Error("--plan and --release are r
 const release = values.release
 const plan = await readLocalJSONFile<Array<{ member: string; license: unknown }>>(values.plan)
 const only = values.states ? new Set(values.states.split(",")) : null
-const cache = dataRootPath("oa-cache")
+const cache = currentSourcePath("openaddresses")
 
 await makeDirectories(cache)
 

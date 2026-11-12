@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ukrainian postal designators: the premise, sub-premise, floor and relation words an address or a query
- *   uses. The UPU sheet lists the apartment abbreviation in Latin transliteration, and the row gives it in
- *   Cyrillic.
+ *   Ukrainian postal designators: the premise, sub-premise, floor and relation
+ *   words an address or a query uses.
+ *
+ *   The UPU sheet lists the apartment abbreviation in Latin transliteration,
+ *   and the row gives it in Cyrillic.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/ukrEn.pdf UPU Ukraine addressing sheet (Ukrposhta)}
  * @see {@link https://en.wiktionary.org/wiki/будинок Wiktionary: будинок}

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A `street_suffix` with no `street` anywhere in the tree and contiguous with a name-containing place belongs to that place, while a stranded affix that neighbors no adjacent span is left exactly as it is.
+ *   A `street_suffix` with no `street` anywhere in the tree and contiguous with
+ *   a name-containing place belongs to that place, while a stranded affix that
+ *   neighbors no adjacent span is left exactly as it is.
  */
 
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"

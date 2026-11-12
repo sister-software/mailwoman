@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Aliases and containment. An alias is text that may refer to an entity. It resolves only when exactly
- *   one candidate holds evidence, and two candidates stay two. A containment link relates a child to a
- *   parent through one source record, so a parcel with two buildings keeps both.
+ *   Aliases and containment.
+ *
+ *   An alias is text that may refer to an entity.
+ *   It resolves only when exactly one candidate holds evidence, and two candidates stay two.
+ *
+ *   A containment link relates a child to a parent through one source record,
+ *   so a parcel with two buildings keeps both.
  */
 
 import type { PostalAddress } from "@mailwoman/record"

@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The live eval for the v1.8.0 international admin-split candidate. Runs the production ship-config
- *   parse (createScorer: anchor + gazetteer + conventions=auto) → resolve (createWOFResolver,
- *   defaultCountry FR) → coordinate on the held-OUT FR golden set (disjoint communes, with truth
- *   coords). The report includes assembled centroid error, resolve rate, région emit rate,
- *   plus the diacritic break.
+ *   The live eval for the v1.8.0 international admin-split candidate.
  *
- *   Grade the assembled anchor-on coordinate, never label-F1. Run for v1.5.0 (baseline) and the
- *   v1.8.0 candidate. promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 and the US
- *   guardrail (separate oa-resolver-eval run) holds.
+ *   Runs the production ship-config parse (createScorer: anchor + gazetteer + conventions=auto),
+ *   then resolve (createWOFResolver, defaultCountry FR), then coordinate on the
+ *   held-OUT FR golden set (disjoint communes, with truth coords).
+ *   The report includes assembled centroid error, resolve rate, région emit rate, plus the diacritic break.
+ *
+ *   Grade the assembled anchor-on coordinate, never label-F1.
+ *   Run for v1.5.0 (baseline) and the v1.8.0 candidate. promote iff the candidate's mean
+ *   centroid error ≤ 0.95× v1.5.0 and the US guardrail (separate oa-resolver-eval run) holds.
  *
  *   Run: node packages/mailwoman/tools/dev-tools/fr/admin/split/eval.run.ts\
  *   --model <int8.onnx> --tokenizer <tok> --model-card neural-weights-en-us/model-card.json\
@@ -121,7 +122,7 @@ const { values: args } = parseArguments({
  *
  * A migration changes this eval's verdict on any row that resolves a `localadmin`
  * or `borough`, so it needs that count on this eval's own panel first.
- * A promoted convention does not move on an argument.
+ * A promoted convention doesn't move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,

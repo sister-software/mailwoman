@@ -130,7 +130,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
 		// The postcode node stays undecorated when a locality was recovered:
 		// its medoid centroid is coarser than the village pin.
-		// Postcode-over-locality consumers must not trade down.
+		// Postcode-over-locality consumers mustn't trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeFalsy()

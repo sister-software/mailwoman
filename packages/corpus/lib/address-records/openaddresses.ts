@@ -13,7 +13,7 @@ import {
 	type StreetLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, JSONSpliterator } from "spliterator"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
 import type { UnitSplitter } from "#adapters/street/unit"
@@ -39,7 +39,7 @@ export interface OpenAddressesRunRecord {
 /**
  * The ISO 3166-1 alpha-2 code a run's member path opens with, such as `US` for `us/wi/statewide`.
  *
- * @throws When the path's first segment is not two letters.
+ * @throws When the path's first segment isn't two letters.
  */
 export function openAddressesRunCountry(member: string): string {
 	const segment = member.split("/")[0] ?? ""
@@ -146,6 +146,53 @@ export async function* readOpenAddressesRunRecords(
 	const rows = CSVSpliterator.fromAsync<OpenAddressesRunRecord>(csvPath.toString(), { normalizeKeys: true })
 
 	for await (const row of rows) {
+		const record = openAddressesAddressRecord(row, member, streetLocale, units)
+
+		if (record) {
+			yield record
+		}
+	}
+}
+
+/**
+ * The file name a run's batch job output is cached under, such as `us__mi__statewide.source.geojson.gz`.
+ */
+export function openAddressesSourceCacheName(member: string): string {
+	return `${member.replaceAll("/", "__")}.source.geojson.gz`
+}
+
+/**
+ * One feature of an OpenAddresses batch job's `source.geojson.gz`: a point
+ * and the run's fields in lower case.
+ */
+interface OpenAddressesRunFeature {
+	geometry?: { type?: string; coordinates?: readonly number[] } | null
+	properties?: Omit<OpenAddressesRunRecord, "lon" | "lat"> | null
+}
+
+/**
+ * Streams the address records of one OpenAddresses batch job's `source.geojson.gz`,
+ * as cached by `fetchOpenAddressesSources`, skipping features the record refuses.
+ *
+ * The reader decompresses the file as it streams, so the run is never extracted to disk.
+ * A feature without a point geometry has no position, and the record refuses it.
+ *
+ * @param member The run's member path, such as `us/mi/statewide`, which supplies the source id and country.
+ */
+export async function* readOpenAddressesGeoJSONRunRecords(
+	geojsonPath: PathBuilderLike,
+	member: string,
+	streetLocale: StreetLocale,
+	units?: UnitSplitter
+): AsyncGenerator<AddressRecord> {
+	for await (const feature of JSONSpliterator.fromAsync<OpenAddressesRunFeature>(geojsonPath.toString())) {
+		const point = feature.geometry?.type === "Point" ? feature.geometry.coordinates : null
+
+		const row: OpenAddressesRunRecord = {
+			...feature.properties,
+			...(point ? { lon: String(point[0]), lat: String(point[1]) } : {}),
+		}
+
 		const record = openAddressesAddressRecord(row, member, streetLocale, units)
 
 		if (record) {

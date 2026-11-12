@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Re-fetch the Hawaii State DOE school directory as its original xlsx workbook. The
- *   `state-hi-schools` adapter reads both worksheets directly.
+ *   Re-fetch the Hawaii State DOE school directory as its original xlsx workbook.
  *
- *   Upstream is a single xlsx (~64 KB) with two sheets — `hidoe` (~258 district schools) and `PCS`
- *   (~38 public charter schools). Both sheets are validated against the adapter's required columns
+ *   The `state-hi-schools` adapter reads both worksheets directly.
+ *
+ *   Upstream is a single xlsx (~64 KB) with two sheets — `hidoe` (~258 district schools)
+ *   and `PCS` (~38 public charter schools).
+ *   Both sheets are validated against the adapter's required columns
  *   before the workbook is recorded as fetched.
  *
  *   License: Hawaii state government open data (Tier A — state PD-equivalent).
  *
- *   Invoke via `mailwoman corpus fetch state-hi-schools --out-root <path>`. Idempotent: if the dest
- *   workbook exists and its sha matches manifest, skips download.
+ *   Invoke via `mailwoman corpus fetch state-hi-schools`.
+ *   A re-run skips the download only when the host still states the `ETag`
+ *   (or `Last-Modified`) the manifest recorded and the workbook on disk matches it.
  */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -22,7 +25,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import type { PathBuilderLike } from "path-ts"
 import { XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 import { STATE_HI_SCHOOL_REQUIRED_COLUMNS, STATE_HI_SCHOOL_SHEETS } from "#us/adapters/state/hi-schools/workbook"
 
@@ -41,13 +44,28 @@ export interface FetchStateHISchoolsOptions extends BaseFetchOptions {
 	sourceURL?: string
 }
 
-interface Manifest {
-	source_url: string
-	downloaded_at: string
-	filename: string
-	sha256: string
-	bytes: number
+interface Manifest extends SourceManifest {
 	notes: string
+}
+
+/**
+ * The version the host states for the workbook: its `ETag`, or its `Last-Modified` when it sends no ETag.
+ * Measured on 2026-11-10, the DOE's host sends both.
+ *
+ * @returns `null` when the host states neither or the request fails, so the caller
+ * downloads again and the download reports any failure.
+ */
+async function servedVersion(url: string): Promise<string | null> {
+	const res = await fetch(url, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(60_000) }).catch(
+		() => null
+	)
+
+	if (!res?.ok) return null
+
+	const etag = res.headers.get("etag")
+	const lastModified = res.headers.get("last-modified")
+
+	return etag ? `etag ${etag}` : lastModified ? `last-modified ${lastModified}` : null
 }
 
 async function validateWorkbook(path: PathBuilderLike): Promise<void> {
@@ -92,20 +110,25 @@ export async function fetchStateHISchools(
 
 	report?.(`=== ${SLUG}`)
 
-	// Idempotency: skip if the source workbook exists and sha matches the recorded manifest.
-	if (await pathExists(xlsxDest)) {
+	// The workbook is skipped only when the publisher still serves the version the manifest
+	// recorded and the file on disk is the one the manifest describes.
+	const served = await servedVersion(sourceURL)
+
+	if (served != null && (await pathExists(xlsxDest))) {
 		const recorded = await readManifest<Partial<Manifest>>(manifestPath)
 
-		if (recorded?.sha256 && recorded.filename === XLSX_FILENAME) {
-			const actualSha = await sha256File(xlsxDest)
+		if (
+			recorded?.publisher_version === served &&
+			recorded.filename === XLSX_FILENAME &&
+			recorded.sha256 === (await sha256File(xlsxDest))
+		) {
+			report?.(`  ✓ Already current (the publisher still serves ${served}) — skipping download.`)
 
-			if (actualSha === recorded.sha256) {
-				report?.(`  ✓ Already current (sha256 matches MANIFEST) — skipping download.`)
-
-				return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
-			}
+			return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
 		}
 	}
+
+	report?.(`  The publisher serves ${served ?? "no stated version"}`)
 
 	// Download xlsx.
 	report?.(`  Downloading ${sourceURL} ...`)
@@ -152,6 +175,7 @@ export async function fetchStateHISchools(
 		filename: XLSX_FILENAME,
 		sha256: xlsxSha,
 		bytes: xlsxSize,
+		...(served != null ? { publisher_version: served } : {}),
 		notes: "Original XLSX; the adapter reads the HIDOE and PCS sheets directly.",
 	}
 

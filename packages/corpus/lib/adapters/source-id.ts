@@ -4,12 +4,15 @@
 /**
  *   The deterministic row id for a source that publishes no primary key of its own.
  *
- * A CSV row or GeoJSON feature can lack a stable identifier. The runner still needs one, so
- * deduplication and holdout manifests agree across reruns and a run can resume. These functions
- * derive it by hashing the adapter id together with a canonical serialization of the row's values.
+ * A CSV row or GeoJSON feature can lack a stable identifier.
+ * The runner still needs one, so deduplication and holdout manifests agree
+ * across reruns and a run can resume.
  *
- * The separator bytes are part of the hashed stream, so changing them changes every id in every
- * built corpus.
+ * These functions derive it by hashing the adapter id together with a canonical
+ * serialization of the row's values.
+ *
+ * The separator bytes are part of the hashed stream, so changing them changes
+ * every id in every built corpus.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -29,7 +32,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@linkcode stableSourceID} over arbitrary disambiguator keys, such as a variant index
- * or a slot number that is not a `ComponentTag`.
+ * or a slot number that's not a `ComponentTag`.
  *
  * Both functions sort and hash every key handed in, so only the key vocabulary differs.
  * The narrower signature above stops an adapter from hashing a misspelled component name.

@@ -6,9 +6,16 @@ container runs the same code an npm consumer gets. The gazetteer (the large geog
 kept out of the image and mounts at `/data`.
 
 The image is built from the repo-root [`Dockerfile`](../Dockerfile),
-[`docker/package.json`](./package.json) (the exact dependency set), and
-[`docker/server.mjs`](./server.mjs) (the entrypoint). CI publishes it with
-[`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml).
+[`docker/package.json`](./package.json) (the package set), and
+[`docker/server.ts`](./server.ts) (the entrypoint). Node runs the entrypoint as source. The
+`MAILWOMAN_VERSION` build argument sets the version of every package. CI publishes the image with
+[`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml). The workflow passes the
+release version, so the `11.0.0` image holds the `11.0.0` packages. A local build without the argument
+installs `latest`:
+
+```bash
+docker build --build-arg MAILWOMAN_VERSION=11.0.0 -t mailwoman:11.0.0 .
+```
 
 ## First run — parse works with no data
 
@@ -41,7 +48,7 @@ curl -s -X POST localhost:3000/v1/geocode \
 ```
 
 If you do not have a gazetteer yet, pull the worldwide candidate DB (~1.65 GB, population-first
-ranking) with the same image. The host does not need Node or npm for this step:
+ranking) with the same image. The host doesn't need Node or npm for this step:
 
 ```bash
 mkdir -p mailwoman-data
@@ -51,7 +58,7 @@ docker run --rm -v "$(pwd)/mailwoman-data:/data" \
 ```
 
 `data pull` writes the file under the container's `$MAILWOMAN_DATA_ROOT` (`/data`, set by the image),
-at `/data/wof/candidate.db`. That is the path the read-only mount above expects. This one run needs
+at `/data/wof/candidate.db`. That's the path the read-only mount above expects. This one run needs
 the volume **without** `:ro`. Every later `docker run` that only reads the gazetteer keeps `:ro`.
 
 ### Read-only mounts

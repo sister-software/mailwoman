@@ -4,11 +4,14 @@
 /**
  *   This module grades comparisons only when their truth data supports a verdict.
  *
- *   `checkCase` grades individual cases. `toGauntletResult` projects the result. This module
- *   determines whether a set has truth data. It interprets a two-arm delta and calculates the
- *   smallest effect the current row count could detect.
+ *   `checkCase` grades individual cases.
+ *   `toGauntletResult` projects the result.
  *
- *   A set without truth data receives the `ungradeable` grade. The grade keeps it out of passing cases.
+ *   This module determines whether a set has truth data.
+ *   It interprets a two-arm delta and calculates the smallest effect the current row count could detect.
+ *
+ *   A set without truth data receives the `ungradeable` grade.
+ *   The grade keeps it out of passing cases.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -77,7 +80,7 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
  * `checkCase` returns the list of issues, so fewer is better.
  *
  * Count comparison is deliberate because an arm that trades one wrong component
- * for a different wrong one has not improved.
+ * for a different wrong one hasn't improved.
  */
 export function gradeRow(
 	seed: SeedCase | null,

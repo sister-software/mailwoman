@@ -4,7 +4,8 @@
 /**
  *   PLATEAU's hosted 3D Tiles building sets, and the selection of the ones a published map may draw.
  *
- *   `data/plateau-tilesets.json` lists one LoD2 building tileset per ward, with the license its CKAN record states.
+ *   `data/plateau-tilesets.json` lists one LoD2 building tileset per ward,
+ *   with the license its CKAN record states.
  *   `sdk/plateau/tilesets.run.ts` regenerates it from PLATEAU VIEW's catalog.
  */
 

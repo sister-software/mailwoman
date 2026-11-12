@@ -11,7 +11,7 @@ operator set to end at 13:00 UTC. Every task left for the last four hours needed
 - **The served JP path resolves** (ba46cc6d9). A correct JP parse answered no coordinate: the placetype map had no
   entry for `prefecture` / `municipality` / `district`, the admin ladder listed no JP rung, and the normalizer stripped
   the `〒` the character model was trained with. All three measured on 300 board rows (0 → 271 accepted @15 km) and
-  shipped. The Latin board did not move (0 of 674 rows, run `8eb39d63`).
+  shipped. The Latin board didn't move (0 of 674 rows, run `8eb39d63`).
 - **The compound municipality resolves as a scoped pair** (3dbff6ab5, #2175). `神戸市西区` and `猿島郡五霞町` have no single
   key. The unscoped split lost rows (251 of 300) because a bare ward answers a namesake elsewhere. The head resolves
   first, the tail probes as its child with the parent fallback withheld and a region-scope re-admission refused: 271 →
@@ -66,7 +66,7 @@ operator set to end at 13:00 UTC. Every task left for the last four hours needed
 - The Korean builder's `COUNTRY_TOKEN = "대한민국"` read as a hardcoded password to bandit (B105) and failed the `static`
   CI job on 3486a25fa. The local `yarn lint:python` had reported it too, and its exit code went unread. Renamed to
   `COUNTRY_NAME`. Read the exit code rather than the tail of the output.
-- `zsh` does not word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
+- `zsh` doesn't word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
   no-ops before the shape was noticed.
 
 ## Decisions made autonomously

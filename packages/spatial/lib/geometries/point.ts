@@ -72,7 +72,7 @@ export class GeoPoint implements PointLiteral {
 
 	/**
 	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the interface,
-	 * never inferred from the magnitudes — and rejects a coordinate that is not on the globe.
+	 * never inferred from the magnitudes — and rejects a coordinate that's not on the globe.
 	 *
 	 * See {@link GeoPoint.from} for why both halves of that sentence are required.
 	 *
@@ -199,7 +199,7 @@ export class GeoPoint implements PointLiteral {
 
 	/**
 	 * Attempts to create a new GeoPoint instance from the given input, returning `null`
-	 * rather than throwing when the input is not a coordinate this class will stand behind.
+	 * rather than throwing when the input isn't a coordinate this class will stand behind.
 	 *
 	 * Two rules, both of which this constructor got wrong until 2026-08-05
 	 * (the defect was recorded in `e9bfd139` and routed around rather than fixed):

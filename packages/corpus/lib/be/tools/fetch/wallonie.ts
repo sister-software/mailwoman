@@ -2,26 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Downloads the INSPIRE Addresses theme the Service public de Wallonie publishes for the Walloon
- *   Region.
+ *   Downloads the INSPIRE Addresses theme the Service public de Wallonie publishes for the Walloon Region.
  *
  *   ## Two feeds and one archive
  *
- *   The service document lists one dataset feed, and that feed offers one archive for the whole
- *   region rather than one per municipality. Czechia's ČÚZK publishes 6,258 archives through the same
- *   INSPIRE pattern, so the resolution here is the same shape with a list of one:
+ *   The service document lists one dataset feed, and that feed offers one archive
+ *   for the whole region rather than one per municipality.
+ *   Czechia's ČÚZK publishes 6,258 archives through the same INSPIRE pattern,
+ *   so the resolution here is the same shape with a list of one:
  *
  *       AD_Service.xml  →  AD_Dataset_<uuid>.xml  →  AD.Addresses.gml.zip
  *
- *   The service document's `<updated>` is the freshness signal this fetcher records. A dataset feed
- *   that reports the same value as the manifest means the archive on disk is the one the publisher
- *   serves, and the download is skipped.
+ *   The service document's `<updated>` is the freshness signal this fetcher records.
+ *   A dataset feed that reports the same value as the manifest means the archive on
+ *   disk is the one the publisher serves, and the download is skipped.
  *
  *   ## Why the archive stays compressed
  *
- *   `#be/adapters/wallonie/adapter` reads the member through `inspireGMLChunks`, which inflates from
- *   the archive. The member is 5,163,917,131 bytes against the archive's 106,665,832, so unpacking it
- *   here would cost 48 times the disk for no reader that wants it.
+ *   `#be/adapters/wallonie/adapter` reads the member through `inspireGMLChunks`,
+ *   which inflates from the archive.
+ *   The member is 5,163,917,131 bytes against the archive's 106,665,832, so unpacking
+ *   it here would cost 48 times the disk for no reader that wants it.
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"

@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Splice locale diacritic pieces into a frozen tokenizer, or grow an exported model onto a spliced tokenizer.
+ *   Splice locale diacritic pieces into a frozen tokenizer, or grow an exported
+ *   model onto a spliced tokenizer.
  *
- *   `build-tokenizer` reads the locales' OpenAddresses street and city names, trains a locale unigram model on them,
- *   appends that model's pieces that hold a code point outside ASCII to the base tokenizer, and checks that English
- *   tokenizes as before. With `--trained-samples`, it also writes the code point overlap report beside the spliced
- *   tokenizer and fails on an overlap no `--accept-overlap` entry accepts.
+ *   `build-tokenizer` reads the locales' OpenAddresses street and city names,
+ *   trains a locale unigram model on them, appends that model's pieces that hold a code
+ *   point outside ASCII to the base tokenizer, and checks that English tokenizes as before.
+ *   With `--trained-samples`, it also writes the code point overlap report beside the
+ *   spliced tokenizer and fails on an overlap no `--accept-overlap` entry accepts.
  *
- *   `onnx-mean-init` grows an exported model's token embedding table, and its int8 twin's, to the spliced vocabulary.
+ *   `onnx-mean-init` grows an exported model's token embedding table,
+ *   and its int8 twin's, to the spliced vocabulary.
  *
  *   Usage:
  *
@@ -20,9 +23,9 @@
  *     node packages/mtf/tools/tokenizer/splice.run.ts onnx-mean-init --fp32-onnx <onnx> --base-tokenizer <model>
  *       --spliced-tokenizer <model> --out-fp32 <onnx> [--int8-onnx <onnx> --out-int8 <onnx>]
  *
- *   A per-file cap that reads a whole small regional file can read only the first departments of a country published
- *   as one national file, such as France's. Raise it, or pass a sampled national extract, to keep the corpus spread
- *   across the country.
+ *   A per-file cap that reads a whole small regional file can read only the first
+ *   departments of a country published as one national file, such as France's.
+ *   Raise it, or pass a sampled national extract, to keep the corpus spread across the country.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"

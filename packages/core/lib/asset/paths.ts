@@ -4,8 +4,8 @@
 /**
  *   Path builders for Mailwoman's platform-native application directories.
  *
- *   The builders read the typed environment and `path-ts`, so this module is for Node callers. A bundle that
- *   needs only a tileset name reads `asset-names.ts`, a module of string constants.
+ *   The builders read the typed environment and `path-ts`, so this module is for Node callers.
+ *   A bundle that needs only a tileset name reads `asset-names.ts`, a module of string constants.
  */
 
 import { createPathBuilderResolver, type PathBuilder } from "path-ts"

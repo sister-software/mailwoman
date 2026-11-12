@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture `test/fixtures/202605_BDUK_uprn_release_sample.csv` copies eight rows verbatim from the
- *   published Building Digital UK sample file for the May 2026 release, retrieved 2026-10-05 under
- *   OGL v3.0. It keeps the sample's published file name and header. The sample's rows are all
- *   `Gigabit Grey/Black`, so the tests that read the other statuses replace one cell.
+ *   The fixture `test/fixtures/202605_BDUK_uprn_release_sample.csv` copies eight
+ *   rows verbatim from the published Building Digital UK sample file for the May
+ *   2026 release, retrieved 2026-10-05 under OGL v3.0.
+ *
+ *   It keeps the sample's published file name and header.
+ *   The sample's rows are all `Gigabit Grey/Black`, so the tests that read the
+ *   other statuses replace one cell.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -333,7 +336,7 @@ describe("parseBDUKRelease refusals", () => {
 		)
 	})
 
-	// A quote that opens on one line and closes on a later one is not an error to
+	// A quote that opens on one line and closes on a later one isn't an error to
 	// the reader: it joins the lines into one record.
 	// Only the width check and the record count tell that read from a shorter file.
 	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {

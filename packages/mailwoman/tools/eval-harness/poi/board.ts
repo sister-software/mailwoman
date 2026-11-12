@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Grades committed POI queries against the production pipeline's result. The board also checks the registered floors.
+ *   Grades committed POI queries against the production pipeline's result.
+ *   The board also checks the registered floors.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -53,7 +54,7 @@ export interface POIBoardFixture {
 	rowRef?: string
 	/**
 	 * A note for the board author.
-	 * The board does not grade it.
+	 * The board doesn't grade it.
 	 */
 	note?: string
 }
@@ -484,7 +485,7 @@ export interface POIBoardReport {
 	/**
 	 * Number of tracked rows.
 	 *
-	 * They are graded and reported and never count toward the floors.
+	 * They're graded and reported and never count toward the floors.
 	 */
 	trackedCases: number
 	/**

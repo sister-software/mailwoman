@@ -6,9 +6,12 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { CreateRule } from "@oxlint/plugins"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
 import { reflowRule } from "./config/oxlint/comment-reflow/rule.ts"
+import { serialImportsRule } from "./config/oxlint/serial-imports/rule.ts"
+import { spdxHeaderRule } from "./config/oxlint/spdx-header/rule.ts"
 import { HELPER_HOMES, type HelperHome } from "./oxlint.helper-homes.ts"
 
 /**
@@ -61,7 +64,7 @@ interface Rule {
 
 interface Plugin {
 	meta: { name: string }
-	rules: Record<string, Rule>
+	rules: Record<string, Rule | CreateRule>
 }
 
 /**
@@ -156,7 +159,7 @@ function containsNeverCast(node: AstNode | null | undefined): boolean {
 }
 
 /**
- * Get a called member's name when it is not computed.
+ * Get a called member's name when it isn't computed.
  */
 function calledMethod(node: AstNode): string | null {
 	const callee = node.callee
@@ -1003,26 +1006,36 @@ const noAwaitUsingSyncDisposableRule: Rule = {
 }
 
 /**
- * The `mailwoman` oxlint plugin with every repo-local rule.
+ * The rules written against this module's own `Rule` type.
+ * The plugin's tests drive these rules directly.
+ */
+export const localRules: Record<string, Rule> = {
+	"no-await-using-sync-disposable": noAwaitUsingSyncDisposableRule,
+	"no-database-boundary-cast": noDatabaseBoundaryCastRule,
+	"no-cross-package-reexport": noCrossPackageReexportRule,
+	"no-database-handle-cast": noDatabaseHandleCastRule,
+	"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
+	"no-import-meta-resolve": noImportMetaResolveRule,
+	"no-raw-git-spawn": noRawGitSpawnRule,
+	"no-relative-dynamic-import": noRelativeDynamicImportRule,
+	"no-sync-fs-in-async": noSyncFSInAsyncRule,
+	"prefer-home": preferHomeRule,
+	"prefer-spliterator": preferSpliteratorRule,
+	"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
+	"require-disable-reason": requireDisableReasonRule,
+}
+
+/**
+ * The `mailwoman` oxlint plugin with every repo-local rule: the local rules,
+ * and the fix-capable rules written against oxlint's own `CreateRule` type.
  */
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
-		// Adapt the fix-capable shared rule to this plugin's local rule type.
-		"comment-reflow": reflowRule as unknown as Rule,
-		"no-await-using-sync-disposable": noAwaitUsingSyncDisposableRule,
-		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
-		"no-cross-package-reexport": noCrossPackageReexportRule,
-		"no-database-handle-cast": noDatabaseHandleCastRule,
-		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
-		"no-import-meta-resolve": noImportMetaResolveRule,
-		"no-raw-git-spawn": noRawGitSpawnRule,
-		"no-relative-dynamic-import": noRelativeDynamicImportRule,
-		"no-sync-fs-in-async": noSyncFSInAsyncRule,
-		"prefer-home": preferHomeRule,
-		"prefer-spliterator": preferSpliteratorRule,
-		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
-		"require-disable-reason": requireDisableReasonRule,
+		...localRules,
+		"comment-reflow": reflowRule,
+		"no-serial-dynamic-imports": serialImportsRule,
+		"spdx-header": spdxHeaderRule,
 	},
 }
 

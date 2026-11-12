@@ -3,18 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Claude Code Stop hook: run the assistant's finished reply through the Mailwoman Vale rules and
- *   hand the findings back, so the agent revises the reply instead of letting the jargon stand.
- *   The lint policy — rule set, severity split, finding format — lives in `check-core.ts`,
- *   shared with the Codex adapter. This file owns only the Claude payload shape, the loop guard
- *   and the output JSON.
+ *   Claude Code Stop hook: run the assistant's finished reply through the Mailwoman Vale rules
+ *   and hand the findings back, so the agent revises the reply instead of letting the jargon stand.
  *
- *   Error-severity findings return `decision: "block"`, which sends the reason back for one
- *   corrective turn. warning-only findings return the non-blocking `systemMessage` for the agent to weigh. The
- *   `stop_hook_active` guard caps the loop at one revision pass per stop: the revised reply is not
- *   re-linted, so a false positive costs one turn at most. Every failure path is silence, same
- *   interface as `symbol-precheck.ts` — a hook that throws on an unanticipated payload is a broken
- *   session rather than a missing hint.
+ *   The lint policy — rule set, severity split, finding format — lives in
+ *   `check-core.ts`, shared with the Codex adapter.
+ *   This file owns only the Claude payload shape, the loop guard and the output JSON.
+ *
+ *   Error-severity findings return `decision: "block"`, which sends the reason back for one corrective
+ *   turn. warning-only findings return the non-blocking `systemMessage` for the agent to weigh.
+ *   The `stop_hook_active` guard caps the loop at one revision pass per stop:
+ *   the revised reply isn't re-linted, so a false positive costs one turn at most.
+ *
+ *   Every failure path is silence, same interface as `symbol-precheck.ts` — a hook that
+ *   throws on an unanticipated payload is a broken session rather than a missing hint.
  *
  *   Register it in `.claude/settings.json` under `hooks.Stop`.
  */

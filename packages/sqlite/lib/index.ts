@@ -4,12 +4,16 @@
 /**
  *   The one way a Mailwoman SQLite connection comes into being.
  *
- *   `DatabaseClient` opens the file; `openBuiltClient` opens a built artifact with the seal check. A caller specifies which
- *   file and schema. It never constructs the connection, so one database has one schema, one owner and a
- *   lifetime `using` can end. `new DatabaseSync` appears once in this package and nowhere else in the repository.
+ *   `DatabaseClient` opens the file; `openBuiltClient` opens a built artifact with the seal check.
+ *   A caller specifies which file and schema.
  *
- *   It lives outside `@mailwoman/core` because it needs none of core's 11 MB of parser reference data. Its whole
- *   dependency set is `kysely`. That is what lets the leaf lookups use it.
+ *   It never constructs the connection, so one database has one schema, one owner
+ *   and a lifetime `using` can end.
+ *   `new DatabaseSync` appears once in this package and nowhere else in the repository.
+ *
+ *   It lives outside `@mailwoman/core` because it needs none of core's 11 MB of parser reference data.
+ *   Its whole dependency set is `kysely`.
+ *   That's what lets the leaf lookups use it.
  */
 
 export * from "#batched"

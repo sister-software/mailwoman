@@ -91,7 +91,7 @@ export function pathExists(path: PathBuilderLike | URL): Promise<boolean> {
 // #region Assertions
 
 /**
- * Assert that a path exists, throwing an error if it does not.
+ * Assert that a path exists, throwing an error if it doesn't.
  */
 export function assertPathExists(path: PathBuilderLike | URL, message?: string | null): Promise<void> {
 	return pathExists(path).then((exists) => {
@@ -113,10 +113,10 @@ export function isDirectory(path: PathBuilderLike | URL): Promise<boolean> {
 }
 
 /**
- * Assert that a path exists and is a directory, throwing an error if it does not.
+ * Assert that a path exists and is a directory, throwing an error if it doesn't.
  *
  * @category Files
- * @throws {AssertionError} If the path does not exist or is not a directory.
+ * @throws {AssertionError} If the path doesn't exist or isn't a directory.
  */
 export function assertIsDirectory(
 	path: PathBuilderLike | URL,
@@ -155,10 +155,10 @@ export function assertIsDirectory(
 }
 
 /**
- * Assert that a path exists and is a file, throwing an error if it does not.
+ * Assert that a path exists and is a file, throwing an error if it doesn't.
  *
  * @category Files
- * @throws {AssertionError} If the path does not exist or is not a file.
+ * @throws {AssertionError} If the path doesn't exist or isn't a file.
  */
 export function assertIsFile(path: PathBuilderLike | URL, message?: string | null, cachedStats?: Stats): Promise<void> {
 	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
@@ -272,7 +272,7 @@ export function entryLeadsToDirectory(entry: Dirent): Promise<boolean> {
 /**
  * The size of a file in bytes.
  *
- * @throws Enoent when the file does not exist.
+ * @throws Enoent when the file doesn't exist.
  */
 export function readFileSize(path: PathBuilderLike | URL): Promise<number> {
 	return statPath(path).then((stats) => stats.size)
@@ -295,7 +295,7 @@ export interface FilesystemSpace {
 
 /**
  * The space on the filesystem that will hold `path`, read from its nearest
- * existing ancestor when `path` does not exist yet.
+ * existing ancestor when `path` doesn't exist yet.
  *
  * @throws The system error when the nearest existing ancestor cannot be read.
  */
@@ -320,7 +320,7 @@ export async function readFilesystemSpace(path: PathBuilderLike): Promise<Filesy
 /**
  * The size of a file, rendered in IEC units (`12.3 MiB`) — the unit for anything a machine measured.
  *
- * @throws Enoent when the file does not exist.
+ * @throws Enoent when the file doesn't exist.
  */
 export async function formatFileSize(path: PathBuilderLike | URL, options?: ByteFormatterOptions): Promise<string> {
 	return ByteFormatter.formatIEC(await readFileSize(path), options)
@@ -355,7 +355,7 @@ export function open(path: PathBuilderLike | URL, flags?: string | number, mode?
 /**
  * The target a symbolic link points at, verbatim — relative if it was written relative.
  *
- * @throws Einval when the path is not a link, enoent when the path is absent.
+ * @throws Einval when the path isn't a link, enoent when the path is absent.
  */
 export function readLink(path: PathBuilderLike): Promise<string> {
 	return readlink(path.toString())

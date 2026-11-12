@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What every training audit writes: its report, as tab-indented JSON with each `Map` in its insertion order, and the
- *   preflight receipt the GPU run checks before it trains.
+ *   What every training audit writes: its report, as tab-indented JSON with each `Map` in
+ *   its insertion order, and the preflight receipt the GPU run checks before it trains.
  *
- *   The preflight receipt is written only after every audit a config declares has passed, so its presence is the
- *   pass. Its key binds it to the config's bytes and the set of file sha256s the corpus manifest lists, so the GPU
- *   run checks it in milliseconds without hashing a parquet file.
+ *   The preflight receipt is written only after every audit a config declares
+ *   has passed, so its presence is the pass.
+ *   Its key binds it to the config's bytes and the set of file sha256s the corpus manifest
+ *   lists, so the GPU run checks it in milliseconds without hashing a parquet file.
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -52,7 +53,7 @@ export function sortedByKey<V>(entries: Iterable<[string, V]>): Array<[string, V
 }
 
 /**
- * A floor a config declares that the measured corpus does not meet.
+ * A floor a config declares that the measured corpus doesn't meet.
  *
  * The report travels with the error, so a reader has the numbers that failed.
  */

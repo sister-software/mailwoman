@@ -3,17 +3,20 @@
 
 /**
  *   This module parses and prints JSON.
+ *
  *   It provides the strict parser.
  *   It also provides a forgiving parser and a reader for JSON columns.
+ *
  *   The module includes the pretty printer.
  *   The module imports only types and uses the global `JSON` object, so it stays platform-neutral.
+ *
  *   The license key module can depend on it when a Cloudflare Worker bundles that module.
  */
 
 import type { GetTagMetadata, Tagged } from "type-fest"
 
 /**
- * A branded type representing a string that is known to be valid JSON.
+ * A branded type representing a string that's known to be valid JSON.
  */
 export type StringifiedJSON<T = unknown> = Tagged<string, "JSON", T>
 
@@ -42,7 +45,7 @@ export function prettyJSON<T = unknown>(input: T, newline = true, space: string 
  *
  * This is effectively a wrapper around `JSON.stringify` that returns a branded
  * type to indicate that the output is valid JSON.
- * It is also one of two places in the codebase that is allowed to use `JSON.stringify`
+ * It is also one of two places in the codebase that's allowed to use `JSON.stringify`
  *
  * @param input The object to be stringified.
  * @param keys An allowlist of property names, in the order they should print.
@@ -127,7 +130,7 @@ function orderedValue(value: unknown, indent: string, sortKeys: boolean, depth: 
  * Serializes a value as canonical JSON for hashing.
  *
  * Object keys are sorted at every depth and `undefined` entries are dropped,
- * so reformatting a file or reordering an object's keys does not change the hash.
+ * so reformatting a file or reordering an object's keys doesn't change the hash.
  * Array order is preserved because an array's order is part of its value.
  */
 export function canonicalJSON(value: unknown): string {
@@ -196,8 +199,8 @@ export function parseJSONStrict<T = unknown>(input: string): T {
  * A JSON array encoded inside a string field.
  *
  * `undefined` answers `[]`; a value that parses to anything but an array throws,
- * because a non-array there is a schema change at the source rather than something to coerce.
- * An empty array would read as "none", which is not what a differently-shaped value means.
+ * because a non-array there's a schema change at the source rather than something to coerce.
+ * An empty array would read as "none", which isn't what a differently-shaped value means.
  *
  * @param scope The reader the error message identifies, e.g. `coastal client`.
  */

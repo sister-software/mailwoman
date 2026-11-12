@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Schema and validation for conformance-law fixtures. Each row compares base and variant queries under one fixed
- *   context, using a comparator identified by name and an expected relation. Comparator, relation, and status vocabularies are closed.
+ *   Schema and validation for conformance-law fixtures.
+ *
+ *   Each row compares base and variant queries under one fixed context,
+ *   using a comparator identified by name and an expected relation.
+ *   Comparator, relation, and status vocabularies are closed.
+ *
  *   Invalid rows fail loading rather than being skipped or defaulted.
  */
 
@@ -127,7 +131,7 @@ export interface ConformanceFixture {
 	toleranceM: number | null
 	/**
 	 * A note for the fixture author.
-	 * The suite does not grade it.
+	 * The suite doesn't grade it.
 	 */
 	note: string | null
 }

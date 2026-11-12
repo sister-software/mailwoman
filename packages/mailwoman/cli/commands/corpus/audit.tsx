@@ -3,6 +3,7 @@
 
 /**
  *   `mailwoman corpus audit <corpus-dir>` — per-source parquet-file count vs `source_weight` diagnostic.
+ *
  *   Pair with `--config` to weight the counts by a training YAML's source_weights block.
  */
 

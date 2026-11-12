@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus input-changes --manifest <MANIFEST.json> --source wof-admin` lists the input files that changed
- *   since the source's corpus files were built: each checkout's commits since the recorded one, then its uncommitted
- *   files, with the WOF id at the start of each file name.
+ *   `mailwoman corpus input-changes --manifest <MANIFEST.json> --source wof-admin`
+ *   lists the input files that changed since the source's corpus files were built:
+ *   each checkout's commits since the recorded one, then its uncommitted files,
+ *   with the WOF id at the start of each file name.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { Box, Text } from "ink"
@@ -25,7 +26,7 @@ export const spec = {
 		source: { type: "string", required: true, description: "The manifest source to compare, such as wof-admin" },
 		input: {
 			type: "string",
-			default: dataRootPath("src", "wof-repos").toString(),
+			default: wofReposPath.toString(),
 			description: "The directory of git checkouts the source was read from",
 		},
 		at: {

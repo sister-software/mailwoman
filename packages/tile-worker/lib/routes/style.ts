@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   MapLibre styles for the Protomaps planet tileset, such as `/styles/light.json`. A style names the tile URL
- *   template itself, so a client that cannot read TileJSON, such as QGIS, gets the tiles and their symbology from one
- *   URL.
+ *   MapLibre styles for the Protomaps planet tileset, such as `/styles/light.json`.
+ *
+ *   A style holds the tile URL template itself, so a client that cannot read TileJSON,
+ *   such as QGIS, gets the tiles and their symbology from one URL.
  */
 
 import { createBasemapStyle, isBasemapLanguage, isBasemapStyleName } from "@mailwoman/cartographer/base/standalone"
@@ -22,7 +23,7 @@ import { CloudflareWorkerPMTiles } from "#protomaps"
 export const STYLE_FILE = "[a-z\\-]+\\.json"
 
 /**
- * Serves the style the request's `style` segment names, labelled in the `lang` query parameter's language.
+ * Serves the style the request's `style` segment selects, labeled in the `lang` query parameter's language.
  */
 export async function serveBasemapStyle(c: Context<TileWorkerHono>): Promise<Response> {
 	const style = (c.req.param("style") ?? "").slice(0, -".json".length)

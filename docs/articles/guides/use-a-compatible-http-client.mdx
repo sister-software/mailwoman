@@ -1,0 +1,267 @@
+---
+title: Point a Nominatim, Photon or libpostal client at Mailwoman
+description: Run the compatibility server for an existing client, send the requests the client already makes, and check which response fields it receives.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Point a Nominatim, Photon or libpostal client at Mailwoman
+
+Use this procedure when an application already calls Nominatim, Photon or a libpostal REST service, and you want it to call Mailwoman with as few changes as possible. Each compatibility package runs its own server with that service's routes. Change the client's base URL, then compare the fields your client reads with the responses on this page.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+
+Install the compatibility package for your client next to the parser packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/nominatim@11.0.0 @mailwoman/photon@11.0.0 @mailwoman/libpostal@11.0.0
+```
+
+The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. The examples query Washington, DC:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+npx mailwoman data pull candidate
+npx mailwoman data pull us --only us-dc
+```
+
+The libpostal server parses text and reads no geographic data. The responses below were captured with local builds of these bundles that are newer than the 11.0.0 registry entries.
+
+## Nominatim clients
+
+Start the server on the port your client will call:
+
+```bash
+npx nominatim serve --port 7803 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
+```
+
+It prints the routes it serves: `GET /search`, `GET /reverse`, `GET /lookup`, `GET /status` and `GET /openapi.json`. Point the client's base URL at `http://127.0.0.1:7803`.
+
+A free-text search with `format=jsonv2` and `addressdetails=1`:
+
+```bash
+curl --get http://127.0.0.1:7803/search --data-urlencode "q=1600 Pennsylvania Ave NW, Washington, DC 20500" --data-urlencode "format=jsonv2" --data-urlencode "addressdetails=1"
+```
+
+```json
+[
+	{
+		"place_id": 2734451821,
+		"licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
+		"lat": "38.89767510742324",
+		"lon": "-77.03654697024702",
+		"display_name": "1600, Pennsylvania Ave NW, Washington, DC, 20500",
+		"mailwoman": { "coordinate_source": { "source": "overture:NAD", "release": "2026-05-20.0" } },
+		"class": "place",
+		"type": "house",
+		"address": {
+			"city": "Washington",
+			"state": "DC",
+			"postcode": "20500",
+			"house_number": "1600",
+			"road": "Pennsylvania Ave NW"
+		},
+		"annotations": {
+			"DMS": { "lat": "38° 53′ 51.63″ N", "lng": "77° 2′ 11.57″ W" },
+			"MGRS": "18SUJ2339007392",
+			"Maidenhead": "FM18lv",
+			"Mercator": { "x": -8575669.1812, "y": 4707024.990299999 },
+			"geohash": "dqcjqcpeq",
+			"qibla": 56.56149203398303,
+			"sun": { "rise": { "apparent": 1794311189 }, "set": { "apparent": 1794348021 } }
+		},
+		"engine": {
+			"name": "mailwoman",
+			"version": "11.0.0",
+			"license": "AGPL-3.0-only",
+			"license_url": "https://mailwoman.post/license",
+			"notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
+		}
+	}
+]
+```
+
+Check these differences against your client:
+
+- The result has `place_id`, `licence`, `lat`, `lon` (as strings), `display_name`, `class`, `type` and `address`. It has no `osm_type`, `osm_id`, `boundingbox`, `importance` or `place_rank`. The `jsonv2` format still returns `class` rather than `category`.
+- `address.state` holds the abbreviation from the input, `DC`.
+- The `mailwoman.coordinate_source` field identifies the register behind the coordinate. `annotations` and `engine` are Mailwoman additions.
+
+A structured search with `city` and `state` returned the Springfield, Illinois city point. Its result has no `class`, `type` or `address` fields:
+
+```bash
+curl --get http://127.0.0.1:7803/search --data-urlencode "city=Springfield" --data-urlencode "state=IL" --data-urlencode "format=json"
+```
+
+```json
+[
+	{
+		"place_id": 1523220856,
+		"licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
+		"lat": "39.797328",
+		"lon": "-89.645547",
+		"display_name": "Springfield, IL",
+		"annotations": {
+			"DMS": { "lat": "39° 47′ 50.38″ N", "lng": "89° 38′ 43.97″ W" },
+			"MGRS": "16SBK7349508611",
+			"Maidenhead": "EM59et",
+			"Mercator": { "x": -9979296.643924473, "y": 4836534.097786217 },
+			"geohash": "dp062hfh5",
+			"qibla": 47.460111271008884,
+			"sun": { "rise": { "apparent": 1794314329 }, "set": { "apparent": 1794350934 } },
+			"timezone": { "name": "America/Chicago", "offset_sec": -21600 },
+			"UN_LOCODE": "US RN7"
+		},
+		"engine": {
+			"name": "mailwoman",
+			"version": "11.0.0",
+			"license": "AGPL-3.0-only",
+			"license_url": "https://mailwoman.post/license",
+			"notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
+		}
+	}
+]
+```
+
+That capture came from a data root with additional local databases. Those databases add `timezone` and `UN_LOCODE` to `annotations`. Your `annotations` can omit them.
+
+`/lookup` isn't implemented and returns status 501:
+
+```bash
+curl -i "http://127.0.0.1:7803/lookup?osm_ids=W5013364"
+```
+
+```http
+HTTP/1.1 501 Not Implemented
+content-type: application/json
+
+{"error":"this engine does not implement lookup"}
+```
+
+Only the status line, content type and body of that response are shown. `/reverse` needs a Who's On First admin gazetteer. You build that gazetteer separately from the data bundles. [Reverse-geocode a coordinate](./reverse-geocode.mdx) describes how to build one. Without it, `/reverse` returns status 200 with the body `null`:
+
+```bash
+curl "http://127.0.0.1:7803/reverse?lat=38.8977&lon=-77.0365&format=jsonv2"
+```
+
+```json
+null
+```
+
+With an admin gazetteer in the data root, the same request returned `"display_name":"White House Grounds, Northwest Washington, Washington, District of Columbia, District of Columbia, United States"` and no `address` object. `/status?format=json` returns `"status":0,"message":"OK"` with a `mailwoman.artifacts` list that identifies each database the server opened.
+
+## Photon clients
+
+Start the server and point the client at it:
+
+```bash
+npx photon serve --port 7804 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
+```
+
+It serves `GET /api`, `GET /reverse` and `GET /openapi.json`. A search:
+
+```bash
+curl --get http://127.0.0.1:7804/api --data-urlencode "q=1600 Pennsylvania Ave NW, Washington, DC 20500" --data-urlencode "limit=1"
+```
+
+```json
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"geometry": { "type": "Point", "coordinates": [-77.03654697024702, 38.89767510742324] },
+			"properties": {
+				"osm_key": "place",
+				"osm_value": "house",
+				"type": "house",
+				"city": "Washington",
+				"state": "District of Columbia",
+				"postcode": "20500",
+				"country": "United States",
+				"countrycode": "us",
+				"housenumber": "1600",
+				"street": "Pennsylvania Ave NW",
+				"mailwoman": { "coordinate_source": { "source": "overture:NAD", "release": "2026-05-20.0" } }
+			}
+		}
+	],
+	"engine": {
+		"name": "mailwoman",
+		"version": "11.0.0",
+		"license": "AGPL-3.0-only",
+		"license_url": "https://mailwoman.post/license",
+		"notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
+	}
+}
+```
+
+Check these differences against your client:
+
+- Feature `properties` have `osm_key`, `osm_value`, `type`, the address fields, `country` and `countrycode`. They have no `osm_id`, `osm_type` or `extent`. A house result has no `name`.
+- `state` holds the full name, `District of Columbia`, unlike the Nominatim server's `DC`.
+- `limit` is honored. A search for `Springfield` with `limit=3` returned three <Country code="US" /> cities called Springfield.
+
+Without an admin gazetteer, `/reverse` returns an empty feature collection with status 200:
+
+```json
+{
+	"type": "FeatureCollection",
+	"features": [],
+	"engine": {
+		"name": "mailwoman",
+		"version": "11.0.0",
+		"license": "AGPL-3.0-only",
+		"license_url": "https://mailwoman.post/license",
+		"notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
+	}
+}
+```
+
+## libpostal clients
+
+The libpostal server parses and expands text without geographic data:
+
+```bash
+npx libpostal serve --port 7805 --host 127.0.0.1
+```
+
+It serves `GET` and `POST` on `/parse` and `/expand`, and `GET /openapi.json`. A parse:
+
+```bash
+curl -X POST http://127.0.0.1:7805/parse -H "content-type: application/json" -d '{"query":"781 Franklin Ave Crown Heights Brooklyn NYC NY 11216 USA"}'
+```
+
+```json
+[
+	{ "label": "house_number", "value": "781" },
+	{ "label": "road", "value": "Franklin Ave" },
+	{ "label": "city", "value": "Crown Heights Brooklyn NYC" },
+	{ "label": "state", "value": "NY" },
+	{ "label": "postcode", "value": "11216" },
+	{ "label": "country", "value": "USA" }
+]
+```
+
+The response is the ordered `label` and `value` array that libpostal REST services return. Values keep the input's casing. The three place names before the state came back as one `city` value, `Crown Heights Brooklyn NYC`. Check whether your client expects a neighborhood or district as a separate label.
+
+An expansion:
+
+```bash
+curl -X POST http://127.0.0.1:7805/expand -H "content-type: application/json" -d '{"address":"781 Franklin Ave Brooklyn NY"}'
+```
+
+```json
+{ "expansions": ["781 Franklin Ave Brooklyn NY", "781 Franklin Avenue Brooklyn NY"] }
+```
+
+## Check your client before switching
+
+1. Send the requests your client makes in production to both the current service and the Mailwoman server.
+2. List the response fields your client reads, and confirm each one is present in the Mailwoman response.
+3. Handle the empty results described above: `null` from Nominatim `/reverse`, an empty feature collection from Photon `/reverse`, and status 501 from Nominatim `/lookup`.
+
+Each server also serves `GET /openapi.json`, its machine-readable route description. The [HTTP reference](../reference/http.mdx) lists every compatibility route and its declared status codes.

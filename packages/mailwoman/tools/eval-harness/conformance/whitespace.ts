@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Whitespace invariance suite. It asserts that edge spaces, internal runs and comma spacing do not change a parse.
+ *   Whitespace invariance suite.
+ *
+ *   It asserts that edge spaces, internal runs and comma spacing do not change a parse.
  *   The space inside a structured postcode such as `SW1A 1AA` is never rewritten.
  */
 
@@ -165,7 +167,7 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 /**
  * Rules that exclude a transformation.
  *
- * The first applies when the text does not change.
+ * The first applies when the text doesn't change.
  * The second applies when every internal run sits inside a postcode.
  */
 export const WHITESPACE_APPLICABILITY_RULES = ["identity-transformation", "structural-identifier-space"] as const

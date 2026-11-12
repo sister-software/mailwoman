@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Draws a grid of meridians and parallels under the basemap so that the globe is readable while
- *   tiles load. Loaded tiles cover the grid.
+ *   Draws a grid of meridians and parallels under the basemap so that the
+ *   globe is readable while tiles load.
+ *   Loaded tiles cover the grid.
  */
 
 import { type ReactNode, useMemo } from "react"

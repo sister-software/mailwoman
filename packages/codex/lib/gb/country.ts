@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The four constituent countries of the United Kingdom, keyed by their ISO 3166-2:GB code: England
- *   (`ENG`), Scotland (`SCT`), Wales (`WLS`), Northern Ireland (`NIR`).
+ *   The four constituent countries of the United Kingdom, keyed by their ISO 3166-2:GB code:
+ *   England (`ENG`), Scotland (`SCT`), Wales (`WLS`), Northern Ireland (`NIR`).
  *
- *   The UK's top-level admin tier is itself the first oddity of this system. France has régions,
- *   Germany has Bundesländer and the US has states as a single flat layer.
- *   The UK has constituent _countries_ within the country. An address rarely names its constituent
- *   country directly. Its common shape is `street, town, postcode`. The postcode area provides a
- *   useful signal for inferring the constituent country, with documented exceptions in `postcode-area.ts`.
- *   This file provides the coarse admin label. The postcode area provides the geographic signal.
+ *   The UK's top-level admin tier is itself the first oddity of this system.
+ *   France has régions, Germany has Bundesländer and the US has states as a single flat layer.
+ *
+ *   The UK has constituent _countries_ within the country.
+ *   An address rarely identifies its constituent country directly.
+ *
+ *   Its common shape is `street, town, postcode`.
+ *   The postcode area provides a useful signal for inferring the constituent country,
+ *   with documented exceptions in `postcode-area.ts`.
+ *
+ *   This file provides the coarse admin label.
+ *   The postcode area provides the geographic signal.
  */
 
 import { foldName } from "#normalize"

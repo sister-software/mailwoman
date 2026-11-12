@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwdev_parse_compare`'s measurement: one input set through mailwoman's parser and one already-running libpostal
- *   `/parse` endpoint, diffed span by span.
+ *   `mwdev_parse_compare`'s measurement: one input set through mailwoman's parser
+ *   and one already-running libpostal `/parse` endpoint, diffed span by span.
  *
- *   Two refusals remain from `external-arm.ts`: no external service is ever started, so an endpoint that is not up
- *   is a refusal with the reason rather than a run where every row records libpostal as silent. And an arm's identity is
- *   never inferred from a port, because `@mailwoman/libpostal` answers this exact path with this exact shape, so
- *   pointing at the wrong port compares mailwoman against mailwoman and produces a beautifully high agreement rate.
+ *   Two refusals remain from `external-arm.ts`: no external service is ever started,
+ *   so an endpoint that's not up is a refusal with the reason rather than a run
+ *   where every row records libpostal as silent.
+ *   And an arm's identity is never inferred from a port, because `@mailwoman/libpostal`
+ *   answers this exact path with this exact shape, so pointing at the wrong port compares
+ *   mailwoman against mailwoman and produces a beautifully high agreement rate.
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -46,7 +48,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | null) ?? {}
-	const engine = await registry.acquire(config)
+	using engine = await registry.acquire(config)
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
@@ -75,7 +77,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 			libpostal: theirs,
 			libpostal_error: libpostalError,
 			diff,
-			// A row libpostal could not answer does not count as an agreement.
+			// A row libpostal couldn't answer doesn't count as an agreement.
 			// An empty diff containing no disagreement would otherwise make it.
 			agrees: theirs !== null && diff.every((entry) => entry.verdict === SpanVerdict.Agree),
 		})

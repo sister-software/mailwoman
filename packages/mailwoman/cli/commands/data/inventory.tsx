@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Output goes through {@linkcode writeRawStdout} rather than Ink because an Ink frame at least as tall as the viewport
- *   emits `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the scrollback.
+ *   Output goes through {@linkcode writeRawStdout} rather than Ink because an Ink frame at
+ *   least as tall as the viewport emits `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the scrollback.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

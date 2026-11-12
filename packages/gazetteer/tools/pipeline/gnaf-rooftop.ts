@@ -2,30 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `osm/address-points-au-au.db` — the AU rooftop database from Geoscape G-NAF, on the shared
- *   situs schema + OSM H3 spine so the existing `OSMRegionDatabaseProvider` / `AddressPointSqliteLookup`
- *   serve it with zero runtime changes.
+ *   Build `osm/address-points-au-au.db` — the AU rooftop database from Geoscape G-NAF,
+ *   on the shared situs schema + OSM H3 spine so the existing `OSMRegionDatabaseProvider`
+ *   / `AddressPointSqliteLookup` serve it with zero runtime changes.
  *
- *   why G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin` at 1–6 km —
- *   correct locality centroids with no address point to snap to. G-NAF is the authoritative
- *   national register (~15M principal addresses including rural LOT numbering), CC-BY-4.0 with
- *   attribution — no ODbL posture, unlike the OSM-derived siblings in the same directory. The
- *   acquisition provenance (eula, use-restriction fact sheet, sha256) lives beside the source data
- *   under `<data-root>/gnaf/<release>/provenance.md`.
+ *   why G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin`
+ *   at 1–6 km — correct locality centroids with no address point to snap to.
+ *   G-NAF is the authoritative national register (~15M principal addresses including rural LOT numbering),
+ *   CC-BY-4.0 with attribution — no ODbL posture, unlike the OSM-derived siblings in the same directory.
  *
- *   join shape (per state, streaming): `locality` (pid → name) and `STREET_LOCALITY` (pid →
- *   name/type/suffix) load as maps; `ADDRESS_DEFAULT_GEOCODE` (detail-pid → lon/lat) loads as a
- *   map. then `ADDRESS_DETAIL` streams once. Retired rows and non-principal (alias) addresses are
- *   skipped. `NUMBER_FIRST` wins. a number-less row falls back to `LOT_NUMBER` (the `LOT 373`
- *   rural class the parser reads as unit + house_number). Street rendering: `STREET_NAME` +
- *   `STREET_TYPE_CODE` + suffix, with the directional suffix codes expanded to words (the register
- *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the
- *   same branch the GB/NZ databases use.
+ *   The acquisition provenance (eula, use-restriction fact sheet, sha256) lives beside
+ *   the source data under `<data-root>/gnaf/<release>/provenance.md`.
  *
- *   G-NAF PSV is crlf-terminated and quote-free: the reader trims the trailing `\r`, because
- *   otherwise the last column's name and every last-field value have it — the geocode file's
- *   `latitude` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
- *   0-geocode failure).
+ *   join shape (per state, streaming): `locality` (pid → name) and `STREET_LOCALITY`
+ *   (pid → name/type/suffix) load as maps; `ADDRESS_DEFAULT_GEOCODE` (detail-pid → lon/lat)
+ *   loads as a map. then `ADDRESS_DETAIL` streams once.
+ *   Retired rows and non-principal (alias) addresses are skipped.
+ *
+ *   `NUMBER_FIRST` wins. a number-less row falls back to `LOT_NUMBER`
+ *   (the `LOT 373` rural class the parser reads as unit + house_number).
+ *   Street rendering: `STREET_NAME` + `STREET_TYPE_CODE` + suffix, with the directional suffix
+ *   codes expanded to words (the register stores types as full words but suffixes as codes);
+ *   keys via the shared `en` normalizer — the same branch the GB/NZ databases use.
+ *
+ *   G-NAF PSV is crlf-terminated and quote-free: the reader trims the trailing `\r`,
+ *   because otherwise the last column's name and every last-field value have it.
+ *   The geocode file's `latitude` column is last, so the un-stripped join loses
+ *   every coordinate (the ACT smoke's 0-geocode failure).
  */
 
 import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"

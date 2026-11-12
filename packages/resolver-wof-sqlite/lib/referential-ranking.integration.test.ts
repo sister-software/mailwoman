@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   saint-denis — the canonical test for ROAD_TO_V9 §2's ratified policy: **the geocoder ranks by
- *   referential likelihood. encyclopedic importance is data, never the ranking key.**
+ *   saint-denis — the canonical test for ROAD_TO_V9 §2's ratified policy: **the geocoder ranks
+ *   by referential likelihood. encyclopedic importance is data, never the ranking key.**
  *
- *   the case, with the real numbers from `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`
- *   (read 2026-08-06):
+ *   the case, with the real numbers from
+ *   `wof/fst-staging-2026-08-05/admin-global-priority-importance.db` (read 2026-08-06):
  *
  *   | place                             | wof         | population | encyclopedic |
  *   | --------------------------------- | ----------- | ---------- | ------------ |
@@ -14,16 +14,19 @@
  *   | Saint-Denis, Aude                 | 101896431   | 418        | 0.5683       |
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
- *   A geocoder that ranked on it would answer a bare "Saint-Denis" with the wrong hamlet. The
- *   fixture below stores both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
- *   column isn't withheld and asserts the suburb still wins.
+ *   A geocoder that ranked on it would answer a bare "Saint-Denis" with the wrong hamlet.
+ *
+ *   The fixture below stores both scores in the gazetteer — the suburb's disadvantage
+ *   on the encyclopedic column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
- * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
+ * 	 There's no hand-written rule, pin, or safelist anywhere in the path.
  *
  *   The second half measures the D-rule prediction for the split (§2 R1's "expected resolver delta is zero").
  *   Each ranking assertion runs against a gazetteer without the encyclopedic column and one with it.
- *   Both gazetteers must return the same answers. This test would show a rank change caused by carrying the score.
+ *
+ *   Both gazetteers must return the same answers.
+ *   This test would show a rank change caused by carrying the score.
  */
 
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
@@ -191,18 +194,18 @@ describe("Saint-Denis — ranking is referential", () => {
 	})
 
 	it("a FOURTH bearer the policy text does not name — Réunion — wins on the same rule, and that is correct", async () => {
-		// found while measuring (2026-08-06), and recorded rather than smoothed over. §2 names two bearers,
+		// found while measuring (2026-08-06), and recorded rather than smoothed over. §2 lists two bearers,
 		// but the live gazetteer's referentially dominant "Saint-Denis" is neither: it is the capital of
 		// Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so `country = FR` too).
 		// Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
 		//
-		// That is the policy behaving exactly as specified rather than failing.
+		// That's the policy behaving exactly as specified rather than failing.
 		// What it exposes is an assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`,
 		// which pins the Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan
 		// France", which is a different claim from "referentially dominant".
 		// The row fails identically under all four FST arms including no-FST,
 		// so it is a board-authoring question for §3 rather than a regression here,
-		// but a test that omitted Réunion would be asserting a world that does not exist.
+		// but a test that omitted Réunion would be asserting a world that doesn't exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,
 			{ id: 9_000_000_590_797, name: "Saint-Denis", country: "FR", lat: -20.8823, lon: 55.4504, population: 154_765 },

@@ -10,8 +10,8 @@ import { BuyLicense } from "#components/License/BuyLicense"
 
 Mailwoman is dual-licensed: **AGPL-3.0-only**, or **LicenseRef-Commercial** under a paid agreement. Both
 branches are offered for every release, and the branch that applies to an installation is the one it
-can show a key for. The offer reaches the code and model artifacts Sister Software authors, to the
-extent it holds or controls the rights in them. Third-party components distributed with Mailwoman, and
+can show a key for. The offer reaches the code and model artifacts Teffen Ellis authors and the
+contributions licensed to her, to the extent the licensor holds or controls the rights in them. Third-party components distributed with Mailwoman, and
 reference data you download, stay under the terms of whoever published them, and neither branch of this
 offer changes those terms. The two sections below, on reference data and on what a pretrained package contains, state
 where to read them.
@@ -20,7 +20,7 @@ where to read them.
 
 Under the AGPL, three obligations attach. You keep the copyright notices (attribution). A modified
 copy stays under the same license (share-alike). And if people use your modified copy over a network,
-they are entitled to its corresponding source (the source offer, section 13). `mailwoman doctor`
+they're entitled to its corresponding source (the source offer, section 13). `mailwoman doctor`
 reports these three by name for the installation it runs on.
 
 Without a license key, every `mailwoman` command ends with a two-line notice on stderr that states the
@@ -35,27 +35,29 @@ A commercial license releases you from the source offer and the share-alike cond
 model artifacts we author, so you can build closed products and services on Mailwoman. The agreement
 you accept at checkout is the [commercial license agreement](/license/terms/commercial-2026-10),
 published at its own address and never edited after publication. It is the agreement that binds, and
-it is the document to read for what you owe and what you are owed. This page and the site
+it is the document to read for what you owe and what you're owed. This page and the site
 [terms of service](/terms-of-service) describe the website and the catalog, and neither replaces a
 term of the agreement you accepted. What each tier covers, and the enterprise and OEM tiers, are on
 the [pricing page](/pricing).
 
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md)
-in the repository is a reference template, and its own opening notice states that it is not self-executing and
-grants no rights on its own. It has the same ten sections in the same order, and four of them read
+in the repository is a reference template, and its own opening notice states that it isn't self-executing and
+grants no rights on its own. It has the published agreement's ten sections in the same order, plus a
+section 4a on third-party datasets, and four of the ten read
 differently from `commercial-2026-10`: the template defines the licensee generically where the
 published agreement identifies the entity given at checkout, the template leaves fees and term open where
-the published agreement states the subscription price and the key-period mechanics, and the template's
-attribution section contains a paragraph limiting the waiver to Sister Software's own attribution that
-the published agreement states only in its grant section. Read the published version for a purchase
+the published agreement states the subscription price and the key-period mechanics, and the published
+agreement's attribution waiver also excludes the attribution owed for datasets the licensee downloads.
+The template covers those datasets in its section 4a. Read the published version for a purchase
 made under it. The template is where a negotiated agreement starts.
 
-### What the commercial grant does not cover
+### What the commercial grant doesn't cover
 
-Section 2 of the agreement limits the grant to the code and model artifacts Sister Software authors.
-It does not extend to third-party components distributed with Mailwoman. Those components stay under their own
+Section 2 of the agreement limits the grant to the code and model artifacts the licensor has authority
+to license: those Teffen Ellis authors, and the contributions licensed to her.
+It doesn't extend to third-party components distributed with Mailwoman. Those components stay under their own
 licenses, and any attribution or share-alike obligation attaching to those components continues to
-apply. A commercial license does not waive or relicense them.
+apply. A commercial license doesn't waive or relicense them.
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
 lists the components we distribute and the terms that apply to each one. Reference data an operator
 downloads separately is under the terms of whoever published it, and the next section states what those
@@ -83,17 +85,17 @@ the command to run and stop. The download happens when you run `mailwoman data p
 command prints each bundle's publishers, its terms, what it obliges you to do, and what no one has
 established about it, before any bytes move. `mailwoman data --list` prints each bundle's description, file
 count, size and destination, and states no terms.
-Two paths do fetch without a prompt and are not this command: a page running the browser engine
+Two paths other than this command fetch without a prompt: a page running the browser engine
 loads its model and database assets from `public.mailwoman.post` as it starts, and a map surface loads fonts
 and sprites from the same origin.
 
-A commercial key does not reach any of this. The publishers above are not parties to your agreement
-with us, and their attribution and share-alike conditions apply to you whichever branch you are on.
+A commercial key covers none of this. Each publisher above stays outside your agreement
+with us, and their attribution and share-alike conditions apply to you whichever branch you're on.
 
 ## What a pretrained package already contains
 
-A model's inputs are fixed when it is trained. If you install `@mailwoman/neural-weights-en-us` without
-pulling a single bundle still gives you artifacts built from the sources that package records, and
+A model's inputs are fixed when it is trained. An install of `@mailwoman/neural-weights-en-us` without
+a single bundle still gives you artifacts built from the sources that package records, and
 skipping a runtime download leaves them unchanged. To use different inputs, install a different
 package.
 
@@ -102,7 +104,7 @@ terms above. `PROVENANCE.json` records each artifact it ships with its digest or
 sources its model card attributes with the license each one names, the base package a data-only overlay
 decodes through together with that base's own sources, and the questions the record leaves open. Read
 it as a record of what the model card holds: a package recording no attribution is a package whose card
-records none. That is a different statement from a package with no attributable inputs. Neither file
+records none. That's a different statement from a package with no attributable inputs. Neither file
 states that an artifact is cleared for a particular use.
 
 For the installation in front of you:
@@ -112,7 +114,7 @@ mailwoman license attribution
 ```
 
 It reads the `PROVENANCE.json` of every weights package present in `node_modules` and prints the sources, the
-inherited lineage, and what each record leaves unresolved. It names what it does not cover: reference
+inherited lineage, and what each record leaves unresolved. It states what it doesn't cover: reference
 data you pulled separately, and whether a recorded entry is the whole of what that source requires.
 
 ### Purchase a license
@@ -145,8 +147,8 @@ date, `mailwoman license refresh` re-issues the key, and the notice counts the d
 student key lasts one year. An expired key leaves every artifact on disk working and stops new downloads
 until it is re-issued.
 
-**Evaluate** for thirty days with an email address. An address receives one evaluation, and the key is
-not re-issued. After it, declare or buy.
+**Evaluate** for thirty days with an email address. An address receives one evaluation, and the key isn't
+re-issued. After it, declare or buy.
 
 ```bash
 mailwoman license evaluate --name "Your team" --email you@example.com

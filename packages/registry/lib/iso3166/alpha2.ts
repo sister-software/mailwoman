@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The strict alpha-2 country-code predicate over the `iso3166-1-alpha2-membership` bitset. An import of it retains
- *   that 85-byte bitset and the reader, and no name, airport or record.
+ *   The strict alpha-2 country-code predicate over the `iso3166-1-alpha2-membership` bitset.
+ *
+ *   An import of it retains that 85-byte bitset and the reader, and no name, airport or record.
  */
 
 import { iso31661Alpha2MembershipArtifact } from "#artifacts/iso3166-1/alpha2-membership"

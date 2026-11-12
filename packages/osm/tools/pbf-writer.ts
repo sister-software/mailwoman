@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes a small OpenStreetMap `.osm.pbf` file from tagged nodes, so the build recipe can be exercised
- *   end to end against a file GDAL's OSM driver reads, without downloading an extract.
+ *   Writes a small OpenStreetMap `.osm.pbf` file from tagged nodes, so the build recipe can be
+ *   exercised end to end against a file GDAL's OSM driver reads, without downloading an extract.
  *
- *   The file is one `OSMHeader` blob and one `OSMData` blob holding a single `DenseNodes` group. Each blob
- *   stores its payload in the format's uncompressed `raw` field
- *   (https://wiki.openstreetmap.org/wiki/PBF_Format), which a fixture of a few nodes can afford. The writer
- *   encodes the few protobuf fields it needs by hand rather than taking a protobuf dependency.
+ *   The file is one `OSMHeader` blob and one `OSMData` blob holding a single `DenseNodes` group.
+ *   Each blob stores its payload in the format's uncompressed `raw` field
+ *   (https://wiki.openstreetmap.org/wiki/PBF_Format), which a fixture of a few nodes can afford.
+ *
+ *   The writer encodes the few protobuf fields it needs by hand rather than taking a protobuf dependency.
  */
 
 /**

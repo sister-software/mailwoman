@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ledgerAppend` records the graded model's tokenizer md5 from its card, and leaves the field out
- *   when the card records none.
+ *   `ledgerAppend` records the graded model's tokenizer md5 from its card,
+ *   and leaves the field out when the card records none.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The United Kingdom's OpenStreetMap extraction policy. `europe/britain-and-ireland` also holds Ireland and
- *   the Isle of Man, so a build from it clips the United Kingdom by its geoBoundaries outline.
+ *   The United Kingdom's OpenStreetMap extraction policy.
+ *
+ *   `europe/britain-and-ireland` also holds Ireland and the Isle of Man, so a build
+ *   from it clips the United Kingdom by its geoBoundaries outline.
  */
 
 import type { OSMExtractionPolicy } from "#extraction-policy"

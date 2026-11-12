@@ -2,33 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Alignment: turn a `CanonicalRow` (raw + components) into a `LabeledRow` (raw + tokens + BIO
- *   labels) or a `QuarantinedRow` (raw + reason) per the Phase 1 plan.
+ *   Alignment: turn a `CanonicalRow` (raw + components) into a `LabeledRow`
+ *   (raw + tokens + BIO labels) or a `QuarantinedRow` (raw + reason) per the Phase 1 plan.
  *
  *   Pipeline:
  *
- *   1. For each `(tag, value)` in `components`, find the value's character span in `raw`. First try a
- *        verbatim substring match (case-insensitive, whitespace-collapsed). If that fails, fall
- *        back to fuzzy match via `fastest-levenshtein`, with a tunable edit distance threshold.
- *   2. If any component cannot be located, reject the row with a human-readable reason and send it to
- *        the quarantine pile (`reason: "component-not-found:<tag>"` or
- *        `"edit-distance-exceeded:<tag>:<dist>"`).
+ *   1. For each `(tag, value)` in `components`, find the value's character span in `raw`.
+ *      First try a verbatim substring match (case-insensitive, whitespace-collapsed).
+ *      If that fails, fall back to fuzzy match via `fastest-levenshtein`,
+ *      with a tunable edit distance threshold.
+ *   2. If any component cannot be located, reject the row with a human-readable reason and send it to the
+ *      quarantine pile (`reason: "component-not-found:<tag>"` or `"edit-distance-exceeded:<tag>:<dist>"`).
  *   3. Tokenize `raw` with the supplied `Tokenizer` (defaults to the whitespace tokenizer).
- *   4. For each token: walk the list of component spans, pick the one whose span contains the token's
- *        character range. First token in a component span → `B-<tag>`; subsequent tokens →
- *        `I-<tag>`; no overlap → `O`.
- *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` / `span_tags[]` (the
- *        v0.5.0 char-offset format).
+ *   4. For each token: walk the list of component spans, pick the one whose span
+ *      contains the token's character range.
+ *      First token in a component span → `B-<tag>`; subsequent tokens → `I-<tag>`; no overlap → `O`.
+ *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` /
+ *      `span_tags[]` (the v0.5.0 char-offset format).
  *
- *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
- *   than quarantines, because it indicates a bug here rather than bad source data):
+ *   Structural invariants the function preserves (the span ones loudly — a violation throws
+ *   rather than quarantines, because it indicates a bug here rather than bad source data):
  *
  *   - `tokens.length === labels.length` always.
- *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
- *       enforced by greedy first-match span assignment + ordered token iteration.
+ *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps).
+ *     This is enforced by greedy first-match span assignment + ordered token iteration.
  *   - The span triple is sorted ascending by start and non-overlapping.
- *   - `raw` is NFC-normalized (asserted per row. a non-NFC raw makes char offsets ambiguous downstream
- *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
+ *   - `raw` is NFC-normalized (asserted per row. a non-NFC raw makes char offsets ambiguous
+ *     downstream — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -108,7 +108,7 @@ export function locateComponentSpans(
 
 	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
-	// Longest value first: a short component must not claim a word that a longer,
+	// Longest value first: a short component mustn't claim a word that a longer,
 	// more specific component owns.
 	// Emit order is unaffected, since spans are re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
@@ -257,7 +257,7 @@ function locateSpan(args: {
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones, so a short
 	// value cannot claim the inside of an earlier word.
-	// Intra-word matches stay allowed as the fallback because they are essential for affix
+	// Intra-word matches stay allowed as the fallback because they're essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence).
 	let intraWord: { start: number; end: number } | null = null
 	let from = 0
@@ -343,24 +343,31 @@ function labelTokens(tokens: readonly TextSpan[], spans: readonly ComponentSpan[
 	const seenSpan = new Set<number>()
 
 	for (const token of tokens) {
-		let assigned: BIOLabel = "O"
+		// A token inside one span takes that span's tag.
+		// A token that overlaps exactly one span without lying inside it holds that component
+		// plus text a layout glued to it, such as `FL-9485` around the postcode `9485`,
+		// so it takes that span's tag too and the token labels agree with the span triple.
+		// A token across two spans stays `O`.
+		let index = spans.findIndex((s) => token.start >= s.start && token.end <= s.end)
 
-		for (let i = 0; i < spans.length; i++) {
-			const s = spans[i]!
+		if (index < 0) {
+			const overlapping = spans.flatMap((s, i) => (token.start < s.end && token.end > s.start ? [i] : []))
 
-			if (token.start >= s.start && token.end <= s.end) {
-				if (!seenSpan.has(i)) {
-					assigned = `B-${s.tag}` as BIOLabel
-					seenSpan.add(i)
-				} else {
-					assigned = `I-${s.tag}` as BIOLabel
-				}
-
-				break
+			if (overlapping.length === 1) {
+				index = overlapping[0]!
 			}
 		}
 
-		out.push(assigned)
+		if (index < 0) {
+			out.push("O")
+
+			continue
+		}
+
+		const tag = spans[index]!.tag
+
+		out.push((seenSpan.has(index) ? `I-${tag}` : `B-${tag}`) as BIOLabel)
+		seenSpan.add(index)
 	}
 
 	return out

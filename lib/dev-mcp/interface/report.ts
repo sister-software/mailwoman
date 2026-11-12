@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwdev_interface`'s measurement: parse an input set, validate each tree against the decoder's own structural
- *   interface and report which violation classes fire, including the ones that do not.
+ *   `mwdev_interface`'s measurement: parse an input set, validate each tree against the decoder's own
+ *   structural interface and report which violation classes fire, including the ones that do not.
  *
- *   The tree validated is `GeocodeRun.tree` as the resolver sees it, after the postcode and stranded-affix repairs, so
- *   this counts what survives them: a violation the repairs already clean up has no consumer impact.
+ *   The tree validated is `GeocodeRun.tree` as the resolver sees it, after the postcode
+ *   and stranded-affix repairs, so this counts what survives them: a violation the
+ *   repairs already clean up has no consumer impact.
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -21,7 +22,7 @@ export async function runInterfaceCensus(
 ): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | null) ?? {}
-	const engine = await registry.acquire(config)
+	using engine = await registry.acquire(config)
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
@@ -82,7 +83,7 @@ function summarize(census: ReturnType<typeof censusTrees>, powerSentence: string
 			`(${((worst.stranding_rate ?? 0) * 100).toFixed(1)}%).`
 		: "No strict dependent was stranded on any row."
 
-	// A tag no row ever produced is not a clean bill of health.
+	// A tag no row ever produced isn't a clean bill of health.
 	const blindSentence = census.never_produced.length
 		? ` ${census.never_produced.length} strict dependents never appeared at all (${census.never_produced.join(", ")}), ` +
 			"so their zero stranding counts measure nothing."

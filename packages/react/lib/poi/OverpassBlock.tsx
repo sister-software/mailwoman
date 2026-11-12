@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `OverpassBlock` — the OverpassQL export panel: a header with a copy button and the query in a code
- *   block. Renders the emitter error instead when the export failed. Presentational.
+ *   `OverpassBlock` — the OverpassQL export panel: a header with a copy button
+ *   and the query in a code block.
+ *
+ *   Renders the emitter error instead when the export failed.
+ *   Presentational.
  */
 
 import type { ReactNode } from "react"

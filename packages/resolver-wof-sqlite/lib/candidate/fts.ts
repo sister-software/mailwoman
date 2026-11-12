@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   FTS5-trigram fuzzy index over the candidate gazetteer's normalized `name_key`; raw SQL on purpose, since Kysely cannot express `create virtual table … using fts5`.
+ *   FTS5-trigram fuzzy index over the candidate gazetteer's normalized `name_key`;
+ *   raw SQL on purpose, since Kysely cannot express `create virtual table … using fts5`.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

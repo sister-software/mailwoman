@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@linkcode buildSlimWOFDatabase}. The fixture contains a country and localities with
- *   varying populations. It also contains postcodes and a non-US locality. The test checks which rows the slim
- *   output keeps under the selection policy.
+ *   Tests for {@linkcode buildSlimWOFDatabase}.
  *
- *   The fixture mirrors the production source shape. It contains `spr`, `names`, and a pre-built
- *   `place_population` auxiliary table. It has no `geojson` table. `scripts/build-unified-wof.ts`
- *   extracts `wof:population` into `place_population` during ingest. The builder does not persist
- *   geojson, so the slim builder reads population directly from `place_population`.
+ *   The fixture contains a country and localities with varying populations.
+ *   It also contains postcodes and a non-US locality.
+ *
+ *   The test checks which rows the slim output keeps under the selection policy.
+ *
+ *   The fixture mirrors the production source shape.
+ *   It contains `spr`, `names`, and a pre-built `place_population` auxiliary table.
+ *
+ *   It has no `geojson` table.
+ *   `scripts/build-unified-wof.ts` extracts `wof:population` into `place_population` during ingest.
+ *
+ *   The builder doesn't persist geojson, so the slim builder reads population
+ *   directly from `place_population`.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

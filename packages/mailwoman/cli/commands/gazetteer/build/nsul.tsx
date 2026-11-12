@@ -13,6 +13,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -45,11 +46,15 @@ export const spec = {
 
 const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPath } = await import("@mailwoman/core/paths")
-		const { buildSHA } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
-
-		const { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel } =
-			await import("@mailwoman/gazetteer/tools/pipeline/nsul-layer")
+		const {
+			paths: { repoRootPath },
+			stampManifest: { buildSHA },
+			nsulLayer: { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel },
+		} = await allKeyed({
+			paths: import("@mailwoman/core/paths"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			nsulLayer: import("@mailwoman/gazetteer/tools/pipeline/nsul-layer"),
+		})
 
 		const result = await buildNSULLayer({
 			sourceDir: options.sourceDir,

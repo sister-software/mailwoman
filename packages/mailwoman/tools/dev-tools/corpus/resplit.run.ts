@@ -3,18 +3,25 @@
 
 /**
  *   Re-split a built corpus under a new split policy (HOLDOUT_AND_EVALUATION section 5):
- *   write a split-attribute file for every parquet the manifest lists, under a new corpus
- *   directory, and assemble the new manifest. The parquet files are shared with the base
- *   corpus. Only attributes and the manifest are new. With `--retention`, every row of a
- *   covered country–shape combination stays in training (section 5.1).
+ *   write a split-attribute file for every parquet the manifest lists,
+ *   under a new corpus directory, and assemble the new manifest.
  *
- *   The manifest is the base corpus's own, with its paths under the training volume's `/data`. Each file is read
- *   from the same path under the local data root, and the new manifest writes its attribute paths under `/data`,
- *   so it describes the corpus as the volume holds it once the attributes are synced.
+ *   The parquet files are shared with the base corpus.
+ *   Only attributes and the manifest are new.
  *
- *   Files are independent, so each is split on a worker thread (`resplit-worker.ts`), `--jobs` at a time, largest
- *   first: the largest file bounds the wall time, and starting it first lets the others run beside it. Each worker's
- *   DuckDB instance gets `--duckdb-threads` threads and an equal share of `--duckdb-memory-gb`.
+ *   With `--retention`, every row of a covered country–shape combination stays in training (section 5.1).
+ *
+ *   The manifest is the base corpus's own, with its paths under the training volume's `/data`.
+ *   Each file is read from the same path under the local data root.
+ *
+ *   The new manifest writes its attribute paths under `/data`.
+ *   It therefore describes the corpus as the volume holds it once the attributes are synced.
+ *
+ *   Files are independent, so each is split on a worker thread (`resplit-worker.ts`),
+ *   `--jobs` at a time, largest first: the largest file bounds the wall time,
+ *   and starting it first lets the others run beside it.
+ *   Each worker's DuckDB instance gets `--duckdb-threads` threads and an equal
+ *   share of `--duckdb-memory-gb`.
  *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/corpus/resplit.run.ts \
@@ -158,7 +165,7 @@ if (written.size !== files.length) throw new Error(`split ${written.size} of ${f
 
 // The base manifest's split counts and policy hashes describe the base's split,
 // so both are recomputed from the attributes written here.
-// A deleted row's split under the new policy is not recorded anywhere,
+// A deleted row's split under the new policy isn't recorded anywhere,
 // so a base with deletions is refused rather than counted.
 if (manifest.deletions?.length) {
 	throw new Error(`${args.manifest} lists ${manifest.deletions.length} deletions, whose rows' new splits are unknown`)

@@ -4,21 +4,27 @@
 /**
  *   Reader for the CSV files of Building Digital UK's UPRN-level release, "OMR and premises in BDUK plans".
  *
- *   Each row is one UPRN that BDUK assessed in an Open Market Review (OMR), with its postcode, its subsidy
- *   control status, whether it has a gigabit-capable connection now and in suppliers' plans, and the BDUK
- *   contracts that include it. BDUK's premises base is OS AddressBase Premium filtered to postal addresses
- *   that are not demolished. A UPRN the release omits is therefore a premises BDUK did not assess, and the
- *   release gives it no status.
+ *   Each row is one UPRN that BDUK assessed in an Open Market Review (OMR), with its postcode,
+ *   its subsidy control status, whether it has a gigabit-capable connection now
+ *   and in suppliers' plans, and the BDUK contracts that include it.
+ *   BDUK's premises base is OS AddressBase Premium filtered to postal addresses that are not demolished.
  *
- *   `current_gigabit` is BDUK's view from suppliers' returns to the OMR and its own delivery data. A
- *   supplier that sends no return leaves a gap, so `false` states BDUK's view rather than an observed
- *   absence of a network. The release names no network for commercial coverage, and its Grey/Black status
- *   covers one qualifying network or several.
+ *   A UPRN the release omits is therefore a premises BDUK didn't assess,
+ *   and the release gives it no status.
  *
- *   The reader returns each requested column typed. A requested column that the header lacks throws
- *   {@linkcode BDUKColumnError}. A cell outside its column's closed vocabulary or form throws
- *   {@linkcode BDUKValueError}, whose message gives the value, its line and its UPRN. An empty cell reads as `null`,
- *   so it stays distinct from `false` and from zero.
+ *   `current_gigabit` is BDUK's view from suppliers' returns to the OMR and its own delivery data.
+ *   A supplier that sends no return leaves a gap, so `false` states BDUK's view
+ *   rather than an observed absence of a network.
+ *
+ *   The release identifies no network for commercial coverage, and its Grey/Black
+ *   status covers one qualifying network or several.
+ *
+ *   The reader returns each requested column typed.
+ *   A requested column that the header lacks throws {@linkcode BDUKColumnError}.
+ *
+ *   A cell outside its column's closed vocabulary or form throws {@linkcode BDUKValueError},
+ *   whose message gives the value, its line and its UPRN.
+ *   An empty cell reads as `null`, so it stays distinct from `false` and from zero.
  *
  *   The OMR month appears only in the published file name, so the reader requires that name.
  */
@@ -38,7 +44,7 @@ export const BDUK_UPRN_COLUMN = "uprn"
 /**
  * The subsidy control statuses that the May 2026 release writes, verbatim.
  *
- * The user guide defines a fourth status, `Unassessed`, for a premises that BDUK did not assess.
+ * The user guide defines a fourth status, `Unassessed`, for a premises that BDUK didn't assess.
  * No row of the May 2026 release holds it, and its spelling in a file is unknown,
  * so the reader refuses it until a release shows that spelling.
  */
@@ -53,7 +59,7 @@ export const BDUKSubsidyControlStatus = {
 	 */
 	White: "Gigabit White",
 	/**
-	 * Suppliers reported coverage that BDUK has not verified, or planned build
+	 * Suppliers reported coverage that BDUK hasn't verified, or planned build
 	 * whose delivery has risks or evidence gaps.
 	 */
 	UnderReview: "Gigabit Under Review",
@@ -322,7 +328,7 @@ export interface BDUKReleaseFile<C extends BDUKColumn> {
 }
 
 /**
- * Requested columns that a file's header does not name.
+ * Requested columns that a file's header doesn't name.
  */
 export class BDUKColumnError extends Error {
 	readonly file: string
@@ -377,7 +383,7 @@ export class BDUKValueError extends Error {
 const FILE_NAME = /^(?<year>\d{4})(?<month>0[1-9]|1[0-2])_BDUK_uprn_release_(?<part>.+)\.csv$/u
 
 /**
- * Derives the source facts from a published file name, or throws when the name does not state them.
+ * Derives the source facts from a published file name, or throws when the name doesn't state them.
  */
 export function parseBDUKReleaseFileName(file: string): BDUKReleaseSource {
 	const groups = FILE_NAME.exec(file)?.groups

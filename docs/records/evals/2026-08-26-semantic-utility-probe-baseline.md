@@ -20,7 +20,7 @@ Route (b) pre-registers on the §5.3 recall gap, and it cannot be executed again
 first increment: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
 **second** establishment class asserting the affordance. §4 forbids that ("no sibling class is
 minted") and stop condition 5 makes an explicit amendment rather than a probe. It would also need a
-recall metric the committed grader does not have (§5.5's second bound). Route (a) needs neither: the
+recall metric the committed grader doesn't have (§5.5's second bound). Route (a) needs neither: the
 comparator already exists and is committed, the anchors and expectations are copied byte-for-byte
 from committed board rows, and the semantic arm is reachable from the frozen increment without additions: activity
 phrase → `obtain_medication` → the concepts that afford it → POI category `pharmacy` through the
@@ -58,7 +58,7 @@ only thing that varies.
 | `cat-fr-03`  | `same_category` | `pharmacy near Toulouse`  | the venue-noun form at `sem-act-fr-01`'s anchor    |
 | `syn-01`     | `adjacent`      | `er near Denver CO`       | a different healthcare category at the same anchor |
 | `cat-us-04`  | `adjacent`      | `bank near Seattle WA`    | an unrelated category at an unrelated anchor       |
-| `abstain-05` | `adjacent`      | `hospital`                | a bare category — an arm must not invent an anchor |
+| `abstain-05` | `adjacent`      | `hospital`                | a bare category — an arm mustn't invent an anchor  |
 
 The second group is what makes the control set non-vacuous: an arm that answers `pharmacy` for
 everything would leave all three `same_category` rows green.
@@ -66,7 +66,7 @@ everything would leave all three `same_category` rows green.
 **Metrics.**
 
 - `target_answer_rate` — target rows passing the comparator, over **4** registered target rows.
-- `target_poi_routing_rate` — target rows whose outcome shape is not `no_poi_branch`, over the same
+- `target_poi_routing_rate` — target rows whose outcome shape isn't `no_poi_branch`, over the same
   **4**. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires. It reads the
   closed POI outcome-shape vocabulary, never free-form prose.
 - `control_hold_rate` — control rows still passing, over **6**.
@@ -86,7 +86,7 @@ it by baseline drift.
 | **STOP-REDESIGN**   | otherwise                                                        |
 
 A control regression stops under both decisions: a target delta bought by breaking the venue-noun
-form of the same query is not a result the program can act on.
+form of the same query isn't a result the program can act on.
 
 ## The baseline
 
@@ -110,19 +110,19 @@ form of the same query is not a result the program can act on.
 | control | `abstain-05`    | `poi_abstain`        | yes  | `anchor_required`                                                         |
 
 **Recorded decision for this arm: STOP-REDESIGN** — the baseline compared against its own frozen
-baseline moves no metric. That result is the self-check that the decision function is not vacuously
+baseline moves no metric. That result is the self-check that the decision function isn't vacuously
 permissive.
 
 ### One measured surprise, and why the row stays
 
 §5.2 measured `matchPOISubject` in isolation and found NO SUBJECT MATCH for all four activity
 phrases. The full pipeline reproduces that for three of them. `sem-act-fr-01` still reaches the POI
-branch, and the reason is not the category lexicon: `matchPOISubject` returns `null` for it too.
+branch, and the reason isn't the category lexicon: `matchPOISubject` returns `null` for it too.
 `Somewhere` is a POI **name** in the shipped `poi.db` — a `clothing_store` in Bordeaux and two
 `womens_clothing_store` rows in Lyon and Paris — so the name lexicon claims the query and the branch
 answers a clothing store 211.75 km from Toulouse.
 
-That makes this row's baseline a confident wrong answer rather than a miss. That is a worse starting
+That makes this row's baseline a confident wrong answer rather than a miss. That's a worse starting
 point than the other three rather than a better one. The row is kept: its form is attested in §5.1, and
 swapping it out after measuring would be exactly the row selection this pre-registration exists to
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the

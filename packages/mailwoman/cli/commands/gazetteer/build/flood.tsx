@@ -2,19 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build flood` — acquire the Environment Agency's Flood Map for Planning and build
- *   the sealed `flood.db` layer. Thin wiring only: catalogue read → download → extent → build → verify all
- *   live in `@mailwoman/flood/sdk`, so each stays unit-testable without Ink or the network in the loop.
+ *   `mailwoman gazetteer build flood` — acquire the Environment Agency's Flood Map
+ *   for Planning and build the sealed `flood.db` layer.
+ *
+ *   Thin wiring only: catalogue read → download → extent → build → verify all live in
+ *   `@mailwoman/flood/sdk`, so each stays unit-testable without Ink or the network in the loop.
  *   Mirrors `bdc.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
- *   The measurement runs as a separate mode because it costs a full pass
- *   over 813,627 polygons per candidate and produces a table rather than an artifact.
+ *   `--measure-resolutions` doesn't build.
+ *   The index resolution is measured for this layer.
  *
- *   `--limit` selects the smoke rung. It stops the ingest after N features and builds a real artifact over a
- *   real prefix of the source — enough to exercise the field names, the value domain, the projection and
- *   the seal. Fixtures cannot exercise those source-dependent checks. The coverage rows still cover all of England,
- *   because the footprint comes from the authority's statement rather than from the polygons.
+ *   The measurement runs as a separate mode because it costs a full pass over 813,627
+ *   polygons per candidate and produces a table rather than an artifact.
+ *
+ *   `--limit` selects the smoke rung.
+ *   It stops the ingest after N features and builds a real artifact over a real prefix of the
+ *   source — enough to exercise the field names, the value domain, the projection and the seal.
+ *
+ *   Fixtures cannot exercise those source-dependent checks.
+ *   The coverage rows still cover all of England, because the footprint comes from
+ *   the authority's statement rather than from the polygons.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -110,7 +117,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		// The catalogue read supplies the product's ISO revision date and the direct file URL.
 		// Both are read rather than assembled: the EA's file service keys on an opaque
 		// id with no relationship to the dataset id, so a hard-coded URL survives a
-		// republish by pointing at a file that is no longer the product.
+		// republish by pointing at a file that's no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
 		const sourceVintage = options.sourceVintage ?? catalogue?.revisionDate
 
@@ -157,7 +164,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		// The outline is a second authority's artifact: the EA states its mapping covers
-		// all of England and does not publish where England is.
+		// all of England and doesn't publish where England is.
 		// `flood_map_extent` records which outline was used.
 		const outline = options.boundary
 			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)

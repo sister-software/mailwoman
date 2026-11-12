@@ -3,8 +3,10 @@
 
 /**
  * This module configures the shared browser for Plotly and MapLibre rendering.
+ *
  * SwiftShader supplies WebGL without a hardware GPU.
  * Each caller owns navigation, readiness checks, and screenshots.
+ *
  * The browser package loads Playwright and stealth plugins when a session starts.
  */
 

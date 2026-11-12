@@ -52,7 +52,7 @@ The `read-excel-file/node` and `write-excel-file/node` aliases in `webpack-polic
 **Interfaces:**
 
 - Consumes: `@mailwoman/core/module/resolvers` `resolvePackagePath(name)`; `esbuild` `build()` with `metafile: true`.
-- Produces: the test rows later tasks turn green. Task 3 relies on the row for `@mailwoman/neural/classifier` asserting `out/classifier/loader-browser.js` is in the bundle and `out/classifier/loader.js` is not.
+- Produces: the test rows later tasks turn green. Task 3 relies on the row for `@mailwoman/neural/classifier` asserting `out/classifier/loader-browser.js` is in the bundle and `out/classifier/loader.js` isn't.
 
 The test lives in `neural` rather than one file per package because `neural` depends on `core`, both packages' subpaths are public exports, and a second copy of the esbuild walk in `core/test/` would trip `jscpd` (`minTokens: 80`). The existing `packages/core/lib/worker-bundle.integration.test.ts` keeps its own shape because it asserts a different condition set.
 
@@ -296,7 +296,7 @@ yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts
 ```
 
-Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-chain assertion listing seven `spliterator` edges (`node:worker_threads`, `stream/web`, `node:stream/web`, `node:url`, `node:stream`, `node:fs`, `node:worker_threads`). `@mailwoman/neural/classifier` fails on `mustInclude` because `loader-browser.js` does not exist yet. If `@mailwoman/neural/web-loader` also fails on the dynamic allowance, the failure message identifies the file. That row should pass, since both dynamic imports are listed.
+Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-chain assertion listing seven `spliterator` edges (`node:worker_threads`, `stream/web`, `node:stream/web`, `node:url`, `node:stream`, `node:fs`, `node:worker_threads`). `@mailwoman/neural/classifier` fails on `mustInclude` because `loader-browser.js` doesn't exist yet. If `@mailwoman/neural/web-loader` also fails on the dynamic allowance, the failure message identifies the file. That row should pass, since both dynamic imports are listed.
 
 - [ ] **Step 3: Commit the failing test**
 
@@ -351,7 +351,7 @@ Expected: oxlint reports no issue, and the row passes with zero static edges. If
 
 Run: `yarn vitest --run --config vitest.fast.config.ts packages/core/lib`
 
-Expected: the same count of passing files as on `main` (run the same command on `main` first if the count is not already known).
+Expected: the same count of passing files as on `main` (run the same command on `main` first if the count isn't already known).
 
 - [ ] **Step 4: Commit**
 
@@ -439,7 +439,7 @@ Replace the paragraph at lines 201-206 with:
  */
 ```
 
-Leave the two `import(/* webpackIgnore: true */ "#classifier/loader")` lines as they are. The comment is for the docs SSR bundle. That bundle resolves the `node` condition and would otherwise bundle the Node loader.
+Leave the two `import(/* webpackIgnore: true */ "#classifier/loader")` lines as they're. The comment is for the docs SSR bundle. That bundle resolves the `node` condition and would otherwise bundle the Node loader.
 
 - [ ] **Step 4: Compile, lint, run the rows**
 
@@ -680,7 +680,7 @@ with the outcome (kept on, or the refusing module) stated in the commit body.
 
 Status line: append `Implemented`, today's date, and the PR number once `gh pr create` prints it.
 
-"Proof" section: replace its first sentence with "One table-driven test, `packages/neural/lib/browser-bundle.integration.test.ts`, covers every `core` and `neural` subpath the client reaches; `neural` depends on `core`, so both packages' public subpaths are reachable from one file, and a second copy of the esbuild walk would trip `jscpd`. Subpaths in packages `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's Vite build."
+"Proof" section: replace its first sentence with "One table-driven test, `packages/neural/lib/browser-bundle.integration.test.ts`, covers every `core` and `neural` subpath the client reaches; `neural` depends on `core`, so both packages' public subpaths are reachable from one file, and a second copy of the esbuild walk would trip `jscpd`. Subpaths in packages `neural` doesn't depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's Vite build."
 
 "Definition of done", second bullet: replace with "`docs/plugins/demo-assets/webpack-policy.ts` contains zero `node:` stubs, zero fallbacks, and zero client-side aliases for `@mailwoman/*`. The SSR-only `onnx-runner` alias is a Docusaurus property and leaves with the geocoder page in the Earth design."
 
@@ -694,7 +694,7 @@ yarn typecheck:tests
 yarn ci:test:fast
 ```
 
-Expected: `health` exits 0 (if `health:debt` reports `asNever` or `doubleCast` growth, check whether `main` already fails the same way before touching the baseline, because this change must not move it). `typecheck:tests` and the fast test leg pass.
+Expected: `health` exits 0 (if `health:debt` reports `asNever` or `doubleCast` growth, check whether `main` already fails the same way before touching the baseline, because this change mustn't move it). `typecheck:tests` and the fast test leg pass.
 
 - [ ] **Step 3: Commit and open the PR**
 

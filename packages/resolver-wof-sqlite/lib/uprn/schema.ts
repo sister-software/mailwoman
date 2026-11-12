@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Typed schema for `uprn.db`, storing OS's own WGS84 latitude/longitude verbatim rather than reconverting from the source's eastings.
+ * Typed schema for `uprn.db`, storing OS's own WGS84 latitude/longitude verbatim
+ * rather than reconverting from the source's eastings.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"

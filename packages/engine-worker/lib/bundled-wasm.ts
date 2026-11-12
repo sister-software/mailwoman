@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two WebAssembly runtimes the parse needs, as modules wrangler compiles at deploy time. workerd refuses to
- *   compile WebAssembly from bytes, so neither runtime may fetch and compile its binary at request time.
+ *   The two WebAssembly runtimes the parse needs, as modules wrangler compiles at
+ *   deploy time. workerd refuses to compile WebAssembly from bytes, so neither
+ *   runtime may fetch and compile its binary at request time.
  *
- *   The tokenizer takes its module through `setTokenizerRuntimeSource`. onnxruntime-web accepts only bytes as its
- *   `wasmBinary`, so the loader hands it {@link ORT_WASM_TAG} and {@link installBundledWasm} replaces
- *   `WebAssembly.instantiate` with a version that answers those bytes with the bundled module.
+ *   The tokenizer takes its module through `setTokenizerRuntimeSource`. onnxruntime-web
+ *   accepts only bytes as its `wasmBinary`, so the loader hands it {@link ORT_WASM_TAG}
+ *   and {@link installBundledWasm} replaces `WebAssembly.instantiate` with a version
+ *   that answers those bytes with the bundled module.
  */
 
 // Wrangler's bundler turns each `.wasm` import into a compiled module, and `wasm-modules.d.ts` declares that type.

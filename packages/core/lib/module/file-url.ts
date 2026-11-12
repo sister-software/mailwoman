@@ -12,7 +12,7 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Converts a `file:` URL to a filesystem path.
  *
- * @throws {TypeError} When the URL is not a `file:` URL.
+ * @throws {TypeError} When the URL isn't a `file:` URL.
  */
 export function fileURLToPath(url: string | URL): string {
 	return nativeFileURLToPath(url)

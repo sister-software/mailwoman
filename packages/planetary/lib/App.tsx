@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The body's app: the host check first, then the route, so a production host serving the other body's build
- *   renders the error on its first load. A click pushes `/feature/<id>` and the browser's back button closes it.
+ *   The body's app: the host check first, then the route, so a production host serving
+ *   the other body's build renders the error on its first load.
+ *
+ *   A click pushes `/feature/<id>` and the browser's back button closes it.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"

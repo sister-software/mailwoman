@@ -34,7 +34,7 @@ distribution. Sustained density high enough to reach it starves the rest. Combin
 the stable ~65 ceiling at moderate density (Runs A/B) and **US street stuck at ~74–76.5
 in every variant** (canonical bar 80.4), this is a demonstrated
 **capacity/stability constraint at 29M params** — a fork rather than a tuning problem.
-(DeepSeek's two predictions here — "5× clears ≥72" and "75 is not a transient, suffix
+(DeepSeek's two predictions here — "5× clears ≥72" and "75 isn't a transient, suffix
 will asymptote" — were both falsified. The operator's treadmill guard and the original
 capacity-competition hypothesis were right.)
 
@@ -118,7 +118,7 @@ region 80.1 · micro 81.6 · FR hn 92.0.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
   at ~76 (−4.4 vs v0.9.8) in every run** — an actual guardrail regression the relaxed table had hidden.
 - **Any future relaxation of these numbers is a STATED decision with a reason, made here.** As of now,
-  none is approved: the config check stands. If Run C lands affix ~75/63 and street ~76, that is a
+  none is approved: the config check stands. If Run C lands affix ~75/63 and street ~76, that's a
   CHECK MISS to confront (re-baseline-with-reason, or iterate) rather than a pass.
 
 **Decision tree (with the operator's TREADMILL GUARD) — RESOLVED, kept for the record:**
@@ -128,8 +128,8 @@ ceiling at moderate density) is the two-opposite-directions fork in its sharpest
 density high enough for affix destroys the guardrail, and density low enough for the guardrail caps
 affix at ~65. Per the guard, all recipe iteration stopped. The live decision is the "The fork"
 section at the top of this doc. (Historical note: DeepSeek's pre-registered capacity-tell —
-suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
-not anticipate the transient-then-decay shape. The guard caught what the tell didn't.)
+suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and didn't
+anticipate the transient-then-decay shape. The guard caught what the tell didn't.)
 
 **4. SHIP check — REQUIRED before tagging v4.2.0 (training-check pass is necessary rather than sufficient).**
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
@@ -152,7 +152,7 @@ recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreog
 **6. After the flag-plant — queue rather than ad-hoc:** next substantive item is **#478** (arbitration
 layer, zero-GPU — converts the model wins into "pipeline never worse than v0"). po_box/cedex do
 not run standalone — they **ride the next consolidation-class run** (dilution lesson), so they're a
-queue slot rather than a now. Lossless decomposition (the agent's "#32") is **not in the triaged backlog** —
+queue slot rather than a now. Lossless decomposition (the agent's "#32") **isn't in the triaged backlog** —
 if it's the post-parity differentiator, it needs a fresh issue with a real spec + a deliberate slot
 in **epic #488** rather than an ad-hoc grab.
 

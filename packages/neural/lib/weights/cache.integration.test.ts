@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the cache fallback that `resolveWeights` uses when no weights package resolves. The tests
- *   use `pt-BR` because no workspace package exists for that locale, so resolution reaches the cache
- *   on every host.
+ *   Tests the cache fallback that `resolveWeights` uses when no weights package resolves.
+ *
+ *   The tests use `pt-BR` because no workspace package exists for that locale,
+ *   so resolution reaches the cache on every host.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"

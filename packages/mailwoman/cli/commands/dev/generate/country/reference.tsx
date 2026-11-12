@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev generate country-reference` — regenerate `codex/country/reference-data.ts` (the
- *   per-country calling code + currency table) from mledoze/countries. Network codegen. the output
- *   is committed for provenance.
+ *   `mailwoman dev generate country-reference` — regenerate `codex/country/reference-data.ts`
+ *   (the per-country calling code + currency table) from mledoze/countries.
+ *   Network codegen. the output is committed for provenance.
  */
 
 import { Text } from "ink"

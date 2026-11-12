@@ -4,18 +4,26 @@
 /**
  *   Every weights package must decode with its model's label vocabulary.
  *
- *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own. It shares the base's model.
- *   Its card describes the overlay, while the vocabulary belongs to the base. An overlay card that omits `labels` is
- *   correct. The resolver falls back to the base vocabulary, so authors do not copy 33 strings into every carrier.
+ *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own.
+ *   It shares the base's model.
+ *
+ *   Its card describes the overlay, while the vocabulary belongs to the base.
+ *   An overlay card that omits `labels` is correct.
+ *
+ *   The resolver falls back to the base vocabulary, so authors do not copy 33 strings into every carrier.
  *   Those duplicate strings would go stale on the first retrain.
  *
- *   The failure this pins is silent and total. `NeuralAddressClassifier` falls back to `STAGE2_BIO_LABELS` (21) when no
- *   labels reach it. The shared base emits 33 logits per token. The first parse then throws inside
- *   `assertEmissionWidth`. The package is inoperable at runtime.
+ *   The failure this pins is silent and total.
+ *   `NeuralAddressClassifier` falls back to `STAGE2_BIO_LABELS` (21) when no labels reach it.
  *
- *   A card check by itself is insufficient. `resolveWeights` already fell back to the
- *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and had no
- *   `labels` key. Existence and completeness are different questions.
+ *   The shared base emits 33 logits per token.
+ *   The first parse then throws inside `assertEmissionWidth`.
+ *   The package is inoperable at runtime.
+ *
+ *   A card check by itself is insufficient.
+ *   `resolveWeights` already fell back to the base card when the overlay's was absent,
+ *   but four scaffolded carriers had a card that existed and had no `labels` key.
+ *   Existence and completeness are different questions.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

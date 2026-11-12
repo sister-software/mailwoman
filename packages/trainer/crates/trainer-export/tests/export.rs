@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The exporter and quantizer against fixtures torch 2.12.0 wrote.
 //!
 //! `fixtures/tiny-bundle` is a `MailwomanCoarseEncoder` with hidden size 8 and one block, built with every channel of

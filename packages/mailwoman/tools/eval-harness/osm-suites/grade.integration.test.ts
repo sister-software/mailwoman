@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker pool `gradeOSMSuite` runs returns, for every suite row, the outcome the held-out scorer gives
- *   the same row parsed in this process with the same weights.
+ *   The worker pool `gradeOSMSuite` runs returns, for every suite row, the outcome the
+ *   held-out scorer gives the same row parsed in this process with the same weights.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

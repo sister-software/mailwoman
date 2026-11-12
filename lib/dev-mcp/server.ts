@@ -4,10 +4,13 @@
 /**
  *   MCP wiring — adapts the `tools/` directory's table to the SDK's `registerTool` signature.
  *
- *   One departure from `@mailwoman/mcp`'s envelope and the reason this file exists separately rather than
- *   reusing that one. Results here are returned as `structuredContent` as well as text. A denominator that only exists
- *   inside a stringified blob is a denominator a wrapper cannot enforce and an agent can paraphrase away. The text
- *   block stays for clients that cannot read structured output.
+ *   One departure from `@mailwoman/mcp`'s envelope and the reason this file exists
+ *   separately rather than reusing that one.
+ *   Results here are returned as `structuredContent` as well as text.
+ *
+ *   A denominator that only exists inside a stringified blob is a denominator a
+ *   wrapper cannot enforce and an agent can paraphrase away.
+ *   The text block stays for clients that cannot read structured output.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"

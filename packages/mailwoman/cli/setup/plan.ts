@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pure half of `mailwoman setup`: which tiers the asked countries have, and the lines the non-interactive run
- *   prints. The Ink command in `cli/commands/setup.tsx` draws these and adds the prompts.
+ *   The pure half of `mailwoman setup`: which tiers the asked countries have,
+ *   and the lines the non-interactive run prints.
+ *
+ *   The Ink command in `cli/commands/setup.tsx` draws these and adds the prompts.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -26,7 +28,7 @@ import {
 import { SizeBasis } from "#data/registry"
 
 /**
- * The installation inventory could not be read, naming the input that failed.
+ * The installation inventory couldn't be read, naming the input that failed.
  */
 export class InstallationReadError extends CommandError {
 	readonly path: string
@@ -361,7 +363,7 @@ export interface SetupInstallation {
 /**
  * The lines the non-interactive run prints.
  *
- * They are the roots, the parsed sample, one line per tier, what works now, the next smallest
+ * They're the roots, the parsed sample, one line per tier, what works now, the next smallest
  * installation, and the routes to a token when a licensed tier is among the tiers not installed.
  */
 export function setupSummary(

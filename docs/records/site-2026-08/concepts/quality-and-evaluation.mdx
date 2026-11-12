@@ -48,7 +48,7 @@ No change promotes on a felt improvement. The full procedure is [the model-work 
 
 **Checks are pre-registered.** The target numbers and no-regression bounds for a change are written into the training config before the first optimizer step runs. The runbook's phrasing is "If you can't define the check, you aren't ready to train." Written down first, a check can't without output bend around the result it was meant to judge.
 
-**Every candidate runs the same battery**, whatever the change touched: per-locale F1 floors for the US and France, a German word-order check, unit and affix retention, the six demo presets, coordinate metrics on held-out geography, and a metamorphic layer where label-preserving perturbations (casing, punctuation, a one-letter typo) must not move the resolved coordinate ([input robustness](./input-robustness.mdx) explains why that layer can't be overfit). The battery is a CLI:
+**Every candidate runs the same battery**, whatever the change touched: per-locale F1 floors for the US and France, a German word-order check, unit and affix retention, the six demo presets, coordinate metrics on held-out geography, and a metamorphic layer where label-preserving perturbations (casing, punctuation, a one-letter typo) mustn't move the resolved coordinate ([input robustness](./input-robustness.mdx) explains why that layer can't be overfit). The battery is a CLI:
 
 ```text
 $ mailwoman eval check --help

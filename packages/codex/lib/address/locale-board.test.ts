@@ -4,18 +4,22 @@
 /**
  *   One real address per locale this project publishes weights for, with the surface it must render to.
  *
- *   The OpenCage templates follow OpenStreetMap's tag vocabulary and fit anglophone and German-order locales.
+ *   The OpenCage templates follow OpenStreetMap's tag vocabulary and fit anglophone
+ *   and German-order locales.
  *   They insert a comma into Spain's street line and drop Italy's province.
- *   They reorder India's address tail. They print both CJK locales backwards with commas inserted.
- *   For example, they produce `1-9-1, 丸の内, 千代田区, 東京都 100-0005` instead of
- *   `〒100-0005 東京都千代田区丸の内1-9-1`.
  *
- *   Provenance for the CJK rows is this repository's own: `corpus/lib/jp/adapters/wof-admin` declares the Japanese
- *   envelope as `〒<postcode>? <region><locality><neighbourhood>?`.
- *   `mailwoman/lib/geocode/routed-classifier.test.ts` includes `〒930-0393 富山県中新川郡上市町法音寺1`
- *   as a parse fixture. `corpus/lib/cn/recipes/organizational-units` decomposes
- *   `云南省临沧市孟定农场三分场二队` largest-first without separators. The Latin rows
- *   are the libaddressinput skeletons.
+ *   They reorder India's address tail.
+ *   They print both CJK locales backwards with commas inserted.
+ *
+ *   For example, they produce `1-9-1, 丸の内, 千代田区, 東京都 100-0005` instead of `〒100-0005 東京都千代田区丸の内1-9-1`.
+ *
+ *   Provenance for the CJK rows is this repository's own: `corpus/lib/jp/adapters/wof-admin`
+ *   declares the Japanese envelope as `〒<postcode>? <region><locality><neighbourhood>?`.
+ *   `mailwoman/lib/geocode/routed-classifier.test.ts` includes `〒930-0393 富山県中新川郡上市町法音寺1` as a parse fixture.
+ *
+ *   `corpus/lib/cn/recipes/organizational-units` decomposes `云南省临沧市孟定农场三分场二队`
+ *   largest-first without separators.
+ *   The Latin rows are the libaddressinput skeletons.
  */
 
 import { describe, expect, it } from "vitest"
@@ -257,7 +261,7 @@ describe("a rendering says what it placed and what it could not", () => {
 
 		expect(rendering.placed).toContain("locality")
 		// France's layout prints no region — the postcode line absorbs it — and the render holds that fact,
-		// where a substring search over the output could not tell it from a value that never arrived.
+		// where a substring search over the output couldn't tell it from a value that never arrived.
 		expect(rendering.unplaced).toEqual(["region"])
 	})
 

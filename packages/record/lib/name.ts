@@ -4,26 +4,27 @@
 import { TextSpliterator } from "spliterator"
 
 /**
- *   Person-name parsing — split a full name into components for the matcher to canonicalize and
- *   compare.
+ *   Person-name parsing — split a full name into components for the matcher to canonicalize and compare.
  *
- *   A rule-based positional parser, the portable recipe from `python-nameparser`: split on a comma to
- *   detect `Last, First` inversion, then classify tokens by position against configurable title /
- *   suffix / particle lists. We deliberately store the surname **particle** (`van`, `de la`, `von`)
- *   separately from the bare surname (the `theiconic/name-parser` pattern) so the matcher can
- *   compare `Vega` independent of `de la` — sources that drop or vary the particle still match.
+ *   A rule-based positional parser, the portable recipe from `python-nameparser`:
+ *   split on a comma to detect `Last, First` inversion, then classify tokens by
+ *   position against configurable title / suffix / particle lists.
+ *   We deliberately store the surname **particle** (`van`, `de la`, `von`) separately from
+ *   the bare surname (the `theiconic/name-parser` pattern) so the matcher can compare
+ *   `Vega` independent of `de la` — sources that drop or vary the particle still match.
  *
  *   Scope + honesty (per the name-canonicalization research pass):
  *
- *   - Western / romanized names only. Cultural given-family order variation (East-Asian family-first)
- *       and transliteration are not handled here — a documented follow-up.
- *   - Nickname → canonical-root mapping is intentionally not done at parse time: it is lossy and
- *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
- *       agreement level rather than a destructive rewrite. We only _extract_ a parenthetical/quoted
- *       nickname.
- *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port. this
- *       positional parser covers the documented hard cases (inversion, particles, generational +
- *       professional suffixes) without a model.
+ *   - Western / romanized names only.
+ *     Cultural given-family order variation (East-Asian family-first) and transliteration
+ *     are not handled here — a documented follow-up.
+ *   - Nickname → canonical-root mapping is intentionally not done at parse time:
+ *     it is lossy and gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in
+ *     the matcher as a fuzzy agreement level rather than a destructive rewrite.
+ *     We only _extract_ a parenthetical/quoted nickname.
+ *   - A CRF parser (probablepeople) is the gold-standard reference but too
+ *     heavy to port. this positional parser covers the documented hard cases
+ *     (inversion, particles, generational + professional suffixes) without a model.
  */
 
 /**
@@ -349,7 +350,7 @@ export function parsePersonName(input: string | null): PersonName | null {
  * The order a person name prints in.
  *
  * Western / romanized only, the same scope {@linkcode parsePersonName} declares.
- * A family-first system does not use this order in reverse.
+ * A family-first system doesn't use this order in reverse.
  * An invented order here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]

@@ -77,7 +77,7 @@ describe("weightsReconciliationCheck", () => {
 	})
 
 	it("refuses an overlay pinned to a base at another version", async () => {
-		// Every workspace releases in lockstep, so two versions mean a release did not land whole.
+		// Every workspace releases in lockstep, so two versions mean a release didn't land whole.
 		const tree = await treeWith([
 			{ locale: "en-us", version: "10.0.0", files: ["model.onnx", "model-card.json"] },
 			{ locale: "en-au", version: "9.4.0", baseWeights: "@mailwoman/neural-weights-en-us" },

@@ -10,7 +10,7 @@
  *   Ported from the Python builders' `countries/jp/corpora/sources.py`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { countInto } from "@mailwoman/core/stats"
@@ -28,7 +28,7 @@ import { openParquetRowStream } from "#parquet/streams"
  * The Overture-JP addresses the corpus reads.
  */
 export function jpOvertureParquetPath() {
-	return dataRootPath("overture", "2026-06-17.0", "addresses-jp.parquet")
+	return snapshotSourcePath("overture", "2026-06-17.0", "addresses-jp.parquet")
 }
 
 /**

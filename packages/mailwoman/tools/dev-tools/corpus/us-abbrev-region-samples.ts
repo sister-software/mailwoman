@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regenerates the committed `corpus/us/abbrev-region-samples.ts` table from the Who's On First admin and US
- *   postcode databases: for each US state whose code is also another country's code, the most populous current
- *   localities under the state's region record and, for each, the postcode nearest its point among those whose
- *   parent is that locality.
+ *   Regenerates the committed `corpus/us/abbrev-region-samples.ts` table.
+ *
+ *   Its inputs are the Who's On First admin and US postcode databases.
+ *   For each US state whose code is also another country's code, the most populous
+ *   current localities under the state's region record and, for each, the postcode
+ *   nearest its point among those whose parent is that locality.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { US_STATE_CODES_READ_AS_COUNTRIES } from "@mailwoman/corpus/us/state-country-codes"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -187,11 +190,7 @@ export async function generateUSAbbrevRegionSamples(
 		report?.(`${code}: ${samples.localities.join(", ")}`)
 	}
 
-	const header = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+	const header = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   generated — do not edit by hand. Sample localities and postcodes for each US state whose code is also
  *   another country's ISO 3166-1 alpha-2 code: the three most populous current localities under the state's
  *   region record in Who's On First's admin database, each with the postcode nearest its point among those

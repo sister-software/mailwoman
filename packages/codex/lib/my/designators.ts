@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Malaysia designators in Malay: the delivery service, premise, floor and relation words that a Malaysian
- *   address or query uses.
+ *   Malaysia designators in Malay: the delivery service, premise, floor
+ *   and relation words that a Malaysian address or query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mysEn.pdf UPU Malaysia addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/menara Wiktionary menara}

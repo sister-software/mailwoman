@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map's own building style for city models: each building takes a district color from the guide-map palette, and
- *   its walls take the window grid the compact building layer draws.
+ *   The map's own building style for city models: each building takes a district color from the
+ *   guide-map palette, and its walls take the window grid the compact building layer draws.
  *
- *   A converted city tile holds geometry and a feature id per vertex. When a tile loads, {@link styleCityModel} adds
- *   three vertex attributes from them, and {@link createCityModelMaterial} draws every tile with one shader.
+ *   A converted city tile holds geometry and a feature id per vertex.
+ *   When a tile loads, {@link styleCityModel} adds three vertex attributes from them,
+ *   and {@link createCityModelMaterial} draws every tile with one shader.
  */
 
 import { GuideMapPalette } from "@mailwoman/cartographer/base/theme"

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -98,7 +98,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 
 		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length)
 			throw new Error(
-				`A base pool is empty — check ${dataRootPath("oa-cache")}, ${dataRootPath(NAD_SKELETON_DIRECTORY)}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
+				`A base pool is empty — check ${currentSourcePath("openaddresses")}, ${dataRootPath(NAD_SKELETON_DIRECTORY)}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
 			)
 
 		let emitted = 0,

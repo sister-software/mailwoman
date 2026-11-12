@@ -4,13 +4,14 @@
 /**
  *   Builds `<data root>/db/poi/landmarks.db` from the fetched Wikidata vital-places inventory.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/landmarks/build.run.ts [--source-root <fetch root>] [--out <path>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/landmarks/build.run.ts
+ *   [--source-root <fetch root>] [--out <path>]
  *
- *   `--source-root` is the `--out` root `mailwoman corpus fetch wikidata-vital-places` wrote under.
+ *   `--source-root` is the `--out-root` `mailwoman corpus fetch wikidata-vital-places`
+ *   wrote under, by default the current-source root `$MAILWOMAN_CACHE_ROOT/sources/`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -23,7 +24,7 @@ import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { PathBuilder, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { LANDMARK_DATABASE_FILE } from "#geocode/session"
+import { LANDMARK_DATABASE_FILE } from "#geocode/session/layers"
 import { AIRPORT_CODES_QUERY, type AirportCode, readAirportCodes } from "#tools/dev-tools/landmarks/airport-codes"
 import { buildLandmarkDatabase } from "#tools/dev-tools/landmarks/build"
 
@@ -38,7 +39,7 @@ const { values } = parseArguments({
 const AIRPORT_CODES_FILE = "airport-codes.json"
 
 const sourceDir = vitalPlacesPath(
-	PathBuilder.from(values["source-root"] ? resolvePath(values["source-root"]) : dataRootPath("corpus", "sources"))
+	PathBuilder.from(values["source-root"] ? resolvePath(values["source-root"]) : currentSourcesRoot())
 )
 
 const roots = await readLocalJSONFile<ClassRoots>(sourceDir(VITAL_PLACES_FILES.classRoots))

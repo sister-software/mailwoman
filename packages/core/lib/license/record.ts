@@ -22,7 +22,7 @@
  *   source material is provenance and user duties are obligations. The raw value remains available
  *   for later review against what the writer recorded.
  *
- *   **A value this cannot resolve reads `unresolved`, and that is a finding rather than a default.**
+ *   **A value this cannot resolve reads `unresolved`, and that's a finding rather than a default.**
  *   `unresolved` means the obligations are unknown. That differs from knowing there are none.
  *   A caller deciding whether to publish or train must distinguish those cases. This type exists
  *   because a bare string made them easy to confuse.
@@ -151,7 +151,7 @@ const MENTIONABLE: ReadonlyArray<readonly [pattern: RegExp, identifier: string]>
  * Everything else reads `unresolved` with empty obligations, including a value
  * whose prose mentions a license.
  *
- * A sentence mentioning ODbL does not establish that ODbL is the grant on the row.
+ * A sentence mentioning ODbL doesn't establish that ODbL is the grant on the row.
  */
 export function readLicenseRecord(raw: string | null | undefined): LicenseRecord {
 	const text = raw ?? ""

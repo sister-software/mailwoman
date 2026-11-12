@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The national Overture rooftop provider answers a `zh`-keyed lookup for a registered country with its database on disk. It returns `{}` when the database is missing or the country is unregistered.
+ *   The national Overture rooftop provider answers a `zh`-keyed lookup for a
+ *   registered country with its database on disk.
+ *
+ *   It returns `{}` when the database is missing or the country is unregistered.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

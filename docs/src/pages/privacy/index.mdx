@@ -7,19 +7,17 @@ description: How Sister Software handles personal information related to Mailwom
 
 Last updated: September 21, 2026.
 
-Sister Software is currently operated by **Nirrus LLC**, a Delaware limited liability company.
+Sister Software is currently operated by **Nirrius LLC**, a Delaware limited liability company.
 
-Mailwoman is self-hosted software. We do not operate a hosted geocoding service, and ordinary use of Mailwoman does not send your addresses, coordinates, queries, customer records, or other workload data to us.
+Mailwoman is self-hosted software. We don't operate a hosted geocoding service, and ordinary use of Mailwoman doesn't send your addresses, coordinates, queries, customer records, or other workload data to us.
 
 ## Your workload stays on your infrastructure
-
-Mailwoman runs on infrastructure you control.
 
 The published libraries, CLI, browser engine, and self-hosted API servers contain no usage telemetry, behavioral analytics, crash reporting, or query harvesting, and none of them transmits the content of a parse or geocode request to Sister Software.
 
 When you parse or geocode an address with Mailwoman, that operation occurs locally on your computer, browser, server, or other infrastructure.
 
-We therefore do not receive or maintain:
+We therefore don't receive or maintain:
 
 - addresses you geocode;
 - coordinates returned by Mailwoman;
@@ -45,15 +43,15 @@ A third-party network provider or content-delivery network in front of any of th
 
 The records Mailwoman is trained on are separate from anything you send us, and this section is about the former.
 
-We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact does not establish that a corpus contains no personal data, so this section states the two claims separately.
+We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records come from those sources, and none of them is a customer query. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact doesn't establish that a corpus contains no personal data, so this section states the two claims separately.
 
 The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 426 sources. As of this update, the register records a reviewed license decision for 54 of them and marks twenty-nine of the 426 as eligible for ingest. Eligibility permits a future corpus to draw on a source, and it describes that source's terms and fields rather than the contents of any corpus already built. No source in that register has contributed to a published model.
 
-**A corpus we build from now on contains the addresses of organizations and no address of an identifiable natural person.** We decided that on 2026-09-30 and the register enforces it. Some candidate registers, such as the French SIRENE enterprise register, contain records about sole traders that identify a natural person at a business address. That class of source is excluded rather than analyzed: we have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for it, and this Policy does not assert one.
+**A corpus we build from now on contains the addresses of organizations and no address of an identifiable natural person.** We decided that on 2026-09-30 and the register enforces it. Some candidate registers, such as the French SIRENE enterprise register, contain records about sole traders that identify a natural person at a business address. That class of source is excluded rather than analyzed: we've not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for it, and this Policy doesn't assert one.
 
-The ingest process enforces that exclusion. Each source in the register has a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication has not been found clear. 394 of the 426 sources are refused on that ground today: 15 have a review that found records about identifiable people, and 379 have no review at all. One source has a completed analysis: the Italian public-contracts database. Its suppliers include identified individuals, and its published addresses all belong to public bodies. This rule keeps a source carrying personal addresses out of any corpus built from now on. It makes no statement about a model already published.
+The ingest process enforces that exclusion. Each source in the register has a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication hasn't been found clear. 394 of the 426 sources are refused on that ground today: 15 have a review that found records about identifiable people, and 379 have no review at all. One source has a completed analysis: the Italian public-contracts database. Its suppliers include identified individuals, and its published addresses all belong to public bodies. This rule keeps a source carrying personal addresses out of any corpus built from now on. It makes no statement about a model already published.
 
-We cannot at present recover an individual record from the trained weights of a published model trained
+We can't at present recover an individual record from the trained weights of a published model trained
 on address records. We make no claim that the weights are anonymous within the meaning of any particular
 law.
 
@@ -88,7 +86,7 @@ If you purchase a commercial license, we may maintain records such as:
 
 Payment processing is handled by third-party payment providers such as Stripe.
 
-These systems do not receive your Mailwoman geocoding queries or datasets.
+These systems don't receive your Mailwoman geocoding queries or datasets.
 
 Mailwoman license keys verify locally. Optional online license-management actions, such as checking license status or refreshing a license, may contact Sister Software infrastructure and transmit the license information necessary to perform that request.
 
@@ -96,17 +94,15 @@ Mailwoman license keys verify locally. Optional online license-management action
 
 Our websites and supporting infrastructure may process ordinary technical information required to deliver and secure a web service, such as IP address, request time, requested URL, and similar network metadata.
 
-We do not use Mailwoman websites to create advertising profiles or track users across unrelated services.
+We don't use Mailwoman websites to create advertising profiles or track users across unrelated services.
 
-We do not use tracking cookies or behavioral advertising cookies.
+We don't use tracking cookies or behavioral advertising cookies.
 
 ## Customer projects and pilots
 
-If you participate in a design-partner program, support engagement, evaluation, or other commercial project, you may choose to provide data to us directly.
+If you participate in a design-partner program, support engagement, evaluation, or other commercial project, you may choose to provide data to us directly, separately from ordinary Mailwoman operation.
 
-That is separate from ordinary Mailwoman operation.
-
-Any customer data provided for such an engagement remains subject to the applicable agreement. We do not acquire ownership of customer address lists, subscriber records, network data, or other business information merely because it is supplied to us for a project.
+Any customer data provided for such an engagement remains subject to the applicable agreement. We don't acquire ownership of customer address lists, subscriber records, network data, or other business information merely because it is supplied to us for a project.
 
 For engagements involving substantial personal data, we may enter into additional confidentiality, security, retention, or data-processing terms.
 
@@ -124,11 +120,11 @@ We may use information provided directly to us to:
 - comply with legal obligations, and
 - enforce our agreements.
 
-We do not sell personal information.
+We don't sell personal information.
 
-We do not sell Mailwoman query data.
+We don't sell Mailwoman query data.
 
-We do not use customer geocoding queries for advertising or model training because ordinary Mailwoman queries are not transmitted to us. That statement is about customer queries. What our training corpora are built from is described under "Where our training data comes from".
+We don't use customer geocoding queries for advertising or model training, because ordinary Mailwoman use transmits no query to us. That statement is about customer queries. What our training corpora are built from is described under "Where our training data comes from".
 
 ## Service providers
 
@@ -147,7 +143,7 @@ Those providers receive only the information necessary to provide the relevant s
 
 We retain information provided directly to us only for as long as reasonably necessary for the purpose for which it was collected or as required for legal, accounting, security, or contractual reasons.
 
-Mailwoman workload data processed entirely on your infrastructure is not subject to our retention practices because we never receive it.
+Mailwoman workload data processed entirely on your infrastructure isn't subject to our retention practices because we never receive it.
 
 ## Your rights
 
@@ -155,13 +151,13 @@ Applicable law may give you rights to access, correct, delete, restrict, or obje
 
 These rights apply only to information we hold.
 
-Because Mailwoman normally processes your workload locally, we cannot access, export, correct, or delete addresses or queries that were never transmitted to us. Data held inside an installation you operate is yours to act on. We have no access to it and cannot act on it for you.
+Because Mailwoman normally processes your workload locally, we can't access, export, correct, or delete addresses or queries that were never transmitted to us. Data held inside an installation you operate is yours to act on. We have no access to it and can't act on it for you.
 
-For a record in a public source we used to build a corpus, write to the address under "Contact". We will identify what we hold, what we can remove from a corpus we still hold, and what a published model retains. We do not claim an ability to delete a record from weights that are already published.
+For a record in a public source we used to build a corpus, write to the address under "Contact". We will identify what we hold, what we can remove from a corpus we still hold, and what a published model retains. We don't claim an ability to delete a record from weights that are already published.
 
 ## International processing
 
-Sister Software is currently operated by Nirrus LLC in the United States.
+Sister Software is currently operated by Nirrius LLC in the United States.
 
 Information you provide directly to us may be processed in the United States or other locations where our service providers operate.
 
@@ -171,13 +167,13 @@ Where applicable law requires safeguards for international transfers, we will us
 
 We may update this Policy as our services, providers, or legal obligations change.
 
-If responsibility for the services covered by this Policy moves from Nirrus LLC to another legal entity, we will update this Policy accordingly.
+If responsibility for the services covered by this Policy moves from Nirrius LLC to another legal entity, we will update this Policy accordingly.
 
 ## Contact
 
 For privacy questions or requests:
 
 **Sister Software**
-currently operated by **Nirrus LLC**, a Delaware limited liability company
+currently operated by **Nirrius LLC**, a Delaware limited liability company
 
 `support [at] sister [dot] software`

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   South Korea designators in Hangul: the delivery service, premise, sub-premise, floor and relation words
- *   that a Korean address or query uses.
+ *   South Korea designators in Hangul: the delivery service, premise, sub-premise,
+ *   floor and relation words that a Korean address or query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/korEn.pdf UPU Korea addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/사서함 Wiktionary 사서함}

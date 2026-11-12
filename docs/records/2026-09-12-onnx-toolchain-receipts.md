@@ -1,7 +1,7 @@
 # ONNX toolchain receipts — onnxscript 0.7.2 and the onnxruntime producer/consumer gap
 
 Two pins that decide the shipped ONNX graph had open questions. Both are now measured. The
-headline is that one of them did not answer the way the pin comment assumed.
+headline is that one of them didn't answer the way the pin comment assumed.
 
 ## The rig
 
@@ -35,8 +35,8 @@ and the six initializers it adds are the folded constants. `opset` stays 17, `ir
 the input and output names are unchanged, and **no weight tensor changed**: of the 98 initializers
 present in both graphs, zero differ in bytes. The int8 graph shows the same delta exactly.
 
-The risk in a fold like that is folding a _dynamic_ dimension into a constant. Such a fold pins the graph
-to the length it was traced at, and the graph fails only at some other length. It did not:
+The risk in a fold like that's folding a _dynamic_ dimension into a constant. Such a fold pins the graph
+to the length it was traced at, and the graph fails only at some other length. It didn't:
 
 | sequence     | fp32                    | int8                    |
 | ------------ | ----------------------- | ----------------------- |
@@ -56,7 +56,7 @@ rewritten.
 ## 2. The producer/consumer gap: Python was behind its own consumer
 
 The memory note recorded this as "onnxruntime-web 1.29.0, current release 1.30.0, so the Python side
-is four minors behind." The npm half of that is wrong: `onnxruntime-web`'s `latest` dist-tag **is**
+is four minors behind." The npm half of that's wrong: `onnxruntime-web`'s `latest` dist-tag **is**
 1.29.0, and every 1.30.0 on npm is a `-dev.` prerelease. The browser was on current stable. The
 Python side was pinned three minors behind the runtime executing its output.
 
@@ -80,11 +80,11 @@ read by both processes so the feed is byte-identical:
 | ten real addresses, shipped tokenizer | 9.8e-02       | **0 / 172 real tokens** |
 
 The random-input flips are ill-conditioning rather than signal: an int8 model's logits on uniform-random
-token ids are near-degenerate, so the argmax there is decided by noise. On real addresses the
+token ids are near-degenerate, so the argmax there's decided by noise. On real addresses the
 decision the decoder reads is unchanged on every token of every address.
 
 The right reading is therefore not "the gap was harmless." It is that a graph quantized by one
-runtime and served by another was being checked by an instrument that is not the one in the user's
+runtime and served by another was being checked by an instrument that's not the one in the user's
 hands, and the difference between those instruments is about 1e-1 on a logit — comfortably enough to
 flip a token whose top two labels are close. The gap closes at no extra work, since the artifact is
 byte-identical either way.

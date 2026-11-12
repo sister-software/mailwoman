@@ -3,24 +3,40 @@
 
 /**
  *   Postcode shape patterns identify substrings of a line that look like a postcode.
- *   Patterns appear from most-specific to least-specific. A lower index wins when patterns overlap.
  *
- *   The data lives in `./shapes.json` so non-TypeScript consumers read the same records as
- *   `us/street-suffix.json`. The neural package uses this table for postcode repair.
- *   The Python trainer reads it in `features/postcode_shapes.py` to paint the train-side anchor
- *   on the spans inference paints. Separate typed copies drifted twice. The IE Eircode row appeared
- *   in TypeScript one month before it appeared in Python. The BR CEP row followed five weeks later.
+ *   Patterns appear from most-specific to least-specific.
+ *   A lower index wins when patterns overlap.
+ *
+ *   The data lives in `./shapes.json` so non-TypeScript consumers read the same
+ *   records as `us/street-suffix.json`.
+ *   The neural package uses this table for postcode repair.
+ *
+ *   The Python trainer reads it in `features/postcode_shapes.py` to paint the
+ *   train-side anchor on the spans inference paints.
+ *   Separate typed copies drifted twice.
+ *
+ *   The IE Eircode row appeared in TypeScript one month before it appeared in Python.
+ *   The BR CEP row followed five weeks later.
+ *
  *   Each gap made the trainer paint one fewer shape than inference.
  *
- *   This function checks postcode form. `./systems.ts` checks whether a postcode occurs in a gazetteer.
- *   A bare `68161` matches the US five-digit shape. It also matches the German shape.
- *   It matches the French shape. It matches the Spanish shape.
+ *   This function checks postcode form.
+ *   `./systems.ts` checks whether a postcode occurs in a gazetteer.
+ *
+ *   A bare `68161` matches the US five-digit shape.
+ *   It also matches the German shape.
+ *
+ *   It matches the French shape.
+ *   It matches the Spanish shape.
+ *
  *   It matches the Italian shape.
  *   The modules remain independent.
  *
  *   The pattern bodies use a regex subset accepted by both JavaScript `RegExp` and Python `re`.
- *   This lets both runtimes read one file. A row needing different source text requires a second field
- *   and a stated reason. Keep each runtime's comparison strict.
+ *   This lets both runtimes read one file.
+ *
+ *   A row needing different source text requires a second field and a stated reason.
+ *   Keep each runtime's comparison strict.
  */
 
 import postcodeShapeData from "./shapes.json" with { type: "json" }
@@ -70,7 +86,7 @@ export const POSTCODE_SHAPES_VERSION: string = postcodeShapeData.version
  * {@linkcode POSTCODE_SHAPES} answers whether a line contains a postcode-shaped span.
  * This map answers whether a whole string is one.
  *
- * That is the question a caller asks once it already holds a span and wants to know what the span is.
+ * That's the question a caller asks once it already holds a span and wants to know what the span is.
  *
  * A row states a `whole` pattern only where the anchored form differs from its scan form,
  * and its `wholeNote` gives the reason.

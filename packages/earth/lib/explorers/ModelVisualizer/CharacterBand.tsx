@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The character band: the traced text drawn one character at a time, each in the color of the label of the
- *   token covering it, with the token's confidence as the color's weight. A character between tokens, such as
- *   the space SentencePiece folds into the next piece, is drawn plain, and a newline breaks the band's line.
+ *   The character band: the traced text drawn one character at a time, each in the color of
+ *   the label of the token covering it, with the token's confidence as the color's weight.
+ *
+ *   A character between tokens, such as the space SentencePiece folds into the next piece,
+ *   is drawn plain, and a newline breaks the band's line.
  */
 
 import type { TraceTokenLike } from "mailwoman/browser-runtime/types"

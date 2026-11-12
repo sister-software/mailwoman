@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measure the coarse-placer's handling of the Latin-script off-map residual. A Latin off-map
- *   address is handled when the model routes it to `other` or abstains. Anything else is a
- *   confident mis-placement onto a wrong trained country. Reports handled-rate overall, by group
- *   (indist is held-out rows of trained-other countries, heldout is countries never trained), and
- *   by source country, plus where the misses land.
+ *   Measure the coarse-placer's handling of the Latin-script off-map residual.
+ *
+ *   A Latin off-map address is handled when the model routes it to `other` or abstains.
+ *   Anything else is a confident mis-placement onto a wrong trained country.
+ *
+ *   Reports handled-rate overall, by group (indist is held-out rows of trained-other countries,
+ *   heldout is countries never trained), and by source country, plus where the misses land.
  *
  *   Run: `mailwoman placer eval latin-offmap --model <dir> [--abstain 0.5]`
  */

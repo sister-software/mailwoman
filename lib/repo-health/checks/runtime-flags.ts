@@ -4,11 +4,13 @@
 /**
  *   Every flag in the runtime-flag register must be touched by at least one test.
  *
- *   Operator ruling: **a flag with no test is either up for removal or needs a test.**
- *   Both cases require action. This check prevents the question from going unanswered because a manual sweep becomes stale.
+ *   Operator ruling: **a flag with no test is either up for removal
+ *   or needs a test.** Both cases require action.
+ *   This check prevents the question from going unanswered because a manual sweep becomes stale.
  *
  *   A test counts when its name appears anywhere in the file, including in prose.
- *   This check finds flags with no connection to the test suite. Other checks assess coverage quality.
+ *   This check finds flags with no connection to the test suite.
+ *   Other checks assess coverage quality.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

@@ -4,24 +4,25 @@
 /**
  * The activation-coverage census: is every mechanism in the parse path alive on at least one board row?
  *
- * A pipeline part with no test case that activates it is itself a kind of failure: soft mechanisms are
- * designed to degrade silently and result tests cannot see a counterfactual, so the census asks not
- * "did the rows pass" but "did each mechanism signal on any row at all".
+ * A pipeline part with no test case that activates it is itself a kind of failure: soft
+ * mechanisms are designed to degrade silently and result tests cannot see a counterfactual,
+ * so the census asks not "did the rows pass" but "did each mechanism signal on any row at all".
  *
  * Levels, per mechanism:
  *
- * - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was
- *   configured); near meaningless by itself, since a stage can report `applied: true` beside all-zero
- *   channels.
- * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
- *   traced run.
- * - **L2 moved a result** — needs ablation pairs. This file does not compute L2.
- *   The gauntlet's ablation layer owns that measurement. Reports mark it unmeasured so readers can
- *   distinguish L1 coverage from result relevance.
+ * - **L0 present** — the mechanism's record appears in the trace
+ *   (the stage ran / the channel was configured); near meaningless by itself,
+ *   since a stage can report `applied: true` beside all-zero channels.
+ * - **L1 signaled** — it produced nonzero input to the next stage.
+ *   This file computes L0 and L1 from one traced run.
+ * - **L2 moved a result** — needs ablation pairs.
+ *   This file doesn't compute L2.
+ *   The gauntlet's ablation layer owns that measurement.
+ *   Reports mark it unmeasured so readers can distinguish L1 coverage from result relevance.
  *
- * A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached:
- * every zero needs either a row that activates it or an allowlisted reason someone can state
- * ({@link CENSUS_ALLOWLIST}).
+ * A mechanism at zero L1 across the whole set is reported as inert with the standing
+ * rule attached: every zero needs either a row that activates it or an allowlisted
+ * reason someone can state ({@link CENSUS_ALLOWLIST}).
  */
 
 import { SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
@@ -228,7 +229,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 	const config = (args["config"] as Record<string, unknown> | null) ?? {}
 	// The census uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
-	const engine = await registry.acquire({ ...config, trace: true })
+	using engine = await registry.acquire({ ...config, trace: true })
 
 	const traced: Array<{ id: string; input: string; parse: NeuralParseTrace }> = []
 	const untraced: string[] = []

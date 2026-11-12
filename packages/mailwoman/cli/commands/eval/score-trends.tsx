@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval score-trends` — regenerate `docs/records/evals/score-trends.md` from the eval
- *   ledger. Run it after `eval ledger-append`: the new row is not visible in the docs until the page
- *   is rebuilt.
+ *   `mailwoman eval score-trends` — regenerate `docs/records/evals/score-trends.md` from the eval ledger.
+ *
+ *   Run it after `eval ledger-append`: the new row isn't visible in the docs until the page is rebuilt.
  */
 
 import { Text } from "ink"

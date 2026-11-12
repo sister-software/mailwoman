@@ -2,16 +2,77 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
+import { defineStateMachine } from "@mailwoman/core/state-machine"
 
 /**
- *   Long-running child processes, polled rather than awaited: a gauntlet outlives what a synchronous tool call should
- *   hold open. An MCP client that times out mid-run leaves the work orphaned and reports no result.
+ *   Long-running child processes, polled rather than awaited: a gauntlet outlives
+ *   what a synchronous tool call should hold open.
  *
- *   Output is captured rather than inherited because this process speaks JSON-RPC over stdout, so a child writing there
- *   would corrupt the transport — which is also why the gauntlet is spawned rather than imported.
+ *   An MCP client that times out mid-run leaves the work orphaned and reports no result.
+ *
+ *   Output is captured rather than inherited because this process speaks
+ *   JSON-RPC over stdout, so a child writing there would corrupt the transport —
+ *   which is also why the gauntlet is spawned rather than imported.
  */
 
 export type JobState = "running" | "succeeded" | "failed" | "cancelled"
+
+/**
+ * What the registry observes about a job's child process.
+ *
+ * `error` is Node's `ChildProcess` event.
+ * It fires when the process couldn't be spawned and when `kill()` couldn't deliver its signal.
+ */
+export type JobEvent =
+	| { kind: "close"; code: number | null; signal: NodeJS.Signals | null }
+	| { kind: "error" }
+	| { kind: "cancel" }
+
+/**
+ * The state a job moves to on an event.
+ *
+ * Only `running` moves on a close or an error.
+ * A cancelled job stays cancelled through its close and through a failed kill,
+ * so a killed run never reads as a graded `fail`.
+ * `succeeded` and `failed` are terminal.
+ */
+function nextJobState(state: JobState, event: JobEvent): JobState {
+	return jobMachine.transition(state, event).next
+}
+
+/**
+ * A dev-mcp job's lifecycle.
+ *
+ * Its state lives in the registry's memory.
+ * Each step holds an empty record and an empty effect list.
+ */
+export const jobMachine = defineStateMachine<JobState, JobEvent>({
+	name: "job",
+	states: ["running", "succeeded", "failed", "cancelled"],
+	events: {
+		"exit 0": { kind: "close", code: 0, signal: null },
+		"exit 1": { kind: "close", code: 1, signal: null },
+		"killed by SIGTERM": { kind: "close", code: null, signal: "SIGTERM" },
+		"spawn or kill error": { kind: "error" },
+		cancel: { kind: "cancel" },
+	},
+	transition(state, event) {
+		const step = (next: JobState) => ({ next, record: {}, effects: [] })
+
+		if (state !== "running") return step(state)
+
+		switch (event.kind) {
+			case "cancel":
+				return step("cancelled")
+			case "error":
+				return step("failed")
+			case "close":
+				if (event.signal) return step("cancelled")
+
+				return step(event.code === 0 ? "succeeded" : "failed")
+		}
+	},
+})
 
 export interface Job {
 	jobID: string
@@ -90,14 +151,20 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signaled exit is a cancellation.
-			// A failure verdict would let a killed run read as a graded `fail`.
-			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
+			job.state = nextJobState(job.state, { kind: "close", code, signal })
 		})
 
 		child.on("error", (error) => {
+			// After a cancel, the error is a kill that failed, and the process may still run.
+			// The job keeps its child so `cancelAll` can kill it again.
+			if (job.state === "cancelled") {
+				job.stderr = appendCapped(job.stderr, `\n[jobs] kill failed: ${error.message}\n`)
+
+				return
+			}
+
 			job.endedAt = Date.now()
-			job.state = "failed"
+			job.state = nextJobState(job.state, { kind: "error" })
 			job.stderr = appendCapped(job.stderr, `\n[jobs] spawn failed: ${error.message}\n`)
 			job.child = null
 		})
@@ -133,14 +200,14 @@ export class JobRegistry {
 
 		if (!job?.child) return false
 
-		job.state = "cancelled"
+		job.state = nextJobState(job.state, { kind: "cancel" })
 		job.child.kill("SIGTERM")
 
 		return true
 	}
 
 	/**
-	 * Called on shutdown so a killed server does not leave orphaned gauntlets
+	 * Called on shutdown so a killed server doesn't leave orphaned gauntlets
 	 * holding multi-gigabyte SQLite handles.
 	 */
 	cancelAll(): number {
@@ -148,7 +215,7 @@ export class JobRegistry {
 
 		for (const job of this.#jobs.values()) {
 			if (job.child) {
-				job.state = "cancelled"
+				job.state = nextJobState(job.state, { kind: "cancel" })
 				job.child.kill("SIGTERM")
 
 				cancelled++

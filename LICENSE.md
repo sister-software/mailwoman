@@ -1,6 +1,6 @@
 # Mailwoman
 
-Copyright © Teffen Ellis (DBA Sister Software). Authors: Teffen Ellis, et al.
+Copyright © Teffen Ellis. Authors: Teffen Ellis, et al.
 
 Mailwoman is available under dual-license terms. You may choose either:
 

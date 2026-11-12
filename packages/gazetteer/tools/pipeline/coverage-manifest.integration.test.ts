@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the coverage-manifest drawer. The derived safelist and bboxes must match the code
- *   constants they supersede, so a rebuilt artifact behaves exactly like the constants until a
- *   promote grows the record. A round trip through a real candidate build exposes `artifactCoverage`,
- *   while a legacy database without manifest tables reads `undefined`, the constant-fallback signal.
- *   A measured-and-failed country is a present row that stays distinguishable from a never-measured
- *   one.
+ *   Tests for the coverage-manifest drawer.
+ *
+ *   The derived safelist and bboxes must match the code constants they supersede,
+ *   so a rebuilt artifact behaves exactly like the constants until a promote grows the record.
+ *   A round trip through a real candidate build exposes `artifactCoverage`, while a legacy
+ *   database without manifest tables reads `undefined`, the constant-fallback signal.
+ *
+ *   A measured-and-failed country is a present row that stays distinguishable from a never-measured one.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

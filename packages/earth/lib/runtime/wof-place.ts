@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A Who's On First id typed as a query, read from the browser's own range readers: the gazetteer's containment
- *   chain lists the place's parents, and the release's polygon file places it. Neither reader indexes a place's
- *   own name by id, so the answer is a located outline with its chain rather than the gazetteer row with its name.
+ *   A Who's On First id typed as a query, read from the browser's own range readers: the gazetteer's
+ *   containment chain lists the place's parents, and the release's polygon file places it.
+ *
+ *   Neither reader indexes a place's own name by id, so the answer is a located outline
+ *   with its chain rather than the gazetteer row with its name.
  */
 
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

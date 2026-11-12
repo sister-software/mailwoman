@@ -4,13 +4,16 @@
 /**
  *   Native `spm_train` writes the Python wheel's model, byte for byte.
  *
- *   `test/fixtures/spm-recipes/recipes.json` records five training calls the sentencepiece 0.2.2 wheel made, each in
- *   a directory holding the recipe's input as `input.txt`, and the SHA-256 of the model and vocabulary the wheel
- *   wrote. The recipes cover a comma symbol, the default symbol list, the identity normalizer with eight threads, an
- *   empty symbol list, and explicit trainer defaults. The test makes the same calls through `trainSentencePiece`.
+ *   `test/fixtures/spm-recipes/recipes.json` records five training calls the sentencepiece
+ *   0.2.2 wheel made, each in a directory holding the recipe's input as `input.txt`,
+ *   and the SHA-256 of the model and vocabulary the wheel wrote.
+ *   The recipes cover a comma symbol, the default symbol list, the identity normalizer
+ *   with eight threads, an empty symbol list, and explicit trainer defaults.
+ *   The test makes the same calls through `trainSentencePiece`.
  *
- *   The test needs a built `spm_train`. It runs when the cache root holds one (`spmTrainBinary` builds it on first
- *   use) and is skipped otherwise, so a host without CMake does not fail the suite.
+ *   The test needs a built `spm_train`.
+ *   It runs when the cache root holds one (`spmTrainBinary` builds it on first use)
+ *   and is skipped otherwise, so a host without CMake doesn't fail the suite.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"

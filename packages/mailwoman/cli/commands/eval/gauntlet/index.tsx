@@ -2,15 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   No flags self-checks the shipped default. `--candidate` adds the held-out candidate-vs-prod z-test. `--layer`
- *   runs a single layer with its own verdict and exit code. A non-zero exit blocks the ship (releasing.md).
+ *   No flags self-checks the shipped default.
  *
- *   `--layer ablation` is a measurement rather than a check: it deletes each asserted component from each corpus row and
- *   reports what the deletion cost per (component, locale), never joining the combined verdict or blocking a ship.
+ *   `--candidate` adds the held-out candidate-vs-prod z-test.
+ *   `--layer` runs a single layer with its own verdict and exit code.
+ *   A non-zero exit blocks the ship (releasing.md).
  *
- *   Each ablation variant is graded against a per-row graceful-degradation ladder rather than the undeleted anchor, so
- *   coarsening to a rung the surviving components still justify passes. The ladder accepts abstention under untenable ambiguity. The check also
- *   a substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
+ *   `--layer ablation` is a measurement rather than a check: it deletes each asserted
+ *   component from each corpus row and reports what the deletion cost per (component, locale),
+ *   never joining the combined verdict or blocking a ship.
+ *
+ *   Each ablation variant is graded against a per-row graceful-degradation ladder rather than
+ *   the undeleted anchor, so coarsening to a rung the surviving components still justify passes.
+ *   The ladder accepts abstention under untenable ambiguity.
+ *
+ *   The check also a substitution fails at every rung.
+ *   See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -91,7 +98,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// The layers narrate their own verdict lines on stdout, so there is no `json` output.
+// The layers narrate their own verdict lines on stdout, so there's no `json` output.
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {

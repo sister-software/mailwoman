@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Reports quoted repository paths in source that refer to a file that has moved.
+ * @file Reports quoted repository paths in source that refer to a file that's moved.
  *
  *   The compiler catches stale import specifiers.
  *   Code reads path strings only at runtime and may treat a missing file as a valid negative answer.

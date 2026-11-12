@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Input coercions shared by the storage operation schemas. An adapter hands an operation `--key value` pairs with
- *   the value still a string, so the schema is where a comma list becomes an array.
+ *   Input coercions shared by the storage operation schemas.
+ *
+ *   An adapter hands an operation `--key value` pairs with the value still a string,
+ *   so the schema is where a comma list becomes an array.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

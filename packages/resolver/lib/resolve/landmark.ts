@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Answers a query that is a place's name, with no street or postcode, from the landmark layer.
+ *   Answers a query that's a place's name, with no street or postcode, from the landmark layer.
  *
- *   The place of that name with the most Wikipedia language editions answers, and the others stay as alternatives. A
- *   prominence of log10(sitelinks) puts the lead on the scale the admin tier's `declared_ambiguity` margin reads, so a
- *   close call is declared by the same rule that declares one between two towns.
+ *   The place of that name with the most Wikipedia language editions answers,
+ *   and the others stay as alternatives.
+ *   A prominence of log10(sitelinks) puts the lead on the scale the admin tier's `declared_ambiguity`
+ *   margin reads, so a close call is declared by the same rule that declares one between two towns.
  *
- *   A code written in capitals reads by one rule. A code a country is written as answers the country, and the airport
- *   holding the same IATA code is listed as an alternative: `AUS` is Australia, then Austin–Bergstrom. Every other code
- *   answers the place holding it: `SFO`, `LHR` and `DTW` are airports. `writtenCountryCode` states which codes a country
- *   claims.
+ *   A code written in capitals reads by one rule.
+ *   A code a country is written as answers the country, and the airport holding the same
+ *   IATA code is listed as an alternative: `AUS` is Australia, then Austin–Bergstrom.
+ *
+ *   Every other code answers the place holding it: `SFO`, `LHR` and `DTW` are airports.
+ *   `writtenCountryCode` states which codes a country claims.
  */
 
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
@@ -101,7 +104,7 @@ function placeOf(hit: LandmarkHit): ResolvedPlace {
  * `AUS` answers Australia, and Austin–Bergstrom International Airport is the
  * reading a caller can pick instead.
  * A word spelled like the code, such as the town of Usa under `USA`,
- * is not a holder of the code and stays out.
+ * isn't a holder of the code and stays out.
  *
  * The list sits on a resolved country node, so a country the gazetteer left unresolved keeps its parse.
  *
@@ -183,6 +186,11 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 	if (fromOSM) {
 		// OpenStreetMap holds a place spelled like a street in some other town: `Wall Street` also answers in Utah.
 		if (readsAsStreet) return
+
+		// A bare name that several OpenStreetMap places hold names none of them: `bus stop`
+		// is held in India and Kiribati, and `The Big Apple` in South Carolina and Australia.
+		// With no context to choose, the layer abstains.
+		if (!hasContext && candidates.length > 1) return
 
 		// A school or a park in OpenStreetMap can share its town's name,
 		// so a place holding the whole name keeps it.

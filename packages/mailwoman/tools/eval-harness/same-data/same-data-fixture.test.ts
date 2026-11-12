@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The same-data benchmark's evidence interface. A replay miss raises, because the resolver absorbs
- *   an empty list silently and the arm would then report an abstention the fixture produced. A
- *   candidate carrying a withheld verdict field is refused, since shipping one hands every arm a
- *   partly solved row. The pool is the ordered candidate set every arm is judged to have received.
+ *   The same-data benchmark's evidence interface.
+ *
+ *   A replay miss raises, because the resolver absorbs an empty list silently
+ *   and the arm would then report an abstention the fixture produced.
+ *   A candidate carrying a withheld verdict field is refused, since shipping
+ *   one hands every arm a partly solved row.
+ *
+ *   The pool is the ordered candidate set every arm is judged to have received.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

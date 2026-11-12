@@ -19,7 +19,7 @@ tags:
 The trained-model bundle (`@mailwoman/neural-weights-en-gb`) for
 [Mailwoman](https://mailwoman.post), a postal-address parser. This
 package is **data only** — a `model-card.json`, the placetype-pair retrieval
-index, and the shared gazetteer lexicons. It has no JavaScript logic of its
+index, the postcode-anchor binary, and the shared gazetteer lexicons. It has no JavaScript logic of its
 own. It is loaded at inference time by `@mailwoman/neural`.
 
 > **This locale is served by the shared multi-locale model.** The en-gb bundle
@@ -28,18 +28,17 @@ own. It is loaded at inference time by `@mailwoman/neural`.
 > the base package's model + tokenizer at runtime (a byte-identical artifact, so one
 > encoder serves both locales). What this package ships is the **GB-specific
 > soft-feed data**: the placetype-pair retrieval index (`pair-index-gb.bin`,
-> built from Who's On First place pairs and ONS ward names — see _Attribution_ below), plus
-> the shared gazetteer/country lexicons.
+> built from Who's On First place pairs and ONS ward names — see _Attribution_ below), the
+> postcode-anchor binary (`postcode-gb.bin`, built from Code-Point Open), and the shared
+> gazetteer/country lexicons.
 
-> **The postcode-anchor channel runs off for en-gb** (2026-08-05). This bundle
-> used to ship an outward-code `postcode-gb.bin`; it no longer does. The shared
-> encoder's anchor input reserves one slot per country, and the GB slot was
-> never trained — every training recipe fed the same US/DE/FR-only lookup — so
-> supplying GB anchors pushed every GB parse along an input direction the model
-> has no learned response to. Measured on the `gb-golden` board across three
-> registers, exact postcode goes **294/318 → 318/318** with the anchor inert,
-> and `dependent_locality` is unchanged at 207/207. `@mailwoman/neural-weights-en-nz`
-> has the same posture. The placetype-pair prior is untouched.
+> **The postcode-anchor channel runs on for en-gb.** The shared encoder's anchor input
+> reserves one slot per country, and the GB slot is trained. `postcode-gb.bin` holds
+> 1,749,839 keys: 1,746,976 unit postcodes and 2,863 outward districts. On the
+> `gb-golden` board, exact postcode reads 318/318 with the channel fed. The anchor
+> runs in `shaped` span mode, because the unit keys are stored space-stripped and
+> uppercase. `model-card.json` records the earlier period when this bundle shipped
+> no postcode binary, in `gb_artifacts.no_postcode_bin`.
 
 ## What this is
 
@@ -51,10 +50,9 @@ data so the model never has to memorize GB place names — that knowledge
 arrives at inference as a retrieval rather than a weight.
 
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
-- **Postcode anchor:** not shipped, deliberately — see the note above and
-  `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
-  the gazetteer resolver still handle full unit-postcode text. What is absent
-  is the soft anchor feature rather than postcode support.
+- **Postcode anchor:** `postcode-gb.bin`, a soft anchor feature built from
+  Code-Point Open that feeds the encoder's trained GB anchor slot. See the note
+  above and `model-card.json`'s `anchor` entry.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Didsbury" is a real
   child of "Manchester") — a soft decode-time bias, restricted to GB
@@ -81,16 +79,16 @@ input zero-filled.
 The postcode anchor is the one channel where GB deviates. The general rule
 assumes the channel was trained, and that condition holds for every other
 channel: zeroing a trained input is out-of-distribution. The
-GB anchor slot was never trained, so there is no distribution to leave —
+GB anchor slot was never trained, so there's no distribution to leave —
 zeroing it is what the encoder saw for every GB example it has ever been shown,
-and supplying a value is the out-of-distribution case. That is why the numbers
+and supplying a value is the out-of-distribution case. That's why the numbers
 run the other way here, and why the fix is a retrain rather than more data.
 
 ## Evaluation
 
 **First graded GB story, 2026-07-23.** Previously this package was packaging
 scaffolding only — the runtime resolution path was exercised and tested, but
-no GB-specific numbers existed. That has changed: the base encoder was
+no GB-specific numbers existed. That's changed: the base encoder was
 fine-tuned on a `dependent_locality`-feed corpus that includes a real GB
 subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
@@ -133,7 +131,7 @@ output is byte-stable when calibration is omitted.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there is unmeasured.
+  and quality there's unmeasured.
 
 ## Attribution
 

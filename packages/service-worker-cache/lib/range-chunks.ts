@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A Workbox route handler that stores byte-range responses of immutable, versioned files in Cache Storage, one entry
- *   per requested range.
+ *   A Workbox route handler that stores byte-range responses of immutable,
+ *   versioned files in Cache Storage, one entry per requested range.
  *
- *   The Cache API rejects a 206 response, so each chunk is stored as a 200 under a synthetic per-range URL, with the
- *   original `Content-Range` in a header, and rebuilt into a 206 on a hit.
+ *   The Cache API rejects a 206 response, so each chunk is stored as a 200 under a synthetic
+ *   per-range URL, with the original `Content-Range` in a header, and rebuilt into a 206 on a hit.
  *
- *   Mobile Safari's HTTP cache can hand back a 206 whose body is shorter than its `Content-Range` states. SQLite reads
- *   such a torn chunk as "database disk image is malformed". The handler checks every chunk's length against its
- *   `Content-Range`, refetches a torn chunk once with `cache: "no-store"`, and stores only a chunk that passes.
+ *   Mobile Safari's HTTP cache can hand back a 206 whose body is shorter than its `Content-Range` states.
+ *   SQLite reads such a torn chunk as "database disk image is malformed".
+ *
+ *   The handler checks every chunk's length against its `Content-Range`, refetches a torn
+ *   chunk once with `cache: "no-store"`, and stores only a chunk that passes.
  */
 
 import type { RouteHandlerCallbackOptions, RouteHandlerObject } from "workbox-core/types.js"
@@ -114,7 +116,7 @@ export function rangeChunkKey(href: string, start: number, end: number): string 
  * Creates the range-chunk route handler.
  *
  * Register it on a route that matches only GET range requests of immutable files without a query string.
- * A request whose `Range` header is not a closed range goes to the network unchanged.
+ * A request whose `Range` header isn't a closed range goes to the network unchanged.
  *
  * A failure inside the cache, such as a quota error, also sends the request to the network.
  */

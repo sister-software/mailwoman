@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pinned fetch. A source lands under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/` and its byte count and
- *   SHA-256 go into `sources.lock.json`, which is committed and which only this module writes. A cached file whose
- *   size differs from the lock, a product whose size differs from the source table, or a re-fetch whose hash differs
- *   from the lock all refuse, naming both values: no pin drifts silently.
+ *   The pinned fetch.
  *
- *   The transfer itself is `streamToDisk` from `@mailwoman/core/utils`: a file transfer on raw `fetch`, with the
- *   `.part` rename that keeps an interrupted download from presenting as a finished one.
+ *   A source lands under `$MAILWOMAN_DATA_ROOT/astrogeology/<body>/source/` and its byte count
+ *   and SHA-256 go into `sources.lock.json`, which is committed and which only this module writes.
+ *   A cached file whose size differs from the lock, a product whose size differs from
+ *   the source table, or a re-fetch whose hash differs from the lock all refuse,
+ *   naming both values: no pin drifts silently.
+ *
+ *   The transfer itself is `streamToDisk` from `@mailwoman/core/utils`: a file transfer on raw `fetch`,
+ *   with the `.part` rename that keeps an interrupted download from presenting as a finished one.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

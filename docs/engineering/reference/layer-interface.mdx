@@ -1,5 +1,5 @@
 ---
-title: Spatial-layer interface — the schema every layer database embeds
+title: Spatial-layer interface
 role: reference
 audience: maintainer
 owner: operations
@@ -16,12 +16,12 @@ user's locally built OSM layer, or a private CRM layer. Each is a sealed, readon
 provenance-tracked SQLite database ("a layer") keyed on a shared spatial spine. The shared
 shape lets shipped, build-local, and private layers use one query surface (`@mailwoman/spatial`
 primitives, the `mailwoman_layer_manifest` MCP tool, the planned `layer_query`), and the
-consumer does not need to know where the data came from.
+consumer doesn't need to know where the data came from.
 
 This page describes the interface in prose for layer authors. The code lives in
 [`packages/core/lib/layers/`](https://github.com/sister-software/mailwoman/tree/main/packages/core/lib/layers)
 (`schema.ts` defines the tables, and `manifest.ts` handles read/write IO). The design
-rationale is in the spec listed in the front matter. If you are building a specific layer,
+rationale is in the spec listed in the front matter. If you're building a specific layer,
 read the worked example first. The [POI layer runbook](./poi-layer-runbook.mdx) records the
 problems found during the first four poi.db builds.
 
@@ -41,7 +41,7 @@ build-then-swap) to analysis data as well as reference data. A layer database:
 
 ## The spine
 
-Every layer row is addressable by at least one of three shared keys. Other id spaces remain
+Every layer row is addressable by at least one of four shared keys. Other id spaces remain
 nullable metadata (the GERS rule). Store the id spaces your source provides, and declare them in
 the manifest's `spine_keys`.
 
@@ -50,16 +50,16 @@ the manifest's `spine_keys`.
 | `h3`         | author-chosen | H3 cell, stored as a **48-bit short cell** (`shortenH3Cell`/`expandH3Cell`). Resolution declared per table. |
 | `wof_id`     | author-chosen | WOF ancestry anchor — the resolver's existing id space (Who's On First).                                    |
 | `address_id` | author-chosen | The `@mailwoman/address-id` key, where rows are address-grained.                                            |
+| `street`     | author-chosen | Normalized street column used to join address-point or street-segment layers.                               |
 
 The manifest declares column names and the H3 resolution in its `spine_keys` field (a
 `SpineKeys` record, JSON-encoded in the table). At least one key is **required**.
 `writeLayerManifest` throws at build time, and `readLayerManifest` throws at open time, if a
 manifest declares none.
 
-### A polygon layer declares `h3` naming its INDEX, and the column name states so
+### `spine_keys.h3` for polygon layers
 
-This rule was decided for the EA flood-zone layer, and every later overlay of the same shape
-follows it. A polygon spans multiple cells, so no single cell addresses it. A two-tier polygon
+Every overlay of this shape follows the rule below. It was first set for the EA flood-zone layer. A polygon spans multiple cells, so no single cell addresses it. A two-tier polygon
 layer therefore stores the authority's unsimplified rings as the truth table and an H3 cell table
 above them as the summary. The question is which of the two tables `spine_keys.h3` refers to.
 
@@ -67,33 +67,33 @@ above them as the summary. The question is which of the two tables `spine_keys.h
 `{ "h3": { "column": "flood_zone_cell.h3_cell", "resolution": 9 } }`. Three reasons support this,
 in order of importance.
 
-1. **It is accurate.** The layer is addressable by cell, and the geometry table is not. A manifest
-   that points at a column that does not exist, such as `flood_zone_area.h3_cell`, is worse than
+1. **It is accurate.** The layer is addressable by cell, and the geometry table isn't. A manifest
+   that points at a column that doesn't exist, such as `flood_zone_area.h3_cell`, is worse than
    either option, because a consumer joins on the field the manifest declares.
 2. **The qualified column name resolves the objection.** The objection to declaring `h3` was that
    it points a consumer at the index rather than at the domain table. The qualified column name
    `flood_zone_cell.h3_cell` instead of a bare `h3_cell` states that in the field a consumer
    already reads. It incurs no cost, because `SpineKeys.h3.column` has always been free text the
    author chooses.
-3. **A fourth spine-key kind would add no value.** `street` was added because the situs
+3. **Another spine-key kind would add no value.** `street` was added because the situs
    `address_point` and `street_segment` tables lack a cell, a WOF id and an address-id. That absence was
-   measured. A polygon layer has a cell key. It also has a second tier, and a tier is not
+   measured. A polygon layer has a cell key. It also has a second tier, and a tier isn't
    an addressing scheme.
 
-**When a layer also has a REDUCTION table, the key points at the reduction instead of the
+**When a layer also has a reduction table, the key points at the reduction instead of the
 index.** This case came from `@mailwoman/soil`, which has three cell-facing tables: the
 unsimplified rings, a `(cell, feature)` containment index above them, and a table with one row per
 cell that reduces the index into the summary both of its consumers read. The rule above still
-applies, because the key identifies the table a consumer JOINS on. Here that table is
+applies, because the key identifies the table a consumer joins on. Here that table is
 `soil_capability_cell.h3_cell`. It has a single resolution and one row per cell, and it is the only
 one of the three tables a bulk reader can key against. The containment index is keyed
 `(h3_cell, area_id)` and has mixed resolutions by construction, so it is a tier that the layer's own
 reader walks, and consumers do not join on it. A layer without a reduction, such as the flood
-zones, points at its index because that is its only cell-keyed table.
+zones, points at its index because that's its only cell-keyed table.
 
 A consumer must account for two consequences.
 
-**The declared `resolution` is the index's TARGET, and each stored row records its own
+**The declared `resolution` is the index's target, and each stored row records its own
 resolution.** The whole tier is compacted toward parent cells (`compactCells`). A polygon whose
 bounding box would overrun h3's allocator at the target resolution is indexed at a coarser one. As
 a result, `flood_zone_cell.resolution` is stored per row, and a probe walks its own `cellToParent`
@@ -101,17 +101,17 @@ chain over every resolution in the table. A reader that probed only the manifest
 treat every row at another resolution as absent. This interface is designed to prevent that false
 negative.
 
-**`layer_coverage` has a SINGLE resolution, and that resolution is a third, separate value.**
+**`layer_coverage` has a single resolution, and that resolution is a third, separate value.**
 `recoverShortCellResolution` in `@mailwoman/spatial` recovers one resolution from the stored coverage
 cells and throws on a table that mixes resolutions, so the coverage tier is never compacted. Three
 resolutions therefore coexist in one artifact: the manifest's index target, the per-row cell
 resolutions, and the coverage resolution. Read each one from where it is stored, and never infer
 one from another.
 
-### A polygon builder must bound its h3 work, and must refuse an empty answer
+### h3 allocator exhaustion in polygon builders
 
-This was measured on the EA flood layer, and it applies to every later polygon builder, because the
-failure comes from the tool and not from that product.
+The failure is in h3 and not in the EA flood layer it was measured on, so every polygon builder can
+hit it.
 
 **h3's WASM heap cannot be reset from JavaScript, and when it is exhausted, it returns a null pointer.**
 `polygonToCellsExperimental` sizes its output buffer with `_calloc`. A failing `_calloc` returns
@@ -120,33 +120,30 @@ success, and the reader returns an array of zeros. An exhausted allocator answer
 instead of raising an error. h3-js frees every buffer it allocates, so the problem that builds up
 over millions of calls is heap fragmentation.
 
-That mechanism was measured with h3-js 4.5.0, before the switch to `@sister.software/h3`. The two
-requirements below still hold for every polygon builder.
+That mechanism was measured with h3-js 4.5.0. The two requirements below apply to every polygon
+builder, including one built on `@sister.software/h3`:
 
-Both consequences are requirements:
-
-1. **Refuse an empty answer for any PART.** A part with a non-degenerate bounding box touches at
+1. **Refuse an empty answer for any part.** A part with a non-degenerate bounding box touches at
    least one cell, so zero cells is impossible for it. Run the check on each part. A
    per-feature check passes any multi-part feature whose other parts returned cells, and it indexes
    the feature incompletely without any error. That would reproduce, through the index, the silent
    absence the coverage rule is designed to refuse in the data.
 2. **Bound the classification by construction.** Run it in child processes over ranges of the
    source's own stable ids, so each process starts with an empty heap. A lower call count, for
-   example by skipping the polyfill where the geometry by itself determines the answer, helps speed but does
-   not guarantee correctness. A build that completes only when fragmentation happens to stay low is
-   not reproducible, and its artifact cannot be rebuilt on demand.
+   example by skipping the polyfill where the geometry by itself determines the answer, helps speed but doesn't
+   guarantee correctness. A build that completes only when fragmentation happens to stay low isn't
+   reproducible.
 
 Worked example, with the numbers: in `packages/flood`, three runs failed at one 164 m² feature
 after ~510,000 others, and a fourth failed at another feature after ~798,000. Each of those features
 classifies in milliseconds in a fresh process.
 
-### A conversion tool may REWRITE what the source encoded, and the check is the publisher's own total
+### Ring orientation through GDAL
 
-This was measured on `packages/zoning`. It applies to every polygon builder whose source encodes
-anything in ring ORIENTATION, because the failure comes from the conversion tool and not from that
-product.
+The measurements below come from `packages/zoning`. GDAL causes the failure, so it affects every
+polygon builder whose source encodes anything in ring orientation.
 
-**GDAL's GeoJSON writer always enforces the RFC 7946 winding.** `-lco RFC7946=NO` is not a
+**GDAL's GeoJSON writer always enforces the RFC 7946 winding.** `-lco RFC7946=NO` isn't a
 GeoJSONSeq layer-creation option, and `--config OGR_ORGANIZE_POLYGONS SKIP` has no effect. A source
 that marks holes by winding them opposite to their exterior therefore comes out of a reprojection
 with every ring wound as an exterior. Ireland's largest zoning feature shows this. Meath County
@@ -160,14 +157,14 @@ Two requirements follow, and the second makes the first checkable.
 1. **Choose a transport that preserves what the source encoded**, and state in the ingest code
    which property it preserves. A reprojection can change the meaning of a geometry whose meaning
    depends on its winding.
-2. **Compare the built area against the PUBLISHER'S OWN figure rather than against the archive's.**
+2. **Compare the built area against the publisher's own figure rather than against the archive's.**
    Ireland publishes `Shape__Area` on the service and omits it from the bulk export, so the
    comparison uses an independent source rather than a file compared with itself. Read with their
    holes, the rings total 5,444.5 km², and the publisher's column sums to 5,444.5 km². Read without
-   the holes, they total 5,666.6 km². The 4.1% area error is the minor problem. The serious problem
-   is that a ray cast answers "inside" for every location the plan excluded.
+   the holes, they total 5,666.6 km². The 4.1% area error matters less than what the
+   ray cast does: it answers "inside" for every location the plan excluded.
 
-### An authority's designation uses the query-intent carrier and reports the verdict's own kind
+### Authority designations
 
 This rule is also recorded here, because it belongs to the interface rather than to one layer.
 
@@ -178,19 +175,19 @@ A layer reports what an authority designates at a resolved coordinate through a
 coverage row and the layer's manifest identity.
 
 **The marker reports the verdict's own top kind.** By convention, `QueryIntentMarker.kind` is a kind
-the verdict contains. A designation is not raised by query intent, because no address component
+the verdict contains. A designation isn't raised by query intent, because no address component
 asks for a flood zone, so it has no kind of its own. The interface is satisfied by reporting the top kind
-literally. `declared_ambiguity` set the precedent for a marker raised at resolve time rather than by
-the classifier. This marker goes one step further and has no kind of its own. That choice is
-documented and accepted. The alternative, widening the carrier with an optional-kind marker
-variant, would create a second advisory shape without any benefit a reader can use.
+literally. `declared_ambiguity` is also a marker raised at resolve time rather than by the classifier.
+This marker differs from it in having no kind of its own. The project chose this over the
+alternative of widening the carrier with an optional-kind marker variant. That variant would create a
+second advisory shape without any benefit a reader can use.
 
 **The layer raises no advisory where the authority made no determination.** Outside the authority's
-footprint there is no coverage row, and an advisory there would report a determination that the authority
+footprint there's no coverage row, and an advisory there would report a determination that the authority
 never made. `supportsExclusion` applies the same asymmetry: positive evidence needs no coverage row, and
 a claim of absence does.
 
-### A coverage basis belongs to its SOURCE, and is never inherited from the previous layer
+### Coverage basis per source
 
 A coverage rule that fits one authority's product can be wrong for the next one. When it is wrong,
 it produces a confident answer instead of a missing one. The first two layers below were built on
@@ -198,7 +195,7 @@ the same platform three months apart, and they show both directions:
 
 - **`packages/flood`.** The Environment Agency states that its Flood Zone mapping "covers all of
   England", and the Planning Practice Guidance defines Zone 1 as "all land outside Zones 2, 3a and
-  3b". A location inside the footprint without a polygon therefore has a DESIGNATION. It is stored as
+  3b". A location inside the footprint without a polygon therefore has a designation. It is stored as
   a `layer_coverage` row with `basis = designated, completeness = 1.0`, and the reader reports it as
   `designated_absence`.
 - **`packages/coastal`.** The same authority publishes coastal-erosion zones and **no coverage
@@ -207,12 +204,12 @@ the same platform three months apart, and they show both directions:
   mapped risk area. That second case is the designation a caller wants. The published layers cannot distinguish
   these cases. Every coverage row therefore has `basis = source_present`, the layer has no absence
   reading, and the observation reports no entry where no polygon contains the point.
-- **`packages/zoning`.** This is the hardest of the three, and it shows why the rule depends on the
-  SOURCE and not on the subject. A location without a zoning polygon can mean at least four
-  different things: it is outside any adopted plan area, it is inside one on land the plan does not
+- **`packages/zoning`.** A location without a zoning polygon can mean at least four
+  different things: it is outside any adopted plan area, it is inside one on land the plan doesn't
   zone, its jurisdiction has never adopted zoning, or its jurisdiction's records are unpublished.
-  No product distinguishes them. **The source itself shows the asymmetry**: it states
-  `UNZ - Unzoned` as a POSITIVE value on 4 of its 85,330 rows. Where the authority means unzoned, it
+  No product distinguishes them. This is the hardest of the three, and it shows that the rule
+  depends on the source and not on the subject. **The source itself shows the asymmetry**: it states
+  `UNZ - Unzoned` as a positive value on 4 of its 85,330 rows. Where the authority means unzoned, it
   states so on a row, and every other absence is a missing row. This layer also uses
   `source_present` and refuses exclusions at both ends.
 
@@ -220,29 +217,28 @@ A builder that had applied the flood rule to either of the other layers would ha
 erosion risk" over all of England, or "no restriction applies" over most of a country's land. The
 artifact would have been well formed and would have passed every structural check.
 
-**The basis is therefore checked in code at both ends, and it is not left to the builder's
-judgment.** A layer whose source publishes no footprint refuses to WRITE a coverage row that would
-support an exclusion, and it refuses to OPEN an artifact that contains one. The constructor calls
-`supportsExclusion` over the distinct bases, and a stronger basis throws an error that explains why.
-This makes the basis auditable. A stronger basis requires a deliberate edit to
-a guard whose message states the reason, so the change cannot slip in as an unnoticed coverage row.
+**The basis is therefore checked in code at both ends.** A layer whose source publishes no
+footprint refuses to write a coverage row that would support an exclusion, and it refuses to open an
+artifact that contains one. The constructor calls `supportsExclusion` over the distinct bases, and a
+stronger basis throws an error that explains why. A move to a stronger basis takes a deliberate edit
+to a guard whose message states the reason, so it can't arrive as an unnoticed coverage row.
 
 **The footprint question is recorded where a reader will look for it, and it depends on the
-SOURCE.** For the coastal layer as built, the project has not chosen a mapped-footprint source, so
+source.** For the coastal layer as built, the project hasn't chosen a mapped-footprint source, so
 the basis is `source_present`. Two unverified candidates exist. The first is the Environment Agency's
 Shoreline Management Plan Mapping record: NCERM's own lineage states it is derived from the Shoreline
 Management Plans, and every erosion feature has `smp_no`, `smp_name` and `smp_pu`. The second
 is the frontage geometry behind `frontageid`, which may not be published. A change from
-`source_present` to `designated` requires a published statement of the area the authority MAPPED,
-plus its geometry. The code forbids a footprint derived from the union of the hazard polygons, for
-the same reason the flood layer forbids it. The union of "at risk" areas differs from the mapped
+`source_present` to `designated` requires a published statement of the area the authority mapped,
+plus its geometry. A footprint derived from the union of the hazard polygons isn't accepted, for
+the same reason the flood layer doesn't accept one. The union of "at risk" areas differs from the mapped
 area, and that difference is exactly what a negative answer reports.
 
 ## The manifest — `layer_manifest`
 
 `layer_manifest` is a single-row table that holds the layer's identity, provenance, and licensing.
 The `name` column is the primary key, and the writer inserts exactly one row.
-`readLayerManifest` refuses a table that is empty or has multiple rows, so a layer with no identity,
+`readLayerManifest` refuses a table that's empty or has multiple rows, so a layer with no identity,
 or with two, fails immediately instead of causing errors downstream.
 
 | field                                                | meaning                                                                                                    |
@@ -293,27 +289,26 @@ distinguish "mapped and absent" from "unmapped."
 
 | column          | meaning                                                                        |
 | --------------- | ------------------------------------------------------------------------------ |
-| `h3_cell`       | 48-bit short H3 cell at the resolution the manifest declares                   |
+| `h3_cell`       | 48-bit short H3 cell at the coverage resolution, one per table                 |
 | `completeness`  | estimated completeness of the source survey in the cell, 0..1                  |
 | `basis`         | what that `completeness` rests on — `designated`, `surveyed`, `source_present` |
 | `observed_rows` | rows this layer holds in the cell                                              |
 
-**Never read `completeness` without reading `basis`.** The value without its basis is not enough to act on. A
+**Never read `completeness` without reading `basis`.** A
 cell recorded at `1.0` because an authority designates the set complete and a cell recorded at
 `1.0` because the source happened to return rows there support entirely different conclusions. Only
 `designated` (an authority declares the set complete) and `surveyed` (we measured completeness
 against an independent reference) can support an **exclusion**. An exclusion is a claim that the thing
 asked for is absent. `source_present` supports presence and no exclusion. It shows that the source
 was checked for the cell, and the source may still have missed rows there. A caller building negative evidence
-calls `supportsExclusion(cell)` first and stops when it returns false. It never reads
-`completeness` without `basis`, because the exclusion would then fire identically on a cell measured as empty
-and on a cell that was never surveyed. A NULL `basis` comes from an artifact built before the column
-existed, and it reads back as `source_present`. That is the weakest reading, and it matches what
+calls `supportsExclusion(cell)` first and stops when it returns false. Without `basis`, the
+exclusion would fire the same way on a cell measured as empty and on a cell that was never surveyed. A NULL `basis` comes from an artifact built before the column
+existed, and it reads back as `source_present`. That's the weakest reading, and it matches what
 those builders recorded.
 
 `writeLayerCoverage` and `readLayerCoverage` both refuse a malformed cell: a `completeness` outside
 `[0, 1]`, an unknown `basis`, or a negative or fractional `observed_rows`. Callers treat these
-values as statements about what is known, so a well-formed wrong value is worse than an error.
+values as statements about what's known, so a well-formed wrong value is worse than an error.
 
 The worked example of a `surveyed` basis covers one class and one region, with the arithmetic and
 the limits of what it establishes. It is
@@ -322,7 +317,7 @@ built by `mw gazetteer build poi-coverage`.
 
 **The meaning-of-zero rule.** A _missing_ `layer_coverage` row means **unknown (unmapped)**,
 never "surveyed and found empty." `readLayerCoverage` returns `undefined` for an unsurveyed cell,
-and callers must not treat that as `{ completeness: 0 }`. A missing row is never evidence by
+and callers mustn't treat that as `{ completeness: 0 }`. A missing row is never evidence by
 itself. For this reason, the table is **required by the interface from the start**, even for
 layers that happen to be complete today. A later addition of coverage information to sealed artifacts
 would mean rebuilding every one of them. See [the meaning of zero](./the-meaning-of-zero.mdx) for
@@ -365,7 +360,7 @@ import {
   an empty, multi-row, or invalid table. `readLayerCoverage(db, h3Cell)` returns a `CoverageCell`
   or `undefined`. Apply the meaning-of-zero rule to `undefined`.
 
-Validation deliberately runs at **both** ends, so a hand-built or corrupted layer fails when it is
+Validation runs at both ends, so a hand-built or corrupted layer fails when it is
 opened instead of three joins downstream.
 
 ## Checklist for authors
@@ -403,7 +398,7 @@ A new layer must meet these interface requirements, in order:
 - [`@mailwoman/soil`](../../../packages/soil/README.md): the worked two-consumer example. One per-cell
   artifact is read both by a result-level observation and by a bulk signal consumer. It stores an
   area-weighted class distribution rather than a single winning class, with four separate absence
-  shares, so that "unmapped", "not rated", "the rating does not apply" and "rated unsuitable" stay
+  shares, so that `unmapped`, `not rated`, `the rating does not apply` and `rated unsuitable` stay
   distinct. It also reverses the polygon case's geometry: its delineations are small relative to its
   cells, so the containment index by itself resolves almost no cell, and `compactCells` compacts almost
   no cells (measured at resolution 9: 97.6% of cells partial, 369 whole cells compacting to 315).
@@ -414,7 +409,7 @@ A new layer must meet these interface requirements, in order:
   statement for it.
 - [`@mailwoman/zoning`](../../../packages/zoning/README.md): the worked vocabulary example. It
   stores the authority's own code verbatim, with the publisher's own generic classification beside
-  it, because the pair does not determine a single type (52 of 795 (authority, code) pairs map to
+  it, because the pair doesn't determine a single type (52 of 795 (authority, code) pairs map to
   more than one type). It is also where a conversion tool was measured rewriting what the source
   encoded: this publisher marks holes by ring orientation, and GDAL's GeoJSON writer discards it.
 - [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
@@ -429,14 +424,14 @@ the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwo
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                         | Meaning                                                                                                                                                                                    | Obligations |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                 | attribution |
-| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                       | none        |
-| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records. They are subject to 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
-| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                     | unknown     |
-| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                    | attribution |
-| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                        | attribution |
+| `LicenseRef`                         | Meaning                                                                                                                                                                                   | Obligations |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                | attribution |
+| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                      | none        |
+| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records. They're subject to 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
+| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                    | unknown     |
+| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                   | attribution |
+| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                       | attribution |
 
 `LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
 publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only

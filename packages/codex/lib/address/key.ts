@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The canonical match key — a normalized, deterministic string derived from address components, distinct
- *   from the human-readable formatted string.
+ *   The canonical match key — a normalized, deterministic string derived from address
+ *   components, distinct from the human-readable formatted string.
  *
- *   Lowercased, diacritic-stripped, punctuation-flattened, whitespace-collapsed, fields in a fixed canonical
- *   order, so two records for the same address that differ only in spelling, case or punctuation produce the
- *   same key. This version is pure normalization with no dictionary expansion, so the key is stable and
- *   explainable.
+ *   Lowercased, diacritic-stripped, punctuation-flattened, whitespace-collapsed,
+ *   fields in a fixed canonical order, so two records for the same address that differ
+ *   only in spelling, case or punctuation produce the same key.
+ *   This version is pure normalization with no dictionary expansion, so the key is stable and explainable.
  */
 
 import type { ComponentDict } from "#address/render"

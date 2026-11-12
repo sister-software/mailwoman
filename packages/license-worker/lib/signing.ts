@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Check that the configured private key matches the configured `kid` and that a trust source recognizes that `kid`.
+ *   Check that the configured private key matches the configured `kid`
+ *   and that a trust source recognizes that `kid`.
+ *
  *   In production, the shipped register is the only trust source.
- *   A worker whose key the installed release does not trust would mint tokens that no installation accepts.
+ *   A worker whose key the installed release doesn't trust would mint tokens that no installation accepts.
+ *
  *   The worker must refuse to mint those tokens.
  *   In a sandbox, the worker trusts its own key because no shipped release trusts it.
+ *
  *   It derives the public half from the private key and checks that its digest matches the configured `kid`.
  *   A sandbox end-to-end run verifies tokens against that key.
  */

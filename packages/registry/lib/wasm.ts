@@ -4,11 +4,14 @@
 /**
  *   The WebAssembly batch adapter over `crates/registry-wasm`.
  *
- *   Initialization is explicit: the caller passes the module's bytes or a compiled `WebAssembly.Module`, and this
- *   module compiles the module inside `createRegistry` and at no other time. `registryWasmURL` locates the committed
- *   binaries for a caller that loads them itself, and `preferredWasmVariant` reports whether the host runs `simd128`.
- *   A batch call stages the packed codes in linear memory, crosses the boundary once, and copies the masks into the
- *   caller's buffer. The staging buffers are kept and reused while they are large enough.
+ *   Initialization is explicit: the caller passes the module's bytes or a compiled `WebAssembly.Module`,
+ *   and this module compiles the module inside `createRegistry` and at no other time.
+ *   `registryWasmURL` locates the committed binaries for a caller that loads them itself,
+ *   and `preferredWasmVariant` reports whether the host runs `simd128`.
+ *
+ *   A batch call stages the packed codes in linear memory, crosses the boundary once,
+ *   and copies the masks into the caller's buffer.
+ *   The staging buffers are kept and reused while they're large enough.
  */
 
 import { countryAirportCollisionArtifact } from "#artifacts/country-airport-collision"

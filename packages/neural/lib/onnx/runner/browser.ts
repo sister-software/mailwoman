@@ -6,8 +6,8 @@
  *   `@mailwoman/neural/onnx-runner`, because `onnxruntime-node` is a native addon whose `.node`
  *   binaries a browser graph cannot parse and resolution picks the module rather than the importer.
  *
- *   A webpack SSR compile resolves under the `node` condition rather than `browser` and so reaches
- *   the Node runner unless its config aliases this module explicitly.
+ *   A webpack SSR compile resolves under the `node` condition rather than `browser` and
+ *   so reaches the Node runner unless its config aliases this module explicitly.
  */
 
 /**

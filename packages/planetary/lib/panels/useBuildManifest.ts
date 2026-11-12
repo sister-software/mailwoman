@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetches the body's build manifest. It lists the archives a build read, their digests and the
- *   nomenclature snapshot date.
+ *   Fetches the body's build manifest.
+ *
+ *   It lists the archives a build read, their digests and the nomenclature snapshot date.
  */
 
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"

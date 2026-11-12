@@ -22,7 +22,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 ## Section order
 
 1. `# Title`: the surface, spelled as it is spelled in code.
-2. **Scope.** One paragraph: what this surface is and what it is not.
+2. **Scope.** One paragraph: what this surface is and what it isn't.
 3. **Interface.** The tables. Endpoints, parameters, return shapes, defaults.
 4. **Errors.** One closed table: stable code, one-line meaning, next step.
 5. **Examples.** Full request and full literal response, together.
@@ -36,9 +36,9 @@ promise.
 
 ## Exemplar paragraph
 
-> `@mailwoman/api` serves the native `/v1` surface: `parse`, `geocode`, `batch`, `resolve`, and `format`,
-> plus `/health`, `/metrics`, and an emitted `/openapi.json`. Request bodies are strict and
-> validator-enforced. The package takes an engine object in which every method is optional. When a method is
+> `@mailwoman/api` serves the native `/v1` surface: `parse`, `geocode`, `batch`, `resolve`, `reload`, and
+> `format`, plus `/health`, `/metrics`, and an emitted `/openapi.json`. Request bodies are strict, and a
+> validator enforces them. The package takes an engine object in which every method is optional. When a method is
 > absent, the endpoint returns a status code instead of throwing: `/v1/parse` returns `501`, and
 > `/v1/geocode`, `/v1/batch`, `/v1/resolve`, and `/v1/reload` return `503`. `/v1/format` is the exception.
 > It is wired in-package from `@mailwoman/codex/address/format` and works without any engine method.

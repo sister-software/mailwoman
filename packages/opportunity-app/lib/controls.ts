@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The scenario controls. Each of the eight values is one model input, held in the unit the model takes: basis
- *   points for a percentage, minor units for a price, a date for a date. A control's text parses into that unit
- *   exactly, and the model validates the value's range, so a value the model refuses reaches the page as the
- *   model's own message.
+ *   The scenario controls.
  *
- *   A changed input with an `InputBasis` in the scenario takes {@link CONTROLS_BASIS}, so neither the
- *   inputs table nor the scenario report attributes a new value to the source of the old one. An input left at
- *   the scenario's value keeps the scenario's own record, basis included.
+ *   Each of the eight values is one model input, held in the unit the model takes:
+ *   basis points for a percentage, minor units for a price, a date for a date.
+ *   A control's text parses into that unit exactly, and the model validates the value's range,
+ *   so a value the model refuses reaches the page as the model's own message.
+ *
+ *   A changed input with an `InputBasis` in the scenario takes {@link CONTROLS_BASIS}, so neither
+ *   the inputs table nor the scenario report attributes a new value to the source of the old one.
+ *   An input left at the scenario's value keeps the scenario's own record, basis included.
  */
 
 import { buildDossier, type Dossier, type DossierRecords, type ISODate, isISODate, UnitStage } from "@mailwoman/dossier"
@@ -200,7 +202,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/u
 
 /**
  * Reads decimal text as a whole count of `10^-digits` units, or `null` when the text
- * is not a decimal or has more fractional digits than `digits`.
+ * isn't a decimal or has more fractional digits than `digits`.
  * The conversion is exact: `12.34` with two digits is 1234.
  */
 function parseDecimal(text: string, digits: number): number | null {
@@ -242,7 +244,7 @@ export type ParsedControls =
 /**
  * Reads the controls' text as values.
  *
- * Each field that does not hold its unit's format gets a message, and no value
+ * Each field that doesn't hold its unit's format gets a message, and no value
  * is returned until every field reads.
  */
 export function parseControls(text: ControlText, currency: string): ParsedControls {

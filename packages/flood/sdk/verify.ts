@@ -2,32 +2,53 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The check compares two paths. A separate half verifies locations outside coverage.
+ *   The check compares two paths.
+ *   A separate half verifies locations outside coverage.
  *
- *   The positive half samples points from the sealed artifact and asks the Environment Agency's OGC API Features
- *   service about them. The service returns geometry through a separate distribution channel. This package has not
- *   touched that geometry. The check runs the point test on the service's rings, then compares the two verdicts from
- *   the same authority. This measures our conversion against the authority's published geometry.
+ *   The positive half samples points from the sealed artifact and asks the Environment
+ *   Agency's OGC API Features service about them.
+ *   The service returns geometry through a separate distribution channel.
  *
- *   The negative half has equal importance. Sample points in Wales and Scotland must return `unknown` with no
- *   coverage row. They must never return Zone 1. Wales uses a different authority and a four-zone TAN15 scheme. That
- *   scheme differs from England's. Scotland uses a third system. A report of either location as the EA's
- *   low-probability zone would violate this layer's coverage contract. The positive half by itself could pass an artifact
- *   that answered Zone 1 for the whole
- *   planet.
+ *   This package hasn't touched that geometry.
+ *   The check runs the point test on the service's rings, then compares the
+ *   two verdicts from the same authority.
  *
- *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
- *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
- *   decimals differ by about 10 cm. A point within roughly a meter of a zone boundary can land on opposite sides of
- *   two renderings of the same edge. The check reports these cases as `boundary_tolerance` with their distance to the
- *   nearest edge. The receipt includes their count.
+ *   This measures our conversion against the authority's published geometry.
  *
- *   The check has already found a projection defect. That result is a reason to keep running it. A missing
- *   proj datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
- *   every structural check there is, because they are ordinary WGS84 numbers inside the declared extent.
- *   It showed up here and nowhere else, as eight disagreements out of 59, each a point that had fallen
- *   into a neighboring sliver. With the grid installed the same sample reads 59/59. See
- *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
+ *   The negative half has equal importance.
+ *   Sample points in Wales and Scotland must return `unknown` with no coverage row.
+ *
+ *   They must never return Zone 1.
+ *   Wales uses a different authority and a four-zone TAN15 scheme.
+ *
+ *   That scheme differs from England's.
+ *   Scotland uses a third system.
+ *
+ *   A report of either location as the EA's low-probability zone would violate
+ *   this layer's coverage contract.
+ *   The positive half by itself could pass an artifact that answered Zone 1 for the whole planet.
+ *
+ *   the channels differ IN coordinate precision and that's why A boundary point isn't A failure.
+ *   The geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six.
+ *
+ *   Six decimals differ by about 10 cm.
+ *   A point within roughly a meter of a zone boundary can land on opposite sides
+ *   of two renderings of the same edge.
+ *
+ *   The check reports these cases as `boundary_tolerance` with their distance to the nearest edge.
+ *   The receipt includes their count.
+ *
+ *   The check has already found a projection defect.
+ *   That result is a reason to keep running it.
+ *
+ *   A missing proj datum grid put the whole layer 3.4 m from where the authority puts it —
+ *   coordinates that pass every structural check there's, because they're ordinary
+ *   WGS84 numbers inside the declared extent.
+ *   It showed up here and nowhere else, as eight disagreements out of 59,
+ *   each a point that had fallen into a neighboring sliver.
+ *
+ *   With the grid installed the same sample reads 59/59.
+ *   See `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
 import { nearestRingEdgeMetres } from "@mailwoman/spatial/distance"
@@ -57,7 +78,7 @@ export interface AgreementRow {
 	/**
 	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point.
 	 *
-	 * A polygon that contains the point but has no zone label is not `null`:
+	 * A polygon that contains the point but has no zone label isn't `null`:
 	 * it is reported as `service_unlabelled`, because a service polygon with no label
 	 * is a defect in the service's answer and reading it as absence would
 	 * let it agree with an artifact that answers Zone 1 by absence.
@@ -85,7 +106,7 @@ export interface AgreementRow {
 }
 
 /**
- * The negative half: a point the authority's statement does not reach.
+ * The negative half: a point the authority's statement doesn't reach.
  */
 export interface OutsideRow {
 	label: string
@@ -212,7 +233,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 /**
  * What zone the service's own geometry assigns at a point, decided here with the
  * same even-odd rule the artifact's reader uses.
- * So what is compared is a verdict against a verdict.
+ * So what's compared is a verdict against a verdict.
  *
  * `zone` is `null` only when no returned polygon contains the point.
  * A containing polygon with no `flood_zone` sets `insideUnlabelled` instead,

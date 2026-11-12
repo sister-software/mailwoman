@@ -4,15 +4,18 @@
 /**
  *   An input that tokenizes past the model's fixed sequence length must parse rather than throw.
  *
- *   `ONNXRunner.infer` truncates to `fixedSeqLen` and trims `logits` to what it ran; `pieces` must
- *   follow, or every lockstep consumer (`logits[i]` in the token build, `emissions[pi]` in
- *   `enforceWordConsistency`) indexes past the end.
+ *   `ONNXRunner.infer` truncates to `fixedSeqLen` and trims `logits` to what it ran;
+ *   `pieces` must follow, or every lockstep consumer (`logits[i]` in the token build,
+ *   `emissions[pi]` in `enforceWordConsistency`) indexes past the end.
  *
- *   The limit is reachable by ordinary input — 128 pieces is roughly 330 characters — so the fixtures
- *   grow a real address by repetition instead of using a synthetic blob. The test asserts both sides of the
- *   boundary. A throw here reaches drop-in servers as a 500 on a well-formed query.
- *   The raw and healed paths are both covered because they failed with different messages. That difference
- *   the difference invites diagnosing this as a word-consistency bug.
+ *   The limit is reachable by ordinary input — 128 pieces is roughly 330 characters —
+ *   so the fixtures grow a real address by repetition instead of using a synthetic blob.
+ *   The test asserts both sides of the boundary.
+ *
+ *   A throw here reaches drop-in servers as a 500 on a well-formed query.
+ *   The raw and healed paths are both covered because they failed with different messages.
+ *
+ *   That difference the difference invites diagnosing this as a word-consistency bug.
  */
 
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `buildGraticule` is pure geometry, so it is tested here rather than in the browser suite. What matters is that the
- *   lines are densified. A meridian drawn as two endpoints is a straight chord through the sphere under a globe
- *   projection. It would pass through the globe instead of curving over it.
+ *   `buildGraticule` is pure geometry, so it is tested here rather than in the browser suite.
+ *
+ *   What matters is that the lines are densified.
+ *   A meridian drawn as two endpoints is a straight chord through the sphere under a globe projection.
+ *   It would pass through the globe instead of curving over it.
  */
 
 import { describe, expect, test } from "vitest"

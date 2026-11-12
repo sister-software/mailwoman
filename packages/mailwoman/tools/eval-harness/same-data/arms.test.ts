@@ -4,9 +4,10 @@
 /**
  *   Tests the same-data benchmark arms and scorer on small synthetic fixtures.
  *
- *   A replay miss records an `error`, because the fixture failed rather than the resolver. The scorer
- *   excludes such rows from every metric. `assertEqualEvidence` compares the evidence receipts that
- *   the arms return.
+ *   A replay miss records an `error`, because the fixture failed rather than the resolver.
+ *   The scorer excludes such rows from every metric.
+ *
+ *   `assertEqualEvidence` compares the evidence receipts that the arms return.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -148,7 +149,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 		expect(result.error).toMatch(/replay miss/)
 		expect(result.selection).toBeNull()
 
-		// The scorer must not count the row as an abstention.
+		// The scorer mustn't count the row as an abstention.
 		const metrics = armMetrics("mailwoman", "unambiguous", new Map([[panel.id, panel]]), [result])
 
 		expect(metrics.errors).toBe(1)

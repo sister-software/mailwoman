@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A result that resolved to a postcode or an admin place in a country whose finer tier is published and not
- *   installed states so, in the `engine` block and under the CLI's text result. The statement is information about
- *   the installation, in the shape of AG Grid's watermark without the defacement: the result is printed as computed,
+ *   A result that resolved to a postcode or an admin place in a country whose finer tier is published
+ *   and not installed states so, in the `engine` block and under the CLI's text result.
+ *
+ *   The statement is information about the installation, in the shape of AG
+ *   Grid's watermark without the defacement: the result is printed as computed,
  *   and the absence is labeled with the command that fills it.
  */
 

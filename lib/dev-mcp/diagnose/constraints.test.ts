@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { BIOLabel } from "@mailwoman/codex/component"
 import { DECODE_TERMS, type DecodeSpanExplanation, type DecodeTermValues } from "@mailwoman/neural/decode-explanation"
 import { describe, expect, it } from "vitest"

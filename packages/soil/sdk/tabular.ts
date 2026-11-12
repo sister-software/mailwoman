@@ -2,24 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads the pipe-delimited NASIS export inside a survey-area archive. It maps files to tables and columns to
- *   positions, then reads the authority's declared domains.
+ *   Reads the pipe-delimited NASIS export inside a survey-area archive.
  *
- *   The files have no headers. The archive supplies their schema. `mstab.txt` maps each logical table name to a
- *   filename (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt`). The filenames cannot be inferred. `mstabcol.txt`
- *   gives each column's ordinal position. The reader looks up those positions instead of hard-coding them.
- *   {@link readTable} throws when a requested column is absent from the shipped dictionary. An `undefined` result
- *   for a renamed column would turn a source change into an apparent absence. That would corrupt the measurement.
+ *   It maps files to tables and columns to positions, then reads the authority's declared domains.
  *
- *   Quote handling affects the parsed result. `sacatlog.txt` contains 594 newline bytes and one record. Its
- *   `fgdcmetadata` column contains a 43,251-character XML document with embedded newlines. `mstabcol.txt`, the column
- *   dictionary, contains 913 newlines and 865 records. A line-splitting reader would create 594 malformed rows from
- *   the one-row `sacatlog.txt` file. Each malformed row would still look valid enough to process.
+ *   The files have no headers.
+ *   The archive supplies their schema.
  *
- *   The archive also supplies its declared domains. Those values remove the need to transcribe them by hand.
- *   `msdomdet.txt` lists every `Choice` column's members and the authority's prose definition. It includes
- *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, 28 conditional farmland classifications and six
- *   component kinds. The layer stores and validates those values.
+ *   `mstab.txt` maps each logical table name to a filename
+ *   (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt`).
+ *   The filenames cannot be inferred.
+ *
+ *   `mstabcol.txt` gives each column's ordinal position.
+ *   The reader looks up those positions instead of hard-coding them. {@link readTable} throws
+ *   when a requested column is absent from the shipped dictionary.
+ *
+ *   An `undefined` result for a renamed column would turn a source change into an apparent absence.
+ *   That would corrupt the measurement.
+ *
+ *   Quote handling affects the parsed result.
+ *   `sacatlog.txt` contains 594 newline bytes and one record.
+ *
+ *   Its `fgdcmetadata` column contains a 43,251-character XML document with embedded newlines.
+ *   `mstabcol.txt`, the column dictionary, contains 913 newlines and 865 records.
+ *
+ *   A line-splitting reader would create 594 malformed rows from the one-row `sacatlog.txt` file.
+ *   Each malformed row would still look valid enough to process.
+ *
+ *   The archive also supplies its declared domains.
+ *   Those values remove the need to transcribe them by hand.
+ *
+ *   `msdomdet.txt` lists every `Choice` column's members and the authority's prose definition.
+ *   It includes capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`,
+ *   28 conditional farmland classifications and six component kinds.
+ *   The layer stores and validates those values.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -92,7 +108,7 @@ const MSTABCOL_WIDTH = 14
 /**
  * Read the archive's table and column dictionaries.
  *
- * @throws {Error} When either bootstrap file is missing or is not the declared width.
+ * @throws {Error} When either bootstrap file is missing or isn't the declared width.
  */
 export async function readTabularDictionary(tabularDirectory: PathBuilderLike): Promise<TabularDictionary> {
 	const directory = PathBuilder.from(tabularDirectory)
@@ -159,7 +175,7 @@ export interface TabularTable {
 /**
  * Read a logical ssurgo table, projecting `wanted` columns.
  *
- * @throws {Error} When the archive declares no file for the table, when a requested column is not in
+ * @throws {Error} When the archive declares no file for the table, when a requested column isn't in
  * the shipped dictionary, or when a record is narrower than the position a requested column sits at.
  */
 export async function readTable(
@@ -231,7 +247,7 @@ export interface DomainMember {
  *
  * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
  * files above these could be looked up.
- * They are listed here because the domain read runs before any dictionary-driven read
+ * They're listed here because the domain read runs before any dictionary-driven read
  * and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
@@ -239,7 +255,7 @@ const MSDOMDET_WIDTH = 5
 /**
  * Read the authority's declared domains out of the archive.
  *
- * @throws {Error} When the file is not the declared width.
+ * @throws {Error} When the file isn't the declared width.
  */
 export async function readDeclaredDomains(tabularDirectory: PathBuilderLike): Promise<DomainMember[]> {
 	const rows = await readPipeDelimited(resolvePathBuilder(tabularDirectory, "msdomdet.txt"))
@@ -278,7 +294,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  * The download URL needs `2025-09-09`.
  * Both channels agree only when the code parses the value as a date instead of slicing the string.
  *
- * @throws {Error} When the value is not one of those shapes.
+ * @throws {Error} When the value isn't one of those shapes.
  * An incorrect freshness date requests a nonexistent file.
  * The host returns 400 for the request.
  * A 404 would identify a missing file.

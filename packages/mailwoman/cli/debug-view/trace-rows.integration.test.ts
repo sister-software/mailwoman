@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The evidence rows' vocabulary against a hand-built trace. The meaning-of-zero discipline distinguishes an unfed channel, a channel that fired on no token and a bundle with no locale head.
+ *   The evidence rows' vocabulary against a hand-built trace.
+ *
+ *   The meaning-of-zero discipline distinguishes an unfed channel, a channel that
+ *   fired on no token and a bundle with no locale head.
  */
 
 import { describe, expect, it } from "vitest"

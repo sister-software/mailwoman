@@ -23,7 +23,7 @@ import { surfaceForSource } from "#tools/migrate/recipe-output"
  * when the upstream was not recorded.
  */
 export const OVERLAY_REGISTERS: Record<string, string | null> = {
-	// The recipe names its publication.
+	// The recipe identifies its publication.
 	"synth-gb": SourceRegister.LandRegistryPricePaid,
 	"synth-german": SourceRegister.OpenAddresses,
 	"synth-nz": SourceRegister.OpenAddresses,
@@ -46,7 +46,7 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 	"synth-bare-country": SourceRegister.Codex,
 	"synth-bare-postcode": SourceRegister.Codex,
 	"synth-reviewed-postcode-tail": SourceRegister.ReviewedByHand,
-	// The row names no published record at all.
+	// The row identifies no published record at all.
 	"synth-po-box-cedex": null,
 	"synth-po-box-military": null,
 	"synth-intersection": null,
@@ -110,7 +110,7 @@ export interface OverlayMigrationSummary {
 }
 
 /**
- * The register for one overlay source, refusing a source this map does not name.
+ * The register for one overlay source, refusing a source this map doesn't name.
  */
 export function registerForSource(source: string): string | null {
 	// The map keys on the retired spelling.

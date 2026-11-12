@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `german` recipe: German coverage rows from real OpenAddresses tuples (Berlin and Saxony, cached
- * zips). Each sampled tuple renders through {@link renderGermanRow} in idiomatic German order.
- * Generate mode builds a tuple pool from the cached zips, then draws `--count` rows with the passed
- * `random`. The postcode on the far side of the locality is the training-time `postcode_move`
+ * `german` recipe: German coverage rows from real OpenAddresses tuples (Berlin and Saxony, cached zips).
+ *
+ * Each sampled tuple renders through {@link renderGermanRow} in idiomatic German order.
+ * Generate mode builds a tuple pool from the cached zips, then draws `--count`
+ * rows with the passed `random`.
+ *
+ * The postcode on the far side of the locality is the training-time `postcode_move`
  * augmentation's job (#2750), so the recipe writes no reversed rows.
  *
  * Two registers are absent from the OA tuples. A comma-free single line (`Neusser Str. 12 Nippes 50733
@@ -17,7 +20,7 @@
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -58,8 +61,8 @@ interface GermanSource {
  * The Saxony file is Sachsen.
  */
 const SOURCES: GermanSource[] = [
-	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
-	{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
+	{ zip: currentSourcePath("openaddresses", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+	{ zip: currentSourcePath("openaddresses", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
 /**
@@ -125,7 +128,7 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
  * Every current DE neighborhood with a locality ancestor, keyed by the folded
  * locality name → Ortsteil surfaces.
  *
- * Empty when the admin database is not readable.
+ * Empty when the admin database isn't readable.
  * The recipe then emits no Ortsteil rows and reports that result, rather than
  * failing a build over an optional register.
  */
@@ -275,7 +278,7 @@ export const germanRecipe: CorpusRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error(`No German tuples found — are the cached zips present in ${dataRootPath("oa-cache")}?`)
+			throw new Error(`No German tuples found — are the cached zips present in ${currentSourcePath("openaddresses")}?`)
 		}
 
 		let emitted = 0
@@ -288,7 +291,7 @@ export const germanRecipe: CorpusRecipe = {
 
 		while (emitted < count && guard++ < count * 6) {
 			const drawn = pool[Math.floor(random() * N)]!
-			// OA does not provide these two registers.
+			// OA doesn't provide these two registers.
 			// Each is drawn independently, so every combination occurs.
 			// One is an Ortsteil borrowed from the tuple's own locality, the other a line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())

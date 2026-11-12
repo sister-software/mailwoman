@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The mechanism families of a suite failure list, by the rules of the 2026-10-28 myopia report's classifier over the
- *   list's expected and shipped component strings.
+ *   The mechanism families of a suite failure list, by the rules of the 2026-10-28 myopia
+ *   report's classifier over the list's expected and shipped component strings.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

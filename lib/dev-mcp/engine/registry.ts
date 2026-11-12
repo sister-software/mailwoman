@@ -263,6 +263,28 @@ export interface Engine {
 }
 
 /**
+ * One caller's hold on a resident engine: the engine's fields, and a `Symbol.dispose` that releases the hold.
+ *
+ * Take it with `using`.
+ * The registry disposes an evicted engine's session only once every lease on it is released,
+ * so a caller never reads a session another call's eviction closed.
+ */
+export interface EngineLease extends Engine, Disposable {}
+
+/**
+ * One cache entry: the engine and the count of leases that hold it.
+ */
+interface ResidentEngine {
+	engine: Engine
+	leases: number
+	/**
+	 * Set when the engine left the cache.
+	 * The last lease to be released then disposes its session.
+	 */
+	evicted: boolean
+}
+
+/**
  * One channel's artifact identity.
  */
 interface LexiconIdentity {
@@ -322,9 +344,9 @@ export interface EngineRegistryLike {
 	 * Computes the working tree's current fingerprint on every call.
 	 */
 	fingerprint(): Promise<TreeFingerprint>
-	acquire(config: EngineConfig): Promise<Engine>
-	evict(id: string): boolean
-	evictAll(): number
+	acquire(config: EngineConfig): Promise<EngineLease>
+	evict(id: string): Promise<boolean>
+	evictAll(): Promise<number>
 	summaries(): EngineSummary[]
 }
 
@@ -334,10 +356,21 @@ export interface EngineRegistryLike {
  * Node cannot reload modules in place, so the registry refuses to build an engine after the source changes.
  */
 export class EngineRegistry implements EngineRegistryLike {
-	readonly #engines = new Map<string, Engine>()
+	readonly #engines = new Map<string, ResidentEngine>()
+	/**
+	 * Builds in progress by engine id, so concurrent acquires of one configuration share one session.
+	 */
+	readonly #building = new Map<string, Promise<ResidentEngine>>()
+	/**
+	 * Session disposals that started when a lease was released.
+	 * `evictAll` waits for them.
+	 */
+	readonly #closing = new Set<Promise<void>>()
 	readonly #maxResident: number
 	readonly #repoRoot: string
 	readonly #bootFingerprint: TreeFingerprint
+	readonly #createSession: (options: GeocodeSessionOptions) => Promise<GeocodeSession>
+	readonly #computeFingerprint: (repoRoot: string) => Promise<TreeFingerprint>
 
 	/**
 	 * Creates a registry that records the source fingerprint at boot.
@@ -346,10 +379,26 @@ export class EngineRegistry implements EngineRegistryLike {
 		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
 	}
 
-	constructor(repoRoot: string, maxResident: number, bootFingerprint: TreeFingerprint) {
+	/**
+	 * @param deps The session builder and the tree fingerprint, `createGeocodeSession`
+	 * and `computeTreeFingerprint` by default.
+	 * A test passes its own, because the root Vitest config shares modules between files
+	 * and a module mock then applies only when its file loads the registry first.
+	 */
+	constructor(
+		repoRoot: string,
+		maxResident: number,
+		bootFingerprint: TreeFingerprint,
+		deps: {
+			createSession?: (options: GeocodeSessionOptions) => Promise<GeocodeSession>
+			computeFingerprint?: (repoRoot: string) => Promise<TreeFingerprint>
+		} = {}
+	) {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
 		this.#bootFingerprint = bootFingerprint
+		this.#createSession = deps.createSession ?? createGeocodeSession
+		this.#computeFingerprint = deps.computeFingerprint ?? computeTreeFingerprint
 	}
 
 	get repoRoot(): string {
@@ -368,91 +417,163 @@ export class EngineRegistry implements EngineRegistryLike {
 	}
 
 	fingerprint(): Promise<TreeFingerprint> {
-		return computeTreeFingerprint(this.#repoRoot)
+		return this.#computeFingerprint(this.#repoRoot)
 	}
 
 	/**
-	 * Returns the cached engine for this configuration, or builds one.
+	 * Returns a lease on the cached engine for this configuration, building the engine when none is resident.
+	 *
+	 * Concurrent calls for one configuration share one build.
 	 *
 	 * @throws When the source changed after boot.
 	 */
-	async acquire(config: EngineConfig): Promise<Engine> {
+	async acquire(config: EngineConfig): Promise<EngineLease> {
 		const current = await this.fingerprint()
 		const effective = resolveConfig(config)
 		const id = engineID(effective, current)
 		const existing = this.#engines.get(id)
 
-		if (existing) {
-			existing.lastUsed = Date.now()
+		if (existing) return this.#lease(existing)
 
-			existing.uses++
+		let building = this.#building.get(id)
 
-			return existing
+		if (!building) {
+			if (current.digest !== this.#bootFingerprint.digest) {
+				throw new Error(staleEngineMessage(this.#bootFingerprint, current))
+			}
+
+			building = this.#build(id, effective, current)
+			this.#building.set(id, building)
+			// A failed build leaves no entry, so the next acquire builds again.
+			void building.finally(() => this.#building.delete(id)).catch(() => {})
 		}
 
-		if (current.digest !== this.#bootFingerprint.digest) {
-			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
-		}
+		return this.#lease(await building)
+	}
 
+	async #build(id: string, effective: EffectiveConfig, current: TreeFingerprint): Promise<ResidentEngine> {
 		if (effective.weightsCacheRoot) {
 			await assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
 		}
 
 		const startedAt = Date.now()
-		const session = await createGeocodeSession(effective)
-
+		const session = await this.#createSession(effective)
 		const lexicons = await lexiconIdentities(session)
 
-		const engine: Engine = {
-			engineID: id,
-			session,
-			effective,
-			fingerprint: current,
-			buildMs: Date.now() - startedAt,
-			lastUsed: Date.now(),
-			uses: 1,
-			lexicons,
+		const resident: ResidentEngine = {
+			engine: {
+				engineID: id,
+				session,
+				effective,
+				fingerprint: current,
+				buildMs: Date.now() - startedAt,
+				lastUsed: Date.now(),
+				uses: 0,
+				lexicons,
+			},
+			leases: 0,
+			evicted: false,
 		}
 
-		this.#engines.set(id, engine)
-		this.#evictToCap()
+		this.#engines.set(id, resident)
+		await this.#evictToCap(id)
 
-		return engine
+		return resident
 	}
 
-	#evictToCap(): void {
+	/**
+	 * A lease on `resident`, counted until the holder releases it.
+	 */
+	#lease(resident: ResidentEngine): EngineLease {
+		resident.leases++
+
+		resident.engine.uses++
+		resident.engine.lastUsed = Date.now()
+
+		let released = false
+
+		return {
+			...resident.engine,
+			[Symbol.dispose]: () => {
+				if (released) return
+
+				released = true
+
+				resident.leases--
+
+				if (resident.evicted && resident.leases === 0) {
+					this.#close(resident)
+				}
+			},
+		}
+	}
+
+	#close(resident: ResidentEngine): void {
+		const closing = resident.engine.session[Symbol.asyncDispose]()
+
+		this.#closing.add(closing)
+		void closing.finally(() => this.#closing.delete(closing)).catch(() => {})
+	}
+
+	/**
+	 * Evicts the least recently used engines until the cache fits, keeping `keep`,
+	 * the engine this build made.
+	 */
+	async #evictToCap(keep: string): Promise<void> {
 		while (this.#engines.size > this.#maxResident) {
-			const oldest = [...this.#engines.values()].toSorted((a, b) => a.lastUsed - b.lastUsed)[0]
+			const oldest = [...this.#engines.values()]
+				.filter((resident) => resident.engine.engineID !== keep)
+				.toSorted((a, b) => a.engine.lastUsed - b.engine.lastUsed)[0]
 
 			if (!oldest) return
 
-			this.evict(oldest.engineID)
+			await this.evict(oldest.engine.engineID)
 		}
 	}
 
-	evict(id: string): boolean {
-		const engine = this.#engines.get(id)
+	/**
+	 * Drops the engine from the cache, and closes its session once no lease holds it.
+	 *
+	 * The engine leaves the cache first, so a concurrent acquire builds a fresh one.
+	 * A session with leases outstanding closes when the last of them is released.
+	 */
+	async evict(id: string): Promise<boolean> {
+		const resident = this.#engines.get(id)
 
-		if (!engine) return false
+		if (!resident) return false
 
-		engine.session[Symbol.dispose]()
 		this.#engines.delete(id)
+		resident.evicted = true
+
+		if (resident.leases === 0) {
+			await resident.engine.session[Symbol.asyncDispose]()
+		}
 
 		return true
 	}
 
-	evictAll(): number {
-		const ids = [...this.#engines.keys()]
+	/**
+	 * Evicts every engine, closes each session even when a lease still holds it,
+	 * and waits for every close to finish.
+	 *
+	 * The process calls it on shutdown, when no request is left to finish.
+	 */
+	async evictAll(): Promise<number> {
+		const residents = [...this.#engines.values()]
 
-		for (const id of ids) {
-			this.evict(id)
+		for (const resident of residents) {
+			this.#engines.delete(resident.engine.engineID)
+			resident.evicted = true
+			await resident.engine.session[Symbol.asyncDispose]()
 		}
 
-		return ids.length
+		await Promise.all(this.#closing)
+
+		return residents.length
 	}
 
 	summaries(): EngineSummary[] {
-		return [...this.#engines.values()].map((engine) => ({
+		return [...this.#engines.values()].map(({ engine }) => ({
 			engine_id: engine.engineID,
 			locale: engine.effective.locale,
 			config_effective: engine.effective,

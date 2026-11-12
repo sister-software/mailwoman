@@ -1113,7 +1113,7 @@ export async function renderInkToString(tree: React.ReactElement, columns: numbe
 }
 ```
 
-The tree is pure and synchronous, so the mount frame is final and `unmount()` fires immediately. If Ink's non-TTY mode defers the final write past `unmount` (the first test's non-empty assertion will say so), insert `await new Promise((r) => setImmediate(r))` before reading the frames — that is the only sanctioned adjustment.
+The tree is pure and synchronous, so the mount frame is final and `unmount()` fires immediately. If Ink's non-TTY mode defers the final write past `unmount` (the first test's non-empty assertion will say so), insert `await new Promise((r) => setImmediate(r))` before reading the frames — that's the only sanctioned adjustment.
 
 - [ ] **Step 2: Write the failing component tests.**
 
@@ -1367,7 +1367,7 @@ Alternate screen: mount effect writes `"[?1049h"` to stdout, cleanup writes `"
 
 Frame effect: on `[data?.result, viewportOverride, size]` change and renderer present → compute pane cells via `mapPaneCellSize`, `renderFrame` with marker + ring, guard with the request counter, `setFrame`.
 
-- [ ] **Step 2: Key handling** (`useInput`, active whenever phase is not "loading"):
+- [ ] **Step 2: Key handling** (`useInput`, active whenever phase isn't "loading"):
 
 ```
 Tab              → focused = next of ["input", "output", "map"] (wraps)

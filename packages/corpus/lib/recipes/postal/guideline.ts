@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `postal-guideline` recipe: rows that write a post-office box or its national equivalent as
- *   the postal operator's published guideline states it. Each country's leg renders only forms its
- *   codex rule table cites.
+ *   The `postal-guideline` recipe: rows that write a post-office box or its national
+ *   equivalent as the postal operator's published guideline states it.
  *
- *   Rows draw their locality and postcode from every place of the country, and each row takes the
- *   split {@linkcode splitForRow} gives its place, so the source has train, val and test rows like
- *   every other source. The release capabilities read its test rows.
+ *   Each country's leg renders only forms its codex rule table cites.
+ *
+ *   Rows draw their locality and postcode from every place of the country,
+ *   and each row takes the split {@linkcode splitForRow} gives its place,
+ *   so the source has train, val and test rows like every other source.
+ *   The release capabilities read its test rows.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -40,7 +42,7 @@ export const POSTAL_GUIDELINE_LEGS: readonly PostalGuidelineLeg[] = [
 ]
 
 /**
- * Rows written per leg when `--count` is not given.
+ * Rows written per leg when `--count` isn't given.
  */
 export const POSTAL_GUIDELINE_DEFAULT_COUNT = 2000
 

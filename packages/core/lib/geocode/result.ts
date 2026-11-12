@@ -205,7 +205,7 @@ export type CoordinateSource = z.infer<typeof CoordinateSourceSchema>
 export const OPENSTREETMAP_CREDIT = "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright"
 
 /**
- * Whether a row's provenance stamp names an OpenStreetMap-derived row.
+ * Whether a row's provenance stamp identifies an OpenStreetMap-derived row.
  *
  * `@mailwoman/osm` stamps every row it builds `openstreetmap:<cc>`, and a row the
  * street-recovery pass placed `openstreetmap:<cc>#recovered`, so the prefix decides.
@@ -281,7 +281,7 @@ export const GeocodeResultSchema = z
 		 * The locality key and postcode stored on the matched address-point row.
 		 *
 		 * These values describe the rooftop rather than the query.
-		 * Consumers may display them but must not filter on them.
+		 * Consumers may display them but mustn't filter on them.
 		 */
 		rooftop: RooftopSchema.nullable(),
 
@@ -290,6 +290,10 @@ export const GeocodeResultSchema = z
 		 *
 		 * Set on the `address_point` and `interpolated` tiers.
 		 * Their coordinates come from one register row.
+		 *
+		 * A landmark answer also sets it, at the `venue` tier.
+		 * Its source is the landmark record's `landmark_source`, or `wikidata`
+		 * when the record names none, and its release is null.
 		 *
 		 * It is null on every other tier, including a coordinate a later pass moved to a venue
 		 * or a plus code, because that coordinate no longer comes from the row.
@@ -384,7 +388,7 @@ export const GeocodeResultSchema = z
 		 * check the parsed `region` and `country`.
 		 *
 		 * It is non-null whenever a winner resolved.
-		 * Downstream ranking does not read it.
+		 * Downstream ranking doesn't read it.
 		 */
 		admin_coherence: AdminCoherenceReportSchema.nullable(),
 

@@ -4,15 +4,17 @@
 /**
  *   Compiles a validated {@link GeographicModelDocument} into the runtime artifact deterministically.
  *
- *   `parseGeographicModelDocument` performs all document validation and throws before compilation
- *   starts. A compile either returns the whole artifact or throws.
+ *   `parseGeographicModelDocument` performs all document validation and throws before compilation starts.
+ *   A compile either returns the whole artifact or throws.
  *
- *   Only `isA` defines inheritance. The compiler materializes the transitive `isA` closure for each
- *   concept. It copies each ancestor's assertions onto descendants as {@link DerivedFactRecord}
- *   entries. The compiler does not close over relations marked `transitive` or `inverse`.
+ *   Only `isA` defines inheritance.
+ *   The compiler materializes the transitive `isA` closure for each concept.
  *
- *   The validator rejects `isA` cycles, but the ancestor walk also tracks visited concepts, so it
- *   terminates on any graph.
+ *   It copies each ancestor's assertions onto descendants as {@link DerivedFactRecord} entries.
+ *   The compiler doesn't close over relations marked `transitive` or `inverse`.
+ *
+ *   The validator rejects `isA` cycles, but the ancestor walk also tracks visited
+ *   concepts, so it terminates on any graph.
  */
 
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
@@ -63,7 +65,7 @@ export const CompileIssueCode = {
 export type CompileIssueCode = (typeof CompileIssueCode)[keyof typeof CompileIssueCode]
 
 /**
- * One reason that a valid document does not compile.
+ * One reason that a valid document doesn't compile.
  */
 export interface CompileIssue {
 	code: CompileIssueCode
@@ -295,7 +297,7 @@ function checkDerivedIdentifiers(facts: readonly DerivedFactRecord[], issues: Co
  *
  * The artifact's tables are new sorted arrays that hold the authored records unchanged.
  *
- * @throws {GeographicModelValidationError} When the input is not a valid document.
+ * @throws {GeographicModelValidationError} When the input isn't a valid document.
  * @throws {GeographicModelCompileError} When the document is valid but its derived facts are invalid.
  */
 export function compileGeographicModel(input: unknown): CompiledGeographicModel {

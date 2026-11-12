@@ -4,19 +4,23 @@
 /**
  *   The clustering stage resolves scored pairs into canonical entities.
  *
- *   The pairwise scorer treats each pair independently. Its scores are not transitive: A~B at a
- *   high weight and B~C at a high weight do not guarantee that A~C is a match. A separate stage is
- *   required to turn the graph of above-threshold links into coherent groups — skip it and your
- *   "entities" silently fracture or fuse.
+ *   The pairwise scorer treats each pair independently.
+ *   Its scores are not transitive: A~B at a high weight and B~C at a high weight
+ *   do not guarantee that A~C is a match.
  *
- *   This ships the standard baseline: connected components of the link graph (union-find), with the
- *   link threshold as the precision/recall knob — raise it for tighter, purer clusters, lower it
- *   for more recall. Its known weakness is over-merging via transitive chains (a string of weak
- *   links can pull unrelated records into one component); the principled fix is
- *   centroid-/average-linkage hierarchical clustering (Dedupe), which uses the full within-cluster
- *   score matrix — a documented refinement rather than this first version. For a geocode-first matcher the
- *   over-merge risk is already damped: blocking keeps candidate sets local, so chains can't run
- *   across the whole dataset.
+ *   A separate stage is required to turn the graph of above-threshold links into coherent
+ *   groups — skip it and your "entities" silently fracture or fuse.
+ *
+ *   This ships the standard baseline: connected components of the link graph (union-find),
+ *   with the link threshold as the precision/recall knob — raise it for tighter,
+ *   purer clusters, lower it for more recall.
+ *   Its known weakness is over-merging via transitive chains
+ *   (a string of weak links can pull unrelated records into one component); the principled
+ *   fix is centroid-/average-linkage hierarchical clustering (Dedupe), which uses the full
+ *   within-cluster score matrix — a documented refinement rather than this first version.
+ *
+ *   For a geocode-first matcher the over-merge risk is already damped: blocking keeps
+ *   candidate sets local, so chains can't run across the whole dataset.
  */
 
 /**

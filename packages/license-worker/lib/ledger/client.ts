@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Kysely over D1. One handle per isolate, built once with the other dependencies. D1 has no connection to pool or
- *   close.
+ *   Kysely over D1.
+ *
+ *   One handle per isolate, built once with the other dependencies.
+ *   D1 has no connection to pool or close.
  */
 
 import type { D1Database } from "@cloudflare/workers-types"

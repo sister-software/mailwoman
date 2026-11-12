@@ -9,6 +9,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { TSVSpliterator } from "spliterator"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
@@ -109,11 +110,7 @@ export async function generateCountryPopulation(
 		})
 		.join("\n")
 
-	const header = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+	const header = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   generated — do not edit by hand. Per-country population, derived from GeoNames countryInfo.txt
  *   (https://download.geonames.org/export/dump/countryInfo.txt, CC-BY-4.0). Estimates are
  *   census-vintage; a prominence race reads the magnitude, not the currency. Countries GeoNames

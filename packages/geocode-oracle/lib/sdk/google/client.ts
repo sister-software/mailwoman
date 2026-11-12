@@ -211,7 +211,7 @@ export interface GoogleGeocoderClientConfig extends APIClientConfig {
 	language?: string
 	/**
 	 * Maximum attempts for Google's in-band transient statuses.
-	 * The HTTP-level `retry` option does not handle them.
+	 * The HTTP-level `retry` option doesn't handle them.
 	 */
 	maxAttempts: number
 	/**
@@ -370,7 +370,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	/**
 	 * Looks up a Google Place ID.
 	 *
-	 * Google advises treating a Place ID as stale after a few days, so a test case should not depend on one.
+	 * Google advises treating a Place ID as stale after a few days, so a test case shouldn't depend on one.
 	 */
 	public async geocodePlaceID(
 		placeID: string,

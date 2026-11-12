@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reports the number of training rows that contain a written form the source attested. It also reports the number that contain one
- *   a recipe composed from normalized fields.
+ *   Reports the number of training rows that contain a written form the source attested.
  *
- *   A normalized source supplies `{street, number, unit, postcode, locality}` and discards the line a
- *   person wrote. A recipe then renders a line from a codex layout. Those rows teach the layout this
- *   repository authored rather than the conventions the jurisdiction attests, so adding more of them
- *   raises row counts and leaves the set of written forms unchanged.
+ *   It also reports the number that contain one a recipe composed from normalized fields.
  *
- *   The `surface` column records which form a row contains. The `source` column identifies the adapter.
+ *   A normalized source supplies `{street, number, unit, postcode, locality}`
+ *   and discards the line a person wrote.
+ *   A recipe then renders a line from a codex layout.
+ *
+ *   Those rows teach the layout this repository authored rather than the conventions the jurisdiction
+ *   attests, so adding more of them raises row counts and leaves the set of written forms unchanged.
+ *
+ *   The `surface` column records which form a row contains.
+ *   The `source` column identifies the adapter.
+ *
  *   Together, these columns show whether a locale's street supply teaches attested variety or one template.
  *
  *   Usage:

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the sandbox supervisor under bash against a fake `trainer` and a fake `sync`, which record their calls.
+ *   Runs the sandbox supervisor under bash against a fake `trainer`
+ *   and a fake `sync`, which record their calls.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

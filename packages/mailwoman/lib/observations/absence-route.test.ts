@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the coverage-qualified absence route: its conjunction, recorded absences, observation authority, plus construction refusals.
+ *   Tests the coverage-qualified absence route: its conjunction, recorded absences,
+ *   observation authority, plus construction refusals.
  *
  *   The route reads a finished `POIQueryResult` and a sealed coverage layer supplied here.
  *   The same query and empty answer produce opposite readings for two cells that differ only in `basis`.
  *
- *   The committed pre-registration is asserted too, because its hash is what stops a row that failed from being rewritten into a row that passes.
+ *   The committed pre-registration is asserted too, because its hash is what stops a
+ *   row that failed from being rewritten into a row that passes.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -261,7 +263,7 @@ describe("the conjunction's other half — the artifact", () => {
 	})
 
 	// An activity afforded by two classes puts both in one search while the layer's completeness
-	// covers one, so the whole searched set must be the surveyed class or the cell is not decidable.
+	// covers one, so the whole searched set must be the surveyed class or the cell isn't decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
 		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)

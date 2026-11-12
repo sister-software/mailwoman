@@ -1,0 +1,42 @@
+---
+title: Choose an address workflow
+description: Start with verified Mailwoman 11.0.0 guides for parsing, record checks, matching, and annotations.
+---
+
+import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
+
+<SolutionsIntro />
+
+## Inspect an address entered in a form
+
+**Use this when:** You need to separate a line into components and show the user what the parser read. Install the published parser and en-US model, then run [the first parse](/docs/start). [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the query kind, labeled spans, and stage trace for one exact input. Both exercises run without a geographic database.
+
+**Limit:** A labeled house number or postcode is evidence about the text. Whether the address exists or accepts mail takes postal or geographic evidence. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why that decision needs more than a raw node score.
+
+## Prepare irregular records for review
+
+**Use this when:** You need a repeatable intake step before a human or another system reviews records. [Normalize an input](/docs/guides/normalize-input) shows how to retain the original text and map a normalized span back to it. [Review parse results](/docs/guides/review-parse-results) applies an explicit component-presence rule to a small labeled set. The checked paths use the parser model and no geographic database.
+
+**Limit:** The review rule is an application choice. Its seven illustrative records show the rule's behavior, and a production error rate needs a representative labeled set. [How data and evaluation support quality claims](/docs/explanation/data-and-model-quality) explains the held-out evidence needed for a broader claim.
+
+## Check a parsed record against your intake policy
+
+**Use this when:** A <Country code="US" /> street-address record must have particular components and a ZIP Code shape before downstream processing. [Check parsed records](/docs/guides/validate-records) runs a policy with `pass`, `fail`, and `unknown` outcomes. Supply the country independently of the postcode. The example needs the parser model and the published codex helper, with no geographic database.
+
+**Limit:** The example's pass means the required components and ZIP Code shape were present. Building existence and deliverability require separate evidence. [Result schema](/docs/reference/schema) identifies which fields belong to parsing and geocoding.
+
+## Compare candidate duplicate addresses
+
+**Use this when:** You have candidate pairs and known examples of the same and different addresses. [Match candidate records](/docs/guides/match-records) shows an executed blocking and scoring policy, with separate pairs for tuning and evaluation. Its checked fixture needs no parser or geographic database.
+
+**Limit:** The fixture contains false matches and missed matches. Its selected threshold is an example policy for those pairs, and an address match doesn't identify an occupant. The guide reports each error beside its exact pair. [Limits and release status](/product/limits-and-status) separates published interfaces from evaluated claims for the release.
+
+## Add fields to a coordinate you already have
+
+**Use this when:** A consumer needs coordinate formats or country reference fields. [Annotate a result](/docs/guides/annotate-results) executes published 11.0.0 annotators on a supplied coordinate and country code, then shows two output projections. The checked annotators need no geographic database.
+
+**Limit:** Annotation doesn't obtain or verify the coordinate. A projection can omit repeated parse components and geocode provenance. [Result schema](/docs/reference/schema) describes the source fields to retain if that evidence matters.
+
+## Workflows that need geographic data
+
+Forward geocoding and reverse containment need suitable local geographic databases. Published 11.0.0 interfaces and data bundles are described in [choose an operation](/product/capabilities) and [data and locales](/docs/reference/data-and-locales). [Limits and release status](/product/limits-and-status) explains the difference between a published bundle, an installed file, and release-matched evaluation. This page doesn't report a measured 11.0.0 geocoding result or latency.

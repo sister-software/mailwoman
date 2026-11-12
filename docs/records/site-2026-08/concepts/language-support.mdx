@@ -27,8 +27,8 @@ which layers back each claim.
 
 ## First class: US English and French
 
-Both have per-tag floors in the release check. A model that regresses either does
-not ship. Both have rooftop-grade open registers wired in: the US situs layer
+Both have per-tag floors in the release check. A model that regresses either doesn't
+ship. Both have rooftop-grade open registers wired in: the US situs layer
 (124.9M address points, built from state and federal open data) and the French BAN
 (26M points, Licence Ouverte). A house number in Lyon or Louisville resolves to the
 building, at 1 m reported uncertainty, and both paths are pinned by regression
@@ -39,7 +39,7 @@ street names ("Allée" split at the "é" and dropped the word), which cost
 resolution on exactly the addresses a French user types first. The fix required a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
 training-free shortcut measurably made things worse before the retrain fixed it.
-The finding applies across settings: diacritics are a tokenizer problem before they are a model
+The finding applies across settings: diacritics are a tokenizer problem before they're a model
 problem, and we now check fertility on every new locale.
 
 ## Coordinate-paneled: most of western and central Europe, plus Australia
@@ -83,7 +83,7 @@ different failure modes. Taiwan and Korea are open work rather than claims.
 
 The one evaluators poke at first, so here it is up front. UK addresses parse
 better than you'd expect — a postcode-format prior routes them correctly most of
-the time — but there is no UK training corpus, because the usable open data
+the time — but there's no UK training corpus, because the usable open data
 has a share-alike license that conflicts with how we distribute training
 extracts. The blocker is licensing rather than modeling, and the issue tracking it has a
 check-back owner. Ireland, Hungary, and Romania sit behind the same check.
@@ -97,5 +97,5 @@ We don't count graceful degradation as support.
 US English and French are floor-blocked, with rooftop data behind both.
 About 14 European locales are coordinate-paneled at sub-10 km p90. Japan resolves by
 postcode route. Britain is the known gap, blocked on licensing. When a locale is
-missing from this page, that is also a claim: we haven't measured it, so we don't
+missing from this page, that's also a claim: we haven't measured it, so we don't
 say it works.

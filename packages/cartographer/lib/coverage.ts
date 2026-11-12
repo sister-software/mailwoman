@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Address-coverage overlays rendered from the `mailwoman coverage build` H3 tile set. Each cell
- *   supplies optimistic (`fog_opt`) and observed-coverage (`fog`) values. The demo exposes both as
- *   default-off layers. Tiles are served from `coverage-v5.pmtiles`.
+ *   Address-coverage overlays rendered from the `mailwoman coverage build` H3 tile set.
+ *
+ *   Each cell supplies optimistic (`fog_opt`) and observed-coverage (`fog`) values.
+ *   The demo exposes both as default-off layers.
+ *   Tiles are served from `coverage-v5.pmtiles`.
  */
 
 import type { FillLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"

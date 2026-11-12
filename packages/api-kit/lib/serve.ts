@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node serve wrapper over `@hono/node-server`. The one place the node listener is created —
- *   surface packages stay web-standard (they only export `fetch`-shaped apps) so an edge
- *   deployment needs no changes to them.
+ *   Node serve wrapper over `@hono/node-server`.
+ *
+ *   The one place the node listener is created — surface packages stay web-standard
+ *   (they only export `fetch`-shaped apps) so an edge deployment needs no changes to them.
  */
 
 import { serve, type ServerType } from "@hono/node-server"

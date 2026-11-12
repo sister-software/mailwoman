@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Germany's OpenStreetMap extraction policy. `europe/dach` holds Germany with Austria and Switzerland, so a
- *   build from it clips Germany by its geoBoundaries outline.
+ *   Germany's OpenStreetMap extraction policy.
+ *
+ *   `europe/dach` holds Germany with Austria and Switzerland, so a build from it
+ *   clips Germany by its geoBoundaries outline.
  */
 
 import type { OSMExtractionPolicy } from "#extraction-policy"

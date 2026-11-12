@@ -10,7 +10,7 @@ tags:
 
 # Exotic point-of-interest queries
 
-A large fraction of real-world geocoder searches ask for **points of interest** instead of addresses. Points of interest include places with proper names, categories of things, brands, landmarks, and transit infrastructure. "Find the nearest gas station," "Where is the Eiffel Tower?", and "Show me every Hilton in Manhattan" are all POI queries.
+A large fraction of real-world geocoder searches ask for **points of interest** instead of addresses. Points of interest include places with proper names, categories of things, brands, landmarks, and transit infrastructure. "Find the nearest gas station," "Where's the Eiffel Tower?", and "Show me every Hilton in Manhattan" are all POI queries.
 
 These queries are structurally different from address queries. An address has ordered components (number, street, city, state, postcode) with predictable patterns. A POI query is a name, a category, or a category with a location constraint. The parser that handles `350 5th Ave, New York, NY 10118` will fail on `water fountain near me` because the input is a different kind of query, even though the parser works as designed.
 
@@ -59,11 +59,11 @@ Until you've built that layer, a query for one of these categories abstains with
 - **Brand and franchise detection.** The taxonomy lexicon matches categories rather than chains. Mailwoman has no brand lexicon yet and no Wikidata QID table joining "Walmart" or "McDonalds" to Overture's `brand.wikidata` field. See [Franchise queries](./franchise-queries.mdx).
 - **Proximity-search products.** The CLI and MCP tool answer "nearest X" today. A packaged proximity product with routing, open-now filtering, and review scores is out of scope for now.
 - **Read-time ancestry.** Results don't yet include WOF ancestry or a `gers_id` for cross-referencing against other Overture-keyed data. This gap is recorded as debt against the current spec.
-- **Landmarks and transit codes.** The taxonomy lexicon does not cover landmark-name disambiguation or airport and station code resolution. See [Landmark queries](./landmark-queries.mdx) and [Transit queries](./transit-queries.mdx).
+- **Landmarks and transit codes.** The taxonomy lexicon doesn't cover landmark-name disambiguation or airport and station code resolution. See [Landmark queries](./landmark-queries.mdx) and [Transit queries](./transit-queries.mdx).
 - **More locales.** `poi.db` covers the same four countries the parser trains against today. A new locale extends both.
 
 ## See also
 
-- [What is an address?](../the-problem/what-is-an-address.mdx) — the boundary between addresses and POIs
+- [What's an address?](../the-problem/what-is-an-address.mdx) — the boundary between addresses and POIs
 - [Why a neural parser?](../our-approach/why-a-neural-parser.mdx) — the architecture that could handle both
 - [The knowledge ladder](../our-approach/the-knowledge-ladder.mdx) — where query-type classification fits in the pipeline

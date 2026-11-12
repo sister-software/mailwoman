@@ -5,15 +5,23 @@
  *   This streaming pass writes each delineation to `soil_map_unit_area` and the build's touch table.
  *   It can process part of one survey area as a unit of work.
  *
- *   H3's wasm heap cannot be reset from JavaScript. It also cannot sustain unlimited polyfill calls.
- *   Two runs over the flood layer's real product stopped after roughly 510,000 and 798,000 features.
- *   The same geometries classify in milliseconds in a fresh process. A build that completes only when
- *   fragmentation stays low is not reproducible. {@linkcode buildSoilDatabase} bounds each process to a range
- *   of the shapefile's FIDs. Each range gets a separate process with a fresh heap. Iowa's 99 survey areas
- *   contain far more delineations together than each area contains by itself. The bound therefore applies per range.
+ *   H3's wasm heap cannot be reset from JavaScript.
+ *   It also cannot sustain unlimited polyfill calls.
  *
- *   The chunk appends rows to a database created by the parent. The parent seals that database and adds up
- *   the counts returned by each chunk. Chunks run one at a time against the file, so only one writer uses it.
+ *   Two runs over the flood layer's real product stopped after roughly 510,000 and 798,000 features.
+ *   The same geometries classify in milliseconds in a fresh process.
+ *
+ *   A build that completes only when fragmentation stays low isn't reproducible.
+ *   {@linkcode buildSoilDatabase} bounds each process to a range of the shapefile's FIDs.
+ *   Each range gets a separate process with a fresh heap.
+ *
+ *   Iowa's 99 survey areas contain far more delineations together than each area contains by itself.
+ *   The bound therefore applies per range.
+ *
+ *   The chunk appends rows to a database created by the parent.
+ *   The parent seals that database and adds up the counts returned by each chunk.
+ *
+ *   Chunks run one at a time against the file, so only one writer uses it.
  */
 
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"

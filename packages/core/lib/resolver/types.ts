@@ -414,7 +414,7 @@ export interface ResolveOpts {
 	/**
 	 * The landmark layer.
 	 *
-	 * It answers an input that is a place's name with no street or postcode.
+	 * It answers an input that's a place's name with no street or postcode.
 	 */
 	landmarks?: LandmarkLookup
 	/**
@@ -427,7 +427,7 @@ export interface ResolveOpts {
 	 */
 	writtenInput?: string
 	/**
-	 * Returns whether a word is a POI category, so span-rescore does not re-read
+	 * Returns whether a word is a POI category, so span-rescore doesn't re-read
 	 * a venue's last word as a locality.
 	 */
 	isVenueCategoryWord?: (word: string) => boolean

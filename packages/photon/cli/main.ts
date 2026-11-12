@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman-photon` — boot a Photon-compatible autocomplete endpoint via the `serve` command, wiring
- *   `/api` over `geocodeAddress` (parse → resolve) and `/reverse` over `WOFReverseGeocoder` into Photon's
- *   GeoJSON FeatureCollection.
+ *   `mailwoman-photon` — boot a Photon-compatible autocomplete endpoint via the `serve`
+ *   command, wiring `/api` over `geocodeAddress` (parse → resolve) and `/reverse` over
+ *   `WOFReverseGeocoder` into Photon's GeoJSON FeatureCollection.
  */
 
 import { serveNode } from "@mailwoman/api-kit"

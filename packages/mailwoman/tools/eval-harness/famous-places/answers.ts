@@ -4,9 +4,10 @@
 /**
  *   Grades the frozen famous-places test set by the place each row answers.
  *
- *   `score.ts` compares parse labels, and a parse can improve while the answer gets worse, because a label decides
- *   which geocoding path runs. This scorer sends each input through the geocoder and compares the coordinate with the
- *   row's truth point at the row's tolerance.
+ *   `score.ts` compares parse labels, and a parse can improve while the answer gets worse,
+ *   because a label decides which geocoding path runs.
+ *   This scorer sends each input through the geocoder and compares the coordinate
+ *   with the row's truth point at the row's tolerance.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -14,7 +15,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
-import { loadForkEntityDeps } from "#geocode/session"
+import { loadForkEntityDeps } from "#geocode/session/layers"
 import { resolveCandidateDBPath } from "#resolver-backend"
 import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow } from "#tools/eval-harness/famous-places/score"
 import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"

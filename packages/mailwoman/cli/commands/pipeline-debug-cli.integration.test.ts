@@ -5,18 +5,19 @@
  *   CLI integration test for `parse --debug` in the runtime-pipeline default mode.
  *
  *   When `--debug` runs against the pipeline path, the CLI emits a serialized `PipelineResult` —
- *   normalized + queryShape + locale + kind + path + timing + tree. This is the new operator-facing
- *   surface for diagnosing which stage produced which output. The test exercises the JSON shape
- *   without requiring a real model file (the pipeline falls back to the rule-only path when neural
- *   weights are absent + emits a tree from that).
+ *   normalized + queryShape + locale + kind + path + timing + tree.
+ *   This is the new operator-facing surface for diagnosing which stage produced which output.
+ *
+ *   The test exercises the JSON shape without requiring a real model file
+ *   (the pipeline falls back to the rule-only path when neural weights are absent + emits a tree from that).
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { mailwomanCLIPath } from "#metadata"
 
 const cliBin = await mailwomanCLIPath()
@@ -26,7 +27,7 @@ const cliBin = await mailwomanCLIPath()
  * Isolate the JSON payload.
  */
 function extractJSON(stdout: string): unknown {
-	const cleaned = stripAnsi(stdout).trim()
+	const cleaned = stripANSI(stdout).trim()
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")

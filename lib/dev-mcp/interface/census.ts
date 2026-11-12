@@ -4,8 +4,9 @@
 /**
  *   Counts structural violations and duplicate tags in decoded address trees.
  *
- *   An illegal parent edge is a tree-builder defect. A stranded dependent tag is model behavior, so its count
- *   is reported beside the number of rows that produced the tag.
+ *   An illegal parent edge is a tree-builder defect.
+ *   A stranded dependent tag is model behavior, so its count is reported beside
+ *   the number of rows that produced the tag.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

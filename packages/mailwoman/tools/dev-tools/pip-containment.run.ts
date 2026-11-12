@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compare name matching with polygon containment for resolved rows. Containment checks whether each gold coordinate
- *   lies inside the resolved WOF locality, independent of name spelling.
+ *   Compare name matching with polygon containment for resolved rows.
+ *
+ *   Containment checks whether each gold coordinate lies inside the resolved WOF
+ *   locality, independent of name spelling.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"

@@ -1,4 +1,4 @@
-# Arbitration layer (#478 inc 3) — the two-leg check, and why arbitration is not promoted
+# Arbitration layer (#478 inc 3) — the two-leg check, and why arbitration isn't promoted
 
 _2026-06-17. Per-component rule-vs-neural arbitration in the assembled `runPipeline` (default-OFF,
 behind `arbitrate`). The arc, in three acts: (1) the **flatten+rebuild v1** passed the arena
@@ -8,9 +8,9 @@ containment**; (3) the **containment-preserving fix-v1** (edits on the nested ne
 **eliminated the regression** — the coordinate arm now matches neural — **but the arena collapsed to a
 net wash (+21/−21, v0-only unchanged at 56.9%)**. The +122 "win" was entirely label-conformance to v0's
 decomposition, the very thing that wrecked the geocode. Once fix-v1 removed the harm, the result disappeared with it.
-**Verdict: arbitration is not promoted — fix-v1 makes it SAFE but provides no net benefit, while adding
+**Verdict: arbitration isn't promoted — fix-v1 makes it SAFE but provides no net benefit, while adding
 the full v0-parser cost to every parse.** It stays default-OFF. The #566 lesson, twice over: grade the
-assembled COORDINATE output, and a label-match "win" toward the other parser is not a quality win._
+assembled COORDINATE output, and a label-match "win" toward the other parser isn't a quality win._
 
 ## What ran
 
@@ -39,8 +39,8 @@ parse). The run completed all 376 assertions without errors.
 - **The thesis holds.** Per-component arbitration closes the arena's `v0-only` column the way #478
   predicted — the pipeline keeps whichever source is right per component, so it stops scoring below v0
   on the components v0 wins. `v0-only vs ASSEMBLED` moves **56.4% → 27.1%** with arbitration on.
-- **It is not yet ~0.** The residual 102 cases are where, after the router's mode choice + the
-  coherence pass, neither surviving source matched v0. That is the router/config tuning frontier (which
+- **It isn't yet ~0.** The residual 102 cases are where, after the router's mode choice + the
+  coherence pass, neither surviving source matched v0. That's the router/config tuning frontier (which
   tags route to which source per shape) — deferred, and exactly what the per-tag `from-config` overlay
   exists to A/B without code edits.
 - **The −10 is the watch item.** Ten cases the arbitrated pipeline loses vs raw neural are the
@@ -153,12 +153,12 @@ restructure) nets zero on the arena: +21 helpful relabels/adds offset by 21 harm
 
 Fix-v1 is the correct, containment-preserving arbitration and removes the catastrophic regression — but
 it provides **no net benefit**: a no-op on the coordinate product metric, a +21/−21 wash on the arena,
-while every arbitrated parse pays the cost of a full v0 rule-parse. The measured benefit does not
-justify the latency. **Arbitration ships SAFE and default-OFF. It is not promoted.**
+while every arbitrated parse pays the cost of a full v0 rule-parse. The measured benefit doesn't
+justify the latency. **Arbitration ships SAFE and default-OFF. It isn't promoted.**
 
 The durable findings: (1) the `v0-only` arena column conflates "neural is wrong" with "neural is
 _differently right_" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
-model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 is not a quality
+model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 isn't a quality
 change. The implementation + the safe fix-v1 are banked behind the flag, with the check instruments, should a
 weaker model, a new locale, or a per-tag config (where the data shows arbitration nets positive on a
 specific tag) give a reason to measure it again.

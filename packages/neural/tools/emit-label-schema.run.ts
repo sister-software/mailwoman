@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes `data/label-schema.v1.json` from the TypeScript label constants, the semantic tag registry and the committed
- *   address-system registry, and formats it with oxfmt.
+ *   Writes `data/label-schema.v1.json` from the TypeScript label constants, the semantic
+ *   tag registry and the committed address-system registry, and formats it with oxfmt.
  *
- *   With `--check`, the tool only reads the committed file. It exits non-zero when that file's content differs from
- *   the constants.
+ *   With `--check`, the tool only reads the committed file.
+ *   It exits non-zero when that file's content differs from the constants.
  *
  *   Usage: `node packages/neural/tools/emit-label-schema.run.ts [--check]`
  */
@@ -29,7 +29,7 @@ const schema = buildLabelSchema(await readAddressSystemsReference())
 if (values.check) {
 	const committed = await readLocalJSONFile<LabelSchema>(target)
 
-	// Both sides go through one serializer, so oxfmt's layout of the committed file does not affect the comparison.
+	// Both sides go through one serializer, so oxfmt's layout of the committed file doesn't affect the comparison.
 	if (prettyJSON(committed) === prettyJSON(schema)) {
 		console.log(`${target} matches the label constants`)
 	} else {

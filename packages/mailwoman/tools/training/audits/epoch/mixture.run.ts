@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Audits one epoch of a config's source and country mixture as the trainer samples it, prints the mixture with
- *   each source's reps per row, and refuses an epoch below a declared corpus receipt.
+ *   Audits one epoch of a config's source and country mixture as the trainer samples it, prints
+ *   the mixture with each source's reps per row, and refuses an epoch below a declared corpus receipt.
  *
- *   The seed is `train.seed + epoch` and the epoch length `train_rows_per_epoch`, unless `--draws` sets it. The
- *   report is written before a refusal. A config that declares receipts gets `meta.corpus_receipt_binding`, the
- *   digest of the config and manifest bytes the audit read.
+ *   The seed is `train.seed + epoch` and the epoch length `train_rows_per_epoch`, unless `--draws` sets it.
+ *   The report is written before a refusal.
+ *
+ *   A config that declares receipts gets `meta.corpus_receipt_binding`,
+ *   the digest of the config and manifest bytes the audit read.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts --config <yaml> [--json <path>] \

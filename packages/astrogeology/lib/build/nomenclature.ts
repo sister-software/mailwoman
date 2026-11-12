@@ -2,15 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The nomenclature build reads shapefile rows from the pinned archive and converts each with `featureFromSourceRow`.
- *   It writes NDJSON with a per-feature minimum zoom, then runs `tippecanoe` once to create a PMTiles archive.
+ *   The nomenclature build reads shapefile rows from the pinned archive
+ *   and converts each with `featureFromSourceRow`.
  *
- *   The row reader reads attributes rather than geometry. The shapefile CRS belongs to the body (`GCS_Moon_2000`,
- *   `GCS_Mars_2000`). proj cannot transform it to WGS84, but the GeoJSON writer requires WGS84 output. The transport
- *   therefore declares WGS84 as both source and destination so the writer copies the numbers unchanged. That label
- *   applies only to transport. The build reads `center_lon` and `center_lat`.
+ *   It writes NDJSON with a per-feature minimum zoom, then runs `tippecanoe`
+ *   once to create a PMTiles archive.
+ *
+ *   The row reader reads attributes rather than geometry.
+ *   The shapefile CRS belongs to the body (`GCS_Moon_2000`, `GCS_Mars_2000`). proj cannot
+ *   transform it to WGS84, but the GeoJSON writer requires WGS84 output.
+ *
+ *   The transport therefore declares WGS84 as both source and destination
+ *   so the writer copies the numbers unchanged.
+ *   That label applies only to transport.
+ *
+ *   The build reads `center_lon` and `center_lat`.
  *   It also reads the bounding box in the source convention.
- *   The manifest records that convention. `normalize.ts` converts the values.
+ *
+ *   The manifest records that convention.
+ *   `normalize.ts` converts the values.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

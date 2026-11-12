@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   In-memory fixture implementation of the authoritative-provider interface — synthetic addresses, synthetic
- *   identifiers, zero network — shipped beside the interface the way `@mailwoman/core/api/test-clocks` ships
- *   beside `APIClient`, so every consumer package exercises the boundary against the same reference
+ *   In-memory fixture implementation of the authoritative-provider interface —
+ *   synthetic addresses, synthetic identifiers, zero network — shipped beside the
+ *   interface the way `@mailwoman/core/api/test-clocks` ships beside `APIClient`,
+ *   so every consumer package exercises the boundary against the same reference
  *   implementation instead of hand-rolled mocks that drift.
  *
- *   The fixture matches on the query's normalized form or a declared component value, deliberately simple
- *   string keys because it tests how provider answers pass through result surfaces rather than
- *   matching quality. No fixture row may contain licensed data. Synthetic UPRN-shaped identifiers use the
- *   reserved 0-prefix range no real uprn occupies.
+ *   The fixture matches on the query's normalized form or a declared component value,
+ *   deliberately simple string keys because it tests how provider answers pass
+ *   through result surfaces rather than matching quality.
+ *   No fixture row may contain licensed data.
+ *
+ *   Synthetic UPRN-shaped identifiers use the reserved 0-prefix range no real uprn occupies.
  */
 
 import {

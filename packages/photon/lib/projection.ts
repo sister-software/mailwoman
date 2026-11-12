@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The resolved-place → Photon-schema projection: decorating a resolved gazetteer place (proper-
- *   cased names, ancestry, country, house and street grade overrides) into {@link PhotonProperties},
- *   plus the `format=jsonld` schema.org re-serialization.
+ *   The resolved-place → Photon-schema projection: decorating a resolved gazetteer place
+ *   (proper- cased names, ancestry, country, house and street grade overrides) into
+ *   {@link PhotonProperties}, plus the `format=jsonld` schema.org re-serialization.
  */
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"

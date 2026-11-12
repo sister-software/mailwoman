@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   ArcGIS REST services return errors with HTTP 200 as a JSON `error` envelope. Layer products pass every ArcGIS
- *   JSON body through {@link assertNoArcGISError} before reading fields, so an error is not read as an empty layer.
+ *   ArcGIS REST services return errors with HTTP 200 as a JSON `error` envelope.
+ *
+ *   Layer products pass every ArcGIS JSON body through {@link assertNoArcGISError}
+ *   before reading fields, so an error isn't read as an empty layer.
  */
 
 /**

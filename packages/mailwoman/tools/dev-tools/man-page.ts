@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate `man/mailwoman.1` from the CLI's own help tree. The command descriptions already live once, in each
- *   command module — a hand-written man page would be a second copy of every sentence, stale by the first help edit, so
- *   this derives the page instead: root help supplies name/synopsis/commands, each user-facing command's `--help`
- *   supplies its own section. npm links `package.json#man` on a global install.
+ *   Generate `man/mailwoman.1` from the CLI's own help tree.
+ *
+ *   The command descriptions already live once, in each command module — a hand-written man page
+ *   would be a second copy of every sentence, stale by the first help edit, so this derives
+ *   the page instead: root help supplies name/synopsis/commands, each user-facing command's
+ *   `--help` supplies its own section. npm links `package.json#man` on a global install.
  *   That link makes `man mailwoman` answer.
  *
- *   Committed-artifact discipline: the page is generated into the tree and committed (the freshness test
- *   `man-page.integration.test.ts` re-renders and fails on drift), matching the committed sentencepiece-wasm build — consumers
- *   get the artifact, CI proves it fresh.
+ *   Committed-artifact discipline: the page is generated into the tree and committed
+ *   (the freshness test `man-page.integration.test.ts` re-renders and fails on drift), matching
+ *   the committed sentencepiece-wasm build — consumers get the artifact, CI proves it fresh.
  *
- *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the compiled CLI, the same binary consumers
- *   run).
+ *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the
+ *   compiled CLI, the same binary consumers run).
  */
 
 import { makeDirectories, toLinesText, writeLocalFile } from "@mailwoman/core/fs/writers"

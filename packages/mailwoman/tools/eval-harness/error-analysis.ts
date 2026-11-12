@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Error analysis framework for the neural address parser. Runs the model against the golden eval
- *   set and produces a categorized failure report.
+ *   Error analysis framework for the neural address parser.
+ *
+ *   Runs the model against the golden eval set and produces a categorized failure report.
  *
  *   Categories:
  *
@@ -14,13 +15,14 @@
  *   5. Structural violations, the illegal BIO transitions (I after O)
  *
  *   This is the pre-publish 2pp promote eval: run the full per-tag error analysis and compare against
- *   the current default release, then abort the upload if any tag regresses by more than 2pp. It
- *   therefore builds the classifier via the canonical `createScorer` in strict mode, so the model is
- *   fed the full ship-config it was trained against (anchor, gazetteer and conventions).
+ *   the current default release, then abort the upload if any tag regresses by more than 2pp.
+ *   It therefore builds the classifier via the canonical `createScorer` in strict mode, so the
+ *   model is fed the full ship-config it was trained against (anchor, gazetteer and conventions).
+ *
  *   The model card's `requires` block specifies these channels.
  *   A candidate is graded against that configuration.
- *   `--no-strict`
- *   warns-and-continues for ad-hoc or legacy pre-anchor models instead of failing closed.
+ *
+ *   `--no-strict` warns-and-continues for ad-hoc or legacy pre-anchor models instead of failing closed.
  *
  *   Usage: mailwoman eval error-analysis\
  *   --golden data/eval/golden/v0.1.2 Grade a candidate: ... --model ./out/v.../model.onnx --tokenizer
@@ -99,7 +101,7 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 				entries.push(entry)
 			}
 		} catch {
-			// A missing golden file is not an error.
+			// A missing golden file isn't an error.
 		}
 	}
 

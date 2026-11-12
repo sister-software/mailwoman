@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The half of a move that is not a module specifier: the `exports`/`imports` targets naming the file.
+ * @file The half of a move that's not a module specifier: the `exports`/`imports` targets naming the file.
  *
  * A subpath key is an interface and stays exactly as written, while the target is a path that must be rewritten so a
  * file can move without a consumer noticing.

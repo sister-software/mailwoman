@@ -53,11 +53,7 @@ const MAGIC = Buffer.from(FST_MAGIC_BYTES)
  */
 const MAX_CHAIN_LEN = 8
 
-const placetypeToIdx = new Map<string, number>()
-
-for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
-	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
-}
+const placetypeToIdx = new Map<string, number>(PLACETYPE_ORDER.map((placetype, index) => [placetype, index]))
 
 /**
  * Serializes a matcher, with optional provenance, into the current FST binary format.
@@ -303,7 +299,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 
-			// Files before version 5 have no encyclopedic score, so their reserved byte is not read as a flag.
+			// Files before version 5 have no encyclopedic score, so their reserved byte isn't read as a flag.
 			const hasEncyclopedic =
 				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 

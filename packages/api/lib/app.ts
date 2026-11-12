@@ -96,7 +96,7 @@ export function createMailwomanAPI(engine: MailwomanAPIEngine, options: Mailwoma
 
 	app.onError((error, c) => {
 		// Hono rejects malformed JSON before the validation hook runs.
-		// That is a client error.
+		// That's a client error.
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
 			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}

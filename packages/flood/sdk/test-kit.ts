@@ -2,20 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/flood/test-kit` provides hand-built geometry for fixtures. It includes a square zone polygon,
- *   It includes a square zone polygon plus a polygon in an adjacent zone. Another polygon has a hole.
+ *   `@mailwoman/flood/test-kit` provides hand-built geometry for fixtures.
+ *
+ *   It includes a square zone polygon, It includes a square zone polygon plus a polygon in an adjacent zone.
+ *   Another polygon has a hole.
+ *
  *   A mapped-extent rectangle exceeds the cells the polygons reach.
  *
  *   This module uses a package subpath rather than a `test/` file, like `packages/mailwoman/lib/test-kit`.
- *   The observation route's suite lives in another workspace. TypeScript rejects a relative import across projects
- *   with `TS2878` because the compiled layout does not match the source layout.
+ *   The observation route's suite lives in another workspace.
  *
- *   The fixture uses no network or GDAL. The builder accepts a {@linkcode FloodFeatureSource}, so fixtures can supply
- *   feature lists. This lets every machine exercise the vocabulary checks and cell classification.
- *   It also exercises coverage rows and manifest generation. It exercises sealing without `ogr2ogr`.
+ *   TypeScript rejects a relative import across projects with `TS2878`
+ *   because the compiled layout doesn't match the source layout.
  *
- *   The coordinates deliberately fall over England. The extent rectangle sits in the North Sea off Great Yarmouth,
- *   where no real EA polygon interferes. It remains inside the declared ingest extent and uses the product's coordinate space.
+ *   The fixture uses no network or GDAL.
+ *   The builder accepts a {@linkcode FloodFeatureSource}, so fixtures can supply feature lists.
+ *
+ *   This lets every machine exercise the vocabulary checks and cell classification.
+ *   It also exercises coverage rows and manifest generation.
+ *   It exercises sealing without `ogr2ogr`.
+ *
+ *   The coordinates deliberately fall over England.
+ *   The extent rectangle sits in the North Sea off Great Yarmouth, where no real EA polygon interferes.
+ *
+ *   It remains inside the declared ingest extent and uses the product's coordinate space.
  */
 
 // The exterior and hole ring builders live in `@mailwoman/spatial`.

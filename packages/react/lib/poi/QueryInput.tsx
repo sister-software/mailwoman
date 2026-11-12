@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `QueryInput` — the labeled text field for the POI explorer. Controlled. presentational only.
+ *   `QueryInput` — the labeled text field for the POI explorer.
+ *   Controlled. presentational only.
  */
 
 import type { ReactNode } from "react"

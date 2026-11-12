@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Refinement-monotonicity suite rows and their audit. The law itself is evaluated in `candidate-admissibility.ts`.
+ *   Refinement-monotonicity suite rows and their audit.
  *
- *   Each row's `variant` is the finer query. A listed coarsening step derives its `base`. Rows that share a
- *   `rowRef` must form one chain whose finest query is the committed corpus row.
+ *   The law itself is evaluated in `candidate-admissibility.ts`.
+ *
+ *   Each row's `variant` is the finer query.
+ *   A listed coarsening step derives its `base`.
+ *
+ *   Rows that share a `rowRef` must form one chain whose finest query is the committed corpus row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,7 +34,7 @@ export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
  * - `drop-trailing-segment` removes the last comma-separated segment.
  *   That segment represents the coarsest admin area when present.
  * - `drop-leading-numeric-token` removes the first whitespace-separated token when it contains a digit.
- *   It reaches a postcode or house number that a comma does not separate, as in DE
+ *   It reaches a postcode or house number that a comma doesn't separate, as in DE
  *   and FR addresses that write the postcode before the locality.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coverage funnel that reads every source-register jurisdiction at each coverage stage, with the register supplying the denominator so jurisdictions missing from the census still appear.
+ *   Coverage funnel that reads every source-register jurisdiction at each coverage stage,
+ *   with the register supplying the denominator so jurisdictions missing from the census still appear.
  */
 
 import { LicenseReviewState } from "@mailwoman/core/license/decision"

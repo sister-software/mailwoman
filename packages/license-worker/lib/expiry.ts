@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The expiry date of a token, decided by the intent that issued it. An evaluation lasts thirty days. An academic or
- *   student token lasts a year. An open-source or non-profit declaration expires on the quarter lead date nearest to
- *   its issue date plus four months, so a token lives between eleven and twenty-four weeks and every expiry falls
- *   three weeks before a calendar quarter starts. A commercial token's expiry is its billing period, decided where
- *   the paid invoice becomes a token.
+ *   The expiry date of a token, decided by the intent that issued it.
+ *
+ *   An evaluation lasts thirty days.
+ *   An academic or student token lasts a year.
+ *
+ *   An open-source or non-profit declaration expires on the quarter lead date nearest to
+ *   its issue date plus four months, so a token lives between eleven and twenty-four weeks
+ *   and every expiry falls three weeks before a calendar quarter starts.
+ *   A commercial token's expiry is its billing period, decided where the paid invoice becomes a token.
  */
 
 import type { LicenseIntent } from "@mailwoman/core/license/key"

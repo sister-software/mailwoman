@@ -25,7 +25,7 @@ Pre-registered before the first import as §4 of
 - Results reported per `truth_type` stratum, never blended silently. Every row in this record is the
   `rooftop` stratum. The next section lists the withheld strata.
 
-## What is published, and what is withheld
+## What's published, and what's withheld
 
 The full internal panel is 420 rows across seven lanes, 60 per lane, each row carrying a reference
 coordinate assigned before any arm ran. Reference-coordinate provenance is per row rather than per lane, and
@@ -40,18 +40,18 @@ it splits four ways:
 
 Rows whose reference coordinates derive from licensed sources are withheld. Rows whose reference
 coordinate came from the project's own gazetteer are withheld because grading an engine against its
-own data source is not an independent measurement (an independent re-source of those 25 city-only
+own data source isn't an independent measurement (an independent re-source of those 25 city-only
 coordinates on 2026-08-17 confirmed all of them within each row's pre-assigned tolerance, but the
 scores below were produced against the original coordinates, so the rows stay out). The internally
 curated cases are withheld because their coordinates do not trace to a register.
 
 The **en-gb lane is withheld in full**: two of its rows have licensed-source reference coordinates,
-and the lane's reference set is under separate review. Its open-register remainder is not printed
+and the lane's reference set is under separate review. Its open-register remainder isn't printed
 here.
 
 What remains is **297 rows across six lanes**, all `rooftop` truth, published in full — the per-lane
 denominators below state the count of each lane's 60 rows that survived the provenance filter. The
-internal 420-row aggregate is not restated here, because part of its reference set cannot be
+internal 420-row aggregate isn't restated here, because part of its reference set cannot be
 published. This record's numbers are computed only over rows whose truth a third party can check.
 
 ## The three arms
@@ -65,7 +65,7 @@ published. This record's numbers are computed only over rows whose truth a third
 The footprints are deliberately different, and the comparison is behavioral rather than
 index-for-index: Photon answers from an OSM planet index. Pelias and Mailwoman answer from local
 builds scoped to the panel countries. This helps Photon wherever OSM has the address and hurts it
-wherever OSM does not. This record states the difference rather than correcting for it.
+wherever OSM doesn't. This record states the difference rather than correcting for it.
 
 One arm-configuration caveat: Mailwoman's `eu-mixed` rows ran under the production default `en-US`
 locale (no EU-mixed weights package exists), so that lane measures the unconstrained fallback path rather than a locale-tuned configuration.
@@ -160,7 +160,7 @@ The §4 pre-registration set a ±5 pp equivalence bound at 25 km on this differe
 | pooled | 297 | 25 km     |            +4.7 pp | [+2.0, +7.4] |
 
 At 1 km the CI excludes zero in Pelias's favor. At 5 km and 25 km it excludes zero in Mailwoman's
-favor. The pre-registered ±5 pp equivalence claim at 25 km is **not** met — the CI extends past
+favor. The pre-registered ±5 pp equivalence claim at 25 km **isn't** met — the CI extends past
 +5 pp — so the 25 km result reads as a directional difference in Mailwoman's favor rather than as
 equivalence. Per-lane CIs are wide at these denominators (run the scorer for the full table); the
 only per-lane differences whose CIs exclude zero are en-nz (Mailwoman +24.6 pp, all thresholds) and
@@ -184,7 +184,7 @@ should be read with that in view:
 
 So the summary sentence is narrow: on register-rooftop queries in these six lanes, all three
 engines are in the same band at 1 km pooled (85.9–91.9%), with Pelias ahead. Mailwoman degrades least beyond
-1 km (96.3% at 5 km, 99.3% at 25 km, one no-result in 297 rows). That is its designed behavior:
+1 km (96.3% at 5 km, 99.3% at 25 km, one no-result in 297 rows). That's its designed behavior:
 resolve to the right place at some tier rather than return no result.
 
 ## Truth sources and attribution

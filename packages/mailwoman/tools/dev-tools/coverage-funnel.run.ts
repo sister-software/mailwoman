@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Prints the coverage funnel for every jurisdiction in the source register, where a stage reads `unknown`
  * when a checkout cannot answer it — a statement about the checkout rather than the jurisdiction.
@@ -142,7 +145,7 @@ console.log(
 )
 
 // The union across shipped graphs prints beside the single-config `admitted` stage
-// so an in-flight config is not mistaken for a released model.
+// so an in-flight config isn't mistaken for a released model.
 const shippedAdmitted = await admittedByShippedGraphs(scope)
 const shippedByFamily = new Map<string, number>()
 

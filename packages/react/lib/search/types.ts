@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The record the docs build indexes and the response the search modal renders. The modal and the
- *   query code share these through `import type`.
+ *   The record the docs build indexes and the response the search modal renders.
+ *
+ *   The modal and the query code share these through `import type`.
  */
 
 /**
@@ -23,7 +24,7 @@ export interface SearchRecord {
 	 */
 	id: string
 	/**
-	 * Site-relative path without the anchor, such as `/docs/developers/reference/cli`.
+	 * Site-relative path without the anchor, such as `/docs/reference/cli`.
 	 */
 	url: string
 	/**

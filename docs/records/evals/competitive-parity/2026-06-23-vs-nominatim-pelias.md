@@ -30,8 +30,8 @@ Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/l
 
 ## What's real and what's confounded (verify-before-verdict)
 
-- **The loss is not a resolver-config handicap.** mailwoman is ~44% on the trailing locales across all three resolver configs — admin-only, admin + `postcode-locality-intl`, and the **demo's actual candidate gazetteer** (`candidate-global-20h`). The resolver isn't the cause.
-- **Our internal "resolve-rate" metric OVERSTATES by ~15–22 pp.** Internal panel: PL resolve 62%, CZ 52%, AU 53%. direct @25 km right-place: PL 42%, CZ 28–33%, AU 32–38%. The gap = resolves that land **>25 km** (region-level fallback / wrong same-name place) — counted as success by resolve-rate, as a miss by right-place. **We have been grading ourselves on a lenient metric.** (mailwoman's centroid is not the issue — p50 1.8 km, well inside 25 km; @25 km forgives it.)
+- **The loss isn't a resolver-config handicap.** mailwoman is ~44% on the trailing locales across all three resolver configs — admin-only, admin + `postcode-locality-intl`, and the **demo's actual candidate gazetteer** (`candidate-global-20h`). The resolver isn't the cause.
+- **Our internal "resolve-rate" metric OVERSTATES by ~15–22 pp.** Internal panel: PL resolve 62%, CZ 52%, AU 53%. direct @25 km right-place: PL 42%, CZ 28–33%, AU 32–38%. The gap = resolves that land **>25 km** (region-level fallback / wrong same-name place) — counted as success by resolve-rate, as a miss by right-place. **We've been grading ourselves on a lenient metric.** (mailwoman's centroid isn't the issue — p50 1.8 km, well inside 25 km; @25 km forgives it.)
 - **The test set favors Pelias.** OpenAddresses is one of Pelias's INDEXED sources — its 81% / p50 0.0 km is partly recall-of-its-own-data rather than generalization (home-field advantage). Nominatim (OSM) overlaps less. mailwoman trained on a disjoint held-out split.
 - **The measured mailwoman gap is coverage/recall:** ~27% no-result aggregate (worse on EU non-IT) vs Pelias ~1% / Nominatim ~20%. It fails to return a usable coordinate for a quarter of these addresses.
 
@@ -62,7 +62,7 @@ Real messy takeaway: **mailwoman degrades gracefully (−10pp); Nominatim's free
 | mailwoman | 150 |  18% |  67% | **99%** |    3.2 km |    **0%** |
 | nominatim | 150 |  82% |  83% |     84% |    0.0 km |       16% |
 
-**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses. Nominatim (OSM) does not index OpenAddresses wholesale. Therefore, this is actual coverage superiority rather than data overlap.
+**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses. Nominatim (OSM) doesn't index OpenAddresses wholesale. Therefore, this is actual coverage superiority rather than data overlap.
 
 ## direct verdict
 

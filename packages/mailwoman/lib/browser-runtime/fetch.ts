@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fetch the browser runtime loads its artifacts through: a reset late in a download rejects the body read
- *   rather than the `fetch()` call, so the body is buffered inside the retry. An HTTP status is never retried
- *   because a 404 is an answer the loaders interpret. An attempt that receives no bytes for `STALL_TIMEOUT_MS` is
- *   aborted and retried, because a connection that goes silent without closing never rejects on its own.
+ *   The fetch the browser runtime loads its artifacts through: a reset late in a download rejects
+ *   the body read rather than the `fetch()` call, so the body is buffered inside the retry.
+ *
+ *   An HTTP status is never retried because a 404 is an answer the loaders interpret.
+ *   An attempt that receives no bytes for `STALL_TIMEOUT_MS` is aborted and retried,
+ *   because a connection that goes silent without closing never rejects on its own.
  */
 
 import { startEarly } from "@mailwoman/core/promises"
@@ -81,7 +83,7 @@ async function fetchComplete(
 			headers: response.headers,
 		})
 	} catch (error) {
-		// A browser rejects an aborted read with the abort reason, but the platform does not guarantee it.
+		// A browser rejects an aborted read with the abort reason, but the platform doesn't guarantee it.
 		throw stall.signal.aborted ? stall.signal.reason : error
 	} finally {
 		clearTimeout(timer)
@@ -202,7 +204,7 @@ function requestURL(input: Parameters<typeof fetch>[0]): string {
  * Any other request goes to `fetchImpl` unchanged, a repeat request included.
  *
  * A failed prefetch rejects, with its own error, at the request that reads it.
- * It is not unhandled before then.
+ * It isn't unhandled before then.
  */
 export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[]): typeof fetch {
 	const started = new Map<string, Promise<Response>>()

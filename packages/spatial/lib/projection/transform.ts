@@ -5,27 +5,43 @@ import { runFile } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
 /**
- *   Ask PROJ which datum transformation it would choose. Refuse a ballpark operation.
+ *   Ask PROJ which datum transformation it would choose.
+ *   Refuse a ballpark operation.
  *
- *   PROJ silently substitutes a ballpark datum shift when the accurate grid is absent. On the EA flood product,
- *   `ogr2ogr` placed the first feature's first vertex at `1.698151293, 52.648130027` without the OSGB36→WGS84 grid.
- *   With `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present, it placed the vertex at `1.698174628, 52.648157259`, a distance
- *   of 3.4 m. Both coordinates look like ordinary WGS84 values and pass a bounding-box check. The layer is offset.
- *   The check found eight disagreements among 59 points against the authority's OGC service. Each point fell into a
- *   neighboring sliver.
+ *   PROJ silently substitutes a ballpark datum shift when the accurate grid is absent.
+ *   On the EA flood product, `ogr2ogr` placed the first feature's first vertex at
+ *   `1.698151293, 52.648130027` without the OSGB36→WGS84 grid.
  *
- *   GDAL 3.8 does not pass `--config PROJ_NETWORK on` through to PROJ. Tests also showed that `PROJ_ONLY_BEST=on`
- *   does not refuse a ballpark shift. `projinfo` provides the usable check. Its output identifies the best candidate
- *   operation and reports a missing grid.
+ *   With `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present, it placed the vertex at
+ *   `1.698174628, 52.648157259`, a distance of 3.4 m.
+ *   Both coordinates look like ordinary WGS84 values and pass a bounding-box check.
  *
- *   The check runs even when a source needs no transformation. A source already in EPSG:4326 returns
- *   `Null geographic offset from WGS 84 to WGS 84, 0 m, World.` This operation is usable. The check costs one process.
+ *   The layer is offset.
+ *   The check found eight disagreements among 59 points against the authority's OGC service.
+ *   Each point fell into a neighboring sliver.
+ *
+ *   GDAL 3.8 doesn't pass `--config PROJ_NETWORK on` through to PROJ.
+ *   Tests also showed that `PROJ_ONLY_BEST=on` doesn't refuse a ballpark shift.
+ *
+ *   `projinfo` provides the usable check.
+ *   Its output identifies the best candidate operation and reports a missing grid.
+ *
+ *   The check runs even when a source needs no transformation.
+ *   A source already in EPSG:4326 returns `Null geographic offset from WGS 84 to WGS 84, 0 m, World.`
+ *
+ *   This operation is usable.
+ *   The check costs one process.
+ *
  *   A skipped case would leave a later source's required grid unchecked.
  *
- *   Every vector ingest shares this check because the failure comes from PROJ rather than from a particular product.
- *   Output parsing is separate from process execution so tests can use captured output. The two output states came from the
- *   same command on the same machine before and after grid installation. One produced a meter-accurate layer. The
- *   other produced a 3 m offset.
+ *   Every vector ingest shares this check because the failure comes from PROJ
+ *   rather than from a particular product.
+ *   Output parsing is separate from process execution so tests can use captured output.
+ *
+ *   The two output states came from the same command on the same machine before
+ *   and after grid installation.
+ *   One produced a meter-accurate layer.
+ *   The other produced a 3 m offset.
  */
 
 /**
@@ -86,8 +102,8 @@ export interface AssertDatumTransformationOptions {
 /**
  * Refuse an ingest whose best available datum transformation is a ballpark one, or is missing its grid.
  *
- * @throws {Error} When proj names no candidate, would use a ballpark offset,
- * or would use an operation whose grid is not installed.
+ * @throws {Error} When proj identifies no candidate, would use a ballpark offset,
+ * or would use an operation whose grid isn't installed.
  */
 export async function assertDatumTransformationAvailable(
 	sourceEPSG: number,

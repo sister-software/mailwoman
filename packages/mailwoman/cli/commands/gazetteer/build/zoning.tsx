@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build zoning` — acquire Ireland's Generalised Zoning Types and build the sealed
- *   `zoning-ireland.db` layer. Thin wiring only: item read → download → build → verify all live in
- *   `@mailwoman/zoning/sdk`.
+ *   `mailwoman gazetteer build zoning` — acquire Ireland's Generalised Zoning Types
+ *   and build the sealed `zoning-ireland.db` layer.
  *
- *   The artifact is built locally and never shipped: three published statements disagree about the source's
- *   license. The manifest records `tier: build-local` and `license: noassertion`. The SDK refuses a
- *   `shipped` tier while that holds.
+ *   Thin wiring only: item read → download → build → verify all live in `@mailwoman/zoning/sdk`.
  *
- *   `--measure-resolutions` measures without building. The index resolution is a measurement this layer takes
- *   rather than a number argued to.
+ *   The artifact is built locally and never shipped: three published statements
+ *   disagree about the source's license.
+ *   The manifest records `tier: build-local` and `license: noassertion`.
+ *   The SDK refuses a `shipped` tier while that holds.
+ *
+ *   `--measure-resolutions` measures without building.
+ *   The index resolution is a measurement this layer takes rather than a number argued to.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
@@ -127,8 +129,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				)
 			}
 
-			// The export URL is read from the Hub job rather than assembled from the item id, because
-			// a hard-coded URL would survive a republish pointing at a file that is no longer the product.
+			// The export URL is read from the Hub job rather than assembled from the item id, because a
+			// hard-coded URL would survive a republish pointing at a file that's no longer the product.
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,

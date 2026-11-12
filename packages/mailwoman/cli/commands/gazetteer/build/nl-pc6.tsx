@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build nl-pc6`: the NL full-postcode (PC6) database (tier 2) from the CBS
- *   Postcode6 centroid CSV (CC-BY 4.0). Sealed 0444. The pipeline module is lazy-imported so `--help`
- *   never faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
+ *   `mailwoman gazetteer build nl-pc6`: the NL full-postcode (PC6) database (tier 2)
+ *   from the CBS Postcode6 centroid CSV (CC-BY 4.0).
+ *
+ *   Sealed 0444.
+ *   The pipeline module is lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

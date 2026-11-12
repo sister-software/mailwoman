@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parses rows with one model on a pool of worker threads and writes one `{id, spans}` line per row. The file is
- *   written beside its destination and moved into place once every row is parsed, so an interrupted run leaves no
- *   partial parse file under the cached name.
+ *   Parses rows with one model on a pool of worker threads and writes one `{id, spans}` line per row.
+ *
+ *   The file is written beside its destination and moved into place once every row is parsed,
+ *   so an interrupted run leaves no partial parse file under the cached name.
  */
 
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
@@ -26,6 +27,13 @@ export interface BatteryParseOptions {
 	 * ONNX intra-op threads per worker.
 	 */
 	threads: number
+	/**
+	 * Whether each row's country is passed to the classifier as its locale hint (`row-country`)
+	 * or no hint is passed (`none`, as the runtime pipeline parses).
+	 *
+	 * @defaultValue `"row-country"`
+	 */
+	localeHint?: "row-country" | "none"
 }
 
 /**
@@ -71,14 +79,18 @@ export async function parseRowsWithWorkers(
 	let done = 0
 
 	console.error(
-		`${rows.length} rows, ${options.workers} workers × ${options.threads} ONNX threads, ${options.cacheRoot}`
+		`${rows.length} rows, ${options.workers} workers × ${options.threads} ONNX threads, locale hint ${options.localeHint ?? "row-country"}, ${options.cacheRoot}`
 	)
 
 	for await (const result of parallelMapWorkers<ParseRow, { id: string; spans: BatterySpan[] }>(rows, {
 		worker: PARSE_WORKER_URL,
 		concurrency: options.workers,
 		batchSize: 32,
-		workerData: { cacheRoot: options.cacheRoot, intraOpNumThreads: options.threads },
+		workerData: {
+			cacheRoot: options.cacheRoot,
+			intraOpNumThreads: options.threads,
+			localeHint: options.localeHint ?? "row-country",
+		},
 	})) {
 		out.write(`${stringifyJSON(result)}\n`)
 

@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compute the country–shape retention table of a built corpus (HOLDOUT_AND_EVALUATION
- *   section 5.1) and write it as a `split-retention` artifact beside the manifest.
+ *   Compute the country–shape retention table of a built corpus (HOLDOUT_AND_EVALUATION section 5.1)
+ *   and write it as a `split-retention` artifact beside the manifest.
  *
  *   Supply is measured under the corpus's recorded split assignments: each file's
  *   split-attribute JSON lists its val and test `source_id`s, and the remainder is train.
- *   When a combination's independent training groups (`coalesce(base_source_id, source_id)`
- *   at record granularity) fall below `--floor`, the combination joins the artifact's
- *   retention list. The next split with this artifact keeps every one of its rows in
- *   training.
+ *   When a combination's independent training groups (`coalesce(base_source_id, source_id)` at
+ *   record granularity) fall below `--floor`, the combination joins the artifact's retention list.
+ *
+ *   The next split with this artifact keeps every one of its rows in training.
  *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/corpus/shape/retention.run.ts --manifest <MANIFEST.json> --floor 10 --out <SPLIT_RETENTION.json>

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The strict alpha-3 country-code predicate over the `iso3166-1-alpha3-membership` bitset. An import of it retains
- *   that 2,197-byte bitset and the reader, and no name, airport or record.
+ *   The strict alpha-3 country-code predicate over the `iso3166-1-alpha3-membership` bitset.
+ *
+ *   An import of it retains that 2,197-byte bitset and the reader, and no name, airport or record.
  */
 
 import { iso31661Alpha3MembershipArtifact } from "#artifacts/iso3166-1/alpha3-membership"
@@ -30,7 +31,7 @@ export function alpha3Membership(): BitsetView {
  * `AUS` is one.
  * `aus` and `AU` are not.
  *
- * A former code such as `DDR` is not: the records artifact still describes it.
+ * A former code such as `DDR` isn't: the records artifact still describes it.
  */
 export function isCountryCodeAlpha3(input: string): input is ISO.CountryCode_3166_1_Alpha3 {
 	return alpha3Membership().test(encode3(input))

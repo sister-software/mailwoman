@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/nuts-lookup` — EU coordinate → nuts statistical-region codes (levels 1–3). Point-in-
- *   polygon over the Eurostat gisco nuts boundaries in a `node:sqlite` table. nuts ids nest by
- *   prefix (`DE` → `DE1` → `DE11` → `DE111`), so we find the deepest containing region and derive
- *   its parents. An `@mailwoman/annotations` `Annotator`.
+ *   `@mailwoman/nuts-lookup` — EU coordinate → nuts statistical-region codes (levels 1–3).
+ *
+ *   Point-in- polygon over the Eurostat gisco nuts boundaries in a `node:sqlite`
+ *   table. nuts ids nest by prefix (`DE` → `DE1` → `DE11` → `DE111`), so we find
+ *   the deepest containing region and derive its parents.
+ *   An `@mailwoman/annotations` `Annotator`.
  */
 
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"

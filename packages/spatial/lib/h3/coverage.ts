@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The coverage probe every polygon layer's reader repeats: an index cell's parent at the coverage
- *   resolution, read through the layer interface's shared row mapping.
+ *   The coverage probe every polygon layer's reader repeats: an index cell's parent at
+ *   the coverage resolution, read through the layer interface's shared row mapping.
  *
- *   Not exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`, and the
- *   barrel serves browser bundles that must not include the layer interface's Kysely graph. Import it from the
- *   `@mailwoman/spatial/h3/coverage` subpath.
+ *   Not exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`,
+ *   and the barrel serves browser bundles that mustn't include the layer interface's Kysely graph.
+ *   Import it from the `@mailwoman/spatial/h3/coverage` subpath.
  */
 
 import { toCoverageCell, type CoverageCell, type CoverageRow } from "@mailwoman/core/layers"

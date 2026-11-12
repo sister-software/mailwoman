@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys travel as
- *   PEM: PKCS8 for the private half and spki for the public half. The PEM codec is a base64 transform of the DER bytes
- *   the WebCrypto API imports and exports.
+ *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share.
  *
- *   Ed25519 signing is deterministic, so a WebCrypto signature over the same key and bytes equals `node:crypto`'s byte
- *   for byte.
+ *   Keys travel as PEM: PKCS8 for the private half and spki for the public half.
+ *   The PEM codec is a base64 transform of the DER bytes the WebCrypto API imports and exports.
+ *
+ *   Ed25519 signing is deterministic, so a WebCrypto signature over the same key
+ *   and bytes equals `node:crypto`'s byte for byte.
  */
 
 import { fromBase64URL, toBase64URL } from "#crypto/base64url"
@@ -104,7 +105,7 @@ export async function signEd25519(
 /**
  * Answers `false` for a bad signature and never throws on one.
  *
- * A malformed KEY still throws, because that is a caller error rather than an untrusted input.
+ * A malformed KEY still throws, because that's a caller error rather than an untrusted input.
  */
 export async function verifyEd25519(
 	data: Uint8Array<ArrayBuffer>,

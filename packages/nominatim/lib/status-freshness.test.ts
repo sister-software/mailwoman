@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `/status` over the real freshness reader, the boundary between the artifacts on disk and the
- *   wire.
+ *   `/status` over the real freshness reader, the boundary between the artifacts on disk and the wire.
  *
- *   The reader's own states are covered next door in `mailwoman`'s `freshness.test.ts`. What is
- *   The test checks that `data_updated` is omitted when no artifact has a build date.
+ *   The reader's own states are covered next door in `mailwoman`'s `freshness.test.ts`.
+ *   What's The test checks that `data_updated` is omitted when no artifact has a build date.
+ *
  *   The endpoint still lists artifacts that have a build date.
  *   A response that uses boot time would look like a dated deployment to every client.
  *   The endpoint exists to let clients distinguish those cases.

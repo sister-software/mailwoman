@@ -2,23 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map. The demo
- *   draws the WOF rectangle (`place_bbox`) today. This packs the real admin geometry — simplified — so
- *   the demo can draw an actual boundary, loaded lazily only when a result is shown.
+ *   `mailwoman gazetteer polygons` — build the crisp-polygon sibling for the demo's map.
+ *
+ *   The demo draws the WOF rectangle (`place_bbox`) today.
+ *   This packs the real admin geometry — simplified — so the demo can draw an actual
+ *   boundary, loaded lazily only when a result is shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
- *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database path is
- *   the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only admin placetypes
- *   contain polygons. Postcodes resolve to a point marker and are skipped. In-scope ids are pulled
- *   straight from the already-built points/admin DB so the two stay in lockstep.
+ *   `<repos>/whosonfirst-data-admin-<cc>/data/<id-per-region>/<id>.geojson`, where the database
+ *   path is the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson).
+ *   Only admin placetypes contain polygons.
+ *
+ *   Postcodes resolve to a point marker and are skipped.
+ *   In-scope ids are pulled straight from the already-built points/admin DB so the two stay in lockstep.
  *
  *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable,
  *   since admin polygons are huge at full resolution. Output is `polygons(id integer primary KEY, geom
  *   text)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
- *   `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB (small,
- *   shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the full
- *   gazetteer (optionally `--countries US,DE`). The slim DB excludes localadmin.
+ *   `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB (small, shippable).
+ *   `--admin <admin-global-priority.db>` instead pulls every admin row from the
+ *   full gazetteer (optionally `--countries US,DE`).
+ *
+ *   The slim DB excludes localadmin.
  *   US town polygons live in that placetype.
  */
 
@@ -28,6 +34,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
@@ -181,9 +188,15 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 
 const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
-		const { tryParsingJSON } = await import("@mailwoman/core/json")
+		const {
+			client: { DatabaseClient },
+			polygonSchema: { createPolygonsTable },
+			json: { tryParsingJSON },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			polygonSchema: import("@mailwoman/resolver-wof-sqlite/polygon-schema"),
+			json: import("@mailwoman/core/json"),
+		})
 
 		const out = options.out
 		const points = options.points ?? ""

@@ -48,7 +48,7 @@ describe("it-anac adapter against fixture sample.jsonl", () => {
 	it("emits one row per admitted party under the license the register elected", async () => {
 		const manifest = await run()
 
-		// 21 of the fixture's 34 party objects: 11 suppliers hold a role the adapter does not read,
+		// 21 of the fixture's 34 party objects: 11 suppliers hold a role the adapter doesn't read,
 		// one buyer's street line holds an unplaced number and one payer's postcode is a Brazilian CEP.
 		expect(manifest.yielded).toBe(21)
 

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Capstone: the whole matcher, block → score → cluster, on a tiny synthetic set. The point it
- *   proves is the thesis — two records with different address strings but the same location and
- *   name resolve to one entity, because blocking is geographic rather than textual.
+ *   Capstone: the whole matcher, block → score → cluster, on a tiny synthetic set.
+ *
+ *   The point it proves is the thesis — two records with different address strings but the same
+ *   location and name resolve to one entity, because blocking is geographic rather than textual.
  */
 
 import type { GeoCoordinate } from "@mailwoman/spatial"

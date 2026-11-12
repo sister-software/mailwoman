@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Deterministically validate a {@link GeographicModelDocument} without I/O or external schema libraries. Report all
- *   issues in traversal order and return either the complete valid document or the full issue list.
+ *   Deterministically validate a {@link GeographicModelDocument} without I/O or external schema libraries.
  *
- *   Validate record shapes first, then whole-table references such as duplicate IDs, inheritance cycles, relation
- *   constraints, inverses and derivation inputs.
+ *   Report all issues in traversal order and return either the complete valid
+ *   document or the full issue list.
+ *
+ *   Validate record shapes first, then whole-table references such as duplicate IDs,
+ *   inheritance cycles, relation constraints, inverses and derivation inputs.
  */
 
 import { isPlainObject } from "@mailwoman/core/objects"
@@ -35,7 +37,7 @@ import {
 import { checkReferences } from "#validation/references"
 
 /**
- * The whole document, or every reason it is not one.
+ * The whole document, or every reason it isn't one.
  */
 export type ValidationResult =
 	| { ok: true; document: GeographicModelDocument }

@@ -4,6 +4,9 @@
 **/LICENSE
 **/LICENSE.md
 
+## Published 11.0.0 OpenAPI snapshots preserve the exact bytes emitted by each package's `openapi --out` command.
+docs/static/openapi/v11.0.0/*.json
+
 ## Benchmark artifacts written by docs/static/benchmarks/*.mjs
 ## Both files are script output — `--resample` rewrites the sample, every run rewrites the results —
 ## and `JSON.stringify` cannot reproduce the formatter's array-wrapping decisions. Formatting them

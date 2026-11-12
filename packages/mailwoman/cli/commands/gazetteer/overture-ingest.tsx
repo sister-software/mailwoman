@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { PathBuilder } from "path-ts"
@@ -37,7 +38,11 @@ interface CountryProbe {
  *
  * It copies Overture address rows into per-country Parquet files and writes a fill-rate report.
  *
- * Every output lands under `<out>/<release>/`, so rows from two releases never mix in one directory.
+ * The Parquet files land in the release's snapshot, `$MAILWOMAN_DATA_ROOT/snapshots/overture/<release>/`.
+ * The corpus JSONL and the fill-rate report land in `$MAILWOMAN_DATA_ROOT/corpus/staging/overture/<release>/`.
+ *
+ * With `--out`, every output lands under `<out>/<release>/`.
+ * Rows from two releases never mix in one directory.
  */
 export const spec = {
 	name: "overture-ingest",
@@ -46,7 +51,7 @@ export const spec = {
 		release: { type: "string", description: `Pinned release. Default ${DEFAULT_RELEASE}` },
 		countries: { type: "string", required: true, description: "Comma-separated ISO country codes" },
 		limit: { type: "string", description: "Rows per country" },
-		out: { type: "string", description: "Output root" },
+		out: { type: "string", description: "Output root for every file. Default: the snapshot and data roots" },
 		"probe-only": { type: "boolean", default: false, description: "Only probe local Parquet" },
 		"corpus-jsonl": { type: "boolean", default: false, description: "Emit corpus JSONL" },
 		sample: { type: "string", description: "Reservoir-sample the corpus JSONL to this many rows" },
@@ -90,7 +95,13 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 
 const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const {
+			dataRoot: { snapshotSourcePath },
+			overturePaths: { overtureStagingPath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			overturePaths: import("@mailwoman/corpus/adapters/overture/paths"),
+		})
 
 		if (!options.countries) {
 			throw new CommandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
@@ -101,8 +112,12 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : null
 		// The default seed is fixed so that repeated samples of one release write the same rows.
 		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
-		const outRoot = PathBuilder.from(options.out ?? dataRootPath("overture"))
-		const outDir = outRoot(release)
+		// The Parquet copies are the release's snapshot.
+		// The corpus JSONL and the fill-rate report are derived from them, so they're written
+		// beside the other corpus adapter inputs rather than inside the snapshot.
+		const snapshotDir = options.out ? PathBuilder.from(options.out)(release) : snapshotSourcePath("overture", release)
+		const outDir = options.out ? snapshotDir : overtureStagingPath(release)
+		await makeDirectories(snapshotDir)
 		await makeDirectories(outDir)
 
 		// `@duckdb/node-api` is an optional peer, so it loads here to keep `--help` working without it.
@@ -119,7 +134,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
-		const countryParquet = (cc: string) => outDir(`addresses-${cc.toLowerCase()}.parquet`)
+		const countryParquet = (cc: string) => snapshotDir(`addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
 		 * Copies one country's rows into local Parquet.
@@ -161,7 +176,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 
 		/**
 		 * Writes the flattened JSONL that the `overture` corpus adapter reads,
-		 * so `@mailwoman/corpus` does not need DuckDB.
+		 * so `@mailwoman/corpus` doesn't need DuckDB.
 		 *
 		 * The `locality` field is `postal_city` when present and otherwise the deepest `address_levels` value.
 		 *
@@ -281,7 +296,8 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		db.closeSync()
 
 		return [
-			`overture ingest: ${outDir}`,
+			`overture ingest: ${snapshotDir}`,
+			`derived outputs: ${outDir}`,
 			`release ${release} · ${countries.join(",")} · ${probes.length} probed`,
 			`report: fill-rates.json + fill-rates.md`,
 			...probes.map(

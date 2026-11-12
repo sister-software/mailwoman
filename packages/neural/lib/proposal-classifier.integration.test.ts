@@ -4,9 +4,10 @@
 /**
  *   Unit + smoke tests for `createNeuralProposalClassifier`.
  *
- *   The unit tests stub a `NeuralAddressClassifier` with a hand-authored `AddressTree` so we exercise
- *   the adapter logic without loading a real model. The smoke test runs against the model that
- *   `test/model-assets.ts` selects, and skips in a checkout that has none.
+ *   The unit tests stub a `NeuralAddressClassifier` with a hand-authored `AddressTree`
+ *   so we exercise the adapter logic without loading a real model.
+ *   The smoke test runs against the model that `test/model-assets.ts` selects,
+ *   and skips in a checkout that has none.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

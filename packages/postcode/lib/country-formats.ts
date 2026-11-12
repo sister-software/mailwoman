@@ -4,10 +4,12 @@
 /**
  *   Whether a whole string is a postcode in one country's format.
  *
- *   `./shapes.ts` finds postcode-shaped spans in a line without knowing the country. This module answers the
- *   narrower question an adapter asks once it holds a country's postcode value: does the value have that
- *   country's form? Argentina's `C1425ABC`, Brunei's `BS8811` and Chile's seven digits are postcodes there, and a
- *   four-digit value in a six-digit country is not.
+ *   `./shapes.ts` finds postcode-shaped spans in a line without knowing the country.
+ *   This module answers the narrower question an adapter asks once it holds a country's
+ *   postcode value: does the value have that country's form?
+ *
+ *   Argentina's `C1425ABC`, Brunei's `BS8811` and Chile's seven digits are postcodes there,
+ *   and a four-digit value in a six-digit country isn't.
  */
 
 import { COUNTRY_POSTCODE_FORMAT_SOURCES, type PostcodeLocalityPlacement } from "#country-formats/data"

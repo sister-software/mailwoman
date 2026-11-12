@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Cloudflare provider over a scripted binding: the message goes out from the configured sender to the buyer with
- *   the shared subject, text and html. The invoice ID appears as a header. The binding's message ID is the one
- *   recorded. The two bodies render the same sections, so each is held to what the buyer needs from it.
+ *   The Cloudflare provider over a scripted binding: the message goes out from the
+ *   configured sender to the buyer with the shared subject, text and html.
+ *
+ *   The invoice ID appears as a header.
+ *   The binding's message ID is the one recorded.
+ *
+ *   The two bodies render the same sections, so each is held to what the buyer needs from it.
  */
 
 import { env } from "cloudflare:workers"

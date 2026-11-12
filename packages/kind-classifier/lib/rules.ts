@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Rule-based `QueryKind` scorers. Each scorer reads structural patterns in the normalized input and
- *   its QueryShape and returns a confidence from 0 to 1.
+ *   Rule-based `QueryKind` scorers.
+ *
+ *   Each scorer reads structural patterns in the normalized input and its QueryShape
+ *   and returns a confidence from 0 to 1.
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
@@ -323,7 +325,7 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 	if (len === 0) return 0
 	const segCount = shape.segments?.length ?? 1
 
-	// Digits outside the postcode are required, so a locality with a postcode does not score here.
+	// Digits outside the postcode are required, so a locality with a postcode doesn't score here.
 	if (
 		segCount >= 2 &&
 		shape.characterClass === "alphanumeric" &&

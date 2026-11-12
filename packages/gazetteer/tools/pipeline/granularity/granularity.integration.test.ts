@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Granularity-ladder tests. The builder runs against a fixture DB shaped like the WOF admin DB
- *   rather than the shipped 4M-row artifact, so the parent-coverage math and the bottoms-out rule
- *   are asserted on data small enough to read.
+ *   Granularity-ladder tests.
+ *
+ *   The builder runs against a fixture DB shaped like the WOF admin DB
+ *   rather than the shipped 4M-row artifact, so the parent-coverage math
+ *   and the bottoms-out rule are asserted on data small enough to read.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -70,7 +72,7 @@ function ladderFixtureDB(): string {
 		[3, "Quiet Town", "locality", "GB", 1, 0],
 		[4, "Camden", "borough", "GB", 1, 0],
 		[5, "Shoreditch", "neighbourhood", "GB", 1, 0],
-		// Deprecated: must not count anywhere.
+		// Deprecated: mustn't count anywhere.
 		[6, "Ghost Hood", "neighbourhood", "GB", 1, 1],
 		[7, "Ireland", "country", "IE", 1, 0],
 		[8, "Cork", "locality", "IE", 1, 0],
@@ -193,7 +195,7 @@ describe("bottomsOutAt", () => {
 	})
 
 	it("does not credit a sub-locality rung with nodes but coverage under the floor", () => {
-		// A handful of nodes clustered under one parent is not a tier the country reaches.
+		// A handful of nodes clustered under one parent isn't a tier the country reaches.
 		const row = granularity("XX", {
 			country: { nodes: 1 },
 			locality: { nodes: 5000 },

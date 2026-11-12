@@ -8,7 +8,7 @@ The Department of Housing, Local Government and Heritage publishes the data for 
 covers **30 of the Republic's 31 local authorities**, and Donegal County Council is the one missing. Against
 Census 2022 (CSO table `FY003A`), **4,982,055 of 5,149,139 residents (96.76%) live in a local authority whose
 zoning is represented in the layer.** That figure describes jurisdictions only. An address in a covered authority
-does not mean that a zoning polygon covers your address.
+doesn't mean that a zoning polygon covers your address.
 
 **The artifact is built locally and never redistributed.** Three published statements disagree about the
 source's license, so the manifest records `tier: build-local` and `license: NOASSERTION`. The builder refuses
@@ -18,10 +18,10 @@ a `shipped` tier until the license question is resolved in writing. See _License
 
 The layer has two readings. The reading it lacks matters most.
 
-| reading      | what it means                                                                                                    |
-| ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `designated` | An adopted plan places the location inside a zoning polygon, and the polygon is the answer                       |
-| `unknown`    | No zoning polygon contains the point. This reading does not claim absence, and this layer has no absence reading |
+| reading      | what it means                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| `designated` | An adopted plan places the location inside a zoning polygon, and the polygon is the answer                      |
+| `unknown`    | No zoning polygon contains the point. This reading doesn't claim absence, and this layer has no absence reading |
 
 **This layer has no `designated_absence` reading, and zoning is the hardest case of this rule.** For flood
 zones the Environment Agency states England-wide coverage, and the Planning Practice Guidance defines Zone 1
@@ -29,8 +29,8 @@ as the land outside Zones 2 and 3, so an empty flood answer inside England is a 
 such definition anywhere. A location with no zoning polygon can be in at least four different situations:
 
 1. Outside any adopted plan area. Most land in most countries lies outside one. The authority has made no statement.
-2. Inside a plan area, on land the plan does not zone.
-3. In a jurisdiction that has never adopted zoning at all.
+2. Inside a plan area, on land the plan doesn't zone.
+3. In a jurisdiction that's never adopted zoning at all.
 4. In a jurisdiction whose records no person or program has read or published yet.
 
 **The source states one of these cases explicitly. That shows the other cases are absences.** It
@@ -62,7 +62,7 @@ These figures cover the whole national export:
 | **pairs taking more than one generic type**                     |  **52** |
 
 **The last figure decides the design.** If a local code determined a generic type, the mapping could ship as
-a lookup and the local column would be redundant. A local code does not determine the type. Cork County
+a lookup and the local column would be redundant. A local code doesn't determine the type. Cork County
 Council's `Special Policy Area` takes **14** different generic types, its `Green Infrastructure` takes **12**,
 and Clare's `Utilities` takes **11**. A person assigned the mapping per polygon while reading a plan, and it
 cannot be reconstructed from the pair of columns.
@@ -112,7 +112,7 @@ the only signal that means the same thing in both.**
 
 **Two residual cases are measured and handled instead of rejected.** Nine of the 3,516 holes share their
 parent's boundary instead of sitting inside it. Each is a sliver under 1.7 m², and each is assigned to the
-smallest exterior of its own feature. On eight of the nine, that is the feature's only exterior. **Exactly one
+smallest exterior of its own feature. On eight of the nine, that's the feature's only exterior. **Exactly one
 feature of 85,330** has no ring that the rule can read as an exterior: `OBJECTID` 74040, Galway County
 Council's `Agriculture`, a three-vertex ring enclosing 3.0 × 10⁻⁷ m². At that magnitude a ring's winding is
 floating-point noise and not something the publisher stated. It reads clockwise in the source's own Irish
@@ -124,12 +124,12 @@ The area error is 4.1%, and it is the harmless consequence. The harmful conseque
 treating all 107 rings as exteriors answers "inside `P5` rural zoning" for every location the plan carved out.
 
 **GDAL has no option that preserves this orientation**, so the ingest streams WKT instead of GeoJSON. GDAL's
-GeoJSON writer always enforces the RFC 7946 winding. `-lco RFC7946=NO` is not a GeoJSONSeq option, and
+GeoJSON writer always enforces the RFC 7946 winding. `-lco RFC7946=NO` isn't a GeoJSONSeq option, and
 `--config OGR_ORGANIZE_POLYGONS SKIP` has no effect. Through GeoJSONSeq the Meath feature therefore arrives as
 107 counter-clockwise exteriors totaling 2,371.9 km² against the Department's 2,232.1 km². The same
 conversion written as CSV/WKT keeps the source's 5/102 split intact.
 
-### The publisher's own area column is not in the archive
+### The publisher's own area column isn't in the archive
 
 `Shape__Area` is a service field, and the bulk GeoJSON export drops it. The area cross-check therefore reads
 it from the live service. The check therefore compares two independent paths instead of comparing the
@@ -170,7 +170,7 @@ table holds. `layer_coverage` stays single-resolution.
 ## The resolution is a measurement, and not the one the size interface names
 
 The inherited size interface picks a resolution from the measured `partial` share. **For this subject that
-statistic does not separate the candidates**, and measurement shows why. Most zoning polygons are smaller than a cell:
+statistic doesn't separate the candidates**, and measurement shows why. Most zoning polygons are smaller than a cell:
 
 | percentile |  p1 |  p5 | p10 |   p25 |   **p50** |    p75 |    p90 |    p95 |     p99 |
 | ---------- | --: | --: | --: | ----: | --------: | -----: | -----: | -----: | ------: |
@@ -269,16 +269,16 @@ reported the whole island as zoned.
 3. `myplan.ie`'s own disclaimer grants distribution and commercial use, and points at a map-viewer splash
    screen for the operative terms.
 
-A shipped layer needs one grant that it can quote, and this record does not have one. As a result:
+A shipped layer needs one grant that it can quote, and this record doesn't have one. As a result:
 
 - `layer_manifest.license` is **`NOASSERTION`**, SPDX's own token for a license that no one has determined. A
   `CC-BY-4.0` value there while an all-rights-reserved clause identifies a licensor would mean this program asserting
   a grant.
 - `layer_manifest.tier` is **`build-local`**, and `assertTierMatchesLicense` refuses a `shipped` build while the
-  license reads `NOASSERTION`. A tier change requires a deliberate edit at a line that states what is
+  license reads `NOASSERTION`. A tier change requires a deliberate edit at a line that states what's
   unresolved.
 - `layer_manifest.attribution` stores **both parts**, the Department's credit line and the Tailte Éireann
-  clause, because a re-user who saw only the first would not know that the second exists.
+  clause, because a re-user who saw only the first wouldn't know that the second exists.
 
 **What would change it:** The myplan.ie disclaimer points to a fourth statement as authoritative ("For full
 details of conditions of use please see map viewer splash screen"), and that splash text was not retrieved. Two
@@ -288,7 +288,7 @@ viewer. The splash text is the single fact that would move this layer from `buil
 The npm package is unaffected. `@mailwoman/zoning` publishes with every release from `.release-it.json`'s
 workspace list. The `build-local` tier applies only to the data.
 
-## The mapped-footprint question — what is settled, and what would change it
+## The mapped-footprint question — what's settled, and what would change it
 
 `zoning_mapped_extent` ships **empty**. The empty table records that no mapped footprint is known. The Department states
 "Awaiting data for some Local Authorities - please see map viewer for coverage details" and publishes that
@@ -297,7 +297,7 @@ coverage statement. It is unknown whether other authorities are only partially r
 
 **A footprint derived from the union of the zoning polygons is forbidden**, for the same reason the flood layer
 forbids it. The union of zoned areas differs from the area the authority examined, and that difference is
-exactly what a negative answer would need to report. The union is not even a stable shape here. One authority's
+exactly what a negative answer would need to report. The union isn't even a stable shape here. One authority's
 drafting convention changes the national zoned-area figure by 41%, because Meath County Council zones its entire
 rural remainder as one 2,232 km² polygon, against 32.5 km² for the next largest polygon in the country.
 
@@ -309,7 +309,7 @@ layer could move from `source_present` to a stronger basis.
 `packages/mailwoman/lib/observations/zoning-route.ts` reads a finished coordinate and records what an adopted plan
 assigns there, as one additive `authority_designation` marker with `mechanism: layer:zoning`. **The route is off
 by default and turns on when `$MAILWOMAN_DATA_ROOT/db/zoning/zoning-ireland.db` exists.** The file's presence is the only switch.
-Without the layer file the route does not run, and the geocode result is byte-identical to a build without the
+Without the layer file the route doesn't run, and the geocode result is byte-identical to a build without the
 field.
 
 ## See also

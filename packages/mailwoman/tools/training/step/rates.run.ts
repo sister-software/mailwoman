@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Prints one row per `train_log.csv`: final step, wall hours with restarts excluded, seconds per 100 steps and
- *   restart count. Copy a run's logs to the host with `launch.run.ts fetch` first. The seconds-per-100-steps column
- *   is the value `OBSERVED_SECONDS_PER_100_STEPS` records for the run's device and batch size.
+ *   Prints one row per `train_log.csv`: final step, wall hours with restarts excluded,
+ *   seconds per 100 steps and restart count.
+ *
+ *   Copy a run's logs to the host with `launch.run.ts fetch` first.
+ *   The seconds-per-100-steps column is the value `OBSERVED_SECONDS_PER_100_STEPS`
+ *   records for the run's device and batch size.
  *
  *   Usage: node packages/mailwoman/tools/training/step/rates.run.ts <train_log.csv>...
  */

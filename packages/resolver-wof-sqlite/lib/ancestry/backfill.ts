@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Repair the truncated ancestry left by the `parent_id` closure. Must run after `populateAncestors` and before the build freezes.
+ *   Repair the truncated ancestry left by the `parent_id` closure.
+ *
+ *   Must run after `populateAncestors` and before the build freezes.
  */
 
 import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"

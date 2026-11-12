@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build street-type-lexicon` — the Option-A bundle's street-type evidence
- *   artifact (codex fr/us/gb/de/ca street vocabulary. canonical words case-insensitive,
- *   abbreviations uppercase-conditional). Small artifact, committed at `data/gazetteer/`.
+ *   `mailwoman gazetteer build street-type-lexicon` — the Option-A bundle's street-type
+ *   evidence artifact (codex fr/us/gb/de/ca street vocabulary. canonical words
+ *   case-insensitive, abbreviations uppercase-conditional).
+ *   Small artifact, committed at `data/gazetteer/`.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

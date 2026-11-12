@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The crisp-polygon database opener the geocoder runtime hands to `@mailwoman/react/map`'s declarative overlays. No
- * code here touches React. The resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
+ * The crisp-polygon database opener the geocoder runtime hands to
+ * `@mailwoman/react/map`'s declarative overlays.
+ *
+ * No code here touches React.
+ * The resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  */
 
 import type { PlaceGeometry } from "@mailwoman/react/map/geometry"

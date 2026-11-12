@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The public Hono entry point around a private native API service. The Worker admits a request, forwards the
- *   native parse and geocode routes to the backend with a deadline, and relays the backend's status, body and
- *   engine headers unchanged.
+ *   The public Hono entry point around a private native API service.
+ *
+ *   The Worker admits a request, forwards the native parse and geocode routes to the backend
+ *   with a deadline, and relays the backend's status, body and engine headers unchanged.
  */
 
 import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"

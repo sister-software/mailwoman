@@ -6,28 +6,29 @@
  *
  *   ## One feed and one file
  *
- *   PDOK serves an ATOM download service with a single entry, and that entry's one data link is the
- *   whole country. There is no service document above it and no dataset feed below it, so the
- *   resolution is one request:
+ *   PDOK serves an ATOM download service with a single entry, and that entry's
+ *   one data link is the whole country.
+ *   There's no service document above it and no dataset feed below it, so the resolution is one request:
  *
  *       adressen_inspire_geharmoniseerd.xml  →  addresses.gml.gz
  *
- *   The entry's `<id>` names a sibling feed, `adressen_inspire_geharmoniseerd_epsg4258.xml`, which
- *   answers HTTP 404. A reader that followed the `<id>` rather than the `rel="alternate"` link would
+ *   The entry's `<id>` names a sibling feed,
+ *   `adressen_inspire_geharmoniseerd_epsg4258.xml`, which answers HTTP 404.
+ *   A reader that followed the `<id>` rather than the `rel="alternate"` link would
  *   therefore raise on that 404, so this one reads the link.
  *
  *   ## Why the download stays compressed
  *
- *   `#nl/adapters/kadaster/adapter` inflates `.gml.gz` through `gunzipChunks` as it streams. The
- *   member is 29,677,448,685 bytes against the download's 819,465,603, so inflating it here would
- *   cost 36 times the disk for no reader that wants it.
+ *   `#nl/adapters/kadaster/adapter` inflates `.gml.gz` through `gunzipChunks` as it streams.
+ *   The member is 29,677,448,685 bytes against the download's 819,465,603, so inflating
+ *   it here would cost 36 times the disk for no reader that wants it.
  *
  *   ## Freshness
  *
- *   The entry's `<updated>` is the signal recorded in the manifest. A skip requires the feed to
- *   state an `<updated>` value:
- *   where it states none both sides read `null`, an equality test would hold, and a download of
- *   unknown age would be kept for as long as the feed stayed silent.
+ *   The entry's `<updated>` is the signal recorded in the manifest.
+ *   A skip requires the feed to state an `<updated>` value: where it states none
+ *   both sides read `null`, an equality test would hold, and a download of unknown
+ *   age would be kept for as long as the feed stayed silent.
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
@@ -73,7 +74,7 @@ const SLUG = NL_KADASTER_ADAPTER_ID
  * `feed_updated` is the entry's own `<updated>`.
  * A later run downloads again when that value changes.
  *
- * That is the freshness signal the ATOM feed offers in place of an HTTP validator.
+ * That's the freshness signal the ATOM feed offers in place of an HTTP validator.
  *
  * `rights` is the license URL the feed states, recorded so a change of terms is
  * visible in the artifact rather than only in the register.

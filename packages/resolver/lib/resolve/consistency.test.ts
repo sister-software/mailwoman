@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for postcode-disambiguated locality selection (`opts.postcodeConsistency`). A locality
- *   that resolves far from a resolved sibling postcode is re-picked from its alternatives, or its
- *   coordinate falls back to the postcode point and is flagged. Byte-stable when the flag is unset.
+ *   Tests for postcode-disambiguated locality selection (`opts.postcodeConsistency`).
+ *
+ *   A locality that resolves far from a resolved sibling postcode is re-picked from its
+ *   alternatives, or its coordinate falls back to the postcode point and is flagged.
+ *   Byte-stable when the flag is unset.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -275,7 +277,7 @@ describe("resolveTree + rooftop consistency", () => {
 	})
 
 	it("finds the namesake nearest the rooftop when it ranks below the resolved candidates", async () => {
-		// Six more prominent namesakes fill the locality query's candidates, so the near one is not among them.
+		// Six more prominent namesakes fill the locality query's candidates, so the near one isn't among them.
 		const farNamesakes = Array.from({ length: 6 }, (_, i) => ({
 			...SP_FAR,
 			id: 10 + i,

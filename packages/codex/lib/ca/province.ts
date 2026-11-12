@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The 13 Canadian provinces and territories (10 provinces + 3 territories), keyed by their ISO
- *   3166-2:CA code.
+ *   The 13 Canadian provinces and territories (10 provinces + 3 territories),
+ *   keyed by their ISO 3166-2:CA code.
  *
  *   The informative contrast with `de/bundesland.ts` and `us/state.ts`: a Canadian subdivision is
  *   officially bilingual, so each unit has two equally-canonical names — an English one and a
  *   French one — and the gap between them is wide (`Nova Scotia` / `Nouvelle-Écosse`, `British
  *   Columbia` / `Colombie-Britannique`). That mirrors the German English-exonym pattern (`Bavaria`
- *   / `Bayern`), except here the French name is not a foreign exonym but a co-official form a real
+ *   / `Bayern`), except here the French name isn't a foreign exonym but a co-official form a real
  *   address can be written in. And like a US two-letter state code, the ISO code (`on`, `QC`, `BC`)
  *   is the abbreviation people write on the address line — so unlike German or French
  *   regions, the Canadian code is a surface form as well as a resolver key.

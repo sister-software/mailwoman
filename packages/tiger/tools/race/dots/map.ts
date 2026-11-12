@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render a race-by-dot-density PMTiles tileset (from `race-dots.ts` → tippecanoe) as a standalone
- *   MapLibre page on the house stack: the Protomaps `basemap-v4` vector basemap (layers generated +
- *   inlined here, à la `registry/map-html.ts`) under a circle layer of the dots, colored by race
- *   category. The dots PMTiles is read client-side via the `pmtiles` protocol.
+ *   Render a race-by-dot-density PMTiles tileset (from `race-dots.ts` → tippecanoe)
+ *   as a standalone MapLibre page on the house stack: the Protomaps `basemap-v4`
+ *   vector basemap (layers generated + inlined here, à la `registry/map-html.ts`)
+ *   under a circle layer of the dots, colored by race category.
  *
- *   Each dot is one of `per` people of a category, placed at random inside its Census block — a
- *   representation rather than a record about any address. Serve over localhost (the house tile server
- *   cors-restricts to localhost + the docs domains) — `mailwoman tiger race-dots-map --serve` wires
- *   {@linkcode serveWithRangeSupport} for exactly this.
+ *   The dots PMTiles is read client-side via the `pmtiles` protocol.
+ *
+ *   Each dot is one of `per` people of a category, placed at random inside its Census block —
+ *   a representation rather than a record about any address.
+ *   Serve over localhost (the house tile server cors-restricts to localhost + the docs domains) —
+ *   `mailwoman tiger race-dots-map --serve` wires {@linkcode serveWithRangeSupport} for exactly this.
  *
  *   Run: `mailwoman tiger race-dots-map --pmtiles-url
  *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`

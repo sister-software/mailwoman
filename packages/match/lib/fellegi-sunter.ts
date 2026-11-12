@@ -4,23 +4,34 @@
 /**
  *   The Fellegi-Sunter scorer — the matcher's decision layer.
  *
- *   Each field comparison assigns a record pair to an _agreement level_: exact, high, low, different, or missing.
- *   Each level has two probabilities. `m` is P(this level | the pair really matches).
- *   `u` is P(this level | the pair does not match). Their ratio is a Bayes factor. Its
- *   log is the level's contribution to the total match weight in bits:
+ *   Each field comparison assigns a record pair to an _agreement level_: exact,
+ *   high, low, different, or missing.
+ *   Each level has two probabilities.
+ *
+ *   `m` is P(this level | the pair really matches).
+ *   `u` is P(this level | the pair doesn't match).
+ *
+ *   Their ratio is a Bayes factor.
+ *   Its log is the level's contribution to the total match weight in bits:
  *
  *   ```
  *   M = log2(λ / (1 - λ))  +  Σ_fields  log2(m_level / u_level)
  * ```
  *
- *   — a prior (how likely any two random records match) plus an additive, per-field-attributable
- *   stack of evidence. Convert `M` to a probability and threshold it: above the upper bound is a
- *   link. Below the lower bound, it is a non-link. The band between them is _clerical review_, the calibrated abstain zone.
+ *   — a prior (how likely any two random records match) plus an additive,
+ *   per-field-attributable stack of evidence.
+ *   Convert `M` to a probability and threshold it: above the upper bound is a link.
  *
- *   The `m`/`u` numbers here are not universal constants. They are estimated from the data — by EM,
- *   unsupervised (the next increment) — and the term-frequency adjustment that makes a rare-name
- *   agreement count more than a common one layers on top. This module is the deterministic core
- *   those build on. Given the levels, it produces the weights and probability. It also produces the decision.
+ *   Below the lower bound, it is a non-link.
+ *   The band between them is _clerical review_, the calibrated abstain zone.
+ *
+ *   The `m`/`u` numbers here are not universal constants.
+ *   They're estimated from the data — by EM, unsupervised (the next increment) — and the term-frequency
+ *   adjustment that makes a rare-name agreement count more than a common one layers on top.
+ *
+ *   This module is the deterministic core those build on.
+ *   Given the levels, it produces the weights and probability.
+ *   It also produces the decision.
  */
 
 import { nameSimilarity } from "#comparators"
@@ -38,7 +49,7 @@ export interface ComparisonLevel {
 	 */
 	m: number
 	/**
-	 * P(a pair lands in this level | it is not a match). A measure of coincidence / cardinality.
+	 * P(a pair lands in this level | it isn't a match). A measure of coincidence / cardinality.
 	 */
 	u: number
 	/**

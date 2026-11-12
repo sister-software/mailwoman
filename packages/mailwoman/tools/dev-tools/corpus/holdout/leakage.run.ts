@@ -4,20 +4,22 @@
 /**
  *   Count the train-split rows of a built corpus that the holdout policy assigns to val or test.
  *
- *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild. An overlay
- *   never passes through the align loop that applies it. This reads what a finished corpus holds and
- *   answers the question directly: for each country the policy names, the number of its held-out rows that
- *   are in the train split.
+ *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild.
+ *   An overlay never passes through the align loop that applies it.
  *
- *   The matchers come from `defaultHoldouts()` rather than being restated here, so a prefix added to
- *   the policy is checked without editing this file.
+ *   This reads what a finished corpus holds and answers the question directly: for each
+ *   country the policy names, the number of its held-out rows that are in the train split.
  *
- *   The region and locality tests use exact equality. The postcode test uses a prefix, matching what
- *   `splitForRow` applies. The predicate runs inside DuckDB over the parquet files rather than row by
- *   row in this process, because a base corpus holds over a hundred million train rows.
+ *   The matchers come from `defaultHoldouts()` rather than being restated here,
+ *   so a prefix added to the policy is checked without editing this file.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/holdout/leakage.run.ts --corpus <corpus dir>
+ *   The region and locality tests use exact equality.
+ *   The postcode test uses a prefix, matching what `splitForRow` applies.
+ *
+ *   The predicate runs inside DuckDB over the parquet files rather than row by row in
+ *   this process, because a base corpus holds over a hundred million train rows.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/holdout/leakage.run.ts --corpus <corpus dir>
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -52,11 +54,11 @@ const clauses: string[] = []
  * One predicate per country, kept so an offending row can be read back after the count.
  *
  * A count reports the number of rows the policy names.
- * It does not say which rows matched.
+ * It doesn't say which rows matched.
  *
  * The cases differ: a row whose `region` span holds a holdout name is the policy
  * working on data the split missed, while a row whose `locality` happens to equal
- * one is the policy matching a name that is not a region.
+ * one is the policy matching a name that's not a region.
  */
 const predicates = new Map<string, string>()
 

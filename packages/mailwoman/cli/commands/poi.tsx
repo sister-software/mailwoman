@@ -2,31 +2,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman poi "<query>" [flags]` — POI-query intent probe (spec §3.1–3.4, exotic-POI arc plans
- *   2 + 4). Runs the runtime pipeline with `poiQueryKind` on and prints whatever the intent stage
- *   decided: the matched subject + anchor, an abstain reason, or executed results when `--db` points
- *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
- *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
- *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that and exits 0. This command is a debug probe rather than a strict
- *   POI-only parser.
+ *   `mailwoman poi "<query>" [flags]` — POI-query intent probe (spec §3.1–3.4, exotic-POI arc plans 2 + 4).
+ *
+ *   Runs the runtime pipeline with `poiQueryKind` on and prints whatever the intent
+ *   stage decided: the matched subject + anchor, an abstain reason, or executed results
+ *   when `--db` points at a sealed `poi.db` layer (`mailwoman gazetteer build poi`).
+ *   `--overpass` additionally renders the OverpassQL export block (`@mailwoman/poi-overpass`) —
+ *   export-only, mailwoman never queries Overpass itself.
+ *
+ *   A non-POI query (kind classifier never emits `poi_query`, or the intent stage fell through)
+ *   reports that and exits 0.
+ *   This command is a debug probe rather than a strict POI-only parser.
  *
  *   Exit-code interface:
  *
  *   - 0 on any completed probe, including "no POI intent" and abstain results.
  *   - 1 on a missing positional query or a fatal pipeline error.
  *
- *   Resolver wiring: an anchor remainder ("near Springfield IL") only gains a searchable center when the
- *   pipeline's `resolver` stage decorates the anchor's parsed tree with lat/lon — `poi-executor.ts`'s
- *   `resolveCenter` walks the tree for that. `--db` queries abstain with `anchor_required` without it. Mirrors
- *   `geocode.tsx`/`parse.tsx --resolve`: the same `createResolverBackend` + `createWOFResolver(lookup)`
- *   pairing, lazily built and closed after the run. A missing/unbuilt gazetteer degrades to today's behavior
+ *   Resolver wiring: an anchor remainder ("near Springfield IL") only gains a searchable center
+ *   when the pipeline's `resolver` stage decorates the anchor's parsed tree with lat/lon —
+ *   `poi-executor.ts`'s `resolveCenter` walks the tree for that.
+ *   `--db` queries abstain with `anchor_required` without it.
+ *
+ *   Mirrors `geocode.tsx`/`parse.tsx --resolve`: the same `createResolverBackend` +
+ *   `createWOFResolver(lookup)` pairing, lazily built and closed after the run.
+ *   A missing/unbuilt gazetteer degrades to today's behavior
  *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
  */
 
 import { Spinner } from "@inkjs/ui"
 import { prettyJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
@@ -96,9 +103,16 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 	}
 
 	try {
-		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const { createResolverBackend } = await import("#resolver-backend")
-		const { createWOFResolver } = await import("@mailwoman/resolver")
+		const {
+			resolverWofSqlite: mod,
+			resolverBackend: { createResolverBackend },
+			resolver: { createWOFResolver },
+		} = await allKeyed({
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+			resolverBackend: import("#resolver-backend"),
+			resolver: import("@mailwoman/resolver"),
+		})
+
 		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }

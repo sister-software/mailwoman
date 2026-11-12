@@ -78,7 +78,7 @@ export interface Form499Row {
 	/**
 	 * Registered agent name.
 	 *
-	 * A shared agent does not link two filers, so the builder stores it only as an attribute.
+	 * A shared agent doesn't link two filers, so the builder stores it only as an attribute.
 	 */
 	dcAgentDisplayName: string
 	dcAgentOrganizationName: string

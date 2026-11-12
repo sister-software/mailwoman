@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures Earth's network traffic over a scripted camera sequence. The tool loads the page in headless Chromium,
- *   records every off-origin request through the Chrome DevTools Protocol, and prints request counts, bytes,
- *   cancellations, cache status, protocol and latency percentiles per phase and per host. The run aborts with exit
- *   code 2 when the transferred bytes pass `--budget-mb`.
+ *   Measures Earth's network traffic over a scripted camera sequence.
  *
- *   The sequence has three phases: the initial load, three flights that each finish loading (London, Paris, New
- *   York), and five flights that each interrupt the previous one after 600 ms (Tokyo, Sydney, Rio de Janeiro, Moscow,
- *   Cape Town).
+ *   The tool loads the page in headless Chromium, records every off-origin request through
+ *   the Chrome DevTools Protocol, and prints request counts, bytes, cancellations,
+ *   cache status, protocol and latency percentiles per phase and per host.
+ *   The run aborts with exit code 2 when the transferred bytes pass `--budget-mb`.
  *
- *   Start the preview server first (`yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth preview`).
+ *   The sequence has three phases: the initial load, three flights that each finish loading
+ *   (London, Paris, New York), and five flights that each interrupt the previous one
+ *   after 600 ms (Tokyo, Sydney, Rio de Janeiro, Moscow, Cape Town).
  *
- *   Usage: node packages/earth/tools/net-measure.run.ts [--url http://localhost:7771/?no-model] [--budget-mb 40]
+ *   Start the preview server
+ *   first (`yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth preview`).
+ *
+ *   Usage: node packages/earth/tools/net-measure.run.ts
+ *   [--url http://localhost:7771/?no-model] [--budget-mb 40]
  */
 
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -162,7 +166,7 @@ cdp.on("Network.loadingFailed", (event) => {
 	record.failed = event.errorText
 })
 
-// The page's CDP session does not see requests made from MapLibre's web workers (vector tiles, TileJSON).
+// The page's CDP session doesn't see requests made from MapLibre's web workers (vector tiles, TileJSON).
 // Playwright's page events include them, so a finished request whose URL the CDP
 // session never recorded came from a worker.
 const workerRecords = new Map<object, RequestRecord>()

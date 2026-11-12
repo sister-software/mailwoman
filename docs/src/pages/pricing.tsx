@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pricing page. Three tiers, a calculator that sets the published metered rates beside the flat license, what each
- *   tier includes, and what we do and do not commit to. Every figure comes from the shop constants or `rates.ts`.
+ *   The pricing page.
+ *
+ *   Three tiers, a calculator that sets the published metered rates beside the flat license,
+ *   what each tier includes, and what we do and don't commit to.
+ *   Every figure comes from the shop constants or `rates.ts`.
  */
 
 import Link from "@docusaurus/Link"
@@ -103,7 +106,7 @@ export default function Pricing(): ReactNode {
 							"Paid tiers with a declared key",
 							"Share your source with the people you serve",
 						]}
-						cta={{ label: "Start building for free", to: "/docs/developers/get-started/what-mailwoman-is" }}
+						cta={{ label: "Start building for free", to: "/docs/start" }}
 					/>
 					<Tier
 						featured
@@ -184,9 +187,9 @@ export default function Pricing(): ReactNode {
 						</Heading>
 						<p>
 							A declared key admits the paid tiers without changing the terms: the AGPL still applies, and the notice
-							says so. Each route is one command. The{" "}
-							<Link to="/docs/solutions/research-and-teaching">research and teaching</Link> page covers the academic
-							routes and how to cite Mailwoman.
+							says so. Each route is one command. Read the <Link to="/license">license terms</Link> and the{" "}
+							<a href="https://github.com/sister-software/mailwoman/blob/v11.0.0/CITATION.cff">citation file</a> for
+							published attribution details.
 						</p>
 					</div>
 					<dl className={styles.declarations}>
@@ -213,11 +216,10 @@ export default function Pricing(): ReactNode {
 							<dd>A later price rise applies to new subscriptions. Yours stays where it started while it is active.</dd>
 							<dt>Published releases stay published.</dt>
 							<dd>Every AGPL release already shipped is yours permanently. We could not withdraw that grant.</dd>
-							<dt>We do not count your lookups.</dt>
+							<dt>We don't count your lookups.</dt>
 							<dd>
-								There is no usage to true up at renewal.{" "}
-								<Link to="/docs/solutions/eliminate-the-per-request-bill">Eliminate the per-request bill</Link> works
-								the arithmetic.
+								There is no usage to true up at renewal. <Link to="/solutions">Choose a workflow</Link> to see the local
+								tasks with executed examples.
 							</dd>
 							<dt>A key never changes what runs.</dt>
 							<dd>An artifact already on disk keeps working after its key expires.</dd>
@@ -225,7 +227,7 @@ export default function Pricing(): ReactNode {
 					</div>
 					<div>
 						<Heading as="h2" className={styles.sectionTitle}>
-							What we do not commit to
+							What we don't commit to
 						</Heading>
 						<dl>
 							<dt>A data refresh cadence.</dt>
@@ -236,7 +238,7 @@ export default function Pricing(): ReactNode {
 							<dt>A license for the data.</dt>
 							<dd>
 								Ours covers the code. The reference data comes from open sources with their own terms. Read{" "}
-								<Link to="/docs/about/security-and-compliance">Security and compliance</Link> before you ship.
+								<Link to="/product/data-and-licensing">Data and licensing</Link> before you ship.
 							</dd>
 						</dl>
 					</div>
@@ -247,13 +249,13 @@ export default function Pricing(): ReactNode {
 						<Heading as="h2" className={styles.closingTitle}>
 							Try it before anyone signs anything.
 						</Heading>
-						<p>Geocode an address in your browser, or install it and parse one in ten minutes.</p>
+						<p>Try the browser geocoder, or install Mailwoman and inspect a first parse.</p>
 						<div className={styles.closingButtons}>
 							<Link className="button button--primary button--lg" href="https://earth.mailwoman.post/">
 								Try the geocoder
 							</Link>
-							<Link className="button button--secondary button--lg" to="/docs/developers/get-started/ten-minute-trial">
-								Your first ten minutes
+							<Link className="button button--secondary button--lg" to="/docs/start">
+								Run the first parse
 							</Link>
 						</div>
 						<p className={styles.fine}>

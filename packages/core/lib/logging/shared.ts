@@ -76,7 +76,7 @@ export const createConsoleLogger: LoggerFactory = (prefix, ...args) => {
 		const label = LogLevelLabel[level]
 
 		// @ts-expect-error Alias the log method to the appropriate console method,
-		// defaulting to console.log if the level is not supported.
+		// defaulting to console.log if the level isn't supported.
 		const method = level in sink ? sink[level] : sink.log
 
 		logger[level] = method.bind(sink, `${label} ${msgPrefix}`, ...args)
@@ -119,7 +119,7 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
 		const color = LogLevelColors[level]
 
 		// @ts-expect-error Alias the log method to the appropriate console method,
-		// defaulting to console.log if the level is not supported.
+		// defaulting to console.log if the level isn't supported.
 		const method = level in sink ? sink[level] : sink.log
 
 		logger[level] = method.bind(

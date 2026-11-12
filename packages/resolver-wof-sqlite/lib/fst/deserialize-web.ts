@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Browser-compatible FST reader. Uses DataView + TextDecoder instead of Node's Buffer so the same binary format
- *   loads in the browser and in a Cloudflare Worker through fetch(url).then(r => r.arrayBuffer()).
+ *   Browser-compatible FST reader.
  *
- *   This is a read-only counterpart to serialize.ts. Serialization stays Node-only because it is a build-time
- *   operation.
+ *   Uses DataView + TextDecoder instead of Node's Buffer so the same binary format loads in
+ *   the browser and in a Cloudflare Worker through fetch(url).then(r => r.arrayBuffer()).
+ *
+ *   This is a read-only counterpart to serialize.ts.
+ *   Serialization stays Node-only because it is a build-time operation.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -18,7 +20,7 @@ import type { FSTProvenance } from "#fst/types"
 /**
  * Opens an FST binary for matching, answering queries from the bytes in place.
  *
- * The matcher keeps a reference to `input`, so the caller must not modify it afterward.
+ * The matcher keeps a reference to `input`, so the caller mustn't modify it afterward.
  */
 export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): BinaryFSTMatcher {
 	return new BinaryFSTMatcher(input)

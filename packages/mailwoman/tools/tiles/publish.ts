@@ -2,21 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from
- *   ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.post/...).
+ *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker
+ *   serves from ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.post/...).
  *
  *   The `tiles publish` command and planetary pipeline both call these functions.
- *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
- *   `https://tiles.mailwoman.post/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
+ *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config)
+ *   and exposes `https://tiles.mailwoman.post/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
- *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
- *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives.
+ *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend
+ *   config (source the repo `.env` first: `set -a. . ./.env. set +a`). rclone
+ *   handles multipart for large archives.
  *   The anti-501 flags skip post-PUT HEAD and checksum operations that R2 refuses.
- *   The worker reads the object through its R2 binding, so Content-Type and
- *   Cache-Control do not matter.
  *
- *   Credentials for the artifacts bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets`
- *   (403 on any other bucket).
+ *   The worker reads the object through its R2 binding, so Content-Type and Cache-Control do not matter.
+ *
+ *   Credentials for the artifacts bucket: the `RCLONE_S3_*` keys are scoped to
+ *   `mailwoman-assets` (403 on any other bucket).
  *
  *   The `RCLONE_S3_PUBLIC_*` keys write mailwoman-artifacts.
  *   Map them onto the on-the-fly `:s3:` remote (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`,

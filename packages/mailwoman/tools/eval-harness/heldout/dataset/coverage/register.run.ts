@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the committed evaluation coverage register for one dataset version: markdown under
- *   `docs/engineering/reference/` and the same rows as JSON beside it.
+ *   Writes the committed evaluation coverage register for one dataset version:
+ *   markdown under `docs/engineering/reference/` and the same rows as JSON beside it.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage/register.run.ts \

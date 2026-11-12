@@ -2,25 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate golden-set candidate entries by LLM-driven surface-form synthesis from a verified-label
- *   seed pulled out of the corpus's labeled test split.
+ *   Generate golden-set candidate entries by LLM-driven surface-form synthesis from a
+ *   verified-label seed pulled out of the corpus's labeled test split.
  *
  *   ## Why this approach
  *
- *   The Phase 2 golden set has 74 entries. session-notes.md called for ≥500/locale. Manual curation
- *   doesn't scale. Pure-LLM generation (invent raw + labels from scratch) is too noisy — labels
- *   would be unverified.
+ *   The Phase 2 golden set has 74 entries. session-notes.md called for ≥500/locale.
+ *   Manual curation doesn't scale.
+ *
+ *   Pure-LLM generation (invent raw + labels from scratch) is too noisy — labels would be unverified.
  *
  *   This module takes the middle path:
  *
- *   1. **Seeds come from the corpus-v0.2.0 test split's parquet files** — already through the alignment pipeline, so
- *        labels
- *        are pipeline-verified.
- *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
- *        component values (locality string, postcode digits, etc.) are preserved verbatim.
- *   3. **Programmatic validator drops hallucinations**. Every component value must appear as a
- *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
- *        silently. cost is wasted tokens, never bad-labeled golden entries.
+ *   1. **Seeds come from the corpus-v0.2.0 test split's parquet files** — already
+ *      through the alignment pipeline, so labels are pipeline-verified.
+ *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components.
+ *      The component values (locality string, postcode digits, etc.) are preserved verbatim.
+ *   3. **Programmatic validator drops hallucinations**.
+ *      Every component value must appear as a substring
+ *      (case-insensitive, whitespace-normalized) of the variant's raw.
+ *      Failures dropped silently. cost is wasted tokens, never bad-labeled golden entries.
  *
  *   ## Usage
  *
@@ -37,13 +38,14 @@
  *   - `DEEPSEEK_API_KEY` — required for provider `deepseek`
  *   - `ANTHROPIC_API_KEY` — required for provider `anthropic`
  *
- *   ## What this module does not do
+ *   ## What this module doesn't do
  *
- *   - Does not commit anything or modify the versioned golden dir. Candidates land in
- *       `data/eval/golden/candidates/` for operator review (skim, prune, then run
- *       `mailwoman corpus golden promote`).
- *   - Does not score the LLM's quality — that's an eyeball job after pilot lands.
- *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
+ *   - Doesn't commit anything or modify the versioned golden dir.
+ *     Candidates land in `data/eval/golden/candidates/` for operator review
+ *     (skim, prune, then run `mailwoman corpus golden promote`).
+ *   - Doesn't score the LLM's quality — that's an eyeball job after pilot lands.
+ *   - Doesn't retry hallucinated candidates.
+ *     Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -559,7 +561,7 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
-							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object isn't on a hot path
 							delete goldenCandidate.components[tag]
 						}
 

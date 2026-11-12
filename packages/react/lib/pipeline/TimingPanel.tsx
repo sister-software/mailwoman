@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `TimingPanel` — the per-stage timing breakdown: a stacked bar sized by each stage's wall-clock, plus a legend.
- *   Stage colors are distinct hues, never the confidence red/amber/green, because they encode the pipeline stage and
- *   not quality.
+ *   `TimingPanel` — the per-stage timing breakdown: a stacked bar sized by each
+ *   stage's wall-clock, plus a legend.
+ *
+ *   Stage colors are distinct hues, never the confidence red/amber/green,
+ *   because they encode the pipeline stage and not quality.
  */
 
 import type { StageTiming } from "@mailwoman/core/pipeline/client-result"

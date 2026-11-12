@@ -4,10 +4,12 @@
 /**
  *   Pulls the GEBCO undersea gazetteer's three service layers as GeoJSON, page by page.
  *
- *   The service returns at most {@link UNDERSEA_SERVICE_PAGE_SIZE} records a query, so each layer is read in
- *   pages ordered by `OBJECTID`. The pull asks the service for each layer's count first and refuses a result
- *   that holds a different number of features. A short read would otherwise build a layer missing features
- *   and report success.
+ *   The service returns at most {@link UNDERSEA_SERVICE_PAGE_SIZE} records a query,
+ *   so each layer is read in pages ordered by `OBJECTID`.
+ *   The pull asks the service for each layer's count first and refuses a result
+ *   that holds a different number of features.
+ *
+ *   A short read would otherwise build a layer missing features and report success.
  */
 
 import { APIClient } from "@mailwoman/core/api"

@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ledger-append. It turns a promotion-eval out-dir into one row of
- *   `evals/scores-by-version.json`, so the per-version score ledger updates itself and does not
- *   rely on discipline.
+ *   Ledger-append.
  *
- *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings, the
- *   same numbers the promote decision used). Run metadata (corpus, steps, hardware) defaults from
- *   the model-card. Options can override every metadata value. Rows follow the file's practiced shape
- *   (the v4.4.0 row). The strict schema expects 64-hex digests for corpus and eval-set.
- *   Populated rows use free-text pointers. This tool warns about that drift and continues.
+ *   It turns a promotion-eval out-dir into one row of `evals/scores-by-version.json`,
+ *   so the per-version score ledger updates itself and doesn't rely on discipline.
+ *
+ *   Metric values come from the out-dir's `verdict.json`
+ *   (the eval spec's own floor readings, the same numbers the promote decision used).
+ *   Run metadata (corpus, steps, hardware) defaults from the model-card.
+ *
+ *   Options can override every metadata value.
+ *   Rows follow the file's practiced shape (the v4.4.0 row).
+ *
+ *   The strict schema expects 64-hex digests for corpus and eval-set.
+ *   Populated rows use free-text pointers.
+ *   This tool warns about that drift and continues.
  *
  *   Refuses to append a duplicate (same model_version and run_id) unless `replace`, and always
  *   checks that the result is parseable JSON before writing (write-to-temp, then rename).

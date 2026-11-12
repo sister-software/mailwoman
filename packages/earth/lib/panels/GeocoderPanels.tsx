@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Everything here is presentation over the runtime handle. No code here loads or resolves.
+ *   Everything here is presentation over the runtime handle.
+ *   No code here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

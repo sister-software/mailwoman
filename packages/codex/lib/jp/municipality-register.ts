@@ -4,13 +4,17 @@
 /**
  *   The towns whose own name includes the city marker 市 (shi) before the town suffix 町 / 村 (chō / son).
  *
- *   A Japanese municipality span closes at 市 in the ordinary case (`富山市`, `神戸市西区`), and a character model
- *   learns that boundary from 1,700 cities. A town whose name contains 市 defeats it: `中新川郡上市町` reads as the
- *   city `上市` plus a district beginning with 町. Over the 1,892 municipalities in Japan Post's KEN_ALL list the
- *   shape has six members, so the boundary is stated here rather than learned — a positive attestation from the
- *   postal register, consumed after decode by `@mailwoman/neural`'s JP municipality repair. Two of the six (`上市町`,
- *   `下市町`) put 市 immediately before the suffix, the boundary the model closes at. The other four are listed so an
- *   early close inside them is also repaired.
+ *   A Japanese municipality span closes at 市 in the ordinary case (`富山市`, `神戸市西区`),
+ *   and a character model learns that boundary from 1,700 cities.
+ *   A town whose name contains 市 defeats it: `中新川郡上市町` reads as the city `上市`
+ *   plus a district beginning with 町.
+ *
+ *   Over the 1,892 municipalities in Japan Post's KEN_ALL list the shape has six members,
+ *   so the boundary is stated here rather than learned — a positive attestation from the
+ *   postal register, consumed after decode by `@mailwoman/neural`'s JP municipality repair.
+ *   Two of the six (`上市町`, `下市町`) put 市 immediately before the suffix, the boundary the model closes at.
+ *
+ *   The other four are listed so an early close inside them is also repaired.
  */
 
 import { completeFromRegister } from "#register-completion"

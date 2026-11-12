@@ -24,7 +24,7 @@ Every review, from three different models across two dates, reaches the same ass
 
 ### Phase A — Curatorial cleanup (this week, zero GPU, zero code changes)
 
-These docs-only changes resolve the status confusion immediately. They support every later phase by giving contributors and reviewers one shared picture of what has shipped.
+These docs-only changes resolve the status confusion immediately. They support every later phase by giving contributors and reviewers one shared picture of what's shipped.
 
 **Owner: human (docs track). Issues filed separately as needed.**
 
@@ -39,7 +39,7 @@ These docs-only changes resolve the status confusion immediately. They support e
 | Corpus               | corpus-v0.3.0 (677M rows). corpus-v0.4.0 (v0.3.0 + 4,771 kryptonite + ~73K transliteration pairs) exists but no stable classifier trained on it yet.                                                                                                                                                                                                                         |
 | Tokenizer            | v0.1.0 (16K vocab) — used by v0.4.0 weights. A1 (48K vocab, trained on corpus-v0.4.0) — trained but not yet used in a stable classifier.                                                                                                                                                                                                                                     |
 | Runtime stages       | Table: each of the 6 stages, status (✅ default / 🚩 opt-in / 🧪 scaffold / ❌ not built), and what model weights it works with.                                                                                                                                                                                                                                             |
-| Browser demo         | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode is not active in the demo.                                                                                                                                                                                                                                                                        |
+| Browser demo         | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode isn't active in the demo.                                                                                                                                                                                                                                                                         |
 | Model training state | CE-only smoke passed with val_macro_f1=0.444 and without divergence past step 2000. Full 50K CE-only run in progress. Target: first v0.5.0 weights that train stably.                                                                                                                                                                                                        |
 | Known regressions    | Postcode F1 0.69 (down from 0.76 in v0.3.0). Coarse labels (country 0.21, region 0.19) still come from rules. Full-parse exact match ~0.08.                                                                                                                                                                                                                                  |
 | Not supported        | Rooftop/address-point geocoding. Multi-locale ensemble. Japanese addresses. PO boxes. Unit/apartment parsing.                                                                                                                                                                                                                                                                |
@@ -277,7 +277,7 @@ Update `ARCHITECTURE.md` with a dated status block and audience header. Do not r
 
 ---
 
-## What we are protecting
+## What we're protecting
 
 Through all of this, guard the core architectural shape:
 

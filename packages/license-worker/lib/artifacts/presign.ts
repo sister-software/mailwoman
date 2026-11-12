@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A paid artifact is served from a private R2 bucket by a presigned S3 URL that expires within the hour. An R2
- *   binding cannot presign, so the worker holds S3 API credentials for the bucket as secrets and signs with SigV4
- *   through `aws4fetch`, which runs on WebCrypto and so on the Workers runtime.
+ *   A paid artifact is served from a private R2 bucket by a presigned S3 URL that expires within the hour.
+ *
+ *   An R2 binding cannot presign, so the worker holds S3 API credentials for the bucket as secrets
+ *   and signs with SigV4 through `aws4fetch`, which runs on WebCrypto and so on the Workers runtime.
  */
 
 import { AwsClient } from "aws4fetch"

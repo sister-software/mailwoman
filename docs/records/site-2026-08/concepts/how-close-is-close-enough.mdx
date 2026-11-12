@@ -9,13 +9,13 @@ tags:
 
 # How close is close enough?
 
-A geocoder turns an address into a point, and the obvious thing to ask is whether the point is right. That question has no answer, because "right" assumes a single tolerance and there isn't one. A point that is **right enough to tell you which county regulates this facility** can be **uselessly wrong for routing a truck to its loading dock**. The question that does have an answer is the one the operator keeps coming back to, and the one this page is about: _close enough for what?_
+A geocoder turns an address into a point, and the obvious thing to ask is whether the point is right. That question has no answer, because "right" assumes a single tolerance and there isn't one. A point that's **right enough to tell you which county regulates this facility** can be **uselessly wrong for routing a truck to its loading dock**. The question that does have an answer is the one the operator keeps coming back to, and the one this page is about: _close enough for what?_
 
 In short: Mailwoman never hands you a bare point. It hands you a point, a **tier**, and a **calibrated radius** — and "close enough" is a comparison between that radius and your task's tolerance, made by the consumer rather than asserted by us.
 
 {/* truncate */}
 
-## There is no single tolerance
+## There's no single tolerance
 
 Three real consumers of the same resolved address want three different things:
 
@@ -23,7 +23,7 @@ Three real consumers of the same resolved address want three different things:
 | -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | jurisdiction / coverage          | which city / county / HPSA is this in?     | the **admin centroid** — a few km is fine, because the centroid is inside the right polygon |
 | record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of meters, because a city centroid fuses every facility in town      |
-| routing / dispatch               | where is the door?                         | **rooftop**, and you care about the tail rather than the median                             |
+| routing / dispatch               | where's the door?                          | **rooftop**, and you care about the tail rather than the median                             |
 
 A single accuracy number ("p50 3 km") answers none of these on its own. It's only meaningful against a stated tolerance. The jurisdiction consumer is delighted by 3 km. The matcher is sunk by it.
 
@@ -47,7 +47,7 @@ A tier label is coarse. The per-parse answer to "how close is this one?" is the 
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 
-The raw half-segment interpolation radius covered only ~72% of true errors. A split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
+The raw half-segment interpolation radius covered only ~72% of true errors. A split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that's secretly a city centroid.
 
 This is the same move the parser makes with [confidence calibration](./confidence-calibration.mdx): a number you can act on rather than a vibe.
 
@@ -63,6 +63,6 @@ We don't decide it — we **report enough that the consumer can**. Every resolve
 2. a **calibrated radius** (the calibrated 90% bound), so that
 3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains**. The same calibrated-radius downgrade the resolver already makes when its candidates scatter.
 
-"Close enough" is not a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that holds at its stated rate.
+"Close enough" isn't a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that holds at its stated rate.
 
 _What's still owed: per-use-case sufficiency thresholds (the matcher's "building-grain" cutoff, a routing cutoff) measured against the calibrated radius, and the coverage push to move the ~40% admin-tier fallbacks onto an extract. Both are tracked under the geocoder-quality work._

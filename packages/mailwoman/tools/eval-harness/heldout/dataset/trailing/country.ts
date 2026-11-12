@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Rows for an evaluation set that ends each address with its country, for the countries whose only training rows
- *   ending in a country are Who's On First place-name chains.
+ *   Rows for an evaluation set that ends each address with its country, for the countries
+ *   whose only training rows ending in a country are Who's On First place-name chains.
  *
- *   An OSM address row is rendered by the country's layout with the country's name added as a `country` component,
- *   so `Rruga Bylis 16, Tirane` becomes `Rruga Bylis 16, Tirane, Albania`. The row keeps the identity the corpus
- *   build gives the same address without the country (`osm-<cc>:<stable id>`), so an overlap audit finds the address
- *   in any corpus that trained on it.
+ *   An OSM address row is rendered by the country's layout with the country's name added as a
+ *   `country` component, so `Rruga Bylis 16, Tirane` becomes `Rruga Bylis 16, Tirane, Albania`.
+ *   The row keeps the identity the corpus build gives the same address without the country
+ *   (`osm-<cc>:<stable id>`), so an overlap audit finds the address in any corpus that trained on it.
  *
- *   A Who's On First chain is kept when its last two spans are a locality and its country, the
- *   `<locality>, <country>` reading the region misread competes with.
+ *   A Who's On First chain is kept when its last two spans are a locality and its country,
+ *   the `<locality>, <country>` reading the region misread competes with.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

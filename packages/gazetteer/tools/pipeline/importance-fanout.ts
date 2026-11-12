@@ -5,13 +5,16 @@
  * Which WOF place does a Wikidata id mean?
  *
  * `gazetteer importance` joins Wikipedia importance onto WOF through `concordances`.
- * That join can map one Wikidata id to several current WOF places. Each place receives the
- * same score. The FST bias is linear in importance. The rule is coincident → keep all, else
- * a population lead above the margin → keep the winner, else drop, with coincidence checked first because WOF does
- * not populate every role's row.
+ * That join can map one Wikidata id to several current WOF places.
  *
- * A wrong concordance with fan-out of one is invisible here: catching it needs evidence the TSV does
- * does not include.
+ * Each place receives the same score.
+ * The FST bias is linear in importance.
+ *
+ * The rule is coincident → keep all, else a population lead above the margin → keep the winner,
+ * else drop, with coincidence checked first because WOF doesn't populate every role's row.
+ *
+ * A wrong concordance with fan-out of one is invisible here: catching it needs
+ * evidence the TSV does doesn't include.
  */
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -62,7 +65,7 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	}
 
 	// Check the whole-group spread.
-	// A group of two coincident rows plus one 6,000 km straggler is not coincident.
+	// A group of two coincident rows plus one 6,000 km straggler isn't coincident.
 	// A pairwise-first check would keep the straggler.
 	let maxSpread = 0
 

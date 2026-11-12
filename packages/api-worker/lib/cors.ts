@@ -4,9 +4,9 @@
 /**
  *   The browser origins Mailwoman's Workers answer, and the CORS middleware both Workers mount.
  *
- *   The API Worker and the tile Worker share one origin list, so a site added here can call both. A Worker that
- *   also answers a third-party page, as the tile Worker answers the MapLibre style editor, passes that origin in
- *   `alsoAllow` instead of widening the shared list.
+ *   The API Worker and the tile Worker share one origin list, so a site added here can call both.
+ *   A Worker that also answers a third-party page, as the tile Worker answers the MapLibre
+ *   style editor, passes that origin in `alsoAllow` instead of widening the shared list.
  */
 
 import type { MiddlewareHandler } from "hono"

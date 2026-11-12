@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `QueryForm` — the address input + submit button for the pipeline explorer. Shows a spinner while
- *   parsing. Presentational; `onSubmit` fires on form submission.
+ *   `QueryForm` — the address input + submit button for the pipeline explorer.
+ *
+ *   Shows a spinner while parsing.
+ *   Presentational; `onSubmit` fires on form submission.
  */
 
 import type { InputHTMLAttributes, KeyboardEvent, ReactNode } from "react"

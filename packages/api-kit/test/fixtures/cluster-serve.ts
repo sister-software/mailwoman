@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A cluster primary that forks one worker running `serveNode`, the shape `mailwoman serve` runs in. Node's cluster
- *   child calls `server.address()` inside its own `listening` handler, so a handle that shadows that method fails here
- *   and nowhere in an in-process test. The primary prints `listening <port>` once the worker reports its bound port
+ *   A cluster primary that forks one worker running `serveNode`, the shape `mailwoman serve` runs in.
+ *
+ *   Node's cluster child calls `server.address()` inside its own `listening` handler,
+ *   so a handle that shadows that method fails here and nowhere in an in-process test.
+ *   The primary prints `listening <port>` once the worker reports its bound port
  *   and exits 0. a worker that dies first makes the primary exit with the worker's code.
  */
 

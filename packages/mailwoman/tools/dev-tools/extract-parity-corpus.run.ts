@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase-0 entry: walk the v1 parity suite, extract every `assert()` case, write
- *   `mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl`. Run from the repo root:
- *   `node packages/mailwoman/tools/dev-tools/extract-parity-corpus.run.ts`
+ *   Phase-0 entry: walk the v1 parity suite, extract every `assert()` case,
+ *   write `mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl`.
+ *
+ *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/extract-parity-corpus.run.ts`
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

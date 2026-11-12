@@ -1,7 +1,7 @@
 # Golden street-suffix relabel review deck — v0.1.2 → v0.1.3
 
 > **RULED 2026-08-06 (operator): KEEP every applied split.** The rule, verbatim: "Apply only the TERMINAL
-> street suffix. Earlier suffix-like tokens remain part of the street name unless they are the final suffix
+> street suffix. Earlier suffix-like tokens remain part of the street name unless they're the final suffix
 > element. Preserve post-directionals separately." Consequences: `Finel Hollow Road` -> street `Finel Hollow` +
 > suffix `Road`; `Sutton Hollow` -> street `Sutton` + suffix `Hollow` (Hollow is terminal there); `Stevens Hill W`
 > -> street `Stevens` + suffix `Hill` + post-directional `W`. The arrival of a later suffix reverts the earlier

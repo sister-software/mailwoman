@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Splits the street span of US golden rows into `street_prefix`, `street` and `street_suffix` with the USPS Pub-28 table.
+ *   Splits the street span of US golden rows into `street_prefix`, `street`
+ *   and `street_suffix` with the USPS Pub-28 table.
  */
 
 import {

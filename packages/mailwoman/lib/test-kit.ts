@@ -45,8 +45,8 @@ export function* zip<T, U>(a: Iterable<T>, b: Iterable<U>): Generator<[a: T | nu
 }
 
 /**
- * Given two iterables, assert that they are congruent, i.e. that they have
- * the same elements in the same order.
+ * Given two iterables, assert that they're congruent, i.e. that they have the
+ * same elements in the same order.
  */
 export function assertCongruent<Item>(
 	actualItemIterators: Iterable<Iterable<Item>>,

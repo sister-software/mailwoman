@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests that the decode explanation is computed from the objective the decoder summed: the terms
- *   sum to each margin and to the decoder's own score, and the runner-up is the best reading that
- *   relabels the span.
+ *   Tests that the decode explanation is computed from the objective the decoder summed:
+ *   the terms sum to each margin and to the decoder's own score, and the runner-up
+ *   is the best reading that relabels the span.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"

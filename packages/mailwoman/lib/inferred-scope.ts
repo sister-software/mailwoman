@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The conditional-scope check: a locale-inferred country filter yields when the model's own locale head
- * confidently reads the text as a different country's addressing. It only ever drops the scope. The head's
- * country is evidence the text is foreign-shaped, never a resolved country — and it never fires on an explicit
- * caller scope. Caller scope belongs to the pre-scope.
+ * The conditional-scope check: a locale-inferred country filter yields when the model's
+ * own locale head confidently reads the text as a different country's addressing.
+ *
+ * It only ever drops the scope.
+ * The head's country is evidence the text is foreign-shaped, never a resolved country —
+ * and it never fires on an explicit caller scope.
+ * Caller scope belongs to the pre-scope.
  */
 
 import { addressSystemKey, layoutForCountry } from "@mailwoman/codex/address/layouts"
@@ -60,7 +63,7 @@ function verdictContradicts(verdict: string, inferred: string): boolean {
  * The format signal speaks only on distinctive shapes, so an ambiguous bare 5-digit
  * postcode yields the empty set and keeps the scope.
  *
- * An absent verdict on both signals keeps the scope: unknown is not foreign.
+ * An absent verdict on both signals keeps the scope: unknown isn't foreign.
  */
 export function shouldDropInferredScope(
 	tree: AddressTree,

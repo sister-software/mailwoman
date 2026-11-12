@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Polish postal designators: the delivery service, premise, sub-premise, floor and relation words an address
- *   or a query uses.
+ *   Polish postal designators: the delivery service, premise, sub-premise, floor
+ *   and relation words an address or a query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/polEn.pdf UPU Poland addressing sheet (Poczta Polska)}
  * @see {@link https://www.poczta-polska.pl/wp-content/uploads/2025/09/Zasady-poprawnego-adresowania-przesylek.pdf Poczta Polska: Zasady poprawnego adresowania i oznakowania przesyłek listowych}

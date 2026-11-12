@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The check must distinguish a measured two-source trade from an accidental third source: refusing all
- *   A blanket ban on multi-source countries would refuse the trade. A blanket allowance would miss the accident.
+ *   The check must distinguish a measured two-source trade from an accidental third source:
+ *   refusing all A blanket ban on multi-source countries would refuse the trade.
+ *   A blanket allowance would miss the accident.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -217,7 +218,7 @@ describe("planCountryMove", () => {
 describe("planCountryMove — a move that is already done", () => {
 	it("plans nothing for a country the target already serves", () => {
 		// US is already WOF-served, so an add edit would have a reader touch a list
-		// the country is on and describe work that is done.
+		// the country is on and describe work that's done.
 		const plan = planCountryMove({
 			country: "US",
 			target: AdminSource.WOF,

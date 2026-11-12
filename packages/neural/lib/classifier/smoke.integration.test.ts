@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   End-to-end smoke test for `NeuralAddressClassifier` over the test model that
- *   `test/model-assets.ts` selects: the `MAILWOMAN_TEST_ONNX_MODEL` override, or the packaged en-US
- *   weights. A checkout with neither skips the suite.
+ *   End-to-end smoke test for `NeuralAddressClassifier` over the test model that `test/model-assets.ts`
+ *   selects: the `MAILWOMAN_TEST_ONNX_MODEL` override, or the packaged en-US weights.
+ *   A checkout with neither skips the suite.
  */
 
 import { describe, expect, test } from "vitest"

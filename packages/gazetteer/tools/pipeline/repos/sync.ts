@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Clone and refresh the Who's On First repositories root. Every repository is handled the same way:
+ *   Clone and refresh the Who's On First repositories root.
+ *   Every repository is handled the same way:
  *
  *   1. The `mailwoman` fork is created on GitHub when it is missing.
  *   2. Upstream is merged into the fork on GitHub.
  *   3. A missing clone is cloned from the fork at depth 1, directly under the root.
- *   4. An existing clone's remotes are set to `origin` = the fork and `upstream` = the original. A leftover `fork`
- *      remote is removed, and `origin` fetches only the checked-out branch.
+ *   4. An existing clone's remotes are set to `origin` = the fork and `upstream` = the original.
+ *      A leftover `fork` remote is removed, and `origin` fetches only the checked-out branch.
  *   5. The clone fetches `origin` and fast-forwards when it is behind.
  *   6. A clone holding more than one commit is re-shallowed to its tip, and the older objects are pruned.
  *
- *   A clone with uncommitted changes or commits the fork lacks is fetched but left on its current commit. The
- *   corrections that reach the fork are authored in these directories, and a reset would lose the only copy.
+ *   A clone with uncommitted changes or commits the fork lacks is fetched but left on its current commit.
+ *   The corrections that reach the fork are authored in these directories,
+ *   and a reset would lose the only copy.
  *
- *   The decisions are pure functions over measured state, so every refusal is testable without a network or a clone.
+ *   The decisions are pure functions over measured state, so every refusal is
+ *   testable without a network or a clone.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -48,11 +51,11 @@ export const SyncAction = {
 	 */
 	RefuseDirty: "refuse-dirty",
 	/**
-	 * Commits present that the fork does not have: unpushed work.
+	 * Commits present that the fork doesn't have: unpushed work.
 	 */
 	RefuseLocalCommits: "refuse-local-commits",
 	/**
-	 * A directory exists but is not a git checkout, such as an extracted archive.
+	 * A directory exists but isn't a git checkout, such as an extracted archive.
 	 */
 	RefuseNotAClone: "refuse-not-a-clone",
 } as const
@@ -75,7 +78,7 @@ export const Remote = {
 /**
  * The observable state of one checkout.
  *
- * `null` means the checkout could not answer the question.
+ * `null` means the checkout couldn't answer the question.
  * A negative answer has a known value.
  */
 export interface CloneState {
@@ -146,7 +149,7 @@ export interface RepoSyncResult {
  *
  * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo`
  * and `https://github.com/org/repo`, with or without a `.git` suffix.
- * A string comparison would rewrite a remote that is already correct.
+ * A string comparison would rewrite a remote that's already correct.
  */
 export function sameRemote(a: string | null | undefined, b: string | null | undefined): boolean {
 	if (!a || !b) return false
@@ -183,7 +186,11 @@ export function remoteChanges(origin: RepoOrigin, remotes: Readonly<Record<strin
 	}
 
 	want(Remote.Origin, origin.forkURL)
-	want(Remote.Upstream, origin.upstreamURL)
+
+	// A repository with no original keeps whatever `upstream` remote it has, and gets none added.
+	if (origin.upstreamURL) {
+		want(Remote.Upstream, origin.upstreamURL)
+	}
 
 	const legacy = remotes[Remote.LegacyFork]
 
@@ -334,8 +341,10 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 	const origin = (options.resolveOrigin ?? wofRepoOrigin)(repo)
 	const directory = wofClonePath(options.root, repo)
 
-	const forkCreated = dryRun ? null : await host.ensureFork(origin)
-	const forkUpdate = dryRun ? null : await host.updateFork(origin)
+	// A repository with no original has no fork to create or merge into.
+	const manageFork = !dryRun && origin.upstreamOrg !== null
+	const forkCreated = manageFork ? await host.ensureFork(origin) : null
+	const forkUpdate = manageFork ? await host.updateFork(origin) : null
 
 	// The plan defaults to the one the reported state implies.
 	// A clone or fast-forward passes the plan it ran, because the state read afterward is up to date.
@@ -360,7 +369,10 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 
 		await makeDirectories(dirname(directory))
 		await client.clone(origin.forkURL, directory, { depth: 1 })
-		await client.read(["-C", directory, "remote", "add", Remote.Upstream, origin.upstreamURL])
+
+		if (origin.upstreamURL) {
+			await client.read(["-C", directory, "remote", "add", Remote.Upstream, origin.upstreamURL])
+		}
 
 		return result(await inspectClone(directory), [], { action: SyncAction.Clone, reason: "cloned from the fork" })
 	}

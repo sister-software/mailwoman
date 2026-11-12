@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { beforeAll, describe, expect, it } from "vitest"
 

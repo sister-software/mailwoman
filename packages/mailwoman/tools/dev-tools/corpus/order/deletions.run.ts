@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Find the rows whose postcode sits on the side of the locality-and-region block that the row's country does not
- *   use, as `postcodePlacement` from `@mailwoman/postcode/country-formats` states it (#2750).
+ *   Find the rows whose postcode sits on the side of the locality-and-region
+ *   block that the row's country doesn't use, as `postcodePlacement` from
+ *   `@mailwoman/postcode/country-formats` states it (#2750).
  *
- *   With `--write-native <out.parquet>` the tool writes the input's rows minus the reversed ones, judged row by row,
- *   with a `RECORD.json` beside it, and prints per-country rows in and out. A native row that shares its `source_id`
- *   with a reversed row stays. With `--out <sidecar.parquet>` it writes the reversed rows' `source_id`s for a
+ *   With `--write-native <out.parquet>` the tool writes the input's rows minus the reversed ones,
+ *   judged row by row, with a `RECORD.json` beside it, and prints per-country rows in and out.
+ *   A native row that shares its `source_id` with a reversed row stays.
+ *
+ *   With `--out <sidecar.parquet>` it writes the reversed rows' `source_id`s for a
  *   `deletions[]` entry instead, and prints per-country row, native and reversed counts.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/order/deletions.run.ts --in <file.parquet> --write-native <out.parquet>
- *   node packages/mailwoman/tools/dev-tools/corpus/order/deletions.run.ts --in <file.parquet> --out <sidecar.parquet>
- *   [--country ES --country BE --country PL] [--dry-run]
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/order/deletions.run.ts --in <file.parquet>
+ *   --write-native <out.parquet> node packages/mailwoman/tools/dev-tools/corpus/order/deletions.run.ts
+ *   --in <file.parquet> --out <sidecar.parquet> [--country ES --country BE --country PL] [--dry-run]
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The per-record geocode step, factored out of the worker so it unit-tests against a fake geocoder (no
- * neural model / SQLite). `geocode-worker.ts` builds the real geocoder from config and wraps this.
+ * The per-record geocode step, factored out of the worker so it unit-tests against
+ * a fake geocoder (no neural model / SQLite).
+ *
+ * `geocode-worker.ts` builds the real geocoder from config and wraps this.
  */
 
 import { type ColumnMapping, type GeocodeAddress, pick } from "#ingest"

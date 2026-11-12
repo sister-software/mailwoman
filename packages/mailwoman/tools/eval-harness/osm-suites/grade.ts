@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parses a frozen OpenStreetMap suite with one model across worker threads and totals exact parse
- *   correctness per country. Model inference takes milliseconds per row, the per-row cost at which
- *   `parallelMapWorkers` pays for its dispatch.
+ *   Parses a frozen OpenStreetMap suite with one model across worker threads
+ *   and totals exact parse correctness per country.
+ *
+ *   Model inference takes milliseconds per row, the per-row cost at
+ *   which `parallelMapWorkers` pays for its dispatch.
  */
 
 import { parallelMapWorkers } from "spliterator"

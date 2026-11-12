@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Storybook (Vite builder) for `@mailwoman/react`. Renders the extracted explorers + their leaf
- *   presentational units in isolation — outside Docusaurus/ONNX/httpvfs — which is what proves they
- *   are Docusaurus-independent. Mirrors the docs workspace's Storybook setup.
+ *   Storybook (Vite builder) for `@mailwoman/react`.
+ *
+ *   Renders the extracted explorers + their leaf presentational units in isolation —
+ *   outside Docusaurus/ONNX/httpvfs — which is what proves they're Docusaurus-independent.
+ *   Mirrors the docs workspace's Storybook setup.
  */
 
 import type { StorybookConfig } from "@storybook/react-vite"

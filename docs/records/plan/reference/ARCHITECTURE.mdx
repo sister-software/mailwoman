@@ -5,7 +5,7 @@
 This page was written for Phase 2 planning (2026-05-18). Some details are outdated:
 
 - **Label count:** the page describes a 47-label schema. Shipped weights use 21 BIO labels (Tier 2).
-- **Tokenizer:** the page describes a 16K vocab. The A1 48K tokenizer exists but is not yet used in a stable classifier.
+- **Tokenizer:** the page describes a 16K vocab. The A1 48K tokenizer exists but isn't yet used in a stable classifier.
 - **Repo layout:** the page references a `packages/` directory. The current repo uses root workspaces.
 - **Model config:** 6-layer/256d/4-head is accurate for the current shipped weights.
 
@@ -143,11 +143,11 @@ interface LocaleProfile {
 
 ## Locale strategy
 
-Locales are first-class, and the system does not assume English. Every classifier declares which locales it serves.
+Locales are first-class, and the system doesn't assume English. Every classifier declares which locales it serves.
 
 - A US-only deployment loads the `en-US` profile, the English rule classifiers, and the US weights.
 - A multi-locale deployment loads all configured profiles. A `LocaleDetector` handles per-input locale detection separately (Phase 2 work, and v0 can require an explicit locale).
-- A new locale needs a new `LocaleProfile`, a new weights package, and optionally new rule classifiers. Core code does not change.
+- A new locale needs a new `LocaleProfile`, a new weights package, and optionally new rule classifiers. Core code doesn't change.
 
 ## Inference path
 
@@ -208,7 +208,7 @@ If golden_F1 >= threshold: publish
 
 ## Model architecture (what the neural classifier IS)
 
-**Family: encoder-only transformer + per-token classification head.** This is the standard NER shape. Each token of the input address string gets exactly one BIO label from a fixed set: `O`, plus `B-<tag>` and `I-<tag>` for each tag in the `ComponentTag` union. That is currently 47 labels (1 + 2 × 23 tags).
+**Family: encoder-only transformer + per-token classification head.** This is the standard NER shape. Each token of the input address string gets exactly one BIO label from a fixed set: `O`, plus `B-<tag>` and `I-<tag>` for each tag in the `ComponentTag` union. That's currently 47 labels (1 + 2 × 23 tags).
 
 ### Why this family rather than the others
 
@@ -226,7 +226,7 @@ If golden_F1 >= threshold: publish
 - **Output head**: linear projection → 47 logits per token (the BIO label space derived from `ComponentTag`).
 - **Inference**: take the softmax over labels and the argmax per token, decode BIO spans back to character offsets through SentencePiece's offset map, and emit a `ClassificationProposal` per span with the mean per-token softmax probability as its confidence.
 - **Size target**: < 30 MB int8-quantized ONNX, < 40 MB including the tokenizer, with a total parameter count in the low millions.
-- **Runtime**: `onnxruntime-node` with the CPU execution provider by default. Inference does not use Python.
+- **Runtime**: `onnxruntime-node` with the CPU execution provider by default. Inference doesn't use Python.
 
 ### The cousin: spaCy's `ja_core_news_trf`
 
@@ -243,7 +243,7 @@ The closest commercial reference point is spaCy's [Japanese transformer pipeline
 | Inference runtime     | Python (spaCy)                                                                           | Node (`onnxruntime-node`)                                                                        |
 | License               | CC BY-SA 3.0                                                                             | AGPL-3.0                                                                                         |
 
-spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head. That is the same shape. Our design differs from theirs in three ways:
+spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head. That's the same shape. Our design differs from theirs in three ways:
 
 - **Smaller** (10× fewer parameters): our task is narrower. General-purpose Japanese NER must handle 22 entity types across all news text, while address parsing handles 23 component types in addresses only. A narrower task can use a smaller model.
 - **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia and news. Our domain is far enough from natural-language text that pretraining transfers poorly. An address-only model trained from scratch should be smaller, faster, and more accurate.
@@ -258,7 +258,7 @@ The spaCy pipeline pattern, one shared encoder with multiple task heads, is a ca
 - **Completeness head**: predicts whether the input is a complete address, a fragment, or noise, and feeds graceful-failure signaling per [[project-mailwoman-graceful-failure]].
 - **Confidence head**: a separate calibration learner trained on held-out data. It replaces the per-token softmax with a calibrated probability.
 
-None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or later. spaCy shows that the pattern works at scale.
+None of these heads is in scope for Phases 0–3. They're filed for Phase 4 or later. spaCy shows that the pattern works at scale.
 
 ### Frameworks + tooling stance — what we use, what we don't, what we steal
 
@@ -266,7 +266,7 @@ None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or 
 
 **Don't use**: spaCy as a runtime or training dependency, for these reasons:
 
-- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Python at inference time would complicate deployment for Node users, and avoiding that is the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
+- **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Python at inference time would complicate deployment for Node users, and avoiding that's the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
 - **Model training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible. That preference argues against spaCy even for training, where Python is unavoidable.
 
 **Adopt the patterns rather than the tool**:
@@ -329,7 +329,7 @@ Each iteration succeeds if its artifact is independently shippable and measurabl
 ## Why this shape
 
 - **Classifier-as-plugin** preserves Mailwoman's existing extensibility. New rule classifiers, new neural variants, and future learned rankers all conform to the same interface.
-- **Per-component policy** allows incremental rollout instead of switching every component at once. A regression in neural `street` parsing does not affect `country` parsing.
+- **Per-component policy** allows incremental rollout instead of switching every component at once. A regression in neural `street` parsing doesn't affect `country` parsing.
 - **Locale profiles** keep the architecture from defaulting to English-speaking conventions. If the abstractions cannot express a locale outside those conventions, we fix the abstractions instead of working around the locale.
 - **Separate weights packages** keep npm install times reasonable and let users install only the languages they need.
 - **Python training and TypeScript inference** use each ecosystem for its strengths and keep production code in one language.
@@ -348,7 +348,7 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 
 **Implementation plan (Phase 3, #11):** ship all three decoders behind a `--format json|tuple|sexp` CLI flag. JSON is the default for libpostal compatibility, and S-expr is a power-user mode. A round-trip eval (`parse(format(parse(raw))) == parse(raw)`) shows which shape preserves the most fidelity. If S-expr wins, make it the default.
 
-**The formats require no model retraining.** They are post-processing on the BIO output, and the same neural model serves all three formats.
+**The formats require no model retraining.** They're post-processing on the BIO output, and the same neural model serves all three formats.
 
 **A shipping-label formatter** converts a flat object into a multi-line string for label rendering. Build it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
 
@@ -371,7 +371,7 @@ The corpus already records `source` per row, because every alignment and augment
 
 ### Provenance is already flowing through training
 
-`source_weights` (shipped 2026-05-18 in PR #44) affects what the model emphasizes during training, even though the model itself does not emit source labels. At inference time, the Resolver **makes explicit** the source information that was implicit in training. The data path:
+`source_weights` (shipped 2026-05-18 in PR #44) affects what the model emphasizes during training, even though the model itself doesn't emit source labels. At inference time, the Resolver **makes explicit** the source information that was implicit in training. The data path:
 
 ```
 corpus row (source-stamped)
@@ -392,5 +392,5 @@ corpus row (source-stamped)
 - Do not add a `mode: 'auto'` setting in `ClassifierPolicy` that "intelligently" picks rule vs neural. It hides state and is hard to debug. Keep the policy explicit.
 - Do not hardcode `'en-US'` as the default in core. The default should be no locale, so classifiers must opt in.
 - Do not load all weights at module init. Lazy-load them on the first classification request.
-- Do not mix inference and resolution. The parser does not know about coordinates, place IDs, or WOF resolution. Those belong to Phase 4.
+- Do not mix inference and resolution. The parser doesn't know about coordinates, place IDs, or WOF resolution. Those belong to Phase 4.
 - Do not add tags to `ComponentTag` without updating the schema doc and the alignment logic in the same commit. Schema drift corrupts the corpus.

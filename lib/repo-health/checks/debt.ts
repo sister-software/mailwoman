@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Debt counters for patterns not covered by a simple lint rule.
  *
@@ -557,6 +560,14 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[
+		"docs/engineering/reference/wof-osm-placetype-map.mdx",
+		"the placetype map quotes OSM's aeroway tag values verbatim, as packages/neural/lib/venue/structure.ts does",
+	],
+	[
+		"config/vale/.vale-code-census.ini",
+		"the census config quotes the OSM tag to explain why its listed files hold the word as data",
+	],
+	[
 		"packages/hrt/crates/hrt-profile/src/layers/",
 		"the basemap layers match OSM tags verbatim, such as barrier=gate and seamark:type=cable_submarine",
 	],
@@ -674,7 +685,7 @@ async function readBaseline(): Promise<DebtCounters> {
 }
 
 /**
- * Cap listed sites so one counter does not flood output.
+ * Cap listed sites so one counter doesn't flood output.
  */
 function listSites(sites: readonly string[]): string[] {
 	if (sites.length <= SITE_CEILING) return [...sites]

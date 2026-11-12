@@ -4,12 +4,14 @@
 /**
  *   USPS Publication 28, Appendix C, Postal Service Standard Suffix Abbreviations.
  *
- *   The data lives in `./street-suffix.json` so non-TS consumers such as the Python training
- *   loader's lexicon builder read the identical record. `variants` maps each canonical suffix to
- *   every recognized variant in USPS-published order, with the first variant the preferred
- *   abbreviation. `nameProneCanonicals` is a separate curation of canonicals also observed as
- *   ordinary proper-name heads, shared by the golden relabel flags and the Python relabel pass so
- *   the instrument and the training feed cannot drift.
+ *   The data lives in `./street-suffix.json` so non-TS consumers such as the Python
+ *   training loader's lexicon builder read the identical record.
+ *   `variants` maps each canonical suffix to every recognized variant in USPS-published
+ *   order, with the first variant the preferred abbreviation.
+ *
+ *   `nameProneCanonicals` is a separate curation of canonicals also observed as ordinary
+ *   proper-name heads, shared by the golden relabel flags and the Python relabel pass
+ *   so the instrument and the training feed cannot drift.
  *
  *   @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */

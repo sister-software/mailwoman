@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from `release.config.json` — the writer half of the
- *   overlay rung in `@mailwoman/neural`'s `resolveWeights`.
+ *   Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from `release.config.json` —
+ *   the writer half of the overlay rung in `@mailwoman/neural`'s `resolveWeights`.
  *
- *   The overlay writes to the data root rather than the tracked package. A worktree starts empty. `yarn test`
- *   could mutate tracked directories. `fs.copyFile` can also write through a leftover symlink that a publish tarball
- *   rejects (`YN0035`). A path outside git avoids these cases. Symlinks are safe there because no operation tars the data root.
+ *   The overlay writes to the data root rather than the tracked package.
+ *   A worktree starts empty.
+ *
+ *   `yarn test` could mutate tracked directories.
+ *   `fs.copyFile` can also write through a leftover symlink that a publish tarball rejects (`YN0035`).
+ *
+ *   A path outside git avoids these cases.
+ *   Symlinks are safe there because no operation tars the data root.
  *
  *   Run with `--plan` (or `--dry-run`) to see what it would do and make no change.
  *
@@ -165,7 +170,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// Report these artifacts.
 		// The per-locale `link-dev-weights.ts` scripts build them into the overlay.
 		// Each channel degrades to `undefined` at resolve time, so this step reports
-		// an absent channel because resolution does not.
+		// an absent channel because resolution doesn't.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

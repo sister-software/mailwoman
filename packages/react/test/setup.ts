@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Browser-mode test setup: load the component styles (which pull the tokens in themselves, so a
- *   layout-adjacent assertion reads the same values production does), flag the React act() environment,
- *   wrap the interaction/settle APIs in act() (see `./act.ts`), and unmount rendered trees after each test.
+ *   Browser-mode test setup: load the component styles (which pull the tokens in
+ *   themselves, so a layout-adjacent assertion reads the same values production does),
+ *   flag the React act() environment, wrap the interaction/settle APIs in act()
+ *   (see `./act.ts`), and unmount rendered trees after each test.
  */
 
 import { afterEach } from "vitest"

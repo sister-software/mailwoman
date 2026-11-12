@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry dedup-ceiling`: the irreducible over-merge of co-located distinct-NPI
- *   providers, the Bayes error that caps dedup precision. Geocode-free and label-free. Emits the
- *   markdown report to stdout.
+ *   `mailwoman registry dedup-ceiling`: the irreducible over-merge of co-located
+ *   distinct-NPI providers, the Bayes error that caps dedup precision.
+ *
+ *   Geocode-free and label-free.
+ *   Emits the markdown report to stdout.
  */
 
 import { Text } from "ink"

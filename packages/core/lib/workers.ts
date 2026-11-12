@@ -1,7 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { workerData } from "node:worker_threads"
+import { threadId, workerData } from "node:worker_threads"
+
+/**
+ * Returns the `threadId` of the thread running this module: 0 on the main thread,
+ * and a positive integer in a worker.
+ */
+export function workerThreadID(): number {
+	return threadId
+}
 
 /**
  * The `userData` a spliterator `parallelMapWorkers` coordinator passed this worker thread.

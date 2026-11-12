@@ -3,8 +3,8 @@
 
 /**
  *   Run `findPostcodeCountryScope` over a whole (postcode, locality) panel and report the result
- *   by regime, because the two backends disagree about `exactMatch`: the FTS tier does not fold
- *   `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and not on FTS.
+ *   by regime, because the two backends disagree about `exactMatch`: the FTS tier doesn't
+ *   fold `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and not on FTS.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

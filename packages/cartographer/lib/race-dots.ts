@@ -6,8 +6,9 @@
  *
  * One dot represents ~N people in a Census block, colored by 2020 race/ethnicity category.
  *
- * The PMTiles has one `dots` source-layer with a `cat` field. Each category is exposed as a
- * separate default-off circle layer so LayerToggleControl can toggle them individually.
+ * The PMTiles has one `dots` source-layer with a `cat` field.
+ * Each category is exposed as a separate default-off circle layer
+ * so LayerToggleControl can toggle them individually.
  *
  * Each dot is a randomized placement within its area, standing for a count.
  * A reader who treats one dot as an address misunderstands the layer.

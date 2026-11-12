@@ -15,7 +15,7 @@ scratchpad.
    `--align-range-mib`, default 2048, at most `2K` ranges), and each range aligns in its own worker.
 4. The parquet conversion runs DuckDB at one thread in both modes (see the finding below).
 
-## Result: multi-threaded parquet conversion is not deterministic
+## Result: multi-threaded parquet conversion isn't deterministic
 
 Observed. One 1,000,000-row `ban` train part was exported to NDJSON and converted with the build's own
 `COPY … (FORMAT PARQUET, ROW_GROUP_SIZE 50000)` and `preserve_insertion_order=true`, three runs at each thread
@@ -69,8 +69,8 @@ ceiling of 6.1 GiB, the 6 GiB `--max-old-space-size` it was given.
 
 Inferred: at 128 MiB, the ranges reduced align from 64 to 124 s per source to 21 to 32 s per range. The build got
 slower overall because the `finish` tasks then ran three at once with no other work to overlap, and they contend
-for the disk and CPU (`usgov-nppes/finish` went from 178 to 263 s). At this input size the ranges do not pay. They
-are for sources whose align phase dominates, such as `usgov-nad`.
+for the disk and CPU (`usgov-nppes/finish` went from 178 to 263 s). At this input size the ranges do not pay. They're
+for sources whose align phase dominates, such as `usgov-nad`.
 
 ## Output equivalence
 
@@ -102,7 +102,7 @@ Covered by `packages/corpus/lib/build/parallel.test.ts`, all passing. The fixtur
 - a removed completion record, and a record over a missing part, each rebuilt from its source;
 - a failed worker, where the other sources finish and `--resume` completes the build;
 - a live lock (refused) and a dead owner's lock (taken over);
-- `--jobs` over budget and a resident adapter that does not fit, both refused.
+- `--jobs` over budget and a resident adapter that doesn't fit, both refused.
 
 Every resumed build reaches the serial snapshot.
 

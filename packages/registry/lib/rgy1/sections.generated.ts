@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The RGY1 section kinds. Generated from definitions/sections.json by tools/generate-sections.run.ts. Edit the
- *   definition rather than this file.
+ *   The RGY1 section kinds.
+ *
+ *   Generated from definitions/sections.json by tools/generate-sections.run.ts.
+ *   Edit the definition rather than this file.
  */
 
 /**

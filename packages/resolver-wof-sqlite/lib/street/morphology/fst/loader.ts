@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runtime loader for the street-morphology FST. The sealed artifact
- *   (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`) is the one
- *   resolution ladder every node call site shares.
+ *   Runtime loader for the street-morphology FST.
  *
- *   1. An explicit `artifactPath`, e.g. the weights-package sibling surfaced by
- *      `NeuralAddressClassifier.streetMorphologyPath`. When given, it is the only artifact probed.
+ *   The sealed artifact (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`)
+ *   is the one resolution ladder every node call site shares.
+ *
+ *   1. An explicit `artifactPath`, e.g. the weights-package sibling surfaced
+ *      by `NeuralAddressClassifier.streetMorphologyPath`.
+ *      When given, it is the only artifact probed.
  *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
- *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over `@mailwoman/dictionaries`' libpostal
- *      `street_types.txt` files, kept so a missing artifact degrades to a per-process build instead
- *      of a crash.
+ *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over
+ *      `@mailwoman/dictionaries`' libpostal `street_types.txt` files, kept
+ *      so a missing artifact degrades to a per-process build instead of a crash.
  *
  *   A present-but-unreadable artifact reports through `onWarn` and falls through to the build rung.
- *   Browsers cannot take the fallback because they have no filesystem API. They deserialize the same
- *   artifact through `fst-deserialize-web.ts` (see the docs demo loader).
+ *   Browsers cannot take the fallback because they have no filesystem API.
+ *
+ *   They deserialize the same artifact through `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

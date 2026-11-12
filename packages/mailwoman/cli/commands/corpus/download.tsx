@@ -4,9 +4,10 @@
 /**
  *   `mailwoman corpus download` — pull corpus + tokenizer from Cloudflare R2 via rclone.
  *
- *   Intended for GPU provider instances. Pulls the versioned corpus and tokenizer
- *   from R2 at datacenter speed (~1-10 Gbps depending on provider locality). It also works locally for
- *   syncing a fresh checkout.
+ *   Intended for GPU provider instances.
+ *   Pulls the versioned corpus and tokenizer from R2 at datacenter speed
+ *   (~1-10 Gbps depending on provider locality).
+ *   It also works locally for syncing a fresh checkout.
  *
  *   Requires RCLONE_S3_* env vars (Cloudflare R2 credentials).
  */

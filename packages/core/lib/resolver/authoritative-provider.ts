@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The authoritative-provider interface defines a typed boundary for structured queries to external reference services.
+ *   The authoritative-provider interface defines a typed boundary for structured
+ *   queries to external reference services.
+ *
  *   Results include the provider's identity, licensing and provenance.
  *   This keeps provider assertions separate from Mailwoman's inferences.
  *
- *   An absent provider field is `null`; the interface uses no substitute value such as `false`, `0`, or `""`.
+ *   An absent provider field is `null`; the interface uses no substitute value
+ *   such as `false`, `0`, or `""`.
  *   Refusal and ambiguity are explicit results.
- *   Provider assertions do not overwrite Mailwoman's answer. The response contains both for the consumer to compare.
- *   Provider product names stay out of this interface. Product-specific mapping belongs in an adapter package.
+ *
+ *   Provider assertions do not overwrite Mailwoman's answer.
+ *   The response contains both for the consumer to compare.
+ *
+ *   Provider product names stay out of this interface.
+ *   Product-specific mapping belongs in an adapter package.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -37,7 +44,7 @@ export interface AuthoritativeQuery {
 	normalizedQuery: string
 	components: ReadonlyArray<AuthoritativeQueryComponent>
 	/**
-	 * ISO 3166-1 alpha-2, absent when the pipeline could not commit to one.
+	 * ISO 3166-1 alpha-2, absent when the pipeline couldn't commit to one.
 	 */
 	countryCode: string | null
 	/**
@@ -84,7 +91,7 @@ export interface AuthoritativeMatch {
 	longitude: number | null
 	/**
 	 * The provider's stated precision or tier for the coordinate, in the provider's own vocabulary,
-	 * because the resolver's tier taxonomy does not apply to an assertion Mailwoman did not make.
+	 * because the resolver's tier taxonomy doesn't apply to an assertion Mailwoman didn't make.
 	 */
 	coordinatePrecision: string | null
 	matchStatus: AuthoritativeMatchStatus
@@ -105,7 +112,7 @@ export const AuthoritativeResponseStatus = {
 	 */
 	Matched: "matched",
 	/**
-	 * The provider returned candidates it could not decide between, all of them here.
+	 * The provider returned candidates it couldn't decide between, all of them here.
 	 */
 	Ambiguous: "ambiguous",
 	/**
@@ -134,7 +141,7 @@ export interface AuthoritativeResponse {
 	 */
 	license: string | null
 	/**
-	 * When the provider answered, ISO-8601, absent when the transport does not surface it.
+	 * When the provider answered, ISO-8601, absent when the transport doesn't surface it.
 	 */
 	retrievedAt: string | null
 	/**

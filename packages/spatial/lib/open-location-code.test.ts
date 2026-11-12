@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pinned against the official test vectors
- *   (google/open-location-code/test_data/decoding.csv) plus the board's live Nicaraguan pair.
+ *   Pinned against the official test vectors (google/open-location-code/test_data/decoding.csv)
+ *   plus the board's live Nicaraguan pair.
  */
 
 import { describe, expect, it } from "vitest"

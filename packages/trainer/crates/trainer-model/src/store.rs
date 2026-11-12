@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The model's parameters and buffers by name, in the order `torch.nn.Module` reports them.
 //!
 //! `named_parameters()` walks the module tree: a module's own parameters in registration order, then each child

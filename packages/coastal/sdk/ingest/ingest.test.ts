@@ -2,21 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ingest's schema handling — the part the fixture rung structurally cannot reach, because a fixture is
- *   a feature list rather than a geodatabase.
+ *   The ingest's schema handling — the part the fixture rung structurally cannot reach,
+ *   because a fixture is a feature list rather than a geodatabase.
  *
- *   the fourteen published layers do not share one schema. One layer differs by one column.
- *   `NCERM_SMP_2105_0CC` has no `smp_name`; the other thirteen do. A builder that read the schema off a
- *   sibling — the survey read `NCERM_SMP_2105_95CC` — fails on the twelfth layer with
- *   `error 1: Unrecognized field name smp_name` after 66,000 features. ogr2ogr refuses an unknown column.
- *   A source that returned NULL instead could have shipped. The `select` is built from the layer's own
- *   field list. The tests below pin which columns may be absent and which may
- *   not.
+ *   the fourteen published layers do not share one schema.
+ *   One layer differs by one column.
  *
- *   the policy asymmetry is the other shape. It is regular rather than irregular. The six NFI layers omit
- *   all four Shoreline Management Plan columns because under a no-intervention scenario there is no policy to
- *   record. That is a documented property of the product, so a layer disagreeing with its own scenario throws
- *   rather than being absorbed into a NULL.
+ *   `NCERM_SMP_2105_0CC` has no `smp_name`; the other thirteen do.
+ *   A builder that read the schema off a sibling — the survey read `NCERM_SMP_2105_95CC` —
+ *   fails on the twelfth layer with `error 1: Unrecognized field name smp_name`
+ *   after 66,000 features. ogr2ogr refuses an unknown column.
+ *
+ *   A source that returned NULL instead could have shipped.
+ *   The `select` is built from the layer's own field list.
+ *
+ *   The tests below pin which columns may be absent and which may not.
+ *
+ *   the policy asymmetry is the other shape.
+ *   It is regular rather than irregular.
+ *
+ *   The six NFI layers omit all four Shoreline Management Plan columns because under
+ *   a no-intervention scenario there's no policy to record.
+ *   That's a documented property of the product, so a layer disagreeing with its own
+ *   scenario throws rather than being absorbed into a NULL.
  */
 
 import type { OGRLayerSchema } from "@mailwoman/spatial/tools/ogr"
@@ -104,7 +112,7 @@ describe("the per-layer SELECT", () => {
 	it("tolerates the one layer that publishes no smp_name, rather than refusing it", async () => {
 		// `NCERM_SMP_2105_0CC` is the real case.
 		// The `select` substitutes `NULL AS smp_name` and the ingest proceeds.
-		// The caller receives an ogr2ogr error because the path does not exist.
+		// The caller receives an ogr2ogr error because the path doesn't exist.
 		// This proves the query was built.
 		const fields = FULL_SMP_FIELDS.filter((field) => field !== "smp_name").map((field) =>
 			field === "smp2105_95" ? "smp2105_0" : field

@@ -29,7 +29,7 @@ curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington 
 natively, so you do not need to mount middleware.
 
 **Note on `/expand`:** Mailwoman's normalization is deterministic, so `/expand` returns the
-original plus its normalized and abbreviation-expanded forms. It does not reproduce libpostal's
+original plus its normalized and abbreviation-expanded forms. It doesn't reproduce libpostal's
 probabilistic multi-variant expansion, and it returns one canonical alternative instead of a set
 of hypotheses.
 
@@ -62,5 +62,5 @@ libpostal's interface returns parses and expansions. It returns no coordinate an
 so this server reads no address-point layer, serves no OpenStreetMap data, and holds no row
 provenance or OpenStreetMap credit. An attached OpenStreetMap layer performs geocoding on the
 native, Nominatim and Photon surfaces. Their fields are in the
-[HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit)
+[HTTP interfaces reference](https://mailwoman.post/docs/reference/http)
 lists.

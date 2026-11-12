@@ -147,12 +147,12 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		// Reported beside `rows` rather than inside it.
 		// These rows exist in the corpus and belong to no jurisdiction.
-		// A caller that reads only `rows` would not know they were counted.
+		// A caller that reads only `rows` wouldn't know they were counted.
 		...(report.countryLess.length ? { country_less_rows: report.countryLess } : {}),
 		mismatches: report.mismatches,
 		summary:
 			// A mismatch leads. A caller reads the first sentence.
-			// Every following count is about a corpus the run does not read.
+			// Every following count is about a corpus the run doesn't read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
 			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +

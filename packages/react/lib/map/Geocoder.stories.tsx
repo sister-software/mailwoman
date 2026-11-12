@@ -3,6 +3,7 @@
 
 /**
  *   Exercise the composed geocoder in Storybook with a fake, offline runtime.
+ *
  *   `WithPanels` also demonstrates the host-injected panel slots.
  */
 

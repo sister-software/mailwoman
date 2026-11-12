@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scores the same-data benchmark with per-stratum and pooled metrics. It also computes an exact McNemar test
- *   and a paired bootstrap interval.
+ *   Scores the same-data benchmark with per-stratum and pooled metrics.
  *
- *   Every arm answers the same rows, so the tests are paired. The decision uses the pooled comparison.
+ *   It also computes an exact McNemar test and a paired bootstrap interval.
+ *
+ *   Every arm answers the same rows, so the tests are paired.
+ *   The decision uses the pooled comparison.
  *   Per-stratum tables describe the results.
  *
- *   A row whose arm threw an error is excluded from every metric and counted in `errors`. An abstention count
- *   an abstention would make a harness failure look like a resolver refusal.
+ *   A row whose arm threw an error is excluded from every metric and counted in `errors`.
+ *   An abstention count an abstention would make a harness failure look like a resolver refusal.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
@@ -192,11 +194,11 @@ export interface PairedComparison {
 	 */
 	n: number
 	/**
-	 * Rows the first arm got right and the second did not.
+	 * Rows the first arm got right and the second didn't.
 	 */
 	firstOnly: number
 	/**
-	 * Rows the second arm got right and the first did not.
+	 * Rows the second arm got right and the first didn't.
 	 */
 	secondOnly: number
 	bothCorrect: number

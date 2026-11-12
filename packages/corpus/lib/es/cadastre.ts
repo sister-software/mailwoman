@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The two ways a Spanish cadastre states that it holds no value. All four cadastres share them.
+ * The two ways a Spanish cadastre states that it holds no value.
+ * All four cadastres share them.
  *
- * Spain publishes the INSPIRE Addresses theme through four cadastres: the Dirección General del
- * Catastro for 52 provinces, and the Diputación Foral de Bizkaia, the Diputación Foral de Gipuzkoa
- * and the Gobierno de Navarra for their own territories. Each has its own adapter, because each
- * states its own terms and writes its own file layout. They agree on these two conventions, and
- * reading either of them as data rather than as an absence puts a token where a corpus row expects a
- * number or a postcode.
+ * Spain publishes the INSPIRE Addresses theme through four cadastres: the Dirección
+ * General del Catastro for 52 provinces, and the Diputación Foral de Bizkaia,
+ * the Diputación Foral de Gipuzkoa and the Gobierno de Navarra for their own territories.
+ * Each has its own adapter, because each states its own terms and writes its own file layout.
+ *
+ * They agree on these two conventions, and reading either of them as data rather than
+ * as an absence puts a token where a corpus row expects a number or a postcode.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -36,15 +38,15 @@ const SIN_NUMERO = new Set(["s-n", "s/n"])
  * The whole value has to be the token.
  * A value that holds more, such as Gipuzkoa's `S/N-A`, `S/N-C` and `S/N-5`,
  * states something further and is kept as the publisher wrote it: what the trailing part
- * designates is not established, dropping it would merge several addresses of one building,
- * and rewriting it would state a number the publisher did not.
+ * designates isn't established, dropping it would merge several addresses of one building,
+ * and rewriting it would state a number the publisher didn't.
  */
 export function isSinNumero(value: string): boolean {
 	return SIN_NUMERO.has(value.trim().toLowerCase())
 }
 
 /**
- * The house number a Spanish cadastre states, or null where it states that there is none.
+ * The house number a Spanish cadastre states, or null where it states that there's none.
  *
  * @param types The publisher's own designator types, in the caller's order of precedence.
  * The Dirección General del Catastro writes the type as the element text `1`, while Navarra
@@ -164,7 +166,7 @@ export function cadastralRow(address: CadastralAddress, source: CadastralSource)
 
 	// The address area is a settlement within the municipality where the two names differ,
 	// and repeats the municipality where they do not.
-	// The repetition would state a dependent locality the publisher does not hold.
+	// The repetition would state a dependent locality the publisher doesn't hold.
 	if (address.settlement && address.locality && address.settlement !== address.locality) {
 		components.dependent_locality = address.settlement
 	}

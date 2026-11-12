@@ -4,8 +4,9 @@
 /**
  *   The Ordnance Survey Downloads API's record of one downloadable archive.
  *
- *   The API serves OS OpenData products without authentication. `GET /products/<id>/downloads`
- *   lists one record per archive, and every OS product fetcher in this repository reads that list.
+ *   The API serves OS OpenData products without authentication.
+ *   `GET /products/<id>/downloads` lists one record per archive, and every OS
+ *   product fetcher in this repository reads that list.
  */
 
 /**

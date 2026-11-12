@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Italian leg of the `postal-guideline` evaluation recipe, from Poste Italiane's
- *   {@linkcode IT_CASELLA_POSTALE_RULES}. Two arrangements:
+ *   The Italian leg of the `postal-guideline` evaluation recipe, from Poste
+ *   Italiane's {@linkcode IT_CASELLA_POSTALE_RULES}.
+ *   Two arrangements:
  *
- *   - The fourth and fifth lines: `CASELLA POSTALE`, the number and the office where the box is, then
- *     the CAP, the locality and the province abbreviation.
- *   - The document's own contact address: `Casella Postale`, the number, a dash, the CAP and the
- *     locality.
+ *   - The fourth and fifth lines: `CASELLA POSTALE`, the number and the office
+ *     where the box is, then the CAP, the locality and the province abbreviation.
+ *   - The document's own contact address: `Casella Postale`, the number, a dash, the CAP and the locality.
  *
- *   The document asks for the office without prescribing how to name it. The leg writes it as
- *   `UFFICIO POSTALE` and the locality, the noun the document's fermo posta paragraph uses for a post
- *   office. That wording is this repository's choice rather than a quoted form.
+ *   The document asks for the office without prescribing how to name it.
+ *   The leg writes it as `UFFICIO POSTALE` and the locality, the noun the document's
+ *   fermo posta paragraph uses for a post office.
+ *
+ *   That wording is this repository's choice rather than a quoted form.
  */
 
 import { IT_CASELLA_POSTALE_RULES } from "@mailwoman/codex/it/casella-postale"

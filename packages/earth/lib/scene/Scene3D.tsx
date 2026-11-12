@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<Scene3D>` draws trees and modeled landmarks as meshes through a deck.gl overlay interleaved with the
- *   MapLibre layers, so the meshes share the map's depth buffer with the extruded buildings.
+ *   `<Scene3D>` draws trees and modeled landmarks as meshes through a deck.gl overlay interleaved
+ *   with the MapLibre layers, so the meshes share the map's depth buffer with the extruded buildings.
  */
 
 import { COORDINATE_SYSTEM } from "@deck.gl/core"

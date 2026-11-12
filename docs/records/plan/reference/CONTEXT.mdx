@@ -20,7 +20,7 @@ Output example for `"Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA"`
 ]
 ```
 
-The shape — per-component confidence + character offset + penalty — is unusually good for ML integration. A token-classification model's natural output is essentially this. We are not adapting a model to fit a foreign output shape.
+The shape — per-component confidence + character offset + penalty — is unusually good for ML integration. A token-classification model's natural output is essentially this. We're not adapting a model to fit a foreign output shape.
 
 ## What the field looks like
 
@@ -30,7 +30,7 @@ The shape — per-component confidence + character offset + penalty — is unusu
 - **Airmail** (Rust, tantivy-based geocoder) — sidesteps parsing entirely by treating it as an IR problem. 376 stars, single-maintainer, planet-scale for ~$5/month. Its IR approach is a reference design for this project.
 - **Transformer-based parsers in academic literature** — Guermazi et al. 2024 shows transformers beat libpostal on noisy/multilingual data. Not productized.
 
-The gap: there is no widely adopted neural address parser shipped as a library. Everyone either uses 2018-era CRF (libpostal) or rolls their own.
+The gap: there's no widely adopted neural address parser shipped as a library. Everyone either uses 2018-era CRF (libpostal) or rolls their own.
 
 ## Why neural, why now
 
@@ -92,7 +92,7 @@ Slide 14 of the talk's "programming noir" debug list, plus operator additions:
 - `P'tit St. Denis' Street Café` — apostrophe-contracted French (`P'tit` for `Petit`) layered onto the St./Saint/Street ambiguity
 - `Saint-Denis` vs `Saint Denis` vs `St. Denis` — same place, three orthographies. The model must learn the alternation rather than pick a canonical and reject the rest
 
-These are not noise. They are the inputs a model must learn to handle, and the inputs a rule parser cannot. The corpus pipeline that produces training data must include them — generated alongside their correct labels (compositional synthesis) rather than relied on the alignment layer to discover them after the fact.
+These are not noise. They're the inputs a model must learn to handle, and the inputs a rule parser cannot. The corpus pipeline that produces training data must include them — generated alongside their correct labels (compositional synthesis) rather than relied on the alignment layer to discover them after the fact.
 
 ## Success metric: graceful failure
 
@@ -100,7 +100,7 @@ From slide 20 of the same talk:
 
 > People want what their local post office expects. And, that means failing gracefully.
 
-This is the deliberate counterpoint to F1-maximization. The mail carrier squinting at bad handwriting and figuring it out anyway — that is the target behavior. A wrong answer that at least looks plausible and routes to a recoverable next step is preferable to wrong-with-high-confidence.
+This is the deliberate counterpoint to F1-maximization. The mail carrier squinting at bad handwriting and figuring it out anyway — that's the target behavior. A wrong answer that at least looks plausible and routes to a recoverable next step is preferable to wrong-with-high-confidence.
 
 ### The confidence-as-trap pattern
 
@@ -120,9 +120,9 @@ The principle that inverts this trap, and that should be quoted verbatim whereve
 - **Golden eval set** must include intentionally-ambiguous addresses where the _correct_ answer is "partial parse + low-confidence flag" — in addition to the unambiguous cases.
 - **No `confidence_boost` / `confidence_demerit` layer** in the synthesis pipeline or downstream of the model. That's the rule-era implementation the bitter lesson rejects. The model's softmax probability is the confidence, and calibration is a training-time concern.
 
-## What this project is not
+## What this project isn't
 
 - Not a geocoder. Resolution to coordinates is Phase 4, separate concern.
 - Not a libpostal replacement for everyone. C-language users have libpostal. We're targeting the TypeScript/Node ecosystem.
-- Not a research project. We are shipping a library. Novel architectures lose to slightly-tuned standard architectures shipped reliably.
+- Not a research project. We're shipping a library. Novel architectures lose to slightly-tuned standard architectures shipped reliably.
 - Not multilingual on day one. The cost of premature internationalization is corpus chaos and slow training. Two locales is the right scope.

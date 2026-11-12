@@ -3,9 +3,10 @@
 
 /**
  *   A locality miss has two causes that a rate cannot distinguish.
+ *
  *   A ranking miss means the right place is in the candidate set but was outranked.
- *   Reachability means the right place has no row
- *   under the asked key so no ranking could have reached it at any position.
+ *   Reachability means the right place has no row under the asked key
+ *   so no ranking could have reached it at any position.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -227,7 +228,7 @@ for (const [name, bucket] of shapes) {
 }
 
 /**
- * Below this row count a word is not reported per word: a rate over fewer places
+ * Below this row count a word isn't reported per word: a rate over fewer places
  * reads the draw rather than the word.
  */
 const MIN_ROWS_PER_WORD = 10

@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write `docs/engineering/reference/jurisdiction-coverage.mdx` — one row per jurisdiction, over the denominator
- *   of every ISO 3166-1 alpha-2 code plus the non-ISO operational codes, so a jurisdiction with no presence in any
- *   layer still gets a row: an absent row and a zero row are different findings.
+ *   Write `docs/engineering/reference/jurisdiction-coverage.mdx` — one row per jurisdiction,
+ *   over the denominator of every ISO 3166-1 alpha-2 code plus the non-ISO operational
+ *   codes, so a jurisdiction with no presence in any layer still gets a row:
+ *   an absent row and a zero row are different findings.
  *
- *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls, so this page and that tool
- *   cannot disagree.
+ *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls,
+ *   so this page and that tool cannot disagree.
  *
- *   This writes markdown tables with single-space padding, so a regeneration shows every table row as changed until
- *   the repository's formatter runs.
+ *   This writes markdown tables with single-space padding, so a regeneration shows
+ *   every table row as changed until the repository's formatter runs.
  *
  *   Run:
  *
@@ -134,6 +135,16 @@ const droppedWithRows = withRows.filter((code) => !shippedFamilies.has(code))
 const absent = sorted.filter((code) => !measured.has(code))
 const rooftop = withRows.filter((code) => measured.get(code)?.geocodeTier === "rooftop-published")
 const packaged = sorted.filter((code) => measured.get(code)?.weightsPackage)
+/**
+ * Jurisdictions more than one shipped graph admits, counted so the page doesn't
+ * claim the graphs partition the world.
+ */
+const admittedTwice = admitted.filter((code) => (shippedFamilies.get(code)?.length ?? 0) > 1)
+/**
+ * The jurisdiction with the most corpus rows and no street row.
+ * The column notes cite it as their example.
+ */
+const largestWithoutStreet = withRows.find((code) => !measured.get(code)?.corpusStreetRows) ?? null
 
 /**
  * The admission list of a second config, when one is supplied: reading its count beside the
@@ -143,7 +154,7 @@ const nextConfig = values["next-config"]
 const nextAdmitted = nextConfig ? await readAdmittedCountries(nextConfig) : null
 const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(code) && !shippedFamilies.has(code)) : []
 /**
- * Jurisdictions a shipped graph admits that the second config does not.
+ * Jurisdictions a shipped graph admits that the second config doesn't.
  *
  * A code here is a regression the config's author has to have intended.
  */
@@ -199,9 +210,13 @@ node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --re
 \`\`\`
 
 Corpus counts were taken over \`${report.corpusVersion}\`${report.corpusCensusTakenAt ? `, cached ${report.corpusCensusTakenAt}` : ", counted in this run"}, ${report.corpusRowsTotal.toLocaleString()} rows.
-**Admitted by** shows the shipped graph whose training config admits the jurisdiction. Admission is per
-graph and the two shipped graphs partition the world between them, so the column reads the union of
-\`scope.config.json\`'s registered configs rather than any one of them. \`${relativeToRepo(report.configPath)}\`
+**Admitted by** shows each shipped graph whose training config admits the jurisdiction. Admission is per
+graph, and ${
+	admittedTwice.length
+		? `${admittedTwice.length} jurisdictions (${admittedTwice.map((code) => `\`${code}\``).join(", ")}) are admitted by more than one`
+		: "no jurisdiction is admitted by more than one"
+}, so the column reads the union
+of \`scope.config.json\`'s registered configs rather than any one of them. \`${relativeToRepo(report.configPath)}\`
 is the one \`censusCoverage\` read for its own mismatch findings.${
 	report.corpusMismatch
 		? `\n\nThat config declares a different corpus version from the one the census counted, so a row count
@@ -216,23 +231,30 @@ ${newlyAdmitted.length} it adds are listed below the table.`
 		: ""
 }
 
-## What the columns separate
+## Columns
 
 **Corpus rows** counts rows in the training corpus. **Street rows** counts those with a \`street\`
-or \`house_number\` label. Those rows teach an address rather than a name. A jurisdiction
-can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
+or \`house_number\` label. Those rows teach an address rather than a name.
+${
+	largestWithoutStreet
+		? `A jurisdiction can hold rows while its street-row count reads 0. The largest such jurisdiction, \`${largestWithoutStreet}\`, reads ${measured.get(largestWithoutStreet)!.corpusRows.toLocaleString()} and 0.`
+		: "A jurisdiction can hold rows while its street-row count reads 0."
+}
 
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
 trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
 no rows either, by the other route.
 
-**Gazetteer** counts admin places available to resolve, and \`rooftop\` marks the two jurisdictions
-whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
+**Gazetteer** counts admin places available to resolve, and \`rooftop\` marks the ${rooftop.length}
+${rooftop.length === 1 ? "jurisdiction" : "jurisdictions"} whose rooftop database a consumer can obtain.
+Every other rooftop database is build-local.
 
-**Weights package** existing is not training. One model graph serves every locale. The other packages
-are data-only overlays over it.
+A **weights package** can exist for a jurisdiction no graph was trained on. Most packages are data-only
+overlays that share the model graph of \`@mailwoman/neural-weights-en-us\` or
+\`@mailwoman/neural-weights-cjk\`.
 
-**Board** counts rows that check rather than merely track, over rows present. A jurisdiction reading
+**Board** reads checking rows over all the rows present. A checking row has \`status: pass\`, and
+any other row only tracks. A jurisdiction reading
 \`—\` has no board row. That jurisdiction is unmeasured rather than failing.
 
 ## Counts
@@ -263,8 +285,7 @@ ${
 ${droppedWithRows.map((code) => `\`${code}\` (${measured.get(code)!.corpusRows.toLocaleString()})`).join(", ")}
 
 Each of these holds corpus rows and appears in neither shipped graph's \`country_weights\`, so those
-rows train no shipped model. This is the mechanism that left Norway untaught while its rows sat in
-the corpus. A jurisdiction here that also has a weights package is served by a data-only overlay
+rows train no shipped model. A jurisdiction here that also has a weights package is served by a data-only overlay
 over a graph that was never taught it.
 
 `
@@ -283,19 +304,19 @@ It stops admitting ${nextDrops.length} of the jurisdictions a shipped graph admi
 		: ""
 }## Separately modelled postal jurisdictions
 
-A postal regime is a way of writing an address that does not follow its ISO code's own hierarchy.
+A postal regime is a way of writing an address that doesn't follow its ISO code's own hierarchy.
 Each row states what the repository models rather than what the regime is.
 
 | regime | kind | codes | coverage |
 | --- | --- | --- | --- |
 ${regimeRows.join("\n")}
 
-### A corpus row whose country is not a jurisdiction
+### A corpus row whose country isn't a jurisdiction
 
-\`XK\` is an operational code the register enumerates, so it holds a row in the table above. \`ZZ\` is not:
+\`XK\` is an operational code the register enumerates, so it holds a row in the table above. \`ZZ\` holds none:
 it is the ISO 3166-1 user-assigned range, the register enumerates no jurisdiction for it, and
 \`mailwoman data coverage\` reports its rows under \`countryLess\` rather than as a jurisdiction. A reader
-counting the census's countries must not count it as one.
+counting the census's countries mustn't count it as one.
 
 ${countryLessLines}`
 

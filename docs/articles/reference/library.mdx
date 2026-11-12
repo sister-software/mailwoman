@@ -1,0 +1,176 @@
+---
+title: Node library API
+description: Look up Mailwoman 11.0.0 library imports, parse and geocode calls, options, return types, and errors.
+role: reference
+source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/stream.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
+verified-with: mailwoman v11.0.0
+---
+
+# Node library API
+
+This page describes the principal Node library calls in the published 11.0.0 packages. The runtime pipeline parses an address into a labeled tree. A geocode also requires a resolver and geographic databases. [Parse and geocode result schema](./schema.mdx) defines the result fields, tags, coordinate tiers, and provenance values.
+
+## Imports
+
+| Import                    | Public entry points covered here                                                |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| `mailwoman`               | `createRuntimePipeline`                                                         |
+| `@mailwoman/neural`       | `NeuralAddressClassifier`                                                       |
+| `@mailwoman/core/decoder` | `decodeAsJSON`, `createCalibrator`                                              |
+| `mailwoman/geocode`       | `parseForGeocode`, `geocodeAddress`, `geocodeStream`, `USStateDatabaseProvider` |
+
+`geocodeAddress` is exported by `mailwoman/geocode`. The bare `mailwoman` entry point exports the parse pipeline and the default placer. These import paths were checked against the published 11.0.0 package exports.
+
+## Runtime parse pipeline
+
+```ts
+function createRuntimePipeline(
+	opts?: CreateRuntimePipelineOpts
+): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
+```
+
+The factory returns a parse function synchronously. The returned function runs the async pipeline. An omitted classifier leaves the structural stages available, but a neural classifier is required for the labeled parse shown in the example below. The pipeline can add resolved places to the tree when `resolver` is supplied.
+
+The following factory options are the settings a caller uses to choose the stages and their defaults. `CreateRuntimePipelineOpts` also exposes stage-replacement callbacks and prior controls for custom pipelines. Read the exported TypeScript declaration for those advanced fields.
+
+| Factory option        | Type and default                                       | Effect                                                                                 |
+| --------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `classifier`          | classification stage, absent                           | Supplies labeled address spans. The published neural classifier implements this stage. |
+| `resolver`            | `Resolver`, absent                                     | Resolves parsed places when a geographic database backs it.                            |
+| `fst`                 | `auto`, `none`, or matcher; `auto`                     | Loads the classifier's gazetteer matcher when available.                               |
+| `streetMorphology`    | `auto`, `none`, or matcher; `auto`                     | Supplies street-form evidence when a matcher is available.                             |
+| `streetEvidence`      | `auto`, `none`, or evidence index; `auto`              | Supplies a street reranking index when available.                                      |
+| `placeCountry`        | `auto`, `none`, or function; `auto`                    | Supplies the coarse country guess.                                                     |
+| `machinePreferences`  | `auto`, `none`, or preferences; `auto`                 | Supplies host locale preferences when the caller and input provide none.               |
+| `poiQueryKind`        | `extract`, `none`, or `{ poiDatabasePath }`; `extract` | Detects point-of-interest queries. The object form also opens a lookup for execution.  |
+| `caseNormalization`   | `title-case` or `preserve`; `title-case`               | Sets the default case treatment for calls.                                             |
+| `placerCountryUse`    | `filter` or `prior`; `filter`                          | Sets how a confident coarse country guess constrains resolution.                       |
+| `hardCountrySafelist` | `ReadonlySet<string>`, artifact or built-in default    | Replaces the countries eligible for a hard country filter.                             |
+
+The returned function accepts these `PipelineOpts` fields on each call. A per-call value for `caseNormalization`, `placerCountryUse`, or `hardCountrySafelist` replaces the factory value for that call.
+
+| Per-call option       | Type and default                                               | Effect                                                                              |
+| --------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `locale`              | BCP-47 locale, detected when omitted                           | Supplies a locale hint.                                                             |
+| `userLocation`        | coordinate, country, or region and country. Absent by default. | Supplies the resolver with the caller's location.                                   |
+| `inputMode`           | `auto`, `fragmented`, or `formatted`; `auto`                   | Selects the input register from the query kind when `auto`.                         |
+| `forceFullPipeline`   | `boolean`, false                                               | Disables postcode and locality fast paths. Point-of-interest routing still applies. |
+| `resolveOpts`         | `ResolveOpts`, absent                                          | Passes resolver-specific options through.                                           |
+| `caseNormalization`   | `title-case` or `preserve`; factory default                    | Sets letter-case treatment.                                                         |
+| `placetypePair`       | `inherit`, `off`, or prior object; `inherit`                   | Selects the placetype-pair prior.                                                   |
+| `placerCountryUse`    | `filter` or `prior`; factory default                           | Sets coarse country-guess use.                                                      |
+| `hardCountrySafelist` | `ReadonlySet<string>`, factory default                         | Replaces the hard-country filter set.                                               |
+| `signal`              | `AbortSignal`, absent                                          | Allows cancellation of the call.                                                    |
+
+`PipelineResult` includes `input`, `normalized`, `queryShape`, `locale`, `kind`, `phraseProposals`, `tree`, `poiIntent`, `timing`, `faults`, `intentMarkers`, and `path`. `faults` records stage failures that the coordinator caught and continued past. An empty `faults` array means no stage faulted in that call. The [result schema](./schema.mdx#parse-result) gives each field's type and meaning.
+
+## Neural classifier
+
+```ts
+NeuralAddressClassifier.loadFromWeights(
+  ...args: Parameters<typeof loadClassifierFromWeights>
+): Promise<NeuralAddressClassifier>
+```
+
+`loadFromWeights` loads a model for one locale. The published en-US exercise installs `@mailwoman/neural-weights-en-us@11.0.0` and passes `{ locale: "en-US" }`. The loader also accepts explicit `modelPath`, `tokenizerPath` or `charVocabPath`, `modelCardPath`, `tier`, and `cacheRoot` options. `tier` is `server` by default; `pocket` omits lexicons and keeps the postcode anchor. The full loader type is `ResolveWeightsOpts` plus inference and diagnostic options in `packages/neural/lib/classifier/loader.ts`.
+
+| Method                         | Return type                                      | Projection                                                                                         |
+| ------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `parse(text, opts?)`           | `Promise<AddressTree>`                           | Nested labeled tree.                                                                               |
+| `parseJSON(text, opts?)`       | `Promise<Partial<Record<ComponentTag, string>>>` | One string per retained tag. Optional serialization settings can include unknown or dropped spans. |
+| `parseTuples(text, opts?)`     | `Promise<Array<[ComponentTag, string]>>`         | Tag and value pairs. Optional serialization settings can include unknown spans.                    |
+| `parseXML(text, opts?)`        | `Promise<string>`                                | XML serialization.                                                                                 |
+| `parseWithLogits(text, opts?)` | `Promise<ParseWithLogitsResult>`                 | Tree, logits, and piece offsets.                                                                   |
+| `traceParse(text, opts?)`      | `Promise<NeuralParseTrace>`                      | Serializable decode trace.                                                                         |
+
+Each method takes `ParseOpts` where shown. Common settings include `inputMode`, `caseNormalization`, `queryShape`, `fst`, `calibrate`, and `placetypePair`. Direct classifier calls have their own defaults and omit the runtime pipeline's surrounding stages. Use `createRuntimePipeline` for the complete parse path and the classifier methods when the direct model result or logits are needed.
+
+`decodeAsJSON(tree, opts?)` from `@mailwoman/core/decoder` flattens an `AddressTree` to one value per tag. Its `includeUnknown` and `includeDropped` options add diagnostic arrays. The flat projection can lose repeated spans and tree nesting. Read `tree` when either matters.
+
+## Geocode and batch calls
+
+```ts
+function parseForGeocode(
+	input: string,
+	deps: Pick<
+		GeocodeDeps,
+		| "classifier"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "streetMorphologyPrior"
+		| "anchorRegions"
+		| "venueHead"
+		| "venueHeadOpts"
+	>
+): Promise<AddressTree>
+function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult>
+function geocodeStream(
+	records: AsyncIterable<SourceRecord> | Iterable<SourceRecord>,
+	opts: GeocodeStreamOptions
+): AsyncIterableIterator<SourceRecord>
+```
+
+Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `classifier` and `resolver`. A geocode also requires geographic data behind the resolver. The optional `databases`, `nationalDatabases`, and `osmDatabases` fields select additional region and address-point layers. `parseForGeocode` accepts the parse-related subset of `GeocodeDeps` and returns a tree without running the full coordinate cascade. `geocodeStream` starts workers from a `GeocodeStreamConfig` containing `wofDBPath`, `dataRoot`, and `locale`. It also needs a `ColumnMapping` for the input records. `USStateDatabaseProvider.create(factory, dataRoot, catalog?)` reads the active data selection and warms <Country code="US" /> state database paths before it returns a disposable provider. Its factory supplies the SQLite lookup classes.
+
+`GeocodeResult` separates parsed `components` from `lat`, `lon`, `resolution_tier`, `epistemic_status`, and `coordinate_source`. The [result schema](./schema.mdx#geocode-result-and-provenance) defines those fields. The geocoding calls and stream were checked against the published 11.0.0 declarations and repository source, without a geographic database, so this page records no geocoding response or batch output. [Geocode a file of addresses](../tutorials/geocode-a-file.mdx) shows executed geocodes.
+
+## Confidence calibration
+
+```ts
+function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator
+type Calibrator = (rawConfidence: number) => number
+```
+
+`createCalibrator` from `@mailwoman/core/decoder` makes a function from a supplied calibration table. Pass that function as `ParseOpts.calibrate` on a direct classifier call. The default parse path doesn't apply a calibration table. The caller supplies a table fitted for the model being used. This function doesn't select one.
+
+## Errors and absence
+
+| Call or field                                                                                                          | Observed or declared behavior                                                                                                                                                       | Caller action                                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `loadFromWeights({ modelPath: "/tmp/mailwoman-r01-missing.onnx", tokenizerPath: "/tmp/mailwoman-r01-missing.model" })` | Published 11.0.0 threw `Explicit modelPath does not exist: /tmp/mailwoman-r01-missing.onnx`.                                                                                        | Supply an existing model path or install the locale's weights package.      |
+| `createCalibrator([])`                                                                                                 | Published 11.0.0 threw `createCalibrator: empty calibration table`.                                                                                                                 | Supply at least one calibration bin.                                        |
+| `geocodeAddress`                                                                                                       | Its declaration and source allow a fatal parse or resolve error to reject the promise. The exact error text depends on the failing dependency and is unknown from this page's runs. | Inspect the classifier, resolver, and data paths for the failing call.      |
+| `PipelineResult.faults`                                                                                                | The coordinator returns caught stage failures in this array. The executed example returned an empty array.                                                                          | Inspect each reported stage, name, and message before using a partial tree. |
+
+## Example: parse one address
+
+The example needs Node.js 24 LTS or later and an ECMAScript module project, with `"type": "module"` in its `package.json`. Install the packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/core@11.0.0
+```
+
+Save this complete file as `library.ts`:
+
+```ts
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+const result = await parse("apt 4b 350 5th ave new york ny 10118")
+
+console.log("kind:", result.kind.kind)
+console.log("path:", result.path)
+console.log("components:", JSON.stringify(decodeAsJSON(result.tree)))
+console.log("faults:", result.faults.length)
+```
+
+Run `node library.ts`. The published 11.0.0 packages produced this output on Linux x64:
+
+```text
+kind: structured_address
+path: full
+components: {"region":"NY","locality":"New York","postcode":"10118","street":"5TH","unit":"Apt 4B","house_number":"350","street_suffix":"Ave"}
+faults: 0
+```
+
+## See also
+
+- [Install Mailwoman and inspect a first parse](../start.mdx) explains how to read the tree.
+- [Inspect the decisions behind a parse](../tutorials/inspect-a-parse.mdx) captures a parser trace.
+- [Parse and geocode result schema](./schema.mdx) defines result fields and values.

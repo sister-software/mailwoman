@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the place autocomplete index from the candidate gazetteer: the primary-name places above a population
- *   floor, with every country and region regardless of population, written as one sealed ancestrie per leading
- *   character of the folded name under `autocomplete/<generation>/` beside a manifest. The payload of every entry
- *   is what `mailwoman/browser-runtime/autocomplete-index` reads back.
+ *   Builds the place autocomplete index from the candidate gazetteer: the primary-name
+ *   places above a population floor, with every country and region regardless of population,
+ *   written as one sealed ancestrie per leading character of the folded name under
+ *   `autocomplete/<generation>/` beside a manifest.
+ *
+ *   The payload of every entry is what `mailwoman/browser-runtime/autocomplete-index` reads back.
  */
 
 import { AncestrieBuilder, type AncestrieEntry } from "@mailwoman/ancestrie"

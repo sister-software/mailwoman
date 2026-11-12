@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The candidate gazetteer's `layer_manifest`, which names its admin ancestor as `source` and
- *   reports an unprovenanced ancestor as `unknown` rather than substituting the file's name.
+ *   The candidate gazetteer's `layer_manifest`, which identifies its admin ancestor as `source`
+ *   and reports an unprovenanced ancestor as `unknown` rather than substituting the file's name.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -59,7 +59,7 @@ export interface CandidateManifestInput {
 	}
 	/**
 	 * Whether an importance database was folded in.
-	 * This changes ranking in a way the schema does not show.
+	 * This changes ranking in a way the schema doesn't show.
 	 */
 	importance: boolean
 	buildSHA: string
@@ -75,7 +75,7 @@ export interface CandidateManifestInput {
 }
 
 /**
- * The identifier that stands for a fold whose own terms this build could not read,
+ * The identifier that stands for a fold whose own terms this build couldn't read,
  * deliberately absent from `KNOWN_OBLIGATIONS` so `summarizeLicense` reports it as
  * unrecognized and `refusalsForPublication` refuses the layer.
  */
@@ -83,7 +83,7 @@ export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
 
 /**
  * Where a contributing database recorded its terms, with `none` meaning it
- * records no terms or could not be read.
+ * records no terms or couldn't be read.
  */
 export const FoldTermsRecord = {
 	LayerManifest: "layer_manifest",
@@ -100,7 +100,7 @@ export type FoldTermsRecord = (typeof FoldTermsRecord)[keyof typeof FoldTermsRec
 export interface FoldTerms {
 	path: string
 	/**
-	 * The layer name the manifest records, or the filename when no manifest names one.
+	 * The layer name the manifest records, or the filename when no manifest identifies one.
 	 */
 	name: string
 	recordedIn: FoldTermsRecord
@@ -264,7 +264,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 
 	const adminTerms = await readFoldTerms(input.adminDBPath)
 	const foldTerms = await Promise.all(contributing.map((path) => readFoldTerms(path)))
-	// The ancestor is not a fold, so the count reads only the contributing databases.
+	// The ancestor isn't a fold, so the count reads only the contributing databases.
 	const buildLocal = foldsRefusingPublication(foldTerms).length
 
 	for (const terms of [adminTerms, ...foldTerms]) {

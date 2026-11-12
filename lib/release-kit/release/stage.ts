@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The staging + audit half of the release preflight: materialize the release tree in an isolated
- *   staging root, then pack and audit every release workspace there, so a preflight exercises the
- *   exact pack-and-verify path CI publishes with — without a tag, a registry write, or a dirty source
- *   checkout.
+ *   The staging + audit half of the release preflight: materialize the release tree
+ *   in an isolated staging root, then pack and audit every release workspace there,
+ *   so a preflight exercises the exact pack-and-verify path CI publishes with —
+ *   without a tag, a registry write, or a dirty source checkout.
  *
- *   A staging tree built by `git archive head` holds tracked files only and lives outside the
- *   checkout, so an interrupted run leaves every tracked file byte-identical by construction rather
- *   than by cleanup code that must survive kill signals.
+ *   A staging tree built by `git archive head` holds tracked files only and lives outside
+ *   the checkout, so an interrupted run leaves every tracked file byte-identical by
+ *   construction rather than by cleanup code that must survive kill signals.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -35,7 +35,7 @@ export const SANCTIONED_RELEASE_ABSENCES = await import("@mailwoman/universe/rel
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
  *
  * Every entry is refused rather than only the rights-held ones, so one rule cannot
- * drift from a classification it does not include.
+ * drift from a classification it doesn't include.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -149,8 +149,8 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 /**
  * One workspace's pack-and-audit result.
  *
- * A pack that could not produce a tarball reports the thrown message as its
- * single failure rather than aborting the sweep.
+ * A pack that couldn't produce a tarball reports the thrown message as its single
+ * failure rather than aborting the sweep.
  */
 export interface WorkspaceAuditResult {
 	workspace: string

@@ -16,14 +16,14 @@ The import graph comes from the current checkout rather than each historical tre
 The scoped medians describe different commit populations: 161 baseline commits and 190 candidate commits.
 The all-commit medians use the same 300 commits.
 The candidate also includes root tool tests that the baseline's fast configuration excluded.
-These results measure selected file counts. The replay did not measure execution time or runner charges.
+These results measure selected file counts. The replay didn't measure execution time or runner charges.
 The baseline differs from the original issue's reported 159 full selections because this replay uses the selector at `2be22445d` and the current file population.
 
 Tests that import filesystem, module-path, SQLite, or subprocess access retain all of their owner's transitive workspace inputs.
 They remain selected when those inputs change, even when an import edge is absent.
 Other tests use the Vitest import graph for source changes.
 Fixture and data changes retain workspace-level selection.
-This policy does not infer individual fixture paths from arbitrary runtime expressions.
+This policy doesn't infer individual fixture paths from arbitrary runtime expressions.
 
 `readCIWorkspaces` detects runtime access from test-file syntax each time CI selects tests.
 An unreadable source file raises an error instead of producing an empty selection.

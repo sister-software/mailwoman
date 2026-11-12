@@ -97,7 +97,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 /**
  * Returns the per-state address-point database path under `<dataRoot>/db/address-points/`.
  *
- * It returns null when the slug is null or the file does not exist.
+ * It returns null when the slug is null or the file doesn't exist.
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
@@ -109,7 +109,7 @@ export async function selectAddressPointsDB(dataRoot: string, stateSlug: string 
 /**
  * Returns the per-state interpolation database path under `<dataRoot>/db/interpolation/`.
  *
- * It returns null when the slug is null or the file does not exist.
+ * It returns null when the slug is null or the file doesn't exist.
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
@@ -140,19 +140,17 @@ export interface RegionDatabaseFactory {
 export interface RegionDatabaseCacheEntry extends RegionDatabases {
 	_ap?: Disposable | null
 	_ip?: Disposable | null
-	/**
-	 * The resolved database path. {@link USStateDatabaseProvider.reload} compares it with the new path.
-	 */
-	apPath: string | null
-	ipPath: string | null
 }
 
 /**
  * Opens and caches per-state address-point and interpolation lookups,
  * so each state's databases open once per batch.
  *
- * Paths resolve through the active selection, then the `releases.json` manifest when one exists.
- * {@link reload} swaps in a newly published version. {@link close} releases every cached handle.
+ * Paths resolve through the active selection, then the `releases.json` manifest
+ * when one exists, read once at construction.
+ * A newly published version is read by a new provider.
+ *
+ * A geocode session builds one for each data generation. {@link close} releases every cached handle.
  *
  * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
  * Construct instances with {@linkcode USStateDatabaseProvider.create}.
@@ -162,12 +160,7 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	readonly #factory: RegionDatabaseFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
-	/**
-	 * Handles replaced by the last `reload()`.
-	 * The next `reload()` closes them.
-	 */
-	#retired: Disposable[] = []
-	#manifest: DataReleaseManifest | null
+	readonly #manifest: DataReleaseManifest | null
 	/**
 	 * Resolved database paths per slug, filled by {@linkcode warm}.
 	 */
@@ -209,7 +202,7 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	/**
 	 * Resolves the address-point and interpolation paths for every US state and territory slug.
 	 *
-	 * Each call replaces the path map. {@linkcode reload} calls it without a snapshot to re-read the disk.
+	 * Each call replaces the path map.
 	 */
 	async warm(snapshot?: LayerCatalog): Promise<void> {
 		this.#paths.clear()
@@ -257,7 +250,7 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : null
 
-		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
+		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip }
 	}
 
 	readonly for: RegionDatabaseResolver = (stateSlug) => {
@@ -279,55 +272,13 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 		return this.#manifest ? { ...this.#manifest } : null
 	}
 
-	/**
-	 * Re-reads the manifest and database paths.
-	 * It reopens cached states whose paths changed.
-	 *
-	 * The replaced handles stay open until the next reload, so a lookup started
-	 * on one finishes before the handle closes.
-	 * The method returns the new manifest.
-	 */
-	async reload(): Promise<DataReleaseManifest | null> {
-		for (const h of this.#retired) {
-			h[Symbol.dispose]()
-		}
-
-		this.#retired = []
-		this.#manifest = await readReleaseManifest(this.#dataRoot)
-		await this.warm()
-
-		for (const [slug, old] of this.#cache) {
-			const paths = this.#paths.get(slug.toLowerCase()) ?? { apPath: null, ipPath: null }
-			const layerPath = this.#factory.openAddressLayerLookup ? this.#layerPaths.get(slug.toLowerCase()) : undefined
-			const apPath = layerPath ?? paths.apPath
-
-			if (apPath === old.apPath && paths.ipPath === old.ipPath) continue
-			this.#cache.set(slug, this.#open(slug))
-
-			if (old._ap) {
-				this.#retired.push(old._ap)
-			}
-
-			if (old._ip) {
-				this.#retired.push(old._ip)
-			}
-		}
-
-		return this.versions()
-	}
-
 	close(): void {
 		for (const e of this.#cache.values()) {
 			e._ap?.[Symbol.dispose]()
 			e._ip?.[Symbol.dispose]()
 		}
 
-		for (const h of this.#retired) {
-			h[Symbol.dispose]()
-		}
-
 		this.#cache.clear()
-		this.#retired = []
 	}
 
 	[Symbol.dispose](): void {

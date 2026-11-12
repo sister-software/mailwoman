@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman train config resolve <config.yaml> --out <resolved.json>` writes the versioned resolved training
- *   config the Rust trainer and sampler read: every default applied, the YAML path absolute, and the source
- *   admission record embedded. It refuses a config the Python loader refuses, and a config that admits a source
- *   whose register rows lack a transform and train permission unless `data.unshippable_reason` is set.
+ *   `mailwoman train config resolve <config.yaml> --out <resolved.json>` writes the versioned
+ *   resolved training config the Rust trainer and sampler read: every default applied,
+ *   the YAML path absolute, and the source admission record embedded.
+ *
+ *   It refuses a config the Python loader refuses, and a config that admits a source whose
+ *   register rows lack a transform and train permission unless `data.unshippable_reason` is set.
  */
 
 import { Box, Text } from "ink"

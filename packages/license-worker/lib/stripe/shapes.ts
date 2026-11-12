@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The three reads of a Stripe object this worker makes more than once, under the pinned API version. An expandable
- *   field is a string id or the object. every caller wants the id.
+ *   The three reads of a Stripe object this worker makes more than once, under the pinned API version.
+ *
+ *   An expandable field is a string id or the object. every caller wants the id.
  */
 
 import type Stripe from "stripe"

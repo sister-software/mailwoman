@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the `realized_draws` exposure report of one Rust training segment, `exposure-realized-from-<step>.json`.
+ *   Writes the `realized_draws` exposure report of one Rust training
+ *   segment, `exposure-realized-from-<step>.json`.
  *
- *   `trainer train` writes the rows each consumed batch held to `exposure-realized-from-<step>.rows.jsonl.zst` and,
- *   when the run ends, the description `exposure-realized-from-<step>.rows.json`, which records the stream's file
- *   name, its row count, the label set and the report's inputs. This tool counts the rows with the same `StageCounter` and
- *   phenomena as `exposure.run.ts` and writes the report the Python loop wrote in-process, beside the description
- *   unless `--json` names another path. It refuses a stream whose row count differs from the description's.
+ *   `trainer train` writes the rows each consumed batch held to
+ *   `exposure-realized-from-<step>.rows.jsonl.zst` and, when the run ends, the description
+ *   `exposure-realized-from-<step>.rows.json`, which records the stream's file name,
+ *   its row count, the label set and the report's inputs.
+ *   This tool counts the rows with the same `StageCounter` and phenomena as
+ *   `exposure.run.ts` and writes the report the Python loop wrote in-process,
+ *   beside the description unless `--json` names another path.
+ *
+ *   It refuses a stream whose row count differs from the description's.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/exposure/realized.run.ts \

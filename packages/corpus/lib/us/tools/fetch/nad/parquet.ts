@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Converts the NAD bulk release's delimited text to one Parquet file sorted by state and county, so a query about one
- *   county reads only that county's row groups.
+ *   Converts the NAD bulk release's delimited text to one Parquet file sorted by state
+ *   and county, so a query about one county reads only that county's row groups.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

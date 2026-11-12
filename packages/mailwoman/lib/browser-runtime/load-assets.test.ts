@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The release loader starts the FST, morphology, calibration and ORT wasm fetches beside the classifier, starts the
- *   card, model, embedding and tokenizer fetches before the loader chunk resolves, and still advances the step labels
- *   in order.
+ *   The release loader starts the FST, morphology, calibration and ORT wasm fetches
+ *   beside the classifier, starts the card, model, embedding and tokenizer fetches
+ *   before the loader chunk resolves, and still advances the step labels in order.
  */
 
 import { afterAll, afterEach, describe, expect, test, vi } from "vitest"

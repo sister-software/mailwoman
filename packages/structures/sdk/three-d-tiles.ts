@@ -4,15 +4,19 @@
 /**
  *   Converts 3D Tiles 1.0 city models into the 3D Tiles 1.1 form Earth serves for every city source.
  *
- *   A 1.0 tile is a b3dm: a feature table, a batch table of per-building attributes, and a binary glTF. The 1.1
- *   tile is that glTF, without the tables. The conversion keeps the geometry and materials byte for byte and changes
- *   four things:
+ *   A 1.0 tile is a b3dm: a feature table, a batch table of per-building attributes, and a binary glTF.
+ *   The 1.1 tile is that glTF, without the tables.
+ *
+ *   The conversion keeps the geometry and materials byte for byte and changes four things:
  *
  *   - The `CESIUM_RTC` center becomes the translation of a new root node, in glTF's y-up axes.
- *   - The `_BATCHID` vertex attribute becomes `_FEATURE_ID_0`, the feature id attribute of `EXT_mesh_features`.
- *   - The batch table is replaced by an `EXT_structural_metadata` property table holding one column, the source's
- *     building id (`gml_id` for a CityGML source). The map never reads the other columns, so they are dropped.
- *   - {@link limitTextureEdge} scales a texture larger than the tile's limit down to it, in the same image format.
+ *   - The `_BATCHID` vertex attribute becomes `_FEATURE_ID_0`, the feature id
+ *     attribute of `EXT_mesh_features`.
+ *   - The batch table is replaced by an `EXT_structural_metadata` property table holding
+ *     one column, the source's building id (`gml_id` for a CityGML source).
+ *     The map never reads the other columns, so they're dropped.
+ *   - {@link limitTextureEdge} scales a texture larger than the tile's limit
+ *     down to it, in the same image format.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"

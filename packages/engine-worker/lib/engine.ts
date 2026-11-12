@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The engine behind the Worker's `/v1/parse` and `/v1/geocode`: Earth's browser pipeline for the parse, and the
- *   gazetteer cascade over a place lookup for the coordinate. The serve engine's `extractGeocodeResult` projects the
- *   resolved tree, so a geocode answer has the serve engine's shape at the admin tier.
+ *   The engine behind the Worker's `/v1/parse` and `/v1/geocode`: Earth's browser pipeline
+ *   for the parse, and the gazetteer cascade over a place lookup for the coordinate.
+ *
+ *   The serve engine's `extractGeocodeResult` projects the resolved tree,
+ *   so a geocode answer has the serve engine's shape at the admin tier.
  */
 
 import type { MailwomanAPIEngine } from "@mailwoman/api/engine"

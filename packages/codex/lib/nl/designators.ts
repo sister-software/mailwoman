@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a Dutch address uses: the Postbus, building and room words, floors, and the relation
- *   words of a query.
+ *   The designators a Dutch address uses: the Postbus, building and room words,
+ *   floors, and the relation words of a query.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/nldEn.pdf UPU, Netherlands addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/nabij Wiktionary, nabij}

@@ -4,11 +4,14 @@
 /**
  *   The formatter's public surface, over the layout table this package now owns.
  *
- *   Most of what this file used to assert was about the third-party engine's vocabulary — whether a country's mustache
- *   template names `suburb` or `quarter` or neither, whether a connector survived an empty slot, whether a missing line
- *   could be spliced back in afterwards. Those questions disappear once the order is data.
- *   A layout that declares a `dependent_locality` slot has one. A line assembled from present values
- *   writes no connector around an absent slot. These tests assert the resulting behavior.
+ *   Most of what this file used to assert was about the third-party engine's vocabulary —
+ *   whether a country's mustache template names `suburb` or `quarter` or neither, whether a
+ *   connector survived an empty slot, whether a missing line could be spliced back in afterwards.
+ *   Those questions disappear once the order is data.
+ *
+ *   A layout that declares a `dependent_locality` slot has one.
+ *   A line assembled from present values writes no connector around an absent slot.
+ *   These tests assert the resulting behavior.
  */
 
 import { describe, expect, it } from "vitest"
@@ -234,7 +237,7 @@ describe("formatAddressRow", () => {
 
 	it("reads the alignment rather than inferring it from the string", () => {
 		// A substring test answers `street` here because `Paris` sits inside `Rue de Paris`.
-		// The render knows the layout placed both, so it does not have to guess.
+		// The render knows the layout placed both, so it doesn't have to guess.
 		const components: ComponentDict = {
 			house_number: "5",
 			street: "Rue de Paris",
@@ -264,6 +267,32 @@ describe("a postcode written with its layout's prefix", () => {
 
 		expect(row.raw).toContain(written)
 		expect(row.components.postcode).toBe(written)
+	})
+
+	it("places Puerto Rico's fixed `PR` as the region when the address gives none, and a given region over it", () => {
+		const components = { street: "Calle Munoz Rivera", house_number: "555", locality: "Caguas", postcode: "00725" }
+		const fixed = formatAddressRow(components, "PR", { singleLine: true })!
+
+		expect(fixed.raw).toContain("Caguas PR 00725")
+		expect(fixed.components.region).toBe("PR")
+
+		const given = formatAddressRow({ ...components, region: "Caguas Municipio" }, "PR", { singleLine: true })!
+
+		expect(given.raw).toContain("Caguas Caguas Municipio 00725")
+		expect(given.components.region).toBe("Caguas Municipio")
+	})
+
+	it("keeps Azerbaijan's `AZ`, its postcode prefix, as postcode text rather than a region", () => {
+		const row = formatAddressRow(
+			{ street: "Neftchilar", house_number: "1", postcode: "1000", locality: "Baku" },
+			"AZ",
+			{
+				singleLine: true,
+			}
+		)!
+
+		expect(row.raw).toContain("AZ 1000")
+		expect(row.components.region).toBeUndefined()
 	})
 
 	it("leaves a postcode with no glued prefix as given", () => {
@@ -419,7 +448,7 @@ describe("the script a row renders in", () => {
 	})
 
 	it("abstains on a dict with no letters rather than reading digits as Latin", () => {
-		// The meaning-of-zero rule: no letters is not evidence of a register, so the country's own default stands.
+		// The meaning-of-zero rule: no letters isn't evidence of a register, so the country's own default stands.
 		const digits = formatAddressRow({ house_number: "21", postcode: "100-0005" }, "JP", { singleLine: true })
 
 		expect(digits?.script).toBe("local")

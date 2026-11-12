@@ -4,8 +4,8 @@
 /**
  *   Build a corpus's support index beside its manifest.
  *
- *   The index counts the train split's tag-set shapes and folded surfaces once, so `mwdev_support`
- *   answers a gauntlet row's corpus support without a scan.
+ *   The index counts the train split's tag-set shapes and folded surfaces once,
+ *   so `mwdev_support` answers a gauntlet row's corpus support without a scan.
  *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/corpus/support-index.run.ts --manifest <MANIFEST.json>

@@ -2,57 +2,49 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
+ * `createServeEngine` builds the shared stack once at boot.
+ *
+ * The CLI's `serve` command awaits it before listening, so a misconfigured deployment
+ * fails at boot rather than on the first request.
+ * A degraded boot is deliberate: `parse` needs only the model weights and still
+ * answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload`
+ * are absent and their routes answer 503.
+ *
+ * When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback.
+ * `health` always answers.
  */
 
-import type { GeocodeCallback, GeocodeInit, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
+import type { HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
-import type { GeocodeResponse } from "@mailwoman/api/operations/geocode/address"
 import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import type { InputModeSelection } from "@mailwoman/core/pipeline"
-import type { DefaultCountry, Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { createWOFResolver } from "@mailwoman/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
-import type { GeocodeClassifier } from "#geocode/classifier"
-import { deriveGeocodeRegister, geocodeAddress, type GeocodeDeps, parseForGeocode } from "#geocode/core"
-import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
-import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
-import {
-	buildNoGazetteerMessage,
-	createResolverBackend,
-	existingWOFDatabasePaths,
-	resolveCandidateDBPath,
-} from "#resolver-backend"
+import { createGeocodeCommandOptions } from "#geocode/command-options"
+import { deriveGeocodeRegister } from "#geocode/core"
+import { need, ProcessServices } from "#geocode/services"
+import { createGeocodeProcessScope, createGeocodeSession, type GeocodeSessionOptions } from "#geocode/session"
+import { GeocodeSessionSlot } from "#geocode/session/slot"
+import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
 
 const DATA_ROOT = dataRootPath()
-
-interface GeocodeDepsBundle {
-	classifier: GeocodeClassifier
-	resolver: Resolver
-	/**
-	 * The concrete US provider, because the engine's `reload` calls its `reload`.
-	 */
-	databases: USStateDatabaseProvider
-	defaultCountry: DefaultCountry | null
-}
 
 async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
 	// The env override is comma-split and probed like the convention set: a listed database
-	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
+	// that's not on disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env ? extractDelimited(env) : null
 
 	return existingWOFDatabasePaths(explicit)
@@ -65,7 +57,7 @@ async function wofPaths(): Promise<string[]> {
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
 		dataRoot: DATA_ROOT,
-		docsPath: "/docs/developers/get-started/ten-minute-trial",
+		docsPath: "/docs/reference/data-and-locales",
 	})
 }
 
@@ -84,7 +76,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// `pathExists` below therefore checks every candidate.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
-		// A weights package that does not resolve here falls through to the next candidate.
+		// A weights package that doesn't resolve here falls through to the next candidate.
 	}
 
 	candidates.push("packages/neural-weights-en-us/model-card.json")
@@ -152,49 +144,6 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-/**
- * The geocode dependencies one request runs with: the engine's loaded stack
- * plus the request's input mode and bias.
- */
-function geocodeDepsFor(
-	deps: GeocodeDepsBundle,
-	inputMode: InputModeSelection,
-	bias: GeocodeInit["bias"] = []
-): GeocodeDeps {
-	return {
-		classifier: deps.classifier,
-		resolver: deps.resolver,
-		databases: deps.databases.for,
-		...(deps.defaultCountry ? { defaultCountry: deps.defaultCountry } : {}),
-		interpCalibration: INTERP_RADIUS_CALIBRATION,
-		inputMode,
-		...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
-	}
-}
-
-function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: InputModeSelection): Promise<GeocodeResult> {
-	return geocodeAddress(address, geocodeDepsFor(deps, inputMode))
-}
-
-/**
- * Geocodes one address for `POST /v1/geocode`, with the request's bias.
- *
- * When the request asks for the tree, the address is parsed once here and the parsed
- * tree is handed to the geocoder, so the response's tree is the one the coordinate
- * was resolved from and the classifier runs once.
- */
-async function geocodeForRoute(deps: GeocodeDepsBundle, address: string, init: GeocodeInit): Promise<GeocodeResponse> {
-	const geocodeDeps = geocodeDepsFor(deps, init.inputMode, init.bias)
-
-	if (!init.includeTree) {
-		return { ...(await geocodeAddress(address, geocodeDeps)), tree: null }
-	}
-
-	const tree = await parseForGeocode(address, geocodeDeps)
-
-	return { ...(await geocodeAddress(address, { ...geocodeDeps, parsedTree: tree })), tree }
-}
-
 function collectStreetTier(
 	node: AddressTree["roots"][number]
 ): Array<"address_point" | "interpolated" | "street" | "admin"> {
@@ -214,36 +163,51 @@ function collectStreetTier(
 
 /**
  * {@link createServeEngine}'s return value.
+ *
+ * Its async disposal waits for in-flight requests, closes the geocode session, and releases the classifier.
  */
-export interface ServeEngine {
+export interface ServeEngine extends AsyncDisposable {
 	engine: MailwomanAPIEngine
 	preflight: { ok: true } | { ok: false; message: string }
 }
 
 /**
+ * The options the server's sessions build from: the library defaults at `en-US` over the process data root.
+ *
+ * `$MAILWOMAN_WOF_DB` and `$MAILWOMAN_CANDIDATE_DB` pin the gazetteer as they do for `mailwoman geocode`.
+ */
+function serveSessionOptions(): GeocodeSessionOptions {
+	return createGeocodeCommandOptions({ locale: "en-US", dataRoot: DATA_ROOT })
+}
+
+/**
  * Builds the wired `mailwoman serve` engine, awaited once at boot so a misconfigured
  * deployment reports its preflight failure before the process starts listening.
+ *
+ * The engine geocodes through the same {@link createGeocodeSession} as `mailwoman geocode`.
+ * The classifier lives in a process scope that every session shares,
+ * and `reload` builds a session for the data root's current generation, swaps it in,
+ * and closes the previous session once its in-flight requests finish.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
 	// `health` reads files best-effort and never throws, so it is wired unconditionally.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
+	const options = serveSessionOptions()
+	const processScope = createGeocodeProcessScope(options)
+	const disposeProcessScope = () => processScope[Symbol.asyncDispose]()
 
-	// Parse needs only the model weights, loaded here once per boot and reused by the
-	// geocode stack below, so `/v1/parse` answers even on a geocode-degraded boot.
+	// Parse needs only the model weights.
+	// The session below reads them from the same process scope.
+	// `/v1/parse` therefore answers even on a geocode-degraded boot.
 	let parse: MailwomanAPIEngine["parse"]
-	let neuralMod: typeof import("@mailwoman/neural") | null = null
-	let classifier: GeocodeClassifier | null = null
 
 	try {
-		neuralMod = await import("@mailwoman/neural")
-		classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-
-		const parseClassifier = classifier
+		const classifier = (await need(processScope, ProcessServices.classifier)).primary
 
 		parse = async (address, opts) => {
 			const inputMode = opts.inputMode === "auto" ? deriveGeocodeRegister(address) : opts.inputMode
 
-			const tree = await parseClassifier.parse(address, { postcodeRepair: true, inputMode })
+			const tree = await classifier.parse(address, { postcodeRepair: true, inputMode })
 
 			return {
 				input: address,
@@ -254,124 +218,100 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		}
 	} catch {
 		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
+
+		return {
+			engine: { health },
+			preflight: { ok: false, message: buildPreflightMessage() },
+			[Symbol.asyncDispose]: disposeProcessScope,
+		}
 	}
 
-	if (!neuralMod || !classifier) {
-		console.error("createServeEngine: @mailwoman/neural + @mailwoman/resolver-wof-sqlite are required")
-
-		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
-	}
-
-	let resolverMod: typeof import("@mailwoman/resolver-wof-sqlite")
+	let slot: GeocodeSessionSlot
 
 	try {
-		resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	} catch {
-		console.error("createServeEngine: @mailwoman/neural + @mailwoman/resolver-wof-sqlite are required")
+		slot = new GeocodeSessionSlot(await createGeocodeSession(options, { process: processScope }))
+	} catch (error) {
+		// A missing gazetteer or resolver package is a preflight failure the operator fixes.
+		// Any other construction failure is a fault, and boot stops on it.
+		if (!(error instanceof CommandError)) throw error
 
-		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
-	}
+		console.error(`createServeEngine: ${error.message}`)
 
-	const paths = await wofPaths()
-	// A candidate DB by itself (without a WOF admin database) is a valid boot configuration.
-	// The preflight therefore checks both.
-	// This check governs geocode/batch/resolveTree/reload.
-	// `parse` is already wired above.
-	const candidateDB = await resolveCandidateDBPath()
-
-	if (!paths.length && !candidateDB) {
-		console.error("createServeEngine: no WOF DBs found — set MAILWOMAN_WOF_DB or MAILWOMAN_CANDIDATE_DB")
-
-		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
-	}
-
-	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
-	const resolver = createWOFResolver(backend)
-	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
-
-	const deps: GeocodeDepsBundle = {
-		classifier,
-		resolver,
-		databases,
-		defaultCountry: candidateDB ? null : { country: "US", source: "caller" },
+		return {
+			engine: { parse, health },
+			preflight: { ok: false, message: buildPreflightMessage() },
+			[Symbol.asyncDispose]: disposeProcessScope,
+		}
 	}
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
-	const geocode: GeocodeCallback = (address, init) => geocodeForRoute(deps, address, init)
+	const geocode: MailwomanAPIEngine["geocode"] = (address, init) =>
+		slot.run(async (session) => {
+			const { result, tree } = await session.geocode(address, {
+				inputMode: init.inputMode,
+				bias: init.bias.map((point) => ({ ...point })),
+			})
+
+			return { ...result, tree: init.includeTree ? tree : null }
+		})
 
 	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
 	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.
 	// Results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
-	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
-		const { inputMode } = opts
-		const inputs = addresses.map((a) => a.trim())
-		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
+	// The whole batch reads one data generation.
+	const batch: MailwomanAPIEngine["batch"] = (addresses, opts) =>
+		slot.run(async (session) => {
+			const results: BatchRow[] = []
 
-		for (let i = 0; i < inputs.length; i++) {
-			const input = inputs[i]!
-			const t0 = performance.now()
+			for (const address of addresses) {
+				const input = address.trim()
+				const t0 = performance.now()
 
-			try {
-				const result = await oneGeocode(deps, input, inputMode)
-				recordTimed(performance.now() - t0, result.resolution_tier)
-				results[i] = result
-			} catch (error) {
-				recordTimed(performance.now() - t0, "error")
-				results[i] = { input, error: error instanceof Error ? error.message : String(error) }
+				try {
+					const { result } = await session.geocode(input, { inputMode: opts.inputMode })
+
+					recordTimed(performance.now() - t0, result.resolution_tier)
+					results.push(result)
+				} catch (error) {
+					recordTimed(performance.now() - t0, "error")
+					results.push({ input, error: error instanceof Error ? error.message : String(error) })
+				}
 			}
-		}
 
-		return { results }
-	}
+			return { results }
+		})
 
 	// Unlike `/v1/geocode`, the route wraps no try/catch around `resolveTree`,
 	// so the tier metric and the rethrow both happen here.
-	const resolveTree: MailwomanAPIEngine["resolveTree"] = async (tree, rawOpts) => {
-		const incomingOpts = (rawOpts ?? {}) as ResolveOpts
-		const t0 = performance.now()
+	const resolveTree: MailwomanAPIEngine["resolveTree"] = (tree, rawOpts) =>
+		slot.run(async (session) => {
+			const t0 = performance.now()
 
-		try {
-			const slug = regionSlugFromTree(tree)
-			const { addressPoints, interpolation } = deps.databases.for(slug)
+			try {
+				const resolved = await session.resolveTree(tree, (rawOpts ?? {}) as ResolveOpts)
+				const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
 
-			const opts: ResolveOpts = {
-				...incomingOpts,
-				...((incomingOpts.defaultCountry ?? deps.defaultCountry)
-					? { defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry! }
-					: {}),
-				...(addressPoints ? { addressPoints } : {}),
-				// Calibration ladder: an explicit incoming factor wins, then the artifact's own
-				// header value (`interpolation.radiusCalibration`), then the in-code per-region
-				// table for databases predating the `interp_calibration` metadata table.
-				...(interpolation
-					? {
-							interpolation,
-							...(incomingOpts.interpolationRadiusCalibration == null && interpolation.radiusCalibration == null
-								? { interpolationRadiusCalibration: interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug) }
-								: {}),
-						}
-					: {}),
+				recordTimed(performance.now() - t0, street ?? "admin")
+
+				return { tree: resolved }
+			} catch (error) {
+				recordTimed(performance.now() - t0, "error")
+				throw error
 			}
-
-			const resolved = await deps.resolver.resolveTree(tree, opts)
-			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
-			recordTimed(performance.now() - t0, street ?? "admin")
-
-			return { tree: resolved }
-		} catch (error) {
-			recordTimed(performance.now() - t0, "error")
-			throw error
-		}
-	}
+		})
 
 	const reload: MailwomanAPIEngine["reload"] = async () => {
-		const versions = await deps.databases.reload()
+		await slot.replace(() => createGeocodeSession(options, { process: processScope }))
 
-		return { reloaded: true, versions }
+		return { reloaded: true, versions: await readReleaseManifest(DATA_ROOT) }
 	}
 
 	return {
 		engine: { parse, geocode, batch, resolveTree, reload, health },
 		preflight: { ok: true },
+		[Symbol.asyncDispose]: async () => {
+			await slot[Symbol.asyncDispose]()
+			await disposeProcessScope()
+		},
 	}
 }

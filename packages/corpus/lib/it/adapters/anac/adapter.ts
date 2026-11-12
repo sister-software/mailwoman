@@ -2,28 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `it-anac`: the OCDS release Autorità Nazionale Anticorruzione publishes for Italy's National
- * Database of Public Contracts, read for the addresses of the public bodies that appear on each contract.
+ * `it-anac`: the OCDS release Autorità Nazionale Anticorruzione publishes for Italy's National Database
+ * of Public Contracts, read for the addresses of the public bodies that appear on each contract.
  *
- * Input is the publisher's own JSON Lines: one OCDS release per line, as
- * `https://data.open-contracting.org/en/publication/117/download?name=<year>.jsonl.gz` serves it
- * once decompressed. A release has a `parties` array, and each party holds a `roles` list, a
- * `name`, an `identifier` and an `address` whose four fields are `locality`, `postalCode`,
- * `countryName` and `streetAddress`. The adapter streams the file through `JSONSpliterator`, so a
- * year's release never sits in memory whole. `opts.inputPath` is one `.jsonl` edition or a directory
- * holding several. `fetchITANAC` writes the directory form.
+ * Input is the publisher's own JSON Lines: one OCDS release per line,
+ * as `https://data.open-contracting.org/en/publication/117/download?name=<year>.jsonl.gz`
+ * serves it once decompressed.
+ * A release has a `parties` array, and each party holds a `roles` list, a `name`, an `identifier`
+ * and an `address` whose four fields are `locality`, `postalCode`, `countryName` and `streetAddress`.
+ *
+ * The adapter streams the file through `JSONSpliterator`, so a year's release never sits in memory whole.
+ * `opts.inputPath` is one `.jsonl` edition or a directory holding several.
+ * `fetchITANAC` writes the directory form.
  *
  * ## Which roles the adapter reads, and why those two
  *
  * The register's `addressRoles` for `it-procurement-grants-1` records exactly two fields,
  * `parties[roles=buyer].address` and `parties[roles=payer].address`.
- * Those two are the only address fields in the release. Measured over the whole 2025 edition, 9,405 releases and
- * 29,823 party objects in three roles: a `supplier` party holds no `address` key at all on 11,075 of
- * 11,075, a `buyer` holds one on 9,381 of 9,381, and a `payer` on 9,359 of 9,367. So every address
- * in this release belongs to a contracting authority or to the office that pays.
+ * Those two are the only address fields in the release.
+ *
+ * Measured over the whole 2025 edition, 9,405 releases and 29,823 party objects in
+ * three roles: a `supplier` party holds no `address` key at all on 11,075 of 11,075,
+ * a `buyer` holds one on 9,381 of 9,381, and a `payer` on 9,359 of 9,367.
+ * So every address in this release belongs to a contracting authority or to the office that pays.
+ *
  * Both of those are Italian public entities, and a contracting counterparty holds none.
  *
- * That is what makes this source admissible under the policy that admits the addresses of
+ * That's what makes this source admissible under the policy that admits the addresses of
  * organizations and no address of an identifiable natural person. The two admitted roles are held by
  * public bodies, and the one role whose parties can be sole traders publishes no address.
  * {@linkcode readANACParty} still applies a name check and refuses a party whose name takes the
@@ -35,27 +40,29 @@
  *
  * ## The street line
  *
- * Italy writes the house number after the street name, joined by a space. `STREET_ORDERS` records
- * that order as `number-last`. `COMMA_JOINED_STREET_COUNTRIES` records it by leaving `IT` out.
- * {@linkcode splitTrailingStreetLine} performs the split. Three Italian
- * conventions are normalized before it runs, each measured over the 2025 edition's 11,930
- * non-placeholder street lines:
+ * Italy writes the house number after the street name, joined by a space.
+ * `STREET_ORDERS` records that order as `number-last`.
  *
- * 1. **A trailing copy of the locality.** 406 lines end with the value the publisher writes in its
- *    own `locality` field — `CORSO ITALIA, 29 FIRENZE` against `locality` `FIRENZE`. The copy is
- *    removed only where it equals that field, so the publisher's own record is what authorizes the
- *    removal rather than a place-name list.
- * 2. **A civic marker.** 1,222 lines write `numero civico` as a marker before the number, spaced as
- *    `PIAZZA ROOSEVELT N 1` or glued as `VIA ROMA N.68`. The marker is dropped, so the street is
- *    `PIAZZA ROOSEVELT` rather than `PIAZZA ROOSEVELT N`.
- * 3. **`senza numero`.** 182 lines end `SNC` or `SN`, which states that the premise has no civic
- *    number, so the tail is dropped and no `house_number` is composed from it.
+ * `COMMA_JOINED_STREET_COUNTRIES` records it by leaving `IT` out.
+ * {@linkcode splitTrailingStreetLine} performs the split.
+ * Three Italian conventions are normalized before it runs, each measured over the
+ * 2025 edition's 11,930 non-placeholder street lines:
  *
- * A number preceded by `KM` names a point on a state highway rather than a house number, as
- * `S.S. 7 APPIA KM 671` does. That number stays in the street line, and the rule below refuses the
- * row.
+ * 1. **A trailing copy of the locality.** 406 lines end with the value the publisher writes
+ *    in its own `locality` field — `CORSO ITALIA, 29 FIRENZE` against `locality` `FIRENZE`.
+ *    The copy is removed only where it equals that field, so the publisher's own record
+ *    is what authorizes the removal rather than a place-name list.
+ * 2. **A civic marker.** 1,222 lines write `numero civico` as a marker before the number,
+ *    spaced as `PIAZZA ROOSEVELT N 1` or glued as `VIA ROMA N.68`.
+ *    The marker is dropped, so the street is `PIAZZA ROOSEVELT` rather than `PIAZZA ROOSEVELT N`.
+ * 3. **`senza numero`.** 182 lines end `SNC` or `SN`, which states that the premise has
+ *    no civic number, so the tail is dropped and no `house_number` is composed from it.
  *
- * **A street line holding a digit the split could not place refuses the row.**
+ * A number preceded by `KM` names a point on a state highway rather than a house
+ * number, as `S.S. 7 APPIA KM 671` does.
+ * That number stays in the street line, and the rule below refuses the row.
+ *
+ * **A street line holding a digit the split couldn't place refuses the row.**
  * {@linkcode ANACRefusal.StreetNumberUnplaced} covers 194 of those 11,930 lines, where the publisher
  * appends a qualifier after the number: `VIA CIRCONVALLAZIONE, 1 PARCO IDROSCALO`, `VIA FELTRE 57
  * 32100 BELLUNO (BL)`, `VIA SAN SECONDO 29 BIS`. The adapter refuses that line, because emitting it
@@ -72,44 +79,50 @@
  *
  * ## What the split was checked against
  *
- * The release publishes no preformatted address line, so no field of the publisher's states the
- * written form this adapter composes. The check available is reversibility against the publisher's
- * own string: the composed `street` and `house_number`, rejoined, reproduce the published
- * `streetAddress` on 11,736 of the 11,736 street lines this adapter emits, after the three
- * normalizations above and folding case, inner whitespace and the comma. Against the published
- * string as published, 10,027 of 11,736 reproduce it exactly under the same folding, and each of the
- * 1,709 that do not differs by one of those three normalizations. The split therefore loses no
- * published token. Which side of the split each token belongs on is the part no field of this
- * publisher's confirms.
+ * The release publishes no preformatted address line, so no field of the publisher's
+ * states the written form this adapter composes.
+ * The check available is reversibility against the publisher's own string: the composed
+ * `street` and `house_number`, rejoined, reproduce the published `streetAddress` on 11,736
+ * of the 11,736 street lines this adapter emits, after the three normalizations above
+ * and folding case, inner whitespace and the comma.
  *
- * Every other component is a published value copied unchanged. The same pass checked this: 0 of the
- * 18,473 rows the 2025 edition admits show a `locality`, `postcode` or `venue` that differs from the
- * field it came from.
+ * Against the published string as published, 10,027 of 11,736 reproduce it exactly under the
+ * same folding, and each of the 1,709 that do not differs by one of those three normalizations.
+ * The split therefore loses no published token.
+ *
+ * Which side of the split each token belongs on is the part no field of this publisher's confirms.
+ *
+ * Every other component is a published value copied unchanged.
+ * The same pass checked this: 0 of the 18,473 rows the 2025 edition admits show a `locality`,
+ * `postcode` or `venue` that differs from the field it came from.
  *
  * ## Placeholders and the postcode
  *
- * The publisher writes the literal `N.A.` where it holds no value: 476 postcodes, 6 localities and 6
- * street lines on the 2025 edition. {@linkcode isPlaceholderValue} treats it as absent, so no row
- * records `N.A.` as a postcode.
+ * The publisher writes the literal `N.A.` where it holds no value: 476 postcodes,
+ * 6 localities and 6 street lines on the 2025 edition. {@linkcode isPlaceholderValue}
+ * treats it as absent, so no row records `N.A.` as a postcode.
  *
- * An Italian CAP is five digits. A postcode that is neither a placeholder nor five digits is not a
- * CAP, and the row is refused rather than stripped of the field: the one such value on the 2025
- * edition is `01238-000`, a São Paulo CEP on the payer `ISTITUTO ITALIANO DI CULTURA DI SAN PAOLO`,
- * whose address is in Brazil rather than Italy. A `countryName` naming any country but Italy refuses
- * the row for the same reason. Buyers write `ITALY` on all 9,381 rows and payers write no
- * `countryName` at all.
+ * An Italian CAP is five digits.
+ * A postcode that's neither a placeholder nor five digits isn't a CAP, and the row is refused
+ * rather than stripped of the field: the one such value on the 2025 edition is `01238-000`,
+ * a São Paulo CEP on the payer `ISTITUTO ITALIANO DI CULTURA DI SAN PAOLO`,
+ * whose address is in Brazil rather than Italy.
+ *
+ * A `countryName` naming any country but Italy refuses the row for the same reason.
+ * Buyers write `ITALY` on all 9,381 rows and payers write no `countryName` at all.
  *
  * ## Identity and license
  *
- * The row id is content-addressed over the aligned components. The publisher's party identifier
- * cannot serve: a buyer's `IT-CF` fiscal code covers more than one address on 17 of 3,119 distinct
- * codes, and one address recurs across hundreds of releases, so the identifier identifies the
- * organization rather than the address.
+ * The row id is content-addressed over the aligned components.
+ * The publisher's party identifier cannot serve: a buyer's `IT-CF` fiscal code covers more
+ * than one address on 17 of 3,119 distinct codes, and one address recurs across hundreds
+ * of releases, so the identifier identifies the organization rather than the address.
  *
- * The OCP Data Registry publishes this release under CC BY 4.0. The address-source register elected
- * that license on 2026-09-30 with `spdx` `CC-BY-4.0`. CC BY requires credit, a link to the license
- * and a statement that changes were made. Every row records the license, and
- * {@linkcode IT_ANAC_ATTRIBUTION} is the credit the model card records.
+ * The OCP Data Registry publishes this release under CC BY 4.0.
+ * The address-source register elected that license on 2026-09-30 with `spdx` `CC-BY-4.0`.
+ *
+ * CC BY requires credit, a link to the license and a statement that changes were made.
+ * Every row records the license, and {@linkcode IT_ANAC_ATTRIBUTION} is the credit the model card records.
  *
  * The adapter honors `opts.limit`, `opts.signal` and `opts.country`.
  */
@@ -165,7 +178,7 @@ export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), v
 export const IT_ANAC_PARTY_ROLES: readonly string[] = ["buyer", "payer"]
 
 /**
- * Why a party's address did not become a row.
+ * Why a party's address didn't become a row.
  *
  * The reading returns one of these rather than an empty result, so a caller counting
  * refusals knows which condition each party met.
@@ -186,7 +199,7 @@ export const ANACRefusal = {
 	 */
 	LocalityAbsent: "locality-absent",
 	/**
-	 * The street line holds a digit that the split could not read as a house number.
+	 * The street line holds a digit that the split couldn't read as a house number.
 	 */
 	StreetNumberUnplaced: "street-number-unplaced",
 	/**
@@ -269,7 +282,7 @@ const PLACEHOLDER_VALUES: ReadonlySet<string> = new Set(["na", "n.a.", "n/a", "n
 const CAP = /^\d{5}$/u
 
 /**
- * The country names this release writes for Italy.
+ * The country names that this release writes for Italy.
  *
  * Buyers write `ITALY` on every row of the 2025 edition.
  * The other two spellings are accepted because a later edition translating the
@@ -307,7 +320,7 @@ const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
  * each side of the comma is rare: `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`
  * has eight words after the comma.
  * The single word on each side is what the inverted personal form has
- * and what a department or authority name does not.
+ * and what a department or authority name doesn't.
  */
 const PERSONAL_NAME_FORM = /^\p{L}[\p{L}'’.-]*\s*,\s*\p{L}[\p{L}'’.-]*$/u
 

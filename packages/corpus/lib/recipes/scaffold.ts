@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader and
- *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its row construction and filter. The `mailwoman corpus recipe <recipe>` command
- *   supplies the I/O.
+ *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader
+ *   and the canonical → `alignRow` → `LabeledRow` jsonl emit step.
+ *
+ *   A recipe ({@link CorpusRecipe}) supplies only its row construction and filter.
+ *   The `mailwoman corpus recipe <recipe>` command supplies the I/O.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -116,7 +117,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
 /**
  * {@link readCSVRecords} over one member of a zip archive.
  *
- * A source a checkout has not cached yields no rows after warning, while a recipe
+ * A source a checkout hasn't cached yields no rows after warning, while a recipe
  * that ends up with no tuples at all still throws.
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
@@ -330,7 +331,7 @@ export interface RecipeProvenance {
 	 * `null` is a statement rather than an omission.
 	 *
 	 * A `composed` row reorders fields from a real record, so it has an underlying record by definition.
-	 * `null` means the recipe did not preserve that record's id.
+	 * `null` means the recipe didn't preserve that record's id.
 	 *
 	 * The cost of `null` is measurable.
 	 * Over `v0.6.0-register-surface` it is `null` for 4,176,539 of the 4,206,561 `composed` rows,
@@ -465,7 +466,7 @@ export interface RecipeOptions {
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/ban`
 	 */
 	banDir?: PathBuilderLike
 	multilocaleCount?: number | null
@@ -524,7 +525,7 @@ export interface RecipeOptions {
 	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
 	 * `category` and `country` columns.
 	 *
-	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
+	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/snapshots/overture`
 	 */
 	venueNames?: PathBuilderLike
 	/**

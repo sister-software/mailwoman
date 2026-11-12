@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
@@ -172,6 +175,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 
 	if (!selected) return groupHelp(filesystemParts)
 
+	// effect-loads: packages/mailwoman/cli/commands
 	return import(selected.href).then((module) =>
 		runCommand(module, commandParts.join(" "), argv.slice(commandParts.length))
 	)

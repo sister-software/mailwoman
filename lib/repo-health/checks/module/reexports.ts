@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A module that declares exports of its own does not also re-export another workspace module's names. A
- *   re-export there gives each re-exported declaration a second home, so importers drift between the two and the
- *   defining module stops being the one place to look. Only a directory barrel re-exports: a package's `index.ts`, the
- *   `<dir>.ts` beside a `<dir>/` directly under a source root, and the `<dir>/<dir>.ts` a `./<dir>` subpath maps to.
- *   A file whose only exports are re-exports is a barrel by construction and is not reported.
+ *   A module that declares exports of its own doesn't also re-export another workspace module's names.
  *
- *   A re-export from an external package (`node:*`, `kysely`, …) is a facade the import rules point callers at,
- *   so it is allowed anywhere.
+ *   A re-export there gives each re-exported declaration a second home, so importers
+ *   drift between the two and the defining module stops being the one place to look.
+ *   Only a directory barrel re-exports: a package's `index.ts`, the `<dir>.ts` beside a `<dir>/`
+ *   directly under a source root, and the `<dir>/<dir>.ts` a `./<dir>` subpath maps to.
+ *
+ *   A file whose only exports are re-exports is a barrel by construction and isn't reported.
+ *
+ *   A re-export from an external package (`node:*`, `kysely`, …) is a facade the
+ *   import rules point callers at, so it is allowed anywhere.
  */
 
 import { relative } from "path-ts"
@@ -113,7 +116,7 @@ export function moduleReexports(file: string, source: ts.SourceFile): ModuleReex
 }
 
 /**
- * Every internal re-export in a module that is neither a directory barrel nor a pure barrel.
+ * Every internal re-export in a module that's neither a directory barrel nor a pure barrel.
  */
 async function findModuleReexports(context: RepoContext): Promise<ModuleReexport[]> {
 	const paths = await trackedSourcePaths(context, { globs: PACKAGE_SOURCE_GLOBS, existingOnly: true })

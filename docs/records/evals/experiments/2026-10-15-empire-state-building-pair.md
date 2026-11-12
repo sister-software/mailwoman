@@ -55,7 +55,7 @@ The change runs a guard-free exact probe, `probeLandmarkEntity`, on the whole in
 is `landmark`, the parse produced no venue span, and no resolved node's value equals the whole input.
 The last condition keeps a bare name the admin race resolved whole, such as a locality whose name is all
 of its words, on its admin answer. A hit rewrites the result as the entity: the parse's components and the
-hierarchy the resolver built from them describe a place the input does not state, so they are cleared and
+hierarchy the resolver built from them describe a place the input doesn't state, so they're cleared and
 the component map holds the venue. The probe reads the same two exact rows and the same decorated rows
 as the city form, and the Midtown row wins.
 
@@ -76,7 +76,7 @@ first call warmed the connection.
 The probe runs for the `landmark` kind only, two to four proper-case words in one segment with no
 house number and no disqualifying street suffix. A one-word chain name such as `Starbucks` never
 reaches it. That name costs the fork probe 147 ms at the median and 3.2 s at the maximum on the same
-database. That is the cost a wider trigger would pay.
+database. That's the cost a wider trigger would pay.
 
 ## Grades
 

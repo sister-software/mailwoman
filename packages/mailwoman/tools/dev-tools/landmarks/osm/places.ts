@@ -4,8 +4,9 @@
 /**
  *   Reads places out of a Photon index as landmark rows, for the build-local OpenStreetMap place layer.
  *
- *   Each row keeps the importance Photon holds for its place, so the reader ranks namesakes the way Photon does. The data
- *   is ODbL, so the database stays out of every published package.
+ *   Each row keeps the importance Photon holds for its place, so the reader
+ *   ranks namesakes the way Photon does.
+ *   The data is ODbL, so the database stays out of every published package.
  */
 
 import { OSM_LANDMARK_PREFIX } from "@mailwoman/core/resolver"

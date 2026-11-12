@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Stripe SDK on the Workers runtime uses the fetch HTTP client instead of Node's. It pins an API version so a Stripe
- *   upgrade is a deliberate change here, never a drift. The SubtleCrypto provider for webhook signatures lives beside
- *   the verifier in `webhook.ts`.
+ *   The Stripe SDK on the Workers runtime uses the fetch HTTP client instead of Node's.
+ *
+ *   It pins an API version so a Stripe upgrade is a deliberate change here, never a drift.
+ *   The SubtleCrypto provider for webhook signatures lives beside the verifier in `webhook.ts`.
  */
 
 import Stripe from "stripe"
@@ -17,7 +18,7 @@ import type { LicenseWorkerEnv } from "#env"
 export const STRIPE_API_VERSION = "2026-10-28.endive"
 
 /**
- * The http status Stripe answers for an id it does not know.
+ * The http status Stripe answers for an id it doesn't know.
  */
 const STRIPE_NOT_FOUND = 404
 

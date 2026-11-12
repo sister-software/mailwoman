@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares two weights caches staged by `stage-candidate-cache.run.ts`. The tool prints each cache's file and symlink
- *   counts, every relative path whose md5 differs or which only one cache holds, and the base package card's version,
- *   corpus version and declared `model.onnx` md5. A symlink is hashed through its target, so a linked cache and a
- *   copied cache of the same files compare equal.
+ *   Compares two weights caches staged by `stage-candidate-cache.run.ts`.
+ *
+ *   The tool prints each cache's file and symlink counts, every relative path whose
+ *   md5 differs or which only one cache holds, and the base package card's version,
+ *   corpus version and declared `model.onnx` md5.
+ *   A symlink is hashed through its target, so a linked cache and a copied
+ *   cache of the same files compare equal.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/compare-candidate-caches.run.ts <cache a> <cache b>
  */

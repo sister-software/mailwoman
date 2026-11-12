@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetches FTS5 candidates for fuzzy name matching. It runs the schema-qualified `place_search` match and its
- *   population-ordered companion query. Both queries return the raw row shape defined here.
+ *   Fetches FTS5 candidates for fuzzy name matching.
  *
- *   Bbox and near-with-radius narrow at the SQL level through SQLite's built-in `rtree`, whose index name and schema
- *   are defined in `fts.ts` beside the FTS5 build. This package uses SQLite's R*Tree instead of SpatiaLite or turf.
- *   The R*Tree narrows the search to at most a few hundred candidates per query. Downstream passes work on that set
- *   instead of the whole corpus, so exact haversine calculations remain cheap.
+ *   It runs the schema-qualified `place_search` match and its population-ordered companion query.
+ *   Both queries return the raw row shape defined here.
+ *
+ *   Bbox and near-with-radius narrow at the SQL level through SQLite's built-in `rtree`,
+ *   whose index name and schema are defined in `fts.ts` beside the FTS5 build.
+ *   This package uses SQLite's R*Tree instead of SpatiaLite or turf.
+ *
+ *   The R*Tree narrows the search to at most a few hundred candidates per query.
+ *   Downstream passes work on that set instead of the whole corpus,
+ *   so exact haversine calculations remain cheap.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -149,7 +154,7 @@ export function fetchSearchRows<DB>(options: {
 	// Bbox and near-with-radius are SQL-level filters via the R*Tree.
 	// The join is emitted only when the active extract has the R*Tree.
 	// A requested filter on a legacy extract is silently treated as no bbox filter
-	// so the query does not crash.
+	// so the query doesn't crash.
 	const extractHasBbox = hasBboxIndex.get(sch) === true
 	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm) && extractHasBbox
 	let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
@@ -239,7 +244,7 @@ export function fetchSearchRows<DB>(options: {
 	// by the row's alias bulk (measured ~15 pts, against a +4.0 boost cap).
 	// This fetch includes prominent holders of a name in the candidate pool.
 	// The exact-tier sort below decides whether they win.
-	// It is skipped without a population index, since there is no column to order by.
+	// It is skipped without a population index, since there's no column to order by.
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

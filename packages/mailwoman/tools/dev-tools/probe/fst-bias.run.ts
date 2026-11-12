@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Report, per surface, the gazetteer bias each FST arm hands the decoder: `applyBias` collapses
- *   accepting entries to the max importance per BIO tag, so a place's per-place ranking is invisible
- *   and only the four placetypes that reach a tag matter, while `miss` is absence and a printed
- *   `0` is a scored zero.
+ *   Report, per surface, the gazetteer bias each FST arm hands the decoder:
+ *   `applyBias` collapses accepting entries to the max importance per BIO tag,
+ *   so a place's per-place ranking is invisible and only the four placetypes that reach
+ *   a tag matter, while `miss` is absence and a printed `0` is a scored zero.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

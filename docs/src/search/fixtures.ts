@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Records the search tests share. Two share a URL so the collapse to one hit per page is observable,
- *   and one is a level-5 table row.
+ *   Records the search tests share.
+ *
+ *   Two share a URL so the collapse to one hit per page is observable, and one is a level-5 table row.
  */
 
 import type { SearchRecord } from "@mailwoman/react/search/types"

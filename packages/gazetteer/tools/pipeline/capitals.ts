@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `data/gazetteer/capitals-v1.json`, the capital-status reference: every national
- *   capital (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
+ *   Build `data/gazetteer/capitals-v1.json`, the capital-status reference: every national capital
+ *   (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
  *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
- *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country, proximity and name
- *   membership. All three conditions must match, so a capital-adjacent namesake cannot stand in for the capital.
- *   Alternate names preserve exonym rows ("Vienna" for Wien)
- *   matching without a hand-kept exonym list.
  *
- *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `pplch` (historical
- *   capital) stay out. `countryInfo.txt`, the same source's own catalog, grades the extraction: a
- *   catalog country whose dump yields no `pplc` row. It also records a catalog capital name that matches none
- *   of the extracted rows' names, are both recorded in the coverage block rather than silently
- *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate
+ *   by country, proximity and name membership.
+ *   All three conditions must match, so a capital-adjacent namesake cannot stand in for the capital.
+ *
+ *   Alternate names preserve exonym rows ("Vienna" for Wien) matching without a hand-kept exonym list.
+ *
+ *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats)
+ *   and `pplch` (historical capital) stay out.
+ *   `countryInfo.txt`, the same source's own catalog, grades the extraction:
+ *   a catalog country whose dump yields no `pplc` row.
+ *
+ *   It also records a catalog capital name that matches none of the extracted rows'
+ *   names, are both recorded in the coverage block rather than silently absorbed
+ *   (the partial-reader rule: a reference that couldn't measure a country must say so).
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -68,14 +73,14 @@ export interface CapitalsReference {
 		admin1: number
 		/**
 		 * Catalog countries with no dump file on disk.
-		 * This reference could not measure them.
+		 * This reference couldn't measure them.
 		 */
 		missing_dumps: string[]
 		/**
-		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump
+		 * Catalog countries whose `<CC>.txt` isn't a 19-column gazetteer dump
 		 * (GeoNames' postal exports share the basename).
 		 *
-		 * A wrong-format file cannot answer the capital question, so it does not count as scanned.
+		 * A wrong-format file cannot answer the capital question, so it doesn't count as scanned.
 		 * A "scanned, found none" result would falsely claim the reader had complete evidence.
 		 */
 		wrong_format: string[]
@@ -252,7 +257,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 
 		if (!nationals.length) {
 			// A stated capital with no pplc row is a gap.
-			// A catalog row with no capital (AQ, BV) is not.
+			// A catalog row with no capital (AQ, BV) isn't.
 			if (capital) {
 				missingNational.push(country)
 			}

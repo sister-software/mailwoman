@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Importance is `min(1, log2(1 + pop/1000) / 14)`, so `ONE_TOKEN_IMPORTANCE_FLOOR` inverts to
- *   pop ≥ 10,314 and `PERSON_NAME_IMPORTANCE_FLOOR` to pop ≥ 77,793. Which floor applies depends on
- *   whether libpostal classifies the surface as a person name.
+ *   Importance is `min(1, log2(1 + pop/1000) / 14)`, so `ONE_TOKEN_IMPORTANCE_FLOOR`
+ *   inverts to pop ≥ 10,314 and `PERSON_NAME_IMPORTANCE_FLOOR` to pop ≥ 77,793.
+ *
+ *   Which floor applies depends on whether libpostal classifies the surface as a person name.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -123,7 +124,7 @@ async function buildAgainstFixture(
 	countries: string[],
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
-	// A fresh DB per call, because `create table` is not idempotent and two tests build twice.
+	// A fresh DB per call, because `create table` isn't idempotent and two tests build twice.
 	const seq = buildSeq++
 	const dbPath = scratch.path(`admin-${seq}.db`)
 	const output = scratch.path(`lexicon-${seq}.json`)

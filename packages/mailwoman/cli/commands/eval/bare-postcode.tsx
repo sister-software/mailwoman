@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval bare-postcode` — parse the 56 globally reserved postcode inputs with one warm
- *   classifier. Exit 0 requires every first token to decode as postcode.
+ *   `mailwoman eval bare-postcode` — parse the 56 globally reserved postcode
+ *   inputs with one warm classifier.
+ *   Exit 0 requires every first token to decode as postcode.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

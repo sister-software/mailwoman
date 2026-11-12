@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The encoder's constructor arguments, from a checkpoint's `config.json` or from a training config.
 //!
 //! [`EncoderSpec::from_checkpoint_config`] applies the defaults of `nn/serialization.py`'s `_constructor_kwargs`,

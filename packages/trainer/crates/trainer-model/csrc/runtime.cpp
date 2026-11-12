@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // What the linked libtorch reports about itself, for the runtime block of a parity record.
 //
 // The Python reference records `torch.__version__`, `torch.get_num_threads()` and

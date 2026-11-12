@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Rows, comparator, metric arithmetic, baseline and thresholds all come from `probe-definition.json`. The loader
- *   refuses to hand over if its content hash has moved.
+ *   Rows, comparator, metric arithmetic, baseline and thresholds all come from `probe-definition.json`.
  *
- *   `--semantic-observation` builds the one semantic observation route and injects it into the pipeline this run
- *   constructs. Without it the run is the un-injected pipeline whatever `--arm` is called. The receipt records which
- *   of the two happened because a dropped route and a route that changed no answer produce the same numbers.
+ *   The loader refuses to hand over if its content hash has moved.
  *
- *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded stop-redesign is a result
- *   rather than a failure.
+ *   `--semantic-observation` builds the one semantic observation route
+ *   and injects it into the pipeline this run constructs.
+ *   Without it the run is the un-injected pipeline whatever `--arm` is called.
+ *
+ *   The receipt records which of the two happened because a dropped route
+ *   and a route that changed no answer produce the same numbers.
+ *
+ *   Report-only by design: the exit code is non-zero only when the harness broke,
+ *   so a recorded stop-redesign is a result rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

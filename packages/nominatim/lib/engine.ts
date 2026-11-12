@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Nominatim engine interface + wire types the router delegates to. The resolved-address →
- *   {@link NominatimResult} formatter (`toNominatimResult`, `toFeatureCollection`,
- *   `nominatimResultToSchemaOrg`) lives in `format.ts`.
+ *   The Nominatim engine interface + wire types the router delegates to.
+ *
+ *   The resolved-address → {@link NominatimResult} formatter
+ *   (`toNominatimResult`, `toFeatureCollection`, `nominatimResultToSchemaOrg`) lives in `format.ts`.
  */
 
 import type { OpenCageAnnotations } from "@mailwoman/annotations"
@@ -118,7 +119,7 @@ export interface NominatimLookupParams {
 /**
  * Whether an artifact could state its own provenance.
  *
- * `unreadable` is kept apart from `absent` because "we could not open it" is a
+ * `unreadable` is kept apart from `absent` because "we couldn't open it" is a
  * fault to chase rather than a rebuild to schedule.
  */
 export type NominatimManifestState = "present" | "absent" | "unreadable"
@@ -156,9 +157,9 @@ export interface NominatimStatusArtifact {
 	 * The SPDX expression this artifact's own manifest records, verbatim.
 	 *
 	 * Null when the row holds none.
-	 * A null expression states that the build did not record the obligations.
+	 * A null expression states that the build didn't record the obligations.
 	 *
-	 * The artifact may still contain a manifest, so a client must not read a null as permissive.
+	 * The artifact may still contain a manifest, so a client mustn't read a null as permissive.
 	 */
 	license: string | null
 	/**

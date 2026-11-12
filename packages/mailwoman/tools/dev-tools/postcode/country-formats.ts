@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate `@mailwoman/postcode`'s per-country postcode formats from libaddressinput's `zip` pattern and the
- *   literal its `fmt` prints ahead of `%Z` (`MD-%Z`, `AX-%Z`) and whether `fmt` prints `%Z` before or after `%C`, so
- *   the table is derived rather than transcribed.
+ *   Generate `@mailwoman/postcode`'s per-country postcode formats from libaddressinput's `zip`
+ *   pattern and the literal its `fmt` prints ahead of `%Z` (`MD-%Z`, `AX-%Z`) and whether
+ *   `fmt` prints `%Z` before or after `%C`, so the table is derived rather than transcribed.
  *
  *   Usage: `node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts`
  */
@@ -14,6 +14,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
 
@@ -152,10 +153,7 @@ for (const file of await Globerator.files("json", {
 	)
 }
 
-const emitted = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+const emitted = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  * @generated
  *
  *   generated — run \`node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts\` to refresh. Do not edit by hand.

@@ -11,7 +11,7 @@
  *
  *   The GeoNames country dumps are unquoted TSV and contain `"` in place names (`Ovrag Kyzylak"on`).
  *   Since spliterator 10, `TSVSpliterator` reads `"` as data by default, and a quote left open at the end of
- *   the input throws. These readers still pass `enableQuoteHandling: false` so their contract does not rest
+ *   the input throws. These readers still pass `enableQuoteHandling: false` so their contract doesn't rest
  *   on a default.
  *
  *   A quote-aware reader of CSV text indexes its header with {@linkcode headerColumnIndex} and passes its

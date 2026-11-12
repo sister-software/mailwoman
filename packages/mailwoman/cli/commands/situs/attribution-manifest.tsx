@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman situs attribution-manifest` — regenerate a complete situs attribution manifest from
- *   the address-point databases on disk. The national build driver (`mailwoman situs build`) only
- *   records the states it built in a given run, so after incremental / resumed builds its
- *   `attribution.json` undercounts. This reads every `address-points-us-*.db` in the directory and
- *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
- *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
- *   domain. the OA data sources request credit).
+ *   `mailwoman situs attribution-manifest` — regenerate a complete situs attribution
+ *   manifest from the address-point databases on disk.
  *
- *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
- *   the original script — `attribution.json` is written directly in place. Per-database progress
- *   streams to stderr. the summary lands on stdout.
+ *   The national build driver (`mailwoman situs build`) only records the states it built in
+ *   a given run, so after incremental / resumed builds its `attribution.json` undercounts.
+ *   This reads every `address-points-us-*.db` in the directory and aggregates
+ *   the per-row `source` (`overture:<dataset>`) provenance into a full ledger —
+ *   the document we owe consumers for the OpenAddresses attribution obligation
+ *   (NAD is US public domain. the OA data sources request credit).
+ *
+ *   This regenerates a small JSON manifest from read-only databases (it builds no large DB),
+ *   so — as in the original script — `attribution.json` is written directly in place.
+ *   Per-database progress streams to stderr. the summary lands on stdout.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

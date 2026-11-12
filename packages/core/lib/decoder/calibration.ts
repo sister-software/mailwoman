@@ -4,22 +4,25 @@
 /**
  *   Opt-in confidence calibration for decoded spans.
  *
- *   The decoder emits a per-span `confidence` that is the mean of the span's per-token softmax
- *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated. A CE-trained model
- *   is systematically over-confident or under-confident in bands. An isotonic-regression calibrator
- *   is fitted on a held-out OpenAddresses + corpus set
- *   (`packages/mailwoman/tools/eval-harness/calibration/isotonic.ts`) and the result ships as a lookup table
- *   (`data/eval/calibration/isotonic-<locale>-<version>.json`).
+ *   The decoder emits a per-span `confidence` that's the mean of the span's
+ *   per-token softmax probabilities (`build-tree.ts`).
+ *   Softmax probabilities are not calibrated.
  *
- *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function. It
- *   is deliberately decoupled from the table source: pass the parsed JSON object so this stays
- *   browser-safe (no `node:fs`). The demo imports the JSON directly and Node scripts call
- *   `JSON.parse` on it.
+ *   A CE-trained model is systematically over-confident or under-confident in bands.
+ *   An isotonic-regression calibrator is fitted on a held-out OpenAddresses + corpus set
+ *   (`packages/mailwoman/tools/eval-harness/calibration/isotonic.ts`) and the result ships
+ *   as a lookup table (`data/eval/calibration/isotonic-<locale>-<version>.json`).
  *
- *   The default decode path is unchanged (byte-stable `conf=` output). A caller that wants
- *   calibrated confidences builds a `Calibrator` here and passes it via
- *   `ParseOpts.calibrate` (neural) or `BuildTreeOpts.calibrate` (decoder), which `build-tree.ts`
- *   applies in `flush()`.
+ *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function.
+ *   It is deliberately decoupled from the table source: pass the parsed JSON object
+ *   so this stays browser-safe (no `node:fs`).
+ *
+ *   The demo imports the JSON directly and Node scripts call `JSON.parse` on it.
+ *
+ *   The default decode path is unchanged (byte-stable `conf=` output).
+ *   A caller that wants calibrated confidences builds a `Calibrator` here and passes
+ *   it via `ParseOpts.calibrate` (neural) or `BuildTreeOpts.calibrate` (decoder),
+ *   which `build-tree.ts` applies in `flush()`.
  */
 
 /**

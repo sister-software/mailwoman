@@ -3,7 +3,9 @@
 
 /**
  *   The `mwdev_constraints` tool definition provides the description and input schema an agent reads.
- *   It also wires the handler. The measurement lives in `../constraint-census.ts`.
+ *
+ *   It also wires the handler.
+ *   The measurement lives in `../constraint-census.ts`.
  */
 
 import { z } from "zod"

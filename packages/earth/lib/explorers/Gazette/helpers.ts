@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure helpers for the gazette explorer: the shape of a candidate row as the page reads it, the grouping
- *   of a prefix search's rows by name key, and the reading of a row the way the resolver reads it. Kept free
- *   of the range database so they unit-test without a worker.
+ *   Pure helpers for the gazette explorer: the shape of a candidate row as
+ *   the page reads it, the grouping of a prefix search's rows by name key,
+ *   and the reading of a row the way the resolver reads it.
+ *
+ *   Kept free of the range database so they unit-test without a worker.
  */
 
 import { DEFAULT_PLACETYPE_MAP, expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
@@ -101,7 +103,7 @@ export interface NameGroup {
  * Groups search rows by name key, keeping the lowest-ranked row of each key as its face.
  *
  * Groups keep the order their keys first appear in.
- * For a prefix scan that is key order.
+ * For a prefix scan that's key order.
  */
 export function groupByNameKey(rows: readonly PlaceRow[]): NameGroup[] {
 	const groups = new Map<string, NameGroup>()
@@ -146,7 +148,7 @@ export function tagsSelecting(placetype: string): string[] {
 }
 
 /**
- * A row read the way the browser resolver reads it when a parse names this key.
+ * A row read the way the browser resolver reads it when a parse identifies this key.
  */
 export interface ResolverReading {
 	/**

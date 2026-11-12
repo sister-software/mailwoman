@@ -4,36 +4,51 @@
 /**
  *   Exact parse scoring: whether a parse's component spans equal a row's annotated spans.
  *
- *   A row is exactly parsed when the multiset of predicted `(tag, start, end)` spans equals the multiset of
- *   annotated spans. Every annotated span must be predicted with its tag and boundaries, and no other span may
- *   be predicted. The recovered-span diagnostic also accepts additional predictions.
+ *   A row is exactly parsed when the multiset of predicted `(tag, start, end)`
+ *   spans equals the multiset of annotated spans.
+ *   Every annotated span must be predicted with its tag and boundaries, and no other span may be predicted.
  *
- *   Normalization. Offsets index the row's `raw` string in UTF-16 code units, the unit both the corpus and
- *   the decoder use. Each span, annotated or predicted, has the whitespace at its edges trimmed before
- *   comparison, so `[0, 5)` over `"Main "` equals `[0, 4)`. Case keeps its written form because the
- *   comparison reads boundaries rather than text, and the classifier's case normalization preserves length.
+ *   The recovered-span diagnostic also accepts additional predictions.
  *
- *   Street convention. Each row is scored under its country's street span convention, read from
- *   `streetSpanConventionFor` in `@mailwoman/codex/street-convention`. Under the `split` convention (US),
- *   `street_prefix`, `street_prefix_particle`, `street` and `street_suffix` spans are compared as they are,
- *   so a gold row that splits the street requires the split and a gold row that keeps it whole refuses it.
- *   Under the `whole` convention (every other country), {@linkcode joinStreetSpans} first joins each run of
- *   those spans that touch or are separated only by whitespace into one `street` span from the first start
- *   to the last end, on the predicted side and the annotated side alike. `Lister` + `street_suffix: Lane`
- *   then equals `street: Lister Lane`, while a street that ends at the wrong word still fails. The outcome
- *   records the convention applied and whether joining changed the result.
+ *   Normalization.
+ *   Offsets index the row's `raw` string in UTF-16 code units, the unit both the corpus and the decoder use.
  *
- *   Repeated components. Spans are compared as a multiset, so two annotated `locality` spans require two
- *   predicted `locality` spans at those boundaries, and a predicted span duplicated at one position counts
- *   once as matched and once as additional.
+ *   Each span, annotated or predicted, has the whitespace at its edges trimmed
+ *   before comparison, so `[0, 5)` over `"Main "` equals `[0, 4)`.
+ *   Case keeps its written form because the comparison reads boundaries rather than text,
+ *   and the classifier's case normalization preserves length.
  *
- *   Ignored labels. No component tag is ignored. The parse tree's nodes, parents and children alike, all
- *   count as predicted spans. Unlabeled text, the `O` label, is not a span on either side.
+ *   Street convention.
+ *   Each row is scored under its country's street span convention, read from
+ *   `streetSpanConventionFor` in `@mailwoman/codex/street-convention`.
  *
- *   Validity. {@linkcode validateAnnotatedSpans} refuses a row when its span columns differ in length or its
- *   offsets are not integers inside `raw` with `start < end`. It also refuses spans containing only whitespace and tags that are not
- *   a {@linkcode ComponentTag}, or whose spans overlap. The scorer throws for such a row instead of scoring
- *   it.
+ *   Under the `split` convention (US), `street_prefix`, `street_prefix_particle`, `street`
+ *   and `street_suffix` spans are compared as they're, so a gold row that splits the
+ *   street requires the split and a gold row that keeps it whole refuses it.
+ *   Under the `whole` convention (every other country), {@linkcode joinStreetSpans} first joins
+ *   each run of those spans that touch or are separated only by whitespace into one `street` span
+ *   from the first start to the last end, on the predicted side and the annotated side alike.
+ *
+ *   `Lister` + `street_suffix: Lane` then equals `street: Lister Lane`,
+ *   while a street that ends at the wrong word still fails.
+ *   The outcome records the convention applied and whether joining changed the result.
+ *
+ *   Repeated components.
+ *   Spans are compared as a multiset, so two annotated `locality` spans require two
+ *   predicted `locality` spans at those boundaries, and a predicted span duplicated
+ *   at one position counts once as matched and once as additional.
+ *
+ *   Ignored labels.
+ *   No component tag is ignored.
+ *
+ *   The parse tree's nodes, parents and children alike, all count as predicted spans.
+ *   Unlabeled text, the `O` label, isn't a span on either side.
+ *
+ *   Validity. {@linkcode validateAnnotatedSpans} refuses a row when its span columns
+ *   differ in length or its offsets are not integers inside `raw` with `start < end`.
+ *   It also refuses spans containing only whitespace and tags that are not a
+ *   {@linkcode ComponentTag}, or whose spans overlap.
+ *   The scorer throws for such a row instead of scoring it.
  */
 
 import { COMPONENT_TAGS, type ComponentTag, STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
@@ -96,7 +111,7 @@ const KNOWN_TAGS: ReadonlySet<string> = new Set(COMPONENT_TAGS)
 
 /**
  * Trims whitespace at both edges of a span.
- * A span that is only whitespace trims to `start === end`.
+ * A span that's only whitespace trims to `start === end`.
  */
 export function trimSpan(raw: string, span: ComponentSpan): ComponentSpan {
 	let { start, end } = span

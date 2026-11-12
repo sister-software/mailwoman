@@ -137,7 +137,7 @@ describe("designatorsByType", () => {
 
 		// The publisher wrote `<ad:designator/>`, which means "no extension" rather than void.
 		expect(byType.get("addressNumberExtension")).toEqual([""])
-		// `designator` skips it, because an empty string is not a house-number part.
+		// `designator` skips it, because an empty string isn't a house-number part.
 		expect(designator(byType, "addressNumberExtension")).toBeNull()
 		expect(designator(byType, "addressNumber")).toBe("3")
 		expect(designator(byType, "postalDeliveryIdentifier")).toBe("9901AA")
@@ -190,7 +190,7 @@ describe("voidDesignatorTypes", () => {
 		const [voided] = await features(VOID_NUMBER, "ad:Address")
 		const [czech] = await features(CZ, "ad:Address")
 
-		// The void row states a `buildingIdentifier` it could not give a value for,
+		// The void row states a `buildingIdentifier` it couldn't give a value for,
 		// so the type is absent from `designatorsByType` and present here.
 		expect(designatorsByType(voided!).has("buildingIdentifier")).toBe(false)
 		expect(voidDesignatorTypes(voided!).has("buildingIdentifier")).toBe(true)

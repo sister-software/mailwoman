@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators an Irish address uses: floors and the relation words of a query. The An Post address
- *   sheet on the UPU site lists no delivery service, premise or unit word, so the table has no such row.
+ *   The designators an Irish address uses: floors and the relation words of a query.
+ *
+ *   The An Post address sheet on the UPU site lists no delivery service, premise
+ *   or unit word, so the table has no such row.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/irlEn.pdf UPU, Ireland addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/near Wiktionary, near}

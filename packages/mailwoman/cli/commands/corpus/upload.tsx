@@ -9,6 +9,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runProcess } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
@@ -32,7 +33,7 @@ const DEFAULT_BUCKET = "mailwoman-assets"
  * `--s3-no-head` skips that request, and {@linkcode R2_SIZE_CHECK} confirms the transfer afterwards.
  *
  * R2 also answers rclone's pre-write bucket check with `NotImplemented`, failing every write.
- * `--s3-no-check-bucket` skips it, so the transfer does not depend on `.env`
+ * `--s3-no-check-bucket` skips it, so the transfer doesn't depend on `.env`
  * setting `RCLONE_S3_NO_CHECK_BUCKET`.
  *
  * The retry counts stay above rclone's defaults of 10 low-level and 3 high-level
@@ -103,7 +104,7 @@ type UploadedCorpusManifest = Partial<
  * A build output also writes the build manifest at `<root>/<entry>/MANIFEST.json`;
  * an overlay corpus assembled by `overlay-manifest` has none.
  *
- * A flat entry is `<root>/<entry>/` and its `MANIFEST.json` sits at the root of what is sent.
+ * A flat entry is `<root>/<entry>/` and its `MANIFEST.json` sits at the root of what's sent.
  */
 export interface CorpusUploadSource {
 	layout: "nested" | "flat"
@@ -114,7 +115,7 @@ export interface CorpusUploadSource {
 /**
  * Read one manifest the share-alike check needs, or throw naming the path.
  *
- * `--allow-share-alike` does not reach this: the flag accepts a known share-alike set
+ * `--allow-share-alike` doesn't reach this: the flag accepts a known share-alike set
  * or an unrecorded one, and a manifest that cannot be read is neither.
  */
 async function readRequiredManifest(version: string, path: PathBuilderLike): Promise<UploadedCorpusManifest> {
@@ -135,9 +136,9 @@ async function readRequiredManifest(version: string, path: PathBuilderLike): Pro
  *
  * The decision reads the obligations recorded for each license value the corpus stores,
  * through `shareAlikeFindings`.
- * It does not read source ids, adapter names or license-string prefixes, because a
- * row's obligation is a property of its license value and a share-alike register can
- * reach a corpus through a source whose id identifies a different license.
+ * It doesn't read source ids, adapter names or license-string prefixes, because a row's
+ * obligation is a property of its license value and a share-alike register can reach
+ * a corpus through a source whose id identifies a different license.
  *
  * The manifest at the root of the uploaded directory must be readable.
  * An unreadable one throws even when `allow` is set.
@@ -149,8 +150,10 @@ async function readRequiredManifest(version: string, path: PathBuilderLike): Pro
  * When neither does, the set is unrecorded and refuses unless `allow` is set.
  */
 export async function refuseShareAlike(version: string, upload: CorpusUploadSource, allow: boolean): Promise<void> {
-	const { stringifyJSON } = await import("@mailwoman/core/json")
-	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
+	const {
+		json: { stringifyJSON },
+		license: { shareAlikeFindings },
+	} = await allKeyed({ json: import("@mailwoman/core/json"), license: import("@mailwoman/corpus/utils/license") })
 
 	const uploadedPath = PathBuilder.from(upload.source)("MANIFEST.json")
 	const uploaded = await readRequiredManifest(version, uploadedPath)
@@ -182,7 +185,7 @@ export async function refuseShareAlike(version: string, upload: CorpusUploadSour
 	// `align` increments the `licenses` map once per canonical adapter row.
 	// `total_aligned_rows` counts the labeled rows produced from those rows.
 	// The values use different units.
-	// The rows the map does not answer for are the ones `overlay-manifest` merged
+	// The rows the map doesn't answer for are the ones `overlay-manifest` merged
 	// after the build: they raise the corpus manifest's `total_rows` above the build
 	// manifest's `total_aligned_rows` and include their own license values.
 	// A reading of the base by itself would state that the whole corpus is free of

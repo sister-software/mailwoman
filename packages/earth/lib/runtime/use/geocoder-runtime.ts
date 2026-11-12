@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `useGeocoderRuntime` — the app's runtime assembly. It builds the real {@link GeocoderRuntime} that
- * `@mailwoman/react/map`'s geocoder consumes, injecting the browser runtime's loaders into
- * `@mailwoman/react`'s `useReleaseRuntime` orchestration and wrapping the loaded assets with the map surface.
+ * `useGeocoderRuntime` — the app's runtime assembly.
  *
- * This is application code on purpose. `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
- * maplibre graph. This assembly imports all three.
+ * It builds the real {@link GeocoderRuntime} that `@mailwoman/react/map`'s geocoder consumes,
+ * injecting the browser runtime's loaders into `@mailwoman/react`'s `useReleaseRuntime`
+ * orchestration and wrapping the loaded assets with the map surface.
+ *
+ * This is application code on purpose.
+ * `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and maplibre graph.
+ * This assembly imports all three.
  */
 
 import {
@@ -34,7 +37,7 @@ import type {
 	ResolvedPlaceView,
 	ComponentMatch,
 } from "@mailwoman/core/pipeline/client-result"
-import { startEarly } from "@mailwoman/core/promises"
+import { allKeyed, startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
@@ -182,7 +185,7 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
 export function prefetchReleasesManifest(): void {
 	if (modelDisabled()) return
 
-	// The hook awaits and reports a failure, so the early promise must not report it a second time.
+	// The hook awaits and reports a failure, so the early promise mustn't report it a second time.
 	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
@@ -200,7 +203,7 @@ function modelDisabled(): boolean {
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
 /**
- * Reads one landmark layer, and keeps a search working when the Worker does not answer.
+ * Reads one landmark layer, and keeps a search working when the Worker doesn't answer.
  *
  * The layers improve a bare place name, and the page geocodes offline without them.
  * A failed read goes to the console with its layer, and the gazetteer's own answer stands.
@@ -529,10 +532,13 @@ export function useGeocoderRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { openRangeDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
-
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
-						await import("@mailwoman/resolver-wof-wasm/httpvfs/street")
+					const {
+						database: { openRangeDatabase },
+						street: { HTTPVFSAddressPointLookup, HTTPVFSInterpolator },
+					} = await allKeyed({
+						database: import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+						street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
+					})
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
@@ -1013,12 +1019,15 @@ export function useGeocoderRuntime({
 			ready: rt.ready,
 			runParse,
 			parseStageLabels,
-			loading: {
-				progress: rt.loadingProgress,
-				stepLabels: rt.loadingStepLabels,
-				stepIndex: rt.loadingStepIndex,
-				byteFraction: rt.loadingByteFraction,
-			},
+			// `?no-model` answers no manifest, so no release loads and the footer shows no loading status.
+			loading: rt.manifestAbsent
+				? null
+				: {
+						progress: rt.loadingProgress,
+						stepLabels: rt.loadingStepLabels,
+						stepIndex: rt.loadingStepIndex,
+						byteFraction: rt.loadingByteFraction,
+					},
 			errorMessage: rt.errorMessage,
 			mapStyle,
 			overlays,
@@ -1036,6 +1045,7 @@ export function useGeocoderRuntime({
 	}, [
 		mapStyle,
 		rt.ready,
+		rt.manifestAbsent,
 		rt.loadingProgress,
 		rt.loadingStepLabels,
 		rt.loadingStepIndex,

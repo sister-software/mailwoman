@@ -6,8 +6,10 @@
  *
  *   AS 4590.1-2017 defines these codes in its level-type table.
  *   GNAF uses the same vocabulary in its `LEVEL_TYPE_CODE` column.
+ *
  *   Australia Post AMAS approves `L` as the abbreviation for `Level`.
- *   OpenAddresses data contributes informal variants such as `LVL`. The parser recognizes them.
+ *   OpenAddresses data contributes informal variants such as `LVL`.
+ *   The parser recognizes them.
  *
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
@@ -194,7 +196,7 @@ export function isAuLevelDesignator(input: unknown): boolean {
 /**
  * Normalizes a level designator to its canonical abbreviation, so `"level 3"` becomes `"L 3"`.
  *
- * @returns The input unchanged when it is not a level designator.
+ * @returns The input unchanged when it isn't a level designator.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

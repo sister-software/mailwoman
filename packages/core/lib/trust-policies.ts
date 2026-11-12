@@ -2,20 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one sanctioned route from an untrusted string to an html sink: DOMPurify behind Trusted
- *   Types policies. Under a CSP with `require-trusted-types-for 'script'`, a sink refuses a plain
- *   string. Every injection site must go through an explicit policy. These three policies are available.
- *   policies.
+ *   The one sanctioned route from an untrusted string to an html sink:
+ *   DOMPurify behind Trusted Types policies.
  *
- *   The sanitizer is `isomorphic-dompurify`, so the same engine answers in a browser (plain
- *   DOMPurify over the page's window) and in Node (DOMPurify over a jsdom window). Server code,
- *   Docusaurus prerendering and SDK tooling all sanitize for real instead of degrading to a
- *   passthrough. The plain {@link sanitizeHTML} and {@link stripHTML} functions are that engine
- *   without the Trusted Types wrapper, for callers that need the transform rather than a sink token.
+ *   Under a CSP with `require-trusted-types-for 'script'`, a sink refuses a plain string.
+ *   Every injection site must go through an explicit policy.
+ *   These three policies are available. policies.
  *
- *   keep this module A leaf. The Node build constructs its jsdom window at import time — measured at
- *   0.45 s and ~130 MB over a bare Node process — so an import from a barrel (`core/utils`, the CLI
- *   graph) would add that time and memory to every process in the repo. Only modules that sanitize import it.
+ *   The sanitizer is `isomorphic-dompurify`, so the same engine answers in a browser
+ *   (plain DOMPurify over the page's window) and in Node (DOMPurify over a jsdom window).
+ *   Server code, Docusaurus prerendering and SDK tooling all sanitize for real
+ *   instead of degrading to a passthrough.
+ *
+ *   The plain {@link sanitizeHTML} and {@link stripHTML} functions are that engine without
+ *   the Trusted Types wrapper, for callers that need the transform rather than a sink token.
+ *
+ *   keep this module A leaf.
+ *   The Node build constructs its jsdom window at import time — measured at 0.45 s and ~130
+ *   MB over a bare Node process — so an import from a barrel (`core/utils`, the CLI graph)
+ *   would add that time and memory to every process in the repo.
+ *   Only modules that sanitize import it.
  */
 
 import DOMPurify, { type Config as DOMPurifyConfig } from "isomorphic-dompurify"

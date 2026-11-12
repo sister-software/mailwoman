@@ -10,7 +10,7 @@ sweeps CPU-only.
 
 Interpretation: the ablation removes a channel the model was TRAINED with, so it tests deliberate out-of-distribution
 input (#566/#685), so a channel delta reads "what this channel adds to the trained model" —
-not "what a model trained without it would score." That is the right question for the
+not "what a model trained without it would score." That's the right question for the
 consolidation ledger (P2): it measures what each layer contributes at inference time today.
 
 ## Micro-F1 deltas vs the full production config
@@ -43,7 +43,7 @@ drift, diagnosed.** `no-queryshape` reproduces the battery numbers exactly: the 
 production-vs-battery gap on golden-us is the query-shape prior, and it is driven by **locality
 −7.8** under the prior. On FR, adversarial, and parity it is ~0. Two consequences: (a) the check
 battery (which never feeds queryShape) has been over-reporting the production config by 2.3 micro
-on US golden, so the check measures a config production does not run. (b) The prior itself misfires
+on US golden, so the check measures a config production doesn't run. (b) The prior itself misfires
 on clean full addresses, the exact "libpostal clean-arena drift" the audit told us to watch.
 Follow-up filed: either fix the locality interaction or make the check score the production config.
 
@@ -57,14 +57,14 @@ candidates: retire each, or show an arena where it improves the score.
 **4. The word-consistency heal and the postcode anchor both improve the score, by locale-dependent
 amounts.** The heal adds +0.6/+0.8/+2.6 (us/fr/parity). The heal adds the most on parity, the arena with the most hostile input, so the heal stays default-ON. The anchor channel adds +1.6 on FR (house_number +5.7, so FR
 depends on it) but reads −0.8 on golden-us, i.e. mildly counterproductive on clean US input. That
-reading does not justify a change by itself. It does show that channel value is locale-asymmetric.
+reading doesn't justify a change by itself. It does show that channel value is locale-asymmetric.
 The per-locale capability manifest should eventually reflect that asymmetry.
 
 ## Cross-check
 
 The `battery` arm scores golden-us 87.8 vs the promotion check's 86.8 for the same weights — a
-1.0-point loader difference (createScorer explicit-paths vs loadFromWeights package feed) that is
-constant across configs and does not affect any delta above.
+1.0-point loader difference (createScorer explicit-paths vs loadFromWeights package feed) that's
+constant across configs and doesn't affect any delta above.
 
 ## What this feeds
 

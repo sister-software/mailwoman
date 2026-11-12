@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reassemble the full parsed street name from a street node's subtree. `street.value` by itself is
- *   the bare base ("Sheldon" for "East Sheldon Rd"), so the result surface rebuilds the name from
- *   every name-containing tag, ordered by span offset.
+ *   Reassemble the full parsed street name from a street node's subtree.
+ *
+ *   `street.value` by itself is the bare base ("Sheldon" for "East Sheldon Rd"), so the
+ *   result surface rebuilds the name from every name-containing tag, ordered by span offset.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

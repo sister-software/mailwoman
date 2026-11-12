@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for the browser POI category search against a synthetic in-memory `poi` table, read
- *   through a node:sqlite-backed stub of the range-read database handle.
+ *   Unit tests for the browser POI category search against a synthetic in-memory `poi` table,
+ *   read through a node:sqlite-backed stub of the range-read database handle.
  */
 
 import { shortCellToInt } from "@mailwoman/spatial"

@@ -9,10 +9,10 @@ import type { PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
 import type { ConfigSectionSpec } from "@mailwoman/corpus/training/config/schema"
 
 /**
- * Every dotted key under `node` that `section` does not declare, appended to `junk` in document order.
+ * Every dotted key under `node` that `section` doesn't declare, appended to `junk` in document order.
  *
  * A key whose field is a nested section is walked into.
- * A key whose field is a scalar is not, so an unknown key is reported once, at its own level.
+ * A key whose field is a scalar isn't, so an unknown key is reported once, at its own level.
  */
 export function unknownConfigKeys(
 	node: PythonValue,

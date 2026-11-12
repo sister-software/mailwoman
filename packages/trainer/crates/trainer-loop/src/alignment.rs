@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `data/loader/verify.py`'s `verify_tokenizer_alignment`: the corpus/tokenizer check a supervised run makes before
 //! it builds its model.
 //!

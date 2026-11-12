@@ -77,4 +77,4 @@ or suite numbers.
 `data.required_validation_label_support` declares a per-label row floor on the validation draw, and
 `audit_label_support` fails the launch preflight below it. `train_log.csv` writes each label's piece
 support beside its F1. The next from-scratch run declares floors for `po_box` and `unit` and draws
-its validation rows so that they are met.
+its validation rows so that they're met.

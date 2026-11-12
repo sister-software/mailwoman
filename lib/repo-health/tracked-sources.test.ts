@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pathspec filter has to answer what `git ls-files -- <pathspec>` answered, because the debt baseline was recorded
- *   against the spawned command. The `scripts/**\/*.ts` case is the one that decides a counter's population.
+ *   The pathspec filter has to answer what `git ls-files -- <pathspec>` answered,
+ *   because the debt baseline was recorded against the spawned command.
+ *
+ *   The `scripts/**\/*.ts` case is the one that decides a counter's population.
  */
 
 import { describe, expect, it } from "vitest"

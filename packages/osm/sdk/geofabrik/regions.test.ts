@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every country extraction policy lists Geofabrik regions this registry lists, and each of them holds
- *   the country, so a policy never points at a region by a URL or an identity the acquisition cannot resolve.
+ *   Every country extraction policy lists Geofabrik regions this registry lists,
+ *   and each of them holds the country, so a policy never points at a region by a URL
+ *   or an identity the acquisition cannot resolve.
  */
 
 import { describe, expect, it } from "vitest"

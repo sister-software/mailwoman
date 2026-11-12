@@ -3,14 +3,18 @@
 
 /**
  *   The French leg of the `postal-unit-guideline` evaluation recipe, from La Poste's
- *   {@linkcode FR_UNIT_LINE_RULES}: one line 2 or line 3 designator with its identifier, the number
- *   and street on line 4, then the postcode and locality on line 6, in capitals as the document's
- *   example writes lines 3 to 6.
+ *   {@linkcode FR_UNIT_LINE_RULES}: one line 2 or line 3 designator with its identifier,
+ *   the number and street on line 4, then the postcode and locality on line 6,
+ *   in capitals as the document's example writes lines 3 to 6.
  *
- *   The leg leaves out ESCALIER and ENTREE, because `synthetic-secondary` writes `Escalier 4` and
- *   `Entrée C`. The flat is written as the example's `Appartement` or as line 2's `APP`. A
- *   residence or housing estate takes another held-out place's name as its identifier. Every other
- *   designator takes a number or a letter. The street is the example's `RUE DE` and another held-out place's name.
+ *   The leg leaves out ESCALIER and ENTREE, because `synthetic-secondary`
+ *   writes `Escalier 4` and `Entrée C`.
+ *   The flat is written as the example's `Appartement` or as line 2's `APP`.
+ *
+ *   A residence or housing estate takes another held-out place's name as its identifier.
+ *   Every other designator takes a number or a letter.
+ *
+ *   The street is the example's `RUE DE` and another held-out place's name.
  */
 
 import { FR_UNIT_LINE_RULES } from "@mailwoman/codex/fr"

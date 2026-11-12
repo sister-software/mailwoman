@@ -44,7 +44,7 @@ synth-side implementation.
 
 ## 2. Infrastructure that came out of the cycle
 
-The cycle did not ship a model, but it did ship substantial
+The cycle didn't ship a model, but it did ship substantial
 infrastructure that v0.7 builds on:
 
 - **2D pre-publish eval check**
@@ -162,7 +162,7 @@ the model cannot span, and the model labels only some of the pieces as
 postcode.
 
 This is a tokenizer concern rather than a schema concern. More JP / KR /
-BR coverage (system-multiplicity) does not fix it. v0.7 needs to address
+BR coverage (system-multiplicity) doesn't fix it. v0.7 needs to address
 postcodes at the character or FST level.
 
 ### 3.5 Test-set leakage at the DECISION level
@@ -170,24 +170,24 @@ postcodes at the character or FST level.
 v0.1.2 has been the check baseline for every v0.6.x decision. Three
 iterations consumed the same dataset as decision data. The threshold
 values in the 2D check (2pp recall drop, 100 hallucination count) were
-calibrated against the same set we have been reading. Some check
+calibrated against the same set we've been reading. Some check
 pass/fail decisions may have been false positives.
 
 The model has never seen v0.1.2 in training, but the recipe has been
-tuned against it three times. That is decision-side leakage, even
+tuned against it three times. That's decision-side leakage, even
 though no training-side leakage occurred.
 
-## 4. What did not cause v0.6.x's pathology
+## 4. What didn't cause v0.6.x's pathology
 
-These causes were considered and ruled out. They are recorded here so
+These causes were considered and ruled out. They're recorded here so
 later cycles do not reopen them:
 
 - **System-multiplicity (JP block addressing, KR dual systems, etc.)
-  did not cause v0.6.x failures.** All measured regressions were on
+  didn't cause v0.6.x failures.** All measured regressions were on
   US-mostly data with US-mostly eval. JP/KR/Colombia are real
-  architectural concerns for global coverage but were not the binding
+  architectural concerns for global coverage but weren't the binding
   constraint here. See DeepSeek turn 12's tier list.
-- **CRF disablement did not cause v0.6.x failures.** v0.6.x was
+- **CRF disablement didn't cause v0.6.x failures.** v0.6.x was
   CE-only because of the bf16 NaN issue in CRF transitions. The
   [fp32-CRF fix](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx) is
   verified, but enabling CRF on top of v0.6.x's overconfident model
@@ -314,7 +314,7 @@ The v0.8+ direction (informed by DeepSeek turn 12):
   `street` → `house_number`. Consumers opt in. Avoid lossy universal
   projection.
 
-This work matters, but the v0.6.x failures did not come from it. v0.7
+This work matters, but the v0.6.x failures didn't come from it. v0.7
 fixes the measured problems, and v0.8 starts the structural work.
 
 ## 7. The meta-lesson

@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fill one stratum of a pre-registered panel. Shuffle eligible rows once with the registered seed.
- *   Take rows in that order until the target is reached. Report each dropped row and the reason.
+ *   Fill one stratum of a pre-registered panel.
  *
- *   Every stratified benchmark uses this function so its draw order stays consistent. The draw order decides
- *   which rows a frozen panel contains. A stratum with separate drop-counting logic could report a coverage
- *   hole as a panel choice.
+ *   Shuffle eligible rows once with the registered seed.
+ *   Take rows in that order until the target is reached.
+ *   Report each dropped row and the reason.
  *
- *   Each stratum decides whether a row is gradeable. Under the same-data homograph rule, gold alternates between
- *   two bearers. A check of only the iterated row would refuse rows whose actual gold is valid.
+ *   Every stratified benchmark uses this function so its draw order stays consistent.
+ *   The draw order decides which rows a frozen panel contains.
+ *
+ *   A stratum with separate drop-counting logic could report a coverage hole as a panel choice.
+ *
+ *   Each stratum decides whether a row is gradeable.
+ *   Under the same-data homograph rule, gold alternates between two bearers.
+ *
+ *   A check of only the iterated row would refuse rows whose actual gold is valid.
  */
 
 import { SeededRandom } from "@mailwoman/core/random"
@@ -38,7 +44,7 @@ export interface StratumFillCensus {
 	 */
 	droppedUngradeableGold: number
 	/**
-	 * Rows the stratum's own rule could not render.
+	 * Rows the stratum's own rule couldn't render.
 	 *
 	 * Counted apart from the gold drop because the two name different holes —
 	 * one in the gazetteer, one in the source register.

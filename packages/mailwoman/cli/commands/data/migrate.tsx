@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman data migrate --dry-run`: list the files today's readers select, classify each, and print the plan
- *   that would register them in place, with its rollback. This release plans only. Without `--dry-run` the
- *   command refuses and leaves the data root as it was.
+ *   `mailwoman data migrate --dry-run`: list the files today's readers select, classify each,
+ *   and print the plan that would register them in place, with its rollback.
+ *
+ *   This release plans only.
+ *   Without `--dry-run` the command refuses and leaves the data root as it was.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

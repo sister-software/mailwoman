@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval ledger-append`: turn a promotion-eval out-dir into one row of
- *   `evals/scores-by-version.json`. `eval promote` prints this command pre-filled on every
- *   `pass`. Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts. exit codes
- *   mirror the retired script (0 appended, 1 refused, 2 usage).
+ *   `mailwoman eval ledger-append`: turn a promotion-eval out-dir into one row
+ *   of `evals/scores-by-version.json`.
+ *
+ *   `eval promote` prints this command pre-filled on every `pass`.
+ *   Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts.
+ *   exit codes mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

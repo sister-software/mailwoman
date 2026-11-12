@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `POST /v1/downloads` answers a presigned URL for a paid artifact to a token that admits it. The token is verified
- *   offline against the register and this worker's own key, its scope must admit the artifact, and a token with a lid
- *   must stand `active` in the ledger. A hand-issued token has no lid and is admitted on the offline verification
- *   so an enterprise licensee downloads without a ledger row. Every grant is a `downloads` row.
+ *   `POST /v1/downloads` answers a presigned URL for a paid artifact to a token that admits it.
+ *
+ *   The token is verified offline against the register and this worker's own key, its scope
+ *   must admit the artifact, and a token with a lid must stand `active` in the ledger.
+ *   A hand-issued token has no lid and is admitted on the offline verification
+ *   so an enterprise licensee downloads without a ledger row.
+ *   Every grant is a `downloads` row.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

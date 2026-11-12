@@ -89,7 +89,7 @@ export interface RecipeSource {
 	 */
 	producer: string
 	/**
-	 * Why the producer's path does not fully explain the placement.
+	 * Why the producer's path doesn't fully explain the placement.
 	 */
 	note: string | null
 }
@@ -290,8 +290,8 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
  *
  * Each is either a register's own name, used by an adapter or builder that reads that
  * register by construction, or an adversarial set whose producer chose the name.
- * They are listed so a check over training configs can tell a source that
- * exists from one that a sweep invented.
+ * They're listed so a check over training configs can tell a source that exists
+ * from one that a sweep invented.
  */
 export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"overture",
@@ -412,7 +412,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"matrikkelen-sj",
 	// One id per French overseas jurisdiction for the BAN department files,
 	// written by `corpus run ban --source-name`.
-	// Metropolitan rows keep `ban`, so its weight does not decide the rate at which a territory is drawn.
+	// Metropolitan rows keep `ban`, so its weight doesn't decide the rate at which a territory is drawn.
 	"ban-gp",
 	"ban-mq",
 	"ban-gf",
@@ -450,7 +450,7 @@ const BY_CURRENT = new Map(RECIPE_SOURCES.map((entry) => [entry.current, entry])
 
 /**
  * The current spelling of a recipe-output source given either spelling,
- * or `null` for a source this table does not record.
+ * or `null` for a source this table doesn't record.
  *
  * A caller rewriting a corpus must refuse on `null` rather than pass the value through, because a
  * pass-through leaves a corpus carrying two vocabularies with no record of which files were touched.
@@ -533,7 +533,7 @@ export function retiredSourceName(source: string): string {
  * Every recipe-output spelling and adapter source id this table knows.
  *
  * Adapter ids are not here.
- * They are declared by each adapter as `<NAME>_ADAPTER_ID`, and a reader that needs
+ * They're declared by each adapter as `<NAME>_ADAPTER_ID`, and a reader that needs
  * the full set of stored `source` values joins the two.
  */
 export function knownOverlaySourceNames(): ReadonlySet<string> {

@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Canonicalizes organization names by removing legal designations. It normalizes DBA clauses plus punctuation and accents.
- *   It also folds connectives and leading articles. Jurisdiction adds local legal forms. Domain rules preserve
- *   ambiguous terms that could otherwise be stripped.
+ *   Canonicalizes organization names by removing legal designations.
+ *
+ *   It normalizes DBA clauses plus punctuation and accents.
+ *   It also folds connectives and leading articles.
+ *
+ *   Jurisdiction adds local legal forms.
+ *   Domain rules preserve ambiguous terms that could otherwise be stripped.
  */
 
 import { foldForKey } from "@mailwoman/codex/address/key"
@@ -126,7 +130,7 @@ const BASE_DESIGNATIONS = new Set([
 
 /**
  * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms) added only when the jurisdiction
- * is known, holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base must not strip.
+ * is known, holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base mustn't strip.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang

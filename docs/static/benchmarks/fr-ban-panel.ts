@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //
 // fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against BAN's own rooftop coordinate in two surface forms.
 //
@@ -62,7 +65,7 @@ const PANEL_SIZE = 100
 const DRAW_SIZE = 1200
 
 /**
- * Rows averaged to place a postcode's centroid, capped so a dense postcode does not dominate the run.
+ * Rows averaged to place a postcode's centroid, capped so a dense postcode doesn't dominate the run.
  */
 const CENTROID_SAMPLE = 2000
 
@@ -105,7 +108,7 @@ if (!dataRoot) {
 }
 
 /**
- * The checked data root, bound once because module-level narrowing does not reach into function bodies.
+ * The checked data root, bound once because module-level narrowing doesn't reach into function bodies.
  */
 const DATA_ROOT = PathBuilder.from(dataRoot)
 
@@ -134,7 +137,7 @@ interface PanelRow {
  * One graded answer.
  *
  * Its `km` is null when the pipeline returned no coordinate. {@link summarize} keeps
- * that case separate from a coordinate that is far away.
+ * that case separate from a coordinate that's far away.
  */
 interface GradedRecord {
 	km: number | null
@@ -336,7 +339,7 @@ async function run() {
 				continue
 			}
 
-			// Capture the coordinates rather than the object: narrowing `result` does not narrow `result.lat`.
+			// Capture the coordinates rather than the object: narrowing `result` doesn't narrow `result.lat`.
 			const answer =
 				typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
 

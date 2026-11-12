@@ -10,7 +10,7 @@ route merged in PR #1955 and given GO on #1930.
 for).
 
 Stop condition 2 states that a large downstream phase needs a concrete product requirement supported by its
-own evidence, and that a recorded GO does not count as one. This record supplies that requirement and
+own evidence, and that a recorded GO doesn't count as one. This record supplies that requirement and
 states how strong the evidence is. It decides the surface, the dependency direction, the default
 posture, the bar any default change must clear, and the rollback plan. It implements no code.
 
@@ -25,7 +25,7 @@ alphabetical order decides which one it takes.
 ## 0. The decision
 
 1. **The product requirement is admitted**, and it is a requirement about a capability the system
-   does not have rather than about a volume of traffic it receives (§2).
+   doesn't have rather than about a volume of traffic it receives (§2).
 2. **The consuming surface is `createRuntimePipeline`'s existing `poiSemanticLookup` option**,
    consulted last and supplying positive evidence only. This record freezes the order PR #1955
    established (§3.1).
@@ -33,7 +33,7 @@ alphabetical order decides which one it takes.
    The boundary record's §6 constraint on `@mailwoman/core` is **left standing, unamended** (§3.2,
    §10). The `devDependency` becomes a real dependency only in a change published by the same
    coordinated release that moves `@mailwoman/geographic-model` off `0.0.0` (§3.3).
-4. **The default posture is off, and this record does not authorize a default change.** The D-rule
+4. **The default posture is off, and this record doesn't authorize a default change.** The D-rule
    allows three options for a mechanism with unmeasured effect on a tier-1 locale: repair it, admit
    it per locale, or ship it opt-in. This record takes the third (§4).
 5. **A supported opt-in surface is authorized**, conditional on the four prerequisites in §8. Two of
@@ -47,11 +47,11 @@ alphabetical order decides which one it takes.
 
 ---
 
-## 1. What is known, and over what denominator
+## 1. What's known, and over what denominator
 
 ### 1.1 The capability the shipped path lacks
 
-Committed data attests this half, and it does not depend on the probe at all.
+Committed data attests this half, and it doesn't depend on the probe at all.
 
 The committed category lexicon matches exact phrases over venue nouns. The boundary record's §5.2 ran
 nine queries through the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`. Every
@@ -65,7 +65,7 @@ The type system rules out repairing this inside `@mailwoman/poi-taxonomy`, and t
 show why. `SynonymEntry.categoryID` is a **single** id, while the set of kinds affording an activity
 is plural and depends on the country. On the shipped `poi.db` (manifest `2026-07-22.0`), **7,168 of
 the 89,336 rows** under the two pharmacy-adjacent Overture leaves sit under `retail > drugstore` and
-are structurally unreachable from the shipped `pharmacy` query. That is 8.0% overall, 12.9% within the
+are structurally unreachable from the shipped `pharmacy` query. That's 8.0% overall, 12.9% within the
 US, and a measured zero in FR.
 
 This requirement is supported by committed evidence and holds regardless of whether any probe ran.
@@ -77,7 +77,7 @@ The probe used four target rows and six controls. Targets moved from 0/4 to 3/4,
 operator recorded it on 2026-08-26.
 
 The denominators matter most here. The boundary record's §5.1 labels the four target rows as
-**synthetic**. They are the venue-noun controls with the noun replaced by an activity phrase, and the
+**synthetic**. They're the venue-noun controls with the noun replaced by an activity phrase, and the
 anchors are copied byte-for-byte so only the subject varies. Recognition rests on ten authored
 phrases whose provenance opens with `AUTHORED FOR ONE EXPERIMENT`, and four of the ten are the
 registered target phrasings. The controls are six POI queries, three of which are the venue-noun form
@@ -109,7 +109,7 @@ Three things are unmeasured. Each is stated here so that no later reader takes i
 Both defects were reproduced by running code.
 
 **(a) A plural affordance collapses to one by code-point order.** The affordance edge exists because
-an activity is afforded by a **set** of kinds. That is §5.3's argument for why a synonym table
+an activity is afforded by a **set** of kinds. That's §5.3's argument for why a synonym table
 cannot hold it. The query surface cannot hold a set either, and it narrows the set without reporting
 it:
 
@@ -157,7 +157,7 @@ production-shaped code.
 
 **The requirement is admitted at the strength the evidence supports:**
 
-> A query that names what the user wants to do, in a POI-shaped form, must reach the entity kinds
+> A query that states what the user wants to do, in a POI-shaped form, must reach the entity kinds
 > that afford it — with the assertion that decided it available to the caller — rather than being
 > answered as an address parse of a sentence.
 
@@ -167,11 +167,11 @@ The evidence for the requirement's **size** is §1.3. That section contains no m
 
 That difference decides the posture, and it is the central argument of this record. The team can make
 an unreachable capability available to the callers who ask for it. A change to what every caller gets
-is a different claim, and it needs a denominator that does not exist. The requirement is therefore
-admitted **at opt-in strength**. That is enough to make the route a supported surface, but not
+is a different claim, and it needs a denominator that doesn't exist. The requirement is therefore
+admitted **at opt-in strength**. That's enough to make the route a supported surface, but not
 enough to change the default answer for inputs that no measurement has counted.
 
-The first paragraph of this section satisfies stop condition 2 for the opt-in surface. It does not
+The first paragraph of this section satisfies stop condition 2 for the opt-in surface. It doesn't
 satisfy stop condition 2 for a default change.
 
 ---
@@ -199,7 +199,7 @@ That property keeps the integration point to one optional argument instead of a 
 record preserves it.
 
 **One move is required before the surface is supported.** The builder lives at
-`packages/mailwoman/lib/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
+`packages/mailwoman/lib/eval-harness/semantic-utility/observation-route.ts`. A consumer mustn't reach
 into an eval harness for a runtime capability, so the builder moves into the `mailwoman` runtime
 tree with a real export subpath, and the harness imports it from there. The move must leave the
 probe's frozen definition and freeze record unchanged, with an empty diff. #1960 has the same
@@ -249,7 +249,7 @@ release would pin `0.0.0` permanently, and that version will never be republishe
 is in the bump set. `AGENTS.md` describes the same frozen-workspace hazard from the other side.
 
 **The decision:** the edge moves from `devDependencies` to `dependencies` in the change that ships
-the supported surface. That change is not published until the same coordinated release also
+the supported surface. That change isn't published until the same coordinated release also
 publishes `@mailwoman/geographic-model` at the shared version. The workspace is in
 `.release-it.json`'s list. That list is both the publish set **and** the bump set. One `yarn release`
 therefore does both, and the dependency versions always match. No step here needs a hand-publish, and no step
@@ -267,17 +267,17 @@ small, separate benefit.
 
 The D-rule states that no default-on mechanism ships with a known regression against the shipped
 model on any tier-1 locale, and that the compliant routes are to repair it, to admit it per locale,
-or to ship it opt-in. It also states the obligation that comes with opt-in: a path that is off by
+or to ship it opt-in. It also states the obligation that comes with opt-in: a path that's off by
 default must ship with tests that turn it on. Otherwise no test exercises the mechanism, it decays,
 and its first real use is also its first execution.
 
 This record takes the opt-in route, for a reason the D-rule's own wording supports. The route changes
-which query **kind** is chosen. An input the committed lexicon does not claim currently takes the
+which query **kind** is chosen. An input the committed lexicon doesn't claim currently takes the
 address path. With the route on, an input ending in a declared activity phrase takes the POI branch
 instead. That change would newly affect every non-POI input carrying such a phrase, and §1.3 records
 that no measurement has counted those inputs. A default change against an uncounted population has no measured
-regression. For that reason it is not admissible: the D-rule's bar requires a measurement,
-and the lack of a measured regression does not meet it.
+regression. For that reason it isn't admissible: the D-rule's bar requires a measurement,
+and the lack of a measured regression doesn't meet it.
 
 §11's census is the first measurement of that population. For the merged route it found **zero
 changes over 9,324 committed inputs**. That number is real and reassuring. It also describes only
@@ -300,7 +300,7 @@ the option turns the route on, its absence gives the pipeline that shipped, and 
 `streetMorphology?: … | false`, each documented as the byte-stable override for a mechanism that
 became default-on. Any change that makes the route auto-construct must widen `poiSemanticLookup` to
 `… | false` in the same commit, with a test that sets it `false` and asserts byte-stability against
-the pre-change composition. A rollback option added after the change does not count as rollback (§6).
+the pre-change composition. A rollback option added after the change doesn't count as rollback (§6).
 
 ### 4.3 Locale and country admission
 
@@ -351,15 +351,15 @@ A result for one row cannot be inferred from another.
 | **5** | The false-claim census             | §11's instrument, re-run at the shipping phrase lexicon    | Zero subject-match changes on the board's address-guard rows, and every change elsewhere adjudicated row by row. The positive control reported in the same run — a census that cannot detect a change reports the same zero as a real absence                                                   |
 | **6** | Multi-kind adjudication            | A test over an activity with two afforded kinds            | `mappedKindCount > 1` answered without an authored preference (§8.1). A default change while `hits[0]` decides by code point is refused                                                                                                                                                         |
 | **7** | Country admission                  | A row anchored outside an assertion's `countries`          | The route stays silent there, and the receipt records the scope that refused it                                                                                                                                                                                                                 |
-| **8** | Artifact identity on every receipt | —                                                          | `poi.db` manifest version, weights version, resolver backend, `modelVersion`, phrase-lexicon id and version. An arm label is not a measurement of what ran                                                                                                                                      |
+| **8** | Artifact identity on every receipt | —                                                          | `poi.db` manifest version, weights version, resolver backend, `modelVersion`, phrase-lexicon id and version. An arm label isn't a measurement of what ran                                                                                                                                       |
 | **9** | The recorded phase-2 decision      | #1967                                                      | The ruler contains rows 1–8, both arms run, and the operator records the verdict                                                                                                                                                                                                                |
 
 Two of those nine rows measure something that no run has measured yet. Row 5 exists only as this record's
-instrument, and rows 6 and 7 have no committed rows at all. They are listed here so #1967's
+instrument, and rows 6 and 7 have no committed rows at all. They're listed here so #1967's
 pre-registration includes them from the start.
 
 **What the bar deliberately omits:** a prevalence number. If one becomes available, it strengthens
-the requirement in §2, and this record is amended to say so. A missing prevalence number is not a
+the requirement in §2, and this record is amended to say so. A missing prevalence number isn't a
 check that can be waived. It is the reason for the current default posture.
 
 ---
@@ -390,10 +390,10 @@ would recreate the version skew the release list prevents.
 
 If #1967's phase-2 measurement misses its resolution threshold but clears a pre-registered
 structured diagnostic threshold, the admissible outcome is **the observation surface without the
-recognition change**. This record defines that outcome now so it is not improvised under pressure
+recognition change**. This record defines that outcome now so it isn't improvised under pressure
 later.
 
-Today the provenance the program is built around does not reach a caller. `semanticObservations[]`
+Today the provenance the program is built around doesn't reach a caller. `semanticObservations[]`
 appears only under `packages/mailwoman/lib/eval-harness/semantic-utility/`. The route hands the
 observations out through a `takeObservations()` drain that the harness owns, and `POIIntentOutcome`
 has no field for them. A consumer of `createRuntimePipeline` gets the category and none of the
@@ -412,7 +412,7 @@ modality, mapping and both provenance records). The recognition route stays opt-
 artifact keeps growing under the amendment process. A caller can then see on whose authority the
 category was chosen, and no behavior changes on the default path. The same plumbing suits the opt-in
 surface regardless of the phase-2 verdict, and #1965's absence observations need the same channel.
-That is why §8.3 lists it as a prerequisite rather than a fallback.
+That's why §8.3 lists it as a prerequisite rather than a fallback.
 
 **A stop-strength outcome**, such as regressing controls or a false-claim census that finds claims
 that no reviewer can adjudicate, ends the opt-in surface as well as the default change. The route then returns
@@ -447,7 +447,7 @@ it is owned outside this program.
 **Until that change lands, a plural affordance may not reach the route.** The interim rule is a
 construction refusal, like the eight refusals the route already has: a declared phrase whose activity
 reaches more than one mapped kind is refused at construction, and the error lists the phrase and the
-kinds. A refusal is visible, and an unreported alphabetical winner is not. #1963 lands the first
+kinds. A refusal is visible, and an unreported alphabetical winner isn't. #1963 lands the first
 plural case, so this refusal must exist before #1963 merges. Otherwise the collapse would ship
 without anyone seeing it.
 
@@ -500,12 +500,12 @@ across the move.
 | **#1960 / PR #1969**        | Merges first. It is the measurement surface §5 rows 1 and 5 read. Its three `improvement_target` rows name **this issue** as their blocker, so when #1966 closes they must be re-pointed at the implementation issue §8 authorizes. A tracked row naming a closed issue is a row with no open owner |
 | **#1962** (recognition)     | **Blocks the opt-in surface.** A supported capability may not rest on a table whose provenance reads `AUTHORED FOR ONE EXPERIMENT`. Its per-entry locale scoping is half of §4.3's admission control, and its phrase-collision census is what stops another `Somewhere`                             |
 | **#1963** (semantics)       | **Blocked by §8.1 and §8.2.** It lands the first plural affordance and the first country-scoped assertion, and both defects in §1.4 become live at that moment. Its own re-measurement obligation (§4.1's closing paragraph) is unchanged by this record                                            |
-| **#1964 / #1965** (absence) | **Independent of the default posture.** Observation-only by construction, blocked on exclusion-grade coverage cells rather than on this record. It shares §8.3's route to the caller and should not build a second one                                                                              |
+| **#1964 / #1965** (absence) | **Independent of the default posture.** Observation-only by construction, blocked on exclusion-grade coverage cells rather than on this record. It shares §8.3's route to the caller and shouldn't build a second one                                                                               |
 | **#1967** (phase-2 ruler)   | **Consumes this record.** §5's nine rows are what the ruler must contain. Rows 5, 6 and 7 have no committed instruments today and must be built into the pre-registration rather than discovered after the arms run                                                                                 |
 | **#1039**                   | Owns `sem-act-fr-01`'s structural blocker. Not this program's, and not on the path to the opt-in surface                                                                                                                                                                                            |
-| **#1933**                   | Owns the `drugstore`/`pharmacy` retrieval split. §8.1's union search is adjacent to it and must not be mistaken for it. One is which categories a subject reaches, the other is which category a typed phrase reaches                                                                               |
+| **#1933**                   | Owns the `drugstore`/`pharmacy` retrieval split. §8.1's union search is adjacent to it and mustn't be mistaken for it. One is which categories a subject reaches, the other is which category a typed phrase reaches                                                                                |
 
-**This record does not authorize a default change, and #1967 cannot authorize one by itself.** A default
+**This record doesn't authorize a default change, and #1967 cannot authorize one by itself.** A default
 change needs §5's bar cleared, a recorded operator decision, and, if the bar itself changes, an
 amendment here.
 
@@ -538,7 +538,7 @@ temporary scripts, deleted after the run. Each is short enough to rebuild from t
 
 **The false-claim census.** Every distinct string in every committed `.jsonl` under
 `packages/mailwoman/lib/eval-harness/gauntlet/cases/`, `…/conformance/` (both `base` and `variant`) and
-`…/fixtures/`. That is 9,324 distinct inputs: 915 gauntlet cases, 182 conformance, and 8,227
+`…/fixtures/`. That's 9,324 distinct inputs: 915 gauntlet cases, 182 conformance, and 8,227
 fixtures (BAN FR fragments 2,800, Overture DE fragments 2,404, `no-digits` 2,400, the parity corpora,
 the golden sets, the venue confounds, and the 51-row POI board). Each input was passed to
 `matchPOISubject` twice with the same locale: once against `poiTaxonomyLookup` with no fallthrough, and once
@@ -572,7 +572,7 @@ measured zero is conservative. The measurement needs a `poi.db`, which §5 row 5
 **The wave-1 simulation.** The committed `packages/geographic-model/data/geographic-model.json` was
 read and cloned. The clone received one added concept (`drugstore`, `isA: ["establishment"]`) with
 one assertion (`affords` → `obtain_medication`, `modality: strongly_expected`, `countries: ["US"]`)
-and one `poi-taxonomy` mapping to external id `drugstore`. That is the wave-1 set exactly as §4.1
+and one `poi-taxonomy` mapping to external id `drugstore`. That's the wave-1 set exactly as §4.1
 admits it. The route was built over the modified artifact with
 `createSemanticObservationRoute({ model })` and queried through `matchPOISubject`. §1.4 shows the
 output.

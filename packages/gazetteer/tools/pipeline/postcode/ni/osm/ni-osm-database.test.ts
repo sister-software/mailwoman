@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture-scale check for the NI OSM postcode database. The name law holds and the medoid lands on a member point.
- *   A malformed tag value is dropped and reported. The provenance `meta` reaches the sealed artifact.
+ *   Fixture-scale check for the NI OSM postcode database.
  *
- *   The fixture is a synthetic Overpass response in the real envelope shape, because a node has `lat`/`lon` and a way has `center`; a parser that handles only one still passes tests written against the other.
+ *   The name law holds and the medoid lands on a member point.
+ *   A malformed tag value is dropped and reported.
+ *   The provenance `meta` reaches the sealed artifact.
+ *
+ *   The fixture is a synthetic Overpass response in the real envelope shape,
+ *   because a node has `lat`/`lon` and a way has `center`; a parser that handles
+ *   only one still passes tests written against the other.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"

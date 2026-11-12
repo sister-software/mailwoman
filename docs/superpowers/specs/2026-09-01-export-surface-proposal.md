@@ -21,17 +21,17 @@ together, as §4.1 asked, because the directory structure is the new export list
 | `neural`              |                                             40 → 31 |
 | `resolver`            |                                             15 → 11 |
 
-**Both of the remaining recommendations in §0 were measured, and both were wrong.** That is the useful part
+**Both of the remaining recommendations in §0 were measured, and both were wrong.** That's the useful part
 of this record now.
 
 ### §0.2 — `sideEffects: false` is correct, but not for the reason given
 
 Landed on the **43 of 59** published packages that warrant it, by walking each module's top-level statement
-list (an expression statement, a bare `import "x"` or a top-level await runs, and a declaration does not). The
+list (an expression statement, a bare `import "x"` or a top-level await runs, and a declaration doesn't). The
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
-defense in depth. **It does not.** Measured after landing it: repointing one demo import from
+defense in depth. **It doesn't.** Measured after landing it: repointing one demo import from
 `street/normalize` back to the `street` barrel still produces 27
 `'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still required, and
 `webpack-policy.test.ts` now refuses a barrel import by name in ~30 ms — because the only other thing that
@@ -41,13 +41,13 @@ _(A first pass at the audit reported 13 clean packages. It used a regex, and `^`
 an indented statement inside a function exactly as it matches a top-level one. It also flagged `neural`,
 which already declared the field — that contradiction is what exposed it.)_
 
-### §0.4 — the docs alias map must not be derived from `exports`
+### §0.4 — the docs alias map mustn't be derived from `exports`
 
 This looked right and is the opposite of right. **The alias list's job is to DIFFER from the
 exports map.** `@mailwoman/resolver-wof-sqlite` now advertises both `./fst` and `./fst/deserialize-web`;
 Node callers should take the barrel and the browser must take the leaf, because the barrel re-exports
 `fst/freshness`, which reaches `@mailwoman/core/fs`. A derivation reads both entries and has no way to
-express the preference — it is an editorial judgment about the BROWSER, and the exports map is not written
+express the preference — it is an editorial judgment about the BROWSER, and the exports map isn't written
 from the browser's point of view.
 
 What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that
@@ -59,7 +59,7 @@ resolves to no target. That refusal caught three real breaks during the fold (`r
 - An **array-valued** `sideEffects` naming the entry files would let the other 16 packages shake their
   library halves. This change is recommended and not yet made.
 - `core` (80) and `codex` (54) are now the two largest surfaces and neither was folded — no prefix families
-  at their roots, so the reduction there is a different exercise.
+  at their roots, so the reduction there's a different exercise.
 
 ---
 
@@ -71,7 +71,7 @@ resolves to no target. That refusal caught three real breaks during the fold (`r
 2. **Keep the deliberate isolation leaves, and mark them.** Each needs its reason in its own docstring. Today
    only one of three has it (§2). Add `"sideEffects": false` to every published package so barrel imports
    tree-shake and the leaf list stops growing for bundle reasons. Today exactly **one** package declares it.
-3. **Wildcards only where the surface is not public.** Five of the 64 workspaces are private.
+3. **Wildcards only where the surface isn't public.** Five of the 64 workspaces are private.
 4. **Derive the mirrors.** The docs alias map hand-copies subpaths, and that list is **already stale** (§2.2).
 
 ---
@@ -112,11 +112,11 @@ are side-effect-free **and** every Node-only dependency sits behind its own entr
 
 ### 2.1 The reasons are not written down
 
-**Two of those three modules do not state why they are a separate entry.**
+**Two of those three modules do not state why they're a separate entry.**
 The docstring of `sqlite/lib/introspection.ts` reads only "`@file` Questions asked of `sqlite_master`".
 `neural/lib/viterbi.ts` describes the CRF decoder. Only `core/lib/trust-policies.ts` mentions jsdom.
 
-That is how a deliberate leaf gets tidied away: a future agent collapsing the surface reads three modules,
+That's how a deliberate leaf gets tidied away: a future agent collapsing the surface reads three modules,
 finds one reason, and folds the other two into a barrel — reintroducing exactly the bundle break the split was
 made to prevent. **Each docstring must explain the reason before the exports can collapse.**
 
@@ -127,32 +127,32 @@ made to prevent. **Each docstring must explain the reason before the exports can
 (`./geo` was removed from the exports map when the geometry helpers moved to `@mailwoman/spatial`, and
 `lib/geo.ts` is gone with it).
 
-It has not been noticed because it fails softly: `resolvePackageFile` returns `null` for a missing target and
-`existingCompiledFile` logs "alias skipped". A derived map cannot go stale this way. That is the argument for
+It hasn't been noticed because it fails softly: `resolvePackageFile` returns `null` for a missing target and
+`existingCompiledFile` logs "alias skipped". A derived map cannot go stale this way. That's the argument for
 §0.4 stated as a defect rather than as a preference.
 
 ## 3. Where the count would land
 
 `mailwoman`'s 55 collapse toward the count of its top-level directories; `core`'s 80 toward `./fs`, `./utils`,
-`./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure is not predictable before the
+`./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure isn't predictable before the
 folds are drawn. The directory structure is the new export list. A second drawing would repeat the work.
 
 `dev-mcp` removes the most explicit subpaths for the least risk — **51 subpaths, private**, so a `./*` wildcard there breaks no
 consumer because no consumer outside this monorepo installs it. `docs` (12, already 4 wildcards),
 `geocode-oracle` (9) and `neural-weights-base-latn` (1) are the rest of the private set; `tile-worker` is
-private but exports no subpath at all, so it is not in scope.
+private but exports no subpath at all, so it isn't in scope.
 
 ## 4. Implementation sequence
 
 1. **Fold the collapse into the hierarchy arc's second half** rather than before it.
 2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
    package listing every removed path, rather than two rounds of consumer churn. See
-   `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6. That section sizes what is left to bundle.
+   `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6. That section sizes what's left to bundle.
 3. **`sideEffects: false` and the leaf docstrings land first**, before any collapse. Both are prerequisites:
    without the flag a barrel import stops tree-shaking, and without the docstrings the leaves get collapsed by
    someone who cannot see why they exist.
 4. **Derive the docs alias map before the folds move anything**, so the folds do not have to be mirrored by
-   hand into a list that is already wrong.
+   hand into a list that's already wrong.
 
 ## 5. Corrections to the figures this record was given
 

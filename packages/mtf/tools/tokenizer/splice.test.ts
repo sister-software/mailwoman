@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The splice code point overlap check. "Identical by construction" holds for ASCII text only: French, German
- *   and Spanish share code points with spliced pieces, so the check must report each locale's overlap, refuse an
+ *   The splice code point overlap check.
+ *
+ *   "Identical by construction" holds for ASCII text only: French, German and Spanish share
+ *   code points with spliced pieces, so the check must report each locale's overlap, refuse an
  *   overlap the reviewer rejects, and pass when the overlap is absent or the reviewer accepts it.
  */
 

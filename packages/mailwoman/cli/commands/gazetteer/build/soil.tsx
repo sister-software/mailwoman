@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build soil` — acquire NRCS's SSURGO survey areas for a region and build the
- *   sealed `soil.db` layer. Thin wiring only: the catalogue read, the downloads, the metadata, the build
+ *   `mailwoman gazetteer build soil` — acquire NRCS's SSURGO survey areas for a region
+ *   and build the sealed `soil.db` layer.
+ *
+ *   Thin wiring only: the catalogue read, the downloads, the metadata, the build
  *   and the verification all live in `@mailwoman/soil/sdk`.
  *
- *   `--region` names a survey-area prefix. The survey area is the authority's own unit, so `--region IA` builds
- *   every Iowa survey area and `--area IA153` builds one. The manifest's declared extent and the coverage
- *   rows then describe the same set of published survey areas rather than "the United States".
+ *   `--region` names a survey-area prefix.
+ *   The survey area is the authority's own unit, so `--region IA` builds every
+ *   Iowa survey area and `--area IA153` builds one.
  *
- *   `--measure-resolutions` measures instead of building. The index resolution is a measurement this layer takes rather
- *   than a number argued to.
+ *   The manifest's declared extent and the coverage rows then describe the same set
+ *   of published survey areas rather than "the United States".
+ *
+ *   `--measure-resolutions` measures instead of building.
+ *   The index resolution is a measurement this layer takes rather than a number argued to.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
@@ -127,7 +132,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const client = createSoilDataAccessClient()
 
 		// `--verify-only` checks an existing artifact because a full-region build takes hours,
-		// so re-running the check must not cost a rebuild.
+		// so re-running the check mustn't cost a rebuild.
 		if (options.verifyOnly) {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),

@@ -71,8 +71,8 @@ describe("usesStatedIn", () => {
 	})
 
 	it("reads an entry that states no use as unstated rather than as training", () => {
-		// A default training classification would turn every entry whose wording this does
-		// not recognize into a claim about what the model learned from.
+		// A default training classification would turn every entry whose wording this
+		// doesn't recognize into a claim about what the model learned from.
 		expect(
 			usesStatedIn("See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.")
 		).toEqual(["unstated"])
@@ -120,8 +120,8 @@ describe("readWeightsRightsRecords", () => {
 		try {
 			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-fixture"])
 
-			// README.md documents the package, so it is not an artifact whose provenance is in question.
-			// The glob is not a literal entry at all.
+			// README.md documents the package, so it isn't an artifact whose provenance is in question.
+			// The glob isn't a literal entry at all.
 			expect(record!.artifacts.map((artifact) => artifact.path)).toEqual(["model.onnx", "fst-fixture.bin"])
 			expect(record!.artifacts.map((artifact) => artifact.digest)).toEqual(["recorded", "unrecorded"])
 

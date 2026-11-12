@@ -24,7 +24,7 @@ matches.
 ## Lookup behavior
 
 The lookup trims surrounding whitespace and lowercases the query. It matches
-the entire resulting phrase against the bundled table. It does not extract
+the entire resulting phrase against the bundled table. It doesn't extract
 phrases from a longer query or perform fuzzy matching.
 
 | Locale relationship    | Result            |
@@ -36,7 +36,7 @@ phrases from a longer query or perform fuzzy matching.
 For example, `servo` with `en-US` can still match the Australian entry through
 the language fallback, at confidence `0.5`. Locale comparison is case-sensitive.
 Use consistently cased tags such as `en-AU`. A `regionHint` is descriptive
-metadata and does not filter results.
+metadata and doesn't filter results.
 
 ## API and data
 

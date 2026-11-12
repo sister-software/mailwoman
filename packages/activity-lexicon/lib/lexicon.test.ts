@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the reviewed activity-phrase lexicon: the committed file, the locale semantics it borrows from
- *   `@mailwoman/variant-aliases`, and every refusal the audit makes.
+ *   Tests for the reviewed activity-phrase lexicon: the committed file, the locale semantics
+ *   it borrows from `@mailwoman/variant-aliases`, and every refusal the audit makes.
  *
- *   The refusals are what the tests spend most of their length on, because each one describes a lexicon that
- *   would answer fewer queries than it appears to declare — and a consumer measuring recognition breadth
- *   against it would read the shortfall as the world rather than as the file.
+ *   The refusals are what the tests spend most of their length on, because each one describes a
+ *   lexicon that would answer fewer queries than it appears to declare — and a consumer measuring
+ *   recognition breadth against it would read the shortfall as the world rather than as the file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

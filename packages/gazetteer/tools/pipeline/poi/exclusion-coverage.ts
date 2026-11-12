@@ -3,19 +3,23 @@
 
 /**
  * Compose a region outline and one class's rows from two inventories.
+ *
  * Include a capture-recapture estimate in the composition.
- * Write the resulting coverage cells through the only path in this pipeline that reaches
- * {@link CoverageBasis.Surveyed}.
+ * Write the resulting coverage cells through the only path in this pipeline that
+ * reaches {@link CoverageBasis.Surveyed}.
  *
- * Pure: the IO belongs to the command, so the arithmetic behind a completeness claim is testable over
- * synthetic points. Three rules connect each conclusion to its evidence.
+ * Pure: the IO belongs to the command, so the arithmetic behind a completeness
+ * claim is testable over synthetic points.
+ * Three rules connect each conclusion to its evidence.
  *
- * 1. Every interior cell gets a row, including empty ones. `observedRows: 0` under a surveyed basis
- *    means "surveyed with no rows here". A cell left out of the table means unknown.
+ * 1. Every interior cell gets a row, including empty ones.
+ *    `observedRows: 0` under a surveyed basis means "surveyed with no rows here".
+ *    A cell left out of the table means unknown.
  * 2. Cells outside the region are never written, because the region is what was measured.
- * 3. One region, one completeness: the estimate is regional. Per-cell variation would need a
- *    per-cell denominator. The pilot's départements agreed to within 0.7%, which supports the uniform
- *    value here. Another region needs its own measurement.
+ * 3. One region, one completeness: the estimate is regional.
+ *    Per-cell variation would need a per-cell denominator.
+ *    The pilot's départements agreed to within 0.7%, which supports the uniform value here.
+ *    Another region needs its own measurement.
  */
 
 import { CoverageBasis } from "@mailwoman/evidence"
@@ -84,7 +88,7 @@ export interface ExclusionCoverageResult {
  *
  * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the
  * coverage resolution, matching `bboxCoverageCells` and every reader.
- * H3's hierarchy is not geometrically exact.
+ * H3's hierarchy isn't geometrically exact.
  *
  * The two derivations disagree for some points.
  * A row landing on a neighboring cell here would move its observed count away

@@ -3,6 +3,7 @@
 
 /**
  *   Ink rendering for the `progress` events a core `ProcessTask` or `GitClient` dispatches.
+ *
  *   Written without JSX because Node type stripping cannot compile it.
  */
 

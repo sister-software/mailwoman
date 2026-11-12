@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Census of the subjects the POI intent matcher probes and the venue names and categories that collide with them.
+ *   Census of the subjects the POI intent matcher probes and the venue names
+ *   and categories that collide with them.
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
@@ -459,7 +460,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 				continue
 			}
 
-			// The tokens match but the normalized names differ, so the shipped lookup would not treat them as equal.
+			// The tokens match but the normalized names differ, so the shipped lookup wouldn't treat them as equal.
 			if (tokens.length === probeTokens.length) {
 				foldOnlyMatches.push({ probe, name: venue.name })
 

@@ -4,11 +4,11 @@
 
 **Observed:** Earth runs classification and resolution in the browser. Its live `en-us/releases.json` points to `v10.1.0`, with `splitEmbeddings: true` and `hasFST: true`. The October 8 cold-load trace, before the split release, measured 76,517,011 wire bytes across 65 requests. That trace measures the earlier release. Today's mobile load remains unmeasured. [Issue #2505](https://github.com/sister-software/mailwoman/issues/2505) and [PR #2506](https://github.com/sister-software/mailwoman/pull/2506) record the changes.
 
-**Observed:** `@mailwoman/api` supplies Hono routes for `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, health, metrics, and OpenAPI. `mailwoman serve` supplies the real engine from Node and local model and database files. The Photon and Nominatim packages supply separate compatibility routes. The Fastify package is an embedding adapter. Its reserved version does not supply the hosted engine.
+**Observed:** `@mailwoman/api` supplies Hono routes for `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, health, metrics, and OpenAPI. `mailwoman serve` supplies the real engine from Node and local model and database files. The Photon and Nominatim packages supply separate compatibility routes. The Fastify package is an embedding adapter. Its reserved version doesn't supply the hosted engine.
 
 **Observed:** Cloudflare's [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) give each isolate 128 MB, including WebAssembly allocations. Its [WebAssembly documentation](https://developers.cloudflare.com/workers/runtime-apis/webassembly/) states that Workers do not support threading or Web Workers. [Containers](https://developers.cloudflare.com/containers/platform/limits/) offer larger memory and a full Linux runtime, at a separate running cost. None of these platform facts measures Mailwoman's model memory or throughput.
 
-**Decided for this scaffold:** `@mailwoman/api-worker` is a private Hono HTTP entry point. Its backend is an injected Fetch interface. The first implementation forwards the native parse and geocode operations to an engine service and preserves the backend's status, body, and provenance fields. It does not load model weights, an FST, or SQLite in the Worker isolate. The Worker is not added to production deployment until the engine service and abuse controls are specified and tested.
+**Decided for this scaffold:** `@mailwoman/api-worker` is a private Hono HTTP entry point. Its backend is an injected Fetch interface. The first implementation forwards the native parse and geocode operations to an engine service and preserves the backend's status, body, and provenance fields. It doesn't load model weights, an FST, or SQLite in the Worker isolate. The Worker isn't added to production deployment until the engine service and abuse controls are specified and tested.
 
 **Unknown:** The memory and latency of the complete hosted engine under real concurrency, the Cloudflare deployment form for that engine, the current Earth mobile cold-load distribution, the hosting cost at expected request volume, and the policy for public anonymous traffic. Measurements below resolve these questions before a production decision.
 
@@ -21,9 +21,9 @@ Earth browser ── HTTPS ──> api-worker (Hono: CORS, admission, routing, t
                                           └── existing Mailwoman model, FST, gazetteer, and API engine
 ```
 
-- The Worker accepts `POST /v1/parse` and `POST /v1/geocode` first. The backend validates the existing native request schemas and returns the existing native response schemas. The Worker does not invent a second JSON shape.
+- The Worker accepts `POST /v1/parse` and `POST /v1/geocode` first. The backend validates the existing native request schemas and returns the existing native response schemas. The Worker doesn't invent a second JSON shape.
 - The Worker owns a small readiness route. Its response distinguishes Worker availability from backend readiness. A backend timeout or unreadable response is an error with an identifiable status, never a valid-looking empty result.
-- The Worker forwards only request headers the backend needs. It sets the backend address through a private binding. It does not expose `/v1/reload`, backend administration, or a generic forwarding path to public callers.
+- The Worker forwards only request headers the backend needs. It sets the backend address through a private binding. It doesn't expose `/v1/reload`, backend administration, or a generic forwarding path to public callers.
 - The Worker preserves the engine stamp, `coordinate_source`, license header, and response status. The API's OpenAPI document remains generated from the native route table. If the Worker serves it, the document must describe only exposed routes and their authentication policy.
 - The engine service may use the current Node `createServeEngine` and `createMailwomanAPI` stack. A Cloudflare Container is one candidate because it can run Node and the local data files. A separately hosted service is another. Select between them with the same load, cold-start, and cost measurements.
 - Photon `/api` and Nominatim `/search` are later adapters over the hosted engine. Their route and projection packages may be reused after the native path works. They do not define Earth's first wire contract.
@@ -44,7 +44,7 @@ Earth browser ── HTTPS ──> api-worker (Hono: CORS, admission, routing, t
 ## Production switch requirements
 
 - The exact model and data versions served by the backend appear in the receipt and responses. A missing requested artifact causes a readiness failure.
-- The Worker and backend return the native API's statuses, schemas, attribution, and engine stamp for the selected route set. The parity receipt names every address and comparison arm.
+- The Worker and backend return the native API's statuses, schemas, attribution, and engine stamp for the selected route set. The parity receipt lists every address and comparison arm.
 - Remote Earth omits model, FST, embedding, tokenizer, and classifier wasm downloads on a cold load. The browser trace proves this for the selected release.
 - Mobile first-result and warm-result latency distributions are reported against the local baseline under identical conditions. Set numeric launch thresholds from the product latency budget before judging the result. Do not fit them to the current failures.
 - The load run shows memory, throughput, failure rate, and cost at the expected peak concurrency. Rate limiting and backend failure tests pass.

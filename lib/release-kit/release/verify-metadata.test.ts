@@ -21,14 +21,12 @@ const MODEL = "9.1.0"
 const statusPage = (version: string) =>
 	[
 		"---",
-		"title: Status",
+		"title: Limits and release status",
 		"---",
 		"",
-		`:::info[Verified as of release ${version}]`,
+		`The published weights identify model version \`${version}\` for this release.`,
 		"",
-		"What ships today.",
-		"",
-		":::",
+		"## Downloadable data",
 		"",
 	].join("\n")
 
@@ -66,7 +64,7 @@ async function plant(options: { status: string; statusVersion?: string }) {
 
 describe("verifyReleaseMetadata", () => {
 	it("passes when the published status page cites the shipped model", async () => {
-		const repoRoot = await plant({ status: "docs/articles/developers/status.mdx" })
+		const repoRoot = await plant({ status: "docs/src/pages/product/limits-and-status.mdx" })
 		const report = await verifyReleaseMetadata({ repoRoot, log: () => {} })
 
 		expect(report.modelVersion).toBe(MODEL)
@@ -74,7 +72,7 @@ describe("verifyReleaseMetadata", () => {
 	})
 
 	it("fails when the published status page cites a superseded release", async () => {
-		const repoRoot = await plant({ status: "docs/articles/developers/status.mdx", statusVersion: "8.6.0" })
+		const repoRoot = await plant({ status: "docs/src/pages/product/limits-and-status.mdx", statusVersion: "8.6.0" })
 
 		await expect(verifyReleaseMetadata({ repoRoot, log: () => {} })).rejects.toThrow(
 			/1 of 3 surfaces stale for model 9\.1\.0/u
@@ -87,6 +85,6 @@ describe("verifyReleaseMetadata", () => {
 		// The archived copy cites the shipped model, so without the constraint this run would pass.
 		await expect(
 			verifyReleaseMetadata({ repoRoot, status: "docs/records/site-2026-08/status.mdx", log: () => {} })
-		).rejects.toThrow(/must be a page the site publishes/u)
+		).rejects.toThrow(/must be docs\/src\/pages\/product\/limits-and-status\.mdx/u)
 	})
 })

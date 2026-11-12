@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `nn/crf.py`'s `LinearChainCRF`: the BIO-masked linear-chain CRF and its negative log-likelihood.
 
 use crate::init;

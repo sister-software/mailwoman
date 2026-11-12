@@ -16,12 +16,12 @@
 
 ## Pre-registered decisions (cite in commits)
 
-1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through an HTML scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "there is no bulk loader" to "no good source exists", which does not follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**. That role supplies parent and subsidiary edges. The first draft's "enrichment" framing did not anticipate them.
+1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through an HTML scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "there's no bulk loader" to "no good source exists", which doesn't follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**. That role supplies parent and subsidiary edges. The first draft's "enrichment" framing didn't anticipate them.
    No CORES **bulk** extract was found, because the FCC's bulk downloads cover ULS and ASR but not CORES. Per-FRN calls are acceptable here because 499 and the provider list first produce a **finite, enumerated FRN universe**. The job is bounded enrichment over a known key set rather than an open-ended crawl for discovery. Cache per FRN, rate-limit the requests, and identify the client.
    **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs and terms are unverified. `broadbandmap.fcc.gov` works with credentials, so the block is specific to these hosts. Task 9 opens with a verification step and stops if the interface differs from the documentation.
-2. **`filer.db` is not a layer-interface artifact in 3a.** It has no coordinates (ASR is 3c), and `layer_coverage` is h3-keyed with no null path. Layer-interface conformance would require coverage rows that assert no fact. The meaning-of-zero rule prohibits those rows. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at), with `LayerManifestTable`'s fields minus the spatial ones. Layer-interface conformance is deferred to 3c, when ASR structures provide coordinates and coverage becomes meaningful. **Do not geocode filer HQ addresses in 3a** to create a spatial spine.
+2. **`filer.db` isn't a layer-interface artifact in 3a.** It has no coordinates (ASR is 3c), and `layer_coverage` is h3-keyed with no null path. Layer-interface conformance would require coverage rows that assert no fact. The meaning-of-zero rule prohibits those rows. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at), with `LayerManifestTable`'s fields minus the spatial ones. Layer-interface conformance is deferred to 3c, when ASR structures provide coordinates and coverage becomes meaningful. **Do not geocode filer HQ addresses in 3a** to create a spatial spine.
 3. **FRN is a zero-padded 10-character branded string.** `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros, the same defect class as 2a's `location_id`. Provide `isFRN(value): value is FRN` with a real 10-digit check.
-4. **Entity linkage runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup**, and its threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit this only with a corporate-data model.
+4. **Entity linkage runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup**, and its threshold isn't in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit this only with a corporate-data model.
 5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and can be queried, but a rollup that includes them must say so. This is §4.1, and it is an acceptance check.
 6. **The graph keeps full cardinality, and `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can have multiple FRNs and conflicting holding companies. Never warn, overwrite and keep the last value. `filer.db` retains every edge. When task 8 populates `bdc_provider`, the primary FRN is the one from the most recent 499 filing date, and the schema docstring documents that rule. `brand_name` stays NULL because the provider list has no source for it.
 7. **Temporal validity: `valid_from` is mandatory and `valid_to` is nullable.** In 3a the only date source is the 499 `lastFiledAt`. `valid_from` is therefore the filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
@@ -30,7 +30,7 @@
 ## Acceptance checks (§7-3a, pre-registered — Task 7 discharges them)
 
 1. **Provenance completeness (required).** No edge can exist without `source`, `source_vintage`, `assertion` and `valid_from`. Enforce this structurally. The fields are non-optional on the insert type and pinned with `satisfies Record<keyof FilerEdgeInsert, true>`, and a runtime test asserts that a partial edge is rejected.
-2. **Authoritative and inferred edges are never conflated.** Entity groups use authoritative edges only. A fixture test adds an inferred edge that _would_ merge two authoritative components, then asserts that the merge does not happen and that the API exposes the distinction.
+2. **Authoritative and inferred edges are never conflated.** Entity groups use authoritative edges only. A fixture test adds an inferred edge that _would_ merge two authoritative components, then asserts that the merge doesn't happen and that the API exposes the distinction.
 3. **Cardinality fidelity.** A fixture `provider_id` carrying two FRNs round-trips both edges through `filer.db`. The test also asserts that the documented primary-FRN rule picks the later-filed one.
 4. **Temporal scoping.** Every edge stores `valid_from`. A rollup query with an `asOf` before an edge's `valid_from` excludes that edge, and the result states the `asOf` it used.
 
@@ -69,7 +69,7 @@ export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> 
 ```
 
 - [x] Tests first: `toFRN(1753557)` → `"0001753557"`, `isFRN("1753557")` false (not 10 chars), a fixture TSV of 3 rows parses to 3 typed rows, a short row throws naming file + line number (decision 8), and `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
-- [x] Implement. Retain both the `managementCompany` and `holdingCompany` fields, because they are different assertions (spec §3.1 finding 1).
+- [x] Implement. Retain both the `managementCompany` and `holdingCompany` fields, because they're different assertions (spec §3.1 finding 1).
 - [x] Commit `feat(filer): FRN branded string + streaming Form 499 parser (3a task 2, decisions 3,8)`.
 
 ### Task 3: BDC provider list parsing
@@ -234,7 +234,7 @@ The query requires exactly one identifier and throws otherwise, as `filingLandsc
 
 MCP: add `mailwoman_filer_lookup` following the house pattern exactly: snake_case zod with `.describe()` on every field, an `MCPToolDeps` method, and parse → deps → verbatim result. Add `openFilerDatabaseIfPresent`/`assertFilerDatabaseExists` in `mcp/layer-guards.ts`, following the 2b precedent.
 
-- [x] **Write the check tests first, in a `describe("§7-3a checks")` block.** They are the four checks from this plan's Acceptance Checks section, verbatim, including check 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
+- [x] **Write the check tests first, in a `describe("§7-3a checks")` block.** They're the four checks from this plan's Acceptance Checks section, verbatim, including check 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
 - [x] Commit `feat(filer,mcp): filer_lookup reader, the four 3a checks, MCP tool (3a task 7)`.
 
 ### Task 8: Populate `bdc_provider` (cross-workspace)
@@ -250,8 +250,8 @@ MCP: add `mailwoman_filer_lookup` following the house pattern exactly: snake_cas
 
 **Step 0 outcome:** the stop check fired, and the task was not implemented. The lab host sent these probes with a User-Agent that identified the project and gave a contact address:
 
-- `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` returned **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block depends on the host or IP rather than the agent string.
-- `https://apps.fcc.gov/cores/api/frn/0001753557` returned an HTML **"Invalid Request"** page rather than JSON. That guessed path is not the documented interface.
+- `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` returned **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA didn't change the outcome, so the block depends on the host or IP rather than the agent string.
+- `https://apps.fcc.gov/cores/api/frn/0001753557` returned an HTML **"Invalid Request"** page rather than JSON. That guessed path isn't the documented interface.
 
 The check's own terms read:
 
@@ -261,7 +261,7 @@ if the host 403s from this machine, or the response does not carry the documente
 
 No fallback was attempted, and no code was written. `broadbandmap.fcc.gov` still works with credentials, so the block is specific to these hosts rather than covering all FCC hosts.
 
-**What remains true:** the FRN Conversions API is publicly documented and reportedly returns parent and subsidiary names. Those names would make it a family-edge source rather than only enrichment. No evidence disproved that claim. It could not be verified from the lab host.
+**What remains true:** the FRN Conversions API is publicly documented and reportedly returns parent and subsidiary names. Those names would make it a family-edge source rather than only enrichment. No evidence disproved that claim. It couldn't be verified from the lab host.
 
 **Deferred to 3b** with two prerequisites:
 
@@ -307,7 +307,7 @@ The enrichment emits authoritative edges, since CORES states them: `frn ↔ pare
 
 ## Self-review notes
 
-- Spec §3.1 columns map to T2. Both family fields are retained. T2 does not emit the DC agent as a family edge, per the spec's anti-pattern warning.
+- Spec §3.1 columns map to T2. Both family fields are retained. T2 doesn't emit the DC agent as a family edge, per the spec's anti-pattern warning.
 - The §4.1 graph maps to T4/T5, and §4.1 clustering maps to T6.
 - §6-3a `bdc_provider` maps to T8.
 - Transaction-layer §2 `valid_from` maps to T4/T5, with room for 3b extensions.

@@ -4,14 +4,15 @@
 /**
  * Build a country-surface lexicon for the country soft-feed channel.
  *
- * This channel is a dictionary-style signal. It helps the model spot country phrases like "United
- * States of America" that can otherwise be misread as street-like text.
+ * This channel is a dictionary-style signal.
+ * It helps the model spot country phrases like "United States of America" that
+ * can otherwise be misread as street-like text.
  *
- * We reuse the gazetteer's phrase matcher and only change the vocabulary and emitted feature. Each
- * matched piece gets two bits:
+ * We reuse the gazetteer's phrase matcher and only change the vocabulary and emitted feature.
+ * Each matched piece gets two bits:
  * - `country_surface` (bit 1): part of a known country surface.
- * - `country_ambiguous` (bit 2): a risky surface (for example, a US region homograph like
- *   "Georgia"/"IN", or common words like "America").
+ * - `country_ambiguous` (bit 2): a risky surface (for example, a US region homograph
+ *   like "Georgia"/"IN", or common words like "America").
  *
  * Data source: `@mailwoman/codex` (`COUNTRY_SURFACE_FORMS` + `ISO2_TO_NAME`).
  *

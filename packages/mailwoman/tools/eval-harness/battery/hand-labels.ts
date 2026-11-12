@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Disagreement rows labeled by hand against `docs/engineering/reference/label-convention.mdx`, and the scorer that
- *   compares parses with those labels.
+ *   Disagreement rows labeled by hand against `docs/engineering/reference/label-convention.mdx`,
+ *   and the scorer that compares parses with those labels.
  *
- *   Each row of the fixture records the address, the hand labels as a battery field map, and the convention rule
- *   that decided them. A row whose source labels the reader accepted records `decision: "source"`. A row the reader
- *   corrected records `decision: "corrected"` and keeps the source's labels in `source`. A row written by hand to
- *   exercise a rule records `decision: "written"`.
+ *   Each row of the fixture records the address, the hand labels as a battery field map,
+ *   and the convention rule that decided them.
+ *   A row whose source labels the reader accepted records `decision: "source"`.
+ *
+ *   A row the reader corrected records `decision: "corrected"` and keeps the source's labels in `source`.
+ *   A row written by hand to exercise a rule records `decision: "written"`.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -71,8 +73,8 @@ export const HAND_LABELS_FIXTURE: string = resolvePackagePath(
 )
 
 /**
- * Reads the hand-labeled rows, refusing a row that names no known rule, lacks labels,
- * or is corrected without keeping its source labels.
+ * Reads the hand-labeled rows, refusing a row that identifies no known rule,
+ * lacks labels, or is corrected without keeping its source labels.
  */
 export async function readHandLabels(path: string = HAND_LABELS_FIXTURE): Promise<HandLabeledRow[]> {
 	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<HandLabeledRow>(path))

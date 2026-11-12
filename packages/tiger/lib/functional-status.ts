@@ -14,7 +14,7 @@ export const TIGERFunctionalStatus = {
 	 */
 	ActiveGovernment: "A",
 	/**
-	 * Active government that is partially consolidated with another government
+	 * Active government that's partially consolidated with another government
 	 * but with separate officials providing primary general-purpose functions.
 	 */
 	PartiallyConsolidatedActiveGovernment: "B",
@@ -31,7 +31,7 @@ export const TIGERFunctionalStatus = {
 	 */
 	FictitiousEntity: "F",
 	/**
-	 * Active government that is subordinate to another unit of government.
+	 * Active government that's subordinate to another unit of government.
 	 */
 	SubordinateActiveGovernment: "G",
 	/**

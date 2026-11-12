@@ -4,9 +4,12 @@
 /**
  *   Routes each input to the primary classifier or to the weights family whose script the input uses.
  *
- *   The families and their routing scripts are declared in `#weights/families`. A family without routing scripts,
- *   such as the Latin family, is reachable only through the caller's locale. A family loads on first use. When its
- *   package is missing, the router warns once and falls back to the primary.
+ *   The families and their routing scripts are declared in `#weights/families`.
+ *   A family without routing scripts, such as the Latin family, is reachable
+ *   only through the caller's locale.
+ *
+ *   A family loads on first use.
+ *   When its package is missing, the router warns once and falls back to the primary.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -30,7 +33,7 @@ import {
  * Returns the family that claims a comma segment of the input, or `null`.
  *
  * The `weights-family` repository check rejects a script claimed by two families,
- * so declaration order does not affect the result.
+ * so declaration order doesn't affect the result.
  */
 function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | null {
 	for (const entry of FAMILIES) {

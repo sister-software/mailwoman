@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Australian leg of the `postal-guideline` evaluation recipe, from Australia Post's
- *   {@linkcode AU_DELIVERY_GUIDELINE_RULES}: a delivery-service line, then the locality, state and
- *   postcode in capitals.
+ *   The Australian leg of the `postal-guideline` evaluation recipe, from Australia
+ *   Post's {@linkcode AU_DELIVERY_GUIDELINE_RULES}: a delivery-service line,
+ *   then the locality, state and postcode in capitals.
  *
- *   The leg writes only CARE PO, MS and RMS. The table's PO BOX and LOCKED BAG rows are cited too,
- *   but the `invented-po-box-cedex` training recipe already writes both, so rows using them could not
- *   show that a model reads a form it was not taught.
+ *   The leg writes only CARE PO, MS and RMS.
+ *   The table's PO BOX and LOCKED BAG rows are cited too, but the `invented-po-box-cedex`
+ *   training recipe already writes both, so rows using them couldn't show that
+ *   a model reads a form it was not taught.
  */
 
 import { AU_DELIVERY_GUIDELINE_RULES, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"

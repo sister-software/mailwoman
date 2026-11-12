@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Serializes CLI spawns across vitest workers with an async directory lock. The lock stores the holder's pid so a crashed worker's lock can be reclaimed. A `finally` block always releases the lock.
+ *   Serializes CLI spawns across vitest workers with an async directory lock.
+ *
+ *   The lock stores the holder's pid so a crashed worker's lock can be reclaimed.
+ *   A `finally` block always releases the lock.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"

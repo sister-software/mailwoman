@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Runs a cross-engine comparison end to end with a stub registry for Mailwoman and a scripted Axios adapter for the external engine.
+ * Runs a cross-engine comparison end to end with a stub registry for Mailwoman
+ * and a scripted Axios adapter for the external engine.
+ *
  * It uses two `AD` board rows with truth coordinates so each assertion can be checked by hand.
  */
 
@@ -78,8 +80,8 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		}),
 		acquire: async () => engine,
 		summaries: () => [],
-		evict: () => true,
-		evictAll: () => 0,
+		evict: async () => true,
+		evictAll: async () => 0,
 	})
 }
 

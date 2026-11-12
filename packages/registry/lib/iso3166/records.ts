@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country record retrieval over the `iso3166-1-records` artifact: three id tables, six columns and a string pool.
+ *   Country record retrieval over the `iso3166-1-records` artifact: three id tables,
+ *   six columns and a string pool.
  *
- *   A record is materialized on request and cached by row, so a repeated read of one country returns one object. The
- *   artifact holds every status; `getCountry*` answers a record of any status and reports it, while the brands and the
- *   membership predicates cover officially assigned codes only.
+ *   A record is materialized on request and cached by row, so a repeated read
+ *   of one country returns one object.
+ *   The artifact holds every status; `getCountry*` answers a record of any status and reports it,
+ *   while the brands and the membership predicates cover officially assigned codes only.
  */
 
 import { iso31661RecordsArtifact } from "#artifacts/iso3166-1/records"

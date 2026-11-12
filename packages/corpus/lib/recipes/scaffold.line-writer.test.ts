@@ -6,6 +6,7 @@
  *
  *   When the writer omits a delimiter, two rows land on one line.
  *   A later parser reports the error instead of the recipe writer.
+ *
  *   The writer emits one line per call and writes the delimiter separately.
  *   This interface prevents the missing-delimiter failure.
  */

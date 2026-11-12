@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture-scale checks for the NZ locality database: the thin-group floor, sealed artifact, plus license terms.
+ *   Fixture-scale checks for the NZ locality database: the thin-group floor,
+ *   sealed artifact, plus license terms.
+ *
  *   The artifact records its terms in `database_meta` and `layer_manifest`.
  */
 

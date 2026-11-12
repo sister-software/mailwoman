@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the alternateNamesV2 language
- * tag, `privateuse` ("preferred"), and the `official` bit, set when the language is CLDR-official for
- * the country. Colloquial and historic forms never qualify. Without the V2 file the fold is untagged.
+ * `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the
+ * alternateNamesV2 language tag, `privateuse` ("preferred"), and the `official` bit,
+ * set when the language is CLDR-official for the country.
+ *
+ * Colloquial and historic forms never qualify.
+ * Without the V2 file the fold is untagged.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -57,7 +60,7 @@ function freshDB(): DatabaseClient<WOFDatabase> {
 	)
 
 	db.exec(
-		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER, source TEXT)`
 	)
 
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
@@ -89,12 +92,12 @@ beforeAll(async () => {
 
 	// "Santa Isabel" has one language-tagged unflagged row and a separate language-less
 	// row carrying the historic evidence (isHistoric and a `to` date).
-	// Historic-ness is a fact about the name, so the unflagged row must not classify official.
+	// Historic-ness is a fact about the name, so the unflagged row mustn't classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(
 		[
-			altRow("633679", "sv", "Åbo"), // official Swedish, deliberately not flagged preferred (the real FI row is not)
+			altRow("633679", "sv", "Åbo"), // official Swedish, deliberately not flagged preferred (the real FI row isn't)
 			altRow("633679", "el", "Tourkou"), // Greek transliteration (not official in FI)
 			altRow("633679", "la", "Aboa", { 7: "1" }), // historic, never official
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
@@ -119,7 +122,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 
 	// Åbo qualifies without isPreferredName.
 	// The flag is sparse annotation in real dumps (Turku's actual sv row is unflagged),
-	// so officialness must not require it.
+	// so officialness mustn't require it.
 	expect(byName("Åbo")).toEqual({ language: "sv", privateuse: "", official: 1 })
 	expect(byName("Tourkou")).toEqual({ language: "el", privateuse: "", official: 0 })
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })

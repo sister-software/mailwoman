@@ -285,7 +285,7 @@ interface WrapLimits {
 }
 
 /**
- * An abbreviation ending in a period is not a sentence boundary.
+ * An abbreviation ending in a period isn't a sentence boundary.
  *
  * A missed entry costs a break opportunity, never a mangled sentence.
  */
@@ -324,7 +324,7 @@ const CONJUNCTIONS = new Set([
 const DASH = /^[—–-]$/
 
 /**
- * A wrap must not create a new JSDoc tag, list item, or Markdown heading.
+ * A wrap mustn't create a new JSDoc tag, list item, or Markdown heading.
  */
 function isStructuralToken(token: string) {
 	return /^(?:@|[-+*>]$|#{1,6}$|\d+[.)]$|`{3}|~{3})/.test(token)
@@ -385,7 +385,7 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 
 /**
  * Set one sentence, choosing its breaks by minimizing a penalty over every legal breaking
- * rather than filling each line until the next word does not fit.
+ * rather than filling each line until the next word doesn't fit.
  */
 function chooseBreaks(tokens: readonly string[], limits: WrapLimits, firstWidth: number, continuationWidth: number) {
 	const facts = measure(tokens, limits.tabWidth)
@@ -653,7 +653,7 @@ function isStructure(line: string) {
 /**
  * `paragraphs` is off for a run of `//` comments.
  *
- * A blank line there is a `//` on its own. which reads as a gap in the code rather than a paragraph break.
+ * A blank line there's a `//` on its own. which reads as a gap in the code rather than a paragraph break.
  */
 interface ParagraphShape {
 	paragraphs: boolean
@@ -721,7 +721,7 @@ function reflowText(
 				const completeMarkup = [parts.description, ...lines.slice(i + 1, end)].every((value) => words(value) !== null)
 
 				// A tag's continuation sits flush with the star rather than indented under
-				// the tag, because that is where oxfmt puts it.
+				// the tag, because that's where oxfmt puts it.
 				// An indent it strips is a line this rule would report again on the next run.
 				output.push(...((completeMarkup ? wrapProse(text, limits, parts.prefix, "") : null) ?? lines.slice(i, end)))
 

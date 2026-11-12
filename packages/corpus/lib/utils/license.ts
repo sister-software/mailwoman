@@ -2,28 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Corpus licensing — the training-data license policy, read from a row's obligations rather than from
- *   the shape of its license string.
+ *   Corpus licensing — the training-data license policy, read from a row's obligations
+ *   rather than from the shape of its license string.
  *
- *   Exclusion is a deliberate act rather than a silent default: the build includes every row an adapter
- *   yields (stamping its `license`), and a build that needs a license set carrying no share-alike
- *   obligation asks for {@linkcode LicensePolicy.ShareAlikeFree}, so no source is dropped unless the
- *   operator selected the policy.
+ *   Exclusion is a deliberate act rather than a silent default: the build includes every
+ *   row an adapter yields (stamping its `license`), and a build that needs a license set
+ *   carrying no share-alike obligation asks for {@linkcode LicensePolicy.ShareAlikeFree},
+ *   so no source is dropped unless the operator selected the policy.
  *
- *   The refusal reads `readLicenseRecord`, which resolves a value to an SPDX expression and looks up
- *   that expression's obligations. An anchored prefix match over the raw column cannot do this. Measured
- *   over `v0.7.0-de-holdout` on 2026-09-26, the column holds 71 distinct values across 703,835,753 rows,
- *   of which 4 are SPDX identifiers and 66 are prose. A row whose license reads "OpenStreetMap venue +
- *   sub-venue names (ODbL, © OpenStreetMap contributors) …" is share-alike-derived and starts with
+ *   The refusal reads `readLicenseRecord`, which resolves a value to an SPDX expression
+ *   and looks up that expression's obligations.
+ *   An anchored prefix match over the raw column cannot do this.
+ *
+ *   Measured over `v0.7.0-de-holdout` on 2026-09-26, the column holds 71 distinct values
+ *   across 703,835,753 rows, of which 4 are SPDX identifiers and 66 are prose.
+ *   A row whose license reads "OpenStreetMap venue + sub-venue names
+ *   (ODbL, © OpenStreetMap contributors) …" is share-alike-derived and starts with
  *   neither `ODbL` nor `CC-BY-SA`, so `/^ODbL/` admitted it.
  *
- *   Three refusal classes exist because they are different claims. A value that resolves to an
- *   expression carrying share-alike states the obligation. A value whose prose mentions a share-alike
- *   license while resolving to no expression is share-alike-derived without stating its own grant. A
- *   value that resolves to no expression has unknown obligations. Unknown obligations differ from an empty
- *   obligation set. Of these rows, 628,203,119 contain prose this repository writes about its own renderings. The
- *   third class is therefore reported rather than refused under {@linkcode LicensePolicy.ShareAlikeFree},
- *   and {@linkcode LicensePolicy.ResolvedOnly} refuses it for a caller that needs every grant stated.
+ *   Three refusal classes exist because they're different claims.
+ *   A value that resolves to an expression carrying share-alike states the obligation.
+ *
+ *   A value whose prose mentions a share-alike license while resolving to no expression
+ *   is share-alike-derived without stating its own grant.
+ *   A value that resolves to no expression has unknown obligations.
+ *
+ *   Unknown obligations differ from an empty obligation set.
+ *   Of these rows, 628,203,119 contain prose this repository writes about its own renderings.
+ *
+ *   The third class is therefore reported rather than refused under
+ *   {@linkcode LicensePolicy.ShareAlikeFree}, and {@linkcode LicensePolicy.ResolvedOnly}
+ *   refuses it for a caller that needs every grant stated.
  */
 
 import { carriesShareAlike, mentionsShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"

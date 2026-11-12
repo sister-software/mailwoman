@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country-reference annotators. The flag emoji is a pure function of the ISO 3166-1 alpha-2 code
- *   (two Regional Indicator Symbols); calling code + currency come from {@link COUNTRY_REFERENCE}, a
- *   table generated from mledoze/countries (provenance-tracked rather than hand-typed — the
- *   no-irrelevant-trivia rule).
+ *   Country-reference annotators.
+ *
+ *   The flag emoji is a pure function of the ISO 3166-1 alpha-2 code (two Regional Indicator Symbols);
+ *   calling code + currency come from {@link COUNTRY_REFERENCE}, a table generated from
+ *   mledoze/countries (provenance-tracked rather than hand-typed — the no-irrelevant-trivia rule).
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
@@ -20,7 +21,7 @@ const A_UPPER = "A".charCodeAt(0)
  * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two
  * Regional Indicator Symbols (`US` → 🇺🇸).
  *
- * @returns `""` for anything that is not two ascii letters.
+ * @returns `""` for anything that's not two ascii letters.
  */
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()

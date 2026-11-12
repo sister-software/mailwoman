@@ -3,7 +3,9 @@
 
 /**
  *   Renders a component dictionary through an address layout into tagged pieces.
- *   `formatAddress` joins the pieces into a string. `layout.ts` describes connector rules.
+ *
+ *   `formatAddress` joins the pieces into a string.
+ *   `layout.ts` describes connector rules.
  */
 
 import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
@@ -57,7 +59,7 @@ function rendered(result: readonly AddressPiece[] | null): boolean {
 
 function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly AddressPiece[] | null {
 	if (isSlot(atom)) {
-		const text = components[atom.tag]?.trim()
+		const text = components[atom.tag]?.trim() || atom.fallback
 
 		return text ? [{ tag: atom.tag, text, softBreak: false }] : null
 	}
@@ -156,7 +158,7 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
  * or `CH-` in `CH-8001`, into the postcode piece.
  *
  * The prefix belongs to the written code, so a label that stops at `600` marks a
- * span that does not appear in the reader's input.
+ * span that doesn't appear in the reader's input.
  * A connector that holds whitespace separates two values and stays a connector.
  */
 function absorbPostcodePrefixes(pieces: readonly AddressPiece[]): readonly AddressPiece[] {

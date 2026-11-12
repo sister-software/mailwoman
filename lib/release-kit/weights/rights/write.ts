@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write each published weights workspace's `LICENSE.md` and `PROVENANCE.json` from its manifest and model card.
+ *   Write each published weights workspace's `LICENSE.md` and `PROVENANCE.json`
+ *   from its manifest and model card.
  *
  *   The files are committed rather than materialized at pack time.
- *   They change only when a manifest or card changes. Reviewers can see each rights statement in the diff.
- *   The `weights-rights` check keeps the
- *   tree equal to this writer's output. Private weights workspaces are skipped, because a rights file there would
+ *   They change only when a manifest or card changes.
+ *
+ *   Reviewers can see each rights statement in the diff.
+ *   The `weights-rights` check keeps the tree equal to this writer's output.
+ *
+ *   Private weights workspaces are skipped, because a rights file there would
  *   state terms for a tarball that never publishes.
  */
 

@@ -4,20 +4,22 @@
 /**
  *   The venue-structure confound board, run as a check.
  *
- *   `venueStructureBiasScale` pushes venue-interior designators ("concourse", "terminal", "boarding gate",
- *   "wing") toward `unit` harder than the postal designators they share a vocabulary with. That
- *   risks false units on surfaces where one of those words appears without being a designator: GB
- *   street names such as Briggate, gatehouse venues and "Terminal" industrial estates.
+ *   `venueStructureBiasScale` pushes venue-interior designators
+ *   ("concourse", "terminal", "boarding gate", "wing") toward `unit` harder than
+ *   the postal designators they share a vocabulary with.
+ *   That risks false units on surfaces where one of those words appears without being a designator:
+ *   GB street names such as Briggate, gatehouse venues and "Terminal" industrial estates.
+ *
  *   It also includes "Wing" as a personal or business name and designators used as street names.
  *
- *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
- *   measured. Its bar is absolute, zero `unit` emissions, because every row is a surface where a
- *   unit is wrong.
+ *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was measured.
+ *   Its bar is absolute, zero `unit` emissions, because every row is a surface where a unit is wrong.
  *
- *   The board runs the path a user runs. `enforceWordConsistency` defaults to off on
- *   `NeuralAddressClassifier` and is switched on by `geocode-core.ts` via
- *   `WORD_CONSISTENCY_SHIP_DEFAULT`, so a board run against the raw classifier would measure an
- *   unhealed decode and report failures no consumer of the shipped pipeline can reach.
+ *   The board runs the path a user runs.
+ *   `enforceWordConsistency` defaults to off on `NeuralAddressClassifier`
+ *   and is switched on by `geocode-core.ts` via `WORD_CONSISTENCY_SHIP_DEFAULT`,
+ *   so a board run against the raw classifier would measure an unhealed decode
+ *   and report failures no consumer of the shipped pipeline can reach.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"

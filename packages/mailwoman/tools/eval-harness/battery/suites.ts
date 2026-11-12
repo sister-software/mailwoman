@@ -2,17 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The comparison battery scores frozen suites. Some rows measure our labeling rather than a model, and some expected
+ *   The comparison battery scores frozen suites.
+ *
+ *   Some rows measure our labeling rather than a model, and some expected
  *   answers are corrected before scoring.
  *
- *   Each suite is a dataset manifest beside its rows file in {@linkcode batterySuiteDirectory}. A row is "label
- *   convention" when the expected labels follow a choice of ours that a writer of the address would not make, so a
- *   the model's score measures how well it learned that choice. The report groups those rows and excludes them from the
- *   decision totals.
+ *   Each suite is a dataset manifest beside its rows file in {@linkcode batterySuiteDirectory}.
+ *   A row is "label convention" when the expected labels follow a choice of ours that a writer of
+ *   the address wouldn't make, so a the model's score measures how well it learned that choice.
  *
- *   The five `osm-` suites are read at `v2`: `v1`'s rows with Hong Kong and Macau re-rendered by `formatAddressRow` at
- *   47ebdd8e1. That renderer prints a value pairing a Chinese name with its English or Portuguese name in the Latin
- *   order (`15 明安街 Ming On Street, Hung Hom, Kowloon` where `v1` had `Hong KongKowloonHung Hom明安街 Ming On Street15`).
+ *   The report groups those rows and excludes them from the decision totals.
+ *
+ *   The five `osm-` suites are read at `v2`: `v1`'s rows with Hong Kong
+ *   and Macau re-rendered by `formatAddressRow` at 47ebdd8e1.
+ *   That renderer prints a value pairing a Chinese name with its English
+ *   or Portuguese name in the Latin order (`15 明安街 Ming On Street, Hung Hom, Kowloon`
+ *   where `v1` had `Hong KongKowloonHung Hom明安街 Ming On Street15`).
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -74,7 +79,7 @@ const decisionRow = () => null
  * The five `osm-` suites are built by `osm-suites/build.run.ts`, and each row was
  * checked absent from both training corpora's OSM files by id and group through
  * the overlap audit in `heldout/dataset/overlap.ts`.
- * That audit compares no text, so a training row holding the same address under another id is not detected.
+ * That audit compares no text, so a training row holding the same address under another id isn't detected.
  *
  * The five `photon-` suites were sampled by a script that was not committed.
  * Each frozen manifest's `sampling.order` and `drawnFrom` record the rule and the inputs:
@@ -152,8 +157,8 @@ export const BATTERY_SUITES: readonly BatterySuiteSpec[] = [
 ]
 
 /**
- * Corrections applied to the expected and predicted field maps before they are compared,
- * each for an expected answer that depends on a rendering choice the text does not show.
+ * Corrections applied to the expected and predicted field maps before they're compared,
+ * each for an expected answer that depends on a rendering choice the text doesn't show.
  */
 export const CORRECTION_GROUPS: Readonly<Record<string, string>> = {
 	"postcode-country-prefix":

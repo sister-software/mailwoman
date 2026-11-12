@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shared column runs are pinned by the stored column order they produce, because that order is part of what a
- *   sealed layer artifact contains and what its readers see.
+ *   The shared column runs are pinned by the stored column order they produce, because
+ *   that order is part of what a sealed layer artifact contains and what its readers see.
  */
 
 import { sql } from "kysely"

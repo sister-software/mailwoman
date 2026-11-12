@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The retention vocabulary of the country–shape split policy (HOLDOUT_AND_EVALUATION
- * section 5.1). The ordered-shape key identifies a combination. The independent-group
- * identity counts it once per address record. The split consults the table first.
+ * The retention vocabulary of the country–shape split policy (HOLDOUT_AND_EVALUATION section 5.1).
+ *
+ * The ordered-shape key identifies a combination.
+ * The independent-group identity counts it once per address record.
+ *
+ * The split consults the table first.
  * A row covered below the floor stays in training.
  *
- * This module is a leaf: `split.ts` reads it. The supply pass in `#utils/shape-supply`
- * reads both. The graph stays acyclic.
+ * This module is a leaf: `split.ts` reads it.
+ * The supply pass in `#utils/shape-supply` reads both.
+ * The graph stays acyclic.
  */
 
 import { recordIDOf } from "#adapters/record-id"

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `astrogeology fetch --body <moon|mars> [--kind nomenclature|dem]` — pin a body's sources: download each one to the
- *   data root and record its bytes and SHA-256 in `sources.lock.json`. A source already pinned and on disk is reused.
+ *   `astrogeology fetch --body <moon|mars> [--kind nomenclature|dem]` — pin a body's sources:
+ *   download each one to the data root and record its bytes and SHA-256 in `sources.lock.json`.
+ *   A source already pinned and on disk is reused.
  */
 
 import { Spinner } from "@inkjs/ui"

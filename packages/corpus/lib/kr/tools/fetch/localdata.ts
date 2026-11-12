@@ -3,25 +3,34 @@
 
 /**
  *   Fetch Korea's local-government permit registry (지방행정인허가데이터): one CSV per permit category,
- *   every business a local authority has licensed, about 195 categories. Each row includes both address
- *   forms of the same premises — `소재지전체주소` (the lot-number form, 지번) and `도로명전체주소` (the
- *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, epsg:5174). That
- *   The two formats together provide the cheapest dual-format signal in Korean addresses.
- *   The coordinate supplies the board's coordinate half. That role gives this source its weight.
+ *   every business a local authority has licensed, about 195 categories.
  *
- *   What it asserts differs by field. The local authority grants the permit, so the permit identifier is an
- *   `identity` assertion. The address is an `observation`: a clerk typed it, in both address systems, with
- *   no validation. The registry attests only that it received the string. Both sit on `premise` rows —
- *   the address of the licensed premises. One verdict over the source would discard the permit identity.
+ *   Each row includes both address forms of the same premises — `소재지전체주소`
+ *   (the lot-number form, 지번) and `도로명전체주소` (the road-name form) — plus both postcodes
+ *   and a planar coordinate (`좌표정보(x/y)`, epsg:5174).
+ *   That The two formats together provide the cheapest dual-format signal in Korean addresses.
+ *
+ *   The coordinate supplies the board's coordinate half.
+ *   That role gives this source its weight.
+ *
+ *   What it asserts differs by field.
+ *   The local authority grants the permit, so the permit identifier is an `identity` assertion.
+ *
+ *   The address is an `observation`: a clerk typed it, in both address systems, with no validation.
+ *   The registry attests only that it received the string.
+ *
+ *   Both sit on `premise` rows — the address of the licensed premises.
+ *   One verdict over the source would discard the permit identity.
  *
  *   The public-data portal labels the category files "이용허락범위 제한 없음" and links them to
- *   `file.localdata.go.kr`, which serves them behind a session: the category page sets the xsrf cookie,
- *   `/file/validate/download-count` is the portal's own rate check (429 when it wants a pause), and
- *   `/file/download/<slug>/info` streams the CSV. The files are CP949 as delivered. the adapter
- *   decodes. The restaurant category by itself is about 700 MB.
+ *   `file.localdata.go.kr`, which serves them behind a session: the category page sets
+ *   the xsrf cookie, `/file/validate/download-count` is the portal's own rate check
+ *   (429 when it wants a pause), and `/file/download/<slug>/info` streams the CSV.
+ *   The files are CP949 as delivered. the adapter decodes.
+ *   The restaurant category by itself is about 700 MB.
  *
- *   Invoke via `mailwoman corpus fetch localdata-kr --out-root <path>`, optionally with
- *   `--categories general_restaurants,rest_cafes`.
+ *   Invoke via `mailwoman corpus fetch localdata-kr --out-root <path>`,
+ *   optionally with `--categories general_restaurants,rest_cafes`.
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
@@ -65,7 +74,7 @@ const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 
 /**
  * Open a session on the portal: the category page answers the xsrf cookie
- * and the navigation that names every category.
+ * and the navigation that lists every category.
  */
 async function openSession(): Promise<Session> {
 	const res = await fetch(INDEX_URL, {
@@ -105,6 +114,15 @@ async function validateDownloadCount(session: Session): Promise<boolean> {
 	return res.status !== HTTP_TOO_MANY_REQUESTS
 }
 
+/**
+ * Downloads each wanted category and writes a collection manifest after each file.
+ *
+ * Every run downloads every wanted category again.
+ * The portal states no version to compare: the category page states no date, and the
+ * download response, measured on 2026-11-10, sends no `ETag` or `Last-Modified` header.
+ *
+ * A file already on disk is replaced only once its new copy has arrived whole.
+ */
 export async function fetchLocaldataKR(
 	options: FetchLocaldataKROptions,
 	report?: (line: string) => void
@@ -121,27 +139,34 @@ export async function fetchLocaldataKR(
 
 	report?.(`=== ${SLUG}: ${wanted.length} of ${session.categories.length} categories`)
 
-	// A previous run's entries survive, keyed by file name, so a re-run
-	// after an interruption fetches only what is missing.
+	// Each earlier entry stands until its file's new copy arrives, so an interrupted
+	// or failed run leaves every file on disk described by the manifest.
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, SourceManifest>()
+
+	for (const [filename, entry] of previous) {
+		if (await pathExists(destDir(filename))) {
+			files.set(filename, entry)
+		}
+	}
+
 	let fetched = 0
-	let skipped = 0
 	const failedCodes: string[] = []
+
+	const record = () =>
+		writeManifest(manifestPath, {
+			source: SLUG,
+			source_url: INDEX_URL,
+			license: LICENSE,
+			attribution: ATTRIBUTION,
+			downloaded_at: new Date().toISOString(),
+			files: [...files.values()],
+		} satisfies SourceCollectionManifest)
 
 	for (const category of wanted) {
 		const filename = `${category.slug}.csv`
 		const dest = destDir(filename)
 		const url = `${PORTAL}/file/download/${category.slug}/info`
-		const before = previous.get(filename)
-
-		if (before && (await pathExists(dest))) {
-			files.set(filename, before)
-
-			skipped++
-
-			continue
-		}
 
 		report?.(`--- ${category.name} (${category.slug})`)
 
@@ -178,6 +203,9 @@ export async function fetchLocaldataKR(
 		if (bytes < BYTES_PER_KIB) {
 			report?.(`  ✗ ${bytes} bytes — an error page, not the register`)
 			failedCodes.push(category.slug)
+			// The page replaced the earlier copy, so the earlier entry no longer describes the file.
+			files.delete(filename)
+			await record()
 
 			continue
 		}
@@ -188,17 +216,8 @@ export async function fetchLocaldataKR(
 		fetched++
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 
-		const manifest: SourceCollectionManifest = {
-			source: SLUG,
-			source_url: INDEX_URL,
-			license: LICENSE,
-			attribution: ATTRIBUTION,
-			downloaded_at: new Date().toISOString(),
-			files: [...files.values()],
-		}
-
-		await writeManifest(manifestPath, manifest)
+		await record()
 	}
 
-	return { fetched, skipped, failed: failedCodes.length, failedCodes }
+	return { fetched, skipped: 0, failed: failedCodes.length, failedCodes }
 }

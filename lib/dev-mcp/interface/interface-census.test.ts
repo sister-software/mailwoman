@@ -4,9 +4,13 @@
 /**
  *   The interface census's denominators.
  *
- *   The tally itself is arithmetic. What is easy to get wrong is what a zero is allowed to mean: a strict dependent
- *   with no stranding count because it is never stranded. The second has no stranding count because no parse ever
- *   produced it, are the same number and opposite facts. These pin that they stay distinguishable.
+ *   The tally itself is arithmetic.
+ *   What's easy to get wrong is what a zero is allowed to mean: a strict dependent
+ *   with no stranding count because it is never stranded.
+ *
+ *   The second has no stranding count because no parse ever produced it,
+ *   are the same number and opposite facts.
+ *   These pin that they stay distinguishable.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -53,7 +57,7 @@ describe("censusTrees", () => {
 
 	it("enumerates every strict dependent, fired or not", () => {
 		// The check's denominator is the tag set, so a class that never fires still has to appear.
-		// Otherwise the report is a list of what happened with no way to see what did not.
+		// Otherwise the report is a list of what happened with no way to see what didn't.
 		const census = censusTrees([row("plain", "Alburgh, VT", [node("locality", "Alburgh")])])
 
 		expect(census.stranding.map((entry) => entry.tag).toSorted()).toEqual([

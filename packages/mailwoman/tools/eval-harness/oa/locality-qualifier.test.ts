@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The strip stays conservative: a parenthesis mid-name and a parenthetical-only surface come back
- *   unchanged, so it remains a fallback after an exact compare rather than a normalizer.
+ *   The strip stays conservative: a parenthesis mid-name and a parenthetical-only surface come
+ *   back unchanged, so it remains a fallback after an exact compare rather than a normalizer.
  */
 
 import { describe, expect, it } from "vitest"

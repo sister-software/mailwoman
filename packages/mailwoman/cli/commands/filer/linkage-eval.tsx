@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman filer linkage-eval` — the corporate-family recovery eval. Geocode-free,
- *   database-free (builds its own scratch `filer.db` artifacts from an embedded synthetic corpus); emits
- *   the markdown scorecard to stdout and, when `--out-md` is given, to that path too. `--date` overrides
- *   the report's dated H1 so the committed scorecard can be regenerated without editing code.
+ *   `mailwoman filer linkage-eval` — the corporate-family recovery eval.
+ *
+ *   Geocode-free, database-free (builds its own scratch `filer.db` artifacts from an embedded synthetic corpus);
+ *   emits the markdown scorecard to stdout and, when `--out-md` is given, to that path too.
+ *   `--date` overrides the report's dated H1 so the committed scorecard can
+ *   be regenerated without editing code.
  */
 
 import { Text } from "ink"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Point-shaped queries: a coordinate pair, a plus code, an H3 cell and a `wof:` id each answer from
  *   their own decoder rather than the classifier, and the gazette and trace pages explain the shapes they

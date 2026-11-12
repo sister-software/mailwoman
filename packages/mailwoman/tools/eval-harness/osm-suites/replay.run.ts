@@ -2,18 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Replays the suite rows through a traced parse and attributes each row to the decoder stage that decided it.
+ *   Replays the suite rows through a traced parse and attributes each row to
+ *   the decoder stage that decided it.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/osm-suites/replay.run.ts --suites /mnt/mw/corpus/heldout/osm-suites \
  *     --arm <weights cache> --second-arm <weights cache> --failures <failure-list.json> --out <directory>
  *
- *   `--arm` is parsed with the trace on. `--second-arm` is parsed without it, so the rows both arms fail and both pass can
- *   be read. Every row record (`rows.jsonl`) holds the gold labels, the four traced label sequences, the stage that
- *   decided the row (`replay.ts`), and the rank of the gold labels among the decoder's 20 best paths over the
- *   post-prior emissions under the BIO masks. `summary.json` holds each arm's exact count per suite, the deciding stage
- *   and k-best availability per mechanism family for the failure list. `--failures` supplies the list in the shape the
- *   2026-10-28 suite report wrote.
+ *   `--arm` is parsed with the trace on.
+ *   `--second-arm` is parsed without it, so the rows both arms fail and both pass can be read.
+ *
+ *   Every row record (`rows.jsonl`) holds the gold labels, the four traced label sequences,
+ *   the stage that decided the row (`replay.ts`), and the rank of the gold labels among
+ *   the decoder's 20 best paths over the post-prior emissions under the BIO masks.
+ *   `summary.json` holds each arm's exact count per suite, the deciding stage
+ *   and k-best availability per mechanism family for the failure list.
+ *
+ *   `--failures` supplies the list in the shape the 2026-10-28 suite report wrote.
  */
 
 import { sortedGlob } from "@mailwoman/core/fs/readers"
@@ -94,7 +99,7 @@ interface RowRecord {
 	matches: boolean[]
 	stage: ReplayStage
 	/**
-	 * The 1-based rank of the gold labels among the 20 best paths, or null when they are not among them.
+	 * The 1-based rank of the gold labels among the 20 best paths, or null when they're not among them.
 	 */
 	goldRank: number | null
 	/**

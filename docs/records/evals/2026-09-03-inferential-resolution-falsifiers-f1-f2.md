@@ -30,10 +30,10 @@ The layer vocabulary (`packages/core/lib/layers/schema.ts`: `designated`, `surve
 `source_present`; `supportsExclusion`) admits an exclusion from the first two only.
 
 - **BAN — designated.** The publisher declares BAN the national reference address base for every
-  commune (Loi 3DS, art. 169). The designation applies to the register. Per-commune BAL certification is
-  not a column in the extract, so a commune's street list is "designated complete" by mandate rather than
-  by audit. Treated as `designated` here. The Paris row below (a 2021 esplanade the register does
-  not hold) is what that caveat costs.
+  commune (Loi 3DS, art. 169). The designation applies to the register. Per-commune BAL certification isn't
+  a column in the extract, so a commune's street list is "designated complete" by mandate rather than
+  by audit. Treated as `designated` here. The Paris row below (a 2021 esplanade the register doesn't
+  hold) is what that caveat costs.
 - **TIGER EDGES — designated, with a caveat a reader may refuse.** MAF/TIGER is the Census Bureau's
   road inventory for every county, but this extract holds only edges carrying an address range. Read
   as `source_present`, no US source on the data root supports an exclusion and the US county arm is
@@ -215,7 +215,7 @@ pairs are clustered at p < 0.05, and the family's median share is ≥ 2%.
 
 - **trees: 91.7% / 55.3% / 2.70% — passes all three.**
 - presidents: 69.7% / 45.0% / 0.98% — fails the clustering bar by 5.0 points and the share bar.
-- numbered: 48.0% / 67.4% / 0.30% — fails the share bar. The pre-registration also ruled that it could not
+- numbered: 48.0% / 67.4% / 0.30% — fails the share bar. The pre-registration also ruled that it couldn't
   pass F2 without another family passing.
 
 **F2 passes, on trees.** Name-based families are real and clustered at roughly eleven times the random-draw
@@ -239,7 +239,7 @@ the commune or the house number. Inference: register membership tested on the pa
 builder's fold is the wrong instrument. Any negative-evidence mechanism would first need a
 membership test at least as forgiving as the resolver's own street lookup (directionals,
 abbreviations, route prefixes, span trimming), and its false-fire rate should be re-measured with
-that test before the mechanism is judged again. That is a precondition rather than a re-run of this
+that test before the mechanism is judged again. That's a precondition rather than a re-run of this
 falsifier.
 
 Observation: one fire on a correct answer came from WOF ancestry (White House, TN has two counties
@@ -252,14 +252,14 @@ Observation: naming families cluster. Trees are present in 288 of 300 localities
 152 of 275 eligible ones. Inference: the structural-affinity source is real at the rates the
 pre-registration asked for, but small — 2.4% of streets pooled, 1.1% for presidents — and F1 shows
 the board has no row of the shape it would act on (an unknown street inside a known locality).
-The phenomenon is established. The demand is not.
+The phenomenon is established. The demand isn't.
 
 ## Consequences
 
-1. Stage 2 of the staged path on #1571 (negative evidence) is not earned by the board. It is not
+1. Stage 2 of the staged path on #1571 (negative evidence) isn't earned by the board. It isn't
    scheduled.
 2. The coverage-register work #1672 asked for (a `basis` beside `completeness`) stays correct and
-   stays independent of this result. This record does not change the layer interface.
+   stays independent of this result. This record doesn't change the layer interface.
 3. Structural affinity (constraint source 3) survives its falsifier on the trees family. No mechanism
    is built: with F1's D1 at zero useful rows, the board has no row for it to act on. The finding is
    recorded as an input the support-surface design may draw on, and the trigger for revisiting it is

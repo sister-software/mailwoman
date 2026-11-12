@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The v7 rules-excision swap check. The acceptance criterion is coordinate acceptability plus
- *   the plausibility guard, so the check asks whether the neural parse resolves to the same place
- *   as the rules parse it replaces and whether the garbage-geocode tail is bounded.
+ *   The v7 rules-excision swap check.
  *
- *   The v1 rules parser has been deleted, so the rules baseline is read from the phase-0 frozen
- *   capture in `legacy-golden/parity-raw.jsonl` and rebuilt into an `AddressTree` with
- *   `v0RecordToTree`. The coordinate comparison is identical to the live arm. Only the source
- *   of the rules parse changed.
+ *   The acceptance criterion is coordinate acceptability plus the plausibility guard,
+ *   so the check asks whether the neural parse resolves to the same place as the rules
+ *   parse it replaces and whether the garbage-geocode tail is bounded.
+ *
+ *   The v1 rules parser has been deleted, so the rules baseline is read from the phase-0 frozen capture
+ *   in `legacy-golden/parity-raw.jsonl` and rebuilt into an `AddressTree` with `v0RecordToTree`.
+ *   The coordinate comparison is identical to the live arm.
+ *   Only the source of the rules parse changed.
  *
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
@@ -84,7 +86,7 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 async function weightsPresent(): Promise<boolean> {
 	try {
 		// Ask the resolver rather than probing a package path literal directly.
-		// A skip guard that stops matching does not fail, it skips, so the suite
+		// A skip guard that stops matching doesn't fail, it skips, so the suite
 		// disappears from the run while the run reports success.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {

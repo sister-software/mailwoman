@@ -112,7 +112,7 @@ both):
    mechanism: when every row in a country is exact, every resample has the value 1, so the percentile bounds
    are [1, 1], and the evaluator's rule (lower bound and estimate at least the minimum) passes. The same
    mechanism explains the 63 to 70% per-country coverage in `small-10-rows`, where 10/10 samples are common at
-   a true rate of 0.90. The nominal per-check coverage there is 99%. The percentile bootstrap gives no width on
+   a true rate of 0.90. The nominal per-check coverage there's 99%. The percentile bootstrap gives no width on
    a discrete score at 0 or 1 successes or failures. The module's comment claims the rounding of the percentile
    index "widens rather than narrows an interval on discrete scores", but rounding cannot widen an interval
    whose resamples are all identical. This is a defect in `evaluate.ts` against the policy sentence "A measured
@@ -128,7 +128,7 @@ both):
 3. **Observed: joint coverage is below nominal with group metadata at the sizes simulated.** Joint coverage is
    90.5% [85.6, 93.8] in `correlated-grouped` (80 groups per country) and 82.5% [76.6, 87.1] in
    `unequal-sizes-meets`, whose 40-row countries reach 95.5 to 98.5% per-check coverage against a nominal 99.5%.
-   With 4000 resamples the joint coverage was 90.0% and 86.0%, so the number of resamples is not the main
+   With 4000 resamples the joint coverage was 90.0% and 86.0%, so the number of resamples isn't the main
    cause (inferred). The remaining explanation is the percentile bootstrap's small-sample bias on a bounded
    binomial rate, unknown until compared against an interval with better small-sample behavior (a
    distinguishing test: the same scenarios with a studentized or Wilson-type bound).
@@ -206,7 +206,7 @@ Against the targets (observed):
   R = 200 cannot tell 94% from 95%. The 40-row countries of `unequal-sizes-meets` now reach at least 99.0%
   [96.4, 99.7] per check against a nominal 99.5%. Every scenario other than the ungrouped and same-set
   selection ones has joint coverage whose interval includes 95%.
-- When the dataset omits groups, the check does not decide: both `row_identity` scenarios are 100% insufficient evidence and report no
+- When the dataset omits groups, the check doesn't decide: both `row_identity` scenarios are 100% insufficient evidence and report no
   bounds.
 - `boundary-minimum` erroneous fail is 2.5% [1.1, 5.7] with the truth exactly at the minimum in four
   countries. The bound allows up to 4 x 0.005 = 2% there (four per-side tails of 0.05/5/2); the interval
@@ -224,5 +224,5 @@ Against the targets (observed):
 ## Limitations
 
 The generative model has one correlation level per country and no structure shared across countries, places or
-sources. Rates are constant within a country, so heterogeneity across address patterns is not simulated.
+sources. Rates are constant within a country, so heterogeneity across address patterns isn't simulated.
 R = 200 bounds a rate of 0 at under 1.9% and resolves differences of a few percentage points only.

@@ -13,7 +13,7 @@ Inject a clock and use `@mailwoman/core/api/test-clocks` in timing tests.
 `packages/filer/sdk/sec-client.ts` is the primary example. `packages/bdc/sdk/client.ts` shows
 binary responses and per-request `cache: false`.
 
-`requestsPerMinute` computes a cooldown of `60000 / N` after the previous dispatch. It does not enforce
+`requestsPerMinute` computes a cooldown of `60000 / N` after the previous dispatch. It doesn't enforce
 a full-minute window: a measured configuration of 10 dispatched 100 requests per minute. Set
 `minRequestIntervalMs` to `60000 / N` when the host requires that interval.
 
@@ -55,7 +55,7 @@ Use `path-ts` for path composition. Use `import.meta.dirname` and `import.meta.f
 module. Convert another `file:` URL through `@mailwoman/core/module/file-url`.
 
 The tokenizer in `@mailwoman/neural` is the one documented exception. It dynamically imports
-`node:fs/promises` with `webpackIgnore` so the browser bundle does not acquire core's Node graph.
+`node:fs/promises` with `webpackIgnore` so the browser bundle doesn't acquire core's Node graph.
 `browser-slo.test.ts` detects a static replacement that makes esbuild resolve `fs`.
 
 ## Data, package, and repository roots
@@ -67,7 +67,7 @@ contain a lab-specific path.
 A database under the data root's `db/` group is located by the package that owns it, through that
 package's `paths` export: `wofDatabasePath("admin-global-priority.db")` from
 `@mailwoman/resolver-wof-sqlite/paths`, `banDatabasePath` from `@mailwoman/ban/paths`, and the same
-pattern in `soil`, `flood`, `coastal`, `zoning`, `osm` and `timezone-lookup`. Each constant reads the
+pattern in `soil`, `flood`, `coastal`, `zoning`, `osm`, `tiger` and `timezone-lookup`. Each constant reads the
 data root when a path is requested. The matching `…DatabaseRoot(dataRoot)` function takes an explicit
 root. Core keeps only `databaseRootPath`, for a package that cannot depend on the owner.
 
@@ -104,8 +104,8 @@ Normal path composition under a caller-supplied root, scratch directory, or user
 valid. A clean-install probe may inspect a foreign install layout because resolving from the monorepo
 would invalidate the probe.
 
-`repoRootPath` names the checkout `@mailwoman/core` was loaded from, which is another checkout when a
-worktree has no install of its own. `@mailwoman/core/module/checkout-locality` compares that checkout with
+`repoRootPath` names the checkout `@mailwoman/core` was loaded from. When a worktree has no install of its
+own, that's another checkout. `@mailwoman/core/module/checkout-locality` compares that checkout with
 the entry point's. A repository entry point calls `assertCheckoutLocality(import.meta.dirname)` before it
 loads the rest of its graph.
 
@@ -132,7 +132,7 @@ Check these homes before adding a helper:
 - `@mailwoman/spatial`: geographic distance, polygon containment, and bounding-box helpers.
 - `packages/match/lib/comparators.ts`: string similarity functions.
 
-There is no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
+There's no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
 `Array.fromAsync(JSONSpliterator.fromAsync<T>(path))`.
 
 `mailwoman/prefer-home` reports repeated implementation shapes. The
@@ -140,7 +140,7 @@ There is no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
 function. A justified local implementation uses
 `// repo-health-ignore private-name-shadows-export -- <reason>`.
 
-When a shared helper does not fit a caller, determine whether its performance, asynchronous interface,
+When a shared helper doesn't fit a caller, determine whether its performance, asynchronous interface,
 or dependency graph caused the local implementation. Fix the shared interface when appropriate. Keep a
 documented local implementation when the dependency cost is larger than the duplication.
 
@@ -153,10 +153,45 @@ under `--conditions=workerd,worker,browser`, in the shape of
 `packages/neural/lib/web/browser-slo.integration.test.ts`. When a name moves, every caller is
 repointed in the same change, and no forwarding export stays.
 
+## Import-time effects
+
+An import-time effect is work a module does when it is evaluated: it registers a listener, writes a
+global, mutates another module's state, imports CSS, or starts I/O. A value a module computes for its
+own constants, such as `new Set(Object.keys(TABLE))`, is no effect, and neither is a write to an object
+the module itself declares.
+
+A bundler that reads `sideEffects: false` drops a module whose exports go unused, and with it whatever
+the module runs at evaluation. A workspace that declares the field lists each module that runs an
+import-time effect, by its source path and its `out/` path. A `*.run.ts` script and `cli/main.ts` are
+entry points whose module-scope statements are the program, so they're listed by glob. An `if
+(import.meta.main)` block runs only for the entry point and needs no listing. The `side-effects`
+repository check reads every declaring workspace's sources and reports a module the declaration
+misses.
+
+`/* @__PURE__ */` tells a bundler it may delete a call whose result goes unused. Put it only on a call
+whose callee you have read, never on an effect interface. The same check reports an annotated
+effect-interface call.
+`mwops side-effects` reports the bytes a bare import of each module keeps when every module counts as
+effectful. Those bytes show where an annotation would shrink a bundle.
+
+`docs/engineering/reference/effects-register.mdx` lists each module's import-time effects and runtime
+effect edges, one page per workspace. Regenerate it with `yarn mwops effects-register` after a change
+that adds, removes or moves an effect. The `effects-register` check fails while a page is stale.
+
+## State machines
+
+A lifecycle whose state is stored, such as a ledger column, is declared with `defineStateMachine` from
+`@mailwoman/core/state-machine`. Its transition is a pure function from a state and an event to a step:
+the next state, the columns written with it, and the effects to run after the write. `applyStep`
+writes the step through a carrier's compare-and-set, so a step decided from a state another writer has
+since left fails as a conflict. A machine's `events` table holds one event per case its transition
+distinguishes, and the effects register prints the machine's transition table from it.
+`packages/license-worker/lib/ledger/machines.ts` holds the first three machines.
+
 ## Core tests and Vite
 
 When one core test imports both `@mailwoman/core` and a core subpath, Vite can interleave the barrel and
 subpath graphs before the barrel finishes binding its exports. Base classes can then evaluate as
 `undefined`. A side-effect `import "@mailwoman/core"` at the start of the affected test forces the barrel
-to initialize first. This is a structural import-graph issue tracked on #481. Top-level await is not its
+to initialize first. This is a structural import-graph issue tracked on #481. Top-level await isn't its
 cause.

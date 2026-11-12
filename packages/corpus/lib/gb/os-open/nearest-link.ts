@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The nearest line feature to each of a set of points, measured point-to-segment in a planar
- *   projection.
+ *   The nearest line feature to each of a set of points, measured point-to-segment in a planar projection.
  *
- *   The points sit in a bucket grid and the lines stream past it. Each segment of each line asks the
- *   grid for the points inside its bounding box widened by the search radius, and each of those
- *   points keeps the nearest line it has been offered. Memory is bounded by the point count rather
- *   than by the line count, so a whole country's road network can be read once from disk.
+ *   The points sit in a bucket grid and the lines stream past it.
+ *   Each segment of each line asks the grid for the points inside its bounding box widened by
+ *   the search radius, and each of those points keeps the nearest line it has been offered.
  *
- *   Distances are Euclidean in the projection's own units. For EPSG:27700, the British National
- *   Grid, those are meters, and the grid's scale error stays under 0.04% across Great Britain.
+ *   Memory is bounded by the point count rather than by the line count,
+ *   so a whole country's road network can be read once from disk.
+ *
+ *   Distances are Euclidean in the projection's own units.
+ *   For EPSG:27700, the British National Grid, those are meters, and the grid's
+ *   scale error stays under 0.04% across Great Britain.
  */
 
 import { planarSegmentDistanceSquared } from "@mailwoman/spatial/distance"
@@ -94,7 +96,7 @@ export interface NearestLinkMatch<T> {
 /**
  * Joins each point to the nearest line offered to it within `radius`.
  *
- * A line offered at exactly the same distance as the current nearest does not replace it,
+ * A line offered at exactly the same distance as the current nearest doesn't replace it,
  * so the first-offered line wins a tie and the answer follows the order the lines are read in.
  */
 export class NearestLinkJoin<T> {

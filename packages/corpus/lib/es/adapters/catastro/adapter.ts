@@ -2,70 +2,85 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `es-catastro`: the INSPIRE Addresses theme the Dirección General del Catastro publishes, read
- * from its per-municipality zipped GML.
+ * `es-catastro`: the INSPIRE Addresses theme the Dirección General del Catastro publishes,
+ * read from its per-municipality zipped GML.
  *
  * The ATOM service at `https://www.catastro.hacienda.gob.es/INSPIRE/Addresses/ES.SDGC.AD.atom.xml`
- * lists 55 entries. 52 are the Dirección General del Catastro's own provinces. Three link the foral
- * cadastres of Bizkaia, Gipuzkoa and Navarra. Those three state their own terms and have an adapter
- * each. Every DGC entry links a province feed listing one zipped GML per municipality, so a caller
+ * lists 55 entries. 52 are the Dirección General del Catastro's own provinces.
+ * Three link the foral cadastres of Bizkaia, Gipuzkoa and Navarra.
+ *
+ * Those three state their own terms and have an adapter each.
+ * Every DGC entry links a province feed listing one zipped GML per municipality, so a caller
  * harvests municipality by municipality and this adapter reads one archive or a directory of them.
  *
- * Three properties of the file decide the reader, and each of the three would silently empty a row
- * if it were read the way the other INSPIRE publishers are read.
+ * Three properties of the file decide the reader, and each of the three would silently
+ * empty a row if it were read the way the other INSPIRE publishers are read.
  *
- * The archive holds two members. `A.ES.SDGC.AD.<code>.gml` is the data and
- * `A.ES.SDGC.AD.MD.<code>.xml` is its ISO 19139 metadata record. A member selector matching `.xml`
- * therefore selects the metadata record. That record holds no `AD:Address` at all, so
- * {@linkcode GML_MEMBER} matches the extension that holds the features.
+ * The archive holds two members.
+ * `A.ES.SDGC.AD.<code>.gml` is the data and `A.ES.SDGC.AD.MD.<code>.xml` is its ISO 19139 metadata record.
  *
- * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and is not valid UTF-8. Ceuta's
- * 11,861,975-byte member holds 26 bytes above 0x7F, one of which is the `Ñ` of a street name.
- * `streamMarkupElements` decodes with a UTF-8 `TextDecoder`. That decoder answers those bytes with
- * U+FFFD. The bytes therefore pass through `decodeByteStream` first. {@linkcode assertLatin1Declaration}
- * reads the declaration rather than trusting this note, because a publisher that re-encodes its
- * output would otherwise have every accented name mojibaked under a reader that still claimed to be
- * right.
+ * A member selector matching `.xml` therefore selects the metadata record.
+ * That record holds no `AD:Address` at all, so {@linkcode GML_MEMBER} matches
+ * the extension that holds the features.
+ *
+ * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and isn't valid UTF-8.
+ * Ceuta's 11,861,975-byte member holds 26 bytes above 0x7F, one of which is the `Ñ` of a street name.
+ *
+ * `streamMarkupElements` decodes with a UTF-8 `TextDecoder`.
+ * That decoder answers those bytes with U+FFFD.
+ *
+ * The bytes therefore pass through `decodeByteStream` first. {@linkcode assertLatin1Declaration} reads
+ * the declaration rather than trusting this note, because a publisher that re-encodes its output
+ * would otherwise have every accented name mojibaked under a reader that still claimed to be right.
  *
  * The file binds the INSPIRE namespaces to upper-case prefixes, `AD:Address` and `GN:text`, and
- * states a designator type and an administrative level as element text rather than as a codelist
- * URI. `#inspire/address` matches an element by its local name and accepts either form of a coded
- * value, so the readers there serve this publisher. Only the element names this module passes to the
- * markup stream hold the upper-case prefix.
+ * states a designator type and an administrative level as element text rather than as a codelist URI.
+ * `#inspire/address` matches an element by its local name and accepts either form
+ * of a coded value, so the readers there serve this publisher.
+ *
+ * Only the element names that this module passes to the markup stream hold the upper-case prefix.
  *
  * Each address references exactly three features by local `#` fragment, measured as 8,126 of 8,126
  * addresses in Ceuta carrying one `ES.SDGC.PD`, one `ES.SDGC.TN` and one `ES.SDGC.AU` reference.
- * Those features are written after the addresses — Ceuta's 511 of them sit in the last 530,000 bytes
- * of the member — so the adapter reads the member twice through
+ * Those features are written after the addresses — Ceuta's 511 of them sit in the
+ * last 530,000 bytes of the member — so the adapter reads the member twice through
  * {@linkcode streamIndexedInspireRows} rather than holding every address until the document ends.
  *
- * The number is one designator, typed `1`. The publisher's own rendering fixes what that type means
- * and what the value `S-N` means. `Consulta_DNPRC` on the OVC web service answers a cadastral
- * reference with the address the Cadastre holds for it, as `<ldt>`, plus the fields it is built
- * from: `tv` the street-type abbreviation, `nv` the street name, `pnp` the number, `plp` its letter,
- * `dp` the postcode and `nm` the municipality. The cadastral reference is the tail of the address's
- * own `gml:id`, so every row this adapter writes can be put beside the publisher's own line:
+ * The number is one designator, typed `1`.
+ * The publisher's own rendering fixes what that type means and what the value `S-N` means.
+ *
+ * `Consulta_DNPRC` on the OVC web service answers a cadastral reference with the
+ * address the Cadastre holds for it, as `<ldt>`, plus the fields it is built from:
+ * `tv` the street-type abbreviation, `nv` the street name, `pnp` the number,
+ * `plp` its letter, `dp` the postcode and `nm` the municipality.
+ * The cadastral reference is the tail of the address's own `gml:id`, so every row
+ * this adapter writes can be put beside the publisher's own line:
  *
  * | `gml:id` tail | designator | `<ldt>` |
  * | --- | --- | --- |
  * | `9744803TE8794S` | `13` | `CL SANTIAGO APOSTOL 13 51002 CEUTA (CEUTA)` |
  * | `9745701TE8794S` | `13D` | `CL SANTIAGO APOSTOL 13(D) 51002 CEUTA (CEUTA)` |
  *
- * So the designator is `pnp` with `plp` appended, and the street is `tv` followed by `nv`. That
- * street matches the `AD:ThoroughfareName` text verbatim once its leading space is trimmed. The
- * abbreviation stays in the street component because the publisher writes it in its own rendered
- * line. `Calle` would state something the Cadastre did not.
+ * So the designator is `pnp` with `plp` appended, and the street is `tv` followed by `nv`.
+ * That street matches the `AD:ThoroughfareName` text verbatim once its leading space is trimmed.
  *
- * `S-N` is *sin número*, the publisher stating that the address has no number, and it is 856 of
- * Ceuta's 8,126 designators. A row carrying it writes no `house_number`, because the string is a
- * statement about the number rather than a number.
+ * The abbreviation stays in the street component because the publisher writes it in its own rendered line.
+ * `Calle` would state something the Cadastre didn't.
  *
- * One reference form states an absence the same way. The postal-descriptor reference's final segment
- * is the postcode, and 70 of Ceuta's 8,126 addresses write `#ES.SDGC.PD.55.101.` with that segment
- * empty, against five `AD:PostalDescriptor` features the file does publish. Those 70 are the only
- * unresolvable references in the member: the thoroughfare and administrative-unit references resolve
- * 8,126 of 8,126 each. A reference whose final segment is empty is therefore read as the publisher
- * holding no value for that component, and every other unresolved reference raises.
+ * `S-N` is *sin número*, the publisher stating that the address has no number,
+ * and it is 856 of Ceuta's 8,126 designators.
+ * A row carrying it writes no `house_number`, because the string is a statement
+ * about the number rather than a number.
+ *
+ * One reference form states an absence the same way.
+ * The postal-descriptor reference's final segment is the postcode, and 70 of
+ * Ceuta's 8,126 addresses write `#ES.SDGC.PD.55.101.` with that segment empty,
+ * against five `AD:PostalDescriptor` features the file does publish.
+ *
+ * Those 70 are the only unresolvable references in the member: the thoroughfare
+ * and administrative-unit references resolve 8,126 of 8,126 each.
+ * A reference whose final segment is empty is therefore read as the publisher holding
+ * no value for that component, and every other unresolved reference raises.
  */
 
 import { decodeByteStream } from "@mailwoman/core/fs/streams"
@@ -157,7 +172,7 @@ const COMPONENT_ELEMENTS = [
 const ADDRESS_ELEMENT = "AD:Address"
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * The publisher writes `<AD:level>4</AD:level>` as text where the other INSPIRE publishers
  * write the `AdministrativeHierarchyLevel/4thOrder` codelist URI, so both spellings
@@ -267,7 +282,7 @@ export function createESCatastroAdapter(): CorpusAdapter {
  * One address's row, or null when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
- * feature is a value the reader asked for and could not read, and it raises.
+ * feature is a value the reader asked for and couldn't read, and it raises.
  */
 function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | null {
 	const addressID = address.attributes["gml:id"]?.trim() ?? null

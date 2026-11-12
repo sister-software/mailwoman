@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postcode-shape record is data authored once in `@mailwoman/postcode`. The training pipeline
- *   (`packages/trainer`, Rust) cannot import that package, so it vendors a byte-identical copy that this
- *   test checks against the authored one.
+ *   The postcode-shape record is data authored once in `@mailwoman/postcode`.
  *
- *   The test lives in this package because `@mailwoman/postcode` depends only on codex, and the check
- *   needs core's repo-root resolver.
+ *   The training pipeline (`packages/trainer`, Rust) cannot import that package,
+ *   so it vendors a byte-identical copy that this test checks against the authored one.
+ *
+ *   The test lives in this package because `@mailwoman/postcode` depends only on codex,
+ *   and the check needs core's repo-root resolver.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

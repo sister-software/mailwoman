@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { buildAddressTree } from "@mailwoman/core/decoder"
 import { prettyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"

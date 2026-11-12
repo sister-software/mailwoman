@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads the package's shipped `data/` tables. This module runs only in Node. The browser-safe
- *   `./table` entry takes its table from the caller instead.
+ *   Reads the package's shipped `data/` tables.
+ *
+ *   This module runs only in Node.
+ *   The browser-safe `./table` entry takes its table from the caller instead.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

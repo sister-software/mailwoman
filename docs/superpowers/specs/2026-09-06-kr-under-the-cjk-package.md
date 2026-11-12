@@ -11,7 +11,7 @@ package is `@mailwoman/neural-weights-cjk`, and today it serves Japanese and Chi
 Korean is the K, and it is the cheapest of the three to add: the source is on disk, its surface is whitespace-separated,
 and every component it contains maps onto a tag the head already has.
 
-## 2. What is on disk
+## 2. What's on disk
 
 `$MAILWOMAN_DATA_ROOT/openaddresses/extracted/kr/<province>/provincewide.csv` — the OpenAddresses delivery of the
 national road-name address register (도로명주소, entrance points), 734 MB, UTF-8, WGS84.
@@ -47,7 +47,7 @@ exact KOGL rider before the card ships (the 2026-07-18 acquisition note flags th
 | POSTCODE   | `postcode`           | no KR postcode extract exists. The tag still trains                                                                                                                      |
 
 `subregion`, not `locality`, because the resolver's locality filter group is `locality / borough / localadmin` and
-does not admit `county`; `subregion → county` is already in `DEFAULT_PLACETYPE_MAP`. The compound city + 구 is the
+doesn't admit `county`; `subregion → county` is already in `DEFAULT_PLACETYPE_MAP`. The compound city + 구 is the
 JP compound municipality again (`compoundMunicipality`, #2175): the same scoped pair with a `^(.+시)(.+구)$` shape,
 head under the region, tail under the head. Hangul keys are stored NFD (conjoining jamo); the probe's normalizer
 already writes the same form, and a precomposed-range glob reads 0 where 87.3% of KR records have a Hangul key.
@@ -87,10 +87,10 @@ municipalities, so the KR read reports the per-시군구 macro the #2165 report 
 The probe is 2,000 steps on the mixed JP + CN + KR corpus from the current `v8-cjk` recipe, pre-registered in the
 config header before launch:
 
-- JP board blended coordinate-acceptability ≥ 0.9653 (the shipped read, and KR rows must not cost JP a pp).
+- JP board blended coordinate-acceptability ≥ 0.9653 (the shipped read, and KR rows mustn't cost JP a pp).
 - CN `locality_unit` ≥ 12 of 14.
 - KR board: `street` and `house_number` per-tag ≥ 0.99, `subregion` ≥ 0.97, `dependent_locality` ≥ 0.95 at 2k steps —
-  whitespace-separated surfaces read higher than JP's at the same step in every prior run, and lower than that is the
+  whitespace-separated surfaces read higher than JP's at the same step in every prior run, and lower than that's the
   finding.
 
 A passing probe warrants the 24k run, exported into the same served package (one `model.onnx`, one `char-vocab.json`,
@@ -101,10 +101,10 @@ one card), with the KR attribution line in the card.
 1. Korean joins `@mailwoman/neural-weights-cjk` (the name promises it) rather than a separate `ko-kr` package.
 2. The KOGL attribution text in the card, and whether counsel's rider question blocks publish or only the refresh.
 3. The `subregion` mapping for the 시군구 (the alternative, widening the locality group to `county`, changes every
-   locality lookup in every country and is not proposed).
+   locality lookup in every country and isn't proposed).
 4. Whether to spend the probe now or after the kana read (#2165) settles the JP base.
 
-## 7. What this does not decide
+## 7. What this doesn't decide
 
 The KR postcode extract (34,160 codes with entrance points is a per-country postcode database waiting to be built);
 the street tier for KR (the entrance points are rooftop-grade and would make an address-point database, licensed
@@ -128,6 +128,6 @@ modal run corpus-python/modal/train_remote.py::sync_v8cjk_kr
 modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kr-probe.yaml --resume auto
 ```
 
-Two shapes the build measured that the plan did not name: the source's REGION strings predate the 2023 renames
+Two shapes the build measured that the plan didn't name: the source's REGION strings predate the 2023 renames
 (`강원도`, `전라북도`), so both spellings have a short form. And 시군구 with a two-level compound (`천안시 동남구`) render
 as two adjacent `subregion` spans, the shape the resolver's scoped pair (#2175) will read.

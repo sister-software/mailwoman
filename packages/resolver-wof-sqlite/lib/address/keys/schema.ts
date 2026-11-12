@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The address layer's two files. `lookup.db` holds one clustered key table per level of precision a parse can
- *   reach, each row holding its answer, plus street aggregates and the `source` table. `detail.db` holds the full
- *   `address` record. A reader opens it only to show one result in detail.
+ *   The address layer's two files.
  *
- *   Every key table is `WITHOUT ROWID` and clustered on its key, so a lookup is one B-tree descent over contiguous
- *   pages, the property a reader of the file by HTTP range depends on.
+ *   `lookup.db` holds one clustered key table per level of precision a parse can reach,
+ *   each row holding its answer, plus street aggregates and the `source` table.
+ *   `detail.db` holds the full `address` record.
+ *   A reader opens it only to show one result in detail.
+ *
+ *   Every key table is `WITHOUT ROWID` and clustered on its key, so a lookup is one B-tree
+ *   descent over contiguous pages, the property a reader of the file by HTTP range depends on.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"

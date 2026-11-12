@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   USPS Publication 28's secondary unit designators as cited postal-unit rules. The designators
- *   and their approved abbreviations are {@linkcode US_UNIT_DESIGNATOR_PREFERRED_ABBR}, and whether
- *   one takes a number is {@linkcode US_UNIT_DESIGNATOR_REQUIRES_RANGE}. This module adds the
- *   citation of Appendix C2 to each rather than holding a second designator table, and adds the two
- *   placement rules of section 213.
+ *   USPS Publication 28's secondary unit designators as cited postal-unit rules.
+ *
+ *   The designators and their approved abbreviations are {@linkcode US_UNIT_DESIGNATOR_PREFERRED_ABBR},
+ *   and whether one takes a number is {@linkcode US_UNIT_DESIGNATOR_REQUIRES_RANGE}.
+ *   This module adds the citation of Appendix C2 to each rather than holding a second
+ *   designator table, and adds the two placement rules of section 213.
  *
  * @see {@link https://pe.usps.com/text/pub28/28apc_003.htm USPS Pub 28 Appendix C2 (Secondary Unit Designators)}
  * @see {@link https://pe.usps.com/text/pub28/28c2_003.htm USPS Pub 28 §213 (Secondary Address Unit Designators)}

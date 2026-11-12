@@ -2,28 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Address-point interpolation, the second method of the resolution ladder. When the exact
- *   address-point tier misses a house number, bracket the number with real neighbor points on the
- *   same street and interpolate linearly in house-number space between them. Real occupancy
- *   replaces the tiger range tier's uniform-spacing assumption. Tiger range interpolation
- *   (`StreetInterpolator`) is the fallback for streets too sparse to bracket.
+ *   Address-point interpolation, the second method of the resolution ladder.
  *
- *   The matching key is `street_key`, the shared normalizer plus the route fold
- *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and query
- *   time by construction. Scope is postcode-first like the segment tier. A query without a postcode
- *   goes straight to the fallback. The fallback has its own statewide-ambiguity abstention.
+ *   When the exact address-point tier misses a house number, bracket the number with real neighbor
+ *   points on the same street and interpolate linearly in house-number space between them.
+ *   Real occupancy replaces the tiger range tier's uniform-spacing assumption.
  *
- *   Neighbor candidates never include the queried number itself, so production never overrides an
- *   on-file number and grading against the same extract is non-circular.
+ *   Tiger range interpolation (`StreetInterpolator`) is the fallback for streets too sparse to bracket.
  *
- *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the nearest known number
- *       below and above. `uncertaintyM` is half the distance between them.
- *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest known numbers
- *       on that side, capped at one pair-span beyond the nearest point (`t ≤ 2`, past which the line
- *       provides no evidence and the query falls through). `uncertaintyM` is the pair distance plus
- *       the extrapolated overshoot, larger than the both-sided radius.
- *   - No bracket, meaning no neighbors, a single known number, or past the extrapolation cap: fall
- *       through to the tiger fallback when configured, else null.
+ *   The matching key is `street_key`, the shared normalizer plus the route fold (`canonicalizeRouteKey`),
+ *   identical at build time (`mailwoman situs address-points`) and query time by construction.
+ *   Scope is postcode-first like the segment tier.
+ *
+ *   A query without a postcode goes straight to the fallback.
+ *   The fallback has its own statewide-ambiguity abstention.
+ *
+ *   Neighbor candidates never include the queried number itself, so production never
+ *   overrides an on-file number and grading against the same extract is non-circular.
+ *
+ *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the
+ *     nearest known number below and above.
+ *     `uncertaintyM` is half the distance between them.
+ *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest
+ *     known numbers on that side, capped at one pair-span beyond the nearest point
+ *     (`t ≤ 2`, past which the line provides no evidence and the query falls through).
+ *     `uncertaintyM` is the pair distance plus the extrapolated overshoot,
+ *     larger than the both-sided radius.
+ *   - No bracket, meaning no neighbors, a single known number, or past the extrapolation cap:
+ *     fall through to the tiger fallback when configured, else null.
  *
  *   Standalone like the segment tier, wired through the ordered `spatialTiers` list.
  */
@@ -70,7 +76,7 @@ export class AddressPointInterpolator<
 	/**
 	 * Resources this instance opened.
 	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it.
+	 * A connection handed in by a caller isn't in here, so disposal cannot reach it.
 	 * Ownership is membership rather than a flag a later branch checks.
 	 */
 	readonly #resources: DisposableStack

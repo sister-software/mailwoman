@@ -3,7 +3,7 @@
 Date: 2026-10-20. Issue #2763, the "operator registers numerical minima" item, delegated. Policy:
 `scratchpad/2026/10/20/D_RULE_REDESIGN-confirmed.md`. Evaluator: `packages/mailwoman/tools/eval-harness/release/`
 at `origin/main` 3b2000e24. This record is committed with `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v3.json`,
-which holds the JSON in the last section verbatim. Paths under the session scratchpad name working files that were not committed.
+which holds the JSON in the last section verbatim. Paths under the session scratchpad name working files that weren't committed.
 
 Each claim is marked observed (measured here or read from the tree), inferred, decided, or unknown.
 
@@ -119,7 +119,7 @@ minimum. This value sits at that level because every product reading of exact pa
 deference plays no part: the US rows are dominated by the corpus's street/suffix split convention, and the
 missing/additional counts on NAD rows (0.71 missing and 0.38 additional per row, observed) are the signature
 of one boundary moved per failing row. A US minimum above the published level is a decision that the affix
-split is a release blocker. That is a v4 decision to take once the split is measured as its own capability
+split is a release blocker. That's a v4 decision to take once the split is measured as its own capability
 (section 7). A US candidate at parity will need about 2,300 admitted rows to pass this minimum. US has 1.79 M
 test rows available, so the dataset quota is the value to raise, and the minimum stays as registered.
 
@@ -135,11 +135,11 @@ inflation from choosing the best of 20 candidates on the evaluation rows showed 
 and 0.0% erroneous approval at 1,000 rows (lower than the committed 300-row scenarios' 4.5% because the
 candidates differ less at this size), and it disappears entirely on fresh confirmation rows. The policy's
 defense against selection is procedural (a confirmation collection the development loop never reads), so the
-margin should not be spent on it.
+margin shouldn't be spent on it.
 
 Why not a negative tolerance. A non-inferiority margin would let a candidate at parity ship. That contradicts
 "improves the declared objective". The cost of 0 is real: a candidate at exact parity never passes (0.0% in
-`v3-200-rows-parity` and `v3-heldout-sizes-parity`), and a release whose purpose is not quality (a rights
+`v3-200-rows-parity` and `v3-heldout-sizes-parity`), and a release whose purpose isn't quality (a rights
 cleanup like 10.7.0) needs either a measurable gain somewhere in C or a v4 that registers a tolerance with
 that reason.
 
@@ -150,13 +150,13 @@ that reason.
   pass rate from 48.0% to 63.5% and lowered joint coverage to 91.5% (section 8). That rise in pass rate is smaller than
   the rise the quota delivers (section 3), so the level stays at the validated value.
 - Bonferroni (decided). Checks share rows (every country check shares rows with the objective), so Šidák's
-  independence assumption does not hold. Bonferroni is valid under any dependence, and at m = 14 the per-side
+  independence assumption doesn't hold. Bonferroni is valid under any dependence, and at m = 14 the per-side
   tail differs by 4% relative (0.001786 against 0.001831), which moves no bound in this record. The evaluator
   counts every declared check whether or not its threshold is registered, so m is fixed by the spec text.
 - Required precision 0.08 (decided). It is the half-width the registered quota delivers for a country minimum
   at 1,000 rows and p ≥ 0.6 (4.6 pp at p = 0.60, 3.1 pp at 0.90, observed from `bounds.ts`), with headroom
   for a design effect of up to about 3 from augmentation groups. The Q bound is far inside it (1.0 pp). The
-  field is reported against and does not decide. A bound wider than it identifies the country whose rows the
+  field is reported against and doesn't decide. A bound wider than it identifies the country whose rows the
   next dataset version must add.
 - Provenance (decided): `admitted: ["verified_unseen"]`. `known_overlap` rows favor the model that trained on
   them and `unknown` rows have no history. Both are reported per class by the verdict and the coverage
@@ -165,20 +165,20 @@ that reason.
 
 ## 6. The 18 retained-pending floors, the int8 cap and the mask lock
 
-| Floor (`v9.0.0-base.json`)                                                                  | Decision                                                                             | Reason                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `us.postcode` 93.7, `us.micro` 82.9, `us.locality` 79.6, `us.region` 89.4, `us.street` 67.7 | replaced by the US country requirement (0.60)                                        | Each was the published model's golden-dev reading minus a Wilson margin on one tag. Exact parse on US rows requires every tag at once, and per-tag F1 stays a diagnostic reported by country and component.                                                                                                                                                                       |
-| `us.street_prefix` 57.0 (n=25), `us.street_suffix` 69.9 (n=30)                              | retired as deciders, kept as a diagnostic                                            | At n=25 and 30 the floors sit 34 and 27 pp below the readings and can detect only collapse. The affix split is exercised by every NAD row in the US check, and a dedicated affix capability needs a span-annotated source (section 7).                                                                                                                                            |
-| `us.unit_real` 73.0 (n=34)                                                                  | replaced by `venue_unit` 0.85                                                        | Same slot, 1,936 held-out rows instead of 34.                                                                                                                                                                                                                                                                                                                                     |
-| `us.country_homograph_f1` 64.8 (n=54)                                                       | replaced by `country_token` 0.85, and the homograph fixture stays a diagnostic watch | A 22.7 pp margin floor can detect only collapse. The held-out source tests the slot. The homograph confound (a country name that is also a place name) has no held-out source and is kept as a watch.                                                                                                                                                                             |
-| `fr.postcode` 98.8, `fr.house_number` 96.6, `fr.region` 36.7                                | replaced by the FR country requirement (0.90)                                        | `fr.region` 36.7 records a 2026-08 reading of a tag the corpus barely annotates. It was never a product need.                                                                                                                                                                                                                                                                     |
-| `de.native_locality` 89.5                                                                   | replaced by the DE country requirement (0.85)                                        | The anchor-on de-order cell is one row order, and the DE rows hold both orders (observed in `rendered-de`).                                                                                                                                                                                                                                                                       |
-| `us.po_box_real` 94.3 (n=2000), `fr.cedex_real` 92.4 (n=430)                                | replaced by `po_box_cedex` 0.85 with max loss 0.05                                   | The fixtures are component-keyed and outside the collection. The held-out source has 175 rows. The max loss keeps the ratchet these two floors applied. The fixtures stay diagnostics until aligned (section 7).                                                                                                                                                                  |
-| `us.intersection_real` 80.7 (n=36)                                                          | retired as a decider, kept as a diagnostic                                           | No `intersection_a`/`intersection_b` span exists in the held-out collection (observed tag census), and n=36 cannot bound a rate.                                                                                                                                                                                                                                                  |
-| `arena.perturb` 59.9 (n=398)                                                                | retired as a decider, kept as a diagnostic                                           | Whole-parse-strict on perturbed golden rows. The corpus's augmentation variants (`+double-space` and the like, observed in test `source_id`s) are already inside every country check through their groups. A perturbation capability needs a selector the evaluator lacks (by augmentation class rather than source).                                                             |
-| `fr.bare_street_intact` 75.0 (designed, #949)                                               | retired as a decider, diagnostic leg kept                                            | A designed tolerance on a probe the collection does not hold (BAN rows all have a number). The promotion battery keeps the leg and reports it as a diagnostic.                                                                                                                                                                                                                    |
-| `int8_vs_fp32_max_delta_pp` 1.5                                                             | retired                                                                              | The verdict is tied to the int8 artifact's sha256 and every minimum is measured on it, so a quantization collapse fails the minima directly. fp32-to-fp32 comparison stays the development rule (iron rule 3).                                                                                                                                                                    |
-| Mask-regression lock (#718, 2 pp per tag under the conventions mask)                        | retained as a configuration check, outside the spec                                  | It compares the candidate with and without the ship config's conventions mask and leaves the published model out of the comparison. It is a measurement-validity refusal of the same kind as the tokenizer-comparability refusal. It does not read the published model's answers, so the migration table's description of it is inaccurate and should be corrected when v3 lands. |
+| Floor (`v9.0.0-base.json`)                                                                  | Decision                                                                             | Reason                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `us.postcode` 93.7, `us.micro` 82.9, `us.locality` 79.6, `us.region` 89.4, `us.street` 67.7 | replaced by the US country requirement (0.60)                                        | Each was the published model's golden-dev reading minus a Wilson margin on one tag. Exact parse on US rows requires every tag at once, and per-tag F1 stays a diagnostic reported by country and component.                                                                                                                                                                      |
+| `us.street_prefix` 57.0 (n=25), `us.street_suffix` 69.9 (n=30)                              | retired as deciders, kept as a diagnostic                                            | At n=25 and 30 the floors sit 34 and 27 pp below the readings and can detect only collapse. The affix split is exercised by every NAD row in the US check, and a dedicated affix capability needs a span-annotated source (section 7).                                                                                                                                           |
+| `us.unit_real` 73.0 (n=34)                                                                  | replaced by `venue_unit` 0.85                                                        | Same slot, 1,936 held-out rows instead of 34.                                                                                                                                                                                                                                                                                                                                    |
+| `us.country_homograph_f1` 64.8 (n=54)                                                       | replaced by `country_token` 0.85, and the homograph fixture stays a diagnostic watch | A 22.7 pp margin floor can detect only collapse. The held-out source tests the slot. The homograph confound (a country name that's also a place name) has no held-out source and is kept as a watch.                                                                                                                                                                             |
+| `fr.postcode` 98.8, `fr.house_number` 96.6, `fr.region` 36.7                                | replaced by the FR country requirement (0.90)                                        | `fr.region` 36.7 records a 2026-08 reading of a tag the corpus barely annotates. It was never a product need.                                                                                                                                                                                                                                                                    |
+| `de.native_locality` 89.5                                                                   | replaced by the DE country requirement (0.85)                                        | The anchor-on de-order cell is one row order, and the DE rows hold both orders (observed in `rendered-de`).                                                                                                                                                                                                                                                                      |
+| `us.po_box_real` 94.3 (n=2000), `fr.cedex_real` 92.4 (n=430)                                | replaced by `po_box_cedex` 0.85 with max loss 0.05                                   | The fixtures are component-keyed and outside the collection. The held-out source has 175 rows. The max loss keeps the ratchet these two floors applied. The fixtures stay diagnostics until aligned (section 7).                                                                                                                                                                 |
+| `us.intersection_real` 80.7 (n=36)                                                          | retired as a decider, kept as a diagnostic                                           | No `intersection_a`/`intersection_b` span exists in the held-out collection (observed tag census), and n=36 cannot bound a rate.                                                                                                                                                                                                                                                 |
+| `arena.perturb` 59.9 (n=398)                                                                | retired as a decider, kept as a diagnostic                                           | Whole-parse-strict on perturbed golden rows. The corpus's augmentation variants (`+double-space` and the like, observed in test `source_id`s) are already inside every country check through their groups. A perturbation capability needs a selector the evaluator lacks (by augmentation class rather than source).                                                            |
+| `fr.bare_street_intact` 75.0 (designed, #949)                                               | retired as a decider, diagnostic leg kept                                            | A designed tolerance on a probe the collection doesn't hold (BAN rows all have a number). The promotion battery keeps the leg and reports it as a diagnostic.                                                                                                                                                                                                                    |
+| `int8_vs_fp32_max_delta_pp` 1.5                                                             | retired                                                                              | The verdict is tied to the int8 artifact's sha256 and every minimum is measured on it, so a quantization collapse fails the minima directly. fp32-to-fp32 comparison stays the development rule (iron rule 3).                                                                                                                                                                   |
+| Mask-regression lock (#718, 2 pp per tag under the conventions mask)                        | retained as a configuration check, outside the spec                                  | It compares the candidate with and without the ship config's conventions mask and leaves the published model out of the comparison. It is a measurement-validity refusal of the same kind as the tokenizer-comparability refusal. It doesn't read the published model's answers, so the migration table's description of it is inaccurate and should be corrected when v3 lands. |
 
 ## 7. Evidence gaps and the smallest work
 
@@ -192,7 +192,7 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
    draws per country and kind, and the scoring pass here ran at 120 rows/s, so a 30,000-row set costs about four
    minutes per arm). Every test row has `source_id` and 2,465,713 of 3,180,659 have `base_source_id`
    (observed), so groups exist.
-2. The overlap audit has not run. Every row is therefore `unknown`, and no class is admitted. Work: `overlap.run.ts` over
+2. The overlap audit hasn't run. Every row is therefore `unknown`, and no class is admitted. Work: `overlap.run.ts` over
    `v0.7.10-gb-county` and the candidate's corpus, naming both model cards. Rows the v0.8.0 split repair moved
    into test (FR Corse, Lozère and Creuse region rows, GB Cornwall, observed in `SPLIT_MANIFEST.json`) will be
    `known_overlap` for 10.7.0 and excluded. FR and GB keep their v0.7.10 postcode-prefix holdouts, so admitted
@@ -201,10 +201,10 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
    of these four (observed). Two ways out, either of which is small:
    - `packages/corpus/lib/utils/split.ts` `defaultHoldouts()`: add one held-out place per country (ES a
      postcode prefix such as `35`/`38`, IT `11`, AU `08`, NZ `96`), effective at the next base rebuild
-     (v0.8.1). Those rows are then in the candidate's test split but were in 10.7.0's training, so they are
+     (v0.8.1). Those rows are then in the candidate's test split but were in 10.7.0's training, so they're
      `known_overlap` and inadmissible under v3's global admission. The evaluator change that unblocks this is
      per-check admission: a minimum check reads rows unseen by the candidate, and only the objective and max-loss
-     checks need rows unseen by both. That is a one-field change in `requirements.ts` (`provenance.admitted`
+     checks need rows unseen by both. That's a one-field change in `requirements.ts` (`provenance.admitted`
      becomes `{ minimum: [...], comparative: [...] }`) and a filter in `evaluate.ts`.
    - Or an evaluation-only source for each (a publisher no training corpus reads, built through the corpus
      aligner so the spans have `corpus-alignment` provenance, declared `split: test`). It is admissible for
@@ -310,8 +310,8 @@ Readings (observed from the table, inferred where stated):
 - The evaluator admits one provenance class for every check, so a newly held-out country is unmeasurable for
   one release cycle unless item 3 of section 7 lands.
 - Simulation rates are constant within a country. Heterogeneity across sources (NAD at 63.9%, NPPES at 26.3%,
-  TIGER at 90.9% inside US, observed) is not modelled, and a candidate that shifts the source mix of its
-  failures moves the design effect the simulation did not draw.
+  TIGER at 90.9% inside US, observed) isn't modelled, and a candidate that shifts the source mix of its
+  failures moves the design effect the simulation didn't draw.
 
 ## The v3 specification to commit
 

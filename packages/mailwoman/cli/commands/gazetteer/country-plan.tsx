@@ -4,14 +4,16 @@
 /**
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   This command performs no clone, edit or build. Its read-only behavior comes from its implementation.
+ *   This command performs no clone, edit or build.
+ *   Its read-only behavior comes from its implementation.
+ *
  *   The separate `--apply` command clones hundreds of megabytes and edits a file reviewed like code.
  *
  *   This command reports values computed from the artifact rather than the lists: `defaults.ts` is a
  *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled.
  *
- *   Output goes through {@linkcode writeRawStdout} because an Ink frame as tall as the viewport emits
- *   `\x1b[3J`. That code wipes the scrollback.
+ *   Output goes through {@linkcode writeRawStdout} because an Ink frame as tall as
+ *   the viewport emits `\x1b[3J`. That code wipes the scrollback.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -150,7 +152,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to move from.
+				// Absence reported as absence: without the artifact there's no current state to move from.
 				// This command reads the artifact instead of guessing from the lists.
 				lines.push(
 					"",
@@ -213,7 +215,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 
 			let writeFailures = 0
 
-			// `--write` edits the working tree and stops there — it does not stage, commit
+			// `--write` edits the working tree and stops there — it doesn't stage, commit
 			// or build, so the change stays a diff a person reviews.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = repoRootPath("packages", "mailwoman", "tools", "gazetteer-pipeline", "defaults.ts")

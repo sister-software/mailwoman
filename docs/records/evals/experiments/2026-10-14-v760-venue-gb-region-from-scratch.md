@@ -143,7 +143,7 @@ The `provenance.txt` beside it records the candidate's md5.
 
 ## Decision
 
-v7.6.0 does not ship: the D-rule refuses it on GB and US and the net is -2. The run answers both queued
+v7.6.0 doesn't ship: the D-rule refuses it on GB and US and the net is -2. The run answers both queued
 questions. With `fragment-venue-bare` at weight 0, the FR, DE, ES and IT bare-street regressions of v7.4.0 are
 gone, and the England and Wales `region` relabel reaches the parser. The cost is a new US mechanism, a bare
 locality before `region postcode` read as a street. A trailing directional still breaks a bare street under

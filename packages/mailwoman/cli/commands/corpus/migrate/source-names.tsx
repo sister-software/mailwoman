@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus migrate-source-names` — rewrite the `source` column in each parquet file from the retired
- *   `synth-*` spelling to the operation spelling `RECIPE_SOURCES` gives it.
+ *   `mailwoman corpus migrate-source-names` — rewrite the `source` column in each parquet file
+ *   from the retired `synth-*` spelling to the operation spelling `RECIPE_SOURCES` gives it.
  *
- *   Run this over an assembly's routed staging files before `corpus overlay-manifest`, so the manifest's
- *   `sha256` describes the renamed bytes. A corpus already assembled is never rewritten in place.
+ *   Run this over an assembly's routed staging files before `corpus overlay-manifest`,
+ *   so the manifest's `sha256` describes the renamed bytes.
+ *   A corpus already assembled is never rewritten in place.
  *
- *   Each rewrite is written beside its input as `<name>.renamed` and swapped over the input only with
- *   `--swap`, so a run that refuses one file leaves every other file readable by the code that built it.
+ *   Each rewrite is written beside its input as `<name>.renamed` and swapped over
+ *   the input only with `--swap`, so a run that refuses one file leaves every
+ *   other file readable by the code that built it.
  *   The run writes `source-names.json` beside the first input, recording every mapping it applied.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -36,10 +39,17 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { extractDelimited } = await import("@mailwoman/core/scripting/arguments")
-		const { movePath, writeLocalJSONFile } = await import("@mailwoman/core/fs/writers")
-		const { dirname, resolvePath } = await import("path-ts")
-		const { rewriteSourceNames } = await import("@mailwoman/corpus/tools/migrate/source-names")
+		const {
+			arguments: { extractDelimited },
+			writers: { movePath, writeLocalJSONFile },
+			pathTs: { dirname, resolvePath },
+			sourceNames: { rewriteSourceNames },
+		} = await allKeyed({
+			arguments: import("@mailwoman/core/scripting/arguments"),
+			writers: import("@mailwoman/core/fs/writers"),
+			pathTs: import("path-ts"),
+			sourceNames: import("@mailwoman/corpus/tools/migrate/source-names"),
+		})
 
 		const inputs = extractDelimited(options.parquet)
 

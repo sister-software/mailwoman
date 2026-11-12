@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `useRemoteGeocoderRuntime` builds the {@link GeocoderRuntime} that parses and geocodes through the hosted
- *   native API. It loads no release manifest, model, FST or gazetteer database, so the page's cold load is the
- *   basemap and the app bundle.
+ *   `useRemoteGeocoderRuntime` builds the {@link GeocoderRuntime} that parses
+ *   and geocodes through the hosted native API.
+ *
+ *   It loads no release manifest, model, FST or gazetteer database, so the page's
+ *   cold load is the basemap and the app bundle.
  */
 
 import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
@@ -57,7 +59,7 @@ const DEVICE_LOCATION_BIAS_WEIGHT = 0.6
 
 function resolveMapPlace(candidate: ResolvedPlaceView): ResolvedMapPlace {
 	// TODO: A hosted answer renders as a point, because the crisp admin polygon the browser
-	// runtime draws comes from the release's `wof-polygons.db`, which this runtime does not load.
+	// runtime draws comes from the release's `wof-polygons.db`, which this runtime doesn't load.
 	// Either a `/v1/place/{id}/geometry` route on the API, or a byte-range read of
 	// `wof-polygons.db` keyed by the candidate's Who's On First ID, would supply it.
 	return { ...candidate }

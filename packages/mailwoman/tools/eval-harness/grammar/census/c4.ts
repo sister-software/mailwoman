@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Threshold-free, report-only observations for decoder-grammar constraint C4.
  *
@@ -200,7 +203,7 @@ export type C4License = (typeof C4_LICENSES)[number]
 /**
  * The C4 reading of one boundary receipt.
  *
- * - `outside_phrase`: no phrase proposal holds the boundary strictly inside it, so C4 does not apply.
+ * - `outside_phrase`: no phrase proposal holds the boundary strictly inside it, so C4 doesn't apply.
  * - `licensed`: at least one §5 license holds at the boundary.
  * - `violation`: the boundary is inside a phrase proposal and no license holds.
  * - `unmeasured`: no license holds among the sources read, and an affix or registry source was not read.
@@ -215,7 +218,7 @@ export interface C4BoundaryClassification {
 	/**
 	 * The verdict with the comma-free query-shape segment as the phrase.
 	 *
-	 * Every boundary that is not on a delimiter lies inside one, so this verdict is never `outside_phrase`.
+	 * Every boundary that's not on a delimiter lies inside one, so this verdict is never `outside_phrase`.
 	 * It differs from {@link verdict} where the grouper proposes no phrase across the boundary.
 	 */
 	segmentVerdict: Exclude<C4Verdict, "outside_phrase">

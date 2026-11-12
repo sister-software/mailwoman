@@ -4,9 +4,10 @@
 /**
  *   Lists every key a strict config load would refuse, across every committed training config (#1248).
  *
- *   It walks each YAML against the config sections and reports every unknown dotted key, where the strict loader
- *   stops at the first. It also loads each file and reports any other refusal separately, so the two failure
- *   classes stay apart.
+ *   It walks each YAML against the config sections and reports every unknown dotted key,
+ *   where the strict loader stops at the first.
+ *   It also loads each file and reports any other refusal separately,
+ *   so the two failure classes stay apart.
  *
  *   Usage: node packages/mailwoman/tools/training/audits/config/keys.run.ts
  */

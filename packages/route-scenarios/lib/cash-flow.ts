@@ -4,24 +4,34 @@
 /**
  *   The monthly unfinanced cash-flow table, from month 0 through the horizon.
  *
- *   Each selected building keeps three counts apart: occupied eligible units, active subscribers, and the
- *   month's new activations, churn and joining existing subscribers. Provider availability is a dossier
- *   fact and enters the table only through a building's first service month. All counts are whole
- *   subscribers. Churn in a month is the floor of the building's cumulative expected churn (the sum of each
- *   earlier month's closing subscribers times the monthly churn rate) minus the churn already applied.
- *   New activations fill the gap to the month's target and never exceed the occupied units left after the
- *   building's existing subscribers.
+ *   Each selected building keeps three counts apart: occupied eligible units, active
+ *   subscribers, and the month's new activations, churn and joining existing subscribers.
+ *   Provider availability is a dossier fact and enters the table only through
+ *   a building's first service month.
  *
- *   A month's cash flow is its receipts minus promotion credits, service and maintenance, acquisition and
- *   activation, construction and replacement, the working-capital increase and tax. Receipts are each
- *   active subscriber's price, collected in the month of service. A promotion credit is a stated share of the
- *   month's price. It reduces what a new subscriber pays in the activation month and appears as a cost. First
- *   revenue is the first month whose receipts exceed its credits. Peak funding is the deepest point of the
- *   cumulative cash flow. That point can fall after first revenue. The base case adds no terminal value after
- *   the horizon.
+ *   All counts are whole subscribers.
+ *   Churn in a month is the floor of the building's cumulative expected churn
+ *   (the sum of each earlier month's closing subscribers times the monthly churn rate)
+ *   minus the churn already applied.
  *
- *   The discount rule is the one in `money.ts`. Each row holds its factor and its present value, and NPV is
- *   the sum of the present values.
+ *   New activations fill the gap to the month's target and never exceed the occupied
+ *   units left after the building's existing subscribers.
+ *
+ *   A month's cash flow is its receipts minus promotion credits, service and maintenance,
+ *   acquisition and activation, construction and replacement, the working-capital increase and tax.
+ *   Receipts are each active subscriber's price, collected in the month of service.
+ *
+ *   A promotion credit is a stated share of the month's price.
+ *   It reduces what a new subscriber pays in the activation month and appears as a cost.
+ *
+ *   First revenue is the first month whose receipts exceed its credits.
+ *   Peak funding is the deepest point of the cumulative cash flow.
+ *
+ *   That point can fall after first revenue.
+ *   The base case adds no terminal value after the horizon.
+ *
+ *   The discount rule is the one in `money.ts`.
+ *   Each row holds its factor and its present value, and NPV is the sum of the present values.
  */
 
 import type { EntityID } from "@mailwoman/dossier"

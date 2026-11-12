@@ -2,26 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pre-GPU eval for the international admin-split retrain. Before spending an A100, falsify the
- *   premise: does splitting the département out of the locality move the resolved coordinate,
- *   anchor-on, through the production resolver? Or does FTS land the same commune either way, the
- *   silent-wash risk of a label change the resolver ignores?
+ *   The pre-GPU eval for the international admin-split retrain.
  *
- *   For each sampled FR commune (truth = its own WOF centroid) we resolve three parse states through
- *   the same resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
- *   `defaultCountry: FR`):
+ *   Before spending an A100, falsify the premise: does splitting the département out of
+ *   the locality move the resolved coordinate, anchor-on, through the production resolver?
+ *   Or does FTS land the same commune either way, the silent-wash risk of a
+ *   label change the resolver ignores?
+ *
+ *   For each sampled FR commune (truth = its own WOF centroid) we resolve
+ *   three parse states through the same resolver the geocoder ships
+ *   (`createWOFResolver` over `admin-global-priority.db`, `defaultCountry: FR`):
  *
  *   - `dropped` {locality:[commune]}: the model's "région → null" failure
  *   - `merged` {locality:[commune + " " + dept]}: the "canberra ACT" fuse failure
- *   - `split` {locality:[commune], region:[dept]}: the corrected parse and measure the great-circle
- *       error to the commune's true centroid.
+ *   - `split` {locality:[commune], region:[dept]}: the corrected parse and measure
+ *     the great-circle error to the commune's true centroid.
  *
- *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged`, concentrated on
- *   collision communes (a name in >1 département), where the région is the only disambiguator.
+ *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged`, concentrated
+ *   on collision communes (a name in >1 département), where the région is the only disambiguator.
  *   Unique communes are the control (the resolver should find them with or without the région).
  *
- *   Eval: ≥5% mean collision-stratum reduction (`split` vs `dropped`), else the premise is false and
- *   no retrain can fix it.
+ *   Eval: ≥5% mean collision-stratum reduction (`split` vs `dropped`),
+ *   else the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node packages/mailwoman/tools/dev-tools/fr/admin/split/selfvalidation.run.ts\
  *   --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md

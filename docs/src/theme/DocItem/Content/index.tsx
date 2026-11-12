@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Adds a status notice above each document title, so readers can tell current decisions from
- *   superseded ones without authors adding banners by hand.
+ *   Adds a status notice above each document title, so readers can tell current decisions
+ *   from superseded ones without authors adding banners by hand.
  *
- *   Documents with `status: active-decision` or `status: superseded` show a notice. If
- *   `superseded-by` is set, the notice links to that URL. Other status values show no notice.
+ *   Documents with `status: active-decision` or `status: superseded` show a notice.
+ *   If `superseded-by` is set, the notice links to that URL.
+ *   Other status values show no notice.
  *
- *   The old historical-record banner was removed when archived pages moved outside the published
- *   docs tree. Restore it only if archived pages are published again.
+ *   The old historical-record banner was removed when archived pages moved outside the published docs tree.
+ *   Restore it only if archived pages are published again.
  */
 
 import Link from "@docusaurus/Link"

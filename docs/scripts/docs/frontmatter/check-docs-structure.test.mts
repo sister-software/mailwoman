@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests strict frontmatter rules with in-memory fixtures. It excludes filesystem checks and sidebar checks.
+ * Tests strict frontmatter rules with in-memory fixtures.
+ *
+ * It excludes filesystem checks and sidebar checks.
  * It also excludes legacy-mode checks.
  */
 

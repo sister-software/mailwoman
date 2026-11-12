@@ -1,7 +1,10 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Report-only C6 census over the committed Gauntlet corpus.
  *
- * This command is not a release eval.
+ * This command isn't a release eval.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

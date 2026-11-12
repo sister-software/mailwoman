@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The full-epoch audit of the source and country mixture: what the sampler draws, and what the trainer reads.
+ *   The full-epoch audit of the source and country mixture: what the sampler draws,
+ *   and what the trainer reads.
  *
- *   A prefix audit ends before any source exhausts, so it misses a mixture that drifts mid-epoch. This audit reads
- *   one row-limited epoch at two levels. The draw level counts the mixture's own rows per fixed window of draws,
- *   the stationarity receipt: every window must hold every source at its requested share. The emitted level runs
- *   the same stream through the trainer's emit step and counts what fills the row budget, where augmented copies
- *   compete with originals and `distortion_vs_draw_share` measures each source's realized-weight distortion.
+ *   A prefix audit ends before any source exhausts, so it misses a mixture that drifts mid-epoch.
+ *   This audit reads one row-limited epoch at two levels.
  *
- *   A config's `required_corpus_receipts` name row shapes its corpus must hold: a source, a country and a
- *   contiguous component sequence, each with a floor of draws per epoch. The audit refuses an epoch below a floor.
+ *   The draw level counts the mixture's own rows per fixed window of draws,
+ *   the stationarity receipt: every window must hold every source at its requested share.
+ *   The emitted level runs the same stream through the trainer's emit step
+ *   and counts what fills the row budget, where augmented copies compete with originals
+ *   and `distortion_vs_draw_share` measures each source's realized-weight distortion.
+ *
+ *   A config's `required_corpus_receipts` name row shapes its corpus must hold: a source,
+ *   a country and a contiguous component sequence, each with a floor of draws per epoch.
+ *   The audit refuses an epoch below a floor.
+ *
  *   A passing audit is bound to the config's and the manifest's bytes by {@linkcode corpusReceiptBinding}.
  */
 

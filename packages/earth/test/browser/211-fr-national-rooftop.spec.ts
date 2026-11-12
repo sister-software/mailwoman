@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // FR national rooftop check.
 // With the BAN situs extract hosted (street/fr/national/situs.db) and the demo's national
 // street-tier fallback wired, a postcode-less FR street address must resolve to its

@@ -83,7 +83,7 @@ async function fixture(name: string, basis: CoverageBasis): Promise<PathBuilder>
 
 	// Both cells are covered.
 	// Only one holds a point.
-	// That is the whole distinction under test.
+	// That's the whole distinction under test.
 	const cells = new Set([WESTMINSTER, EDINBURGH].map((p) => uprnCoverageCell(p.latitude, p.longitude)))
 
 	await writeLayerCoverage(

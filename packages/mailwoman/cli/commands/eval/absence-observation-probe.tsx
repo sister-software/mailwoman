@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Rows, expected results and the coverage layer all come from `probe-definition.json`. The loader refuses to
- *   hand over if its content hash has moved.
+ *   Rows, expected results and the coverage layer all come from `probe-definition.json`.
  *
- *   No route is injected into the runtime pipeline for the absence work. The semantic phrase route is injected because
- *   the activity-phrased rows cannot reach a category without it.
+ *   The loader refuses to hand over if its content hash has moved.
  *
- *   The coverage layer is build-local (ODbL) and uncommitted, so a run without it refuses at construction rather than
- *   reporting an empty board. Its build command is in
- *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`.
+ *   No route is injected into the runtime pipeline for the absence work.
+ *   The semantic phrase route is injected because the activity-phrased rows
+ *   cannot reach a category without it.
  *
- *   Report-only by design: the exit code is non-zero only when the harness broke, so a recorded breach is a result
- *   rather than a crash.
+ *   The coverage layer is build-local (ODbL) and uncommitted, so a run without it
+ *   refuses at construction rather than reporting an empty board.
+ *   Its build command is in `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`.
+ *
+ *   Report-only by design: the exit code is non-zero only when the harness broke,
+ *   so a recorded breach is a result rather than a crash.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

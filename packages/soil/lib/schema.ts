@@ -2,23 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for `soil.db`. It defines the polygon truth table, its containment index and the shared reduction
- *   that both consumers read. It also defines the layer-interface tables from `@mailwoman/core/layers`.
+ *   Typed schema for `soil.db`.
+ *
+ *   It defines the polygon truth table, its containment index and the shared
+ *   reduction that both consumers read.
+ *   It also defines the layer-interface tables from `@mailwoman/core/layers`.
  *
  *   {@link SoilMapUnitAreaTable} stores the authority's unsimplified geometry.
- *   {@link SoilMapUnitCellTable} records which cells each delineation reaches and whether it fills them.
- *   {@link SoilCapabilityCellTable} is that index reduced once, at build time, into a per-cell
- *   distribution. A `partial` cell's contribution is weighted by the area it covers. The truth table keeps
- *   unsimplified rings so simplification cannot change those weights silently.
+ *   {@link SoilMapUnitCellTable} records which cells each delineation reaches and
+ *   whether it fills them. {@link SoilCapabilityCellTable} is that index reduced once,
+ *   at build time, into a per-cell distribution.
+ *   A `partial` cell's contribution is weighted by the area it covers.
  *
- *   The reduction stores a distribution instead of one winning class. Four separate shares record reasons for
- *   absence. Class 8 is a determination, so it contributes a class share. A fold that places a `notcom` polygon, a water body
- *   and an unrated series into "not arable" would produce a well-formed but wrong answer. The four shares preserve
- *   those distinctions.
+ *   The truth table keeps unsimplified rings so simplification cannot change those weights silently.
  *
- *   Cell tables use `without rowid`; the geometry table uses ordinary rowids. Small fixed-width rows are probed by
- *   their exact primary key, so they fit the B-tree. A geometry blob would make every index page a geometry page if
- *   stored in that B-tree.
+ *   The reduction stores a distribution instead of one winning class.
+ *   Four separate shares record reasons for absence.
+ *
+ *   Class 8 is a determination, so it contributes a class share.
+ *   A fold that places a `notcom` polygon, a water body and an unrated series into
+ *   "not arable" would produce a well-formed but wrong answer.
+ *   The four shares preserve those distinctions.
+ *
+ *   Cell tables use `without rowid`; the geometry table uses ordinary rowids.
+ *   Small fixed-width rows are probed by their exact primary key, so they fit the B-tree.
+ *
+ *   A geometry blob would make every index page a geometry page if stored in that B-tree.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -172,8 +181,8 @@ export interface SoilComponentTable {
 	compname: string | null
 	/**
 	 * `Miscellaneous area` is what separates not-rateable from unrated: a rock outcrop
-	 * or a water body is a component the capability rating does not apply to,
-	 * while an unrated series is one the survey did not rate.
+	 * or a water body is a component the capability rating doesn't apply to,
+	 * while an unrated series is one the survey didn't rate.
 	 */
 	compkind: string | null
 	/**
@@ -190,7 +199,7 @@ export interface SoilComponentTable {
 	 * The irrigated rating.
 	 *
 	 * Populated only where irrigation is a considered use, so its absence states that
-	 * the rating does not apply rather than anything about the land.
+	 * the rating doesn't apply rather than anything about the land.
 	 * The build stores it without reducing it.
 	 */
 	irrcapcl: string | null
@@ -228,11 +237,11 @@ export interface SoilCapabilityCellTable {
 	class_shares: string
 	/**
 	 * Mapped soil components carrying a NULL rating.
-	 * The survey did not rate them.
+	 * The survey didn't rate them.
 	 */
 	unrated_share: number
 	/**
-	 * Miscellaneous areas (rock outcrop, water) the rating does not apply to.
+	 * Miscellaneous areas (rock outcrop, water) the rating doesn't apply to.
 	 */
 	notrateable_share: number
 	/**
@@ -267,7 +276,7 @@ export interface SoilCapabilityCellTable {
 	 * NULL when the cell has no class.
 	 * This is a valid result.
 	 *
-	 * A cell that is 100% `unrated_share` is complete and has no capability reading.
+	 * A cell that's 100% `unrated_share` is complete and has no capability reading.
 	 */
 	top_class: string | null
 	top_class_share: number | null
@@ -294,7 +303,7 @@ export interface SoilCapabilityCellTable {
  * The survey's §3.2 identifies rated polygons as an invalid source for this footprint.
  * `notcom` and access-denied map units are inside the footprint and have no rating,
  * so a footprint taken from the rated set would report them as unmapped even
- * though the authority has declared exactly what they are.
+ * though the authority has declared exactly what they're.
  */
 export interface SoilSurveyAreaTable {
 	areasymbol: string
@@ -311,7 +320,7 @@ export interface SoilSurveyAreaTable {
 	 * This date differs from `saverest`.
 	 * `IA153` records a 2025-09-09 refresh over a field survey published in 1960.
 	 *
-	 * The dataset's time-period-of-content ends at the refresh, so it does not state
+	 * The dataset's time-period-of-content ends at the refresh, so it doesn't state
 	 * when the field survey occurred.
 	 */
 	survey_source_date: string | null

@@ -3,7 +3,9 @@
 
 /**
  *   Normalizes casing of British place and street names.
- *   Price Paid Data ships every field in uppercase. Models trained on natural casing see uppercase as out-of-domain text.
+ *
+ *   Price Paid Data ships every field in uppercase.
+ *   Models trained on natural casing see uppercase as out-of-domain text.
  */
 
 import { titleCase } from "spliterator/casing"

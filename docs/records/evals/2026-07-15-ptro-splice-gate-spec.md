@@ -9,7 +9,7 @@ from v5.1.0 is the template.
 its bars are unedited since. But the commit that was supposed to land it first _failed silently_ —
 the pre-commit hook runs the compiled CLI and `out/` was stale from another branch, and a `tail -1`
 pipe hid the error — so it entered git after the v266 grading below rather than before it. The bars
-were not tuned to the measured output (v266 is a no-op, so its output offered no target to tune toward). The git record
+weren't tuned to the measured output (v266 is a no-op, so its output offered no target to tune toward). The git record
 cannot prove that ordering, and this record states the gap rather than hiding it. Protocol lesson in
 the night-3 postmortem: verify the commit landed, and rebuild `out/` after any branch switch.
 
@@ -62,7 +62,7 @@ Plus the standing battery, unchanged and non-negotiable:
 
 - **Target legs** (the point of the splice): PT + RO parity street-tag must IMPROVE. RO
   byte-fallback words must disappear from the tokenization.
-- Parity floors (`eval parity`, ship config): house_number / postcode / street must not regress.
+- Parity floors (`eval parity`, ship config): house_number / postcode / street mustn't regress.
 - Golden 2pp per-tag promote check (`eval error-analysis`).
 - Gauntlet (regression + metamorphic) pass.
 - Demo presets 6/6, zero grouper-audit nodes.
@@ -112,7 +112,7 @@ level:
 **But v267 is a different candidate with a wider blast surface**: its lowercase pieces overlap
 `fr` (`é`), `it` (`ã`), and `pl` (`ó`) — on top of cz/es/nl. FR is the largest trained locale and is
 exactly what the v5.1.0 "net-positive by luck" incident ran through. A six-locale acceptance requires a
-fresh pre-registration with six legs, graded before promotion. That is a new check spec rather than an
+fresh pre-registration with six legs, graded before promotion. That's a new check spec rather than an
 amendment to this one, and it is deliberately not rushed to fit a shift boundary. Artifacts staged
 for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v264: 39.8 MB, +0.3%).
 
@@ -136,8 +136,8 @@ Net street +1 = **fixed 2, broke 1**. The two fixes are the exact target rows
 > `BR v1-address.bra-1` `"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil"` —
 > street `"Rua Raul Leite Magalhães"` → **`""`** (emitted nowhere).
 
-**Brazilian** Portuguese — a PT-family locale that is not in the overlap check's `--trained-samples`
-list at all, so the check never saw it. That is a gap in the check's locale inventory, notthis
+**Brazilian** Portuguese — a PT-family locale that's not in the overlap check's `--trained-samples`
+list at all, so the check never saw it. That's a gap in the check's locale inventory, notthis
 candidate's problem: `pt-BR` (and the OA `br` set) should join the standing sample list before any
 PT-touching splice is graded again.
 
@@ -149,7 +149,7 @@ between runs. The full diff shows zero ASCII drift. Never diff two runs through 
 ## Decision rule, fixed now
 
 Ship **only** on a clean sweep: every accepted-locale leg within its bar, PT/RO improved, without a floor
-or check regression, size within budget. Any accepted-locale leg outside its bar = the splice does
-not ship as-is. The direct outcome is a narrower RO-only splice without `Á/É/À/Ú/â`
+or check regression, size within budget. Any accepted-locale leg outside its bar = the splice doesn't
+ship as-is. The direct outcome is a narrower RO-only splice without `Á/É/À/Ú/â`
 exposure, rather than a relaxed bar. Bars are not editable after the first measurement. A miss is an
 adjudication, and the revision protocol's human-in-the-loop is the buffer rather than a constant.

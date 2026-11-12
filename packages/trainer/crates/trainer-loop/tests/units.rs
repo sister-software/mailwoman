@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The loop's pieces that need no corpus: schedules, checkpoint discovery, the CSV row, the metrics, and the model's
 //! construction and save/restore on a small spec.
 
@@ -78,7 +81,7 @@ fn a_model_section_enabling_a_retired_head_is_refused() {
 	}
 }
 
-/// Locale 1 forbids `street_suffix`, as the schema's FR row does; the other eight forbid nothing.
+/// Locale 1 forbids `street_suffix`, a synthetic row that exercises the mask; the other eight forbid nothing.
 fn conventions() -> Vec<Vec<String>> {
 	let mut out = vec![Vec::new(); 9];
 	out[1] = vec!["street_suffix".to_owned()];
@@ -337,6 +340,26 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 			"{name} has no gradient"
 		);
 	}
+}
+
+#[test]
+fn the_latest_checkpoint_is_the_highest_step_past_the_name_padding() {
+	let dir = tempfile::tempdir().unwrap();
+	for step in [999_999, 1_000_000, 42] {
+		let checkpoint = dir.path().join(checkpoint_dir_name(step));
+		std::fs::create_dir_all(&checkpoint).unwrap();
+		std::fs::write(checkpoint.join("training_state.json"), "{}").unwrap();
+	}
+	assert_eq!(
+		find_latest_checkpoint(dir.path()).unwrap(),
+		Some(dir.path().join(checkpoint_dir_name(1_000_000)))
+	);
+
+	let stray = dir.path().join("step-old");
+	std::fs::create_dir_all(&stray).unwrap();
+	std::fs::write(stray.join("training_state.json"), "{}").unwrap();
+	let refusal = find_latest_checkpoint(dir.path()).unwrap_err().to_string();
+	assert!(refusal.contains("step-old"), "{refusal}");
 }
 
 #[test]

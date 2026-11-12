@@ -2,20 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the panel for the same-data benchmark. It applies the frozen selection rules to GeoNames and emits rows.
- *   The builder does not make independent selection judgments.
+ *   Builds the panel for the same-data benchmark.
  *
- *   Eligibility, query construction, gold, fill order and the sampling seed all come from
- *   `benchmark-definition.json`, committed before inspecting any row. Changes to its selection rules require a
- *   definition version and content-hash update.
+ *   It applies the frozen selection rules to GeoNames and emits rows.
+ *   The builder doesn't make independent selection judgments.
+ *
+ *   Eligibility, query construction, gold, fill order and the sampling seed all come
+ *   from `benchmark-definition.json`, committed before inspecting any row.
+ *   Changes to its selection rules require a definition version and content-hash update.
  *
  *   A row's entity, name, coordinate and population come from `cities15000.txt` under CC-BY-4.0.
- *   `readGoldSets` turns the geonameid into the ids the candidate backend answers with. A geonameid whose
- *   join is not coherent is dropped before sampling with the count reported, because that count describes
- *   the gazetteer and reporting it keeps a coverage hole from reading as a panel choice.
+ *   `readGoldSets` turns the geonameid into the ids the candidate backend answers with.
  *
- *   Half the homograph rows have a bearer that is not the most populous. A panel whose gold is always the
- *   largest bearer would be satisfied by a population prior by itself. The benchmark tests that prior.
+ *   A geonameid whose join isn't coherent is dropped before sampling with the count
+ *   reported, because that count describes the gazetteer and reporting it keeps
+ *   a coverage hole from reading as a panel choice.
+ *
+ *   Half the homograph rows have a bearer that's not the most populous.
+ *   A panel whose gold is always the largest bearer would be satisfied by a population prior by itself.
+ *   The benchmark tests that prior.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"

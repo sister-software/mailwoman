@@ -61,7 +61,7 @@ export const AddressRole = {
 	 */
 	LegalNotice: "legal-notice",
 	/**
-	 * A role that this vocabulary does not cover.
+	 * A role that this vocabulary doesn't cover.
 	 *
 	 * Add a new constant when a second uncovered role appears.
 	 */
@@ -111,7 +111,7 @@ export const SurfaceOrigin = {
 	 * Distinct from {@link SurfaceOrigin.Composed} because an adapter renders one canonical
 	 * form per record while a recipe varies the form deliberately.
 	 *
-	 * A source id beginning `rendered-` does not take this value.
+	 * A source id beginning `rendered-` doesn't take this value.
 	 * `SourceOperation.Rendered` in `#recipes/sources` names a recipe operation with the same word,
 	 * and those recipes record {@link SurfaceOrigin.Composed} because they vary the form.
 	 *
@@ -178,7 +178,7 @@ export interface SourceProvenance {
 	source: string
 
 	/**
-	 * An id that is unique within the source and stable across reruns,
+	 * An id that's unique within the source and stable across reruns,
 	 * so that deduplication and holdouts reproduce.
 	 *
 	 * SQLite-backed adapters use the primary key.
@@ -398,11 +398,11 @@ export interface AdapterOptions {
 	 * An adapter that drops a record increments a `row:<reason>` key, and one that keeps the row
 	 * but discards a component increments a `component:<tag>:<reason>` key.
 	 * A `kept:<condition>` key counts records kept under a condition the reader should see,
-	 * such as a country the record does not state.
+	 * such as a country the record doesn't state.
 	 *
 	 * The runner writes the map into `MANIFEST.json` as `dropped`, so the gap between a
 	 * source's record count and the rows written has a counted reason.
-	 * An adapter that does not count leaves the map empty.
+	 * An adapter that doesn't count leaves the map empty.
 	 *
 	 * The manifest records that as an empty object rather than as zero drops of a specific kind.
 	 */
@@ -452,7 +452,7 @@ export interface RowSample {
 	holdOutCells?: readonly string[]
 	/**
 	 * Cells, in the same forms as `holdOutCells`, that stay in training and also supply a
-	 * comparison set: up to `heldOutPerCell` rows per entry that the sample does not emit,
+	 * comparison set: up to `heldOutPerCell` rows per entry that the sample doesn't emit,
 	 * and whose case-folded text matches no emitted row's, written to `comparisonFile`.
 	 *
 	 * A model's score on these rows is its score on a trained structure with unseen rows.
@@ -532,7 +532,7 @@ export interface CorpusAdapter {
 	 *
 	 * Implementations must apply `opts.country` and `opts.limit`, check `opts.signal` at each
 	 * iteration, set `source` to `this.id`, and set `license` unless a row overrides it.
-	 * They must not mutate rows already yielded.
+	 * They mustn't mutate rows already yielded.
 	 */
 	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
 }

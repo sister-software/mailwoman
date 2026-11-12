@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The browser half of `#classifier/loader`. The Node half reads weights from disk through `@mailwoman/core/fs`,
- *   resolves them through `node:module`, and runs them on `onnxruntime-node`; none of that has a browser meaning. A
- *   bundler that follows `NeuralAddressClassifier.loadFromWeights` under the `browser` condition lands here and gets a
- *   refusal at call time instead of the Node graph at bundle time. Browser callers load through `web-loader`.
+ *   The browser half of `#classifier/loader`.
+ *
+ *   The Node half reads weights from disk through `@mailwoman/core/fs`, resolves them through
+ *   `node:module`, and runs them on `onnxruntime-node`; none of that has a browser meaning.
+ *   A bundler that follows `NeuralAddressClassifier.loadFromWeights` under the `browser` condition
+ *   lands here and gets a refusal at call time instead of the Node graph at bundle time.
+ *   Browser callers load through `web-loader`.
  */
 
 import type {

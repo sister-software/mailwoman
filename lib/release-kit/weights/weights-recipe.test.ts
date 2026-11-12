@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The base directory is per key: a path resolved against the wrong base degrades `existsSync → undefined` and
- *   reports the artifact absent rather than wrong.
+ *   The base directory is per key: a path resolved against the wrong base degrades
+ *   `existsSync → undefined` and reports the artifact absent rather than wrong.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -119,7 +119,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 
 describe("readWeightsRecipe — the dev-only FSTs", () => {
 	it("names both FSTs even though the release config does not", async () => {
-		// They are dev-only — `copy-weights.ts` ships neither — so their absence resolves
+		// They're dev-only — `copy-weights.ts` ships neither — so their absence resolves
 		// the gazetteer and street-context priors off with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 

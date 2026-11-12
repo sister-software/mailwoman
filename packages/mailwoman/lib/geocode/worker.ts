@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`). Top-level
- * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver and geometry databases
- * from the serializable `workerData.userData` config (paths + locale), then assemble the same geocode
- * interface the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
+ * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`).
+ *
+ * Top-level code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver
+ * and geometry databases from the serializable `workerData.userData` config (paths + locale),
+ * then assemble the same geocode interface the CLI builds.
+ * Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
 
 import { workerData } from "node:worker_threads"

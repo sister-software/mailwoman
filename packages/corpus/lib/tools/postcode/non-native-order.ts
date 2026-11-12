@@ -4,16 +4,19 @@
 /**
  *   The held-out non-native postcode-order evaluation suite.
  *
- *   A French address arrives as `«postcode» «locality»` in every source, so `Via del Corso 12, Roma 00186` or
- *   `Av. Paulista 1000, 01310-100 São Paulo` is a sequence that measures whether a model reads a postcode by its
- *   form rather than by its slot. This module reads `(house number, street, locality, postcode)` tuples from a
- *   corpus's held-out `test` split, never from `train`, and renders each with its postcode in the slot opposite
- *   the one libaddressinput's `fmt` states for its country. The rows are golden `{raw, components, country}`
- *   lines, the shape `fr-order --golden` writes, so they never reach a training corpus.
+ *   A French address arrives as `«postcode» «locality»` in every source, so
+ *   `Via del Corso 12, Roma 00186` or `Av. Paulista 1000, 01310-100 São Paulo` is a sequence
+ *   that measures whether a model reads a postcode by its form rather than by its slot.
+ *   This module reads `(house number, street, locality, postcode)` tuples from a corpus's
+ *   held-out `test` split, never from `train`, and renders each with its postcode in
+ *   the slot opposite the one libaddressinput's `fmt` states for its country.
  *
- *   Training rows with the postcode on the non-native side come from the `postcode_move` augmentation in
- *   the trainer (#2750), which moves the postcode at training time. A corpus-time renderer of the same
- *   order would mix it a second time at an unmeasured share.
+ *   The rows are golden `{raw, components, country}` lines, the shape `fr-order --golden`
+ *   writes, so they never reach a training corpus.
+ *
+ *   Training rows with the postcode on the non-native side come from the `postcode_move`
+ *   augmentation in the trainer (#2750), which moves the postcode at training time.
+ *   A corpus-time renderer of the same order would mix it a second time at an unmeasured share.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -108,7 +111,7 @@ export interface NonNativeOrderTuple {
  *
  * The first span of each tag is read, by the UTF-16 offsets `alignRow` wrote.
  *
- * @throws When the span triple is not three parallel arrays.
+ * @throws When the span triple isn't three parallel arrays.
  * A malformed row read as one without the components would hide a corrupt file behind a smaller sample.
  */
 export function nonNativeOrderTupleOf(row: NonNativeOrderCorpusRow): NonNativeOrderTuple | null {

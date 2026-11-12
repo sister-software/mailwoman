@@ -168,7 +168,7 @@ function rasterizeFeature(
 }
 
 /**
- * Pulled out of {@link MapRenderer.renderFrame} so its tile loop does not accumulate
+ * Pulled out of {@link MapRenderer.renderFrame} so its tile loop doesn't accumulate
  * this function's three nested loops on top of its own.
  */
 function rasterizeTileForKind(

@@ -1,0 +1,117 @@
+---
+title: Parse an address in a browser
+description: Serve the published model and runtime assets from your application and parse one address in a browser tab.
+role: guide
+source-of-truth: packages/neural/lib/web/loader.ts, packages/mailwoman/lib/browser-runtime/load-assets.ts, packages/neural-weights-en-us/model-card.json
+verified-with: published @mailwoman/neural, @mailwoman/neural-weights-en-us, and @mailwoman/core v11.0.0, onnxruntime-web 1.31.1, Vite 8.3.5, and Chromium 156.0.8078.4
+---
+
+# Parse an address in a browser
+
+Use the browser loader when an application needs address components in the tab. This procedure runs the published en-US model on one address. It returns a parse tree. A geographic lookup and a delivery check are separate operations.
+
+## Prerequisites
+
+- Node.js 24 LTS or later, for the build commands.
+- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+
+Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install these exact published versions in a fresh project:
+
+```sh
+npm install --save-exact @mailwoman/core@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 onnxruntime-web@1.31.1 vite@8.3.5
+```
+
+The model files must be served over HTTP. Copy the ten files used by this example into Vite's `public/mailwoman` directory. Keep the four lexicons beside `model.onnx`: the loader derives their URLs from the model URL and the published model card.
+
+```sh
+mkdir -p public/mailwoman public/ort
+for file in model.onnx tokenizer.model model-card.json \
+  anchor-lexicon-v1.json country-surface-lexicon-v1.json \
+  street-type-lexicon-v3.json locality-surface-lexicon-v7.json \
+  postcode-us.bin postcode-prefix-us.bin pair-index-us.bin; do
+  cp "node_modules/@mailwoman/neural-weights-en-us/$file" public/mailwoman/
+done
+cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs public/ort/
+cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm public/ort/
+```
+
+The two ONNX Runtime files are the pair fetched in the Chromium run below. A browser or runtime using another execution variant may require that variant's matching `.mjs` and `.wasm` files. Without the `.mjs` file beside the `.wasm` file, loading failed before inference with `Error: no available backend found. ERR: [wasm] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4173/ort/ort-wasm-simd-threaded.mjs`, and it succeeded once the `.mjs` file was in place.
+
+## Add the page and parser
+
+Save this page as `index.html` at the project root:
+
+```html
+<!doctype html>
+<html lang="en">
+	<meta charset="utf-8" />
+	<title>Mailwoman browser parse</title>
+	<pre id="result">Loading</pre>
+	<script type="module" src="/main.ts"></script>
+</html>
+```
+
+Save this module as `main.ts` beside `index.html`. Vite compiles the TypeScript entry module itself:
+
+```ts
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web/loader"
+
+const result = document.querySelector<HTMLPreElement>("#result")
+if (!result) throw new Error("The page has no #result element")
+
+try {
+	const { classifier, diagnostics, labels, pairIndexes, release } = await loadNeuralClassifierFromURLs({
+		modelURL: "/mailwoman/model.onnx",
+		tokenizerURL: "/mailwoman/tokenizer.model",
+		modelCardURL: "/mailwoman/model-card.json",
+		postcodeBinaryURLs: ["/mailwoman/postcode-us.bin"],
+		postcodePrefixURLs: ["/mailwoman/postcode-prefix-us.bin"],
+		pairIndexURLs: ["/mailwoman/pair-index-us.bin"],
+		country: "US",
+		runner: { wasmPathsRoot: "/ort/" },
+	})
+	const tree = await classifier.parse("350 5th Ave, New York, NY 10118")
+	result.textContent = JSON.stringify(
+		{
+			backend: diagnostics?.backend,
+			labels: labels?.length,
+			pairIndexes: pairIndexes.length,
+			raw: tree.raw,
+			components: decodeAsJSON(tree),
+		},
+		null,
+		2
+	)
+	await release()
+} catch (error) {
+	result.textContent = String(error)
+}
+```
+
+Build the page with `npx vite build`, then serve the built files with `npx vite preview --host 127.0.0.1`. Open the preview address in a browser. Chromium 156.0.8078.4 returned this complete content inside the `pre` element for the published 11.0.0 assets:
+
+```json
+{
+	"backend": "wasm",
+	"labels": 33,
+	"pairIndexes": 1,
+	"raw": "350 5th Ave, New York, NY 10118",
+	"components": {
+		"region": "NY",
+		"locality": "New York",
+		"postcode": "10118",
+		"street": "5th",
+		"house_number": "350",
+		"street_suffix": "Ave"
+	}
+}
+```
+
+`decodeAsJSON` provides a flat view of the tree. Use the [result schema](../reference/schema.mdx) when repeated tags or span provenance matter.
+
+## Check the asset cost
+
+The ten copied model, tokenizer, lexicon, postcode, and pair-index files occupied 42,850,059 bytes on disk in the published 11.0.0 package. The copied ONNX Runtime `.mjs` and `.wasm` pair occupied another 14,873,590 bytes, for 57,723,649 copied asset bytes in this example. The production build was served from local Vite preview to headless Chromium 156.0.8078.4 with the cache disabled. Chrome DevTools Protocol reported 44,150,884 encoded transfer bytes across 16 completed requests, including the page, generated scripts, model files, and runtime files. A warm cache, a different server compression policy, or another runtime variant can change that transfer count. Browser memory use is unknown, because this run produced no reliable measurement of it.
+
+This example loads one parser model and one <Country code="US" /> pair index. Geographic candidates and coordinates require separate data and resolver behavior. See [data and locale prerequisites](../reference/data-and-locales.mdx) before adding a geographic lookup.

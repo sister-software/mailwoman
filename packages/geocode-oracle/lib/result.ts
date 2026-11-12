@@ -34,7 +34,7 @@ export const OracleProvider = {
 } as const
 
 /**
- * The provider names an {@linkcode OracleGeocodeResult} can include.
+ * The provider names that an {@linkcode OracleGeocodeResult} can include.
  */
 export type OracleProvider = (typeof OracleProvider)[keyof typeof OracleProvider]
 
@@ -50,7 +50,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 * The match as a canonical mailwoman address record.
 	 *
 	 * `geocode` is always populated.
-	 * A reference geocoder with no coordinate does not produce a match.
+	 * A reference geocoder with no coordinate doesn't produce a match.
 	 *
 	 * The clients raise an error instead of returning a coordinate-less record.
 	 */

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node reader for `poi.db` (spec §3.4), the res-9 k-ring reader over the clustered `poi`
- *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
- *   artifact. Each path has a method that returns its details.
+ *   Node reader for `poi.db` (spec §3.4), the res-9 k-ring reader over the clustered
+ *   `poi` `without rowid` B-tree `poi-schema.ts` builds.
  *
- *   `latLngToCell` and `gridDisk` come from `@sister.software/h3`. The 48-bit short-cell packing that turns a raw
- *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and
- *   that math is never reimplemented here.
+ *   Category, brand and name searches share one artifact.
+ *   Each path has a method that returns its details.
+ *
+ *   `latLngToCell` and `gridDisk` come from `@sister.software/h3`.
+ *   The 48-bit short-cell packing that turns a raw H3 cell into the integer `poi.h3_cell` stores
+ *   is `@mailwoman/spatial`'s `shortCellToInt`, and that math is never reimplemented here.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -372,7 +374,7 @@ function toHit(
  * then phrase-quote each whitespace-separated token (and-joined).
  *
  * `lookup.ts` already has this discipline in `sanitizeFTSQuery`, but that function is
- * module-private there and is not re-exported from `fts.ts` or the package's `index.ts`.
+ * module-private there and isn't re-exported from `fts.ts` or the package's `index.ts`.
  * This replicates the discipline locally rather than reach across the module boundary for a private helper.
  */
 function sanitizePOINameQuery(text: string): string {

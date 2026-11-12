@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Adds confidence-scaled span-proposal biases to encoder emissions before Viterbi. Annotation spans
- *   bias toward `O`. quoted spans do not bias labels. mapped proposal kinds bias their component tag.
+ *   Adds confidence-scaled span-proposal biases to encoder emissions before Viterbi.
+ *
+ *   Annotation spans bias toward `O`. quoted spans do not bias labels. mapped
+ *   proposal kinds bias their component tag.
  */
 
 import type { ProposedSpan } from "@mailwoman/core/pipeline"

@@ -2,17 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval conformance` — run the conformance-LAW suites: pairs of queries that differ by one
- *   declared transformation. Each pair is graded on the axis its own row specifies (entity identity, assembled
- *   coordinate, strict parse, component map, mechanism shape). Every suite in the register runs by default,
- *   with rows drawn from committed board cases and variants derived from those same queries by the specified
- *   transformation. The register (`conformance/suites.ts`) defines the laws. This file contains a second list
- *   of those laws. The list can go stale.
+ *   `mailwoman eval conformance` — run the conformance-LAW suites: pairs of queries
+ *   that differ by one declared transformation.
  *
- *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades rather than a
- *   second assembly of it. Rows are audited before the engine loads; `status: pass` rows check the exit
- *   code. Tracked rows report without blocking. A tracked row that starts holding prints a promotion
- *   instruction.
+ *   Each pair is graded on the axis its own row specifies
+ *   (entity identity, assembled coordinate, strict parse, component map, mechanism shape).
+ *   Every suite in the register runs by default, with rows drawn from committed board cases
+ *   and variants derived from those same queries by the specified transformation.
+ *
+ *   The register (`conformance/suites.ts`) defines the laws.
+ *   This file contains a second list of those laws.
+ *   The list can go stale.
+ *
+ *   Runs through the Gauntlet's own deps, so the pipeline under test is the one
+ *   the board grades rather than a second assembly of it.
+ *   Rows are audited before the engine loads; `status: pass` rows check the exit code.
+ *
+ *   Tracked rows report without blocking.
+ *   A tracked row that starts holding prints a promotion instruction.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

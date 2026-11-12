@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a Portuguese address uses: the apartado and private letter box, the door side, floors,
- *   the number and ordinal marks, and the relation words of a query.
+ *   The designators a Portuguese address uses: the apartado and private letter box,
+ *   the door side, floors, the number and ordinal marks, and the relation words of a query.
  *
- *   The UPU sheet writes `R. LEAL DA CÂMARA 31 RC ESQ`, `APARTADO 42024` and `CCI 8318`, and it labels the `CCI`
- *   line a p.o. box. The marks `n.º`, `º` and `ª` are read from Wiktionary, because the sheet's examples write
- *   none of them.
+ *   The UPU sheet writes `R. LEAL DA CÂMARA 31 RC ESQ`, `APARTADO 42024`
+ *   and `CCI 8318`, and it labels the `CCI` line a p.o. box.
+ *   The marks `n.º`, `º` and `ª` are read from Wiktionary, because the sheet's examples write none of them.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/prtEn.pdf UPU, Portugal addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/nº Wiktionary, nº}

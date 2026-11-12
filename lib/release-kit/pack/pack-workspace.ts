@@ -4,9 +4,12 @@
 /**
  *   The one way to produce a consumer-grade tarball from a workspace: inject the derived
  *   `publishConfig.exports` (rewrite every `.ts` target to emitted JavaScript — Node refuses
- *   type-stripping under node_modules, so a source target must never reach a consumer), refuse the pack if
- *   one survives, `yarn pack`, restore the manifest. Used by both the release path (`publish-workspace.ts`) and the CI smoke test
- *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps. That
+ *   type-stripping under node_modules, so a source target must never reach a consumer),
+ *   refuse the pack if one survives, `yarn pack`, restore the manifest.
+ *
+ *   Used by both the release path (`publish-workspace.ts`) and the CI smoke test
+ *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps.
+ *   That
  *   let the v7.2.0 ship-break class through untested.
  */
 

@@ -38,7 +38,7 @@ const STREET_LOCALE = streetLocaleForBANCountry("fr")
 const ARRONDISSEMENT = /^(.+?)\s+\d+(?:er|e)\s+arrondissement$/iu
 
 /**
- * The city an arrondissement's commune belongs to, or `null` for a commune that is not an arrondissement.
+ * The city an arrondissement's commune belongs to, or `null` for a commune that's not an arrondissement.
  */
 export function arrondissementCity(commune: string): string | null {
 	return ARRONDISSEMENT.exec(commune.trim())?.[1] ?? null

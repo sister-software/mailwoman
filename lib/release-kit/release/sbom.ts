@@ -2,30 +2,42 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate Software Bill of Materials (sbom) artifacts for the published `mailwoman` package in
- *   both open standards — spdx 2.3 and CycloneDX 1.5 — using the zero-dependency `npm sbom` builtin
- *   (npm >= 9.5). The files land in `docs/static/sbom/` so Docusaurus serves them at
- *   `https://mailwoman.post/sbom/mailwoman-<version>.{spdx,cdx}.json`.
+ *   Generate Software Bill of Materials (sbom) artifacts for the published
+ *   `mailwoman` package in both open standards — spdx 2.3 and CycloneDX 1.5 —
+ *   using the zero-dependency `npm sbom` builtin (npm >= 9.5).
  *
- *   The monorepo uses Yarn's `workspace:*` protocol. `npm sbom` cannot resolve that protocol.
- *   An SBOM documents what a consumer installs: concrete versions and the production dependency
- *   closure. The operation runs `npm pack` on the released version, then installs and inspects its tarball.
+ *   The files land in `docs/static/sbom/` so Docusaurus serves them
+ *   at `https://mailwoman.post/sbom/mailwoman-<version>.{spdx,cdx}.json`.
+ *
+ *   The monorepo uses Yarn's `workspace:*` protocol.
+ *   `npm sbom` cannot resolve that protocol.
+ *
+ *   An SBOM documents what a consumer installs: concrete versions and the production dependency closure.
+ *   The operation runs `npm pack` on the released version, then installs and inspects its tarball.
  *
  *   The published `mailwoman` package.json includes one devDependency: `@mailwoman/osm`.
  *   This internal dev-only workspace is never published, so a clean install would return 404.
- *   Consumers do not install a dependency's devDependencies. A production SBOM excludes them by
- *   definition, so the operation strips devDependencies before installation. It renames the extracted
- *   tarball directory to `mailwoman`. npm derives the CycloneDX root display name from the directory
- *   basename, so the renamed directory gives the component the display name `mailwoman`.
  *
- *   The operation normalizes two npm-spdx-output quirks so the document passes the SPDX reference validator
- *   (pyspdxtools). It truncates the `created` timestamp to whole seconds because SPDX forbids fractional
- *   seconds. It rewrites each `_` in an SPDX ID to `-` because the SPDX ID character set allows letters,
- *   numbers, `.`, and `-` only — e.g. `string_decoder`). The rewrite is applied consistently across
- *   every spdxid cross-reference (documentDescribes, relationships, hasFiles) so the graph stays
- *   internally consistent. CycloneDX output validates as-is and is only re-serialized for a tidy diff.
+ *   Consumers do not install a dependency's devDependencies.
+ *   A production SBOM excludes them by definition, so the operation strips
+ *   devDependencies before installation.
  *
- *   Usage:  yarn mwops release sbom [--version <x.y.z>] [--out <dir>]
+ *   It renames the extracted tarball directory to `mailwoman`. npm derives the
+ *   CycloneDX root display name from the directory basename, so the renamed directory
+ *   gives the component the display name `mailwoman`.
+ *
+ *   The operation normalizes two npm-spdx-output quirks so the document passes
+ *   the SPDX reference validator (pyspdxtools).
+ *   It truncates the `created` timestamp to whole seconds because SPDX forbids fractional seconds.
+ *
+ *   It rewrites each `_` in an SPDX ID to `-` because the SPDX ID character set allows
+ *   letters, numbers, `.`, and `-` only — e.g. `string_decoder`).
+ *   The rewrite is applied consistently across every spdxid cross-reference
+ *   (documentDescribes, relationships, hasFiles) so the graph stays internally consistent.
+ *
+ *   CycloneDX output validates as-is and is only re-serialized for a tidy diff.
+ *
+ *   Usage: yarn mwops release sbom [--version <x.y.z>] [--out <dir>]
  *     --version  the published `mailwoman` version to document (default: the `mailwoman` workspace's
  *                package.json version — i.e. the version this repo would publish).
  *     --out      output directory (default: docs/static/sbom).

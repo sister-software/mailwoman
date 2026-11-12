@@ -61,8 +61,8 @@ export function frenchTitleCase(text: string): string {
 /**
  * The held-out street surfaces: every non-blank line, stripped.
  *
- * @throws When the file does not exist, naming it, because a missing list
- * would admit the board's own streets.
+ * @throws When the file doesn't exist, naming it, because a missing list would
+ * admit the board's own streets.
  */
 export async function readFRReservedSurfaces(path: PathBuilderLike = frReservedSurfacesPath()): Promise<Set<string>> {
 	if (!(await pathExists(path))) {

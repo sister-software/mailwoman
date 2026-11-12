@@ -4,7 +4,7 @@
 /**
  * @file The license and attribution of the `osm` adapter's rows.
  *
- *   These sit apart from the adapter so a reader of the license, such as the effective training manifest, does not
+ *   These sit apart from the adapter so a reader of the license, such as the effective training manifest, doesn't
  *   import the adapter. The corpus build's code hash follows imports, and an import of the adapter would put every
  *   OSM edit into every source's hash.
  */

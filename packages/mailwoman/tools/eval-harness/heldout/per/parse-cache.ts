@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parses held-out rows with one weights cache on a pool of worker threads, and keeps the parses so that scoring the
- *   same rows with the same weights at the same commit reads them back rather than parsing again.
+ *   Parses held-out rows with one weights cache on a pool of worker threads,
+ *   and keeps the parses so that scoring the same rows with the same weights at the
+ *   same commit reads them back rather than parsing again.
  *
- *   A cached parse file is keyed by four values: the inference rule, the rows (identity, text and country of each), a
- *   digest of every file in the weights packages the rows are parsed with, and the commit. A working tree with any
- *   change under `packages/` neither reads nor writes the cache, because the parse depends on source the commit does
- *   not then describe. Inputs outside the weights cache, such as the gazetteer under the data root, are not keyed.
+ *   A cached parse file is keyed by four values: the inference rule, the rows
+ *   (identity, text and country of each), a digest of every file in the weights
+ *   packages the rows are parsed with, and the commit.
+ *   A working tree with any change under `packages/` neither reads nor writes the cache,
+ *   because the parse depends on source the commit doesn't then describe.
+ *
+ *   Inputs outside the weights cache, such as the gazetteer under the data root, are not keyed.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -46,6 +50,12 @@ export interface HeldoutParseCacheKey {
 	 */
 	weights: string
 	commit: string
+	/**
+	 * Present as `"none"` for parses made without the row's country as the locale hint.
+	 *
+	 * A hinted key leaves it out, so the files hinted runs cached before the field existed keep their names.
+	 */
+	localeHint?: "none"
 }
 
 /**
@@ -122,6 +132,13 @@ export interface HeldoutParseOptions {
 	 * Where cached parse files live, or `null` to parse without the cache.
 	 */
 	cacheDirectory?: PathBuilderLike | null
+	/**
+	 * Whether each row's country is the classifier's locale hint (`row-country`)
+	 * or no hint is passed (`none`).
+	 *
+	 * @defaultValue `"row-country"`
+	 */
+	localeHint?: "row-country" | "none"
 }
 
 /**
@@ -141,7 +158,8 @@ export async function parseHeldoutRows(
 	options: HeldoutParseOptions
 ): Promise<{ parses: Map<string, readonly BatterySpan[]>; source: HeldoutParseSource }> {
 	const parseRows = heldoutParseRows(rows)
-	const pool = { cacheRoot, workers: options.workers, threads: options.threads }
+	const localeHint = options.localeHint ?? "row-country"
+	const pool = { cacheRoot, workers: options.workers, threads: options.threads, localeHint }
 
 	const cacheDirectory =
 		options.cacheDirectory === undefined ? dataRootPath("models", "arms", "heldout-parses") : options.cacheDirectory
@@ -171,6 +189,7 @@ export async function parseHeldoutRows(
 			rows.map((row) => heldoutWeightsLocale(row.country, options.packages))
 		),
 		commit: await gitHead(),
+		...(localeHint === "none" ? { localeHint } : {}),
 	}
 
 	const name = sha256Hex(stringifyJSON(key)).slice(0, 16)

@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares each regression-board row's written form against the form this repository's own layout
- *   would produce from that row's expected components.
+ *   Compares each regression-board row's written form against the form this repository's
+ *   own layout would produce from that row's expected components.
  *
- *   An adapter or a recipe builds each training row by rendering a line through a codex layout. A board
- *   row's `source` field records an operator sweep or an issue instead, so a person wrote that line.
- *   Those are two different written surfaces. A decoder fitted on the first is graded on the second.
+ *   An adapter or a recipe builds each training row by rendering a line through a codex layout.
+ *   A board row's `source` field records an operator sweep or an issue instead,
+ *   so a person wrote that line.
  *
- *   This reports how far apart they are, per country, without a parser and without a GPU. A row whose
- *   `input` matches its rendered twin sits inside the surface the training rows teach. A row that
- *   differs is a form no adapter or recipe emits.
+ *   Those are two different written surfaces.
+ *   A decoder fitted on the first is graded on the second.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/board-surface-gap.run.ts [--country GB] [--show 15] [--json <out>]
+ *   This reports how far apart they're, per country, without a parser and without a GPU.
+ *   A row whose `input` matches its rendered twin sits inside the surface the training rows teach.
+ *   A row that differs is a form no adapter or recipe emits.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/board-surface-gap.run.ts
+ *   [--country GB] [--show 15] [--json <out>]
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

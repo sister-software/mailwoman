@@ -17,6 +17,12 @@ const HEADER = ["code", "name", "address", "city", "zip"]
 let server: Server
 let sourceURL: string
 
+/**
+ * The version the test host states.
+ * A test changes it to stand for a republished workbook.
+ */
+let etag = '"v1"'
+
 beforeAll(async () => {
 	const data = (rows: Array<Array<string | number>>): SheetData => rows as SheetData
 
@@ -31,9 +37,13 @@ beforeAll(async () => {
 		},
 	]).toBuffer()
 
-	server = createServer((_req, res) => {
-		res.writeHead(200, { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
-		res.end(workbook)
+	server = createServer((req, res) => {
+		res.writeHead(200, {
+			"Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			ETag: etag,
+		})
+
+		res.end(req.method === "HEAD" ? undefined : workbook)
 	})
 
 	await new Promise<void>((resolve) => {
@@ -45,7 +55,7 @@ beforeAll(async () => {
 
 afterAll(() => server.close())
 
-test("fetchStateHISchools retains and validates the source workbook, then skips a matching artifact", async () => {
+test("fetchStateHISchools retains and validates the source workbook, skips it while the host states the same version, and refetches a republished one", async () => {
 	await using scratch = await temporaryDirectory("mailwoman-state-hi-schools-")
 	const reports: string[] = []
 	const options = { outRoot: scratch.path, sourceURL }
@@ -73,4 +83,13 @@ test("fetchStateHISchools retains and validates the source workbook, then skips 
 		failed: 0,
 		failedCodes: [],
 	})
+
+	// The workbook on disk is unchanged, and only the publisher's version moved.
+	etag = '"v2"'
+
+	await expect(fetchStateHISchools(options)).resolves.toMatchObject({ fetched: 1, skipped: 0 })
+
+	const refreshed = await readLocalJSONFile<Record<string, unknown>>(sourceDir("MANIFEST.json"))
+
+	expect(refreshed.publisher_version).toBe('etag "v2"')
 })

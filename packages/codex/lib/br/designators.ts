@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Brazilian designators: caixa postal, premise and sub-premise words, floors, number marks and Portuguese
- *   relation words. The Correios sheet on the UPU site shows `Caixa Postal`, `CPC`, `Bloco`, `Conjunto`,
- *   `Quadra` and `8º andar`. The remaining words take a dictionary entry as their source.
+ *   Brazilian designators: caixa postal, premise and sub-premise words, floors,
+ *   number marks and Portuguese relation words.
+ *
+ *   The Correios sheet on the UPU site shows `Caixa Postal`, `CPC`, `Bloco`,
+ *   `Conjunto`, `Quadra` and `8º andar`.
+ *   The remaining words take a dictionary entry as their source.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/braEn.pdf UPU Brazil postal address sheet (Correios)}
  * @see {@link https://en.wiktionary.org/wiki/edif%C3%ADcio Wiktionary, edifício}

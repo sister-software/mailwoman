@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `evaluation/metrics.py`: the token F1, the cross-pollution rate and the per-locale tag F1 a run logs, and the
 //! CSV eval row. Counts are integers and the ratios are float32, as the Python tensors compute them.
 

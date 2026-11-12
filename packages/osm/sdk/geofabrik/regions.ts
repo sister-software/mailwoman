@@ -4,14 +4,17 @@
 /**
  *   The Geofabrik regions the OpenStreetMap build can acquire, each with the countries its extract holds.
  *
- *   A region is the publisher's identity: its path under https://download.geofabrik.de, without the
- *   `-latest.osm.pbf` suffix. A country extraction policy names regions by this identity and never copies a
- *   URL. One region may hold several countries, such as `europe/dach` (Germany, Austria and Switzerland),
+ *   A region is the publisher's identity: its path under https://download.geofabrik.de,
+ *   without the `-latest.osm.pbf` suffix.
+ *   A country extraction policy names regions by this identity and never copies a URL.
+ *
+ *   One region may hold several countries, such as `europe/dach` (Germany, Austria and Switzerland),
  *   and the build acquires it once and derives each requested country from the same file.
  *
- *   Geofabrik clips every extract along a polygon drawn with a margin past the border, so a region's file
- *   also holds addresses on the far side of each land border. `partial` lists a country of which the region holds a
- *   part only, such as Northern Ireland in `europe/ireland-and-northern-ireland`.
+ *   Geofabrik clips every extract along a polygon drawn with a margin past the border,
+ *   so a region's file also holds addresses on the far side of each land border.
+ *   `partial` lists a country of which the region holds a part only, such as Northern
+ *   Ireland in `europe/ireland-and-northern-ireland`.
  */
 
 /**
@@ -38,7 +41,7 @@ export interface GeofabrikRegion {
 export const GEOFABRIK_BASE_URL = "https://download.geofabrik.de/"
 
 // country-branch: each row records which countries one Geofabrik extract covers.
-// Geofabrik's index-v1.json, which lists each extract's ISO codes, would replace the hand copy.
+// Geofabrik's index-v1.json lists each extract's ISO codes and would replace the hand copy.
 const REGIONS: readonly GeofabrikRegion[] = [
 	{ id: "australia-oceania/new-zealand", countries: ["NZ"], partial: [] },
 	{ id: "asia/indonesia", countries: ["ID"], partial: [] },
@@ -60,7 +63,7 @@ const REGIONS: readonly GeofabrikRegion[] = [
 const BY_ID = new Map(REGIONS.map((region) => [region.id, region]))
 
 /**
- * The region with this identity, or `null` when the registry does not list it.
+ * The region with this identity, or `null` when the registry doesn't list it.
  */
 export function geofabrikRegion(id: string): GeofabrikRegion | null {
 	return BY_ID.get(id.replaceAll(/^\/+|\/+$/g, "")) ?? null

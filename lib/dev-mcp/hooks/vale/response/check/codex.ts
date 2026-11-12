@@ -3,24 +3,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Codex Stop hook: the Codex twin of `response/check.ts`. The lint policy — rule set,
- *   severity split, finding format — lives in `check-core.ts`; this file owns the Codex
- *   payload shape, loop guard and output JSON. Codex's hook interface
- *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses.
- *   `Stop` fires when a turn completes. The payload includes `last_assistant_message`.
+ *   Codex Stop hook: the Codex twin of `response/check.ts`.
+ *
+ *   The lint policy — rule set, severity split, finding format — lives in `check-core.ts`;
+ *   this file owns the Codex payload shape, loop guard and output JSON.
+ *   Codex's hook interface (https://learn.chatgpt.com/docs/hooks) matches Claude
+ *   Code's on the parts this hook uses.
+ *
+ *   `Stop` fires when a turn completes.
+ *   The payload includes `last_assistant_message`.
+ *
  *   The output is `decision: "block"` + `reason` or the non-blocking `systemMessage`.
  *   The Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
  *
  *   Two deliberate differences from the Claude adapter:
  *
- *   - Codex has no `stop_hook_active` field or built-in loop prevention. The one-pass guard
- *     uses a session-keyed marker file in the OS temp dir. A block writes the marker.
- *     The next Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
- *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
- *     one corrective turn.
- *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript
- *     schema is Codex's own rather than the jsonl shape the Claude adapter parses. A missing
- *     `last_assistant_message` here is silence rather than a parse attempt.
+ *   - Codex has no `stop_hook_active` field or built-in loop prevention.
+ *     The one-pass guard uses a session-keyed marker file in the OS temp dir.
+ *     A block writes the marker.
+ *     The next Stop in that session consumes it and passes unchecked.
+ *     That approximates Claude's semantics — the reply after a block goes unlinted
+ *     whatever produced it — and caps a false positive at one corrective turn.
+ *   - There's no transcript fallback: Codex's `transcript_path` is nullable and its transcript
+ *     schema is Codex's own rather than the jsonl shape the Claude adapter parses.
+ *     A missing `last_assistant_message` here is silence rather than a parse attempt.
  *
  *   Register it in `.codex/hooks.json` under `hooks.Stop`; the command path is repo-relative,
  *   matching how `.codex/config.toml` addresses `lib/dev-mcp/cli.ts`.

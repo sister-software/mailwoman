@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Converts semantic observations, coverage-qualified absences and layer designations into `QueryIntentMarker`s.
- *   Markers add evidence without changing the winning answer. Each marker includes a kind that the verdict holds as
- *   its top kind or an alternative.
+ *   Converts semantic observations, coverage-qualified absences and layer
+ *   designations into `QueryIntentMarker`s.
+ *
+ *   Markers add evidence without changing the winning answer.
+ *   Each marker includes a kind that the verdict holds as its top kind or an alternative.
  */
 
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
@@ -351,7 +353,7 @@ export function zoningDesignationMarker(
 export interface LayerDesignationRoutes {
 	/**
 	 * The EA Flood Map for Planning route reports a designated absence inside England
-	 * where a location has no flood polygon because that is Flood Zone 1.
+	 * where a location has no flood polygon because that's Flood Zone 1.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
 	soilCapabilityRoute?: SoilCapabilityRoute

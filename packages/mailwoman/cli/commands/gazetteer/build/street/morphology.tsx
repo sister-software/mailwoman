@@ -3,10 +3,11 @@
 
 /**
  *   `mailwoman gazetteer build street-morphology` — the sealed street-morphology FST artifact
- *   (`fst-street-morphology.bin`), the street-context check's signal source serialized once at
- *   build time instead of rebuilt from the libpostal dictionaries per process (and never in the
- *   browser). Lands at `$MAILWOMAN_DATA_ROOT/db/wof/` by default — beside, never inside, the
- *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
+ *   (`fst-street-morphology.bin`), the street-context check's signal source serialized once at build time
+ *   instead of rebuilt from the libpostal dictionaries per process (and never in the browser).
+ *
+ *   Lands at `$MAILWOMAN_DATA_ROOT/db/wof/` by default — beside, never inside, the per-locale FST dir.
+ *   See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

@@ -95,10 +95,10 @@ export interface AlignCheckpoint {
 }
 
 /**
- * Read the align checkpoint, or return `null` when the build has not reached one.
+ * Read the align checkpoint, or return `null` when the build hasn't reached one.
  *
  * @throws When the checkpoint describes different settings, or an adapter order
- * the current run does not begin with.
+ * the current run doesn't begin with.
  * Both cases would append this run's rows to a file written under different rules.
  * The resulting corpus could report a row count that later readers accept.
  */

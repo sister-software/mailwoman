@@ -3,7 +3,9 @@
 
 /**
  *   Both decision sites call this ordering function.
- *   The candidate backend partitions rows before the limit window. The resolver walk partitions again after fame and anchor re-ranking.
+ *
+ *   The candidate backend partitions rows before the limit window.
+ *   The resolver walk partitions again after fame and anchor re-ranking.
  */
 
 import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"

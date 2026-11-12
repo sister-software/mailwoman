@@ -9,8 +9,8 @@
  *   `packages/mailwoman/data/published-bundles.json` records the bucket's `content-length`
  *   for those artifacts on a stated date. The two sources drifted apart once without a check noticing.
  *   The docs site then restated the stale figure to customers. This check reports an artifact
- *   the snapshot does not cover, an artifact the registry no longer names and a size the snapshot could
- *   not read. It also reports a size mismatch between the registry and snapshot.
+ *   the snapshot doesn't cover, an artifact the registry no longer names and a size the snapshot couldn't
+ *   read. It also reports a size mismatch between the registry and snapshot.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -33,7 +33,7 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-healt
  * Zero, because `data status` compares a local file against `approxBytes` exactly,
  * so a registry figure one byte off reports every correct download as stale.
  * The first snapshot, taken 2026-09-27, found all 106 published artifacts matching to
- * the byte, so the tolerance refuses no artifact that is right today.
+ * the byte, so the tolerance refuses no artifact that's right today.
  */
 export const APPROX_BYTES_TOLERANCE = 0
 

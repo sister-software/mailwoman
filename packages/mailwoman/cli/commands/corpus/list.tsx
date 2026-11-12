@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus list` — print every adapter known to the default registry, one per line, for humans
- *   and for scripts that fan a build out over adapters. It prints zero lines and exits 0 when no adapter has
- *   been registered.
+ *   `mailwoman corpus list` — print every adapter known to the default registry,
+ *   one per line, for humans and for scripts that fan a build out over adapters.
+ *
+ *   It prints zero lines and exits 0 when no adapter has been registered.
  */
 
 import { Box, Text } from "ink"
@@ -17,8 +18,8 @@ import { type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
 export const spec = { name: "list", description: "List registered corpus adapters" } as const satisfies CommandSpec
 
 /**
- * Per-line output is one `Text` node so Ink does not column-wrap the adapter id on a
- * non-TTY stdout (CI, spawned tests), keeping the list grep-friendly rather than pretty.
+ * Per-line output is one `Text` node so Ink doesn't column-wrap the adapter id on a non-TTY
+ * stdout (CI, spawned tests), keeping the list grep-friendly rather than pretty.
  */
 const CorpusList = () => {
 	const state = useCommandTask(async () => {

@@ -3,14 +3,22 @@
 
 /**
  *   The admin build's Freeze phase checkpoints WAL, freezes the journal and closes the ancestor relation.
- *   It creates an `ancestors(id)` index before the −4 backfill. The `wof:hierarchy` −4 backfill applies only to WOF ids.
- *   The phase then builds indexes and analyze data. It also runs an integrity check. The index comes first
- *   because the backfill's per-candidate lookups otherwise full-scan the 13M-row table and the build
- *   stalls for hours. The phase runs in place on the staging DB. The caller then `vacuum into`s the final artifact
- *   afterwards.
+ *
+ *   It creates an `ancestors(id)` index before the −4 backfill.
+ *   The `wof:hierarchy` −4 backfill applies only to WOF ids.
+ *
+ *   The phase then builds indexes and analyze data.
+ *   It also runs an integrity check.
+ *
+ *   The index comes first because the backfill's per-candidate lookups otherwise
+ *   full-scan the 13M-row table and the build stalls for hours.
+ *   The phase runs in place on the staging DB.
+ *
+ *   The caller then `vacuum into`s the final artifact afterwards.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -41,11 +49,15 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
-		await import("@mailwoman/resolver-wof-sqlite/ancestry")
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	const {
+		ancestry: { backfillAncestorsFromHierarchy, discoverAdminDataRoots },
+		unifiedSchema: { createUnifiedIndexes, populateAncestors },
+	} = await allKeyed({
+		ancestry: import("@mailwoman/resolver-wof-sqlite/ancestry"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+	})
 
-	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
 	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`).

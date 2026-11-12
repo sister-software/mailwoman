@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   VersionCompare — side-by-side parse comparison of two model versions on the same input. Activated
- *   by the Compare toggle. Shows two SpanHighlight ribbons, two component tables
- *   with confidence-delta annotations and a unified diff of tag changes.
+ *   VersionCompare — side-by-side parse comparison of two model versions on the same input.
+ *
+ *   Activated by the Compare toggle.
+ *   Shows two SpanHighlight ribbons, two component tables with confidence-delta
+ *   annotations and a unified diff of tag changes.
  */
 
 import type { ParseResult, ParsedComponent } from "@mailwoman/core/pipeline/client-result"
@@ -155,7 +157,7 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 		})
 	}
 
-	// Spanned compare nodes that the span did not match.
+	// Spanned compare nodes that the span didn't match.
 	for (const [spanKey, cn] of cBySpan) {
 		if (handledSpans.has(spanKey)) continue
 

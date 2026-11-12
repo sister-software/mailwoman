@@ -19,7 +19,7 @@ const COUNTRY_CODE = /^[A-Z]{2}$/
 /**
  * Parses the tier table in `SCOPE.mdx` into a map from tier number to the country codes listed in that tier.
  *
- * A country can appear in more than one tier, so the map must not be inverted to look up a country's tier.
+ * A country can appear in more than one tier, so the map mustn't be inverted to look up a country's tier.
  */
 export function declaredTiers(markdown: string): Map<string, string[]> {
 	const tiers = new Map<string, string[]>()

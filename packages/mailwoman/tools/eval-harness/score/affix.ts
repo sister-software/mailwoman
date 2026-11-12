@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Affix-aware per-tag scorer. `per-locale-f1`'s `foldToComponents` joins
- *   `street_prefix`+`street`+`street_suffix` into one `street`, so it cannot measure the affix
- *   split. This scores the unfolded `decodeAsJSON` output against split ground truth: exact-match
- *   (case-insensitive) P/R/F1 per tag.
+ *   Affix-aware per-tag scorer.
  *
- *   Every printed line goes through the `report` sink, one call per line, so a caller can capture the
- *   report as markdown.
+ *   `per-locale-f1`'s `foldToComponents` joins `street_prefix`+`street`+`street_suffix`
+ *   into one `street`, so it cannot measure the affix split.
+ *   This scores the unfolded `decodeAsJSON` output against split ground truth:
+ *   exact-match (case-insensitive) P/R/F1 per tag.
+ *
+ *   Every printed line goes through the `report` sink, one call per line,
+ *   so a caller can capture the report as markdown.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"

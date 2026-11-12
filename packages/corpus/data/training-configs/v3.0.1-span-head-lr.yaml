@@ -17,12 +17,12 @@
 #   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573. the check is a
 #   relative comparison and both heads read the same starved encoder).
 # Secondary read: the span NLL must converge. If loss again ends ~17 and still falling, the
-# LR is not the binding constraint and the fork reopens.
+# LR isn't the binding constraint and the fork reopens.
 #
 # Not a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
 # untouched. this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
 #
-# If seg@1 still loses with a converged span loss: that is the falsification. Do not tune further —
+# If seg@1 still loses with a converged span loss: that's the falsification. Do not tune further —
 # fork to the operator with the loss curve.
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).

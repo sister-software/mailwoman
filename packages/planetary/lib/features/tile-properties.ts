@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A clicked tile feature becomes a selection through the pipeline's own schema, so the app never trusts a tile
- *   property it did not validate: a tile from an older build, or a property tippecanoe coerced, fails here instead of
- *   rendering as a feature with a missing name.
+ *   A clicked tile feature becomes a selection through the pipeline's own schema, so the app
+ *   never trusts a tile property it didn't validate: a tile from an older build, or a property
+ *   tippecanoe coerced, fails here instead of rendering as a feature with a missing name.
  */
 
 import { PlanetaryNomenclatureFeatureSchema } from "@mailwoman/astrogeology/schema/nomenclature"

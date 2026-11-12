@@ -249,7 +249,7 @@ export interface LinkageEvalRegistrant {
  * This function groups FRNs that share a provider ID into registrants.
  *
  * It builds truth from the inputs rather than from the evaluated artifact,
- * so family scoring does not depend on entity-resolution results.
+ * so family scoring doesn't depend on entity-resolution results.
  */
 export function buildTruthRegistrants(
 	rows: readonly Form499Row[],

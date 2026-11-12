@@ -2,31 +2,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The measured coverage record for the candidate gazetteer and its build-time emission. It is the
- *   durable home for two sets of facts:
+ *   The measured coverage record for the candidate gazetteer and its build-time emission.
+ *   It is the durable home for two sets of facts:
  *
  *   - The hard-country-filter coverage measurements behind
  *     `HARD_PLACE_COUNTRY_SAFELIST` (`core/pipeline/runtime-pipeline.ts`).
  *   - The guard-B plausibility boxes behind `COUNTRY_BBOX` (`resolver/plausibility.ts`).
  *
- *   Facts about an artifact live in the artifact's manifest, read at load, so they update at
- *   gazetteer rebuild rather than at a code pull request. This module owns the reviewed measurement
- *   record ({@link MEASURED_COUNTRY_COVERAGE}, {@link MEASURED_COUNTRY_BBOXES}, grown at promotes,
- *   like `defaults.ts` owns the build recipe) and the emission step `buildCandidate` runs before
- *   sealing. The schema and canonical read/write functions live in
- *   `@mailwoman/resolver-wof-sqlite/coverage-manifest-schema` (the fold/build convention: canonical
- *   package functions, composed here).
+ *   Facts about an artifact live in the artifact's manifest, read at load,
+ *   so they update at gazetteer rebuild rather than at a code pull request.
+ *   This module owns the reviewed measurement record ({@link MEASURED_COUNTRY_COVERAGE},
+ *   {@link MEASURED_COUNTRY_BBOXES}, grown at promotes, like `defaults.ts` owns the build recipe)
+ *   and the emission step `buildCandidate` runs before sealing.
  *
- *   The shipped candidate gazetteer is never patched ("never patch databases, rebuild"): an
- *   artifact predating the manifest reads `undefined` at open. Every consumer then falls back to the
- *   code constants byte-identically. FI and PL are present rows with `hardFilterSafe: false`.
- *   This setting
- *   keeps a measured failure distinguishable from a country that was never measured (absent row).
+ *   The schema and canonical read/write functions live in
+ *   `@mailwoman/resolver-wof-sqlite/coverage-manifest-schema`
+ *   (the fold/build convention: canonical package functions, composed here).
+ *
+ *   The shipped candidate gazetteer is never patched ("never patch databases, rebuild"):
+ *   an artifact predating the manifest reads `undefined` at open.
+ *   Every consumer then falls back to the code constants byte-identically.
+ *
+ *   FI and PL are present rows with `hardFilterSafe: false`.
+ *   This setting keeps a measured failure distinguishable from a country that
+ *   was never measured (absent row).
  */
 
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
 // resolver-wof-sqlite's runtime modules are imported inside the functions,
-// so loading this module does not evaluate them.
+// so loading this module doesn't evaluate them.
 // Type-only imports are erased.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
@@ -143,7 +147,7 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	},
 	// AU joined with the AU placer class.
 	// The hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
-	// The receipt has no single-rate number, so there is no `hardResolveRate` (never invent a magnitude).
+	// The receipt has no single-rate number, so there's no `hardResolveRate` (never invent a magnitude).
 	{
 		country: "AU",
 		hardFilterSafe: true,

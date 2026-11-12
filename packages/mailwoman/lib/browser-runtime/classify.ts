@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The classify stage of the browser runtime: query shape, kind, the neural pipeline and the tree flatten, with the
- *   two front-half timings captured, plus the dual-role resolution and the projections a renderer takes. The caller
- *   owns resolution (`runCascade`, a street tier, an anchor fallback) and the staged progress ticks.
+ *   The classify stage of the browser runtime: query shape, kind, the neural pipeline
+ *   and the tree flatten, with the two front-half timings captured, plus the dual-role
+ *   resolution and the projections a renderer takes.
+ *
+ *   The caller owns resolution (`runCascade`, a street tier, an anchor fallback)
+ *   and the staged progress ticks.
  */
 
 // Keep these static.

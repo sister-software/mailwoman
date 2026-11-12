@@ -200,7 +200,7 @@ Attributed against the placebo, the Russian rows add 26 exact rows at 115 draws 
 
 - **Street rows without a postcode** improve from the first thousand draws.
 - **Rows with a six-digit postcode** stay at 0 through 9,683 draws and reach 541 of 875 at 98,999. The
-  threshold lies between 10,000 and 100,000 draws, and the curve has not flattened at 100,000.
+  threshold lies between 10,000 and 100,000 draws, and the curve hasn't flattened at 100,000.
 
 **No floor is set.** A floor is the exposure at which behavior is stable, and at 98,999 draws the
 postcode rows are still rising. `exposure/floors.json` stays empty until a longer arm shows the
@@ -305,11 +305,11 @@ held until each dataset's license is read.
   SCHEMA.mdx defines them as refining. `locality_unit`, `building_name`, the stage4 tags and the two JS-only
   tags have no documented equivalent and are counted as unrepresentable rather than written as `O`.
 - **Wallonia.** `addressNumberExtension` is ICAR's box number, rendered as `unit` without a designator
-  word. Stage4 activation is a separate decision and is not taken here.
+  word. Stage4 activation is a separate decision and isn't taken here.
 - **OSM rows per country.** Each country's rows have their own source id (`osm-ru` … `osm-bd`), so
   country admission, source admission and sampling weight are three settings.
 - **Holdouts.** Each of the eight countries has a declared holdout. NG's is 24 val and 36 test rows.
-  That is too few to read a phenomenon from.
+  That's too few to read a phenomenon from.
 
 ## Open decisions
 

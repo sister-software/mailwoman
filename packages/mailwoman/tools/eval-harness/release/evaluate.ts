@@ -2,56 +2,82 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Evaluates a release-requirement specification against the paired per-row outcomes the held-out grader
- *   writes (`heldout/per/country`), returning pass, fail or insufficient evidence.
+ *   Evaluates a release-requirement specification against the paired per-row outcomes the held-out
+ *   grader writes (`heldout/per/country`), returning pass, fail or insufficient evidence.
  *
- *   Independent units. A row's unit is its `group` within its country. A row without a group is its own unit
- *   only when the specification declares rows independent (`statistics.rowsIndependent: true`); otherwise any
- *   check that reads an ungrouped row is insufficient evidence and reports no bounds, because bounds computed
- *   as if correlated variants were independent are too narrow (the 2026-10-20 simulation measured 33% joint
- *   coverage against a nominal 95%).
+ *   Independent units.
+ *   A row's unit is its `group` within its country.
  *
- *   Admission. A minimum check reads the rows whose provenance class `provenance.admitted.minimum` lists (rows
- *   the candidate never trained on, whatever the published model saw). The objective and max-loss checks read
- *   only `provenance.admitted.comparative` (rows neither model trained on), because a row one model trained on
- *   favors that model in a comparison. The verdict also records the inference rule the outcomes were produced
- *   under. Outcomes that record none, or rows without a weights locale package, are insufficient evidence.
+ *   A row without a group is its own unit only when the specification declares
+ *   rows independent (`statistics.rowsIndependent: true`); otherwise any check
+ *   that reads an ungrouped row is insufficient evidence and reports no bounds,
+ *   because bounds computed as if correlated variants were independent are too narrow
+ *   (the 2026-10-20 simulation measured 33% joint coverage against a nominal 95%).
  *
- *   Capability probes. A source a capability requirement selects is read only by capability checks. Country
- *   checks, the objective and the per-class country report leave its rows out.
+ *   Admission.
+ *   A minimum check reads the rows whose provenance class `provenance.admitted.minimum`
+ *   lists (rows the candidate never trained on, whatever the published model saw).
  *
- *   Simultaneous bounds. Every check the specification declares counts toward the registered correction
- *   (Bonferroni or Sidak), registered threshold or not, giving one per-side tail probability for every bound.
+ *   The objective and max-loss checks read only `provenance.admitted.comparative`
+ *   (rows neither model trained on), because a row one model trained on favors that model in a comparison.
+ *   The verdict also records the inference rule the outcomes were produced under.
  *
- *   A minimum check (a candidate rate against a minimum) uses a Clopper–Pearson interval on the effective
- *   count. The cluster (sandwich, ratio-estimator) variance of the rate over units gives the design effect
- *   `deff = V_cluster / (p (1 - p) / n)`, and the effective count is `n / deff`, clamped to `[units, n]`.
- *   When the rate is 0 or 1 the design effect cannot be estimated and the effective count is the number of
- *   units, the most conservative value the clamp admits. Clopper–Pearson was chosen over a percentile
- *   bootstrap and over Wilson because it is exact (never below nominal) on independent binomial counts,
- *   discrete samples included, and its bound away from 0 or 1 never collapses: ten exact rows of ten give a
- *   lower bound well below 1, where every bootstrap resample of them is 1 and the percentile interval was
- *   [1, 1]. This conservative interval reduces power at small sample sizes. The policy accepts that cost because a small sample that
- *   cannot show a minimum is met is insufficient evidence.
+ *   Outcomes that record none, or rows without a weights locale package, are insufficient evidence.
  *
- *   A difference check (a capability's loss against its permitted loss, and the equal-country objective's Q
- *   improvement) uses an analytic cluster (sandwich) variance of the paired difference. Within each stratum (one
- *   per objective country, or one for a capability's pooled rows) the variance of the mean paired difference is
- *   `G / (G - 1) * sum_g (d_g - D m_g)^2 / n^2` over its G units, and Q's variance is the sum of the
- *   per-country variances over K^2. The bound is the estimate plus or minus a Student t quantile whose degrees
- *   of freedom are the Welch–Satterthwaite combination of the strata's `G - 1`. A stratum with fewer than two
- *   units has no variance estimate and makes the check insufficient. A stratum whose estimated variance is zero
- *   (in practice, when no unit is discordant) is degenerate: its variance is replaced by the exact zero-event bound,
- *   `q / G` with `q = 1 - tail^(1/G)` the Clopper–Pearson upper bound on the share of discordant units, since
- *   a unit's mean paired difference lies in [-1, 1]. A degenerate sample therefore never reports zero width,
- *   and it decides only once its unit count makes that bound narrow enough. A bound that is still zero width
- *   is insufficient evidence.
+ *   Capability probes.
+ *   A source a capability requirement selects is read only by capability checks.
  *
- *   Boundary comparisons are inclusive on the passing side. A check passes when its lower bound is at least
- *   its threshold and its point estimate is at least its threshold. It fails when its upper bound is below the
- *   threshold. Anything between is insufficient evidence. A missing threshold or confidence level, a check
- *   without rows, an unregistered artifact identity, or ungrouped rows without a declaration of independence
- *   is insufficient evidence. None of these is ever read as zero loss or a pass.
+ *   Country checks, the objective and the per-class country report leave its rows out.
+ *
+ *   Simultaneous bounds.
+ *   Every check the specification declares counts toward the registered correction (Bonferroni or Sidak),
+ *   registered threshold or not, giving one per-side tail probability for every bound.
+ *
+ *   A minimum check (a candidate rate against a minimum) uses a Clopper–Pearson
+ *   interval on the effective count.
+ *   The cluster (sandwich, ratio-estimator) variance of the rate over units gives
+ *   the design effect `deff = V_cluster / (p (1 - p) / n)`, and the effective
+ *   count is `n / deff`, clamped to `[units, n]`.
+ *
+ *   When the rate is 0 or 1 the design effect cannot be estimated and the effective
+ *   count is the number of units, the most conservative value the clamp admits.
+ *   Clopper–Pearson was chosen over a percentile bootstrap and over Wilson because it is
+ *   exact (never below nominal) on independent binomial counts, discrete samples included,
+ *   and its bound away from 0 or 1 never collapses: ten exact rows of ten give a lower bound well
+ *   below 1, where every bootstrap resample of them is 1 and the percentile interval was [1, 1].
+ *
+ *   This conservative interval reduces power at small sample sizes.
+ *   The policy accepts that cost because a small sample that cannot show a
+ *   minimum is met is insufficient evidence.
+ *
+ *   A difference check (a capability's loss against its permitted loss, and the equal-country
+ *   objective's Q improvement) uses an analytic cluster (sandwich) variance of the paired difference.
+ *   Within each stratum (one per objective country, or one for a capability's pooled rows)
+ *   the variance of the mean paired difference is `G / (G - 1) * sum_g (d_g - D m_g)^2 / n^2`
+ *   over its G units, and Q's variance is the sum of the per-country variances over K^2.
+ *
+ *   The bound is the estimate plus or minus a Student t quantile whose degrees of
+ *   freedom are the Welch–Satterthwaite combination of the strata's `G - 1`.
+ *   A stratum with fewer than two units has no variance estimate and makes the check insufficient.
+ *
+ *   A stratum whose estimated variance is zero (in practice, when no unit is discordant)
+ *   is degenerate: its variance is replaced by the exact zero-event bound, `q / G` with
+ *   `q = 1 - tail^(1/G)` the Clopper–Pearson upper bound on the share of discordant units,
+ *   since a unit's mean paired difference lies in [-1, 1].
+ *   A degenerate sample therefore never reports zero width, and it decides only
+ *   once its unit count makes that bound narrow enough.
+ *   A bound that's still zero width is insufficient evidence.
+ *
+ *   Boundary comparisons are inclusive on the passing side.
+ *   A check passes when its lower bound is at least its threshold and its point
+ *   estimate is at least its threshold.
+ *
+ *   It fails when its upper bound is below the threshold.
+ *   Anything between is insufficient evidence.
+ *
+ *   A missing threshold or confidence level, a check without rows, an unregistered artifact
+ *   identity, or ungrouped rows without a declaration of independence is insufficient evidence.
+ *   None of these is ever read as zero loss or a pass.
  */
 
 import type { ReachabilityCensus } from "#tools/eval-harness/heldout/dataset/reachability"

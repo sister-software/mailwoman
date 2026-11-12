@@ -1,7 +1,7 @@
 # Postcode-country coherence: overriding `defaultCountry` on geometric evidence
 
 **Date:** 2026-08-04 · **Branch:** `feat/42-postcode-coherence` · **Issue:** #42 · **Status:** implemented
-opt-in, default off. Default-on is a D-rule call the operator makes. §5 lists the evidence that is still
+opt-in, default off. Default-on is a D-rule call the operator makes. §5 lists the evidence that's still
 missing.
 
 > **Added 2026-08-05 — the flag flipped.** The evidence §5 asked for was gathered in
@@ -55,7 +55,7 @@ postcode and a locality.
 
 ### The geocode-path wrinkle
 
-Rooftop and street-centroid extracts are selected before the resolve. They are resolver inputs — off
+Rooftop and street-centroid extracts are selected before the resolve. They're resolver inputs — off
 `defaultCountry ?? placedCountry`. A US-scoped call therefore picks no BAN/OSM extract, and a corrected
 FR address would sit at its commune centroid with the national register never consulted. So when the
 resolver reports an override (the `postcode_country_scope` stamp it writes onto the postcode and
@@ -114,7 +114,7 @@ $ … --postcode-country-coherence
   <locality … src="resolver:localadmin:1159322569" lat="48.856599" lon="2.342841">Paris
 ```
 
-Note what the before-picture shows: both nodes sitting on 32.960001,-96.838499. That is the
+Note what the before-picture shows: both nodes sitting on 32.960001,-96.838499. That's the
 worse-than-wrong case — `applyPostcodeConsistency` finding no Paris within 50 km of ZIP 75001 (the
 nearest is 143.8 km) and falling the locality back onto the ZIP point.
 
@@ -163,8 +163,8 @@ The four bolded "unchanged" rows are the adversarial ones and the reason to trus
 - **P14 Athens, Georgia** is the same trap with a country name. The outcome is the same.
 
 P20/P21 pair a real postcode with the wrong city. No country makes them consistent, so the pass
-abstains and keeps the US answer. That answer is still wrong and still flagged `postcode_city_mismatch`. The pass does
-not invent a country to explain a contradiction.
+abstains and keeps the US answer. That answer is still wrong and still flagged `postcode_city_mismatch`. The pass doesn't
+invent a country to explain a contradiction.
 
 P19 `London, Ontario` has no postcode, so the mechanism is inert by construction — the defect the
 diagnosis flagged (Ontario tagged `locality` rather than `region`, so `applyRegionCountryCoherence` never
@@ -184,7 +184,7 @@ Identical to Leg A except three rows, all of which resolve to the extract set ra
 
 - **P04 Munchen → FIXED (DE 48.153,11.547).** See §4.1.
 - **P07 Toronto → already CA, OFF and ON.** `applyRegionCountryCoherence` rescues the "ON" region
-  token on this backend, so the row was already correct. The pass did not change it.
+  token on this backend, so the row was already correct. The pass didn't change it.
 - **P19 London, Ontario → US (London OH) both ways.** Different wrong answer than Leg A's London GB,
   same pre-existing defect, still untouched by this pass.
 
@@ -195,7 +195,7 @@ Identical to Leg A except three rows, all of which resolve to the extract set ra
 Both are DATA abstentions rather than mechanism failures, and each was measured rather than reasoned to:
 
 - **P04 `Munchen`.** On the FTS backend, `findPlace({text:"Munchen", country:"DE"})` returns `München`
-  with `exactMatch: FALSE`. The FTS exact-match tier does not fold `ü` → `u`. The pass requires an
+  with `exactMatch: FALSE`. The FTS exact-match tier doesn't fold `ü` → `u`. The pass requires an
   exact match, so it abstains. The candidate backend keys on `name_key = "munchen"` and does fold it.
   That fold is why Leg B fixes the row. The gap is in the FTS exact-match tiering rather than here.
 - **P07 `M5V 3L9`.** The production extract set has **zero** CA postcode rows reachable as
@@ -207,23 +207,23 @@ Both fail toward abstention. Abstention is the designed direction.
 
 **No — not yet, and the missing evidence is specific.**
 
-### What is established
+### What's established
 
 - The confound board holds. 22 cases × 2 backends × 2 registers, and **not one case is made worse**.
   The four adversarial rows that would hurt most (Addison TX, Paris TX, Berlin NH, Athens GA) are all
   untouched, and untouched _by the cheap exit_ — the pass never even asks the foreign country.
 - The abstention behaviour is real rather than theoretical: P04, P07, P20 and P21 abstain for four different
   reasons (diacritic folding, missing extract, contradictory pair, contradictory pair).
-- The cost is bounded and mostly zero: 2 lookups when the default is coherent, ≤8 when it is not,
+- The cost is bounded and mostly zero: 2 lookups when the default is coherent, ≤8 when it isn't,
   none at all without a postcode + locality + `defaultCountry`.
 
-### What is missing
+### What's missing
 
 **A tier-1 aggregate on a panel that exercises the mechanism.** The first attempt at getting
 one produced a trap that this record documents, because it looked exactly like a pass.
 
-`mailwoman eval oa-resolver --limit 10000` (10,000 OpenAddresses US rows) returned a per-row dump that
-is **byte-identical** between flag off and ON — md5 `4a98e68f17daf90605354b15c707f485` on both 1.94 MB
+`mailwoman eval oa-resolver --limit 10000` (10,000 OpenAddresses US rows) returned a per-row dump that's
+**byte-identical** between flag off and ON — md5 `4a98e68f17daf90605354b15c707f485` on both 1.94 MB
 files, and the aggregate table matches to the digit (locality-match 98.2%, region 100.0%, coord p50
 3.3 / p90 9.8 / p99 87.9 km).
 
@@ -242,9 +242,9 @@ test. That leg's result is in §6.
 §6 re-runs it in the regime that matters, and adds an FR and a GB panel. Those close the aggregate
 question. What remains open is narrower:
 
-1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` has no resolver-change pin, so the
-   D-rule's standard check has no leg for it. §6 is an oa-resolver measurement. That is the right
-   instrument for a resolver change but is not the check the release process runs.
+1. **The gauntlet hasn't seen this.** `mailwoman eval gauntlet` has no resolver-change pin, so the
+   D-rule's standard check has no leg for it. §6 is an oa-resolver measurement. That's the right
+   instrument for a resolver change but isn't the check the release process runs.
 2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
    backend disagree about what an exact match is (`Munchen` → `München` is exact on one rather than the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on
@@ -254,8 +254,8 @@ question. What remains open is narrower:
    are untested at scale. The confound board covers only DE, by hand.
 4. **The 800-pair survey is inherited rather than re-run.** The original zero-border-crossing claim comes from
    the 2026-08-03 out-of-tree prototype. §6 supersedes it with 28,000 evaluations against the shipped
-   code, so this is bookkeeping rather than a gap — but the two should not be cited as independent
-   confirmations of each other. They are the same claim, measured twice, the second time properly.
+   code, so this is bookkeeping rather than a gap — but the two shouldn't be cited as independent
+   confirmations of each other. They're the same claim, measured twice, the second time properly.
 
 ### Recommendation
 
@@ -265,7 +265,7 @@ measured**. Those are the two real gaps, and both are small pieces of work rathe
 The evidence for default-on is otherwise strong and unusually clean. 28,000 pair evaluations across
 US/FR/GB and both mis-scope directions produce **zero false positives**, and — the part that matters
 more than the zero — 1,240 domestic rows in fact fell past the cheap exit and had every alternative
-country tried, so the zero is not an artifact of the mechanism never running. The rescue rate lands at
+country tried, so the zero isn't an artifact of the mechanism never running. The rescue rate lands at
 88–99% and equals the resolvable-pair count exactly, so the failure mode is abstention rather than error. The
 whole confound board is untouched, including the four rows designed to break it (Addison TX, Paris TX,
 Berlin NH, Athens GA).
@@ -292,7 +292,7 @@ per-row dump byte-identical, md5 `2209017211bbbf14c5e3e36f8c38cc1a` on both 1.94
 identical to the digit: locality-match 98.3%, region 100.0%, resolved 100.0%, coord p50 2.4 / p90 10.6
 / p99 24.5 km, and every per-state cell matches.
 
-**And the regime it ran in**, because that is what makes the number mean something. Each row classified
+**And the regime it ran in**, because that's what makes the number mean something. Each row classified
 by whether the US default was itself coherent (step 1 exits without asking another country) or fell through
 (every candidate country tried — the false-positive path):
 
@@ -304,10 +304,10 @@ by whether the US default was itself coherent (step 1 exits without asking anoth
 | OpenAddresses FR, `defaultCountry: FR` |  3,000 |            2,963 |       **37** |     **0** |           **0** |
 | OSM GB, `defaultCountry: GB`           |  1,000 |              879 |      **121** |     **0** |           **0** |
 
-The fell-through column is the point. 1,082 US rows, 37 FR rows and 121 GB rows did not take the cheap
+The fell-through column is the point. 1,082 US rows, 37 FR rows and 121 GB rows didn't take the cheap
 exit — for each of them the pass asked every other country the postcode shape allows, and every one
 came back refuted by the locality test. **Zero border crossings on 1,240 in fact at-risk domestic
-rows.** Without that column the byte-identical dump would not show that the pass ran. A magnitude never reports its
+rows.** Without that column the byte-identical dump wouldn't show that the pass ran. A magnitude never reports its
 own absence.
 
 ### Rescue leg — a deliberately mis-scoped default. An override to the panel's country is the result.
@@ -332,7 +332,7 @@ The "coherent-default" split is derived by re-running the pass with an impossibl
 forces step 1 to fail and reports what the alternatives would decide without the default. A pair coherent in two
 countries reads as "fell through" under that probe even though the real leg would also have abstained,
 so the fell-through column is if anything an over-count. It errs toward claiming more at-risk rows than
-there were. For this argument, that is the safe direction.
+there were. For this argument, that's the safe direction.
 
 ## 7. Test summary
 

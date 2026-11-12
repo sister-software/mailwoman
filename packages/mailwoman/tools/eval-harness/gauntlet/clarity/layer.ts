@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gauntlet's clarity layer: runs every board row with a truth point at each level of clarity and reports how far
- *   down each place still answers.
+ *   The gauntlet's clarity layer: runs every board row with a truth point at each
+ *   level of clarity and reports how far down each place still answers.
  *
- *   This layer measures and cannot block a ship. It passes no country hint, because a person who types a bare name
- *   states none. It reads the committed cases, so it needs no `regression.db`.
+ *   This layer measures and cannot block a ship.
+ *   It passes no country hint, because a person who types a bare name states none.
+ *
+ *   It reads the committed cases, so it needs no `regression.db`.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"

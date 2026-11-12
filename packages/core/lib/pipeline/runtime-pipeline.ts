@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the parse pipeline: normalization, query shape, locale and kind detection, classification and resolution.
+ *   Runs the parse pipeline: normalization, query shape, locale and kind detection,
+ *   classification and resolution.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -65,8 +66,8 @@ export const COARSE_PLACER_ANCHOR_WEIGHT = 1
  */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// country-branch: the fallback for an artifact without a coverage manifest,
-// which is the planetary source and takes precedence whenever it is present.
+// country-branch: the fallback for an artifact without a coverage manifest.
+// The coverage manifest is the planetary source and takes precedence whenever it is present.
 /**
  * The countries eligible for a hard country filter when the artifact has no coverage manifest.
  *
@@ -131,6 +132,20 @@ function isPostcodeFormatHit(hit: { format: string }): boolean {
  */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
 	return { raw, normalized: raw, appliedLocale: opts?.locale ?? null }
+}
+
+/**
+ * Returns the normalized input with each line break, and the spaces around it,
+ * written as `, ` when `mode` is `"comma"`.
+ *
+ * The parse tree's offsets point into the normalized text.
+ * The normalizer already reshapes that text, and a caller reads offsets against
+ * the tree, so the rewrite moves none of them.
+ */
+export function rewriteLineBreaks(input: NormalizedInputLite, mode: "keep" | "comma"): NormalizedInputLite {
+	if (mode === "keep" || !/[\r\n]/.test(input.normalized)) return input
+
+	return { ...input, normalized: input.normalized.replaceAll(/[ \t]*(?:\r\n|[\r\n])[ \t]*/g, ", ") }
 }
 
 /**
@@ -272,7 +287,7 @@ export async function runPipeline(
 	const classifyKind = stages.classifyKind ?? defaultClassifyKind
 
 	throwIfAborted(opts)
-	const normalized = normalize(raw, { locale: opts?.locale })
+	const normalized = rewriteLineBreaks(normalize(raw, { locale: opts?.locale }), opts?.lineBreaks ?? "keep")
 	timing["normalize"] = performance.now() - t0
 
 	// The coarse placer adds a country prior unless the caller already supplied one.
@@ -406,6 +421,7 @@ export async function runPipeline(
 			anchorRegions: stages.anchorRegions ?? null,
 			venueHead: stages.venueHead?.(locale) ?? null,
 			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
+			localeHint: opts?.localeHint ?? null,
 		})
 
 		timing["token-classify"] = performance.now() - tClassify
@@ -487,6 +503,7 @@ async function safeClassify(
 		anchorRegions: AnchorRegionLookupLike | null
 		venueHead: VenueHeadStage | null
 		inputMode: InputMode
+		localeHint: string | null
 	}
 ): Promise<AddressTree> {
 	const {
@@ -498,12 +515,14 @@ async function safeClassify(
 		anchorRegions,
 		venueHead,
 		inputMode,
+		localeHint,
 	} = knobs
 
 	try {
 		return await classifier.parse(text, {
 			queryShape,
 			inputMode,
+			...(localeHint ? { localeHint } : {}),
 			fst,
 			postcodeRepair: true,
 			caseNormalization,

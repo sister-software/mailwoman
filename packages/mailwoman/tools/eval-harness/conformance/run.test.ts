@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The test would turn the strongest available nondeterminism check into a tautology if it derived the identity law's second side from the first. It observes both sides independently.
+ *   The test would turn the strongest available nondeterminism check into a tautology
+ *   if it derived the identity law's second side from the first.
+ *   It observes both sides independently.
  */
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
@@ -508,7 +510,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
 		expect(summary.decided).toBe(0)
-		// A suite that measured no row is not a clean suite, the same refusal an empty suite gets.
+		// A suite that measured no row isn't a clean suite, the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
 

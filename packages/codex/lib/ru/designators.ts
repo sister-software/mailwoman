@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Russian postal designators: the delivery service, premise, sub-premise, floor, number mark and relation
- *   words an address or a query uses. The UPU sheet lists the postal abbreviations in Latin transliteration, and
- *   the rows give them in Cyrillic.
+ *   Russian postal designators: the delivery service, premise, sub-premise, floor,
+ *   number mark and relation words an address or a query uses.
+ *
+ *   The UPU sheet lists the postal abbreviations in Latin transliteration,
+ *   and the rows give them in Cyrillic.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/rusEn.pdf UPU Russian Federation addressing sheet (Russian Post)}
  * @see {@link https://en.wiktionary.org/wiki/строение Wiktionary: строение}

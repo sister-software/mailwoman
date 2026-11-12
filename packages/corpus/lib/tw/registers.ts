@@ -183,7 +183,7 @@ function longestPrefix(characters: readonly string[], at: number, candidates: Re
 
 /**
  * A register address aligned to region, district, village, street, number and floor,
- * or `null` when any required part does not match the key sets.
+ * or `null` when any required part doesn't match the key sets.
  */
 export function alignRegisterAddress(text: string, index: TWKeyIndex): TWAligned | null {
 	const raw = splitWhitespace(text).join("")

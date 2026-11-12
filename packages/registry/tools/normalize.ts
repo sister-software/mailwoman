@@ -4,10 +4,12 @@
 /**
  *   Turns the pinned sources into the reviewable normalized JSON the compiler reads.
  *
- *   Every record keeps the source's own identity (`entityID`), the code as the source spells it, and the source's
- *   status words. Each record comes from one source: a country record from Wikidata, an airport record from
- *   OurAirports. An airport's `country` is the alpha-2 string OurAirports states, with a status that records whether
- *   that string is an officially assigned ISO code, a source extension such as `XK`, or absent.
+ *   Every record keeps the source's own identity (`entityID`), the code as the
+ *   source spells it, and the source's status words.
+ *   Each record comes from one source: a country record from Wikidata, an airport record from OurAirports.
+ *
+ *   An airport's `country` is the alpha-2 string OurAirports states, with a status that records
+ *   whether that string is an officially assigned ISO code, a source extension such as `XK`, or absent.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -15,7 +17,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
-import { type SourceDefinition, type SourceLock, sourcePath, SOURCES } from "#sdk/sources"
+import { pinnedSourceFile, type SourceDefinition, type SourceLock, SOURCES } from "#sdk/sources"
 
 /**
  * One ISO 3166-1 entry.
@@ -433,7 +435,7 @@ export function formatNormalized(collection: NormalizedCountries | NormalizedAir
 }
 
 /**
- * Reads the three pinned sources and normalizes them, refusing bytes the lock does not describe.
+ * Reads the three pinned sources and normalizes them, refusing bytes the lock doesn't describe.
  */
 export async function normalizeFromLock(lock: SourceLock): Promise<{
 	countries: NormalizedCountries
@@ -442,7 +444,7 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 }> {
 	for (const definition of SOURCES.filter((candidate) => candidate.terms.elected)) {
 		const locked = lock.sources[definition.id]
-		const digest = await sha256File(sourcePath(definition))
+		const digest = await sha256File(pinnedSourceFile(definition))
 
 		if (!locked) throw new Error(`${definition.id} is outside the lock`)
 
@@ -451,7 +453,7 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 		}
 	}
 
-	const results = await readLocalJSONFile<SPARQLResults>(sourcePath(sourceDefinition("wikidata-iso3166-1")))
+	const results = await readLocalJSONFile<SPARQLResults>(pinnedSourceFile(sourceDefinition("wikidata-iso3166-1")))
 	const countries = normalizeCountries(results, lock.profile)
 
 	const current = new Set(
@@ -459,14 +461,14 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 	)
 
 	const airports = normalizeAirports(
-		await readLocalTextFile(sourcePath(sourceDefinition("ourairports-airports"))),
+		await readLocalTextFile(pinnedSourceFile(sourceDefinition("ourairports-airports"))),
 		current,
 		lock.profile
 	)
 
 	const comparison = compareCountryLists(
 		countries.records,
-		await readLocalTextFile(sourcePath(sourceDefinition("ourairports-countries")))
+		await readLocalTextFile(pinnedSourceFile(sourceDefinition("ourairports-countries")))
 	)
 
 	return { countries, airports, coverage: declareCoverage(countries, airports, comparison) }

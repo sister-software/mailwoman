@@ -3,12 +3,12 @@
 **Date:** 2026-07-19. **Command:** `mailwoman eval poi-board`. **Fixtures:**
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (45 cases, committed). **DB:**
 `$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db` (the full 4-country build — 13,681,698 rows,
-release 2026-05-20.0. It is **not** a `--limit` sample, per the poi-layer-runbook's warning against
+release 2026-05-20.0. It **isn't** a `--limit` sample, per the poi-layer-runbook's warning against
 grading coverage off a limited build). **Resolver:** default FTS admin extract
 (`admin-global-priority.db`).
 
 **Status: BASELINE ONLY. No floors yet — this is the pre-registered first run** (spec §3.6:
-"written floors set at Phase-1 baseline"). A case failing here is not a regression, because
+"written floors set at Phase-1 baseline"). A case failing here isn't a regression, because
 no earlier floor exists to regress from. Floors land in a follow-up PR once these numbers exist to set them
 against.
 
@@ -19,7 +19,7 @@ against.
 | category + anchor      |  22 | ≥4 per country: US 6, CA 5, MX 5, FR 6 — well-known city-center golds, 25 km tolerance                                  |
 | locale-hintd synonym   |   5 | 3 exact-locale-hintd (`er`/en-US, `petrol station`/en-GB, `mailbox`/en-CA), 2 unconditional                             |
 | abstain                |   7 | 3 build-local infra (anchored — see note below), 3 bare no-anchor shipped categories, 1 conditional-synonym→build-local |
-| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — must not take the poi path                                       |
+| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — mustn't take the poi path                                        |
 | near-miss / robustness |   6 | comma anchors, multiword synonyms, multi-segment anchors, 2 actual coverage-gap probes                                  |
 
 **A deliberate deviation from the task's literal phrasing:** the composition brief lists
@@ -63,7 +63,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
   second debt payment, landed 2026-07-19). Both report-only per the schema's meaning-of-zero
   convention.
 - **nearest-distance distribution** — p50 0.58 km, p95 8.42 km, all well inside the 25 km
-  tolerance on passing cases. The board is not measuring at the edge of its own tolerance
+  tolerance on passing cases. The board isn't measuring at the edge of its own tolerance
   band. When a case fails, it fails on zero results rather than a near-miss on distance.
 
 ## Notable failures (3/45, all left failing — not tuned away)
@@ -76,11 +76,11 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
 
 Both gaps are **subject-match successes, execution misses** — `matchPOISubject` correctly
 resolved `grocery`→`supermarket` and `hiking trail`→`trail` in every case. The poi.db search
-came back empty. That is exactly the signal this board exists to surface: the runner has no
+came back empty. That's exactly the signal this board exists to surface: the runner has no
 bug here, the underlying category coverage does.
 
-One additional near-anomaly did not fail a fixture: anchor resolution is locale-sensitive in
-ways the query text does not reveal. `"cafe
+One additional near-anomaly didn't fail a fixture: anchor resolution is locale-sensitive in
+ways the query text doesn't reveal. `"cafe
 near Montreal QC"` resolves the FTS backend to a homonymous town in Wisconsin rather than Montréal,
 Québec — dropping the `QC`/state-style suffix in favor of `"cafe near Montreal, Canada"`
 resolves correctly. `"pharmacy near Calgary AB"` abstains with `anchor_required` (the

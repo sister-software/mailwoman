@@ -1,6 +1,6 @@
 # Template: evidence
 
-An `evidence` page reports a measurement. It is dated by construction: a later reader needs to know what ran,
+An `evidence` page reports a measurement and the date it was taken. A later reader needs to know what ran,
 against what baseline, and what it cost. Register rules are in [`../writing-system.md`](../writing-system.md)
 under Register by role.
 
@@ -22,7 +22,7 @@ role: evidence
 2. **What ran.** Candidate, baseline, dataset, date. One paragraph.
 3. **Method.** Enough for someone else to run it again.
 4. **Numbers.** A table. Deltas state their units.
-5. **Losses.** What got worse. This section is not optional and does not go last by accident.
+5. **Losses.** What got worse. This section isn't optional and doesn't go last by accident.
 6. **Caveats.** Mechanism first. Circularity caveats are mandatory.
 7. **Reproduce.** The command, and a link to the run.
 
@@ -34,11 +34,11 @@ Lead with what was measured and against which baseline, in one sentence, before 
 
 > The pre-publish eval compares a candidate model's per-tag output against a baseline and exits non-zero if
 > any tag violates either of two dimensions: a recall drop on a tag that had recall to lose, or a
-> hallucination spike on a tag whose false-positive count runs away. Both dimensions are needed, and the
-> v0.6.1 release is the receipt. A recall-only check would have passed it: `dependent_locality` went from 0
-> hallucinated spans to 1066, while its nominal recall improved from 0% to 30%. A check of only the recall dimension
-> would have caught the `locality` drop (39.7% → 31.1%, −8.6pp) and the `house_number` drop (79.0% → 75.9%,
-> −3.1pp) and shipped the third failure anyway.
+> hallucination spike on a tag whose false-positive count runs away. Both dimensions are needed. The v0.6.1
+> release had three violations, and a recall-only check would have caught two of them: the `locality` drop
+> (39.7% → 31.1%, −8.6pp) and the `house_number` drop (79.0% → 75.9%, −3.1pp). It would have missed the third,
+> because `dependent_locality` went from 0 hallucinated spans to 1066 while its nominal recall improved from 0%
+> to 30%.
 
 <!-- illustrative -->
 

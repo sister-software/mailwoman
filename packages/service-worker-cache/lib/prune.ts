@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The page-to-worker message that drops cached files of releases the page no longer reads, and the cache walk the
- *   worker runs for it. A release's files live under a release-version path segment, such as `v10.8.0` in
- *   `/mailwoman/en-us/v10.8.0/model.onnx`. Files outside any release, such as the gazetteer's
- *   `/mailwoman/gazetteer/2026-08-25b/candidate.db`, have no such segment in their path and are kept.
+ *   The page-to-worker message that drops cached files of releases the page no
+ *   longer reads, and the cache walk the worker runs for it.
+ *
+ *   A release's files live under a release-version path segment, such as `v10.8.0`
+ *   in `/mailwoman/en-us/v10.8.0/model.onnx`.
+ *   Files outside any release, such as the gazetteer's `/mailwoman/gazetteer/2026-08-25b/candidate.db`,
+ *   have no such segment in their path and are kept.
  */
 
 /**

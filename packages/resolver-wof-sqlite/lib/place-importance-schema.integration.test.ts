@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two-score split's interface (ROAD_TO_V9 §2 R1): the referential derivation, the ordering
- *   equivalence that makes the split a zero-delta change for the resolver. The legacy
- *   reconstruction the read-only 2026-08-05 staging database needs.
+ *   The two-score split's interface (ROAD_TO_V9 §2 R1): the referential derivation,
+ *   the ordering equivalence that makes the split a zero-delta change for the resolver.
+ *
+ *   The legacy reconstruction the read-only 2026-08-05 staging database needs.
  */
 
 import {
@@ -61,8 +62,8 @@ describe("compareReferential — the zero-delta guarantee", () => {
 	 * The whole D-rule claim for the resolver half of §2 R1: ordering by referential must be
 	 * the same order as ordering by population, on every input including the saturated tail.
 	 *
-	 * A bare `b.referential - a.referential` would not be.
-	 * That is precisely the bug the population tiebreak exists to prevent.
+	 * A bare `b.referential - a.referential` wouldn't be.
+	 * That's precisely the bug the population tiebreak exists to prevent.
 	 */
 	it("orders identically to raw population, saturated megacities included", () => {
 		const populations = [
@@ -136,8 +137,8 @@ describe("splitLegacyImportance", () => {
 	})
 
 	it("still separates a real Wikipedia score that is merely SMALL", () => {
-		// The tolerance must not become a bucket.
-		// A low score that is not a bucket artifact sits orders of magnitude outside
+		// The tolerance mustn't become a bucket.
+		// A low score that's not a bucket artifact sits orders of magnitude outside
 		// 8 ULP of the population curve.
 		const population = 21_299
 		const nearby = referentialFromPopulation(population) + 1e-6

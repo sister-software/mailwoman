@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Saudi postal designators: the delivery service and office in English and the premise, sub-premise, floor
- *   and relation words in Arabic.
+ *   Saudi postal designators: the delivery service and office in English and the premise,
+ *   sub-premise, floor and relation words in Arabic.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/sauEn.pdf UPU Saudi Arabia addressing sheet (Saudi Post)}
  * @see {@link https://splonline.com.sa/ar/po-box/ Saudi Post: صناديق البريد العادية}

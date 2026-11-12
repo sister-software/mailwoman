@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `un-locode.db` read interface. Declared beside the reader and the builder that writes it, so a column added to
- *   one is a compile error against the other.
+ *   The `un-locode.db` read interface.
+ *
+ *   Declared beside the reader and the builder that writes it, so a column added
+ *   to one is a compile error against the other.
  */
 
 /**

@@ -3,17 +3,19 @@
 
 /**
  *   Per-tag score trends from the eval ledger — the version × tag matrix behind
- *   `docs/records/evals/score-trends.md`, which `docs/records/evals/index.mdx` links as the answer to
- *   the scorecards' standing "see the latest". Reads `evals/scores-by-version.json` in every shape the
- *   ledger has retained across eras and emits one table per locale.
+ *   `docs/records/evals/score-trends.md`, which `docs/records/evals/index.mdx` links
+ *   as the answer to the scorecards' standing "see the latest".
  *
- *   Lives beside `ledger-append` because it is that command's second half: a row appended to the
- *   ledger is not visible in the docs until this regenerates the page.
+ *   Reads `evals/scores-by-version.json` in every shape the ledger has retained
+ *   across eras and emits one table per locale.
  *
- *   The number formatting reproduces Python's `%g` and round-half-to-even to the digit, inherited from
- *   the retired Python generator that wrote the committed page's earlier columns. A different rounding method
- *   instead would rewrite cells whose underlying score never changed, so every regen would land as
- *   diff noise across a table spanning every release.
+ *   Lives beside `ledger-append` because it is that command's second half: a row appended
+ *   to the ledger isn't visible in the docs until this regenerates the page.
+ *
+ *   The number formatting reproduces Python's `%g` and round-half-to-even to the digit,
+ *   inherited from the retired Python generator that wrote the committed page's earlier columns.
+ *   A different rounding method instead would rewrite cells whose underlying score never
+ *   changed, so every regen would land as diff noise across a table spanning every release.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -113,7 +113,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
    preceded the GPU spend rather than followed it.
 3. **Disjoint-codepoint vocab splicing is a real tool.** Append only non-ASCII pieces to a unigram vocab
    keeps the source language byte-identical _by construction_ — a guarantee rather than a hope. Apply it to
-   any future non-Latin extension (with the caveat that it does not scale to CJK, where char-level is the
+   any future non-Latin extension (with the caveat that it doesn't scale to CJK, where char-level is the
    natural unit).
 4. **A recipe copied from vN-1 inherits vN-1's bugs.** Diff the corpus and source-weights against the shipped
    recipe before launching rather than after.

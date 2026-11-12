@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Prints each held-out split's rows and street rows per country, the countries with no street-level validation
- *   signal, and the config's declared coverage floors. Exits non-zero when a floor is missed, after the report is
- *   written.
+ *   Prints each held-out split's rows and street rows per country, the countries with no
+ *   street-level validation signal, and the config's declared coverage floors.
+ *
+ *   Exits non-zero when a floor is missed, after the report is written.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/audits/validation/coverage.run.ts <config> [--json <path>] \

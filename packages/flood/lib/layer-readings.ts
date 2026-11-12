@@ -2,17 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dossier records from a `flood.db` answer at a building's coordinate. The reading keeps the
- *   layer's three answers apart. A designated zone is one record. A designated absence is zero records
- *   on the coverage row's basis. A location outside the footprint has no survey.
+ *   Dossier records from a `flood.db` answer at a building's coordinate.
  *
- *   A layer reading has no field for a zone code, so each determined answer also yields a designated
- *   claim with the code as its value. A designated absence yields the Zone 1 claim. Its code is the
- *   code of the definition the lookup returns for the absence. An unknown answer yields no claim. A
- *   building without a flood-zone claim therefore has an unknown reading, and never an unclaimed Zone 1.
+ *   The reading keeps the layer's three answers apart.
+ *   A designated zone is one record.
  *
- *   The claim's value is the zone the authority's map assigns at the coordinate. That value is a fact
- *   about the map. It makes no statement about the building's flood risk, and a Zone 1 claim is silent
+ *   A designated absence is zero records on the coverage row's basis.
+ *   A location outside the footprint has no survey.
+ *
+ *   A layer reading has no field for a zone code, so each determined answer also
+ *   yields a designated claim with the code as its value.
+ *   A designated absence yields the Zone 1 claim.
+ *
+ *   Its code is the code of the definition the lookup returns for the absence.
+ *   An unknown answer yields no claim.
+ *
+ *   A building without a flood-zone claim therefore has an unknown reading, and never an unclaimed Zone 1.
+ *
+ *   The claim's value is the zone the authority's map assigns at the coordinate.
+ *   That value is a fact about the map.
+ *
+ *   It makes no statement about the building's flood risk, and a Zone 1 claim is silent
  *   about surface water, groundwater and defended-area residual risk.
  */
 

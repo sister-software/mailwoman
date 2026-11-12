@@ -6,7 +6,9 @@
  *
  *   When the gazetteer cascade answers no place, the fallback tries postcode keys against a centroid map.
  *   The keys come from the parse's postcode node and from the input's known postcode formats.
- *   A postcode the classifier labeled at low confidence, or left unlabeled, therefore still reaches the map.
+ *
+ *   A postcode the classifier labeled at low confidence, or left unlabeled,
+ *   therefore still reaches the map.
  *   The map merges the classifier's anchors with the binaries a release lists for the fallback only.
  */
 

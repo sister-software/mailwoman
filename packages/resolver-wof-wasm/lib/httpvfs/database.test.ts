@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The client half of the protocol: which `open` request each opener posts. The worker half runs only in
- *   a browser and is covered by the docs Playwright suite.
+ *   The client half of the protocol: which `open` request each opener posts.
+ *
+ *   The worker half runs only in a browser and is covered by the docs Playwright suite.
  */
 
 import { afterEach, describe, expect, test, vi } from "vitest"
@@ -19,12 +20,14 @@ import type { RangeWorkerCall } from "#httpvfs/worker-protocol"
 
 class FakeWorker extends EventTarget {
 	static posted: RangeWorkerCall[] = []
+	static created: FakeWorker[] = []
 
 	readonly url: string
 
 	constructor(url: string) {
 		super()
 		this.url = url
+		FakeWorker.created.push(this)
 	}
 
 	postMessage(call: RangeWorkerCall): void {
@@ -66,6 +69,7 @@ class FailingReadWorker extends FakeWorker {
 
 afterEach(() => {
 	FakeWorker.posted = []
+	FakeWorker.created = []
 	vi.unstubAllGlobals()
 })
 
@@ -110,5 +114,21 @@ describe("the open request", () => {
 
 		// The open reads the schema so a corrupt file fails here rather than at the first query.
 		expect(FakeWorker.posted[1]).toMatchObject({ type: "query", sql: "SELECT count(*) FROM sqlite_master" })
+	})
+})
+
+describe("a failed worker", () => {
+	test("rejects every later call with the worker's error, without posting it", async () => {
+		vi.stubGlobal("Worker", FakeWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		const database = await openRangeDatabase("/data.db", "/sqlite/")
+		const postedBeforeFailure = FakeWorker.posted.length
+
+		FakeWorker.created.at(-1)!.dispatchEvent(Object.assign(new Event("error"), { message: "worker crashed" }))
+
+		await expect(database.query("SELECT 1")).rejects.toThrow("worker crashed")
+		await expect(database.bytesRead()).rejects.toThrow("worker crashed")
+		expect(FakeWorker.posted).toHaveLength(postedBeforeFailure)
 	})
 })

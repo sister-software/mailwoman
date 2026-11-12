@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs one stage of the release-time exposure check on an exposure report, prints the findings as JSON, and exits 1
- *   when the check refuses.
+ *   Runs one stage of the release-time exposure check on an exposure report,
+ *   prints the findings as JSON, and exits 1 when the check refuses.
  *
- *   `preflight` reads the `replayed_draws` stage. `completed` reads `realized_draws` and the floors in `floors.json`.
+ *   `preflight` reads the `replayed_draws` stage.
+ *   `completed` reads `realized_draws` and the floors in `floors.json`.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/exposure/release/check.run.ts preflight --report exposure.json \

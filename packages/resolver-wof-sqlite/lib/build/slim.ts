@@ -158,7 +158,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		}
 
 		// `place_search` and `place_bbox` derive purely from `spr` + `names`, and the
-		// population aux table is not rebuilt because it was copied verbatim.
+		// population aux table isn't rebuilt because it was copied verbatim.
 		progress("fts", "building place_search / place_bbox on slim DB")
 
 		buildPlaceSearchFTS(out, {

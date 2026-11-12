@@ -4,7 +4,8 @@
 /**
  *   Where the Vale prose linter is, for every caller that spawns it.
  *
- *   `@vvago/vale` has published both a native binary and a Node launcher, so the manifest's own `bin` field is the interface and is read at call time.
+ *   `@vvago/vale` has published both a native binary and a Node launcher, so the
+ *   manifest's own `bin` field is the interface and is read at call time.
  */
 
 import { PathBuilder } from "path-ts"

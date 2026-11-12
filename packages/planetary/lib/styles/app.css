@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /*
  * Space is painted here, not by the map. Under globe projection a MapLibre background layer paints the sphere, and
  * the canvas is transparent everywhere outside it — so the field around the body, and the stars in it, belong to the

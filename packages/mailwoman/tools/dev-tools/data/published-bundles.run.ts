@@ -2,21 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures what the public bucket serves for every artifact in `BUNDLES` and writes the committed snapshot
- *   `packages/mailwoman/data/published-bundles.json`.
+ *   Measures what the public bucket serves for every artifact in `BUNDLES` and writes
+ *   the committed snapshot `packages/mailwoman/data/published-bundles.json`.
  *
- *   Each artifact gets two readings. A HEAD request against its public URL reports `content-length` without downloading it.
+ *   Each artifact gets two readings.
+ *   A HEAD request against its public URL reports `content-length` without downloading it.
+ *
  *   The tier and license come from `layer_manifest` in the local copy under the data root.
- *   Only a host that has pulled the bundle can supply that copy. An artifact this host does not hold
- *   gets its manifest recorded as unmeasured with the path that was looked for, so a reader of the snapshot can
- *   tell a tier with a read record from one without a read record.
+ *   Only a host that's pulled the bundle can supply that copy.
  *
- *   The `published-bundles` repository-health check compares the sizes here against the registry's `approxBytes`,
- *   and the docs site renders the snapshot beside its date. Run this after publishing an artifact or changing the
- *   registry, then commit the result.
+ *   An artifact this host doesn't hold gets its manifest recorded as unmeasured
+ *   with the path that was looked for, so a reader of the snapshot can tell a tier
+ *   with a read record from one without a read record.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/data/published-bundles.run.ts
+ *   The `published-bundles` repository-health check compares the sizes here against the
+ *   registry's `approxBytes`, and the docs site renders the snapshot beside its date.
+ *   Run this after publishing an artifact or changing the registry, then commit the result.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/published-bundles.run.ts
  */
 
 import { APIClient } from "@mailwoman/core/api"

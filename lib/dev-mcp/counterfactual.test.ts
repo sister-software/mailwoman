@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The setting space and the move predicate. Driven through `resolveConfig` rather than a hand-built options object, so
- *   the flips are stated against the configuration production ships — a flip enumerated off a caller's
- *   half-filled config would move the unset settings in the wrong direction.
+ *   The setting space and the move predicate.
+ *
+ *   Driven through `resolveConfig` rather than a hand-built options object, so the flips
+ *   are stated against the configuration production ships — a flip enumerated off a
+ *   caller's half-filled config would move the unset settings in the wrong direction.
  */
 
 import { describe, expect, it } from "vitest"

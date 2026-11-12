@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `house-venue` recipe — synthetic house_number+venue+street co-occurrence rows: tuples →
- *   {@link synthesizeHouseVenueRow} → aligned LabeledRow. The v0.6.3 corrective companion to the
- *   no-street recipe: every row includes both house_number and venue to represent their co-occurrence.
- *   Ported from the root build script
- *   it replaced.
+ *   `house-venue` recipe — synthetic house_number+venue+street co-occurrence rows:
+ *   tuples → {@link synthesizeHouseVenueRow} → aligned LabeledRow.
+ *
+ *   The v0.6.3 corrective companion to the no-street recipe: every row includes both
+ *   house_number and venue to represent their co-occurrence.
+ *   Ported from the root build script it replaced.
  */
 
 import { layoutForCountry, layoutPrintsTag } from "@mailwoman/codex/address/layouts"
@@ -88,7 +89,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 						source,
 						// The id covers the generated house number, street and venue as well as the admin tail.
 						// Two rows generated in one postcode differ only in those, and an id without them
-						// names every row of a postcode, template and variant as one record (#2894).
+						// lists every row of a postcode, template and variant as one record (#2894).
 						source_id: recipeSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,

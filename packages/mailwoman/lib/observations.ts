@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The opt-in `mailwoman/observations` surface has no route on by default. Presence enables it. Rollback removes the argument at the one call site.
+ * The opt-in `mailwoman/observations` surface has no route on by default.
+ *
+ * Presence enables it.
+ * Rollback removes the argument at the one call site.
  */
 
 export type {

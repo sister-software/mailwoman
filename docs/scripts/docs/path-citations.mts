@@ -4,7 +4,8 @@
 /**
  *   Finds repository paths in markdown inline code spans that do not exist on disk.
  *
- *   A backticked string that contains a slash is not always a file path, so {@linkcode refusalFor} sorts them into refusal classes before resolution.
+ *   A backticked string that contains a slash isn't always a file path,
+ *   so {@linkcode refusalFor} sorts them into refusal classes before resolution.
  */
 
 // This file is imported by `check/docs-structure.ts`, which the Docs workflow runs
@@ -51,13 +52,15 @@ const CODE_SPAN = /(`{1,2})([^`\n]+?)\1/g
 const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
 
 /**
- * Directories whose documents are point-in-time records even though their filenames have
- * no date, so a broken citation under one is refused rather than reported.
+ * This list identifies undated documents that record paths from earlier repository states.
+ *
+ * The check records a missing file that these documents cite as historical.
  */
 const RECORD_TREES = new Map([
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
 	["docs/records/engineering/", "engineering notes that describe the tree on the date they were written"],
+	["docs/engineering/documentation-rebuild/source-to-target.md", "the inventory of retired article paths"],
 	["config/vale/fixtures/", "fixtures for the prose-rule tests"],
 ])
 
@@ -92,7 +95,7 @@ export const CitationRefusal = {
 export type CitationRefusal = (typeof CitationRefusal)[keyof typeof CitationRefusal]
 
 /**
- * A backticked citation whose target does not exist.
+ * A backticked citation whose target doesn't exist.
  */
 export interface BrokenCitation {
 	file: string

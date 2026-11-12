@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A loader-built classifier (real `NeuralAddressClassifier` plus the real fixture tokenizer, only
- *   onnxruntime-web mocked) must thread a country-matched index's emission matrix and its
- *   transition-beta adjustments into the shared decode. It must remain byte-stable when no index matches
- *   the evaluation data.
+ *   A loader-built classifier (real `NeuralAddressClassifier` plus the real fixture tokenizer,
+ *   only onnxruntime-web mocked) must thread a country-matched index's emission matrix
+ *   and its transition-beta adjustments into the shared decode.
  *
- *   The fixture is the path-fusion lattice "Shoreditch London" → ['▁Shore','d','itch','▁London']: the
- *   fused street run (8+7+7=22) outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4,
+ *   It must remain byte-stable when no index matches the evaluation data.
+ *
+ *   The fixture is the path-fusion lattice "Shoreditch London" → ['▁Shore','d','itch','▁London']:
+ *   the fused street run (8+7+7=22) outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4,
  *   so the flip requires both the emission matrix and the β=5 transition bonus to reach viterbi.
  */
 

@@ -2,25 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset. `sealDatabase`
- *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
- *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
- *   file throws a descriptive error pointing at the rebuild command instead of a cryptic SQLITE_READONLY.
- *   A caller can restore write permission only with manual `chmod u+w`; the program never changes permissions.
+ *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset.
+ *
+ *   `sealDatabase` is the last step of every builder — checkpoint, freeze the journal, chmod 0444.
+ *   `openBuiltClient` (`@mailwoman/sqlite/sealed`) is how anything opens a data
+ *   artifact. a write-mode open of a sealed file throws a descriptive error pointing
+ *   at the rebuild command instead of a cryptic SQLITE_READONLY.
+ *
+ *   A caller can restore write permission only with manual `chmod u+w`;
+ *   the program never changes permissions.
  *   Rebuild the artifact to make changes.
  *
- *   `swapDatabaseIntoPlace` is the atomic publish step agents.md
- *   specifies in prose ("build it successfully. Move the previous version to a temp directory.
- *   Move the new version into place."). It lives here because this module already owns the
- *   built-artifact lifecycle. A rule stated in project prose and implemented by several builders belongs in a
- *   shared function.
+ *   `swapDatabaseIntoPlace` is the atomic publish step agents.md specifies in prose
+ *   ("build it successfully. Move the previous version to a temp directory. Move the new version into place.").
+ *   It lives here because this module already owns the built-artifact lifecycle.
+ *
+ *   A rule stated in project prose and implemented by several builders belongs in a shared function.
  */
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { processExists } from "@mailwoman/core/fs/lock"
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { basename, type PathBuilderLike } from "path-ts"
+import { basename, dirname, type PathBuilderLike } from "path-ts"
 
 /**
  * The one capability {@link assertDatabaseIntegrity} needs.
@@ -103,7 +109,7 @@ export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 }
 
 /**
- * Verify a freshly-built database is not corrupt, immediately before it is sealed and published.
+ * Verify a freshly-built database isn't corrupt, immediately before it is sealed and published.
  *
  * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does.
  * The check is part of the built-artifact lifecycle.
@@ -173,8 +179,7 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 		await movePath(tmpPathString, finalPathString)
 	} catch (error) {
 		// The prior version is already aside at this point.
-		// A failed forward rename must not leave the slot empty while a restorable
-		// artifact sits one rename away.
+		// A failed forward rename mustn't leave the slot empty while a restorable artifact sits one rename away.
 		if ((await pathExists(aside)) && !(await pathExists(finalPathString))) {
 			await movePath(aside, finalPathString)
 		}
@@ -187,4 +192,59 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 	}
 
 	await removePathIfPresent(aside)
+	await recoverInterruptedBuilds(finalPath)
+}
+
+/**
+ * A sibling an earlier build of an artifact left beside it: the artifact's name, `.tmp-`
+ * or `.old-`, the building process's pid, and an optional `-wal` or `-shm` suffix.
+ */
+const BUILD_SIBLING = /\.(tmp|old)-(\d+)(-wal|-shm)?$/u
+
+/**
+ * Restores or removes what an interrupted build of `finalPath` left beside it.
+ *
+ * A build writes `<final>.tmp-<pid>` and, during its swap, moves the published file to `<final>.old-<pid>`.
+ * A process killed in between leaves those files on disk under a pid no later build shares.
+ *
+ * When the published slot is empty, the newest `.old-` file of an exited process is
+ * the last published version, and it moves back into the slot.
+ * Every other sibling of an exited process is removed.
+ *
+ * A sibling whose process still runs belongs to a build in progress and stays.
+ */
+export async function recoverInterruptedBuilds(finalPath: PathBuilderLike): Promise<void> {
+	const finalPathString = finalPath.toString()
+	const directory = dirname(finalPathString).toString()
+
+	if (!(await pathExists(directory))) return
+
+	const name = basename(finalPathString).toString()
+
+	const siblings = [
+		...(await sortedGlob(directory, `${name}.tmp-*`)),
+		...(await sortedGlob(directory, `${name}.old-*`)),
+	].flatMap((path) => {
+		const match = BUILD_SIBLING.exec(path)
+
+		return match && !processExists(Number(match[2])) ? [{ path, kind: match[1], sidecar: match[3] ?? null }] : []
+	})
+
+	if (!(await pathExists(finalPathString))) {
+		const stranded = siblings.filter((sibling) => sibling.kind === "old" && !sibling.sidecar)
+
+		const newest = (
+			await Promise.all(
+				stranded.map(async (sibling) => ({ ...sibling, mtimeMs: (await statPath(sibling.path)).mtimeMs }))
+			)
+		).toSorted((a, b) => b.mtimeMs - a.mtimeMs)[0]
+
+		if (newest) {
+			await movePath(newest.path, finalPathString)
+		}
+	}
+
+	for (const sibling of siblings) {
+		await removePathIfPresent(sibling.path)
+	}
 }

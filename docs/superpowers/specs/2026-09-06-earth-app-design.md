@@ -49,7 +49,7 @@ Vite are then two independent bundler readings of every package both consume.
 deploys with `wrangler deploy`. The app needs no publish workflow, API token in GitHub, or Worker script,
 because the `wrangler.toml` declares `assets` and no other field.
 
-**Done includes the removal.** The work is not finished while any of the geocoder page, its runtime
+**Done includes the removal.** The work isn't finished while any of the geocoder page, its runtime
 modules, its plugin, its static assets, or its dependencies remain in `docs/`.
 
 ## Design
@@ -189,7 +189,7 @@ touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` 
 `https://mars.mailwoman.post`. `public.mailwoman.post` is the R2 public origin, and its CORS policy is
 verified for the new origin before launch. The check is a `curl` with an `Origin` header against
 `releases.json`, `wof-hot.db` (a `Range` request), and one model file, recorded in the launch PR. Range
-behavior does not change, because the browser talks to `public.mailwoman.post` directly and no Worker sits
+behavior doesn't change, because the browser talks to `public.mailwoman.post` directly and no Worker sits
 in that path.
 
 ### Test plan

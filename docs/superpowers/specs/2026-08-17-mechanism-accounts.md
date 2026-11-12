@@ -9,7 +9,7 @@ claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 Diagnosis of this system today depends on whoever is reasoning about it at the time. The operator
 described the cost: after every context reset, someone has to re-learn how addresses behave from a
 narrow view, so the assistant's in-context reasoning has become a required part of improving the
-product. The project should not depend on that reasoning.
+product. The project shouldn't depend on that reasoning.
 
 Aggregate metrics cause that dependency. Distance-from-truth discards diagnostic information. The
 #1711 city-only stratum reported `89.1% vs 96.9%, p = 0.084`, which read as underpowered with no finding
@@ -22,7 +22,7 @@ produced them.
 ## 2. The two commitments (the anti-Pelias rules)
 
 Pelias-style rule geocoders become rigid through their test suites. Each test encodes a belief about
-how addresses work. New addresses force adjustments that must not break old tests, and the suite
+how addresses work. New addresses force adjustments that mustn't break old tests, and the suite
 eventually blocks change. A hand-authored taxonomy of failure classes would repeat the same mistake one
 level up. Two commitments prevent it:
 
@@ -61,7 +61,7 @@ smallest counterfactual: apply the region constraint → order inverts
 
 Accounts cannot explain what happens inside the weights, because the weights hold no recoverable
 reasons. Accounts therefore describe the boundaries: what was fed, retrieved, conditional, and ranked.
-When an account ends at "the model chose X with margin m and every channel silent," that is itself
+When an account ends at "the model chose X with margin m and every channel silent," that's itself
 the class: the model had no evidence. The fix is to supply evidence rather than to inspect the logits.
 
 ## 4. Shapes and confidence
@@ -90,7 +90,7 @@ error ("features, never overrides"), so a test that asserts outcomes cannot dete
 
 | check                                                 | asserts                                                   | catches                                                                                 | status                                                                           |
 | ----------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must not activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
+| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | mustn't activate (no-component / no-resolve / no-throw)   | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
 | **activation census** (#1719, `mwdev_census`)         | must activate somewhere (L0 ran / L1 signaled / L2 moved) | inert mechanisms — the house's most-repeated failure class (#1699, #1703, #1349, R5)    | L0/L1 shipped, first run found 2 inert, both verified deliberate and allowlisted |
 | **fragile-pass ledger** (#1720)                       | activated for the right reason                            | compensated defects (XOR signature: fixing one of a canceling pair turns the board red) | designed, needs accounts                                                         |
 
@@ -138,11 +138,11 @@ The instruments ship in this order:
 4. Exhaustive patch-sweep tool (~1,700 sites per input at this depth, seconds per case).
 5. Conditional: an IIT country register and at most one exploratory SAE run.
 
-The following are not planned, and are recorded so they are not proposed again: hard concept
-bottlenecks (they would have been wrong for Weimar, because they should flag bypass decisions rather
+The following are not planned, and are recorded so they're not proposed again: hard concept
+bottlenecks (they'd have been wrong for Weimar, because they should flag bypass decisions rather
 than prevent them), RRR gradient penalties, and attention-as-explanation.
 
-## 8. What is already landed (as of 2026-08-17)
+## 8. What's already landed (as of 2026-08-17)
 
 - `variable_isolation` rename. The confound check now claims setup hygiene rather than causation.
   The underlying vocabulary bug was #1715.
@@ -162,7 +162,7 @@ than prevent them), RRR gradient penalties, and attention-as-explanation.
   numbers their meaning. Version 1 exposed a coverage limit: the resolver-interior trace (#1721)
   records only the walk's own `#lookupAndPick`. A row answered by the post-walk span-rescore
   therefore returns a resolved coordinate beside an empty lookup list. Accounts report that case
-  explicitly so the empty list is not read as "no retrieval happened".
+  explicitly so the empty list isn't read as "no retrieval happened".
 
 ## 9. Sequence
 

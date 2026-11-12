@@ -6,6 +6,7 @@ import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers
 import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -119,9 +120,15 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 
 const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { parseJSONStrict } = await import("@mailwoman/core/json")
-		const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
+		const {
+			client: { DatabaseClient },
+			json: { parseJSONStrict },
+			interpCalibration: { INTERP_RADIUS_CALIBRATION },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			json: import("@mailwoman/core/json"),
+			interpCalibration: import("#interp-calibration"),
+		})
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
 			throw new CommandError(
@@ -136,7 +143,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
-		// Both packages load dynamically because the published CLI does not depend on them.
+		// Both packages load dynamically because the published CLI doesn't depend on them.
 		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 

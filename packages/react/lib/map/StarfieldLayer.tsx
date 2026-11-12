@@ -4,8 +4,10 @@
 /**
  *   Paints the procedural star sky onto a canvas that sits behind the map.
  *
- *   Under globe projection MapLibre leaves its canvas transparent outside the sphere, so a canvas stacked beneath it
- *   shows through around the globe. This component renders as a `<Map>` child so it can read the map instance.
+ *   Under globe projection MapLibre leaves its canvas transparent outside the sphere,
+ *   so a canvas stacked beneath it shows through around the globe.
+ *   This component renders as a `<Map>` child so it can read the map instance.
+ *
  *   It redraws the sky canvas that `<MapCanvas>` owns on every camera move.
  */
 

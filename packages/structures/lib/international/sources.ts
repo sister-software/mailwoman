@@ -3,7 +3,9 @@
 
 /**
  *   Structure sources that span countries.
- *   These are the inputs of the basemaps the map draws, plus the catalog that individual landmark models come from.
+ *
+ *   These are the inputs of the basemaps the map draws, plus the catalog that
+ *   individual landmark models come from.
  */
 
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"

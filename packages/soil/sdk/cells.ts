@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The delineation-keyed cell index, plus the partial-cell and mixed-top-class shares that choose its resolution.
+ *   The delineation-keyed cell index, plus the partial-cell and mixed-top-class
+ *   shares that choose its resolution.
  */
 
 import {

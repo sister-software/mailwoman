@@ -51,7 +51,7 @@ gazetteer doesn't use. Another training run cannot fix a measurement bug.
 
 **Berlin is an actual failure — but not the one we were retraining for.** Berlin's PIP equals its
 name-match (36.3%), so there's no hidden artifact. Of 1,500 Berlin rows, **955 resolve to
-no place at all**, and the 545 that resolve all resolve correctly to Berlin. Berlin's problem is not a
+no place at all**, and the 545 that resolve all resolve correctly to Berlin. Berlin's problem isn't a
 wrong pick or a too-small polygon — it's that the model drops the locality span entirely in the
 city-state layout `…, Berlin, Berlin 14199`, where locality and region are the same word. One "Berlin"
 gets labeled region, the other is lost, and the resolver receives no locality span to place. This is a

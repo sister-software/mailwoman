@@ -13,7 +13,7 @@
 # the affix trajectory.
 #
 # One model carrying every proven parity change, at a larger step budget (the cumulative-dilution
-# lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
+# lesson: never stack N sources into a fixed 20k budget — give them room). This isn't a single-variable
 # experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Serves `GET /health`, which reports issuance, Stripe mode, signing, ledger reachability and
- *   long-running email failures without exposing customer or key data.
+ *   Serves `GET /health`, which reports issuance, Stripe mode, signing, ledger reachability
+ *   and long-running email failures without exposing customer or key data.
  *
- *   The route returns 503 only when the ledger is unreachable. Email failures still return 200 with
- *   `email: "failing"`.
+ *   The route returns 503 only when the ledger is unreachable.
+ *   Email failures still return 200 with `email: "failing"`.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The census uses the placetype-pair prior's parent-candidate probes and records what it knows on
- *   the trace.
+ *   The census uses the placetype-pair prior's parent-candidate probes
+ *   and records what it knows on the trace.
  *
  *   The interface this file holds is the negative one: a census present must produce a decode
- *   byte-identical to a census absent: same emission matrix and transition adjustments. On real
- *   weights the same emissions, path and tokens — so an accidental wiring fails loudly.
+ *   byte-identical to a census absent: same emission matrix and transition adjustments.
+ *   On real weights the same emissions, path and tokens — so an accidental wiring fails loudly.
  *
  *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusResolver` round trip
- *   because the fold agreement between the two artifacts (`foldVersion`) is part of what is under
- *   test.
+ *   because the fold agreement between the two artifacts (`foldVersion`) is part of what's under test.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman data prune`: list installed artifacts no retained generation and no live session references, and
- *   delete them under `--yes`. Without `--yes` it prints the plan and keeps every file. The retention policy is in
- *   `lib/data/retention.ts`.
+ *   `mailwoman data prune`: list installed artifacts no retained generation
+ *   and no live session references, and delete them under `--yes`.
+ *
+ *   Without `--yes` it prints the plan and keeps every file.
+ *   The retention policy is in `lib/data/retention.ts`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests what a coverage fact licenses. A hard country filter is safe only when a fact records that it was measured and
- *   passed. Measured-and-failed and never-measured are separate readings. Neither reading permits the filter.
+ *   Tests what a coverage fact licenses.
+ *
+ *   A hard country filter is safe only when a fact records that it was measured and passed.
+ *   Measured-and-failed and never-measured are separate readings.
+ *   Neither reading permits the filter.
  */
 
 import { describe, expect, it } from "vitest"

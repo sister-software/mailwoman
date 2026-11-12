@@ -3,16 +3,23 @@
 
 /**
  *   Comma spacing — a comma directly followed by a letter gains one space.
+ *
  *   `Biggin Hill,United Kingdom` reaches stage 2 as `Biggin Hill, United Kingdom`.
- *   Tight commas are a common typing pattern. The tokenizer is the first stage that reads them differently.
- *   Without a space, it combines `,United` into one piece. The segmenter still splits the input.
+ *   Tight commas are a common typing pattern.
+ *
+ *   The tokenizer is the first stage that reads them differently.
+ *   Without a space, it combines `,United` into one piece.
+ *
+ *   The segmenter still splits the input.
  *   The decoder then labels the combined piece as a street or locality, though it is neither.
  *
- *   A letter or a digit after the comma triggers the insertion, with one exception: a comma with a digit on
- *   both sides is a numeric separator (`12,5`, `1,000`) and is left as typed. `Köln,50733` has a letter before
- *   the comma, so it is a list separator and gains the space. A space, punctuation or end of input after the
- *   comma is left as typed. The inserted space maps to the comma's own offset, the same rule the `…`
- *   expansion in `punctuation.ts` follows, so every span that starts after it still points into the raw input.
+ *   A letter or a digit after the comma triggers the insertion, with one exception: a comma
+ *   with a digit on both sides is a numeric separator (`12,5`, `1,000`) and is left as typed.
+ *   `Köln,50733` has a letter before the comma, so it is a list separator and gains the space.
+ *
+ *   A space, punctuation or end of input after the comma is left as typed.
+ *   The inserted space maps to the comma's own offset, the same rule the `…` expansion in
+ *   `punctuation.ts` follows, so every span that starts after it still points into the raw input.
  */
 
 import { identityMap } from "#offset-map"
@@ -40,8 +47,8 @@ function isNumericSeparator(input: string, commaIndex: number): boolean {
 }
 
 /**
- * Insert one space after every comma that is directly followed by a letter
- * or digit, unless the comma is a numeric separator.
+ * Insert one space after every comma that's directly followed by a letter or digit,
+ * unless the comma is a numeric separator.
  *
  * Offset-map-correct: the inserted space maps to the comma.
  */

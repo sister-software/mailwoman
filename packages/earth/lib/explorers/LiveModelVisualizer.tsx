@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The trace workbench. A wide text field at the top center takes an address, a pasted postal block with
- *   its newlines included. Under it, three columns: the tiles for permuting the words, the bands for the
- *   current text, and the readings. The text is traced as it is typed, after a short debounce, and a trace
- *   that arrives after a newer one started is dropped, so the bands never show a reading of text the visitor
- *   has since changed. The traced text is written to the URL's `q` so a reload or a shared link keeps it.
+ *   The trace workbench.
  *
- *   A classifier bundle that predates the trace hook reports that fact instead of rendering an empty workbench.
+ *   A wide text field at the top center takes an address, a pasted postal block with its newlines included.
+ *   Under it, three columns: the tiles for permuting the words, the bands for
+ *   the current text, and the readings.
+ *
+ *   The text is traced as it is typed, after a short debounce, and a trace that arrives after a newer
+ *   one started is dropped, so the bands never show a reading of text the visitor has since changed.
+ *   The traced text is written to the URL's `q` so a reload or a shared link keeps it.
+ *
+ *   A classifier bundle that predates the trace hook reports that fact
+ *   instead of rendering an empty workbench.
  */
 
 import { parsePointQuery, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"
@@ -33,7 +38,7 @@ const DEBOUNCE_MS = 120
 export interface LiveModelVisualizerProps {
 	/**
 	 * Trace an input through the decode path, resolving null when the classifier
-	 * is not ready or the trace fails.
+	 * isn't ready or the trace fails.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**

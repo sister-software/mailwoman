@@ -18,7 +18,7 @@ import { SqliteDialect } from "#dialect"
 import type { SqliteDialectConfig } from "#dialect/config"
 
 /**
- * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.
+ * A connection's non-Kysely surface: the statements Kysely doesn't model, plus ending the connection.
  *
  * Schema-agnostic because Kysely is invariant in `DB`: a parameter typed
  * `DatabaseClient` would reject every real client.
@@ -81,7 +81,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	}
 
 	/**
-	 * Run a statement Kysely does not model: `pragma`, `vacuum`, `analyze`, `attach`, FTS5 virtual-table DDL.
+	 * Run a statement Kysely doesn't model: `pragma`, `vacuum`, `analyze`, `attach`, FTS5 virtual-table DDL.
 	 */
 	exec(sql: string): void {
 		this.#database.exec(sql)

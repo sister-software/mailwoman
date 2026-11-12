@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The runtime a Rust parity record was measured on: the counterpart of the Python reference's `runtime` block.
 //!
 //! The Python side recorded the interpreter version, `torch`, `threads` and `cpu_capability`. The Rust side records the `tch` crate

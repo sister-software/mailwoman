@@ -4,8 +4,9 @@
 /**
  * The page's handle on a remote SQLite database read by HTTP range requests.
  *
- * `openRangeDatabase` starts the worker in `range-worker.ts`, which runs `@sqlite.org/sqlite-wasm` over a
- * read-only VFS. The browser lookups in this directory take the {@link RangeDatabase} it returns.
+ * `openRangeDatabase` starts the worker in `range-worker.ts`, which runs
+ * `@sqlite.org/sqlite-wasm` over a read-only VFS.
+ * The browser lookups in this directory take the {@link RangeDatabase} it returns.
  */
 
 import type {
@@ -61,7 +62,7 @@ export const DEFAULT_CHUNK_SIZE = 65_536
 const SQLITE_IOERR = 10
 
 /**
- * A statement the range worker could not run, with SQLite's extended result code
+ * A statement the range worker couldn't run, with SQLite's extended result code
  * when SQLite raised the failure.
  */
 export class RangeWorkerError extends Error {
@@ -75,9 +76,9 @@ export class RangeWorkerError extends Error {
 }
 
 /**
- * Whether a range-database failure is a page read SQLite could not complete, as when a range request fails.
+ * Whether a range-database failure is a page read SQLite couldn't complete, as when a range request fails.
  *
- * In a page under a caching service worker that is offline, it means the pages
+ * In a page under a caching service worker that's offline, it means the pages
  * a query needs were never cached.
  */
 export function isSQLiteReadFailure(error: unknown): boolean {
@@ -100,6 +101,14 @@ class RangeWorkerClient implements RangeDatabase {
 	readonly #worker: Worker
 	readonly #pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>()
 	#nextID = 0
+	/**
+	 * The error from the worker's `error` event.
+	 *
+	 * The worker answers each call's own failure with a reply, so this event means the
+	 * worker itself failed and its database state is unknown.
+	 * Every later call rejects with this error.
+	 */
+	#failure: Error | null = null
 
 	constructor(workerURL: string) {
 		this.#worker = new Worker(workerURL, { type: "module" })
@@ -122,6 +131,8 @@ class RangeWorkerClient implements RangeDatabase {
 		this.#worker.addEventListener("error", (event) => {
 			const error = new Error(event.message || `The range worker at ${workerURL} failed to load`)
 
+			this.#failure = error
+
 			for (const waiter of this.#pending.values()) {
 				waiter.reject(error)
 			}
@@ -132,6 +143,12 @@ class RangeWorkerClient implements RangeDatabase {
 
 	call<Request extends RangeWorkerRequest>(request: Request): Promise<RangeWorkerResults[Request["type"]]> {
 		const reply = new Promise<unknown>((resolve, reject) => {
+			if (this.#failure) {
+				reject(this.#failure)
+
+				return
+			}
+
 			const id = this.#nextID++
 
 			this.#pending.set(id, { resolve, reject })
@@ -248,25 +265,4 @@ export async function tableExists(database: RangeDatabase, name: string): Promis
 	)
 
 	return Number(rows[0]?.n ?? 0) > 0
-}
-
-/**
- * Memoizes a zero-argument async probe as its in-flight promise so concurrent callers share one query.
- *
- * A rejection clears the memo so a transient failure can retry.
- */
-export function memoizeResettable<T>(fn: () => Promise<T>): () => Promise<T> {
-	let memo: Promise<T> | null = null
-
-	return () => {
-		if (!memo) {
-			memo = fn()
-
-			memo.catch(() => {
-				memo = null
-			})
-		}
-
-		return memo
-	}
 }

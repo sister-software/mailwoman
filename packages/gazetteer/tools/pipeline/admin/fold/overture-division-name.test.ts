@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The predicate is exported for direct tests. The fold streams the Overture divisions theme remotely with no local fixture.
+ *   The predicate is exported for direct tests.
+ *
+ *   The fold streams the Overture divisions theme remotely with no local fixture.
  */
 
 import { describe, expect, it } from "vitest"

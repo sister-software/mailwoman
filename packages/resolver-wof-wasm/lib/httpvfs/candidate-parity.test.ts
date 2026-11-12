@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node↔browser candidate-reader parity over the real artifact, asserting the same top candidate and skipped when the artifact is absent.
+ *   Node↔browser candidate-reader parity over the real artifact, asserting the same
+ *   top candidate and skipped when the artifact is absent.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

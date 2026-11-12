@@ -2,33 +2,42 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `nearestInfrastructure` — a coverage-paired k-nearest read over the telecom-infrastructure POI
- *   categories (`telecom_exchange`/`tower_comms` — `@mailwoman/poi-taxonomy` categories, populated by the
- *   `--source osm` extractor) that a caller can join against any layer's own `layer_coverage`
- *   survey-completeness table (decision 7). A typical caller is a BDC filing scorer.
+ *   `nearestInfrastructure` — a coverage-paired k-nearest read over the telecom-infrastructure
+ *   POI categories (`telecom_exchange`/`tower_comms` — `@mailwoman/poi-taxonomy` categories,
+ *   populated by the `--source osm` extractor) that a caller can join against any
+ *   layer's own `layer_coverage` survey-completeness table (decision 7).
+ *
+ *   A typical caller is a BDC filing scorer.
  *   It asks for the nearest real infrastructure to a claimed Broadband Serviceable Location.
+ *
  *   It also asks whether this layer has survey evidence for that area.
  *
  *   The shapes below follow the interfaces in `poi-lookup.ts` and `@mailwoman/core/layers`:
  *
- *   - **`poiLookup` is an already-open {@link POILookup}.** The caller constructs it from `POILookupOpts` before calling this function. `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
- *     and prepares three statements (see `poi-lookup.ts`) — reconstructing that per call would mean
- *     re-opening the SQLite handle and re-running the dictionary `select` on every single
- *     `nearestInfrastructure` invocation. A scorer calls this once per filing candidate. It opens
- *     `poi.db` once and reuses the same `POILookup`. This wrapper accepts that shape: the caller owns
- *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`). The wrapper calls
- *     `.search()` on it.
+ *   - **`poiLookup` is an already-open {@link POILookup}.** The caller constructs
+ *     it from `POILookupOpts` before calling this function.
+ *     `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
+ *     and prepares three statements (see `poi-lookup.ts`) — reconstructing that per
+ *     call would mean re-opening the SQLite handle and re-running the dictionary
+ *     `select` on every single `nearestInfrastructure` invocation.
+ *     A scorer calls this once per filing candidate.
+ *     It opens `poi.db` once and reuses the same `POILookup`.
+ *     This wrapper accepts that shape: the caller owns `POILookup`'s open/dispose
+ *     lifecycle (`using poiLookup = new POILookup(...)`).
+ *     The wrapper calls `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
- *     (`@mailwoman/core/layers`) is `Promise`-returning. Every layer-interface read in this codebase is
- *     (`readLayerManifest`, `filingLandscape` itself) — so pairing each POI hit with its coverage cell
- *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.
+ *     (`@mailwoman/core/layers`) is `Promise`-returning.
+ *     Every layer-interface read in this codebase is (`readLayerManifest`, `filingLandscape` itself) —
+ *     so pairing each POI hit with its coverage cell means awaiting one `readLayerCoverage` call per hit.
+ *     A sync signature can't await that.
  *
- *   {@link res9ShortCellToRes6Parent} (exported by `filing-landscape.ts`; see that file's docstring for
- *   why the res-6 parent is reconstructed from the stored res-9 cell rather than recomputed from the
- *   centroid) turns each hit's res-9 cell into the res-6 cell every layer in this repo aggregates
- *   coverage at (poi.db's own convention; `bdc.db`'s `BDC_COVERAGE_H3_RESOLUTION` matches it
- *   deliberately — see `schema.ts`). `POI_H3_RESOLUTION` (`poi-lookup.ts`) is also 9, so the two layers'
- *   spines agree without this module hardcoding a resolution of its own.
+ *   {@link res9ShortCellToRes6Parent} (exported by `filing-landscape.ts`; see that file's
+ *   docstring for why the res-6 parent is reconstructed from the stored res-9 cell
+ *   rather than recomputed from the centroid) turns each hit's res-9 cell into the res-6
+ *   cell every layer in this repo aggregates coverage at (poi.db's own convention;
+ *   `bdc.db`'s `BDC_COVERAGE_H3_RESOLUTION` matches it deliberately — see `schema.ts`).
+ *   `POI_H3_RESOLUTION` (`poi-lookup.ts`) is also 9, so the two layers' spines agree
+ *   without this module hardcoding a resolution of its own.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

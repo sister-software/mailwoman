@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * These tools spawn the compiled CLI and poll its jobs. Each CLI writes its report to stdout.
- * The JSON-RPC server also uses stdout, so each command runs as a child process. This lets the
- * command verify the compiled tree with `assertCompiledFresh`. A child process adds a cold start
- * of about 1.4 seconds.
+ * These tools spawn the compiled CLI and poll its jobs.
+ *
+ * Each CLI writes its report to stdout.
+ * The JSON-RPC server also uses stdout, so each command runs as a child process.
+ *
+ * This lets the command verify the compiled tree with `assertCompiledFresh`.
+ * A child process adds a cold start of about 1.4 seconds.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -278,7 +281,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				try {
 					parsed = parseJSONStrict(finished.stdout)
 				} catch {
-					// Not JSON — ordinary for most verbs, so this is not reported as an error.
+					// Not JSON — ordinary for most verbs, so this isn't reported as an error.
 				}
 
 				return {
@@ -345,7 +348,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				return {
 					...summary,
 					// A running job still reports what it has produced so far, marked as partial,
-					// because a partial log is useful and a silent "not ready" is not.
+					// because a partial log is useful and a silent "not ready" isn't.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing
 					// A completed failing gauntlet has `state: "failed"`.

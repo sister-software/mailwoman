@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The comparison-model setting progression the NPPES benchmark walks, where each row turns one
- *   setting on so its marginal effect is isolated.
+ *   The comparison-model setting progression the NPPES benchmark walks, where each
+ *   row turns one setting on so its marginal effect is isolated.
  */
 
 import type { TermFrequencyTable } from "@mailwoman/match"

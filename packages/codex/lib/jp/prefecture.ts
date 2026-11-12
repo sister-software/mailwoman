@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The 47 Japanese prefectures (都道府県, todōfuken), keyed by their ISO 3166-2:JP code — the two-digit
- *   numeric string `"01"`..`"47"` standing in for `JP-01`..`JP-47`.
+ *   The 47 Japanese prefectures (都道府県, todōfuken), keyed by their ISO 3166-2:JP code —
+ *   the two-digit numeric string `"01"`..`"47"` standing in for `JP-01`..`JP-47`.
  *
  *   This case differs from `fr/region.ts`, `de/bundesland.ts` and `us/state.ts`.
  *   Japan's top-level admin unit has four legally distinct forms.
+ *
  *   Addresses write the prefecture name directly instead of deriving it from the postcode.
  *
- *   "都道府県" is four kanji because the top-level admin unit comes in four legally distinct flavors,
- *   even though all 47 are peers in practice:
+ *   "都道府県" is four kanji because the top-level admin unit comes in four legally
+ *   distinct flavors, even though all 47 are peers in practice:
  *
- *   - 都 (to, "metropolis") — exactly **1**: Tokyo (東京都). The capital's special form.
- *   - 道 (dō, "circuit") — exactly **1**: Hokkaido (北海道). A historical term. the name already ends in 道,
- *       so Hokkaido is written and indexed whole, never stripped to "北海".
- *   - 府 (fu, "urban prefecture") — exactly **2**: Osaka (大阪府) and Kyoto (京都府). The old imperial capital
- *       region.
- *   - 県 (ken, "prefecture") — the remaining **43**. The ordinary case.
+ *   - 都 (to, "metropolis") — exactly **1**: Tokyo (東京都).
+ *     The capital's special form.
+ *   - 道 (dō, "circuit") — exactly **1**: Hokkaido (北海道).
+ *     A historical term. the name already ends in 道, so Hokkaido is written
+ *     and indexed whole, never stripped to "北海".
+ *   - 府 (fu, "urban prefecture") — exactly **2**: Osaka (大阪府) and Kyoto (京都府).
+ *     The old imperial capital region.
+ *   - 県 (ken, "prefecture") — the remaining **43**.
+ *     The ordinary case.
  *
- *   Unlike a French région or a German Bundesland, the prefecture does appear on a normal address
- *   line: a Japanese address is written largest-to-smallest (prefecture → city → ward → block), so
- *   the prefecture is the first thing written rather than an inferred-from-postcode afterthought. See
- *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
+ *   Unlike a French région or a German Bundesland, the prefecture does appear on a normal address line:
+ *   a Japanese address is written largest-to-smallest (prefecture → city → ward → block),
+ *   so the prefecture is the first thing written rather than an inferred-from-postcode afterthought.
+ *   See `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 
 import { foldToken } from "#normalize"

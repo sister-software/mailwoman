@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * A misconfigured environment answers 503 for every request rather than letting one route work while another mints.
+ * A misconfigured environment answers 503 for every request rather than letting
+ * one route work while another mints.
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"

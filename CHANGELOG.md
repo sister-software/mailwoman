@@ -25,7 +25,7 @@ Every workspace that indexed with `h3-js` 4.5.0 now depends on `@sister.software
 the H3 C library compiled to WebAssembly with the same function names, argument order and cell strings. The
 import lines are the only change: initialization is implicit, so every call stays synchronous.
 
-h3-js allocated a 32 MiB heap when its module was first evaluated, which was the largest single part of a
+h3-js allocated a 32 MiB heap when its module was first evaluated. That heap was the largest single part of a
 Worker isolate's 128 MB. The new package instantiates a module of about 174 KB on the first H3 call
 instead.
 
@@ -35,7 +35,7 @@ Both libraries recomputed the stored res-9 `h3_cell` columns of two shipped laye
 - `poi.db`: 1,490 of 14,664,001 rows (0.010%) get the neighboring cell.
 
 Every one of those 1,490 points lies within about 3e-16 rad of a cell edge, closer than the two libraries'
-floating-point math agree. Most share one Overture confidence score, which points to a single upstream source that places POIs on
+floating-point math agree. Most share one Overture confidence score. That shared score points to a single upstream source that places POIs on
 res-9 edges. Lookups
 search a ring of cells, so such a place is still found. A rebuild of the layer realigns the column with the
 runtime library.
@@ -104,14 +104,14 @@ interface: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/
 `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder` provenance —
 stopped existing. The router now resolves a typed name against the literal path first and then against its
 prefix-directory readings, and the docs generator's tree takes each command's declared `spec.name`. A PREFIX
-DIRECTORY is transparent to the command path. A namespace like `gazetteer/inspect/` is not, and only the declared
+DIRECTORY is transparent to the command path. A namespace like `gazetteer/inspect/` isn't, and only the declared
 names tell them apart. Group help reads the compiled file's text rather than importing it. That read keeps group help side-effect free.
 
 ### Changed — the prefix-directory rule covers the whole tree, files and directories alike
 
 `recipe-prefix-directories` is now `prefix-directories`: three or more siblings sharing a hyphen-delimited prefix, in
 any directory, counting a subdirectory as a sibling beside a `.ts` file. Measured over the tracked tree: 163 groups
-at a threshold of two, 43 at three. Two kinds of name are excluded because they are interfaces rather than layout, and
+at a threshold of two, 43 at three. Two kinds of name are excluded because they're interfaces rather than layout, and
 both are derived rather than listed. A workspace directory is an npm package name. A directory holding no
 tracked TypeScript belongs to whoever it mirrors (`hf-publish/mailwoman-cjk/` is a Hugging Face repository,
 `fixtures/…/whosonfirst-data-admin-fr/` an upstream one). The fix renamed 186 files: 43 groups in the first
@@ -126,7 +126,7 @@ corpus recipe into its prefix directory. The move operation under it re-derives 
 owning package's own `imports`/`exports` patterns and writes it only once it RESOLVES to the moved file, so a
 replacement stays in the family the author wrote and a specifier that no resolution proves refuses the whole plan.
 
-TypeScript's own `getEditsForFileRename` was measured first and is not the mechanism. Asked to move a corpus recipe,
+TypeScript's own `getEditsForFileRename` was measured first and isn't the mechanism. Asked to move a corpus recipe,
 it rewrote a test file's `@mailwoman/corpus/recipes/fr/fragment` to `#lib/recipes/fr-fragment` — a public export
 subpath turned into a package-private import, naming `packages/corpus/lib/lib/recipes/…`, a path no checkout has.
 
@@ -164,7 +164,7 @@ rather than drawing whatever they draw.
 `v0.29.0-target-families` is a pure overlay add of eight parquets, 390,903 rows, onto v0.28.0's 711 files.
 It contains the Singapore registers (142,083 rows, F6 and the SG board), the Pakistan and Bangladesh register
 lines (84,632) and the OpenStreetMap PK/BD/VN base formats (153,965) for F8, the corrected Spanish
-trailing-region surfaces (4,944) for F2, and the military po_box line (5,279) for F9. The config names each
+trailing-region surfaces (4,944) for F2, and the military po_box line (5,279) for F9. The config lists each
 family in `source_doses` — reps per row, with the weight derived at launch — rather than guessing a weight:
 the six sources take 5.43% of the run, and the 2k probe holds the same 5.43% by dividing its reps by the step
 ratio. The launch log prints each derivation to three decimals, since a probe's exposures are legitimately
@@ -253,7 +253,7 @@ invariance suite's country table ("mirrors the gauntlet's", against a two-entry 
 
 ### Added — Singapore postcodes answer at the building
 
-A six-digit Singapore postcode names one building, so `postalcode-sg-overture.db` — the per-postcode centroid of the
+A six-digit Singapore postcode identifies one building, so `postalcode-sg-overture.db` — the per-postcode centroid of the
 Overture-SG register (123,883 codes, OneMap / Singapore Land Authority under the Singapore Open Data Licence 1.0,
 through Overture's CDLA-Permissive-2.0), built with `mailwoman eval es-postcode-centroids --country SG --pc-len 0` —
 joins the default postcode databases, and `SG` joins the codex table of address systems whose postcode outranks
@@ -263,7 +263,7 @@ locality-first answered 185 and sent the rest to the "Singapore" locality centro
 and `S(NNNNNN)` register forms still wait on the Latin model (#2204 §4). The centroid builder's `source` stamp now
 records the Overture release the parquet came from. It had written the pinned default's release on every row.
 
-### Fixed — one registry of synthetic place-id ranges, and a region's variant name that is another region's official name is refused
+### Fixed — one registry of synthetic place-id ranges, and a region's variant name that's another region's official name is refused
 
 Two builders claimed the same synthetic id base each, and each kept its own docstring of the ranges it believed taken:
 the NZ locality database and Code-Point Open both minted from 9.7e12, the Prague districts and the Northern Ireland OSM
@@ -291,14 +291,14 @@ register below the admin ladder existed for Taiwan. `mailwoman situs address-poi
 fifteen civil-affairs bureaus in the provenance), and `OvertureNationalDatabaseProvider` serves it in the geocode
 session below BAN and above OSM. The register scopes a point by 縣市 + 鄉鎮市區 and has no postcode, so the
 address-point query sends the parse's `region` and `subregion`, and a `zh` reader composes its scope from the pair
-(or matches the stored pair by its 鄉鎮市區 tail when the line names no 縣市). The `zh` street locale is the Han fold:
+(or matches the stored pair by its 鄉鎮市區 tail when the line identifies no 縣市). The `zh` street locale is the Han fold:
 NFKC, 臺 → 台, whitespace removed, the 號 dropped from the number, and the sub-number forms `30之19號` / `30號之19` /
 `30附40號` falling to the base number. On a 2,000-row draw of the Taiwan board, 1,998 rows answer at the
 address-point tier and 1,958 within 100 m of the row's own point. The same probe address answers 25.0399658,
 121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
 the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
 step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
-commit staging a command file failed with an instruction `yarn compile` could not satisfy. The comparison now runs
+commit staging a command file failed with an instruction `yarn compile` couldn't satisfy. The comparison now runs
 first.
 
 ### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
@@ -328,7 +328,7 @@ also admitted a namesake under another region — `臺南市北區` resolved Tai
 Hsinchu's 北區 214 km away with the coherence report reading `region: contradicted` while the point stood. The resolver
 now stamps a widened pick (`parent_fallback`) and `applyParentFallbackContradiction` un-resolves it when its stamped
 ancestors name a region other than the resolved parent, so the admin ladder answers the parent's own point. A chain
-that names no region is kept. `placetypeMapForCountry` gives Taiwan's `subregion` tag the `locality` band (WOF types
+that identifies no region is kept. `placetypeMapForCountry` gives Taiwan's `subregion` tag the `locality` band (WOF types
 164 of the 178 held-out 鄉鎮市區 the candidate table stores as `locality` or `localadmin`, 14 as `county`), on both
 resolve passes. On the 289 held-out 鄉鎮市區 as bare lines: 154 resolve the district within 15 km (at most 14 could
 under the `county` band), the fourteen namesakes at 21.6–238 km are refused, and the rest answer the 縣市.
@@ -357,7 +357,7 @@ overlay over `@mailwoman/neural-weights-cjk`: its locale FST plus a card, with t
 
 ### Removed — `@mailwoman/neural-web`
 
-The workspace is deleted and the package will not publish again. 9.3.0 is its last version on npm. Since 9.0.0 it
+The workspace is deleted and the package won't publish again. 9.3.0 is its last version on npm. Since 9.0.0 it
 was a re-export shim over `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`, the two subpaths
 the browser runtime moved to, and re-exporting another package's names is what `mailwoman/no-cross-package-reexport`
 refuses everywhere else. A consumer on the shim imports the same names from those two subpaths.
@@ -396,7 +396,7 @@ The Stripe objects the license worker depends on are defined once, in `packages/
 the Product, the two Prices (by lookup key), the Payment Links' shape (the licensee field, the agreement-version
 metadata, the success URL, consent collection), the Customer Portal's features and the webhook's events.
 `mwops shop status --mode test|live` reads a Stripe account against it; `mwops shop provision --mode … --apply` creates
-what is missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
+what's missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
 `docs/src/license/shop.ts`. The webhook signing secret is answered once and written nowhere. `mwops` is now a view over
 three registries. New env: `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, so a live write is a deliberate act with its own key.
 `mwops shop rehearse` and `mwops shop rehearse-renewal` run the renewal path against a deployed worker in test mode: a
@@ -411,13 +411,13 @@ with whether the renewed expiry is the new period end plus the grace.
 offline until its date. `/license/issued` is the page Stripe returns a buyer to: it polls the worker's claim route and
 shows the key, the one-time refresh secret, the `.env` fragment and the two commands to run. `mailwoman license adopt
 <token> --secret <s>` writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `refresh.json`
-(mode 0600). `mailwoman license refresh` fetches the current key after a renewal. Neither writes a token this build does
-not trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICENSE_KEY` is unset. `license verify
+(mode 0600). `mailwoman license refresh` fetches the current key after a renewal. Neither writes a token this build doesn't
+trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICENSE_KEY` is unset. `license verify
 --online` and `mailwoman doctor` report the per-license status as a fifth word beside the key-id publication: `active`,
 `lapsed`, `revoked`, `unknown`, or `unreachable`. New in core: `@mailwoman/core/license/status` (the worker client),
 `decodeLicenseKeyPayload`, and the env var `MAILWOMAN_LICENSE_URL`. `mailwoman --version` loads 136 modules, from 132.
 The key-id publication gains a word: `unpublished`, when mailwoman.post answers and has no register at the well-known
-path (a 4xx, or a body that is not a register), kept apart from `unreachable`, which stays a network answer. Neither
+path (a 4xx, or a body that's not a register), kept apart from `unreachable`, which stays a network answer. Neither
 changes the branch. The doctor reports which one it saw.
 
 ### Added — `@mailwoman/license-worker` (private)
@@ -428,7 +428,7 @@ unique constraints so replayed and reordered events mint one token per invoice, 
 id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. A six-hourly reconciliation
 mints what the webhook missed, re-sends what failed, and corrects a license's state against Stripe, including a dispute
 ruled in the customer's favor. Sandbox and production are separate Wrangler environments. Issuance is off until
-`ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
+`ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key isn't an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
 builtin. `GET /health` reports `email: ok | failing`, the latter when a token's email has stayed `failed` for over an
 hour, so one external check covers the ledger alert and the email alert. The reconciliation's drift sweep reads the
@@ -492,7 +492,7 @@ with no deprecated re-export. Replacements:
 | `@mailwoman/spatial/sdk` (barrel)        | import the module you want, by name  |
 
 `sdk/` in this repository means **data acquisition** (`AGENTS.md`), and neither module acquires anything: one is a
-pure WKT/WKB codec, the other shells out to `ogrinfo` to read what a source declares about itself. The barrel is not
+pure WKT/WKB codec, the other shells out to `ogrinfo` to read what a source declares about itself. The barrel isn't
 replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by browser-facing packages, the root
 barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
 `export *` away from a browser graph.
@@ -523,7 +523,7 @@ holds the tree at zero so it cannot return.
 `@mailwoman/filer/frn`, `@mailwoman/filer/family-rollup` and `@mailwoman/filer/filer-lookup`. No shims. All three
 are also re-exported from the package root, so `@mailwoman/filer` itself keeps resolving them.
 
-They are identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
+They're identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
 needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel.
 That barrel `export *`s seventeen modules. Therefore, an MCP request path loaded the SEC and CORES HTTP clients and the EDGAR
 ingest to reach three functions. That import now points at the three modules, and `dependency-cruiser`'s
@@ -546,7 +546,7 @@ The shipped model is unchanged at 9.1.0 — this is a code release.
 
 ### 4.15.0 — postcode-anchor fix (`v1.9.3a3-anchor-absorption`)
 
-A leading 5-digit token that is a US house number shaped
+A leading 5-digit token that's a US house number shaped
 like a ZIP (`12345 Main St`) is now labeled `house_number` with the
 postcode anchor on (the `SLICE-H` case: 20 → 100), at zero coordinate cost
 (#220/#723). Trades a coordinate-invisible −2 us.postcode label-F1 on the rare

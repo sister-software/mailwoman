@@ -273,7 +273,7 @@ export function GeocoderControls({
 			if (event.clientY - armed.startY < OVERSCROLL_PROMOTE_PX) return
 
 			overscrollRef.current = null
-			// The drag starts from the pull's origin, so the drawer does not jump by the threshold.
+			// The drag starts from the pull's origin, so the drawer doesn't jump by the threshold.
 			sheetDragRef.current = { startY: armed.startY, startHeight: sheet.getBoundingClientRect().height, moved: true }
 			sheet.setPointerCapture(event.pointerId)
 			onGripPointerMove(event)
@@ -292,7 +292,7 @@ export function GeocoderControls({
 	const closeSheet = useCallback(() => setOpenSheet(null), [])
 
 	// The query submitted last, from the field or from the host's URL, so the URL's query
-	// is not submitted a second time after the host records the submit it heard.
+	// isn't submitted a second time after the host records the submit it heard.
 	const lastSubmitted = useRef<string | null>(null)
 
 	// Every user-initiated query goes through this function, so `onSubmitQuery` fires from one place.
@@ -464,7 +464,7 @@ export function GeocoderControls({
 	}, [menuPoint, contextMenu, searchFromMap])
 
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
-	// The model download does not open the result panel.
+	// The model download doesn't open the result panel.
 	// The progress bar reports it instead.
 	const showSheet = Boolean(busy || result || errorMessage) && !resultDismissed
 
@@ -477,7 +477,7 @@ export function GeocoderControls({
 
 	// The model downloads during the first step.
 	// While bytes arrive, the bar follows the byte fraction scaled into the first step's share,
-	// so it does not move backwards when step progress takes over.
+	// so it doesn't move backwards when step progress takes over.
 	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
 	const byteFraction = loading?.byteFraction
 
@@ -506,7 +506,7 @@ export function GeocoderControls({
 				 */}
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
-						{/* The handle appears only with a result, because there is no content to expand without one. */}
+						{/* The handle appears only with a result, because there's no content to expand without one. */}
 						{showSheet ? (
 							<button
 								type="button"

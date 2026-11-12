@@ -2,18 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Refuse a workspace manifest whose `license` field is not the repository's expression in an admissible SPDX
- *   form.
+ *   Refuse a workspace manifest whose `license` field isn't the repository's
+ *   expression in an admissible SPDX form.
  *
- *   The `license` field states the terms shipped in a release. Two failure classes reach consumers
- *   through this field without breaking a build. A deprecated identifier such as `AGPL-3.0` omits
- *   `-only` or `-or-later`. `summarizeLicense` reports it as `recognized: false` with an empty
- *   obligation list. A workspace that omits the commercial branch contradicts the public license page.
+ *   The `license` field states the terms shipped in a release.
+ *   Two failure classes reach consumers through this field without breaking a build.
  *
- *   The root manifest provides the reference expression. The check validates its own field for
- *   admissibility before using it. A workspace that needs different terms raises a rights question.
- *   Record that decision in `docs/engineering/reference/artifact-rights-inventory.mdx` and the
- *   manifests it governs instead of adding an exception here.
+ *   A deprecated identifier such as `AGPL-3.0` omits `-only` or `-or-later`.
+ *   `summarizeLicense` reports it as `recognized: false` with an empty obligation list.
+ *
+ *   A workspace that omits the commercial branch contradicts the public license page.
+ *
+ *   The root manifest provides the reference expression.
+ *   The check validates its own field for admissibility before using it.
+ *
+ *   A workspace that needs different terms raises a rights question.
+ *   Record that decision in `docs/engineering/reference/artifact-rights-inventory.mdx`
+ *   and the manifests it governs instead of adding an exception here.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -63,8 +68,8 @@ function admissibilityDiagnostic(expression: string, file: string): Diagnostic |
 }
 
 /**
- * The `package-license` check: one error per workspace whose manifest declares no license, declares
- * an identifier the obligations table does not know, or declares an expression other than the root's.
+ * The `package-license` check: one error per workspace whose manifest declares no license, declares an
+ * identifier the obligations table doesn't know, or declares an expression other than the root's.
  */
 export const packageLicenseCheck: RepoCheck = {
 	id: "package-license",

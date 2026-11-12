@@ -2,25 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Canadian postcodes: the branded type, shape, normalization and FSA-letter →
- *   province/territory prior. They are the only alphanumeric postcodes among the systems the codex models.
+ *   Canadian postcodes: the branded type, shape, normalization and FSA-letter → province/territory prior.
  *
- *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
- *   here:
+ *   They're the only alphanumeric postcodes among the systems the codex models.
+ *
+ *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and here:
  *
  *   - A US ZIP is numeric. its first digit maps to a loose band of states.
  *   - A German PLZ is numeric. its first digit maps to a Leitzone that crosses Bundesland borders.
  *   - A French code postal is numeric. its first two digits are the département.
- *   - A Canadian postcode is `A1A 1A1` — Letter Digit Letter, then Digit Letter Digit — and its
- *       first letter pins the province or territory directly (`M` → Ontario, `H` → Quebec, `V` →
- *       British Columbia). So like the French prefix it is a clean admin prior, but it does the job
- *       with a single alpha character rather than digits.
+ *   - A Canadian postcode is `A1A 1A1` — Letter Digit Letter, then Digit Letter
+ *     Digit — and its first letter pins the province or territory directly
+ *     (`M` → Ontario, `H` → Quebec, `V` → British Columbia).
+ *     So like the French prefix it is a clean admin prior, but it does the job
+ *     with a single alpha character rather than digits.
  *
- *   The rule has two exceptions. `X` is shared by the Northwest Territories and
- *   Nunavut (no single letter splits them), so `provinceOfPostalCode` returns an array there. And
- *   the large provinces span several letters: only Ontario owns `K L M N P`, while Quebec owns `G H J`.
- *   The first three characters form the FSA (Forward Sortation Area); the last three are the LDU
- *   (Local Delivery Unit). A FSA whose second character (the first digit) is `0` is a rural area —
+ *   The rule has two exceptions.
+ *   `X` is shared by the Northwest Territories and Nunavut (no single letter splits them),
+ *   so `provinceOfPostalCode` returns an array there.
+ *
+ *   And the large provinces span several letters: only Ontario owns `K L M N P`, while Quebec owns `G H J`.
+ *   The first three characters form the FSA (Forward Sortation Area);
+ *   the last three are the LDU (Local Delivery Unit).
+ *
+ *   A FSA whose second character (the first digit) is `0` is a rural area —
  *   the bridge to the wider, lower-density delivery zones.
  */
 
@@ -61,7 +66,7 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
  * exactly one space between the FSA (first three chars) and the LDU (last three) —
  * `K1A0B1` → `K1A 0B1`, `k1a 0b1` → `K1A 0B1`.
  *
- * @returns Null if the input is not a valid Canadian postcode.
+ * @returns Null if the input isn't a valid Canadian postcode.
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -114,7 +119,7 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
  * The province/territory a postcode belongs to, via its FSA first letter.
  *
  * @returns The single code for the clean letters, the `["NT", "NU"]` pair
- * for the shared `X`, and null if the input is not a valid Canadian postcode
+ * for the shared `X`, and null if the input isn't a valid Canadian postcode
  * (or its first letter has no province. The pattern already forbids that case).
  */
 export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode | CanadianProvinceCode[] | null {

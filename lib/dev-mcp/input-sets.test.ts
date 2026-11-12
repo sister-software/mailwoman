@@ -12,7 +12,7 @@ import { resolveInputSet } from "#dev-mcp/input-sets"
  * Whether the panel artifact is present.
  *
  * The panel and golden sets live under `$MAILWOMAN_DATA_ROOT` and are absent in CI,
- * so their suites are presence-conditional and a skipped suite is not a passing one.
+ * so their suites are presence-conditional and a skipped suite isn't a passing one.
  */
 const havePanel = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl"))
 const havePanel21 = await pathExists(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl"))

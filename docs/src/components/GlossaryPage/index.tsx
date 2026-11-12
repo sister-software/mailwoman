@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The /glossary route component, registered by plugins/glossary/plugin.ts (which wraps
- *   docusaurus-plugin-glossary). Renders terms grouped by primary category (first tag), with
- *   toggle-button tag filters and the standard theme TOC in the right rail for jumping between
- *   categories. Term anchor ids keep the upstream scheme so remark tooltip deep-links resolve.
+ *   The /glossary route component, registered by plugins/glossary/plugin.ts
+ *   (which wraps docusaurus-plugin-glossary).
+ *
+ *   Renders terms grouped by primary category (first tag), with toggle-button tag filters
+ *   and the standard theme TOC in the right rail for jumping between categories.
+ *   Term anchor ids keep the upstream scheme so remark tooltip deep-links resolve.
  */
 
 import Link from "@docusaurus/Link"
@@ -35,7 +37,7 @@ interface GlossaryPageProps {
 }
 
 /**
- * Upstream anchor slug scheme — must not change or remark tooltip links break.
+ * Upstream anchor slug scheme — mustn't change or remark tooltip links break.
  */
 function anchorSlug(text: string): string {
 	return text.toLowerCase().replaceAll(/\s+/g, "-")

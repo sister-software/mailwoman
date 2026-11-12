@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared by all four layer routes, because a coverage magnitude without its basis cannot distinguish a cell an authority declares complete from one where a source happened to return rows.
+ *   Shared by all four layer routes, because a coverage magnitude without its basis cannot distinguish
+ *   a cell an authority declares complete from one where a source happened to return rows.
  */
 
 import type { LayerManifest } from "@mailwoman/core/layers"

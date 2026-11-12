@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-locale releases manifest stores the version pointer beside versioned asset directories. It is the one place
- *   its wire keys are read. Every spelling a published manifest has used stays readable here, because a wire
- *   key is a string interface and a reader that drops one turns a release's gazetteer off with no error.
+ *   The per-locale releases manifest stores the version pointer beside versioned asset directories.
+ *
+ *   It is the one place its wire keys are read.
+ *   Every spelling a published manifest has used stays readable here, because a wire key is a
+ *   string interface and a reader that drops one turns a release's gazetteer off with no error.
  */
 
 import type { FamilyEncoder } from "@mailwoman/neural/weights/families"
@@ -187,7 +189,7 @@ export interface WireReleasesManifest {
  * Every release read `undefined`, silently disabling the demo's WOF cascade and the FST
  * for three days (zero console errors; "no WOF hits" was the only symptom).
  *
- * The fix is not to freeze the wire keys but to migrate them deliberately: the publisher now writes
+ * The fix isn't to freeze the wire keys but to migrate them deliberately: the publisher now writes
  * house-cased keys, this normalizer accepts both generations (old HF mirrors still use the legacy keys).
  * The interface test pins all three parties.
  */
@@ -264,7 +266,7 @@ function isPairIndexManifest(raw: unknown): raw is PairIndexManifest {
  * Fetch the manifest of one pair-index generation.
  *
  * Answers `null`, with a console warning that gives the URL, when the bucket answers
- * an error status or a body that is not a manifest.
+ * an error status or a body that's not a manifest.
  * A generation without a readable manifest then loads no pair index, and the pair
  * prior is a soft decode channel, so the classifier still loads.
  */

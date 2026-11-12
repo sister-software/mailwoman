@@ -4,10 +4,12 @@
 /**
  *   A procedural star sky for the globe projection, and the camera math that places it on screen.
  *
- *   Stars are unit vectors fixed to the Earth's frame, so the sky turns with the globe as the camera orbits it. Their
- *   magnitudes follow the naked-eye count law, where each fainter magnitude holds about 3.2 times the star count,
- *   and a share of them crowd a band along the real galactic plane. The catalog is seeded, so every render of the
- *   same options draws the same sky.
+ *   Stars are unit vectors fixed to the Earth's frame, so the sky turns with
+ *   the globe as the camera orbits it.
+ *   Their magnitudes follow the naked-eye count law, where each fainter magnitude holds about
+ *   3.2 times the star count, and a share of them crowd a band along the real galactic plane.
+ *
+ *   The catalog is seeded, so every render of the same options draws the same sky.
  *
  *   This module touches no DOM or WebGL at import, so node tests can load it.
  */

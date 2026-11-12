@@ -6,7 +6,7 @@ tags: [geocoding, motivation]
 date: 2026-06-20
 ---
 
-Every geocoder turns an address into a coordinate. Almost none of them will tell you where that coordinate came from. You get a latitude, a longitude, and a vague confidence enum, and when it's wrong you have no thread to pull — no way to know whether the point came from a federal data release, a county GIS office, or a straight line drawn down the middle of a street. Mailwoman keeps the source on every point. Here's New York, every dot colored by the open dataset it came from.
+Every geocoder turns an address into a coordinate. Almost none of them will tell you where that coordinate came from. You get a latitude, a longitude, and a vague confidence enum, and when it's wrong you have no way to know whether the point came from a federal data release, a county GIS office, or a straight line drawn down the middle of a street. Mailwoman keeps the source on every point. Here's New York, every dot colored by the open dataset it came from.
 
 {/* truncate */}
 
@@ -14,19 +14,19 @@ Every geocoder turns an address into a coordinate. Almost none of them will tell
 
 Green is the National Address Database. Orange is OpenAddresses. For New York, OpenAddresses republishes the city's own NYC Open Data. You can [explore the interactive version](pathname:///maps/address-provenance-ny.html) and click any dot to see its publisher.
 
-## The split is geography you can see
+## Federal data across the state and city data in New York City
 
 The federal release blankets the state. New York City sits in its own color because the city publishes its own address file, and OpenAddresses republishes it. No guess was made about which is which. Every point kept its source, from ingest all the way to this map. The method is a `source` column that no pipeline stage dropped.
 
-## Credit where the data's due
+## The datasets behind the points
 
-None of this is our data. The National Address Database is a federal release. OpenAddresses is a decade of county and municipal publishers doing the unglamorous work of putting their address files online. The street network underneath is Census TIGER. They're free, they're open, and they're good. The lookup was never the hard part of geocoding. Each pipeline must assemble these sources, keep them fresh, and preserve their provenance. That record lets a user trace a wrong coordinate to the dataset and release that produced it.
+None of this is our data. The National Address Database is a federal release. OpenAddresses is a decade of county and municipal publishers doing the unglamorous work of putting their address files online. The street network underneath is Census TIGER. All three are free, open and good, and the lookup is the easy part of geocoding. Each pipeline must assemble these sources, keep them fresh, and preserve their provenance. That record lets a user trace a wrong coordinate to the dataset and release that produced it.
 
 ## The layers under the dots
 
 This map shows the rooftop-point sources. Where there's no rooftop point, the geocoder falls back to TIGER street interpolation, a position estimated along the block, and below that to an administrative centroid from Who's On First. Each tier is a different open dataset, and every coordinate records which rung it landed on, so a rooftop in Manhattan and a block-interpolated guess in a thinly-covered county never get mistaken for each other.
 
-## See it, build it
+## The interactive map and the source column
 
 [Explore the interactive map](pathname:///maps/address-provenance-ny.html) — serve it over localhost, since the basemap tiles are CORS-scoped to the house domains. The provenance is a plain column on the address-point table:
 

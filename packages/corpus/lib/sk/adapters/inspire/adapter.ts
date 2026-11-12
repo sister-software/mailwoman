@@ -2,41 +2,50 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `sk-inspire`: the INSPIRE Addresses theme the Slovak Ministry of the Interior publishes out of the
- * national address register, read from saved pages of its Web Feature Service.
+ * `sk-inspire`: the INSPIRE Addresses theme the Slovak Ministry of the Interior publishes
+ * out of the national address register, read from saved pages of its Web Feature Service.
  *
- * The service is `https://rageo.minv.sk/geoserver/ad/wfs`, a GeoServer WFS 2.0 that advertises
- * `ImplementsResultPaging` and serves all five AD feature types. Measured 2026-10-02, a
- * `GetFeature` for `ad:Address` answers `numberMatched="1704196"`, and the other four types hold
- * 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName` and 1,415
- * `ad:PostalDescriptor`. Acquisition pages each type into its own document and the adapter reads a
- * directory of those pages, so a build harvests the service once and reads the saved bytes.
+ * The service is `https://rageo.minv.sk/geoserver/ad/wfs`, a GeoServer WFS 2.0 that
+ * advertises `ImplementsResultPaging` and serves all five AD feature types.
+ * Measured 2026-10-02, a `GetFeature` for `ad:Address` answers `numberMatched="1704196"`,
+ * and the other four types hold 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`,
+ * 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`.
+ *
+ * Acquisition pages each type into its own document and the adapter reads a directory of
+ * those pages, so a build harvests the service once and reads the saved bytes.
  *
  * The reference form is a WFS stored-query URL: an `ad:component` href is
- * `…/ad/ows?…&storedQuery_id=urn:ogc:def:query:OGC-WFS::GetFeatureById&id=AdminUnitName.199`, and
- * that `id` parameter equals the target's `gml:id` exactly. A `GetFeatureById` fetch of
- * `AdminUnitName.199` confirms. `componentJoinKey` reads it. Each reference also repeats its target's
- * value in `xlink:title`, as Czechia's does, and the adapter reads none of those titles. Three of an
- * address's references are `ad:AdminUnitName` features whose titles are a region, a district and a
- * municipality, and only the resolved feature's `ad:level` separates the three.
+ * `…/ad/ows?…&storedQuery_id=urn:ogc:def:query:OGC-WFS::GetFeatureById&id=AdminUnitName.199`,
+ * and that `id` parameter equals the target's `gml:id` exactly.
+ * A `GetFeatureById` fetch of `AdminUnitName.199` confirms.
  *
- * That is why the reader takes two passes over the input rather than one. A component page is a
- * different document from an address page, so a single pass would have to defer an address until the
- * page holding its municipality arrived, and with 1,704,196 addresses against 35,514 component
- * features the deferred list is the wrong side of the join to hold. The first pass indexes the four
- * component types from every document, and the second streams `ad:Address`. The index is therefore
- * complete before the first address is read, so a reference resolving to no feature is a value the
- * reader asked for and could not read, and it raises.
+ * `componentJoinKey` reads it.
+ * Each reference also repeats its target's value in `xlink:title`, as Czechia's does,
+ * and the adapter reads none of those titles.
+ *
+ * Three of an address's references are `ad:AdminUnitName` features whose titles are a region,
+ * a district and a municipality, and only the resolved feature's `ad:level` separates the three.
+ *
+ * That's why the reader takes two passes over the input rather than one.
+ * A component page is a different document from an address page, so a single pass would have to
+ * defer an address until the page holding its municipality arrived, and with 1,704,196 addresses
+ * against 35,514 component features the deferred list is the wrong side of the join to hold.
+ *
+ * The first pass indexes the four component types from every document, and the second streams `ad:Address`.
+ * The index is therefore complete before the first address is read, so a reference resolving
+ * to no feature is a value the reader asked for and couldn't read, and it raises.
  *
  * The locator vocabulary is two types, and the publisher's own rendering fixes how they compose.
  * `ad:designator` repeats and states no position, so selection goes by `ad:type/@xlink:href`:
  * `addressNumber` is the *číslo popisné* and is present on every address, and `buildingIdentifier`
- * is the *orientačné číslo* and appears only where the address also references a street. Measured
- * over 1,000 addresses across ten windows spread through the 1,704,196, `addressNumber` appeared
- * 1,000 times, `buildingIdentifier` 334 times, and the street count was also exactly 334.
+ * is the *orientačné číslo* and appears only where the address also references a street.
  *
- * The same publisher serves its register's own rendered address through `ra:address` on the same
- * GeoServer. That rendering pins the composition. Three records, matched by street, number and postcode:
+ * Measured over 1,000 addresses across ten windows spread through the 1,704,196, `addressNumber`
+ * appeared 1,000 times, `buildingIdentifier` 334 times, and the street count was also exactly 334.
+ *
+ * The same publisher serves its register's own rendered address through `ra:address` on the same GeoServer.
+ * That rendering pins the composition.
+ * Three records, matched by street, number and postcode:
  *
  * | `addressNumber` | `buildingIdentifier` | street | `fulladdress` |
  * | --- | --- | --- | --- |
@@ -44,31 +53,45 @@
  * | `1771` | `4` | `Skalická` | `Skalická,1771/4,Košice-Krásna,04018` |
  * | `142` | (absent) | (absent) | `142,Sikenička,94359` |
  *
- * So the number is `addressNumber` by itself, or `addressNumber/buildingIdentifier` where the
- * orientation number exists. That is the publisher's own `annotation` field verbatim. A street-less
- * address is ordinary rather than a defect: 666 of those 1,000 referenced no `ad:ThoroughfareName`.
+ * So the number is `addressNumber` by itself, or `addressNumber/buildingIdentifier`
+ * where the orientation number exists.
+ * That's the publisher's own `annotation` field verbatim.
  *
- * The place names come from two types. `ad:AdminUnitName` at `4thOrder` is the municipality and is
- * referenced by every address measured, 1,080 of 1,080. The `3rdOrder` district and the `2ndOrder`
- * region are referenced beside it and are not part of a written address. `ad:AddressAreaName` is the
- * *časť obce*, the settlement part, and 426 of those 1,080 addresses reference one. Of those 426, 325
- * repeat the municipality and 101 state another place, such as `Lidér Tejed` in the municipality
- * of `Povoda`, so the adapter writes a dependent locality only where the two differ. The publisher's
- * own `fulladdress` omits the settlement part in both cases, so a row holding one states a component
- * that string does not.
+ * A street-less address is ordinary rather than a defect: 666 of those 1,000
+ * referenced no `ad:ThoroughfareName`.
  *
- * The postcode is `ad:PostalDescriptor/ad:postCode`, written as five digits with its leading zero
- * intact (`04018`). Slovak usage splits it as `040 18`. The publisher writes it closed up, and the
- * row stores what the publisher wrote, as the Czech reader does with `66463`.
+ * The place names come from two types.
+ * `ad:AdminUnitName` at `4thOrder` is the municipality and is referenced by
+ * every address measured, 1,080 of 1,080.
  *
- * The Ministry states one condition of use and states it twice, in its own register record
- * `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72` and in that
- * record's INSPIRE export: `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)`. That phrase renders
- * INSPIRE's controlled value for no conditions applying to access and use, in Slovak, with the
- * publisher's own identification of it as CC0. No version accompanies the label, so the
- * address-source register writes no SPDX identifier and the rows record the publisher's words.
+ * The `3rdOrder` district and the `2ndOrder` region are referenced beside it
+ * and are not part of a written address.
+ * `ad:AddressAreaName` is the *časť obce*, the settlement part, and 426 of
+ * those 1,080 addresses reference one.
  *
- * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `SK`.
+ * Of those 426, 325 repeat the municipality and 101 state another place, such as `Lidér Tejed` in the
+ * municipality of `Povoda`, so the adapter writes a dependent locality only where the two differ.
+ * The publisher's own `fulladdress` omits the settlement part in both cases,
+ * so a row holding one states a component that string doesn't.
+ *
+ * The postcode is `ad:PostalDescriptor/ad:postCode`, written as five digits
+ * with its leading zero intact (`04018`).
+ * Slovak usage splits it as `040 18`.
+ *
+ * The publisher writes it closed up, and the row stores what the publisher wrote,
+ * as the Czech reader does with `66463`.
+ *
+ * The Ministry states one condition of use and states it twice, in its own register
+ * record `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`
+ * and in that record's INSPIRE export: `Neuplatňujú sa žiadne podmienky (CC0 Voľné dielo)`.
+ * That phrase renders INSPIRE's controlled value for no conditions applying to access
+ * and use, in Slovak, with the publisher's own identification of it as CC0.
+ *
+ * No version accompanies the label, so the address-source register writes no SPDX
+ * identifier and the rows record the publisher's words.
+ *
+ * The adapter honors `opts.limit` and `opts.signal`.
+ * `opts.country` is optional and accepts only `SK`.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -138,7 +161,7 @@ const COMPONENT_TYPES = [
 ] as const
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * Measured over 1,080 addresses, every one references exactly one `ad:AdminUnitName` at this level.
  * The `3rdOrder` district and the `2ndOrder` region are referenced beside it, so the level

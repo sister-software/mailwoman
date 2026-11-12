@@ -2,111 +2,140 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `wallonie`: the INSPIRE Addresses (AD) theme the Service public de Wallonie publishes out of its
- * ICAR address-point register.
+ * `wallonie`: the INSPIRE Addresses (AD) theme the Service public de Wallonie
+ * publishes out of its ICAR address-point register.
  *
- * Coverage is the Walloon Region rather than Belgium. Belgium needs three readers, because each
- * region publishes the theme through its own service: Flanders through a WFS (`vlaanderen`),
- * Brussels through a bare HTTP download (`brussels`), and Wallonia through the ATOM service below.
- * Every row this adapter emits is `BE`, and any other `opts.country` raises
- * {@linkcode UnsupportedCountryError}.
+ * Coverage is the Walloon Region rather than Belgium.
+ * Belgium needs three readers, because each region publishes the theme through its
+ * own service: Flanders through a WFS (`vlaanderen`), Brussels through a bare HTTP
+ * download (`brussels`), and Wallonia through the ATOM service below.
  *
- * The schema-level reading is `#inspire/address`, which owns every part of an `ad:Address` the
- * publishers spell alike. This module holds only what is Wallonia's own: the two-pass join its
- * document order forces, and the number extension it writes on every address.
+ * Every row this adapter emits is `BE`, and any other `opts.country`
+ * raises {@linkcode UnsupportedCountryError}.
+ *
+ * The schema-level reading is `#inspire/address`, which owns every part of an
+ * `ad:Address` the publishers spell alike.
+ * This module holds only what's Wallonia's own: the two-pass join its document order forces,
+ * and the number extension it writes on every address.
  *
  * ## The publication
  *
- * The ATOM service document is `https://geoservices.wallonie.be/inspire/atom/AD_Service.xml`, 9,935
- * bytes, with one entry. That entry's dataset feed offers one archive for the whole region:
+ * The ATOM service document is `https://geoservices.wallonie.be/inspire/atom/AD_Service.xml`,
+ * 9,935 bytes, with one entry.
+ * That entry's dataset feed offers one archive for the whole region:
  * `…/spwdatadownload/results/b62f8405-2ce3-449f-8a61-5fc2f38d8b73/AD.Addresses.gml.zip`,
  * 106,665,832 bytes, sha256 `8eebae71d793632c22c9902e8420bc50e0e572c97de15b7d10051b29b59e208a`,
- * holding one deflate member `AD.Addresses.gml` of 5,163,917,131 bytes. The archive is 48 times
- * smaller than what it holds, so the member is streamed and never buffered.
+ * holding one deflate member `AD.Addresses.gml` of 5,163,917,131 bytes.
  *
- * The host ignores `Range`: a `bytes=0-4194303` request answers HTTP 200 with the whole body and no
- * `content-range`, so there is no prefix to sample and every measurement below is over all
- * 5,163,917,131 bytes.
+ * The archive is 48 times smaller than what it holds, so the member is streamed and never buffered.
  *
- * Counts, read 2026-10-02 with {@linkcode streamMarkupElements} and reconciled against a second
- * instrument that extracted `gml:featureMember` blocks from the same stream as text: 1,772,312
- * `ad:Address`, 55,766 `ad:ThoroughfareName`, 1,963 `ad:AddressAreaName`, 598 `ad:PostalDescriptor`
- * and 264 `ad:AdminUnitName`. The two instruments agree, and they reconcile: 1,772,312 addresses plus
- * 58,591 component features is the 1,830,903 `gml:featureMember` elements the file holds, and the
- * component total is the number of distinct component `gml:id` values. The address count is also the
- * one the address-source register records for `be-property-building-2`.
+ * The host ignores `Range`: a `bytes=0-4194303` request answers HTTP 200
+ * with the whole body and no `content-range`, so there's no prefix to sample
+ * and every measurement below is over all 5,163,917,131 bytes.
  *
- * Every component `gml:id` is distinct. Over 58,591 component features, 0 ids repeat, so the index
- * below states no collision rule and raises on a collision instead. A replaced entry would
- * substitute one street for another on every address referencing it.
+ * Counts, read 2026-10-02 with {@linkcode streamMarkupElements} and reconciled against a
+ * second instrument that extracted `gml:featureMember` blocks from the same stream as text:
+ * 1,772,312 `ad:Address`, 55,766 `ad:ThoroughfareName`, 1,963 `ad:AddressAreaName`,
+ * 598 `ad:PostalDescriptor` and 264 `ad:AdminUnitName`.
+ * The two instruments agree, and they reconcile: 1,772,312 addresses plus 58,591
+ * component features is the 1,830,903 `gml:featureMember` elements the file holds,
+ * and the component total is the number of distinct component `gml:id` values.
+ *
+ * The address count is also the one the address-source register records for `be-property-building-2`.
+ *
+ * Every component `gml:id` is distinct.
+ * Over 58,591 component features, 0 ids repeat, so the index below states no
+ * collision rule and raises on a collision instead.
+ *
+ * A replaced entry would substitute one street for another on every address referencing it.
  *
  * ## Why the join takes two passes
  *
- * Wallonia writes all 1,772,312 addresses before the first component feature. Measured by resolving
- * each reference against the components indexed so far, all 10,633,872 references are forward
- * references: 0 resolve in a single pass. ČÚZK's one-pass reader with a deferred tail cannot be used
- * here, because deferring every address means holding 1.77 million subtrees in memory.
+ * Wallonia writes all 1,772,312 addresses before the first component feature.
+ * Measured by resolving each reference against the components indexed so far,
+ * all 10,633,872 references are forward references: 0 resolve in a single pass.
+ * ČÚZK's one-pass reader with a deferred tail cannot be used here, because deferring
+ * every address means holding 1.77 million subtrees in memory.
  *
- * So the member is inflated twice. The first pass indexes the four component types — 58,591 entries,
- * bounded and small — and the second streams the addresses and joins locally. Two inflations of
- * 5,163,917,131 bytes cost less than one buffered document.
+ * So the member is inflated twice.
+ * The first pass indexes the four component types — 58,591 entries, bounded and small —
+ * and the second streams the addresses and joins locally.
  *
- * Each address writes exactly 6 `ad:component` references, 10,633,872 over the file, and each one
- * addresses a `gml:id` in the same document. Four are the region's own
- * (`BE.WL.ICAR.ThoroughfareName`, `AdminUnitName`, `PostalDescriptor`, `AddressAreaName`) and two are
- * the country and the region, `#BE.AdminUnitName.1000` (`Belgique`, `1stOrder`) and
- * `#BE.AdminUnitName.3000` (`Région wallonne`, `2ndOrder`). The index keeps an administrative unit
- * only at {@link MUNICIPALITY_LEVEL}, so those two resolve to no entry and are a reference the
- * adapter declines rather than a defect — the same shape Flanders' `refnis1995_1000` reference has.
+ * Two inflations of 5,163,917,131 bytes cost less than one buffered document.
+ *
+ * Each address writes exactly 6 `ad:component` references, 10,633,872 over the file,
+ * and each one addresses a `gml:id` in the same document.
+ * Four are the region's own (`BE.WL.ICAR.ThoroughfareName`, `AdminUnitName`, `PostalDescriptor`,
+ * `AddressAreaName`) and two are the country and the region, `#BE.AdminUnitName.1000`
+ * (`Belgique`, `1stOrder`) and `#BE.AdminUnitName.3000` (`Région wallonne`, `2ndOrder`).
+ *
+ * The index keeps an administrative unit only at {@link MUNICIPALITY_LEVEL}, so those two
+ * resolve to no entry and are a reference the adapter declines rather than a defect —
+ * the same shape Flanders' `refnis1995_1000` reference has.
  *
  * ## The number extension is the box number, rendered as `unit`
  *
- * Every address writes two inline designators: `addressIdentifierGeneral` holds the house
- * number and `addressNumberExtension` holds a four-character code. `ad:level` is
- * `postalDeliveryPoint` on every address, so a row is a letterbox rather than a building, and the
- * extension distinguishes letterboxes at one number: `93` appears with `B001` and `C003`, and `29`
- * with `0014`, `B004`, `B007`, `C009` and `D015`. Other observed values are `0001`, `A001`, `008B`,
- * `BP3` and `0RCH`.
+ * Every address writes two inline designators: `addressIdentifierGeneral` holds the
+ * house number and `addressNumberExtension` holds a four-character code.
+ * `ad:level` is `postalDeliveryPoint` on every address, so a row is a letterbox
+ * rather than a building, and the extension distinguishes letterboxes at one number:
+ * `93` appears with `B001` and `C003`, and `29` with `0014`, `B004`, `B007`, `C009` and `D015`.
  *
- * The element is written on all 1,772,312 addresses and holds a value on 347,859 of them, measured by
- * running this adapter over the whole archive. The other 1,424,453, 80.4%, write
- * `addressNumberExtension` with its `ad:designator` empty. That empty element is the publisher
- * stating that the address has no extension rather than omitting the field.
+ * Other observed values are `0001`, `A001`, `008B`, `BP3` and `0RCH`.
  *
- * ICAR, the register this publication is drawn from, models a sub-address below the police number
- * and states what identifies it: the SPW's ICAR presentation to the Club des utilisateurs du PICC
- * (27 February 2015) lists the communes' validation of sub-addresses identified by their
- * `numéro de boîte`, the box number, and its ICAR address form records each sub-address's `Numéro` apart from the `Index`
- * field. A box number identifies one delivery point inside the numbered premise. That is the
- * concept the `unit` tag records. It is not a floor, a building, an entrance or a staircase, even
- * where a code such as `0RCH` (rez-de-chaussée) names the box after the floor it sits on.
+ * The element is written on all 1,772,312 addresses and holds a value on 347,859 of them,
+ * measured by running this adapter over the whole archive.
+ * The other 1,424,453, 80.4%, write `addressNumberExtension` with its `ad:designator` empty.
+ *
+ * That empty element is the publisher stating that the address has no extension
+ * rather than omitting the field.
+ *
+ * ICAR, the register this publication is drawn from, models a sub-address below the
+ * police number and states what identifies it: the SPW's ICAR presentation to the
+ * Club des utilisateurs du PICC (27 February 2015) lists the communes' validation of
+ * sub-addresses identified by their `numéro de boîte`, the box number, and its ICAR
+ * address form records each sub-address's `Numéro` apart from the `Index` field.
+ * A box number identifies one delivery point inside the numbered premise.
+ *
+ * That's the concept the `unit` tag records.
+ * It isn't a floor, a building, an entrance or a staircase, even where a code such as
+ * `0RCH` (rez-de-chaussée) names the box after the floor it sits on.
  *
  * The value is rendered as the publisher writes it, with no designator word: `Rue de la Station 29
  * B004, 1420 Braine-l'Alleud`. Wallonia publishes no formatted line to copy a designator from, so a
- * word such as `bte` would be a surface this source does not state. Two letterboxes at one number
+ * word such as `bte` would be a surface this source doesn't state. Two letterboxes at one number
  * therefore render two lines, and deduplication keeps both.
  *
  * ## Voids
  *
- * Every void in this file states a reason. Over the whole member, 1,830,903 `ad:validTo` and
- * 1,830,903 `ad:endLifespanVersion` elements, 57,997 `gn:pronunciation`, `gn:grammaticalGender` and
- * `gn:grammaticalNumber` each, 2,823 `ad:validFrom` and 264 `ad:adminUnit` are `xsi:nil="true"` with
- * a `nilReason`, and 0 nil elements omit the reason. No value this adapter reads was void in the file
- * measured. Brussels is the opposite case, writing no reason on any void, and `isVoid` in
- * `#inspire/address` keys on `xsi:nil` rather than on a reason for that reason. This adapter reads
- * the same primitives, so a Walloon void that stopped stating a reason would still read as a void.
+ * Every void in this file states a reason.
+ * Over the whole member, 1,830,903 `ad:validTo` and 1,830,903 `ad:endLifespanVersion` elements,
+ * 57,997 `gn:pronunciation`, `gn:grammaticalGender` and `gn:grammaticalNumber` each,
+ * 2,823 `ad:validFrom` and 264 `ad:adminUnit` are `xsi:nil="true"` with a `nilReason`,
+ * and 0 nil elements omit the reason.
+ *
+ * No value this adapter reads was void in the file measured.
+ * Brussels is the opposite case, writing no reason on any void, and `isVoid` in
+ * `#inspire/address` keys on `xsi:nil` rather than on a reason for that reason.
+ *
+ * This adapter reads the same primitives, so a Walloon void that stopped stating
+ * a reason would still read as a void.
  *
  * ## Coordinates
  *
- * This adapter emits text and components only, because {@linkcode CanonicalRow} declares no position
- * field. The file's axis order is recorded here for whoever does emit one. Wallonia declares
- * `srsName="http://www.opengis.net/def/crs/EPSG/0/3035"` and complies with that authority's
- * northing-then-easting order: `gml:pos` `3079047.229041581 3924386.42904076` reads as latitude
- * 50.686064, longitude 4.381708, in Braine-l'Alleud. That is the municipality the same address's own
- * `ad:AdminUnitName` names. Its `gml:boundedBy` lower corner, `2942208.441255148 3816649.462808032`,
- * puts the smaller number first in the same way. Brussels declares the same CRS and writes
- * easting-northing, so the two publishers disagree and a reader cannot take the declaration at its
- * word. `brussels/adapter.ts` records that measurement.
+ * This adapter emits text and components only, because {@linkcode CanonicalRow} declares no position field.
+ * The file's axis order is recorded here for whoever does emit one.
+ *
+ * Wallonia declares `srsName="http://www.opengis.net/def/crs/EPSG/0/3035"` and complies with
+ * that authority's northing-then-easting order: `gml:pos` `3079047.229041581 3924386.42904076`
+ * reads as latitude 50.686064, longitude 4.381708, in Braine-l'Alleud.
+ * That's the municipality the same address's own `ad:AdminUnitName` names.
+ *
+ * Its `gml:boundedBy` lower corner, `2942208.441255148 3816649.462808032`,
+ * puts the smaller number first in the same way.
+ * Brussels declares the same CRS and writes easting-northing, so the two publishers disagree
+ * and a reader cannot take the declaration at its word.
+ * `brussels/adapter.ts` records that measurement.
  *
  * ## Terms
  *
@@ -120,9 +149,9 @@
  * states `Source : Service public de Wallonie (SPW) - INSPIRE - Points d'adresses en Wallonie (BE)
  * (2017-11-20) https://geodata.wallonie.be/id/b62f8405-2ce3-449f-8a61-5fc2f38d8b73`.
  *
- * That row declares no `adapterID`, so `createIneligibilityReader` refuses every row this adapter
- * emits until a review sets `adapterID` to `wallonie` on it. The refusal is by construction and
- * states itself in the build manifest.
+ * That row declares no `adapterID`, so `createIneligibilityReader` refuses every row
+ * this adapter emits until a review sets `adapterID` to `wallonie` on it.
+ * The refusal is by construction and states itself in the build manifest.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -167,7 +196,7 @@ export const WALLONIE_ADAPTER_ID = "wallonie"
  *
  * It belongs in `SourceRegister` beside `be-vlaanderen-inspire-ad`, and this constant
  * stands in until that entry lands, because a built corpus stores the id on every row
- * and the id must not change afterwards.
+ * and the id mustn't change afterwards.
  * Replace the constant with the `SourceRegister` member on integration.
  */
 export const WALLONIE_SOURCE_REGISTER = SourceRegister.WallonieInspireAddresses
@@ -363,7 +392,7 @@ const Refusal = {
 	 */
 	AbsentHouseNumber: "row:house-number-absent",
 	/**
-	 * The publisher marked the house number void, so the value could not be read.
+	 * The publisher marked the house number void, so the value couldn't be read.
 	 */
 	VoidHouseNumber: "row:house-number-void",
 	/**
@@ -371,7 +400,7 @@ const Refusal = {
 	 */
 	Unjoined: "row:component-unjoined",
 	/**
-	 * An address the codex could not render into a line.
+	 * An address the codex couldn't render into a line.
 	 */
 	Unrendered: "row:render-failed",
 } as const
@@ -417,8 +446,8 @@ export function createWallonieAdapter(): CorpusAdapter {
 					const house = designator(byType, HOUSE_NUMBER_DESIGNATOR)
 
 					if (!house) {
-						// A void number is a value this run could not read and an absent one is
-						// a number the publisher states the address has none of.
+						// A void number is a value this run couldn't read and an absent one is a
+						// number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
 						if (voidDesignatorTypes(address).has(HOUSE_NUMBER_DESIGNATOR)) {
 							countDropped(tally, Refusal.VoidHouseNumber)
@@ -453,7 +482,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 						area = index.areas.get(key) ?? area
 					}
 
-					// A component the index cannot answer is a street, postcode or locality this run could not read.
+					// A component the index cannot answer is a street, postcode or locality this run couldn't read.
 					// A row emitted without it would record an absence the publisher never stated.
 					if (!street || !postcode || !locality) {
 						countDropped(tally, Refusal.Unjoined)
@@ -498,7 +527,7 @@ export function createWallonieAdapter(): CorpusAdapter {
 						country: "BE",
 						// Every component name is read in French: `gn:language` is `fre` on the first
 						// `ad:name` of each feature, and the country and region features add `ger`
-						// and `dut` spellings after it that `placeName` does not reach.
+						// and `dut` spellings after it that `placeName` doesn't reach.
 						locale: "fr-BE",
 						source: WALLONIE_ADAPTER_ID,
 						source_id: seed ? `${WALLONIE_ADAPTER_ID}-${seed}` : stableSourceID(WALLONIE_ADAPTER_ID, aligned),

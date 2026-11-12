@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"

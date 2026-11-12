@@ -7,20 +7,24 @@
  *   The sibling of {@link ./unit-designator.ts}: where the unit table covers the full secondary-unit
  *   vocabulary (APT, STE, RM, …), this module extracts the floor-class subset — designators that
  *   name a floor or level of the building rather than a specific addressable unit on that floor.
- *   USPS Pub 28 Appendix C2 identifies these designators as requiring a secondary number: "FL" (the
- *   approved abbreviation for floor). The publication gives `floor` as the canonical designator
- *   with approved abbreviation `FL` and variant `FLR`; `basement` (`bsmt`), `penthouse` (`PH`), and
- *   `lobby` (`lbby`) are the standalone-or-numbered floor-adjacent types also listed in Appendix
- *   C2.
+ *   USPS Pub 28 Appendix C2 identifies these designators as requiring a secondary number:
+ *   "FL" (the approved abbreviation for floor).
  *
- *   Appendix C2 explicitly marks floor, basement as requiring a secondary number (alongside APT,
- *   bldg, etc.) while penthouse and lobby may appear without another designator. PH and lbby are kept here as well as in
- *   {@link ./unit-designator.ts} because the span proposer treats them as level-class hints.
- *   "Lobby" and "PH" identify specific floor analogs. The prior map routes `LEVEL_PHRASE` to `unit`.
+ *   The publication gives `floor` as the canonical designator with approved abbreviation `FL`
+ *   and variant `FLR`; `basement` (`bsmt`), `penthouse` (`PH`), and `lobby` (`lbby`) are
+ *   the standalone-or-numbered floor-adjacent types also listed in Appendix C2.
+ *
+ *   Appendix C2 explicitly marks floor, basement as requiring a secondary number
+ *   (alongside APT, bldg, etc.) while penthouse and lobby may appear without another designator.
+ *   PH and lbby are kept here as well as in {@link ./unit-designator.ts}
+ *   because the span proposer treats them as level-class hints.
+ *
+ *   "Lobby" and "PH" identify specific floor analogs.
+ *   The prior map routes `LEVEL_PHRASE` to `unit`.
  *   The schema has no separate `level` tag.
  *
- *   This table drives the `levelDesignators` set in the span-proposer lexicon. The full
- *   secondary-unit designators (APT, STE, RM, …) remain in {@link ./unit-designator.ts}.
+ *   This table drives the `levelDesignators` set in the span-proposer lexicon.
+ *   The full secondary-unit designators (APT, STE, RM, …) remain in {@link ./unit-designator.ts}.
  *
  *   Data is verbatim USPS Pub 28 Appendix C2.
  * @see {@link https://pe.usps.com/text/pub28/28apc_003.htm USPS Publication 28 — Appendix C2: Secondary Unit Designators}

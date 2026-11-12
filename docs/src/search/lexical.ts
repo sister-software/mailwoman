@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The lexical query. Every token of the user's text becomes a quoted FTS5 string, so the text never
+ *   The lexical query.
+ *
+ *   Every token of the user's text becomes a quoted FTS5 string, so the text never
  *   reaches the FTS5 parser as an operator, a column filter or a bare `*`.
  */
 

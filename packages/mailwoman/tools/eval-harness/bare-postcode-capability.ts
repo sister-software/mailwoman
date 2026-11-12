@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parse-only read of the reserved bare-postcode cases. One classifier stays warm for all 56
- *   inputs. The report names every input whose first token is not decoded as a postcode.
+ *   Parse-only read of the reserved bare-postcode cases.
+ *
+ *   One classifier stays warm for all 56 inputs.
+ *   The report lists every input whose first token isn't decoded as a postcode.
  */
 
 import { bareBIOTag } from "@mailwoman/codex/component"

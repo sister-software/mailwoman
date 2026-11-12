@@ -6,42 +6,47 @@
  *
  *   ## Two areas, because the adapter emits two jurisdictions
  *
- *   `#no/adapters/matrikkelen/adapter` reads `kommunenummer` to decide a row's country, and
- *   municipality 2100 is Svalbard rather than the mainland. Geonorge publishes the dataset per area
- *   from one 375-entry area list, and the two entries this repository reads are `0000` `Hele landet`
- *   and `2100` `Svalbard`. The mainland extract has no Svalbard row, so taking only `0000` would
- *   leave `SJ` with no rows while the adapter still claimed to cover it.
+ *   `#no/adapters/matrikkelen/adapter` reads `kommunenummer` to decide a row's country,
+ *   and municipality 2100 is Svalbard rather than the mainland.
+ *   Geonorge publishes the dataset per area from one 375-entry area list, and the two
+ *   entries this repository reads are `0000` `Hele landet` and `2100` `Svalbard`.
  *
- *   Each area is a separate archive at the dataset's conventional download path, so no download
- *   order has to be placed through Geonorge's order API:
+ *   The mainland extract has no Svalbard row, so taking only `0000` would leave `SJ`
+ *   with no rows while the adapter still claimed to cover it.
+ *
+ *   Each area is a separate archive at the dataset's conventional download path,
+ *   so no download order has to be placed through Geonorge's order API:
  *
  *       …/MatrikkelenAdresse/CSV/Basisdata_<area>_<name>_4258_MatrikkelenAdresse_CSV.zip
  *
  *   ## Why the member is extracted
  *
- *   The adapter opens `opts.inputPath` with `CSVSpliterator.fromAsync`. That reader takes a
- *   delimited file rather than an archive, so the member is written out beside the archive it came
- *   from. The member is `matrikkelenAdresse.csv` in every area's archive, inside a directory whose
- *   name follows the archive. Each area is written under its own area-code directory, and the
- *   publisher's own file name is kept.
+ *   The adapter opens `opts.inputPath` with `CSVSpliterator.fromAsync`.
+ *   That reader takes a delimited file rather than an archive, so the member is
+ *   written out beside the archive it came from.
  *
- *   The archive is kept rather than removed, because its sha256 is the value the address-source
- *   register records for the publication and the member's is not.
+ *   The member is `matrikkelenAdresse.csv` in every area's archive, inside a
+ *   directory whose name follows the archive.
+ *   Each area is written under its own area-code directory, and the publisher's own file name is kept.
+ *
+ *   The archive is kept rather than removed, because its sha256 is the value the
+ *   address-source register records for the publication and the member's isn't.
  *
  *   ## Freshness
  *
- *   Geonorge serves `last-modified` and `content-length` on the archive, and a regenerated extract
- *   changes both. A skip requires a stated `last-modified`: where the service states none, both
- *   sides read `null`, an equality test would hold, and an archive of unknown age would be kept for
- *   as long as the service stayed silent.
+ *   Geonorge serves `last-modified` and `content-length` on the archive,
+ *   and a regenerated extract changes both.
+ *   A skip requires a stated `last-modified`: where the service states none,
+ *   both sides read `null`, an equality test would hold, and an archive of unknown
+ *   age would be kept for as long as the service stayed silent.
  *
  *   ## The header is checked on arrival
  *
- *   A renamed column reaches the adapter as an empty string on every row rather than as an error, so
- *   the extract's header is read through the same `CSVSpliterator` the adapter uses and checked
- *   against the nine columns the adapter indexes by name. The file's first column name has a
- *   byte-order mark, and none of the nine is that column, so the check does not depend on stripping
- *   the mark.
+ *   A renamed column reaches the adapter as an empty string on every row rather than as an error,
+ *   so the extract's header is read through the same `CSVSpliterator` the adapter uses
+ *   and checked against the nine columns the adapter indexes by name.
+ *   The file's first column name has a byte-order mark, and none of the nine is that column,
+ *   so the check doesn't depend on stripping the mark.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -414,7 +419,7 @@ export async function downloadMatrikkelenArea(
  * Downloads every requested area and writes the collection manifest beside them.
  *
  * An area that fails is counted and the rest are still taken, because the two areas are
- * separate publications and Svalbard's 57 KiB does not depend on the mainland's 145 MiB.
+ * separate publications and Svalbard's 57 KiB doesn't depend on the mainland's 145 MiB.
  */
 export async function downloadMatrikkelen(
 	client: Pick<APIClient, "fetch">,

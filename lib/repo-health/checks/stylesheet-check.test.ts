@@ -10,7 +10,7 @@
  *   favor of the `-webkit-` twin written after it. The reduced-transparency fallback covered four of the six
  *   surfaces the material did.
  *
- *   The passing cases matter as much: each is a shape the rules must not report, because an unsatisfiable rule
+ *   The passing cases matter as much: each is a shape the rules mustn't report, because an unsatisfiable rule
  *   gets an exemption instead of a fix.
  */
 

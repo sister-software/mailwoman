@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Kryptonite-catalogue fixture for the phrase grouper. Each fixture is one of the operator's
- *   adversarial examples — inputs where v0.4.0's joint boundary+type classification got the
- *   boundaries wrong and produced cascading classification errors.
+ *   Kryptonite-catalogue fixture for the phrase grouper.
  *
- *   The phrase grouper's job here is the easier half of the eventual joint decode: propose the right
- *   phrase boundaries with a structural kind hypothesis. The reconciler selects which proposal wins when
- *   several overlap is Stage 5 reconcile's job (Thread D); this file asserts only that the grouper
- *   surfaces the correct proposals at usable confidence ranges.
+ *   Each fixture is one of the operator's adversarial examples — inputs where v0.4.0's joint
+ *   boundary+type classification got the boundaries wrong and produced cascading classification errors.
  *
- *   See `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx` § E for the v0.5.0 context. See
- *   `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` for the design rationale.
+ *   The phrase grouper's job here is the easier half of the eventual joint decode:
+ *   propose the right phrase boundaries with a structural kind hypothesis.
+ *   The reconciler selects which proposal wins when several overlap is Stage 5
+ *   reconcile's job (Thread D); this file asserts only that the grouper surfaces
+ *   the correct proposals at usable confidence ranges.
+ *
+ *   See `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx` § E for the v0.5.0 context.
+ *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx`
+ *   for the design rationale.
  */
 
 import type { PhraseKind, PhraseProposal } from "@mailwoman/core/pipeline"

@@ -234,7 +234,7 @@ export const reflowRule: CreateRule = {
 					const jsxBlock = comment.type === "Block" && container?.type === "JSXEmptyExpression"
 
 					// Inline JSX blocks share the braces' indentation.
-					// A preceding block's closing marker must not add indentation on the next fix.
+					// A preceding block's closing marker mustn't add indentation on the next fix.
 					const indentStart =
 						jsxBlock && /[^\t ]/.test(text.slice(start, comment.range[0]))
 							? lineStart(text, container.parent.range[0])
@@ -334,7 +334,7 @@ export const reflowRule: CreateRule = {
 						})
 
 						if (!target) continue
-						// Insertion before the target must not detach a next-line pragma.
+						// Insertion before the target mustn't detach a next-line pragma.
 						const preceding = comments[i - 1]
 
 						if (

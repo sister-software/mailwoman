@@ -1,0 +1,71 @@
+---
+title: Compare Mailwoman with other geocoders
+description: How Mailwoman differs from Google's Geocoding API, self-hosted Nominatim and Pelias on where data lives, what self-hosting needs and what results you may keep, with the one dated measured comparison and the command that reproduces it.
+---
+
+import "./evidence-tables.css"
+
+# Compare Mailwoman with other geocoders
+
+This page compares Mailwoman with three alternatives: Google's Geocoding API, a self-hosted Nominatim server, and Pelias with libpostal. It covers where the data lives, what running each one requires, what you may keep from its results, and the one measured comparison this project has published. Third-party facts below were read from each project's own documentation on 11 November 2026. Check the linked pages before deciding, because their terms and requirements change.
+
+## How they differ
+
+<div className="evidence-table evidence-table--wide" role="region" aria-label="Geocoder feature comparison" tabIndex="0">
+
+| Question                        | Mailwoman 11.0.0                                                                                                                                                                                                                                | Google Geocoding API                                                                                                                                                                                                             | Self-hosted Nominatim                                                                                                                                                                                                                                                                    | Pelias with libpostal                                                                                                                                                                                                                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where the addresses you send go | Your own process or server.                                                                                                                                                                                                                     | Google's service.                                                                                                                                                                                                                | Your own server.                                                                                                                                                                                                                                                                         | Your own server.                                                                                                                                                                                                                                                                       |
+| Main data sources               | Who's On First, Overture Maps, GeoNames, national address registers such as the US National Address Database and France's Base Adresse Nationale. [Data and licensing](/product/data-and-licensing) lists each bundle's terms.                  | Google's own data.                                                                                                                                                                                                               | OpenStreetMap.                                                                                                                                                                                                                                                                           | The sources you import, such as OpenStreetMap, OpenAddresses, Who's On First and GeoNames.                                                                                                                                                                                             |
+| What self-hosting needs         | Node.js 24 LTS or later, the npm packages, and the data bundles for your area. The global place candidates are 2.9 GB. One server measured about 607 MB of memory on one host after one geocode ([run a server](/docs/tutorials/run-a-server)). | Not self-hosted.                                                                                                                                                                                                                 | It runs on a PostgreSQL database built from an OpenStreetMap import. For a full planet, the [installation guide](https://nominatim.org/release-docs/latest/admin/Installation/) recommends 128 GB of RAM or more and at least 1 TB of disk, and estimates about 2.5 days for the import. | Elasticsearch 7.5 or later, Node.js 20 or later, and libpostal's data, about 3 GB in memory and 4 GB on disk. The [requirements page](https://github.com/pelias/documentation/blob/master/requirements.md) asks for 8 GB of RAM for a local build and 16 GB or more for a full planet. |
+| What you may keep from results  | Results come from data you installed, under that data's terms.                                                                                                                                                                                  | The [service terms](https://cloud.google.com/maps-platform/terms/maps-service-terms) allow caching latitude and longitude for up to 30 consecutive days, then require deletion, with a separate exception for end-user features. | Results derive from OpenStreetMap, under the Open Database License.                                                                                                                                                                                                                      | Results come from the data you imported, under each source's terms.                                                                                                                                                                                                                    |
+| Public hosted service           | None.                                                                                                                                                                                                                                           | Google's API, billed per request. See Google's pricing page.                                                                                                                                                                     | The OpenStreetMap Foundation's server allows at most 1 request per second per application and no heavy use, per its [usage policy](https://operations.osmfoundation.org/policies/nominatim/).                                                                                            | None run by the project.                                                                                                                                                                                                                                                               |
+| Parser                          | Mailwoman's own model, also served through a libpostal-compatible API.                                                                                                                                                                          | Not offered separately.                                                                                                                                                                                                          | Not offered separately.                                                                                                                                                                                                                                                                  | libpostal.                                                                                                                                                                                                                                                                             |
+| Software license                | AGPL-3.0-only, or a commercial license.                                                                                                                                                                                                         | Proprietary service.                                                                                                                                                                                                             | [GPL version 3 or later](https://github.com/osm-search/Nominatim) for the Python code, with other files under GPLv2 or Apache 2.0.                                                                                                                                                       | [MIT](https://github.com/pelias/pelias) for Pelias. Check libpostal's own repository for its license.                                                                                                                                                                                  |
+
+</div>
+
+Mailwoman also serves Nominatim-, Photon- and libpostal-compatible APIs, so a client built for one of those can call it. [Point a compatible client at Mailwoman](/docs/guides/use-a-compatible-http-client) lists the fields those APIs return and the ones they lack.
+
+## The measured comparison
+
+The project has published one comparison that ran Mailwoman beside other geocoders: the [open-truth three-arm report of 18 August 2026](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md). It used Mailwoman model 9.1.0, and Pelias and Photon results captured in August 2026. Photon is a geocoder built on OpenStreetMap data. Google and Nominatim weren't measured.
+
+The [panel](/benchmarks/open-truth-panel.jsonl) has 297 addresses in six groups, each with a rooftop coordinate from an open address register. Every arm received the same 297 strings. The scorer counts a row as a hit when the returned coordinate lies within 1, 5 or 25 km of the reference, and counts a missing result as a miss at every distance.
+
+<div className="evidence-table evidence-table--wide" role="region" aria-label="Measured geocoder results" tabIndex="0">
+
+| Arm             | Within 1 km        | Within 5 km        | Within 25 km       | No result |
+| --------------- | ------------------ | ------------------ | ------------------ | --------- |
+| Mailwoman 9.1.0 | 258 of 297 (86.9%) | 286 of 297 (96.3%) | 295 of 297 (99.3%) | 1         |
+| Pelias          | 273 of 297 (91.9%) | 275 of 297 (92.6%) | 281 of 297 (94.6%) | 0         |
+| Photon          | 255 of 297 (85.9%) | 273 of 297 (91.9%) | 276 of 297 (92.9%) | 20        |
+
+</div>
+
+The scorer's paired bootstrap (seed 20260807, 1,000 resamples) gives the Mailwoman − Pelias difference over all 297 rows:
+
+- −5.1 percentage points at 1 km, 95% interval [−9.8, −0.7]
+- +3.7 points at 5 km, [0.7, 6.7]
+- +4.7 points at 25 km, [2.0, 7.4]
+
+By group, the largest differences were in New Zealand, where Mailwoman led by 24.6 points at every distance over 57 rows, and in a mixed European group, where Mailwoman trailed by 42.2 points at 1 km over 45 rows.
+
+Three limits apply to these numbers:
+
+- They describe model 9.1.0 and the data of August 2026. Release 11.0.0 ships model 10.8.0 and hasn't been measured on this panel.
+- Mailwoman and Pelias use some of the same open registers that supplied the reference coordinates. The distance partly measures how well each one retrieves that register's row.
+- 297 rows in six groups describe those six groups. Other addresses can have a different error rate.
+
+## Reproduce the comparison
+
+The scorer recomputes every count above from the committed results file, with no network access. From a checkout of the repository at tag `v11.0.0`:
+
+```bash
+cd docs/static/benchmarks
+node open-truth-three-arm.mjs
+```
+
+It prints the per-group table, the pooled table, the paired bootstrap and the rows where an arm returned no result. It was run again for this page and exited 0 with the counts shown. A fresh run of the three geocoders needs Pelias and Photon servers with their own data. This page doesn't cover setting them up.
+
+The [benchmark index](/evidence/benchmarks) lists the other dated measurements and explains how to read each metric.

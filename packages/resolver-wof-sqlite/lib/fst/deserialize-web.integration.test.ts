@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the browser-compatible FST deserializer. Hand-builds minimal binary fixtures in the
- *   on-disk FST format (header + string table + state/edge/place tables) so the pure
- *   DataView/TextDecoder parsing can be exercised without a real `.bin` artifact or DB.
+ *   Tests for the browser-compatible FST deserializer.
  *
- *   Fixtures are written at version 2 — the highest the web reader claims to support (`MAX_VERSION`)
- *   — using the v1/v2 layout (12-byte state entries, u16 per-state counts), per fst-serialize.ts.
+ *   Hand-builds minimal binary fixtures in the on-disk FST format
+ *   (header + string table + state/edge/place tables) so the pure DataView/TextDecoder
+ *   parsing can be exercised without a real `.bin` artifact or DB.
+ *
+ *   Fixtures are written at version 2 — the highest the web reader claims to support (`MAX_VERSION`) —
+ *   using the v1/v2 layout (12-byte state entries, u16 per-state counts), per fst-serialize.ts.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -344,7 +346,7 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
 	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is rejected.
 	// This assertion is why the check stops drifting.
-	// It fails the moment the serializer bumps and the reader's check does not.
+	// It fails the moment the serializer bumps and the reader's check doesn't.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)

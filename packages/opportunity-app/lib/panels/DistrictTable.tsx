@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The district table repeats the district markers of the map. Each row gives the sum of the district's resolved
- *   unit totals and, in its own column, the count of its buildings whose total is unresolved, so an unknown unit
- *   count is never folded into the sum as a zero.
+ *   The district table repeats the district markers of the map.
+ *
+ *   Each row gives the sum of the district's resolved unit totals and,
+ *   in its own column, the count of its buildings whose total is unresolved,
+ *   so an unknown unit count is never folded into the sum as a zero.
  */
 
 import { type EntityID, proseList } from "@mailwoman/dossier"

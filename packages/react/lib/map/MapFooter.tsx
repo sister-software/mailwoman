@@ -11,7 +11,7 @@ export interface MapFooterProps {
 	 */
 	identity?: ReactNode
 	/**
-	 * What is loading right now, beside the identity.
+	 * What's loading right now, beside the identity.
 	 */
 	status?: ReactNode
 	/**

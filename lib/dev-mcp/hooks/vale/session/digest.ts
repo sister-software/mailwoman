@@ -5,16 +5,22 @@
 /**
  *   SessionStart hook: the reply prose rules, at the top of every session.
  *
- *   why at session start. Vale's Stop hook rejects a reply after it has been written. The output style names four rules.
- *   The other twenty-six arrive only as
- *   findings. This puts the set in front of the work.
+ *   why at session start.
+ *   Vale's Stop hook rejects a reply after it has been written.
  *
- *   how compaction changes it. `SessionStart` fires with `source: "compact"` after the context is compacted.
- *   this hook declares no matcher, so it runs on `startup`, `resume`, `clear`, `compact` and `fork` alike. The digest
- *   The hook re-derives and injects the digest each time. A `claude.md` line or one-time message cannot do that.
+ *   The output style lists four rules.
+ *   The other twenty-six arrive only as findings.
+ *   This puts the set in front of the work.
  *
- *   It fails silent and exits 0 on every error path, for the reason `session-orientation.ts` gives: a session that
- *   cannot start because its orientation hook threw is the worse trade.
+ *   how compaction changes it.
+ *   `SessionStart` fires with `source: "compact"` after the context is compacted. this hook
+ *   declares no matcher, so it runs on `startup`, `resume`, `clear`, `compact` and `fork` alike.
+ *
+ *   The digest The hook re-derives and injects the digest each time.
+ *   A `claude.md` line or one-time message cannot do that.
+ *
+ *   It fails silent and exits 0 on every error path, for the reason `session-orientation.ts`
+ *   gives: a session that cannot start because its orientation hook threw is the worse trade.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

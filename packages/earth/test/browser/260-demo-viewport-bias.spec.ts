@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Viewport-bias wiring: the map's current center feeds `resolveTree` as a soft proximity hint, so an in-view
  *   namesake sorts ahead of a distant one at equal exact tier. A strong population signal still wins regardless

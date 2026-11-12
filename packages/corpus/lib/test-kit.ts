@@ -5,7 +5,9 @@
  *   The corpus adapter-test harness — the sibling of `mailwoman/test-kit/`.
  *
  *   `corpus/package.json` excludes this directory from the published tarball.
- *   That entry predates this file. The test harness can therefore import `vitest`.
+ *   That entry predates this file.
+ *
+ *   The test harness can therefore import `vitest`.
  *   `mailwoman/test-kit/index.ts` uses the same packaging boundary.
  */
 
@@ -36,7 +38,7 @@ export interface ScratchDir {
  * `slug` names the directory (`mailwoman-<slug>-xxxxxx` under the OS temp dir)
  * so a stray leftover is traceable to its suite.
  * Teardown swallows its own errors, because a test that already removed the directory
- * or a platform holding a handle open must not turn a passing assertion into a failing suite.
+ * or a platform holding a handle open mustn't turn a passing assertion into a failing suite.
  */
 export function useScratchDir(slug: string): ScratchDir {
 	let owned: TemporaryDirectory | null = null
@@ -103,7 +105,7 @@ export async function writeDelimitedFixture<P extends PathBuilderLike>(
  * and reddened a local preflight that had passed an hour earlier.
  *
  * So a live-service test is opt-in, and the suite reports it as skipped
- * rather than passing on a check it did not make.
+ * rather than passing on a check it didn't make.
  * Run one with `MAILWOMAN_LIVE_PUBLISHER_TESTS=1 yarn vitest --run --config vitest.slow.config.ts <file>`.
  *
  * A test reading a committed fixture needs this switch unset, and most of

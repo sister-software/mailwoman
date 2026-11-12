@@ -4,22 +4,23 @@
 /**
  *   Per-node lineage provenance for the result `hierarchy`.
  *
- *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region
- *   resolves on its own and contributes its entry beside the locality winner, whether or not any
- *   place on earth has that containment chain. Silently mixing the winner's lineage with
- *   independently resolved fragments is the defect. This module makes the mixing explicit.
+ *   The `hierarchy` array is assembled from independently resolved parse nodes:
+ *   the parsed region resolves on its own and contributes its entry beside the locality
+ *   winner, whether or not any place on earth has that containment chain.
+ *   Silently mixing the winner's lineage with independently resolved fragments is the defect.
+ *   This module makes the mixing explicit.
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
  *   - `true`: the winner's own ancestors sidecar vouches for this entry, or the entry is the winner.
  *   - `false`: the entry resolved independently to a place outside the winner's containment chain.
- *   - absent: no sidecar to ask (the backend or artifact has no `ancestors()`), or the entry has
- *     no place identity. Absence reads as "unverifiable" rather than "false", per the meaning-of-zero
- *     rule.
+ *   - absent: no sidecar to ask (the backend or artifact has no `ancestors()`),
+ *     or the entry has no place identity.
+ *     Absence reads as "unverifiable" rather than "false", per the meaning-of-zero rule.
  *
- *   The winner-chain-as-hierarchy representation belongs to the stage-2 containment re-rank, where
- *   the winner's chain becomes the natural assembly. Until then the shipped shape keeps its
- *   parse-anchored entries and states each one's standing.
+ *   The winner-chain-as-hierarchy representation belongs to the stage-2 containment re-rank,
+ *   where the winner's chain becomes the natural assembly.
+ *   Until then the shipped shape keeps its parse-anchored entries and states each one's standing.
  */
 
 import type { HierarchyEntry } from "@mailwoman/core/geocode"

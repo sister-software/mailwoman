@@ -90,7 +90,7 @@ Dependencies: `@sister.software/asciify` (`./tui` entry), `pmtiles`, `@mapbox/ve
 
 Render note: solid fills pass through asciify's Bayer ordered dither, so a fill color's
 luminance sets its stipple density. Water renders as a dim texture and roads as solid bright
-dots. The style table can tune this, so it is not a design risk.
+dots. The style table can tune this, so it isn't a design risk.
 
 Attribution: `MapFrame.attribution` holds the tile archive's attribution string. The dump is
 OSM-derived, so display attribution is required. Consumers render it, and the debug pane shows it
@@ -156,10 +156,10 @@ pattern as the existing format-shorthand conflict in `resolveFormat`.
 
 - `map-tui/` joins the root `workspaces` array (54 → 55) **and** the `.release-it.json` publish
   list in the same release that ships `--debug`. `mailwoman` gains a hard dependency on it, so
-  the osm-style holdout is not available. An unpublished `workspace:*` dependency would break the
+  the osm-style holdout isn't available. An unpublished `workspace:*` dependency would break the
   published tarball.
 - The first `@mailwoman/map-tui` publish cannot use Trusted Publishing OIDC because the package
-  does not exist yet. The manual bless path applies once.
+  doesn't exist yet. The manual bless path applies once.
 - In phase 2, `npx @mailwoman/map-tui` works from the scoped bin without extra setup. The scoped bin reserves
   the unscoped `map-tui` npm name is a phase-2 product decision and is deferred.
 - New workspace follows every standing convention: dev `exports` map only (publish map derived

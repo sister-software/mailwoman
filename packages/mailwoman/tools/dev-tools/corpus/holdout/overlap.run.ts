@@ -4,24 +4,31 @@
 /**
  *   Count, per country and split, the held-out `source_id`s that also appear in train.
  *
- *   `holdout-leakage.run.ts` counts train rows the holdout policy assigns to val or test. This report checks
- *   the other direction: a row can sit in val and share its `source_id` with a train row. This happens when a
- *   file's split was chosen by hand rather than by `splitForRow`. Zero is the expected value.
+ *   `holdout-leakage.run.ts` counts train rows the holdout policy assigns to val or test.
+ *   This report checks the other direction: a row can sit in val and share its `source_id` with a train row.
  *
- *   Measured over `v0.6.0-register-surface` on 2026-09-28, this tool's own denominators: DE's val split holds
- *   40,918 distinct `source_id`s and 770 of them are in train (1.88%), all 770 from
- *   `part-synth-german-val.parquet`, which a hand-written list routed. Against that one file's 3,987 ids the
- *   share is 19.3%, which is the figure #2359 records. GB, routed through `corpus split-overlay`, reads 37 of
- *   109,096 in val (0.03%) and 31 of 109,792 in test. FR and US read 0.
+ *   This happens when a file's split was chosen by hand rather than by `splitForRow`.
+ *   Zero is the expected value.
  *
- *   **Why the raw-string count is a lower bound.** `base_source_id` is NULL for 4,176,539 of the 4,206,561
- *   `composed` rows of that corpus, so two rows composed from one underlying address under different
- *   `source_id`s are indistinguishable from two unrelated rows. The raw column counts rows whose `raw` string
- *   is byte-equal across the splits. It misses any pair the recipe rendered differently. DE val reads 513
- *   of 38,056 there.
+ *   Measured over `v0.6.0-register-surface` on 2026-09-28, this tool's own denominators:
+ *   DE's val split holds 40,918 distinct `source_id`s and 770 of them are in train (1.88%),
+ *   all 770 from `part-synth-german-val.parquet`, which a hand-written list routed.
+ *   Against that one file's 3,987 ids the share is 19.3%, which is the figure #2359 records.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/holdout/overlap.run.ts --corpus <corpus dir> [--json <out>]
+ *   GB, routed through `corpus split-overlay`, reads 37 of 109,096 in val (0.03%)
+ *   and 31 of 109,792 in test.
+ *   FR and US read 0.
+ *
+ *   **Why the raw-string count is a lower bound.** `base_source_id` is NULL for 4,176,539 of
+ *   the 4,206,561 `composed` rows of that corpus, so two rows composed from one underlying
+ *   address under different `source_id`s are indistinguishable from two unrelated rows.
+ *   The raw column counts rows whose `raw` string is byte-equal across the splits.
+ *
+ *   It misses any pair the recipe rendered differently.
+ *   DE val reads 513 of 38,056 there.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/holdout/overlap.run.ts
+ *   --corpus <corpus dir> [--json <out>]
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

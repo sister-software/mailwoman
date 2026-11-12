@@ -3,7 +3,7 @@
 
 /**
  * @file The published-bundles check over the live tree and over planted registries and snapshots: a registry figure
- *   edited away from the bucket's, a bundle the snapshot never measured, a size it could not read and a snapshot row
+ *   edited away from the bucket's, a bundle the snapshot never measured, a size it couldn't read and a snapshot row
  *   the registry no longer names.
  */
 

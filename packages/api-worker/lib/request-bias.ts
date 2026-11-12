@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The request's approximate location as a geocode bias point. Cloudflare places each request at the client's
- *   network location, at city precision when it has one. The Worker adds that point to a geocode request so a bare
- *   place name such as `Springfield` leans toward the one near the caller when the page sends no stronger signal.
+ *   The request's approximate location as a geocode bias point.
+ *
+ *   Cloudflare places each request at the client's network location, at city precision when it has one.
+ *   The Worker adds that point to a geocode request so a bare place name such as `Springfield`
+ *   leans toward the one near the caller when the page sends no stronger signal.
  */
 
 import { MAX_BIAS_POINTS } from "@mailwoman/api/input-limits"
@@ -42,7 +44,7 @@ export function requestLocationOf(request: Request): GeocodeBiasPoint | null {
 /**
  * The geocode body with `location` appended to its `bias`, as UTF-8 bytes.
  *
- * The body is returned unchanged when it is not a JSON object, when its `bias` is present
+ * The body is returned unchanged when it isn't a JSON object, when its `bias` is present
  * and not an array, or when the array already holds the most points a request may send.
  * The engine then validates it as sent.
  */

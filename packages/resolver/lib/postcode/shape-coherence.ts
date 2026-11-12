@@ -37,7 +37,7 @@ export interface PostcodeShapeVerdict {
 	excluded: string[]
 
 	/**
-	 * Postcode values left undecided because the tree names no country
+	 * Postcode values left undecided because the tree identifies no country
 	 * or region with a stated postcode syntax.
 	 */
 	abstained: string[]

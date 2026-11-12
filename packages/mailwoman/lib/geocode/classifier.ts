@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The classifier interface the geocode cascade consumes and the two helpers every geocode entry runs first.
- *   One helper selects the classifier that reads this input. A script-routed classifier handles the character-path
- *   family for a kanji or Hangul line. The other helper normalizes the input, including the postal-mark decision
- *   that must follow the classifier's encoder. These helpers live together so the three geocode entries agree.
+ *   The classifier interface the geocode cascade consumes and the two helpers
+ *   every geocode entry runs first.
+ *
+ *   One helper selects the classifier that reads this input.
+ *   A script-routed classifier handles the character-path family for a kanji or Hangul line.
+ *
+ *   The other helper normalizes the input, including the postal-mark decision
+ *   that must follow the classifier's encoder.
+ *   These helpers live together so the three geocode entries agree.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

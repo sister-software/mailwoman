@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwops release preflight` stages the tracked tree in an isolated root, materializes the weights artifacts there, then packs and audits all release workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with, performing no git, GitHub, npm-registry, R2, or Hugging Face writes.
+ *   `mwops release preflight` stages the tracked tree in an isolated root,
+ *   materializes the weights artifacts there, then packs and audits all release workspaces
+ *   with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with,
+ *   performing no git, GitHub, npm-registry, R2, or Hugging Face writes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -62,7 +65,7 @@ export interface ReleasePreflightReport {
 
 /**
  * Stage, materialize, pack and audit every release workspace, returning a report whose
- * verdict is `FAIL` when any workspace does not pack to a tarball honoring its manifest
+ * verdict is `FAIL` when any workspace doesn't pack to a tarball honoring its manifest
  * or when the release list and its computed absence set do not match.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {

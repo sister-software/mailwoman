@@ -333,7 +333,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeo
 
 	it("aligns one intermediate to the same four digests twice, which is what makes a resumed align safe", async () => {
 		// A resumed build reuses an adapter's canonical rows and re-runs the align phase over them.
-		// That is sound only where the phase is a function of its input: the split routing,
+		// That's sound only where the phase is a function of its input: the split routing,
 		// the augmentation draw and the write order all have to land the same way on a second pass.
 		// This pins the four files the phase writes rather than the row counts,
 		// because a count matches across two runs that ordered their rows differently.
@@ -448,7 +448,8 @@ describe("buildCorpus keeps sources independent", { timeout: 60_000 }, () => {
 	})
 })
 
-describe("buildCorpus resume", () => {
+// Each test runs two builds, so the block takes the end-to-end tests' limit.
+describe("buildCorpus resume", { timeout: 60_000 }, () => {
 	const options = {
 		corpusVersion: "0.1.0",
 		adapters: [wofAdminAdapter],
@@ -587,6 +588,21 @@ describe("buildCorpus resume", () => {
 		).rejects.toThrow(/resume refused.*align-checkpoint\.json/s)
 	})
 
+	it("refuses to resume onto an adapter run made from other adapter options", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		await expect(
+			buildCorpus({
+				...options,
+				adapterInputs: { "wof-admin": { inputPath: fixtureRoot, country: "US" } },
+				outputDir: outDir,
+				priorOutput: PriorOutput.Resume,
+			})
+		).rejects.toThrow(/resume refused for wof-admin.*other inputs/s)
+	})
+
 	it("refuses to resume when a recorded parquet file is no longer on disk", async () => {
 		const outDir = scratch.path("build")
 
@@ -688,7 +704,7 @@ describe("buildCorpus resume", () => {
 		const trainPath = outDir("intermediate", "labeled-train.jsonl")
 		const digest = await sha256File(trainPath)
 
-		// Stands for rows a fresh build must not keep.
+		// Stands for rows a fresh build mustn't keep.
 		await appendLocalTextFile(`${stringifyJSON({ raw: "row from the earlier build" })}\n`, trainPath)
 
 		const stages: string[] = []

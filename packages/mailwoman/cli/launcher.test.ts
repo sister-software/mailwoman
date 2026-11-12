@@ -4,9 +4,12 @@
 /**
  *   The bin entry's argument handling sits in front of every command.
  *
- *   The launcher cannot know the union of every command's flags. Before dispatching, it decides whether this is
- *   a bare version request and whether an interactive geocode should print a loading line. Both cases below are ones a
- *   stricter reading of the argument vector gets wrong while still looking correct for `mw --version`.
+ *   The launcher cannot know the union of every command's flags.
+ *   Before dispatching, it decides whether this is a bare version request and
+ *   whether an interactive geocode should print a loading line.
+ *
+ *   Both cases below are ones a stricter reading of the argument vector gets wrong
+ *   while still looking correct for `mw --version`.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

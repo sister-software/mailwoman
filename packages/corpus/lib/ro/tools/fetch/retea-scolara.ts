@@ -4,11 +4,13 @@
 /**
  * Downloads Romania's school network workbook for the `ro-retea-scolara` adapter.
  *
- * The Ministry of Education publishes a new workbook each school year under one data.gov.ro dataset,
- * and each upload has a new resource URL. The fetcher therefore asks the portal's CKAN API for the
- * dataset's resources and downloads the newest XLSX, rather than holding a URL that the next upload
- * retires. The manifest records the resource URL, the CKAN `last_modified` and the license id the
- * portal states, so a corpus row traces to one upload.
+ * The Ministry of Education publishes a new workbook each school year under one
+ * data.gov.ro dataset, and each upload has a new resource URL.
+ * The fetcher therefore asks the portal's CKAN API for the dataset's resources
+ * and downloads the newest XLSX, rather than holding a URL that the next upload retires.
+ *
+ * The manifest records the resource URL, the CKAN `last_modified` and the license
+ * id the portal states, so a corpus row traces to one upload.
  */
 
 import { APIClient } from "@mailwoman/core/api"

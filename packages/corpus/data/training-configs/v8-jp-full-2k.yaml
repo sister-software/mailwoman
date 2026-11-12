@@ -1,9 +1,9 @@
 # === v8-jp-full-2k — the cheap recipe-validation probe for v8-jp-full.yaml. ======================
 #
 # Diagnostic-before-fix: 2,000 steps (~8 GPU-minutes at the probe's measured ~4 steps/s) to prove the
-# recipe runs and the heads move before committing 24,000. This is not a check — no threshold here is
+# recipe runs and the heads move before committing 24,000. This isn't a check — no threshold here is
 # pre-registered, and it cannot pass or fail the JP arc. It answers four mechanical questions the
-# 24,000-step from-scratch run should not be the first place to discover:
+# 24,000-step from-scratch run shouldn't be the first place to discover:
 #
 #   1. Does the 47-label `stage3-jp` head load, train, and checkpoint on the char path at all?
 #      (The Leg-1 launch crashed at its first step-2000 save on `tokenizer.vocab_size` — the
@@ -11,16 +11,16 @@
 #      set to 1000 here: this probe saves twice, deliberately.)
 #   2. Does the head param group split? The launch log must print
 #      `[classifier_learning_rate] 18,095 params @ 0.001` (47 * 384 weights + 47 biases). Absent
-#      line = the carve-out silently did not happen.
+#      line = the carve-out silently didn't happen.
 #   3. Do the 19 supported labels separate from the 28 zero-support ones, or does label smoothing
 #      over a mostly-dead 47-way head make the dead rows fire? Read per-label F1 in the eval dump.
 #   4. Does the board scorer run end to end against a `stage3-jp` checkpoint — including the
-#      per-register split? The blended number at 2k is not the check. the native register clearing
+#      per-register split? The blended number at 2k isn't the check. the native register clearing
 #      the pack is the signal that the encoder is learning the surface the source contains.
 #
 # deliberate deviations from v8-jp-full.yaml (the curves are therefore not directly comparable):
 #   * `warmup_steps: 200` instead of 1000 — 1000 of 2000 steps would be half warmup and read as a
-#     stall. Consequence: this probe's early loss curve is not the first 2,000 steps of the 24,000-step
+#     stall. Consequence: this probe's early loss curve isn't the first 2,000 steps of the 24,000-step
 #     from-scratch run.
 #   * cosine over `max_steps: 2000` fully anneals the LR inside the probe. The 24,000-step run is only 8%
 #     through its cosine at step 2,000, so the probe's final loss is optimistic relative to it.
@@ -30,8 +30,8 @@
 #
 # The optional second leg (only if question 2's change is in doubt): copy this file with
 # `classifier_learning_rate` removed and diff the two runs' per-label F1 on the 12 supported JP fine
-# rows. That is the only A/B that can justify keeping a change whose #727 premise (a warm encoder)
-# does not hold on a from-scratch run.
+# rows. That's the only A/B that can justify keeping a change whose #727 premise (a warm encoder)
+# doesn't hold on a from-scratch run.
 #
 # Launch (the operator runs this):
 #   node packages/mailwoman/tools/training/launch/launch.run.ts start --config v8-jp-full-2k.yaml --fresh

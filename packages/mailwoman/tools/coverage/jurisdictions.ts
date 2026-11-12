@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The jurisdiction coverage layer: one Natural Earth map unit per jurisdiction, carrying what a
- *   training run drew from it, the address sources the register holds for it, its address system,
- *   and its board rows.
+ *   The jurisdiction coverage layer: one Natural Earth map unit per jurisdiction,
+ *   carrying what a training run drew from it, the address sources the register
+ *   holds for it, its address system, and its board rows.
  *
- *   The training numbers come from a run's realized-draws exposure report, the rows the trainer
- *   drew, rather than from a corpus census. A census counts rows a run may never sample.
+ *   The training numbers come from a run's realized-draws exposure report,
+ *   the rows the trainer drew, rather than from a corpus census.
+ *   A census counts rows a run may never sample.
  */
 
 import {
@@ -301,7 +302,7 @@ export interface JurisdictionTileResult {
 /**
  * Builds the jurisdiction coverage PMTiles.
  *
- * @throws When the exposure report is not a `mailwoman.exposure/v1` report, or tippecanoe fails.
+ * @throws When the exposure report isn't a `mailwoman.exposure/v1` report, or tippecanoe fails.
  */
 export async function buildJurisdictionTiles(options: JurisdictionTileOptions): Promise<JurisdictionTileResult> {
 	const exposure = await readLocalJSONFile<ExposureReport>(options.exposurePath)

@@ -77,9 +77,9 @@
   - **Phrase-prior input-layer conditioning:** when `model.use_phrase_priors=true`, the encoder takes a per-token feature tensor `(B, S, PHRASE_FEATURE_DIM=10)` holding BIE markers (`phrase_start`/`phrase_mid`/`phrase_end`) + a 7-way one-hot over the `PhraseKind` taxonomy (NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND — mirrored from Thread E's TS interface). Features are concatenated onto the token+position embedding and projected back to `hidden_size` with a learned linear. The default `false` preserves v0.3.0/v0.4.0 behavior bit-identically. That default allows a clean ablation of the phrase-prior contribution.
   - **Hidden-size knob kept at v0.3.0/v0.4.0 baseline (256).** The plan doc mentions a 256 → 384 or 512 bump "likely paid for by rented GPU." The scaffold holds the bump and first validates that the new architecture trains at the current size. The bump becomes a separate `v0_5_0-classifier-large.yaml` follow-up once the baseline trains without divergence.
   - **Label vocab unchanged from v0.3.0** (21 BIO classes, listed in `mailwoman_train.labels.ACTIVE_BIO_LABELS`). POI taxonomy expansion is out of scope per the plan doc.
-  - **Recipe parked:** `configs/v0_5_0-classifier-smoke.yaml` defines the short verdict-smoke (constant-LR per Thread F's [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx), `--smoke-mode constant`). It can run once Threads A + B + F have all landed. This PR did not execute it.
+  - **Recipe parked:** `configs/v0_5_0-classifier-smoke.yaml` defines the short verdict-smoke (constant-LR per Thread F's [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx), `--smoke-mode constant`). It can run once Threads A + B + F have all landed. This PR didn't execute it.
 
-  The forward-pass smoke (`tests/mailwoman_train/test_v0_5_0_forward_pass.py`, 14 cases) verifies wiring on stub batches in seconds, without running loss.backward or an optimizer step. This integration check decides whether the new architecture is ready for verdict-smoke training. It does not test whether the architecture converges.
+  The forward-pass smoke (`tests/mailwoman_train/test_v0_5_0_forward_pass.py`, 14 cases) verifies wiring on stub batches in seconds, without running loss.backward or an optimizer step. This integration check decides whether the new architecture is ready for verdict-smoke training. It doesn't test whether the architecture converges.
 
 ## Pre-flight
 
@@ -101,7 +101,7 @@
 - [ ] `data_loader.py` — load Parquet extracts via `datasets.load_dataset('parquet', ...)`. Lazy, streaming, memory-stable.
 - [ ] Stratified sampling: per-country weights to prevent imbalance. Configurable in YAML.
 - [ ] Length filtering: drop rows where token count > 128. Address text is short by nature, and long rows are typically adapter bugs.
-- [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it does not match, the corpus is corrupt, so stop and investigate.
+- [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it doesn't match, the corpus is corrupt, so stop and investigate.
 
 ### 3. Model architecture
 

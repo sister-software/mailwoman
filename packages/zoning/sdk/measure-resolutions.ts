@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `partial` share cannot choose between candidate resolutions, so each is reported by candidates per cell and by the polyfill-only zero-cell count.
+ *   The `partial` share cannot choose between candidate resolutions, so each is reported
+ *   by candidates per cell and by the polyfill-only zero-cell count.
  */
 
 import type { ResolutionMeasurementOptions, ResolutionMeasurementReport } from "@mailwoman/core/layers"
@@ -24,7 +25,7 @@ const DEFAULT_PROGRESS_EVERY = 5000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares.
+ * @throws {Error} When the streamed feature count doesn't match the count the source declares.
  */
 export async function measureZoningCellResolutions(
 	options: MeasureResolutionsOptions

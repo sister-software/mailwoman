@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev generate country-population` regenerates `codex/country/population.ts`, the
- *   per-country population table, from GeoNames countryInfo.txt. This is network codegen and the
- *   output is committed for provenance.
+ *   `mailwoman dev generate country-population` regenerates `codex/country/population.ts`,
+ *   the per-country population table, from GeoNames countryInfo.txt.
+ *
+ *   This is network codegen and the output is committed for provenance.
  */
 
 import { Text } from "ink"

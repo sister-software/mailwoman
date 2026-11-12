@@ -3,8 +3,10 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 /**
- *   The opt-in `unknown` surface across the three serializers. The existing shapes (libpostal-compat
- *   JSON, tag-only tuples, the XML elements) are byte-stable unless the caller asks for the report.
+ *   The opt-in `unknown` surface across the three serializers.
+ *
+ *   The existing shapes (libpostal-compat JSON, tag-only tuples, the XML elements)
+ *   are byte-stable unless the caller asks for the report.
  */
 import { describe, expect, it } from "vitest"
 

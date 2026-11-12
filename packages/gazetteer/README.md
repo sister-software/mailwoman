@@ -69,7 +69,7 @@ layouts. Country codes are lowercased when constructing repository names.
 directory. It derives `859/775/39/85977539.geojson` from the example ID.
 
 The reader returns `null` when no root contains the file or when the first existing
-file cannot be read or parsed. It does not distinguish those conditions or continue
+file cannot be read or parsed. It doesn't distinguish those conditions or continue
 to another root after a read failure. Callers that need those distinctions must
 read the file directly.
 
@@ -103,7 +103,7 @@ hierarchyAncestorsInAnyBranch(5, branches) // Map { 1 => "country", 2 => "region
 
 Both readers exclude the record's own ID and non-positive or non-finite IDs.
 Import hierarchy helpers from the explicit subpath shown above. The package root
-does not export them.
+doesn't export them.
 
 ## Build gazetteer data
 

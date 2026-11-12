@@ -5,11 +5,13 @@
  *   The premise-linkage row and report interface, fixed before any controlled data arrives so a
  *   provider's file populates an adapter rather than reshaping the evaluation after results are seen.
  *
- *   The row types define the privacy boundary. {@link PremiseLinkageInputRow} holds the licensed address,
- *   expected identifier plus truth coordinate in memory. {@link PremiseLinkageResultRow} persists a salted case
- *   identifier and shape class. It also stores presence booleans and closed-set results without address text.
+ *   The row types define the privacy boundary. {@link PremiseLinkageInputRow} holds
+ *   the licensed address, expected identifier plus truth coordinate in memory.
+ *   {@link PremiseLinkageResultRow} persists a salted case identifier and shape class.
+ *   It also stores presence booleans and closed-set results without address text.
  *
- *   Every rate is a numerator and denominator as separate fields. No field stores a precomputed ratio.
+ *   Every rate is a numerator and denominator as separate fields.
+ *   No field stores a precomputed ratio.
  */
 
 /**
@@ -108,8 +110,8 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * What one arm did with one row: `refused` and `ambiguous` are first-class
  * and never recorded as `wrong`, and an ambiguous answer is never `exact`.
  *
- * `errored` is not a result the arm produced.
- * It marks a row that could not be graded at all — and is excluded from every rate
+ * `errored` isn't a result the arm produced.
+ * It marks a row that couldn't be graded at all — and is excluded from every rate
  * and reported as its own count.
  */
 export const PremiseLinkageResult = {
@@ -128,7 +130,7 @@ export type PremiseLinkageResult = (typeof PremiseLinkageResult)[keyof typeof Pr
  */
 export const PremiseLinkageFailureCategory = {
 	/**
-	 * The arm names no premise identifier at all, the open arm's structural state
+	 * The arm identifies no premise identifier at all, the open arm's structural state
 	 * rather than a failure of this row.
 	 */
 	ArmAssertsNoIdentifier: "arm_asserts_no_identifier",
@@ -137,7 +139,7 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	ProviderRefused: "provider_refused",
 	/**
-	 * The provider returned candidates it would not decide between.
+	 * The provider returned candidates it wouldn't decide between.
 	 */
 	ProviderAmbiguous: "provider_ambiguous",
 	/**
@@ -174,7 +176,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	result: PremiseLinkageResult
 	/**
 	 * Lets the report writer omit a coordinate when the row's terms forbid publication.
-	 * A permission flag does not supply a licensed coordinate.
+	 * A permission flag doesn't supply a licensed coordinate.
 	 */
 	coordinatePublishable: boolean
 	/**
@@ -290,7 +292,7 @@ export interface PremiseLinkageReport {
 	 * The number of cells the writer removed.
 	 *
 	 * Zero means the writer removed no cells.
-	 * The report includes this value to distinguish that result from a run that did not measure small cells.
+	 * The report includes this value to distinguish that result from a run that didn't measure small cells.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

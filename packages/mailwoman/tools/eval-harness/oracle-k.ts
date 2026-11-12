@@ -4,21 +4,23 @@
 /**
  *   Oracle-recall@k over segment-level k-best decodes (stage-2 instrumentation).
  *
- *   Every standing eval scores the top-1 parse. That score hides improvements elsewhere in the hypothesis space.
- *   This eval measures the k-best headroom directly: a semi-Markov Viterbi over the current model's
- *   post-prior emissions (span score = summed B-/I- log-probs over word-aligned segments, smoothed
- *   empirical segment-type transition bigrams from the golden dev gold orderings), returning the
- *   top-k whole segmentations. `oracle@k` = the gold value appears in any of the top-k hypotheses'
- *   extractions.
+ *   Every standing eval scores the top-1 parse.
+ *   That score hides improvements elsewhere in the hypothesis space.
  *
- *   Baselines are registered rather than restated here. See `baselines.json` (profiles `v264`,
- *   `v301`), and pass `--assert-baseline <profile>` to make this harness refuse to print when its
- *   instruments read wrong.
+ *   This eval measures the k-best headroom directly: a semi-Markov Viterbi over the current
+ *   model's post-prior emissions (span score = summed B-/I- log-probs over word-aligned segments,
+ *   smoothed empirical segment-type transition bigrams from the golden dev gold orderings),
+ *   returning the top-k whole segmentations.
+ *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
  *
- *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode will
- *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph). When the trained span
- *   head lands, its scores replace the summed BIO log-probs here and this eval's oracle@k becomes
- *   the rerank ceiling tracker.
+ *   Baselines are registered rather than restated here.
+ *   See `baselines.json` (profiles `v264`, `v301`), and pass `--assert-baseline <profile>`
+ *   to make this harness refuse to print when its instruments read wrong.
+ *
+ *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode
+ *   will take (span enumeration + pruning + k-way Viterbi outside the ONNX graph).
+ *   When the trained span head lands, its scores replace the summed BIO log-probs here
+ *   and this eval's oracle@k becomes the rerank ceiling tracker.
  */
 
 import { walkNodes } from "@mailwoman/core/decoder"

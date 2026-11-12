@@ -4,10 +4,13 @@
 /**
  *   Counts what a two-letter uppercase token teaches: a country or a region.
  *
- *   `NL` is a Canadian province code and the Netherlands' alpha-2 code, and the model reads whichever the corpus
- *   attested more (#2299). No code list is typed here: every two-letter uppercase token is counted under itself, so
- *   the contested set comes out of the data. Both levels are counted because `augment_region_prob` writes region
- *   surfaces onto rows that lacked one, so the draw level understates the region side by the augmentation's share.
+ *   `NL` is a Canadian province code and the Netherlands' alpha-2 code,
+ *   and the model reads whichever the corpus attested more (#2299).
+ *   No code list is typed here: every two-letter uppercase token is counted under itself,
+ *   so the contested set comes out of the data.
+ *
+ *   Both levels are counted because `augment_region_prob` writes region surfaces onto rows that
+ *   lacked one, so the draw level understates the region side by the augmentation's share.
  */
 
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"

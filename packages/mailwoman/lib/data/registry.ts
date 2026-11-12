@@ -54,7 +54,7 @@ function streetLocale(bundle: DataBundle): string | null {
  * Read one published bundle as an available-data entry.
  *
  * Every field comes from the bundle's own record.
- * A size is `estimated` because the registry's surveyed size is not measured by this read,
+ * A size is `estimated` because the registry's surveyed size isn't measured by this read,
  * and no SHA-256 is expected because the bucket publishes none.
  *
  * @throws When an artifact has no recorded role, or a street-keyed artifact has no recorded locale.
@@ -196,7 +196,7 @@ export interface AvailableArtifact {
 	 */
 	remotePath: string
 	/**
-	 * The digest the published file is expected to have, or `null` when the registry has not recorded it.
+	 * The digest the published file is expected to have, or `null` when the registry hasn't recorded it.
 	 *
 	 * The installed manifest is still read and validated after download.
 	 */
@@ -411,7 +411,7 @@ export function availableDataEntryProblems(entry: Partial<AvailableDataEntry>): 
 
 /**
  * Every way a registry fails as a whole, or an empty list: a malformed entry, a repeated name,
- * a dependency on an entry the registry does not hold, or a dependency cycle.
+ * a dependency on an entry the registry doesn't hold, or a dependency cycle.
  */
 export function availableDataRegistryProblems(entries: readonly AvailableDataEntry[]): string[] {
 	const problems: string[] = []

@@ -3,8 +3,9 @@
 
 /**
  *   `mailwoman corpus recipe kryptonite` — build a parquet file from the DeepSeek-generated
- *   kryptonite jsonl and emit the combined corpus manifest (the base parquet files + the new one). See
- *   docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the reproducibility interface.
+ *   kryptonite jsonl and emit the combined corpus manifest (the base parquet files + the new one).
+ *
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the reproducibility interface.
  */
 
 import { Text } from "ink"

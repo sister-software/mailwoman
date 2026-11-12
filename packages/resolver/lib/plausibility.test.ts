@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the resolution-plausibility guard. The guard trips only when a resolved tree's finest
- *   place is a bare country centroid, the garbage-geocode archetype the coordinate-parity study
- *   surfaced (`California` / `6000, NSW, Australia`).
+ *   Tests for the resolution-plausibility guard.
+ *
+ *   The guard trips only when a resolved tree's finest place is a bare country
+ *   centroid, the garbage-geocode archetype the coordinate-parity study surfaced
+ *   (`California` / `6000, NSW, Australia`).
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

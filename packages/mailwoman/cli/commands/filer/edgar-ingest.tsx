@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman filer edgar-ingest` — run the edgar chain against live SEC filings and write
- *   `EdgarSubsidiaryRow`s to jsonl. Reads company names from a file (one per line) and a CIK lookup index
- *   (`cik-lookup-data.txt`); requires `SEC_EDGAR_USER_AGENT` set in the environment. Paced at 9 req/s.
+ *   `mailwoman filer edgar-ingest` — run the edgar chain against live SEC filings
+ *   and write `EdgarSubsidiaryRow`s to jsonl.
+ *
+ *   Reads company names from a file (one per line) and a CIK lookup index (`cik-lookup-data.txt`);
+ *   requires `SEC_EDGAR_USER_AGENT` set in the environment.
+ *   Paced at 9 req/s.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

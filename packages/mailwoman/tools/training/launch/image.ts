@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The images a training sandbox runs: the Rust `trainer` binary linked against libtorch, for the CPU and for CUDA.
+ *   The images a training sandbox runs: the Rust `trainer` binary linked against
+ *   libtorch, for the CPU and for CUDA.
  *
- *   An image is built in two parts. The base layers ({@linkcode trainerBaseCommands}) download the libtorch archive at its
- *   pinned sha256 and install the Rust toolchain the root `rust-toolchain.toml` names. A build sandbox on that
- *   base then receives a tarball of {@linkcode trainerSourceBundle}'s files on stdin and runs {@linkcode trainerBuildScript}, and
- *   its filesystem snapshot is the training image. The JavaScript SDK copies no local files into an image, so the
- *   sources travel this way. The snapshot is published under {@linkcode trainerImageName}, which hashes every file the
- *   bundle holds, so a later launch with the same sources reuses it.
+ *   An image is built in two parts.
+ *   The base layers ({@linkcode trainerBaseCommands}) download the libtorch archive at its
+ *   pinned sha256 and install the Rust toolchain the root `rust-toolchain.toml` names.
+ *
+ *   A build sandbox on that base then receives a tarball of {@linkcode trainerSourceBundle}'s files on
+ *   stdin and runs {@linkcode trainerBuildScript}, and its filesystem snapshot is the training image.
+ *   The JavaScript SDK copies no local files into an image, so the sources travel this way.
+ *
+ *   The snapshot is published under {@linkcode trainerImageName}, which hashes every
+ *   file the bundle holds, so a later launch with the same sources reuses it.
  */
 
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -48,7 +53,7 @@ export const LIBTORCH_ARCHIVE_SHA256: Readonly<Record<TrainerVariant, string>> =
 /**
  * libtorch 2.13.0+cu130 loads the CUDA libraries.
  *
- * Its archive does not hold them: the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
+ * Its archive doesn't hold them: the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
  *
  * The CUDA image installs them with pip into the base image's interpreter,
  * the install the Python launcher's image ran on Modal.
@@ -187,7 +192,7 @@ export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
 
 	// Every workspace member's crate, beside the trainer's own: cargo loads the whole workspace
-	// the root manifest declares, refuses a `default-members` entry that is no member,
+	// the root manifest declares, refuses a `default-members` entry that's no member,
 	// and under `--locked` refuses a lockfile that lists crates the workspace lacks.
 	// `-p trainer-cli` compiles only the trainer and what it depends on.
 	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", ":(glob)packages/*/crates/**"])

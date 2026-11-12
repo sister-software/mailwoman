@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train the coarse-placer: a multinomial logistic-regression over the hashed char-n-gram and
- *   script features ({@link featurize}), via plain SGD. CPU-only, a few minutes, with no GPU or
- *   Modal dependency. After training, fits a single temperature on val (NLL minimization) for
- *   calibrated confidence. Writes a `meta.json` and `weights.bin` (Float32, row-major
- *   [class][feature]) artifact.
+ *   Train the coarse-placer: a multinomial logistic-regression over the hashed char-n-gram
+ *   and script features ({@link featurize}), via plain SGD.
+ *
+ *   CPU-only, a few minutes, with no GPU or Modal dependency.
+ *   After training, fits a single temperature on val (NLL minimization) for calibrated confidence.
+ *
+ *   Writes a `meta.json` and `weights.bin` (Float32, row-major [class][feature]) artifact.
  *
  *   Run: `mailwoman placer train [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`

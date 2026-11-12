@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the batched path's arithmetic. A fixture build cannot reach this path.
+ *   Tests the batched path's arithmetic.
+ *
+ *   A fixture build cannot reach this path.
  *   A failure here could still produce a well-formed artifact.
  *
- *   A chunk represents one scenario. Every scenario covers the same coast, so a coverage cell appears in
- *   twelve chunks and the counts must be added. The last chunk's value would report one scenario's
- *   polygons as the full cell value. That is one twelfth of the actual count and could look plausible on a receipt.
+ *   A chunk represents one scenario.
+ *   Every scenario covers the same coast, so a coverage cell appears in twelve chunks
+ *   and the counts must be added.
+ *
+ *   The last chunk's value would report one scenario's polygons as the full cell value.
+ *   That's one twelfth of the actual count and could look plausible on a receipt.
  */
 
 import { describe, expect, it } from "vitest"

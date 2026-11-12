@@ -4,10 +4,13 @@
 /**
  *   Counts rows where a bare number occupies a comma-delimited segment by itself.
  *
- *   `301 College Ave, 101, Athens, GA 30601` is the surface #2298 would teach as a secondary unit. No token decides
- *   its reading, and the same shape is already attested as a house number (`15, 07691 Portopetro, …`) and as a
- *   postcode. A number at the start of a row is the house-number form several recipes emit. A number in a later
- *   segment is the shape under review, so the two positions are counted apart, by the tag each opens.
+ *   `301 College Ave, 101, Athens, GA 30601` is the surface #2298 would teach as a secondary unit.
+ *   No token decides its reading, and the same shape is already attested as a house
+ *   number (`15, 07691 Portopetro, …`) and as a postcode.
+ *
+ *   A number at the start of a row is the house-number form several recipes emit.
+ *   A number in a later segment is the shape under review, so the two positions
+ *   are counted apart, by the tag each opens.
  */
 
 import { isDecimalDigits } from "@mailwoman/core/strings/unicode"

@@ -46,7 +46,7 @@ export interface DoctorCheck {
 	status: CheckStatus
 	detail: string
 	/**
-	 * Explains the user-facing effect when the check is not `ok`.
+	 * Explains the user-facing effect when the check isn't `ok`.
 	 */
 	consequence: string | null
 	/**
@@ -517,7 +517,7 @@ export interface RuntimeLicenseObservation {
 	/**
 	 * Holds the license worker's status for a self-service license.
 	 *
-	 * This status does not change the offline license branch.
+	 * This status doesn't change the offline license branch.
 	 */
 	lidStatus: LicenseStatusAnswer | null
 	/**
@@ -530,7 +530,7 @@ export interface RuntimeLicenseObservation {
 /**
  * Reports which branch of Mailwoman's license applies and its known obligations.
  *
- * The check is informational and does not change runtime behavior.
+ * The check is informational and doesn't change runtime behavior.
  */
 export function runtimeLicenseCheck(o: RuntimeLicenseObservation, command: string): DoctorCheck {
 	const base = {
@@ -642,14 +642,14 @@ export interface LayerLicenseObservation {
 	label: string
 	path: string
 	/**
-	 * Holds the manifest fields, or is null when the manifest could not be read.
+	 * Holds the manifest fields, or is null when the manifest couldn't be read.
 	 */
 	manifest: LayerIdentity | null
 	error: string | null
 	/**
 	 * Lists other `.db` files in the layer's directory when the expected file is absent.
 	 *
-	 * A listed file can come from a build written under a name the session does not attach.
+	 * A listed file can come from a build written under a name the session doesn't attach.
 	 */
 	alternates: string[] | null
 }
@@ -731,7 +731,7 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
  *
  * It states the credit the manifest records and what the license asks when the layer,
  * or a database derived from it, is publicly used.
- * The operator's own use of results from the layer is not public use.
+ * The operator's own use of results from the layer isn't public use.
  *
  * The notice states that condition without asserting that an obligation is already owed.
  */
@@ -765,7 +765,7 @@ export interface ObligationPostureObservation {
 	 */
 	layers: ReadonlyArray<{ subject: string; expression: string }>
 	/**
-	 * Layers on disk whose manifest could not be read.
+	 * Layers on disk whose manifest couldn't be read.
 	 *
 	 * The posture reports them as unreadable rather than as satisfied.
 	 */

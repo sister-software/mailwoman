@@ -4,12 +4,12 @@
 /**
  *   Loader tests for the sealed street-morphology FST artifact (`fst-street-morphology.bin`):
  *
- *   - Artifact round-trip: build → serialize → load via the loader → identical matches to the
- *     in-process build on street-type probes ("rue", "avenue", "straße")
+ *   - Artifact round-trip: build → serialize → load via the loader → identical matches
+ *     to the in-process build on street-type probes ("rue", "avenue", "straße")
  *   - Provenance passes through the trailer and loader
  *   - Web-deserializer parity: `deserializeFSTWeb` over the same artifact bytes matches
- *   - Degrade path: a missing or unreadable explicit artifact falls back to the dictionary build
- *     (warning, never a throw)
+ *   - Degrade path: a missing or unreadable explicit artifact falls back to the
+ *     dictionary build (warning, never a throw)
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

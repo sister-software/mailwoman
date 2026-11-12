@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A missing `postcode-<cc>.bin` throws no error and reads as a model regression, so the guard reads each
- *   package's own card rather than a list in the harness and stays silent only where a package ships no binary on purpose.
+ *   A missing `postcode-<cc>.bin` throws no error and reads as a model regression,
+ *   so the guard reads each package's own card rather than a list in the harness
+ *   and stays silent only where a package ships no binary on purpose.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -65,7 +66,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
 		// The en-gb card sets `requires.anchor.required` true while `files` contains only a comment,
-		// so a guard keyed on `requires` would call it broken and one keyed on `files` would not.
+		// so a guard keyed on `requires` would call it broken and one keyed on `files` wouldn't.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },

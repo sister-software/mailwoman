@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the POI category taxonomy. Categories come from two namespaces: the Overture Places
- *   `taxonomy` snapshot (shipped-tier data. the old `categories` property is dead as of Overture's
- *   Sept 2026 release, so only the new property is modeled), and the `mailwoman-infra` extension
- *   for street-furniture/infrastructure classes that exist only in ODbL sources (fire hydrants,
- *   post boxes) — recognized by the lexicon even when no build-local layer is present.
+ *   Types for the POI category taxonomy.
+ *
+ *   Categories come from two namespaces: the Overture Places `taxonomy` snapshot
+ *   (shipped-tier data. the old `categories` property is dead as of Overture's Sept
+ *   2026 release, so only the new property is modeled), and the `mailwoman-infra`
+ *   extension for street-furniture/infrastructure classes that exist only in ODbL sources
+ *   (fire hydrants, post boxes) — recognized by the lexicon even when no build-local layer is present.
  */
 
 declare const POICategoryIDBrand: unique symbol

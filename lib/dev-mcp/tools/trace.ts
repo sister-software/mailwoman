@@ -3,6 +3,7 @@
 
 /**
  * The `mwdev_trace` tool definition provides the agent-facing description and input schema.
+ *
  * Its handler reads the trace measurement in the package root.
  */
 
@@ -41,7 +42,7 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		// This surface enables tracing to explain each row.
 		// The band probe also runs with tracing.
 		// Neither diagnostic changes the parse result.
-		const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
+		using engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 
 		const set = await resolveInputSet({
 			kind: "literal",

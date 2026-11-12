@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shape of one country's leg of the `postal-guideline` evaluation recipe. Each leg lives under
- *   its country's directory and renders only the forms its codex rule table cites.
+ *   The shape of one country's leg of the `postal-guideline` evaluation recipe.
+ *
+ *   Each leg lives under its country's directory and renders only the forms its codex rule table cites.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

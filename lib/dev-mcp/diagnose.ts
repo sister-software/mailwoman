@@ -4,17 +4,20 @@
 /**
  * Mechanism accounts — per row, what the pipeline did, assembled from the facts it already exposes.
  *
- * Two commitments bind every line here. Expectations pin results rather than mechanisms.
- * Each account is recomputed from the current system on every call. Failure shapes describe
- * mechanisms rather than address forms. Each predicate reads pipeline facts: channels, constraints,
- * ranks and lineage.
+ * Two commitments bind every line here.
+ * Expectations pin results rather than mechanisms.
  *
- * Classification is v1: transparent predicates over recorded pipeline facts, with no calibration — every
- * result records that in its own `calibration` field — and a row that matches no shape while failing its
- * expectation is reported `unclassified` rather than squeezed into the nearest match.
+ * Each account is recomputed from the current system on every call.
+ * Failure shapes describe mechanisms rather than address forms.
  *
- * Aggregation is by shape with each class's n, never by raw row count, because a rate over a mixture is a
- * number about the mixture.
+ * Each predicate reads pipeline facts: channels, constraints, ranks and lineage.
+ *
+ * Classification is v1: transparent predicates over recorded pipeline facts, with no calibration —
+ * every result records that in its own `calibration` field — and a row that matches no shape
+ * while failing its expectation is reported `unclassified` rather than squeezed into the nearest match.
+ *
+ * Aggregation is by shape with each class's n, never by raw row count,
+ * because a rate over a mixture is a number about the mixture.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -229,7 +232,7 @@ interface KnownFormatReading {
 	 * The component tag this format asserts.
 	 *
 	 * `null` means the format maps to no component.
-	 * A missing component assertion is not a contradiction.
+	 * A missing component assertion isn't a contradiction.
 	 */
 	expects_component: string | null
 	matched: boolean
@@ -273,13 +276,13 @@ interface LookupFact {
 	 */
 	picked_initial_rank: number | null
 	/**
-	 * The first ranking stage at which the picked candidate reached rank 1, when it did not start there.
+	 * The first ranking stage at which the picked candidate reached rank 1, when it didn't start there.
 	 */
 	flipped_at: string | null
 	/**
 	 * The other placetype bands the unreachable-band probe found the key in, when the lookup was probed.
 	 *
-	 * `null` when the probe did not run.
+	 * `null` when the probe didn't run.
 	 * An empty list is a probed key that no other band holds.
 	 */
 	reachable_in: Array<{ placetype: string; n: number }> | null
@@ -289,7 +292,7 @@ export interface RetrievalFacts {
 	/**
 	 * `null` when the trace contains no resolver records (a trace predating them);
 	 * an empty array is the walk stating it performed no lookups, a different claim
-	 * the shapes must not read as retrieval failure.
+	 * the shapes mustn't read as retrieval failure.
 	 *
 	 * Coverage bound for every retrieval shape below: the trace records the
 	 * walk's own `#lookupAndPick` method.
@@ -315,8 +318,8 @@ export interface ResultFacts {
 	outside_winner_lineage: Array<{ tag: string; name: string; place_id: string | null }>
 	lineage_vouched: number
 	/**
-	 * Hierarchy entries whose lineage standing could not be established (no sidecar, or no place identity);
-	 * counted apart from `outside_winner_lineage` because unverifiable is not contradicted.
+	 * Hierarchy entries whose lineage standing couldn't be established (no sidecar, or no place identity);
+	 * counted apart from `outside_winner_lineage` because unverifiable isn't contradicted.
 	 */
 	lineage_unverifiable: number
 }
@@ -327,7 +330,7 @@ export interface RowAccount {
 	country: string | null
 	shapes: DiagnoseShape[]
 	/**
-	 * `null` when the run produced no parse trace (the bundle could not produce one),
+	 * `null` when the run produced no parse trace (the bundle couldn't produce one),
 	 * distinct from a parse whose every channel is absent.
 	 */
 	parse: ParseFacts | null
@@ -349,8 +352,8 @@ export interface RowAccount {
 	routing: RowRouting | null
 	/**
 	 * A coordinate arrived and the resolver trace recorded no lookup, so the account's retrieval facts are
-	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace does not cover);
-	 * reported so the empty lookup list is not read as "retrieval had no work to do".
+	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace doesn't cover);
+	 * reported so the empty lookup list isn't read as "retrieval had no work to do".
 	 */
 	resolved_without_recorded_lookup: boolean
 	/**
@@ -498,7 +501,7 @@ export function collectResultFacts(result: AccountInput["result"]): ResultFacts 
 /**
  * Match the mechanism-state predicates.
  *
- * This function does not decide the terminal states.
+ * This function doesn't decide the terminal states.
  * The row's expectation determines `clean` or `unclassified`.
  *
  * That expectation stays outside this function so it cannot influence a mechanism claim.
@@ -564,7 +567,7 @@ export function matchShapes(facts: {
 
 	// The rule fires only when the scoped probe missed across the whole cascade and the
 	// unscoped fallback produced rows, so every candidate in that lookup is a re-admitted one.
-	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`,
+	// The per-candidate `regionScopeMiss` stamp doesn't reach `ResolveCandidateTrace`,
 	// so lookup granularity is all the trace can support.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
@@ -744,7 +747,7 @@ export interface SettingTally {
 }
 
 /**
- * Per-setting counterfactual counts: rows tried, rows moved and rows where the setting did not apply.
+ * Per-setting counterfactual counts: rows tried, rows moved and rows where the setting didn't apply.
  *
  * All three always, because a setting that changed no result on forty rows and one that
  * was never applicable are the same zero in a moved-only table but not the same fact.
@@ -931,11 +934,11 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	// The account uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
 	const traced: EngineConfig = { ...config, trace: true, diagnose_unreachable: true }
-	const engine = await registry.acquire(traced)
+	using engine = await registry.acquire(traced)
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
 	// Reachability reads the same candidate table the engine resolves against.
-	// A table that does not open leaves every reading `null`, and the summary states that it went unread.
+	// A table that doesn't open leaves every reading `null`, and the summary states that it went unread.
 	const candidateDB = await openSealedArtifact(
 		await resolveCandidateDBPath(config.candidate_db, config.data_root ?? dataRootPath())
 	)
@@ -965,7 +968,10 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const enginesByRouting: Array<{ routing: RowRouting | null; engine_id: string; rows: number }> = []
 
 	for (const group of groups.values()) {
-		const rowEngine = group.routing ? await registry.acquire(routingConfig(traced, group.routing)) : engine
+		// The routed engine's lease ends with its group.
+		// The base engine's lease lasts the whole call.
+		using routed = group.routing ? await registry.acquire(routingConfig(traced, group.routing)) : null
+		const rowEngine = routed ?? engine
 
 		enginesByRouting.push({ routing: group.routing, engine_id: rowEngine.engineID, rows: group.items.length })
 

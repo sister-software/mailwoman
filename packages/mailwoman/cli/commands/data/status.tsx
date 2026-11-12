@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   An artifact listed in the active selection is reported with its generation and checked against the size its
- *   own manifest records. A selected artifact of another size raises an unreadable-artifact error with its path.
+ *   An artifact listed in the active selection is reported with its generation
+ *   and checked against the size its own manifest records.
  *
- *   The command runs offline by default. It reports an on-disk artifact as "present" when its size matches
- *   the registry's surveyed `approxBytes`. This size-only integrity check catches truncation and does not
- *   compare versions. `--check-remote` adds a live head `Content-Length` probe through `APIClient`.
+ *   A selected artifact of another size raises an unreadable-artifact error with its path.
+ *
+ *   The command runs offline by default.
+ *   It reports an on-disk artifact as "present" when its size matches the registry's surveyed `approxBytes`.
+ *
+ *   This size-only integrity check catches truncation and doesn't compare versions.
+ *   `--check-remote` adds a live head `Content-Length` probe through `APIClient`.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -38,7 +42,7 @@ import {
 import { LayerCatalog, type ResolvedSource } from "#data/catalog"
 import { availableDataEntry, selectionScopeOf } from "#data/registry"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
-import { headContentLength } from "#data/remote"
+import { dataClientHeaders, headContentLength } from "#data/remote"
 import { type InterruptedAcquisition, readInstallationState } from "#data/state"
 
 /**
@@ -115,6 +119,7 @@ async function statusForBundles(
 				displayName: "mailwoman data status",
 				minRequestIntervalMs: 150,
 				retry: true,
+				axios: { headers: await dataClientHeaders() },
 			})
 		: null
 

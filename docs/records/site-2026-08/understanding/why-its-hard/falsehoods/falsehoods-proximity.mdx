@@ -11,7 +11,7 @@ tags:
 
 # Falsehoods programmers believe about geocoded precision and frontages
 
-_"Close enough" is a statement about your use case rather than about the coordinate. A geocode that is correct for statistical aggregation may be catastrophically wrong for emergency dispatch. And the coordinate itself answers a question, "the front door", that the geocoder's designers rarely define._
+_"Close enough" is a statement about your use case rather than about the coordinate. A geocode that's correct for statistical aggregation may be catastrophically wrong for emergency dispatch. And the coordinate itself answers a question, "the front door", that the geocoder's designers rarely define._
 
 ## Falsehoods
 
@@ -48,7 +48,7 @@ USPS delivery to a rural address: the mailbox is at the road, 200 meters from th
 | Emergency dispatch (which entrance?)              | Specific door (~1m)      | Seconds matter, wrong entrance kills            |
 | Utility service (which meter?)                    | Specific wall (~0.5m)    | The gas shutoff is on the north wall            |
 
-A geocode that is "close enough" for market analysis (city-level) is wrong by 5 kilometers for last-mile delivery. A geocode that is "close enough" for delivery routing (street segment) is wrong by 50 meters for emergency dispatch. The same coordinate can be useful for one consumer and useless for another.
+A geocode that's "close enough" for market analysis (city-level) is wrong by 5 kilometers for last-mile delivery. A geocode that's "close enough" for delivery routing (street segment) is wrong by 50 meters for emergency dispatch. The same coordinate can be useful for one consumer and useless for another.
 
 A geocoder returns a coordinate at "95% confidence." The consumer assumes this means "within 5 meters of the front door." The geocoder meant "within the correct ZIP code." The consumer routes an ambulance to the ZIP centroid, 8 miles from the actual address.
 
@@ -72,7 +72,7 @@ A rear-access building in a dense urban area may have a street address on the fr
 
 ### "The geocode's precision is the same as its accuracy."
 
-A geocoder can return a coordinate with 8 decimal places (sub-millimeter precision) that is accurate to within 5 kilometers. The precision is a property of the floating-point representation. The accuracy is a property of the data source and algorithm. Consumers see "37.422387, -122.084084" and assume the coordinate is precise to the digit. It isn't.
+A geocoder can return a coordinate with 8 decimal places (sub-millimeter precision) that's accurate to within 5 kilometers. The precision is a property of the floating-point representation. The accuracy is a property of the data source and algorithm. Consumers see "37.422387, -122.084084" and assume the coordinate is precise to the digit. It isn't.
 
 Google's Geocoding API returns a `location_type` with each result: `ROOFTOP`, `RANGE_INTERPOLATED`, `GEOMETRIC_CENTER`, or `APPROXIMATE`. This is the right taxonomy — it tells the consumer the accuracy rather than the precision. Most geocoders don't expose this. They return a coordinate and a confidence score, and the consumer assumes the confidence score maps to spatial accuracy. It doesn't.
 
@@ -84,9 +84,9 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 
 ## How traditional geocoders handled these
 
-**libpostal** does not produce coordinates. It produces labeled text spans. The precision question is downstream. This is architecturally correct: the parser's confidence is about label correctness rather than spatial accuracy. The resolver owns the spatial question.
+**libpostal** doesn't produce coordinates. It produces labeled text spans. The precision question is downstream. This is architecturally correct: the parser's confidence is about label correctness rather than spatial accuracy. The resolver owns the spatial question.
 
-**Pelias** returns coordinates from Elasticsearch queries against gazetteer data. The coordinate is the centroid of the matched record — a locality centroid for city-level matches, a building centroid for address-level matches. Pelias does not distinguish between "building entrance" and "parcel centroid" coordinates because the underlying data (WOF, OSM, OpenAddresses) doesn't consistently model that distinction.
+**Pelias** returns coordinates from Elasticsearch queries against gazetteer data. The coordinate is the centroid of the matched record — a locality centroid for city-level matches, a building centroid for address-level matches. Pelias doesn't distinguish between "building entrance" and "parcel centroid" coordinates because the underlying data (WOF, OSM, OpenAddresses) doesn't consistently model that distinction.
 
 **Google's API** returns `location_type` as described above. Google's Places API returns multiple `types` for each result (street_address, premise, subpremise, point_of_interest, etc.) and a `viewport` bounding box. This gives the consumer enough metadata to distinguish "this coordinate is the building" from "this coordinate is the street" — but most consumers ignore the metadata and take the coordinate.
 
@@ -94,17 +94,17 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 
 ## What the neural approach changes
 
-**The resolver (Stage 6) returns candidates with placetypes rather than a single coordinate.** A WOF record has a `placetype` and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a building-level coordinate or a locality centroid. But WOF does not distinguish between "building entrance" and "building centroid". Both are the same coordinate in WOF's data model.
+**The resolver (Stage 6) returns candidates with placetypes rather than a single coordinate.** A WOF record has a `placetype` and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a building-level coordinate or a locality centroid. But WOF doesn't distinguish between "building entrance" and "building centroid". Both are the same coordinate in WOF's data model.
 
-**The resolver can return multiple candidates per address component.** `locality=Springfield` returns 34 candidates, each with a different coordinate. The downstream system can choose the one that matches additional context (state, postcode) or surface all of them. The resolver does not pretend to know which Springfield when it doesn't.
+**The resolver can return multiple candidates per address component.** `locality=Springfield` returns 34 candidates, each with a different coordinate. The downstream system can choose the one that matches additional context (state, postcode) or surface all of them. The resolver doesn't pretend to know which Springfield when it doesn't.
 
 **[Confidence is per-component rather than spatial](../../../concepts/confidence-calibration.mdx).** The parser's confidence score is about the label — "I'm 95% sure this token is a locality" — not about the coordinate — "I'm 95% sure the locality is within 500 meters of this point." The resolver's score is about gazetteer match quality rather than spatial accuracy. Separate signals for label confidence, resolver match quality, and spatial precision metadata remain future work.
 
 ## What Mailwoman still can't do
 
 - **Frontage-level coordinates.** WOF stores one coordinate per record — typically a centroid. Mailwoman's resolver returns that coordinate. Multiple coordinates per address (entrance, delivery, parcel centroid) require a gazetteer that stores them and a resolver that exposes them. No open gazetteer does this at global scale.
-- **Precision metadata.** The resolver does not return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. The planned resolver output includes a precision signal. That signal is not yet implemented.
-- **Reverse geocoding.** The resolver forward-geocodes — text → coordinate. Reverse geocoding (coordinate → text) is a different problem with different infrastructure (spatial index rather than text index). Mailwoman does not do reverse geocoding.
+- **Precision metadata.** The resolver doesn't return a `location_type` equivalent (ROOFTOP vs GEOMETRIC_CENTER vs APPROXIMATE). WOF records don't consistently encode how the coordinate was derived. The planned resolver output includes a precision signal. That signal isn't yet implemented.
+- **Reverse geocoding.** The resolver forward-geocodes — text → coordinate. Reverse geocoding (coordinate → text) is a different problem with different infrastructure (spatial index rather than text index). Mailwoman doesn't do reverse geocoding.
 
 ## References
 

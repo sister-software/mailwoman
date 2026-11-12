@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the tiger street-segment interpolation extracts (`street-segments-<cc>-<st>.db`,
- *   built by `scripts/build-interpolation-extract.ts` from tiger edges). This is the Method-3
- *   fallback the resolver drops to when the address-point tier (Method 2) cannot bracket. It is the
- *   definition of the columns the builder writes and the reader ({@link StreetInterpolator}) probes,
- *   so a column rename in one is a compile error in the other.
+ *   Typed schema for the tiger street-segment interpolation extracts
+ *   (`street-segments-<cc>-<st>.db`, built by `scripts/build-interpolation-extract.ts` from tiger edges).
  *
- *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read`, see
- *   agents.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
- *   insert (every edge in a county) stays raw. Its column list derives from
- *   {@link STREET_SEGMENT_COLUMNS} so it cannot drift from the DDL.
+ *   This is the Method-3 fallback the resolver drops to when the address-point
+ *   tier (Method 2) cannot bracket.
+ *   It is the definition of the columns the builder writes and the reader ({@link StreetInterpolator})
+ *   probes, so a column rename in one is a compile error in the other.
+ *
+ *   The builder reads geometry from shapefiles via DuckDB's spatial extension
+ *   (raw `ST_Read`, see agents.md "Database / inline SQL") and writes here through `node:sqlite`.
+ *   The hot positional insert (every edge in a county) stays raw.
+ *
+ *   Its column list derives from {@link STREET_SEGMENT_COLUMNS} so it cannot drift from the DDL.
  */
 
 import { type Kysely, sql } from "kysely"

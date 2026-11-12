@@ -11,9 +11,10 @@
  *   --golden <golden.jsonl> [--weights-cache <package-shaped weights root>]
  * ```
  *
- * Each row is parsed on the geocode path. The tool prints postcode-span, locality-span and full-component
- * exact match per country and overall, with denominators, and writes the receipt to
- * `<golden>.score.json`, or to `<golden>.<weights-cache basename>.score.json` when a cache is graded.
+ * Each row is parsed on the geocode path.
+ * The tool prints postcode-span, locality-span and full-component exact match per country
+ * and overall, with denominators, and writes the receipt to `<golden>.score.json`,
+ * or to `<golden>.<weights-cache basename>.score.json` when a cache is graded.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

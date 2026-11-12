@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures street exact-match on the held-out US golden subset where gold has both a street and a
- *   locality span. It compares a baseline to a candidate and tallies the rows where a street regression
- *   coincides with the gold street's leading token landing in the candidate's locality (the "eat"
- *   mechanism). The guard refuses a candidate more than one percentage point below the baseline.
+ *   Measures street exact-match on the held-out US golden subset where gold
+ *   has both a street and a locality span.
+ *
+ *   It compares a baseline to a candidate and tallies the rows where a street regression coincides
+ *   with the gold street's leading token landing in the candidate's locality (the "eat" mechanism).
+ *   The guard refuses a candidate more than one percentage point below the baseline.
  *
  *   Run: node packages/mailwoman/tools/dev-tools/street-recall-full-probe.run.ts\
  *   --baseline $MAILWOMAN_DATA_ROOT/models/quantized/model-v151-step-40000-int8.onnx\

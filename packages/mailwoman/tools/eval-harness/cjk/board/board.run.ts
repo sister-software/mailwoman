@@ -4,17 +4,19 @@
 /**
  *   Scores a character-encoder weights package on a held-out CJK board and prints the pre-registered read.
  *
- *   The read argmax-decodes each row's character labels from the package's `model.onnx`, reconstructs the spans, and
- *   resolves the predicted prefecture and municipality pair against the centroid table at 15 km. The JP, KR and TW
- *   boards share it; `--resolve-tags region,subregion` with that board's centroid table reads the KR and TW boards.
+ *   The read argmax-decodes each row's character labels from the package's
+ *   `model.onnx`, reconstructs the spans, and resolves the predicted prefecture
+ *   and municipality pair against the centroid table at 15 km.
+ *   The JP, KR and TW boards share it; `--resolve-tags region,subregion` with that
+ *   board's centroid table reads the KR and TW boards.
  *
  *   ```sh
  *   node packages/mailwoman/tools/eval-harness/cjk/board/board.run.ts --weights packages/neural-weights-cjk \
  *     --board $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-kana-2026-09-06/jp-board.jsonl.zst --all-municipalities
  *   ```
  *
- *   `--predictions <jsonl>` writes each row's label ids, and `--result <json>` writes the totals, so another scorer can
- *   read the same predictions.
+ *   `--predictions <jsonl>` writes each row's label ids, and `--result <json>` writes
+ *   the totals, so another scorer can read the same predictions.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

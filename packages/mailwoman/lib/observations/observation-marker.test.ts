@@ -4,12 +4,15 @@
 /**
  *   Tests for the one carrier both observation routes use to reach a caller.
  *
- *   These tests check two properties of the marker interface. The conversion preserves the observation's full authority.
- *   A verdict without a POI kind produces no marker that claims a kind the result does not contain.
+ *   These tests check two properties of the marker interface.
+ *   The conversion preserves the observation's full authority.
  *
- *   The semantic half is driven by the committed route, so the evidence the marker includes is the evidence
- *   a real firing produces. The absence half is built from a synthetic observation, because a real one
- *   needs a sealed coverage layer and the carrier reads the record rather than the layer.
+ *   A verdict without a POI kind produces no marker that claims a kind the result doesn't contain.
+ *
+ *   The semantic half is driven by the committed route, so the evidence the marker
+ *   includes is the evidence a real firing produces.
+ *   The absence half is built from a synthetic observation, because a real one needs a
+ *   sealed coverage layer and the carrier reads the record rather than the layer.
  */
 
 import { QueryIntentCode, type QueryKindResult } from "@mailwoman/core/pipeline"

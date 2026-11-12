@@ -4,12 +4,15 @@
 /**
  *   The pinned sources of the open profile, and the lock that records the bytes a build read.
  *
- *   A source is a published file at one URL. The lock records its SHA-256 and byte count, the publication marker the
- *   server stated (`Last-Modified` or `ETag`), and the publisher's statement of terms. A build reads the locked bytes
- *   from the data root and refuses bytes whose digest differs, so a moving `latest` never enters an artifact unnoticed.
+ *   A source is a published file at one URL.
+ *   The lock records its SHA-256 and byte count, the publication marker the server stated
+ *   (`Last-Modified` or `ETag`), and the publisher's statement of terms.
+ *
+ *   A build reads the locked bytes from the data root and refuses bytes whose digest differs,
+ *   so a moving `latest` never enters an artifact unnoticed.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import type { PathBuilder } from "path-ts"
 
 /**
@@ -59,7 +62,7 @@ export type SourceID = (typeof SOURCE_IDS)[number]
  * The SPARQL query that reads every item holding an ISO 3166-1 alpha-2, alpha-3 and numeric code.
  *
  * `wdt:` reads the best-rank claim.
- * A state that has ended, such as the German Democratic Republic (`DD`) or the Netherlands Antilles
+ * A state that's ended, such as the German Democratic Republic (`DD`) or the Netherlands Antilles
  * (`AN`), keeps its codes as best-rank claims, so the query also reads the dissolution date (P576)
  * and the normalizer records such an entry as `formerly-used` rather than `officially-assigned`.
  *
@@ -81,7 +84,7 @@ export const WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 /**
  * The open profile's sources.
  *
- * The UN Statistics Division's M49 crosswalk is not among them.
+ * The UN Statistics Division's M49 crosswalk isn't among them.
  * The UN terms of use (https://www.un.org/en/about-us/terms-of-use, read 2026-11-06)
  * grant "personal, non-commercial use, without any right to resell or redistribute"
  * and exclude the right "to compile or create derivative works therefrom".
@@ -154,8 +157,10 @@ export interface SourceLock {
 }
 
 /**
- * Where the pinned bytes of a source live.
+ * Where the pinned bytes of a source live: a current source under the cache root.
+ *
+ * A fetch checks the bytes against the lock, and fetches them again after the cache root is cleared.
  */
-export function sourcePath(source: SourceDefinition): PathBuilder {
-	return dataRootPath("corpus", "sources", "registry", source.file)
+export function pinnedSourceFile(source: SourceDefinition): PathBuilder {
+	return currentSourcePath("registry", source.file)
 }

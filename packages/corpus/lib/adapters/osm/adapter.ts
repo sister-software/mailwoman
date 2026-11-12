@@ -4,9 +4,11 @@
 /**
  * `osm`: OpenStreetMap address adapter for the countries no permissive source covers.
  *
- * Every row lists `ODbL-1.0`, whose recorded obligations include share-alike. A build run under
- * `LicensePolicy.ShareAlikeFree` refuses these rows at ingest, so they reach only the open weights.
- * That is why `defaultLicense` is not an option on this adapter.
+ * Every row lists `ODbL-1.0`, whose recorded obligations include share-alike.
+ * A build run under `LicensePolicy.ShareAlikeFree` refuses these rows at ingest,
+ * so they reach only the open weights.
+ *
+ * That's why `defaultLicense` isn't an option on this adapter.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -54,7 +56,8 @@ export const OSM_TRAILING_COUNTRY_SHARE = 0.3
 const MIN_TRAILING_COUNTRY_LENGTH = 3
 
 /**
- * The number of values a 32-bit unsigned integer takes, which scales a hash prefix to the unit interval.
+ * The number of values a 32-bit unsigned integer takes.
+ * A hash prefix divided by it falls in the unit interval.
  */
 const UINT32_RANGE = 2 ** 32
 
@@ -178,7 +181,7 @@ function parseLine(line: string): OSMCorpusRow | null {
  * (`addr:city`, `addr:place`, `addr:suburb`, `addr:subdistrict`, `addr:district`)
  * holds the identity the street would have held.
  *
- * That is OSM's documented scheme for addresses numbered within a place rather than
+ * That's OSM's documented scheme for addresses numbered within a place rather than
  * along a street, and it is the `streetless-premise-identity` shape.
  * A row whose `addr:street` holds a line rather than a name stays refused:
  * the mapper supplied a street, and the value is a line.

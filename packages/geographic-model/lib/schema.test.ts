@@ -6,14 +6,14 @@
  * (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4): `pharmacy affords
  * obtain_medication`, mapped onto the `@mailwoman/poi-taxonomy` `pharmacy` category.
  *
- * The fixtures are typed with the package's own record types on purpose, because a document assembled
- * through `ConceptRecord`, `RelationRecord`, and the brand helpers and then accepted by the validator
- * is the evidence that the schema can state the record set, where a plain JSON literal cast at the end
- * would prove only that the validator accepts some object.
+ * The fixtures are typed with the package's own record types on purpose, because a
+ * document assembled through `ConceptRecord`, `RelationRecord`, and the brand helpers and
+ * then accepted by the validator is the evidence that the schema can state the record set,
+ * where a plain JSON literal cast at the end would prove only that the validator accepts some object.
  *
- * This file holds the whole suite rather than splitting by concern, because the package interface
- * forbids a relative import between test files and a fixture copied into a second file is a fixture
- * that drifts.
+ * This file holds the whole suite rather than splitting by concern,
+ * because the package interface forbids a relative import between test files
+ * and a fixture copied into a second file is a fixture that drifts.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -531,7 +531,7 @@ describe("relation refusals", () => {
 		})
 
 		// Both records declare the pairing, so the validator identifies both.
-		// Either could be the wrong half and the validator does not decide which.
+		// Either could be the wrong half and the validator doesn't decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
 			["$.relations[1].inverse", ValidationIssueCode.InverseKindsMismatch],

@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Learned-scorer cross-state generalization, the next axis after the held-out-NPI A/B. The
- *   within-state A/B showed the GBT beats the FS baseline on clustering, so this trains on one state and
- *   evaluates clustering F1 on a different state the model never saw.
+ *   Learned-scorer cross-state generalization, the next axis after the held-out-NPI A/B.
  *
- *   One registry pass builds the global address-frequency table, a train-state sample and an
- *   eval-state sample. Both samples are geocoded. The GBT and LR train on the train state's pairs and
- *   cluster the eval state's records through the same `resolveEntities` pipeline, with best F1 over a
- *   fine per-scorer threshold sweep.
+ *   The within-state A/B showed the GBT beats the FS baseline on clustering, so this trains
+ *   on one state and evaluates clustering F1 on a different state the model never saw.
+ *
+ *   One registry pass builds the global address-frequency table, a train-state sample
+ *   and an eval-state sample.
+ *   Both samples are geocoded.
+ *
+ *   The GBT and LR train on the train state's pairs and cluster the eval state's records through
+ *   the same `resolveEntities` pipeline, with best F1 over a fine per-scorer threshold sweep.
  *
  *   Run: `mailwoman registry scorer-eval cross-state [--train-state TX] [--eval-state CA]
  *   [--npis 2000] [--out-md <md>]`

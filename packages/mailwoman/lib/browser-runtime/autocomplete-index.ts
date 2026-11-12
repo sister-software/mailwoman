@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The place autocomplete index a page reads without the engine: one sealed `@mailwoman/ancestrie` per leading
- *   character of the folded place name, published under `autocomplete/<generation>/` beside a manifest that lists
- *   the files. A query folds the typed text with the same function the index was keyed with, fetches the one file
- *   its first token selects, and walks it. The home page's hero is the first reader.
+ *   The place autocomplete index a page reads without the engine: one sealed
+ *   `@mailwoman/ancestrie` per leading character of the folded place name, published
+ *   under `autocomplete/<generation>/` beside a manifest that lists the files.
+ *
+ *   A query folds the typed text with the same function the index was keyed with,
+ *   fetches the one file its first token selects, and walks it.
+ *   The home page's hero is the first reader.
  */
 
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import { isPresent } from "@mailwoman/core/objects"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { z } from "zod"
@@ -146,14 +150,13 @@ export class PlaceAutocompleteIndex {
 
 	/**
 	 * @param manifest Reads the generation's manifest.
-	 * Called once.
+	 * Called once, and again after a call that rejected.
 	 * @param load Reads one partition file into a trie.
-	 * Called once per partition.
+	 * Called once per partition, and again after a call that rejected.
 	 */
 	constructor(manifest: () => Promise<AutocompleteIndexManifest>, load: (partition: string) => Promise<Ancestrie>) {
-		let pending: Promise<AutocompleteIndexManifest> | null = null
-
-		this.#manifest = () => (pending ??= manifest())
+		// A failed manifest read is retried by the next query, so one dropped request leaves completion working.
+		this.#manifest = memoizeResettable(manifest)
 		this.#load = load
 	}
 
@@ -208,8 +211,17 @@ export class PlaceAutocompleteIndex {
 		let loading = this.#files.get(partition)
 
 		if (!loading) {
-			loading = this.#load(partition)
-			this.#files.set(partition, loading)
+			const pending = this.#load(partition)
+
+			loading = pending
+			this.#files.set(partition, pending)
+
+			// A failed read leaves the map, so the next query on this partition reads it again.
+			pending.catch(() => {
+				if (this.#files.get(partition) === pending) {
+					this.#files.delete(partition)
+				}
+			})
 		}
 
 		return loading

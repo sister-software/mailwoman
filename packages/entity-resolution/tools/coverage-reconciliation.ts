@@ -4,14 +4,15 @@
 /**
  *   Coverage reconciliation, the product output that replaces inspecting the map by eye.
  *
- *   Each resolved entity is classified by the kind of source its records come from. An eligibility
- *   source holds providers and facilities, such as NPPES org NPIs or TX HHSC nursing facilities. A
- *   funding source holds entities enrolled in a funding program, such as FCC Rural Health Care
- *   filings.
+ *   Each resolved entity is classified by the kind of source its records come from.
+ *   An eligibility source holds providers and facilities, such as NPPES org NPIs
+ *   or TX HHSC nursing facilities.
  *
- *   The buckets are enrolled (both an eligibility and a funding record), eligible rather than
- *   enrolled (an eligibility record with no funding record resolving to it), and funded rather than
- *   in the eligibility set (a funding record with no eligibility record resolving to it).
+ *   A funding source holds entities enrolled in a funding program, such as FCC Rural Health Care filings.
+ *
+ *   The buckets are enrolled (both an eligibility and a funding record), eligible rather
+ *   than enrolled (an eligibility record with no funding record resolving to it), and funded
+ *   rather than in the eligibility set (a funding record with no eligibility record resolving to it).
  *
  *   This is strictly a set-membership reconciliation, never an allegation.
  *

@@ -52,7 +52,8 @@ The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
 The sandbox exits 0 when training completes and 3 on a refusal. `status` reads that code: `completed`, `refused`,
 `running`, or `stopped` for any other exit. That covers a spent retry count, the timeout and a preemption. `restart`
 starts a fresh sandbox for a stopped run. The new sandbox resumes from the newest complete checkpoint and keeps every file the run wrote.
-`cancel` terminates the running sandbox, and the checkpoints it committed stay.
+`cancel` terminates the running sandbox, and the checkpoints it committed stay. `start`, `restart` and `cancel` each
+hold the run's host lock, so a cancel refuses while a start or restart of the run is recording a sandbox.
 
 ### The trainer image
 
@@ -79,7 +80,7 @@ package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUN
 
 The default GPU is the A100-40GB. On the 29.6 M-parameter model at batch 128 in bf16, the Rust trainer ran 15.46
 steps/s on it, 9.95 on an A10 and 6.96 on an L4, in sandboxes of 8 CPUs and 32 GiB. The A100-80GB costs $0.40 per
-hour more for memory this model does not use. `launch/wall-clock.ts` records each rate.
+hour more for memory this model doesn't use. `launch/wall-clock.ts` records each rate.
 
 Modal billed a GPU training sandbox's CPU and memory on the request: $0.142 per requested CPU-hour and $0.024 per
 GiB-hour on 2026-10-31, three times the per-core and per-GiB rates on Modal's pricing page. An hour of #2884's

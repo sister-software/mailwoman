@@ -4,8 +4,8 @@
 /**
  * The tool table — the tested interface; `server.ts` only adapts it to the SDK's envelope.
  *
- * Two rules bind every result: a number never travels without its denominator. Absence is reported as absence — no
- * line here fills in a value the pipeline did not produce.
+ * Two rules bind every result: a number never travels without its denominator.
+ * Absence is reported as absence — no line here fills in a value the pipeline didn't produce.
  */
 
 import { buildSpawnTools } from "#dev-mcp/spawn-tools"
@@ -44,7 +44,7 @@ export type { DevTool, DevToolDeps, Provenance } from "#dev-mcp/tool-kit"
 export { githubTools } from "#dev-mcp/tools/github"
 
 /**
- * Every tool, in the order an agent should meet them: what is running, what can be measured,
+ * Every tool, in the order an agent should meet them: what's running, what can be measured,
  * the measurements themselves, then the surfaces that explain a result.
  */
 const FACTORIES = [

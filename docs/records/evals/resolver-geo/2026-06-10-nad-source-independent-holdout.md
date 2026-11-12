@@ -39,13 +39,13 @@ What the misses are (classified, n=461 with a resolved-but-wrong name):
 - The remainder are actual ranking/disambiguation misses (e.g. Juneau → Wrangell).
 
 Consumers: the designation-credit issue (primary); **#478** still gets its
-complementarity row (v0 locality 86.7 vs neural region 100.0). **#475's alias table is
-not validated by this eval** — it needs an eval whose _inputs_ contain postal surfaces
+complementarity row (v0 locality 86.7 vs neural region 100.0). **#475's alias table isn't
+validated by this eval** — it needs an eval whose _inputs_ contain postal surfaces
 (real-traffic shaped); noted on the issue.
 
 Caveats: admin-centroid coord errors are expected to be tens of km (the harness's own
 note); v0's 24.6 p90 reflects its conservative no-resolve behavior on hard rows (99.4%
-resolved). The NAD render is one template — format diversity is not this eval's job.
+resolved). The NAD render is one template — format diversity isn't this eval's job.
 
 Trust: 6,453 rows ≥ the 1000-row floor → **TRUSTED**. Files:
 `data/eval/external/overture-us-nad-holdout.jsonl` + `.report.json`.

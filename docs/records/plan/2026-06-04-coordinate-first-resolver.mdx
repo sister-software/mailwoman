@@ -12,7 +12,7 @@ That zero explains the problem. The parse matched the string exactly and the res
 
 ## The reframe: the German "wall" is largely a metric artifact
 
-Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalizes a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. A large share of the "25.6% / 77.4% German locality" number was therefore never a geocoding failure. The metric could not recognize a name variant.
+Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalizes a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. A large share of the "25.6% / 77.4% German locality" number was therefore never a geocoding failure. The metric couldn't recognize a name variant.
 
 The fix starts with the metric. **The non-gameable metric:** a locality is correctly resolved iff the real OA per-address point lies _inside the polygon_ of the resolver-assigned WOF locality (point-in-polygon containment rather than centroid distance, because distance is gameable in a dense metro). The circularity rule has no exceptions: score against the real OA point, **never** the postcode centroid the resolver itself consumed.
 
@@ -22,7 +22,7 @@ The fix starts with the metric. **The non-gameable metric:** a locality is corre
 
 **Airmail** (and Nominatim, Photon) are retrieval geocoders that run BM25 over indexed places. A wrong postcode lowers a document's score, and the right city still ranks it up. This is resilient, but these geocoders have no explicit signal that two fields disagree, so they _silently mislocate_ when a wrong combination scores high (`90210 Los Angeles` → Beverly Hills). We can fill that gap.
 
-The lesson: Pelias trusts the coordinate because at _import_ it has the true address point. We are a query-time parser+resolver. The postcode is the user's _claim_. A claim can be transposed, stale, or borrowed from the next town over. So we cannot blindly trust it the way Pelias does. The parsed city name is our independent cross-check, and the trim made it reliable.
+The lesson: Pelias trusts the coordinate because at _import_ it has the true address point. We're a query-time parser+resolver. The postcode is the user's _claim_. A claim can be transposed, stale, or borrowed from the next town over. So we cannot blindly trust it the way Pelias does. The parsed city name is our independent cross-check, and the trim made it reliable.
 
 ## The design
 
@@ -73,7 +73,7 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 4. **Conflict-falsehoods eval:** extend the falsehoods doc and check whether mismatches are caught. (#276)
 5. **No-postcode fallback:** country-filtered fuzzy matching over the alias index, where the trim's clean string is most useful.
 
-The parser stays a clean token tagger throughout. PR #272 (the trim) is retained. It does not move the name-match metric, but it makes the name a reliable cross-check for reconciliation and feeds the string-fallback path.
+The parser stays a clean token tagger throughout. PR #272 (the trim) is retained. It doesn't move the name-match metric, but it makes the name a reliable cross-check for reconciliation and feeds the string-fallback path.
 
 ## Done-with-German
 

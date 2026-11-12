@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the v0.7 intersection synthesizer. Validates the {raw, components} interface and the BIO
- *   output by running rows through the real `alignRow` aligner — confirming the model will see
- *   B-/I-intersection_a, O on the connector and B-/I-intersection_b (the signal it currently
- *   lacks).
+ *   Tests for the v0.7 intersection synthesizer.
+ *
+ *   Validates the {raw, components} interface and the BIO output by running rows through
+ *   the real `alignRow` aligner — confirming the model will see B-/I-intersection_a,
+ *   O on the connector and B-/I-intersection_b (the signal it currently lacks).
  */
 
 import { mulberry32 } from "@mailwoman/core/random"

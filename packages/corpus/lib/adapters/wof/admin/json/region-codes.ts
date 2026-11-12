@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The region codes a country's addresses write in place of the region's name, from Google libaddressinput.
+ *   The region codes a country's addresses write in place of the region's name,
+ *   from Google libaddressinput.
  *
- *   A libaddressinput country spec lists its subdivisions twice: `sub_keys`, the value an address writes, and
- *   `sub_names`, the subdivision's name. The United States keys `NY` and names `New York`, so its addresses write
- *   `NY`. France lists no subdivisions and Japan keys each prefecture by its name, so neither has a code to write.
- *   A country counts as writing codes when most of its keys differ from their names: AU, BR, CA, ES, HK, IT, KR, MX,
- *   SO and US in the vendored specs.
+ *   A libaddressinput country spec lists its subdivisions twice: `sub_keys`,
+ *   the value an address writes, and `sub_names`, the subdivision's name.
+ *   The United States keys `NY` and names `New York`, so its addresses write `NY`.
+ *
+ *   France lists no subdivisions and Japan keys each prefecture by its name,
+ *   so neither has a code to write.
+ *   A country counts as writing codes when most of its keys differ from their names:
+ *   AU, BR, CA, ES, HK, IT, KR, MX, SO and US in the vendored specs.
  */
 
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"

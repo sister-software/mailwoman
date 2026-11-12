@@ -6,7 +6,7 @@ title: "#727 Phase 4a — resolution reranking cannot collect the headroom, and 
 
 **Status: VALID measurement (the instrument was checked first this time). Result: NULL, with a
 mechanism.** The reranker is built, tested, and correct. Resolution evidence cannot adjudicate the
-class the arc targets — not because the signal is weak, but because it does not exist for those
+class the arc targets — not because the signal is weak, but because it doesn't exist for those
 inputs.
 
 ## The measurement
@@ -46,16 +46,16 @@ The arc targets **bare fragments** (66% of street failures, night-3 partition). 
 - has **no locality** → the street-centroid tier has no locality to scope a street lookup by,
 - therefore resolves to an **admin centroid** — _identically, for every hypothesis in the k-best list_.
 
-So the resolver returns the same evidence for the right parse and the wrong one. The signal is not
-noisy. **There is no signal**. Resolution evidence can only adjudicate addresses that are
+So the resolver returns the same evidence for the right parse and the wrong one. The signal isn't
+noisy. **There's no signal**. Resolution evidence can only adjudicate addresses that are
 already resolvable — which are largely the ones the parse gets right anyway.
 
 The −1 on Paris shows the same pattern on one fixture. On the single fixture where evidence existed,
 the reranker fired, and its choice was wrong.
 
-## What this does and does not overturn
+## What this does and doesn't overturn
 
-**Does not overturn:** the k-best headroom is real and measured — oracle@5 **0.723** (parity) and
+**Doesn't overturn:** the k-best headroom is real and measured — oracle@5 **0.723** (parity) and
 **0.905** (Paris) against a shipped 0.573. The span decode in fact puts the gold parse in the
 list. That stands.
 
@@ -66,12 +66,12 @@ something else.
 
 ## The direction this points (not chased here — that would be signal #3 on a losing streak)
 
-The resolver answers _"where is this?"_ The useful question for reranking a bare fragment is
+The resolver answers _"where's this?"_ The useful question for reranking a bare fragment is
 _"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index** rather than
 a geocode. `ban/street-centroids-fr.db` contains every FR street name. A query for whether
 `Rue de Rome` appears in it needs no locality and no house number.
 
-That is a lexicon lookup rather than resolution — a different signal with a different failure surface, and
+That's a lexicon lookup rather than resolution — a different signal with a different failure surface, and
 it interacts directly with #1142 (the `matched` vs `importance` split: "is this a known name" is
 _exactly_ the `matched` bit that today's multiply destroys). It warrants a probe only with the same bar
 the others got: a pre-registered check and a measured win.
@@ -90,6 +90,6 @@ to a branch.
 - **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
   bare-fragment class rather than a follow-up. It attacks the parse where evidence cannot.
 
-**And the standing fact this does not change:** the v7 street floor is **0.90**. seg@1 is 0.577,
+**And the standing fact this doesn't change:** the v7 street floor is **0.90**. seg@1 is 0.577,
 oracle@5 is 0.723. Even a perfect reranker would have landed short. The floors need 4c and/or more
 training. A decode change without either one cannot reach 0.90.

@@ -4,7 +4,7 @@
 /**
  * @file `coverage-census` — the readers that decide what mailwoman is reported to support.
  *
- *   Every failure this file pins is silent: an answer that is wrong and confident rather than thrown.
+ *   Every failure this file pins is silent: an answer that's wrong and confident rather than thrown.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -101,7 +101,7 @@ describe("readAdmittedCountries", () => {
 	})
 
 	it("treats a zero weight as NOT admitted", async () => {
-		// The loader drops on `weight is None or weight <= 0`, so a zero is a drop and must not read as coverage.
+		// The loader drops on `weight is None or weight <= 0`, so a zero is a drop and mustn't read as coverage.
 		const path = root("zero.yaml")
 
 		await writeLocalTextFile("data:\n  country_weights:\n    US: 1.0\n    GB: 0\n  source_weights:\n    x: 1.0\n", path)
@@ -158,7 +158,7 @@ describe("readBoardCoverage", () => {
 
 	it("counts PASSING rows apart from tracked ones", async () => {
 				// A country whose rows are all `improvement_target` has no verified row,
-				// so its row count must not read as coverage.
+				// so its row count mustn't read as coverage.
 				const board = await readBoardCoverage(root("cases"))
 
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
@@ -197,7 +197,7 @@ const CORPUS = dataRootPath(
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
 	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
  // `getCursor(["country", "labels"])` returns only `{country}` on the v0.17.0-era writer's
-				// databases, so a dropped label column must not read as "this country has no street rows".
+				// databases, so a dropped label column mustn't read as "this country has no street rows".
 												const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
 				// The manifest key has two live spellings on disk, so the test accepts either
@@ -274,7 +274,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 	})
 
 	it("answers zero for a manifest that lists no train files at all", async () => {
-				// A corpus whose manifest names no train file holds no train rows,
+				// A corpus whose manifest identifies no train file holds no train rows,
 				// so zero is the measurement rather than a failure to read.
 				await using directory = await temporaryDirectory("mw-census-none-")
 		const scratch = directory.path("MANIFEST.json")
@@ -328,7 +328,7 @@ describe("readConfiguredCorpusVersion", () => {
 	})
 
 	it("returns undefined rather than a guess when the config states no corpus_dir", async () => {
-				// "Cannot check" is not "they match", so a plausible default would manufacture agreement.
+				// "Cannot check" isn't "they match", so a plausible default would manufacture agreement.
 				await using scratch = await config("data:\n  max_length: 128\n")
 
 		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBeNull()

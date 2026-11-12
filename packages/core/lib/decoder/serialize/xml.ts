@@ -2,22 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module projects an address tree into XML. Each component is one element.
- *   The element's direct text node holds the component's value. Children nest as sub-elements for geographic or structural
- *   containment.
+ *   This module projects an address tree into XML.
+ *
+ *   Each component is one element.
+ *   The element's direct text node holds the component's value.
+ *
+ *   Children nest as sub-elements for geographic or structural containment.
  *
  *   Attributes:
  *
  *   - `conf` holds the aggregated confidence in [0, 1] with two decimal places.
  *   - `start` / `end` hold character offsets in the raw input.
- *       Those offsets preserve source order beside the containment-derived element order.
+ *     Those offsets preserve source order beside the containment-derived element order.
  *   - `src` holds provenance for the assertion.
- *       The format is `<source>:<sourceID>` when both fields are present.
- *       It is `<source>` when only the broad category is set and omitted when neither is set.
- *   - `lat` / `lon` hold the resolver-supplied centroid. Emitted only when both are set.
+ *     The format is `<source>:<sourceID>` when both fields are present.
+ *     It is `<source>` when only the broad category is set and omitted when neither is set.
+ *   - `lat` / `lon` hold the resolver-supplied centroid.
+ *     Emitted only when both are set.
  *   - `place` holds the resolver-supplied normalized place URI, such as `wof:101751119`.
- *       The serializer emits it when `node.placeID` is set.
- *       Callers that want the bare place ID without the vendor prefix can read this attribute.
+ *     The serializer emits it when `node.placeID` is set.
+ *     Callers that want the bare place ID without the vendor prefix can read this attribute.
  *   - Root `<address>` includes `raw`, the full input string for round-trip.
  *
  *   DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of

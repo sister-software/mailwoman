@@ -4,8 +4,8 @@
 /**
  *   Grades the famous-places test set by place answer for one model.
  *
- *   Usage:
- *   node packages/mailwoman/tools/eval-harness/famous-places/answers.run.ts [--weights-cache <root>] [--json <path>]
+ *   Usage: node packages/mailwoman/tools/eval-harness/famous-places/answers.run.ts
+ *   [--weights-cache <root>] [--json <path>]
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

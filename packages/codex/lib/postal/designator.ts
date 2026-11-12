@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shared concept list and row shape for the words an address uses to mark a part of itself: a delivery
- *   service (`BP`, `Postfach`, `私書箱`), a premise (`Bâtiment`, `корпус`), a sub-premise (`APT`, `号室`), a
- *   floor (`12/F`, `층`), a number mark (`№`, `2º`), or, in a query, the relation between a thing and a place
- *   (`near`, `près de`, `300 metros norte de`).
+ *   The shared concept list and row shape for the words an address uses to mark a part of
+ *   itself: a delivery service (`BP`, `Postfach`, `私書箱`), a premise (`Bâtiment`, `корпус`),
+ *   a sub-premise (`APT`, `号室`), a floor (`12/F`, `층`), a number mark (`№`, `2º`), or, in a query,
+ *   the relation between a thing and a place (`near`, `près de`, `300 metros norte de`).
  *
- *   Each country keeps its own table under `lib/<cc>/designators.ts`, because the same spelling means
- *   different things in different countries: `CP` is a Swiss case postale and an Italian casella postale,
- *   and `BP` is a French boîte postale. A spelling two countries share gets one row in each country's
- *   table, and {@linkcode designatorCollisions} reports where their concepts differ.
+ *   Each country keeps its own table under `lib/<cc>/designators.ts`, because the same
+ *   spelling means different things in different countries: `CP` is a Swiss case postale
+ *   and an Italian casella postale, and `BP` is a French boîte postale.
+ *   A spelling two countries share gets one row in each country's table,
+ *   and {@linkcode designatorCollisions} reports where their concepts differ.
  *
- *   A row records the evidence the decoder and lexicon read. It never instructs a pass to strip a word: the
- *   same words are parts of names (`Near Sawrey`, `In der Au`, `Barrow-in-Furness`).
+ *   A row records the evidence the decoder and lexicon read.
+ *   It never instructs a pass to strip a word: the same words are parts of names
+ *   (`Near Sawrey`, `In der Au`, `Barrow-in-Furness`).
  */
 
 import type { LevelDesignatorKind, LevelDesignatorRow } from "#level-semantics"

@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postal-regime table's shape and the reading it makes legible: every regime it names is unmodeled
- *   or partial today.
+ *   The postal-regime table's shape and the reading it makes legible:
+ *   every regime it names is unmodeled or partial today.
  *
- *   That last assertion is the reason the test exists. When a regime starts being modeled, this test fails and whoever
- *   modeled it writes down which layout, lexicon, postcode shape or check now distinguishes it. A table without a matching test
- *   maintains reports the coverage of the day it was written.
+ *   That last assertion is the reason the test exists.
+ *   When a regime starts being modeled, this test fails and whoever modeled it writes down
+ *   which layout, lexicon, postcode shape or check now distinguishes it.
+ *
+ *   A table without a matching test maintains reports the coverage of the day it was written.
  */
 
 import { describe, expect, it } from "vitest"

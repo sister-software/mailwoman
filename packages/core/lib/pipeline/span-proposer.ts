@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proposes spans for balanced punctuation, designator phrases and ambiguous numeric forms. Downstream stages choose
- *   among the proposals. The caller supplies the designator lexicon, so core does not depend on codex data.
+ *   Proposes spans for balanced punctuation, designator phrases and ambiguous numeric forms.
+ *
+ *   Downstream stages choose among the proposals.
+ *   The caller supplies the designator lexicon, so core doesn't depend on codex data.
  */
 
 /**
@@ -94,7 +96,7 @@ export interface SpanProposerLexicon {
 	/**
 	 * Venue-interior designators.
 	 *
-	 * They are kept apart from postal unit designators so consumers can weight them differently.
+	 * They're kept apart from postal unit designators so consumers can weight them differently.
 	 */
 	venueStructureDesignators: ReadonlySet<string>
 	/**
@@ -355,8 +357,8 @@ function isShortIdentifier(body: string): boolean {
 
 /**
  * Reports whether the designator at `index` reads as a street-type word:
- * it is street-forming, written in lowercase, and follows a capitalized word with
- * no separator between them, in an input that names no airport.
+ * it is street-forming, written in lowercase, and follows a capitalized word with no
+ * separator between them, in an input that identifies no airport.
  */
 function streetFormingShape(tokens: readonly RawToken[], index: number, lexicon: SpanProposerLexicon): boolean {
 	const designator = tokens[index]!
@@ -644,7 +646,7 @@ function proposeNumericReadings(
  * Proposes typed spans for the input.
  *
  * Results may overlap.
- * They are sorted by start offset, then by descending confidence.
+ * They're sorted by start offset, then by descending confidence.
  *
  * A confident annotation suppresses the designator and numeric proposals inside it.
  */

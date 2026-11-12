@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   En-US locale profile. Lists the `ComponentTag`s the US locale uses.
+ *   En-US locale profile.
+ *   Lists the `ComponentTag`s the US locale uses.
  */
 
 import type { LocaleProfile } from "#locale/locale"

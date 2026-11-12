@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev generate corpus-us-abbrev-region-samples` regenerates `corpus/us/abbrev-region-samples.ts`,
- *   the sample localities and postcodes for each US state whose code is also a country code, from the Who's On First
- *    admin and US postcode databases under the data root. The output is committed for provenance.
+ *   `mailwoman dev generate corpus-us-abbrev-region-samples` regenerates
+ *   `corpus/us/abbrev-region-samples.ts`, the sample localities and postcodes for each
+ *   US state whose code is also a country code, from the Who's On First
+ *    admin and US postcode databases under the data root.
+ *    The output is committed for provenance.
  */
 
 import { Text } from "ink"

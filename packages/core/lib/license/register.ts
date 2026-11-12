@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The register of license signing keys: the one source both the shipped trust map and the well-known JSON on
- *   mailwoman.post derive from, so the two cannot disagree. A key enters when `mailwoman license keygen` mints it and
- *   moves through three states:
+ *   The register of license signing keys: the one source both the shipped trust map
+ *   and the well-known JSON on mailwoman.post derive from, so the two cannot disagree.
+ *
+ *   A key enters when `mailwoman license keygen` mints it and moves through three states:
  *
  *   - `active`: may sign and verify.
  *   - `retired`: may no longer sign. tokens it signed still verify offline until they expire.
- *   - `revoked`: compromised. Online status refuses its tokens at once. The derived trust map omits the key, so the
- *     next release stops trusting it offline.
+ *   - `revoked`: compromised.
+ *     Online status refuses its tokens at once.
+ *     The derived trust map omits the key, so the next release stops trusting it offline.
  *
- *   `mailwoman license register --write` regenerates the well-known file from this module. The `license-register`
- *   health check reports a mismatch between the register and the generated file.
+ *   `mailwoman license register --write` regenerates the well-known file from this module.
+ *   The `license-register` health check reports a mismatch between the register and the generated file.
  */
 
 /**
@@ -70,7 +72,7 @@ MCowBQYDK2VwAyEAv0e7Yn028V/BS2AT0tW5a/reOLpWnGiaOxwoscegolQ=
 ]
 
 /**
- * Key id → PEM public key for offline verification: every key that is not revoked.
+ * Key id → PEM public key for offline verification: every key that's not revoked.
  */
 export function trustedLicenseSigningKeys(): Readonly<Record<string, string>> {
 	return Object.fromEntries(

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `postalcode-nl-pc6.db`, the NL full-postcode (PC6) database. WOF NL has no
- *   `postalcode` tier at all, so `1012 LG` could only resolve to the Amsterdam locality centroid.
+ *   Build `postalcode-nl-pc6.db`, the NL full-postcode (PC6) database.
+ *
+ *   WOF NL has no `postalcode` tier at all, so `1012 LG` could only resolve
+ *   to the Amsterdam locality centroid.
  *   Source: the CBS "Postcode6 statistieken" GeoPackage via pdok (CC-BY 4.0, provenance in `meta`),
  *   pre-extracted to a centroid CSV with ogr2ogr:
  *
@@ -12,11 +14,14 @@
  *             ST_Y(ST_Centroid(ST_Transform(geom, 4326))) AS lat from postcode6"
  *
  *   One `spr` row per PC6 (placetype `postalcode`, country NL, polygon centroid, degenerate bbox),
- *   the normalized form (`1012LG`) as `name` plus the display form (`1012 LG`) as an extra `names`
- *   row, the same convention as `ingestGeonamesPostal`. The lookup's NL PC6 ladder (`lookup.ts`:
- *   full code, joined form, then 4-digit stem) was already built and is waiting on exactly this data.
- *   FTS and analyze run through the canonical `buildPlaceSearchFTS`. The artifact is built to
- *   `.tmp` and swapped into place, so the previous version moves aside and is never mutated.
+ *   the normalized form (`1012LG`) as `name` plus the display form (`1012 LG`) as an
+ *   extra `names` row, the same convention as `ingestGeonamesPostal`.
+ *   The lookup's NL PC6 ladder (`lookup.ts`: full code, joined form, then 4-digit stem)
+ *   was already built and is waiting on exactly this data.
+ *
+ *   FTS and analyze run through the canonical `buildPlaceSearchFTS`.
+ *   The artifact is built to `.tmp` and swapped into place, so the previous
+ *   version moves aside and is never mutated.
  *
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
@@ -24,6 +29,7 @@
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -56,10 +62,17 @@ export interface BuildNLPC6Options {
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	const {
+		resolverWofSqlite: { buildPlaceSearchFTS },
+		geonames: { normalizePostcodeName },
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+	} = await allKeyed({
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+	})
+
 	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv"))
 	const outPath = (opts.out ?? wofDatabasePath("postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`

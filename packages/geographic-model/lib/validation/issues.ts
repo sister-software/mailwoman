@@ -6,6 +6,7 @@
  *
  * Every reader appends issues to the supplied list and returns `null` when it cannot read a field.
  * The pass records each defect and continues.
+ *
  * A default would turn an unreadable field into a value and invent data at the validation boundary.
  */
 
@@ -93,7 +94,7 @@ export function listVocabulary(allowed: readonly string[]): string {
 }
 
 /**
- * Refuse any field the schema does not declare, naming the ranking-policy ones under their own code.
+ * Refuse any field the schema doesn't declare, naming the ranking-policy ones under their own code.
  */
 export function checkFieldNames(
 	issues: ValidationIssue[],

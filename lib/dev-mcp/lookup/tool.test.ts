@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Test source artifact resolution and ensure missing artifacts return `unavailable_reason`, not query misses.
+ *   Test source artifact resolution and ensure missing artifacts return
+ *   `unavailable_reason`, not query misses.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -12,7 +13,7 @@ import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { runLookup } from "#dev-mcp/lookup/tool"
 
 /**
- * Fail if a source that should not use the engine registry tries to access it.
+ * Fail if a source that shouldn't use the engine registry tries to access it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

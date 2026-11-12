@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Map each country to its admin coverage sources. Report conflicts when a country has an unrecorded second source.
+ * Map each country to its admin coverage sources.
  *
- * The WOF leg is presence-driven while Overture and GeoNames are list-driven, so the fourteen
- * baseline Overture + GeoNames pairs are accepted and a fifteenth is refused.
+ * Report conflicts when a country has an unrecorded second source.
+ *
+ * The WOF leg is presence-driven while Overture and GeoNames are list-driven, so the
+ * fourteen baseline Overture + GeoNames pairs are accepted and a fifteenth is refused.
  */
 
 /**
@@ -58,7 +60,7 @@ export interface CountrySources {
 }
 
 /**
- * A country that gained a source it did not have in the baseline.
+ * A country that gained a source it didn't have in the baseline.
  */
 export interface SourceConflict {
 	country: string
@@ -70,7 +72,7 @@ export interface SourceConflict {
  * Map every country to the sources that serve it, from the three lists.
  *
  * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES` because the WOF
- * leg is presence-driven: a build check passes what is on disk, a recipe check passes the list.
+ * leg is presence-driven: a build check passes what's on disk, a recipe check passes the list.
  */
 export function countrySourceMap(lists: {
 	wofCountries: readonly string[]
@@ -97,7 +99,7 @@ export function countrySourceMap(lists: {
 }
 
 /**
- * Countries served by more than one source that the baseline does not already
+ * Countries served by more than one source that the baseline doesn't already
  * record. a WOF conflict is reported regardless.
  */
 export function sourceConflicts(sources: readonly CountrySources[]): SourceConflict[] {

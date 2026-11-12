@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-feature cell rows and the per-scenario measurement. The measurement must stay split by scenario,
- *   because twelve layers cover the same frontages with different extents and a pooled `partial` share
- *   describes neither.
+ *   The per-feature cell rows and the per-scenario measurement.
+ *
+ *   The measurement must stay split by scenario, because twelve layers cover the same
+ *   frontages with different extents and a pooled `partial` share describes neither.
  */
 
 import { type MultiPolygonRings, classifyFeatureCells, rectangleRing, featureCellRows } from "@mailwoman/spatial"

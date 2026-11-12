@@ -6,8 +6,8 @@ threshold over this signal can provide at the final selection.
 
 **Exploratory, and outside the frozen pre-registration.** Every threshold here was read off results that
 were already visible. The registered rule forbids exactly that. The decision column below records
-what the registered rule would have read at each threshold. It does not re-decide the frozen verdict, and
-no threshold warrants a claim until it is registered ahead of a panel it has not seen.
+what the registered rule would have read at each threshold. It doesn't re-decide the frozen verdict, and
+no threshold warrants a claim until it is registered ahead of a panel it hasn't seen.
 
 28 of 75 of Mailwoman's withheld-gold selections have the maximum margin, because the
 lookup that produced them considered one candidate. No threshold at or below 1 can withhold those.

@@ -73,7 +73,7 @@ export interface PublishHFOptions {
 	/**
 	 * The sealed character vocabulary of a character-path model.
 	 *
-	 * When it is set, the tokenizer is not required and the release gets no `releases.json` entry.
+	 * When it is set, the tokenizer isn't required and the release gets no `releases.json` entry.
 	 */
 	charVocab?: string
 	modelCard?: string
@@ -89,7 +89,7 @@ export interface PublishHFOptions {
 	 * PCB1 postcode binaries the browser's postcode-only fallback reads and the
 	 * classifier's anchor channel never does, delimited like `postcodes`.
 	 *
-	 * They are listed under `postcodeCentroids` in the release entry.
+	 * They're listed under `postcodeCentroids` in the release entry.
 	 */
 	postcodeCentroids?: string
 	pairIndexes?: string

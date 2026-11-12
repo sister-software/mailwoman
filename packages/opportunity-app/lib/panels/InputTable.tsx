@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The inputs the controls set, each with its value in the applied scenario and its basis. The cost and value
- *   report lists every other rate, quantity and operating assumption with its basis.
+ *   The inputs the controls set, each with its value in the applied scenario and its basis.
+ *
+ *   The cost and value report lists every other rate, quantity and operating assumption with its basis.
  */
 
 import type { ReactNode } from "react"

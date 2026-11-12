@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure phrase → category matching core, shared by the node entry (`lookup.ts`, `node:fs` loader) and the
- *   browser-safe entry (`table.ts`, injected table). Holds the index construction and locale-filtering
- *   logic, with zero node imports so it stays bundler-safe. Not exported via a subpath of its own.
+ *   Pure phrase → category matching core, shared by the node entry (`lookup.ts`, `node:fs` loader)
+ *   and the browser-safe entry (`table.ts`, injected table).
+ *
+ *   Holds the index construction and locale-filtering logic, with zero node imports
+ *   so it stays bundler-safe.
+ *   Not exported via a subpath of its own.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -27,7 +27,7 @@ export interface TriageInventoryReport extends InventoryResult {
 
 /**
  * `.d.ts` contains generated declarations and `out/` contains the compiled tree,
- * so both would inventory comments this repository did not write and cannot edit.
+ * so both would inventory comments this repository didn't write and cannot edit.
  */
 function isInventorySource(path: string): boolean {
 	if (!path.endsWith(".ts") && !path.endsWith(".tsx")) return false

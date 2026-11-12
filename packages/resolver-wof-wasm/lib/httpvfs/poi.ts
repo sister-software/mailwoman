@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "@sister.software/h3"
 
-import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
+import type { RangeDatabase } from "#httpvfs/database"
 
 const POI_H3_RESOLUTION = 9
 

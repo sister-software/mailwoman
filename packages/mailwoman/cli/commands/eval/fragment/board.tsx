@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval fragment-board`: the locale fragment board (Tier 1c). Targeted
- *   failure classes with confidence intervals, sampled from BAN (Tier A). The second of the two
- *   standing boards. `eval parity` is the first (the global "do no harm" floor).
+ *   `mailwoman eval fragment-board`: the locale fragment board (Tier 1c).
  *
- *   A change ships when the `eval parity` floors still pass and this board's failure-class rates
- *   improve. Neither gives a verdict by itself.
- *   Informational (always exits 0). The standing floors stay on `eval parity`.
+ *   Targeted failure classes with confidence intervals, sampled from BAN (Tier A).
+ *   The second of the two standing boards.
+ *   `eval parity` is the first (the global "do no harm" floor).
+ *
+ *   A change ships when the `eval parity` floors still pass and this board's failure-class rates improve.
+ *   Neither gives a verdict by itself.
+ *
+ *   Informational (always exits 0).
+ *   The standing floors stay on `eval parity`.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

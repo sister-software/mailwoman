@@ -3,6 +3,7 @@
 
 /**
  *   Reads the host's cores, memory and platform to size a fan-out or name the machine in a report.
+ *
  *   This is the only module that reads those values from `node:os` or the heap ceiling from `node:v8`.
  */
 

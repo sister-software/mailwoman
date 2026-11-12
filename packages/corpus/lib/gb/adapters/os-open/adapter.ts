@@ -2,30 +2,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `gb-os-open`: Great Britain street addresses joined from three OS OpenData products, each under
- * the Open Government Licence v3.0.
+ * `gb-os-open`: Great Britain street addresses joined from three OS OpenData products,
+ * each under the Open Government Licence v3.0.
  *
  * - **Code-Point Open** gives every unit postcode in England, Scotland and Wales a grid point.
  * - **OS Open Roads** gives each road link with a name a centreline and its roadNameTOID.
  * - **OS Open Names** gives each roadNameTOID its `NAME1`, `POSTCODE_DISTRICT` and `POPULATED_PLACE`.
  *
- * Each postcode is joined to the nearest road link with a name within 100 m, measured point-to-segment
- * in EPSG:27700 meters. The street is the Open Names `NAME1` for that link's TOID. The locality is its
- * `POPULATED_PLACE`. The GB layout has no region field, so each row omits a region. OS supplies every
- * component except `house_number`. No open GB product publishes a house number. This adapter draws the
- * number from local bands seeded by the postcode and TOID. The generated number does not come from the source.
+ * Each postcode is joined to the nearest road link with a name within 100 m,
+ * measured point-to-segment in EPSG:27700 meters.
+ * The street is the Open Names `NAME1` for that link's TOID.
+ *
+ * The locality is its `POPULATED_PLACE`.
+ * The GB layout has no region field, so each row omits a region.
+ *
+ * OS supplies every component except `house_number`.
+ * No open GB product publishes a house number.
+ *
+ * This adapter draws the number from local bands seeded by the postcode and TOID.
+ * The generated number doesn't come from the source.
  *
  * A postcode is dropped when:
  *
  * - its Code-Point coordinate has no position, `Positional_quality_indicator` 90;
- * - its coordinate is shared with another postcode, so the point does not locate this postcode's street;
+ * - its coordinate is shared with another postcode, so the point doesn't locate this postcode's street;
  * - no road link with a name lies within 100 m;
  * - the joined road's `POSTCODE_DISTRICT` differs from the postcode's own outward code.
  *
  * `inputPath` is a directory holding the three products unzipped, each in its own subdirectory:
- * `code-point-open/` (with `Data/CSV/*.csv`), `open-names/` (with `Data/*.csv`) and `open-roads/`
- * (with the `.gml` tiles anywhere beneath it). The Code-Point rows are held in memory, the road
- * tiles stream past them once, and Open Names is read once for the roadNameTOID values the join chose.
+ * `code-point-open/` (with `Data/CSV/*.csv`), `open-names/` (with `Data/*.csv`)
+ * and `open-roads/` (with the `.gml` tiles anywhere beneath it).
+ * The Code-Point rows are held in memory, the road tiles stream past them once,
+ * and Open Names is read once for the roadNameTOID values the join chose.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -149,7 +157,7 @@ export interface GBOSOpenSummary {
 		 */
 		noOpenNamesRow: number
 		/**
-		 * The road's `POSTCODE_DISTRICT` is not the postcode's outward code.
+		 * The road's `POSTCODE_DISTRICT` isn't the postcode's outward code.
 		 */
 		districtMismatch: number
 	}

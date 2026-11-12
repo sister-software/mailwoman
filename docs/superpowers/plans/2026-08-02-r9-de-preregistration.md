@@ -7,7 +7,7 @@ inside another locale's package can never fire. Germany is the first locale to g
 
 ## Source: WOF rather than a postal register
 
-Deutsche Post routes `PLZ Stadt` and has **no Ortsteil field**, so there is no postal source to
+Deutsche Post routes `PLZ Stadt` and has **no Ortsteil field**, so there's no postal source to
 harvest — the same situation as the US, and the opposite of France, where BAN's `nom_ld` IS the
 postal line. WOF's German borough/neighborhood records are the Ortsteile and Stadtteile that
 German addresses do include when they include any sub-locality: **85,605 pairs**, the largest instance in the
@@ -16,7 +16,7 @@ campaign after France. Top parents are Köln (170), Wuppertal (159), Solingen (1
 ## The R6 prediction, confirmed on first contact
 
 The FR rung predicted DE/ES/IT would each need a `LEADING_POSTCODE_COUNTRIES` entry, since all
-three write the postcode before the locality. That is exactly what happened, and the failure was
+three write the postcode before the locality. That's exactly what happened, and the failure was
 silent: **the artifact built correctly, probed correctly, and produced no effect.** `Neusser Str. 12,
 Nippes, 50733 Köln` produced no dependent locality with the index loaded, because the parent segment
 folded to `"50733 köln"` — a key no bare-Gemeinde entry matches.

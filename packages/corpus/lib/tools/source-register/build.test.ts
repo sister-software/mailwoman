@@ -37,7 +37,7 @@ describe("readUnresolvedColumn", () => {
 
 	it("refuses an address_role that is neither a placeholder nor a role", () => {
 		// Its omission would make a column someone filled in read as a column with no recorded value.
-		// The message names both repairs because either can be the right one.
+		// The message lists both repairs because either can be the right one.
 		expect(() => readUnresolvedColumn("head office", "address_role", 42)).toThrow(
 			/row 42: address_role "head office" is neither a declared placeholder nor an `AddressRole`/u
 		)

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two native programs the tokenizer tools run: `mtf-tokenizer`, built from `crates/mtf-tools`, and
- *   SentencePiece v0.2.2's `spm_train`.
+ *   The two native programs the tokenizer tools run: `mtf-tokenizer`, built from
+ *   `crates/mtf-tools`, and SentencePiece v0.2.2's `spm_train`.
  *
- *   `mtf-tokenizer` is a binary rather than a Node addon. Each tool calls it a handful of times over files, so a
- *   process per call costs milliseconds. A binary also builds without an addon toolchain, a per-platform artifact or ABI
- *   matching against Node. Cargo builds it on first use under the `tools` profile.
+ *   `mtf-tokenizer` is a binary rather than a Node addon.
+ *   Each tool calls it a handful of times over files, so a process per call costs milliseconds.
  *
- *   `spm_train` is built from the google/sentencepiece tag the runtime and the Python wheel were built from, with the
- *   CMake recipe of `packages/sentencepiece-wasm/build.sh` minus emscripten. The checkout and build live under the
- *   cache root, outside the repository.
+ *   A binary also builds without an addon toolchain, a per-platform artifact or ABI matching against Node.
+ *   Cargo builds it on first use under the `tools` profile.
+ *
+ *   `spm_train` is built from the google/sentencepiece tag the runtime and the Python wheel were
+ *   built from, with the CMake recipe of `packages/sentencepiece-wasm/build.sh` minus emscripten.
+ *   The checkout and build live under the cache root, outside the repository.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"

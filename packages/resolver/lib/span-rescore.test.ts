@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
@@ -362,7 +365,7 @@ describe("findRescoreCandidate", () => {
 			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0, isVenueCategoryWord })
 
 			expect(hit?.text).toBe("London")
-			// `Tower of` is part of the name, so `London` may scope the venue lookup but is not the answer.
+			// `Tower of` is part of the name, so `London` may scope the venue lookup but isn't the answer.
 			expect(hit?.dropsName).toBe(true)
 		})
 

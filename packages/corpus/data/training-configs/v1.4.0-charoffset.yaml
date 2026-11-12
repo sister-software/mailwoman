@@ -17,7 +17,7 @@
 # 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).
 # known caveat (stopgap rather than a recipe choice): the corpus stores UTF-16 span offsets (#519); the
 # ~0.06% astral-script rows are skipped at load by the #558 iter_encoded guard. The lasting fix
-# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on. it does not check this run.
+# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on. it doesn't check this run.
 # Launch: node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.4.0-charoffset.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0

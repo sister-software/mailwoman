@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write the effective training manifest. It records which of a corpus's sources one config's audited epoch reached
- *   and why each remaining source did not reach the trainer.
+ *   Write the effective training manifest.
  *
- *   The corpus's own `TRAINING_SOURCES.json` records what the corpus holds. A run reads it through a
- *   config. `country_weights`, `source_weights`, a `0.0` weight and `augment_exclude_sources` each remove
- *   rows between the two. A model card quoting the corpus manifest attributes sources the checkpoint never
- *   saw. This report separates the records.
+ *   It records which of a corpus's sources one config's audited epoch reached
+ *   and why each remaining source didn't reach the trainer.
+ *
+ *   The corpus's own `TRAINING_SOURCES.json` records what the corpus holds.
+ *   A run reads it through a config.
+ *
+ *   `country_weights`, `source_weights`, a `0.0` weight and `augment_exclude_sources`
+ *   each remove rows between the two.
+ *   A model card quoting the corpus manifest attributes sources the checkpoint never saw.
+ *   This report separates the records.
  *
  *   Run `audit_epoch_mixture` first; `coverage-funnel.run.ts` names the command and the path it looks in.
  *

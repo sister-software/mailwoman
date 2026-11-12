@@ -7,10 +7,10 @@
 # `--fresh`, the same shape v5.7.0 used.
 #
 # Control: v5.7.0 itself. It is from-scratch at seed 42 on this corpus with the flag on, so it is this
-# arm's exact twin and no control run has to be paid for. That is the whole reason this arm is one run
+# arm's exact twin and no control run has to be paid for. That's the whole reason this arm is one run
 # rather than two.
 #
-# One difference between the arms is not the flag, and grading has to account for it. v5.7.0 trained under a
+# One difference between the arms isn't the flag, and grading has to account for it. v5.7.0 trained under a
 # loader that took a parquet file's first row as the whole file's source, so a source whose rows sat in
 # another source's file was unreachable. Reading every source in a file reaches them: across the 718
 # train files, 8 hold more than one source, and the rows those files hold for a source other than their
@@ -35,7 +35,7 @@
 #
 # v5.7.0 already spent a corpus arm on this surface (#2303) and it worked: the bare arm went 53.2%
 # (309/581) under v5.6.0 to 92.0% (555/603) under v5.7.0, measured by
-# `us/locality-region-postcode-arms.run.ts`. What it did not reach is the residual. The residual is
+# `us/locality-region-postcode-arms.run.ts`. What it didn't reach is the residual. The residual is
 # concentrated in one name shape. Serving v5.7.0 with the choreography off, same panel, same probe:
 #
 #   shape                     n     choreography on    choreography off
@@ -43,15 +43,15 @@
 #   multi-word                84    84.5%              98.8%
 #   ends in a USPS suffix     77    59.7%              93.5%
 #
-# That is an inference-only ablation on a model trained with the choreography, so it estimates the
+# That's an inference-only ablation on a model trained with the choreography, so it estimates the
 # upside rather than reporting what a model trained without it does. This run is what answers that.
 #
 # Pre-registered bars. Read against v5.7.0 on the same instruments.
 #
-#   1. `us/locality-region-postcode-arms.run.ts`, the 603-city panel. The bare arm must not fall below
+#   1. `us/locality-region-postcode-arms.run.ts`, the 603-city panel. The bare arm mustn't fall below
 #      v5.7.0's 92.0% (555/603), and its suffix-tail bucket must improve on 59.7% (46/77). The reverse
 #      is the same measurement: `street_only` answers no locality for 594 of 603 today and may not
-#      fall — recovering the locality surface must not turn a street before a state code into a
+#      fall — recovering the locality surface mustn't turn a street before a state code into a
 #      locality.
 #
 #   2. US postcode, the tag this flag was added to guard. The choreography's own receipt is about 3
@@ -64,11 +64,11 @@
 #
 #   4. The D-rule, iron rule 6: no regression anywhere on FR, GB or DE.
 #
-# Pair the inference half by hand before grading. `cli/commands/package.py` does not write
+# Pair the inference half by hand before grading. `cli/commands/package.py` doesn't write
 # `suppress_gazetteer_near_postcode` into the model card, and the shipped card
 # (`packages/neural-weights-en-us/model-card.json`, line 62) holds `true` as a hand-maintained
 # value. A candidate staged from this run with that card unedited is served with the choreography the
-# run was trained without. That is the mismatch this arm tests. Every number measured
+# run was trained without. That's the mismatch this arm tests. Every number measured
 # that way is void. Set the candidate card's `suppress_gazetteer_near_postcode` to false and confirm
 # it before the first grade:
 #

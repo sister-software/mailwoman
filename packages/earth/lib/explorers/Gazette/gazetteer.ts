@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gazette explorer's reads over the published browser gazetteer, `candidate.db`, through the same
- *   byte-range worker the geocoder uses and without the classifier. Every query is a primary-key probe or a
- *   primary-key range, except the "contains" search. That one asks the trigram FTS index.
+ *   The gazette explorer's reads over the published browser gazetteer, `candidate.db`,
+ *   through the same byte-range worker the geocoder uses and without the classifier.
+ *
+ *   Every query is a primary-key probe or a primary-key range, except the "contains" search.
+ *   That one asks the trigram FTS index.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * A check has no way to mutate, generate, publish, benchmark or probe, because `run` returns diagnostics and no other result is asked of it.
+ * A check has no way to mutate, generate, publish, benchmark or probe, because `run`
+ * returns diagnostics and no other result is asked of it.
  */
 
 /**

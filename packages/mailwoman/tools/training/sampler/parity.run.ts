@@ -2,18 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Checks the Node sampler binding against an encoder-parity record, and measures its memory over a long stream.
+ *   Checks the Node sampler binding against an encoder-parity record,
+ *   and measures its memory over a long stream.
  *
- *   `verify --name <record>` re-draws a record under `$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<record>/` through
- *   `mtf-node`: the sampler's rows, the row encoder's arrays and each row's locale and address-system ids. It compares
- *   the emitted row count, the batch sizes, each row's identity, the tensor set with its dtypes and shapes, and the
- *   SHA-256 of every row of every tensor with the record's, and prints the first difference it finds.
+ *   `verify --name <record>` re-draws a record under
+ *   `$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<record>/` through `mtf-node`: the sampler's
+ *   rows, the row encoder's arrays and each row's locale and address-system ids.
+ *   It compares the emitted row count, the batch sizes, each row's identity,
+ *   the tensor set with its dtypes and shapes, and the SHA-256 of every row of every
+ *   tensor with the record's, and prints the first difference it finds.
  *
- *   `stream --config <yaml> --rows <n>` reads `n` rows of a split a chunk at a time, counting rows only, and prints
- *   the resident set every `--every` rows and the peak, so a reader can see whether memory grows with the rows read.
+ *   `stream --config <yaml> --rows <n>` reads `n` rows of a split a chunk at a time,
+ *   counting rows only, and prints the resident set every `--every` rows and the peak,
+ *   so a reader can see whether memory grows with the rows read.
  *
- *   `profile --config <yaml>` times the host side of a training step: the encoder build and the sampler's first
- *   batch, then sampling and encoding per batch over `--batches` (40) batches of `--batch-size` (128) rows.
+ *   `profile --config <yaml>` times the host side of a training step: the encoder build
+ *   and the sampler's first batch, then sampling and encoding per batch over
+ *   `--batches` (40) batches of `--batch-size` (128) rows.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k [--report <json>]

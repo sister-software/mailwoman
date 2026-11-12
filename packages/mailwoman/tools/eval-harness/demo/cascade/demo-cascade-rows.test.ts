@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Row-schema tests for the demo-cascade smoke eval. The module is split out of the runner so the
- *   schema interface is unit-testable without loading the model or the hot DB.
+ *   Row-schema tests for the demo-cascade smoke eval.
+ *
+ *   The module is split out of the runner so the schema interface is unit-testable
+ *   without loading the model or the hot DB.
  *
  *   Pure string parsing, so it runs in CI.
  */

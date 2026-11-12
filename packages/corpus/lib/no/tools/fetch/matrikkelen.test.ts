@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves which archive the Matrikkelen fetcher asks for per area, how it reads the service's
- *   freshness headers, and what it refuses.
+ *   Proves which archive the Matrikkelen fetcher asks for per area, how it reads
+ *   the service's freshness headers, and what it refuses.
  *
- *   The two archive names are the publisher's real paths and the byte counts are its real ones,
- *   recorded when the reader was written, so a change in what the fetcher resolves shows up against
- *   them.
+ *   The two archive names are the publisher's real paths and the byte counts are its real ones, recorded
+ *   when the reader was written, so a change in what the fetcher resolves shows up against them.
  *
- *   `./matrikkelen.integration.test.ts` reads the live service. This suite stubs the transport and
- *   runs the real `APIClient` over it, so the HEAD requests go through the same adapter and header
- *   normalization they do against the publisher.
+ *   `./matrikkelen.integration.test.ts` reads the live service.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the HEAD requests
+ *   go through the same adapter and header normalization they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"

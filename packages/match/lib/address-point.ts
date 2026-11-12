@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Comparisons for two address points that share a street: the unit each states and the house number each states.
+ *   Comparisons for two address points that share a street: the unit each states
+ *   and the house number each states.
  *
- *   A unit's identifier is read by the caller, since designator words are per-country (`UNIT 2`, `Apt. 2` and `#2`
- *   all identify `2` under USPS Publication 28). The comparisons here only compare what the extractor returns.
+ *   A unit's identifier is read by the caller, since designator words are per-country
+ *   (`UNIT 2`, `Apt. 2` and `#2` all identify `2` under USPS Publication 28).
+ *   The comparisons here only compare what the extractor returns.
  */
 
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
@@ -98,7 +100,7 @@ export function isJoinedHouseNumber(number: string): boolean {
 
 /**
  * Reads a house number such as `12`, `12A`, `12 1/2` or `12-14` into its parts,
- * or `null` when it does not start with digits.
+ * or `null` when it doesn't start with digits.
  *
  * A hyphenated number that {@link isJoinedHouseNumber} reads as one number,
  * such as Hawaii's `19-4074`, is read as its joined digits, `194074`, with no range.

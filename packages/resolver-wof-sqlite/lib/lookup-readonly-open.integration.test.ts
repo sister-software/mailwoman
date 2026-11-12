@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Regression guard for the open mode WOFSQLitePlaceLookup chooses on the databasePath branch:
- * read-only by default on every serve and query path, read-write only when buildFTS is requested
- * because the FTS5 index build is the sole writer. Shipped extracts are sealed 0444 and Docker :ro
- * mounts forbid write-mode opens.
+ * Regression guard for the open mode WOFSQLitePlaceLookup chooses on the databasePath
+ * branch: read-only by default on every serve and query path, read-write only
+ * when buildFTS is requested because the FTS5 index build is the sole writer.
  *
- * SQLite silently downgrades a write-mode open to read-only on an owned read-only file, so a 0444
- * open succeeds under a write-mode option too. The test records the `readOnly` option passed to DatabaseSync
- * is the reliable signal.
+ * Shipped extracts are sealed 0444 and Docker :ro mounts forbid write-mode opens.
+ *
+ * SQLite silently downgrades a write-mode open to read-only on an owned read-only file,
+ * so a 0444 open succeeds under a write-mode option too.
+ * The test records the `readOnly` option passed to DatabaseSync is the reliable signal.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

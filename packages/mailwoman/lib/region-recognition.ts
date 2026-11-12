@@ -2,23 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   US region recognition: a rule-based parse-tree correction for the case the neural parser
- *   under-handles, a postcode-less "City, State" string. Without a postcode or street anchor the
- *   model mistags the state. It labels "Texas" a `locality` ("Dublin, Texas" becomes two
- *   localities), or merges the whole string into one locality ("Dublin, TX" or "Athens, Texas").
+ *   US region recognition: a rule-based parse-tree correction for the case the neural
+ *   parser under-handles, a postcode-less "City, State" string.
+ *
+ *   Without a postcode or street anchor the model mistags the state.
+ *   It labels "Texas" a `locality` ("Dublin, Texas" becomes two localities),
+ *   or merges the whole string into one locality ("Dublin, TX" or "Athens, Texas").
+ *
  *   With no `region` node, the resolver cannot scope the locality to its state.
  *
- *   This is a legitimate atlas correction: the US states are a closed known gazetteer, so a state
- *   token the grammar missed can be retagged confidently. The module restructures affected nodes into
- *   `region → locality` nesting. The resolver's existing parent-scoping then constrains them correctly without a
- *   resolver change. The module handles two shapes:
+ *   This is a legitimate atlas correction: the US states are a closed known gazetteer,
+ *   so a state token the grammar missed can be retagged confidently.
+ *   The module restructures affected nodes into `region → locality` nesting.
  *
- *   - A `locality` whose whole value is a US state becomes a `region`, and sibling locality
- *     (city) nodes are nested under it.
+ *   The resolver's existing parent-scoping then constrains them correctly without a resolver change.
+ *   The module handles two shapes:
+ *
+ *   - A `locality` whose whole value is a US state becomes a `region`,
+ *     and sibling locality (city) nodes are nested under it.
  *   - A `locality` whose value is a merged `"City, ST"` is split into `region(ST) → locality(City)`.
  *
- *   This is US-scoped because the gazetteer contains US states. The long-term fix is for the model to recognize the
- *   region. This handles the bare `City, State` class in the meantime.
+ *   This is US-scoped because the gazetteer contains US states.
+ *   The long-term fix is for the model to recognize the region.
+ *   This handles the bare `City, State` class in the meantime.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -137,7 +143,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	// Turn a locality whose whole value is a state into a region, with sibling
 	// city localities nested under it.
 	// This fires only when exactly one state-name locality is in the container,
-	// the unambiguous "City, State" shape, so a multi-locality list is not reparented.
+	// the unambiguous "City, State" shape, so a multi-locality list isn't reparented.
 	const stateIdxs = afterSplit
 		.map((n, i) => (n.tag === "locality" && usStateSlug(n.value) ? i : -1))
 		.filter((i) => i >= 0)
@@ -159,7 +165,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		}
 	}
 
-	// Only convert when there is a sibling city to nest, the unambiguous "City, State" shape.
+	// Only convert when there's a sibling city to nest, the unambiguous "City, State" shape.
 	// A lone state-name locality ("Washington", "Florida") can be a city or a state in
 	// this context, so leave it untouched rather than risk a mis-fire.
 	if (!region.children.length) return afterSplit

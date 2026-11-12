@@ -4,18 +4,29 @@
 /**
  *   The two-path comparison's own logic runs against a scripted service reader.
  *
- *   The check assigns one of three results to each point. A live run can only be watched making that decision.
- *   A scripted function makes the decision testable. Points the service places inside agree. Points far from
- *   every service edge disagree. Points within a few centimeters of an edge receive `boundary_tolerance` because
- *   the two channels round the same edge differently.
+ *   The check assigns one of three results to each point.
+ *   A live run can only be watched making that decision.
  *
- *   The service side resolves hole roles the same way the ingest does. The publisher uses one convention on both
- *   channels. A checker that read the service's rings as nested GeoJSON would answer "inside" for a point in a
- *   hole and report the artifact as wrong at exactly the locations the hole handling exists for.
+ *   A scripted function makes the decision testable.
+ *   Points the service places inside agree.
  *
- *   The test also pins the negative case. The Department does not publish Donegal, one of 31 local authorities.
- *   Northern Ireland is a separate jurisdiction. Both cases must read `unknown` with no designation. The test
- *   catches a builder that applies the flood layer's Zone-1-by-absence rule to these cases.
+ *   Points far from every service edge disagree.
+ *   Points within a few centimeters of an edge receive `boundary_tolerance`
+ *   because the two channels round the same edge differently.
+ *
+ *   The service side resolves hole roles the same way the ingest does.
+ *   The publisher uses one convention on both channels.
+ *
+ *   A checker that read the service's rings as nested GeoJSON would answer "inside" for a point
+ *   in a hole and report the artifact as wrong at exactly the locations the hole handling exists for.
+ *
+ *   The test also pins the negative case.
+ *   The Department doesn't publish Donegal, one of 31 local authorities.
+ *
+ *   Northern Ireland is a separate jurisdiction.
+ *   Both cases must read `unknown` with no designation.
+ *
+ *   The test catches a builder that applies the flood layer's Zone-1-by-absence rule to these cases.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

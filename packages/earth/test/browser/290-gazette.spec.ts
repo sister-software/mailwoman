@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file The `/gazette` explorer: a name search over the published browser gazetteer, and a place permalink that
  *   shows the place's ancestors and the record as the resolver reads it.

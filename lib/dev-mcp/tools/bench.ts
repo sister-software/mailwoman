@@ -40,10 +40,10 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 
 		if (args["include_cold"]) {
 			// This eviction makes the measurement cold by removing the cached engine.
-			registry.evictAll()
+			await registry.evictAll()
 
 			const startedAt = Date.now()
-			const coldEngine = await registry.acquire(config)
+			using coldEngine = await registry.acquire(config)
 			const builtAt = Date.now()
 
 			await coldEngine.session.geocode(selected[0]!.input)
@@ -55,7 +55,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 			}
 		}
 
-		const engine = await registry.acquire(config)
+		using engine = await registry.acquire(config)
 		const samples: number[] = []
 
 		for (let pass = 0; pass < repetitions; pass++) {

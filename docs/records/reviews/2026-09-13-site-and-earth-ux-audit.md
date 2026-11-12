@@ -31,7 +31,7 @@ Half of this was hard to check for a separate reason: `.yarnrc.yml` declared
 
 Earth, once the `libc` fix landed (2026-09-14): `vite build` completes on Linux, so the Earth changes
 compile, bundle and pass the PWA precache step. `packages/react`'s node-mode suite is green (21 tests,
-including `place-render.node.test.ts` — the camera logic this pass deliberately did not touch), and so
+including `place-render.node.test.ts` — the camera logic this pass deliberately didn't touch), and so
 are `packages/earth`'s unit tests (14, including `routes.test.ts`, the `?q=` parser that `initialQuery`
 calls).
 
@@ -56,8 +56,8 @@ auto-run fires.
 
 One new flake vector, for the case where a flake ever appears: when the auto-run finishes before the
 fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
-while the second is still in flight. Both runs send the same query and render the same DOM, so there
-is no observable difference. That same timing is the reason a second run happens at all.
+while the second is still in flight. Both runs send the same query and render the same DOM, so there's
+no observable difference. That same timing is the reason a second run happens at all.
 
 ---
 
@@ -67,7 +67,7 @@ Reported symptom: Safari force-reloads the Earth tab with a memory warning. Caus
 appeared nowhere in the repository.
 
 An ONNX `InferenceSession` keeps its weights and arenas in the WASM heap, or on the GPU — memory the
-JavaScript collector does not own. The runtime freed the wrapper when the last reference to a loaded bundle disappeared and
+JavaScript collector doesn't own. The runtime freed the wrapper when the last reference to a loaded bundle disappeared and
 left the model resident. `useReleaseRuntime` rebuilds the bundle whenever the version or the backend
 force changes (`useReleaseRuntime.ts:289`, deps `[selectedVersion, forceWASM]`), so every model-version
 pick, every Force WASM toggle and every compare-mode entry added the native memory of one more model that
@@ -78,7 +78,7 @@ Three leaks, fixed in 86e85929f:
 1. `WebONNXRunner` held `modelBytes` for its whole life. `InferenceSession.create` copies the graph into
    the runtime's own heap, so that was a second full copy of a 38 MB model, kept for the page's life,
    to no purpose. Dropped as soon as a session owns it.
-2. `WebONNXRunner.release()` did not exist. It does now, and is what hands the session's memory back.
+2. `WebONNXRunner.release()` didn't exist. It does now, and is what hands the session's memory back.
    Safe to call twice, and safe mid-load — an in-flight session is awaited and then released, so an
    aborted load cannot leak the session it was half-way through building.
 3. `useReleaseRuntime` now takes `disposeAssets` and calls it in the three places a bundle stopped being
@@ -86,7 +86,7 @@ Three leaks, fixed in 86e85929f:
    are never resident at once, because the peak is what kills a tab), a bundle whose load was aborted after it
    had already resolved, and the last bundle on unmount.
 
-This is separate from the main-thread stall below, and does not fix it. It does reduce what the page
+This is separate from the main-thread stall below, and doesn't fix it. It does reduce what the page
 holds while that work runs, and it is the more likely explanation of the browser killing a tab.
 
 ---
@@ -98,13 +98,13 @@ holds while that work runs, and it is the more likely explanation of the browser
 `packages/earth/lib/App.tsx:78` passed the URL's query as `defaultAddress`, which only pre-fills the
 field. No code submitted it. A shared link therefore landed on the world view with the address sitting
 in the search box, unrun, and the visitor had to press Enter themselves — so "Copy link" produced a
-link that did not reproduce the result it was copied from. Reproduced on
+link that didn't reproduce the result it was copied from. Reproduced on
 `?q=350+5th+Ave+New+York+NY+10118`: 48 s after load, the field was populated but neither a result sheet
 nor a marker had appeared.
 
 Fixed: `Geocoder` takes an `initialQuery` prop, distinct from `defaultAddress`, and runs it once as
 soon as `runtime.ready` flips. Only the URL's query goes through it, so a cold visit still pre-fills
-the demo address without spending the visitor's first seconds on a parse they did not ask for.
+the demo address without spending the visitor's first seconds on a parse they didn't ask for.
 
 ### 1b. The map is black for ~20 s after a result appears — NOT a camera bug
 
@@ -112,13 +112,13 @@ An earlier draft of this record called this a fly-to that overshot the basemap's
 wrong. It is recorded here because acting on that diagnosis would have "fixed" the camera into a
 second bug.
 
-What is settled is that the camera is correct. `computeMapPlaceRenderSpec`
+What's settled is that the camera is correct. `computeMapPlaceRenderSpec`
 (`packages/react/lib/map/place-render.ts:126`) flies an interpolated hit to z15, well inside the
 Protomaps source's `maxzoom: 15`, and the marker lands on the right building. The viewport is
 nevertheless black for tens of seconds and then fills in on its own with no interaction. Why it does
-that is the open question below. An earlier answer to it has also been withdrawn.
+that's the open question below. An earlier answer to it has also been withdrawn.
 
-The cause is not established. The 2026-09-14 entry that claimed to establish it has been withdrawn. This
+The cause isn't established. The 2026-09-14 entry that claimed to establish it has been withdrawn. This
 is the second confident wrong answer about this one symptom, and this record notes the pattern here.
 
 **Fact, from source.** Inference runs on the page's main thread.
@@ -145,9 +145,9 @@ whole page life. That measurement cannot state the claim:
   `packages/tile-worker/lib/protomaps.ts:72` builds the template as
   `https://tiles.mailwoman.post/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
-  and the measurement is the one that is wrong.
+  and the measurement is the one that's wrong.
 
-**2026-09-14: the measurement does not reproduce the bug.** The live page was instrumented with a
+**2026-09-14: the measurement doesn't reproduce the bug.** The live page was instrumented with a
 longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
 
 - **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated. That
@@ -165,21 +165,21 @@ Every observation of this symptom in this record came from a tab driven by brows
 runs the page hidden. So the black map is, on the evidence available, **an artifact of how it was
 observed**. It has never been reproduced in a browser tab a human was looking at.
 
-That does not prove the app is fine. A visible tab might still stall for its own reasons, and the
-original report deserves a look. It does mean there is currently no evidence of a bug here. The next
+That doesn't prove the app is fine. A visible tab might still stall for its own reasons, and the
+original report deserves a look. It does mean there's currently no evidence of a bug here. The next
 step is a five-minute check in a visible tab rather than a fix:
 `yarn workspace @mailwoman/earth preview`, open `http://localhost:7771`, run a query, watch.
 
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
 resolve shows long tasks and main-thread occupancy directly. Alternatively, call
-`performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
+`performance.setResourceTimingBufferSize(5000)` before the query if request counts are what's wanted.
 The question to answer first is whether the main thread is occupied or idle during those twenty
 seconds. Everything else follows from that, and no change should be made until it is known.
 
-Not fixed, and it should not be fixed from this workspace. The candidate actions (inference in a
+Not fixed, and it shouldn't be fixed from this workspace. The candidate actions (inference in a
 worker, yielding between pipeline stages) are architecture changes whose whole value is their effect
 on frame timing. A workspace that cannot open a browser cannot judge frame timing. The memory work
-above (86e85929f) fixed a separate, established bug and does not fix this one.
+above (86e85929f) fixed a separate, established bug and doesn't fix this one.
 
 ### 2. Nine silent failure paths in Earth
 
@@ -187,17 +187,17 @@ above (86e85929f) fixed a separate, established bug and does not fix this one.
 prints a raw `Error.message` in monospace with no `role="alert"` / `aria-live`. Everything below fails
 with no result on screen:
 
-| Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
-| --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. A second press performs no work, forever.                                                                                     |
-| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centered on the US.                                                                                                                       |
-| Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
-| Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
-| Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                      |
-| Decode-path trace fails           | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64`              | Tick "Trace the decode path" and the drawer never opens. No reason is given.                                                                       |
-| `loadManifest` resolves `null`    | `packages/react/lib/runtime/useReleaseRuntime.ts:227`                                   | `ready` never true, `errorMessage` stays null, footer pinned to "Loading releases…" permanently.                                                   |
-| Any load error                    | `useReleaseRuntime.ts:283` sets the message but leaves `assets` null                    | `bundleLoading` stays true → the progress bar sweeps _forever underneath the error_, footer stuck on "Loading…".                                   |
-| Any of the above                  | —                                                                                       | No retry control anywhere, and `GeocoderControls.tsx:194` `disabled={!runtime.ready}` leaves the search box permanently dead.                      |
+| Failure                           | Where                                                                                   | What the user sees                                                                                                                                |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. A second press performs no work, forever.                                                                                    |
+| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centered on the US.                                                                                                                      |
+| Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there's no empty state at all. |
+| Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                       |
+| Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                     |
+| Decode-path trace fails           | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64`              | Tick "Trace the decode path" and the drawer never opens. No reason is given.                                                                      |
+| `loadManifest` resolves `null`    | `packages/react/lib/runtime/useReleaseRuntime.ts:227`                                   | `ready` never true, `errorMessage` stays null, footer pinned to "Loading releases…" permanently.                                                  |
+| Any load error                    | `useReleaseRuntime.ts:283` sets the message but leaves `assets` null                    | `bundleLoading` stays true → the progress bar sweeps _forever underneath the error_, footer stuck on "Loading…".                                  |
+| Any of the above                  | —                                                                                       | No retry control anywhere, and `GeocoderControls.tsx:194` `disabled={!runtime.ready}` leaves the search box permanently dead.                     |
 
 Also: `packages/earth/lib/main.tsx:19` calls `registerSW()` with no `onNeedRefresh` / `onOfflineReady`,
 and `packages/react/lib/map/MapCanvas.tsx` has no `onError` — a dead tile worker renders a blank canvas
@@ -248,7 +248,7 @@ of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). A move fr
 `/license` drops the band and **shifts the whole page up by its height**. That jump is a large part of
 what reads as disjointed.
 
-### 6. Two nav rows disagree about where you are
+### 6. Two nav rows disagree about where you're
 
 On `/docs/pricing` the navbar highlights **Pricing** (`docusaurus.config.ts:314`, a direct doc link) while
 the sub-header highlights **About** (pricing lives in the `about` sidebar, `sidebars.ts:236`). Pick one:
@@ -257,7 +257,7 @@ either give the pricing page its own navbar entry, or drop the navbar shortcut a
 ### 7. `/license/issued` visited cold is a bare sentence
 
 The page has no layout or branding. It shows a single line of copy in the top-left of an otherwise empty viewport. It is only
-ever reached as a Stripe return URL, but that is exactly the moment a customer is most anxious. It needs
+ever reached as a Stripe return URL, but that's exactly the moment a customer is most anxious. It needs
 a real "what happens next" state.
 
 ### 8. The 404 tells the visitor to contact the site owner
@@ -295,7 +295,7 @@ Four fixes, in order of payoff:
 1. `preload` the four faces that paint above the fold (Bliss Pro Regular 400, Medium 500, Bold 700, and
    the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.post`
    (`docusaurus.config.ts:71`) saves the handshake but not the CSS-parse discovery delay.
-2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap does not
+2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap doesn't
    move text.
 3. Consider self-hosting the four critical faces on the docs origin and leaving the rest on
    `public.mailwoman.post` — removes a connection from the critical path entirely.
@@ -307,14 +307,14 @@ Four fixes, in order of payoff:
 **Search input**
 
 - `packages/earth/lib/App.tsx:78` — `defaultAddress={query ?? DEFAULT_ADDRESS}` pre-fills the field with
-  the full White House address. There is **no `autoFocus`, no `onFocus`, no `.select()`** anywhere in
+  the full White House address. There's **no `autoFocus`, no `onFocus`, no `.select()`** anywhere in
   `packages/earth/lib` or `packages/react/lib`. The caret starts mid-string when a user clicks the field: typing an
   address produces `1600 Pennsylvania Ave NW, W<your text>ashington, DC 20500`, which is exactly what
   happened on the first run of this audit. Select-on-focus, or ship the field empty with the address as
   placeholder only.
 - The same string is also the placeholder (`packages/react/lib/map/Geocoder.tsx:185`), which is
   effectively dead code. It can only appear after the user clears the field, and at that point it
-  re-suggests the text they had deleted.
+  re-suggests the text they'd deleted.
 - The field is `disabled` for the entire 38 MB download, so the pre-filled text sits there uneditable for
   the whole wait.
 
@@ -382,7 +382,7 @@ Four fixes, in order of payoff:
   `prefers-color-scheme` handling, even though `packages/react/tokens/index.css:61` ships a complete light
   palette.
 - Sheets (`packages/react/lib/map/MapSheet.tsx:36-60`): Escape closes, but focus is never moved in,
-  trapped, or returned. On mobile they are `inset: 0` full-screen — a de-facto modal as a bare `<aside>`
+  trapped, or returned. On mobile they're `inset: 0` full-screen — a de-facto modal as a bare `<aside>`
   with no `aria-modal`, so a screen reader keeps reading the map behind it.
 
 **Responsive / tokens**
@@ -452,7 +452,7 @@ each looked correct in the stylesheet:
 
 - An absolutely positioned close reserves no space. Hung off a bar with no height of its own, a 44px
   button came down across the right end of the search field below it.
-- A negative top margin does not pull a grid item out of its padding. The track is sized from the margin
+- A negative top margin doesn't pull a grid item out of its padding. The track is sized from the margin
   box while the item is laid out at the track's start, so the bar painted 12px past its own row.
 - A drawer at its tall detent crosses the control rail's corner. Under it, the rail sat on the drawer's
   own close. The drawer is now raised over the rail, as a sheet over a map should be.
@@ -467,13 +467,13 @@ the About, Layers and Developer panels close differently from the result.
 Run after the restructure, because a rearrangement is when copies of one idea get left behind. Every item
 fixed here was two implementations of one thing, and four of them had already disagreed.
 
-| Duplicate                                      | What the disagreement cost                                                                                                                                                                                                                                 |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass.                                                                                               |
-| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                                                                                                                     |
-| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel and dismissed the result behind it. One keystroke, two dismissals.                                                                                                                                 |
-| Sheet close button, markup re-typed            | Against `MapSheet`'s docblock at the time. That docblock put the close button in one component so the four sheets could not disagree. `packages/react/lib/map/MapSheet.tsx:23` now describes `SheetClose` as the accessible button for dismissing a sheet. |
-| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it. A drift arms a drag on a layout with nowhere to drag to.                                                                                                                                      |
+| Duplicate                                      | What the disagreement cost                                                                                                                                                                                                                                |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass.                                                                                              |
+| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                                                                                                                    |
+| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel and dismissed the result behind it. One keystroke, two dismissals.                                                                                                                                |
+| Sheet close button, markup re-typed            | Against `MapSheet`'s docblock at the time. That docblock put the close button in one component so the four sheets couldn't disagree. `packages/react/lib/map/MapSheet.tsx:23` now describes `SheetClose` as the accessible button for dismissing a sheet. |
+| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it. A drift arms a drag on a layout with nowhere to drag to.                                                                                                                                     |
 
 Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-map-searchbar__clear`.
 `.mw-map-chrome__search` was the last member of a deleted namespace, now `.mw-map-panel__search`.
@@ -482,7 +482,7 @@ Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-m
 still listed `.mw-map-chrome--top` and `.mw-map-sheet--bottom`, and `visibleBoxes` SKIPS a selector whose
 `count() !== 1` — so the overlap interface had stopped testing the surface the restructure was about, and
 made no assertion. An interface check that skips what it cannot find reports green for a deleted subject. Two unit and
-browser assertions were stale the same way and had not been run since.
+browser assertions were stale the same way and hadn't been run since.
 
 Left unchanged deliberately:
 
@@ -511,8 +511,8 @@ browser suites need Playwright browsers that VM has no egress to fetch.
 
 **The one that was a defect rather than untidiness.** The bars and the About legend painted `#22c55e / #f59e0b /
 #ef4444`; the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`. So the legend that
-explains the confidence colors used colors the results table does not, and the comment above the span
-rules said _"The tier tints match `.mw-conf__bar--high/--mid/--low`."_ Raw hex also meant the tiers did not
+explains the confidence colors used colors the results table doesn't, and the comment above the span
+rules said _"The tier tints match `.mw-conf__bar--high/--mid/--low`."_ Raw hex also meant the tiers didn't
 follow the theme, on surfaces that flip from white to near-black.
 
 **Where the tokens live.** `packages/react/tokens/index.css` is GENERATED by `yarn workspace @mailwoman/react
@@ -521,21 +521,21 @@ run — which is how the first attempt at this pass was written, and would have 
 regenerated.
 
 `stylesheet-interface` grew a detector for a raw pixel `border-radius`, so the scale is enforced rather than
-merely documented. The spacing scale is not enforced: it would need a lint over four properties and a way to
+merely documented. The spacing scale isn't enforced: it would need a lint over four properties and a way to
 exempt the values that are deliberate, and the check's house rule is that every rule in it is a defect that
 reached production.
 
-Kept raw on purpose: `1px` / `2px` / `3px` borders, outlines and hairlines (they should not scale with the
+Kept raw on purpose: `1px` / `2px` / `3px` borders, outlines and hairlines (they shouldn't scale with the
 reader's type size), and `packages/planetary/lib/styles/app.css`'s starfield gradients. Those gradients are artwork
 rather than palette. Still outstanding: one `rgba(0, 0, 0, 0.18)` shadow in `panels.module.css` and two raw
 background hexes in the planetary app.
 
 ---
 
-## What the linter caught that the tests did not
+## What the linter caught that the tests didn't
 
 `oxlint` cannot run in the workspace VM (node 22 against the repo's 24), so these came back from a run on
-real hardware. Four were mine, and one of them was a rule I had argued myself out of.
+real hardware. Four were mine, and one of them was a rule I'd argued myself out of.
 
 **The ref written during render.** The permalink race — `?q=` answering "Classifier not ready" on a page
 whose classifier had loaded — came from mirroring `rt.assets` into a ref in an EFFECT: React runs effects
@@ -545,14 +545,14 @@ to say so: a value written during render is one React is entitled to discard.
 
 The fix is neither mirror. The callbacks that parse with a bundle now DEPEND on the bundle — `rt.assets`,
 `rt.selectedRelease`, `rt.selectedVersion` in their dependency arrays — so every consumer gets the new
-callback in the same render that produced the new assets, and there is no second copy of the truth to keep
+callback in the same render that produced the new assets, and there's no second copy of the truth to keep
 in step. The identity churns once per release load. That load is the only moment the identity means anything. The refs
-existed to hold identity fixed across exactly that change. That change is the one time identity should not stay fixed.
+existed to hold identity fixed across exactly that change. That change is the one time identity shouldn't stay fixed.
 
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
 export (`./map/graticule` added, and the test now imports it the way the geometry test does). Two missing
-hook dependencies. Two unnamed thresholds in the drawer gestures (`3` for a press that has traveled far
-enough to be a drag, `8` for a pull at the top of the scroll that has traveled far enough to be one, and the
+hook dependencies. Two unnamed thresholds in the drawer gestures (`3` for a press that's traveled far
+enough to be a drag, `8` for a pull at the top of the scroll that's traveled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
 scrolling). `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there. And
 `beforeId`, which title-cases an acronym the house style capitalizes whole.

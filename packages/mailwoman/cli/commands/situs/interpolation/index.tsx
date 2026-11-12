@@ -9,6 +9,7 @@ import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { scriptEntryPath } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -23,7 +24,6 @@ import {
 	type CommandComponent,
 	positiveInteger,
 	splitUSStateCodes,
-	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -313,15 +313,15 @@ async function buildStateDatabase(
 
 	if (result.status !== 0) {
 		console.error(`  [fail] ${stateAbbr}: situs interpolation-database exited ${result.status}`)
-		console.error(stripAnsi(result.stderr ?? "").trim())
+		console.error(stripANSI(result.stderr ?? "").trim())
 
 		return { wallMs, segments: 0, counties: 0 }
 	}
 
 	// The segment count appears on stdout and the county count on stderr.
 	// The patterns have no line anchors because the summary lines include a render prefix.
-	const stdout = stripAnsi(result.stdout ?? "")
-	const stderr = stripAnsi(result.stderr ?? "")
+	const stdout = stripANSI(result.stdout ?? "")
+	const stderr = stripANSI(result.stderr ?? "")
 	const combined = `${stdout}\n${stderr}`
 	const segMatch = combined.match(/(\d+) segment-sides/)
 	const segments = segMatch ? Number(segMatch[1]) : 0

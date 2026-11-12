@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The country sets the coarse-placer dataset is drawn from. `build-dataset.ts` samples them. the
- *   outlier builders consult them to keep in-map countries out of the `other` pool.
+ *   The country sets the coarse-placer dataset is drawn from.
  *
- *   Every set is read from {@linkcode COARSE_CLASSES}, the model's label map, through the source each class's rows
- *   are drawn from. A class added to the label map without a source fails to compile here.
+ *   `build-dataset.ts` samples them. the outlier builders consult them to keep
+ *   in-map countries out of the `other` pool.
+ *
+ *   Every set is read from {@linkcode COARSE_CLASSES}, the model's label map,
+ *   through the source each class's rows are drawn from.
+ *   A class added to the label map without a source fails to compile here.
  */
 
 import { COARSE_CLASSES } from "#coarse-placer/featurize"
@@ -30,7 +33,8 @@ const CoarseRowSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The G-NAF corpus, which `build/dataset.ts` reads on its own glob.
+	 * The G-NAF corpus.
+	 * `build/dataset.ts` reads it on its own glob.
 	 */
 	GNAF: "gnaf-corpus",
 } as const

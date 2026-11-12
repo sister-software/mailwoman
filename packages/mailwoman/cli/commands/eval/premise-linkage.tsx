@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   With `--config <module>` the command loads a private run configuration. It requires an agreed `--min-cell-size`;
- *   Without the config, the shipped synthetic fixture checks the harness. It never measures a register.
+ *   With `--config <module>` the command loads a private run configuration.
  *
- *   The salt is read from `$MAILWOMAN_PREMISE_LINKAGE_SALT` rather than taken as a flag, because a flag value is
- *   visible in the process table to every user on the host.
+ *   It requires an agreed `--min-cell-size`; Without the config, the shipped
+ *   synthetic fixture checks the harness.
+ *   It never measures a register.
+ *
+ *   The salt is read from `$MAILWOMAN_PREMISE_LINKAGE_SALT` rather than taken as a flag,
+ *   because a flag value is visible in the process table to every user on the host.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import {
@@ -70,8 +74,10 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 				import("#tools/eval-harness/premise-linkage/report-writer"),
 			])
 
-		const { PremiseLinkageMode, PremiseLinkagePolicy } = await import("#tools/eval-harness/premise-linkage/schema")
-		const { $private } = await import("#env")
+		const {
+			schema: { PremiseLinkageMode, PremiseLinkagePolicy },
+			env: { $private },
+		} = await allKeyed({ schema: import("#tools/eval-harness/premise-linkage/schema"), env: import("#env") })
 
 		const controlled = typeof options.config === "string" && options.config.length > 0
 		const mode = controlled ? PremiseLinkageMode.Controlled : PremiseLinkageMode.Synthetic

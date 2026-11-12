@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Route definitions + handlers for the Photon-compatible surface. The OpenAPI document is
- *   emitted from these definitions, so no handwritten spec exists. Handlers parse params from
- *   the `legacyQuery` express-shaped view. The zod query schemas drive only the emitted document.
+ *   Route definitions + handlers for the Photon-compatible surface.
+ *
+ *   The OpenAPI document is emitted from these definitions, so no handwritten spec exists.
+ *   Handlers parse params from the `legacyQuery` express-shaped view.
+ *   The zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -37,7 +39,7 @@ function asStringArray(raw: unknown): string[] | null {
 /**
  * A friendly html landing page for `GET /`.
  *
- * Upstream komoot/photon serves no root page, so there is no wire interface to match.
+ * Upstream komoot/photon serves no root page, so there's no wire interface to match.
  * Relative example URLs resolve against whatever host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>
@@ -67,7 +69,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 <li><a class="q" href="/api?q=1600+pennsylvania+ave&amp;limit=1">/api?q=1600+pennsylvania+ave&amp;limit=1</a></li>
 <li><a class="q" href="/reverse?lat=52.52&amp;lon=13.405">/reverse?lat=52.52&amp;lon=13.405</a></li>
 </ul>
-<footer><a href="https://mailwoman.post/docs/developers/get-started/what-mailwoman-is">What Mailwoman is</a> &middot; <a href="https://mailwoman.post/demo">Live demo</a></footer>
+<footer><a href="https://mailwoman.post/product">What Mailwoman is</a> &middot; <a href="https://mailwoman.post/demo">Live demo</a></footer>
 </body>
 </html>
 `

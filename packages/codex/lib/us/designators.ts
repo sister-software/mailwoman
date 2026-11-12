@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   United States designators: delivery services, rural forms, secondary units, floors and the English
- *   relation words. Unit, floor and PO Box rows read from `unit-designator.ts`, `floor-designator.ts` and
- *   `po-box.ts`. Rural, General Delivery and Bin rows are the forms those modules lack.
+ *   United States designators: delivery services, rural forms, secondary units,
+ *   floors and the English relation words.
+ *
+ *   Unit, floor and PO Box rows read from `unit-designator.ts`, `floor-designator.ts` and `po-box.ts`.
+ *   Rural, General Delivery and Bin rows are the forms those modules lack.
  *
  * @see {@link https://pe.usps.com/text/pub28/28apc_003.htm USPS Publication 28, Appendix C2 secondary unit designators}
  * @see {@link https://pe.usps.com/text/pub28/28c2_036.htm USPS Publication 28 section 281, Post Office Box address format}

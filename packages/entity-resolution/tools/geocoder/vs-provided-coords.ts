@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Geocoder validation against provided coordinates. TX HHSC's nursing-facilities registry ships
- *   a `Geo Location` (`lat,lon`) per facility alongside its physical address. Geocode the address
- *   with mailwoman's parser and resolver, then measure the great-circle delta to the provided point,
- *   broken down by resolution tier.
+ *   Geocoder validation against provided coordinates.
  *
- *   The provided coordinate is treated as ground truth for this eval, with the caveat that it is
- *   itself a third-party geocode of unknown provenance. A large delta is a discrepancy to inspect
- *   rather than automatically our error.
+ *   TX HHSC's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per
+ *   facility alongside its physical address.
+ *   Geocode the address with mailwoman's parser and resolver, then measure the
+ *   great-circle delta to the provided point, broken down by resolution tier.
+ *
+ *   The provided coordinate is treated as ground truth for this eval, with the caveat
+ *   that it is itself a third-party geocode of unknown provenance.
+ *   A large delta is a discrepancy to inspect rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`

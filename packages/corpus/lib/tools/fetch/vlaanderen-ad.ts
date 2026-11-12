@@ -2,28 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Harvests the INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen into the directory
- * that `#be/adapters/vlaanderen/adapter` reads.
+ * Harvests the INSPIRE Addresses (AD) theme of agentschap Digitaal Vlaanderen into
+ * the directory that `#be/adapters/vlaanderen/adapter` reads.
  *
- * `./inspire-addresses.ts` owns what every INSPIRE WFS shares, in GeoJSON. This module is Flanders'
- * own GML paging, kept apart for three reasons the service forced:
+ * `./inspire-addresses.ts` owns what every INSPIRE WFS shares, in GeoJSON.
+ * This module is Flanders' own GML paging, kept apart for three reasons the service forced:
  *
- * 1. The component types are small enough to take whole — 167,218 `ad:ThoroughfareName`, 1,190
- *    `ad:PostalDescriptor`, 609 `ad:AdminUnitName` — so the harvest writes one file per type and the
- *    adapter joins locally rather than resolving four references per address against 4,563,062 of
- *    them.
- * 2. `sortBy=gml:identifier` answers HTTP 504, so the service grants no ordering. The manifest
- *    records the pages taken and their order. That record makes a harvest reproducible even though
- *    a second harvest need not match the first.
- * 3. A bare `resultType=hits` answers `numberMatched="10000"` whatever `count` asks for. The count
- *    has to be taken past index 0: `startIndex=1` answers `numberMatched="4563062"`, and the
- *    bisected tail agrees — `startIndex=4563061` returns one feature and `startIndex=4563062`
- *    returns none.
+ * 1. The component types are small enough to take whole — 167,218 `ad:ThoroughfareName`,
+ *    1,190 `ad:PostalDescriptor`, 609 `ad:AdminUnitName` — so the harvest writes
+ *    one file per type and the adapter joins locally rather than resolving four
+ *    references per address against 4,563,062 of them.
+ * 2. `sortBy=gml:identifier` answers HTTP 504, so the service grants no ordering.
+ *    The manifest records the pages taken and their order.
+ *    That record makes a harvest reproducible even though a second harvest need not match the first.
+ * 3. A bare `resultType=hits` answers `numberMatched="10000"` whatever `count` asks for.
+ *    The count has to be taken past index 0: `startIndex=1` answers `numberMatched="4563062"`,
+ *    and the bisected tail agrees — `startIndex=4563061` returns one feature
+ *    and `startIndex=4563062` returns none.
  *
- * Article 3 of the elected `Modellicentie voor gratis hergebruik Vlaanderen` grants reproduction and
- * transmission, and article 6 states that access is free. Those two grants cover paging. The
- * capabilities document's `ows:Fees` and `ows:AccessConstraints` describe the service rather than
- * the data, so neither is read here.
+ * Article 3 of the elected `Modellicentie voor gratis hergebruik Vlaanderen` grants
+ * reproduction and transmission, and article 6 states that access is free.
+ * Those two grants cover paging.
+ *
+ * The capabilities document's `ows:Fees` and `ows:AccessConstraints` describe the service
+ * rather than the data, so neither is read here.
  */
 
 import { open } from "node:fs/promises"
@@ -204,7 +206,7 @@ interface PageOnDisk {
  * from the page size, so a page the service answered short is recorded as short.
  * A file whose opening bytes state no `numberReturned` is left out.
  *
- * The harvest then requests that index again: a page of unknown extent is not a page
+ * The harvest then requests that index again: a page of unknown extent isn't a page
  * this harvest can count, and a run killed mid-write leaves exactly that.
  *
  * A group small enough for one page is written under `<stem>.gml` with no index,
@@ -301,7 +303,7 @@ export async function harvestVlaanderenAD(
 		}
 
 		// A component type read short leaves every address referencing its tail unjoinable,
-		// and the adapter would refuse those rows as if the publisher had not published them.
+		// and the adapter would refuse those rows as if the publisher hadn't published them.
 		if (read !== count) {
 			throw new Error(
 				`vlaanderen ad wfs: ad:${typeName} answered ${read} features over ` +
@@ -315,7 +317,7 @@ export async function harvestVlaanderenAD(
 	const addressPages: Array<{ startIndex: number; file: string; numberReturned: number }> = []
 	let retrievedAt = ""
 
-	// A page already on disk is not requested again.
+	// A page already on disk isn't requested again.
 	// The service answered HTTP 400 on one page of a whole-region harvest after 105 pages
 	// and 1.8 GB, and that page answered 200 on a later attempt, so the refusal was transient.
 	// Without this the next run starts at index 0 and re-downloads every page it already holds.

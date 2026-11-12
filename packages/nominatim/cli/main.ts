@@ -6,10 +6,10 @@
  *   `mailwoman-nominatim`, booting a Nominatim-compatible endpoint through the `serve` command.
  *   Usage and examples live in the package readme.
  *
- *   Wires the real engine: `/search` over `geocodeAddress` and `/reverse` over
- *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the resolver-backend
- *   selector `GeocodeRouter` uses. Results include the OpenCage-style `annotations` block composed
- *   from the `@mailwoman/*` annotators.
+ *   Wires the real engine: `/search` over `geocodeAddress` and `/reverse`
+ *   over `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons),
+ *   reusing the resolver-backend selector `GeocodeRouter` uses.
+ *   Results include the OpenCage-style `annotations` block composed from the `@mailwoman/*` annotators.
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
@@ -107,7 +107,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const resolver = createWOFResolver(backend)
 	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse.
-	// A no-op when the extract is not on disk, so the endpoint falls back to the OSM tier without an error.
+	// A no-op when the extract isn't on disk, so the endpoint falls back to the OSM tier without an error.
 	// Both read one generation of the active selection, else their conventional paths.
 	const rooftops = await openServingRooftopProviders(dataRootPath())
 	const banExtracts = rooftops.national
@@ -194,7 +194,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolved.address.road = result.street
 			}
 
-			// The country tag is not always in the hierarchy, since US admin results omit it.
+			// The country tag isn't always in the hierarchy, since US admin results omit it.
 			// Backfill from the US-centric-data default so the address, display name,
 			// flag, currency and calling code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback ?? null

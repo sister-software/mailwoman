@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the POI explorer. Live poi.db search is injected as {@link POILiveSearch} so the httpvfs
- *   worker stays out of this package's browser graph.
+ *   Types for the POI explorer.
+ *
+ *   Live poi.db search is injected as {@link POILiveSearch} so the httpvfs worker
+ *   stays out of this package's browser graph.
  */
 
 import type { QueryKindResult } from "@mailwoman/core/pipeline"

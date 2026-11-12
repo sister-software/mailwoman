@@ -27,7 +27,7 @@ printed query or result rather than on an inference from an output coordinate.
    was overruled — `defaultCountry` outranks every other country signal in the codebase, by design
    and in three separate places.
 
-3. **The premise needs correcting: `75001` is not an unambiguously French postcode.** It is a valid
+3. **The premise needs correcting: `75001` isn't an unambiguously French postcode.** It is a valid
    US ZIP (Addison, Texas). codex agrees — `candidateSystemsForPostcode("75001")` returns
    `["us","de","fr"]` — and the gazetteer holds the string in four countries. No pattern-only
    mechanism can settle this. It needs geometry.
@@ -56,7 +56,7 @@ Q {"text":"Paris","placetype":"locality","limit":5,"country":"US","postcode":"75
 ```
 
 `resolver/resolve.ts` does its part. `firstPostcodeValue` (line 120) pre-scans the whole tree
-because postcode and locality are siblings and the top-down walk would not otherwise let the
+because postcode and locality are siblings and the top-down walk wouldn't otherwise let the
 locality lookup see it; `#lookupAndPick` (lines 981-983) attaches it to any `locality` query.
 
 It is the **backend** that drops it. `WOFSQLitePlaceLookup.findPlace` dispatches the resolved
@@ -161,7 +161,7 @@ This was verified twice: once by recomputing the check arithmetic from raw gazet
 by running the production CLI. The consistency pass behaves exactly as specified. Its input is a
 country it should never have received. The falsehood flag _does_ fire.
 
-## 3. The premise: `75001` is not unambiguously French
+## 3. The premise: `75001` isn't unambiguously French
 
 This is the required correction, and it kills the obvious fix.
 
@@ -191,7 +191,7 @@ mechanism at all. Two production paths, one change.
 
 ## 4. The mechanism that does work: postcode-country coherence
 
-The shape is ambiguous. The **geometry** is not. Addison and Paris are 8,000 km apart, and only one
+The shape is ambiguous. The **geometry** isn't. Addison and Paris are 8,000 km apart, and only one
 of them has a town of the same name next to its 75001.
 
 This is the same joint-consistency move the resolver already makes three times — `applyAdminCoherence`
@@ -210,7 +210,7 @@ Every file in `resolver/` is unchanged.
 
 ### Confound board
 
-Verdicts were identical at 15, 25 and 50 km checks. The mechanism is not check-tuned.
+Verdicts were identical at 15, 25 and 50 km checks. The mechanism isn't check-tuned.
 
 | postcode | locality      | verdict                            | distance | note                                   |
 | -------- | ------------- | ---------------------------------- | -------: | -------------------------------------- |
@@ -239,7 +239,7 @@ Real pairs, sampled deterministically from the shipped artifacts:
 | 400 FR (CP, commune) | `postcode-locality-fr.db`, `is_containing=1` | FR **400**, other **0**, abstain 0   |
 
 800 pairs, zero border crossings, at both the 15 and 25 km checks. The 22 US abstentions are pairs
-where the ZIP's parent name is not an exact-matching locality in the admin gazetteer — a recall
+where the ZIP's parent name isn't an exact-matching locality in the admin gazetteer — a recall
 gap, and abstention is the safe outcome there.
 
 ### The four required cases, end to end
@@ -255,9 +255,9 @@ gap, and abstention is the safe outcome there.
 The mechanism requires **both** a postcode and a locality in the tree. That requirement makes it
 inert on three of the four confounds by construction rather than by tuning.
 
-Two of those rows hide separate defects that this investigation surfaced and did not fix:
+Two of those rows hide separate defects that this investigation surfaced and didn't fix:
 
-- **`Springfield, IL 62701` does not produce a locality node at all.** Measured tree:
+- **`Springfield, IL 62701` doesn't produce a locality node at all.** Measured tree:
   `region="IL"`, `postcode="62701"`, **`street="Springfield"`**. The parser tags Springfield as a
   street. Any locality-side mechanism is inert here for that reason rather than because the scoping is
   right. As a bare `(62701, Springfield)` pair the pass returns US at 3.3 km.
@@ -293,8 +293,8 @@ against exactly that configuration. The check needs to report its inert state ra
 
 Stop deriving `defaultCountry` from the locale's region subtag when the tree holds a postcode or
 the placer is confident. **This precedent already exists**: #912 change 3 (`commands/geocode.tsx:287`,
-`inferredScopeOK`) skips the locale-inferred default for a bare-locality tree, with the comment
-"Paris under the en-US locale must not be hard-scoped to Paris, Texas". The check is one predicate
+`inferredScopeOK`) skips the locale-inferred default for a bare-locality tree, with a comment that
+keeps Paris under the en-US locale from being hard-scoped to Paris, Texas. The check is one predicate
 short of covering this case.
 
 Measured effect of removing the default entirely (`--default-country none`): all four target cases

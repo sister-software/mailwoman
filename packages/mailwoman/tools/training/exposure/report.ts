@@ -2,23 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The exposure measurement artifact: per jurisdiction, what each pipeline stage holds and which phenomena it
- *   exercises.
+ *   The exposure measurement artifact: per jurisdiction, what each pipeline stage holds
+ *   and which phenomena it exercises.
  *
  *   Stages, in pipeline order:
  *
- *   - `source_records`: records the source published that the acquisition read, from the acquisition's stats file.
+ *   - `source_records`: records the source published that the acquisition read,
+ *     from the acquisition's stats file.
  *   - `canonical_rows`: rows an adapter wrote to `canonical.jsonl` after its refusals and deduplication.
- *   - `eligible_training_rows`: rows in the built corpus's `train` split that the training config admits, by a
- *       positive country weight and a positive source weight (or no source weights).
+ *   - `eligible_training_rows`: rows in the built corpus's `train` split that the training config
+ *     admits, by a positive country weight and a positive source weight (or no source weights).
  *   - `replayed_draws`: rows the training mixture draws in epoch 1, reconstructed with the trainer's seed.
  *   - `realized_draws`: rows the trainer logged as drawn, recorded only from a trainer log.
  *
- *   A stage that was not measured is `null`. A stage measured at zero is `{"total": 0, ...}`. The two are different
- *   facts and the report never writes one for the other.
+ *   A stage that was not measured is `null`.
+ *   A stage measured at zero is `{"total": 0, ...}`.
  *
- *   The report is the Python `exposure/report.py` artifact, `mailwoman.exposure/v1`, byte for byte apart from
- *   `measured_at`.
+ *   The two are different facts and the report never writes one for the other.
+ *
+ *   The report is the Python `exposure/report.py` artifact, `mailwoman.exposure/v1`,
+ *   byte for byte apart from `measured_at`.
  */
 
 import { gitHead } from "@mailwoman/core/git"
@@ -154,7 +157,7 @@ export class StageCounter {
 	}
 
 	/**
-	 * A row the stage holds but the predicates could not read.
+	 * A row the stage holds but the predicates couldn't read.
 	 * It counts toward the total.
 	 */
 	addUnreadable(country: string): void {

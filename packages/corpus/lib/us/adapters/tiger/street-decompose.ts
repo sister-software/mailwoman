@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Decompose a US street name into Stage 3 components (street_prefix, street, street_suffix) from the
- * curated libpostal/en directionals and street_types dictionaries — the same ones the runtime
- * StreetPrefixClassifier and StreetSuffixClassifier use, so corpus labels and runtime classifications
- * agree on the vocabulary.
+ * Decompose a US street name into Stage 3 components (street_prefix, street, street_suffix)
+ * from the curated libpostal/en directionals and street_types dictionaries —
+ * the same ones the runtime StreetPrefixClassifier and StreetSuffixClassifier use,
+ * so corpus labels and runtime classifications agree on the vocabulary.
  */
 
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"

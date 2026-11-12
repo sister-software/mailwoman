@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Implements `mailwoman coverage build`, which builds the demo map's address-coverage H3 hexbin
- *   PMTiles from the per-state address-point and interpolation databases.
+ *   Implements `mailwoman coverage build`, which builds the demo map's address-coverage
+ *   H3 hexbin PMTiles from the per-state address-point and interpolation databases.
  *
- *   `coverage-core.ts` implements the pipeline. `mailwoman tiles publish` uploads the result. The
- *   command requires the local databases, `tippecanoe` on the path and the `@duckdb/node-api`
- *   development dependency.
+ *   `coverage-core.ts` implements the pipeline.
+ *   `mailwoman tiles publish` uploads the result.
+ *
+ *   The command requires the local databases, `tippecanoe` on the path
+ *   and the `@duckdb/node-api` development dependency.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -62,8 +64,8 @@ const unit = (description: string, defaultValue: number) =>
 /**
  * The command specification for `mailwoman coverage build`.
  *
- * The CLI reference page `docs/articles/developers/reference/cli.mdx` is generated
- * from these option names and descriptions.
+ * The generator reads these option names and descriptions.
+ * It writes `docs/articles/reference/cli.mdx`.
  * The docs check fails when the page is stale.
  */
 export const spec = {

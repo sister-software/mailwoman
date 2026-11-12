@@ -4,8 +4,9 @@
 /**
  *   Builds a digest of the Vale rules that the Stop hook applies to replies, read from the rule files.
  *
- *   The code reads rule files to keep the digest in step with them. The parser scans lines because the fields it
- *   needs are flat scalars and one flat map. The repository ships no YAML parser.
+ *   The code reads rule files to keep the digest in step with them.
+ *   The parser scans lines because the fields it needs are flat scalars and one flat map.
+ *   The repository ships no YAML parser.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -104,7 +105,7 @@ function disabledRules(config: string): Set<string> {
 /**
  * Returns every tracked rule file under the style directory, including the `Grammar/` subdirectory.
  *
- * The list comes from git, so an untracked rule file does not appear in the digest.
+ * The list comes from git, so an untracked rule file doesn't appear in the digest.
  */
 function ruleFiles(repoRoot: PathBuilderLike): Promise<string[]> {
 	// A git pathspec `*` crosses `/`, so this pattern also matches `Grammar/`.

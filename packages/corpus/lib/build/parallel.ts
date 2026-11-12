@@ -35,7 +35,7 @@ import { sleep } from "@mailwoman/core/utils/sleep"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { reusableRun } from "#build/adapters"
+import { adapterRunInputs, reusableRun } from "#build/adapters"
 import { alignSettings } from "#build/align"
 import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align/range"
 import { mergeAlignTotals } from "#build/align/totals"
@@ -186,7 +186,7 @@ class WorkerPool {
 			pending.reject(reason)
 		}
 
-		// A slot whose process has not been forked yet has no child, and its start sees the cancellation.
+		// A slot whose process hasn't been forked yet has no child, and its start sees the cancellation.
 		for (const { child } of this.#running.values()) {
 			child?.kill("SIGTERM")
 		}
@@ -229,8 +229,8 @@ class WorkerPool {
 		if (this.#cancelled) return
 
 		// Highest priority first.
-		// A task that does not fit waits rather than letting a smaller one pass it, except that
-		// a resident adapter waiting on another resident adapter does not hold up standard work.
+		// A task that doesn't fit waits rather than letting a smaller one pass it, except that
+		// a resident adapter waiting on another resident adapter doesn't hold up standard work.
 		const ordered = this.#queue.toSorted((a, b) => b.priority[0] - a.priority[0] || b.priority[1] - a.priority[1])
 
 		for (const pending of ordered) {
@@ -472,10 +472,14 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		}
 
 		const inputStat = await tryStat(options.inputPath)
-		// A directory input's size does not predict its rows, so it is ranked first and starts early.
+		// A directory input's size doesn't predict its rows, so it is ranked first and starts early.
 		const inputWeight = inputStat?.isFile() ? inputStat.size : Number.MAX_SAFE_INTEGER
 		const adapterDir = intermediateDir(source)
-		let run = settings.resume ? await reusableRun(source, adapterDir) : null
+		const inputs = adapterRunInputs(await sourceDerivation())
+
+		let run = settings.resume
+			? await reusableRun(source, adapterDir, { corpusVersion: opts.corpusVersion, inputs })
+			: null
 
 		if (run) {
 			onProgress("adapter-run", `[${source}] reused the adapter run (${run.yielded} canonical rows)`)
@@ -492,6 +496,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 					adapterModule: derivationFor.modules.get(source)!,
 					adapterOptions: { ...serializable, inputPath: options.inputPath.toString() },
 					corpusVersion: opts.corpusVersion,
+					inputs,
 					intermediateDir: intermediateDir.toString(),
 				},
 				adapterWorkerClass(source),

@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /**
  * Styles for the custom /glossary page (see index.tsx). Infima variables throughout so both
  * themes work without per-theme overrides; term-card styling follows the upstream plugin's look.

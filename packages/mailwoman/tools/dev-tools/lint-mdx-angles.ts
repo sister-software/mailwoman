@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Raw-angle-bracket MDX lint. Docusaurus compiles both .md and .mdx through micromark's MDX-JSX
- *   extension, so a bare `<55` or `{word` in prose is a build-breaking parse error ("Unexpected
- *   character before name"). This class broke three builds on 2026-06-10 (the consolidation
- *   session doc, the deep-dive review, the fill-rate record) — hence this check.
+ *   Raw-angle-bracket MDX lint.
  *
- *   Checks staged docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
- *   code blocks and inline code. flags raw `<` before a digit or `{` before a letter.
+ *   Docusaurus compiles both .md and .mdx through micromark's MDX-JSX extension, so a bare `<55`
+ *   or `{word` in prose is a build-breaking parse error ("Unexpected character before name").
+ *   This class broke three builds on 2026-06-10 (the consolidation session doc,
+ *   the deep-dive review, the fill-rate record) — hence this check.
  *
- *   Stays quiet and fast — it runs on every `main` commit via the husky pre-commit hook. Run:
- *   mailwoman dev lint mdx-angles [files...]
+ *   Checks staged docs markdown by default (pre-commit), or explicit paths when given.
+ *   Skips fenced code blocks and inline code. flags raw `<` before a digit or `{` before a letter.
+ *
+ *   Stays quiet and fast — it runs on every `main` commit via the husky pre-commit hook.
+ *   Run: mailwoman dev lint mdx-angles [files...]
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

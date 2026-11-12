@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Checks docs frontmatter against the six-role interface, duplicate titles, sidebar coverage, relative links
- *   and cited repository paths. Accepted exceptions live in `docs/scripts/docs/structure-allowlist.mts`.
+ *   Checks docs frontmatter against the six-role interface, duplicate titles,
+ *   sidebar coverage, relative links and cited repository paths.
+ *
+ *   Accepted exceptions live in `docs/scripts/docs/structure-allowlist.mts`.
  */
 
 // CI runs this script before `yarn install`, so imports must be Node builtins or relative paths.

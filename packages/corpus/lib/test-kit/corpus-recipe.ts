@@ -4,8 +4,8 @@
 /**
  *   Shared harness for the corpus-recipe tests.
  *
- *   It lives under `test-kit/` and is excluded from corpus's build project, so it is never emitted into
- *   `out/` and never reaches the published tarball.
+ *   It lives under `test-kit/` and is excluded from corpus's build project,
+ *   so it is never emitted into `out/` and never reaches the published tarball.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -64,7 +64,7 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 /**
  * The register id included in a harness-built tuple set.
  *
- * It names no publisher, so a row written under it cannot be mistaken for a real register's record.
+ * It identifies no publisher, so a row written under it cannot be mistaken for a real register's record.
  */
 export const TEST_REGISTER = "test-harness"
 

@@ -3,6 +3,7 @@
 
 /**
  *   Builds Taiwan's table from 3-digit postcodes to WOF districts.
+ *
  *   It uses Chunghwa Post district centers and Overture division polygons.
  *   It also uses the WOF admin database.
  */
@@ -32,7 +33,7 @@ import { writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
 import { ProximityGrid } from "#tools/pipeline/postcode/locality/base"
 
 /**
- * The shortest romanized stem that is specific enough to match a Taiwanese place name.
+ * The shortest romanized stem that's specific enough to match a Taiwanese place name.
  */
 const MIN_ENGLISH_STEM_LENGTH = 3
 
@@ -320,7 +321,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 	}
 
 	// Regions serve as the containing-city fallback for districts that WOF lacks.
-	// They are keyed by normalized Chinese name so the postal county prefix can find them.
+	// They're keyed by normalized Chinese name so the postal county prefix can find them.
 	const regionsByHan = new Map<string, AdminPlace>()
 
 	for (const row of admin

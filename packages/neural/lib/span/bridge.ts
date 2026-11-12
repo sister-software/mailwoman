@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Merges same-label spans separated by a short punctuation gap after decoding. Whitespace-only
- *   gaps remain separate because they can mark a component boundary.
+ *   Merges same-label spans separated by a short punctuation gap after decoding.
+ *
+ *   Whitespace-only gaps remain separate because they can mark a component boundary.
  */
 
 import { bareBIOTag } from "@mailwoman/codex/component"
@@ -85,7 +86,7 @@ export function bridgePunctuationGaps(
 	for (const token of input) {
 		if (token.label !== "O") {
 			// Look back past any O tokens that sit inside the candidate gap
-			// (the punctuation pieces themselves decode as O — they are exactly what we bridge across).
+			// (the punctuation pieces themselves decode as O — they're exactly what we bridge across).
 			let back = out.length - 1
 
 			while (back >= 0 && out[back]!.label === "O" && out[back]!.start >= (out[back - 1]?.end ?? 0)) {

@@ -92,7 +92,7 @@ records have no usable layout, and the empty string reports that absence.
 ### `formatAddressRow(components, countryCode, options?)`
 
 `formatAddressRow` performs the same render and also reports **which tags it printed and which
-it could not place**. The second part is the reason this function exists. A country's layout
+it couldn't place**. The second part is the reason this function exists. A country's layout
 can legitimately drop components, and searching the output string for each value cannot
 distinguish a dropped component from one whose text happens to appear inside another (`Paris`
 inside `Rue de Paris`).
@@ -163,12 +163,12 @@ models for are hand-authored and checked against real addresses on a committed b
 > A node that renders no output removes itself, and its connector goes with it.
 
 A connector between two slots needs a rendered slot on each side. A connector at a line's edge
-has only one side, so it binds to the single slot it touches. That is how Japan's 〒 disappears
-with an absent postcode while an interior space does not. When several connectors survive in a
+has only one side, so it binds to the single slot it touches. That's how Japan's 〒 disappears
+with an absent postcode while an interior space doesn't. When several connectors survive in a
 row, the strongest one wins. Punctuation outranks whitespace, so `Calle Mayor, 12` keeps its
 comma when the street suffix is absent.
 
-This package authors four things that libaddressinput does not model, each based on a
+This package authors four things that libaddressinput doesn't model, each based on a
 measurement: the street line's spelling (183 countries space-join the number and the name, and
 22 comma-join them), the post-office box line, the country line, and the sub-locality line.
 
@@ -203,7 +203,7 @@ candidateSystemsForPostcode("94043") // → ["us", "de", "fr"]
 candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 ```
 
-The first call returns three systems. This function tests the code's **shape** and does not
+The first call returns three systems. This function tests the code's **shape** and doesn't
 check gazetteer membership, so returning all three is correct. The caller's country scope
 narrows the list. The code returns every locale because it has no evidence for choosing one.
 
@@ -215,7 +215,7 @@ between them, and the question that changes an answer is narrower: **is this cod
 the locality that contains it?**
 
 The answer depends on a country's _administrative_ geography and not its postal system, and
-code length does not predict it. France and Germany both use five digits and land on opposite
+code length doesn't predict it. France and Germany both use five digits and land on opposite
 sides.
 
 ```ts
@@ -243,7 +243,7 @@ populations. These tables exist to prevent a tier claim that averages two granul
 ## Layout and convention coverage
 
 The layouts and the parsing conventions cover different numbers of places. The difference is
-intentional and does not represent a backlog.
+intentional and doesn't represent a backlog.
 
 | Table                                                         | Keyed by     | Coverage                                       |
 | ------------------------------------------------------------- | ------------ | ---------------------------------------------- |
@@ -252,7 +252,7 @@ intentional and does not represent a backlog.
 | `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`           |
 
 A layout defines how to print an address, so a country needs one before it can be served. A
-conventions row defines what is ungrammatical in that system, and the decoder applies it as a hard
+conventions row defines what's ungrammatical in that system, and the decoder applies it as a hard
 mask before Viterbi. A wrong row therefore breaks parses that currently work. Each row records
 the measurement that justified it. An absent row means "no constraints known" and never "no
 constraints exist". Contributors can add a country to the layouts directly. A conventions row requires a measured receipt.
@@ -274,9 +274,9 @@ until someone with a UPU account reads the template. The eight jurisdictions wit
 layout (BW, DJ, KM, LC, QA, TT, UG and ZW) have a null libaddressinput `fmt`, so the template is their
 only source of order.
 
-### Postal regimes the country code does not name
+### Postal regimes the country code doesn't name
 
-Three families of addresses need a unit that is finer than, or different from, the ISO country
+Three families of addresses need a unit that's finer than, or different from, the ISO country
 code. codex cannot express any of them today
 ([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
 
@@ -285,9 +285,9 @@ code. codex cannot express any of them today
 - **BFPO identifiers.** BFPO identifiers are routing instructions and do not represent a GB
   locality plus postcode. The American half of this family is modeled in
   `lib/us/military-address.ts`, which covers APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states. The
-  British half is not modeled.
+  British half isn't modeled.
 - **Narrative addresses.** Costa Rica, Nicaragua and parts of Panama and the Caribbean build an
-  address from a landmark, a direction and a distance. That is a separate grammar and not a
+  address from a landmark, a direction and a distance. That's a separate grammar and not a
   variant of the street grammar the layouts assume.
 
 ### Out of scope
@@ -297,11 +297,11 @@ project has verified an open national address register for Chile is a fact about
 backlog and not about how Chileans write an address. That information lives in
 [`@mailwoman/corpus`](../corpus#source-provenance).
 
-## What this package does not do
+## What this package doesn't do
 
-This package does not **parse**. The [`mailwoman`](https://www.npmjs.com/package/mailwoman) parser uses sequence labeling to turn `"1600 Amphitheatre Pkwy, Mountain View CA"` into components. A separately installed small transformer encoder solves that task. This package does not
+This package doesn't **parse**. The [`mailwoman`](https://www.npmjs.com/package/mailwoman) parser uses sequence labeling to turn `"1600 Amphitheatre Pkwy, Mountain View CA"` into components. A separately installed small transformer encoder solves that task. This package doesn't
 geocode either. It covers the inverse direction and the reference tables, and it stays
-dependency-free so that a consumer who only wants to print an address does not download a model.
+dependency-free so that a consumer who only wants to print an address doesn't download a model.
 
 ## Design
 
@@ -322,11 +322,11 @@ separate:
 
 - **Codex is normative.** It reproduces USPS Pub-28 (and each system's equivalent) verbatim: the
   canonical word, every _recognized_ variant, and the one _preferred_ abbreviation. Its consumers
-  need precision. They are corpus synthesis recipes, the eval harness's invariance transforms, and
+  need precision. They're corpus synthesis recipes, the eval harness's invariance transforms, and
   formatting, since rendering `N` or `North` requires knowing which form the authority prints.
 - **The libpostal dictionaries** (`dictionaries/data/libpostal/dictionaries/`, Pelias lineage) **are
   descriptive.** They list everything people write, including forms that no authority recognizes
-  (`en/directionals.txt` lists `lower`/`upper`/`central`). Their consumers need recall. They are
+  (`en/directionals.txt` lists `lower`/`upper`/`central`). Their consumers need recall. They're
   evidence-lexicon curation laws, street decomposition for training gold, and the street-morphology
   FST.
 

@@ -3,10 +3,10 @@
 
 /**
  *   The package sets its casing policy rather than borrowing language rules.
- *   The primitives (`titleCase`, `isUpperCase`, `isLowerCase`, `matchCase`, `sentenceCase`)
- *   live in `spliterator`.
- *   This module fixes the thresholds and short-token rules an address parser needs on top of
- *   them.
+ *
+ *   The primitives (`titleCase`, `isUpperCase`, `isLowerCase`, `matchCase`,
+ *   `sentenceCase`) live in `spliterator`.
+ *   This module fixes the thresholds and short-token rules an address parser needs on top of them.
  */
 
 import { isLowerCase, isUpperCase, titleCase } from "spliterator/casing"

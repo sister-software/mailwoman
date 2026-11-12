@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec}; a `null` place yields `null`.
+ *   The thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec};
+ *   a `null` place yields `null`.
  */
 
 import { useMemo } from "react"

@@ -22,7 +22,7 @@ import { countHoldoutSpans, type HoldoutSpanFinding, holdoutSpanFindings } from 
 import type { CountryHoldout } from "#utils/split"
 
 /**
- * The parquet manifest's name while the check has not admitted it.
+ * The parquet manifest's name while the check hasn't admitted it.
  */
 export const UNCHECKED_PARQUET_MANIFEST_FILE = "MANIFEST.unchecked.json"
 

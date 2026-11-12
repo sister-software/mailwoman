@@ -51,7 +51,7 @@ vi.mock("#env", async (importOriginal) => {
 // Cached modules do not re-evaluate.
 // `vi.mock` factories run only during evaluation.
 // Reset before importing so the chain uses this mock.
-// Reset again after this file so the next file in the worker does not inherit the mocked env module.
+// Reset again after this file so the next file in the worker doesn't inherit the mocked env module.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -78,7 +78,7 @@ const DEFAULT_INTERVAL_MS = 6000
 /**
  * BDC answers with a `{ data: … }` envelope.
  *
- * The client refuses to cache a 200 whose body is not one.
+ * The client refuses to cache a 200 whose body isn't one.
  * The stub's default body must be a valid envelope or every cache assertion
  * would exercise the self-heal path instead.
  */
@@ -504,7 +504,7 @@ describe("createBDCClient: the binary download path", () => {
 		// A JSON-validating disk cache cannot read back a multi-hundred-megabyte zip.
 		// `downloadBDCFile` writes the extracted CSV itself.
 		//
-		// An empty cache directory by itself would not prove this: the storage layer's own `validate`
+		// An empty cache directory by itself wouldn't prove this: the storage layer's own `validate`
 		// check rejects a zip too, so the assertion would pass with `cache: false` deleted.
 		// What distinguishes "the request bypassed the cache" from "the cache refused
 		// the write" is that `buildDiskStorage` warns on every write it drops,
@@ -631,7 +631,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 
 		expect((error as ResourceErrorShape).status).toBe(404)
 		expect(isTransientResourceError(error)).toBe(false)
-		// A 404 is not a credential problem, so it must not pick up the credential explanation.
+		// A 404 isn't a credential problem, so it mustn't pick up the credential explanation.
 		expect((error as Error).message).not.toMatch(/hash_value/)
 	})
 
@@ -803,7 +803,7 @@ const ZIP_VERSION = 20
  * availability download has, minus the deflate.
  *
  * Hand-assembled rather than pulled from a fixture file or a new dependency:
- * `yauzl-promise` (the extractor under test) reads zips but does not write them.
+ * `yauzl-promise` (the extractor under test) reads zips but doesn't write them.
  * A committed binary fixture would be unreadable in review.
  */
 function storedZip(filename: string, contents: string): Buffer {

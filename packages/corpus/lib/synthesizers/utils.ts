@@ -5,6 +5,7 @@
  * Synthesis and augmentation utilities.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
@@ -121,6 +122,30 @@ export const doubleSpace: Augmentation = (row) => {
 	}
 
 	return withAugmentation(row, "double-space", newRaw, newComponents)
+}
+
+/**
+ * The share of rows that get a line-break variant, chosen per row from its source id.
+ */
+const LINE_BREAK_SHARE = 0.25
+
+/**
+ * Render the row on its country layout's envelope lines, so a line break separates
+ * the street line from the city line, for one row in four (#2992).
+ *
+ * The variant's components are the ones the layout printed.
+ * A row whose layout puts everything on one line, or a country with no layout, gets no variant.
+ */
+export const lineBreaks: Augmentation = (row) => {
+	if (/[\r\n]/.test(row.raw)) return null
+
+	if (mulberry32(hashString(`${row.source_id}:line-breaks`))() >= LINE_BREAK_SHARE) return null
+
+	const rendered = formatAddressRow(row.components, row.country)
+
+	if (!rendered?.raw.includes("\n")) return null
+
+	return withAugmentation(row, "line-breaks", rendered.raw, rendered.components)
 }
 
 /**
@@ -319,7 +344,7 @@ const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
  * Expand state abbreviation to full name.
  */
 /**
- * Replace the last whole-word occurrence of `region` in `raw`, or return null when it does not occur.
+ * Replace the last whole-word occurrence of `region` in `raw`, or return null when it doesn't occur.
  *
  * The region follows the street and the locality in every US rendering,
  * so the last occurrence is the region's.
@@ -663,6 +688,7 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"case-lower": caseLower,
 	"drop-commas": dropCommas,
 	"double-space": doubleSpace,
+	"line-breaks": lineBreaks,
 	"accent-strip": accentStrip,
 	"state-expand": stateExpand,
 	"state-abbreviate": stateAbbreviate,
@@ -682,7 +708,7 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
  */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
 	// `typoInject` is opt-in only.
-	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
+	const universal = [caseUpper, caseLower, dropCommas, doubleSpace, lineBreaks]
 
 	switch (country) {
 		// country-branch: the US and FR augmentation lists exist because the two tier-1 locales have vocabulary tables. See `stateExpand`.

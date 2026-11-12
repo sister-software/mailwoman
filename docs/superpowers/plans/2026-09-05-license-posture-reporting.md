@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- The runtime does not change: no code path refuses work for want of a key. The stamp and notice REPORT.
+- The runtime doesn't change: no code path refuses work for want of a key. The stamp and notice REPORT.
 - The stamp never contains `licensee` or `kid`. Tests assert this by key enumeration.
 - The stamp is offline: it reads `verifyConfiguredLicenseKey()` and never the well-known register. A network call per process for a stamp is out of scope. The doctor owns the freshness check.
 - Wire keys are snake_case: `license_url`. TypeScript identifiers cap acronyms whole: `docsURL`, `licenseURL`, `EngineStamp`.
@@ -224,7 +224,7 @@ describe("licenseNoticeLines", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/core/lib/license/stamp.test.ts`
-Expected: fail — `buildEngineStamp` is not exported from `@mailwoman/core/license`.
+Expected: fail — `buildEngineStamp` isn't exported from `@mailwoman/core/license`.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -340,7 +340,7 @@ Expected: pass, 11 tests.
 
 - [ ] **Step 5: Lint and commit**
 
-Run: `yarn oxlint packages/core/lib/license/stamp.ts packages/core/lib/license/stamp.test.ts` (or `yarn lint:oxlint` if the single-file form is not wired).
+Run: `yarn oxlint packages/core/lib/license/stamp.ts packages/core/lib/license/stamp.test.ts` (or `yarn lint:oxlint` if the single-file form isn't wired).
 
 ```bash
 git add packages/core/lib/license/stamp.ts packages/core/lib/license/index.ts packages/core/lib/license/stamp.test.ts
@@ -856,7 +856,7 @@ test("EngineStampSchema: accepts the stamp and refuses a licensee", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/api-kit/lib/engine-stamp.test.ts`
-Expected: fail — `engineHeaders` is not exported.
+Expected: fail — `engineHeaders` isn't exported.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -1426,7 +1426,7 @@ and in the `serveNode` call's `onListen` (add one if it relies on the default), 
 				},
 ```
 
-Note the launcher (Task 3) also prints the notice when the process exits. A server prints it at listen because it does not exit.
+Note the launcher (Task 3) also prints the notice when the process exits. A server prints it at listen because it doesn't exit.
 
 - [ ] **Step 3: Compile, typecheck, and hand-run**
 
@@ -1570,7 +1570,7 @@ yarn lint
 yarn vitest run packages/core/lib/license packages/api-kit/lib packages/api/lib packages/nominatim/lib packages/photon/lib packages/libpostal/lib packages/mailwoman/lib/cli/launcher.test.ts packages/mailwoman/lib/cli/kit
 ```
 
-Expected: all clean. `yarn lint` includes `health`, which counts synchronous filesystem calls and banned vocabulary. A new finding there is a defect in this branch.
+Expected: all clean. `yarn lint` includes `health`, which counts synchronous filesystem calls and banned vocabulary. A new finding there's a defect in this branch.
 
 - [ ] **Step 4: Commit and open the PR**
 

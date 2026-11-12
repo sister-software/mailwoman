@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The US filing denominator control. A broadband filing row describes a provider, technology and speed
- *   tier for a census block, and several rows can describe one block. The only count the rows support is
- *   the number of distinct blocks. Buildings, units and subscribers need their own records.
+ *   The US filing denominator control.
+ *
+ *   A broadband filing row describes a provider, technology and speed tier for a
+ *   census block, and several rows can describe one block.
+ *   The only count the rows support is the number of distinct blocks.
+ *   Buildings, units and subscribers need their own records.
  */
 
 import type { Evidence } from "#links"

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Prints each declared split's rows per head label and the config's label floors. Exits non-zero when a floor is
- *   missed, after the report is written.
+ *   Prints each declared split's rows per head label and the config's label floors.
+ *
+ *   Exits non-zero when a floor is missed, after the report is written.
  *
  *   Usage: node packages/mailwoman/tools/training/audits/label/support.run.ts <config> [--json <path>]
  */

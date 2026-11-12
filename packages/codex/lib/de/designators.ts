@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a German address uses: the Postfach, poste restante, floors, and the relation words of a
- *   query.
+ *   The designators a German address uses: the Postfach, poste restante, floors,
+ *   and the relation words of a query.
  *
- *   The `Postfach` row reads its source from the Deutsche Post rule in `postfach.ts`. The Packstation of the
- *   UPU sheet has no concept in the shared list, so it has no row.
+ *   The `Postfach` row reads its source from the Deutsche Post rule in `postfach.ts`.
+ *   The Packstation of the UPU sheet has no concept in the shared list, so it has no row.
  *
  * @see {@link https://www.deutschepost.de/de/b/briefumschlag-richtig-beschriften.html Deutsche Post, Briefumschlag richtig adressieren}
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/deuEn.pdf UPU, Germany addressing sheet}

@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   note(de-shell): forwarding shim. The demo-cascade smoke eval now lives at
- *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and `promotion-eval.ts` calls it in-process. This
- *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
- *   owns every printed line.
+ *   note(de-shell): forwarding shim.
  *
- *   Exit-code parity: 0 = the run completed (row failures are in the table + sidecar), 2 = missing
- *   artifacts / malformed rows. Do not add logic here.
+ *   The demo-cascade smoke eval now lives at `mailwoman/eval-harness/demo-cascade-smoke.ts`
+ *   and `promotion-eval.ts` calls it in-process.
+ *   This shim keeps standalone invocation working unchanged.
+ *
+ *   Output is byte-identical because the module owns every printed line.
+ *
+ *   Exit-code parity: 0 = the run completed (row failures are in the table + sidecar),
+ *   2 = missing artifacts / malformed rows.
+ *   Do not add logic here.
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reverse lookup over the `postcode-locality-*.db` artifacts: the containing postcode of a
- *   resolved locality, keyed by its WOF id.
+ *   Reverse lookup over the `postcode-locality-*.db` artifacts: the containing
+ *   postcode of a resolved locality, keyed by its WOF id.
  *
- *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real city) gets
- *   no postcode. A machine without the DBs degrades to no enrichment.
+ *   The exactly-one rule is the abstention: a locality contained by several
+ *   postcodes (any real city) gets no postcode.
+ *   A machine without the DBs degrades to no enrichment.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

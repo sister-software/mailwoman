@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `crates/registry-wasm` for `wasm32-unknown-unknown` twice, once with `simd128` and once without, and
- *   writes `wasm/registry-simd.wasm` and `wasm/registry.wasm`.
+ *   Builds `crates/registry-wasm` for `wasm32-unknown-unknown` twice, once with `simd128`
+ *   and once without, and writes `wasm/registry-simd.wasm` and `wasm/registry.wasm`.
  *
- *   The two builds use separate target directories, because a `RUSTFLAGS` change would otherwise invalidate every
- *   crate in the shared target directory.
+ *   The two builds use separate target directories, because a `RUSTFLAGS` change would
+ *   otherwise invalidate every crate in the shared target directory.
  *
- *   With `--check`, the tool builds without writing and exits non-zero when a build's SHA-256 differs from the
- *   committed binary's.
+ *   With `--check`, the tool builds without writing and exits non-zero
+ *   when a build's SHA-256 differs from the committed binary's.
  *
  *   Usage: `node packages/registry/tools/build-wasm.run.ts [--check]`
  */

@@ -12,15 +12,15 @@ tags:
 
 # POI layer runbook
 
-Operational knowledge from the first poi.db builds (2026-07-18/19, the exotic-POI arc,
-PRs #1180–#1185). Read this before touching `gazetteer build poi`, the poi executor, or the
-layer publish path. The design rationale is in the spec listed in the front matter. This
-page records the failures that the build and publish path produce.
+This runbook covers building, verifying and publishing poi.db, and the failures the build and
+publish path produce. It was written from the first poi.db builds (2026-07-18/19, PRs
+#1180–#1185). Read it before touching `gazetteer build poi`, the poi executor, or the layer publish
+path.
 
-poi.db is layer #1. The schema every layer database embeds — the `layer_manifest` /
-`layer_coverage` interface, the spine keys, tiers, and the meaning-of-zero rule this build
-follows — is specified in the [spatial-layer interface](./layer-interface.mdx). Read that first if
-you are authoring a new layer rather than rebuilding poi.db.
+poi.db is layer #1. The [spatial-layer interface](./layer-interface.mdx) specifies the schema every
+layer database embeds: the `layer_manifest` / `layer_coverage` interface, the spine keys, tiers, and
+the meaning-of-zero rule this build follows. Read that first if you're authoring a new layer rather
+than rebuilding poi.db.
 
 ## Build
 
@@ -30,22 +30,22 @@ node mailwoman/out/cli.js gazetteer build poi --countries US,CA,MX,FR \
 ```
 
 Two phases: DuckDB ingest (Overture Places S3 → per-country parquet under
-`<data-root>/overture/<release>/`) then the SQLite build (staged bulk load → clustered
+`<data-root>/snapshots/overture/<release>/places/`) then the SQLite build (staged bulk load → clustered
 materialize → FTS → `poi_name_key` index → layer manifest + coverage → seal). `--limit N`
 caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 
 ### Overture Places schema gotchas
 
-- **There is no top-level `country` column** in the Places theme (the addresses theme has
-  one, and Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
+- **There's no top-level `country` column** in the Places theme (the addresses theme has
+  one, and Places doesn't). Country lives at `addresses[1].country` (1-based DuckDB list
   index). The builder probes `DESCRIBE` output and picks the right expression
   (`chooseCountryExpression`); rows with no address struct are **excluded from per-country
-  subsets** under the addresses-based filter — this is the accepted v1 limitation.
+  subsets** under the addresses-based filter. This is the accepted v1 limitation.
 - **The category property is mid-transition.** The old `categories` property is slated for
   removal in Overture's September 2026 release. The new `taxonomy` property
   (`taxonomy.primary`) replaces it. The builder probes for both and prefers `taxonomy`
   (`chooseCategoryColumn`). When bumping the pinned release, re-check the probe output in
-  the build log — it prints which property it chose.
+  the build log, where the probe prints the property it chose.
 - **`--limit` samples are geographically clustered rather than representative.** LIMIT takes the
   first rows the scan yields. The first 50k US rows in the 2026-05-20.0 release all landed
   in Hawaii. Fine for smoke verification, useless for coverage judgments. Never grade
@@ -54,18 +54,18 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   serially — one S3 connection at ~10 KB/s on the 2026-08-19 measurement, zero bytes
   written after 6 minutes — while an unbounded country scan runs 7–8 parallel connections
   and finishes GB in ~23 minutes. Smoke against S3 with an unbounded single-country ingest rather than a LIMIT.
-- **Overture prunes old releases from the bucket** — the 2026-08-19 listing held exactly
+- **Overture prunes old releases from the bucket.** The 2026-08-19 listing held exactly
   one release, and both prior pins were gone. Consequences: a stale `DEFAULT_RELEASE` fails
   every default build, a sealed artifact from a pruned release can never be
-  rebuilt, and two releases never mix in one artifact — so extending an existing artifact
+  rebuilt, and two releases never mix in one artifact, so extending an existing artifact
   after a prune means re-ingesting every country at the current release. Cost relief: the
   first country's scan pays the cold cache (~25 min); each further country in the same
   invocation runs warm at 30–50 s, so batch them.
-- `brand.names.primary` is deliberately not extracted — the QID (`brand.wikidata`) is the
+- `brand.names.primary` is deliberately not extracted. The QID (`brand.wikidata`) is the
   join key and the row's own `name` holds the display form. Re-adding it is a schema +
   builder change rather than a flag.
 
-### Key decisions (do not silently re-decide)
+### Key decisions
 
 - **res-9 H3 clustering** (`(h3_cell, category_id, neg_rank, rowid_key)` WITHOUT ROWID PK):
   matches `ADDRESS_H3_RESOLUTION = 9` in `@mailwoman/address-id` so the POI↔address join is
@@ -73,12 +73,12 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   byte-range/httpvfs serving profile. Coverage cells sit at res 6.
 - **WOF ancestry is decorated at read time rather than build time** (deviation from the spec's
   original build-time-PIP wording, pre-declared in plan 3). The read-time half plus
-  `gersID` on results landed 2026-07-19 (`mailwoman/poi-executor.ts`'s `reverseGeocode`
+  `gersID` on results landed 2026-07-19 (`packages/mailwoman/lib/poi/executor.ts`'s `reverseGeocode`
   dep, wired lazily in `runtime-pipeline.ts` from a `WOFReverseGeocoder`) — see the
   [runtime-flag register](./runtime-flags.mdx).
 - **ODbL never ships.** Infrastructure categories (`source: "mailwoman-infra"` in the
   taxonomy) abstain with `requires_build_local_layer`; Overture's _base_ theme is ODbL too
-  (Overture does not launder OSM's license), so there is no permissive source to "just
+  (Overture doesn't launder OSM's license), so there's no permissive source to "just
   use." We ship the builder.
 
 ## Verify
@@ -90,25 +90,24 @@ node mailwoman/out/cli.js poi "coffee near <city-in-coverage>" --db <built.db>
 ```
 
 The CLI needs a resolver to turn anchor text into coordinates (`--resolve-db` /
-`--candidate-db`, defaulting to the standard data-root paths) — without one, every anchored
-query abstains `anchor_required`, which looks like a data bug and isn't. An empty results
-list with a resolved anchor means the sample lacks coverage there (see the LIMIT note);
-an `anchor_required` abstain means the resolver isn't wired.
+`--candidate-db`, defaulting to the standard data-root paths). Without one, every anchored
+query abstains with `anchor_required`. That abstention looks like a data bug, but it means the
+resolver isn't wired. An empty results list with a resolved anchor means the sample lacks coverage
+there (see the LIMIT note).
 
-Fixture-level tests cannot catch source-schema drift or scale behavior — the first live
-builds caught three bugs (the country column, the CLI resolver gap, and a full-scale OOM)
-that 800+ green tests missed. End every poi.db-touching change with a live smoke build,
-and treat the first FULL-scale build as its own verification step: the 2026-07-19 four-country run died
-at Node's default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader
-materialized instead of streamed. Row readers over DuckDB must use the chunked/streaming
-API. Memory must stay flat with row count.
+Fixture-level tests cannot catch source-schema drift or scale behavior. The first live builds
+caught three bugs (the country column, the CLI resolver gap, and a full-scale OOM) that 800+ green
+tests missed. End every poi.db-touching change with a live smoke build, and treat the first
+full-scale build as its own verification step: the 2026-07-19 four-country run died at Node's
+default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader materialized instead
+of streamed.
 
-Two more full-scale-only failures, both fixed 2026-07-19, share a class.
-The DuckDB parquet reader must STREAM (chunked fetches, because a materializing reader OOM'd the
-~4 GB JS heap at 13.68M rows — peak RSS is ~2.4 GB streamed), and any Kysely bulk
-`.values(...)` insert must be CHUNKED (`writeLayerCoverage`'s single INSERT for 159,702
-res-6 cells exceeded SQLite's bound-variable limit, so it now inserts batches of 5,000 rows). The class:
-anything linear in row count that fixture scale cannot exercise.
+The OOM and one more full-scale-only failure, both fixed 2026-07-19, are linear in row count.
+Fixture scale cannot exercise that class. The DuckDB parquet reader must stream with chunked fetches, so memory
+stays flat with row count (a materializing reader OOM'd the ~4 GB JS heap at 13.68M rows, and peak
+RSS is ~2.4 GB streamed). Any Kysely bulk `.values(...)` insert must be chunked:
+`writeLayerCoverage`'s single INSERT for 159,702 res-6 cells exceeded SQLite's bound-variable limit,
+so it now inserts batches of 5,000 rows.
 
 Reference numbers from the first complete 4-country build (release 2026-05-20.0,
 confidence ≥ 0.85): 13,681,698 rows (US 11.52M / CA 794k / FR 721k / MX 644k),
@@ -117,7 +116,7 @@ confidence ≥ 0.85): 13,681,698 rows (US 11.52M / CA 794k / FR 721k / MX 644k),
 
 A crashed build leaves a partial, unsealed `.db` behind (the builder direct-writes and
 seals at the end, per the candidate-builder precedent). The next run's `rmSync` clears it,
-but never point a reader — or the publish path — at an unsealed file: no manifest row is
+but never point a reader (or the publish path) at an unsealed file. No manifest row is
 the tell (`readLayerManifest` throws).
 
 ## Publish (demo)
@@ -132,22 +131,24 @@ labeled regional extract, as fallback only.
 uploader (`packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts`) rather than the gazetteer path: stage a hardlink dir mirroring the R2 layout
 `poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
 `set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>`
-(source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's
+(source the repo `.env` first, because the R2 credentials live there). Then bump the browser runtime's
 version constant (`POI_LAYER_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`). Note:
-`gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**
+`gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and **isn't**
 the poi path. It would land the file at the wrong key. The docs tester
 (`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
 
 ## Flag state
 
-`poiQueryKind` is **default-ON since 2026-07-20** (`"extract" | "none" | { poiDatabasePath }`) — the
-promotion eval passed: 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
+`poiQueryKind` is **default-ON since 2026-07-20** (`"extract" | "none" | { poiDatabasePath }`). The
+promotion eval passed with 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
 v1.1 92.2% (see
 [`2026-07-20-poi-promotion-battery.md`](../../records/evals/2026-07-20-poi-promotion-battery.md) and
-the [runtime-flag register](./runtime-flags.mdx)). After #1206/#1208/#1209 (leaf fan-out,
-indexed brand fetch, full ~2,110-category snapshot) the board stands at **50/51 = 98.0%**
-against the rebuilt `poi/2026-07-20a/poi.db` — `nm-04` the sole holdout (a ring-budget case rather than a coverage gap), both hard floors green (see the 2026-07-20 standing update in
-[`2026-07-19-poi-query-board-v1-baseline.md`](../../records/evals/2026-07-19-poi-query-board-v1-baseline.md)). `undefined`/`true` is intent/abstain-only
-(no db); pass `false` to restore the pre-flag, byte-identical address-only classification.
-`forceFullPipeline` does not bypass the poi branch (routing branch rather than a fast-path —
-decided, documented on `PipelineOpts`).
+the [runtime-flag register](./runtime-flags.mdx)). With #1206/#1208/#1209 (leaf fan-out,
+indexed brand fetch, full ~2,110-category snapshot), the board is at **50/51 = 98.0%** against the
+rebuilt `poi/2026-07-20a/poi.db`, with both hard floors green. The one holdout is `nm-04`, a
+ring-budget case and not a coverage gap (see the 2026-07-20 standing update in
+[`2026-07-19-poi-query-board-v1-baseline.md`](../../records/evals/2026-07-19-poi-query-board-v1-baseline.md)).
+`"extract"`, the value an unset option takes, is intent/abstain-only with no database. Pass
+`"none"` to remove the POI stage and restore the pre-flag, byte-identical address-only
+classification. `forceFullPipeline` doesn't bypass the poi branch, because the branch is a routing
+branch and not a fast-path (decided, and documented on `PipelineOpts`).

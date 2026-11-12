@@ -46,11 +46,23 @@ test("verifyAdmin passes a complete fixture", async () => {
 		"coverage-floor:true",
 		"region-abbrevs:true",
 		"place-abbr:true",
+		"names-source:true",
+		"concordances-source:true",
 		"fts-bbox:true",
 		"bbox-extents:true",
 	])
 
 	expect(r.ok).toBe(true)
+})
+
+test("verifyAdmin fails names-source when a writer left a row's source empty", async () => {
+	using db = await fixtureDB()
+	db.exec("INSERT INTO names (id, name, placetype, country, language) VALUES (3, 'Testburg', 'locality', 'TL', '')")
+	const r = verifyAdmin(db, TINY_BASELINE)
+	const check = r.checks.find((c) => c.check === "names-source")!
+
+	expect(r.ok).toBe(false)
+	expect(check.detail).toBe("1 rows state no source")
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {

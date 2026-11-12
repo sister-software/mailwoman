@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The default artifact and dataset locations the coarse-placer tools share. Each location has one
- *   spelling, so a relocated artifact is a one-line change rather than a sweep of every tool's option default.
+ *   The default artifact and dataset locations the coarse-placer tools share.
+ *
+ *   Each location has one spelling, so a relocated artifact is a one-line change
+ *   rather than a sweep of every tool's option default.
  */
 
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"

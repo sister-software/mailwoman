@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map style. A build with a basemap TileJSON URL draws the cartographer base style over that tileset, and
- *   a build without one draws a stub style with one background layer and zero sources. The stub style names no
- *   glyph host and no sprite, so every request of a page that draws it goes to the page's own server.
+ *   The map style.
+ *
+ *   A build with a basemap TileJSON URL draws the cartographer base style over that tileset,
+ *   and a build without one draws a stub style with one background layer and zero sources.
+ *   The stub style identifies no glyph host and no sprite, so every request of a
+ *   page that draws it goes to the page's own server.
  */
 
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
@@ -23,7 +26,7 @@ export const STUB_STYLE: StyleSpecification = {
 /**
  * The style for a basemap TileJSON URL, or the stub style when the build has none.
  */
-export function basemapStyle(tileJSONURL: string | null): StyleSpecification {
+export function opportunityMapStyle(tileJSONURL: string | null): StyleSpecification {
 	if (!tileJSONURL) return STUB_STYLE
 
 	return new StyleSpecificationComposer({

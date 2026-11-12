@@ -4,21 +4,23 @@
 /**
  *   Build a CJK postcode → WOF locality table by authoritative name match.
  *
- *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level, so the
- *   European coordinate-first point-in-polygon build in build-postcode-locality.ts does not apply.
+ *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level,
+ *   so the European coordinate-first point-in-polygon build in build-postcode-locality.ts doesn't apply.
  *   This is the CJK substitute:
  *
  *   Postcode --(national postal authority)--> municipality name (romanized) postcode --(GeoNames)-->
  *   point municipality name + point --(cross-placetype name+proximity match)--> WOF place id
  *
- *   The match searches all the municipality-ish WOF placetypes (locality + county + localadmin +
- *   borough), because CJK municipalities are split across them (regular cities → locality, wards →
- *   county/localadmin, Tokyo special wards → borough).
+ *   The match searches all the municipality-ish WOF placetypes
+ *   (locality + county + localadmin + borough), because CJK municipalities are split across
+ *   them (regular cities → locality, wards → county/localadmin, Tokyo special wards → borough).
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
  *   The authoritative name data comes from the national postal file (JP = KEN_ALL, Japan Post).
- *   GeoNames supplies the points. Both are source material rather than prebuilt dumps.
+ *
+ *   GeoNames supplies the points.
+ *   Both are source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
@@ -26,9 +28,9 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
- *   With no polygons there is no point-in-polygon step, so matching is name plus haversine
- *   proximity through `@mailwoman/spatial`'s `haversine` (asin form, matching Python). The
- *   output is written directly to `--output` as a full single-country rebuild.
+ *   With no polygons there's no point-in-polygon step, so matching is name plus haversine
+ *   proximity through `@mailwoman/spatial`'s `haversine` (asin form, matching Python).
+ *   The output is written directly to `--output` as a full single-country rebuild.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

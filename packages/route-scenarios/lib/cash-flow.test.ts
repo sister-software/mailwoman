@@ -2,16 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The synthetic scenario's monthly rows, checked by hand. Amounts are in cents.
+ *   The synthetic scenario's monthly rows, checked by hand.
+ *   Amounts are in cents.
  *
- *   Example Building A has 24 occupied units from month 0. Example Building B has 0, then 8 from month 4 and 16
- *   from month 8.
- *   Both take customers from month 3. The take rate is 50% reached over four months, so a building's target
- *   in its k-th service month is ⌊50% × occupied × min(k, 4) / 4⌋. Monthly churn is 2%, applied in whole
- *   subscribers as the floor of the cumulative expected churn, and a churned subscriber is replaced in the
- *   same month. Each new subscriber costs USD 250.00 to activate and USD 50.00 to acquire, and the whole
- *   first month's price, USD 55.00, is credited. Service costs USD 10.00 per subscriber and maintenance
- *   USD 40.00 per month from month 3. The price is USD 55.00.
+ *   Example Building A has 24 occupied units from month 0.
+ *   Example Building B has 0, then 8 from month 4 and 16 from month 8.
+ *
+ *   Both take customers from month 3.
+ *   The take rate is 50% reached over four months, so a building's target in its
+ *   k-th service month is ⌊50% × occupied × min(k, 4) / 4⌋.
+ *
+ *   Monthly churn is 2%, applied in whole subscribers as the floor of the cumulative
+ *   expected churn, and a churned subscriber is replaced in the same month.
+ *   Each new subscriber costs USD 250.00 to activate and USD 50.00 to acquire,
+ *   and the whole first month's price, USD 55.00, is credited.
+ *
+ *   Service costs USD 10.00 per subscriber and maintenance USD 40.00 per month from month 3.
+ *   The price is USD 55.00.
  */
 
 import { describe, expect, test } from "vitest"

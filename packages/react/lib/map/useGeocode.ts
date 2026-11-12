@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `useGeocode` — the parse+resolve state machine for the geocoder map. It reuses the pipeline's
- *   `useParsePipeline` (text / busy / stage / result / candidate selection) and layers on the two map-only
- *   concerns the geocoder adds over the base explorer:
+ *   `useGeocode` — the parse+resolve state machine for the geocoder map.
+ *
+ *   It reuses the pipeline's `useParsePipeline` (text / busy / stage / result / candidate selection)
+ *   and layers on the two map-only concerns the geocoder adds over the base explorer:
  *
  *     1. Viewport bias — when the runtime exposes `runParseWithBias`, the current map center (read through
  *        an injected `getBias`, itself reading the `MapRef`) supplies a soft proximity prior. The
@@ -13,8 +14,8 @@
  *        richer {@link ResolvedMapPlace} the declarative overlays consume (bbox / tier / polygon). Absent
  *        an enricher, the candidate renders as a bare point.
  *
- *   No maplibre import at module scope — the map handle is reached only through the injected `getBias`
- *   callback, so this hook stays independent of the map binding.
+ *   No maplibre import at module scope — the map handle is reached only through the
+ *   injected `getBias` callback, so this hook stays independent of the map binding.
  */
 
 import { useCallback, useMemo, useState } from "react"

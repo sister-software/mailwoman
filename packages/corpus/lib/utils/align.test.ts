@@ -128,6 +128,36 @@ describe("alignRow — verbatim matches", () => {
 		expect(result.row.labels).toEqual(["B-locality", "O", "B-country"])
 	})
 
+	it.each([
+		["Oberwiesen 8, FL-9485 Nendeln", "LI", "9485", "FL-9485"],
+		["Ulica 4, HR-52100 Pula", "HR", "52100", "HR-52100"],
+		["Avenida 27 16, 01006- Guatemala", "GT", "01006", "01006-"],
+		["Rue 3 9, HT1110 Port-au-Prince", "HT", "1110", "HT1110"],
+	])("labels %j's postcode token, which a layout glued text to, as the postcode", (raw, country, postcode, token) => {
+		const result = alignRow(baseRow({ raw, country, components: { postcode } }))
+
+		expect(result.kind).toBe("labeled")
+
+		if (result.kind !== "labeled") return
+		expect(result.row.labels[result.row.tokens.indexOf(token)]).toBe("B-postcode")
+		expect(result.row.span_tags).toContain("postcode")
+	})
+
+	it("leaves a token that two components share as O", () => {
+		const result = alignRow(
+			baseRow({
+				raw: "Street1 Kowloon",
+				country: "HK",
+				components: { street: "Street", house_number: "1", locality: "Kowloon" },
+			})
+		)
+
+		expect(result.kind).toBe("labeled")
+
+		if (result.kind !== "labeled") return
+		expect(result.row.labels).toEqual(["O", "B-locality"])
+	})
+
 	it("tokens.length === labels.length always", () => {
 		const result = alignRow(
 			baseRow({

@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The license worker's Hono app. Every response is `no-store`, because the claim and refresh routes return
- * tokens and the status route returns a verdict that revocation changes.
+ * The license worker's Hono app.
  *
- * Every `/v1` route sits behind the signing self-test, so a worker whose key the shipped register does not
- * trust answers 503 rather than mint tokens no installation accepts, while `/health` stays up to say so.
+ * Every response is `no-store`, because the claim and refresh routes return tokens
+ * and the status route returns a verdict that revocation changes.
+ *
+ * Every `/v1` route sits behind the signing self-test, so a worker whose key the shipped
+ * register doesn't trust answers 503 rather than mint tokens no installation accepts,
+ * while `/health` stays up to say so.
  * Dependencies arrive as values so a test can inject a fixture email provider, a ledger over
  * Miniflare's D1, a Stripe client over a fetch stub and a signing status without a trusted key.
  */

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reserved bare-postcode capability cases. These strings are excluded from every country in the
- *   training recipe and are read only by evaluation. Reservation is by normalized input string,
- *   because `NNN NN` is shared by CZ, SK, SE and GR. excluding only a Czech row could still train
- *   the model on the identical Swedish input.
+ *   Reserved bare-postcode capability cases.
+ *
+ *   These strings are excluded from every country in the training recipe and are read only by evaluation.
+ *   Reservation is by normalized input string, because `NNN NN` is shared by CZ, SK, SE
+ *   and GR. excluding only a Czech row could still train the model on the identical Swedish input.
  */
 
 import { compactPostcode } from "@mailwoman/postcode/display-form"

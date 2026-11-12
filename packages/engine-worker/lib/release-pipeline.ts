@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Loads the default `en-us` release the way Earth does, without its gazetteer: the gazetteer Worker answers place
- *   lookups, so this isolate holds the classifier, the FST prior, the street-morphology matcher, the pair indexes and
- *   the anchor regions.
+ *   Loads the default `en-us` release the way Earth does, without its gazetteer:
+ *   the gazetteer Worker answers place lookups, so this isolate holds the classifier,
+ *   the FST prior, the street-morphology matcher, the pair indexes and the anchor regions.
  */
 
 import { runClassifyStage } from "mailwoman/browser-runtime/classify"

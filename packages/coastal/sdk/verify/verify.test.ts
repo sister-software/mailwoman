@@ -3,9 +3,14 @@
 
 /**
  *   Tests the two-path comparison using a scripted service reader.
- *   A point inside a service area agrees. A point far from every service edge disagrees.
- *   A point a few centimeters from an edge receives `boundary_tolerance` because the two channels
- *   publish six and nine decimal places. Those precisions render the same edge differently.
+ *
+ *   A point inside a service area agrees.
+ *   A point far from every service edge disagrees.
+ *
+ *   A point a few centimeters from an edge receives `boundary_tolerance`
+ *   because the two channels publish six and nine decimal places.
+ *   Those precisions render the same edge differently.
+ *
  *   Inland English points must read `unknown` without a designation.
  */
 

@@ -11,8 +11,8 @@
  *   mailwoman-un-locode --db un-locode.db -- 40.7128 -74.0060
  *   ```
  *
- *   The `--` separates flags from coordinates so negative coordinates parse as positionals (the
- *   coordinate form is the nearest-code lookup, formerly `--near`).
+ *   The `--` separates flags from coordinates so negative coordinates parse as positionals
+ *   (the coordinate form is the nearest-code lookup, formerly `--near`).
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

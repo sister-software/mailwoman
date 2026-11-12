@@ -3,11 +3,13 @@
 
 /**
  *   Row-to-pair fold/dedupe/skip logic for the PIX1 placetype-pair index.
- *   Extracted from `commands/gazetteer/pair-index.tsx` so it can be unit tested
- *   with in-memory rows.
+ *
+ *   Extracted from `commands/gazetteer/pair-index.tsx` so it can be unit tested with in-memory rows.
  *
  *   {@link PairIndexBuilder} processes one (rawCity, rawDistrict) row at a time.
- *   The child is always `dependent_locality`. Empty city rows are skipped.
+ *   The child is always `dependent_locality`.
+ *
+ *   Empty city rows are skipped.
  *   Both fields are folded with `normalizeFSTToken`.
  *
  *   `parentTag` is provided by the caller per row and is never defaulted.

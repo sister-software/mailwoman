@@ -2,48 +2,58 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `es-gipuzkoa`: the INSPIRE Addresses theme the Diputación Foral de Gipuzkoa publishes, read from
- * the one zipped GML that holds the whole province.
+ * `es-gipuzkoa`: the INSPIRE Addresses theme the Diputación Foral de Gipuzkoa publishes,
+ * read from the one zipped GML that holds the whole province.
  *
- * The ATOM service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` holds a single entry
- * for the province and links its dataset through `rel="alternate"` rather than `rel="enclosure"`, so
- * a fetcher that looks only for an enclosure finds no dataset here. The adapter is handed the
- * archive and the feed is acquisition's concern. The archive holds one 313 MB GML member. The
- * adapter reads that member as a chunk sequence and never buffers it.
+ * The ATOM service at `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` holds a
+ * single entry for the province and links its dataset through `rel="alternate"` rather than
+ * `rel="enclosure"`, so a fetcher that looks only for an enclosure finds no dataset here.
+ * The adapter is handed the archive and the feed is acquisition's concern.
  *
- * The member is self-contained and its order decides the reader. Addresses number 68,744, and the
- * 4,516 reference features they point at are written last. An address held until the document ends
- * would keep all 68,744 pending, so the adapter reads the member twice through
- * {@linkcode streamIndexedInspireRows} and indexes the 4,516 references instead.
+ * The archive holds one 313 MB GML member.
+ * The adapter reads that member as a chunk sequence and never buffers it.
  *
- * A reference is a WFS stored-query URL whose `ID` parameter equals the target's `gml:id`, written
- * against the internal host `http://b5mdev/` and with the id repeated as the URL's fragment:
- * `…?…&ID=ES.GFA.TN.056.1110#ES.GFA.TN.056.1110`. `componentJoinKey` reads the parameter and the
- * fragment belongs to the URL rather than to the id, so the key is `ES.GFA.TN.056.1110`. The
- * unreachable host is not this reader's problem, because every reference resolves inside the member.
+ * The member is self-contained and its order decides the reader.
+ * Addresses number 68,744, and the 4,516 reference features they point at are written last.
  *
- * A postal-descriptor reference whose final segment is empty, `…&ID=ES.GFA.PD.059. #…`, states that
- * the publisher holds no postcode, and `referenceStatesNoValue` separates it from a broken join.
- * The Cadastre writes the same form. The predicate therefore has one home.
+ * An address held until the document ends would keep all 68,744 pending, so the adapter reads the
+ * member twice through {@linkcode streamIndexedInspireRows} and indexes the 4,516 references instead.
  *
- * The locator vocabulary is one type,
- * `LocatorDesignatorTypeValue/addressIdentifierGeneral`. The municipality is the only
- * `ad:AdminUnitName` level published, `4thOrder`.
+ * A reference is a WFS stored-query URL whose `ID` parameter equals the target's `gml:id`,
+ * written against the internal host `http://b5mdev/` and with the id repeated as the
+ * URL's fragment: `…?…&ID=ES.GFA.TN.056.1110#ES.GFA.TN.056.1110`.
+ * `componentJoinKey` reads the parameter and the fragment belongs to the URL
+ * rather than to the id, so the key is `ES.GFA.TN.056.1110`.
  *
- * The publisher writes its street names in Basque, with the street type as a trailing word rather
- * than a leading abbreviation: `Samikolla ibilbidea`. The name is taken as written.
+ * The unreachable host isn't this reader's problem, because every reference resolves inside the member.
  *
- * `ad:LocatorName` holds a building name as a Basque and Spanish pair, `Gasolinera` with
- * `Gasolindegia` and `Agirre, baserria` with `Agirre, caserío`. The adapter writes none of them: the
- * address-source register's personal-data review reads `absent` because these identify the building
- * rather than its occupant, and a Basque *baserri* name is commonly also a surname. The review
- * therefore does not rest on the stronger claim that the name is safe to publish as address text.
+ * A postal-descriptor reference whose final segment is empty, `…&ID=ES.GFA.PD.059. #…`, states
+ * that the publisher holds no postcode, and `referenceStatesNoValue` separates it from a broken join.
+ * The Cadastre writes the same form.
+ * The predicate therefore has one home.
  *
- * The address `gml:id` `ES.GFA.AD.056_1110_003` concatenates the municipality code `056`, the
- * thoroughfare code `1110` and the number `003`, and holds references
- * `AU_ADMINISTRATIVEUNIT_34162020056`, `ES.GFA.TN.056.1110` and `ES.GFA.PD.056.20830`. The
- * adapter's test checks the composed street and number against that identifier. That check confirms
- * the right features were joined. It does not check the address the publisher would print.
+ * The locator vocabulary is one type, `LocatorDesignatorTypeValue/addressIdentifierGeneral`.
+ * The municipality is the only `ad:AdminUnitName` level published, `4thOrder`.
+ *
+ * The publisher writes its street names in Basque, with the street type as a trailing word
+ * rather than a leading abbreviation: `Samikolla ibilbidea`.
+ * The name is taken as written.
+ *
+ * `ad:LocatorName` holds a building name as a Basque and Spanish pair, `Gasolinera`
+ * with `Gasolindegia` and `Agirre, baserria` with `Agirre, caserío`.
+ * The adapter writes none of them: the address-source register's personal-data review
+ * reads `absent` because these identify the building rather than its occupant,
+ * and a Basque *baserri* name is commonly also a surname.
+ *
+ * The review therefore doesn't rest on the stronger claim that the name is safe to publish as address text.
+ *
+ * The address `gml:id` `ES.GFA.AD.056_1110_003` concatenates the municipality code `056`,
+ * the thoroughfare code `1110` and the number `003`, and holds references
+ * `AU_ADMINISTRATIVEUNIT_34162020056`, `ES.GFA.TN.056.1110` and `ES.GFA.PD.056.20830`.
+ * The adapter's test checks the composed street and number against that identifier.
+ *
+ * That check confirms the right features were joined.
+ * It doesn't check the address the publisher would print.
  */
 
 import type { MarkupElement } from "@mailwoman/core/html/elements"
@@ -122,7 +132,7 @@ const COMPONENT_ELEMENTS = [
 ] as const
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * The only level the province publishes, on 88 of 88 `ad:AdminUnitName` features.
  */
@@ -176,7 +186,7 @@ export function createESGipuzkoaAdapter(): CorpusAdapter {
  * One address's row, or null when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
- * feature is a value the reader asked for and could not read, and it raises.
+ * feature is a value the reader asked for and couldn't read, and it raises.
  */
 function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | null {
 	const addressID = address.attributes["gml:id"]?.trim() ?? null
@@ -229,7 +239,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
  * Every archive under `inputPath`, which is one `.zip`, one unpacked `.gml`, or a directory holding either.
  *
  * The publisher ships one archive, and the unpacked member is accepted because an
- * operator who inflated 313,162,472 bytes once should not have to inflate them again,
+ * operator who inflated 313,162,472 bytes once shouldn't have to inflate them again,
  * and because a committed fixture is reviewable only as text.
  * A directory holding neither raises rather than yielding zero rows, so a wrong path
  * reports itself instead of reading as an empty publisher.

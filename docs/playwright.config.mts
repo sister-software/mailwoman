@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Playwright configuration for the docs site's build-health check. The browser suite for the geocoder lives with
  *   the app in `packages/earth`; what remains here asserts that `docusaurus build` succeeds with no warnings or
@@ -32,7 +35,7 @@ const projectFlags = argv.flatMap((arg, index) =>
 const SEARCH_ONLY = projectFlags.length > 0 && projectFlags.every((name) => name === "search")
 
 /**
- * The environment variable that carries the search server's port from the main process to the test workers.
+ * The environment variable that passes the search server's port from the main process to the test workers.
  *
  * Playwright evaluates this file again in every worker process.
  * A worker's argv holds no `--project` flag, so without the variable it would compute

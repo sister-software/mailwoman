@@ -286,31 +286,41 @@ export const RENDERED_DIFF_LIMIT = 40
 
 /**
  * Two acquired engines, or the error that prevented the comparison.
+ *
+ * Take it with `using`.
+ * Its disposal releases both engines' leases.
  */
-export type TwoArms =
-	| { base: Engine; candidate: Engine; error?: null }
-	| { base?: null; candidate?: null; error: Record<string, unknown> }
+export type TwoArms = Disposable &
+	(
+		| { base: Engine; candidate: Engine; error?: null }
+		| { base?: null; candidate?: null; error: Record<string, unknown> }
+	)
 
 /**
  * Acquires a baseline engine and a candidate engine.
  *
  * It returns an error when `weightsCache` yields the baseline's engine,
  * because the candidate weights were then not applied.
+ * It releases both leases before it returns that error.
  */
 export async function acquireTwoArms(
 	registry: EngineRegistryLike,
 	options: { locale?: string | undefined; weightsCache?: string | undefined }
 ): Promise<TwoArms> {
 	const { locale, weightsCache } = options
-	const base = await registry.acquire(locale ? { locale } : {})
+	using leases = new DisposableStack()
+	const base = leases.use(await registry.acquire(locale ? { locale } : {}))
 
-	const candidate = await registry.acquire({
-		...(locale ? { locale } : {}),
-		...(weightsCache ? { weights_cache: weightsCache } : {}),
-	})
+	const candidate = leases.use(
+		await registry.acquire({
+			...(locale ? { locale } : {}),
+			...(weightsCache ? { weights_cache: weightsCache } : {}),
+		})
+	)
 
 	if (weightsCache && base.engineID === candidate.engineID) {
 		return {
+			[Symbol.dispose]: () => {},
 			error: {
 				error: "weights_cache did not take",
 				requested: weightsCache,
@@ -323,7 +333,9 @@ export async function acquireTwoArms(
 		}
 	}
 
-	return { base, candidate }
+	const held = leases.move()
+
+	return { base, candidate, [Symbol.dispose]: () => held.dispose() }
 }
 
 /**
@@ -388,14 +400,14 @@ function droppedRow(run: GeocodeRun): string[] {
  * A marker therefore reports something about the answer rather than replacing or withholding it,
  * and `declared_coarser_answer` sits beside a coordinate the run returned.
  *
- * The row names each marker and its evidence.
+ * The row lists each marker and its evidence.
  * The rows around this one show whether the parse or the resolver walk left a component empty.
  *
  * An earlier version of this row called every marker a refusal and attributed
  * every empty component to the #1649 tier check.
  * That sentence appeared on rows whose components were populated and on markers with
  * no connection to that check, such as `poi_category` and `authority_designation`,
- * and a reader acting on it attributed a parse failure to a stage that had not run.
+ * and a reader acting on it attributed a parse failure to a stage that hadn't run.
  */
 function intentAdvisoryRow(run: GeocodeRun): string[] {
 	const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
@@ -572,7 +584,7 @@ const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status"
 /**
  * Asserts that `by` is a known {@linkcode StratumKey}.
  *
- * @throws If `by` is not a known stratum.
+ * @throws If `by` isn't a known stratum.
  */
 export function assertStratumKey(by: string): asserts by is StratumKey {
 	if (!STRATUM_KEYS.includes(by as StratumKey)) {

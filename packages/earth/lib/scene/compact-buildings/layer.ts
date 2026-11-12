@@ -4,9 +4,12 @@
 /**
  *   A MapLibre custom layer that extrudes compact building tiles on the GPU.
  *
- *   Each z14 tile uploads two buffers once: one instance per footprint edge, drawn as a wall quad, and the roof
- *   triangles. The layer keeps no CPU copy after the upload, draws a z14 tile at every zoom from 13 up, and evicts
- *   tiles out of view by their GPU bytes. Positions go through MapLibre's own projectTileFor3D shader function, so the layer
+ *   Each z14 tile uploads two buffers once: one instance per footprint edge,
+ *   drawn as a wall quad, and the roof triangles.
+ *   The layer keeps no CPU copy after the upload, draws a z14 tile at every zoom from 13 up,
+ *   and evicts tiles out of view by their GPU bytes.
+ *
+ *   Positions go through MapLibre's own projectTileFor3D shader function, so the layer
  *   follows the globe and mercator projections and shares the map's depth buffer.
  */
 
@@ -691,7 +694,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	}
 
 	/**
-	 * Evicts the least recently drawn tiles that the current frame did not draw,
+	 * Evicts the least recently drawn tiles that the current frame didn't draw,
 	 * until the layer is within its budget.
 	 */
 	#evict(gl: WebGL2RenderingContext): void {

@@ -4,11 +4,12 @@
 /**
  *   The launch preflight, run on the host against the copy of the volume under `MAILWOMAN_DATA_ROOT`.
  *
- *   It runs every audit the config declares through the audit commands under `tools/training/audits/`, on a copy of
- *   the config whose volume paths point at the host copy, checks the wall clock, and writes the receipt with
- *   `writePreflightReceipt`. The receipt's key binds the original YAML and the MANIFEST's file sha256 set, and the
- *   sandbox refuses a volume whose MANIFEST bytes differ from the host's, so the audits and the training read the same
- *   corpus.
+ *   It runs every audit the config declares through the audit commands under
+ *   `tools/training/audits/`, on a copy of the config whose volume paths point at the host copy,
+ *   checks the wall clock, and writes the receipt with `writePreflightReceipt`.
+ *   The receipt's key binds the original YAML and the MANIFEST's file sha256 set,
+ *   and the sandbox refuses a volume whose MANIFEST bytes differ from the host's,
+ *   so the audits and the training read the same corpus.
  */
 
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"

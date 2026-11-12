@@ -119,7 +119,7 @@ This is a maintainable extension surface. The risk is flag proliferation. Each n
 - `scripts/eval/failure-dump.ts`
 - `scripts/eval/competitive-benchmark.ts`
 
-Five near-identical implementations of the same 6-line function. The resolver copies differ only in variable naming (`la1`/`la2` vs inline). This is not a correctness bug, and the math is trivial. It is a maintenance hazard if a precision issue surfaces in one copy. Consolidate into `core/spatial/haversine.ts` or a shared utility. This is a low-priority consistency cleanup.
+Five near-identical implementations of the same 6-line function. The resolver copies differ only in variable naming (`la1`/`la2` vs inline). This isn't a correctness bug, and the math is trivial. It is a maintenance hazard if a precision issue surfaces in one copy. Consolidate into `core/spatial/haversine.ts` or a shared utility. This is a low-priority consistency cleanup.
 
 ### The eval tooling ecosystem is healthy
 
@@ -173,7 +173,7 @@ The benchmark harness supports `--messy` (drops commas, abbreviates street words
 
 ### 3. AU's root cause is characterized but the fix path has a dependency gap
 
-The AU order probe (`scripts/eval/au-order-probe.ts`) shows that the model can parse AU addresses when they are in canonical order. The ceiling is +22pp. The fix is AU-native-order training data (#208 G-NAF). But G-NAF isn't in the corpus pipeline yet, and the issue isn't visible in the open queue. This is the highest-ROI single change on the board (would lift all-panel from ~90 to ~93 and flip AU from trailing Pelias to competitive), and it lacks a tracked next step.
+The AU order probe (`scripts/eval/au-order-probe.ts`) shows that the model can parse AU addresses when they're in canonical order. The ceiling is +22pp. The fix is AU-native-order training data (#208 G-NAF). But G-NAF isn't in the corpus pipeline yet, and the issue isn't visible in the open queue. This is the highest-ROI single change on the board (would lift all-panel from ~90 to ~93 and flip AU from trailing Pelias to competitive), and it lacks a tracked next step.
 
 ### 4. haversineKm duplication is technical debt
 

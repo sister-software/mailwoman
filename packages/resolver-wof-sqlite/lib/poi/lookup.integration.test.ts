@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@link POILookup} — the Node reader over `poi.db` (spec §3.4). Builds a tiny fixture
- *   straight against the layer schema (`poi` + `poi_category_codes` + the `poi_search` FTS5 table): 3
- *   cafes at increasing distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
- *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
- *   ring budget, including the only `museum`-category rows in the fixture), and one uncategorized
- *   row with the name "Pier 39" for the FTS name path. All twelve rows land in the final `poi` table via
- *   typed Kysely inserts. The builder owns the `poi_stage` mirror.
+ *   Tests for {@link POILookup} — the Node reader over `poi.db` (spec §3.4).
+ *
+ *   Builds a tiny fixture straight against the layer schema
+ *   (`poi` + `poi_category_codes` + the `poi_search` FTS5 table): 3 cafes at increasing
+ *   distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
+ *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the
+ *   default ring budget, including the only `museum`-category rows in the fixture),
+ *   and one uncategorized row with the name "Pier 39" for the FTS name path.
+ *   All twelve rows land in the final `poi` table via typed Kysely inserts.
+ *
+ *   The builder owns the `poi_stage` mirror.
  *   This test exercises the reader's table.
  */
 
@@ -336,7 +340,7 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
-		// The old 12-ring budget (covers gridDistance ≤ 11) does not.
+		// The old 12-ring budget (covers gridDistance ≤ 11) doesn't.
 		// This is the exact boundary miss nm-04 exposed.
 		expect(lk.search({ categoryIDs: ["trail"], center: SPRINGFIELD, maxRings: 12 })).toEqual([])
 		// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.

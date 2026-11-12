@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one variable the planetary build reads. It is read under Node by the Vite config and compiled into the
- *   client. the browser never sees an environment.
+ *   The one variable the planetary build reads.
+ *
+ *   It is read under Node by the Vite config and compiled into the client. the
+ *   browser never sees an environment.
  */
 
 import { $public as corePublic, liveEnv } from "@mailwoman/core/env"

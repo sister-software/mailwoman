@@ -20,11 +20,12 @@ A directory containing one or more cloned `whosonfirst-data-admin-*` repos:
     └── data/...
 ```
 
-`<inputPath>` is the repositories root, `$MAILWOMAN_DATA_ROOT/src/wof-repos`,
-which every recorded corpus build names in its `inputs.json`. Each repository
-is cloned once there, from its `mailwoman` fork, by
+`<inputPath>` is the repositories root, `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`.
+Each repository is cloned once there, from its `mailwoman` fork, by
 `mailwoman gazetteer inspect sync`, and the adapter walks that root
-recursively (`**/*.geojson`). To add the repositories one country needs:
+recursively (`**/*.geojson`). The `inputs.json` of each corpus build recorded
+before 2026-11-10 records the earlier root, `src/wof-repos` under the data root.
+To add the repositories one country needs:
 
 ```sh
 mailwoman gazetteer inspect sync --countries us,fr
@@ -92,7 +93,7 @@ WOF tags each record's `mz:is_current` as one of:
 
 - `1` — current, in service.
 - `-1` — unknown, treated as active. The official Pelias importer accepts
-  these. The Phase 1.5 SQLite adapter did not, and it silently emitted **zero
+  these. The Phase 1.5 SQLite adapter didn't, and it silently emitted **zero
   rows** from the production distribution as a result.
 - `0` — superseded. Skipped.
 
@@ -116,7 +117,7 @@ rows look like `Paris, Île-de-France, France`.
   alternative would require resolving parents lazily. That alternative is more code
   and saves no meaningful memory at corpus-build scale.
 - Alternate-geometry sibling files (`<id>-alt-<source>-<lang>.geojson`) are
-  identified by the `-alt-` substring in the filename and skipped. They are
+  identified by the `-alt-` substring in the filename and skipped. They're
   not separate records.
 - The adapter walks `**/*.geojson` from `inputPath`, so it doesn't care about
   the directory structure WOF uses internally (`data/XXX/YYY/ZZZ/`). Tests

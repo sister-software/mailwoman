@@ -4,8 +4,9 @@
 import { prettyJSON } from "@mailwoman/core/json"
 
 /**
- *   `build.json`: the static deployment record a production smoke reads instead of a health endpoint. A site's build
- *   emits it (see `vite/build-info.ts`); the app and the smoke read it.
+ *   `build.json`: the static deployment record a production smoke reads instead of a health endpoint.
+ *
+ *   A site's build emits it (see `vite/build-info.ts`); the app and the smoke read it.
  */
 
 export interface BuildInfo {

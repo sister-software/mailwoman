@@ -1,7 +1,7 @@
 # v0.7.2 eval — intersection-bare retrain (2026-05-30)
 
 **Verdict: EXPERIMENTAL.** Best neural model to date and strictly dominates
-v0.6.0, but does not clear the ≥25% harness PROMOTE bar. Do not promote to
+v0.6.0, but doesn't clear the ≥25% harness PROMOTE bar. Do not promote to
 default on the strict check. Ship it as experimental. The path to ≥25% is coverage
 and the resolver rather than another recipe tweak.
 
@@ -30,7 +30,7 @@ port). The capability map shows that neural is the robustness layer rather than 
 ### Intersection cluster — the retrain's target
 
 `intersection.test.ts`: **4/65 → 11/65 (17%)**. The bare-format + `@` fix worked
-_directionally_ (+7 assertions) but did not reach "most-of-65." Format diversity
+_directionally_ (+7 assertions) but didn't reach "most-of-65." Format diversity
 helped, but it wasn't sufficient. Bare-intersection coverage is still thin relative
 to the 65 hand-curated adversarial cases.
 
@@ -83,7 +83,7 @@ needs a coverage extract (backlog B3'). Stays opt-in.
   _strictly dominates_ the current default (v0.6.0): +5.1pp harness, +7
   intersections, per-tag check clean. The team should ship it as **experimental** (model card rather than `defaultVersion`) — it's the best artifact we have and is
   A/B-able. The promote-to-default decision is the operator's.
-- **The 25% bar is not a recipe-tuning problem.** Two cycles (v0.6.x, v0.7.x) of
+- **The 25% bar isn't a recipe-tuning problem.** Two cycles (v0.6.x, v0.7.x) of
   corpus tweaks have moved harness 14→19.5%. The remaining gap is (a) coverage of
   the long tail — bare intersections, street-less last-lines, mid-street units,
   non-US locales (the third arena's 0% edge classes) — and (b) the resolver

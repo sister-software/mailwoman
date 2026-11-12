@@ -195,7 +195,7 @@ export async function applyModuleMoves(
 		const directory = rewrite.file.slice(0, rewrite.file.lastIndexOf("/"))
 		const target = `${directory}/${rewrite.replacement.slice(2)}`
 
-		// The build has not emitted `out/` targets yet, so only source targets can be checked.
+		// The build hasn't emitted `out/` targets yet, so only source targets can be checked.
 		if (target.includes("/out/")) continue
 
 		if (!(await pathExists(resolvePath(context.repoRoot, target)))) {

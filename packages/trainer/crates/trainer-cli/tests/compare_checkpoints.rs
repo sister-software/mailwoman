@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `trainer compare-checkpoints` exits 0 on two equal checkpoints and 1 when a tensor is in one checkpoint only.
 
 use std::path::Path;

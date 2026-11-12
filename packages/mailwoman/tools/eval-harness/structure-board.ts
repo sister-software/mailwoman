@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Board that checks whether the parser labels held-out address shapes it was not trained on: WOF structure cells kept
- *   out of every training arm, query shapes, relation-word pairs, mixed-script venues, romaji in Western order and typos
- *   (#2857, step 5).
+ *   Board that checks whether the parser labels held-out address shapes it was not trained on:
+ *   WOF structure cells kept out of every training arm, query shapes, relation-word pairs,
+ *   mixed-script venues, romaji in Western order and typos (#2857, step 5).
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -35,7 +35,7 @@ export type StructureBoardResult = SpanBoardResult
  */
 export interface StructureFixture extends SpanBoardFixture {
 	/**
-	 * When true, the row fails on any tag the parse emits that its expectation does not name.
+	 * When true, the row fails on any tag the parse emits that its expectation doesn't name.
 	 *
 	 * Query-shaped rows set it, so a category word tagged `street` or `region` fails in every class alike.
 	 */

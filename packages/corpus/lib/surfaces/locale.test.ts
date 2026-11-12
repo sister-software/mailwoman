@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the German synthesizer (night-shift 2026-06-02, DE-1). Validates the {raw, components}
- *   interface and the BIO output via the real `alignRow`: the model must see German order — street →
- *   house_number (house after street) and postcode → locality (postcode before city) — the
- *   convention the US/FR-trained model never learned.
+ *   Tests for the German synthesizer (night-shift 2026-06-02, DE-1).
+ *
+ *   Validates the {raw, components} interface and the BIO output via the real `alignRow`:
+ *   the model must see German order, street before house_number (house after street) and postcode
+ *   before locality (postcode before city), the convention the US/FR-trained model never learned.
  */
 
 import { describe, expect, it } from "vitest"

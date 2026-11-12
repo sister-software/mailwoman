@@ -2,22 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Freezes an evaluation set of addresses that end in their country, with the Who's On First
- *   `<locality>, <country>` chains of the same countries.
+ *   Freezes an evaluation set of addresses that end in their country.
+ *
+ *   It adds the Who's On First `<locality>, <country>` chains of the same countries.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/trailing/country.run.ts \
  *     --countries AL,AM,AE,BF,CI,CR,EC --wof-manifest <corpus MANIFEST.json> --dataset-id <id> --out <dataset .json> \
  *     [--osm-dir /mnt/mw/db/osm/corpus] [--per-country 300] [--unseen <provenance .json>]
  *
- *   Address rows come from each country's OSM extract (`osm-<cc>-<date>.corpus.jsonl`, the newest) through the OSM
- *   adapter, rendered with the country's name last (`trailing-country.ts`). The country's name is the spelling with the
- *   highest count among its Who's On First test rows. Chains come from the Who's On First admin test rows of `--wof-manifest`.
+ *   Address rows come from each country's OSM extract (`osm-<cc>-<date>.corpus.jsonl`, the newest)
+ *   through the OSM adapter, rendered with the country's name last (`trailing-country.ts`).
+ *   The country's name is the spelling with the highest count among its Who's On First test rows.
  *
- *   An address extract holds rows a training corpus also holds. Freeze once with a large `--per-country`, audit the
- *   result with `overlap.run.ts`, then freeze again with `--unseen <that provenance file>`. The second pass draws each
- *   country's quota from the rows the audit classed `verified_unseen`. A country with no extract is listed and
- *   skipped, and the manifest's `drawnFrom.files` names every extract read.
+ *   Chains come from the Who's On First admin test rows of `--wof-manifest`.
+ *
+ *   An address extract holds rows a training corpus also holds.
+ *   Freeze once with a large `--per-country`, audit the result with `overlap.run.ts`,
+ *   then freeze again with `--unseen <that provenance file>`.
+ *
+ *   The second pass draws each country's quota from the rows the audit classed `verified_unseen`.
+ *   A country with no extract is listed and skipped, and the manifest's
+ *   `drawnFrom.files` names every extract read.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

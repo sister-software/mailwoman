@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The required case grades place identity off the resolved place rather than the echoed query span, the
- *   confusion that would make the whole check decorative.
+ *   The required case grades place identity off the resolved place rather than the echoed
+ *   query span, the confusion that would make the whole check decorative.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

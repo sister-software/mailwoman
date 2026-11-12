@@ -39,7 +39,7 @@ that page doesn't cover.
 Speech recognition faces the same problem: a learned model
 (acoustic → phoneme sequences) needs world knowledge (which phoneme
 sequences are real words / valid sentences) that its training data
-did not supply. The solution that works in production: compute the acoustic
+didn't supply. The solution that works in production: compute the acoustic
 model's posterior over phoneme sequences, ADD a logit bias from an
 independent language model, decode the combined distribution.
 
@@ -79,7 +79,7 @@ This is the full picture the classifier supports — `morphology_fst_bias` is a 
 
 The biases are capped at 3.0 logits (per the
 [FST gazetteer prior](./fst-gazetteer-prior.mdx) design). A confident
-encoder decision (raw logit > 5) is not overridden by a 3-logit bias.
+encoder decision (raw logit > 5) isn't overridden by a 3-logit bias.
 But when the encoder is uncertain (raw logit ~0), a 3-logit positive
 bias determines the label.
 

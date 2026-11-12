@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Shared weights-overlay routing metadata for board runners.
  */
@@ -64,7 +67,7 @@ export function overlayLocale(country: string | null): string {
  * given the overlay locales that failed to load.
  *
  * A country with no declared overlay answers `false`: it grades through the base package by design.
- * That is its production path.
+ * That's its production path.
  *
  * Therefore, calling that degraded would withhold a suggestion the run is entitled to make.
  *

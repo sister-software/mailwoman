@@ -103,7 +103,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * The grant schedule remains arithmetically compliant.
  * This mismatch makes a failed block difficult to debug.
  *
- * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy.
+ * One request per second of headroom costs ~10% throughput on a crawl that's already cache-heavy.
  * The extra headroom keeps arrivals inside the published limit when the event loop runs late.
  *
  * `SEC_MAX_REQUESTS_PER_SECOND` remains the clamp — a caller may ask for anything
@@ -113,7 +113,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * under 10/s rather than merely the grant times.
  *
  * The interval must also be an integer number of milliseconds.
- * This constant's first value did not meet that requirement.
+ * This constant's first value didn't meet that requirement.
  *
  * `1000 / 9` is `111.111…`.
  * A fractional interval puts the 10th grant at exactly 1000.0 ms after the first.
@@ -147,7 +147,7 @@ const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
  * `Infinity` is the obvious spelling of "never expires" and the wrong one:
  * `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as `0` in the cache
  * interceptor's `createdAt + ttl < Date.now()` expiry test, so a "permanent" entry would
- * round-trip through disk into one that is expired the instant it is read.
+ * round-trip through disk into one that's expired the instant it is read.
  * `buildDiskStorage` throws on a non-finite TTL for this reason.
  */
 const PERMANENT_CACHE_TTL_MS = 100 * 365 * 24 * 60 * 60 * 1000
@@ -177,7 +177,7 @@ const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
  * live at a path of this shape once submitted,
  * e.g. `https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/aapl-20230930.htm`.
  *
- * SEC does not revise a filed document in place.
+ * SEC doesn't revise a filed document in place.
  * A correction is a new filing at a new path — so a document fetched today
  * reads identically a year from now.
  *
@@ -208,7 +208,7 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * `sec.gov` (the apex) and `efts.sec.gov` (edgar full-text search — the Exhibit 21 discovery path)
  * are included alongside the two hosts decision 5 names.
  * The client compares `url.hostname` by exact `Set` membership.
- * It does not check suffixes.
+ * It doesn't check suffixes.
  *
  * Exact hostname matching rejects `www.sec.gov.attacker.example`.
  * An `.endsWith(".sec.gov")`-style check would accept it.
@@ -219,7 +219,7 @@ export function isImmutableArchiveURL(url: URL): boolean {
 const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "efts.sec.gov"])
 
 /**
- * Reject a URL this client must not send its User-Agent to.
+ * Reject a URL this client mustn't send its User-Agent to.
  *
  * @throws A {@linkcode ResourceError} whose URN kind is `request` — never transient,
  * because re-issuing the identical URL can only fail identically.
@@ -360,7 +360,7 @@ export class SECClient extends APIClient<SECClientConfig> {
 	 * the parsed JSON body, subject to the on-disk cache, request pacer and bounded retry.
 	 *
 	 * Takes a full absolute URL rather than a path appended to one base: edgar is served
-	 * across several hosts, so there is no single base to append to.
+	 * across several hosts, so there's no single base to append to.
 	 *
 	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request.
 	 * The cache interceptor provides a stampede guard.
@@ -393,7 +393,7 @@ export class SECClient extends APIClient<SECClientConfig> {
 	 * Same client, same pacing limit, same host allowlist, same retry policy,
 	 * same {@linkcode ResourceError} mapping as {@linkcode get} — only a per-request The
 	 * `responseType: "text"` override tells Axios to return the body as-is.
-	 * Axios does not attempt `JSON.parse` on it (the default `transformResponse` only parses
+	 * Axios doesn't attempt `JSON.parse` on it (the default `transformResponse` only parses
 	 * when `responseType === "json"`; this override is what turns that off for exactly this one call).
 	 *
 	 * `/Archives/edgar/data/` documents still get the permanent cache TTL
@@ -461,7 +461,7 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path
  * short of hand-deleting a file whose name is its hash.
- * That is why both branches exist instead of one permissive `Boolean(value.data?.data)` check.
+ * That's why both branches exist instead of one permissive `Boolean(value.data?.data)` check.
  *
  * That would also admit a numeric `0` or a boolean `false` body, neither of
  * which this client's endpoints ever legitimately return.

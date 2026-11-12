@@ -11,7 +11,7 @@
  * The grades `held`, `degraded`, and `correctlyAbstained` pass.
  * The failing grades stay distinct because each one points at a different kind of bug.
  *
- * - `lost` means the case should resolve and did not.
+ * - `lost` means the case should resolve and didn't.
  * - `overconfident` means the case should abstain and resolved anyway.
  * - `homonymTakeover` means the case should abstain and resolved because the
  *   remaining text matches another place.

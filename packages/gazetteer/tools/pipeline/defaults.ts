@@ -3,10 +3,15 @@
 
 /**
  *   The canonical admin-gazetteer coverage recipe lives here and receives code review.
+ *
  *   `data/gazetteer/wof-build-manifest.json` records the command, execution time, plus its MD5.
  *
- *   The lists map id ranges to sources. WOF rows (`id < 2e9`) are the priority countries.
- *   Overture divisions (`8e12 ≤ id < 9e12`) are the 86. The GeoNames alias fold (`id ≥ 9e12`) is the 161.
+ *   The lists map id ranges to sources.
+ *   WOF rows (`id < 2e9`) are the priority countries.
+ *
+ *   Overture divisions (`8e12 ≤ id < 9e12`) are the 86.
+ *   The GeoNames alias fold (`id ≥ 9e12`) is the 161.
+ *
  *   See releasing.md "Rebuilding + swapping the canonical admin gazetteer".
  *
  * 	 TODO: Move most of this to JSON configuration files.

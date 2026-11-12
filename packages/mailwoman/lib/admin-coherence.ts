@@ -3,11 +3,14 @@
 
 /**
  *   Compares parsed `region` and `country` qualifiers with the winning candidate's resolver ancestry.
- *   The report is informational and does not affect ranking or selection.
  *
- *   Name comparison uses the shared locality fold plus codex mappings for countries and supported
- *   subdivisions. It does not infer cross-language aliases. A qualifier with no ancestry to compare
- *   against is `unverifiable`.
+ *   The report is informational and doesn't affect ranking or selection.
+ *
+ *   Name comparison uses the shared locality fold plus codex mappings for countries
+ *   and supported subdivisions.
+ *   It doesn't infer cross-language aliases.
+ *
+ *   A qualifier with no ancestry to compare against is `unverifiable`.
  */
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"

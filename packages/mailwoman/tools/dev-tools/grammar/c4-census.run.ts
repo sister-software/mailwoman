@@ -1,7 +1,10 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Threshold-free, report-only C4 boundary-feature census over the committed Gauntlet board.
  *
- * This command changes no runtime behavior and is not a release eval.
+ * This command changes no runtime behavior and isn't a release eval.
  */
 
 /* oxlint-disable sister-software/multiline-statement-padding -- each row's evidence assembly reads as one operation */

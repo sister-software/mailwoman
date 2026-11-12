@@ -72,7 +72,7 @@ with members `packages/mtf/crates/*` and `packages/trainer/crates/*`) when:
 - a global/full-run trigger happens
 
 `mtf-core`'s `board_reference` test reads the uncommitted en-us `tokenizer.model`, so this hosted job
-does not run it.
+doesn't run it.
 
 ## Rust in the fast leg
 
@@ -110,7 +110,7 @@ pinned version.
   - is cancelled
   - unexpectedly skips
 - Scope summary shows selected suites and affected workspaces.
-- If a suite was not selected, it did not run.
+- If a suite was not selected, it didn't run.
 
 Data-fleet exception:
 

@@ -57,7 +57,7 @@ version works where the string-first v0 imploded.
   - `name.ts`: `parsePersonName` — rule-based positional parser (the python-nameparser
     recipe), comma-inversion, leading titles, trailing suffixes, surname **particle stored
     separately** (`de la Vega` to particle `de la` + family `Vega`), nickname extraction.
-    Western/romanized only. It does not map nicknames to roots (lossy/gendered — that belongs
+    Western/romanized only. It doesn't map nicknames to roots (lossy/gendered — that belongs
     in the matcher as a fuzzy agreement level).
   - `organization.ts`: `canonicalizeOrganizationName` — Winkler designation-strip (`Acme
     Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
@@ -135,7 +135,7 @@ solid baseline, and org _matching_ needs a follow-up pass. Full detail in
 - **After adding a workspace:** add it to root `package.json` workspaces, `tsconfig.json`
   references, `vitest.config.ts` aliases, then `yarn install` (updates the lockfile — keep
   it clean for CI's `--immutable`).
-- **The heavy geocoder (weights + situs/interp extracts) is not in this worktree**, so the
+- **The heavy geocoder (weights + situs/interp extracts) isn't in this worktree**, so the
   real end-to-end geocode run can't be unit-tested here — it's operator-verifiable via the
   CLI. That's why geocoding is an injected boundary.
 - Another agent was active on `eval/oa-offmap-pull` in the shared checkout during this

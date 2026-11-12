@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure render helpers for `<ModelVisualizer>` — kept free of React so they unit-test without a
- *   DOM. Color output is CSS `hsl()` strings chosen to read on both light and dark Docusaurus
- *   themes (mid-lightness, alpha-scaled).
+ *   Pure render helpers for `<ModelVisualizer>` — kept free of React so they unit-test without a DOM.
+ *
+ *   Color output is CSS `hsl()` strings chosen to read on both light and dark
+ *   Docusaurus themes (mid-lightness, alpha-scaled).
  */
 
 import { isPresent } from "@mailwoman/core/objects"

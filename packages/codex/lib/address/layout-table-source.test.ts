@@ -4,16 +4,22 @@
 /**
  *   Diff the committed layout table against the dataset it was generated from, country by country.
  *
- *   The generated half of the table contains 186 transcriptions of libaddressinput `fmt` strings. A transcription error
- *   can produce a plausible address from another place. Reviewers can miss it in the 1,215-line generated file.
- *   This test re-derives each skeleton from the dataset. It requires the committed layout to print the same fields,
- *   in the same order, with the same line breaks.
+ *   The generated half of the table contains 186 transcriptions of libaddressinput `fmt` strings.
+ *   A transcription error can produce a plausible address from another place.
+ *
+ *   Reviewers can miss it in the 1,215-line generated file.
+ *   This test re-derives each skeleton from the dataset.
+ *
+ *   It requires the committed layout to print the same fields, in the same order,
+ *   with the same line breaks.
  *
  *   The test locates the dataset in `@mailwoman/dictionaries` by package resolution rather than by import.
- *   Production files under `lib/` cannot depend on that package, because it depends on core and core imports
- *   `@mailwoman/codex`. The codex manifest therefore stays free of both.
+ *   Production files under `lib/` cannot depend on that package, because it depends
+ *   on core and core imports `@mailwoman/codex`.
+ *   The codex manifest therefore stays free of both.
  *
- *   The test skips eleven hand-authored countries because their layouts intentionally differ from the dataset.
+ *   The test skips eleven hand-authored countries because their layouts
+ *   intentionally differ from the dataset.
  *   A separate `@mailwoman/codex` test records the reason for each difference.
  */
 
@@ -62,7 +68,7 @@ const FIELD: Readonly<Record<string, string>> = {
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A slot counts as authored only when the source does not define it.
+	// A slot counts as authored only when the source doesn't define it.
 	// The 14 `fmt` strings that include `%D` are compared like any other line,
 	// so a transcription error there still fails.
 	const inSource = new Set(source.flat())
@@ -72,7 +78,9 @@ function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): s
 }
 
 function nameOf(atom: AddressAtom): string[] {
-	if (isSlot(atom)) return [atom.tag]
+	// A slot with fixed text, such as Puerto Rico's `PR`, transcribes the skeleton's literal
+	// text, so it compares like a connector and drops out of the field list.
+	if (isSlot(atom)) return atom.fallback ? [] : [atom.tag]
 
 	// An alternation or a nested layout is the street line however that country spells it.
 	if (isAlternation(atom) || isLayout(atom)) return ["«street»"]
@@ -81,7 +89,7 @@ function nameOf(atom: AddressAtom): string[] {
 }
 
 /**
- * A placeholder this project does not model drops out.
+ * A placeholder this project doesn't model drops out.
  *
  * A country whose `fmt` contains only such fields is reported as unusable rather than as a mismatch.
  */
@@ -171,7 +179,7 @@ describe("the generated layout table matches libaddressinput", () => {
 
 		// A country the dataset leaves unusable may still have an approved S42 template.
 		// Its Standardized Address Format Description states an order this repository read.
-		// That is a second source rather than a second reading of the same one.
+		// That's a second source rather than a second reading of the same one.
 		// A UPU Postal Addressing Systems description is a third: the postal operator's printed examples.
 		for (const country of unusable) {
 			const layout = layoutForCountry(country)

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The single-parse dedupe surface: `geocodeAddress` accepts a pre-parsed `parsedTree` and skips its
- *   internal `classifier.parse` when given one. `parseForGeocode` exposes that exact parse so a
- *   caller can run it once and feed both the geocode and a PostalAddress. Fakes the classifier/resolver
- *   — no weights/WOF needed.
+ *   The single-parse dedupe surface: `geocodeAddress` accepts a pre-parsed `parsedTree`
+ *   and skips its internal `classifier.parse` when given one.
+ *
+ *   `parseForGeocode` exposes that exact parse so a caller can run it once
+ *   and feed both the geocode and a PostalAddress.
+ *   Fakes the classifier/resolver — no weights/WOF needed.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -91,7 +93,7 @@ describe("parseForGeocode", () => {
 		const tree = await parseForGeocode("x", { classifier })
 		await geocodeAddress("x", { classifier, resolver, placeCountry: "none", parsedTree: tree })
 
-		// parseForGeocode parsed once. geocodeAddress did not parse again.
+		// parseForGeocode parsed once. geocodeAddress didn't parse again.
 		expect(classifier.parse).toHaveBeenCalledTimes(1)
 		expect(seen.at(-1)).toBe(tree)
 	})

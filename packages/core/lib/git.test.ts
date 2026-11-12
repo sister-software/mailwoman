@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
 import { realPath } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
-import { GitClient, type GitProgress, parseGitProgress } from "#git"
+import { GitClient, type GitProgress, parseGitProgress, streamTrackedFiles, trackedFiles } from "#git"
 
 const IDENTITY = ["-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture"]
 
@@ -88,5 +88,35 @@ describe("GitClient", () => {
 		await client[Symbol.asyncDispose]()
 
 		await expect(client.read(["rev-parse", "HEAD"])).rejects.toThrow("disposed")
+	})
+})
+
+describe("streamTrackedFiles", () => {
+	it("lists the paths trackedFiles lists, narrowed by a pathspec", async () => {
+		await using scratch = await temporaryDirectory("git-stream-")
+
+		const repo = scratch.path("repo")
+
+		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", repo.toString()])
+
+		for (const file of ["README", "data/101/1.geojson", "data/102/ 2 with space.geojson"]) {
+			await writeLocalTextFile("fixture\n", repo(file))
+		}
+
+		const client = new GitClient({ cwd: repo })
+
+		await client.read(["add", "."])
+		await client.read([...IDENTITY, "commit", "--quiet", "-m", "fixture"])
+
+		const streamed = await Array.fromAsync(streamTrackedFiles(repo, ["data"]))
+
+		expect(streamed).toEqual(await trackedFiles(repo, ["data"]))
+		expect(streamed).toEqual(["data/101/1.geojson", "data/102/ 2 with space.geojson"])
+	})
+
+	it("throws when the directory is not a repository rather than ending as an empty listing", async () => {
+		await using scratch = await temporaryDirectory("git-stream-")
+
+		await expect(Array.fromAsync(streamTrackedFiles(scratch.path))).rejects.toThrow("git ls-files exited")
 	})
 })

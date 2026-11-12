@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The web loader's postcode-prefix leg: a listed index becomes the anchor-region lookup, and a
- *   missing or corrupt one is skipped with a warning while the classifier still loads.
+ *   The web loader's postcode-prefix leg: a listed index becomes the anchor-region lookup,
+ *   and a missing or corrupt one is skipped with a warning while the classifier still loads.
  */
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"

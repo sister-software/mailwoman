@@ -17,7 +17,7 @@ configuration or dependency.
 ## Decisions
 
 - **The index is a static file.** The docs build writes it, GitHub Pages serves it, and the browser
-  queries it. There is no server, schedule, ingest or secret. The 2026-10-02 design put the index in a
+  queries it. There's no server, schedule, ingest or secret. The 2026-10-02 design put the index in a
   Cloudflare worker with D1 and Vectorize. The probe below replaced it.
 - **The browser fetches the file whole.** The probe measured a range VFS against a whole-file fetch on
   the real index and the whole file won. The numbers are under "Probe".
@@ -133,11 +133,11 @@ and a `node:sqlite` adapter satisfies it in tests.
    `position`, for 40 rows.
 3. When the primary query returns zero rows, each token of at least three characters is corrected:
    `terms_trigram` is queried with the `OR` of the token's three-character windows for 10 candidates,
-   and the candidate with the smallest Damerau-Levenshtein distance that is at most 2, and at most
+   and the candidate with the smallest Damerau-Levenshtein distance that's at most 2, and at most
    one for a token under 6 characters, replaces the token. The primary query runs again with the
    corrected tokens, and the response reports the correction. A term that shares no three-character
    window with the token is never proposed, so a transposition inside a word of four letters or fewer
-   is not corrected.
+   isn't corrected.
 4. Hits are the first record per URL, up to `limit`, with a 160-character snippet around the first
    token match and the character ranges that matched.
 

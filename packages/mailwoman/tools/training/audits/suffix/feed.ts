@@ -4,11 +4,14 @@
 /**
  *   Audits how the suffix-boundary feed labels a street's terminal suffix after the affix relabel.
  *
- *   A street group is a `B-street` run with the `B-street_suffix` run after it. The classify lexicon sorts a group
- *   by its last two words: `terminal-contrast` when the last word is a name-prone suffix, and `terminal-only` when the
- *   last word is a suffix and the word before it a name-prone one. Each classified group is correct when, after the
- *   relabel lexicon's pass, its last word reads `street_suffix` and the word before it `street`. The rows of the
- *   suffix-boundary sources are counted apart from every other source's.
+ *   A street group is a `B-street` run with the `B-street_suffix` run after it.
+ *   The classify lexicon sorts a group by its last two words: `terminal-contrast`
+ *   when the last word is a name-prone suffix, and `terminal-only` when the last
+ *   word is a suffix and the word before it a name-prone one.
+ *
+ *   Each classified group is correct when, after the relabel lexicon's pass,
+ *   its last word reads `street_suffix` and the word before it `street`.
+ *   The rows of the suffix-boundary sources are counted apart from every other source's.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

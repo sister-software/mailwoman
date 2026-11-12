@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A self-contained basemap style over the Protomaps planet tileset: one vector source and the
- *   `@protomaps/basemaps` layers, with no terrain, bathymetry or buildings tileset.
+ *   A self-contained basemap style over the Protomaps planet tileset: one vector source
+ *   and the `@protomaps/basemaps` layers, with no terrain, bathymetry or buildings tileset.
  *
- *   `StyleSpecificationComposer` builds Earth's style, which adds raster DEM sources, a GeoJSON land underlay, sky and
- *   light. A client that renders only vector tiles, such as QGIS, or a page that wants a plain basemap, reads this
- *   style instead.
+ *   `StyleSpecificationComposer` builds Earth's style.
+ *   That style adds raster DEM sources, a GeoJSON land underlay, sky and light.
+ *
+ *   A client that renders only vector tiles, such as QGIS, or a page that wants
+ *   a plain basemap, reads this style instead.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -19,7 +21,7 @@ import { PROTOMAPS_GLYPHS_URL, protomapsSpriteURL, type ProtomapsSpriteName } fr
 import type { TileJSON } from "#tiles/schema"
 
 /**
- * The named basemap styles: the Protomaps stock flavors and the two Mailwoman themes.
+ * The basemap styles a caller selects by name: the Protomaps stock flavors and the two Mailwoman themes.
  */
 export const BASEMAP_STYLE_NAMES = [
 	"light",
@@ -38,7 +40,7 @@ export function isBasemapStyleName(value: string): value is BasemapStyleName {
 }
 
 /**
- * The flavor and sprite sheet of each named style.
+ * The flavor and sprite sheet of each style in {@linkcode BASEMAP_STYLE_NAMES}.
  *
  * A Mailwoman theme reads the sprite of the stock flavor it starts from.
  */

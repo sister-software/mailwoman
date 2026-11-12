@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A read-only SQLite database whose pages are R2 range reads, implementing the browser resolver's `RangeDatabase`
- *   so `WOFCandidateTableLookup` runs on it unchanged. The browser reader answers SQLite's synchronous page reads with
- *   synchronous XHR in a Web Worker, and a Cloudflare Worker has no synchronous XHR. The JSPI build of wa-sqlite lets the VFS's
- *   `jRead` await an R2 read instead.
+ *   A read-only SQLite database whose pages are R2 range reads, implementing the browser
+ *   resolver's `RangeDatabase` so `WOFCandidateTableLookup` runs on it unchanged.
+ *
+ *   The browser reader answers SQLite's synchronous page reads with synchronous XHR
+ *   in a Web Worker, and a Cloudflare Worker has no synchronous XHR.
+ *   The JSPI build of wa-sqlite lets the VFS's `jRead` await an R2 read instead.
  */
 
 import type { R2Bucket } from "@cloudflare/workers-types"

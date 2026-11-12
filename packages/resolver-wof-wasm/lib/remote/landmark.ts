@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The landmark route's interface: the Worker answers it, and a browser reads it through
- *   {@linkcode RemoteLandmarkLookup}.
+ *   The landmark route's interface: the Worker answers it, and a browser reads
+ *   it through {@linkcode RemoteLandmarkLookup}.
  */
 
 import type { LandmarkHit, LandmarkLookup } from "@mailwoman/core/resolver"

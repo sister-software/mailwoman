@@ -4,12 +4,17 @@
 /**
  *   Maps floor designators to signed integer ordinals across locales, with ground at 0 as in Apple's IMDF.
  *
- *   The same numbered floor can mean different storeys. In the United States "1st floor" is ground, while in
- *   France, Germany and the UK it is one storey above ground. Designator words are keyed by language family.
+ *   The same numbered floor can mean different storeys.
+ *   In the United States "1st floor" is ground, while in France, Germany
+ *   and the UK it is one storey above ground.
+ *
+ *   Designator words are keyed by language family.
  *   Each locale uses its full locale key for numbering conventions.
  *
  *   The tables encode common building usage because no single authority publishes these conventions.
- *   Half-storeys round down: a mezzanine or upper ground maps to 0. A lower ground maps to -1.
+ *   Half-storeys round down: a mezzanine or upper ground maps to 0.
+ *
+ *   A lower ground maps to -1.
  *   Penthouse, roof and attic have no fixed ordinal and map to `undefined`.
  *
  * @see {@link https://register.apple.com/resources/imdf/Level/ imdf Level — `ordinal` (Apple Indoor Mapping Data Format)}

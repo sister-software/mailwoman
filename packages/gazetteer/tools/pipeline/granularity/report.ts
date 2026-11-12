@@ -7,8 +7,7 @@
  *
  * The report declares its own limits inline rather than deferring them to a design doc.
  *
- * Pure: rows in, markdown out, `buildDate` injected by the caller so the output is deterministic
- * under test.
+ * Pure: rows in, markdown out, `buildDate` injected by the caller so the output is deterministic under test.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -20,7 +19,7 @@ import { LADDER, type CountryGranularity, bottomsOutAt } from "#tools/pipeline/g
 /**
  * Which build path supplied a country's rows, derived from the artifact (synthetic id ranges)
  * rather than the recipe so a country added to `DEFAULT_WOF_PRIORITY_COUNTRIES` before a rebuild
- * does not read as `wof-repo`; the recipe is only a cross-check that renders `rebuild pending`.
+ * doesn't read as `wof-repo`; the recipe is only a cross-check that renders `rebuild pending`.
  */
 function sourceClass(country: CountryGranularity): string {
 	const locality = country.rungs.locality
@@ -33,7 +32,7 @@ function sourceClass(country: CountryGranularity): string {
 	const observed =
 		synthetic === 0 ? "wof-repo" : locality.geonamesBackfilled > locality.overtureBackfilled ? "geonames" : "overture"
 
-	// The recipe promises WOF rows the artifact does not yet contain: a rebuild has not run since the recipe changed.
+	// The recipe promises WOF rows the artifact doesn't yet contain: a rebuild hasn't run since the recipe changed.
 	if (recipeSaysWOF && observed !== "wof-repo") return `${observed} (rebuild pending)`
 
 	return observed

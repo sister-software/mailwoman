@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The one variable the application's build reads. The Vite config reads it under Node and compiles it into the
- *   client, so the browser never reads an environment.
+ *   The one variable the application's build reads.
+ *
+ *   The Vite config reads it under Node and compiles it into the client,
+ *   so the browser never reads an environment.
  */
 
 import { $public as corePublic, liveEnv } from "@mailwoman/core/env"

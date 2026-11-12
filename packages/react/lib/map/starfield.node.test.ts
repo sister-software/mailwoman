@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The star sky's generator and camera math are pure, so they are tested here rather than in the browser suite.
+ *   The star sky's generator and camera math are pure, so they're tested here
+ *   rather than in the browser suite.
  */
 
 import { describe, expect, test } from "vitest"

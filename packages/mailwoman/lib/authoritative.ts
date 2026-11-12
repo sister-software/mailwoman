@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Threads a configured authoritative provider's answer onto a geocode result as an additive, separate block — no code here rewrites the open result's coordinate, components, or tier — and a provider that throws is reported as `status: "transport_error"` with the message rather than silently dropped, because a dropped failure is indistinguishable from "the provider was not configured".
+ * Threads a configured authoritative provider's answer onto a geocode result as an additive,
+ * separate block — no code here rewrites the open result's coordinate, components,
+ * or tier — and a provider that throws is reported as `status: "transport_error"`
+ * with the message rather than silently dropped, because a dropped failure is
+ * indistinguishable from "the provider was not configured".
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

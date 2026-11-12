@@ -2,34 +2,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Per-release mask-regression check, the "second lock" paired with the load-time
- *   capability-manifest delta check shipped in `neural/scorer.ts`
- *   (`assertConventionsRespectCapabilities`).
+ *   Per-release mask-regression check, the "second lock" paired with the load-time capability-manifest
+ *   delta check shipped in `neural/scorer.ts` (`assertConventionsRespectCapabilities`).
  *
  *   What it adds over the load-time delta check (and why two locks):
  *
- *   - The load-time delta check (createScorer) is reactive and coarse. It consults the model card's
- *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
- *       certifies, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on explicitly-forbidden
- *       tags. It checks only pre-recorded numbers, so it cannot see a tag the mask harms indirectly
- *       (for example forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
- *       regression on a tag no `forbiddenTags` row lists.
- *   - This check is proactive and fine-grained. It re-runs the model (mask-off against mask-auto/on)
- *       per locale under the full ship-config (anchor-on and gazetteer-on) and fails if any tag's F1
- *       drops by more than a tighter 2pp threshold under the conventions mask, catching the subtler
- *       interaction harms the per-tag 5pp delta check would miss.
+ *   - The load-time delta check (createScorer) is reactive and coarse.
+ *     It consults the model card's `capabilities` block and rejects only a conventions mask
+ *     that forbids a tag the card certifies, at a 5pp `maskOffF1 − maskOnF1` threshold.
+ *     It fires only on explicitly-forbidden tags.
+ *     It checks only pre-recorded numbers, so it cannot see a tag the mask harms indirectly
+ *     (for example forbidding `street_suffix` shifts probability mass and depresses `street`),
+ *     nor a regression on a tag no `forbiddenTags` row lists.
+ *   - This check is proactive and fine-grained.
+ *     It re-runs the model (mask-off against mask-auto/on) per locale under the full
+ *     ship-config (anchor-on and gazetteer-on) and fails if any tag's F1 drops by more
+ *     than a tighter 2pp threshold under the conventions mask, catching the subtler
+ *     interaction harms the per-tag 5pp delta check would miss.
  *
- *   It is weight-dependent (it runs the model), so it is a release check to run with weights on disk
- *   before publishing. It is not a weightless CI step, since weight-dependent tests do not run in CI.
+ *   It is weight-dependent (it runs the model), so it is a release check to run
+ *   with weights on disk before publishing.
+ *   It isn't a weightless CI step, since weight-dependent tests do not run in CI.
+ *
  *   Hook it into the release path (`mailwoman eval promote` / the publish flow) rather than Test CI.
  *
- *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer` (so
- *   the channel feed matches the ship config) with `overrides.conventions`
- *   toggling mask off against auto, plus the unfolded exact-match per-tag F1 from `score-affix.ts`
+ *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer`
+ *   (so the channel feed matches the ship config) with `overrides.conventions` toggling
+ *   mask off against auto, plus the unfolded exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible, unlike the folded `per-locale-f1.ts`).
  *   The difference from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the load-time check reads), while this check computes the delta
- *   for every tag, because a mask can harm a tag no `forbiddenTags` row lists.
+ *   codex-forbidden tags (the only tags the load-time check reads), while this check computes
+ *   the delta for every tag, because a mask can harm a tag no `forbiddenTags` row lists.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
@@ -38,10 +41,12 @@
  *   pass = no tag regresses more than the threshold under the mask. fail = at least one tag
  *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
  *
- *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
- *   locale × tag rather than only violations) for the release record. All narration goes through the
- *   `report` sink (stderr by default), and `promotion-eval.ts` captures it into
- *   `<out-dir>/mask-regression.md`.
+ *   `threshold` overrides the default 0.02 (2pp).
+ *   `json` writes the full per-tag delta table (every locale × tag rather than
+ *   only violations) for the release record.
+ *
+ *   All narration goes through the `report` sink (stderr by default),
+ *   and `promotion-eval.ts` captures it into `<out-dir>/mask-regression.md`.
  */
 
 import type { SystemCode } from "@mailwoman/codex"

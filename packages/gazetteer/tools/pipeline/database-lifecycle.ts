@@ -92,7 +92,7 @@ export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): v
 }
 
 /**
- * Marks a provenance field that a rebuild could not recover.
+ * Marks a provenance field that a rebuild couldn't recover.
  *
  * It is a sentinel rather than an empty string so that a consumer can tell "unknown" from "no value exists".
  */

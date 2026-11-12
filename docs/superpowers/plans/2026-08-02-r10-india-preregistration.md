@@ -7,8 +7,8 @@ India shipped, but our own ingest produced a smaller number.
 
 ## The correction: 186,469 → 175,744, and 86,754 before aliases
 
-The handoff's probes counted nodes in the raw WOF repo. The probes are gitignored and were not in
-this tree, so the figure could not be audited, only re-derived. Re-derived through the pipeline:
+The handoff's probes counted nodes in the raw WOF repo. The probes are gitignored and weren't in
+this tree, so the figure couldn't be audited, only re-derived. Re-derived through the pipeline:
 
 | measurement                                             | pairs       |
 | ------------------------------------------------------- | ----------- |
@@ -75,8 +75,8 @@ live pair counts were identical across old and new, and India went from 0 to 86,
 
 The regenerated `gazetteer granularity` report against the swapped artifact changes India's `source` column
 from `overture (rebuild pending)` to `wof-repo` and fills its dependent-locality rung with **88,142
-nodes**. The scorecard still reports that India's coverage stops at `locality`. That is correct and
-does not come from stale data:
+nodes**. The scorecard still reports that India's coverage stops at `locality`. That's correct and
+doesn't come from stale data:
 
 | country | locality nodes carrying a dep-loc child |    share |
 | ------- | --------------------------------------: | -------: |

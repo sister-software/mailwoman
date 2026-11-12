@@ -44,7 +44,7 @@ await classifier.parseJSON("東京都千代田区丸の内1丁目9-1")
 // { prefecture: "東京都", municipality: "千代田区", district: "丸の内", block: "1丁目", house_number: "9-1" }
 ```
 
-There is no SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over
+There's no SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over
 `char-vocab.json`. The graph's inputs are `char_ids` (int64, batch × sequence × 7) and `attention_mask` (int64,
 batch × sequence); the output is `logits` (batch × sequence × 49).
 

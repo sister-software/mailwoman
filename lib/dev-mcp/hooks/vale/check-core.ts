@@ -3,19 +3,29 @@
 
 /**
  *   This module runs finished agent replies through the Mailwoman Vale rules and renders one verdict.
- *   `response/check.ts` adapts Claude Code. `response/check/codex.ts` adapts Codex.
- *   Both parse payloads and guard against loops. They format output JSON through the shared policy in this module.
- *   This module defines the config and blocking severities. It also defines the finding text.
  *
- *   The rule set is `config/vale/.vale-chat.ini`: every rule under `config/vale/styles/`, the chat-only
- *   rules included, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
- *   relative to this module, so a worktree checkout lints with its own rules.
+ *   `response/check.ts` adapts Claude Code.
+ *   `response/check/codex.ts` adapts Codex.
  *
- *   Severity picks the mechanism. Error-severity findings render a `block` verdict. The tier is
- *   curated to near-zero legitimate use. The correction must replace the judgment with the
- *   concrete claim rather than merely delete the flagged word. Warning-only findings render a `context`
- *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex does
- *   not have, so the agent weighs them.
+ *   Both parse payloads and guard against loops.
+ *   They format output JSON through the shared policy in this module.
+ *
+ *   This module defines the config and blocking severities.
+ *   It also defines the finding text.
+ *
+ *   The rule set is `config/vale/.vale-chat.ini`: every rule under `config/vale/styles/`,
+ *   the chat-only rules included, fixture-tested by `config/vale/check-rules.ts`.
+ *   The config path resolves relative to this module, so a worktree checkout lints with its own rules.
+ *
+ *   Severity picks the mechanism.
+ *   Error-severity findings render a `block` verdict.
+ *
+ *   The tier is curated to near-zero legitimate use.
+ *   The correction must replace the judgment with the concrete claim
+ *   rather than merely delete the flagged word.
+ *
+ *   Warning-only findings render a `context` verdict: those rules (opaque IDs, minted metaphors,
+ *   vague praise) need judgment a regex doesn't have, so the agent weighs them.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -42,7 +52,7 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const vale = await valeCommand(import.meta.url)
 	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
-	// Vale exits 1 when error-severity alerts exist, so the exit code does not indicate a tool failure.
+	// Vale exits 1 when error-severity alerts exist, so the exit code doesn't indicate a tool failure.
 	// Unparseable stdout indicates failure.
 	// The silence interface would otherwise treat it as "no findings".
 	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {

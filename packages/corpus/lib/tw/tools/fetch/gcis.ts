@@ -2,23 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch Taiwan's company and business registers (公司登記資料, 商業登記資料) from the Ministry of
- *   Economic Affairs' commerce open-data platform, data.gcis.nat.gov.tw. The platform publishes the
- *   full registers as CSV files split by region (the six special municipalities each on their own,
- *   the rest of the island in four bands) and by industry letter, 148 files in all, each row carrying
- *   the registered address (公司地址) and, for companies, the tax office's business address
- *   (營業地址) as free text.
+ *   Fetch Taiwan's company and business registers (公司登記資料, 商業登記資料) from the Ministry
+ *   of Economic Affairs' commerce open-data platform, data.gcis.nat.gov.tw.
  *
- *   The ministry issues the company number, so the identifier is an `identity` assertion. Both address
- *   columns are `observation`s — a person typed them — and they serve different roles on the same row:
- *   公司地址 is the entity's `registered-office`, 營業地址 the `facility` it operates from. An adapter that
- *   reads the file must set `addressRole` per column, or it teaches the premise parser registered-office
- *   grammar.
+ *   The platform publishes the full registers as CSV files split by region
+ *   (the six special municipalities each on their own, the rest of the island in four bands)
+ *   and by industry letter, 148 files in all, each row carrying the registered address (公司地址)
+ *   and, for companies, the tax office's business address (營業地址) as free text.
  *
- *   License: 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0). The platform's
- *   own dialog states the condition that binds: attribution in the form it prescribes, or the grant is
- *   void from the start ("未盡顯名標示義務者，視為自始未取得開放資料之授權"). The manifest records the
- *   prescribed wording per file so the corpus build and the model card can include it.
+ *   The ministry issues the company number, so the identifier is an `identity` assertion.
+ *   Both address columns are `observation`s — a person typed them — and they serve different roles on
+ *   the same row: 公司地址 is the entity's `registered-office`, 營業地址 the `facility` it operates from.
+ *
+ *   An adapter that reads the file must set `addressRole` per column, or it teaches
+ *   the premise parser registered-office grammar.
+ *
+ *   License: 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0).
+ *   The platform's own dialog states the condition that binds: attribution in the form
+ *   it prescribes, or the grant is void from the start ("未盡顯名標示義務者，視為自始未取得開放資料之授權").
+ *
+ *   The manifest records the prescribed wording per file so the corpus build
+ *   and the model card can include it.
  *
  *   Invoke via `mailwoman corpus fetch gcis-tw --out-root <path>`.
  */
@@ -93,6 +97,15 @@ async function fileURLFor(dataset: Dataset): Promise<string | null> {
 	return path ? `${PORTAL}${path}` : null
 }
 
+/**
+ * Downloads every bulk register file the catalog lists and writes a collection manifest after each file.
+ *
+ * Every run downloads every file again.
+ * The platform states no version to compare: the detail page gives an update frequency (每月) but no date,
+ * and the file response, measured on 2026-11-10, sends no `ETag` or `Last-Modified` header.
+ *
+ * A file already on disk is replaced only once its new copy has arrived whole.
+ */
 export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
@@ -102,23 +115,32 @@ export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: s
 	report?.(`=== ${SLUG}: ${datasets.length} bulk register files in the catalog`)
 
 	const previous = await loadCollectionFiles(manifestPath)
+	// Each earlier entry stands until its file's new copy arrives, so an interrupted
+	// or failed run leaves every file on disk described by the manifest.
 	const files = new Map<string, SourceManifest>()
+
+	for (const [filename, entry] of previous) {
+		if (await pathExists(destDir(filename))) {
+			files.set(filename, entry)
+		}
+	}
+
 	let fetched = 0
-	let skipped = 0
 	const failedCodes: string[] = []
+
+	const record = () =>
+		writeManifest(manifestPath, {
+			source: SLUG,
+			source_url: CATALOG_URL,
+			license: LICENSE,
+			attribution: ATTRIBUTION,
+			downloaded_at: new Date().toISOString(),
+			files: [...files.values()],
+		} satisfies SourceCollectionManifest)
 
 	for (const dataset of datasets) {
 		const filename = filenameFor(dataset.title)
 		const dest = destDir(filename)
-		const before = previous.get(filename)
-
-		if (before && (await pathExists(dest))) {
-			files.set(filename, before)
-
-			skipped++
-
-			continue
-		}
 
 		await sleep(PACE_MS)
 		const url = await fileURLFor(dataset)
@@ -154,6 +176,9 @@ export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: s
 		if (bytes < BYTES_PER_KIB) {
 			report?.(`  ✗ ${bytes} bytes — an error page, not the register`)
 			failedCodes.push(dataset.title)
+			// The page replaced the earlier copy, so the earlier entry no longer describes the file.
+			files.delete(filename)
+			await record()
 
 			continue
 		}
@@ -164,17 +189,8 @@ export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: s
 		fetched++
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 
-		const manifest: SourceCollectionManifest = {
-			source: SLUG,
-			source_url: CATALOG_URL,
-			license: LICENSE,
-			attribution: ATTRIBUTION,
-			downloaded_at: new Date().toISOString(),
-			files: [...files.values()],
-		}
-
-		await writeManifest(manifestPath, manifest)
+		await record()
 	}
 
-	return { fetched, skipped, failed: failedCodes.length, failedCodes }
+	return { fetched, skipped: 0, failed: failedCodes.length, failedCodes }
 }

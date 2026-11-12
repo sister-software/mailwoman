@@ -57,7 +57,7 @@ venue tags) and (b) the quick base legs (P0 fragment sample plus golden sample).
 
 - If the main run misses V1, one contingency run is allowed, and only with a stated mechanism (for
   example, the GB venue pool composition or the range-number rate). A second miss goes to an
-  operator conversation, and there is no third launch.
+  operator conversation, and there's no third launch.
 - If B1 misses at the chosen λ, do not ship. Report the conflict between λ and the target as the
   finding, since it sets the cost of the B11 guarantee.
 - If only λ=0 clears V1, then λ=0 is the calibrated answer. Record it, and the template inherits it
@@ -78,7 +78,7 @@ The first λ sweep (v4.1.0, venue weight 2.0, lr 1e-5, 2k steps) produced **no s
 53.8% to 54.5%, which is noise. The exposure arithmetic explains the design defect. At weight 2.0
 the venue extract is about 1.4% of samples, so the run saw about 7k venue rows (about 2.4k GB) in 2k
 steps at a fine-tune learning rate. The probe cannot test λ if the increment leaves the outputs unchanged, so the
-sweep result is void. It does not show that λ is unconstrained.
+sweep result is void. It doesn't show that λ is unconstrained.
 
 **Stated revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune feed,
 following the v3.8.x oversample precedent (the no-fragment run used 12.0 for its corrective
@@ -105,7 +105,7 @@ more fixtures made real partial progress. New North now gets house_number "287-2
 postcode right, and Far East now extracts the mixed-script venue in full. GB board: venue
 53.8→80.8, locality 54→78.8, postcode 74.5→92.3, all-components 10.5→20.5.
 
-**Why another weight change would not fix the remaining three.** The stop rules end the run here
+**Why another weight change wouldn't fix the remaining three.** The stop rules end the run here
 because the three remaining fixtures fail through three different mechanisms, and the extract
 teaches none of them:
 
@@ -113,12 +113,12 @@ teaches none of them:
    stayed near 29% at every weight, and the PPD tuples are overwhelmingly typed streets. Ye Three
    Lords needs the model to accept a bare proper noun as a street from its position without other cues.
 2. _The doubled bare venue_ ("Southfields Station, Southfields Station"). This is a venue-only
-   fragment and does not match the extract's venue+address template.
+   fragment and doesn't match the extract's venue+address template.
 3. _Abbreviated internal directionals_ ("New N Rd") next to a venue that starts with a direction.
    "13 Gerrard St" also shows a digit-split oddity (house_number "Ger") that deserves its own look.
 
 Each can become listed future work: a typeless-street extract leg, a venue-only doubled template in
-the no-street extract, and an abbreviation-augmentation pass over the GB leg. That is three
+the no-street extract, and an abbreviation-augmentation pass over the GB leg. That's three
 mechanisms, and the envelope allows one contingency. **The run stopped per the pre-registration.
 The candidate (model 7.0.1-candidate, staged rather than promoted) and all receipts go to the
 operator.** The six gauntlet fixtures stay `improvement_target`.
@@ -149,7 +149,7 @@ Stop rule: any miss goes to an operator conversation, with no contingency run.
 
 The v4.1.3 run (weight 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) fails its bars. For T1, the FR
 control still fails at both the pipeline and bare-classifier levels. The model learned to tag the
-tail (`country` now emits on tailed rows), but it did not learn to find the venue in rows with a
+tail (`country` now emits on tailed rows), but it didn't learn to find the venue in rows with a
 tail. Venue is null everywhere, and the FR control's house_number degraded from 44 to "4". The
 corrected gauntlet shows 0 newly passing fixtures and a conditional regression (VERDICT FAIL).
 

@@ -27,7 +27,7 @@ A corpus version is a frozen set of `(raw, tokens, BIO labels)` triples ready fo
 | wall-clock to build            | ~6.5 hours                         |
 | splits                         | train (90%) / val (5%) / test (5%) |
 
-The corpus is built once per ship. A re-run of the build is idempotent. The build does not yet support incremental updates.
+The corpus is built once per ship. A re-run of the build is idempotent. The build doesn't yet support incremental updates.
 
 ## The data sources
 
@@ -53,7 +53,7 @@ Skipped in v0.3.0:
 - **fcc-bdc** — license incompatibility (CostQuest gray-copyright).
 - **usgov-samhsa-treatment-locator** — source bulk export went offline (PR #113 deferred the adapter).
 
-The diversity of sources matters more than the absolute count. NPPES contributes 9.2M rows but it is the single largest source of `venue + address` co-occurrence. Without it, the model would not have learned that a venue precedes a street more frequently than it follows one.
+The diversity of sources matters more than the absolute count. NPPES contributes 9.2M rows but it is the single largest source of `venue + address` co-occurrence. Without it, the model wouldn't have learned that a venue precedes a street more frequently than it follows one.
 
 ## Stage 1 — Per-adapter row emission
 

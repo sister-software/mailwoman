@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The dedicated-worker script behind `openRangeDatabase`. It registers a read-only SQLite VFS whose file is
- * one remote database, read by HTTP range requests, and answers the messages in `worker-protocol.ts`.
+ * The dedicated-worker script behind `openRangeDatabase`.
  *
- * A host stages the compiled script beside the sqlite-wasm runtime and the page loads it by URL. The
- * script therefore has type-only imports: a runtime import would name a file the host never staged.
+ * It registers a read-only SQLite VFS whose file is one remote database, read by HTTP
+ * range requests, and answers the messages in `worker-protocol.ts`.
  *
- * SQLite calls `xRead` synchronously, so each range request is a synchronous `XMLHttpRequest`, which
- * browsers permit inside a worker.
+ * A host stages the compiled script beside the sqlite-wasm runtime and the page loads it by URL.
+ * The script therefore has type-only imports: a runtime import would name a file the host never staged.
+ *
+ * SQLite calls `xRead` synchronously, so each range request is a synchronous
+ * `XMLHttpRequest`, which browsers permit inside a worker.
  */
 
 import type { Database, PreparedStatement, Sqlite3Static } from "@sqlite.org/sqlite-wasm"
@@ -85,7 +87,7 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
 /**
  * Returns chunk `index` of the file, fetching it on first use.
  *
- * Every request covers one whole chunk at an offset that is a multiple of the chunk size, so the same
+ * Every request covers one whole chunk at an offset that's a multiple of the chunk size, so the same
  * read always produces the same `Range` header and an HTTP or service-worker cache can answer it.
  */
 function chunkAt(file: RemoteFile, index: number): Uint8Array {
@@ -265,6 +267,11 @@ function openInMemory(sqlite3: Sqlite3Static, bytes: Uint8Array): Database {
 }
 
 async function open(request: Extract<RangeWorkerCall, { type: "open" }>): Promise<RangeWorkerResults["open"]> {
+	// One worker serves one database.
+	// A second open would replace `database` under statements prepared against the first one,
+	// so the client starts a new worker for another file.
+	if (remote || database) throw new Error("The range worker already has a database open")
+
 	const { default: initialize } = (await import(
 		/* @vite-ignore */ /* webpackIgnore: true */ request.runtimeModuleURL
 	)) as typeof import("@sqlite.org/sqlite-wasm")

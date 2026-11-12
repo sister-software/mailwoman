@@ -6,8 +6,9 @@
  *
  *   The output mixes designator-led streets with bare commune names as counterexamples.
  *   Some streets include a house number.
- *   `--exclude-surfaces` keeps streets on the fragment evaluation board out of training. A model trained on
- *   these rows needs the French `street_prefix` loss mask disabled.
+ *
+ *   `--exclude-surfaces` keeps streets on the fragment evaluation board out of training.
+ *   A model trained on these rows needs the French `street_prefix` loss mask disabled.
  */
 
 import { titleCaseFR } from "@mailwoman/codex/fr"
@@ -23,7 +24,7 @@ import { SurfaceOrigin } from "#types"
 
 /**
  * The provenance for every row.
- * Street and commune names both come from BAN.
+ * Street and commune names that both come from BAN.
  */
 /**
  * Resolved once, because `source_id` includes the source as its prefix and a pair

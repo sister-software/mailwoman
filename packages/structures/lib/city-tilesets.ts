@@ -4,8 +4,9 @@
 /**
  *   The city models Earth serves from its own tile worker, whatever source each came from.
  *
- *   `data/city-tilesets.json` lists them. The converter for each source writes the tileset as 3D Tiles 1.1 under
- *   `3dtiles/<id>/` in the tiles bucket and adds its record here, so the map reads one list for every city.
+ *   `data/city-tilesets.json` lists them.
+ *   The converter for each source writes the tileset as 3D Tiles 1.1 under `3dtiles/<id>/`
+ *   in the tiles bucket and adds its record here, so the map reads one list for every city.
  */
 
 /**

@@ -18,13 +18,13 @@ import type { CanonicalRow } from "#types"
  *
  * License and provenance fields stay out of the key, so two adapters emitting
  * the same address produce the same key.
- * The key store does not deduplicate across adapters: `runAdapter` holds its own as a local
+ * The key store doesn't deduplicate across adapters: `runAdapter` holds its own as a local
  * and discards it when the adapter returns, so each adapter is deduplicated only against itself.
  *
  * A cross-adapter pass would hold every adapter's keys at once and would have to choose
  * which adapter's copy of an address survives.
  * That choice sets the row's `source`, `license` and `register`, which makes it a
- * corpus-level decision the runner does not take today.
+ * corpus-level decision the runner doesn't take today.
  *
  * An augmented row is never deduplicated against the row it was fanned from, because
  * `augmentation.name` joins the key when present and each augmentation variant therefore survives.

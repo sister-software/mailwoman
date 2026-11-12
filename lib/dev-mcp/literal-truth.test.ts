@@ -6,7 +6,7 @@
  *
  *   The point of the feature is that a row can be measured before its case file is written. So the tests that matter
  *   are: the truth reaches the resolved row, the graded fraction is reported against its own denominator and a mixed
- *   set does not let an ungraded row read as a graded one.
+ *   set doesn't let an ungraded row read as a graded one.
  */
 
 import { describe, expect, it } from "vitest"

@@ -3,9 +3,11 @@
 
 /**
  *   The countries the BAN rooftop build has an extract for, and the street locale each folds under.
- *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`, which the
- *   reader also calls. This module stays apart from `region-database-provider.ts`, which opens the SQLite
- *   lookup, so the locale can be tested without a database.
+ *
+ *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`,
+ *   which the reader also calls.
+ *   This module stays apart from `region-database-provider.ts`, which opens the
+ *   SQLite lookup, so the locale can be tested without a database.
  */
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"

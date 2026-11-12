@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The checkpoint's `config.json`, as the trainer writes it (the format the Python trainer's `to_config_dict` defined).
 //!
 //! A key the file omits takes the default `serialization._constructor_kwargs` gives it, so a config written by an

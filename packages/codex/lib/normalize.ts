@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Name-normalization primitives shared across the codex tables and the lexicon builders that read
- *   them. They live here rather than in `core` or `normalize` because codex is the
- *   zero-runtime-dependency reference package. Every lookup that matches a name against a codex table
- *   already depends on it. The package keeps folding rules beside the tables they fold. This placement prevents a
- *   lookup and its table from disagreeing about what counts as the same name.
+ *   Name-normalization primitives shared across the codex tables and the lexicon builders that read them.
+ *
+ *   They live here rather than in `core` or `normalize` because codex is the
+ *   zero-runtime-dependency reference package.
+ *   Every lookup that matches a name against a codex table already depends on it.
+ *
+ *   The package keeps folding rules beside the tables they fold.
+ *   This placement prevents a lookup and its table from disagreeing about what counts as the same name.
  */
 
 /**
@@ -25,7 +28,7 @@ export function foldName(s: string): string {
 /**
  * Normalize a word list without folding case or non-Latin scripts — `"Кыргызстан,"` and `"日本 。"`
  * survive with their content intact — for surface lexicons whose entries must remain renderable.
- * Unlike {@link foldName} this is not a match key.
+ * Unlike {@link foldName} this isn't a match key.
  */
 export function wordNorm(s: string): string {
 	return s

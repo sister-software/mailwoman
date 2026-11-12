@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The origins the app talks to are typed URLs. A composed URL cannot lose its trailing slash.
+ *   The origins the app talks to are typed URLs.
+ *
+ *   A composed URL cannot lose its trailing slash.
  *   One object lets a staging deployment swap all three at once.
  */
 

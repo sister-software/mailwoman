@@ -1,7 +1,7 @@
 # AGENTS.md — `@mailwoman/corpus`
 
 Scope notes for the training-corpus pipeline. The repo-wide rules live in the root `AGENTS.md`; this
-file covers what is specific to acquiring source data and turning it into recipe outputs, and it exists
+file covers what's specific to acquiring source data and turning it into recipe outputs, and it exists
 because each item below cost a real investigation to establish.
 
 ## OpenAddresses acquisition
@@ -14,7 +14,7 @@ blocks you on a credential or costs a multi-gigabyte download for a single count
   `fetchOpenAddresses` reads `OA_BATCH_TOKEN`. Granularity is a whole country, and the US collection is several gigabytes.
 - **Per-source runs** — `https://results.openaddresses.io/latest/run/<path>.zip`, e.g.
   `.../latest/run/us/ia/statewide.zip`. **Anonymous access with no token**, and the endpoint honors range requests. `<path>`
-  is exactly the member path the recipe names, so `oa-cache/us__ia__statewide.zip` ⇄
+  is exactly the member path the recipe names, so `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/us__ia__statewide.zip` ⇄
   `us/ia/statewide.csv` ⇄ `/latest/run/us/ia/statewide.zip`.
 
 The auth check is on collections only. If you need a handful of specific sources, use the per-source
@@ -23,10 +23,10 @@ endpoint — all seven `us__*` sources the recipes read total ~117 MB.
 `HEAD` against the per-source endpoint returns no `Content-Length` (it redirects). To size one
 without downloading it, issue a one-byte range GET and read `Content-Range`.
 
-## A file's mtime is not its data's vintage
+## A file's mtime isn't its data's vintage
 
 `$MAILWOMAN_DATA_ROOT/openaddresses/europe.zip` has a 2021 mtime. That date reads as five-year-old data,
-and the file has been proposed for refresh on that basis. It is not stale: `fr/countrywide.csv`,
+and the file has been proposed for refresh on that basis. It isn't stale: `fr/countrywide.csv`,
 `de/berlin.csv` and `de/sn/statewide.csv` are **byte-identical** to what OA's current run serves
 (`bf624492…`, `9903d438…`, `623b099b…`). The date records when someone downloaded the archive.
 
@@ -78,7 +78,7 @@ Recipe outputs are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/slices/` rat
 artifacts. Two checks, one command each, before asserting that a code change invalidates one:
 
 1. **Is that reader on the changed path?** Several recipes read the same source through different
-   readers. `locale.ts` has its own `CSVSpliterator` reader and is not among `readCSVRecords`' callers.
+   readers. `locale.ts` has its own `CSVSpliterator` reader and isn't among `readCSVRecords`' callers.
 2. **Does the artifact predate the fix?** Compare the recipe output's mtime against the commit date of
    the change. A recipe output built after a fix already contains it.
 
@@ -106,7 +106,7 @@ rows, with the `licenseID` each one points at. A derived or synthetic source lis
 publication with no register row gets one in `data/source-additions.json` under an `unchecked` decision, so
 the gap shows in the register rather than hiding as an absence. Add both entries in the change that adds the
 adapter, recipe, inherited overlay or generator, before any build reads the source. The
-`corpus-source-inputs` repository check reports an emitted source the table does not map.
+`corpus-source-inputs` repository check reports an emitted source the table doesn't map.
 
 `buildCorpus`, `corpus overlay-manifest`, `corpus recipe`, every `lib/tools/*.run.ts` builder, the `train` command
 and the Modal launcher's local entry point refuse a source unless each register source it reads has an
@@ -138,20 +138,29 @@ the precedent.
 A base corpus build,
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
 takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
-input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in the background with
+input path relative to `$MAILWOMAN_DATA_ROOT`, or to `$MAILWOMAN_CACHE_ROOT` when the entry states
+`"root": "cache"`, as a current source under `sources/` does. A record from before the storage classes
+identifies no root and keeps the paths it recorded. Budget a day, run the build in the background with
 `NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
 change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
 `--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and
-peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
+peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and isn't hung:
 `rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
 
 A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
-adapter `MANIFEST.json`, and names each file with its size. To continue an interrupted build, rerun
+adapter `MANIFEST.json`, and lists each file with its size. To continue an interrupted build, rerun
 the same command with `--resume`:
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json --out <out> --resume`.
 It reuses each finished adapter run, truncates the align outputs to the checkpoint's offsets and
 aligns the remaining adapters, and keeps the parquet files the parquet manifest records. `--fresh`
 deletes that work and builds from the start. A build without one of the two flags deletes no file.
+
+An adapter run's `MANIFEST.json` records the corpus version and an `inputs` digest of the adapter's
+options, its input's fingerprint and its code (`adapterRunInputs` in `lib/build/adapters.ts`). A resume
+refuses a run whose corpus version or digest differs from the build's. The align checkpoint already
+records that adapter as aligned, so running it again would leave its old aligned rows in place. Rebuild
+it with `--fresh`, or with `--fresh-sources <id>` under `--jobs` above 1. A manifest written before the
+digest existed records none and is refused the same way.
 
 `--jobs K` above 1 runs each source's adapter, align and parquet work in worker processes
 (`lib/build/parallel.ts`) and writes the same parquet, split and manifest bytes as `--jobs 1`; only
@@ -199,7 +208,7 @@ API and match on `organization` rather than `title`; a third party's copy may ha
 with `license_id: notspecified` while the publisher's entry holds the grant under another name.
 Compare the entry's `resources` against the file to be fetched to prove the two records describe one
 artifact. A portal also returns third parties' datasets about a country, and a third party's license
-is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
+isn't the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
 `electedTerms` hold the publisher's words, because `electedTermsLabel` feeds the share-alike
 filter.
 

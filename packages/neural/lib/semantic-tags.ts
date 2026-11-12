@@ -4,25 +4,31 @@
 /**
  *   The shared semantic tag registry: one global identity per address concept, across every model family.
  *
- *   A label set is a model family's head vocabulary. Its head indices are positions in that set, and two sets may
- *   place the same tag at different indices: `locality_unit` is head tag 16 in `stage3-cn` and head tag 23 in
- *   `stage3-cjk`. The tag's semantic identity is its entry here, and it is the same in both.
+ *   A label set is a model family's head vocabulary.
+ *   Its head indices are positions in that set, and two sets may place the same tag at different
+ *   indices: `locality_unit` is head tag 16 in `stage3-cn` and head tag 23 in `stage3-cjk`.
  *
- *   Script and locale choose a family, a tokenizer and priors. They do not choose what a tag means. `Tokyo` and
- *   `東京都` are both `prefecture` (`docs/engineering/reference/SCHEMA.mdx` gives both as examples). A family whose
- *   head lacks `prefecture` emits the concept the schema records it refines, `region`. A family with no documented
- *   equivalent reports the concept as unrepresentable rather than writing `O`.
+ *   The tag's semantic identity is its entry here, and it is the same in both.
+ *
+ *   Script and locale choose a family, a tokenizer and priors.
+ *   They do not choose what a tag means.
+ *
+ *   `Tokyo` and `東京都` are both `prefecture` (`docs/engineering/reference/SCHEMA.mdx` gives both as examples).
+ *   A family whose head lacks `prefecture` emits the concept the schema records it refines, `region`.
+ *
+ *   A family with no documented equivalent reports the concept as unrepresentable rather than writing `O`.
  *
  *   Rules:
  *
- *   - {@linkcode SEMANTIC_TAGS} is append-only. A tag's global id is its index and never changes.
- *   - {@linkcode REFINES} maps a fine tag to the shared tag that holds the same concept at coarser grain, only where
- *       SCHEMA.mdx states the relation.
- *   - {@linkcode SEMANTIC_TAG_REGISTRY_VERSION} increments whenever `SEMANTIC_TAGS` or `REFINES` changes, and every
- *       model card records it beside `label_set` and `head_mapping`.
+ *   - {@linkcode SEMANTIC_TAGS} is append-only.
+ *     A tag's global id is its index and never changes.
+ *   - {@linkcode REFINES} maps a fine tag to the shared tag that holds the same concept
+ *     at coarser grain, only where SCHEMA.mdx states the relation.
+ *   - {@linkcode SEMANTIC_TAG_REGISTRY_VERSION} increments whenever `SEMANTIC_TAGS`
+ *     or `REFINES` changes, and every model card records it beside `label_set` and `head_mapping`.
  *
- *   `emit-label-schema.run.ts` writes the registry into the `semantic_tags` section of `data/label-schema.v1.json`,
- *   which the trainer reads.
+ *   `emit-label-schema.run.ts` writes the registry into the `semantic_tags` section
+ *   of `data/label-schema.v1.json`, which the trainer reads.
  */
 
 import { CN_FINE_TAGS, JP_FINE_TAGS, LABEL_SETS, type LabelSetName, STAGE3_TAGS, STAGE4_FINE_TAGS } from "./labels.ts"
@@ -35,7 +41,7 @@ export const SEMANTIC_TAG_REGISTRY_VERSION = 1
 /**
  * The tags `COMPONENT_TAGS` in `@mailwoman/codex/component` declares and no label set trains.
  *
- * They are registered so the registry covers the parser's whole vocabulary.
+ * They're registered so the registry covers the parser's whole vocabulary.
  */
 export const JS_ONLY_TAGS = ["street_prefix_particle", "attention"] as const
 
@@ -92,7 +98,7 @@ export const UNREFINED: ReadonlySet<string> = new Set([
 /**
  * The global semantic id of each head tag of `name`, in head order.
  *
- * @throws When the set holds a tag the registry does not know.
+ * @throws When the set holds a tag the registry doesn't know.
  * The refusal catches a tag that skipped registration.
  */
 export function headMapping(name: LabelSetName): number[] {
@@ -156,7 +162,7 @@ export function splitBIOLabel(label: string): [prefix: "B" | "I", tag: string] |
 }
 
 /**
- * What projecting a family's labels changed and what it could not represent, as the ledger reports it.
+ * What projecting a family's labels changed and what it couldn't represent, as the ledger reports it.
  */
 export interface ProjectionReport extends LabelSetContract {
 	projected: Record<string, number>
@@ -164,10 +170,10 @@ export interface ProjectionReport extends LabelSetContract {
 }
 
 /**
- * Counts what projecting labels into one family changed and what it could not represent.
+ * Counts what projecting labels into one family changed and what it couldn't represent.
  *
  * A loader that projects through it reports, per run, the spans of each concept that
- * became a coarser tag and the spans the family could not emit.
+ * became a coarser tag and the spans the family couldn't emit.
  */
 export class ProjectionLedger {
 	readonly labelSet: LabelSetName
@@ -207,8 +213,8 @@ export class ProjectionLedger {
 	/**
 	 * Projects a row's labels, merging adjacent spans that refine the same target into one span.
 	 *
-	 * `2丁目3番16号` is three spans (`block`, `sub_block`, `building_number`) on a head that
-	 * has them and one `house_number` span on a head that does not.
+	 * `2丁目3番16号` is three spans (`block`, `sub_block`, `building_number`) on a head
+	 * that has them and one `house_number` span on a head that doesn't.
 	 * Rule D4 labels the compact form `2-3-16` the same way.
 	 *
 	 * A span that projects to the target it already holds is never merged with its neighbor,

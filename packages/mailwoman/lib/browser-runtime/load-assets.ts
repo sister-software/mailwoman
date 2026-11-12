@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-release asset loader: the classifier, the calibration table, the FST gazetteer and street-morphology
- *   matchers, the pair indexes and the byte-range gazetteer lookup for one published release. It reports staged
- *   progress through {@link AssetLoadProgress}. The host owns the terminal ready/error state and reveals the returned
- *   bundle atomically. The onnxruntime-web and range-reader imports stay dynamic so a host that never loads a
- *   release never pays for them.
+ *   The per-release asset loader: the classifier, the calibration table,
+ *   the FST gazetteer and street-morphology matchers, the pair indexes and the
+ *   byte-range gazetteer lookup for one published release.
+ *
+ *   It reports staged progress through {@link AssetLoadProgress}.
+ *   The host owns the terminal ready/error state and reveals the returned bundle atomically.
+ *
+ *   The onnxruntime-web and range-reader imports stay dynamic so a host that
+ *   never loads a release never pays for them.
  */
 
 import type { CalibrationTable, Calibrator } from "@mailwoman/core/decoder/calibration"

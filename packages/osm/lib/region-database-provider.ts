@@ -2,15 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The OSM rooftop extract provider, the injection point the geocode cascade consults for the opt-in
- *   international precision tier. Given a data root, it opens the extract the caller's active selection
- *   names for a country, else `osm/address-points-<cc>-<cc>.db`, with the country's street-normalization locale. Probe-side keying then matches the extract the
- *   builder wrote. The provider caches the open handle per country. Wire its bound `for` into
- *   `GeocodeDeps.osmExtracts`.
+ *   The OSM rooftop extract provider, the injection point the geocode cascade
+ *   consults for the opt-in international precision tier.
  *
- *   The extracts it opens are OpenStreetMap Derivative Databases under ODbL 1.0, each built locally by the
- *   operator. `README.md` states the licensing boundary. A caller that applies a license policy passes
- *   `admit`, which sees each extract's manifest before the provider attaches it and throws to refuse it.
+ *   Given a data root, it opens the extract the caller's active selection names for a country,
+ *   else `osm/address-points-<cc>-<cc>.db`, with the country's street-normalization locale.
+ *   Probe-side keying then matches the extract the builder wrote.
+ *
+ *   The provider caches the open handle per country.
+ *   Wire its bound `for` into `GeocodeDeps.osmExtracts`.
+ *
+ *   The extracts it opens are OpenStreetMap Derivative Databases under ODbL 1.0,
+ *   each built locally by the operator.
+ *   `README.md` states the licensing boundary.
+ *
+ *   A caller that applies a license policy passes `admit`, which sees each extract's manifest
+ *   before the provider attaches it and throws to refuse it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

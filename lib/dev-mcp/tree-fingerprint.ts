@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The staleness guard for a long-lived process holding an imported module graph: the fingerprint covers the newest
- * mtime across the workspaces an engine imports, plus `head` and the dirty set. A change makes the engine
- * unreachable rather than wrong.
+ * The staleness guard for a long-lived process holding an imported module graph: the fingerprint
+ * covers the newest mtime across the workspaces an engine imports, plus `head` and the dirty set.
+ * A change makes the engine unreachable rather than wrong.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"
@@ -35,8 +35,8 @@ export const FINGERPRINTED_WORKSPACES = [
 ] as const
 
 /**
- * Directory names that never affect behavior but change constantly; `out/` is excluded on purpose
- * because the daemon imports source, so a recompile must not read as a source edit.
+ * Directory names that never affect behavior but change constantly; `out/` is excluded on
+ * purpose because the daemon imports source, so a recompile mustn't read as a source edit.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "out", ".git", "test", "__pycache__"])
 
@@ -86,7 +86,7 @@ async function newestSourceMtime(root: PathBuilder): Promise<{ mtimeMs: number; 
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
 			// A workspace absent from this checkout contributes no file rather than throwing.
-			// The caller's emptiness check catches a list that is wrong in total.
+			// The caller's emptiness check catches a list that's wrong in total.
 			continue
 		}
 
@@ -160,7 +160,7 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 
 	const gitHead = git(repoRoot, ["rev-parse", "HEAD"]).trim()
 	const status = git(repoRoot, ["status", "--porcelain"])
-	// `git status --porcelain` over one checkout is already fully buffered by execFileSync above, so there is no stream
+	// `git status --porcelain` over one checkout is already fully buffered by execFileSync above, so there's no stream
 	// to consume lazily and the bound is the number of changed files in a working tree.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, already in memory
 	const dirtyFiles = status ? status.split("\n").map((line) => line.slice(3).trim()) : []
@@ -173,7 +173,7 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 /**
  * The message a tool returns when the process's imported modules predate
  * the current source: restarting the process is the only permitted response
- * and this message must not offer another, because Node cannot evict an imported module
+ * and this message mustn't offer another, because Node cannot evict an imported module
  * and an in-process reload would report the new fingerprint over the old code.
  * To A/B a source change, run each arm in its own process.
  */

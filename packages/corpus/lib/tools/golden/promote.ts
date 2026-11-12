@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Promote LLM-synthesized golden-set candidates into a versioned golden dir, with
- *   human-typed-likelihood filters + dedup. Companion to `golden-expand.ts`.
+ *   Promote LLM-synthesized golden-set candidates into a versioned golden dir,
+ *   with human-typed-likelihood filters + dedup.
+ *   Companion to `golden-expand.ts`.
  *
  *   ## What it does
  *
@@ -169,7 +170,7 @@ export async function promoteGolden(
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the required input, so its absence must not read as "zero candidates".
+	// The candidates file is the required input, so its absence mustn't read as "zero candidates".
 	// That promotes the prior version unchanged and reports success.
 	// `JSONSpliterator.fromAsync` reports a missing path as a bare `TypeError`
 	// naming its own internals, so name the path here.

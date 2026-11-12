@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stage 2.5 classifier: compose rule-based scorers over QueryShape and return a top kind with alternatives.
+ *   Stage 2.5 classifier: compose rule-based scorers over QueryShape
+ *   and return a top kind with alternatives.
  */
 
 export { classifyKind, classifyKindSync, createKindClassifier } from "#classify"

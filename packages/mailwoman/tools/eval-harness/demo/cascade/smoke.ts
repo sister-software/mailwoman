@@ -4,13 +4,15 @@
 /**
  *   Demo-cascade smoke eval, the whole-stack lens the per-layer eval battery lacks.
  *
- *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the full stack exactly the
- *   way the demo and real consumers compose it: neural parse with the ship config (gazetteer
- *   lexicon, postcode anchor, conventions mask, span bridge and FST), then `runPipeline` and grouper
- *   audit, then the demo's `runCascade` (the shared `resolveTree` over the lookup, with the demo's pin
- *   extraction) against the slim `wof-hot.db` the demo serves. Each row asserts the resolved WOF place
- *   ID of the top hit. The row readme (`data/eval/external/demo-cascade-smoke.readme.md`) documents the
- *   convention.
+ *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the full stack
+ *   exactly the way the demo and real consumers compose it: neural parse with the ship
+ *   config (gazetteer lexicon, postcode anchor, conventions mask, span bridge and FST),
+ *   then `runPipeline` and grouper audit, then the demo's `runCascade`
+ *   (the shared `resolveTree` over the lookup, with the demo's pin extraction)
+ *   against the slim `wof-hot.db` the demo serves.
+ *   Each row asserts the resolved WOF place ID of the top hit.
+ *
+ *   The row readme (`data/eval/external/demo-cascade-smoke.readme.md`) documents the convention.
  *
  *   Usage (after `yarn compile`):
  *
@@ -22,15 +24,20 @@
  *   [--explain]
  *   ```
  *
- *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
- *   demo serves). `MAILWOMAN_WOF_HOT_DB` overrides the database path, as in integration tests.
- *   Exit 0 means the run completed. Row failures appear in the table and sidecar.
- *   The promotion-eval verdict enforces configured floors. Exit 2 means artifacts are missing or rows are malformed.
+ *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live demo serves).
+ *   `MAILWOMAN_WOF_HOT_DB` overrides the database path, as in integration tests.
+ *
+ *   Exit 0 means the run completed.
+ *   Row failures appear in the table and sidecar.
+ *
+ *   The promotion-eval verdict enforces configured floors.
+ *   Exit 2 means artifacts are missing or rows are malformed.
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
  *
- *   `runCascade` comes from `@mailwoman/resolver-wof-wasm/browser-cascade` and `flattenTreeNodes` from
- *   `@mailwoman/core/decoder`: the same functions the browser runtime calls, so this measures the real cascade.
+ *   `runCascade` comes from `@mailwoman/resolver-wof-wasm/browser-cascade`
+ *   and `flattenTreeNodes` from `@mailwoman/core/decoder`: the same functions the
+ *   browser runtime calls, so this measures the real cascade.
  */
 
 import { CountryISO2 } from "@mailwoman/codex/country/codes"
@@ -137,7 +144,7 @@ export async function demoCascadeSmoke(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
-	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
+	// Lazy, deliberately: `mailwoman` doesn't depend on `@mailwoman/resolver-wof-wasm`,
 	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
 	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
 	// loads only when the leg runs.

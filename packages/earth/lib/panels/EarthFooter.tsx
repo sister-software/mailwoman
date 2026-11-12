@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The deployed page is the real runtime, so anything present only in the fake path renders nowhere a visitor can see; `status` is the only thing the two paths may differ by.
+ *   The deployed page is the real runtime, so anything present only in the fake path renders
+ *   nowhere a visitor can see; `status` is the only thing the two paths may differ by.
  */
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"

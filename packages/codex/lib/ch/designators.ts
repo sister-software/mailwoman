@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a Swiss address uses, in German, French and Italian: the Postfach and case postale, the
- *   floors of each language, and the relation words of a query.
+ *   The designators a Swiss address uses, in German, French and Italian: the Postfach
+ *   and case postale, the floors of each language, and the relation words of a query.
  *
- *   The Italian casella postale reads from the Italian Wikipedia article, and the Romansh forms have no row.
+ *   The Italian casella postale reads from the Italian Wikipedia article,
+ *   and the Romansh forms have no row.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cheEn.pdf UPU, Switzerland addressing sheet}
  * @see {@link https://www.post.ch/de/briefe-versenden/adressieren-und-gestalten/sendungen-richtig-adressieren Swiss Post, Sendungen richtig adressieren}

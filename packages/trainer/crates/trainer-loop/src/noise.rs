@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `train/noise.py`'s evidence curricula and `loop.py`'s `apply_curricula`, drawing from the global generator in
 //! Python's order.
 

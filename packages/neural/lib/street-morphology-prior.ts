@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement architecture (see
- *   `docs/articles/concepts/street-supplement-architecture.md`).
+ *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement
+ *   architecture (see `docs/articles/concepts/street-supplement-architecture.md`).
  *
- *   It composes with {@linkcode buildFSTEmissionPriors} (admin FST) and the QueryShape prior via
- *   {@linkcode addEmissionMatrix}: where the admin FST biases `B/I-locality`, `B/I-region`, ..., this
- *   biases the matched affix span toward `B/I-street_prefix` and `B/I-street_suffix` and the
- *   adjacent tokens toward `B/I-street` and away from `B/I-dependent_locality`, the negative bias
- *   that closes the inference-time vacuum behind dep_locality hallucination.
+ *   It composes with {@linkcode buildFSTEmissionPriors} (admin FST) and the QueryShape prior
+ *   via {@linkcode addEmissionMatrix}: where the admin FST biases `B/I-locality`, `B/I-region`,
+ *   ..., this biases the matched affix span toward `B/I-street_prefix` and `B/I-street_suffix`
+ *   and the adjacent tokens toward `B/I-street` and away from `B/I-dependent_locality`,
+ *   the negative bias that closes the inference-time vacuum behind dep_locality hallucination.
  *
  *   The morphology FST binary (`fst-street-morphology.bin`) is built by
  *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` and loaded into a second `FSTMatcher`.

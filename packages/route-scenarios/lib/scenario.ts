@@ -4,17 +4,18 @@
 /**
  *   The inputs of a shared-route scenario and the validation that refuses an incomplete one.
  *
- *   A scenario states its as-of date, currency, month zero, horizon, price basis, tax treatment, annual
- *   discount rate, the buildings it selects, the route segments those buildings need, the works each
- *   building needs, the monthly operating assumptions and a versioned rate card. Every rate, quantity,
- *   price and occupancy figure states its basis: an admitted source record or an operator's stated
- *   assumption.
+ *   A scenario states its as-of date, currency, month zero, horizon, price basis, tax treatment,
+ *   annual discount rate, the buildings it selects, the route segments those buildings need,
+ *   the works each building needs, the monthly operating assumptions and a versioned rate card.
+ *   Every rate, quantity, price and occupancy figure states its basis: an admitted
+ *   source record or an operator's stated assumption.
  *
- *   The pilot route is an assumption until a source verifies the topology. A building's `route` lists the
- *   segments its connection is assumed to need, and the calculator draws no route from proximity.
+ *   The pilot route is an assumption until a source verifies the topology.
+ *   A building's `route` lists the segments its connection is assumed to need,
+ *   and the calculator draws no route from proximity.
  *
- *   Validation throws {@link ScenarioInputError} for the first incomplete or malformed input it finds. The
- *   error's `input` gives the kind of input, and its `path` gives the input's location in the scenario.
+ *   Validation throws {@link ScenarioInputError} for the first incomplete or malformed input it finds.
+ *   The error's `input` gives the kind of input, and its `path` gives the input's location in the scenario.
  */
 
 import {

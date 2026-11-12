@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The absent-verdict and explicit-scope cases are the interface. An absent verdict stays unknown.
- *   and an explicit caller scope is never second-guessed here.
+ *   The absent-verdict and explicit-scope cases are the interface.
+ *
+ *   An absent verdict stays unknown. and an explicit caller scope is never second-guessed here.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

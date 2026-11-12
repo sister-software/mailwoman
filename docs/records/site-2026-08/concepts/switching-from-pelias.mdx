@@ -12,7 +12,7 @@ Mailwoman keeps what Pelias offers (self-hosting, open data, and hierarchy aware
 
 ## Map the move
 
-Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. A change to the endpoint URL by itself does not work:
+Pelias has its own `/v1` response envelope, and Mailwoman doesn't ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. A change to the endpoint URL by itself doesn't work:
 
 | Pelias             | Mailwoman                                     |
 | ------------------ | --------------------------------------------- |
@@ -29,11 +29,11 @@ npx @mailwoman/photon serve      # autocomplete (GeoJSON)
 ## What's different
 
 - **It needs neither Elasticsearch nor an import pipeline.** One SQLite gazetteer replaces the cluster and its imports.
-- **A model replaces the analysis chain.** A calibrated neural tagger parses addresses and supplies [confidence you can route on](./confidence-calibration.mdx). It also supplies an OpenCage-style annotations block that Pelias does not produce.
+- **A model replaces the analysis chain.** A calibrated neural tagger parses addresses and supplies [confidence you can route on](./confidence-calibration.mdx). It also supplies an OpenCage-style annotations block that Pelias doesn't produce.
 
 ## What's missing
 
-- **There is no `/v1` envelope yet.** If your client depends on Pelias's exact response, adapt it to the Nominatim or Photon shapes. A `/v1` adapter would be a reasonable contribution.
+- **There's no `/v1` envelope yet.** If your client depends on Pelias's exact response, adapt it to the Nominatim or Photon shapes. A `/v1` adapter would be a reasonable contribution.
 - **Coverage and ranking** still need long-term work. Pelias's mature importers still produce better results in some places.
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx) for the capability matrix.

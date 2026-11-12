@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The address-system registry the trainer reads: one id per distinct component order in codex's layouts,
- *   and the system of every country in each script it has a layout for.
+ *   The address-system registry the trainer reads: one id per distinct component order in
+ *   codex's layouts, and the system of every country in each script it has a layout for.
  *
  *   A trained checkpoint's address-system head has one output per id, so an id never changes meaning.
  *   A key that leaves the layouts keeps its id, and a new key takes the next id.
+ *
  *   Regenerate with: mailwoman dev generate address-systems, then
  *   `node packages/neural/tools/emit-label-schema.run.ts`, because the label schema lists the systems by id.
  */

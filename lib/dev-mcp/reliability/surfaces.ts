@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Where a graded confidence comes from: the surfaces `reliability.ts` curves. Each reports what it could not grade,
- * because a curve over part of a set and a curve over all of it differ in ways the ECE by itself cannot distinguish.
+ * Where a graded confidence comes from: the surfaces `reliability.ts` curves.
+ *
+ * Each reports what it couldn't grade, because a curve over part of a set and a curve
+ * over all of it differ in ways the ECE by itself cannot distinguish.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -46,7 +48,7 @@ export const ComponentAggregate = {
 export type ComponentAggregate = (typeof ComponentAggregate)[keyof typeof ComponentAggregate]
 
 /**
- * Rows a surface could not grade, with the reason and a few examples.
+ * Rows a surface couldn't grade, with the reason and a few examples.
  */
 interface ExcludedRows {
 	reason: string
@@ -57,7 +59,7 @@ interface ExcludedRows {
 /**
  * Produced components no truth row asserted — confidence mass riding on unverified output,
  * reported beside the curve because folding it in as errors measures the corpus
- * and dropping it hides how much the curve does not cover.
+ * and dropping it hides how much the curve doesn't cover.
  */
 interface UnassertedCohort {
 	n: number
@@ -66,12 +68,12 @@ interface UnassertedCohort {
 }
 
 /**
- * A surface's graded observations plus what it could not grade.
+ * A surface's graded observations plus what it couldn't grade.
  */
 export interface SurfaceSample {
 	observations: Observation[]
 	/**
-	 * Rows the surface could not grade, plus the reason for each row.
+	 * Rows the surface couldn't grade, plus the reason for each row.
 	 * Reported rather than deducted in silence.
 	 */
 	excluded: ExcludedRows[]
@@ -254,7 +256,7 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 			correct: prediction.country === row.country,
 			// An abstain is a prediction here, reported rather than dropped,
 			// because at abstainBelow 0 the placer still declines on an out-of-set input
-			// and dropping those rows would report a precision the eval does not deliver.
+			// and dropping those rows would report a precision the eval doesn't deliver.
 			strata: { expected: row.country, predicted: prediction.country ?? "(abstain)" },
 		})
 	}
@@ -263,7 +265,7 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		observations,
 		excluded: [excludedRows("line carried no raw/country pair", unusable)].filter((entry) => entry.n > 0),
 		// No analogue here: the placer emits exactly one prediction per row against one label,
-		// so there is no unasserted output for the truth to be silent about.
+		// so there's no unasserted output for the truth to be silent about.
 		unasserted: null,
 		notes: [
 			`corpus: ${corpusPath}`,

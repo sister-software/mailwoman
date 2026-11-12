@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The subset of Python's pickle machine that `torch.save` uses for a state dict.
 //!
 //! `torch.save` pickles the state dict with protocol 2 into `<archive>/data.pkl`. Each tensor is a call to

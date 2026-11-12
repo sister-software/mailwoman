@@ -4,13 +4,17 @@
 /**
  *   Written forms of a country's postcode that libaddressinput's `zip` pattern omits.
  *
- *   `./data.ts` is generated from libaddressinput and states the form a postal form prints. People also write
- *   forms that pattern refuses, and a refused correct code makes shape coherence exclude it. Each entry here is
- *   one such form, observed in written address text, as an unanchored pattern in the regex subset JavaScript and
- *   Python share. `postcodeSyntax` accepts a value that matches the libaddressinput pattern or any entry.
+ *   `./data.ts` is generated from libaddressinput and states the form a postal form prints.
+ *   People also write forms that pattern refuses, and a refused correct code
+ *   makes shape coherence exclude it.
  *
- *   The table states syntax only. An entry records a way of writing the country's code, and dictionary
- *   membership stays with the postcode dictionary readers.
+ *   Each entry here is one such form, observed in written address text, as an unanchored
+ *   pattern in the regex subset JavaScript and Python share.
+ *   `postcodeSyntax` accepts a value that matches the libaddressinput pattern or any entry.
+ *
+ *   The table states syntax only.
+ *   An entry records a way of writing the country's code, and dictionary membership
+ *   stays with the postcode dictionary readers.
  */
 
 /**

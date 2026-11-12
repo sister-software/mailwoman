@@ -2,23 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coverage bound: for which countries can the postcode-country coherence pass see a postcode at all, on a given
- *   backend? That bounds where default-on could ever matter, independently of how well the mechanism works.
+ *   Coverage bound: for which countries can the postcode-country coherence pass
+ *   see a postcode at all, on a given backend?
+ *
+ *   That bounds where default-on could ever matter, independently of how well the mechanism works.
  *
  *   Two things are measured, because one without the other misleads:
  *
- *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
- *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
- *   2. reachability: one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
- *      pass itself makes. It reports whether the postcode resolved and whether an exact same-name locality came back.
- *      Those results show whether the pair was coherent. This is the number that decides whether the pass can speak.
+ *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table.
+ *      A count isn't reachability (an indexed row the query path never returns is still zero evidence),
+ *      so it is reported as a bound rather than as coverage.
+ *   2. reachability: one real (postcode, locality) pair per codex system,
+ *      run through the same `findPlace` calls the pass itself makes.
+ *      It reports whether the postcode resolved and whether an exact same-name locality came back.
+ *      Those results show whether the pair was coherent.
+ *      This is the number that decides whether the pass can speak.
  *
- *   The candidate set is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
- *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed at any row count. The
- *   probe
- *   therefore walks exactly those systems, one real pair each.
+ *   The candidate set is bounded by codex rather than by the gazetteer:
+ *   `candidateSystemsForPostcode` only knows the systems in `SYSTEM_CODES`,
+ *   so a country with no codex address system can never be proposed at any row count.
+ *   The probe therefore walks exactly those systems, one real pair each.
  *
- *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/postcode/coherence/coverage.run.ts <fts|candidate>`
+ *   Run from the repo
+ *   root: `node packages/mailwoman/tools/dev-tools/postcode/coherence/coverage.run.ts <fts|candidate>`
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

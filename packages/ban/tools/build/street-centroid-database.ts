@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the street-centroid database (`street-centroids-<cc>.db`) from the sealed BAN
- *   address-point database. Each row holds one street, postcode and commune with its centroid,
- *   bounding box and point count. `StreetCentroidSqliteLookup` reads it to answer queries that have a
- *   street but no house number.
+ *   Builds the street-centroid database (`street-centroids-<cc>.db`) from the
+ *   sealed BAN address-point database.
+ *
+ *   Each row holds one street, postcode and commune with its centroid, bounding box and point count.
+ *   `StreetCentroidSqliteLookup` reads it to answer queries that have a street but no house number.
  *
  *   BAN splits Paris, Lyon and Marseille into arrondissements, but queries use the base commune.
- *   The query groups by the full locality and emits the base commune. The reader's weighted average
- *   merges the rare case where two arrondissements share a street and postcode.
+ *   The query groups by the full locality and emits the base commune.
+ *
+ *   The reader's weighted average merges the rare case where two arrondissements
+ *   share a street and postcode.
  *
  *   Usage:
  *     node packages/ban/out/tools/build/street-centroid-database.js

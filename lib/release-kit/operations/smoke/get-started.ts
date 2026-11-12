@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { flag, text } from "#release-kit/operations/inputs"
 import { smokeGetStarted } from "#release-kit/release/smoke/get-started"
 
@@ -16,7 +17,7 @@ import { smokeGetStarted } from "#release-kit/release/smoke/get-started"
 export const smokeGetStartedOperation = defineOperation({
 	id: "release.smoke-get-started",
 	description:
-		"Cold trial of the get-started pages: pack the closure of mailwoman + neural + the en-us weights, npm install it outside the tree, and run the pages' transcripts (first parse, doctor, shell parse). --full adds the ~2.88 GB candidate pull and the US + FR geocodes; --data-root keeps the pull.",
+		"Cold trial of the first-parse tutorial and CLI: pack mailwoman, neural, and en-us weights; install the tarballs outside the tree; run the tutorial script, doctor, and shell parse. --full adds the candidate pull and US and FR geocodes; --data-root keeps the pull.",
 	effect: OperationEffect.LocalWrite,
 	options: { full: { type: "boolean" }, "data-root": { type: "string" } },
 	inputSchema: z.object({ full: flag, "data-root": text }).strict(),

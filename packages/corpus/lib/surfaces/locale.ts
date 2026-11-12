@@ -5,12 +5,14 @@
  *   Render real address tuples into locale-specific surface strings.
  *
  *   Public address registers supply inputs such as OA, HM Land Registry and CNIG.
- *   LINZ-derived extracts also supply inputs. The module applies OpenCage templates to
- *   choose ordering and punctuation by country.
+ *   LINZ-derived extracts also supply inputs.
  *
- *   Keep the emitted source ids stable: they are persisted in built corpora and referenced by
- *   training configs. `recipes/sources.ts` records each one under its operation spelling
- *   (`rendered-de`) and the `synth-*` spelling it retired on 2026-09-26.
+ *   The module applies OpenCage templates to choose ordering and punctuation by country.
+ *
+ *   Keep the emitted source ids stable: they're persisted in built corpora
+ *   and referenced by training configs.
+ *   `recipes/sources.ts` records each one under its operation spelling (`rendered-de`)
+ *   and the `synth-*` spelling it retired on 2026-09-26.
  */
 
 import { formatAddress } from "@mailwoman/codex/address/format"
@@ -153,7 +155,7 @@ function tokenPresent(raw: string, value: string): boolean {
  * Render one tuple into a locale-ordered `{raw, components}` row via OpenCage templates,
  * with light variation (house number and postcode may be dropped).
  *
- * Returns `null` when the tuple is too thin or a component would not align to an exact span.
+ * Returns `null` when the tuple is too thin or a component wouldn't align to an exact span.
  * The row prints the tuple's region only when {@linkcode LocaleRenderOpts.withRegion} asks for it.
  */
 export function renderLocaleRow(
@@ -168,7 +170,7 @@ export function renderLocaleRow(
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
 	// Sub-locality is part of the address body.
-	// If the template does not surface it verbatim, the row is dropped below.
+	// If the template doesn't surface it verbatim, the row is dropped below.
 	if (base.dependent_locality) {
 		components.dependent_locality = base.dependent_locality
 	}
@@ -187,7 +189,7 @@ export function renderLocaleRow(
 	}
 
 	// The region costs no random draw, so a row without one renders exactly as before.
-	// A region the country's layout cannot place, or that does not align, falls back to the row without it.
+	// A region the country's layout cannot place, or that doesn't align, falls back to the row without it.
 	if (opts.withRegion && base.region) {
 		const withRegion = finishLocaleRow({ ...components, region: base.region }, base, country, opts)
 

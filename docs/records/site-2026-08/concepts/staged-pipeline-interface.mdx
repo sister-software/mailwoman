@@ -59,7 +59,7 @@ card's notes name the required settings per release):
 
 When a v4.4.0+ model omits these settings, the measured checks fail (po_box 60.4 vs
 89.1 with the bridge, and the FR digit-split class without conventions). These settings are not
-optional enhancements for those weights. They are the decode interface.
+optional enhancements for those weights. They're the decode interface.
 
 ## Replace a stage
 
@@ -139,7 +139,7 @@ Use `mailwoman parse --benchmark <N>` for percentile breakdowns over several ite
 
 The coordinator short-circuits stages 3-5 when:
 
-1. `forceFullPipeline` is **not** set on `PipelineOpts`, AND
+1. `forceFullPipeline` **isn't** set on `PipelineOpts`, AND
 2. `classifyKind` returned `confidence ≥ 0.95`, AND
 3. The kind matches a known shape signal:
    - `postcode_only` → QueryShape has a postcode `knownFormats` hit
@@ -156,7 +156,7 @@ Common reasons:
 - **Different classifier** — your own ONNX model, a rule-based classifier, a remote inference endpoint
 - **Test fakes** — every stage takes a vi.fn() / sinon stub directly, with no special harness
 
-You should **not** swap a stage to bypass it cheaply. If you want the pipeline without locale detection, pass `{ locale: "en-US" }` on every call — the default `detectLocale` is already a sub-microsecond caller-trust stub. The performance you'd reclaim by swapping is rounding error against the neural classifier's milliseconds.
+You **shouldn't** swap a stage to bypass it cheaply. If you want the pipeline without locale detection, pass `{ locale: "en-US" }` on every call — the default `detectLocale` is already a sub-microsecond caller-trust stub. The performance you'd reclaim by swapping is rounding error against the neural classifier's milliseconds.
 
 ## See it in action
 

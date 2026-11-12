@@ -64,7 +64,7 @@ export interface MailwomanDecorator {
 	geocode(text: string, opts?: PipelineOpts): Promise<GeocodeResult>
 	/**
 	 * Run a POI query and return its intent and results, an abstention, or `not_poi_query`.
-	 * The method throws when POI is not configured.
+	 * The method throws when POI isn't configured.
 	 */
 	poi(text: string, opts?: PipelineOpts): Promise<POISearchResponse>
 }
@@ -76,7 +76,7 @@ declare module "fastify" {
 }
 
 /**
- * Thrown by `mailwoman.poi` when POI search is not configured.
+ * Thrown by `mailwoman.poi` when POI search isn't configured.
  */
 export class POINotConfiguredError extends Error {
 	public override name = "POINotConfiguredError"

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The app's three client routes, read from `location.pathname` with no router: Cloudflare's SPA fallback serves
- * `index.html` for every path, so an unknown path is a not-found view rather than the geocoder and a stale link
- * fails visibly.
+ * The app's three client routes, read from `location.pathname` with no router:
+ * Cloudflare's SPA fallback serves `index.html` for every path, so an unknown path is
+ * a not-found view rather than the geocoder and a stale link fails visibly.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -42,7 +42,7 @@ const ROUTES_BY_PATH: ReadonlyMap<string, Route> = new Map([
 const GAZETTE_PLACE = /^\/gazette\/(\d+)(?:\/([^/]+))?$/u
 
 /**
- * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
+ * The route a pathname names, with a trailing slash forgiven, or null for a path the app doesn't serve.
  */
 export function routeForPath(pathname: string): Route | null {
 	const normalized = pathname.replace(CAMERA_SEGMENTS, "").replace(/\/+$/u, "") || "/"
@@ -103,7 +103,7 @@ const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
 
 /**
  * The tile-worker tileset a page parameter such as `?basemap=` asks for, or `null`
- * when the page has no such parameter or its value is not a tileset name.
+ * when the page has no such parameter or its value isn't a tileset name.
  *
  * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
  * A URL to an archive is refused.
@@ -274,7 +274,7 @@ function decimalText(value: number, decimals: number): string {
 /**
  * The camera a link asks for: `?center=<lon>,<lat>` with an optional `&zoom=<z>`.
  *
- * Returns null when `center` is absent or is not two finite numbers inside longitude and latitude range.
+ * Returns null when `center` is absent or isn't two finite numbers inside longitude and latitude range.
  * A malformed `zoom` leaves the zoom to the app default.
  */
 export function cameraFromSearch(search: string): CameraParams | null {

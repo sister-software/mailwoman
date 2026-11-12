@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Australia Post's rules for a delivery-service address, each with the sentence or table row that
- *   states it. The Correct Addressing brochure places a PO Box or Locked Bag on the second line and
- *   writes the third line in capitals. The barcode booklet's Postal Delivery Type table supplies the
- *   abbreviations CARE PO, MS and RMS. Whether a type takes a number is read from
- *   {@linkcode AU_DELIVERY_SERVICE_DESIGNATORS}, which neither document states directly.
+ *   Australia Post's rules for a delivery-service address, each with the sentence
+ *   or table row that states it.
+ *
+ *   The Correct Addressing brochure places a PO Box or Locked Bag on the second line
+ *   and writes the third line in capitals.
+ *   The barcode booklet's Postal Delivery Type table supplies the abbreviations CARE PO, MS and RMS.
+ *
+ *   Whether a type takes a number is read from {@linkcode AU_DELIVERY_SERVICE_DESIGNATORS},
+ *   which neither document states directly.
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (Postal Delivery Type table)}

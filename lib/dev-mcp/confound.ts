@@ -203,7 +203,7 @@ type ResolvedByName = Map<string, Pick<RoutedArtifactRecord, "origin" | "path" |
  *
  * Two recorded digests that differ make isolation ambiguous.
  * A `null` on either side leaves the comparison unable to establish whether the bytes agree.
- * That is a different reading from agreement.
+ * That's a different reading from agreement.
  */
 function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 	if (!Array.isArray(value)) return null
@@ -230,7 +230,8 @@ function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 }
 
 /**
- * Reads the artifact names one routed arm resolved for each locale, paired with the rung that supplied each.
+ * Reads the artifact names that one routed arm resolved for each locale,
+ * paired with the rung that supplied each.
  *
  * Returns `null` when an arm's provenance has no routed artifact record.
  * External geocoders, oracles.

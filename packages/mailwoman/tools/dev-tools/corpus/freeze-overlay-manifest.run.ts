@@ -4,23 +4,31 @@
 /**
  *   Write the frozen source record of an overlay corpus by reading its parquet files.
  *
- *   `buildCorpus` writes `TRAINING_SOURCES.json` from the rows it aligned. The tool then assembles an overlay corpus
- *   from that base plus parquet files produced by a recipe or adapter run. The assembly reads no rows, so the
- *   overlay corpus has no record of its own. Without one, `effective-manifest.run.ts` can give a license only to the
- *   base build's sources and every overlay source stays unrecorded.
+ *   `buildCorpus` writes `TRAINING_SOURCES.json` from the rows it aligned.
+ *   The tool then assembles an overlay corpus from that base plus parquet files
+ *   produced by a recipe or adapter run.
  *
- *   The base record cannot be composed with the added files, because it counts the adapter rows the build
- *   aligned and the build's files also hold the rows it synthesized from them. Measured over
- *   `v0.7.0-de-holdout`: the record counts 118,938,779 rows and the build's own `part-NNNN.parquet` files hold
- *   692,848,471. It tallies every file listed in the overlay manifest by the rows' `source` and `license` columns.
- *   which the trainer's loader reads. A file with a `<stem>.RECORD.json` beside it contributes the tally its writer
- *   recorded. Only a file without one is re-read. The record therefore states what the corpus holds rather than
- *   what one stage of its assembly observed.
+ *   The assembly reads no rows, so the overlay corpus has no record of its own.
+ *   Without one, `effective-manifest.run.ts` can give a license only to the base
+ *   build's sources and every overlay source stays unrecorded.
  *
- *   The profile and the refused set are the base record's, because an overlay file enters by a recipe or an
- *   adapter run that applies no eligibility reading of its own. Each source's license decisions are read from the
- *   register as it stands when this runs, through the register inputs `corpus-source-inputs.json` maps the source
- *   to, and `builtAt` is when the corpus overlay was applied.
+ *   The base record cannot be composed with the added files, because it counts the adapter
+ *   rows the build aligned and the build's files also hold the rows it synthesized from them.
+ *   Measured over `v0.7.0-de-holdout`: the record counts 118,938,779 rows
+ *   and the build's own `part-NNNN.parquet` files hold 692,848,471.
+ *
+ *   It tallies every file listed in the overlay manifest by the rows' `source`
+ *   and `license` columns. which the trainer's loader reads.
+ *   A file with a `<stem>.RECORD.json` beside it contributes the tally its writer recorded.
+ *
+ *   Only a file without one is re-read.
+ *   The record therefore states what the corpus holds rather than what one stage of its assembly observed.
+ *
+ *   The profile and the refused set are the base record's, because an overlay file enters
+ *   by a recipe or an adapter run that applies no eligibility reading of its own.
+ *   Each source's license decisions are read from the register as it stands when this runs,
+ *   through the register inputs `corpus-source-inputs.json` maps the source to,
+ *   and `builtAt` is when the corpus overlay was applied.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts \

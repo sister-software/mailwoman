@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The report digest is the SHA-256 of the report the Python fitter (the deleted Python `calibration.isotonic`,
- *   NumPy 2.5.3, CPython 3.12.3) wrote for `data/eval/calibration/confidences-v413.jsonl` at seed 20260607 and model
- *   version 4.13.0, at revision `ae90ae7a2`. The table digest was that fitter's until the table moved to the
- *   repository's JSON spelling (#2879 T62). At the parent revision this port reproduced the Python table byte for byte,
+ *   The report digest is the SHA-256 of the report the Python fitter
+ *   (the deleted Python `calibration.isotonic`, NumPy 2.5.3, CPython 3.12.3)
+ *   wrote for `data/eval/calibration/confidences-v413.jsonl` at seed 20260607
+ *   and model version 4.13.0, at revision `ae90ae7a2`.
+ *
+ *   The table digest was that fitter's until the table moved to the repository's JSON spelling (#2879 T62).
+ *   At the parent revision this port reproduced the Python table byte for byte,
  *   and the digest was then re-frozen from the same values in the new spelling.
+ *
  *   A digest rather than a copy is pinned, because a formatter rewrites a committed JSON copy's whitespace.
  */
 

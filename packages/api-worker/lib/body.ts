@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Request-body limits for the Workers. A Worker reads a body in chunks and stops at its limit, so a client that
- *   sends more than the limit costs the Worker the limit and no more.
+ *   Request-body limits for the Workers.
+ *
+ *   A Worker reads a body in chunks and stops at its limit, so a client that sends
+ *   more than the limit costs the Worker the limit and no more.
  */
 
 /**

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The Mailwoman coarse encoder over libtorch, through `tch`.
 //!
 //! The model is the Python trainer's `MailwomanCoarseEncoder`, with the same parameter and

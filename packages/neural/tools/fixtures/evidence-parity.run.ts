@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes `test/fixtures/evidence-parity-v2.json`, the parity fixture between the training painter and the
- *   inference painter for the street-type and locality-surface channels.
+ *   Writes `test/fixtures/evidence-parity-v2.json`, the parity fixture between the training
+ *   painter and the inference painter for the street-type and locality-surface channels.
  *
- *   Two small lexicons are painted over a probe set by the training encoder's painter in `mtf-channels`, through the
- *   tracked fixture tokenizer, and each piece's features and confidence are recorded. `evidence-inference.test.ts`
- *   replays the same lexicons and piece offsets through `buildGazetteerFeatures` and requires equal values.
+ *   Two small lexicons are painted over a probe set by the training encoder's painter in `mtf-channels`,
+ *   through the tracked fixture tokenizer, and each piece's features and confidence are recorded.
+ *   `evidence-inference.test.ts` replays the same lexicons and piece offsets through
+ *   `buildGazetteerFeatures` and requires equal values.
  *
- *   The probes include hyphenated and apostrophe surfaces, uppercase-only codes, homograph bits, multi-word
- *   longest-first matches, lowercase input, negative rows, and digit-guard rows, where a match beside or containing a
- *   digit paints zeros.
+ *   The probes include hyphenated and apostrophe surfaces, uppercase-only codes,
+ *   homograph bits, multi-word longest-first matches, lowercase input, negative rows,
+ *   and digit-guard rows, where a match beside or containing a digit paints zeros.
  *
  *   Usage: `node packages/neural/tools/fixtures/evidence-parity.run.ts`
  */

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Whether the tokenizer can represent an input at all. SentencePiece marks unrepresented text by falling back
- * to raw UTF-8 bytes. The per-character report is required because a fallback share has no meaning without a
- * control arm.
+ * Whether the tokenizer can represent an input at all.
+ *
+ * SentencePiece marks unrepresented text by falling back to raw UTF-8 bytes.
+ * The per-character report is required because a fallback share has no meaning without a control arm.
  */
 
 /**
@@ -55,7 +56,7 @@ export interface VocabularyReport {
 	control: VocabularyReport["totals"] | null
 	/**
 	 * Per-character coverage over every letter in the input, the actionable half:
-	 * a list of codepoints is a decision, a percentage is not.
+	 * a list of codepoints is a decision, a percentage isn't.
 	 */
 	characters: {
 		inVocabulary: string[]

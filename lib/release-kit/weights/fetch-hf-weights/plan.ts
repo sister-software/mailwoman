@@ -30,7 +30,7 @@ const MODEL_FILENAME = "model.onnx"
 export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | { kind: "repo"; sourcePath: string }
 
 /**
- * One artifact that a weights package declares in `files` and the repo does not track.
+ * One artifact that a weights package declares in `files` and the repo doesn't track.
  */
 export interface WeightsArtifactPlan {
 	/**
@@ -231,8 +231,7 @@ async function hfResolveRoot(repoRoot: PathBuilderLike): Promise<string> {
 }
 
 /**
- * Plans every artifact that a release's weights packages declare in `files`
- * and the checkout does not track.
+ * Plans every artifact that a release's weights packages declare in `files` and the checkout doesn't track.
  * Each plan records the artifact's origin and expected MD5.
  */
 export async function planWeightsMaterialization(

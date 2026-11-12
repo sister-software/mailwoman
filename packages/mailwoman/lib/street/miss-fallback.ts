@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The bare-toponym street-miss fallback, split from `geocode-core.ts` (the max-lines cap. the
- *   geocode file holds the cascade, this one holds the retry). Interface in {@link applyStreetMissFallback}.
+ *   The bare-toponym street-miss fallback, split from `geocode-core.ts`
+ *   (the max-lines cap. the geocode file holds the cascade, this one holds the retry).
+ *   Interface in {@link applyStreetMissFallback}.
  */
 
 import { loneValueNode } from "@mailwoman/core/decoder"

@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman wof explore <id-or-name>`: print every row the `wof-admin` adapter renders for one Who's On First
- *   record, grouped by name slot and variant suffix.
+ *   `mailwoman wof explore <id-or-name>`: print every row the `wof-admin` adapter renders
+ *   for one Who's On First record, grouped by name slot and variant suffix.
  *
- *   A number is a WOF id. A name is looked up in `candidate.db`, the matches are listed by population and
- *   importance, and the first is explored unless `--pick` chooses another.
+ *   A number is a WOF id.
+ *   A name is looked up in `candidate.db`, the matches are listed by population
+ *   and importance, and the first is explored unless `--pick` chooses another.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -35,7 +37,7 @@ export const spec = {
 			description: "Also print each row under every synthesizer augmentation that changes it",
 		},
 		"candidate-db": { type: "string", description: "Candidate database. Default <data-root>/db/wof/candidate.db" },
-		"repos-root": { type: "string", description: "WOF repos directory. Default <data-root>/src/wof-repos" },
+		"repos-root": { type: "string", description: "WOF repos directory. Default <cache-root>/sources/wof-repos" },
 		limit: { type: "number", default: 20, description: "Most name matches listed" },
 	},
 } as const satisfies CommandSpec
@@ -58,9 +60,15 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 		if (/^\d+$/.test(query)) {
 			id = Number(query)
 		} else {
-			const { openBuiltClient } = await import("@mailwoman/sqlite/sealed")
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-			const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street/normalize")
+			const {
+				sealed: { openBuiltClient },
+				paths: { wofDatabasePath },
+				normalize: { normalizeLocalityForKey },
+			} = await allKeyed({
+				sealed: import("@mailwoman/sqlite/sealed"),
+				paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+				normalize: import("@mailwoman/resolver-wof-sqlite/street/normalize"),
+			})
 
 			type Database = import("@mailwoman/resolver-wof-sqlite/candidate/schema").CandidateDatabase
 			using db = await openBuiltClient<Database>(options.candidateDB ?? wofDatabasePath("candidate.db"))

@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Commercial events and organizational roles. An inquiry, a commitment, an order, an active subscription,
- *   a landlord's permission and an accepted build are six different events, each with its own parties,
- *   physical scope and date. A permission reaches only the entities in its scope. An ownership or
- *   management record states who holds the role. The signing authority is a separate fact that stays
- *   unknown until a record states it.
+ *   Commercial events and organizational roles.
+ *
+ *   An inquiry, a commitment, an order, an active subscription, a landlord's permission and an
+ *   accepted build are six different events, each with its own parties, physical scope and date.
+ *   A permission reaches only the entities in its scope.
+ *
+ *   An ownership or management record states who holds the role.
+ *   The signing authority is a separate fact that stays unknown until a record states it.
  */
 
 import type { EntityID } from "#identifiers"
@@ -55,7 +58,7 @@ export interface ActiveSubscriptions {
 	count: number
 	events: readonly CommercialEvent[]
 	/**
-	 * Subscriptions without a date cannot be placed at the query date, so they are listed and never counted.
+	 * Subscriptions without a date cannot be placed at the query date, so they're listed and never counted.
 	 */
 	undated: readonly CommercialEvent[]
 }

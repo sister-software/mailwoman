@@ -4,10 +4,12 @@
 /**
  *   The 16 German federal states (Bundesländer), keyed by their ISO 3166-2:DE subdivision code.
  *
- *   The US analog is `us/state.ts`. The informative difference: a US state's two-letter code (`CA`)
- *   is the USPS abbreviation people write in an address, whereas a German address almost
- *   never includes the Bundesland. It is `PLZ City`, and the state is inferred. These
- *   codes matter for resolver region-matching and display rather than for parsing the surface string.
+ *   The US analog is `us/state.ts`.
+ *   The informative difference: a US state's two-letter code (`CA`) is the USPS abbreviation
+ *   people write in an address, whereas a German address almost never includes the Bundesland.
+ *
+ *   It is `PLZ City`, and the state is inferred.
+ *   These codes matter for resolver region-matching and display rather than for parsing the surface string.
  */
 
 /**

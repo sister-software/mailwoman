@@ -4,15 +4,18 @@
 /**
  *   Loads a directory of JSON files into one {@link GeographicModelDocument}.
  *
- *   File layout does not assign meaning to a file. Any file may hold any subset of the tables.
+ *   File layout doesn't assign meaning to a file.
+ *   Any file may hold any subset of the tables.
  *   Only `model.json` may declare the document's `version`.
  *
- *   The loader sorts files by path before reading them, so directory enumeration order never affects
- *   the output. It records the source file of every record and maps each validation issue back to that
- *   file. A duplicate-identifier issue also reports the file that used the identifier first.
+ *   The loader sorts files by path before reading them, so directory enumeration
+ *   order never affects the output.
+ *   It records the source file of every record and maps each validation issue back to that file.
  *
- *   `./validate.ts` performs document validation. The loader checks only that each file parses, holds
- *   an object and uses known table keys.
+ *   A duplicate-identifier issue also reports the file that used the identifier first.
+ *
+ *   `./validate.ts` performs document validation.
+ *   The loader checks only that each file parses, holds an object and uses known table keys.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -58,7 +61,7 @@ const RECORD_PATH_PATTERN = /^\$\.([A-Za-z]+)\[(\d+)\](?:\.assertions\[(\d+)\])?
 export const LoadIssueCode = {
 	...ValidationIssueCode,
 	/**
-	 * A source file is not valid JSON.
+	 * A source file isn't valid JSON.
 	 */
 	MalformedJSON: "malformed_json",
 } as const
@@ -110,7 +113,7 @@ export function formatSourcedIssues(issues: readonly SourcedIssue[]): string {
 }
 
 /**
- * The error thrown when a model directory does not load.
+ * The error thrown when a model directory doesn't load.
  * Its message lists every issue.
  */
 export class GeographicModelLoadError extends Error {

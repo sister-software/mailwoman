@@ -2,26 +2,42 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The refinement-monotonicity law runs against the live pipeline. This leg geocodes and reads a real candidate table.
+ *   The refinement-monotonicity law runs against the live pipeline.
+ *   This leg geocodes and reads a real candidate table.
  *
- *   It is an `.integration.test.ts` file because the `mailwoman-data` runner runs that suite with
- *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. The fast suite is portable by construction. A
- *   data-dependent test placed there would skip and report success. The guard uses the resolver-based
- *   `weightsPresent()` idiom from the other integration suites. It asks the resolver for the model the loader
- *   will open. A path literal could stop matching while the suite continued to skip and report success.
+ *   It is an `.integration.test.ts` file because the `mailwoman-data` runner runs that
+ *   suite with `MAILWOMAN_DATA_ROOT` set and the weights materialized.
+ *   The fast suite is portable by construction.
  *
- *   This integration leg adds evidence beyond the fast one. The unit legs prove that the instrument reads a
- *   candidate table correctly and that every chain is corpus-attested. They do so without loading data. Neither
- *   unit leg can produce a candidate table. The table is the subject of this test. The resolver decides the
- *   fetch window and country scope at run time. It also decides the hierarchy path and `checks`. A synthetic trace
- *   cannot attest how the shipped walk handles them.
+ *   A data-dependent test placed there would skip and report success.
+ *   The guard uses the resolver-based `weightsPresent()` idiom from the other integration suites.
  *
- *   This integration leg cannot report a known defect as passing or a blind row as passing. `runConformanceCommand`
- *   blocks on `status: pass` rows and reports tracked rows without blocking. It removes unmeasured rows from the
- *   verdict's count. A suite that cannot decide any rows returns non-zero instead of reporting a clean run over
- *   unmeasured rows.
+ *   It asks the resolver for the model the loader will open.
+ *   A path literal could stop matching while the suite continued to skip and report success.
  *
- *   The suite path is pinned. A default run covers every committed law. This file runs the refinement leg.
+ *   This integration leg adds evidence beyond the fast one.
+ *   The unit legs prove that the instrument reads a candidate table correctly
+ *   and that every chain is corpus-attested.
+ *
+ *   They do so without loading data.
+ *   Neither unit leg can produce a candidate table.
+ *
+ *   The table is the subject of this test.
+ *   The resolver decides the fetch window and country scope at run time.
+ *
+ *   It also decides the hierarchy path and `checks`.
+ *   A synthetic trace cannot attest how the shipped walk handles them.
+ *
+ *   This integration leg cannot report a known defect as passing or a blind row as passing.
+ *   `runConformanceCommand` blocks on `status: pass` rows and reports tracked rows without blocking.
+ *
+ *   It removes unmeasured rows from the verdict's count.
+ *   A suite that cannot decide any rows returns non-zero instead of reporting
+ *   a clean run over unmeasured rows.
+ *
+ *   The suite path is pinned.
+ *   A default run covers every committed law.
+ *   This file runs the refinement leg.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

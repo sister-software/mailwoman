@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generated, so do not edit by hand. Official languages per ISO 3166-1 territory, derived from
- *   Unicode CLDR 47.0.0 supplemental territoryInfo and listed under every ISO-639 spelling CLDR
- *   aliases. Regenerate with: mailwoman dev generate official-languages
+ *   Generated, so do not edit by hand.
+ *
+ *   Official languages per ISO 3166-1 territory, derived from Unicode CLDR 47.0.0
+ *   supplemental territoryInfo and listed under every ISO-639 spelling CLDR aliases.
+ *   Regenerate with: mailwoman dev generate official-languages
  */
 
 /**

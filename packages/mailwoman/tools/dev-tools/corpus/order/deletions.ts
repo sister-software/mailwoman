@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Find corpus rows whose postcode sits on the side of the locality-and-region block that the row's
- *   country does not print it on, as libaddressinput's `fmt` states the placement.
+ *   Find corpus rows whose postcode sits on the side of the locality-and-region block that
+ *   the row's country doesn't print it on, as libaddressinput's `fmt` states the placement.
  *
- *   `order-deletions.run.ts` reads a parquet file through this module and writes the matching `source_id`s
- *   as a deletion sidecar (#2750).
+ *   `order-deletions.run.ts` reads a parquet file through this module and writes
+ *   the matching `source_id`s as a deletion sidecar (#2750).
  */
 
 import { sha256File } from "@mailwoman/core/hash"

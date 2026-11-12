@@ -2,25 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node reader for `nsul.db` — the GB uprn → unit-postcode register (`nsul/schema.ts`). Two probes,
- *   both synchronous `.prepare()` hits in the `uprn/lookup.ts` style:
+ *   Node reader for `nsul.db` — the GB uprn → unit-postcode register (`nsul/schema.ts`).
+ *
+ *   Two probes, both synchronous `.prepare()` hits in the `uprn/lookup.ts` style:
  *
  *   - **`postcodeForUPRN(uprn)`**: primary-key hit on the `without rowid` table.
  *   - **`uprnsForPostcode(postcode)`**: the `pcds_compact` index, answering every uprn the register
- *     assigns to one unit postcode with the point OS publishes for each — the "assigned points and
- *     their bound" the physical-constraint design record names as the prior's soft structure.
+ *     assigns to one unit postcode with the point OS publishes for each — the "assigned points
+ *     and their bound" the physical-constraint design record names as the prior's soft structure.
  *
  *   ## `null` and `[]` are claims, scoped by coverage
  *
  *   The register designates GB complete (every uprn in AddressBase with a Code-Point Open postcode),
- *   and the builder writes `layer_coverage` with basis `designated` for every cell the register
- *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
- *   has a Code-Point postcode, or no UPRN has that postcode. Two absences the reader cannot
- *   tell from those are recorded in `nsul_meta` as counts rather than as rows. A uprn whose `pcds` is
- *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
- *   caller building negative evidence reads the coverage table and those counts rather than this reader
- *   by itself. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
- *   unknown, per the meaning-of-zero rule.
+ *   and the builder writes `layer_coverage` with basis `designated` for every cell the register touches.
+ *   Inside a covered cell an empty answer is evidence of absence: no GB uprn by that
+ *   number has a Code-Point postcode, or no UPRN has that postcode.
+ *
+ *   Two absences the reader cannot tell from those are recorded in `nsul_meta`
+ *   as counts rather than as rows.
+ *   A uprn whose `pcds` is null (its postcode isn't in Code-Point Open) and one Open
+ *   uprn publishes no coordinate for — so a caller building negative evidence reads
+ *   the coverage table and those counts rather than this reader by itself.
+ *
+ *   Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the
+ *   answer is unknown, per the meaning-of-zero rule.
  */
 
 import type { UkCountryCode } from "@mailwoman/codex/gb/country"

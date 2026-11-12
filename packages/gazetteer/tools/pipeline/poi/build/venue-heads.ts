@@ -2,24 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `@mailwoman/poi-taxonomy/data/venue-heads.json` from three name populations per country:
- *   venue names from an Overture places names file, place names from the Who's On First candidate
- *   database with postal codes excluded, and street spans from the train split of a corpus
- *   manifest. Names are split on whitespace and each word is normalized with `normalizeFSTToken`,
+ *   Builds `@mailwoman/poi-taxonomy/data/venue-heads.json` from three name
+ *   populations per country: venue names from an Overture places names file,
+ *   place names from the Who's On First candidate database with postal codes excluded,
+ *   and street spans from the train split of a corpus manifest.
+ *
+ *   Names are split on whitespace and each word is normalized with `normalizeFSTToken`,
  *   the form the decoder's word groups use, so a table key matches the word the prior reads.
  *
- *   A head's bias is the natural log of its venue rate over the higher of its place rate and street
- *   rate. Each rate adds half a name to its count, so a head absent from a population has a finite
- *   rate. A head that is the complete name of an admin place in the country is excluded, because a
- *   city name ends venue names such as `Hotel Adlon Berlin` without marking them. The exclusion
- *   reads the candidate database's admin names, every language's name for each admin place in the
- *   Who's On First admin database together with its abbreviations, and the country's names in every
- *   ICU locale, so `Deutschland`, `Bayern`, `NSW` and `DC` are excluded with `Germany`, `Bavaria`,
- *   `New South Wales` and `Washington` for every country the admin database covers.
+ *   A head's bias is the natural log of its venue rate over the higher of its place rate and street rate.
+ *   Each rate adds half a name to its count, so a head absent from a population has a finite rate.
  *
- *   A suffix is counted from the last word of every name, with admin words left out, and it needs
- *   several distinct words ending in it: a suffix that ends one word only is that word rather than a
- *   morpheme, so `ondon` is `London` and `galerie` is a head.
+ *   A head that's the complete name of an admin place in the country is excluded,
+ *   because a city name ends venue names such as `Hotel Adlon Berlin` without marking them.
+ *   The exclusion reads the candidate database's admin names, every language's name
+ *   for each admin place in the Who's On First admin database together with its
+ *   abbreviations, and the country's names in every ICU locale, so `Deutschland`,
+ *   `Bayern`, `NSW` and `DC` are excluded with `Germany`, `Bavaria`, `New South Wales`
+ *   and `Washington` for every country the admin database covers.
+ *
+ *   A suffix is counted from the last word of every name, with admin words left out,
+ *   and it needs several distinct words ending in it: a suffix that ends one word only is
+ *   that word rather than a morpheme, so `ondon` is `London` and `galerie` is a head.
  */
 
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
@@ -86,7 +90,7 @@ const MIN_ALPHABETIC_SUFFIX_LENGTH = 4
  * Who's On First leaves population and importance empty on most localities, so neither
  * field can tell a town from a hamlet, and a hamlet called `Palace` removes that word too.
  *
- * A head word that is also a place name is then left to the model rather than the prior.
+ * A head word that's also a place name is then left to the model rather than the prior.
  */
 const ADMIN_PLACETYPES = [
 	"country",
@@ -137,7 +141,7 @@ export function wordSuffixes(word: string): string[] {
  * and is the source of the suffix counts.
  *
  * `words` counts the names that contain a word at any position, once per name, and is the
- * comparison rate for a first-word or last-word head: a word that is common anywhere in
+ * comparison rate for a first-word or last-word head: a word that's common anywhere in
  * place names, such as `on` in `Walton on the Naze`, is weak evidence wherever it sits.
  */
 export class HeadCounts {

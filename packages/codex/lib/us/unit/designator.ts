@@ -4,21 +4,28 @@
 /**
  *   USPS Publication 28, Appendix C2, Secondary Unit Designators.
  *
- *   The sibling of {@link ./street-suffix.ts}. That table standardizes the trailing street _type_
- *   (avenue → AVE). This one standardizes the _secondary unit_ designator that introduces an
- *   apartment / suite / floor / room (apartment → APT, suite → STE). For each canonical designator
- *   the value lists recognized variants in USPS order. The first is the approved USPS abbreviation,
- *   the form the post office prints.
+ *   The sibling of {@link ./street-suffix.ts}.
+ *   That table standardizes the trailing street _type_ (avenue → AVE).
  *
- *   Used by `@mailwoman/corpus`'s synthesis layer (the `unit-{expand,abbreviate}` augmentations) to
- *   vary the designator in a `unit` component while preserving the identifier. Designators are
- *   leading ("Apt 4B"). Street suffixes trail.
+ *   This one standardizes the _secondary unit_ designator that introduces an apartment
+ *   / suite / floor / room (apartment → APT, suite → STE).
+ *   For each canonical designator the value lists recognized variants in USPS order.
  *
- *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` is Pub-28's own "Requires a Secondary Number" column. APT,
- *   bldg, dept, FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr and unit must be followed
- *   by an identifier ("Apt 4B"). bsmt, frnt, lbby, lowr, OFC, PH, rear, side and uppr may stand
- *   by itself. A separate deliverable is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
- *   planta/piso/bajo, piano/terra, 階/F/B1, …). This module stays US/Pub-28 only.
+ *   The first is the approved USPS abbreviation, the form the post office prints.
+ *
+ *   Used by `@mailwoman/corpus`'s synthesis layer (the `unit-{expand,abbreviate}` augmentations)
+ *   to vary the designator in a `unit` component while preserving the identifier.
+ *   Designators are leading ("Apt 4B").
+ *   Street suffixes trail.
+ *
+ *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` is Pub-28's own "Requires a Secondary Number" column.
+ *   APT, bldg, dept, FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr
+ *   and unit must be followed by an identifier ("Apt 4B"). bsmt, frnt, lbby, lowr,
+ *   OFC, PH, rear, side and uppr may stand by itself.
+ *
+ *   A separate deliverable is the per-locale *level-semantics* table
+ *   (étage/RDC, EG/OG/UG, planta/piso/bajo, piano/terra, 階/F/B1, …).
+ *   This module stays US/Pub-28 only.
  *
  *   Data is verbatim USPS Pub-28 C2.
  * @see {@link https://pe.usps.com/text/pub28/28apc_003.htm USPS Secondary Unit Designators}
@@ -156,7 +163,7 @@ export interface UnitDesignatorRangeMatch {
 	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B".
 	 *
 	 * `null` when the designator appears standalone (e.g. a bare "Basement").
-	 * This module does not validate the range's own shape.
+	 * This module doesn't validate the range's own shape.
 	 *
 	 * Numeric, letter and alphanumeric ranges are all USPS-valid.
 	 */
@@ -166,7 +173,7 @@ export interface UnitDesignatorRangeMatch {
 	 * range (see {@link US_UNIT_DESIGNATOR_REQUIRES_RANGE}).
 	 *
 	 * Informational only.
-	 * This matcher does not enforce it.
+	 * This matcher doesn't enforce it.
 	 */
 	requiresRange: boolean
 }
@@ -249,7 +256,7 @@ export interface UnitContext {
  * so `BLDG 25 FL 1` and `25 1` both yield `251`.
  *
  * Zeros that open a numeric word are dropped, so `0807` and `807` agree.
- * A unit that is only designators, such as `Basement`, yields its first canonical
+ * A unit that's only designators, such as `Basement`, yields its first canonical
  * designator, so `BSMT` and `Basement` agree.
  *
  * Other words are folded and kept, so `North Wing` yields `northwing`.

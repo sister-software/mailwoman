@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Whether `data pull` may fetch a bundle, decided before any byte moves. A free bundle downloads as it always has.
- *   A licensed bundle needs a configured token that verifies and whose scope admits the bundle's tier. The refusal
- *   prints the three routes to a token, so the operator who meets it knows what to do next.
+ *   Whether `data pull` may fetch a bundle, decided before any byte moves.
+ *
+ *   A free bundle downloads as it always has.
+ *   A licensed bundle needs a configured token that verifies and whose scope admits the bundle's tier.
+ *
+ *   The refusal prints the three routes to a token, so the operator who meets it knows what to do next.
  */
 
 import { docsSiteURL, type LicenseKeyVerification, scopeAdmits } from "@mailwoman/core/license"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import type { BundleArtifact, DataBundle } from "#data/bundles"
 
@@ -88,12 +92,15 @@ export interface GrantedDownload {
 /**
  * Trade the token for a presigned URL of one licensed artifact.
  *
- * @throws When the worker refuses, is not provisioned, or does not answer,
+ * @throws When the worker refuses, isn't provisioned, or doesn't answer,
  * with the worker's word in the message.
  */
 export async function requestGrantedDownload(token: string, artifact: string): Promise<GrantedDownload> {
-	const { requestDownload } = await import("@mailwoman/core/license/status")
-	const { readInstallationID } = await import("@mailwoman/core/license")
+	const {
+		status: { requestDownload },
+		license: { readInstallationID },
+	} = await allKeyed({ status: import("@mailwoman/core/license/status"), license: import("@mailwoman/core/license") })
+
 	const install = await readInstallationID()
 	const answer = await requestDownload({ token, artifact, ...(install ? { install } : {}) })
 

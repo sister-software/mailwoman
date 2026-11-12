@@ -35,13 +35,13 @@ For street decomposition, the data was already there too. Three existing adapter
 - **NAD** (`corpus/src/adapters/usgov-nad/`) — NAD already has structured `St_PreDir`, `St_PreTyp`, `St_Name`, `St_PosTyp`, `St_PosDir` fields. The adapter now emits them as separate components instead of joining into one monolithic `street`. `Unit`/`Building`/`Floor`/`Room` chain into the new `unit` tag.
 - **BAN** (`corpus/src/adapters/ban/`) — French street types are leading words: "Rue de Rivoli", "Avenue des Champs-Élysées". `decomposeFrStreet()` uses libpostal/fr/street_types.txt to pick off the leading type word as `street_prefix`.
 
-These changes immediately give the model thousands of correctly-labeled Stage 3 examples per adapter without retraining the upstream data.
+Once the corpus is rebuilt, these changes give the model thousands of correctly-labeled Stage 3 examples per adapter without retraining the upstream data.
 
 ## PO box: the synthesis case
 
 PO boxes are different. No corpus adapter has explicit `po_box` data — TIGER is street segments, NAD has buildings, BAN is street-level addresses, WOF is the admin hierarchy. We need synthesis.
 
-The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508 §4.1.4/§4.5.4 specify the allowed forms. Multi-locale extension is similarly bounded:
+PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508 §4.1.4/§4.5.4 specify the allowed forms. Multi-locale extension is similarly bounded:
 
 | Locale | Leaders                                             |
 | ------ | --------------------------------------------------- |
@@ -59,7 +59,7 @@ The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508
 
 1. **PMB shares the `po_box` tag**. USPS treats PMB as a PO Box alias in CASS processing. Downstream code can distinguish via "is a street line also present?" without needing a separate label.
 2. **Whole-phrase spans** ("PO Box 123" as one `po_box` span rather than a bare "123"). Matches the existing golden eval convention.
-3. **10% number-format noise** (commas, dashes, embedded spaces). Real OCR'd input is lousy with "Box 1,234" and "PMB-200" — the parser ships with that as native input.
+3. **10% number-format noise** (commas, dashes, embedded spaces). Real OCR'd input is lousy with "Box 1,234" and "PMB-200", so the parser trains on those forms as native input.
 
 ## The pipeline
 
@@ -83,13 +83,13 @@ P.O. Box 9, Bancroft, ID 83603
   labels: ['B-po_box', 'I-po_box', 'I-po_box', 'I-po_box', 'B-locality', 'B-region', 'B-postcode']
 ```
 
-Five tokens get `po_box` (the whole "P.O. Box 9" phrase including the `.` punctuation). The model learns the span shape, the leader vocabulary, and the locale-to-template mapping all at once.
+Four tokens get `po_box` (the whole "P.O. Box 9" phrase). The model learns the span shape, the leader vocabulary, and the locale-to-template mapping all at once.
 
 ## Golden eval expansion
 
-Test data matters as much as training data. The golden v0.1.2 set had 1 PO box entry — not enough to fail meaningfully or to measure progress. We added 26:
+The golden v0.1.2 set had 1 PO box entry — not enough to fail meaningfully or to measure progress. We added 26:
 
-- 20 US variants across all leader forms (PO Box, P.O. Box, P. O. Box, POB, POBOX, Post Office Box, Box, P.O.Box) and number ranges (single-digit to 7-digit)
+- 17 US variants across all leader forms (PO Box, P.O. Box, P. O. Box, POB, POBOX, Post Office Box, Box, P.O.Box) and number ranges (single-digit to 7-digit)
 - 3 PMB variants ("100 Main St PMB 200", "1234 Wilshire Blvd #500")
 - 6 FR/CA variants (BP, B.P., Boîte Postale, Case Postale, CP)
 
@@ -115,7 +115,7 @@ Per-tag golden eval (4,561 entries):
 | unit             | 0.0%          | 0.0%          |
 | intersection_a/b | 0.0%          | 0.0%          |
 
-PO box recognition went from impossible to functional in one training run. Sample:
+PO box recall went from 0.0% to 51.9% in one training run. Sample:
 
 ```
 "PO Box 123, Burlington, VT 05401"
@@ -131,8 +131,8 @@ The other Stage 3 tags (street_prefix, street_suffix, unit, intersection) stayed
 
 CRF learned transitions are also deferred. Two NaN attempts (`crf_loss_weight: 0.5` then `0.1`) both diverged post-warmup. The hypothesis: bf16 + the doubled transition table (33×33 vs 21×21) is numerically unstable. v0.6.1 will try fp32 precision for the CRF parameters specifically, or a gradient-clipped warmup-only schedule.
 
-## What this proves
+## The next tags
 
-The pattern works. A new tag in the canonical schema + a focused synthesis source + a one-line corpus config change + 100K training steps = working tag recognition. Total elapsed time tonight: ~6 hours from "no PO box training data exists" to a 28 MB model that hits PO box correctly more than half the time on a hostile eval set.
+A new tag in the canonical schema + a focused synthesis source + a one-line corpus config change + 100K training steps = working tag recognition. Total elapsed time tonight: ~6 hours from "no PO box training data exists" to a 28 MB model that hits PO box correctly more than half the time on a hostile eval set.
 
-The same recipe scales to street decomposition, intersection, unit, and the JP-specific Phase 6 tags. The schema is already declared. Each new tag is the same kind of work as PO box was tonight.
+The same recipe scales to street decomposition, intersection, unit, and the JP-specific Phase 6 tags. The schema is already declared. Street decomposition first needs the corpus rebuild described above.

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. It is
- *   validated before writing and again after `pmtiles edit`, so an archive leaves the build
- *   carrying the block the schema describes.
+ *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back.
+ *
+ *   It is validated before writing and again after `pmtiles edit`, so an archive
+ *   leaves the build carrying the block the schema describes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

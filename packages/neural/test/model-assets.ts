@@ -7,7 +7,7 @@
  *   `MAILWOMAN_TEST_ONNX_MODEL` overrides the model to run against the tokenizer fixture. Without it,
  *   suites use the packaged en-US weights. `mwops release copy-weights` materializes those in CI and
  *   `link-dev-weights.ts` links them on a developer host. A checkout with neither answers `null`, and a
- *   suite that reads `null` skips rather than asserting on a model it does not have.
+ *   suite that reads `null` skips rather than asserting on a model it doesn't have.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -60,7 +60,7 @@ export async function testModelAssets(): Promise<TestModelAssets | null> {
 		}
 	} catch {
 		// A lean checkout resolves no weights package.
-		// That is the `null` answer below.
+		// That's the `null` answer below.
 	}
 
 	return null

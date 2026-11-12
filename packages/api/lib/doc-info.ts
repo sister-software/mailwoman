@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The native API's OpenAPI document metadata. It reads this package's `package.json` when the module loads, so it
- *   lives apart from the app factory: a Cloudflare Worker bundle has no package files, and imports `#app` without
- *   this module.
+ *   The native API's OpenAPI document metadata.
+ *
+ *   It reads this package's `package.json` when the module loads, so it lives apart from the app
+ *   factory: a Cloudflare Worker bundle has no package files, and imports `#app` without this module.
  */
 
 import { type OpenAPIDocInfo, readServedDocumentInfo } from "@mailwoman/api-kit"

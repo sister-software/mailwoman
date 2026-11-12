@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Australia Post delivery-service designators, from the Postal Delivery Type table in the barcode addressing
- *   booklet.
+ *   Australia Post delivery-service designators, from the Postal Delivery Type
+ *   table in the barcode addressing booklet.
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (Postal Delivery Type table)}
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
@@ -66,7 +66,7 @@ export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNAT
 /**
  * Designator patterns in match order.
  *
- * `MS` requires an identifier that starts with a digit, so "Ms Smith" does not match.
+ * `MS` requires an identifier that starts with a digit, so "Ms Smith" doesn't match.
  */
 const DESIGNATOR_PATTERNS: ReadonlyArray<readonly [AuDeliveryServiceAbbreviation, string]> = [
 	["GPO BOX", String.raw`general\s+post\s+office\s+box|g\.?\s*p\.?\s*o\.?\s*box`],
@@ -160,7 +160,7 @@ export function isAuDeliveryService(input: unknown): boolean {
 /**
  * Normalizes a delivery-service line to its canonical form, so `"g.p.o. Box 123"` becomes `"GPO BOX 123"`.
  *
- * @returns The input unchanged when it is not a delivery-service line.
+ * @returns The input unchanged when it isn't a delivery-service line.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

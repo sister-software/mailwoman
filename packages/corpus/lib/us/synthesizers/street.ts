@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Street-decomposition synthesizer for Stage 3 training. Generates address rows where
- *   `street_prefix`, `street`, and `street_suffix` are emitted as separate BIO spans (instead of
- *   monolithic `street`). Mirrors the PO box synthesizer pattern.
+ *   Street-decomposition synthesizer for Stage 3 training.
  *
- *   Why this exists: tiger/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
- *   components from raw source data, but the v0.4.0 parquet files on Modal were built before those
- *   changes. A full-corpus rebuild requires downloading raw tiger/NAD/BAN data and re-running
- *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
- *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
- *   the PO box pipeline.
+ *   Generates address rows where `street_prefix`, `street`, and `street_suffix` are
+ *   emitted as separate BIO spans (instead of monolithic `street`).
+ *   Mirrors the PO box synthesizer pattern.
  *
- *   Note: uses the same decomposition logic as tiger's `decomposeStreet()` so the synthetic
- *   distribution matches what the model would see if/when the tiger parquet files are rebuilt with the new
- *   adapter.
+ *   Why this exists: tiger/NAD/BAN adapter changes (committed earlier tonight) emit decomposed components
+ *   from raw source data, but the v0.4.0 parquet files on Modal were built before those changes.
+ *   A full-corpus rebuild requires downloading raw tiger/NAD/BAN data and re-running
+ *   adapters end-to-end — out of scope for a single night shift.
+ *
+ *   This synthesizer takes (locality, region, postcode) tuples and produces
+ *   freshly-decomposed Stage 3 training rows, same shape as the PO box pipeline.
+ *
+ *   Note: uses the same decomposition logic as tiger's `decomposeStreet()`
+ *   so the synthetic distribution matches what the model would see if/when the
+ *   tiger parquet files are rebuilt with the new adapter.
  */
 
 import { isPresent } from "@mailwoman/core/objects"

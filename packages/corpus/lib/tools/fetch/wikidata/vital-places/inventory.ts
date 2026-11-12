@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The inventory: the ranked entities that are places, with their country codes, and the counts by country
- * and by class that size the training source.
+ * The inventory: the ranked entities that are places, with their country codes,
+ * and the counts by country and by class that size the training source.
  */
 
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
@@ -28,7 +28,7 @@ export interface VitalPlace extends VitalEntity {
 }
 
 /**
- * Why a ranked record is not in the places file.
+ * Why a ranked record isn't in the places file.
  */
 export const EXCLUSION_REASONS = {
 	missing: "missing",

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads where a libaddressinput `fmt` layout prints the postcode relative to the locality and to the block the
- *   locality and region form. The postcode country-format generator records both answers per country, so the
- *   evaluation renderer and the training-time `postcode_move` augmentation read them from data rather than from a
- *   branch on a country code.
+ *   Reads where a libaddressinput `fmt` layout prints the postcode relative to the locality
+ *   and to the block the locality and region form.
+ *
+ *   The postcode country-format generator records both answers per country,
+ *   so the evaluation renderer and the training-time `postcode_move` augmentation
+ *   read them from data rather than from a branch on a country code.
  */
 
 import type { PostcodeLocalityPlacement } from "@mailwoman/postcode/country-formats/data"

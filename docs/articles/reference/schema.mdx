@@ -1,0 +1,175 @@
+---
+title: Parse and geocode result schema
+description: Look up component tags, parse spans, query kinds, coordinate tiers, and provenance fields.
+role: reference
+source-of-truth: packages/codex/lib/component.ts, packages/core/lib/decoder/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/geocode/result.ts, packages/annotations/lib/geo.ts, packages/evidence/lib/status.ts
+verified-with: mailwoman v11.0.0
+---
+
+# Parse and geocode result schema
+
+This page describes the published 11.0.0 component vocabulary and the result types used by the parser and geocoder. A parse returns a `PipelineResult` with an `AddressTree`; a geocode returns a separate `GeocodeResult`. Fields below are grouped by the interface that owns them.
+
+## Component tags
+
+`ComponentTag` is the union of the 26 strings exported as `COMPONENT_TAGS` by `@mailwoman/codex/component@11.0.0`. A tag identifies a span's role. The schema lists every possible tag, and a model's card lists the tags that model supports. The published `@mailwoman/neural-weights-en-us@11.0.0` card identifies its model as version 10.8.0 and lists 16 supported tags. The final column describes that model head. Other locale packages and rule-based stages have their own capabilities.
+
+| Tag                      | Component                                          | en-US model head |
+| ------------------------ | -------------------------------------------------- | ---------------- |
+| `country`                | Country name or code                               | Yes              |
+| `region`                 | First-level administrative region                  | Yes              |
+| `locality`               | City or other main settlement                      | Yes              |
+| `dependent_locality`     | Settlement or neighborhood below a locality        | Yes              |
+| `postcode`               | Postcode                                           | Yes              |
+| `subregion`              | Administrative region below `region`               | Yes              |
+| `house_number`           | Street address number                              | Yes              |
+| `street`                 | Base street name                                   | Yes              |
+| `street_prefix`          | Street type or directional prefix                  | Yes              |
+| `street_prefix_particle` | Particle within a street prefix                    | No               |
+| `street_suffix`          | Street type or directional suffix                  | Yes              |
+| `intersection_a`         | First street of an intersection                    | Yes              |
+| `intersection_b`         | Second street of an intersection                   | Yes              |
+| `unit`                   | Apartment, suite, or other unit                    | Yes              |
+| `venue`                  | Place or building used as a destination            | Yes              |
+| `attention`              | Addressee or attention line                        | No               |
+| `po_box`                 | Post office box                                    | Yes              |
+| `cedex`                  | French CEDEX routing detail                        | Yes              |
+| `prefecture`             | Prefecture in a locale-specific hierarchy          | No               |
+| `municipality`           | Municipality in a locale-specific hierarchy        | No               |
+| `district`               | District in a locale-specific hierarchy            | No               |
+| `block`                  | Block in a locale-specific hierarchy               | No               |
+| `sub_block`              | Sub-block in a locale-specific hierarchy           | No               |
+| `building_number`        | Building number within a locale-specific hierarchy | No               |
+| `building_name`          | Building name within a locale-specific hierarchy   | No               |
+| `locality_unit`          | Unit settlement in a Chinese rural address         | No               |
+
+`BIO_LABELS` contains `O` for text outside a component, plus `B-<tag>` for the beginning and `I-<tag>` for the continuation of each tag. Its 53 labels comprise one `O` and two labels for each of the 26 component tags. The en-US model card declares 33 labels: one `O` and two labels for each of its 16 supported tags.
+
+## Parse result
+
+`createRuntimePipeline` returns a `PipelineResult`. These are its top-level fields. The [library API](./library.mdx) describes the call options.
+
+| Field             | Type                          | Meaning                                                                                                                                  |
+| ----------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `input`           | `string`                      | Input supplied to the parser.                                                                                                            |
+| `normalized`      | normalized input object       | Text and normalization details used by the pipeline.                                                                                     |
+| `queryShape`      | query-shape object            | Detected format matches, segments, scripts, and token classes. A format match describes shape. It doesn't establish a country.           |
+| `locale`          | `LocaleHint`                  | Chosen BCP-47 locale, confidence, alternatives, and `source`. `source` is `caller`, `environment`, `machine`, `detected`, or `ensemble`. |
+| `kind`            | `QueryKindResult`             | Chosen query kind, confidence, alternatives, and optional advisories.                                                                    |
+| `phraseProposals` | array                         | Phrase proposals, empty when no grouper ran or a fast path skipped it.                                                                   |
+| `tree`            | `AddressTree`                 | Labeled component tree.                                                                                                                  |
+| `poiIntent`       | object or `null`              | Point-of-interest intent result when that stage produced one.                                                                            |
+| `timing`          | object                        | Stage timings for this run.                                                                                                              |
+| `faults`          | array                         | Caught stage failures in order. An empty array means no stage faulted.                                                                   |
+| `intentMarkers`   | array                         | Query-intent advisories. An empty array means none matched.                                                                              |
+| `path`            | `fast-path`, `full`, or `poi` | Pipeline branch taken for this input.                                                                                                    |
+
+`AddressTree.raw` is the text whose offsets index the returned nodes. It can differ from `PipelineResult.input` after the classifier adjusts letter case, as the example in [the first-parse tutorial](../start.mdx) shows. `AddressTree.roots` contains the top-level nodes. The tree also has optional `system`, `country`, and `localeCountry` fields.
+
+| `AddressNode` field               | Type                                       | Meaning                                                                          |
+| --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
+| `tag`                             | `ComponentTag`                             | Role of the span.                                                                |
+| `value`                           | `string`                                   | Text assigned to the component.                                                  |
+| `start`, `end`                    | `number`                                   | Start inclusive and end exclusive offsets into `tree.raw`.                       |
+| `confidence`                      | `number`                                   | Returned node score. It isn't evidence that an address exists.                   |
+| `children`                        | `AddressNode[]`                            | Nested components. An empty array has no child nodes.                            |
+| `source`, `sourceID`              | optional string or `null`                  | Node origin and an identifier within that origin, when recorded.                 |
+| `lat`, `lon`, `placeID`           | optional number, number, string            | Resolved place centroid and normalized place URI, when resolution supplied them. |
+| `alternatives`, `interpretations` | optional arrays                            | Runner-up places or secondary tags for this span.                                |
+| `metadata`, `script`              | optional object or `null`, optional string | Diagnostic metadata and ISO 15924 script, when available.                        |
+
+The half-open span `[start, end)` selects `tree.raw.slice(start, end)`. In the published 11.0.0 example, the input `apt 4b 350 5th ave new york ny 10118` yields `tree.raw` as `Apt 4B 350 5TH Ave New York NY 10118`. Its `locality` node has `[19, 27)` and value `New York`; slicing the returned `tree.raw` at those offsets returns `New York`.
+
+## Query kinds
+
+`QueryKindResult.kind` is one of the following 12 values exported by `QueryKindSchema` in `@mailwoman/core/pipeline@11.0.0`:
+
+| Kind                 | Input or requested operation                                     |
+| -------------------- | ---------------------------------------------------------------- |
+| `postcode_only`      | Postcode without a fuller address.                               |
+| `locality_only`      | Locality without a fuller address.                               |
+| `structured_address` | Address with street or other structured components.              |
+| `intersection`       | Two crossing street descriptions.                                |
+| `po_box`             | Post office box query.                                           |
+| `landmark`           | Landmark query.                                                  |
+| `poi_query`          | Point-of-interest query.                                         |
+| `vague`              | Input without enough address structure for a more specific kind. |
+| `bare_toponym`       | Bare place name. Resolution can report ambiguity.                |
+| `route_pair`         | Two place names. The pipeline reports readings without routing.  |
+| `near_me`            | Relative location query that needs the caller's position.        |
+| `poi_category`       | Point-of-interest category without a search anchor.              |
+
+## Geocode result and provenance
+
+`GeocodeResult` is a separate projected result. The following fields describe its coordinate, matched components, and evidence. A `null` coordinate means the result has no selected coordinate. A `null` `coordinate_source` means the result contains no source stamp for its selected coordinate.
+
+| Field                   | Type                                           | Meaning                                                                                                                                                                                                 |
+| ----------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `input`                 | `string`                                       | Geocoded input.                                                                                                                                                                                         |
+| `components`            | partial record from `ComponentTag` to `string` | One value per retained parsed tag.                                                                                                                                                                      |
+| `dropped_components`    | array or `null`                                | Spans omitted by the one-value-per-tag projection, or `null` when none were dropped.                                                                                                                    |
+| `unfollowed_components` | array or `null`                                | Parsed components that the selected coordinate didn't follow.                                                                                                                                           |
+| `lat`, `lon`            | number or `null`                               | Returned coordinate when one was selected.                                                                                                                                                              |
+| `resolution_tier`       | `ResolutionTier`                               | Mechanism that supplied the coordinate.                                                                                                                                                                 |
+| `epistemic_status`      | `EpistemicStatus`                              | Claim supported by the coordinate's evidence, independently of the tier.                                                                                                                                |
+| `coordinate_source`     | object or `null`                               | The matched address-point or interpolation row's `source` and `release` when stamped. The published landmark `venue` branch can also set a source, with `release: null`. Other paths may return `null`. |
+| `uncertainty_m`         | number or `null`                               | Reported uncertainty radius in meters, when available.                                                                                                                                                  |
+| `hierarchy`             | array                                          | Resolved administrative entries, most specific first.                                                                                                                                                   |
+| `candidates`            | array                                          | Selected primary place first, then alternatives with distinct coordinates. Candidate `score` ranks places within one answer only.                                                                       |
+| `derivation`            | object or `null`                               | Derivation projection when the caller provided a resolver trace sink.                                                                                                                                   |
+| `entity`, `rooftop`     | object or `null`                               | Matched point of interest or address-point row details when applicable.                                                                                                                                 |
+| `authoritative`         | object or `null`                               | Answer from a configured authoritative provider, when one was configured.                                                                                                                               |
+
+The result also has nullable convenience fields for `locality`, `region`, `postcode`, `house_number`, `street`, `venue`, `dependent_locality`, `unit`, and `countryCode`. `house_number` can be present on a coarse tier. Only `address_point` and `interpolated` place the coordinate at the house. Other fields record query-intent markers, administrative coherence, and resolution decisions. The `GeocodeResultSchema` source listed in the frontmatter defines the remaining fields.
+
+| `resolution_tier` | Coordinate mechanism                     |
+| ----------------- | ---------------------------------------- |
+| `address_point`   | Matched address-point row.               |
+| `interpolated`    | Number interpolated from a register row. |
+| `street`          | Street-level result.                     |
+| `postcode`        | Postcode-level result.                   |
+| `admin`           | Administrative place result.             |
+| `venue`           | Point-of-interest result.                |
+| `plus_code`       | Plus-code result.                        |
+
+| `epistemic_status` | Claim supported by the evidence                                  |
+| ------------------ | ---------------------------------------------------------------- |
+| `designated`       | An authority assigned the value.                                 |
+| `observed`         | An identified source recorded the value at a particular vintage. |
+| `derived`          | A stated rule computed the value from observations.              |
+| `inferred`         | The value follows from constraints without a matched row.        |
+| `unresolved`       | The evidence supports no value claim.                            |
+
+`AddressNode.source` describes where one parse or resolved-tree node came from. `GeocodeResult.coordinate_source` records the matched register row for an address point or interpolation when that row has a source stamp. The published landmark branch writes its landmark source to the same field. That branch was read from the published source, and no landmark geocode is recorded on this page. `epistemic_status` states the evidence claim for the selected coordinate.
+
+## Example: inspect the published vocabulary
+
+The example needs Node.js 24 LTS or later and an ECMAScript module project, with `"type": "module"` in its `package.json`. Install the published packages:
+
+```bash
+npm install @mailwoman/codex@11.0.0 @mailwoman/core@11.0.0
+```
+
+Save this complete file as `schema.ts`:
+
+```ts
+import { COMPONENT_TAGS, BIO_LABELS } from "@mailwoman/codex/component"
+import { QueryKindSchema } from "@mailwoman/core/pipeline"
+
+console.log("component tags:", COMPONENT_TAGS.join(", "))
+console.log("BIO labels:", BIO_LABELS.length)
+console.log("query kinds:", QueryKindSchema.options.join(", "))
+```
+
+Run it with `node schema.ts`. The following output was captured from the published 11.0.0 packages:
+
+```text
+component tags: country, region, locality, dependent_locality, postcode, subregion, house_number, street, street_prefix, street_prefix_particle, street_suffix, intersection_a, intersection_b, unit, venue, attention, po_box, cedex, prefecture, municipality, district, block, sub_block, building_number, building_name, locality_unit
+BIO labels: 53
+query kinds: postcode_only, locality_only, structured_address, intersection, po_box, landmark, poi_query, vague, bare_toponym, route_pair, near_me, poi_category
+```
+
+## See also
+
+- [Install Mailwoman and inspect a first parse](../start.mdx) runs a local parser and prints its tree.
+- [Inspect the decisions behind a parse](../tutorials/inspect-a-parse.mdx) checks each returned span and reads a debug trace.

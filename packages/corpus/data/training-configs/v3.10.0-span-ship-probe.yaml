@@ -155,7 +155,7 @@ train:
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000
   # The fresh span head needs its own parameter group at a higher rate than the pretrained encoder.
-  # Without it, the span loss does not converge within 2k steps.
+  # Without it, the span loss doesn't converge within 2k steps.
   span_head_learning_rate: 1.0e-3
   batch_size: 128
   eval_batch_size: 128

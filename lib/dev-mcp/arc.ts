@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The graded arc keeps two answers separate. Training attribution asks whether the change, rather than the rig or
- *   the cost of fine-tuning, moved the board: the self-control leg must be quiet and the placebo (null) leg is
- *   subtracted from the candidate. Release eligibility asks whether the exact candidate artifact meets the
- *   registered release requirements. The verdict `release/evaluate.run.ts` writes its result for that
- *   artifact and that specification version. The board's changed rows are reported as findings with their
- *   addresses. The verdict decides release eligibility.
+ *   The graded arc keeps two answers separate.
+ *
+ *   Training attribution asks whether the change, rather than the rig
+ *   or the cost of fine-tuning, moved the board: the self-control leg must be quiet
+ *   and the placebo (null) leg is subtracted from the candidate.
+ *   Release eligibility asks whether the exact candidate artifact meets the registered release requirements.
+ *
+ *   The verdict `release/evaluate.run.ts` writes its result for that artifact
+ *   and that specification version.
+ *   The board's changed rows are reported as findings with their addresses.
+ *   The verdict decides release eligibility.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -211,7 +216,7 @@ export interface ArcResult {
 		/**
 		 * False when the self-control leg disagreed with itself.
 		 *
-		 * The candidate numbers are still reported, but they are not evidence.
+		 * The candidate numbers are still reported, but they're not evidence.
 		 */
 		attributable: boolean
 		/**

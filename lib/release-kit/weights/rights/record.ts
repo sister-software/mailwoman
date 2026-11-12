@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads the artifacts, license and source attribution of each weights package from its manifest and model card.
+ *   Reads the artifacts, license and source attribution of each weights package
+ *   from its manifest and model card.
  *
- *   A license obligation comes from the package's own SPDX expression. A provenance obligation comes from an
- *   artifact's sources and survives redistribution under either license branch. The record keeps the two apart.
+ *   A license obligation comes from the package's own SPDX expression.
+ *   A provenance obligation comes from an artifact's sources and survives
+ *   redistribution under either license branch.
+ *   The record keeps the two apart.
  *
- *   The record reports a gap as a gap. A card without attribution entries yields an empty list, a missing digest
- *   reads `unrecorded`, and an overlay's inherited attribution stays labeled as the base's. The cross-package pass
- *   also finds artifacts whose attribution sits in another package's card.
+ *   The record reports a gap as a gap.
+ *   A card without attribution entries yields an empty list, a missing digest reads
+ *   `unrecorded`, and an overlay's inherited attribution stays labeled as the base's.
+ *
+ *   The cross-package pass also finds artifacts whose attribution sits in another package's card.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -125,7 +130,7 @@ export const SourceUse = {
 	Tokenizer: "tokenizer",
 	Evaluation: "evaluation",
 	/**
-	 * The entry does not say how the source was used.
+	 * The entry doesn't say how the source was used.
 	 */
 	Unstated: "unstated",
 } as const
@@ -251,7 +256,7 @@ function readDataAccessOffers(value: unknown, cardPath: string): DataAccessOffer
 /**
  * The attribution that an overlay inherits from the package that owns its model graph,
  * repeated so a consumer of the overlay by itself can read it and labeled as the base's
- * because the overlay's own artifacts did not contribute to that model.
+ * because the overlay's own artifacts didn't contribute to that model.
  */
 interface InheritedLineage {
 	package: string
@@ -327,7 +332,7 @@ export interface WeightsRightsRecord {
 	/**
 	 * The corpus version that the card states.
 	 *
-	 * It does not prove which records reached the model, because no frozen per-release corpus manifest exists.
+	 * It doesn't prove which records reached the model, because no frozen per-release corpus manifest exists.
 	 */
 	corpusVersion: string | null
 	/**

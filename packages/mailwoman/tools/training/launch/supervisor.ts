@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The supervisor a training sandbox runs: a bash script, so the trainer image needs neither Node nor Python.
+ *   The supervisor a training sandbox runs: a bash script, so the trainer image
+ *   needs neither Node nor Python.
  *
- *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that describe another config or
- *   corpus, checks the device, and runs `trainer train`. It commits the volume after every checkpoint the trainer
- *   saves, and it restarts the trainer after a failed exit, up to the retry count, resuming from the newest complete
- *   checkpoint, or from the branch checkpoint while the run has none. It deletes no
- *   file. The host passes every input through {@linkcode SupervisorEnvironment}.
+ *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that
+ *   describe another config or corpus, checks the device, and runs `trainer train`.
+ *   It commits the volume after every checkpoint the trainer saves, and it restarts
+ *   the trainer after a failed exit, up to the retry count, resuming from the newest
+ *   complete checkpoint, or from the branch checkpoint while the run has none.
+ *
+ *   It deletes no file.
+ *   The host passes every input through {@linkcode SupervisorEnvironment}.
  */
 
 /**

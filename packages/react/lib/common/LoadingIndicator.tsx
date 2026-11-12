@@ -3,9 +3,10 @@
 
 /**
  *   LoadingIndicator — pure-CSS loading states for three UX patterns: `pulse` (skeleton bars),
- *   `spinner` (rotation ring), and `staged` (a step list with checkmarks). SSR-safe: every animation
- *   is CSS-driven, so the component renders identically on server and client. Ported from the docs
- *   component onto plain (`mw-`-prefixed) class names.
+ *   `spinner` (rotation ring), and `staged` (a step list with checkmarks).
+ *
+ *   SSR-safe: every animation is CSS-driven, so the component renders identically on server and client.
+ *   Ported from the docs component onto plain (`mw-`-prefixed) class names.
  */
 
 import { memo, type ReactNode } from "react"

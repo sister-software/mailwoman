@@ -124,7 +124,7 @@ export function defaultBuildJobs(opts: { adapterIDs: readonly string[]; hostMemo
  *
  * @throws When `jobs` standard workers exceed the budget, or a configured resident
  * adapter exceeds the budget when it runs by itself.
- * The error names each reservation and the largest `--jobs` that fits.
+ * The error lists each reservation and the largest `--jobs` that fits.
  */
 export function planWorkerBudget(opts: {
 	jobs: number

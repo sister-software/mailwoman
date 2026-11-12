@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ladder diff tested against a stubbed registry: a real engine would take minutes and fail for reasons unrelated to this file.
+ *   The ladder diff tested against a stubbed registry: a real engine would take minutes
+ *   and fail for reasons unrelated to this file.
  */
 
 import { describe, expect, it } from "vitest"

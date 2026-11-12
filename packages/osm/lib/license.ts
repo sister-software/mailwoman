@@ -4,11 +4,12 @@
 /**
  *   The license, credit and notice that apply to every OpenStreetMap database this package builds.
  *
- *   This package's code is licensed under Mailwoman's own terms. ODbL section 2.3(a) excludes the
- *   programs used to make or operate a database from the license. The databases the code builds are
- *   OpenStreetMap Derivative Databases under ODbL 1.0. These constants are the one place the license
- *   and credit are spelled, so the builder's manifest, the notices it prints and the provider's
- *   refusal message agree.
+ *   This package's code is licensed under Mailwoman's own terms.
+ *   ODbL section 2.3(a) excludes the programs used to make or operate a database from the license.
+ *
+ *   The databases the code builds are OpenStreetMap Derivative Databases under ODbL 1.0.
+ *   These constants are the one place the license and credit are spelled, so the builder's
+ *   manifest, the notices it prints and the provider's refusal message agree.
  */
 
 /**

@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `trailing-region` — the `«locality», «region»[, «country»]` admin tail, built from real
- *   `(locality, region)` WOF ancestor pairs.
+ *   `trailing-region` — the `«locality», «region»[, «country»]` admin tail,
+ *   built from real `(locality, region)` WOF ancestor pairs.
  *
- *   A tuple's `postcodePlacement` selects where the postcode sits: `leading` (the default, so a
- *   tuples file written before the field existed is unchanged), `after_locality`, or `after_region`.
+ *   A tuple's `postcodePlacement` selects where the postcode sits: `leading`
+ *   (the default, so a tuples file written before the field existed is unchanged),
+ *   `after_locality`, or `after_region`.
  *
- *   A bare `«region»` form is deliberately absent: teaching it as `region` would fight the
- *   locality/region ambiguity the dominance race arbitrates. A `dependentLocality`, when present,
- *   becomes `«dep_locality», «locality»…`; without it every row begins with the locality and teaches
- *   the model that the first segment is the locality.
+ *   A bare `«region»` form is deliberately absent: teaching it as `region` would fight
+ *   the locality/region ambiguity the dominance race arbitrates.
+ *   A `dependentLocality`, when present, becomes `«dep_locality», «locality»…`; without it every
+ *   row begins with the locality and teaches the model that the first segment is the locality.
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"
@@ -33,7 +34,7 @@ import { SurfaceOrigin } from "#types"
  * The region code an address line in this country writes, or `null` where the region name is written out.
  *
  * A subdivision belongs here only when its code is a posted surface: Canadian province
- * and US state codes are, a Bundesland or a région is not.
+ * and US state codes are, a Bundesland or a région isn't.
  *
  * Several Canadian codes collide with ISO alpha-2 country codes (`NL`, `PE`),
  * so a code left unattested here reads as the country.
@@ -149,7 +150,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 
-			// Per row, because the id names this tuple's record.
+			// Per row, because the id identifies this tuple's record.
 			// A tuples file written before `sourceID` existed contains no id.
 			// and `null` means the recipe had no id to forward.
 			if (

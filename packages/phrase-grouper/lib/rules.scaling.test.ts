@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every per-segment rule must stay linear in segment length, including on the worst-case input shape: a long run
- *   of capitalized tokens, every one of which is candidate place-name content.
+ *   Every per-segment rule must stay linear in segment length, including on the worst-case input
+ *   shape: a long run of capitalized tokens, every one of which is candidate place-name content.
  *
- *   `scoreLocalityPhrase` walks forward from each start index. The walk must stay bounded by
- *   {@link MAX_LOCALITY_PHRASE_TOKENS} — unbounded, it costs quadratic time for the identical proposals its
- *   clamped results already produce.
+ *   `scoreLocalityPhrase` walks forward from each start index.
+ *   The walk must stay bounded by {@link MAX_LOCALITY_PHRASE_TOKENS} — unbounded,
+ *   it costs quadratic time for the identical proposals its clamped results already produce.
  *
- *   Correctness tests cannot catch that, because bounded and unbounded walks emit the same proposals. Only the
- *   growth curve separates them, measured as token reads through a `Proxy` rather than as wall-clock time that
- *   moves with the host.
+ *   Correctness tests cannot catch that, because bounded and unbounded walks emit the same proposals.
+ *   Only the growth curve separates them, measured as token reads through a `Proxy`
+ *   rather than as wall-clock time that moves with the host.
  */
 
 import { describe, expect, test } from "vitest"

@@ -2,7 +2,7 @@
 
 This guide sets the voice for Mailwoman code comments, API documentation, Markdown prose, and explanatory text in tests. It draws on comments and documentation from the author's earlier projects and on the current Mailwoman communication standards.
 
-The goal is a natural, useful explanation. A comment can be conversational, but it should tell a reader what the code does, why a choice matters, or what a test establishes. It should not make the reader reconstruct the point from narration, shorthand, or a chain of clauses.
+The goal is a natural, useful explanation. A comment can be conversational, but it should tell a reader what the code does, why a choice matters, or what a test establishes. It shouldn't make the reader reconstruct the point from narration, shorthand, or a chain of clauses.
 
 ## The guiding principle
 
@@ -30,7 +30,7 @@ Name the property the code relies on, then state what follows from it.
 // The lookup table contains an entry for every luminance value, so this lookup cannot miss.
 ```
 
-Use the actual buffer, index, state, or lifecycle rule. The word “invariant” can be useful when discussing a specific, documented invariant, but it should not replace the property itself.
+Use the actual buffer, index, state, or lifecycle rule. The word “invariant” can be useful when discussing a specific, documented invariant, but it shouldn't replace the property itself.
 
 ### Lead with the subject and its action
 
@@ -48,7 +48,7 @@ When an explanation needs several steps, let each sentence state one step. A sho
 // `readPixels` returns rows from bottom to top. The rasterizer reverses the row index to display the image upright.
 ```
 
-The two sentences name the operation and its consequence. The reader does not need to unpack several operations from one relative clause.
+The two sentences name the operation and its consequence. The reader doesn't need to unpack several operations from one relative clause.
 
 ### Explain what a test distinguishes
 
@@ -82,7 +82,7 @@ First person, contractions, and direct address are welcome when they make a conc
 // We read rows in reverse because WebGL returns them bottom-to-top.
 ```
 
-Conversational wording is a voice choice. It does not remove the need to state the operation and its reason.
+Conversational wording is a voice choice. It doesn't remove the need to state the operation and its reason.
 
 ### Let the implementation explain routine behavior
 
@@ -92,7 +92,7 @@ Comment non-obvious behavior, constraints, decisions, and limitations. Keep comm
 
 ### Do not chain another thought onto the sentence
 
-The target cadence starts with a main point. A comma adds another clause beginning with `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
+The pattern to avoid starts with a main point. A comma adds another clause beginning with `which`, `whose`, or `and`. These clauses can each be grammatical. The problem is the accumulation: the reader must remember the opening point while the sentence adds another operation, explanation, or result.
 
 ```ts
 // The pass uses the trainer's emitter, which makes its counts comparable, and this means the audit matches a training run.
@@ -168,19 +168,19 @@ function createSession() {
 }
 ```
 
-Add behavior, inputs, outputs, constraints, side effects, or caller guidance that the symbol itself does not express. Remove empty JSDoc blocks and comments that add no information.
+Add behavior, inputs, outputs, constraints, side effects, or caller guidance that the symbol itself doesn't express. Remove empty JSDoc blocks and comments that add no information.
 
 ### Do not use a comment as a parking place for abandoned code
 
 Remove commented-out code. Put deferred work in an issue or task record when it needs to persist. Keep a TODO only when its task and context remain current and actionable.
 
-### Keep the project voice out of marketing copy
+### Do not use marketing voice in technical comments
 
-Technical comments should not use slogans, inflated claims, all-capitals emphasis, or decorative excitement. User-facing guides can address the reader directly and use a warmer cadence. They still need accurate claims, concrete examples, and clear instructions.
+Technical comments shouldn't use slogans, inflated claims, all-capitals emphasis, or decorative excitement. User-facing guides can address the reader directly and use a warmer cadence. They still need accurate claims, concrete examples, and clear instructions.
 
 ## Choose detail by purpose
 
-Implementation comments explain behavior that the code does not make obvious. API documentation explains caller-visible behavior and constraints. Test comments explain the failure mode an assertion can detect. Tutorials and guides can tell a story and address the reader, while keeping each step and claim clear.
+Implementation comments explain behavior that the code doesn't make obvious. API documentation explains caller-visible behavior and constraints. Test comments explain the failure mode an assertion can detect. Tutorials and guides can tell a story and address the reader, while keeping each step and claim clear.
 
 Do not force all comments into one sentence or one register. Use as much detail as the mechanism requires. When a sentence begins to collect another operation and its consequence, end the sentence and give the next step its own subject and verb.
 

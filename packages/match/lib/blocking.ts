@@ -2,20 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The blocking stage generates candidate pairs. An all-pairs comparison is O(n²): a million records require a trillion
- *   comparisons. This stage scores pairs that share a cheap key. This is where the geocode-first
- *   bet pays off: two records resolving to the same place land in the same spatial cell regardless
- *   of how their address strings are spelled, so geography is the primary block.
+ *   The blocking stage generates candidate pairs.
  *
- *   A {@link BlockingKey} maps a record to zero or more string keys. records sharing any key become
- *   candidates. Keys compose as a _union_ (the standard multi-pass approach — high recall from
- *   cheap rules): block on the spatial cell, canonical key, or postcode. A pair caught by
- *   any rule is scored. {@link conjunction} builds the and-style key Geo-ER uses
- *   (`name-cell and geo-cell`) when a single rule is too loose.
+ *   An all-pairs comparison is O(n²): a million records require a trillion comparisons.
+ *   This stage scores pairs that share a cheap key.
  *
- *   Recall is the priority. A pair the blocker never proposes can never match, the most dangerous
- *   silent failure in record linkage. The spatial grid is generous and neighbor-expanded by
- *   default. The code reports any block too large to scan instead of dropping it silently.
+ *   This is where the geocode-first bet pays off: two records resolving to the same
+ *   place land in the same spatial cell regardless of how their address strings
+ *   are spelled, so geography is the primary block.
+ *
+ *   A {@link BlockingKey} maps a record to zero or more string keys. records
+ *   sharing any key become candidates.
+ *   Keys compose as a _union_ (the standard multi-pass approach — high recall from cheap rules):
+ *   block on the spatial cell, canonical key, or postcode.
+ *
+ *   A pair caught by any rule is scored. {@link conjunction} builds the and-style key
+ *   Geo-ER uses (`name-cell and geo-cell`) when a single rule is too loose.
+ *
+ *   Recall is the priority.
+ *   A pair the blocker never proposes can never match, the most dangerous silent failure in record linkage.
+ *
+ *   The spatial grid is generous and neighbor-expanded by default.
+ *   The code reports any block too large to scan instead of dropping it silently.
  */
 
 import type { GeoCoordinate } from "@mailwoman/spatial"

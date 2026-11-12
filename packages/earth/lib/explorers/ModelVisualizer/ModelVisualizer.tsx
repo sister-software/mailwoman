@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   <ModelVisualizer trace={…}> — renders one `ParseTraceLike` (the serializable record of a trip
- *   through the neural decode path) as four piece-aligned bands + a locale gauge:
+ *   <ModelVisualizer trace={…}> — renders one `ParseTraceLike` (the serializable record of
+ *   a trip through the neural decode path) as four piece-aligned bands + a locale gauge:
  *
  *   1. Token ribbon — the SentencePiece pieces with char offsets.
  *   2. Channel band — anchor/gazetteer confidence as fed ("not fed" when a channel is absent.
  *      An unfed channel is a diagnostic fact, an OOD class rather than an empty one).
- *   3. Emissions heatmap — labels × pieces. toggle raw logits vs post-prior emissions (the delta
- *      is the priors' influence). conventions-masked cells hatched. viterbi path outlined. Label
- *      rows are trimmed to the model's emission width (the Stage-prefix rule — a narrower model
- *      never emits the tail labels).
+ *   3. Emissions heatmap — labels × pieces. toggle raw logits vs post-prior emissions
+ *      (the delta is the priors' influence). conventions-masked cells hatched. viterbi path outlined.
+ *      Label rows are trimmed to the model's emission width
+ *      (the Stage-prefix rule — a narrower model never emits the tail labels).
  *   4. Decode band — final tokens, confidence bars, repair-pass diffs as before→after chips.
  *
- *   Pure and fixture-drivable. the live wrapper (LiveModelVisualizer) feeds it from
- *   the runtime handle's trace hook.
+ *   Pure and fixture-drivable. the live wrapper (LiveModelVisualizer) feeds it
+ *   from the runtime handle's trace hook.
  */
 
 import { tagOf } from "@mailwoman/neural/span"

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The hero's search box: a combobox that completes place names from the published autocomplete index through
- *   the shared hook and listbox, and hands the query to Earth on submit. The index loads on the first keystroke,
- *   one file per leading character, and no model or gazetteer reaches this page.
+ *   The hero's search box: a combobox that completes place names from the published autocomplete
+ *   index through the shared hook and listbox, and hands the query to Earth on submit.
+ *
+ *   The index loads on the first keystroke, one file per leading character,
+ *   and no model or gazetteer reaches this page.
  */
 
 import "@mailwoman/react/styles.css"

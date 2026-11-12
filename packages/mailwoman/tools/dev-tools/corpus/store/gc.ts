@@ -62,7 +62,7 @@ export async function trainingManifestRoots(directory: PathBuilderLike): Promise
 /**
  * Every `corpus_version` value anywhere in a model card.
  *
- * A value that is not a corpus version, such as a sentence describing an older feed,
+ * A value that's not a corpus version, such as a sentence describing an older feed,
  * is returned under `unparsed` rather than dropped, so the report shows what the card states.
  */
 export async function modelCardRoots(path: string): Promise<{ roots: StoreRoot[]; unparsed: string[] }> {
@@ -168,7 +168,7 @@ export async function listStoreDirectories(storeRoot: string): Promise<StoreDire
 }
 
 /**
- * A root's manifest read, or the reason it could not be.
+ * A root's manifest read, or the reason it couldn't be.
  */
 export type RootReach =
 	| { root: StoreRoot; manifest: string; reached: string[] }

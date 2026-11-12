@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The opportunity application's build: a static bundle for the local preview server. Node reads
- *   `OPPORTUNITY_BASEMAP_URL` here and compiles it into the client as `__OPPORTUNITY_BASEMAP_URL__`, or `null`
- *   when it is unset. The build registers no service worker and writes no deployment record.
+ *   The opportunity application's build: a static bundle for the local preview server.
+ *
+ *   Node reads `OPPORTUNITY_BASEMAP_URL` here and compiles it into the client as
+ *   `__OPPORTUNITY_BASEMAP_URL__`, or `null` when it is unset.
+ *   The build registers no service worker and writes no deployment record.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
@@ -306,6 +309,34 @@ describe("runPipeline — stage composition", () => {
 
 		expect(options["fstStreetMorphologyOpts"]).toEqual(ZEROED_MORPHOLOGY_OPTS)
 		expect("venueHead" in options).toBe(false)
+	})
+
+	it("passes PipelineOpts.localeHint to classifier.parse only when the caller sets it", async () => {
+		const hinted: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier: hinted }, { localeHint: "US" })
+		expect(hinted.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ localeHint: "US" }))
+
+		const unhinted: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier: unhinted }, { locale: "en-US" })
+		const options = (unhinted.parse as ReturnType<typeof vi.fn>).mock.calls[0]![1] as Record<string, unknown>
+		expect(options).not.toHaveProperty("localeHint")
+	})
+
+	it("parses each line break and its surrounding spaces as `, ` under lineBreaks: comma", async () => {
+		const input = "206 Saint Clair Street \nFort Recovery, OH\r\n 45846"
+		const rewritten = "206 Saint Clair Street, Fort Recovery, OH, 45846"
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree(rewritten)) }
+
+		const result = await runPipeline(input, { classifier }, { lineBreaks: "comma" })
+
+		expect(classifier.parse).toHaveBeenCalledWith(rewritten, expect.anything())
+		expect(result.tree.raw).toBe(rewritten)
+
+		const kept: AddressClassifier = { parse: vi.fn(async () => fakeTree(input)) }
+
+		await runPipeline(input, { classifier: kept })
+
+		expect(kept.parse).toHaveBeenCalledWith(input, expect.anything())
 	})
 
 	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {

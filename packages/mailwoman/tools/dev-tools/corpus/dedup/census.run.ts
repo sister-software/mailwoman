@@ -2,24 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Counts duplicate rows in an adapter's `canonical.jsonl`. It splits them by whether the
- *   runner's dedup set held their key when the duplicate arrived.
+ *   Counts duplicate rows in an adapter's `canonical.jsonl`.
  *
- *   The runner holds at most `DEFAULT_DEDUP_MAX_SIZE` distinct keys. Three adapters passed that limit in
- *   `v0.7.0-de-holdout`. Every row in the file was written, so every duplicate the census finds reached the
- *   corpus. The split states which mechanism removes each group. A duplicate whose key was among the first
- *   `--cap` distinct keys is refused by the membership check that now runs whether or not the set is full.
+ *   It splits them by whether the runner's dedup set held their key when the duplicate arrived.
+ *
+ *   The runner holds at most `DEFAULT_DEDUP_MAX_SIZE` distinct keys.
+ *   Three adapters passed that limit in `v0.7.0-de-holdout`.
+ *
+ *   Every row in the file was written, so every duplicate the census finds reached the corpus.
+ *   The split states which mechanism removes each group.
+ *
+ *   A duplicate whose key was among the first `--cap` distinct keys is refused by the
+ *   membership check that now runs whether or not the set is full.
  *   A duplicate whose key was first seen after the cap is removed only by raising the key capacity.
  *
- *   The set holds exactly the first `--cap` distinct keys in written order, because the runner adds a key
- *   at the moment it writes that key's first row. The census therefore reconstructs the set's contents from
- *   the file without reading the build log.
+ *   The set holds exactly the first `--cap` distinct keys in written order,
+ *   because the runner adds a key at the moment it writes that key's first row.
+ *   The census therefore reconstructs the set's contents from the file without reading the build log.
  *
- *   **Why this holds hashes rather than keys.** A V8 `Set` refuses a 16,777,216th entry. These
- *   adapters exceed it. The census stores a 64-bit hash of each dedup key in a growable `BigUint64Array`,
- *   sorts it and counts adjacent equal values. A 64-bit collision would report a duplicate where none exists.
- *   The collision rate is under 1 in 10^8 for 100 million keys. State that rate here rather than leaving it for a
- *   reader to assume away.
+ *   **Why this holds hashes rather than keys.** A V8 `Set` refuses a 16,777,216th entry.
+ *   These adapters exceed it.
+ *
+ *   The census stores a 64-bit hash of each dedup key in a growable `BigUint64Array`,
+ *   sorts it and counts adjacent equal values.
+ *   A 64-bit collision would report a duplicate where none exists.
+ *
+ *   The collision rate is under 1 in 10^8 for 100 million keys.
+ *   State that rate here rather than leaving it for a reader to assume away.
  *
  *   Usage:
  *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/dedup/census.run.ts \

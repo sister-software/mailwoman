@@ -4,21 +4,28 @@
 /**
  *   Reads the `filing_landscape` summary from a BDC database.
  *
- *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`;
- *   anything else is unknown. A surveyed block with zero filings is a different result. A GEOID
- *   query takes each block's res-9 cell from its `bdc_availability` rows. A GEOID with no rows of
- *   its own takes its cell from the caller's `resolveGeoidCell`, and without one the block is unknown.
- *   An `h3Cells` query supplies the cell, so a covered cell with no rows reports as surveyed with
- *   zero filings.
+ *   A queried block counts as surveyed only when its res-6 parent cell appears
+ *   in `layer_coverage`; anything else is unknown.
+ *   A surveyed block with zero filings is a different result.
  *
- *   The res-6 parent comes from the res-9 cell rather than from the block centroid. H3 cells do not
- *   nest exactly, and the two derivations disagree for some points. `blockCentroidCells` derives both
- *   cells for the builder and for `geoidCellResolver`. A resolver built over the centroid source the
- *   build used therefore places a zero-row block in the cell the builder would have stored for it.
+ *   A GEOID query takes each block's res-9 cell from its `bdc_availability` rows.
+ *   A GEOID with no rows of its own takes its cell from the caller's `resolveGeoidCell`,
+ *   and without one the block is unknown.
  *
- *   Coverage is recorded per res-6 cell and counts the loaded rows of every technology. A zero-row
- *   block reads as surveyed when another block in its res-6 cell has a row in the build. A zero for
- *   one technology holds only for a technology whose rows the build loaded.
+ *   An `h3Cells` query supplies the cell, so a covered cell with no rows reports
+ *   as surveyed with zero filings.
+ *
+ *   The res-6 parent comes from the res-9 cell rather than from the block centroid.
+ *   H3 cells do not nest exactly, and the two derivations disagree for some points.
+ *
+ *   `blockCentroidCells` derives both cells for the builder and for `geoidCellResolver`.
+ *   A resolver built over the centroid source the build used therefore places a
+ *   zero-row block in the cell the builder would have stored for it.
+ *
+ *   Coverage is recorded per res-6 cell and counts the loaded rows of every technology.
+ *   A zero-row block reads as surveyed when another block in its res-6 cell has a row in the build.
+ *
+ *   A zero for one technology holds only for a technology whose rows the build loaded.
  */
 
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"

@@ -4,13 +4,16 @@
 /**
  *   Downloads the three OS OpenData products the `gb-os-open` adapter joins, from the OS Downloads API.
  *
- *   The API serves OpenData without a key. `GET /products/<id>/downloads` lists one archive per
- *   format and area with its OS-published MD5, and each archive is checked against that MD5 after
- *   transfer. A present archive whose MD5 already matches is kept rather than downloaded again.
+ *   The API serves OpenData without a key.
+ *   `GET /products/<id>/downloads` lists one archive per format and area with its
+ *   OS-published MD5, and each archive is checked against that MD5 after transfer.
+ *
+ *   A present archive whose MD5 already matches is kept rather than downloaded again.
  *
  *   Each archive is unpacked into the subdirectory the adapter reads, `code-point-open/`,
- *   `open-names/` or `open-roads/`, so the fetch root is the adapter's `inputPath`. The archive
- *   stays beside its members, because its digest is the value the address-source register records.
+ *   `open-names/` or `open-roads/`, so the fetch root is the adapter's `inputPath`.
+ *   The archive stays beside its members, because its digest is the value the
+ *   address-source register records.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -48,7 +51,7 @@ export interface OSOpenProduct {
 }
 
 /**
- * The three products, in the order they are fetched.
+ * The three products, in the order they're fetched.
  */
 export const GB_OS_OPEN_PRODUCTS: readonly OSOpenProduct[] = [
 	{ productID: "CodePointOpen", format: "CSV", directory: GB_OS_OPEN_PRODUCT_DIRECTORIES.codePointOpen },

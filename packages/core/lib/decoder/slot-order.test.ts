@@ -6,12 +6,16 @@ import type { ComponentTag } from "@mailwoman/codex/component"
  *   `slotNodes` decides which of two same-tag spans a projection reports.
  *
  *   A line that opens with a venue name the model labeled `street` puts that span first in the text.
- *   The real street follows it under the higher label confidence. An order taken from position reports
- *   the venue name as the street and deletes the street. The geocode path then has no street to resolve.
+ *   The real street follows it under the higher label confidence.
  *
- *   An administrative rung is the opposite case. A canonical line writes the rungs finest to coarsest.
- *   The coarser place name scores higher because it is more frequent in training. An order taken from
- *   confidence therefore answers `Bretagne` for a row whose locality is `Plougonvelin`.
+ *   An order taken from position reports the venue name as the street and deletes the street.
+ *   The geocode path then has no street to resolve.
+ *
+ *   An administrative rung is the opposite case.
+ *   A canonical line writes the rungs finest to coarsest.
+ *
+ *   The coarser place name scores higher because it is more frequent in training.
+ *   An order taken from confidence therefore answers `Bretagne` for a row whose locality is `Plougonvelin`.
  */
 import { describe, expect, it } from "vitest"
 

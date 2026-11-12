@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Label-bigram transition potentials counted over encoded training rows, in the `crf-transitions.json` shape the
- *   classifier adds to its BIO masks.
+ *   Label-bigram transition potentials counted over encoded training rows,
+ *   in the `crf-transitions.json` shape the classifier adds to its BIO masks.
  */
 
 /**
@@ -110,7 +110,7 @@ export function fitTransitions(counts: TransitionCounts): FittedTransitions {
 /**
  * Multiplies every potential by `temperature`.
  *
- * The emissions were not trained against these potentials, so their relative weight is a free parameter.
+ * The emissions weren't trained against these potentials, so their relative weight is a free parameter.
  */
 export function scaleTransitions(fitted: FittedTransitions, temperature: number): FittedTransitions {
 	const scale = (row: number[]) => row.map((value) => value * temperature)

@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The card a map click opens: what the click landed on, its coordinate, and the two things to do with
- *   it, search it through the geocoder or copy the coordinate. A feature with a name is titled by that name,
- *   and bare ground by its coordinate.
+ *   The card a map click opens: what the click landed on, its coordinate, and the two
+ *   things to do with it, search it through the geocoder or copy the coordinate.
+ *
+ *   A feature with a name is titled by that name, and bare ground by its coordinate.
  */
 
 import { coordinatePairText } from "@mailwoman/spatial/point-query"

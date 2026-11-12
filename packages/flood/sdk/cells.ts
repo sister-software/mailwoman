@@ -3,19 +3,21 @@
 
 /**
  *   This module builds a zone-keyed cell index with one accumulator per flood zone code.
+ *
  *   It also reports the measurement used to choose the index resolution.
  *
- *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
- *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
- *   allocator-avoiding shortcuts around it are properties of H3 rather than of this product — the layer
- *   interface's polygon-builder section states them as requirements on every polygon builder — and a second
- *   copy of the zero-cell guard is a second place for it to stop guarding.
+ *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's
+ *   call sites and its `@mailwoman/flood/sdk/cells` subpath keep reading the same.
+ *   `classifyFeatureCells` and the allocator-avoiding shortcuts around it are properties
+ *   of H3 rather than of this product — the layer interface's polygon-builder section
+ *   states them as requirements on every polygon builder — and a second copy of the
+ *   zero-cell guard is a second place for it to stop guarding.
  *
- *   what stays here is what is zone-shaped. {@link FloodCellIndex} accumulates per zone code, because the
- *   question a reader asks of this layer is about the zone: a cell wholly inside any FZ3 polygon answers
- *   FZ3 whichever polygon that was. A soil layer accumulates per delineation and weights by covered area
- *   instead, so the accumulator is where the two layers differ and the classifier is where they
- *   do not.
+ *   what stays here is what's zone-shaped. {@link FloodCellIndex} accumulates per
+ *   zone code, because the question a reader asks of this layer is about the zone:
+ *   a cell wholly inside any FZ3 polygon answers FZ3 whichever polygon that was.
+ *   A soil layer accumulates per delineation and weights by covered area instead,
+ *   so the accumulator is where the two layers differ and the classifier is where they do not.
  */
 
 import { compactAcrossResolutions, shortCellToInt, type FeatureCells } from "@mailwoman/spatial"
@@ -89,7 +91,7 @@ export class FloodCellIndex {
 	 *
 	 * Populated for every touched cell and pruned at {@link FloodCellIndex.finish}
 	 * once the whole-cell sets are known.
-	 * A cell that is whole for its zone needs no candidate list.
+	 * A cell that's whole for its zone needs no candidate list.
 	 *
 	 * The index can identify those cells only after it sees every feature.
 	 */
@@ -224,8 +226,8 @@ export class FloodCellIndex {
 		const candidates: Array<{ h3Cell: number; resolution: number; areaID: string }> = []
 
 		for (const [cell, areas] of this.#candidates) {
-			// A cell that is partial for no zone was covered wholly by every zone that
-			// reached it, so its candidate list would never be read.
+			// A cell that's partial for no zone was covered wholly by every zone that reached it,
+			// so its candidate list would never be read.
 			if (!partialCellKeys.has(cell)) continue
 
 			const h3Cell = shortCellToInt(cell)

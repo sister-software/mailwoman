@@ -3,7 +3,9 @@
 
 /**
  *   The `mwdev_reliability` tool definition provides the description and input schema an agent reads.
- *   It also wires the handler. The measurement lives in `#reliability/report`.
+ *
+ *   It also wires the handler.
+ *   The measurement lives in `#reliability/report`.
  */
 
 import { z } from "zod"

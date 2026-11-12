@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The buildings a scenario may count, read from a dossier. A selected building enters the scenario only
- *   with its own identity in the dossier and a resolved unit total at the stage its plan names.
+ *   The buildings a scenario may count, read from a dossier.
  *
- *   An unresolved total stays unresolved. {@link UnresolvedUnitTotalError} holds the dossier's unresolved
- *   total with its reason and conflicting counts, and the scenario computes no cash flow from it. The
- *   calculator never turns such a total into zero units or into a subscriber count.
+ *   A selected building enters the scenario only with its own identity in the dossier
+ *   and a resolved unit total at the stage its plan names.
  *
- *   Two buildings on one parcel keep separate unit counts. A unit membership key that appears in the totals
- *   of two selected buildings would count the same units twice, so {@link SharedUnitMembershipError} refuses it.
+ *   An unresolved total stays unresolved. {@link UnresolvedUnitTotalError} holds
+ *   the dossier's unresolved total with its reason and conflicting counts,
+ *   and the scenario computes no cash flow from it.
+ *   The calculator never turns such a total into zero units or into a subscriber count.
+ *
+ *   Two buildings on one parcel keep separate unit counts.
+ *   A unit membership key that appears in the totals of two selected buildings would
+ *   count the same units twice, so {@link SharedUnitMembershipError} refuses it.
  */
 
 import {

@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The Korean road-name address register (주소DB) used as alignment ground truth. The ministry assigns
- * the road names and building numbers it publishes, so the register asserts `address` on `premise`
- * rows where the permit registry's address field is an `observation`. The archive is four
- * pipe-delimited CP949 text files per 시도 plus one nationwide road-code file, as the guide inside the
- * zip states (붙임1, the 전체분 layout), and both its member names and its contents need the publisher's
- * encoding.
+ * The Korean road-name address register (주소DB) used as alignment ground truth.
+ *
+ * The ministry assigns the road names and building numbers it publishes, so the register asserts
+ * `address` on `premise` rows where the permit registry's address field is an `observation`.
+ * The archive is four pipe-delimited CP949 text files per 시도 plus one nationwide
+ * road-code file, as the guide inside the zip states (붙임1, the 전체분 layout),
+ * and both its member names and its contents need the publisher's encoding.
  */
 
 import { decodeByteStream } from "@mailwoman/core/fs/streams"
@@ -140,7 +141,7 @@ async function loadRoadCodes(archivePath: PathBuilderLike, member: string): Prom
 }
 
 /**
- * A house or lot number as the register writes it: leading zeros dropped, a `-<부번>` only when there is one.
+ * A house or lot number as the register writes it: leading zeros dropped, a `-<부번>` only when there's one.
  */
 function joinNumber(main: string, sub: string): string {
 	const head = main.replace(/^0+/u, "") || "0"

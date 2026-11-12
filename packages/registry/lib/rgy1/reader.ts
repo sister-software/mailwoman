@@ -4,9 +4,11 @@
 /**
  *   The synchronous RGY1 reader: validate an artifact once, then probe its tables in place.
  *
- *   The reader mirrors `crates/registry-core/src/artifact.rs` and follows `docs/rgy1.md`. It reads through a
- *   `DataView` over the caller's bytes, honoring `byteOffset`, so an artifact handed over as a subarray behaves as the
- *   same bytes would in their own buffer. No `Map` is rebuilt: a probe is an arithmetic index into the section's payload.
+ *   The reader mirrors `crates/registry-core/src/artifact.rs` and follows `docs/rgy1.md`.
+ *   It reads through a `DataView` over the caller's bytes, honoring `byteOffset`, so an
+ *   artifact handed over as a subarray behaves as the same bytes would in their own buffer.
+ *
+ *   No `Map` is rebuilt: a probe is an arithmetic index into the section's payload.
  */
 
 import {

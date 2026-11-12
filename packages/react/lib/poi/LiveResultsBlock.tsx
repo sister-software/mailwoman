@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `LiveResultsBlock` — the on-demand live poi.db search affordance: a "Search live" button plus the
- *   idle / loading / error / results states. Presentational — all behavior comes in via props (the
- *   `usePOISearch` hook owns the state machine + the injected probe).
+ *   `LiveResultsBlock` — the on-demand live poi.db search affordance: a "Search live"
+ *   button plus the idle / loading / error / results states.
+ *
+ *   Presentational — all behavior comes in via props
+ *   (the `usePOISearch` hook owns the state machine + the injected probe).
  */
 
 import type { ReactNode } from "react"

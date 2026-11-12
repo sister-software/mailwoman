@@ -4,23 +4,25 @@
 /**
  *   Capability-manifest generator, the measurement half of the load-time delta check.
  *
- *   The model card declares, per tier, per address-system and per tag, the model's measured per-tag F1
- *   with the conventions mask off, plus the mask-on F1 for any tag a codex `forbiddenTags` row would
- *   suppress. The `createScorer` loader (neural/scorer.ts) reads this `capabilities` block and fails
- *   closed when a conventions mask would forbid a tag the model is certified to emit. The guard is a
- *   delta (`maskOffF1 − maskOnF1 > 5pp`), so a tag the model emits at 0.80 is still guarded if the mask
- *   drops it to 0.0.
+ *   The model card declares, per tier, per address-system and per tag,
+ *   the model's measured per-tag F1 with the conventions mask off, plus the mask-on
+ *   F1 for any tag a codex `forbiddenTags` row would suppress.
+ *   The `createScorer` loader (neural/scorer.ts) reads this `capabilities` block and fails
+ *   closed when a conventions mask would forbid a tag the model is certified to emit.
+ *
+ *   The guard is a delta (`maskOffF1 − maskOnF1 > 5pp`), so a tag the model emits
+ *   at 0.80 is still guarded if the mask drops it to 0.0.
  *
  *   Tiers:
  *
  *   - `server`: anchor and gazetteer channels fed (the production default `createScorer` builds).
  *   - `pocket`: anchor fed, gazetteer ablated (the lighter on-device feed, reserved for a future serving target).
  *
- *   For each tier, locale and mask setting we run the model and compute unfolded exact-match per-tag F1
- *   (the same implementation as `score-affix.ts`, which splits `street_prefix`, `street` and
- *   `street_suffix` so the affix capability is measurable). The classifier is built via the canonical
- *   `createScorer` so the channel feed matches the ship config, with `overrides.conventions` toggling
- *   the mask and `overrides.gazetteer` selecting the tier.
+ *   For each tier, locale and mask setting we run the model and compute unfolded exact-match
+ *   per-tag F1 (the same implementation as `score-affix.ts`, which splits `street_prefix`,
+ *   `street` and `street_suffix` so the affix capability is measurable).
+ *   The classifier is built via the canonical `createScorer` so the channel feed matches the ship config,
+ *   with `overrides.conventions` toggling the mask and `overrides.gazetteer` selecting the tier.
  *
  *   Run (Node 26+, custom DB, anchor-on, the production default v1.5.0 int8):
  *
@@ -165,7 +167,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<CapabilityManifest> 
 
 			for (const t of TAGS) {
 				// Skip tags the model never emits and never sees in gold under either mask.
-				// A 0/0 F1 is not a capability claim, just noise.
+				// A 0/0 F1 isn't a capability claim, just noise.
 				// (maskOffF1 0 with the tag present in gold is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }

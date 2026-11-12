@@ -3,7 +3,9 @@
 
 /**
  * Dependency-free accessors for process arguments.
- * They stay separate from script cleanup and logging so latency-sensitive CLI dispatchers can read argv without loading other graphs.
+ *
+ * They stay separate from script cleanup and logging so latency-sensitive CLI
+ * dispatchers can read argv without loading other graphs.
  * ResourceError and ConsoleLogger belong to those graphs.
  * Async initialization also belongs there.
  */
@@ -73,7 +75,7 @@ export function requiredArgument(scope: string, name: string, value: string | nu
 /**
  * A flag's string value read as a safe integer.
  *
- * @throws When the value is not one, naming the flag and the value.
+ * @throws When the value isn't one, naming the flag and the value.
  */
 export function integerArgument(name: string, value: string): number {
 	const parsed = Number(value)
@@ -85,7 +87,7 @@ export function integerArgument(name: string, value: string): number {
 
 /**
  * Kebab segments whose property spelling capitalizes the whole acronym, because a
- * segment missing here derives a property the command's own `Options` does not declare:
+ * segment missing here derives a property the command's own `Options` doesn't declare:
  * the flag still parses but reaches the component under a name no code reads,
  * so add the segment here when a flag contains an acronym.
  */
@@ -149,7 +151,7 @@ export function optionPropertyName(value: string): string {
  * Parse CLI arguments against a `node:util` `parseArgs` config, defaulting `args` to
  * {@linkcode cliArguments} so a script never reads `process.argv` itself.
  *
- * A caller that has already taken a command name off the front passes the remainder
+ * A caller that's already taken a command name off the front passes the remainder
  * as `config.args` and it is used as given.
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {

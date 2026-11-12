@@ -262,7 +262,7 @@ export async function appendLocalTextFile<S extends PathBuilderLike[]>(
 /**
  * Removes a file, or a directory and everything under it.
  *
- * @throws {Error} If the path does not exist.
+ * @throws {Error} If the path doesn't exist.
  * @see {@linkcode removePathIfPresent} for a version that ignores a missing path.
  */
 export function removePath(path: PathBuilderLike): Promise<void> {
@@ -273,7 +273,7 @@ export function removePath(path: PathBuilderLike): Promise<void> {
  * Removes a directory only when it is empty, and reports whether it did.
  *
  * A directory that still holds an entry is kept and returns `false`, so a caller
- * that deleted the files it owns never removes one it does not.
+ * that deleted the files it owns never removes one it doesn't.
  * A missing directory raises.
  */
 export async function removeEmptyDirectory(path: PathBuilderLike): Promise<boolean> {
@@ -338,7 +338,7 @@ export function removePathIfPresent(path: PathBuilderLike): Promise<void> {
  * so the bytes a partial run wrote after the checkpoint are removed rather than duplicated.
  *
  * @throws {Error} If the file is shorter than `length`, because the checkpoint then describes
- * bytes the file does not have and extending it with zeroes would corrupt the output.
+ * bytes the file doesn't have and extending it with zeroes would corrupt the output.
  */
 export async function truncateFile(path: PathBuilderLike, length: number): Promise<void> {
 	const stats = await statPath(path)

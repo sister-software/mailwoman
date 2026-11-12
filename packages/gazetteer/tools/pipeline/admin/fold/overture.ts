@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Backfills the admin gazetteer from the Overture `divisions` theme for countries that WOF does not
- *   cover. The country list lives in `../defaults.ts`.
+ *   Backfills the admin gazetteer from the Overture `divisions` theme.
+ *
+ *   The country list lives in `../defaults.ts`.
+ *   Given a WOF index, a division WOF already holds adds its names to the WOF record
+ *   instead of a row of its own.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -14,6 +17,8 @@ import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
+
+import { type FoldGap, GAP_SOURCE_TERMS, type WOFMatch, type WOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
 
 /**
  * Overture division subtypes that map to the resolver's admin placetypes.
@@ -95,7 +100,7 @@ const HEX_RADIX = 16
  * Each ID is `idBase + (hash(gers) mod span)`.
  *
  * On a collision, the later ID probes forward to the next free slot.
- * The input is sorted first so the probing does not depend on query order.
+ * The input is sorted first so the probing doesn't depend on query order.
  */
 export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = OVERTURE_ID_BASE): Map<string, number> {
 	const idmap = new Map<string, number>()
@@ -151,13 +156,18 @@ const NAMES_COLUMNS = [
 	"language",
 	"official",
 	"lastmodified",
+	"source",
 ] as const satisfies ReadonlyArray<keyof WOFDatabase["names"]>
 
 const POPULATION_COLUMNS = ["id", "population"] as const satisfies ReadonlyArray<keyof WOFDatabase["place_population"]>
 
-const CONCORDANCE_COLUMNS = ["id", "other_id", "other_source", "lastmodified"] as const satisfies ReadonlyArray<
-	keyof WOFDatabase["concordances"]
->
+const CONCORDANCE_COLUMNS = [
+	"id",
+	"other_id",
+	"other_source",
+	"lastmodified",
+	"source",
+] as const satisfies ReadonlyArray<keyof WOFDatabase["concordances"]>
 
 /**
  * Compiles a positional insert statement for one of the column tuples above.
@@ -221,7 +231,14 @@ export async function ingestOvertureDivisions(
 	/**
 	 * The base of the synthetic ID range. It defaults to {@link OVERTURE_ID_BASE}.
 	 */
-	idBase: number = OVERTURE_ID_BASE
+	idBase: number = OVERTURE_ID_BASE,
+	/**
+	 * The WOF records to match against.
+	 *
+	 * A division that matches one adds its names to that record and writes no row, and a child division's parent is
+	 * the matched record. A division that matches none is written and reported to `onGap`.
+	 */
+	wof?: { index: WOFPlaceIndex; onGap: (gap: FoldGap) => void }
 ): Promise<number> {
 	const inlist = countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
@@ -287,17 +304,106 @@ export async function ingestOvertureDivisions(
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
 
+	const candidateOf = (r: Record<string, unknown>) => {
+		const country = String(r.country ?? "").toUpperCase()
+
+		return {
+			name: String(r.name),
+			placetype: foldedPlacetype(String(r.subtype), country),
+			country,
+			latitude: num(r.lat),
+			longitude: num(r.lon),
+			wikidata: typeof r.wikidata === "string" ? r.wikidata : null,
+		}
+	}
+
+	// Every division is matched before any is written, so a child's parent can be the WOF record its parent matched.
+	const matches = new Map<string, WOFMatch>()
+
+	if (wof) {
+		for (const r of rows) {
+			const match = wof.index.match(candidateOf(r))
+
+			if (match) {
+				matches.set(String(r.id), match)
+			}
+		}
+	}
+
+	/**
+	 * Writes a division's name onto the WOF record it matched when the record lacks it,
+	 * and answers whether it did.
+	 */
+	const claim = (index: WOFPlaceIndex, matched: WOFMatch, country: string, alias: string, lang: string): boolean => {
+		if (!index.claimName(matched, country, alias)) return false
+
+		namesInsert.run(
+			matched.id,
+			alias,
+			matched.placetype,
+			country,
+			lang,
+			lang && isOfficialLanguage(country, lang) ? 1 : 0,
+			0,
+			"overture"
+		)
+
+		return true
+	}
+
 	db.exec("BEGIN")
 	let n = 0
 	let nWikidata = 0
+	let namesClaimed = 0
+	let wikidataClaimed = 0
 
 	for (const r of rows) {
-		const nid = idmap.get(String(r.id))!
+		const gers = String(r.id)
+		const { name, placetype, country, latitude, longitude, wikidata } = candidateOf(r)
+		const matched = matches.get(gers)
+		const common = r.common_json ? tryParsingJSON<Record<string, string>>(String(r.common_json)) : null
+
+		if (matched && wof) {
+			const aliases: Array<[lang: string, alias: string]> = [
+				["", name],
+				...Object.entries(common ?? {}).filter(
+					(entry): entry is [string, string] => typeof entry[1] === "string" && isDivisionName(entry[1])
+				),
+			]
+
+			for (const [lang, alias] of aliases) {
+				if (claim(wof.index, matched, country, alias, lang)) {
+					namesClaimed++
+				}
+			}
+
+			// The Wikidata id is how `gazetteer importance` joins a Wikipedia score,
+			// so a WOF record with none takes the division's, tagged with its source.
+			if (wikidata?.startsWith("Q") && wof.index.claimWikidata(matched)) {
+				concordancesInsert.run(matched.id, wikidata, "wd:id", 0, "overture")
+
+				wikidataClaimed++
+			}
+
+			continue
+		}
+
+		const nid = idmap.get(gers)!
 		const pgers = r.parent_division_id == null ? null : String(r.parent_division_id)
-		const pid = (pgers && idmap.get(pgers)) || -1
-		const name = String(r.name)
-		const country = String(r.country ?? "").toUpperCase()
-		const placetype = foldedPlacetype(String(r.subtype), country)
+		const pid = (pgers && (matches.get(pgers)?.id ?? idmap.get(pgers))) || -1
+
+		wof?.onGap({
+			source: "overture",
+			...GAP_SOURCE_TERMS.overture,
+			sourceID: gers,
+			id: nid,
+			name,
+			placetype,
+			country,
+			latitude,
+			longitude,
+			wikidata,
+		})
 
 		// The argument order must match SPR_COLUMNS.
 		sprInsert.run(
@@ -306,8 +412,8 @@ export async function ingestOvertureDivisions(
 			name,
 			placetype,
 			country,
-			num(r.lat),
-			num(r.lon),
+			latitude,
+			longitude,
 			num(r.min_lat),
 			num(r.min_lon),
 			num(r.max_lat),
@@ -320,32 +426,37 @@ export async function ingestOvertureDivisions(
 			0
 		)
 
-		namesInsert.run(nid, name, placetype, country, "", 0, 0)
+		namesInsert.run(nid, name, placetype, country, "", 0, 0, "overture")
 
 		// `names.common` maps a language to that language's standard name.
 		// Each one becomes an alias.
 		// An alias is official when its language is an official language of the country.
-		if (r.common_json) {
-			// A malformed map parses to null.
-			// The row keeps only its primary name.
-			const common = tryParsingJSON<Record<string, string>>(String(r.common_json))
+		// A malformed map parses to null, and the row keeps only its primary name.
+		if (common) {
+			const seen = new Set([name])
 
-			if (common) {
-				const seen = new Set([name])
+			for (const [lang, alias] of Object.entries(common)) {
+				if (typeof alias === "string" && !seen.has(alias) && isDivisionName(alias)) {
+					seen.add(alias)
 
-				for (const [lang, alias] of Object.entries(common)) {
-					if (typeof alias === "string" && !seen.has(alias) && isDivisionName(alias)) {
-						seen.add(alias)
-						namesInsert.run(nid, alias, placetype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
-					}
+					namesInsert.run(
+						nid,
+						alias,
+						placetype,
+						country,
+						lang,
+						isOfficialLanguage(country, lang) ? 1 : 0,
+						0,
+						"overture"
+					)
 				}
 			}
 		}
 
 		// The Wikidata ID uses the same `wd:id` source as the WOF ingest,
 		// so `gazetteer importance` can join Overture rows the same way.
-		if (typeof r.wikidata === "string" && r.wikidata.startsWith("Q")) {
-			concordancesInsert.run(nid, r.wikidata, "wd:id", 0)
+		if (wikidata?.startsWith("Q")) {
+			concordancesInsert.run(nid, wikidata, "wd:id", 0, "overture")
 
 			nWikidata++
 		}
@@ -364,6 +475,14 @@ export async function ingestOvertureDivisions(
 	console.error(
 		`  Overture divisions: ${nWikidata.toLocaleString()} of ${n.toLocaleString()} carry a Wikidata concordance`
 	)
+
+	if (wof) {
+		console.error(
+			`  Overture divisions: ${matches.size.toLocaleString()} matched a WOF record and added ` +
+				`${namesClaimed.toLocaleString()} names and ${wikidataClaimed.toLocaleString()} Wikidata ids to it; ` +
+				`${n.toLocaleString()} written as their own rows`
+		)
+	}
 
 	return n
 }

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The compiled CLI ships its register, so no test can hand it a trusted key. Every refusal is asserted by its word. No test may write a file on refusal.
+ *   The compiled CLI ships its register, so no test can hand it a trusted key.
+ *
+ *   Every refusal is asserted by its word.
+ *   No test may write a file on refusal.
  */
 
 import { serveNode } from "@mailwoman/api-kit"
@@ -85,7 +88,7 @@ describe("mailwoman license", () => {
 	const SECRET = "s".repeat(43)
 
 	/**
-	 * A token the self-service worker would have minted, under a key this build does not trust.
+	 * A token the self-service worker would have minted, under a key this build doesn't trust.
 	 */
 	async function selfServiceToken() {
 		const pair = await generateLicenseSigningKeyPair()

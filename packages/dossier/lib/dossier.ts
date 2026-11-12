@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The as-of projection. Records are admitted by their availability date, so a dossier for a 2022
- *   decision contains what a reader could have known in 2022. Each building section assembles the
- *   admitted identity, position, membership, claim, count, event, authority, window, availability and
- *   reading evidence, and lists each unresolved question beside the record that would resolve it. A
- *   building's availability checks are answered and explained from the same admitted records.
+ *   The as-of projection.
  *
- *   An external identifier is admitted by its evidence like every other record. An identifier without
- *   evidence stays in the section, and the report prints it with the words `source unstated`.
+ *   Records are admitted by their availability date, so a dossier for a 2022 decision
+ *   contains what a reader could have known in 2022.
+ *   Each building section assembles the admitted identity, position, membership,
+ *   claim, count, event, authority, window, availability and reading evidence,
+ *   and lists each unresolved question beside the record that would resolve it.
+ *
+ *   A building's availability checks are answered and explained from the same admitted records.
+ *
+ *   An external identifier is admitted by its evidence like every other record.
+ *   An identifier without evidence stays in the section, and the report prints
+ *   it with the words `source unstated`.
  *
  *   A derived or inferred claim is admitted only when every claim it derives from is admitted.
  *
- *   A layer reading attaches by its subject, then by an admitted membership, and otherwise to no
- *   building. The dossier lists a reading that neither rule places as unplaced, and no section shows it.
+ *   A layer reading attaches by its subject, then by an admitted membership, and otherwise to no building.
+ *   The dossier lists a reading that neither rule places as unplaced, and no section shows it.
  */
 
 import { availabilityAt, type AvailabilityAnswer } from "#availability"
@@ -62,7 +67,7 @@ export interface Unresolved {
 	/**
 	 * The admitted records the question rests on.
 	 *
-	 * They are the records of its candidates, or the record that raises the question.
+	 * They're the records of its candidates, or the record that raises the question.
 	 * The list is empty when no admitted record bears on the question.
 	 */
 	sources: readonly SourceRecordID[]

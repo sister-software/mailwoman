@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The staged comparison of plan §3.3 against the records the Python trainer's `audits.trainer_parity` wrote.
 
 pub mod f1;

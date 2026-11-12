@@ -540,7 +540,7 @@ data:
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - codex-bare-postcode
     # On WOF rows the region and directional rewrites expand a word inside a place name (`AL MANĀMAH` to
     # `Alabama MANĀMAH`) under the original label, and the build already renders a `drop-commas` variant.

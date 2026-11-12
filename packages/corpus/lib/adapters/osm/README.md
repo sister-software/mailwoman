@@ -27,11 +27,13 @@ the license column. That match admitted a row whose license was prose mentioning
 ## Input
 
 A per-country line-delimited JSON file written by `@mailwoman/osm`'s `emit-corpus-jsonl` script from a
-Geofabrik extract. GDAL and the PBF stay in that package, and this one streams the result.
+Geofabrik extract. GDAL and the PBF stay in that package, and this one streams the result. `--region`
+reads the region's newest vintage under `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/<region>/`, and
+`--vintage` names another:
 
 ```bash
 node packages/osm/out/tools/emit-corpus-jsonl.js \
-  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/pakistan-260819.osm.pbf \
+  --region asia/pakistan --vintage 2026-08-19 \
   --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
 ```
 
@@ -77,7 +79,7 @@ municipality is level 7, its mukims level 6 and its kampongs levels 10 and 8.
 
 A record with no `addr:street` is a streetless premise when its house number is designator-shaped and
 an `addr:place` or `addr:city` is present: `12, Ивановка, Тула` keeps `house_number`,
-`dependent_locality` and `locality`. That is OSM's scheme for numbering within a place that has no streets, and it is
+`dependent_locality` and `locality`. That's OSM's scheme for numbering within a place that has no streets, and it is
 the shape the `streetless-premise-identity` phenomenon counts. A record whose `addr:street` holds a line
 rather than a name stays refused.
 
@@ -90,7 +92,7 @@ Mappers write whole lines into `addr:housenumber` (`House 34, Road 4, Sector 9`)
 rows keep the street and lose the number, or are skipped. A comma in `addr:city` is the neighborhood ahead of the
 city (`Mirpur 10, Dhaka` in Bangladesh): the tail is the locality, and the head enters the
 `dependent_locality` chain last, behind `suburb`, `subdistrict`, `district` and `place`. A value with no
-comma is only the locality. `addr:district` is not mapped beside a city: Vietnam's template renders it only when no city is
+comma is only the locality. `addr:district` isn't mapped beside a city: Vietnam's template renders it only when no city is
 present, and a component with no span to align to quarantines the row.
 
 The rendered line follows the country template (`24 Road 104, Dhaka - 1207`; `359 Đường Nguyễn Văn Cừ,

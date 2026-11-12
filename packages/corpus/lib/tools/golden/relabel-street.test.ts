@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture rows for the golden street-suffix relabel (v0.1.2 → v0.1.3). Every class the tool
- *   distinguishes gets a row here, including the ones it must leave unchanged. Those are the
- *   interesting half, because a relabel that over-reaches silently rewrites the answer key.
+ *   Fixture rows for the golden street-suffix relabel (v0.1.2 → v0.1.3).
+ *
+ *   Every class the tool distinguishes gets a row here, including the ones it must leave unchanged.
+ *   Those are the interesting half, because a relabel that over-reaches silently rewrites the answer key.
  */
 
 import { describe, expect, it } from "vitest"

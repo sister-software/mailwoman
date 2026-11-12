@@ -119,7 +119,7 @@ const UNIT_IDENTIFIER = /^(?:\S*\d\S*|\p{L})$/u
 /**
  * The fewest words a street can hold with a unit at its end.
  *
- * They are one street word, the designator and the identifier.
+ * They're one street word, the designator and the identifier.
  */
 const SHORTEST_STREET_WITH_UNIT = 3
 
@@ -268,7 +268,7 @@ function splitLastUnit(
 
 	// An identifier that repeats the row's own postcode is a city, region and postcode
 	// tail run into the street (`TAMPA ROAD PALM HARBOR FL 34683`).
-	// A one-letter directional after a designator that is also a street type
+	// A one-letter directional after a designator that's also a street type
 	// belongs to the street: libpostal lists `front` among English street types,
 	// so `Ocean Front S` is a street and `Suite C` a unit.
 	const identifierAt = (token: string, designator?: string) => {
@@ -340,8 +340,8 @@ function splitLastUnit(
 	}
 
 	// `RM203`: a designator joined to a numeric identifier.
-	// A joined identifier that is a whole postcode of the country is a region and postcode run
-	// together (`BAY FL33157`), which is not a unit, even where the row records no postcode.
+	// A joined identifier that's a whole postcode of the country is a region and postcode run
+	// together (`BAY FL33157`), which isn't a unit, even where the row records no postcode.
 	const joined = /^(\p{L}{2,})(\d\S*)$/u.exec(last)
 
 	if (

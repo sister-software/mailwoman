@@ -2,21 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Hierarchy campaign R6 — FR (lieu-dit, commune) pairs from the raw BAN dump, emitted in the
- *   pair-index entry shape. The French instance of the dependent-locality prior.
+ *   Hierarchy campaign R6 — FR (lieu-dit, commune) pairs from the raw BAN dump,
+ *   emitted in the pair-index entry shape.
+ *   The French instance of the dependent-locality prior.
  *
- *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to be whatever the
- *   postal format uses. WOF's French neighborhood records are Paris quartiers ("Des Halles",
- *   "Palais Royal") — cartographic subdivisions that never appear in a French postal address, since
- *   the arrondissement is encoded in the postcode (75001 = 1er). The line that does appear is the
- *   lieu-dit, written by itself between the street and the commune (La Poste's line 5). An index of
- *   quartiers would be technically valid and practically wrong: a prior pushing toward spans real
- *   addresses never contain.
+ *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to
+ *   be whatever the postal format uses.
+ *   WOF's French neighborhood records are Paris quartiers ("Des Halles", "Palais Royal") —
+ *   cartographic subdivisions that never appear in a French postal address,
+ *   since the arrondissement is encoded in the postcode (75001 = 1er).
  *
- *   The code uses `@mailwoman/ban/sdk`'s `cleanLieuDit` for filtering
- *   (header leaks, placeholders, `ancienne commune` prefixes plus rows whose lieu-dit repeats
- *   the commune — 5.0% of filled values). The `rendered-fr-lieudit` training
- *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
+ *   The line that does appear is the lieu-dit, written by itself between the street
+ *   and the commune (La Poste's line 5).
+ *   An index of quartiers would be technically valid and practically wrong:
+ *   a prior pushing toward spans real addresses never contain.
+ *
+ *   The code uses `@mailwoman/ban/sdk`'s `cleanLieuDit` for filtering (header leaks, placeholders,
+ *   `ancienne commune` prefixes plus rows whose lieu-dit repeats the commune — 5.0% of filled values).
+ *   The `rendered-fr-lieudit` training database reads through, so the index
+ *   and the database agree on what a lieu-dit is by construction.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
@@ -40,7 +44,7 @@ export interface LieuDitPair {
 	 * The commune is the French postal locality line.
 	 * Every FR address writes it after the postcode.
 	 *
-	 * There is no per-row variation to read here: BAN has exactly one commune column
+	 * There's no per-row variation to read here: BAN has exactly one commune column
 	 * and every row's parent comes from it.
 	 */
 	parentTag: "locality"

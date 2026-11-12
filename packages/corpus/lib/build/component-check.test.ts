@@ -16,7 +16,7 @@ describe("componentFindings", () => {
 		).toEqual([ComponentRule.PostcodeFormat])
 
 		expect(rules({ street: "Main St", locality: "Hull", region: "IA", postcode: "51239" })).toEqual([])
-		// The United Arab Emirates records no postcode system, so a value there is not judged.
+		// The United Arab Emirates records no postcode system, so a value there's not judged.
 		expect(rules({ street: "Sheikh Zayed Rd", postcode: "12345" }, "AE")).toEqual([])
 	})
 

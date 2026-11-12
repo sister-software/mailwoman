@@ -38,7 +38,7 @@ await download.saveAs(destination)
 `{ result, consoleErrors }`. It awaits the callback before closing the context and browser,
 including when the callback rejects. `createBrowserSession` also accepts `launchOptions`
 and a `cdpEndpoint` for connecting to an existing Chromium instance. A CDP connection creates
-a separate context. It does not use the existing browser's logged-in tabs.
+a separate context. It doesn't use the existing browser's logged-in tabs.
 
 Use a browser to discover portal requests, inspect rendered metadata, establish sessions,
 or perform interactions required for downloads. When an endpoint can be called directly,
@@ -79,7 +79,7 @@ cookies and tabs unless the caller explicitly transfers storage state.
 ## Dependencies
 
 The implementation uses `playwright-extra` with `puppeteer-extra-plugin-stealth`.
-Each session creates its own launcher and plugin instance. It does not mutate Playwright's
+Each session creates its own launcher and plugin instance. It doesn't mutate Playwright's
 shared Chromium export or add plugins to the E2E runner.
 
 The Python `playwright_stealth` project was inspected as a reference. Its browser evasions

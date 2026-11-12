@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker client over the scripted transport, so the wire is deterministic: the routes answer as
- *   `packages/license-worker/lib/routes/{refresh,status}.ts` do.
+ *   The worker client over the scripted transport, so the wire is deterministic:
+ *   the routes answer as `packages/license-worker/lib/routes/{refresh,status}.ts` do.
  */
 
 import { describe, expect, it } from "vitest"

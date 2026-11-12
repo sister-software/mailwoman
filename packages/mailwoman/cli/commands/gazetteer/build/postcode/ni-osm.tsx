@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT` unit-postcode database from
- *   OpenStreetMap. It runs one Overpass query and saves the response as the reproducibility artifact. It
- *   writes a sealed database to a new dated path.
+ *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT`
+ *   unit-postcode database from OpenStreetMap.
  *
- *   **build-local tier.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
- *   never published to npm, to R2 or to the demo. It reaches the resolver only because
- *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
+ *   It runs one Overpass query and saves the response as the reproducibility artifact.
+ *   It writes a sealed database to a new dated path.
  *
- *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that is the point of
- *   shipping it: an unknown postcode abstains, so every code the database contains is a new answer and
- *   every code it lacks behaves exactly as it did before.
+ *   **build-local tier.** OSM is ODbL 1.0 and share-alike binds a Derived Database,
+ *   so this artifact is never published to npm, to R2 or to the demo.
+ *   It reaches the resolver only because `DEFAULT_POSTCODE_DATABASES` is
+ *   `existsSync`-filtered on the machine that built it.
  *
- *   The pipeline module is lazy-imported so `--help` never faults without the optional
- *   `@mailwoman/resolver-wof-sqlite` peer.
+ *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that's
+ *   the point of shipping it: an unknown postcode abstains, so every code the database
+ *   contains is a new answer and every code it lacks behaves exactly as it did before.
+ *
+ *   The pipeline module is lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"

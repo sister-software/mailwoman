@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /**
  * The pricing calculator. A key-colored panel holding the controls over a plain table; the Mailwoman row is the one
  * on the selected color so the constant reads as the answer.

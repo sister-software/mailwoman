@@ -4,8 +4,9 @@
 /**
  *   Structure sources published in Germany.
  *
- *   Germany's open 3D building data is published by each state. The nationwide LoD2-DE product is sold under
- *   separate terms, so each source here records its state as `region`.
+ *   Germany's open 3D building data is published by each state.
+ *   The nationwide LoD2-DE product is sold under separate terms, so each source
+ *   here records its state as `region`.
  */
 
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"

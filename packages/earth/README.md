@@ -16,7 +16,7 @@ and tiles from `tiles.mailwoman.post`; the range worker and sqlite-wasm runtime 
 | `yarn workspace @mailwoman/earth deploy:dry-run` | validates `wrangler.toml` and the asset manifest                            |
 
 The preview serves on port 7771, and the public data bucket's CORS rule must admit `http://localhost:7771`. On a port
-the rule does not admit, the browser refuses every model, gazetteer and sprite fetch and the geocoder never becomes
+the rule doesn't admit, the browser refuses every model, gazetteer and sprite fetch and the geocoder never becomes
 ready. The docs dev server holds port 7770.
 
 ### What the build reads
@@ -40,7 +40,7 @@ with no model download. Cloudflare's SPA fallback serves `index.html` for each, 
   and the polygon opener. `lib/service-worker.ts` registers the cache routes, built from `@mailwoman/service-worker-cache`. `lib/runtime/use/geocoder-runtime.ts`
   builds the classify deps object field by field from the browser loader's output rather than spreading it, and every
   classify dep is optional. A new field returned by `packages/mailwoman/lib/browser-runtime/load-assets.ts` therefore
-  reaches the app only when this file forwards it. TypeScript does not report the omission, and no Node test exercises
+  reaches the app only when this file forwards it. TypeScript doesn't report the omission, and no Node test exercises
   the file. After adding a browser-runtime asset, grep for a sibling field such as `selectPairIndex:` across
   `packages/earth` and `docs/src`, add the new field at each site, and run a headless parse that depends on the asset
   before declaring a repoint done.
@@ -63,10 +63,10 @@ yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth wrangle
 ### On a push to main
 
 `.github/workflows/deploy.yml` runs the same two commands when a push reaches this workspace or a dependency of it.
-The reach is not a path list: `mwops release deploy-targets` maps the changed files to workspaces and deploys the app
+The reach isn't a path list: `mwops release deploy-targets` maps the changed files to workspaces and deploys the app
 when one of them lies in its dependency closure, walked from the manifests, or a root build file changed. The Worker
 table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.
 
 Two rules outside the repository decide whether a deployment works: the public bucket's CORS rule must admit the
-origin the app is served from (`https://earth.mailwoman.post` is admitted, but a `*.workers.dev` preview origin is not), and
+origin the app is served from (`https://earth.mailwoman.post` is admitted, but a `*.workers.dev` preview origin isn't), and
 the tile worker's CORS list in `packages/tile-worker/lib/cors.ts` must name the same origin.

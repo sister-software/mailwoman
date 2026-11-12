@@ -2,16 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Defines the premise-linkage input adapter and this repository's synthetic fixture implementation. The fixture's
- * addresses, coordinates and identifiers are invented.
+ * Defines the premise-linkage input adapter and this repository's synthetic fixture implementation.
  *
- * The interface is an async iterable because controlled-file terms can forbid holding the entire file in memory.
- * A stream lets a run stop before it materializes all licensed rows. The controlled adapter belongs with its
- * provider because its file format is provider-specific and remains unknown.
+ * The fixture's addresses, coordinates and identifiers are invented.
  *
- * Everything below is synthetic. The identifiers use the reserved 0-prefixed range from the
- * `@mailwoman/core/resolver` fixture provider. Real UPRNs do not use that range. This file derives rows and provider
- * answers from one table. Separate hand-maintained lists could drift after an edit.
+ * The interface is an async iterable because controlled-file terms can forbid
+ * holding the entire file in memory.
+ * A stream lets a run stop before it materializes all licensed rows.
+ *
+ * The controlled adapter belongs with its provider because its file format is
+ * provider-specific and remains unknown.
+ *
+ * Everything below is synthetic.
+ * The identifiers use the reserved 0-prefixed range from the `@mailwoman/core/resolver` fixture provider.
+ *
+ * Real UPRNs do not use that range.
+ * This file derives rows and provider answers from one table.
+ * Separate hand-maintained lists could drift after an edit.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -34,7 +41,7 @@ import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#too
 /**
  * Where a run's rows come from.
  *
- * Exposes one asynchronous method that does not depend on licensed data.
+ * Exposes one asynchronous method that doesn't depend on licensed data.
  * The controlled implementation reads a provider file.
  *
  * This implementation reads a constant.

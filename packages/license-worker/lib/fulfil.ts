@@ -2,17 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fulfillment turns one paid invoice into one signed token. The worker re-reads the invoice and its subscription
- *   from Stripe by id. When the license row does not exist, it also re-reads the Checkout Session. A webhook body
- *   never grants an entitlement. The ledger's unique keys make minting idempotent: a second mint for one invoice
- *   returns `already_minted`. Two events for one payment produce one token in either order. Two callers racing
- *   for one invoice or subscription receive defined answers, with one row between them. The keys do not prevent
- *   duplicate email. The losing caller can find the winner's token while its email is pending and send it too.
+ *   Fulfillment turns one paid invoice into one signed token.
+ *
+ *   The worker re-reads the invoice and its subscription from Stripe by id.
+ *   When the license row doesn't exist, it also re-reads the Checkout Session.
+ *
+ *   A webhook body never grants an entitlement.
+ *   The ledger's unique keys make minting idempotent: a second mint for one
+ *   invoice returns `already_minted`.
+ *
+ *   Two events for one payment produce one token in either order.
+ *   Two callers racing for one invoice or subscription receive defined answers, with one row between them.
+ *
+ *   The keys do not prevent duplicate email.
+ *   The losing caller can find the winner's token while its email is pending and send it too.
+ *
  *   The provider's idempotency key closes that window when the provider honors it.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
+import { applyStep } from "@mailwoman/core/state-machine"
 import type Stripe from "stripe"
 
 import { calendarDateUTC, plusDays } from "#dates"
@@ -26,10 +36,10 @@ import {
 	findLicenseBySubscription,
 	findToken,
 	insertTokenIfAbsent,
-	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
-import type { LicenseRow, LicenseTokenRow } from "#ledger/schema"
+import { emailMachine, tokenEmailCarrier } from "#ledger/machines"
+import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
 import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
@@ -119,7 +129,7 @@ export async function ensureLicenseFromCheckoutSession(
 
 /**
  * One paid invoice to one token: refused with a reason when the invoice, its Price
- * or its subscription is not one this worker mints for, `already_minted` when the ledger
+ * or its subscription isn't one this worker mints for, `already_minted` when the ledger
  * holds the token, `minted` once the token is inserted and the email attempted.
  */
 export async function fulfilInvoice(
@@ -187,6 +197,12 @@ export async function fulfilInvoice(
 		license = await ensureLicenseFromCheckoutSession(env, deps, session)
 	}
 
+	// A refund or dispute revoked this license, and the claim and refresh routes answer `revoked` for it.
+	// A later paid invoice on the same subscription leaves that decision to the operator.
+	if (license.license_state === LicenseState.Revoked) {
+		return { result: "refused", reason: `license ${license.lid} is revoked, so invoice ${invoiceID} mints no token` }
+	}
+
 	if (license.plan_code !== plan.code) {
 		await setPlanCode(deps.ledger, license.lid, plan.code)
 	}
@@ -227,7 +243,7 @@ export async function fulfilInvoice(
 		return alreadyMinted(deps, winner)
 	}
 
-	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
+	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires, email_state: "pending" })
 
 	return { result: "minted", lid: license.lid, invoiceID }
 }
@@ -270,8 +286,10 @@ export type SendResult = { state: "sent" } | { state: "failed"; reason: string }
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,
 	license: LicenseRow,
-	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
+	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires" | "email_state">
 ): Promise<SendResult> {
+	const carrier = tokenEmailCarrier(deps.ledger, token.invoice_id)
+
 	let messageID: string
 
 	try {
@@ -289,12 +307,14 @@ export async function sendTokenEmail(
 			token.invoice_id
 		))
 	} catch (error) {
-		await setEmailState(deps.ledger, token.invoice_id, "failed")
+		await applyStep(emailMachine, carrier, token.email_state, { kind: "failed" })
 
 		return { state: "failed", reason: error instanceof Error ? error.message : String(error) }
 	}
 
-	await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
+	// A conflict means another send recorded its outcome first.
+	// The provider deduplicates on the invoice id, so this send's acceptance needs no second record.
+	await applyStep(emailMachine, carrier, token.email_state, { kind: "sent", messageID })
 
 	return { state: "sent" }
 }

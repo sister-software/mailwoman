@@ -5,7 +5,7 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import type { PathBuilderLike } from "path-ts"
 
 import { DatabaseClient } from "#client"
-import { sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
+import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
 
 export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	/**
@@ -24,7 +24,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | null>
 	/**
 	 * The bounded child-process ingest, run while the parent holds no handle: each child opens the
-	 * temp file and appends one chunk at a time, so there is exactly one writer at every instant.
+	 * temp file and appends one chunk at a time, so there's exactly one writer at every instant.
 	 */
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
@@ -43,6 +43,10 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 	options: BuildSealedArtifactOptions<DB, Streamed, Result>
 ): Promise<Result> {
 	const tmpPath = `${options.out}.tmp-${process.pid}`
+
+	// A killed earlier build's temp file is removed before this one writes its own, and a version
+	// it set aside moves back into an empty slot so readers keep a database while this build runs.
+	await recoverInterruptedBuilds(options.out)
 
 	let streamed: Streamed | null
 

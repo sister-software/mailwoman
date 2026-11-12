@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `publishGazetteer` reads the candidate's own `layer_manifest` before staging a byte. A `build-local`
- *   tier refuses and an absent manifest refuses. Each refusal explains what would lift it.
+ *   `publishGazetteer` reads the candidate's own `layer_manifest` before staging a byte.
+ *
+ *   A `build-local` tier refuses and an absent manifest refuses.
+ *   Each refusal explains what would lift it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

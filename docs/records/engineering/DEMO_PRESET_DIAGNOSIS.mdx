@@ -28,7 +28,7 @@ The other failures (#3 venue, #4 directional, #6 postcode) have different causes
 
 ## Root cause: WOF bare-name frequency dominance
 
-The model receives no explicit signal about where a token sits in the address structure. v0's rule-based solvers had explicit positional penalties (`HouseNumberPositionPenalty`, `PostcodePositionPenalty`) that the neural pipeline does not replicate.
+The model receives no explicit signal about where a token sits in the address structure. v0's rule-based solvers had explicit positional penalties (`HouseNumberPositionPenalty`, `PostcodePositionPenalty`) that the neural pipeline doesn't replicate.
 
 The transformer backbone has positional encodings and can learn "token after street, before region abbreviation → locality." The training data works against that pattern:
 
@@ -50,7 +50,7 @@ Detect an unambiguous 2-letter region abbreviation (e.g., `DC`, `NY`, `CA`) and 
 
 - **Where:** Between the classifier forward pass and the CRF Viterbi decode (the existing `buildEmissionPriors` path).
 - **Magnitude:** `+2.0` logit boost, the same as the existing format-hit priors (~7.4× odds multiplier at softmax).
-- **Safety constraint:** Bias only tokens verified against WOF locality entries at the detected locale. "Pennsylvania" before DC stays a street because it is not a WOF locality in that context.
+- **Safety constraint:** Bias only tokens verified against WOF locality entries at the detected locale. "Pennsylvania" before DC stays a street because it isn't a WOF locality in that context.
 - **Effort:** ~20 lines, without retraining.
 - **Test:** Demo presets #1 and #2. If they still fail, raise the boost to +3.0. If the prior overcorrects on "Washington state" inputs, lower it.
 

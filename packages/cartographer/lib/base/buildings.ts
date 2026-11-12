@@ -24,7 +24,7 @@ const POP_END = 12
 /**
  * Building opacity by zoom, starting at the first zoom where the tiles show buildings.
  *
- * Blocks stay translucent while they are small, so streets read through them,
+ * Blocks stay translucent while they're small, so streets read through them,
  * and become nearly opaque by z15.
  * At 0.6 a tall tower seen at street zoom showed the map through its walls.
  */

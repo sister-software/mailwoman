@@ -5,7 +5,10 @@
  *   Kysely table types for the subset of the Who's On First SQLite schema this package touches.
  *
  *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships about seven tables.
- *   This file models only the tables we read. The others are outside the resolver interface. Their shapes remain unverified.
+ *   This file models only the tables we read.
+ *
+ *   The others are outside the resolver interface.
+ *   Their shapes remain unverified.
  *
  *   Authoritative schema docs:
  *
@@ -98,13 +101,19 @@ export interface NamesTable {
 	official: number | null
 	name: string
 	lastmodified: number
+	/**
+	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 *
+	 * Databases built before the column existed have no such column.
+	 */
+	source?: string
 }
 
 /**
  * Per-place GeoJSON blob.
  *
  * Centroid lat/lon are already exposed via `spr.{latitude,longitude}`,
- * so the resolver does not need to parse this.
+ * so the resolver doesn't need to parse this.
  * The table stays modeled so a caller that wants the full geometry for bbox or polygon work can read it.
  */
 export interface GeojsonTable {
@@ -167,6 +176,12 @@ export interface ConcordancesTable {
 	other_id: string
 	other_source: string
 	lastmodified: number
+	/**
+	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 *
+	 * Databases built before the column existed have no such column.
+	 */
+	source?: string
 }
 
 /**

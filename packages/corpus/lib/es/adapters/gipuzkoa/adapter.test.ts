@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture holds four of the publisher's addresses and the twelve features they reference, in
- *   the publisher's own order.
+ *   The fixture holds four of the publisher's addresses and the twelve features
+ *   they reference, in the publisher's own order.
  *
- * `fixtures/es-gipuzkoa/ES.GFA.AD.gml` is copied out of `ES.GFA.AD.zip`'s 313,162,472-byte member as
- * written, and it keeps the property that decides the reader: every address comes before every
- * feature it references. A single-pass reader would have to hold all four, and over the whole member
- * it would hold all 68,744.
+ * `fixtures/es-gipuzkoa/ES.GFA.AD.gml` is copied out of `ES.GFA.AD.zip`'s
+ * 313,162,472-byte member as written, and it keeps the property that decides the reader:
+ * every address comes before every feature it references.
+ * A single-pass reader would have to hold all four, and over the whole member it would hold all 68,744.
  *
- * The four addresses are a plain number, an address carrying two `ad:LocatorName` building names as a
- * Basque and Spanish pair, an `S/N` designator, and a number with a letter. They sit in four
- * municipalities, so the fixture also shows that the municipality comes from the reference rather
- * than from the file.
+ * The four addresses are a plain number, an address carrying two `ad:LocatorName` building
+ * names as a Basque and Spanish pair, an `S/N` designator, and a number with a letter.
+ * They sit in four municipalities, so the fixture also shows that the municipality
+ * comes from the reference rather than from the file.
  *
  * Counts quoted against the whole member come from reading the archive: 73,260 `gml:featureMember`
- * elements holding 68,744 `ad:Address`, 4,250 `ad:ThoroughfareName`, 178 `ad:PostalDescriptor` and 88
- * `ad:AdminUnitName`, with the first reference feature at byte 306,440,816.
- * Of those addresses, 68,743 write one designator and 46,365 populate `ad:LocatorName`.
- * 26 designators read `S/N`.
+ * elements holding 68,744 `ad:Address`, 4,250 `ad:ThoroughfareName`, 178 `ad:PostalDescriptor`
+ * and 88 `ad:AdminUnitName`, with the first reference feature at byte 306,440,816.
+ * Of those addresses, 68,743 write one designator and 46,365 populate
+ * `ad:LocatorName`. 26 designators read `S/N`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

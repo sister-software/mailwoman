@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_FOLD_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
@@ -54,21 +55,26 @@ export const spec = {
 
 const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
-
 		const {
-			buildCandidate,
-			DEFAULT_ADMIN_DB,
-			DEFAULT_CANDIDATE_OUT,
-			defaultGazetteerVersion,
-			foldGeonamesIntoAdmin,
-			promoteCandidate,
-			publishGazetteer,
-			resolvePostcodeDatabases,
-		} = await import("@mailwoman/gazetteer/tools/pipeline")
-
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+			dataRoot: { dataRootPath },
+			paths: { repoRootPathBuilder },
+			pipeline: {
+				buildCandidate,
+				DEFAULT_ADMIN_DB,
+				DEFAULT_CANDIDATE_OUT,
+				defaultGazetteerVersion,
+				foldGeonamesIntoAdmin,
+				promoteCandidate,
+				publishGazetteer,
+				resolvePostcodeDatabases,
+			},
+			paths2: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/core/paths"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const root = dataRootPath()
 		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)

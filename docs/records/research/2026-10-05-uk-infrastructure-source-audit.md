@@ -87,11 +87,11 @@ fourth, commercial channel. The four entries below were verified on 2026-10-05.
   exploit the information commercially (clauses 2.1 and 3.1). Its conditions: the Ofcom logo and a
   fixed attribution text beside any display to third parties (4.2.1 and 4.2.2), no modification or
   deletion of any portion of the information (4.3.2), Ofcom's speed descriptors used unchanged
-  (4.3.4), and clause 4.3.6: "you are not permitted to cache, aggregate or otherwise store the
+  (4.3.4), and clause 4.3.6: "you're not permitted to cache, aggregate or otherwise store the
   Information in order to build a partial or full dataset of your own. Any data cached for performance
   reasons should be held for a period of no longer than one month."
 - Authority: operator predictions aggregated by Ofcom. A response predicts speed categories for one
-  address and names no network.
+  address and identifies no network.
 
 ### Ofcom broadband checker (consumer)
 
@@ -164,7 +164,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
   provide returns to our OMR process, so there are gaps in our coverage", and that the view "may differ
   from other providers of coverage data including Ofcom and ThinkBroadband". `future_gigabit` comes from
   only the OMR. BDUK's premises base includes "child" premises "(e.g. apartments in houses of multiple
-  occupancy)", and Ofcom's does not. About 4,400 premises in GIS contracts are absent because OS now
+  occupancy)", and Ofcom's doesn't. About 4,400 premises in GIS contracts are absent because OS now
   classes them as demolished, and recent contract changes may be missing.
 - Observed beside the guide: every flag column writes lowercase `true` and `false`, where the guide's
   examples write `TRUE`. `bduk_gis_contract_scope` writes `Initial` and `Deferred`, where the guide's
@@ -190,7 +190,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
 - Access: anonymous catalogue, with free registration to download records. Official Python client `ukpyn`.
 - Permitted use: `CC BY 4.0` for poles and sites. Underground cable routes sit under the bespoke
   `UK Power Networks Shared Data Licence — Connections`, whose text is behind a SharePoint link this
-  audit could not retrieve. Treat cable-route reuse as license-restricted until that text is read.
+  audit couldn't retrieve. Treat cable-route reuse as license-restricted until that text is read.
 - Authority: UKPN owns and operates the assets, so records are authoritative for the presence of power
   plant. Attachment rights, duct space and telecom usability sit outside every dataset.
 - The other GB DNOs publish less: Northern Powergrid, NGED, SSEN, SP Energy Networks and Electricity
@@ -208,7 +208,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
 - Coverage: England, Wales, Northern Ireland. Scotland runs the separate VAULT system. Per-asset
   geometry at safe-dig detail. Underground only — poles, cabinets, exchanges and entrances are outside
   the remit.
-- Vintage: live platform, and owners must keep data current. Public material does not establish
+- Vintage: live platform, and owners must keep data current. Public material doesn't establish
   whether records include per-asset observation dates.
 - Access: invitation-only for asset owners and their authorised contractors under Data Distribution
   Agreements. Anonymous download, public API and bulk export are all absent. A sandbox for expanded

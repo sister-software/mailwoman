@@ -10,7 +10,7 @@
 # The recipe takes the locality from GeoNames admin2, the region from admin1 and the dependent_locality
 # from column 3. Column 3 holds the most specific place name for the postcode. That place can be a
 # street or a colonia rather than the city. Most rows therefore contain a name before the locality, so
-# the model does not learn that the first place-name segment is always the locality. The triples come from
+# the model doesn't learn that the first place-name segment is always the locality. The triples come from
 # packages/corpus/lib/tools/postcode/triples.ts.
 #
 # Every after_region row is from IN, and no source contains a VE postcode. The VE board rows test whether
@@ -19,14 +19,14 @@
 # The country_weights map lists 134 codes, because the loader drops rows from any country missing from it.
 # The map covers the earlier 25 countries, IN, every gauntlet-board country, and KR and TW. KR and TW have
 # the same wof-admin toponym rows as CN and JP. Most codes have no corpus rows yet. Admitting a country
-# does not change source draw shares, because country_weights filters rows inside each source's stream.
+# doesn't change source draw shares, because country_weights filters rows inside each source's stream.
 # JP rows here teach toponym recognition only. JP block structure needs the stage3-jp label set.
 #
 # The checks:
 #   1. The 11 venue-led board rows that v4.8.0 regressed must hold.
 #   2. FR, GB and DE must show no regression.
 #   3. Improved rows minus regressed rows must be at least zero on the full board.
-#   4. Tier-1 must not regress. If it does, rerun with the 25-country map to separate the two changes.
+#   4. Tier-1 mustn't regress. If it does, rerun with the 25-country map to separate the two changes.
 # The four ve_city_postcode_trailing_state rows measure improvement and are not pass criteria.
 
 data:

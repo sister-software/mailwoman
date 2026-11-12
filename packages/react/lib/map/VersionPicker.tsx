@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Renders a selector for the available model versions. The host owns loading and selection.
+ *   Renders a selector for the available model versions.
+ *   The host owns loading and selection.
  */
 
 import type { ReactNode } from "react"

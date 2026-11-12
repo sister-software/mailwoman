@@ -5,8 +5,9 @@
  *   Tests for the activity-phrase collision census: the probe enumeration, the venue-name
  *   classification and the committed report's agreement with the committed lexicon.
  *
- *   No database is required. The census takes its POI reader injected, so the `Somewhere` collision
- *   is reproduced from a synthetic reader.
+ *   No database is required.
+ *   The census takes its POI reader injected, so the `Somewhere` collision is
+ *   reproduced from a synthetic reader.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"

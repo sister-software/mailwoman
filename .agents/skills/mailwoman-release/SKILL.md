@@ -16,15 +16,15 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 
 ## When not to use
 
-- A change that touches only the browser demo. That is a separate repoint (see the last section). The npm
-  publish does not touch the demo.
+- A change that touches only the browser demo. That's a separate repoint (see the last section). The npm
+  publish doesn't touch the demo.
 - Anything local — **we never publish locally** (see Cardinal Rule 1).
 
 ## Cardinal rules (internalize before touching anything)
 
 1. **Always via CI** — `.github/workflows/publish.yml`, dispatched with `gh workflow run`. npm
    Trusted Publishing (OIDC) means no npm token lives anywhere. CI publishes the weights packages
-   too. Local `yarn release` is not the path (local `npm whoami` is E401 by design, and the `$MAILWOMAN_DATA_ROOT`
+   too. Local `yarn release` isn't the path (local `npm whoami` is E401 by design, and the `$MAILWOMAN_DATA_ROOT`
    weight source also doesn't exist on the runner). The operator's rule: "We never do it locally."
 2. **Full-sync versioning** — every workspace in `.release-it.json` + `neural-weights-*/model-card.json#version`
    - `release.config.json#version` + the demo `releases.json` share one number per release. The
@@ -116,7 +116,7 @@ The version bump happens in the publish dispatch.
 
 The workflow's `yarn mwops release fetch-hf-weights` step pulls every artifact the weights packages
 declare from the PUBLIC HF bucket at `en-us/v<cardVersion>/`. Stage them there first, or the real run
-fails before publishing. The fetch plan decides the set, and this runbook does not, so verify with the fetch
+fails before publishing. The fetch plan decides the set, and this runbook doesn't, so verify with the fetch
 itself rather than trusting a list.
 
 ```bash
@@ -181,13 +181,14 @@ surfaces name the new model version. Commit all three on main before dispatching
    A check that failed a floor the operator accepted needs `--operator-exception <metric>`.
    Those floors are retained-pending checks under the release-quality policy (#2763). Report the
    release verdict from `release/evaluate.run.ts` beside them. While the current specification
-   registers no threshold, that verdict is insufficient evidence and does not approve the release, and
+   registers no threshold, that verdict is insufficient evidence and doesn't approve the release, and
    the D-rule's FR, GB and DE veto no longer applies.
 2. **The release matrix.** Add a row for `<target>` at the top of "## The matrix" in
    `docs/engineering/releases.mdx`, and move `(current)` to it.
-3. **The status page.** Update the `:::info[Verified as of …]` box, the version table and the model
-   artifact sizes in `docs/articles/developers/status.mdx`. Change only figures you measured or can
-   compute exactly, and say which in the box.
+3. **The status page.** In `docs/src/pages/product/limits-and-status.mdx`, update the opening
+   summary table and the paragraph before the first `##` heading. That paragraph must state "model
+   version `<version>`". Update the bundle table when the registry changed. Change only figures you measured
+   or can compute exactly, and say which.
 
 Run `yarn mwops release verify-metadata` locally before dispatching. The check keys on the card
 version, so a code-only release passes it with no ledger edit. Update the release matrix for a
@@ -228,9 +229,9 @@ gh run watch <rid> --exit-status --interval 15
   workspace publishes pass `--tolerate-republish`). Re-dispatch it.
 - The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
   before that dispatch. Phase 1 needs no binaries.
-- A prepare dry run does not audit tarballs. Both dry and real publish runs must complete the full
+- A prepare dry run doesn't audit tarballs. Both dry and real publish runs must complete the full
   preflight before tagging or publication. Follow `RELEASING.md` for accepted uploads that still
-  return 404. Registry visibility is not enough evidence to infer an upload failure.
+  return 404. Registry visibility isn't enough evidence to infer an upload failure.
 
 ## Step 4 — verify the ship (the published tarball rather than the workspace)
 

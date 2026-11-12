@@ -5,10 +5,12 @@ of libpostal's dictionaries and maintains a **patch layer** on top: a `!token` l
 that libpostal lists as a street type, place name or surname.
 
 **94 of the 276 non-comment lines are deletions.** A third of the vendored dictionary exists to
-un-say something. This is not a criticism of the engineers. Every line is a defensible call. It is a
+un-say something. This isn't a criticism of the engineers. Every line is a defensible call. It is a
 record of what the _architecture_ charges for a homograph.
 
 ## Each line is a headstone
+
+<!-- verbatim-quote -->
 
 | override                         | the comment, verbatim                                                            | who lost                                               |
 | -------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -21,6 +23,8 @@ record of what the _architecture_ charges for a homograph.
 | `!street` (surnames)             | —                                                                                | the surname Street (a real surname — Picabo Street)    |
 | `!paris` (wof region)            | "This is not used as region"                                                     | —                                                      |
 | `!burgermeester` (nl)            | "typo in LibPostal resource"                                                     | pure vendoring tax — can't fix upstream, patch locally |
+
+<!-- /verbatim-quote -->
 
 Note the **chain of collisions**: `!ca` deletes Spanish so California can win; `!alle` then deletes
 Norwegian so Spanish can win. Each is resolved in favour of whoever complained loudest.
@@ -38,7 +42,7 @@ had to be **hand-un-applied** for the famous cases, because New York and Washing
 localities. The commented-out lines are the fossil of that fight: a blunt instrument, then a manual
 exception list for the entries that mattered too much to lose.
 
-That is the same shape as our own gazetteer-importance problem (#1142): when the signal cannot
+That's the same shape as our own gazetteer-importance problem (#1142): when the signal cannot
 express nuance, famous things need special-casing by hand.
 
 ## The pattern: a global dictionary must choose once, forever
@@ -50,7 +54,7 @@ Almost every override is a collision between a **rare-but-real** meaning and a *
 `art` (Artery, Art TX / the word "art")
 
 A dictionary lookup takes no locale, context or confidence. A token has one meaning. So when
-two meanings collide, one must **die — globally and permanently**. There is no "unless the query
+two meanings collide, one must **die — globally and permanently**. There's no "unless the query
 smells like Spain."
 
 **This is pragmatism, and the EV is correct.** Art, Texas has eighteen residents. The word "art" appears
@@ -77,9 +81,9 @@ Italy, TX             → {country: Italy, region: TX}                      ✗ 
 (`# remove problematic locality names`), and we get it wrong too. We only get it wrong _differently_:
 Pelias deletes the locality. We call Italy a country.
 
-So the thesis is not "we win." It is narrower and more defensible:
+So the thesis isn't "we win." It is narrower and more defensible:
 
-> **Holding an ambiguity is not the same as resolving it.** The architecture provides us the ability to be
+> **Holding an ambiguity isn't the same as resolving it.** The architecture provides us the ability to be
 > wrong _recoverably_ — `Italy, TX` is the country-channel homograph class, and its knob is
 > `country_ambiguous_scale`, which v263 set hard, over-suppressed, and v264 relaxed to 0.5 and
 > measured (homograph F1 82.6 → 85.1, WOF-admin 89.3 → 91.1%, no trade). Pelias's equivalent knob is a
@@ -92,10 +96,10 @@ comment explaining who lost.
 
 1. **It is the strongest available argument for the #727 span/segment direction** — not because
    dictionaries are dumb, but because a per-token global lookup structurally cannot condition. Every
-   `!` line is a place where context existed and could not be consulted.
+   `!` line is a place where context existed and couldn't be consulted.
 2. **`!art` is our own failure class too.** "Art" as a street-type abbreviation for "Artery" is the
    same rare-abbreviation-vs-common-word collision we hit with `rue` (0.149) being a gazetteer place
-   (#1142). We are not immune. Our model can condition the decision on context.
+   (#1142). We're not immune. Our model can condition the decision on context.
 3. **The commented-out `#!new york` is a warning about #1142's fix.** A blunt global rule plus a
-   hand-maintained exception list for famous things is exactly the failure we would ship if we
+   hand-maintained exception list for famous things is exactly the failure we'd ship if we
    "fixed" importance without the `matched`/`importance` split.

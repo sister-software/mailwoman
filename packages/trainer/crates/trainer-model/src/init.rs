@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `torch.nn.init` and the default `reset_parameters` of the modules the encoder uses, in torch 2.13's arithmetic.
 //!
 //! Each initializer computes its bound in `f64` with the same operations as the Python function and then issues

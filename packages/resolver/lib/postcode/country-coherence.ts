@@ -10,7 +10,7 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
  * The default maximum distance, in kilometers, between a postcode and a locality
  * for them to count as consistent.
  *
- * Verdicts did not change anywhere between 15 and 50 km, so the exact value matters little.
+ * Verdicts didn't change anywhere between 15 and 50 km, so the exact value matters little.
  */
 export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
 
@@ -19,7 +19,7 @@ export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
  *
  * - `pair`: the postcode and the locality both resolve in the country, within the threshold distance.
  * - `locality`: the locality exists in exactly one country.
- *   The postcode copy in that country does not contradict it.
+ *   The postcode copy in that country doesn't contradict it.
  * - `postcode`: the postcode exists in exactly one country.
  *   No gazetteer knows the locality.
  */

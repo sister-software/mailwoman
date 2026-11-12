@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   New Zealand designators: delivery-service types, Unit Types, rural delivery, level and the English relation
- *   words. Delivery and unit rows read from `delivery-service.ts` and `unit-type.ts`. A row whose type NZ Post's
- *   how-to-address page names takes that page as its source, and every other row takes ADV358.
+ *   New Zealand designators: delivery-service types, Unit Types, rural delivery,
+ *   level and the English relation words.
+ *
+ *   Delivery and unit rows read from `delivery-service.ts` and `unit-type.ts`.
+ *   A row whose type NZ Post's how-to-address page names takes that page as its source,
+ *   and every other row takes ADV358.
  *
  * @see {@link https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail NZ Post, how to address mail}
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, June 2011)}

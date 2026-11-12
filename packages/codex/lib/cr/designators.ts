@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Costa Rican designators: apartado, the `#` number mark, premise words, floors and the landmark-relative
- *   locator (`300 metros norte del rótulo de AyA`). The Correos de Costa Rica sheet on the UPU site shows `Apdo`
- *   and `#`. Distance units, directions and sides take dictionary entries and published descriptions of the
- *   address system as their sources, because no operator publishes a list of them.
+ *   Costa Rican designators: apartado, the `#` number mark, premise words, floors
+ *   and the landmark-relative locator (`300 metros norte del rótulo de AyA`).
+ *
+ *   The Correos de Costa Rica sheet on the UPU site shows `Apdo` and `#`.
+ *   Distance units, directions and sides take dictionary entries and published descriptions
+ *   of the address system as their sources, because no operator publishes a list of them.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/criEn.pdf UPU Costa Rica postal address sheet (Correos de Costa Rica)}
  * @see {@link https://es.wikipedia.org/wiki/Apartado_de_correos es.wikipedia, Apartado de correos}

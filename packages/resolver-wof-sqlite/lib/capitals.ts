@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The capital-status reference index answers whether a resolved candidate is its country's national capital or admin-1 seat.
- *   The consumer is the resolver's
- *   bounded capital promotion (`@mailwoman/resolver`'s `promoteCapitals`, applied after the fame
- *   key on the bare-toponym class). This module only matches and never ranks. It is pure and
- *   platform-free.
+ *   The capital-status reference index answers whether a resolved candidate is
+ *   its country's national capital or admin-1 seat.
  *
- *   A match requires the same country and a distance within {@link CAPITAL_MATCH_RADIUS_KM} of the reference point.
- *   The candidate's folded name must also appear in the reference entry's folded name set (name + romanization + the source's alternate
- *   names, so exonym rows such as "Vienna" for Wien still match). The name set is what makes the
- *   radius a centroid-drift allowance rather than a catchment.
+ *   The consumer is the resolver's bounded capital promotion
+ *   (`@mailwoman/resolver`'s `promoteCapitals`, applied after the fame key on the bare-toponym class).
+ *   This module only matches and never ranks.
+ *   It is pure and platform-free.
+ *
+ *   A match requires the same country and a distance within
+ *   {@link CAPITAL_MATCH_RADIUS_KM} of the reference point.
+ *   The candidate's folded name must also appear in the reference entry's folded name set
+ *   (name + romanization + the source's alternate names, so exonym rows such as "Vienna" for Wien still match).
+ *
+ *   The name set is what makes the radius a centroid-drift allowance rather than a catchment.
  */
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

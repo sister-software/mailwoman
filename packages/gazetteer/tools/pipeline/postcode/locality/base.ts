@@ -2,30 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the postcode → containing-locality candidate table offline: for every postcode,
- *   point-in-polygon its centroid against the WOF locality polygons and record the containing
- *   locality plus a few of the closest others for the abutting-postcode candidate set, with WOF alt-name
- *   aliases.
+ *   Build the postcode → containing-locality candidate table offline: for every
+ *   postcode, point-in-polygon its centroid against the WOF locality polygons
+ *   and record the containing locality plus a few of the closest others for the
+ *   abutting-postcode candidate set, with WOF alt-name aliases.
  *
- *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by
- *   postcode proximity and name match → pick. It supplies the coordinate candidate that a name
- *   match by itself cannot generate when a small town is not well indexed.
+ *   The resolver consumes this at resolve time: postcode → candidate localities →
+ *   soft-score by postcode proximity and name match → pick.
+ *   It supplies the coordinate candidate that a name match by itself cannot generate
+ *   when a small town isn't well indexed.
  *
- *   Locality polygons come from the whosonfirst-data-admin-<cc> GeoJSON repos and postcode centroids
- *   from our own custom-built postalcode-intl.db.
+ *   Locality polygons come from the whosonfirst-data-admin-<cc> GeoJSON repos
+ *   and postcode centroids from our own custom-built postalcode-intl.db.
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
- *   --admin-repo $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data-admin-de\
+ *   --admin-repo $MAILWOMAN_CACHE_ROOT/sources/wof-repos/whosonfirst-data-admin-de\
  *   --postcode-db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4
  *
  *   Point-in-polygon reuses the canonical even-odd ray cast `geometryContains` from
- *   `@mailwoman/spatial`, byte-identical to the Python `in_geom`/`ray_in_ring`. Haversine is
- *   ported inline (asin form) to match the Python exactly. The output is written directly to
- *   `--output` because this builder is accumulative: `create table if not exists` plus
- *   `delete from … where country=?` lets one shared DB be filled DE, FR, … in successive
- *   `--country` runs, where a temp-build would wipe prior countries' rows.
+ *   `@mailwoman/spatial`, byte-identical to the Python `in_geom`/`ray_in_ring`.
+ *   Haversine is ported inline (asin form) to match the Python exactly.
+ *
+ *   The output is written directly to `--output` because this builder is accumulative:
+ *   `create table if not exists` plus `delete from … where country=?` lets one shared DB be filled DE,
+ *   FR, … in successive `--country` runs, where a temp-build would wipe prior countries' rows.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -114,7 +116,7 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
  *
  * The other uses `Math.round` at 0.5°.
  * Each builder passes its keying function to the constructor.
- * A builder's keying must not be aligned with a sibling's.
+ * A builder's keying mustn't be aligned with a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()

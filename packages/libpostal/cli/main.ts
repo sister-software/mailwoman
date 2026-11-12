@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman-libpostal` — boot a libpostal-compatible parse/expand endpoint via the `serve`
- *   command. Usage + examples live in the package readme.
+ *   `mailwoman-libpostal` — boot a libpostal-compatible parse/expand endpoint via the `serve` command.
+ *   Usage + examples live in the package readme.
  *
  *   Wires the real engine: `/parse` over Mailwoman's neural BIO tagger (`@mailwoman/neural`),
- *   `/expand` over `@mailwoman/normalize`. `/expand` is minimal: it returns the original
- *   plus the deterministic normalized + abbreviation-expanded forms rather than libpostal's probabilistic
- *   variants.
+ *   `/expand` over `@mailwoman/normalize`.
+ *   `/expand` is minimal: it returns the original plus the deterministic normalized +
+ *   abbreviation-expanded forms rather than libpostal's probabilistic variants.
  */
 
 import { serveNode } from "@mailwoman/api-kit"
@@ -39,8 +39,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	// The neural BIO tagger is the sole engine (v7 rules-parser excision).
-	// Note that unlike `@mailwoman/photon`/`@mailwoman/nominatim`, this package does not
-	// declare `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment).
+	// Note that unlike `@mailwoman/photon`/`@mailwoman/nominatim`, this package doesn't declare
+	// `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment).
 	// A bare `npx @mailwoman/libpostal serve` resolves it only when it happens to already be
 	// installed alongside, so the friendly-failure guard warrants its keep here more than anywhere.
 	const classifier = await loadClassifierOrExit()

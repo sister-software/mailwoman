@@ -2,17 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Base-consistency lint: a synthetic recipe output must not label a token a tag the base dominantly labels
- * something else, or training gets conflicting gradients on the same token and the minority (the recipe output)
- * loses. This reads a recipe output's own (token -> tag) and checks each token against the base.
+ * Base-consistency lint: a synthetic recipe output mustn't label a token a tag the
+ * base dominantly labels something else, or training gets conflicting gradients on
+ * the same token and the minority (the recipe output) loses.
  *
- * The check is country-scoped and full-count, because a token's correct tag is country-specific: "Paris" is a
- * locality in FR data and a street in US "Paris Ave". A cross-country aggregate mis-judges any country-specific
- * token. A small sample is street-biased because street sources dwarf locality sources. Each
- * recipe-output token's base tag is therefore tallied scoped to the country the output uses it in, over a large
- * scan. Pure-numeric tokens are excluded because house_number and postcode are context-determined. An
- * affix-split flag (recipe output street_suffix/_prefix against base "street") is expected, because the loader's
- * affix-relabel handles it.
+ * This reads a recipe output's own (token -> tag) and checks each token against the base.
+ *
+ * The check is country-scoped and full-count, because a token's correct tag is country-specific:
+ * "Paris" is a locality in FR data and a street in US "Paris Ave".
+ * A cross-country aggregate mis-judges any country-specific token.
+ *
+ * A small sample is street-biased because street sources dwarf locality sources.
+ * Each recipe-output token's base tag is therefore tallied scoped to the country
+ * the output uses it in, over a large scan.
+ *
+ * Pure-numeric tokens are excluded because house_number and postcode are context-determined.
+ * An affix-split flag (recipe output street_suffix/_prefix against base "street")
+ * is expected, because the loader's affix-relabel handles it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -45,7 +51,7 @@ function stripBIO(label: string): string {
  * Python `str.isdigit()`: non-empty and every character a Unicode digit.
  *
  * Pure-numeric tokens (house_number and postcode) are context-determined
- * rather than lexical vocab, so they are excluded.
+ * rather than lexical vocab, so they're excluded.
  * `\p{Nd}` covers the decimal digits these address corpora contain.
  */
 function isDigit(token: string): boolean {

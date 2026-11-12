@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Each case builds a project directory with its own `package.json`, so the search for the nearest project
- *   stops there rather than at a checkout above the temporary root.
+ *   Each case builds a project directory with its own `package.json`, so the search for
+ *   the nearest project stops there rather than at a checkout above the temporary root.
  */
 
 import { type TemporaryDirectory, temporaryDirectory } from "@mailwoman/core/fs/temporary"

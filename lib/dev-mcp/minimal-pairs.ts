@@ -2,16 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module finds where answers change along a ladder of near-identical inputs. It reports which component changed first.
+ *   This module finds where answers change along a ladder of near-identical inputs.
+ *   It reports which component changed first.
  *
- *   Other measurements here vary the configuration while holding the input fixed. This measurement varies the input
- *   while holding the configuration fixed. That isolates changes caused by a token from changes caused by a setting.
+ *   Other measurements here vary the configuration while holding the input fixed.
+ *   This measurement varies the input while holding the configuration fixed.
  *
- *   The caller supplies the rungs. A local generator would assert a component order. A generator with the wrong
- *   order for one locale would produce a table for an invalid ordering.
+ *   That isolates changes caused by a token from changes caused by a setting.
  *
- *   A tag absent on a rung is reported as absent. A component can be gained, lost, or changed. The table preserves
- *   those separate facts instead of grouping all three under "different".
+ *   The caller supplies the rungs.
+ *   A local generator would assert a component order.
+ *
+ *   A generator with the wrong order for one locale would produce a table for an invalid ordering.
+ *
+ *   A tag absent on a rung is reported as absent.
+ *   A component can be gained, lost, or changed.
+ *
+ *   The table preserves those separate facts instead of grouping all three under "different".
  */
 
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
@@ -66,7 +73,7 @@ interface RungReading {
 	 */
 	advisories: string | null
 	/**
-	 * Null on step 0, where there is no previous rung — a different fact from a
+	 * Null on step 0, where there's no previous rung — a different fact from a
 	 * delta whose every list is empty.
 	 */
 	delta: RungDelta | null
@@ -119,7 +126,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 		}
 	}
 
-	// A null coordinate on either side is not distance zero: abstention is its own result and the tier fields record it.
+	// A null coordinate on either side isn't distance zero: abstention is its own result and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
 			? haversine(previous.lat, previous.lon, current.lat, current.lon)
@@ -138,7 +145,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 /**
  * The rendering shows the addresses a reader needs to decide whether a defect is real.
  *
- * A JSON blob of component maps does not show those addresses.
+ * A JSON blob of component maps doesn't show those addresses.
  */
 function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 	const tags = [...new Set(reading.rungs.flatMap((rung) => Object.keys(rung.components)))].toSorted()
@@ -209,7 +216,7 @@ export async function runMinimalPairs(
 
 	if (!ladders.length) throw new Error("no ladders supplied — pass at least one { rungs: [...] }")
 
-	const engine = await registry.acquire(args.config ?? {})
+	using engine = await registry.acquire(args.config ?? {})
 
 	const readings: LadderReading[] = []
 	let requested = 0

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Usage: node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>
- *   [--bucket mailwoman-public] [--prefix mailwoman] [--dry-run]
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts
+ *   --src <staged-dir> [--bucket mailwoman-public] [--prefix mailwoman] [--dry-run]
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

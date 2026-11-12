@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Ground-truth verifier for the (locality, region) pair-index probe artifacts written by
- * `pair-index-hierarchy-probe.ts`. Deliberately a separate implementation from the builder: the
- * expected pair set is re-derived here with one flat SQL query and compared, so two independent code
+ * Ground-truth verifier for the (locality, region) pair-index probe artifacts
+ * written by `pair-index-hierarchy-probe.ts`.
+ *
+ * Deliberately a separate implementation from the builder: the expected pair set
+ * is re-derived here with one flat SQL query and compared, so two independent code
  * paths converging on the same set is the receipt.
  *
  * Checks, per country: header sanity (country, `delta === 0`, `probeArtifact`, edge, versions);
- * entry-count match against the re-derived set. Full membership sweep with tag `locality` and parent
- * tag `region`; and receipts for cross-country negative controls.
+ * entry-count match against the re-derived set.
+ * Full membership sweep with tag `locality` and parent tag `region`;
+ * and receipts for cross-country negative controls.
  *
  * Throws (exits non-zero under `runIfScript`) on any failure.
  */
@@ -35,7 +38,7 @@ import { resolveHierarchyRunInputs } from "#tools/pipeline/pair/index/hierarchy/
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets, restated here on purpose
- * so the verifier does not share the builder's extraction code.
+ * so the verifier doesn't share the builder's extraction code.
  */
 const PARENT_PLACETYPES_BY_COUNTRY: Readonly<Record<string, string[]>> = {
 	us: ["region"],
@@ -55,7 +58,7 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 		{ child: "Portland", parent: "Maine", expect: "present" },
 		// Cross-country negative control: a US child under an FR parent must miss.
 		{ child: "Springfield", parent: "Bretagne", expect: "absent" },
-		// A real pairing the hierarchy does not contain: Springfield exists, Ontario is not a US region.
+		// A real pairing the hierarchy doesn't contain: Springfield exists, Ontario isn't a US region.
 		{ child: "Springfield", parent: "Ontario", expect: "absent" },
 	],
 	fr: [
@@ -252,7 +255,7 @@ async function main(): Promise<void> {
 				wrongTag++
 			} else if (edge.parentTag !== "region") {
 				// PIX2: the sweep grades both ends, so an entry whose parent tag is anything
-				// else is a builder bug the pre-PIX2 sweep could not have seen.
+				// else is a builder bug the pre-PIX2 sweep couldn't have seen.
 				wrongParentTag++
 			}
 		}

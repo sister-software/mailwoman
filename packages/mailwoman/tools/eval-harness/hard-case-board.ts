@@ -2,20 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The hard-case board contains curated inputs for measuring FST and importance changes. It includes the schema
- *   shadow in Zod and a loader for `fixtures/hard-case-board.jsonl`. A well-formed address does not put the decoder
- *   in a state where a soft gazetteer bias changes the argmax. Each row therefore exercises that bias with a bare
- *   toponym, comma-free fragment, or namesake confound.
+ *   The hard-case board contains curated inputs for measuring FST and importance changes.
  *
- *   {@linkcode HardCase.fstReach} reports whether the row's expected place is inside the locale-scoped
- *   `fst-<locale>.bin` the arm loads. `in` means bias can push the parse toward the answer. `out` means the
- *   country falls outside the FST scope, where the gazetteer can only pull toward a wrong place. The comparison
- *   reports those rows separately as its hijack-risk population.
+ *   It includes the schema shadow in Zod and a loader for `fixtures/hard-case-board.jsonl`.
+ *   A well-formed address doesn't put the decoder in a state where a soft gazetteer bias changes the argmax.
  *
- *   A coordinate assertion is all-or-none — `expectLat` + `expectLon` + `expectToleranceM` together or no
- *   coordinate at all, as {@linkcode HardCaseSchema} enforces, because a silently-defaulted tolerance is a
- *   unrequested tolerance. A zero bias means the FST accepted no entry for that surface. Whether a bias
- *   applies is a separate question.
+ *   Each row therefore exercises that bias with a bare toponym, comma-free fragment, or namesake confound.
+ *
+ *   {@linkcode HardCase.fstReach} reports whether the row's expected place is inside
+ *   the locale-scoped `fst-<locale>.bin` the arm loads.
+ *   `in` means bias can push the parse toward the answer.
+ *
+ *   `out` means the country falls outside the FST scope, where the gazetteer
+ *   can only pull toward a wrong place.
+ *   The comparison reports those rows separately as its hijack-risk population.
+ *
+ *   A coordinate assertion is all-or-none — `expectLat` + `expectLon` + `expectToleranceM`
+ *   together or no coordinate at all, as {@linkcode HardCaseSchema} enforces,
+ *   because a silently-defaulted tolerance is a unrequested tolerance.
+ *   A zero bias means the FST accepted no entry for that surface.
+ *   Whether a bias applies is a separate question.
  *
  *   Graded through `createRuntimePipeline`, the only path an FST prior reaches (see the runner).
  */
@@ -56,7 +62,7 @@ export const HARD_CASE_CLASSES = [
 	 */
 	"country_structure",
 	/**
-	 * A toponym in street-head position that must not be pulled to locality.
+	 * A toponym in street-head position that mustn't be pulled to locality.
 	 */
 	"street_head_control",
 	/**
@@ -217,7 +223,7 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 // A file probe would send the first build to the compiled-tree fallback.
 /**
  * Resolves the committed board from the package root.
- * `tsc` does not emit `.jsonl` files into `out/`.
+ * `tsc` doesn't emit `.jsonl` files into `out/`.
  */
 export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 	"mailwoman",

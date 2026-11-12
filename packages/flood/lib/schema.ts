@@ -4,17 +4,21 @@
 /**
  *   Defines the `flood.db` schema.
  *
- *   The database stores each authority polygon once, unsimplified, with its bounding box. An H3 cell table
- *   marks each cell as `whole` or `partial` for each zone. A `whole` cell answers a lookup from its primary
- *   key by itself. A `partial` cell needs a point-in-polygon test against the polygons that
+ *   The database stores each authority polygon once, unsimplified, with its bounding box.
+ *   An H3 cell table marks each cell as `whole` or `partial` for each zone.
+ *
+ *   A `whole` cell answers a lookup from its primary key by itself.
+ *   A `partial` cell needs a point-in-polygon test against the polygons that
  *   {@link FloodZoneCellAreaTable} lists for it.
  *
- *   The cell tables use `without rowid` because their small rows are read by exact primary key. The polygon
- *   table keeps its rowid because its geometry blobs would fill the B-tree pages.
+ *   The cell tables use `without rowid` because their small rows are read by exact primary key.
+ *   The polygon table keeps its rowid because its geometry blobs would fill the B-tree pages.
  *
- *   The `whole` cells are compacted to coarser parents, so each row stores its own `resolution`. A lookup
- *   walks `cellToParent` up from the index resolution. `layer_coverage` stays at one resolution because
- *   `recoverShortCellResolution` from `@mailwoman/spatial` throws on mixed resolutions.
+ *   The `whole` cells are compacted to coarser parents, so each row stores its own `resolution`.
+ *   A lookup walks `cellToParent` up from the index resolution.
+ *
+ *   `layer_coverage` stays at one resolution because `recoverShortCellResolution`
+ *   from `@mailwoman/spatial` throws on mixed resolutions.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -110,7 +114,7 @@ export interface FloodZoneCellTable {
 	h3_cell: number
 	/**
 	 * The cell's resolution.
-	 * A short cell does not encode its own resolution.
+	 * A short cell doesn't encode its own resolution.
 	 */
 	resolution: number
 	zone_code: string

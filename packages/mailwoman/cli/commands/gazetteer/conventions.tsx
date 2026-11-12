@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Implements `mailwoman gazetteer conventions`. It compiles the authored convention profiles in
- *   `data/conventions/conventions.json` into a read-only SQLite asset.
+ *   Implements `mailwoman gazetteer conventions`.
  *
- *   The asset holds an `address_convention` table keyed by WOF polygon ID and a `meta` table. The
- *   resolver reads it with one indexed lookup per ID.
+ *   It compiles the authored convention profiles in `data/conventions/conventions.json`
+ *   into a read-only SQLite asset.
+ *
+ *   The asset holds an `address_convention` table keyed by WOF polygon ID and a `meta` table.
+ *   The resolver reads it with one indexed lookup per ID.
  *
  *   Each authored entry has the shape `{ "wof_id": number, "source": string, "convention": Convention }`.
- *   The build rejects a row without `source` provenance or with an unregistered strategy, so these
- *   errors surface at build time instead of at runtime.
+ *   The build rejects a row without `source` provenance or with an unregistered strategy,
+ *   so these errors surface at build time instead of at runtime.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 // `@mailwoman/resolver-wof-sqlite` is an optional peer dependency.
 // Runtime values from its root module are imported inside the command,
@@ -104,11 +107,18 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
  */
 const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { assertDatabaseIntegrity } = await import("@mailwoman/sqlite/sealed/db")
+		const {
+			client: { DatabaseClient },
+			paths: { wofDatabasePath },
+			db: { assertDatabaseIntegrity },
+			resolverWofSqlite: { BUILTIN_STRATEGY_NAMES },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			db: import("@mailwoman/sqlite/sealed/db"),
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+		})
 
-		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
 		const src = options.src

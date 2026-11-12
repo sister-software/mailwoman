@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Every measuring tool puts {@link describeObservedRate}'s prose in `summary`, because a bound in a separate
- * `power` field can be dropped on the way to the operator.
+ * Every measuring tool puts {@link describeObservedRate}'s prose in `summary`,
+ * because a bound in a separate `power` field can be dropped on the way to the operator.
  */
 
 /**
@@ -108,7 +108,7 @@ function percent(value: number): string {
 /**
  * Turn a count into a reading that states its own limits.
  *
- * A zero is not a measurement of absence unless the denominator is large enough to have detected the thing.
+ * A zero isn't a measurement of absence unless the denominator is large enough to have detected the thing.
  */
 export function describeObservedRate(observed: ObservedRate): PowerReading {
 	const { events, n, selection, eventLabel, populationN } = observed

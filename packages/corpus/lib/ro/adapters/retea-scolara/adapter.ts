@@ -2,46 +2,55 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ro-retea-scolara`: Romania's school network (`Rețea școlară`), the Ministry of Education's list of every
- * education unit for a school year, read for each unit's postal address.
+ * `ro-retea-scolara`: Romania's school network (`Rețea școlară`), the Ministry of Education's
+ * list of every education unit for a school year, read for each unit's postal address.
  *
- * Input is the publisher's own workbook, one sheet titled `Export`, as data.gov.ro serves it for the
- * dataset `69392a50-5750-4a54-90c1-d461de44da6d`. Three rows precede the header. The adapter finds the
- * header by its `Strada` cell rather than by position, because the preamble is a generation timestamp
- * whose length the publisher does not fix.
+ * Input is the publisher's own workbook, one sheet titled `Export`, as data.gov.ro
+ * serves it for the dataset `69392a50-5750-4a54-90c1-d461de44da6d`.
+ * Three rows precede the header.
+ *
+ * The adapter finds the header by its `Strada` cell rather than by position,
+ * because the preamble is a generation timestamp whose length the publisher doesn't fix.
  *
  * ## Which fields make the address
  *
- * The sheet splits the address into `Strada`, `Numar`, `Cod postal` and `Localitate unitate`, so the
- * adapter splits no street line. Measured over the 2025–2026 edition's 18,022 units:
+ * The sheet splits the address into `Strada`, `Numar`, `Cod postal`
+ * and `Localitate unitate`, so the adapter splits no street line.
+ * Measured over the 2025–2026 edition's 18,022 units:
  *
  * - `Strada` is the street name as the school writes it, in most rows without the street-type word:
  *   `REPUBLICII`, `PRINCIPALA`, `Piața 1848`. 198 values begin with `STR.` and 247 with `CALEA`.
- *   The value is copied unchanged, because a street type the publisher did not write is not evidence.
- * - `Numar` holds the house number. `FN` (`fără număr`, "without number") and `-` state that the premise
- *   has none, on 601 and 180 units. Both are read as absent. A range such as `12-14` is a house number.
- * - `Cod postal` holds a six-digit Romanian postcode on 17,484 units. A value of any other length is
- *   left out of the row rather than refusing the row, because the address is complete without it.
- * - `Judet PJ` holds the county as a two-letter code. The row holds no region, because libaddressinput's
- *   Romanian layout places the county between postcode and locality, and this reader has no source for
- *   the county name in the form an address prints it.
+ *   The value is copied unchanged, because a street type the publisher didn't write isn't evidence.
+ * - `Numar` holds the house number.
+ *   `FN` (`fără număr`, "without number") and `-` state that the premise has none, on 601 and 180 units.
+ *   Both are read as absent.
+ *   A range such as `12-14` is a house number.
+ * - `Cod postal` holds a six-digit Romanian postcode on 17,484 units.
+ *   A value of any other length is left out of the row rather than refusing the row,
+ *   because the address is complete without it.
+ * - `Judet PJ` holds the county as a two-letter code.
+ *   The row holds no region, because libaddressinput's Romanian layout places the
+ *   county between postcode and locality, and this reader has no source for the
+ *   county name in the form an address prints it.
  *
  * `Denumire lunga unitate`, the unit's full name, is the venue.
  *
  * ## Organizations only
  *
- * Every unit is a school, kindergarten, children's club, county inspectorate or similar public body, and
- * the sheet holds no natural person's address. The venue is the institution's name.
+ * Every unit is a school, kindergarten, children's club, county inspectorate
+ * or similar public body, and the sheet holds no natural person's address.
+ * The venue is the institution's name.
  *
  * ## Identity and license
  *
- * The row id is content-addressed over the aligned components. A school and its kindergarten can share
- * one address under two names, so they are two rows.
+ * The row id is content-addressed over the aligned components.
+ * A school and its kindergarten can share one address under two names, so they're two rows.
  *
- * data.gov.ro publishes the dataset under `CC-BY-4.0`, the license its CKAN record names for the
- * publisher `Ministerul Educației`. CC BY 4.0 requires credit, a link to the license and a statement that
- * changes were made, so every row records the license and {@linkcode RO_RETEA_SCOLARA_ATTRIBUTION} is the
- * credit the model card records.
+ * data.gov.ro publishes the dataset under `CC-BY-4.0`, the license its CKAN record
+ * names for the publisher `Ministerul Educației`.
+ * CC BY 4.0 requires credit, a link to the license and a statement that changes were made,
+ * so every row records the license and {@linkcode RO_RETEA_SCOLARA_ATTRIBUTION}
+ * is the credit the model card records.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -81,7 +90,7 @@ export const RO_RETEA_SCOLARA_LICENSE = "CC-BY-4.0"
 export const RO_RETEA_SCOLARA_ATTRIBUTION = "Ministerul Educației, Rețea școlară, via data.gov.ro"
 
 /**
- * Why a unit did not become a row.
+ * Why a unit didn't become a row.
  */
 export const ReteaScolaraRefusal = {
 	/**

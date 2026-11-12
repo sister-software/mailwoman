@@ -4,13 +4,14 @@
 /**
  *   The wall clock a training run needs on a given device, from step rates observed on Modal.
  *
- *   The preflight refuses a config whose estimate exceeds the sandbox timeout, so a run that cannot finish inside one
- *   sandbox fails before a GPU is billed. A device or batch size with no observed rate is refused as well, because the
- *   estimate would be a guess.
+ *   The preflight refuses a config whose estimate exceeds the sandbox timeout,
+ *   so a run that cannot finish inside one sandbox fails before a GPU is billed.
+ *   A device or batch size with no observed rate is refused as well, because the estimate would be a guess.
  *
- *   The estimate has three parts: the training steps at the device's observed seconds per 100 optimizer steps at the
- *   config's batch size, times {@linkcode STEP_HEADROOM}; the validation passes, `max_steps / eval_every_steps + 1` of
- *   them at {@linkcode EVALUATION_SECONDS} each, and {@linkcode STARTUP_SHUTDOWN_SECONDS} outside the step loop.
+ *   The estimate has three parts: the training steps at the device's observed seconds per 100
+ *   optimizer steps at the config's batch size, times {@linkcode STEP_HEADROOM}; the validation
+ *   passes, `max_steps / eval_every_steps + 1` of them at {@linkcode EVALUATION_SECONDS} each,
+ *   and {@linkcode STARTUP_SHUTDOWN_SECONDS} outside the step loop.
  */
 
 /**

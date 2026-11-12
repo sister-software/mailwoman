@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/registry`: standardized identifiers and their relationships, compiled from pinned open sources.
+ *   `@mailwoman/registry`: standardized identifiers and their relationships,
+ *   compiled from pinned open sources.
  *
- *   The root entry re-exports the narrow modules. Every export is a function or a type, and no module decodes an
- *   artifact until its first call, so importing the root costs the modules the bundler keeps and no table.
+ *   The root entry re-exports the narrow modules.
+ *   Every export is a function or a type, and no module decodes an artifact until its
+ *   first call, so importing the root costs the modules the bundler keeps and no table.
+ *
  *   Import a subpath such as `@mailwoman/registry/iso3166/alpha2` when a bundle must retain one table only.
  */
 

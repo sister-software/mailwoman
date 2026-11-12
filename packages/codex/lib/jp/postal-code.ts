@@ -2,23 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, shape and normalization. It also defines the
- *   first-digit → coarse-region prior.
+ *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, shape and normalization.
+ *   It also defines the first-digit → coarse-region prior.
  *
- *   This file is the far end of a spectrum whose other end is `us/zipcode.ts`. A US address leans on
- *   the street line — a street name plus a house number — and the ZIP is a routing convenience. A
- *   Japanese address is the inverse on two counts:
+ *   This file is the far end of a spectrum whose other end is `us/zipcode.ts`.
+ *   A US address leans on the street line — a street name plus a house number —
+ *   and the ZIP is a routing convenience.
+ *   A Japanese address is the inverse on two counts:
  *
  *   - It is written **largest-to-smallest**: prefecture → city/ward → district → block → lot (`東京都 千代田区
  *       千代田 1-1`), the reverse of the US smallest-to-largest line order.
- *   - There are **essentially no street names**. Outside a few Kyoto-style exceptions, you do not
- *       navigate by street names. you navigate by nested administrative areas and numbered
- *       blocks/lots (丁目 / 番地 / 号 — see `address-unit.ts`).
+ *   - There are **essentially no street names**.
+ *     Outside a few Kyoto-style exceptions, you do not navigate by street names. you navigate by
+ *     nested administrative areas and numbered blocks/lots (丁目 / 番地 / 号 — see `address-unit.ts`).
  *
- *   With no street name to anchor on and a reverse field order, the **postcode is the single most
- *   reliable geographic anchor** for a Japanese address — it pins the chōme-level area directly,
- *   far tighter than a US ZIP pins a US address. So where the US parser treats the postcode as a
- *   tie-breaker behind the street, the Japan parser should treat it as the primary key.
+ *   With no street name to anchor on and a reverse field order, the **postcode is the
+ *   single most reliable geographic anchor** for a Japanese address — it pins the
+ *   chōme-level area directly, far tighter than a US ZIP pins a US address.
+ *   So where the US parser treats the postcode as a tie-breaker behind the street,
+ *   the Japan parser should treat it as the primary key.
  */
 
 import type { Tagged } from "type-fest"
@@ -47,7 +49,7 @@ export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
  * strip a leading 〒 mark and any whitespace, then re-insert the hyphen if the input gave
  * the bare seven digits (`〒100-0001` → `100-0001`, `1000001` → `100-0001`).
  *
- * @returns Null if the result is not seven digits.
+ * @returns Null if the result isn't seven digits.
  */
 export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -93,7 +95,7 @@ export const JP_FIRST_DIGIT_REGION: Record<string, string> = {
 }
 
 /**
- * The coarse region label for a postcode's first digit, or null if the input is not a Japanese postcode.
+ * The coarse region label for a postcode's first digit, or null if the input isn't a Japanese postcode.
  *
  * A weak, approximate prior (see {@link JP_FIRST_DIGIT_REGION}); the full code anchors the address.
  */

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Route definitions and handlers for the Nominatim-compatible surface. The OpenAPI document is
- *   emitted from these definitions with no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view. The zod query schemas drive only the emitted document.
+ *   Route definitions and handlers for the Nominatim-compatible surface.
+ *
+ *   The OpenAPI document is emitted from these definitions with no handwritten spec.
+ *   Handlers parse params from the `legacyQuery` express-shaped view.
+ *   The zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -64,7 +66,7 @@ function parseBool(raw: unknown): boolean {
 /**
  * A friendly html landing page for `GET /`.
  *
- * Nominatim itself has no root page, just `/status`, so there is no wire interface to match.
+ * Nominatim itself has no root page, just `/status`, so there's no wire interface to match.
  * A browser visitor who pastes the bare host gets a one-glance orientation with
  * clickable example queries rather than Express's `Cannot GET /` 404.
  *
@@ -97,7 +99,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 <li><a class="q" href="/search?q=1600+pennsylvania+ave+washington+dc&amp;addressdetails=1">/search?q=1600+pennsylvania+ave+washington+dc&amp;addressdetails=1</a></li>
 <li><a class="q" href="/reverse?lat=52.52&amp;lon=13.405">/reverse?lat=52.52&amp;lon=13.405</a></li>
 </ul>
-<footer><a href="https://mailwoman.post/docs/developers/get-started/what-mailwoman-is">What Mailwoman is</a> &middot; <a href="https://mailwoman.post/demo">Live demo</a></footer>
+<footer><a href="https://mailwoman.post/product">What Mailwoman is</a> &middot; <a href="https://mailwoman.post/demo">Live demo</a></footer>
 </body>
 </html>
 `

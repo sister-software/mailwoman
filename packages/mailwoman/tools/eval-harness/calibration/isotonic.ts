@@ -4,18 +4,24 @@
 /**
  *   Fits an isotonic calibrator for span confidence and measures calibration error on a held-out split.
  *
- *   The input is the `(confidence, correct)` span records `collect-span-confidences.run.ts` writes. The fit reads a
- *   seeded 80% of the records and every figure is measured on the other 20%. The output is the lookup table the
- *   opt-in decoder calibrator in `packages/core/lib/decoder/calibration.ts` loads, and a markdown report.
+ *   The input is the `(confidence, correct)` span records `collect-span-confidences.run.ts` writes.
+ *   The fit reads a seeded 80% of the records and every figure is measured on the other 20%.
  *
- *   The model is overconfident in some confidence bands and underconfident in others, so a sigmoid (Platt) fit does
- *   not suit it, and the fit is Pool-Adjacent-Violators. OpenAddresses rows get their own ECE, because the corpus
- *   rows are in-domain and their confidence runs high.
+ *   The output is the lookup table the opt-in decoder calibrator in
+ *   `packages/core/lib/decoder/calibration.ts` loads, and a markdown report.
  *
- *   The held-out split is a permutation of the records. The committed tables were split by NumPy's
- *   `default_rng(seed).permutation(n)`, recorded in `data/eval/calibration/permutations.json` for their seed and
- *   size, so a refit of a committed table reproduces it. A seed and size the file does not hold is split by
- *   {@linkcode seededPermutation}, a different generator: that is a new fit, with its own report.
+ *   The model is overconfident in some confidence bands and underconfident in others,
+ *   so a sigmoid (Platt) fit doesn't suit it, and the fit is Pool-Adjacent-Violators.
+ *   OpenAddresses rows get their own ECE, because the corpus rows are in-domain
+ *   and their confidence runs high.
+ *
+ *   The held-out split is a permutation of the records.
+ *   The committed tables were split by NumPy's `default_rng(seed).permutation(n)`,
+ *   recorded in `data/eval/calibration/permutations.json` for their seed and size,
+ *   so a refit of a committed table reproduces it.
+ *
+ *   A seed and size the file doesn't hold is split by {@linkcode seededPermutation},
+ *   a different generator: that's a new fit, with its own report.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -73,9 +79,9 @@ export async function recordedPermutation(seed: number, n: number): Promise<numb
 }
 
 /**
- * A permutation of `0..n-1` for a seed and size the recorded file does not hold:
+ * A permutation of `0..n-1` for a seed and size the recorded file doesn't hold:
  * a Fisher–Yates shuffle driven by `mulberry32(seed)`.
- * It is not NumPy's, so a fit split by it is a new fit.
+ * It isn't NumPy's, so a fit split by it is a new fit.
  */
 export function seededPermutation(seed: number, n: number): number[] {
 	const order = Array.from({ length: n }, (_, i) => i)

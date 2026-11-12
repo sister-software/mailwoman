@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators an Italian address uses: the casella postale and fermo posta, the staircase and door words
- *   of the building line, floors, and the relation words of a query.
+ *   The designators an Italian address uses: the casella postale and fermo posta, the staircase
+ *   and door words of the building line, floors, and the relation words of a query.
  *
- *   The building line rows read their designators and source from `unit-line.ts`, and the casella postale row
- *   reads from `casella-postale.ts`. The Poste Italiane document writes the staircase, floor and door as
- *   `scala`, `piano` and `interno` and lists fermo posta in its contents. It lists no abbreviation of them.
+ *   The building line rows read their designators and source from `unit-line.ts`,
+ *   and the casella postale row reads from `casella-postale.ts`.
+ *   The Poste Italiane document writes the staircase, floor and door as `scala`,
+ *   `piano` and `interno` and lists fermo posta in its contents.
+ *   It lists no abbreviation of them.
  *
  * @see {@link https://business.poste.it/business/files/1476488640071/posta-registrata-caratteristiche-standard-invii.pdf Poste Italiane, Caratteristiche standard degli invii – Posta Registrata (PRS.INDES.STA.1)}
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/itaEn.pdf UPU, Italy addressing sheet}

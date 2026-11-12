@@ -1,0 +1,34 @@
+---
+title: Mailwoman product overview
+description: Parse address text locally, then add geographic data when you need place matches and coordinates.
+---
+
+import { ProductIntro } from "#components/MarketingLanding/MarketingLanding"
+
+<ProductIntro />
+
+## A recorded first parse
+
+A published `mailwoman@11.0.0` library run parsed this exact input:
+
+```text
+apt 4b 350 5th ave new york ny 10118
+```
+
+The returned tree included `unit: "Apt 4B"`, `house_number: "350"`, `locality: "New York"`, and `postcode: "10118"`. Each node also had a span into the returned normalized text. [Install Mailwoman and inspect a first parse](/docs/start) gives the complete script, command, output, and package versions for that run.
+
+The parser identifies roles in the input. It doesn't establish that a building exists or that a postal carrier can deliver there. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains what the returned scores and later geographic evidence can support.
+
+## Add geographic data when you need coordinates
+
+Geographic data is a separate download. The published 11.0.0 native server requires a valid WOF or candidate database before it starts. The [result schema](/docs/reference/schema) defines coordinate and evidence fields. Dataset download commands and optional remote integrations have their own network behavior.
+
+[Limits and release status](/product/limits-and-status) separates published bundles, locally buildable data, installed data, and evaluated locale claims for release 11.0.0. [Data and licensing](/product/data-and-licensing) identifies the recorded source terms and unresolved rights questions for those bundles.
+
+## Choose your next step
+
+- [Choose an operation](/product/capabilities) to compare the published interfaces and the data each needs.
+- [Choose a deployment](/product/deployment) to compare library and browser paths with HTTP deployment prerequisites.
+- [Run the first parse](/docs/start) to see published library behavior without geographic data.
+- [Use the library reference](/docs/reference/library) to choose imports and call options.
+- Review [licensing](/license) and [pricing](/pricing) for the terms that apply to your deployment.

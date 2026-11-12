@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Argentine designators: casilla de correos, premise and sub-premise words, floors, number marks and Spanish
- *   relation words. The Correo Argentino sheet on the UPU site shows `CASILLA DE CORREOS`, `PISO`, `DPTO.`,
- *   `OFICINA` and the `No` that separates a numbered street name from the street number. The remaining words
- *   take a dictionary entry as their source.
+ *   Argentine designators: casilla de correos, premise and sub-premise words,
+ *   floors, number marks and Spanish relation words.
+ *
+ *   The Correo Argentino sheet on the UPU site shows `CASILLA DE CORREOS`, `PISO`, `DPTO.`,
+ *   `OFICINA` and the `No` that separates a numbered street name from the street number.
+ *   The remaining words take a dictionary entry as their source.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/argEn.pdf UPU Argentina postal address sheet (Correo Argentino)}
  * @see {@link https://en.wiktionary.org/wiki/N%C2%BA Wiktionary, Nº}

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Renders a compare-mode checkbox and a selector for the second model version, leaving the comparison itself to the host.
+ * Renders a compare-mode checkbox and a selector for the second model version,
+ * leaving the comparison itself to the host.
  */
 
 import type { ReactNode } from "react"

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The training sampler for TypeScript tools: a resolved training config turned into the sampler's JSON
- *   configuration, the row and batch streams of the `mtf-node` addon, and the model inputs one batch encodes to.
+ *   The training sampler for TypeScript tools: a resolved training config turned into
+ *   the sampler's JSON configuration, the row and batch streams of the `mtf-node` addon,
+ *   and the model inputs one batch encodes to.
  *
- *   `samplerConfigJSON` writes the sampler's configuration document with `source_reps` and the run length rather than
- *   weights folded in beforehand: `mtf-sampler` folds them with the same row counts and the same derivation the
- *   trainer uses. `encodeBatch` adds each row's locale and address-system ids to the row encoder's arrays, as the
- *   trainer's batch does.
+ *   `samplerConfigJSON` writes the sampler's configuration document with `source_reps`
+ *   and the run length rather than weights folded in beforehand: `mtf-sampler` folds
+ *   them with the same row counts and the same derivation the trainer uses.
+ *   `encodeBatch` adds each row's locale and address-system ids to the row
+ *   encoder's arrays, as the trainer's batch does.
  */
 
 import { isLatinScriptText } from "@mailwoman/codex/address/format"

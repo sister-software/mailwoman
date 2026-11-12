@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<PlaceMarker>` — the resolved-place pin, as a declarative `react-map-gl/maplibre` `<Marker>`. This
- *   replaces the old imperative `new maplibre.Marker(...).setLngLat(...).addTo(map)` (+ the manual
- *   `markerRef.current.remove()` teardown) from the demo's redraw effect: mounting/unmounting the marker
- *   is now React's job, keyed on the resolved candidate. Renders as a child of `<MapCanvas>`.
+ *   `<PlaceMarker>` — the resolved-place pin, as a declarative `react-map-gl/maplibre` `<Marker>`.
  *
- *   node-import safety: imports `react-map-gl/maplibre` at module scope, so it is reachable only through
- *   the `@mailwoman/react/map` subpath, never the package root.
+ *   This replaces the old imperative `new maplibre.Marker(...).setLngLat(...).addTo(map)`
+ *   (+ the manual `markerRef.current.remove()` teardown) from the demo's redraw effect:
+ *   mounting/unmounting the marker is now React's job, keyed on the resolved candidate.
+ *   Renders as a child of `<MapCanvas>`.
+ *
+ *   node-import safety: imports `react-map-gl/maplibre` at module scope, so it is reachable
+ *   only through the `@mailwoman/react/map` subpath, never the package root.
  */
 
 import { Tokens } from "@sister.software/theme"

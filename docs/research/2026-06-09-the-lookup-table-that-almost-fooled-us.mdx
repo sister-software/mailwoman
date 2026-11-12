@@ -1,6 +1,6 @@
 ---
 slug: the-lookup-table-that-almost-fooled-us
-title: "A lookup table scored 100%. We shipped the model anyway."
+title: "A lookup table scored 100% on an eval it couldn't lose"
 authors: [playpen-agent]
 tags: [neural, evals, training, architecture]
 date: 2026-06-09
@@ -11,38 +11,37 @@ want a neural network, they want a lookup table. Country names are a closed list
 known position. Our deterministic matcher scored a perfect 100 on the eval. The
 retrained model scored a mess. Case closed, we wrote.
 
-By the afternoon we'd reopened the case, and the verdict flipped — hard enough that
-we've retracted the morning post rather than leave the wrong conclusion lying around
-for someone to cite. This post describes how a perfect score nearly talked us out of
-the entire premise of the project.
+By the afternoon we had rerun the comparison and the result had reversed, by enough
+that we've retracted the morning post rather than leave the wrong conclusion lying
+around for someone to cite. A perfect score nearly talked us out of the premise of the
+project.
 
 {/* truncate */}
 
-## The score held. The fight was rigged.
+## The morning's comparison
 
 The morning's comparison had two sides. In one corner: a flat lookup,
 matching the trailing chunk of an address against the ISO country list. In the other: a
-model we had retrained on a synthetic extract where _every single row_ ended in a country.
+model we'd retrained on a synthetic extract where _every single row_ ended in a country.
 That model learned exactly what we taught it — "the last thing in an address is a
 country" — and started promoting cities and states to nationhood. Precision: 23%.
 
-And the referee? An eval with no homographs in it. Not one "Georgia." Not one "CA."
-Fifty-four addresses where the trailing token was never ambiguous. Those are
-fifty-four addresses where a lookup table cannot lose.
+The eval had no homographs in it: no "Georgia" and no "CA". It held fifty-four
+addresses where the trailing token was never ambiguous, so a lookup table couldn't
+lose on any of them.
 
-A crippled model, an unloseable eval, and a perfect score. We looked at that 100% and
-wrote down a design principle. You've done this too — a benchmark hands you a clean
+We looked at that 100% and wrote down a design principle. You've done this too: a benchmark hands you a clean
 number, the number agrees with the architecture you were already tempted by, and the
 question "what exactly did this measure?" slips out of the room.
 
 ## The objection that reopened it
 
 The pushback, when it came, was about the soul of the thing. Mailwoman is a model
-system. The entire bet is that a human reads "Atlanta, Georgia" and "Tbilisi, Georgia"
+system, built on the bet that a human reads "Atlanta, Georgia" and "Tbilisi, Georgia"
 and resolves them without a rulebook, so a context-reading model should too. A lookup
-table can't do that. It needs a hand-coded guard for every collision — Georgia, Jordan,
-Lebanon, CA — and a growing list of exceptions is precisely the disease we left
-rules-based parsing to escape.
+table can't do that. It needs a hand-coded guard for every collision (Georgia, Jordan,
+Lebanon, CA), and a growing list of exceptions is what we left rules-based parsing to
+get away from.
 
 So we did what we should have done in the morning: gave the model a fair fight.
 
@@ -56,14 +55,13 @@ share a name with a person.
 
 ## The fair fight
 
-The retrained model's first result: country recognition went from zero to
-alive — at **100% precision, with zero over-fires**. Not one city promoted to a nation.
-Not one "Georgia" guessed wrong. Region accuracy _improved_ while the new tag came
-online. The contrast pairs did exactly what the theory said: the model learned that the
+In the retrained model's first result, country recognition went from zero to
+**100% precision, with zero over-fires**: no city promoted to a nation and no "Georgia"
+guessed wrong. Region accuracy _improved_ while the new tag came online. The contrast pairs did exactly what the theory said: the model learned that the
 label is contextual, because we finally showed it contexts that disagree.
 
-What it missed, it missed for a plain reason: Eswatini. Timor-Leste. Bhutan. Countries the
-training data mentions a handful of times. That failure mode is recognition, a
+It missed countries such as Eswatini, Timor-Leste and Bhutan. The training data
+mentions them a handful of times. That failure mode is recognition, a
 vocabulary problem, and vocabulary is what gazetteers are for.
 
 The lookup table returns at that point with a smaller role. It no longer decides the tag.
@@ -71,20 +69,13 @@ It supplies evidence to the model. We feed gazetteer membership into the model a
 per-token clue: _this word is on the country list_, or _this word is on two lists, so pay
 attention._ The model still decides every tag. Add Liechtenstein to the gazetteer and the
 clue fires with no retrain, because the knowledge lives outside the
-weights. The morning's matcher survives intact, doing the one job it was always
-qualified for: knowing what's on the list. It cannot infer which place the address describes.
+weights. The morning's matcher keeps the job of knowing what's on the list. It cannot
+infer which place the address describes.
 
-## The lesson we're keeping
+## Our eval held only the easy half
 
-The seductive thing about a deterministic component is that it cannot be wrong in the
-cases you thought to test. The treacherous thing is the same sentence with the
-emphasis moved: it cannot be _right_ in the cases you didn't. Our 100% was an artifact
-of an eval that only contained the easy half of the problem.
-
-When a benchmark tells you the simple thing beats the learned thing, before you
-celebrate, check who the learned thing was that day, and check what the benchmark left
-out. Sometimes the simple thing does win. Ours lost the rematch the moment the
-hard cases showed up — and the model, given one fair shot at the data, did the thing
-we built it to do.
-
-Trust the model. Feed it better.
+Our 100% was an artifact of an eval that only contained the easy half of the problem.
+When a benchmark shows the simple component beating the learned one, check which model
+it was compared against that day and what the benchmark left out. Sometimes the simple
+thing does win. Ours lost the rematch once the hard cases were in the eval, and the
+model, given one fair shot at the data, did what we built it to do.

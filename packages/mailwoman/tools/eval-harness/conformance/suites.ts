@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Registry of committed conformance suites. It lives apart from `command.ts` so that importing it does not load an
- *   engine. The `conformance-suites.test.ts` test fails when a suite file in this directory is unregistered.
+ *   Registry of committed conformance suites.
+ *
+ *   It lives apart from `command.ts` so that importing it doesn't load an engine.
+ *   The `conformance-suites.test.ts` test fails when a suite file in this directory is unregistered.
  */
 
 import { dirname } from "path-ts"

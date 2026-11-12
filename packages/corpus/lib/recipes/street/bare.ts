@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `street-bare` recipe — bare-street rows (the v0.8.0 harness change, 2026-06-05). The
- *   `functional.test.ts` cluster (bare street names — "10th Ave", "Main St", "1 Main Pl") was
- *   mislabeled `locality` because {@link synthesizeStreetRow} only ever emitted streets with a ",
- *   City, ST ZIP" tail. This recipe emits streets bare (`--bare-prob`, default 0.6) — no tail, only
- *   `street_prefix`/`street`/`street_suffix` (+ optional `house_number` at `--hn-prob`, default
- *   0.85) — over the built-in {@link DEFAULT_US_BASES} pool (round-robin). Generate-mode, US-only,
- *   in-distribution (no German-collapse risk). Ported from the root build script it replaced.
+ *   `street-bare` recipe — bare-street rows (the v0.8.0 harness change, 2026-06-05).
  *
- *   Byte-fidelity: the legacy script seeded its own mulberry32 from `--seed`
- *   (`mulberry32(opts.seed)`); this recipe re-creates the same generator
- *   (`makeMulberry32(opts.seed)`) and preserves the synthesis call order exactly, so `--seed N`
- *   reproduces the legacy run byte-for-byte.
+ *   The `functional.test.ts` cluster (bare street names — "10th Ave", "Main St", "1 Main Pl")
+ *   was mislabeled `locality` because {@link synthesizeStreetRow} only ever
+ *   emitted streets with a ", City, ST ZIP" tail.
+ *   This recipe emits streets bare (`--bare-prob`, default 0.6) — no tail, only
+ *   `street_prefix`/`street`/`street_suffix` (+ optional `house_number` at `--hn-prob`, default 0.85) —
+ *   over the built-in {@link DEFAULT_US_BASES} pool (round-robin).
+ *
+ *   Generate-mode, US-only, in-distribution (no German-collapse risk).
+ *   Ported from the root build script it replaced.
+ *
+ *   Byte-fidelity: the legacy script seeded its own mulberry32 from `--seed` (`mulberry32(opts.seed)`);
+ *   this recipe re-creates the same generator (`makeMulberry32(opts.seed)`) and preserves
+ *   the synthesis call order exactly, so `--seed N` reproduces the legacy run byte-for-byte.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

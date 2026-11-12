@@ -2,25 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The default read-time WOF reverse geocoder for POI ancestry — the poiQueryKind register row's second
- *   debt payment (runtime-flags.mdx): `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`
- *   lazily loads this once per process and wires a synchronous adapter into `createPOIExecutor`'s
- *   `reverseGeocode` dep (the executor's return type includes no `Promise` — see `poi-intent.ts`'s
- *   `deps.execute`, called synchronously). `WOFReverseGeocoder.reverseGeocodeSync` (added alongside this
- *   feature) is the real synchronous core the async `reverseGeocode` already wrapped — see
- *   resolver-wof-sqlite/reverse.ts.
+ *   The default read-time WOF reverse geocoder for POI ancestry —
+ *   the poiQueryKind register row's second debt payment (runtime-flags.mdx):
+ *   `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` lazily loads this
+ *   once per process and wires a synchronous adapter into `createPOIExecutor`'s
+ *   `reverseGeocode` dep (the executor's return type includes no `Promise` —
+ *   see `poi-intent.ts`'s `deps.execute`, called synchronously).
  *
- *   `@mailwoman/resolver-wof-sqlite` is an optional peer dep and the admin gazetteer (with its
- *   `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build artifact that may not be on
- *   disk — either gap yields `null` and POI results have no `ancestry` key at all (house
- *   meaning-of-zero: absence, never an empty array). The polygon sidecar (`wof-polygons.db`) is optional
- *   too. without it every ancestry chain still resolves, just `containment: "approximate"`
- *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
+ *   `WOFReverseGeocoder.reverseGeocodeSync` (added alongside this feature) is the real synchronous
+ *   core the async `reverseGeocode` already wrapped — see resolver-wof-sqlite/reverse.ts.
  *
- *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` — the same default
- *   `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands use for their own
- *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing database in the list wins
- *   (`admin-global-priority.db` first). The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
+ *   `@mailwoman/resolver-wof-sqlite` is an optional peer dep and the admin gazetteer
+ *   (with its `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build
+ *   artifact that may not be on disk — either gap yields `null` and POI results have no
+ *   `ancestry` key at all (house meaning-of-zero: absence, never an empty array).
+ *   The polygon sidecar (`wof-polygons.db`) is optional too. without it every ancestry chain still
+ *   resolves, just `containment: "approximate"` (`WOFReverseGeocoder`'s own centroid-descent fallback).
+ *
+ *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` —
+ *   the same default `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands
+ *   use for their own `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`):
+ *   first existing database in the list wins (`admin-global-priority.db` first).
+ *   The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
  *   the same env var `mailwoman reverse` reads.
  */
 

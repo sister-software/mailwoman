@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Pin the Overture sub-venue reader against a real SQLite poi.db fixture whose DDL matches the shipped
- * layer's, because no type checker covers the projection against the real schema.
+ * Pin the Overture sub-venue reader against a real SQLite poi.db fixture whose DDL matches
+ * the shipped layer's, because no type checker covers the projection against the real schema.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -41,7 +41,7 @@ interface FixtureDatabase {
 		/**
 		 * Mirrors the shipped column so a rename fails here, but not the fold:
 		 * the real `poi.name_key` is minted by `normalizeLocalityForKey`, and the value
-		 * expression below must not be copied as if it were.
+		 * expression below mustn't be copied as if it were.
 		 */
 		name_key: string | null
 		brand_wikidata: string | null

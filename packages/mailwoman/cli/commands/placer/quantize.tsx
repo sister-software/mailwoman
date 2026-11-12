@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman placer quantize` — int8-quantize the coarse placer weights (per-class symmetric
- *   scales, 4× smaller). Measure the accuracy cost with `placer eval quant-compare`.
+ *   `mailwoman placer quantize` — int8-quantize the coarse placer weights
+ *   (per-class symmetric scales, 4× smaller).
+ *   Measure the accuracy cost with `placer eval quant-compare`.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"

@@ -6,7 +6,7 @@
 
 The capability-manifest generator and the mask-regression check score the same certification rows through the shared `scoreConventionsMaskOffOn`, and until this change they differed in one parse option: the generator parsed with `inputMode: "formatted"` and the check parsed in the bare-library default (`fragmented`). The rows are formatted postal addresses. On those inputs the production pipeline derives `formatted` and runs the evidence-bundle channels off as a declared ablation. The check therefore graded a path production never takes on these rows. Operator decision (2026-09-05): both callers grade `formatted`. The manifest's published numbers are unchanged, and the check's history breaks here.
 
-**The model did not change.** Every difference in the table below is the parse mode. Numbers before this row grade `fragmented`; numbers from this row on grade `formatted`.
+**The model didn't change.** Every difference in the table below is the parse mode. Numbers before this row grade `fragmented`; numbers from this row on grade `formatted`.
 
 ## Per-tag F1, mask off, both modes
 

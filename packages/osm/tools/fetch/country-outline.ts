@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Download geoBoundaries ADM0 country outlines into `$MAILWOMAN_DATA_ROOT/db/osm/outlines`, with a receipt
- *   beside each that records the license geoBoundaries states for that country.
+ *   Download geoBoundaries ADM0 country outlines into `$MAILWOMAN_DATA_ROOT/db/osm/outlines`,
+ *   with a receipt beside each that records the license geoBoundaries states for that country.
  *
  *   An outline decides which records of a Geofabrik extract lie inside the country (`emit-corpus-jsonl
  *   --within`). It is read and never redistributed, and each receipt keeps the per-country license

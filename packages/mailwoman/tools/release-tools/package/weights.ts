@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Assembles a `neural-weights-<locale>/` package directory from an int8 model, its tokenizer and a model card.
+ *   Assembles a `neural-weights-<locale>/` package directory from an int8 model,
+ *   its tokenizer and a model card.
  *
- *   The directory holds `model.onnx`, `tokenizer.model`, `model-card.json`, `package.json` and `README.md`. The card
- *   lists the active label set's tags and BIO labels in emission order, the head's semantic-tag contract, the eval
- *   report it is given, and, for a model trained with an address-system head, the `address_systems` table the runtime
- *   reads to feed `locale_hint` and to read `address_system_logits`.
+ *   The directory holds `model.onnx`, `tokenizer.model`, `model-card.json`, `package.json` and `README.md`.
+ *   The card lists the active label set's tags and BIO labels in emission order,
+ *   the head's semantic-tag contract, the eval report it is given, and, for a model
+ *   trained with an address-system head, the `address_systems` table the runtime reads
+ *   to feed `locale_hint` and to read `address_system_logits`.
  *
  *   The JSON files are tab-indented with each `Map` in its insertion order (`packageFileText`).
  */
@@ -70,7 +72,7 @@ export function noEvalReport(): EvalReport {
 }
 
 /**
- * Parses an eval report and refuses one that is not a JSON object.
+ * Parses an eval report and refuses one that's not a JSON object.
  */
 export function parseEvalReport(text: string): EvalReport {
 	const report: unknown = parseJSONStrict(text)

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parity of the WebAssembly batch kernels, scalar and simd, with the TypeScript reader over every three-letter key.
+ *   Parity of the WebAssembly batch kernels, scalar and simd, with the TypeScript
+ *   reader over every three-letter key.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

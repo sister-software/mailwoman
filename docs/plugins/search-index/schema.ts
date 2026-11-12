@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The search index schema. The FTS5 virtual tables are external-content tables over `records` and
- *   `terms`, so the text is stored once. `porter unicode61` folds plurals; `trigram` over the vocabulary
- *   supports typo correction against indexed terms rather than against page content.
+ *   The search index schema.
+ *
+ *   The FTS5 virtual tables are external-content tables over `records`
+ *   and `terms`, so the text is stored once.
+ *   `porter unicode61` folds plurals; `trigram` over the vocabulary supports typo
+ *   correction against indexed terms rather than against page content.
  */
 
 /**
@@ -30,7 +33,7 @@ export interface SearchIndexDatabase {
  * Creates the tables and the FTS5 virtual tables, all empty.
  *
  * A record is identified by its rowid.
- * The extractor's hash id serves the duplicate check at build time and is not stored,
+ * The extractor's hash id serves the duplicate check at build time and isn't stored,
  * because 32 random hex characters per row compress poorly.
  *
  * `detail=column` keeps a term's count per column for `bm25` ranking.

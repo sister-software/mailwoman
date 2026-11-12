@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module provides the shared frame for digit and fragment boards. It loads JSONL fixtures and parses every row
- *   with the production configuration. It tallies results per class and prints Wilson-interval rates with miss samples.
- *   Each board owns grading and headers. It also owns miss rendering. The shared frame keeps remaining behavior consistent.
+ *   This module provides the shared frame for digit and fragment boards.
+ *
+ *   It loads JSONL fixtures and parses every row with the production configuration.
+ *   It tallies results per class and prints Wilson-interval rates with miss samples.
+ *
+ *   Each board owns grading and headers.
+ *   It also owns miss rendering.
+ *   The shared frame keeps remaining behavior consistent.
  */
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"

@@ -4,8 +4,10 @@
 /**
  *   Train the first-generation tokenizer recipe on a text file of raw addresses, one per line.
  *
- *   The recipe is fixed: a 16,000-piece unigram vocabulary, 0.9995 character coverage, byte fallback, the four special
- *   ids, and no user-defined symbols. It writes `tokenizer.model`, `tokenizer.vocab` and `META.json` under `--output`.
+ *   The recipe is fixed: a 16,000-piece unigram vocabulary, 0.9995 character coverage,
+ *   byte fallback, the four special ids, and no user-defined symbols.
+ *   It writes `tokenizer.model`, `tokenizer.vocab` and `META.json` under `--output`.
+ *
  *   `--version` must match the corpus version the tokenizer ships with.
  *
  *   Usage: `node packages/mtf/tools/tokenizer/train/text.run.ts --input <txt> --output <dir> --version <v>

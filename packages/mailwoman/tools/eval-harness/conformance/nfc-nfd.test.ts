@@ -4,23 +4,43 @@
 /**
  *   The canonical-form law defines a key, two exclusions and the failure line a violation produces.
  *
- *   `canonicalFormKey` defines the scope with `NFD`. Pairs with matching decompositions are canonically equivalent.
- *   Pairs with different decompositions are outside this law. The law rejects compatibility normalization, accent
- *   removal, transliteration and case changes through the key transformation. Tests assert that each change moves it.
+ *   `canonicalFormKey` defines the scope with `NFD`.
+ *   Pairs with matching decompositions are canonically equivalent.
  *
- *   Tests assert independence in both directions. This makes a seeded normalization regression attributable. This
- *   audit refuses case, spacing and punctuation changes. The other three classifiers refuse canonical-form pairs.
- *   A failing arm here therefore cannot be a row assigned to another suite. The other suites cannot absorb this one.
+ *   Pairs with different decompositions are outside this law.
+ *   The law rejects compatibility normalization, accent removal, transliteration
+ *   and case changes through the key transformation.
+ *   Tests assert that each change moves it.
  *
- *   This file contains no hand-typed decomposed string. `nfc-nfd-suite.test.ts` enforces that rule for the directory.
- *   The composed and decomposed spellings of `Köln` render identically. A reviewer cannot check a hand-typed
- *   decomposed literal. An editor can silently rewrite it. Each decomposed value is built from a composed literal
- *   with the law's transformation. Tests state each decomposition in code points.
+ *   Tests assert independence in both directions.
+ *   This makes a seeded normalization regression attributable.
  *
- *   Each case uses a committed board input. The Cologne row tests the umlaut. The Paris street tests the acute and
- *   typographic apostrophe. The Hanoi row tests a base letter with two stacked marks. The Paris venue tests a Hangul
- *   syllable. The Vienna street tests a letter with no canonical decomposition. The bare GB unit code tests a query
- *   with no canonical variance.
+ *   This audit refuses case, spacing and punctuation changes.
+ *   The other three classifiers refuse canonical-form pairs.
+ *
+ *   A failing arm here therefore cannot be a row assigned to another suite.
+ *   The other suites cannot absorb this one.
+ *
+ *   This file contains no hand-typed decomposed string.
+ *   `nfc-nfd-suite.test.ts` enforces that rule for the directory.
+ *
+ *   The composed and decomposed spellings of `Köln` render identically.
+ *   A reviewer cannot check a hand-typed decomposed literal.
+ *
+ *   An editor can silently rewrite it.
+ *   Each decomposed value is built from a composed literal with the law's transformation.
+ *   Tests state each decomposition in code points.
+ *
+ *   Each case uses a committed board input.
+ *   The Cologne row tests the umlaut.
+ *
+ *   The Paris street tests the acute and typographic apostrophe.
+ *   The Hanoi row tests a base letter with two stacked marks.
+ *
+ *   The Paris venue tests a Hangul syllable.
+ *   The Vienna street tests a letter with no canonical decomposition.
+ *
+ *   The bare GB unit code tests a query with no canonical variance.
  */
 
 import { normalize } from "@mailwoman/normalize"

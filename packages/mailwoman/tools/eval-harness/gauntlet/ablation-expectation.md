@@ -1,6 +1,6 @@
 # Ablation expectation model
 
-The gauntlet's ablation layer asks what the deletion of one component may legitimately cost. It does not grade every
+The gauntlet's ablation layer asks what the deletion of one component may legitimately cost. It doesn't grade every
 variant against the undeleted rooftop: removing a country may leave enough evidence to hold that rooftop, while removing
 street and house number should coarsen to an administrative centroid, and a bare ambiguous name may need to abstain.
 

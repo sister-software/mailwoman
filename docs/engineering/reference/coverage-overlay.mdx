@@ -2,22 +2,22 @@
 
 :::tip[Audience]
 
-🧪 **Operator / agent runbook.** Everything you need to rebuild, republish, extend, or debug the demo map's coverage overlay with **zero prior context**. Shipped via PR #737 (merged to `main`).
+**Operator / agent runbook.** Everything you need to rebuild, republish, extend, or debug the demo map's coverage overlay with **zero prior context**.
 
 :::
 
-## What it is
+## Overview
 
 A demo-map overlay that answers **"where do we need data"** at a glance — covered → clear (basemap shows through), uncovered → gray fog. Two layers in one tileset:
 
-1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay. It reveals the "looks covered until you zoom in, then the gaps go gray" holes.
+1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). It reveals the "looks covered until you zoom in, then the gaps go gray" holes.
 2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](../../records/engineering/WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
 - **Live:** `https://tiles.mailwoman.post/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · measured fog_. The user picks one.
-- **Coverage today:** US rooftop = 48 states + DC + VI (Overture) + HI (OpenAddresses) + NH (street-level), **AK excluded** (antimeridian). Global postcode coverage = GeoNames `allCountries` postal (121 countries) clearing the holes. The civilization backdrop is = WOF settlement places weighted by `place_importance`.
+- **Coverage today:** US rooftop = 48 states + DC + VI (Overture) + HI (OpenAddresses) + NH (street-level), **AK excluded** (antimeridian). Global postcode coverage = GeoNames `allCountries` postal (121 countries) clearing the holes. The civilization backdrop is WOF settlement places weighted by `place_importance`.
 
-## Architecture (read this before touching anything)
+## Architecture
 
 It is an **H3 hexbin** tileset. Each cell stores **two baked fog values** in `[0,1]` (0 = covered/clear, 1 = empty/gray):
 
@@ -26,9 +26,9 @@ It is an **H3 hexbin** tileset. Each cell stores **two baked fog values** in `[0
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band. The finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**The tile worker serves XYZ. Client-side PMTiles is not the serving path.** The `.pmtiles` archive lives at `mailwoman-tiles/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.post/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
+**The tile worker serves XYZ. Client-side PMTiles isn't the serving path.** The `.pmtiles` archive lives at `mailwoman-tiles/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.post/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). Don't serve the archive through the `pmtiles://` protocol; `524f78a8` removed that path.
 
-The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but uses the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup. The US tiers are untouched.
+The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but uses the same `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup. The US tiers are untouched.
 
 ## Code map
 
@@ -81,10 +81,10 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 **Re-versioning:** the object is at a versioned path (`coverage-v5`). To ship a fresh bake, bump `CoverageTileSetID` in `cartographer/coverage/index.ts` to `coverage-v6`, upload to `tiles/coverage-v6.pmtiles`, and the demo follows automatically. (Versioning avoids R2 cache-staleness. `basemap-v4` follows the same pattern.)
 
-### Credential + upload gotchas (this cost a whole session — read it)
+### Credential and upload gotchas
 
 - **Which keys write `mailwoman-tiles`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on mailwoman-tiles** (read _and_ write). Wrangler reads `CLOUDFLARE_API_TOKEN`, which `yarn mwops release mint-cloudflare-tokens -o <file>` mints with the deploy role's scopes.
-- **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone rather than wrangler.
+- **`wrangler r2 object put` caps uploads at 300 MiB**, too small for these archives. **rclone uploads in multipart with no cap**, so `tiles publish` uses rclone.
 - **`mailwoman-public` ≠ `mailwoman-tiles`.** `mailwoman-public` (`public.mailwoman.post/mailwoman/`, the `publish-public-bucket.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `mailwoman-tiles`. Don't put tiles in `mailwoman-public`.
 
 ## Data state + the HI/NH situation
@@ -122,14 +122,14 @@ To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s
 
 The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible gray while keeping big cities darkest. Holes below 0.05 residual fog (covered or trivial) are dropped, so the layer is the holes (~290 K res-6 cells); covered + empty stay clear.
 
-**National size by `--fine-res`** (res-9 d6 measured): res-9 ≈ **848 MiB**, res-8 ≈ 364 MiB, res-7 ≈ 55 MiB. Only res-7 fits wrangler's 300 MiB cap — irrelevant now that rclone-multipart works, so we ship the full res-9.
+**National size by `--fine-res`** (res-9 d6 measured): res-9 ≈ **848 MiB**, res-8 ≈ 364 MiB, res-7 ≈ 55 MiB. Only res-7 fits wrangler's 300 MiB cap. `tiles publish` uploads with rclone multipart, so the build ships the full res-9.
 
-## Gotchas (learned the hard way)
+## Gotchas
 
 - **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `mailwoman/coverage/core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir called `coverage` at any depth. It was silently ignoring `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
-- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale. It does not subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
+- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale. It doesn't subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
 
 ## The jurisdiction layer
 
@@ -137,7 +137,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 v5.1.2 map unit per jurisdiction, 281 units carrying the register's 250 jurisdictions. Natural Earth
 is public domain, so its polygons can be published. The map-units file gives the French overseas
 departments, the US Minor Outlying Islands and Taiwan polygons of their own. The countries file
-does not.
+doesn't.
 
 Each feature records what a training run drew from the jurisdiction (`draws`, `draw_share`), the
 address-shape forms among those rows (`shape_forms`, `postcode_first_share`,

@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker's tests run under the Workers runtime through Miniflare, with the sandbox config's bindings and a
- *   fresh D1 per test file. Secrets are placeholders here.
+ *   The worker's tests run under the Workers runtime through Miniflare,
+ *   with the sandbox config's bindings and a fresh D1 per test file.
+ *
+ *   Secrets are placeholders here.
  *   A `wrangler dev` run reads `.dev.vars` instead.
- *   The root Vitest sweep excludes this workspace. CI runs it as its own step.
+ *
+ *   The root Vitest sweep excludes this workspace.
+ *   CI runs it as its own step.
  */
 
 import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin"

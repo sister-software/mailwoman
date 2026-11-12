@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads IATA airport codes from Wikidata's property P238 as landmark rows keyed by the same items as the vital-places
- *   inventory. Wikidata publishes this data under CC0.
+ *   Reads IATA airport codes from Wikidata's property P238 as landmark rows keyed
+ *   by the same items as the vital-places inventory.
+ *   Wikidata publishes this data under CC0.
  */
 
 import type { SPARQLResults } from "@mailwoman/corpus/tools/fetch/wikidata/subvenue"
@@ -39,7 +40,7 @@ export interface AirportCode {
  * Reads the query's answer, keeping an airport's first row, because a second coordinate
  * or country repeats its item.
  *
- * A row with an unreadable coordinate or a code that is not one is left out.
+ * A row with an unreadable coordinate or a code that's not one is left out.
  */
 export function readAirportCodes(results: SPARQLResults): AirportCode[] {
 	const airports = new Map<string, AirportCode>()

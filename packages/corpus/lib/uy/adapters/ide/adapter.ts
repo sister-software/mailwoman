@@ -2,22 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ide-uy`: Uruguay's national address points, `Direcciones Geográficas del Uruguay`, published by the
- * Infraestructura de Datos Espaciales (IDE) on catalogodatos.gub.uy as one CSV per department.
+ * `ide-uy`: Uruguay's national address points, `Direcciones Geográficas del Uruguay`, published
+ * by the Infraestructura de Datos Espaciales (IDE) on catalogodatos.gub.uy as one CSV per department.
  *
- * The CSVs are Windows-1252 (`ORDOÑEZ` reads `ORDO\xd1EZ`), and quote a street name that holds a
- * nickname in doubled quotes (`"AVENIDA JOSE ""PEPE"" D' ELIA"`). Absent values read `N/A`.
+ * The CSVs are Windows-1252 (`ORDOÑEZ` reads `ORDO\xd1EZ`), and quote a street name that
+ * holds a nickname in doubled quotes (`"AVENIDA JOSE ""PEPE"" D' ELIA"`).
+ * Absent values read `N/A`.
  *
- * The adapter reads `nombre_via` as the street, `num_puerta` with `letra_puerta` as the house number,
- * `codigo_postal` as the postcode, `localidad` as the locality, `departamento` as the region and
- * `nombre_inmueble` as a venue. The census value `<DEPARTAMENTO> RURAL` represents the department's rural
- * remainder rather than a place, so the row keeps the department and omits locality. The register assigns
- * a generated code (`UYARMQA_SN_012`) to an unnamed street, and the adapter drops that row. It also drops a
- * point located by a route kilometer because the record has no door number to render.
+ * The adapter reads `nombre_via` as the street, `num_puerta` with `letra_puerta` as
+ * the house number, `codigo_postal` as the postcode, `localidad` as the locality,
+ * `departamento` as the region and `nombre_inmueble` as a venue.
+ * The census value `<DEPARTAMENTO> RURAL` represents the department's rural remainder
+ * rather than a place, so the row keeps the department and omits locality.
  *
- * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay. The license grants adaptation
- * and commercial use. Its note of origin must name the provider, the license and the dataset, and mention
- * changes. Every row records that license.
+ * The register assigns a generated code (`UYARMQA_SN_012`) to an unnamed street,
+ * and the adapter drops that row.
+ * It also drops a point located by a route kilometer because the record has no door number to render.
+ *
+ * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay.
+ * The license grants adaptation and commercial use.
+ *
+ * Its note of origin must name the provider, the license and the dataset, and mention changes.
+ * Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -84,7 +90,7 @@ const PRESENT_OPTIONS = { absentValues: [ABSENT] } as const
  * `BIS` and a single letter.
  *
  * The two-letter values (`DU`, `CC`, `TR`) are codes the dataset's metadata
- * does not define, so they are left off.
+ * doesn't define, so they're left off.
  */
 const LETTER_SUFFIX = /^(?:BIS|[A-Z])$/u
 

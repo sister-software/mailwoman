@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Affix miss-form audit. Classifies every real-affix-eval miss by surface-form features and
- *   compares them against what the extract builder varies (abbr/full per affix, Title-case, four
- *   layouts).
+ *   Affix miss-form audit.
+ *
+ *   Classifies every real-affix-eval miss by surface-form features and compares them against
+ *   what the extract builder varies (abbr/full per affix, Title-case, four layouts).
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/audit-affix-misses.run.ts\
  *   --model <int8.onnx> [--file data/eval/external/street-affix-real.jsonl]\

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build fts <wof.db>... [--drop]` — add the `place_search` FTS5 +
- *   `place_bbox` R*Tree virtual tables to one or more WOF SQLite distributions so production
- *   `WOFSQLitePlaceLookup` instances skip the lazy-build cost at first open. Absorbs the retired
- *   `mailwoman-wof-build-fts` bin.
+ *   `mailwoman gazetteer build fts <wof.db>... [--drop]` — add the `place_search`
+ *   FTS5 + `place_bbox` R*Tree virtual tables to one or more WOF SQLite distributions
+ *   so production `WOFSQLitePlaceLookup` instances skip the lazy-build cost at first open.
+ *   Absorbs the retired `mailwoman-wof-build-fts` bin.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

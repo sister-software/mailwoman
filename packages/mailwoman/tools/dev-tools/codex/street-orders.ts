@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Records per-country street-line conventions that libaddressinput's opaque `%A` street slot does not describe.
+ * Records per-country street-line conventions that libaddressinput's opaque
+ * `%A` street slot doesn't describe.
  */
 
 /**
@@ -301,7 +302,7 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	// `Via Scialoja, 20`, `Strada del Lavoro, 75`.
 	// San Marino also writes a comma between the street and the number, so it is in
 	// {@linkcode COMMA_JOINED_STREET_COUNTRIES} as well.
-	// Italy is not.
+	// Italy isn't.
 	SM: "number-last",
 	SN: "number-first",
 	SO: "number-last",

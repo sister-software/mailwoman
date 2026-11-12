@@ -3,17 +3,20 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 /**
- *   Dump-and-read tool for a two-model locality comparison. For each
- *   golden row, parse with two models (baseline + candidate), then extract the emitted `locality` span.
- *   resolve each tree → record whether it resolved + the emitted locality. Lets us see whether the
- *   candidate emits a different locality string (grain mismatch) or the same string that stopped
- *   resolving (boundary/anchor), or drops the locality entirely. Verify-before-verdict rather than assurance.
+ *   Dump-and-read tool for a two-model locality comparison.
+ *
+ *   For each golden row, parse with two models (baseline + candidate), then extract the emitted
+ *   `locality` span. resolve each tree → record whether it resolved + the emitted locality.
+ *   Lets us see whether the candidate emits a different locality string (grain mismatch)
+ *   or the same string that stopped resolving (boundary/anchor), or drops the locality entirely.
+ *   Verify-before-verdict rather than assurance.
  *
  *   Run: node packages/mailwoman/tools/dev-tools/locality/emit-diff.run.ts \
  *     --base out/v180/model.onnx --cand out/v190-int8/model.onnx \
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { allKeyed } from "@mailwoman/core/promises"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -45,8 +48,13 @@ async function main() {
 
 	const rows = await loadGoldenRows(values["golden"] || "", n)
 
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		scorer: { createScorer },
+		resolverWofSqlite: { WOFSQLitePlaceLookup },
+	} = await allKeyed({
+		scorer: import("@mailwoman/neural/scorer"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
 
 	const mk = (m: string) =>
 		createScorer({

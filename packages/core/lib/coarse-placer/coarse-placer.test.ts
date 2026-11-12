@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the coarse placer's featurizer, artifact loading, int8 dequantization, abstention and posterior filtering.
+ *   Tests the coarse placer's featurizer, artifact loading, int8 dequantization,
+ *   abstention and posterior filtering.
  */
 
 import type { PathBuilder } from "path-ts"

@@ -106,7 +106,7 @@ export interface FRParseRecallOptions {
 	json?: string
 
 	/**
-	 * Candidate weights root that is searched first for the anchor and lexicon files.
+	 * Candidate weights root that's searched first for the anchor and lexicon files.
 	 */
 	weightsCache?: string
 

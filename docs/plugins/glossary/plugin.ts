@@ -2,25 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Wrapper around `docusaurus-plugin-glossary`. It keeps the package's validation, tooltip theme
- *   component (`@theme/GlossaryTerm`) and client modules. It also provides remark auto-linking. It replaces the
- *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
- *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
- *   it. overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
+ *   Wrapper around `docusaurus-plugin-glossary`.
+ *
+ *   It keeps the package's validation, tooltip theme component (`@theme/GlossaryTerm`) and client modules.
+ *   It also provides remark auto-linking.
+ *
+ *   It replaces the `/glossary` route with our own page component.
+ *   The upstream plugin hard-codes its route component to a path inside the package
+ *   (not a `@theme/*` component), so swizzling can't reach it. overriding the lifecycle
+ *   hooks is the supported extension-free alternative to vendoring.
  *
  *   On top of the upstream data model this wrapper:
  *
  *   - Requires every term to include a non-empty `tags` array whose keys are registered in
  *     `docs/tags.yml` (build error otherwise — same spirit as the docs `onInlineTags: "throw"`).
- *   - Emits `tagMeta`: the tags.yml entries used by glossary terms, in declaration order,
- *     with per-tag term counts. The page renders these as filter toggles + category sections.
+ *   - Emits `tagMeta`: the tags.yml entries used by glossary terms,
+ *     in declaration order, with per-tag term counts.
+ *     The page renders these as filter toggles + category sections.
  *   - Emits `backlinks`: for each term, the docs pages that reference it (title + permalink),
- *     computed in `allContentLoaded` from the docs plugin's loaded content. The scan mirrors the
- *     remark auto-linker's matching rules (term + aliases, word boundaries with plural allowance,
- *     case-insensitive, proper-noun guard, homonym guard — see remark.ts) so the backlink list
- *     tracks the pages that render tooltips for the term. The homonym guard shares
- *     `isSuppressedSurface` with remark.ts rather than re-implementing it: a suppressed surface that
- *     still produced a backlink would advertise a tooltip the page does not render.
+ *     computed in `allContentLoaded` from the docs plugin's loaded content.
+ *     The scan mirrors the remark auto-linker's matching rules (term + aliases, word boundaries
+ *     with plural allowance, case-insensitive, proper-noun guard, homonym guard — see remark.ts)
+ *     so the backlink list tracks the pages that render tooltips for the term.
+ *     The homonym guard shares `isSuppressedSurface` with remark.ts rather than
+ *     re-implementing it: a suppressed surface that still produced a backlink would
+ *     advertise a tooltip the page doesn't render.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Projection-table + census-builder tests. The builder runs against a fixture DB shaped like the WOF
- *   admin DB rather than the shipped 4M-row artifact, so the inclusion rule and the cross-border guard
- *   are asserted on data small enough to read.
+ *   Projection-table + census-builder tests.
+ *
+ *   The builder runs against a fixture DB shaped like the WOF admin DB rather
+ *   than the shipped 4M-row artifact, so the inclusion rule and the cross-border
+ *   guard are asserted on data small enough to read.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

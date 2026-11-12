@@ -4,7 +4,7 @@
 /**
  * @file An on-disk `axios-cache-interceptor` storage adapter that gives clients a durable HTTP cache.
  *
- *   This module runs only in Node. It is not re-exported from `./index.ts` because `core/api` reaches a browser bundle
+ *   This module runs only in Node. It isn't re-exported from `./index.ts` because `core/api` reaches a browser bundle
  *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`).
  *   Webpack cannot resolve `node:fs/promises` for the web target. Import this module through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
@@ -78,7 +78,7 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
  *
  * The interceptor reads `null` as `0` in its `createdAt + ttl < Date.now()` expiry test.
  * An `Infinity` TTL — the obvious way to spell "cache this immutable document forever" —
- * would therefore round-trip into an entry that is expired the instant it is read.
+ * would therefore round-trip into an entry that's expired the instant it is read.
  */
 function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
 	if (value.createdAt && !Number.isFinite(value.createdAt)) return false
@@ -129,7 +129,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 	}
 
 	/**
-	 * Serialize `value`, or return `null` when it must not reach disk, logging every rejection
+	 * Serialize `value`, or return `null` when it mustn't reach disk, logging every rejection
 	 * with the key so a maintainer seeing a cache that never fills has something to grep for.
 	 */
 	function serializeIfValid(key: string, value: NotEmptyStorageValue): string | null {

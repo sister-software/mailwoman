@@ -36,7 +36,7 @@ as "distinct." A real entity-truth must collapse by **org-name + address** in ad
 
 1. **The over-merge "problem" is a measurement artifact.** The matcher's co-located merges are correct
    org-resolution. NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
-   showed the corroboration features didn't move precision** — there is essentially no actual
+   showed the corroboration features didn't move precision** — there's essentially no actual
    over-merge to reduce. A precision objective here would optimize a phantom. Cost-sensitive
    training would only _hurt_ (un-merge correct same-org pairs).
 

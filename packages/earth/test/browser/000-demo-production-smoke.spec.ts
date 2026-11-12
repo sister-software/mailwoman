@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Production functional smoke test for the deployed demo. It runs daily against
  *   `MAILWOMAN_EARTH_URL` and in local checks.

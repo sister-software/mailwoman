@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build-time summary of the published data bundles. It runs only in the Docusaurus Node.js plugin context and never
- *   enters the client bundle. This module reads `BUNDLES` and the committed snapshot. It reduces them to page data, then
- *   handed to the client through the plugin's global data, so the data-products page states no size, file count,
- *   tier or license that somebody typed into it.
+ *   Build-time summary of the published data bundles.
  *
- *   Every module on this import path is transformed by the Docusaurus loader, so none of them may touch
- *   `import.meta.resolve`, per the note atop `artifacts.ts`. The imports name `mailwoman/data/bundles` and
- *   `mailwoman/data/published-bundles` rather than the `mailwoman/data` barrel, because the barrel re-exports the
- *   inventory module. The loader cannot require that module's SQLite client. Only a docs build verifies either path.
+ *   It runs only in the Docusaurus Node.js plugin context and never enters the client bundle.
+ *   This module reads `BUNDLES` and the committed snapshot.
+ *
+ *   It reduces them to page data, then handed to the client through the plugin's global data,
+ *   so the data-products page states no size, file count, tier or license that somebody typed into it.
+ *
+ *   Every module on this import path is transformed by the Docusaurus loader,
+ *   so none of them may touch `import.meta.resolve`, per the note atop `artifacts.ts`.
+ *   The imports name `mailwoman/data/bundles` and `mailwoman/data/published-bundles`
+ *   rather than the `mailwoman/data` barrel, because the barrel re-exports the inventory module.
+ *
+ *   The loader cannot require that module's SQLite client.
+ *   Only a docs build verifies either path.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -92,7 +98,7 @@ export interface RuntimeAssetsGlobalData {
 }
 
 /**
- * A fixed locale so the rendered figure does not follow the build host's locale.
+ * A fixed locale so the rendered figure doesn't follow the build host's locale.
  */
 const SIZE_LOCALE = "en-US"
 

@@ -123,7 +123,7 @@ const LINE_DRIFT_WINDOW = 3
 
 /**
  * Finds the line nearest to Vale's reported line that contains `word`, falling back to
- * the reported line when the window does not contain it so no hit is dropped.
+ * the reported line when the window doesn't contain it so no hit is dropped.
  */
 function locate(
 	lines: readonly string[],

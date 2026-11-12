@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The panel builder for the prominence-floor benchmark. It executes the frozen selection rules and
- *   contains no judgment of its own: the bands, the eligibility rule, the fill order and the seed all come
- *   from `benchmark-definition.json`, committed before any row was inspected.
+ *   The panel builder for the prominence-floor benchmark.
  *
- *   The benchmark's addition is its band field. The same-data panel drew each gold above one population floor,
- *   so a floor arm admitted every gold case by construction. This builder fills one stratum per band from that
- *   band's rows. The record reports each band separately.
+ *   It executes the frozen selection rules and contains no judgment of its own:
+ *   the bands, the eligibility rule, the fill order and the seed all come from
+ *   `benchmark-definition.json`, committed before any row was inspected.
  *
- *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is
- *   to reach below 15,000. The dumps have the same columns, so `readCities` parses them unchanged.
+ *   The benchmark's addition is its band field.
+ *   The same-data panel drew each gold above one population floor, so a floor
+ *   arm admitted every gold case by construction.
+ *
+ *   This builder fills one stratum per band from that band's rows.
+ *   The record reports each band separately.
+ *
+ *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`,
+ *   because the point is to reach below 15,000.
+ *   The dumps have the same columns, so `readCities` parses them unchanged.
  */
 
 import {

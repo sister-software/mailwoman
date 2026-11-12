@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Measures whether the parse returns the country for board rows whose input contains their board country's name.
+ * Measures whether the parse returns the country for board rows whose input
+ * contains their board country's name.
  */
 
 import { CountryISO2, CountryNames } from "@mailwoman/codex/country"
@@ -50,7 +51,7 @@ const CODE_BY_FOLDED_NAME = new Map(
 )
 
 /**
- * Maps parsed country forms that the codex does not resolve, such as `UK` to `GB`.
+ * Maps parsed country forms that the codex doesn't resolve, such as `UK` to `GB`.
  */
 const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 	uk: "GB",

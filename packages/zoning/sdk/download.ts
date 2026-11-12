@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Acquire the Department's bulk GeoJSON export with raw `fetch` rather than `APIClient`, following the result URL's redirect and keying the cache on the item's own modified date.
+ * Acquire the Department's bulk GeoJSON export with raw `fetch` rather than `APIClient`,
+ * following the result URL's redirect and keying the cache on the item's own modified date.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"

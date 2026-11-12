@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /*
  * The layer list inside the chrome's Layers sheet. The sheet supplies the glass, the title and the scroll, so this
  * file styles rows and nothing around them.

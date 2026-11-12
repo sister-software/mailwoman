@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `POST /v1/evaluations` issues a thirty-day token to an email address, once per address. The token travels by
- *   email and the response answers the claim the CLI polls. A second request for an address answers 409. The route
- *   therefore confirms that an address has been used. That is the one fact the one-per-address rule has to reveal.
+ *   `POST /v1/evaluations` issues a thirty-day token to an email address, once per address.
+ *
+ *   The token travels by email and the response answers the claim the CLI polls.
+ *   A second request for an address answers 409.
+ *
+ *   The route therefore confirms that an address has been used.
+ *   That's the one fact the one-per-address rule has to reveal.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

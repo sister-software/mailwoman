@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   note(de-shell): forwarding shim. The three unbiased capability arenas now live at
- *   `mailwoman/eval-harness/external-arenas.ts` and `promotion-eval.ts` calls them IN-process. This
- *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
- *   owns every printed line. Do not add logic here.
+ *   note(de-shell): forwarding shim.
+ *
+ *   The three unbiased capability arenas now live at `mailwoman/eval-harness/external-arenas.ts`
+ *   and `promotion-eval.ts` calls them IN-process.
+ *   This shim keeps standalone invocation working unchanged.
+ *
+ *   Output is byte-identical because the module owns every printed line.
+ *   Do not add logic here.
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"

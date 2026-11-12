@@ -3,6 +3,7 @@
 
 /**
  *   Tests the health route's five report fields and `no-store` header.
+ *
  *   It checks that the email field reports a failure after one hour and stays clear for a fresh failure.
  */
 

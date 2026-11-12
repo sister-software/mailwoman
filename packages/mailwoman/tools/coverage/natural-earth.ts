@@ -4,10 +4,10 @@
 /**
  *   Natural Earth's 1:10m admin-0 map units, the polygons the jurisdiction coverage layer fills.
  *
- *   Natural Earth is public domain, so the polygons may be baked into published tiles. The layer reads
- *   the map-units file rather than the countries file because map units give the French overseas
- *   departments, the US Minor Outlying Islands and Taiwan polygons of their own. The countries file
- *   folds the five departments into France.
+ *   Natural Earth is public domain, so the polygons may be baked into published tiles.
+ *   The layer reads the map-units file rather than the countries file because map units give the
+ *   French overseas departments, the US Minor Outlying Islands and Taiwan polygons of their own.
+ *   The countries file folds the five departments into France.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

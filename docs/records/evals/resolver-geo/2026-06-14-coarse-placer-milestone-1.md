@@ -39,7 +39,7 @@ IT 92.8, ES 90.9. The errors are the expected ones — ES↔IT↔DE (European La
 
 ## The wall (and why milestone 2 is the point)
 
-The threshold-only abstention does **not** solve out-of-distribution. Off-map scripts — Cyrillic,
+The threshold-only abstention **doesn't** solve out-of-distribution. Off-map scripts — Cyrillic,
 Armenian, Greek, none of them among the 11 trained countries — are **confidently mis-classified** rather than
 abstained:
 

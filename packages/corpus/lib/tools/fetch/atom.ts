@@ -16,7 +16,7 @@
  *   mode leaves them open.
  *
  *   Feed-level links are told from entry-level links by the parser rather than by position. One request
- *   for `link` and `entry` together yields a `link` only where it is not already inside an `entry`,
+ *   for `link` and `entry` together yields a `link` only where it isn't already inside an `entry`,
  *   because capture runs to the outermost requested element's close.
  */
 
@@ -76,7 +76,7 @@ export interface AtomEntry {
 	links: readonly AtomLink[]
 	/**
 	 * The entry's `inspire_dls:spatial_dataset_identifier_code`, or `null` for a
-	 * feed that is not an INSPIRE predefined-dataset feed.
+	 * feed that's not an INSPIRE predefined-dataset feed.
 	 */
 	identifierCode: string | null
 }
@@ -157,7 +157,7 @@ export async function* feedChunks(text: string): AsyncIterable<string> {
  * The first link carrying `rel`, or `null` where the collection holds none.
  *
  * A feed's entry commonly holds several: ČÚZK writes a `describedby` link to its ISO 19139
- * record beside the `alternate` link that is the data, and either would download as a dataset.
+ * record beside the `alternate` link that's the data, and either would download as a dataset.
  */
 export function linkWithRel(links: readonly AtomLink[], rel: string): AtomLink | null {
 	return links.find((link) => link.rel === rel.toLowerCase()) ?? null

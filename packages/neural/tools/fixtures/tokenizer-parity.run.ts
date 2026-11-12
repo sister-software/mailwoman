@@ -4,10 +4,10 @@
 /**
  *   Writes a tokenizer parity fixture: each input with the pieces and ids `@mailwoman/mtf` encodes it to.
  *
- *   The curated mode encodes a fixed list of address fragments covering ASCII, numbers, hyphenation, Latin
- *   diacritics, punctuation and the empty string, and writes the committed fixture. The parquet mode samples
- *   `--sample` raws from one file's `raw` column with CPython's generator, the sample the Python generator drew for
- *   the same seed, for a larger local fixture.
+ *   The curated mode encodes a fixed list of address fragments covering ASCII, numbers, hyphenation,
+ *   Latin diacritics, punctuation and the empty string, and writes the committed fixture.
+ *   The parquet mode samples `--sample` raws from one file's `raw` column with CPython's generator,
+ *   the sample the Python generator drew for the same seed, for a larger local fixture.
  *
  *   Usage:
  *

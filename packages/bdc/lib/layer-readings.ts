@@ -3,10 +3,12 @@
 
 /**
  *   Dossier layer readings from a BDC database, one per technology for a building's census block.
+ *
  *   Each reading's subject is the building, and its survey date is the database's vintage.
- *   A block is surveyed when its res-6 cell has a coverage row, and its reading then counts the
- *   technology's filing summaries. A block that cannot be placed, or whose cell has no coverage row,
- *   is unknown.
+ *   A block is surveyed when its res-6 cell has a coverage row, and its reading
+ *   then counts the technology's filing summaries.
+ *
+ *   A block that cannot be placed, or whose cell has no coverage row, is unknown.
  */
 
 import type { EntityID, LayerReading, SourceRecordID } from "@mailwoman/dossier"

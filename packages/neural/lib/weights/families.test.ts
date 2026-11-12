@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The family registry's own invariants: one family per locale, one family per routing script and a
- *   vocabulary artifact for every encoder.
+ *   The family registry's own invariants: one family per locale, one family per
+ *   routing script and a vocabulary artifact for every encoder.
  *
  *   The `weights-family` repository check reads `FAMILIES` against the checkout's manifests and cannot
  *   reach a branch that mutates `FAMILIES`, so the declaration's internal consistency is asserted here.
  *
- *   The routing assertions are the ones that break silently: `familyForSegment` reads families in
- *   declaration order, so two families claiming one script would let order decide which graph reads a
- *   Han line while every existing router test still passed.
+ *   The routing assertions are the ones that break silently: `familyForSegment` reads
+ *   families in declaration order, so two families claiming one script would let order decide
+ *   which graph reads a Han line while every existing router test still passed.
  */
 
 import { describe, expect, it } from "vitest"
@@ -127,7 +127,7 @@ describe("familyFallbackFor", () => {
 		// A family id resolves to itself, so it has no fallback.
 		expect(familyFallbackFor("cjk")).toBeNull()
 		expect(familyFallbackFor("en-us")).toBeNull()
-		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights`
+		// A Latin overlay identifies its base in its manifest, so resolution follows `mailwoman.baseWeights`
 		// rather than a script rule and answering here would give one fact two sources.
 		expect(familyFallbackFor("en-GB")).toBeNull()
 		expect(familyFallbackFor("fr-FR")).toBeNull()

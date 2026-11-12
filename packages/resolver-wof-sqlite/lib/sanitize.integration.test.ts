@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the FTS5 sanitizer. It is driven through real `findPlace` calls.
+ *   Tests for the FTS5 sanitizer.
+ *   It is driven through real `findPlace` calls.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

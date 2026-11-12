@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Reports the provenance of the artifacts under the engine and never repairs, because the repairs change what the next
- * build ingests and a read-only answer is safe to ask at any moment.
+ * Reports the provenance of the artifacts under the engine and never repairs, because the repairs
+ * change what the next build ingests and a read-only answer is safe to ask at any moment.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PathBuilderLike } from "path-ts"
 
 interface ArtifactState {
@@ -25,7 +26,7 @@ interface ArtifactState {
 	 * The link target when the path is a symlink.
 	 *
 	 * `candidate.db` is a pointer `gazetteer promote` swaps, so the target name
-	 * identifies the build and the path by itself does not.
+	 * identifies the build and the path by itself doesn't.
 	 */
 	linkTarget: string | null
 	/**
@@ -57,8 +58,8 @@ export interface ProvenanceReport {
 	dataRoot: string
 	artifacts: ArtifactState[]
 	/**
-	 * Read from the stamp `gazetteer inspect sync` writes, or `null` when that has never
-	 * been run here — absence is reported rather than read as "the repos are current".
+	 * Read from the stamp `gazetteer inspect sync` writes, or `null` when that's never been
+	 * run here — absence is reported rather than read as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
@@ -107,9 +108,15 @@ export interface ProvenanceOptions {
  * file as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
-	const { dataRootPath } = await import("@mailwoman/core/data-root")
-	const { repoRootPath } = await import("@mailwoman/core/paths")
-	const { poiDatabasePath, wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+	const {
+		dataRoot: { dataRootPath },
+		paths: { repoRootPath },
+		paths2: { poiDatabasePath, wofDatabasePath },
+	} = await allKeyed({
+		dataRoot: import("@mailwoman/core/data-root"),
+		paths: import("@mailwoman/core/paths"),
+		paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+	})
 
 	const dataRoot = dataRootPath()
 

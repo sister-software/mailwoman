@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Compares FST arms on the hard-case board through the runtime pipeline, holding the model and resolver fixed.
+ * Compares FST arms on the hard-case board through the runtime pipeline,
+ * holding the model and resolver fixed.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

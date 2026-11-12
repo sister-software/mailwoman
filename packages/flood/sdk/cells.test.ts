@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Test whole/partial cell classification, zero-cell handling, adaptive resolution and allocator equivalence.
+ *   Test whole/partial cell classification, zero-cell handling, adaptive resolution
+ *   and allocator equivalence.
  */
 
 import {

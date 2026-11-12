@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The USPS state codes that are also the ISO 3166-1 alpha-2 code of a different country, computed from the
- *   codex tables rather than typed. `CA` after a US locality is California, and the same two letters after a
- *   street in Toronto are Canada, so the country-balanced recipe renders the US reading for every such code.
+ *   The USPS state codes that are also the ISO 3166-1 alpha-2 code of a different country,
+ *   computed from the codex tables rather than typed.
+ *
+ *   `CA` after a US locality is California, and the same two letters after a street in Toronto
+ *   are Canada, so the country-balanced recipe renders the US reading for every such code.
  */
 
 import { CountryISO2 } from "@mailwoman/codex/country"

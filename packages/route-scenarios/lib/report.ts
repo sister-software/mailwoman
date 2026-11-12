@@ -4,15 +4,17 @@
 /**
  *   The report section for a shared-route scenario, in Markdown, written so a reader can check it by hand.
  *
- *   The section opens by stating that its figures are a scenario computed from supplied assumptions, and it
- *   never presents them as a quote. It lists the conventions, the buildings and their unit evidence, the
- *   operating assumptions, every construction line with its quantity, rate, month and basis, the decision
- *   outputs, the comparison cases with their assumptions, and the full monthly table with its totals.
- *   Optional financing and transaction views follow. The low and high capex cases are labeled as scenarios,
- *   and no probability is attached to them.
+ *   The section opens by stating that its figures are a scenario computed from
+ *   supplied assumptions, and it never presents them as a quote.
+ *   It lists the conventions, the buildings and their unit evidence, the operating assumptions,
+ *   every construction line with its quantity, rate, month and basis, the decision outputs,
+ *   the comparison cases with their assumptions, and the full monthly table with its totals.
  *
- *   Tables are padded to their widest cell, the layout the repository's Markdown formatter writes, so the
- *   section reads in columns as plain text and survives formatting unchanged.
+ *   Optional financing and transaction views follow.
+ *   The low and high capex cases are labeled as scenarios, and no probability is attached to them.
+ *
+ *   Tables are padded to their widest cell, the layout the repository's Markdown formatter
+ *   writes, so the section reads in columns as plain text and survives formatting unchanged.
  */
 
 import { formatPercent } from "@mailwoman/core/stats"

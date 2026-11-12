@@ -4,11 +4,11 @@
 /**
  *   Position along a polyline, by arc length.
  *
- *   This is what house-number interpolation stands on: given a street segment's geometry and how far
- *   along its house-number range an address sits, it answers where that is on the ground. The node
- *   reader (`resolver-wof-sqlite/interpolation.ts`) and the browser twin
- *   (`resolver-wof-wasm/httpvfs/street.ts`) both call it: the geometry never differs between them,
- *   only the I/O around it does.
+ *   This is what house-number interpolation stands on: given a street segment's geometry
+ *   and how far along its house-number range an address sits, it answers where that's on the ground.
+ *   The node reader (`resolver-wof-sqlite/interpolation.ts`) and the browser twin
+ *   (`resolver-wof-wasm/httpvfs/street.ts`) both call it: the geometry never
+ *   differs between them, only the I/O around it does.
  */
 
 import { centralAngle, EARTH_RADII } from "#distance"
@@ -17,7 +17,7 @@ import { centralAngle, EARTH_RADII } from "#distance"
  * Clamp a fraction into `[0, 1]`.
  *
  * NaN passes through deliberately.
- * An interpolation whose inputs were not numbers should produce NaN coordinates a
+ * An interpolation whose inputs weren't numbers should produce NaN coordinates a
  * caller can detect rather than silently snap to a segment's start.
  */
 export function clampFraction(t: number): number {

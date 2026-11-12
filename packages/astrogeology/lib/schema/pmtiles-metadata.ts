@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every planetary archive has a `mailwoman:*` block in its PMTiles metadata. The block records the body, kind,
- *   coordinate convention, source and build. The app reads the block before reading a tile.
- *   The verify step reads it
- *   back after the build writes it.
+ *   Every planetary archive has a `mailwoman:*` block in its PMTiles metadata.
+ *
+ *   The block records the body, kind, coordinate convention, source and build.
+ *   The app reads the block before reading a tile.
+ *   The verify step reads it back after the build writes it.
  */
 
 import { z } from "zod"

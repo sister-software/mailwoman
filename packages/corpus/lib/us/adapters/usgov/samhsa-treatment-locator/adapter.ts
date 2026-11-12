@@ -2,28 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `usgov-samhsa-treatment-locator`: samhsa Behavioral Health Treatment Services Locator CSV
- *   consumer.
+ *   `usgov-samhsa-treatment-locator`: samhsa Behavioral Health Treatment Services Locator CSV consumer.
  *
- *   samhsa's Treatment Locator (`findtreatment.gov`) is the federal directory of substance-use and
- *   mental-health treatment facilities. The published CSV includes the facility name, an optional
- *   secondary name (typically the organizational parent), and the postal address quad split into
- *   primary + secondary street lines. Phase 1.6 §1.2 selects this source for the same reason
- *   it selects HRSA: facility names are hand-typed venue strings and the addresses pass through
- *   enough human + system hands to accumulate the suite-designator + sub-tenant chaos ("Suite C,
- *   behind main building") that pure gazetteer data does not.
+ *   samhsa's Treatment Locator (`findtreatment.gov`) is the federal directory of
+ *   substance-use and mental-health treatment facilities.
+ *   The published CSV includes the facility name, an optional secondary name
+ *   (typically the organizational parent), and the postal address quad split
+ *   into primary + secondary street lines.
  *
- *   samhsa writes an address on two lines. `street1` holds the postal street line (`"123 Main St"`)
- *   and `street2` the suite or floor (`"Suite 300"`). `splitUSStreetLine` splits `street1`, and
- *   `unitLine` keeps `street2` as the `unit` when it opens with a USPS designator, the labels every US
- *   register adapter writes for those forms.
+ *   Phase 1.6 §1.2 selects this source for the same reason it selects HRSA:
+ *   facility names are hand-typed venue strings and the addresses pass through enough
+ *   human + system hands to accumulate the suite-designator + sub-tenant chaos
+ *   ("Suite C, behind main building") that pure gazetteer data doesn't.
+ *
+ *   samhsa writes an address on two lines.
+ *   `street1` holds the postal street line (`"123 Main St"`) and `street2` the suite
+ *   or floor (`"Suite 300"`).
+ *
+ *   `splitUSStreetLine` splits `street1`, and `unitLine` keeps `street2` as the `unit` when it
+ *   opens with a USPS designator, the labels every US register adapter writes for those forms.
  *
  *   Column names below match the canonical samhsa Behavioral Health Treatment Services Locator CSV
  *   export header. Operators substituting a closely-related extract should rename columns to match.
  *   the readme has the mapping cheatsheet.
  *
- *   License: stamped `"Public Domain"` per the samhsa Open Data Foundry's federal-government
- *   distribution terms.
+ *   License: stamped `"Public Domain"` per the samhsa Open Data Foundry's
+ *   federal-government distribution terms.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

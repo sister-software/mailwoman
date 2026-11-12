@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regional variant alias lookup. Given a token (or short phrase) and a detected locale, return the
- *   canonical amenity category or brand it refers to.
+ *   Regional variant alias lookup.
+ *
+ *   Given a token (or short phrase) and a detected locale, return the canonical
+ *   amenity category or brand it refers to.
  *
  */
 

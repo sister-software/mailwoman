@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it. NCERM publishes no
- *   coverage statement, so a point inside the footprint but outside every polygon is `unknown` with no
- *   designation rather than the authority's Zone 1.
+ *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
+ *
+ *   NCERM publishes no coverage statement, so a point inside the footprint but outside
+ *   every polygon is `unknown` with no designation rather than the authority's Zone 1.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"

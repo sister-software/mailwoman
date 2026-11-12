@@ -4,32 +4,36 @@
 /**
  *   `intersection` recipe, the real-pair intersection training source.
  *
- *   Street pairs are real. The extraction matches the eval builder
- *   (`scripts/eval/build-intersection-real.ts`). A node where two road edges (mtfcc S1*) with
- *   distinct FULLNAMEs meet is a real crossing. Real pairs avoid teaching fake street-street
- *   co-occurrences.
+ *   Street pairs are real.
+ *   The extraction matches the eval builder (`scripts/eval/build-intersection-real.ts`).
+ *
+ *   A node where two road edges (mtfcc S1*) with distinct FULLNAMEs meet is a real crossing.
+ *   Real pairs avoid teaching fake street-street co-occurrences.
  *
  *   Leakage policy (mirrors the affix recipe's VT discipline):
  *
  *   - train counties: Cook IL (grid city) + Morris NJ (suburb).
  *   - golden (`--golden`) county: Washington VT (rural) only, the corpus defaultHoldout state.
- *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes, by node
- *       id and by order-insensitive name pair (the eval shares all three counties).
+ *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes,
+ *     by node id and by order-insensitive name pair (the eval shares all three counties).
  *
- *   Junction-format variety includes padded and tight `&` and `/`, `and`, `at`, `@`, and the
- *   leading phrases `corner of` and `intersection of`, crossed with tails (bare / `, ST` / `, ST ZIP` /
- *   `, City, ST [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real). The
- *   locality tail comes from the NAD ZIP→city majority tables for Cook and Morris counties.
+ *   Junction-format variety includes padded and tight `&` and `/`, `and`, `at`, `@`,
+ *   and the leading phrases `corner of` and `intersection of`, crossed with tails
+ *   (bare / `, ST` / `, ST ZIP` / `, City, ST [ZIP]`) and case variants.
+ *   ZIPs are the crossing's own tiger edge zipl (real).
  *
- *   Audit: every emitted row is label-checked on the RAW surface via the char-offset span triple. Any
- *   violation fails the build (throws). A JSON audit report lands next to the output.
+ *   The locality tail comes from the NAD ZIP→city majority tables for Cook and Morris counties.
+ *
+ *   Audit: every emitted row is label-checked on the RAW surface via the char-offset span triple.
+ *   Any violation fails the build (throws).
+ *   A JSON audit report lands next to the output.
  *
  *   External inputs (`--edges-dir` and opts.edgesDir, both already on disk. Do not re-download):
  *
  *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped tiger 2023 edges. default
- *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
- *   - `$MAILWOMAN_DATA_ROOT/nad-skeletons/us__{il__cook,nj__morris}__zip-city.csv` (ZIP→city tails, written by
- *       `packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`)
+ *     `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
+ *   - `$MAILWOMAN_DATA_ROOT/nad-skeletons/us__{il__cook,nj__morris}__zip-city.csv`
+ *     (ZIP→city tails, written by `packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`)
  */
 
 import type { DuckDBConnection } from "@duckdb/node-api"

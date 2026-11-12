@@ -1,9 +1,12 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { $public } from "#env"
 import { mailwomanCLIPath } from "#metadata"
 
@@ -13,7 +16,7 @@ const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 function stripAnsiSpinner(stdout: string): string {
-	const cleaned = stripAnsi(stdout).trim()
+	const cleaned = stripANSI(stdout).trim()
 	const objStart = cleaned.search(/[{[]/)
 
 	return objStart >= 0 ? cleaned.slice(objStart) : cleaned

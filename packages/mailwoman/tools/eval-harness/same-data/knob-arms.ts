@@ -4,8 +4,9 @@
 /**
  *   Reads the `ResolveOpts` arms that the same-data `knob` phase replays from a JSON file.
  *
- *   The reader rejects unknown keys and mistyped values. Otherwise a misspelled option would produce a
- *   column identical to the production arm and look like an option with no effect.
+ *   The reader rejects unknown keys and mistyped values.
+ *   Otherwise a misspelled option would produce a column identical to the production arm
+ *   and look like an option with no effect.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

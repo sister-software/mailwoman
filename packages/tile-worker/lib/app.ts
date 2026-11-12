@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tile Worker's Hono app: PMTiles tiles and TileJSON from R2, basemap styles, terrarium elevation tiles, SQLite byte ranges for
- *   the browser's httpvfs reader, and the caller's approximate location.
+ *   The tile Worker's Hono app: PMTiles tiles and TileJSON from R2, basemap styles,
+ *   terrarium elevation tiles, SQLite byte ranges for the browser's httpvfs reader,
+ *   and the caller's approximate location.
  *
- *   Hono matches a regex parameter only when it fills its whole path segment, so a route whose last segment holds a
- *   number and an extension, such as `12905.mvt`, captures the segment and its handler parses it.
+ *   Hono matches a regex parameter only when it fills its whole path segment,
+ *   so a route whose last segment holds a number and an extension, such as `12905.mvt`,
+ *   captures the segment and its handler parses it.
  */
 
 import { mailwomanCORS } from "@mailwoman/api-worker/cors"

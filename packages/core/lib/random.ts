@@ -4,8 +4,10 @@
 /**
  *   Seeded random generators and sampling helpers.
  *
- *   Each LCG reproduces the stream behind existing corpus data, evaluations, model splits or calibration artifacts.
- *   A different generator changes those outputs. New code should use `mulberry32`.
+ *   Each LCG reproduces the stream behind existing corpus data, evaluations,
+ *   model splits or calibration artifacts.
+ *   A different generator changes those outputs.
+ *   New code should use `mulberry32`.
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"

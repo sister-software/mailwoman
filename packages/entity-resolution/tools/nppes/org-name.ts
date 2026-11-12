@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Jaccard floor at or above which two {@linkcode orgTokens} sets count as the
  * same organization — the gold-set threshold.

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Each resolution holds its own cell sets and the finest candidate dominates memory, so a caller that
- * runs out of headroom runs the candidates in separate invocations.
+ * Each resolution holds its own cell sets and the finest candidate dominates memory,
+ * so a caller that runs out of headroom runs the candidates in separate invocations.
  */
 
 import type { ResolutionMeasurementOptions, ResolutionMeasurementReport } from "@mailwoman/core/layers"
@@ -18,7 +18,7 @@ const DEFAULT_PROGRESS_EVERY = 50_000
 
 /**
  * Measure every candidate resolution over the real source, throwing when the streamed
- * feature count does not match the count the source declares.
+ * feature count doesn't match the count the source declares.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions

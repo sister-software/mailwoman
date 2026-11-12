@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 #
 # run-all.sh — pull the data the published panels need, run both, write the result JSON.
 #

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the UN/locode lookup DB from the unece code list CSV (datasets/un-locode `code-list.csv`:
- *   columns Change, Country, Location, Name, NameWoDiacritics, Subdivision, Status, Function, Date,
- *   iata, Coordinates, Remarks). One row per assigned location. coordinates parsed where present.
+ *   Build the UN/locode lookup DB from the unece code list CSV
+ *   (datasets/un-locode `code-list.csv`: columns Change, Country, Location, Name,
+ *   NameWoDiacritics, Subdivision, Status, Function, Date, iata, Coordinates, Remarks).
+ *
+ *   One row per assigned location. coordinates parsed where present.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

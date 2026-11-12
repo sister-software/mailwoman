@@ -3,7 +3,7 @@
 **Resolves:** ROAD_TO_MAILWOMAN_V8_3_0 §4 D4 + §6. The consolidation artifact that makes
 "your fine-tune cannot break core parsing" a check instead of a hope (the B11 guarantee).
 
-## What is captured
+## What's captured
 
 **Diagonal empirical Fisher** over the base training distribution: `F_i = E[(∂L/∂θ_i)²]`,
 estimated as the running mean of squared per-parameter gradients over the final N batches of the
@@ -52,9 +52,9 @@ v2 refinement once a real engagement asks for it.
 - The release-hf command + publish.yml preflight gain one file each (the mechanical pattern from
   the lexicon additions, noted in ROAD_TO §9 so it isn't forgotten at the result).
 
-## What this deliberately does not claim
+## What this deliberately doesn't claim
 
-EWC guards against drift in _parameter space_, calibrated on _our_ distributions. It does not
-guarantee arbitrary customer data can't find a pathological direction. That is what the battery
+EWC guards against drift in _parameter space_, calibrated on _our_ distributions. It doesn't
+guarantee arbitrary customer data can't find a pathological direction. That's what the battery
 check is for. The two together (parameter-space brake + behavior-space check) are the direct
 guarantee. Neither one by itself is.

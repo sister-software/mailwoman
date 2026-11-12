@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module defines the address-source register's types. The register has a jurisdiction table and a source table.
+ *   This module defines the address-source register's types.
+ *   The register has a jurisdiction table and a source table.
  */
 
 import type { LicenseDecision } from "@mailwoman/core/license/decision"
@@ -23,8 +24,8 @@ export const BackboneState = {
 	 */
 	Verified: "A",
 	/**
-	 * A strong open official source that is federated, partial, establishment-only
-	 * or territory-specific, or whose national completeness has not been measured.
+	 * A strong open official source that's federated, partial, establishment-only
+	 * or territory-specific, or whose national completeness hasn't been measured.
 	 */
 	VerifiedPartial: "A~",
 	/**
@@ -94,7 +95,7 @@ export const SourceStatus = {
 	/**
 	 * Research confirmed that a bulk corpus is reachable.
 	 *
-	 * This state by itself does not make a source eligible for ingest.
+	 * This state by itself doesn't make a source eligible for ingest.
 	 */
 	VerifiedCorpus: "verified-corpus",
 	/**
@@ -194,7 +195,7 @@ export const ResearchPass = {
 	/**
 	 * The decoder-exposure survey recorded the authoritative address source of each
 	 * jurisdiction the exposure arc admits through OpenStreetMap.
-	 * It located each authority and did not read its terms.
+	 * It located each authority and didn't read its terms.
 	 */
 	DecoderExposureSurvey: "2026-10-03-decoder-exposure",
 	/**
@@ -272,14 +273,14 @@ export interface JurisdictionRecord {
 	/**
 	 * The research pass's free-text list of propositions it expected sources to support.
 	 *
-	 * The text is kept verbatim because it does not map onto the `AssertedProposition` vocabulary.
+	 * The text is kept verbatim because it doesn't map onto the `AssertedProposition` vocabulary.
 	 */
 	assertionPlan: string
 	note: string
 	/**
 	 * The reason a jurisdiction has no sources.
 	 *
-	 * The audit requires it on every row that is not `seeded`.
+	 * The audit requires it on every row that's not `seeded`.
 	 */
 	stateReason?: string
 }

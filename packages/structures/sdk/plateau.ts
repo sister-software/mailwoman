@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads PLATEAU VIEW's dataset catalog, the CKAN record of each building dataset, and each tileset's root extent.
+ *   Reads PLATEAU VIEW's dataset catalog, the CKAN record of each building dataset,
+ *   and each tileset's root extent.
  */
 
 import { setTimeout as sleep } from "node:timers/promises"
@@ -145,7 +146,7 @@ export async function readGeoidHeight(client: PlateauClient, longitude: number, 
 	const url = `${GSI_GEOID_CALC}?outputType=json&latitude=${latitude}&longitude=${longitude}`
 
 	// A busy server returns `ExportData.ErrMsg` with HTTP 200.
-	// The client retry does not see this response as an error.
+	// The client retry doesn't see this response as an error.
 	for (let attempt = 1; ; attempt++) {
 		const response = await client.getJSON<GeoidCalcResponse>(url)
 		const height = Number.parseFloat(response.OutputData?.geoidHeight ?? "")

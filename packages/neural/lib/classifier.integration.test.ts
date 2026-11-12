@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests on the packaged en-US weights that tracing leaves the parse unchanged and that the decode
- *   explanation's terms add up to the decoder's score and to each span's margin.
+ *   Tests on the packaged en-US weights that tracing leaves the parse unchanged and that
+ *   the decode explanation's terms add up to the decoder's score and to each span's margin.
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"

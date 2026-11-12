@@ -4,12 +4,12 @@
 /**
  *   `mailwoman corpus audit` — per-source parquet-file count vs source_weight diagnostic.
  *
- *   Reads a corpus dir's manifest.json (or scans the parquet files directly), counts files per
- *   source, optionally loads a training config to pair the counts with the configured
- *   source_weights. It reports the estimated sampled-row distribution at training time.
+ *   Reads a corpus dir's manifest.json (or scans the parquet files directly), counts files per source,
+ *   optionally loads a training config to pair the counts with the configured source_weights.
+ *   It reports the estimated sampled-row distribution at training time.
  *
- *   Would have caught v0.3.0's "NAD = 411/674 train files × 2.0 weight = ~75% of sampled mix"
- *   finding before the v0.3.0 retrospective surfaced it.
+ *   Would have caught v0.3.0's "NAD = 411/674 train files × 2.0 weight = ~75% of
+ *   sampled mix" finding before the v0.3.0 retrospective surfaced it.
  *
  *   Emits warnings to stderr and the audit table to stdout. never throws on an empty corpus.
  */

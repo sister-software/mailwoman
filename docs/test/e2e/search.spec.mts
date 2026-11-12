@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { expect, type Locator, type Page, test } from "@playwright/test"
 
 /**
@@ -29,9 +32,9 @@ test("the search modal returns a hit for a reference page", async ({ page }) => 
 
 	const first = dialog.getByRole("option").first()
 
-	await expect(first).toContainText("Locales and tiers")
+	await expect(first).toContainText("Data and locales")
 	await first.click()
-	await expect(page).toHaveURL(/\/docs\/developers\/reference\/locales-and-tiers/)
+	await expect(page).toHaveURL(/\/docs\/reference\/data-and-locales/)
 })
 
 test("a misspelled query shows the corrected text", async ({ page }) => {

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generate canonical and reversed French addresses from real OpenAddresses tuples. Reversed forms
- *   vary postcode, locality and street order. Optional sub-modes add ordinal house numbers and
- *   uppercase localities. `--golden` emits a held-out evaluation set.
+ *   Generate canonical and reversed French addresses from real OpenAddresses tuples.
+ *
+ *   Reversed forms vary postcode, locality and street order.
+ *   Optional sub-modes add ordinal house numbers and uppercase localities.
+ *   `--golden` emits a held-out evaluation set.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
@@ -20,7 +22,7 @@ import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-const SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
+const SOURCE = { zip: currentSourcePath("openaddresses", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 
 /**
  * French house-number ordinal suffixes.

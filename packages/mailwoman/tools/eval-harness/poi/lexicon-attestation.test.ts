@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/activity-lexicon` declares zero dependencies, so the attestations that point at a committed query row, the POI taxonomy, or a compiled concept are checked here, where all three artifacts are held.
+ *   `@mailwoman/activity-lexicon` declares zero dependencies, so the attestations
+ *   that point at a committed query row, the POI taxonomy, or a compiled concept
+ *   are checked here, where all three artifacts are held.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"

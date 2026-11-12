@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The html body as a React tree over react-email's components. They provide the table layout and inline styles mail
- *   clients need. It renders the sections `content.ts` decides and adds no copy of its own. Styles are inline objects:
- *   mail clients drop stylesheets.
+ *   The html body as a React tree over react-email's components.
+ *
+ *   They provide the table layout and inline styles mail clients need.
+ *   It renders the sections `content.ts` decides and adds no copy of its own.
+ *   Styles are inline objects: mail clients drop stylesheets.
  */
 
 import { Body, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text } from "@react-email/components"

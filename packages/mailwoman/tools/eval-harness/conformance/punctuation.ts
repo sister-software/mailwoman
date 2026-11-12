@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Punctuation invariance suite. It asserts that separator commas, periods and apostrophe forms do not change a
- *   parse. Hyphens and punctuation inside tokens are out of scope.
+ *   Punctuation invariance suite.
+ *
+ *   It asserts that separator commas, periods and apostrophe forms do not change a parse.
+ *   Hyphens and punctuation inside tokens are out of scope.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -148,7 +150,7 @@ export function classifyPunctuationTransformation(base: string, variant: string)
 /**
  * Rules that exclude a transformation.
  *
- * `identity-transformation` applies when the text does not change.
+ * `identity-transformation` applies when the text doesn't change.
  * `mark-inside-token` applies when every removable mark sits inside a token.
  *
  * `text-echoing-comparator` applies when the row's comparator grades text that the transformation rewrites.

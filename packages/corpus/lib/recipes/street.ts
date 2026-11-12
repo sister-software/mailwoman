@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `street` recipe — synthetic street-decomposition rows for Stage 3 (US-only): tuples →
- *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from the root build script it replaced.
+ *   `street` recipe — synthetic street-decomposition rows for Stage 3 (US-only):
+ *   tuples → {@link synthesizeStreetRow} → aligned LabeledRow.
+ *   Ported from the root build script it replaced.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"

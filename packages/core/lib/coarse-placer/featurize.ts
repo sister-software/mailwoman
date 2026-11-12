@@ -7,8 +7,9 @@
  *   The training path and always-resident inference share it without dependencies. A string maps to a set of active
  *   feature indices in [0, FEATURE_DIM).
  *
- *   Script is the dominant coarse-geography signal. Char n-grams separate within a script, so a
- *   linear model over both stays a few hundred KB and runs in microseconds.
+ *   Script is the dominant coarse-geography signal.
+ *   Char n-grams separate within a script, so a linear model over both stays a
+ *   few hundred KB and runs in microseconds.
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"

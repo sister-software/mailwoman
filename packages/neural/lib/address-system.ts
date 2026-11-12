@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Detects the address system from the model's `locale_logits` output. Detection returns null below the confidence
- *   threshold, so a low-confidence parse applies no conventions.
+ *   Detects the address system from the model's `locale_logits` output.
+ *
+ *   Detection returns null below the confidence threshold, so a low-confidence parse applies no conventions.
  */
 
 import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
@@ -38,7 +39,7 @@ export interface AddressSystemTable {
  *
  * It returns `null` when the card has no such field.
  *
- * @throws When the value is present but is not `{no_hint: number, members: {"CC/script": number}}`.
+ * @throws When the value is present but isn't `{no_hint: number, members: {"CC/script": number}}`.
  */
 export function parseAddressSystemTable(value: unknown, source: string): AddressSystemTable | null {
 	if (value == null) return null
@@ -197,7 +198,7 @@ export function detectAddressSystem(localeLogits: readonly number[] | null, thre
  *
  * Unlike {@link detectAddressSystem}, it also returns countries without a `SystemCode`.
  * The country indicates that the text resembles that country's address format.
- * It does not resolve the address's actual country.
+ * It doesn't resolve the address's actual country.
  */
 export function confidentLocaleCountry(
 	localeLogits: readonly number[] | null,

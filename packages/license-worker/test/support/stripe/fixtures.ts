@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Minimal Stripe objects: only the fields the handlers read. A test that needs another field adds it here, so the
- *   fixtures say what the worker depends on. Event builders answer `Stripe.Event`, so a handler test passes them as
- *   the handler is typed. the assertion is the one place the fixture meets the SDK's union.
+ *   Minimal Stripe objects: only the fields the handlers read.
+ *
+ *   A test that needs another field adds it here, so the fixtures say what the worker depends on.
+ *   Event builders answer `Stripe.Event`, so a handler test passes them as the handler
+ *   is typed. the assertion is the one place the fixture meets the SDK's union.
  */
 
 import type Stripe from "stripe"

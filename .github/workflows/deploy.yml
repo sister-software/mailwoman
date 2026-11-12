@@ -2,7 +2,7 @@
 # apps (Earth, Moon, Mars). One deployer per Worker, from here, on every push to main. the Workers Builds projects
 # that used to deploy the two workers are retired so that no other deployer races this workflow.
 #
-# which workers A push deploys is not a path list in this file. The `targets` job runs
+# which workers A push deploys isn't a path list in this file. The `targets` job runs
 # `mwops release deploy-targets`, which diffs the push against its parent, maps each changed file to its workspace,
 # and deploys a Worker when a changed workspace lies in that Worker's dependency closure (walked from the manifests)
 # or a root build file changed. The Worker table — build command, wrangler environment, receipt URL — lives in
@@ -126,7 +126,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # wrangler and Vite both resolve the workspaces through the `default` condition. That condition names `out/`.
+      # wrangler and Vite both resolve the workspaces through the `default` condition. That condition identifies `out/`.
       - name: Compile
         run: yarn compile
 
@@ -158,5 +158,5 @@ jobs:
             fi
             sleep 10
           done
-          echo "::error::$RECEIPT did not answer after the deploy"
+          echo "::error::$RECEIPT didn't answer after the deploy"
           exit 1

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What the app adds inside `@mailwoman/react/map`'s result panel: the FST provenance line, the XML view of the
- *   decoded tree, the span ribbon, the stage timing and the containment tree. The XML is decoded on first request
- *   through a dynamic import so the decoder's serializer stays out of the page's entry chunk.
+ *   What the app adds inside `@mailwoman/react/map`'s result panel: the FST provenance line,
+ *   the XML view of the decoded tree, the span ribbon, the stage timing and the containment tree.
+ *
+ *   The XML is decoded on first request through a dynamic import so the decoder's
+ *   serializer stays out of the page's entry chunk.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"

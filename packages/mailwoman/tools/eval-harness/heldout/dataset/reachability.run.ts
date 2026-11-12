@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Counts, for each candidate vocabulary, the gold span edges of a frozen held-out dataset that fall inside one
- *   of its pieces, and writes one census per vocabulary.
+ *   Counts, for each candidate vocabulary, the gold span edges of a frozen held-out
+ *   dataset that fall inside one of its pieces, and writes one census per vocabulary.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/reachability.run.ts \

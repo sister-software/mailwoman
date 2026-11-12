@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the compiled CLI with an isolated empty data root. It pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
+ *   Runs the compiled CLI with an isolated empty data root.
+ *
+ *   It pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

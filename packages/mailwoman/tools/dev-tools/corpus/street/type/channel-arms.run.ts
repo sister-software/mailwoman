@@ -2,33 +2,43 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures what the `street_type` evidence channel changes about the parsed street, over three arms
- *   on the same board rows and the same weights.
+ *   Measures what the `street_type` evidence channel changes about the parsed street,
+ *   over three arms on the same board rows and the same weights.
  *
- *   Three arms run. The first uses the shipped lexicon. The second switches the channel off. The third
- *   extends the shipped lexicon with street words for locales it omits. Each arm counts the rows whose
- *   assembled street name equals `expectComponents.street`, per country.
+ *   Three arms run.
+ *   The first uses the shipped lexicon.
+ *
+ *   The second switches the channel off.
+ *   The third extends the shipped lexicon with street words for locales it omits.
+ *
+ *   Each arm counts the rows whose assembled street name equals `expectComponents.street`, per country.
  *
  *   Each column answers a different question.
  *
- *   The ablated arm removes a channel the model trained with. `createScorer` prints the model card's
- *   own out-of-distribution warning when it does. A row whose street receives no paint under the
- *   shipped lexicon already feeds the channel a zero vector. Such a row cannot move between the
- *   shipped and the ablated arm, so those two columns measure the channel only over the locales the
- *   lexicon covers. The extended arm is the one that reaches a locale the lexicon omits.
+ *   The ablated arm removes a channel the model trained with.
+ *   `createScorer` prints the model card's own out-of-distribution warning when it does.
  *
- *   The extended arm sits out of distribution in the opposite direction. It feeds a positive feature
- *   where training fed zero. A row it fixes does not predict the number of rows a retrain would fix. A row
- *   it breaks does not refuse a retrain either. The count states whether the signal reaches the
- *   decision under the current weights. That answer decides whether to start a codex authoring pass and a
- *   training run.
+ *   A row whose street receives no paint under the shipped lexicon already feeds the channel a zero vector.
+ *   Such a row cannot move between the shipped and the ablated arm, so those two columns
+ *   measure the channel only over the locales the lexicon covers.
+ *
+ *   The extended arm is the one that reaches a locale the lexicon omits.
+ *
+ *   The extended arm sits out of distribution in the opposite direction.
+ *   It feeds a positive feature where training fed zero.
+ *
+ *   A row it fixes doesn't predict the number of rows a retrain would fix.
+ *   A row it breaks doesn't refuse a retrain either.
+ *
+ *   The count states whether the signal reaches the decision under the current weights.
+ *   That answer decides whether to start a codex authoring pass and a training run.
  *
  *   The probe lexicon is written under the scratch directory.
- *   `data/gazetteer/street-type-lexicon-v3.json` is an input to training and `lint-prose.ts` reads no
- *   JSON, so an edit to the committed artifact would reach a training run unreviewed.
+ *   `data/gazetteer/street-type-lexicon-v3.json` is an input to training and `lint-prose.ts`
+ *   reads no JSON, so an edit to the committed artifact would reach a training run unreviewed.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/street/type/channel-arms.run.ts [--country ES,MX,IT] [--json <out>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/street/type/channel-arms.run.ts
+ *   [--country ES,MX,IT] [--json <out>]
  */
 
 import { slotNodes } from "@mailwoman/core/decoder"

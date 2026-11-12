@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Environment variables the `mailwoman` CLI and runtime pipeline read, plus the overrides its evaluation tooling
- * accepts. The resolver's database paths are inherited from `@mailwoman/resolver-wof-sqlite/env`.
+ * Environment variables the `mailwoman` CLI and runtime pipeline read,
+ * plus the overrides its evaluation tooling accepts.
+ *
+ * The resolver's database paths are inherited from `@mailwoman/resolver-wof-sqlite/env`.
  */
 
 import { blankAsAbsent } from "@mailwoman/core/env/utils"
@@ -160,4 +162,22 @@ export const PrivateMailwomanEnvSchema = z.object({
 		title: "Premise-linkage salt",
 		description: "Per-run secret used to salt published case identifiers in controlled premise-linkage evaluations.",
 	}),
+	US_CENSUS_API_KEY: z
+		.string()
+		.optional()
+		.meta({
+			title: "US Census API key",
+			description:
+				"Key for api.census.gov, which the US address coverage census reads its county housing table from. " +
+				"Request one at https://api.census.gov/data/key_signup.html.",
+		}),
+	CLOUDFLARE_FIREWALL_TOKEN: z
+		.string()
+		.optional()
+		.meta({
+			title: "Cloudflare firewall-rules token",
+			description:
+				"The firewall role's token from `mwops release mint-cloudflare-tokens`: Zone WAF edit and Zone read on " +
+				"mailwoman.post, which the bucket's browser-only access-rule tool needs.",
+		}),
 })

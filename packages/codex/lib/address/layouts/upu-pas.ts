@@ -6,17 +6,20 @@
  *
  * A description is a few pages UPU collects from the designated postal operator: the postcode, where
  * the address sits on the envelope, and printed examples with each line labeled (`thoroughfare +
- * premises`, `post office + postcode`). It is not an S42 template and specifies no approved crosswalk.
+ * premises`, `post office + postcode`). It isn't an S42 template and specifies no approved crosswalk.
  * It states what the operator prints.
  *
- * This table includes a country only where libaddressinput states no `fmt`, or where its `fmt` omits the
- * locality line in the operator's own examples. The United Arab Emirates uses `%N%n%O%n%A%n%S`.
- * Each layout transcribes the examples' line order. The dependent-locality line follows
- * the generated tables' convention: it renders a district where a row has one, and an address without
- * one prints the same lines the examples print.
+ * This table includes a country only where libaddressinput states no `fmt`, or
+ * where its `fmt` omits the locality line in the operator's own examples.
+ * The United Arab Emirates uses `%N%n%O%n%A%n%S`.
  *
- * Bonaire, Sint Eustatius and Saba and Sint Maarten are absent: their descriptions (`besEn.pdf` 05/2014 and
- * `sxmEn.pdf` 11/2011) state only the 2010 dissolution of the Netherlands Antilles and print no address.
+ * Each layout transcribes the examples' line order.
+ * The dependent-locality line follows the generated tables' convention: it renders a district
+ * where a row has one, and an address without one prints the same lines the examples print.
+ *
+ * Bonaire, Sint Eustatius and Saba and Sint Maarten are absent: their descriptions
+ * (`besEn.pdf` 05/2014 and `sxmEn.pdf` 11/2011) state only the 2010 dissolution
+ * of the Netherlands Antilles and print no address.
  */
 
 import {

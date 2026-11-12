@@ -2,37 +2,44 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Harvests Estonia's INSPIRE Addresses (AD) theme into the newline-delimited JSON file that
- * `#ee/adapters/ads/adapter` reads.
+ * Harvests Estonia's INSPIRE Addresses (AD) theme into the newline-delimited JSON
+ * file that `#ee/adapters/ads/adapter` reads.
  *
- * Maa- ja Ruumiamet publishes the Aadressiandmete süsteem through GeoServer at
- * {@linkcode EE_ADS_WFS}. The service's dataset record states Creative Commons CC0 1.0 in
- * `otherConstraints`, which the address-source register elected under `spdx` `CC0-1.0`. CC0 reserves
- * no act, so paging the service and storing what it returns is granted and the harvest needs no
- * attribution clause.
+ * Maa- ja Ruumiamet publishes the Aadressiandmete süsteem through GeoServer at {@linkcode EE_ADS_WFS}.
+ * The service's dataset record states Creative Commons CC0 1.0 in `otherConstraints`,
+ * which the address-source register elected under `spdx` `CC0-1.0`.
  *
- * `#tools/fetch/inspire-addresses` owns the capabilities read and the GeoJSON page read, and
- * `#tools/fetch/wfs-harvest` owns the appending, the manifest and the resumption. This module states
- * what is particular to Estonia: four measurements taken on 2026-10-02:
+ * CC0 reserves no act, so paging the service and storing what it returns is granted
+ * and the harvest needs no attribution clause.
  *
- * 1. The payload needs no component resolution. GeoServer flattens the application schema here, so
- *    each `component<n>_xlink_href` has a sibling `component<n>_xlink_title` carrying the referenced
- *    feature's value, and the adapter reads the titles. The harvest therefore takes one feature type
- *    rather than the five a harmonized INSPIRE service splits an address across.
- * 2. `resultType=hits` at `startIndex=1` reports `numberMatched="729973"` and a feature page reports
- *    the same number, so this service's count is real. It is read through
- *    `readCheckedWFSFeatureCount`, which proves the number against a page before a caller uses it,
- *    and no count is written into this file.
- * 3. The service honors a sort. `ImplementsSorting` is `TRUE`, `sortBy=gml_id` answers HTTP 200 and
- *    `sortBy=gml_id D` returns the type's last features first. That proves the parameter is
- *    applied rather than accepted and dropped. `sortBy=gml:identifier` and `sortBy=inspireId` answer
- *    HTTP 400 `Illegal property name`, so the sort property is one of the flattened names.
- * 4. A `count=10000` page of `application/json` is 31,198,909 bytes and takes about 6 seconds. At
- *    729,973 features that is 73 pages and about 2.3 GB, plus three requests for the capabilities and
- *    the checked count.
+ * `#tools/fetch/inspire-addresses` owns the capabilities read and the GeoJSON page read,
+ * and `#tools/fetch/wfs-harvest` owns the appending, the manifest and the resumption.
+ * This module states what's particular to Estonia: four measurements taken on 2026-10-02:
  *
- * The harvest writes one feature per line. The adapter can then stream the whole extract
- * without holding a page. The `FeatureCollection` envelope is dropped: its counts describe one page
+ * 1. The payload needs no component resolution.
+ *    GeoServer flattens the application schema here, so each `component<n>_xlink_href`
+ *    has a sibling `component<n>_xlink_title` carrying the referenced feature's value,
+ *    and the adapter reads the titles.
+ *    The harvest therefore takes one feature type rather than the five a harmonized
+ *    INSPIRE service splits an address across.
+ * 2. `resultType=hits` at `startIndex=1` reports `numberMatched="729973"` and a feature
+ *    page reports the same number, so this service's count is real.
+ *    It is read through `readCheckedWFSFeatureCount`, which proves the number against a page
+ *    before a caller uses it, and no count is written into this file.
+ * 3. The service honors a sort.
+ *    `ImplementsSorting` is `TRUE`, `sortBy=gml_id` answers HTTP 200
+ *    and `sortBy=gml_id D` returns the type's last features first.
+ *    That proves the parameter is applied rather than accepted and dropped.
+ *    `sortBy=gml:identifier` and `sortBy=inspireId` answer HTTP 400 `Illegal property name`,
+ *    so the sort property is one of the flattened names.
+ * 4. A `count=10000` page of `application/json` is 31,198,909 bytes and takes about 6 seconds.
+ *    At 729,973 features that's 73 pages and about 2.3 GB, plus three requests
+ *    for the capabilities and the checked count.
+ *
+ * The harvest writes one feature per line.
+ * The adapter can then stream the whole extract without holding a page.
+ *
+ * The `FeatureCollection` envelope is dropped: its counts describe one page
  * and the manifest records them per page instead.
  */
 
@@ -103,7 +110,7 @@ const LICENSE = "CC0-1.0"
 /**
  * The spacing between requests.
  *
- * The service answers a 10,000-feature page in about 6 seconds, so this is not what limits the harvest.
+ * The service answers a 10,000-feature page in about 6 seconds, so this isn't what limits the harvest.
  * It bounds the harvest to one request per second against a government host
  * whose published terms state no rate.
  *

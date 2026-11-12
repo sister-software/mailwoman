@@ -5,24 +5,28 @@
  *   Per-locale held-out F1 regression check.
  *
  *   The golden v0.1.2 dev set has country files `dev/us.jsonl` and `dev/fr.jsonl`.
- *   It also has `dev/adversarial.jsonl`. This script loads the neural classifier once and scores each country file.
- *   It reports per-locale component-F1 and exact-match. It also reports macro-F1 spread across locales.
+ *   It also has `dev/adversarial.jsonl`.
  *
- *   The score follows `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the Stage-3 street
- *   parts (`street_prefix`/`street`/`street_suffix` → `street`, `intersection_a`/`_b` → `street`) into the
- *   golden component vocab, then compare case-folded strings per tag.
+ *   This script loads the neural classifier once and scores each country file.
+ *   It reports per-locale component-F1 and exact-match.
+ *   It also reports macro-F1 spread across locales.
+ *
+ *   The score follows `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the Stage-3
+ *   street parts (`street_prefix`/`street`/`street_suffix` → `street`, `intersection_a`/`_b` → `street`)
+ *   into the golden component vocab, then compare case-folded strings per tag.
  *
  *   The fold is read per row from the answer key's own `MANIFEST.json` (`convention.street_convention`):
  *   split-convention countries are scored unfolded, everyone else keeps the glue.
  *
- *   The anchor + gazetteer feed channels are fed by default (the standard paths, same as
- *   `score-country-homograph.ts` / `oa-resolver-eval`), because omitting them scores an anchor-trained model
- *   out-of-distribution and silently collapses the admin tags (country→0, region↔locality flips) while
- *   street/venue survive. Pass `--no-anchor` to measure the zero-feed path on purpose.
+ *   The anchor + gazetteer feed channels are fed by default
+ *   (the standard paths, same as `score-country-homograph.ts` / `oa-resolver-eval`),
+ *   because omitting them scores an anchor-trained model out-of-distribution and silently
+ *   collapses the admin tags (country→0, region↔locality flips) while street/venue survive.
+ *   Pass `--no-anchor` to measure the zero-feed path on purpose.
  *
- *   `promotion-eval.ts` calls {@linkcode perLocaleF1} in-process and captures the markdown report (the
- *   `report` sink) into `<out-dir>/<tag>-per-locale.md`, the file the verdict assembler regex-reads, while the
- *   progress narration goes to `reportError`.
+ *   `promotion-eval.ts` calls {@linkcode perLocaleF1} in-process and captures the markdown
+ *   report (the `report` sink) into `<out-dir>/<tag>-per-locale.md`, the file the verdict
+ *   assembler regex-reads, while the progress narration goes to `reportError`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -436,7 +440,7 @@ export async function perLocaleF1(
 
 		// Anchor + gazetteer feed, default-on so an anchor-trained model is scored
 		// in-distribution; `--no-anchor` opts out and explicit paths override,
-		// while the runner harmlessly skips inputs a plainer ONNX does not declare.
+		// while the runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
 
@@ -508,7 +512,7 @@ export async function perLocaleF1(
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null)
 
 			// Production parses feed the query-shape prior + `postcodeRepair` on every path,
-			// so this battery must too or it scores a config production does not run.
+			// so this battery must too or it scores a config production doesn't run.
 			const rowShape = computeQueryShape(row.raw)
 
 			const tree = await neural.parse(row.raw, {

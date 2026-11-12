@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The glyph stacks a symbol layer may name. MapLibre draws no text when a glyph range answers 404, so a `text-font`
- *   naming an absent stack blanks every label in the style with no console error a reader would connect to it. The
- *   mirror behind `PROTOMAPS_GLYPHS_URL` serves `Bliss Pro Regular`, `Bliss Pro Medium`, `Bliss Pro Italic`,
- *   `Fira Code Regular` and `Fira Code Medium` — and no `Open Sans Regular`, which is MapLibre's own default. Name a
- *   constant from this file rather than a string literal.
+ *   The glyph stacks a symbol layer may name.
  *
- *   MapLibre requests one fontstack per URL, so a `text-font` list cannot fall back across files on a static bucket.
- *   Each Bliss Pro stack therefore merges Bliss Pro's Latin, Greek and Cyrillic glyphs over the Noto Sans
- *   glyphs of the same style, and a label in any other script draws from the Noto glyphs inside the same file.
+ *   MapLibre draws no text when a glyph range answers 404, so a `text-font` naming an absent
+ *   stack blanks every label in the style with no console error a reader would connect to it.
+ *   The mirror behind `PROTOMAPS_GLYPHS_URL` serves `Bliss Pro Regular`,
+ *   `Bliss Pro Medium`, `Bliss Pro Italic`, `Fira Code Regular` and `Fira Code Medium` —
+ *   and no `Open Sans Regular`, which is MapLibre's own default.
+ *
+ *   Name a constant from this file rather than a string literal.
+ *
+ *   MapLibre requests one fontstack per URL, so a `text-font` list cannot fall
+ *   back across files on a static bucket.
+ *   Each Bliss Pro stack therefore merges Bliss Pro's Latin, Greek and Cyrillic
+ *   glyphs over the Noto Sans glyphs of the same style, and a label in any other
+ *   script draws from the Noto glyphs inside the same file.
  */
 
 /**

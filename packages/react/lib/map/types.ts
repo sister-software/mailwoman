@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the geocoder map surface. Its `react-map-gl/maplibre` imports are type-only, so the module stays node-safe.
+ *   Types for the geocoder map surface.
+ *
+ *   Its `react-map-gl/maplibre` imports are type-only, so the module stays node-safe.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

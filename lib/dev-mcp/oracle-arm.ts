@@ -2,15 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reference geocoders provide a metered comparison arm. They never supply grading truth.
+ *   Reference geocoders provide a metered comparison arm.
+ *   They never supply grading truth.
  *
- *   An oracle arm always reports `grade: "diff-only"` and a null verdict. It flags rows for a human to read.
- *   The harness enforces this behavior because a billed third-party geocoder must not become an answer key.
+ *   An oracle arm always reports `grade: "diff-only"` and a null verdict.
+ *   It flags rows for a human to read.
  *
- *   `census` is free and unauthenticated. It covers the United States, so callers can use it without extra setup.
+ *   The harness enforces this behavior because a billed third-party geocoder mustn't become an answer key.
  *
- *   `google` incurs a charge. Its opt-in lives in a daemon config file because the key owner controls spending.
- *   The result reports the call cap for that daemon's lifetime. Tool arguments cannot opt in to billed requests.
+ *   `census` is free and unauthenticated.
+ *   It covers the United States, so callers can use it without extra setup.
+ *
+ *   `google` incurs a charge.
+ *   Its opt-in lives in a daemon config file because the key owner controls spending.
+ *
+ *   The result reports the call cap for that daemon's lifetime.
+ *   Tool arguments cannot opt in to billed requests.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -62,7 +69,7 @@ export interface OracleConfig {
 
 /**
  * Chosen to cover one 420-row panel with margin and to come nowhere near a sweep.
- * A cap that silently permits an unbounded run is not a cap.
+ * A cap that silently permits an unbounded run isn't a cap.
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
@@ -72,7 +79,7 @@ export async function readOracleConfig(path: PathBuilderLike = ORACLE_CONFIG_PAT
 	try {
 		return await readLocalJSONFile<OracleConfig>(path)
 	} catch {
-		// A malformed config must not read as "enabled": absence and garbage both mean off.
+		// A malformed config mustn't read as "enabled": absence and garbage both mean off.
 		return {}
 	}
 }
@@ -95,7 +102,7 @@ export interface OracleAdmission {
  * The call cap resets when the process restarts.
  *
  * The operator owns the budget.
- * The process does not infer it.
+ * The process doesn't infer it.
  */
 export class OracleMeter {
 	#googleCalls = 0

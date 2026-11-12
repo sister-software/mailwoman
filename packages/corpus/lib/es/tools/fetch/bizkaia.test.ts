@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves what the Bizkaia harvest reads out of the service document, what it refuses, and that one
- *   run writes both the municipality archives and the WFS component documents the adapter joins
- *   against.
+ *   Proves what the Bizkaia harvest reads out of the service document,
+ *   what it refuses, and that one run writes both the municipality archives
+ *   and the WFS component documents the adapter joins against.
  *
- *   The bodies are the shapes `apli.bizkaia.eus` and `geo.bizkaia.eus` serve, reduced to the
- *   elements this harvest reads. The service document's entries hold a `rel="enclosure"` link and
- *   repeat one `<updated>`, and the WFS's feature pages state `numberMatched="unknown"` with the
- *   delivered count in `numberReturned`, which is why the count is read from a separate
- *   `RESULTTYPE=hits` request.
+ *   The bodies are the shapes `apli.bizkaia.eus` and `geo.bizkaia.eus` serve,
+ *   reduced to the elements this harvest reads.
+ *   The service document's entries hold a `rel="enclosure"` link and repeat one `<updated>`,
+ *   and the WFS's feature pages state `numberMatched="unknown"` with the delivered count in
+ *   `numberReturned`, which is why the count is read from a separate `RESULTTYPE=hits` request.
  *
- *   `./bizkaia.integration.test.ts` reads the live services. This suite stubs the transport and runs
- *   the real `APIClient` over it, so the requests go through the same adapter and error mapping they
- *   do against the publisher.
+ *   `./bizkaia.integration.test.ts` reads the live services.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the requests
+ *   go through the same adapter and error mapping they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -81,7 +81,7 @@ function serviceXML(...entries: string[]): string {
 const SERVICE_XML = serviceXML(entryXML("48001", "ABADIÑO", "001"), entryXML("48915", "ZIORTZA-BOLIBAR", "915"))
 
 /**
- * A body that is a zip archive as far as the harvest reads it.
+ * A body that's a zip archive as far as the harvest reads it.
  *
  * The harvest stores the archive for the adapter rather than opening it,
  * so what its members hold is the adapter's test's business.
@@ -218,7 +218,7 @@ describe("fetchBizkaiaComponentDocument", () => {
 		await expect(readLocalTextFile(dest)).resolves.toContain('gml:id="adComponent.3"')
 
 		// One hits request and one feature request: this service advertises
-		// ImplementsResultPaging=FALSE, so there is no second page to ask for.
+		// ImplementsResultPaging=FALSE, so there's no second page to ask for.
 		expect(client.calls).toHaveLength(2)
 	})
 
@@ -310,7 +310,7 @@ describe("harvestESBizkaia", () => {
 		const summary = await harvestESBizkaia(second, { outputDir: temporary.path })
 
 		expect(summary.skipped).toBe(2)
-		// The component documents state no version, so they are read again on every run.
+		// The component documents state no version, so they're read again on every run.
 		expect(summary.fetched).toBe(ES_BIZKAIA_COMPONENT_TYPES.length)
 		expect(summary.failed).toBe(0)
 	})

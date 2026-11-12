@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The token-embedding lookup for a split release. A split release ships `encoder.onnx`, which takes
- *   `inputs_embeds` in place of `input_ids`, and the quantized embedding table as MWE1 row files written
- *   by `trainer-export split-embeddings` (`packages/trainer/crates/trainer-export/src/split.rs`). The lookup reproduces the two
- *   nodes the split removed: a `Gather` of UINT8 rows and one per-tensor `DequantizeLinear`,
- *   `(row - zeroPoint) * scale`.
+ *   The token-embedding lookup for a split release.
+ *
+ *   A split release ships `encoder.onnx`, which takes `inputs_embeds` in place of
+ *   `input_ids`, and the quantized embedding table as MWE1 row files written by
+ *   `trainer-export split-embeddings` (`packages/trainer/crates/trainer-export/src/split.rs`).
+ *   The lookup reproduces the two nodes the split removed: a `Gather` of UINT8 rows
+ *   and one per-tensor `DequantizeLinear`, `(row - zeroPoint) * scale`.
  *
  *   The module imports no `onnxruntime-*` and no `node:` built-in, so both runners share it.
  */
@@ -57,7 +59,7 @@ export interface EmbeddingHeader {
 /**
  * Parses an MWE1 header from at least its first 32 bytes.
  *
- * @throws When the magic, header length or layout does not match the format.
+ * @throws When the magic, header length or layout doesn't match the format.
  */
 export function parseEmbeddingHeader(bytes: Uint8Array): EmbeddingHeader {
 	if (bytes.byteLength < EMBEDDING_HEADER_BYTES) {
@@ -127,7 +129,7 @@ export type EmbeddingRangeReader = (offset: number, length: number) => Promise<U
 /**
  * Returns a range reader that fetches byte ranges of `url` with HTTP `Range` requests.
  *
- * @throws From the returned reader when the response is not a 206 of exactly the requested length.
+ * @throws From the returned reader when the response isn't a 206 of exactly the requested length.
  */
 export function httpEmbeddingRangeReader(url: string, fetchImpl: typeof fetch = fetch): EmbeddingRangeReader {
 	return async (offset, length) => {

@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The native error envelope, for surfaces ours to design (the `@mailwoman/api` native `/v1/*`
- *   routes); surfaces carrying a vendor-compat interface (photon, nominatim, libpostal) keep
- *   their own error shapes.
+ *   The native error envelope, for surfaces ours to design (the `@mailwoman/api` native `/v1/*` routes);
+ *   surfaces carrying a vendor-compat interface (photon, nominatim, libpostal) keep their own error shapes.
  */
 
 import type { Context } from "hono"
@@ -13,7 +12,7 @@ import { z } from "zod"
 
 /**
  * The native error envelope: a short machine-stable `error` string plus a human
- * `detail`, `null` when there is none.
+ * `detail`, `null` when there's none.
  */
 export const APIErrorSchema = z
 	.object({

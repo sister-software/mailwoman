@@ -1,6 +1,6 @@
 ---
 slug: two-voices-arguing-in-a-model
-title: Two voices arguing inside a model — a beginner-friendly debugging story
+title: Two voices arguing inside a model
 authors: [playpen-agent]
 tags: [training]
 ---
@@ -9,17 +9,17 @@ tags: [training]
 
 **[Mailwoman](https://mailwoman.post)** is an open-source address parser that runs in Node and the browser. It uses a small neural model to label address components ("350" = house number, "NY" = region, etc.). [Try the live demo.](/demo)
 
-This post is a beginner-friendly debugging story that needs no ML background. If you want the project status, see [what ships today](/docs/developers/status).
+This post is a beginner-friendly debugging story that needs no ML background. If you want the project status, see [what ships today](/product/limits-and-status).
 
 :::
 
-This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is starting to learn about AI and machine learning. It assumes no jargon and no math beyond high-school algebra, and it uses a problem we ran into this week to show what ML debugging looks like.
+This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who's starting to learn about AI and machine learning. It assumes no jargon and no math beyond high-school algebra, and it uses a problem we ran into this week to show what ML debugging looks like.
 
 If you've been programming for a while but ML feels opaque, this post is for you. Our core technique was to measure which of two training signals the model was following, and that turned out to be much closer to ordinary debugging than the field typically makes it sound.
 
 {/* truncate */}
 
-## What we're building, in one paragraph
+## What Mailwoman does
 
 Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, New York, NY 10118"`) and turns them into structured place information ("this is in Manhattan, these are the coordinates, this is the postcode, etc."). It uses a small AI model to do the parsing. The model is small by AI standards, with about 9 million numbers inside it. For comparison, GPT-4 is rumored to have over a trillion.
 
@@ -79,11 +79,11 @@ loss
    0     500     800     1100
 ```
 
-The model descends steadily for 500 steps (warmup), stays at a low loss for a while, and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples, and it got _worse_.
+The model descends steadily for 500 steps (warmup), stays at a low loss for a while, and then climbs back up. By the end, it's worse than when it started.
 
-This curve means something is wrong, and the model gives no indication of what. There is no stack trace or exception, only a chart showing that the model learned and then unlearned.
+This curve means something is wrong, and the model gives no indication of what. There's no stack trace or exception, only a chart showing that the model learned and then unlearned.
 
-We saw this exact shape in nine different runs, with different learning speeds, model sizes, and feature combinations. Every run descended steadily and then climbed catastrophically.
+We saw this exact shape in nine different runs, with different learning speeds, model sizes, and feature combinations.
 
 ## The clue we'd been missing
 
@@ -96,20 +96,16 @@ For weeks we'd been ruling out hypotheses:
 - Is a new feature we added destabilizing it? No. We turned it off, and the problem remained.
 - Does the data have a bug? We couldn't rule this out, because it was expensive to check.
 
-Then somebody pointed out something we hadn't questioned: **we were training the model with two different goals at once.**
+Then somebody pointed out something we hadn't questioned: we were training the model with two different goals at once.
 
 The model has two scoring systems. We'll call them Voice A and Voice B.
 
 - **Voice A** asks: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
 - **Voice B** asks: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
 
-Both voices are useful, because a working geocoder needs both per-word accuracy _and_ sensible patterns. We'd been adding their feedback together, with Voice B's contribution scaled down to 5%, and using that combined signal to train the model.
-
-We had never asked whether **Voice A and Voice B were telling the model to do the same thing.**
+Both voices are useful, because a working geocoder needs both per-word accuracy _and_ sensible patterns. We'd been adding their feedback together, with Voice B's contribution scaled down to 5%, and using that combined signal to train the model. We'd never asked whether Voice A and Voice B were telling the model to do the same thing.
 
 ## The five-minute diagnostic
-
-The technique we used is simple enough to explain to a curious teenager.
 
 When you train a model, every weight inside it gets nudged in a particular direction based on the combined loss. That nudge is called a **gradient**. If a gradient is big, the weight moves a lot per step, and if it is small, the weight moves a little.
 
@@ -119,13 +115,9 @@ We asked **which voice contributes most of the gradient** at the step before the
 
 We expected Voice A's gradient to be about 20× larger than Voice B's. That would have meant Voice B contributed almost no gradient and the 5% scaling was appropriate.
 
-Instead, **Voice B's raw gradient was 16× larger than Voice A's.**
-
-Voice B was supposed to be scaled to 5%, but its raw gradient was 16× larger than Voice A's. 5% of 16× is 80%, so Voice B's effective contribution to training was 80% of Voice A's. We had set the scaling knob so that Voice B would contribute lightly, but it contributed nearly as much as Voice A.
+Instead, Voice B's raw gradient was 16× larger than Voice A's. Voice B was supposed to be scaled to 5%, and 5% of 16× is 80%, so Voice B's effective contribution to training was 80% of Voice A's. We had set the scaling knob so that Voice B would contribute lightly, but it contributed nearly as much as Voice A.
 
 ## The cooperative-vs-conflict picture
-
-An analogy helps explain the result.
 
 Imagine a hiker on a foggy hill, trying to walk to the lowest point in the landscape. The hiker can't see far and holds two GPS devices that each point downhill.
 
@@ -134,7 +126,7 @@ Imagine a hiker on a foggy hill, trying to walk to the lowest point in the lands
 
 When the devices disagree, the hiker mostly follows **whichever device gives the larger signal**. With Voice B's signal 16× larger than Voice A's, the hiker follows Voice B even though Voice A was pointing at the valley floor. The hiker climbs out of the valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
 
-That is what happened to our model. Above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping. We observed that drop as the loss climbing back up.
+In our model, above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping. We observed that drop as the loss climbing back up.
 
 ## The fix
 
@@ -144,11 +136,11 @@ Voice B still encodes useful structural rules, such as forbidding orphan tags an
 
 The code change is one line: when Voice B's weight is 0, the loop skips computing it. The run then uses only Voice A's gradient. That gradient had behaved well throughout.
 
-## What we tell ourselves we learned
+## Lessons for the next training run
 
-1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier does not balance a loss's contribution to the optimizer. We watched the loss values and drew the wrong conclusion for nine training runs.
+1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier doesn't balance a loss's contribution to the optimizer. We watched the loss values and drew the wrong conclusion for nine training runs.
 2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Each experiment that changed a knob and retrained cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them, because it measured what the model was responding to instead of the end result.
-3. **ML debugging is more like programming debugging than the field admits.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesize, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
+3. **The techniques were the ones we use on ordinary code.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesize, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
 4. **Run cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't run the probe earlier because we didn't know about it.
 
 ## Where to read more
@@ -159,8 +151,6 @@ The code change is one line: when Voice B's weight is 0, the loop skips computin
 
 If you're starting out in ML and any of this helped, please write to `contact@sister.software`. We'd like to hear what gaps the existing intro material still leaves.
 
-## Update — it worked
+## Update: the CE-only run passed
 
-We wrote this post while the CE-only experiment was still running, and the experiment passed. The model trained past step 2000, where every prior run had diverged, without any loss climb. Its final validation accuracy was 0.444, the best number any run in this project has produced. The full 50,000-step training run is now in progress.
-
-Without Voice B's gradient, the model reached a lower loss than any prior run reached before diverging.
+We wrote this post while the CE-only experiment was still running, and the experiment passed. The model trained past step 2000, where every prior run had diverged, without any loss climb, and it reached a lower loss than any prior run reached before diverging. Its final validation accuracy was 0.444, the best number any run in this project has produced. The full 50,000-step training run is now in progress.

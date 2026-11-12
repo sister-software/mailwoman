@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The strict airport-code predicate over the `iata-airport-membership` bitset. An import of it retains that
- *   2,197-byte bitset and the reader, and no airport record, coordinate or name.
+ *   The strict airport-code predicate over the `iata-airport-membership` bitset.
+ *
+ *   An import of it retains that 2,197-byte bitset and the reader,
+ *   and no airport record, coordinate or name.
  */
 
 import { iataAirportMembershipArtifact } from "#artifacts/iata-airport/membership"

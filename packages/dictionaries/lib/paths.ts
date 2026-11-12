@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Resolvers for the files under this package's `data/` directory. They resolve through the package's own
- *   `package.json`, so a checkout and an npm install return the same layout.
+ *   Resolvers for the files under this package's `data/` directory.
+ *
+ *   They resolve through the package's own `package.json`, so a checkout
+ *   and an npm install return the same layout.
  */
 
 import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"

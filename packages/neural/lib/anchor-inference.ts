@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-piece anchor feature layout is cross-language and must match the training encoder's
- *   `feature_vector` (`mtf-channels::anchor`) byte-for-byte, since a wrong locale order or centroid scale
- *   feeds the model garbage.
+ *   The per-piece anchor feature layout is cross-language and must match the
+ *   training encoder's `feature_vector` (`mtf-channels::anchor`) byte-for-byte,
+ *   since a wrong locale order or centroid scale feeds the model garbage.
  */
 
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
@@ -260,7 +260,7 @@ export type AnchorSpanMode = "alnum-run" | "shaped"
 
 /**
  * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index
- * into `text` and `String.prototype.toUpperCase` is not length-preserving (`ß` → `SS`),
+ * into `text` and `String.prototype.toUpperCase` isn't length-preserving (`ß` → `SS`),
  * which would shift every subsequent span and paint the anchor onto the wrong pieces.
  */
 function asciiUpper(text: string): string {
@@ -274,7 +274,7 @@ const GB_INWARD_LENGTH = 3
 
 /**
  * Merges per-binary anchor lookups by unioning the country posteriors per postcode and meaning
- * the centroids, treating a `(0,0)` centroid as a placeholder that is never averaged in.
+ * the centroids, treating a `(0,0)` centroid as a placeholder that's never averaged in.
  */
 export function mergeAnchorLookups(
 	lookups: readonly ReadonlyMap<string, AnchorEntry>[]

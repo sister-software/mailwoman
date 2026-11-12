@@ -4,14 +4,21 @@
 /**
  *   The hole-role resolution, pinned against the convention it depends on.
  *
- *   This test pins the sign convention used by `ringSignedAreaM2`. The helper signs clockwise rings positive.
- *   The standard planar shoelace uses the opposite sign. This resolver reads each ring's role from that sign.
- *   A flipped helper would turn every exterior into a hole and every hole into an exterior. The resulting
- *   polygons would remain well-formed and answer containment questions while reporting incorrect coverage.
+ *   This test pins the sign convention used by `ringSignedAreaM2`.
+ *   The helper signs clockwise rings positive.
  *
- *   The test also covers the publisher's encoding. This service puts each ring in its own `MultiPolygon` part
- *   for features with holes. A reader that trusts the incoming nesting would treat a hole as a second zoned
- *   area. Every case below uses that shape.
+ *   The standard planar shoelace uses the opposite sign.
+ *   This resolver reads each ring's role from that sign.
+ *
+ *   A flipped helper would turn every exterior into a hole and every hole into an exterior.
+ *   The resulting polygons would remain well-formed and answer containment questions
+ *   while reporting incorrect coverage.
+ *
+ *   The test also covers the publisher's encoding.
+ *   This service puts each ring in its own `MultiPolygon` part for features with holes.
+ *
+ *   A reader that trusts the incoming nesting would treat a hole as a second zoned area.
+ *   Every case below uses that shape.
  */
 
 import { pointInEncodedRings, encodeRings, ringAreaReadings, ringSignedAreaM2 } from "@mailwoman/spatial"

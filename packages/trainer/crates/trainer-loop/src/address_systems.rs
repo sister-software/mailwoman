@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The row targets `data/loader/batch.py` adds to every batch: the locale id and the address-system id.
 //!
 //! The address-system registry is `address_systems.json`, which `mailwoman dev generate address-systems` writes from

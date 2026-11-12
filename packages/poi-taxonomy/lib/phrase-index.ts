@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The lowercased phrase → entries index both matching cores build (`lookup-core.ts` for categories,
- *   `brands-lookup-core.ts` for brands), plus the deterministic string order their tie-breaks share. Zero node
- *   imports, so it stays bundler-safe. Not exported via a subpath of its own.
+ *   The lowercased phrase → entries index both matching cores build
+ *   (`lookup-core.ts` for categories, `brands-lookup-core.ts` for brands),
+ *   plus the deterministic string order their tie-breaks share.
+ *
+ *   Zero node imports, so it stays bundler-safe.
+ *   Not exported via a subpath of its own.
  */
 
 /**

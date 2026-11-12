@@ -3,15 +3,26 @@
 
 /**
  *   This module defines platform-free license access rules from Stripe observations.
- *   It also defines the public response for each state. Webhook handlers and reconciliation supply observations.
- *   Ledger functions persist each decision. Neither caller contains its own access rule.
  *
- *   State precedence runs from highest to lowest. A full refund or open dispute revokes access until the dispute is ruled
- *   in the customer's favor. The subscription determines the state again after that ruling. A partial refund triggers
- *   operator review. The public license status remains `active` during review, regardless of subscription status or token
- *   expiration, because the customer paid and the operator owns the review decision. Otherwise the subscription determines
- *   access. An ended subscription stays active until the current token expires. The token covers the paid period plus its
- *   grace period, so online status follows the same validity period as the offline token.
+ *   It also defines the public response for each state.
+ *   Webhook handlers and reconciliation supply observations.
+ *
+ *   Ledger functions persist each decision.
+ *   Neither caller contains its own access rule.
+ *
+ *   State precedence runs from highest to lowest.
+ *   A full refund or open dispute revokes access until the dispute is ruled in the customer's favor.
+ *
+ *   The subscription determines the state again after that ruling.
+ *   A partial refund triggers operator review.
+ *
+ *   The public license status remains `active` during review, regardless of subscription status
+ *   or token expiration, because the customer paid and the operator owns the review decision.
+ *   Otherwise the subscription determines access.
+ *
+ *   An ended subscription stays active until the current token expires.
+ *   The token covers the paid period plus its grace period, so online status follows
+ *   the same validity period as the offline token.
  */
 
 import type Stripe from "stripe"
@@ -71,9 +82,16 @@ export function licenseStateAfterSubscription(
  *
  * The operator reviews a partial refund.
  * The license reads `active` during that review.
+ *
+ * A partial refund leaves a revoked license revoked, because a revocation outranks a review.
  */
-export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "amount_refunded">): LicenseState {
-	return charge.amount_refunded < charge.amount ? LicenseState.Review : LicenseState.Revoked
+export function licenseStateAfterRefund(
+	current: LicenseState,
+	charge: Pick<Stripe.Charge, "amount" | "amount_refunded">
+): LicenseState {
+	if (charge.amount_refunded >= charge.amount) return LicenseState.Revoked
+
+	return current === LicenseState.Revoked ? current : LicenseState.Review
 }
 
 /**

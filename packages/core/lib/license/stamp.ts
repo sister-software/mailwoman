@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The stamp contains no licensee or key ID. It works offline by design.
+ *   The stamp contains no licensee or key ID.
+ *
+ *   It works offline by design.
  *   The well-known register supplies the doctor's freshness check, so each process makes no network call.
  */
 

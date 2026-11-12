@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   End-to-end: no stubs, because protocol drift between shim and worker is the failure this file must catch.
+ *   End-to-end: no stubs, because protocol drift between shim and worker is
+ *   the failure this file must catch.
  */
 
 import { fileURLToPath } from "@mailwoman/core/module/file-url"

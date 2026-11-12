@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared implementation for the decoder-side regex repair passes (`postcode-repair.ts`,
- *   `unit-repair.ts`).
+ *   Shared implementation for the decoder-side regex repair passes (`postcode-repair.ts`, `unit-repair.ts`).
  *
- *   Both passes have the same skeleton: run a priority-ordered list of shape regexes over the raw
- *   input text, resolve the resulting overlapping candidates down to a non-overlapping set, map each
- *   surviving char range onto the token indices it covers, then relabel that run. `unit-repair.ts`
- *   was written as a deliberate mirror of `postcode-repair.ts` (its docstring states this), so the
- *   skeleton was duplicated line-for-line — including two byte-identical sort comparators. This
- *   module is that skeleton, extracted once so the two passes cannot drift on it.
+ *   Both passes have the same skeleton: run a priority-ordered list of shape regexes over the
+ *   raw input text, resolve the resulting overlapping candidates down to a non-overlapping set,
+ *   map each surviving char range onto the token indices it covers, then relabel that run.
+ *   `unit-repair.ts` was written as a deliberate mirror of `postcode-repair.ts`
+ *   (its docstring states this), so the skeleton was duplicated line-for-line —
+ *   including two byte-identical sort comparators.
  *
- *   Each pass retains what differs between passes: the patterns, the ADD/snap eligibility rules,
- *   the `ADD_OVER_TAGS` set and the smear-cleanup policy. Postcode-repair hands a trailing smear
- *   back to a following locality. Unit-repair always clips to `O`. These differences belong in each pass.
- *   pull them up here.
+ *   This module is that skeleton, extracted once so the two passes cannot drift on it.
+ *
+ *   Each pass retains what differs between passes: the patterns, the ADD/snap eligibility
+ *   rules, the `ADD_OVER_TAGS` set and the smear-cleanup policy.
+ *   Postcode-repair hands a trailing smear back to a following locality.
+ *
+ *   Unit-repair always clips to `O`.
+ *   These differences belong in each pass. pull them up here.
  */
 
 import { bareBIOTag } from "@mailwoman/codex/component"
@@ -112,7 +115,7 @@ export function isTagLabel(label: string, tag: string): boolean {
 
 /**
  * The mutate-and-count label writer both passes thread through their repair loop:
- * a no-op write (same label) does not count as a change.
+ * a no-op write (same label) doesn't count as a change.
  */
 export function createLabelSetter(tokens: DecoderToken[]): {
 	setLabel: (i: number, label: DecoderToken["label"]) => void

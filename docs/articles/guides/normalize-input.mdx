@@ -1,0 +1,68 @@
+---
+title: Normalize an address before direct parsing
+description: Clean raw input with the published normalizer and retain source positions when the string length changes.
+role: guide
+source-of-truth: packages/normalize/lib/compute.ts, packages/normalize/lib/types.ts, packages/neural/lib/classifier.ts
+verified-with: published @mailwoman/normalize, neural, neural-weights-en-us v11.0.0
+---
+
+# Normalize an address before direct parsing
+
+Use this procedure when your application calls `NeuralAddressClassifier.parse` directly and must preserve the caller's original text. The classifier parses the exact string you pass to it. Run the deterministic normalizer first when your input has extra spaces or punctuation, and keep its `raw` and `offsetMap` beside the parse result. The [first parse tutorial](../start.mdx) shows the full runtime pipeline. That pipeline runs the normalizer itself.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+
+Install the packages used in this example:
+
+```sh
+npm install --save-exact @mailwoman/normalize@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+The example uses the English model and reads no geographic database. Save the next code block as `normalize-address.ts`.
+
+## Normalize, keep the source map, and parse
+
+```ts
+import { normalize } from "@mailwoman/normalize"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const raw = "  350   5th Ave,New York, NY 10118  "
+const result = normalize(raw)
+const wanted = "5th Ave"
+const start = result.normalized.indexOf(wanted)
+if (start < 0) throw new Error("The normalized text is missing the expected street substring")
+const end = start + wanted.length
+const rawStart = result.offsetMap[start]
+const rawEnd = result.offsetMap[end - 1] + 1
+if (result.offsetMap.length !== result.normalized.length) throw new Error("Offset map length differs")
+
+console.log("raw:", JSON.stringify(result.raw))
+console.log("normalized:", JSON.stringify(result.normalized))
+console.log("transforms:", JSON.stringify(result.transforms))
+console.log("normalized street:", JSON.stringify(result.normalized.slice(start, end)), `[${start},${end})`)
+console.log("raw street:", JSON.stringify(result.raw.slice(rawStart, rawEnd)), `[${rawStart},${rawEnd})`)
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const tree = await classifier.parse(result.normalized)
+console.log("parser text:", JSON.stringify(tree.raw))
+```
+
+Run `node normalize-address.ts`. Published 11.0.0 returned this complete output:
+
+```text
+raw: "  350   5th Ave,New York, NY 10118  "
+normalized: "350 5th Ave, New York, NY 10118"
+transforms: [{"kind":"nfc","changed":false},{"kind":"space_after_comma","inserted":1},{"kind":"collapse_whitespace","runs":3}]
+normalized street: "5th Ave" [4,11)
+raw street: "5th Ave" [8,15)
+parser text: "350 5th Ave, New York, NY 10118"
+```
+
+`normalize` inserted one space after the first comma and collapsed three whitespace runs. Its `transforms` array also records the NFC pass with `changed: false`. In the returned `normalized` field, `5th Ave` occupies `[4,11)`, and `result.normalized.slice(4, 11)` is `"5th Ave"`. The returned `raw` field preserves the exact input. In it, `5th Ave` occupies `[8,15)`, and `result.raw.slice(8, 15)` is also `"5th Ave"`. The `offsetMap` maps each normalized character position to a source position. In this run, `offsetMap[4]` is 8 and `offsetMap[10]` is 14. The normalized and raw positions differ because the input has leading and repeated spaces.
+
+Keep both strings and the map when you store the parse. A parser node's span belongs to the text in `tree.raw`, so check that field before relating the node to a normalization-stage position. The endpoint mapping above holds for the unchanged `5th Ave` substring. An abbreviation expansion can map several output characters to one source character, and the same endpoint calculation then recovers only part of the original substring. When your application can't reconstruct the exact original span, record its source span as unknown and keep the original input for review.
+
+Normalization prepares text for parsing. Use the [result schema](../reference/schema.mdx) for parse spans and the [confidence and limits explanation](../explanation/confidence-and-limits.mdx) for what a node score can support.

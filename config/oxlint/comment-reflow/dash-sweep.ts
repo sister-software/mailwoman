@@ -111,7 +111,7 @@ function openClause(clause: string): string {
 	if (!/^[a-z]/.test(first)) return clause
 
 	// `foo`, foo.bar, fooBar and foo_bar are names.
-	// Capitalized text would refer to a name that does not exist.
+	// Capitalized text would refer to a name that doesn't exist.
 	if (/^[`[(]/.test(first) || IDENTIFIER.test(first)) return clause
 
 	return first.charAt(0).toUpperCase() + clause.slice(1)
@@ -154,7 +154,7 @@ export function sweepSentence(sentence: string): string {
 	// A coordination, a relative clause or an antithesis takes the comma the
 	// sentence wanted and keeps its own case.
 	// None of them needs a verb of its own.
-	// That is why this runs ahead of the clause tests below.
+	// That's why this runs ahead of the clause tests below.
 	if (COMMA_OPENERS.test(after)) return words.length < COMMA_CLAUSE_FLOOR ? sentence : `${before}, ${after}`
 
 	if (words.length < SENTENCE_CLAUSE_FLOOR) return sentence
@@ -291,10 +291,10 @@ function liftTagSentence(body: readonly string[], tags: readonly string[]) {
 }
 
 /**
- * The character ranges a rewrite must not touch: every string, template and regular expression in the file.
+ * The character ranges a rewrite mustn't touch: every string, template and regular expression in the file.
  *
  * A generator that emits `// TODO(…)` inside a template literal has comment-shaped
- * text that is not a comment.
+ * text that's not a comment.
  * A rewrite changes what the program prints.
  * Only a parse tells the two apart.
  */

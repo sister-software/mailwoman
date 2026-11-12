@@ -5,8 +5,8 @@
  *   Where BDUK's release downloads live under the data root.
  *
  *   A source download sits at the data root's top level, outside the `db/` group that holds built layers.
- *   One directory holds each release by its OMR month, and one directory below it holds each region: the
- *   region's archive as published and its extracted CSV files.
+ *   One directory holds each release by its OMR month, and one directory below it holds
+ *   each region: the region's archive as published and its extracted CSV files.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

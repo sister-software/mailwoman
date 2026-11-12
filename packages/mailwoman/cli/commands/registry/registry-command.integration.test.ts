@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `registry` command's pure pieces. The full cascade needs the weights and the
- *   databases, so this file pins only the column-mapping resolution, the command-specific logic
- *   that avoids the heavy runtime.
+ *   Tests for the `registry` command's pure pieces.
+ *
+ *   The full cascade needs the weights and the databases, so this file pins only the
+ *   column-mapping resolution, the command-specific logic that avoids the heavy runtime.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

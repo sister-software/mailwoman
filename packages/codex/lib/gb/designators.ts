@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a British address uses: the flat and tower words, floors, and the relation words of a
- *   query.
+ *   The designators a British address uses: the flat and tower words, floors,
+ *   and the relation words of a query.
  *
- *   The UPU sheet writes `Stables Flat` and `10B Barry Jackson Tower`. `sub-building.ts` holds the Royal Mail
- *   rules for `Flat` and `Suite` as a Sub Building Name, and this table reads only the flat from the UPU sheet.
+ *   The UPU sheet writes `Stables Flat` and `10B Barry Jackson Tower`.
+ *   `sub-building.ts` holds the Royal Mail rules for `Flat` and `Suite` as a Sub
+ *   Building Name, and this table reads only the flat from the UPU sheet.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/gbrEn.pdf UPU, United Kingdom addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/near Wiktionary, near}

@@ -4,52 +4,56 @@
 /**
  * Harvest ČÚZK's INSPIRE Addresses archives into the directory `#cz/adapters/cuzk/adapter` reads.
  *
- * ČÚZK serves the Addresses (AD) theme as a two-level ATOM service rather than as a WFS. The
- * service document at `https://atom.cuzk.gov.cz/AD/AD.xml` holds one entry per municipality, each
- * pointing at a dataset feed, and each dataset feed offers that municipality's addresses as a
- * zipped GML in two projections. Measured 2026-10-02: the service document answered HTTP 200 with
- * 8,373,817 bytes holding 6,258 entries, sha256
- * `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`.
+ * ČÚZK serves the Addresses (AD) theme as a two-level ATOM service rather than as a WFS.
+ * The service document at `https://atom.cuzk.gov.cz/AD/AD.xml` holds one entry per
+ * municipality, each pointing at a dataset feed, and each dataset feed offers that
+ * municipality's addresses as a zipped GML in two projections.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
- * not declare.
+ * Measured 2026-10-02: the service document answered HTTP 200 with 8,373,817 bytes holding
+ * 6,258 entries, sha256 `9b1d51a721ab601fa74307cce5ce20f74d12dd29512f87be29cd1072f0a2d83b`.
  *
- * Every one of the service document's `rights` elements reads `žádné podmínky neplatí`, INSPIRE's
- * controlled value for no conditions applying to access and use, and the address-source register
- * elects it on that basis. `#cz/adapters/cuzk/adapter` records the same value on every row.
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`, so this module sits beside `#fr/tools/fetch/ban`
+ * rather than in an `sdk/` root the workspace doesn't declare.
  *
- * Four properties of this service decide the harvest's shape, and each was measured rather than
- * assumed:
+ * Every one of the service document's `rights` elements reads `žádné podmínky neplatí`,
+ * INSPIRE's controlled value for no conditions applying to access and use,
+ * and the address-source register elects it on that basis.
+ * `#cz/adapters/cuzk/adapter` records the same value on every row.
  *
- * 1. **The service document states each municipality's file modification time.** An entry's
- *    `<updated>` equals the archive's `Last-Modified` to the second, checked on six municipalities
- *    on 2026-10-02 — `584061` reads `2026-06-04T02:19:33+02:00` against
- *    `Thu, 04 Jun 2026 00:19:33 GMT`, and `531529`, `551481`, `545031`, `587044` and `584282`
- *    agree the same way. So one 8.4 MB request states the freshness of all 6,258 archives, and a
- *    re-run requests only the municipalities whose stated time moved. The alternative — a
- *    conditional request per municipality — costs 6,258 round trips to learn the same thing.
- * 2. **The download URL is composed from a base the feed itself declares.** The service document's
- *    own `rel="next"` links are `https://services.cuzk.gov.cz/gml/inspire/ad/epsg-4258` and
- *    `…/epsg-5514`, and a dataset feed's `alternate` link for the same municipality is that base
- *    plus `/<code>.zip`. The harvest composes from the declared base instead of reading 6,258
- *    dataset feeds. That halves its requests. {@linkcode HarvestCzCuzkOptions.resolveThroughDatasetFeed}
- *    reads the publisher's own href instead, for a run that will not compose a URL.
- * 3. **The `type` attribute describes the data rather than the file.** A dataset feed's link
- *    advertises `application/gml+xml` while the host serves `application/zip`, so the GML is inside
- *    the archive and the advertised type cannot decide what to write. The archive is stored as it
- *    arrives: the adapter opens it with `adm-zip`, because at least one archive's central directory
- *    records its member's size as the ZIP64 sentinel `0xFFFFFFFF`.
- * 4. **A dataset feed's `length` is accurate here, and is still not used.** `584061.zip` claims
- *    24,846 bytes and the host's `content-length` reports 24,846. Denmark's feed understates its file
- *    by 23 times, so every byte count this module records is counted off the delivered body.
+ * Four properties of this service decide the harvest's shape, and each was measured rather than assumed:
  *
- * The archives are small — a systematic sample of 50 of the 6,258 municipalities on 2026-10-02 ran
- * from 5,236 to 1,642,586 bytes with a median of 16,591 — so the harvest is bound by round trips
- * rather than by bandwidth, and it is dispatched serially through one `APIClient`. ČÚZK publishes
- * no rate limit. {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS} holds the harvest to four requests per
- * second against one government host. A caller that has asked ČÚZK for more raises it.
+ * 1. **The service document states each municipality's file modification time.** An entry's `<updated>`
+ *    equals the archive's `Last-Modified` to the second, checked on six municipalities on 2026-10-02 —
+ *    `584061` reads `2026-06-04T02:19:33+02:00` against `Thu, 04 Jun 2026 00:19:33 GMT`,
+ *    and `531529`, `551481`, `545031`, `587044` and `584282` agree the same way.
+ *    So one 8.4 MB request states the freshness of all 6,258 archives, and a re-run
+ *    requests only the municipalities whose stated time moved.
+ *    The alternative — a conditional request per municipality — costs 6,258
+ *    round trips to learn the same thing.
+ * 2. **The download URL is composed from a base the feed itself declares.** The service document's own
+ *    `rel="next"` links are `https://services.cuzk.gov.cz/gml/inspire/ad/epsg-4258` and `…/epsg-5514`,
+ *    and a dataset feed's `alternate` link for the same municipality is that base plus `/<code>.zip`.
+ *    The harvest composes from the declared base instead of reading 6,258 dataset feeds.
+ *    That halves its requests. {@linkcode HarvestCzCuzkOptions.resolveThroughDatasetFeed}
+ *    reads the publisher's own href instead, for a run that won't compose a URL.
+ * 3. **The `type` attribute describes the data rather than the file.** A dataset feed's
+ *    link advertises `application/gml+xml` while the host serves `application/zip`,
+ *    so the GML is inside the archive and the advertised type cannot decide what to write.
+ *    The archive is stored as it arrives: the adapter opens it with `adm-zip`, because at least
+ *    one archive's central directory records its member's size as the ZIP64 sentinel `0xFFFFFFFF`.
+ * 4. **A dataset feed's `length` is accurate here, and is still not used.** `584061.zip`
+ *    claims 24,846 bytes and the host's `content-length` reports 24,846.
+ *    Denmark's feed understates its file by 23 times, so every byte count this
+ *    module records is counted off the delivered body.
+ *
+ * The archives are small — a systematic sample of 50 of the 6,258 municipalities on
+ * 2026-10-02 ran from 5,236 to 1,642,586 bytes with a median of 16,591 — so the harvest
+ * is bound by round trips rather than by bandwidth, and it is dispatched serially through
+ * one `APIClient`. ČÚZK publishes no rate limit. {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS}
+ * holds the harvest to four requests per second against one government host.
+ * A caller that's asked ČÚZK for more raises it.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -326,7 +330,7 @@ export interface CzCuzkArchiveEntry extends SourceManifest {
 	/**
 	 * The `<updated>` the service document stated when this archive was fetched.
 	 *
-	 * A later run that reads the same value for this municipality does not fetch the archive.
+	 * A later run that reads the same value for this municipality doesn't fetch the archive.
 	 * This is the field that makes the harvest resumable without a request per municipality.
 	 */
 	feed_updated: string
@@ -374,7 +378,7 @@ export interface HarvestCzCuzkOptions {
 	/**
 	 * Harvest only these municipality codes, for a probe or to repair specific municipalities.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	municipalities?: readonly string[]
 	/**
@@ -477,7 +481,7 @@ export async function harvestCzCuzk(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, CzCuzkArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept, so a bounded
+	// An entry for a municipality this run doesn't consider is kept, so a bounded
 	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as CzCuzkArchiveEntry)
@@ -554,10 +558,10 @@ export async function harvestCzCuzk(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller supplied that the feed does not list.
+ * The municipalities this run considers, and the codes a caller supplied that the feed doesn't list.
  *
- * A code the caller asked for and the service document does not list is returned
- * rather than dropped, because a municipality that is not published is a different
+ * A code the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a municipality that's not published is a different
  * condition from a selection that holds no municipality.
  */
 function selectMunicipalities(
@@ -598,7 +602,7 @@ function selectMunicipalities(
  * The adapter opens it, because ČÚZK writes the ZIP64 sentinel into at least one central
  * directory and `adm-zip` inflates the member instead of trusting it.
  *
- * @throws When the body does not begin with a zip signature.
+ * @throws When the body doesn't begin with a zip signature.
  * An error page served under http 200 is the body that fails this check.
  * An html page is therefore never written to disk under a `.zip` name.
  */

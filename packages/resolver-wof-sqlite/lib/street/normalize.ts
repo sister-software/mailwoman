@@ -19,8 +19,8 @@ export type NameKey = Tagged<string, "NameKey">
 export type StreetKey = Tagged<string, "StreetKey">
 
 /**
- * A street key that has also passed {@link canonicalizeRouteKey}; binding a plain
- * {@link StreetKey} to a route-folded column silently misses rows whose route spelling differs.
+ * A street key that's also passed {@link canonicalizeRouteKey}; binding a plain {@link StreetKey}
+ * to a route-folded column silently misses rows whose route spelling differs.
  */
 export type RouteKey = Tagged<string, "RouteKey">
 

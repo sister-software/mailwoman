@@ -2,75 +2,76 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `bd-adresses`: the Administration du cadastre et de la topographie's BD-Adresses CSV adapter,
- * covering Luxembourg.
+ * `bd-adresses`: the Administration du cadastre et de la topographie's BD-Adresses
+ * CSV adapter, covering Luxembourg.
  *
- * Input is the semicolon-separated `addresses.csv` the ACT publishes for the whole country through
- * `data.public.lu`, beside a GeoJSON and a shapefile carrying the same records. The adapter reads
- * `rue` as the street, `numero` as the house number, and `code_postal` with `localite` as the
- * postcode and its postal locality.
+ * Input is the semicolon-separated `addresses.csv` the ACT publishes for the whole country
+ * through `data.public.lu`, beside a GeoJSON and a shapefile carrying the same records.
+ * The adapter reads `rue` as the street, `numero` as the house number, and `code_postal`
+ * with `localite` as the postcode and its postal locality.
  *
  * The publisher describes BD-Adresses as `un sous-ensemble des adresses figurant dans le registre
  * national des localités et des rues`, enriched with coordinates. The row count is therefore the
  * published subset rather than Luxembourg's address count.
  *
- * `data.public.lu` states `cc-zero` for the dataset, and the address-source register elects
- * `CC0-1.0` for `lu-property-building-1` on that statement, so the adapter records that license on
- * every row.
+ * `data.public.lu` states `cc-zero` for the dataset, and the address-source register elects `CC0-1.0`
+ * for `lu-property-building-1` on that statement, so the adapter records that license on every row.
  *
- * Luxembourg writes the house number before the street. `STREET_ORDERS` records that order as
- * `number-first`, and `COMMA_JOINED_STREET_COUNTRIES` does not list it. `formatAddressRow` therefore
- * renders `20 Kaesfurterstrooss, L-9755 Hupperdange`.
+ * Luxembourg writes the house number before the street.
+ * `STREET_ORDERS` records that order as `number-first`, and `COMMA_JOINED_STREET_COUNTRIES` doesn't list it.
+ *
+ * `formatAddressRow` therefore renders `20 Kaesfurterstrooss, L-9755 Hupperdange`.
  *
  * ## The file holds one street name, in no single language
  *
  * Luxembourg is trilingual, and the CSV declares one street column.
- * There is no `rue_fr`, `rue_de` or `rue_lb` to choose between, so the adapter emits `rue` as the
- * publisher wrote it.
+ * There's no `rue_fr`, `rue_de` or `rue_lb` to choose between, so the adapter
+ * emits `rue` as the publisher wrote it.
  *
  * What that column holds is mixed.
- * Measured over the 179,622 rows of the 2026-09-28 edition with a generic-word probe rather than a
- * language classifier: 133,449 values open with a French street generic such as `Rue`, `Avenue` or
- * `Montée`, 18,629 close with a Luxembourgish one such as `-strooss`, `-wee` or `-gaass`, and the
- * remaining 27,544 match neither probe and include Luxembourgish forms such as
- * `Am Stengber`, `An Hiesel` and `Um Reebou`.
+ * Measured over the 179,622 rows of the 2026-09-28 edition with a generic-word probe
+ * rather than a language classifier: 133,449 values open with a French street generic
+ * such as `Rue`, `Avenue` or `Montée`, 18,629 close with a Luxembourgish one such
+ * as `-strooss`, `-wee` or `-gaass`, and the remaining 27,544 match neither probe
+ * and include Luxembourgish forms such as `Am Stengber`, `An Hiesel` and `Um Reebou`.
+ *
  * No column marks a row's language, so `locale` reads `und-LU`.
- * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
- * `#recipes/bare/country` and `#tools/postcode/triples`.
- * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher did not
- * tag.
+ * `und` is BCP-47's undetermined language subtag, and the repository already stores
+ * it in `#recipes/bare/country` and `#tools/postcode/triples`.
+ *
+ * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher didn't tag.
  *
  * ## The number comes from `numero`, and never from the street line
  *
- * `rue` and `numero` are separate columns and the publisher never composes them, so neither
- * `splitStreetLine` nor `composeHouseNumber` applies here: there is no line to split and no second
- * column to join.
- * A street split would also be wrong in both directions.
- * 175 `rue` values end in a digit, among them `Route Nationale 1`, `Rue du 9 août 2019` and
- * `Cité des Sacrifiés 1940-1945`.
- * `numero` already holds its own suffix as one token: 162,273 rows hold bare digits, 17,087 a
- * trailing letter such as `12A`, 239 a hyphenated range such as `22-26`, eight the word `BIS` or
- * `bis`, and 15 are empty.
+ * `rue` and `numero` are separate columns and the publisher never composes them,
+ * so neither `splitStreetLine` nor `composeHouseNumber` applies here:
+ * there's no line to split and no second column to join.
+ * A street split would also be wrong in both directions. 175 `rue` values end in a digit,
+ * among them `Route Nationale 1`, `Rue du 9 août 2019` and `Cité des Sacrifiés 1940-1945`.
+ *
+ * `numero` already holds its own suffix as one token: 162,273 rows hold bare digits,
+ * 17,087 a trailing letter such as `12A`, 239 a hyphenated range such as `22-26`,
+ * eight the word `BIS` or `bis`, and 15 are empty.
  *
  * `id_geoportail` is the publisher's own composition of the same two values.
- * It ends in `_<id_caclr_rue>_<numero>` on 179,607 of the 179,607 numbered rows, so the number this
- * adapter emits agrees with the publisher's where the publisher states one.
- * The file publishes no preformatted address line, so a rendered single line has no publisher-side
- * counterpart to be asserted against.
+ * It ends in `_<id_caclr_rue>_<numero>` on 179,607 of the 179,607 numbered rows,
+ * so the number this adapter emits agrees with the publisher's where the publisher states one.
+ *
+ * The file publishes no preformatted address line, so a rendered single line has
+ * no publisher-side counterpart to be asserted against.
  *
  * ## The file needs a quote-aware parser
  *
- * 22 rows RFC 4180-quote `rue` and double its interior quotes:
- * `"Cité ""Pënscherbierg""";3;Wilwerwiltz;…`.
+ * 22 rows RFC 4180-quote `rue` and double its interior quotes: `"Cité ""Pënscherbierg""";3;Wilwerwiltz;…`.
  * Those rows hold no semicolon inside the quotes, so a naive split on `;` still yields 13 fields
- * and passes a field-count check while handing the street to the corpus as
- * `"Cité ""Pënscherbierg"""`.
+ * and passes a field-count check while handing the street to the corpus as `"Cité ""Pënscherbierg"""`.
+ *
  * `CSVSpliterator` unescapes it to `Cité "Pënscherbierg"`.
- * The same edition holds 0 fields with an embedded newline and 0 carriage returns in the whole
- * file.
+ * The same edition holds 0 fields with an embedded newline and 0 carriage returns in the whole file.
  *
  * The file opens with a UTF-8 byte-order mark, the three bytes `EF BB BF`, which the reader strips.
  * The first record's own first key therefore reads `rue` rather than the mark followed by `rue`.
+ *
  * That mark is why the portal's byte count exceeds by three what a reader that discards it reports.
  *
  * The adapter streams with `CSVSpliterator.fromAsync`.

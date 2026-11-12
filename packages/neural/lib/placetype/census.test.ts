@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PCN1 round-trip + doctrine tests. The doctrine cases are the point: `probe` on an unknown parent
- *   must be neutral (null). `share`/`lift` must preserve a missing denominator as missing evidence.
+ *   PCN1 round-trip + doctrine tests.
+ *
+ *   The doctrine cases are the point: `probe` on an unknown parent must be neutral (null).
+ *   `share`/`lift` must preserve a missing denominator as missing evidence.
+ *
  *   The serializer must refuse duplicate parents instead of silently keeping one.
  */
 

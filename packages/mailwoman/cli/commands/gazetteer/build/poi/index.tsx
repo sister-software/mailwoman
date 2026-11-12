@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build poi` — the Overture Places ingest + sealed res-9 `poi.db` layer build
- *   (spec §3.4 of the POI Data + MCP plan). Thin wiring only: the ingest (`ingestPlaces`) and
- *   materialize/seal (`buildPOIDatabase`) logic lives in `gazetteer-pipeline/poi/build-poi.ts`, so it
- *   stays unit-testable without Ink in the loop. Mirrors `overture-ingest.tsx`'s progress
- *   (stderr) / summary (stdout) split.
+ *   `mailwoman gazetteer build poi` — the Overture Places ingest + sealed res-9
+ *   `poi.db` layer build (spec §3.4 of the POI Data + MCP plan).
+ *
+ *   Thin wiring only: the ingest (`ingestPlaces`) and materialize/seal (`buildPOIDatabase`) logic
+ *   lives in `gazetteer-pipeline/poi/build-poi.ts`, so it stays unit-testable without Ink in the loop.
+ *   Mirrors `overture-ingest.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   `--source osm` (decisions 3/5): a second, build-local branch alongside the default
- *   Overture path — same command, same `buildPOIDatabase` entry point, different inputs. It streams
- *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
- *   categories only), stamps the invocation's `--country` onto every row (a bare OSM feature
- *   has no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
- *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
- *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
- *   well-surveyed cell" needs its own zero-observed-rows coverage row rather than silent absence. The manifest
- *   swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default Overture branch
- *   below is untouched and stays byte-identical when `--source` is omitted.
+ *   Overture path — same command, same `buildPOIDatabase` entry point, different inputs.
+ *   It streams `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract
+ *   (telecom-infrastructure categories only), stamps the invocation's `--country` onto every
+ *   row (a bare OSM feature has no country property — see `extract-poi.ts`'s module docstring),
+ *   and derives res-6 coverage by polyfilling the extract's declared `--bbox`
+ *   (`bboxCoverageCells`, decision 5) rather than only the cells rows happened to land in —
+ *   an infra-only extract is sparse by category, so "no plant in a well-surveyed cell"
+ *   needs its own zero-observed-rows coverage row rather than silent absence.
+ *
+ *   The manifest swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default
+ *   Overture branch below is untouched and stays byte-identical when `--source` is omitted.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
@@ -85,12 +89,19 @@ function parseBBoxFlag(raw: string): LatLonBounds {
 
 const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-
-		const { bboxCoverageCells, buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
-		const { ingestPlaces } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
+		const {
+			layers: { LayerTier },
+			dataRoot: { snapshotSourcePath },
+			paths: { poiDatabasePath },
+			poi: { bboxCoverageCells, buildPOIDatabase },
+			overture: { ingestPlaces },
+		} = await allKeyed({
+			layers: import("@mailwoman/core/layers"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			poi: import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi"),
+			overture: import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture"),
+		})
 
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
@@ -170,7 +181,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.skipIngest) {
 			console.error(`▸ skipping ingest — reading already-materialized Parquet for ${countries.join(",")} @ ${release}`)
 
-			const outDir = dataRootPath("overture", release, "places")
+			const outDir = snapshotSourcePath("overture", release, "places")
 			parquetPaths = countries.map((cc) => `${outDir}/places-${cc.toLowerCase()}.parquet`)
 		} else {
 			console.error(`▸ ingest: Overture places @ ${release} (${countries.join(",")})`)

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dev-weights linker for `@mailwoman/neural-weights-it-it`: it builds the index that makes
- *   `resolveWeights({locale: "it-it"})` surface `pairIndexPath` in local dev.
+ *   Dev-weights linker for `@mailwoman/neural-weights-it-it`: it builds the index that
+ *   makes `resolveWeights({locale: "it-it"})` surface `pairIndexPath` in local dev.
  *
  *   The index is inert without the `it` entry in `LEADING_POSTCODE_COUNTRIES`
- *   (`neural/pair/prior-windows.ts`): Italian addresses write the CAP
- *   first ("00184 Roma"), so a parent segment folds to a key no bare-comune entry matches.
+ *   (`neural/pair/prior-windows.ts`): Italian addresses write the CAP first ("00184 Roma"),
+ *   so a parent segment folds to a key no bare-comune entry matches.
  */
 
 import {

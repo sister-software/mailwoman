@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The segment list repeats the route lines of the map in words: each segment's status, whether the selection
- *   shares it, the basis that makes it verified or proposed, and its cost in the selection.
+ *   The segment list repeats the route lines of the map in words: each segment's status, whether the
+ *   selection shares it, the basis that makes it verified or proposed, and its cost in the selection.
  */
 
 import type { EntityID } from "@mailwoman/dossier"

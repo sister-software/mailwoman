@@ -2,13 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the live half of the semantic-utility probe. It loads the frozen pre-registration and sends target and control
- *   rows through the pipeline construction used by the POI board. It then emits a receipt.
+ *   Runs the live half of the semantic-utility probe.
  *
- *   This module decides from `probe-definition.json`. That file supplies the rows.
- *   It also defines the baseline and thresholds. {@linkcode loadProbeDefinition} checks its content hash before returning it.
+ *   It loads the frozen pre-registration and sends target and control rows through
+ *   the pipeline construction used by the POI board.
+ *   It then emits a receipt.
  *
- *   The receipt records artifact identity and measurement values. It reports an unreadable field at its location.
+ *   This module decides from `probe-definition.json`.
+ *   That file supplies the rows.
+ *
+ *   It also defines the baseline and thresholds. {@linkcode loadProbeDefinition}
+ *   checks its content hash before returning it.
+ *
+ *   The receipt records artifact identity and measurement values.
+ *   It reports an unreadable field at its location.
+ *
  *   A pass rate without database and weight identities cannot be reproduced.
  *
  *   A dropped route can produce the same numbers as a route with no behavior change.

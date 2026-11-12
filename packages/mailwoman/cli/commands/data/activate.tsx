@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman data activate <installation-id>` selects an installed installation's artifacts in one new
- *   generation of `active.json`. `--rollback` restores the generation the active one replaced. Both validate
- *   every selected file first and leave the previous generation in force when validation fails.
+ *   `mailwoman data activate <installation-id>` selects an installed installation's
+ *   artifacts in one new generation of `active.json`.
+ *
+ *   `--rollback` restores the generation the active one replaced.
+ *   Both validate every selected file first and leave the previous generation
+ *   in force when validation fails.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

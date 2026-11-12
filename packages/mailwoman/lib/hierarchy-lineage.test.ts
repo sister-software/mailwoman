@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The field is tri-state. The absent states are the interface. A missing sidecar or a place-less
- *   entry must stay ungraded, because `false` is a measured contradiction and never a default.
+ *   The field is tri-state.
+ *
+ *   The absent states are the interface.
+ *   A missing sidecar or a place-less entry must stay ungraded, because `false`
+ *   is a measured contradiction and never a default.
  */
 
 import { describe, expect, it } from "vitest"

@@ -2,25 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   OpenAddresses Latin-off-map outlier exposure for the coarse-placer. OpenAddresses covers far
- *   more countries than the Overture addresses theme, so this assembles address strings from OA's
- *   per-country CSVs and appends them as `country: "other"`.
+ *   OpenAddresses Latin-off-map outlier exposure for the coarse-placer.
+ *
+ *   OpenAddresses covers far more countries than the Overture addresses theme, so this assembles
+ *   address strings from OA's per-country CSVs and appends them as `country: "other"`.
  *
  *   Discipline:
  *
- *   - hold out whole language families (Nordic, Baltic, …) so a trained sibling's shared n-grams
- *       cannot rescue the generalization metric. Train families feed train/val/test(indist).
- *       Heldout families go only to the dedicated test file.
- *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align. Assemble to the same format the in-map rows use (build-outlier-latin's
- *       assemble).
- *   - Dedup (per country) plus per-country CAP (downsample): PL/CZ dwarf others, so cap so `other`
- *       keeps a mixed country profile.
- *   - Country filter: only off-map countries (never the 11 in-map). The in-map test.jsonl is
- *       untouched.
+ *   - hold out whole language families (Nordic, Baltic, …) so a trained sibling's
+ *     shared n-grams cannot rescue the generalization metric.
+ *     Train families feed train/val/test(indist).
+ *     Heldout families go only to the dedicated test file.
+ *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name)
+ *     so differing per-source OA schemas align.
+ *     Assemble to the same format the in-map rows use (build-outlier-latin's assemble).
+ *   - Dedup (per country) plus per-country CAP (downsample): PL/CZ dwarf others,
+ *     so cap so `other` keeps a mixed country profile.
+ *   - Country filter: only off-map countries (never the 11 in-map).
+ *     The in-map test.jsonl is untouched.
  *
- *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
- *   dedicated test file and appends fresh `other` rows. Rebuild train/val before re-running.
+ *   Run after build-dataset + the exposure outliers (it appends).
+ *   Re-runnable: it rewrites the dedicated test file and appends fresh `other` rows.
+ *   Rebuild train/val before re-running.
  *
  *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
  *   6000]`
@@ -29,7 +32,7 @@
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
-import { dataRootPath } from "#data-root"
+import { currentSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { COUNTRIES } from "#tools/coarse-placer/country-sets"
@@ -51,7 +54,7 @@ export interface BuildOutlierOAOptions {
 	/**
 	 * Extracted OpenAddresses root.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted`
 	 */
 	oaDir?: PathBuilderLike
 	/**
@@ -127,7 +130,7 @@ export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},
 	report?: (line: string) => void
 ): Promise<BuildOutlierOAResult> {
-	const oaDir = options.oaDir || dataRootPath("openaddresses", "extracted")
+	const oaDir = options.oaDir || currentSourcePath("openaddresses", "extracted")
 	const PER = options.perCountry ?? 6000
 	const dataDir = options.data || defaultDataDir()
 

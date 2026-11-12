@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Background color per `ComponentTag`, for the debug view's span ribbon (`DebugFrame.tsx`). One
- *   color family per address-component group — street-level greens/blues, admin-hierarchy
- *   ambers/purples, venue-level oranges — so a glance at the ribbon shows which spans are related
- *   without reading the tag text underneath. Hex strings: Ink/chalk accept `backgroundColor="#rrggbb"`
- *   directly, so no color-name lookup table is needed downstream.
+ *   Background color per `ComponentTag`, for the debug view's span ribbon (`DebugFrame.tsx`).
+ *
+ *   One color family per address-component group — street-level greens/blues,
+ *   admin-hierarchy ambers/purples, venue-level oranges — so a glance at the ribbon shows
+ *   which spans are related without reading the tag text underneath.
+ *   Hex strings: Ink/chalk accept `backgroundColor="#rrggbb"` directly,
+ *   so no color-name lookup table is needed downstream.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

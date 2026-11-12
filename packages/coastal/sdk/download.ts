@@ -4,15 +4,19 @@
 /**
  *   Acquire the published file geodatabase — a 70,296,882-byte archive streamed to disk and unzipped.
  *
- *   the transfer, the cache KEY and the extraction live IN `@mailwoman/core/utils`, because none of them is
- *   These download functions share behavior with the BAN source. `downloadZippedGeodatabase` explains
- *   why the archive unpacks into a `.gdb` directory and why the cache uses a vintage instead of a length
- *   probe. `streamToDisk` explains why file transfer uses raw `fetch` instead of `APIClient`.
- *   The two names below belong to this package. Metadata reads around the transfer use `APIClient`;
- *   see `client.ts`.
+ *   the transfer, the cache KEY and the extraction live IN `@mailwoman/core/utils`,
+ *   because none of them is These download functions share behavior with the BAN source.
+ *   `downloadZippedGeodatabase` explains why the archive unpacks into a `.gdb` directory
+ *   and why the cache uses a vintage instead of a length probe.
  *
- *   the host leaves no choice about the cache KEY. It answers `head` with http 405 and ignores `Range`: a
- *   `curl -r 0-1023` against this URL returns http 200 with `size_download=70296882`, the whole file.
+ *   `streamToDisk` explains why file transfer uses raw `fetch` instead of `APIClient`.
+ *   The two names below belong to this package.
+ *
+ *   Metadata reads around the transfer use `APIClient`; see `client.ts`.
+ *
+ *   the host leaves no choice about the cache KEY.
+ *   It answers `head` with http 405 and ignores `Range`: a `curl -r 0-1023` against
+ *   this URL returns http 200 with `size_download=70296882`, the whole file.
  */
 
 import { downloadZippedGeodatabase, type GeodatabaseVintageOptions } from "@mailwoman/core/utils"

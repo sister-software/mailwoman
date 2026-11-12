@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gazetteer Worker: it answers the browser resolver's `findPlace` over a service-binding RPC call, reading
- *   `candidate.db` from R2. It runs apart from the engine Worker so wa-sqlite's memory and its chunk cache stay out of
- *   the isolate that holds the classifier.
+ *   The gazetteer Worker: it answers the browser resolver's `findPlace` over a
+ *   service-binding RPC call, reading `candidate.db` from R2.
  *
- *   It also holds the two landmark layers. `findLandmarks` answers the engine Worker, and `GET /v1/landmarks` answers a
- *   browser. The OpenStreetMap database sits in a bucket with no public route, so this bounded lookup is the one way
- *   to read it.
+ *   It runs apart from the engine Worker so wa-sqlite's memory and its chunk cache
+ *   stay out of the isolate that holds the classifier.
+ *
+ *   It also holds the two landmark layers.
+ *   `findLandmarks` answers the engine Worker, and `GET /v1/landmarks` answers a browser.
+ *
+ *   The OpenStreetMap database sits in a bucket with no public route,
+ *   so this bounded lookup is the one way to read it.
  */
 
 import type { R2Bucket } from "@cloudflare/workers-types"

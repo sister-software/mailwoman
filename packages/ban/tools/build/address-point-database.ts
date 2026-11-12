@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the BAN rooftop address-point database from département CSV files. The output is a
- *   separate sealed database. The OSM extract remains unchanged. Street keys use the same
- *   normalizer as the lookup side.
+ *   Builds the BAN rooftop address-point database from département CSV files.
+ *
+ *   The output is a separate sealed database.
+ *   The OSM extract remains unchanged.
+ *   Street keys use the same normalizer as the lookup side.
  *
  *   Examples:
  *     node packages/ban/tools/build/address-point-database.ts \
- *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
+ *       --csv-dir $MAILWOMAN_CACHE_ROOT/sources/ban --release 2026-05-18
  *     # Build a few départements as a quick check.
  *     node packages/ban/tools/build/address-point-database.ts --depts 48,2A,05 --out /tmp/ban-sample.db
  *     # Run the script from an installed package.
  *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -65,7 +67,7 @@ async function parse(): Promise<BuildArgs> {
 	const country = (values.country ?? "fr").toLowerCase()
 	// Reject unsupported countries rather than selecting an incompatible normalizer.
 	streetLocaleForBANCountry(country)
-	const csvDir = resolvePath(values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban"))
+	const csvDir = resolvePath(values["csv-dir"] ?? currentSourcePath("ban"))
 
 	if (!(await pathExists(csvDir))) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"

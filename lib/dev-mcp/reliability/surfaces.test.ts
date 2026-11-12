@@ -4,10 +4,12 @@
 /**
  *   The decode surface's fold, against a stub engine.
  *
- *   Three decisions in this fold are silent when wrong and change the resulting curve: which tokens count toward a
- *   component's confidence, how they are folded to one number and what happens to a component the truth row never
- *   mentions. The last has a wrong answer in both directions — grade it wrong and a partial-truth corpus scores correct
- *   output as hallucination. drop it silently and the curve covers a fraction of the parse without saying so.
+ *   Three decisions in this fold are silent when wrong and change the resulting curve:
+ *   which tokens count toward a component's confidence, how they're folded to one number
+ *   and what happens to a component the truth row never mentions.
+ *   The last has a wrong answer in both directions — grade it wrong and a
+ *   partial-truth corpus scores correct output as hallucination. drop it silently
+ *   and the curve covers a fraction of the parse without saying so.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -63,7 +65,7 @@ describe("decodeReliabilitySample", () => {
 
 	it("keeps a produced tag the truth row never mentions OUT of the curve, and counts it", async () => {
 		// No wired corpus asserts every component — the board asserts a median of one key
-		// per row — so an unasserted tag is not evidence of a hallucination.
+		// per row — so an unasserted tag isn't evidence of a hallucination.
 		// A single curve measures the corpus rather than the behavior under test.
 		const sample = await decodeReliabilitySample(stubEngine(WITH_UNASSERTED), [ROW], ComponentAggregate.Min)
 
@@ -154,7 +156,7 @@ describe("decodeReliabilitySample", () => {
 	it("ignores a component whose tokens are not in the trace, and says the row scored nothing", async () => {
 		// The result and the trace can disagree: a component assembled by a repair
 		// after the decode has no token carrying its tag.
-		// There is no confidence to grade there.
+		// There's no confidence to grade there.
 		// A fabricated value would be the defect.
 		const sample = await decodeReliabilitySample(
 			stubEngine({

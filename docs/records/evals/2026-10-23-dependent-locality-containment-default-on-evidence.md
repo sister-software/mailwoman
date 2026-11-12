@@ -53,21 +53,21 @@ assertion, and their coordinate moved from the city's point to the district's by
 `La Font del Cuento, Carrer de Garriga i Roca, 1, Horta-Guinardó, 08041 Barcelona, Spain` reads 0.30 km off at a
 250 m tolerance, from 2.32 km.
 
-## What the change does not reach
+## What the change doesn't reach
 
 Six rows stay on the regression layer's `unreachable by data` list. The three ES venue-led rows (`es-op3-*`) assert
-250 m on a venue the POI tier does not hold, and the district's point is not the venue's.
+250 m on a venue the POI tier doesn't hold, and the district's point isn't the venue's.
 `La Croix-Rousse, Lyon` runs on the base weights under board routing (FR has no overlay) and the parse drops the
 district, so no `dependent_locality` node reaches the resolver. `Chill Since \`93 - Covent Garden`parses its district
 with no locality beside it, so there is no parent to contain it.`Little Britain Lake, Uxbridge`tags`Uxbridge`a`locality`, and the `locality` band is unchanged by design.
 
 ## Bounds
 
-- The change is inert without the ancestors sidecar, and inert on a row whose parent did not resolve: both keep
+- The change is inert without the ancestors sidecar, and inert on a row whose parent didn't resolve: both keep
   today's `parentID` scope and country-wide ranking.
 - A dependent locality whose parent is a region rather than a locality is also contained by that region through the
   same sidecar. The board holds no such row with a coordinate assertion, so that path is unmeasured here.
 - The `locality` band is unchanged. A bare district typed `neighbourhood` still resolves through the bare-toponym race
   and nowhere else.
 - The parse decides whether the change can act: the three FR district rows on the board fail before the resolver, at
-  the parse, and this change does not touch them.
+  the parse, and this change doesn't touch them.

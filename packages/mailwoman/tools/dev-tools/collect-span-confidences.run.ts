@@ -2,32 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stage 2 of the confidence-calibration pipeline. Runs the shipped model over the calibration set
- *   (`build-calibration-set.py`) and emits one record per predicted span pairing its raw softmax
- *   confidence with a correct/incorrect label, the `(score, correct?)` pairs the isotonic fitter
- *   (`fit-isotonic-calibration.py`) consumes.
+ *   Stage 2 of the confidence-calibration pipeline.
  *
- *   Calibration is over predictions (spans the model emitted). It measures the rate at which the model is
- *   right when it emits tag T at confidence C. Iterate the decoded tree's spans. Use gold only
- *   used only to label them.
+ *   Runs the shipped model over the calibration set (`build-calibration-set.py`) and emits one
+ *   record per predicted span pairing its raw softmax confidence with a correct/incorrect label,
+ *   the `(score, correct?)` pairs the isotonic fitter (`fit-isotonic-calibration.py`) consumes.
  *
- *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of
- *   the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`). That is exactly the
- *   `conf=` a resolver or a human reads off the XML, so it is the quantity to calibrate.
+ *   Calibration is over predictions (spans the model emitted).
+ *   It measures the rate at which the model is right when it emits tag T at
+ *   confidence C. Iterate the decoded tree's spans.
+ *   Use gold only used only to label them.
  *
- *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts), so the
- *   confidences match the canonical eval path.
+ *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`,
+ *   the mean of the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`).
+ *   That's exactly the `conf=` a resolver or a human reads off the XML, so it is the quantity to calibrate.
+ *
+ *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts),
+ *   so the confidences match the canonical eval path.
  *
  *   The `correct?` score uses these rules:
  *
- *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags in OA gold. A
- *       predicted tag OA can't see is unlabelable and skipped, since OA's silence is not a negative.
- *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. A predicted
- *       tag the address lacks is wrong.
- *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's
- *       street decomposition isn't penalized against the corpus's coarse `street` gold.
- *   - Value match is normalized exact or either-direction substring (handles fragmentation like "Saint"
- *       vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
+ *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags in OA gold.
+ *     A predicted tag OA can't see is unlabelable and skipped, since OA's silence isn't a negative.
+ *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold.
+ *     A predicted tag the address lacks is wrong.
+ *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the
+ *     model's street decomposition isn't penalized against the corpus's coarse `street` gold.
+ *   - Value match is normalized exact or either-direction substring
+ *     (handles fragmentation like "Saint" vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
  *
  *   Run: node packages/mailwoman/tools/dev-tools/collect-span-confidences.run.ts\
  *   --model neural-weights-en-us/model.onnx\
@@ -41,6 +43,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"
@@ -131,9 +134,15 @@ async function main(): Promise<void> {
 
 	const rows: CalibRow[] = await JSONSpliterator.fromAsync<CalibRow>(setPath).take(limit).toArray()
 
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const {
+		neural: { NeuralAddressClassifier },
+		onnxRunner: { ONNXRunner },
+		tokenizer: { MailwomanTokenizer },
+	} = await allKeyed({
+		neural: import("@mailwoman/neural"),
+		onnxRunner: import("@mailwoman/neural/onnx-runner"),
+		tokenizer: import("@mailwoman/neural/tokenizer"),
+	})
 
 	const modelCard = await readLocalJSONFile<{ labels: string[] }>(
 		values["model-card"] || "packages/neural-weights-en-us/model-card.json"

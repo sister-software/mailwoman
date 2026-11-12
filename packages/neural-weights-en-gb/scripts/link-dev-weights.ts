@@ -4,22 +4,31 @@
 
 /**
  *   Materializes the en-gb overlay's development artifacts.
+ *
  *   It also builds or removes the card-conditional GB postcode binary, a step absent from manifests.
  *
- *   One multilingual model serves en-us and en-gb. The en-gb overlay adds its own retrieval data.
+ *   One multilingual model serves en-us and en-gb.
+ *   The en-gb overlay adds its own retrieval data.
+ *
  *   This overlay links the same pair as the base and checks it against en-us's
  *   `model-card.json` `files_md5`, since en-gb's own `files_md5` names only its pair index.
  *
- *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation this
- *   overlay's card records under `requires.<channel>.lexicon`. The card claims its `requires`
- *   block matches the base card verbatim. The base model is trained with both channels.
+ *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation
+ *   this overlay's card records under `requires.<channel>.lexicon`.
+ *   The card claims its `requires` block matches the base card verbatim.
+ *
+ *   The base model is trained with both channels.
  *   An overlay without them would run a GB parse with expected channels disabled.
  *
- *   `pair-index-gb.bin` is derived from the WOF admin DB's borough pairs and three checked-in pairs
- *   JSONL files. It reads no tuple CSV: the HM Land Registry Price Paid Data it read until 2026-10-17
- *   is refused by the license register, and `gazetteer pair-index` refuses a GB `--source`. The shared
- *   `buildPairIndexOverlay` freshness guard compares artifact format, calibrated magnitudes and every
- *   source MD5. `weights.test.ts` invokes this script on every `yarn test`. The shipped bundle's delta is 10.
+ *   `pair-index-gb.bin` is derived from the WOF admin DB's borough pairs
+ *   and three checked-in pairs JSONL files.
+ *   It reads no tuple CSV: the HM Land Registry Price Paid Data it read until 2026-10-17 is
+ *   refused by the license register, and `gazetteer pair-index` refuses a GB `--source`.
+ *
+ *   The shared `buildPairIndexOverlay` freshness guard compares artifact format,
+ *   calibrated magnitudes and every source MD5.
+ *   `weights.test.ts` invokes this script on every `yarn test`.
+ *   The shipped bundle's delta is 10.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

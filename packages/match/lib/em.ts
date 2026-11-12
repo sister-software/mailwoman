@@ -2,22 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unsupervised parameter estimation for the Fellegi-Sunter model — the part that makes the matcher
- *   work with no labeled data.
+ *   Unsupervised parameter estimation for the Fellegi-Sunter model — the part
+ *   that makes the matcher work with no labeled data.
  *
- *   The paradox: to estimate `m`/`u` you need to know which pairs match, but finding matches is the
- *   whole problem. EM (Winkler 1988) breaks it by treating the match/non-match status as a hidden
- *   variable and iterating:
+ *   The paradox: to estimate `m`/`u` you need to know which pairs match,
+ *   but finding matches is the whole problem.
+ *   EM (Winkler 1988) breaks it by treating the match/non-match status as a hidden variable and iterating:
  *
  *   - **E-step** — under the current parameters, compute each pair's posterior responsibility `g =
  *       P(match | its agreement pattern)`.
- *   - **M-step** — re-estimate `λ`, and each level's `m`/`u`, as `g`-weighted (resp. `(1-g)`-weighted)
- *       fractions of the pairs landing in that level.
+ *   - **M-step** — re-estimate `λ`, and each level's `m`/`u`, as `g`-weighted
+ *     (resp. `(1-g)`-weighted) fractions of the pairs landing in that level.
  *
- *   It converges because true matches agree on most fields and non-matches don't, so the two classes
- *   pull apart. Assumes conditional independence of the comparisons given match status (the
- *   standard F-S assumption). Caveat from the literature: EM can land in a local optimum when the
- *   true match rate is very low — seed from sensible `m`/`u` (the model's existing levels do this)
+ *   It converges because true matches agree on most fields and non-matches don't,
+ *   so the two classes pull apart.
+ *   Assumes conditional independence of the comparisons given match status (the standard F-S assumption).
+ *
+ *   Caveat from the literature: EM can land in a local optimum when the true match rate
+ *   is very low — seed from sensible `m`/`u` (the model's existing levels do this)
  *   and sanity- check that the recovered `m` exceeds `u` on the top agreement level.
  */
 

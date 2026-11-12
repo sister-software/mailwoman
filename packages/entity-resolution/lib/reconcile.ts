@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 

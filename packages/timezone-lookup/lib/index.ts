@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/timezone-lookup` — coordinate → iana timezone, server-side. Point-in-polygon over the
- *   timezone-boundary-builder polygons stored in a `node:sqlite` DB (bbox-prefilter + ray-cast),
- *   mirroring the resolver's PIP pattern. The UTC offset comes from `Intl.DateTimeFormat` — no tz
- *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
+ *   `@mailwoman/timezone-lookup` — coordinate → iana timezone, server-side.
+ *
+ *   Point-in-polygon over the timezone-boundary-builder polygons stored in a `node:sqlite`
+ *   DB (bbox-prefilter + ray-cast), mirroring the resolver's PIP pattern.
+ *   The UTC offset comes from `Intl.DateTimeFormat` — no tz database dependency.
+ *
+ *   Build the DB with `mailwoman-timezone build` (see `./build.ts`).
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"

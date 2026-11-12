@@ -132,7 +132,7 @@ flag-OFF (run 2nd): p50=3.466ms mean=3.607ms
 
 **Conclusion: no detectable added latency from the poi classifier's lexicon scan at n=100** — any
 true per-call cost is below the ~0.2–0.3ms run-to-run noise floor at this sample size. A larger-N
-or dedicated microbenchmark would be needed to bound a true per-call cost below that floor. This report did not run one, since the report-only ask was for a first-order signal rather than a tight bound.
+or dedicated microbenchmark would be needed to bound a true per-call cost below that floor. This report didn't run one, since the report-only ask was for a first-order signal rather than a tight bound.
 
 Scripts: `scratchpad/poi-battery/leg4-latency.ts`, `leg4-latency-swapped.ts` (gitignored).
 
@@ -141,10 +141,10 @@ Scripts: `scratchpad/poi-battery/leg4-latency.ts`, `leg4-latency-swapped.ts` (gi
 The register: _"Promotion check before any default flip: golden 2pp + demo presets + the POI
 board (spec §3.6)."_
 
-| Leg          | Requirement (as stated in the register)              | Measured                                                                                                     |
-| ------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Golden 2pp   | flag-on must not misroute/change real address parses | 0/4,507 misroutes, 0/4,507 top-kind deltas (direct classifyKind method rather than the full scoring harness) |
-| Demo presets | flag-on parses must match flag-off                   | 6/6 byte-identical (object form, live poi.db)                                                                |
-| POI board    | spec §3.6 board passes                               | v1.1, 51 cases, 92.2% (8/8 abstain, 6/6 address, 33/37 results) — already committed, cited only              |
+| Leg          | Requirement (as stated in the register)             | Measured                                                                                                     |
+| ------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Golden 2pp   | flag-on mustn't misroute/change real address parses | 0/4,507 misroutes, 0/4,507 top-kind deltas (direct classifyKind method rather than the full scoring harness) |
+| Demo presets | flag-on parses must match flag-off                  | 6/6 byte-identical (object form, live poi.db)                                                                |
+| POI board    | spec §3.6 board passes                              | v1.1, 51 cases, 92.2% (8/8 abstain, 6/6 address, 33/37 results) — already committed, cited only              |
 
 No recommendation is made here beyond these numbers — promotion is the operator's call.

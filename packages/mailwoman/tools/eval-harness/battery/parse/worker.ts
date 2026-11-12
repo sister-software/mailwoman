@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `parallelMapWorkers` handler behind `parseRowsWithWorkers`. Each worker thread loads one classifier per locale
- *   package from the weights cache in its `userData`, refusing a package whose loader reports an unfed required
- *   channel. It parses the rows dispatched to it with the held-out inference options (`HELDOUT_INFERENCE_RULE`) and
- *   returns each row's id with every parsed span in input order.
+ *   The `parallelMapWorkers` handler behind `parseRowsWithWorkers`.
+ *
+ *   Each worker thread loads one classifier per locale package from the weights cache in
+ *   its `userData`, refusing a package whose loader reports an unfed required channel.
+ *   It parses the rows dispatched to it with the held-out inference options (`HELDOUT_INFERENCE_RULE`)
+ *   and returns each row's id with every parsed span in input order.
  */
 
 import { workerUserData } from "@mailwoman/core/workers"
@@ -20,7 +22,11 @@ import {
 	treeSpans,
 } from "#tools/eval-harness/heldout/per/country"
 
-const { cacheRoot, intraOpNumThreads } = workerUserData<{ cacheRoot: string; intraOpNumThreads: number }>()
+const { cacheRoot, intraOpNumThreads, localeHint } = workerUserData<{
+	cacheRoot: string
+	intraOpNumThreads: number
+	localeHint: "row-country" | "none"
+}>()
 
 const packages = await readHeldoutLocalePackages()
 const classifiers = new Map<string, Promise<NeuralAddressClassifier>>()
@@ -44,7 +50,7 @@ export async function handleItem(row: ParseRow): Promise<{ id: string; spans: Ba
 		await classifier
 	).parse(row.raw, {
 		postcodeRepair: true,
-		...(row.country ? { localeHint: row.country } : {}),
+		...(row.country && localeHint === "row-country" ? { localeHint: row.country } : {}),
 	})
 
 	return {

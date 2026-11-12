@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `POST /v1/license-status` returns a license's public state without disclosing licensee details, dates, or reasons.
+ *   `POST /v1/license-status` returns a license's public state without disclosing
+ *   licensee details, dates, or reasons.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

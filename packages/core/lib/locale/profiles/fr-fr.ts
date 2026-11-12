@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fr-FR locale profile. Extends the en-US component set with cedex (postal routing),
- *   street_prefix_particle (de la / du / des), and dependent_locality (arrondissement).
+ *   Fr-FR locale profile.
+ *
+ *   Extends the en-US component set with cedex (postal routing), street_prefix_particle
+ *   (de la / du / des), and dependent_locality (arrondissement).
  */
 
 import type { LocaleProfile } from "#locale/locale"

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Parity pin for the ancestrie migration. `legacyAutocomplete` below is the frozen pre-migration
- * implementation, kept verbatim as the reference the shipped adapter is measured against. A
- * deliberate behavior change in ancestrie's `autocomplete` fails this suite and must be re-ratified
- * by updating the frozen copy in the same commit.
+ * Parity pin for the ancestrie migration.
+ *
+ * `legacyAutocomplete` below is the frozen pre-migration implementation,
+ * kept verbatim as the reference the shipped adapter is measured against.
+ * A deliberate behavior change in ancestrie's `autocomplete` fails this suite
+ * and must be re-ratified by updating the frozen copy in the same commit.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -188,9 +190,9 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 
 	// Synthetic trie: new, san, chic, chicago, springfield.
 	// The behavior matrix covers a referential tie and a state denser than PER_BRANCH.
-	// It covers an encyclopedic score that is present or absent, crossCountryBranches,
+	// It covers an encyclopedic score that's present or absent, crossCountryBranches,
 	// a deep parent chain and one wofID reachable at several depths.
-	// It also covers an edge that is both complete and a prefix.
+	// It also covers an edge that's both complete and a prefix.
 	const nodesMatcher = deserializeThroughBytes([
 		{
 			edges: new Map([

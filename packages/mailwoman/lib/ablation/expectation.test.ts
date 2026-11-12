@@ -4,8 +4,9 @@
 /**
  *   Tests the ablation expectation model against a fake gazetteer.
  *
- *   The expectation must depend only on the components that survive a deletion, never on the
- *   variant's output. The fake gazetteer holds everything else fixed so the tests can vary the output.
+ *   The expectation must depend only on the components that survive a deletion,
+ *   never on the variant's output.
+ *   The fake gazetteer holds everything else fixed so the tests can vary the output.
  */
 
 import { describe, expect, it } from "vitest"
@@ -318,7 +319,7 @@ describe("residualWords — the corpus types less than the input carries", () =>
 	})
 
 	// A row whose only asserted component is deleted leaves an empty component set.
-	// The words left in the input still identify a place, so the model must not require abstention.
+	// The words left in the input still identify a place, so the model mustn't require abstention.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
 

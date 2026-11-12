@@ -2,24 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index. Extracts per-country
- * (locality, region) pairs from the WOF admin DB's `ancestors` table and writes one PIX1 binary per
- * country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
+ * Probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index.
  *
- * This build does not produce a shipped artifact. Three safety properties keep an accidental wire-up inert: `delta: 0`,
- * a filename that does not match the loader's auto-wire pattern, plus output under the data root
+ * Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table
+ * and writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
+ *
+ * This build doesn't produce a shipped artifact.
+ * Three safety properties keep an accidental wire-up inert: `delta: 0`, a filename
+ * that doesn't match the loader's auto-wire pattern, plus output under the data root
  * rather than any `neural-weights-*` workspace.
  *
- * Format is PIX1 verbatim, with extra header keys `edge`, `source` and `probeArtifact`; old readers
- * parse the header and never consult them.
+ * Format is PIX1 verbatim, with extra header keys `edge`, `source` and `probeArtifact`;
+ * old readers parse the header and never consult them.
  *
  * Extraction: `spr` rows with `placetype = 'locality'`, `is_current = 1` and `is_deprecated = 0`;
- * edges from `ancestors` with `ancestor_placetype` in the per-country parent set (US `region`; FR
- * `region` + `macroregion`); surfaces from `spr.name` ∪ official `names`; folded with
- * `normalizeFSTToken` on both sides under `foldVersion: 1`.
+ * edges from `ancestors` with `ancestor_placetype` in the per-country parent set
+ * (US `region`; FR `region` + `macroregion`); surfaces from `spr.name` ∪ official `names`;
+ * folded with `normalizeFSTToken` on both sides under `foldVersion: 1`.
  *
- * Self-verifying: the written bytes are re-read through a fresh `PairIndexResolver` and known
- * per-country pairs are probed. The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
+ * Self-verifying: the written bytes are re-read through a fresh `PairIndexResolver`
+ * and known per-country pairs are probed.
+ * The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

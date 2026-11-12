@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `About` — the explainer for the browser geocoder: the neural model, the confidence colors, the gazetteer resolver, the byte-range database and the FST prior. It renders no live content.
+ * `About` — the explainer for the browser geocoder: the neural model, the confidence colors,
+ * the gazetteer resolver, the byte-range database and the FST prior.
+ * It renders no live content.
  */
 
 import type { ReactNode } from "react"

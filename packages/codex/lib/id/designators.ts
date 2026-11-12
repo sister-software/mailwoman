@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Indonesia designators in Indonesian: the delivery service, premise, floor and relation words that an
- *   Indonesian address or query uses.
+ *   Indonesia designators in Indonesian: the delivery service, premise, floor
+ *   and relation words that an Indonesian address or query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/idnEn.pdf UPU Indonesia addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/menara Wiktionary menara}

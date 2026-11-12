@@ -362,7 +362,7 @@ export async function runAutocompleteLadder(
 		const rungs = ladderRungs(row.input)
 
 		// The first request of a process pays engine construction.
-		// That time is not a rung's latency.
+		// That time isn't a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true

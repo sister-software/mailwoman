@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The tests read the authored records through the consumer artifact. That artifact combines the frozen
- * pharmacy record set with the additions from wave 1.
+ * The tests read the authored records through the consumer artifact.
  *
- * Every assertion is made against the committed artifact or a fresh compile of the committed authoring
- * files, never against a fixture built in this file.
+ * That artifact combines the frozen pharmacy record set with the additions from wave 1.
  *
- * The freshness check compares parsed values rather than bytes. `oxfmt` inlines short arrays in the
- * committed generator output. Separate assertions check byte determinism between two compiles and
- * between the committed artifact and a fresh compile after canonical serialization.
+ * Every assertion is made against the committed artifact or a fresh compile of the
+ * committed authoring files, never against a fixture built in this file.
+ *
+ * The freshness check compares parsed values rather than bytes.
+ * `oxfmt` inlines short arrays in the committed generator output.
+ *
+ * Separate assertions check byte determinism between two compiles and between the
+ * committed artifact and a fresh compile after canonical serialization.
  */
 
 import { getPOICategory, toPOICategoryID } from "@mailwoman/poi-taxonomy"
@@ -90,7 +93,7 @@ describe("the authored pharmacy records", () => {
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
 
-		// The vocabulary owner rejects an identifier the taxonomy does not define.
+		// The vocabulary owner rejects an identifier the taxonomy doesn't define.
 		// Such a mapping would otherwise appear to work inside this package.
 		const category = getPOICategory(String(POI_CATEGORY))
 
@@ -279,8 +282,8 @@ describe("reading the record set through the runtime lookups", () => {
 		expect(index.derivedFactsAbout(DRUGSTORE)).toEqual([])
 	})
 
-	// Each external identifier translates into its own concept and not the other, since the mapping
-	// table states which id names which class and no entry in it states a preference between the two.
+	// Each external identifier translates into its own concept and not the other, since the mapping table
+	// states which id identifies which class and no entry in it states a preference between the two.
 	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

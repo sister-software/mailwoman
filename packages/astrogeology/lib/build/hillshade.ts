@@ -2,16 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The hillshade build: publish the DEM as terrain-RGB tiles, so MapLibre's `hillshade` layer shades it at draw
- *   time. The archive stores encoded elevation. The style chooses the color ramp, so a re-tint requires a style edit
- *   instead of rebuilding the archive.
+ *   The hillshade build: publish the DEM as terrain-RGB tiles, so MapLibre's
+ *   `hillshade` layer shades it at draw time.
  *
- *   Average elevations before encoding. Each encoded byte is a base-256 numeral. The mean of neighboring high bytes
- *   would produce an elevation that matches neither sample. The overview pyramid uses `nearest` to decimate real samples.
+ *   The archive stores encoded elevation.
+ *   The style chooses the color ramp, so a re-tint requires a style edit instead of rebuilding the archive.
  *
- *   The XYZ tile scheme is angular and uses the same lon/lat grid on any sphere. The EPSG:4326 label tells GDAL
- *   which grid to tile. The build assigns the whole-body extent beside it, so coordinates in the body's meters
- *   do not read as degrees.
+ *   Average elevations before encoding.
+ *   Each encoded byte is a base-256 numeral.
+ *
+ *   The mean of neighboring high bytes would produce an elevation that matches neither sample.
+ *   The overview pyramid uses `nearest` to decimate real samples.
+ *
+ *   The XYZ tile scheme is angular and uses the same lon/lat grid on any sphere.
+ *   The EPSG:4326 label tells GDAL which grid to tile.
+ *
+ *   The build assigns the whole-body extent beside it, so coordinates in the
+ *   body's meters do not read as degrees.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -48,7 +55,7 @@ interface DEMGrid {
 /**
  * The unit and width of a DEM's grid, from `gdalinfo`.
  *
- * A source that does not span the whole body is refused, because the extent
+ * A source that doesn't span the whole body is refused, because the extent
  * assigned below is the whole body's.
  */
 async function readDEMGrid(demPath: PathBuilderLike, body: BuildableBodyID): Promise<DEMGrid> {
@@ -170,7 +177,7 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", declare)
 
-	// Read the range from the resampled raster because that is the data to encode.
+	// Read the range from the resampled raster because that's the data to encode.
 	// The resampled raster is much smaller than the source.
 	await assertWithinTerrariumEnvelope(resampled)
 
@@ -257,7 +264,7 @@ export async function buildHillshadePMTiles(
 	}
 
 	// Overviews run from that zoom down to 0, resampled nearest: the bytes are a base-256 numeral
-	// by now, so averaging two neighbors' high bytes answers an elevation that is neither of them.
+	// by now, so averaging two neighbors' high bytes answers an elevation that's neither of them.
 	const overviews = ["-r", "nearest", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {

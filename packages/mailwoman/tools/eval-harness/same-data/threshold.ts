@@ -4,13 +4,15 @@
 /**
  *   Computes the abstention-threshold curve over frozen same-data results.
  *
- *   The curve shows what an arm would score if it withheld every selection whose recorded confidence fell
- *   below a threshold. It re-grades committed results without re-running the resolver. A resolver that
- *   refused a node could reach a different selection through `parentFallback`,
+ *   The curve shows what an arm would score if it withheld every selection whose
+ *   recorded confidence fell below a threshold.
+ *   It re-grades committed results without re-running the resolver.
+ *
+ *   A resolver that refused a node could reach a different selection through `parentFallback`,
  *   so the curve estimates the effect of a threshold without predicting a shipped option.
  *
- *   The confidence is the winner's margin over the runner-up. A lookup with one candidate reports 1, so
- *   no threshold at or below 1 withholds it.
+ *   The confidence is the winner's margin over the runner-up.
+ *   A lookup with one candidate reports 1, so no threshold at or below 1 withholds it.
  */
 
 import type { ArmRowResult } from "#tools/eval-harness/same-data/arms"

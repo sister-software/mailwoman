@@ -4,16 +4,19 @@
 /**
  *   Pre-compute corpus-wide token + bigram label distributions for the corpus linter.
  *
- *   Reads one or more parquet files, builds per-(token, label) and per-(bigram, label-bigram)
- *   histograms. The tool serializes them as JSON. `lint/recipe-output/index.ts` consumes the output file
- *   as the baseline against which a new recipe output is compared.
+ *   Reads one or more parquet files, builds per-(token, label) and per-(bigram, label-bigram) histograms.
+ *   The tool serializes them as JSON.
  *
- *   Stats are cheap to compute (~5–30s per 100K rows) but expensive enough that we cache them between
- *   linter invocations. Re-run this whenever the corpus changes substantially (a new mainline
- *   recipe output added, a source-pool re-weighted, etc.).
+ *   `lint/recipe-output/index.ts` consumes the output file as the baseline against
+ *   which a new recipe output is compared.
  *
- *   Output schema (`slice_paths` is the stats file's own key. a stats file already on disk includes it,
- *   so the linter reads it under that spelling):
+ *   Stats are cheap to compute (~5–30s per 100K rows) but expensive enough that
+ *   we cache them between linter invocations.
+ *   Re-run this whenever the corpus changes substantially
+ *   (a new mainline recipe output added, a source-pool re-weighted, etc.).
+ *
+ *   Output schema (`slice_paths` is the stats file's own key. a stats file already on
+ *   disk includes it, so the linter reads it under that spelling):
  *
  *   ```ts
  *   interface CorpusStats {

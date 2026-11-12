@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The street-type word test for a country, assembled from the codex's per-country tables. The
- *   street-morphology FST that ships beside the weights omits one- and two-letter variants, so the
+ *   The street-type word test for a country, assembled from the codex's per-country tables.
+ *
+ *   The street-morphology FST that ships beside the weights omits one- and two-letter variants, so the
  *   abbreviations a country writes most, `St` and `Rd` in the US, come from the country's own table.
  */
 

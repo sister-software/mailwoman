@@ -204,8 +204,8 @@ describe("harvestADSEE", () => {
 			probe(10),
 			// No feature sits at the reported count's index, so core's guard accepts the number
 			// and the advertised-cap reading below is the only thing that can refuse it.
-			// That is the case this test exists for: a service capping at 10
-			// and a type holding 10 answer every request identically.
+			// That's the case this test exists for: a service capping at 10 and a type
+			// holding 10 answer every request identically.
 			beyond(0),
 			jsonPage(0, 2, 10),
 			jsonPage(2, 0, 10),

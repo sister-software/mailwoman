@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `si-bare-village`, the Slovenian no-street counter-recipe. Slovenia's rural addressing has no
- *   street line, so the village name is the street-level token and repeats as the locality
- *   ("Zabiče 8, 6250 Zabiče"). The leading name must keep its number whole. The trailing mention
- *   must stay locality-bound. This recipe is the paired counter-distribution, with the same lesson
+ *   `si-bare-village`, the Slovenian no-street counter-recipe.
+ *
+ *   Slovenia's rural addressing has no street line, so the village name is the
+ *   street-level token and repeats as the locality ("Zabiče 8, 6250 Zabiče").
+ *   The leading name must keep its number whole.
+ *
+ *   The trailing mention must stay locality-bound.
+ *   This recipe is the paired counter-distribution, with the same lesson
  *   ("name before number, comma, then admin") and the opposite polarity on the trailing mention.
  *
- *   Three real-order templates cycle per tuple (mirrors the coord-golden orders so the eval and the
- *   training distribution agree):
+ *   Three real-order templates cycle per tuple (mirrors the coord-golden orders
+ *   so the eval and the training distribution agree):
  *
- *   1. canonical  "«V» «n», «pc» «V»"
- *   2. bare       "«V» «n», «V»"        (no postcode, the anchor-free form)
- *   3. pc-first   "«pc» «V», «V» «n»"
+ *   1. canonical "«V» «n», «pc» «V»"
+ *   2. bare "«V» «n», «V»" (no postcode, the anchor-free form)
+ *   3. pc-first "«pc» «V», «V» «n»"
  *
  *   Gold spans: leading «V» = street (matches OA ground truth, the village is the address line),
  *   «n» = house_number (never split mid-digits), «pc» = postcode (never swallowing the neighbor),
@@ -94,7 +98,7 @@ export const siBareVillageRecipe: CorpusRecipe = {
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}
 
-			// Per row rather than on the shared literal, because the id names this tuple's record.
+			// Per row rather than on the shared literal, because the id identifies this tuple's record.
 			// A tuples file written before `sourceID` existed has no id.
 			// `null` records that case.
 			if (

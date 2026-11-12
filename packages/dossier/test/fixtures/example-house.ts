@@ -3,17 +3,20 @@
 
 /**
  *   The fictional Example House, Example Annex and Example Parcel that every scenario in the spec uses.
- *   Dates are chosen so that an `asOf` of 2022-06-30 admits the permit and the first inspection and
- *   excludes the later manager statement. The permit states the parcel's lot number and each building's
- *   identification number, so each identifier cites the permit.
  *
- *   The cable check on Example House fails at a source-present empty reading, and the operator's log
- *   records one investigation of it with its result.
+ *   Dates are chosen so that an `asOf` of 2022-06-30 admits the permit and the first
+ *   inspection and excludes the later manager statement.
+ *   The permit states the parcel's lot number and each building's identification number,
+ *   so each identifier cites the permit.
  *
- *   The survey places Example House in cell-1, and the permit places both buildings in district-1. No
- *   record places a building in cell-3, so the survey's cable reading there attaches to no building. Every
- *   position is synthetic: its coordinates lie in the open South Atlantic, where no building stands. The
- *   permit and the survey state two different positions for Example Annex.
+ *   The cable check on Example House fails at a source-present empty reading,
+ *   and the operator's log records one investigation of it with its result.
+ *
+ *   The survey places Example House in cell-1, and the permit places both buildings in district-1.
+ *   No record places a building in cell-3, so the survey's cable reading there attaches to no building.
+ *
+ *   Every position is synthetic: its coordinates lie in the open South Atlantic, where no building stands.
+ *   The permit and the survey state two different positions for Example Annex.
  */
 
 import type { ProviderAvailability } from "#availability"

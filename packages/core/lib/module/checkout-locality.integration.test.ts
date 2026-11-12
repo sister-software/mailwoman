@@ -4,12 +4,13 @@
 /**
  *   The checkout-locality guard in a real git worktree of this repository that has no node_modules.
  *
- *   The worktree sits in a scratch directory whose `node_modules` links to this checkout's install, the layout a
- *   worktree under `.claude/worktrees/<name>` has below the primary checkout. Node's upward walk then resolves
- *   `@mailwoman/core` from this checkout. The guard exists to refuse that resolution.
+ *   The worktree sits in a scratch directory whose `node_modules` links to this checkout's install,
+ *   the layout a worktree under `.claude/worktrees/<name>` has below the primary checkout.
+ *   Node's upward walk then resolves `@mailwoman/core` from this checkout.
+ *   The guard exists to refuse that resolution.
  *
- *   The worktree is added without a checkout and given the current working-tree copies of the files under test,
- *   so the test exercises uncommitted source rather than `HEAD`.
+ *   The worktree is added without a checkout and given the current working-tree copies of
+ *   the files under test, so the test exercises uncommitted source rather than `HEAD`.
  */
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Resolves measurement input sets and reports each set's selection, size, truth coverage and content hash.
+ *   Resolves measurement input sets and reports each set's selection, size,
+ *   truth coverage and content hash.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

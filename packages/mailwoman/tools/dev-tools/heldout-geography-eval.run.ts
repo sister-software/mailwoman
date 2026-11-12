@@ -4,29 +4,33 @@
 /**
  *   Leakage-free eval harness (geographic split + PIP-containment).
  *
- *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
- *   trains on a corpus that covers the same streets OA tests. The legacy locality name-match
- *   metric is blind to picking the right name in the wrong place. This harness measures only the
- *   leakage-free held-out set (OA rows in corpus-held-out geography the model never trained on) and
- *   reports the NON-gameable coordinate truth: region-match, coordinate error (p50/p90), and
- *   PIP-containment (gold OA point inside the resolved WOF polygon), the last reported with a
- *   polygon-coverage denominator, since WOF point-geometry localities can never PIP-contain and
- *   would otherwise count as silent failures.
+ *   The yardstick the rest of the roadmap is graded on.
+ *   Random OA evaluation flatters us: the model trains on a corpus that covers the same streets OA tests.
  *
- *   Lead the scorecard with region-match + coord p50/p90 (fully checkable, transparent to polygon
- *   coverage). Treat locality-PIP as a coverage-adjusted secondary. See
- *   the 2026-06-08 held-out geography report in docs/records/evals/experiments/.
+ *   The legacy locality name-match metric is blind to picking the right name in the wrong place.
+ *   This harness measures only the leakage-free held-out set
+ *   (OA rows in corpus-held-out geography the model never trained on) and reports
+ *   the NON-gameable coordinate truth: region-match, coordinate error (p50/p90),
+ *   and PIP-containment (gold OA point inside the resolved WOF polygon), the last
+ *   reported with a polygon-coverage denominator, since WOF point-geometry localities
+ *   can never PIP-contain and would otherwise count as silent failures.
  *
- *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
- *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
- *   départements = 16 rows. DE has no manifest holdout). Abort/de-risk per the plan: a held-out
- *   set below 1000 rows is reported as untrusted rather than scored.
+ *   Lead the scorecard with region-match + coord p50/p90 (fully checkable, transparent to polygon coverage).
+ *   Treat locality-PIP as a coverage-adjusted secondary.
+ *
+ *   See the 2026-06-08 held-out geography report in docs/records/evals/experiments/.
+ *
+ *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/ Lozère/Creuse.
+ *   Only US/VT clears the 1000-row trust floor in the current samples
+ *   (FR held-out départements = 16 rows. DE has no manifest holdout).
+ *
+ *   Abort/de-risk per the plan: a held-out set below 1000 rows is reported as untrusted rather than scored.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/heldout-geography-eval.run.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
  *   [--tokenizer ...]\
- *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] # a tag for
- *   the report [--out <report.md>] [--tmp /tmp/heldout-geography]
+ *   [--wof <admin.db>,<postcode.db>] # DB under test (default: canonical) [--label fixed] #
+ *   a tag for the report [--out <report.md>] [--tmp /tmp/heldout-geography]
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes `data/normalized/iso3166-1.json`, `data/normalized/iata-airports.json` and
- *   `data/manifests/coverage.json` from the pinned sources.
+ *   Writes `data/normalized/iso3166-1.json`, `data/normalized/iata-airports.json`
+ *   and `data/manifests/coverage.json` from the pinned sources.
  *
  *   Usage: `node packages/registry/tools/normalize.run.ts`
  *

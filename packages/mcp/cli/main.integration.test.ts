@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

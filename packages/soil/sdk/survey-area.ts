@@ -212,8 +212,7 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 /**
  * Refuse a value outside the authority's own declared domain.
  *
- * A blank is a real NULL state rather than a violation, recording that the
- * survey did not rate the component.
+ * A blank is a real NULL state rather than a violation, recording that the survey didn't rate the component.
  */
 function assertDeclared(
 	declared: ReadonlySet<string>,
@@ -237,7 +236,7 @@ function nullable(value: string | null | undefined): string | null {
 /**
  * The nccpi v3.0 overall index per component.
  *
- * Sub-rules at greater depths are submodels this layer does not include.
+ * Sub-rules at greater depths are submodels this layer doesn't include.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -385,8 +384,7 @@ function elementBlocks(xml: string, name: string): string[] {
 }
 
 /**
- * A bare year stays bare, since padding it to January 1 would invent a precision
- * the citation does not claim.
+ * A bare year stays bare, since padding it to January 1 would invent a precision the citation doesn't claim.
  */
 function normalizeFGDCDate(value: string): string {
 	const trimmed = value.trim()

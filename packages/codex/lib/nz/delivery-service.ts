@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   NZ Post delivery-service types and identifier rules from ADV358. The parser also recognizes the unofficial
- *   alias "Private Box" for a PO Box.
+ *   NZ Post delivery-service types and identifier rules from ADV358.
+ *
+ *   The parser also recognizes the unofficial alias "Private Box" for a PO Box.
  *
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, June 2011)}
  * @see {@link https://www.nzpost.co.nz/business/shipping-in-nz/addressing-standards NZ Post addressing standards}
@@ -67,7 +68,7 @@ export const NZ_DELIVERY_SERVICE_TYPES = [
 export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[number]["type"]
 
 /**
- * Metadata for "Private Box", a colloquial alias for a PO Box that ADV358 does not list.
+ * Metadata for "Private Box", a colloquial alias for a PO Box that ADV358 doesn't list.
  *
  * The parser recognizes it.
  * Synthesis should avoid it.
@@ -178,7 +179,7 @@ export function isNZDeliveryService(input: unknown): boolean {
 /**
  * Normalizes a delivery-service line to its canonical type and uppercased identifier.
  *
- * @returns The input unchanged when it is not a delivery-service line.
+ * @returns The input unchanged when it isn't a delivery-service line.
  */
 export function normalizeNZDeliveryService(input: string): string {
 	const m = matchNZDeliveryService(input)

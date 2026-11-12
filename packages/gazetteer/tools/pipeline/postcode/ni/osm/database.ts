@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `postalcode-ni-osm-<date>.db` — the Northern Ireland `BT` unit-postcode database from
- *   OpenStreetMap. OSM attests a minority of live NI postcodes.
+ *   Build `postalcode-ni-osm-<date>.db` — the Northern Ireland `BT` unit-postcode
+ *   database from OpenStreetMap.
+ *
+ *   OSM attests a minority of live NI postcodes.
  *   An absent code abstains from fuzzy matching, so the database is strictly additive.
  *
- *   The database is ODbL 1.0. No npm tarball ships it. The candidate gazetteer folds its rows in
- *   as an independent part of a collective database: they keep their own id range, and no other
- *   row is matched against them. The published fold includes the ODbL offer at
- *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold, and a
- *   gazetteer that folds in a new build must publish that build's rows beside it.
+ *   The database is ODbL 1.0.
+ *   No npm tarball ships it.
+ *
+ *   The candidate gazetteer folds its rows in as an independent part of a collective database:
+ *   they keep their own id range, and no other row is matched against them.
+ *   The published fold includes the ODbL offer at
+ *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold,
+ *   and a gazetteer that folds in a new build must publish that build's rows beside it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -205,7 +210,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const sectors = new Set(records.map((r) => r.sector))
 	const reconciliationFailures = reconcile(stats, records, districts.size, sectors.size)
 
-	// Imported lazily so loading this module does not evaluate resolver-wof-sqlite.
+	// Imported lazily so loading this module doesn't evaluate resolver-wof-sqlite.
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 

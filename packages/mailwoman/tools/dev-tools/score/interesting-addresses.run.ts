@@ -1,10 +1,13 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Operator interesting-address board (2026-08-09): a focused projection of the
  * permanent gauntlet cases rather than a second answer key.
  *
  * Exact component-span recall for venue-heavy GB addresses and a bilingual JP pair.
  * Reviewed Google normalization lives on each gauntlet row's source/coordinate/note
- * and is not treated as parser gold.
+ * and isn't treated as parser gold.
  *
  * Usage: node packages/mailwoman/tools/dev-tools/score/interesting-addresses.run.ts --country
  * GB --label shipped node packages/mailwoman/tools/dev-tools/score/interesting-addresses.run.ts

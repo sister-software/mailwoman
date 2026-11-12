@@ -2,32 +2,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Counts one corpus version's rows by split, country, locale, source and recorded surface origin, and
- *   its spans by country and component tag.
+ *   Counts one corpus version's rows by split, country, locale, source and recorded
+ *   surface origin, and its spans by country and component tag.
  *
- *   This answers the planet-scale question the coverage register cannot: which countries contribute
- *   training, validation and test rows to the decoder being trained, and through which source and written
- *   surface. `censusCoverage` in `mailwoman/coverage` reads only the train split and reports rows and
- *   street rows per country, so it cannot separate a source from a surface or a component from a row.
+ *   This answers the planet-scale question the coverage register cannot: which countries
+ *   contribute training, validation and test rows to the decoder being trained,
+ *   and through which source and written surface.
+ *   `censusCoverage` in `mailwoman/coverage` reads only the train split and reports rows and street
+ *   rows per country, so it cannot separate a source from a surface or a component from a row.
  *
- *   Three outputs stay separate because they count different things. A row-level count gives the number
- *   of rows a stratum holds. A component-level count gives the number of spans that hold a tag. Those
- *   spans overlap within a row, so the two counts never sum to each other. A file-level record lists
- *   the inputs the pass read.
+ *   Three outputs stay separate because they count different things.
+ *   A row-level count gives the number of rows a stratum holds.
  *
- *   The recorded `surface` is reported exactly as the corpus stores it. Three adapters declared
- *   `attested` while rendering the line until `d397d140a`, so a row in a corpus built before that commit
- *   holds a surface label its adapter would no longer write. This tool preserves the stored value and leaves
- *   that interpretation to its reader, because rewriting an immutable corpus version's label inside a
- *   census would make the census disagree with the artifact it describes.
+ *   A component-level count gives the number of spans that hold a tag.
+ *   Those spans overlap within a row, so the two counts never sum to each other.
+ *   A file-level record lists the inputs the pass read.
  *
- *   A file the reader cannot open is recorded by path under `unreadableFiles`, and `rowsRead` against the
- *   manifest's own `counts` states whether the pass covered the whole corpus. A partial read reports as
- *   partial rather than as a smaller corpus.
+ *   The recorded `surface` is reported exactly as the corpus stores it.
+ *   Three adapters declared `attested` while rendering the line until `d397d140a`, so a row in
+ *   a corpus built before that commit holds a surface label its adapter would no longer write.
  *
- *   The pass groups in DuckDB rather than streaming rows through this process, because the answer is a
- *   cross-tab of counts and this corpus version holds 697,653,209 train rows. It writes its artifact after
- *   every file, so a killed run keeps the files it finished and `--resume` continues from them.
+ *   This tool preserves the stored value and leaves that interpretation to its reader,
+ *   because rewriting an immutable corpus version's label inside a census would
+ *   make the census disagree with the artifact it describes.
+ *
+ *   A file the reader cannot open is recorded by path under `unreadableFiles`, and `rowsRead`
+ *   against the manifest's own `counts` states whether the pass covered the whole corpus.
+ *   A partial read reports as partial rather than as a smaller corpus.
+ *
+ *   The pass groups in DuckDB rather than streaming rows through this process, because the
+ *   answer is a cross-tab of counts and this corpus version holds 697,653,209 train rows.
+ *   It writes its artifact after every file, so a killed run keeps the files it finished
+ *   and `--resume` continues from them.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/global-census.run.ts \
@@ -149,7 +155,7 @@ interface Census {
 	/**
 	 * Null when no `--config` was given.
 	 *
-	 * That is a census without an admission reading rather than a census reporting no deficit.
+	 * That's a census without an admission reading rather than a census reporting no deficit.
 	 */
 	deficits: Deficits | null
 }

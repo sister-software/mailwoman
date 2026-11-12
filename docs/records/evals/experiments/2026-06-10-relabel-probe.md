@@ -40,14 +40,14 @@ Scored with `score-affix` (fp32, ship-config channels), real-affix eval (n=32):
 | guardrail (hn/loc/region/postcode) | 100 each         | 100 each         | —               |
 
 direct reading of the strict criterion: we pre-registered "drop ≤ 2pts +2k→+4k"; prefix recall
-dropped 4.0 (F1 2.3). That is exactly one flipped instance (tp 22→21) on a 25-instance eval —
+dropped 4.0 (F1 2.3). That's exactly one flipped instance (tp 22→21) on a 25-instance eval —
 the quantization noise the consult flagged — against the control's 20-point collapse, while
 suffix ROSE to 100. Verdict: hold, with the caveat recorded here rather than hidden.
 
 Residual misses at +4k: four prefixes, all prefix+ordinal/numeric names ("Northwest 23rd
 Avenue", "E 63rd Street", "NE Loop 410"). The suffix splits fire correctly even on those rows
 (`model street="northwest 23rd"`). A long tail that 4k corrective steps on a 20.0-weight resume
-has not migrated. The full 40k consolidation run owns it.
+hasn't migrated. The full 40k consolidation run owns it.
 
 ## The full 40k consolidation run
 

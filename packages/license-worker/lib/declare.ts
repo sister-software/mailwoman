@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A declaration of intent turns into one declared license and its first issuance. An `open-source` declaration
- *   receives its token and refresh secret in the response. The other intents receive the token by email and a claim
- *   id in the response, so the address is a possession proof. A re-issuance mints the next `seq` when the current token
- *   is within `EXPIRY_NOTICE_DAYS` of its expiry, and for an open-source declaration reads the source URL's license
- *   file first. The ledger's unique pair on `(lid, seq)` makes two racing re-issuances one row.
+ *   A declaration of intent turns into one declared license and its first issuance.
+ *
+ *   An `open-source` declaration receives its token and refresh secret in the response.
+ *   The other intents receive the token by email and a claim id in the response,
+ *   so the address is a possession proof.
+ *
+ *   A re-issuance mints the next `seq` when the current token is within `EXPIRY_NOTICE_DAYS` of
+ *   its expiry, and for an open-source declaration reads the source URL's license file first.
+ *   The ledger's unique pair on `(lid, seq)` makes two racing re-issuances one row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type DeclarationRequest, EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
 import { encodeLicenseKey, type LicenseKeyPayload, LicenseTerms } from "@mailwoman/core/license/key"
+import { applyStep } from "@mailwoman/core/state-machine"
 
 import { todayUTC } from "#dates"
 import type { EmailProvider } from "#email/provider"
@@ -20,14 +25,15 @@ import { daysBetween, expiryForIntent } from "#expiry"
 import { newClaimID, newIssuanceID, newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {
+	clearDeclarationPendingSecret,
 	createDeclaration,
 	currentIssuance,
 	findDeclaration,
 	findEvaluationByEmail,
 	insertIssuance,
 	setDeclarationVerification,
-	setIssuanceEmailState,
 } from "#ledger/declarations"
+import { emailMachine, issuanceEmailCarrier } from "#ledger/machines"
 import type { DeclarationRow, IssuanceRow } from "#ledger/schema"
 import { verifySourceURL } from "#verify-source"
 
@@ -116,17 +122,27 @@ async function mintIssuance(
 }
 
 /**
+ * What sending one issuance's email needs from the dependencies.
+ */
+export type IssuanceEmailDependencies = Pick<DeclarationDependencies, "ledger" | "email" | "now">
+
+/**
  * Send an issuance to the declaration's address and record the result.
  *
- * Every open-source declaration lacks an address. was answered in the response and skips the send.
+ * An open-source declaration has no address, because its token was answered
+ * in the response, so it skips the send.
+ * A sent message included the declaration's pending refresh secret.
+ * The ledger then clears that secret.
  */
 async function emailIssuance(
-	deps: DeclarationDependencies,
+	deps: IssuanceEmailDependencies,
 	declaration: DeclarationRow,
 	issuance: IssuanceRow,
 	refreshSecret: string | null
-): Promise<void> {
-	if (!declaration.email) return
+): Promise<"sent" | "failed" | "skipped"> {
+	if (!declaration.email) return "skipped"
+
+	const carrier = issuanceEmailCarrier(deps.ledger, issuance.issuance_id)
 
 	let messageID: string
 
@@ -146,12 +162,36 @@ async function emailIssuance(
 			issuance.issuance_id
 		))
 	} catch {
-		await setIssuanceEmailState(deps.ledger, issuance.issuance_id, "failed", null)
+		await applyStep(emailMachine, carrier, issuance.email_state, { kind: "failed" })
 
-		return
+		return "failed"
 	}
 
-	await setIssuanceEmailState(deps.ledger, issuance.issuance_id, "sent", messageID)
+	// A conflict means another send recorded its outcome first.
+	// The provider deduplicates on the issuance id, so this send's acceptance needs no second record.
+	await applyStep(emailMachine, carrier, issuance.email_state, { kind: "sent", messageID })
+
+	if (refreshSecret) {
+		await clearDeclarationPendingSecret(deps.ledger, declaration.lid, new Date((deps.now ?? Date.now)()).toISOString())
+	}
+
+	return "sent"
+}
+
+/**
+ * Send an issuance's email again, after a provider refusal or a crash before the send.
+ *
+ * The message includes the declaration's pending refresh secret.
+ * The ledger holds that secret until a first message is sent.
+ *
+ * The issuance id is the provider's idempotency key, as on the first attempt.
+ */
+export function resendIssuanceEmail(
+	deps: IssuanceEmailDependencies,
+	declaration: DeclarationRow,
+	issuance: IssuanceRow
+): Promise<"sent" | "failed" | "skipped"> {
+	return emailIssuance(deps, declaration, issuance, declaration.refresh_secret_pending)
 }
 
 /**
@@ -192,8 +232,10 @@ export async function issueDeclaration(
 			claim_id: claim,
 			refresh_secret_sha256: await secretDigest(secret),
 			// The secret travels in the response for open-source and in the message for the other intents.
-			// The ledger keeps its digest only, so no route can answer it later.
-			refresh_secret_pending: null,
+			// An emailed declaration keeps it until its first message is sent.
+			// A resend after a failed send includes it.
+			// No route answers it.
+			refresh_secret_pending: emailed ? secret : null,
 			first_install: request.install ?? null,
 		})
 	} catch (error) {

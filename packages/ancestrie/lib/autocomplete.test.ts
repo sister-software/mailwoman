@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests partial last-token completion, complete-token shadowing, per-branch caps, deduplication,
- *   containment chains. It also tests the robustness interface.
+ *   Tests partial last-token completion, complete-token shadowing, per-branch caps,
+ *   deduplication, containment chains.
+ *   It also tests the robustness interface.
  */
 
 import { describe, expect, it } from "vitest"

@@ -11,7 +11,7 @@ import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
@@ -41,28 +41,28 @@ interface BalanceSource {
 
 const MULTILOCALE_SOURCES: readonly BalanceSource[] = [
 	{
-		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+		zip: currentSourcePath("openaddresses", "de__sn__statewide.zip"),
 		csv: "de/sn/statewide.csv",
 		iso2: "DE",
 		region: "",
 		order: "eu",
 	},
 	{
-		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+		zip: currentSourcePath("openaddresses", "fr__countrywide.zip"),
 		csv: "fr/countrywide.csv",
 		iso2: "FR",
 		region: "",
 		order: "fr",
 	},
 	{
-		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+		zip: currentSourcePath("openaddresses", "it__countrywide.zip"),
 		csv: "it/countrywide.csv",
 		iso2: "IT",
 		region: "",
 		order: "eu",
 	},
 	{
-		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+		zip: currentSourcePath("openaddresses", "nl__countrywide.zip"),
 		csv: "nl/countrywide.csv",
 		iso2: "NL",
 		region: "",
@@ -71,7 +71,13 @@ const MULTILOCALE_SOURCES: readonly BalanceSource[] = [
 ]
 
 const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
-	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+	{
+		zip: currentSourcePath("openaddresses", "de__berlin.zip"),
+		csv: "de/berlin.csv",
+		iso2: "DE",
+		region: "",
+		order: "eu",
+	},
 ]
 
 const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation)
@@ -369,7 +375,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 
 		if (!pool.length) {
 			throw new Error(
-				`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")} and the NAD ` +
+				`No US tuples found — are the cached OA zips present in ${currentSourcePath("openaddresses")} and the NAD ` +
 					`skeletons in ${dataRootPath(NAD_SKELETON_DIRECTORY)}?`
 			)
 		}

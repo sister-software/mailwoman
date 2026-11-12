@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Key encodings: the position of a code in its direct-address key space, mirroring `crates/registry-core/src/key.rs`.
+ *   Key encodings: the position of a code in its direct-address key space,
+ *   mirroring `crates/registry-core/src/key.rs`.
  *
- *   Two or three upper-case ASCII letters encode base-26 with the first letter in the highest place. A three-digit
- *   numeric code encodes as its decimal value. Every encoder checks length and alphabet first and answers `-1` for
- *   anything else. A caller normalizes case or whitespace before calling, never here.
+ *   Two or three upper-case ASCII letters encode base-26 with the first letter in the highest place.
+ *   A three-digit numeric code encodes as its decimal value.
+ *
+ *   Every encoder checks length and alphabet first and answers `-1` for anything else.
+ *   A caller normalizes case or whitespace before calling, never here.
  */
 
 /**

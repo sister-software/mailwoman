@@ -4,9 +4,10 @@
 /**
  *   The NumPy operations the isotonic calibration fit was written in, reproduced to the bit.
  *
- *   A calibration table and its report are compared with the ones NumPy wrote, so each operation here performs the
- *   floating-point steps NumPy's performs, in its order. A sum is NumPy's pairwise sum, a mean that sum over the count,
- *   and an interpolation `np.interp`'s formula over the index its binary search returns.
+ *   A calibration table and its report are compared with the ones NumPy wrote,
+ *   so each operation here performs the floating-point steps NumPy's performs, in its order.
+ *   A sum is NumPy's pairwise sum, a mean that sum over the count, and an interpolation
+ *   `np.interp`'s formula over the index its binary search returns.
  */
 
 /**

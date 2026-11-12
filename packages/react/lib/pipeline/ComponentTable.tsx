@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ComponentTable` — the tag / value / confidence table of decoded components. Presentational.
+ *   `ComponentTable` — the tag / value / confidence table of decoded components.
+ *   Presentational.
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"

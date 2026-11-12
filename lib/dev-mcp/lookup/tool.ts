@@ -245,7 +245,7 @@ export async function runLookup(
 /**
  * Resolves the candidate database path.
  *
- * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
+ * An explicit path that doesn't resolve is returned as given, so opening it reports why it is unavailable.
  */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | null> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
@@ -457,7 +457,7 @@ async function probeLocaleFST(
 	args: LookupArgs,
 	locale: string | undefined
 ): Promise<LocaleLookup & { engine_id: string | null }> {
-	const engine = await registry.acquire({
+	using engine = await registry.acquire({
 		...args.config,
 		...(locale ? { locale } : {}),
 		gazetteer_prior: "on",

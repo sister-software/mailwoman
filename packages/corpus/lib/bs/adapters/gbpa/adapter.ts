@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `gbpa-bs`: address points for the City of Freeport and Lucaya on Grand Bahama. The GBPA publishes
- * them in its `GBPA/gis-datafiles` repository on GitHub.
+ * `gbpa-bs`: address points for the City of Freeport and Lucaya on Grand Bahama.
+ *
+ * The GBPA publishes them in its `GBPA/gis-datafiles` repository on GitHub.
  * The adapter reads the CSV export, `CSV/addresses.csv`.
  *
- * A Freeport address number is a block and a parcel joined by a hyphen (`8-29 Seagull Drive`), and either
- * part may be lettered (`UU-3`, `13-43C`, `W-A-10`). The adapter reads `AddressNum` as the house number,
- * `FullStName` as the street, `City` as the locality, `Island` as the region and `AltName` as a venue
- * (`Lucayan International School`, `Shoreline`). The export truncates some parcel ids to five characters and
- * a star (`Minis*`), and those numbers are dropped.
+ * A Freeport address number is a block and a parcel joined by a hyphen (`8-29 Seagull Drive`),
+ * and either part may be lettered (`UU-3`, `13-43C`, `W-A-10`).
+ * The adapter reads `AddressNum` as the house number, `FullStName` as the street, `City` as the locality,
+ * `Island` as the region and `AltName` as a venue (`Lucayan International School`, `Shoreline`).
  *
- * The export repeats the street's name in a few records (`Rippindale Rippindale`, and across an embedded
- * line break `Santa Maria \r\nSanta Maria Avenue`). The adapter collapses the repeat and counts it.
+ * The export truncates some parcel ids to five characters and a star (`Minis*`),
+ * and those numbers are dropped.
  *
- * The GBPA licenses the data under CC BY 4.0 and asks for the statement "Data Provided by The Grand Bahama
- * Port Authority". Every row records that license.
+ * The export repeats the street's name in a few records (`Rippindale Rippindale`,
+ * and across an embedded line break `Santa Maria \r\nSanta Maria Avenue`).
+ * The adapter collapses the repeat and counts it.
+ *
+ * The GBPA licenses the data under CC BY 4.0 and asks for the statement "Data
+ * Provided by The Grand Bahama Port Authority".
+ * Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -87,7 +92,7 @@ const ADDRESS_NUMBER = /^[A-Z\d]+(?:-[A-Z\d]+)*$/iu
 const REPEATED_NAME = /^(.+?) \1(?= |$)/u
 
 /**
- * A street value that is only a type word, with no name before it.
+ * A street value that's only a type word, with no name before it.
  */
 const TYPE_WORD_ONLY = /^(?:road|lane|drive|avenue|street|court|close|way|place|circle|terrace|crescent)$/iu
 

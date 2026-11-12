@@ -10,6 +10,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * Resolves the committed table from the `@mailwoman/codex` package root, so the path
@@ -155,11 +156,7 @@ export async function generateOfficialLanguages(
 		})
 		.join("\n")
 
-	const header = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+	const header = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   generated — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
  *   Unicode CLDR ${cldrVersion} supplemental territoryInfo (\`_officialStatus\`). \`official\` merges
  *   CLDR's \`official\` + \`de_facto_official\`; \`regional\` is \`official_regional\` (kept separate —

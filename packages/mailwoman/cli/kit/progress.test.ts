@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The test renders the progress feed in a subprocess against real Ink. Ink writes its final frame at unmount.
+ *   The test renders the progress feed in a subprocess against real Ink.
+ *
+ *   Ink writes its final frame at unmount.
  *   It strips ANSI codes before matching stdout.
  */
 
@@ -11,9 +13,10 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { type ProcessProgress, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { expect, test } from "vitest"
 
-import { describeProgressStep, type ProgressStep, stripAnsi, TransferProgress } from "#cli-kit"
+import { describeProgressStep, type ProgressStep, TransferProgress } from "#cli-kit"
 
 const HARNESS = `
 	import { createElement as h, useEffect } from "react"
@@ -129,14 +132,14 @@ test("draws a local download's bytes, total and percent as it arrives", async ()
 
 	// Where the frames fall depends on how the socket splits the writes, so only their order is fixed.
 	const percents = [
-		...stripAnsi(stdout).matchAll(new RegExp(`geo/object\\.db: [█░]+\\s+(\\d+)%\\s+.+ of ${total}`, "gu")),
+		...stripANSI(stdout).matchAll(new RegExp(`geo/object\\.db: [█░]+\\s+(\\d+)%\\s+.+ of ${total}`, "gu")),
 	].map((match) => Number(match[1]))
 
 	expect(stderr).toContain("bytes 3000000")
 	expect(percents.some((percent) => percent > 0 && percent < 100)).toBe(true)
 	expect(percents).toEqual(percents.toSorted((a, b) => a - b))
 	expect(percents.at(-1)).toBe(100)
-	expect(stripAnsi(stdout)).toContain(`geo/object.db: ${"█".repeat(24)}  100%  ${total} of ${total}`)
+	expect(stripANSI(stdout)).toContain(`geo/object.db: ${"█".repeat(24)}  100%  ${total} of ${total}`)
 }, 30_000)
 
 test("renders the latest step per command", async () => {
@@ -145,7 +148,7 @@ test("renders the latest step per command", async () => {
 		env: childEnv(),
 	})
 
-	const text = stripAnsi(stdout)
+	const text = stripANSI(stdout)
 
 	expect(text).toMatch(/git clone a: [█░]{24}\s+50%\s+Receiving objects\s+\(5\/10\)/u)
 	expect(text).toMatch(/git clone b: █{24}\s+100%\s+Resolving deltas\s+\(10\/10\)/u)

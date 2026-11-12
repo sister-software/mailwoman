@@ -4,14 +4,14 @@
 /**
  * Layouts for countries where libaddressinput has `fmt: null`.
  *
- * These were read from each country's UPU Standardized Address Format
- * Description (SAFD), using its line-structure table and examples.
+ * These were read from each country's UPU Standardized Address Format Description (SAFD),
+ * using its line-structure table and examples.
  *
  * SAFD-based layouts are kept separate from generated `fmt` layouts.
  * If they differ, both are kept as-is.
  *
- * Of these eight countries, Botswana, Qatar, and Zimbabwe have no
- * postcode element. Three place postcode before locality, two after.
+ * Of these eight countries, Botswana, Qatar, and Zimbabwe have no postcode element.
+ * Three place postcode before locality, two after.
  */
 
 import { addr, numberFirstCommaStreet, numberFirstStreet, SLOTS, type AddressLayout } from "#address/layout"

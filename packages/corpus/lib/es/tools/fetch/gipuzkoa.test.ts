@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves how the Gipuzkoa fetcher resolves the download service to its one archive, and what it
- *   does where the feed states less than it needs.
+ *   Proves how the Gipuzkoa fetcher resolves the download service to its one archive,
+ *   and what it does where the feed states less than it needs.
  *
  *   The feed body is the shape `https://b5m.gipuzkoa.eus/inspire/download/addresses.xml` serves,
  *   reduced to the elements this fetcher reads, with the publisher's own relations kept: the dataset
  *   is a `rel="alternate"` link and the ISO 19139 record is a `rel="describedby"` link beside it.
- *   There is no `rel="enclosure"` link to find. That is the case a reader of INSPIRE feeds gets
- *   wrong.
+ *   There's no `rel="enclosure"` link to find.
+ *   That's the case a reader of INSPIRE feeds gets wrong.
  *
- *   `./gipuzkoa.integration.test.ts` reads the live service. This suite stubs the transport and runs
- *   the real `APIClient` over it, so the requests go through the same adapter and error mapping they
- *   do against the publisher.
+ *   `./gipuzkoa.integration.test.ts` reads the live service.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the requests
+ *   go through the same adapter and error mapping they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"

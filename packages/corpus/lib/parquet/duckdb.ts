@@ -9,6 +9,8 @@
  *   or write Parquet through DuckDB. A consumer that only needs the schema types never loads it.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
+
 /**
  * An open DuckDB connection, re-exported so consumers of {@link openDuckDB} can name
  * the type without their own static dependency on the optional peer.
@@ -26,7 +28,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
 /**
  * The share of host memory one DuckDB instance may hold.
  *
- * DuckDB allocates outside the V8 heap, so `--max-old-space-size` does not bound it and a query
+ * DuckDB allocates outside the V8 heap, so `--max-old-space-size` doesn't bound it and a query
  * over a corpus with hundreds of millions of rows will exhaust the host rather than spill.
  * A `COUNT(DISTINCT …)` over `v0.6.0-register-surface`'s 697,675,170 train rows did
  * that twice on 2026-09-28, with a second corpus tool running beside it.
@@ -39,7 +41,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  *
  * Past its limit DuckDB spills to `temp_directory`.
  * The query finishes slower.
- * That is the failure to prefer.
+ * That's the failure to prefer.
  *
  * A caller that knows it holds the host by itself passes a larger `memoryLimitBytes`.
  *
@@ -48,7 +50,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
 export const DUCKDB_MEMORY_SHARE = 0.25
 
 /**
- * The share of the host's threads one DuckDB instance takes when its caller names no count.
+ * The share of the host's threads one DuckDB instance takes when its caller identifies no count.
  *
  * DuckDB's own default is every core.
  * Each thread holds part of the memory limit and its own scan buffers, so an instance at every
@@ -62,7 +64,7 @@ export const DUCKDB_MEMORY_SHARE = 0.25
 export const DUCKDB_THREAD_SHARE = 0.25
 
 /**
- * The memory one instance holds when its caller names no limit:
+ * The memory one instance holds when its caller identifies no limit:
  * {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
  */
 export async function defaultDuckDBMemoryLimitBytes(): Promise<number> {
@@ -72,7 +74,7 @@ export async function defaultDuckDBMemoryLimitBytes(): Promise<number> {
 }
 
 /**
- * The threads one instance runs when its caller names no count:
+ * The threads one instance runs when its caller identifies no count:
  * {@linkcode DUCKDB_THREAD_SHARE} of the host's.
  */
 export async function defaultDuckDBThreads(): Promise<number> {
@@ -127,10 +129,17 @@ export interface DuckDBLimits {
  * every process, including processes unrelated to the query that caused it.
  */
 export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableDuckDB> {
-	const { DuckDBInstance } = await import("@duckdb/node-api")
-	const { dataRootPath } = await import("@mailwoman/core/data-root")
-	const { ByteFormatter } = await import("@mailwoman/core/fs/formatters")
-	const { makeDirectories } = await import("@mailwoman/core/fs/writers")
+	const {
+		nodeApi: { DuckDBInstance },
+		dataRoot: { dataRootPath },
+		formatters: { ByteFormatter },
+		writers: { makeDirectories },
+	} = await allKeyed({
+		nodeApi: import("@duckdb/node-api"),
+		dataRoot: import("@mailwoman/core/data-root"),
+		formatters: import("@mailwoman/core/fs/formatters"),
+		writers: import("@mailwoman/core/fs/writers"),
+	})
 
 	const memoryLimitBytes = limits.memoryLimitBytes ?? (await defaultDuckDBMemoryLimitBytes())
 	const threads = limits.threads ?? (await defaultDuckDBThreads())
@@ -172,7 +181,7 @@ export function escapeSQLString(value: string): string {
 /**
  * Escape `value` as a double-quoted SQL identifier, for a column name that reaches a statement from data.
  *
- * A projection names columns the caller chose, so the name is not a literal this module wrote.
+ * A projection names columns the caller chose, so the name isn't a literal this module wrote.
  * Quotes preserve a column whose name collides with a keyword — or includes a space —
  * from re-parsing as syntax.
  */

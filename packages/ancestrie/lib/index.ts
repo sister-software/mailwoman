@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/ancestrie` is a materialized trie over an ancestry graph. Build entries into a token
- *   trie and seal them into one static binary artifact. A single prefix walk answers lexical
- *   continuation, rank and containment queries. The readme describes lineage. `format.ts` describes
- *   the binary layout.
+ *   `@mailwoman/ancestrie` is a materialized trie over an ancestry graph.
+ *
+ *   Build entries into a token trie and seal them into one static binary artifact.
+ *   A single prefix walk answers lexical continuation, rank and containment queries.
+ *
+ *   The readme describes lineage.
+ *   `format.ts` describes the binary layout.
  */
 
 export { autocomplete } from "#autocomplete"

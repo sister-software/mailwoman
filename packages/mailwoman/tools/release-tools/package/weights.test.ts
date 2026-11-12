@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The weights package's card, README and JSON layout. The card's phase and component assertions track the active
- *   label set rather than a historical stage.
+ *   The weights package's card, README and JSON layout.
+ *
+ *   The card's phase and component assertions track the active label set rather than a historical stage.
  */
 
 import { STAGE2_FINE_TAGS } from "@mailwoman/neural/labels"

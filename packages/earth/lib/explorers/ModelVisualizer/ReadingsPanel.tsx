@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The workbench's right column: the trace's metadata and the four readings, each computed from fields the
- *   trace already holds so a reader can check every number against the bands.
+ *   The workbench's right column: the trace's metadata and the four readings, each computed
+ *   from fields the trace already holds so a reader can check every number against the bands.
  *
  *   - Predictability: each token's label confidence and, when the bundle records them, the decoder's margin.
  *   - Confoundance: the best other label per token and the chosen label's lead over it.
@@ -46,7 +46,7 @@ const CHANNEL_FAMILIES: Record<string, readonly string[]> = {
 /**
  * The index of the `country_ambiguous` flag in the country channel's per-piece feature.
  *
- * A hit flagged ambiguous, such as a surname that is also a country, is no disagreement under another label.
+ * A hit flagged ambiguous, such as a surname that's also a country, is no disagreement under another label.
  */
 const COUNTRY_AMBIGUOUS_FEATURE = 1
 

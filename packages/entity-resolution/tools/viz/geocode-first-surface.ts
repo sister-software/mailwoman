@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Plot string-only and string-plus-distance match probabilities using the record matcher's
- *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained html.
+ *   Plot string-only and string-plus-distance match probabilities using the
+ *   record matcher's Fellegi-Sunter weights.
+ *
+ *   The supplied prior is illustrative and the output is self-contained html.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

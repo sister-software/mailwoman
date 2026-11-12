@@ -2,10 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   Promise helpers with no runtime dependency, so a launcher graph can import them.
+ *
+ *   `memoizeResettable` lives in `@mailwoman/core/memoize` because it depends on `async-init`.
+ */
+
+/**
  * Marks a promise started ahead of the await that reads it as handled, and returns it unchanged.
  *
  * A rejection still reaches the later await.
- * Before that await, or when the result goes unused, it is not reported as unhandled.
+ * Before that await, or when the result goes unused, it isn't reported as unhandled.
  */
 export function startEarly<T>(promise: Promise<T>): Promise<T> {
 	promise.catch(() => {})

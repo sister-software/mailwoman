@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit cover for the exclusion-grade coverage composition, plus the write-and-read leg: cells produced
- *   here go through `@mailwoman/core/layers` and come back answering `supportsExclusion` true, while the
- *   pipeline's default path comes back answering false.
+ *   Unit cover for the exclusion-grade coverage composition, plus the write-and-read leg:
+ *   cells produced here go through `@mailwoman/core/layers` and come back answering
+ *   `supportsExclusion` true, while the pipeline's default path comes back answering false.
  */
 
 import {

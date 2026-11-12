@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * What a logged-in Wikimedia Action API session needs: the bot-password credentials, the session
- * cookies the login answers set, and the request limits of each mode.
+ * What a logged-in Wikimedia Action API session needs: the bot-password credentials,
+ * the session cookies the login answers set, and the request limits of each mode.
  *
- * A bot password is created at `Special:BotPasswords` and logs in as `Name@app` with the generated
- * password, through `action=login`. See https://www.mediawiki.org/wiki/API:Login.
+ * A bot password is created at `Special:BotPasswords` and logs in as `Name@app`
+ * with the generated password, through `action=login`.
+ * See https://www.mediawiki.org/wiki/API:Login.
  */
 
 /**

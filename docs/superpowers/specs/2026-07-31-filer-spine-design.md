@@ -2,7 +2,7 @@
 
 2026-07-31. Operator + Claude. **Draft for operator review.** This spec extends the BDC vertical
 (`2026-07-20-bdc-plausibility-design.md`). 2a shipped filings and 2b ships physical corroboration.
-This spec answers the question both leave open: _who is the filer really, and what
+This spec answers the question both leave open: _who's the filer really, and what
 do they physically hold?_ It absorbs the 2c provider registry (see §7).
 
 ## 1. The problem
@@ -30,14 +30,14 @@ to, and what the public record physically supports.
    evidence that produced them. No edge is a bare claim.
 2. **Disclosure, never accusation.** The product reports "these five filers report the same holding
    company" or "no license or registered structure corroborates this claim in this county." It never
-   states that a filer is deceptive, fraudulent, or lying. The record does not show intent, and it is not ours to
+   states that a filer is deceptive, fraudulent, or lying. The record doesn't show intent, and it isn't ours to
    assert. This position is both the direct one and the legally safe one.
-3. **Absence is not impossibility.** Unlicensed operation is lawful and common. CBRS GAA, 5/6 GHz
+3. **Absence isn't impossibility.** Unlicensed operation is lawful and common. CBRS GAA, 5/6 GHz
    unlicensed backhaul, leased fiber, wholesale/resale, and roaming all deliver real service without a
    license, a structure, or a facility in the operator's own name. "No corroborating nexus found"
    is the strongest negative the spine may emit, and only with coverage confidence attached.
 4. **Provenance per edge.** Every crosswalk edge records its source, source vintage, and assertion type.
-   An edge without provenance cannot be checked, so the spine does not store one.
+   An edge without provenance cannot be checked, so the spine doesn't store one.
 
 ## 3. Identifier inventory
 
@@ -71,7 +71,7 @@ Three findings change the design:
 2. **`principalCommType` is a free classification signal.** Map it to
    Incumbent LEC / CLEC / Interexchange / Toll Reseller, because it tells you what _kind_ of
    carrier a filer is without any inference.
-3. **The DC agent must not be used for family inference.** The 499 "DC agent" is the agent for
+3. **The DC agent mustn't be used for family inference.** The 499 "DC agent" is the agent for
    service of process. A handful of firms (CT Corporation, CSC, Cogency
    Global) fill that role for tens of thousands of unrelated companies. A shared registered agent must **never**
    produce a family edge, and it is the most likely source of false positives in this whole design.
@@ -174,7 +174,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 ## 8. Decisions (ratified 2026-07-31)
 
 - **D1 — Fold 2c into 3a.** Operator. See §7.
-- **D2 — ULS: Part 101 only.** Operator. There is a further reason Part 101 point-to-point microwave is the right scope:
+- **D2 — ULS: Part 101 only.** Operator. There's a further reason Part 101 point-to-point microwave is the right scope:
   a Part 101 license describes a _path_, with both endpoint coordinates
   plus the licensee FRN. It is therefore physical backhaul evidence and more than an area authority. A fixed
   wireless operator with licensed backhaul leaves a trace with two geographic endpoints. Doctrine §2.3 still
@@ -184,20 +184,20 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
   FCC's own term), and the record-matching app already uses `registry`.
 - **D4 — Federal-only for v1, without state registries.** Controller call. Fifty heterogeneous scrapers would
   cover the long tail of small privately-held operators. The corporate-family question
-  matters least for exactly those operators, because a single-county WISP is not a national carrier operating under another name. The federal
+  matters least for exactly those operators, because a single-county WISP isn't a national carrier operating under another name. The federal
   pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is about.
-  The same call excludes OpenCorporates, so its licensing question does not arise for v1.
+  The same call excludes OpenCorporates, so its licensing question doesn't arise for v1.
 - **D5 — Publication posture: split the two artifacts.** Controller call. The **record-linkage eval**
-  (§5) can be published early and safely. It is a methods result about matching and names no company's
+  (§5) can be published early and safely. It is a methods result about matching and identifies no company's
   conduct. The **filers-vs-families competition analysis** ships first as an internal/product capability
   and becomes public only through a separate, deliberate operator decision after real output has
   been reviewed. The two have different wording standards and different risks, so do not bundle them.
 - **D6 — EIN dropped from the spine.** Controller call. EINs are mostly non-public, and CIK + FRN already
   do the joining. The spine keeps an EIN as an attribute when a source provides one (SEC
   cover pages, 990s), with no dedicated ingest. A 990 pass can be reconsidered if rural co-ops become a
-  focus, because that is where it would pay off.
+  focus, because that's where it would pay off.
 - **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
-  public domain, so **Phase 3 does not wait on counsel**, unlike the Fabric question that still blocks 2a.
+  public domain, so **Phase 3 doesn't wait on counsel**, unlike the Fabric question that still blocks 2a.
   PeeringDB (API terms) is checked at 3c/C6 time, and D4 puts LERG/OCN and OpenCorporates out of scope.
   The counsel dossier records this as informational and not blocking.
 
@@ -221,18 +221,18 @@ The report was wrong, and the distinction matters for 3b.
 `https://data.fcc.gov/api/frn/getInfo?frn=…` returns **HTTP 302 → `www.fcc.gov/what-can-we-help-you-find`**,
 the FCC's generic landing page for retired URLs. The endpoint appears to be **decommissioned** rather than blocked. The
 403 originally observed came from the _redirect target_ (`www.fcc.gov`) refusing this host, so a dead endpoint
-was misread as a network block. Documentation pages for retired APIs stay online. That is why the search
+was misread as a network block. Documentation pages for retired APIs stay online. That's why the search
 results looked encouraging.
 
 **Host reachability from the lab machine** (verified):
 
-| Host                   | Status              | Notes                                                                    |
-| ---------------------- | ------------------- | ------------------------------------------------------------------------ |
-| `data.fcc.gov`         | **200**             | Entire bulk-download tree reachable                                      |
-| `apps.fcc.gov`         | **200**             | CORES public site loads                                                  |
-| `broadbandmap.fcc.gov` | 401 unauthenticated | Works with credentials — BDC ingest is unaffected                        |
-| `www.fcc.gov`          | **403**             | Akamai edge. A self-identifying User-Agent does not help (host/IP-based) |
-| `wireless2.fcc.gov`    | **403**             | Same                                                                     |
+| Host                   | Status              | Notes                                                                   |
+| ---------------------- | ------------------- | ----------------------------------------------------------------------- |
+| `data.fcc.gov`         | **200**             | Entire bulk-download tree reachable                                     |
+| `apps.fcc.gov`         | **200**             | CORES public site loads                                                 |
+| `broadbandmap.fcc.gov` | 401 unauthenticated | Works with credentials — BDC ingest is unaffected                       |
+| `www.fcc.gov`          | **403**             | Akamai edge. A self-identifying User-Agent doesn't help (host/IP-based) |
+| `wireless2.fcc.gov`    | **403**             | Same                                                                    |
 
 **Consequences:**
 
@@ -290,5 +290,5 @@ easier alternative to the fixed-width archives. It is easier to use, but we veri
 
 **3c decision, pre-registered here:** ingest `r_tower.zip` (fixed-width) and key structures on the
 registrant **FRN** rather than on `Entity`. During 3c recon, confirm that the fixed-width layout includes the FRN.
-If it does not, ASR cannot join to the crosswalk authoritatively, and the phase must be rethought
+If it doesn't, ASR cannot join to the crosswalk authoritatively, and the phase must be rethought
 before any code is written.

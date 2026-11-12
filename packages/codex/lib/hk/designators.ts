@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Hong Kong designators in English and Traditional Chinese: the delivery service, premise, sub-premise, floor
- *   and relation words that a Hong Kong address or query uses. Floor codes follow the Land Registry list.
+ *   Hong Kong designators in English and Traditional Chinese: the delivery service, premise,
+ *   sub-premise, floor and relation words that a Hong Kong address or query uses.
+ *   Floor codes follow the Land Registry list.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/hkgEn.pdf UPU Hongkong addressing profile}
  * @see {@link https://www1.iris.gov.hk/eservices/help/topic02.jsp Land Registry list of commonly used floor codes}

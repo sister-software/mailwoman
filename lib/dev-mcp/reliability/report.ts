@@ -3,7 +3,9 @@
 
 /**
  * `mwdev_reliability` collects graded confidences for one surface and curves them.
- * The report states the number of correct answers each threshold would keep and discard. A well-calibrated surface can still have no threshold that keeps enough correct answers to set.
+ *
+ * The report states the number of correct answers each threshold would keep and discard.
+ * A well-calibrated surface can still have no threshold that keeps enough correct answers to set.
  */
 
 import { resolvePath } from "path-ts"
@@ -127,7 +129,7 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | null) ?? {}
 	// The per-token softmax is the measurement, so tracing is forced on regardless of what the caller passed.
-	const engine = await registry.acquire({ ...config, trace: true })
+	using engine = await registry.acquire({ ...config, trace: true })
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
@@ -183,7 +185,7 @@ function summarize(
 	}
 
 	// The most useful single row: the highest threshold that still admits a majority of what it could,
-	// prioritized because a table gives each row equal prominence while the threshold does not.
+	// prioritized because a table gives each row equal prominence while the threshold doesn't.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable

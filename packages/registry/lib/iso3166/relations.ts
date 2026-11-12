@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The code-equivalence relations of one country entity: alpha-2, alpha-3 and numeric codes of the same record.
+ *   The code-equivalence relations of one country entity: alpha-2, alpha-3
+ *   and numeric codes of the same record.
  */
 
 import { getCountryByAlpha2, getCountryByAlpha3, getCountryByNumeric } from "#iso3166/records"

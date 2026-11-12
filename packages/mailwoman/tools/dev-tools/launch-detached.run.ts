@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Start a long-running command in its own session and exit, so no signal that kills this process can reach the
- *   child.
+ *   Start a long-running command in its own session and exit, so no signal that
+ *   kills this process can reach the child.
  *
- *   `spawn(…, { detached: true })` calls `setsid(2)`, placing the child in a new session and group, so a group
- *   signal has no member to reach; `unref()` then lets this process exit while the child continues.
+ *   `spawn(…, { detached: true })` calls `setsid(2)`, placing the child in a
+ *   new session and group, so a group signal has no member to reach; `unref()`
+ *   then lets this process exit while the child continues.
  *
- *   `nohup` is not equivalent: it ignores SIGHUP and leaves the child in the same group, so a group kill still lands.
+ *   `nohup` isn't equivalent: it ignores SIGHUP and leaves the child in the same group,
+ *   so a group kill still lands.
  *
- *   The child's output goes to `--log`, because a detached child cannot inherit a terminal that is about to
- *   disappear.
+ *   The child's output goes to `--log`, because a detached child cannot inherit
+ *   a terminal that's about to disappear.
  *
- *   Run: node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> [--cwd <dir>] -- <command> [arg ...]
+ *   Run: node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log
+ *   <file> [--cwd <dir>] -- <command> [arg ...]
  */
 
 import { open } from "@mailwoman/core/fs/readers/stat"

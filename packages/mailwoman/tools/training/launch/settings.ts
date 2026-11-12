@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The configuration the training launcher reads, with one documented default per value. The variables and defaults
- *   are the ones the retired Python launcher read, so a `.env` written for that launcher configures this one.
+ *   The configuration the training launcher reads, with one documented default per value.
+ *
+ *   The variables and defaults are the ones the retired Python launcher read,
+ *   so a `.env` written for that launcher configures this one.
  */
 
 import { liveEnv } from "@mailwoman/core/env"

@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The learned scorer, the production wiring for the gradient-boosted-tree model behind
- *   {@link ResolveConfig.scorer}.
+ *   The learned scorer, the production wiring for the gradient-boosted-tree
+ *   model behind {@link ResolveConfig.scorer}.
  *
- *   {@link createMatchFeaturizer} is the one feature extractor for a candidate pair, used
- *   identically at train time (`registry/tools/train-gbt.ts`), eval time and inference time.
- *   {@link createGBTScorer} wraps a trained {@link GBT} and the featurizer into the `(a, b) => number`
- *   the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
- *   Fellegi-Sunter weight it replaces).
+ *   {@link createMatchFeaturizer} is the one feature extractor for a candidate pair,
+ *   used identically at train time (`registry/tools/train-gbt.ts`), eval time
+ *   and inference time. {@link createGBTScorer} wraps a trained {@link GBT} and the
+ *   featurizer into the `(a, b) => number` the resolve pipeline's `scorer` hook expects
+ *   (a logit, threshold-comparable with the Fellegi-Sunter weight it replaces).
  *
- *   Both take the comparison set as input rather than importing {@link buildDefaultModel}, so this
- *   module has no dependency cycle with `resolve.ts`. Feed the comparisons from
- *   `buildDefaultModel({ collapseSpatial: true, addressFrequency })`, since that config fixes the
- *   feature layout.
+ *   Both take the comparison set as input rather than importing {@link buildDefaultModel},
+ *   so this module has no dependency cycle with `resolve.ts`.
+ *   Feed the comparisons from `buildDefaultModel({ collapseSpatial: true, addressFrequency })`,
+ *   since that config fixes the feature layout.
  */
 
 import {
@@ -103,8 +103,8 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		f.push(Math.min(1, freq * 1000))
 		// Roll-up signature: a shared corporate address can host differently-branded
 		// operating entities whose authorized official also agrees.
-		// The official is not in the comparison set, so these three features express that evidence directly.
-		// They are appended at the end, so models trained without them keep scoring unchanged.
+		// The official isn't in the comparison set, so these three features express that evidence directly.
+		// They're appended at the end, so models trained without them keep scoring unchanged.
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0

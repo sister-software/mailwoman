@@ -424,7 +424,7 @@ export interface ResolveConfig {
 	 *
 	 * When the bundled model is active and no {@link threshold} is set,
 	 * its calibrated link threshold ({@link DEDUP_GBT_META}.recommendedThreshold) is used,
-	 * because the GBT logit is not in FS-weight units and 0 would over-merge.
+	 * because the GBT logit isn't in FS-weight units and 0 would over-merge.
 	 *
 	 * The model is NPPES/US-trained.
 	 * For a very different domain, A/B it or pass `false`.
@@ -494,7 +494,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	// An explicit threshold wins.
 	// Otherwise the bundled model uses its calibrated threshold, because its logit
-	// is not in FS-weight units and 0 would over-merge.
+	// isn't in FS-weight units and 0 would over-merge.
 	// The FS baseline or a custom model uses 0.
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 

@@ -10,7 +10,7 @@
 # stated config decisions (no silent drift):
 #   - synth-po-box (the old fixed-layout source) retired — key removed, its rows drop (source filter).
 #     po_box mass now comes from one provenanced source. double-counting was the alternative.
-#   - Train-time conventions pairing deferred: designed but unprobed — it does not ride a
+#   - Train-time conventions pairing deferred: designed but unprobed — it doesn't ride a
 #     consolidation on theory (the discipline that caught Run B's confound). Its own probe next.
 # check: scripts/eval/checks/v4.4.0-boundary.json (pre-registered before any change existed) —
 # incl. fr.region floored 16.2, perturb arena >= 71, po_box >= 70 real / cedex >= 70, intersection >= 50.

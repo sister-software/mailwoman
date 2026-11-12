@@ -3,6 +3,7 @@
 
 /**
  *   The `mwdev_vocab` tool definition provides the agent-facing description and input schema.
+ *
  *   Its handler calls the vocabulary measurement in the package root.
  */
 

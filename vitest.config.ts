@@ -4,9 +4,10 @@
 /**
  *   Root Vitest config for tests across all workspaces.
  *
- *   Workspace aliases point `@mailwoman/*` imports to source `.ts` files. They come from each
- *   workspace's `exports` map, so the aliases stay in sync. The only manual alias is for
- *   `onnxruntime-web`, which is not a workspace.
+ *   Workspace aliases point `@mailwoman/*` imports to source `.ts` files.
+ *   They come from each workspace's `exports` map, so the aliases stay in sync.
+ *
+ *   The only manual alias is for `onnxruntime-web`, which isn't a workspace.
  */
 
 /// <reference types="vitest/config" />
@@ -90,7 +91,7 @@ export default defineConfig({
 			// A production import keeps its own target.
 			//
 			// Resolve the package's root export so upgrades can move or rename its Node build.
-			// There is no exported `./dist/*` path, so the root specifier is required.
+			// There's no exported `./dist/*` path, so the root specifier is required.
 			{
 				find: /^onnxruntime-web\/webgpu$/,
 				replacement: resolveModulePath("onnxruntime-web"),
@@ -121,7 +122,7 @@ export default defineConfig({
 			"**/cypress/**",
 			"**/.{idea,git,cache,output,temp}/**",
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
-			// These Playwright tests use a different runner and must not be collected by Vitest.
+			// These Playwright tests use a different runner and mustn't be collected by Vitest.
 			"**/docs/test/browser/**",
 			// Exclude Playwright tests in packages too.
 			"**/packages/*/test/browser/**",

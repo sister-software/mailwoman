@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The abstention-threshold curve re-grades frozen results instead of re-running a resolver. It
- *   converts a withheld selection into an abstention and leaves an errored row unchanged, because a
- *   harness failure is an error state that folding into abstention would hide. The curve at
- *   threshold zero must equal the unthresholded metrics exactly. The sweep and the
- *   benchmark's own tables count through one function.
+ *   The abstention-threshold curve re-grades frozen results instead of re-running a resolver.
+ *
+ *   It converts a withheld selection into an abstention and leaves an errored row unchanged,
+ *   because a harness failure is an error state that folding into abstention would hide.
+ *   The curve at threshold zero must equal the unthresholded metrics exactly.
+ *
+ *   The sweep and the benchmark's own tables count through one function.
  */
 
 import { describe, expect, it } from "vitest"

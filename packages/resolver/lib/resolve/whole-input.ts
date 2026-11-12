@@ -16,9 +16,9 @@ const SEPARATOR = /[\s,，、;；/|·・]/u
  *
  * `ミュンヘン` and `裕廊东` hold no separator.
  * The en-US parser reads them as a venue, or splits them into fragments the
- * gazetteer does not key, while it keys both whole names.
+ * gazetteer doesn't key, while it keys both whole names.
  *
- * An unspaced address whose parts resolve, or whose whole text names no place, keeps its parse.
+ * An unspaced address whose parts resolve, or whose whole text identifies no place, keeps its parse.
  * This runs after the landmark layer, so a venue the landmark layer knows keeps that answer.
  */
 export async function applyWholeInputPlace(
@@ -33,7 +33,7 @@ export async function applyWholeInputPlace(
 	if (!text || SEPARATOR.test(text) || nodes.some((node) => node.placeID)) return
 
 	// A lone admin span already looked up its whole text, under the placetype and scope the walk applies.
-	// Fragments and a venue span did not.
+	// Fragments and a venue span didn't.
 	if (nodes.length < 2 && nodes[0]?.tag !== "venue") return
 
 	const found = await backend.findPlace({ text, ...(country ? { country } : {}) }).catch(() => [])

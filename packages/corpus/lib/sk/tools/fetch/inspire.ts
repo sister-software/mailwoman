@@ -9,50 +9,55 @@
  * GeoServer at {@linkcode SK_INSPIRE_WFS}. Its register record,
  * `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`, names a WMS and
  * this WFS as the theme's only distributions and states one condition of use, `Neuplatňujú sa žiadne
- * podmienky (CC0 Voľné dielo)`, which the address-source register elected. There is no INSPIRE ATOM
+ * podmienky (CC0 Voľné dielo)`, which the address-source register elected. There's no INSPIRE ATOM
  * download service for this theme: the feeds under `inspirews.skgeodesy.sk` belong to the
- * Geodetický a kartografický ústav. That is a different publisher and a different record.
+ * Geodetický a kartografický ústav. That's a different publisher and a different record.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
- * What is particular to Slovakia is that an address is assembled from five feature types rather
- * than read from one. That shapes the layout this writes.
+ * What's particular to Slovakia is that an address is assembled from five feature types
+ * rather than read from one.
+ * That shapes the layout this writes.
  *
  * ## Five types, five documents, one directory
  *
- * `ad:Address` has a locator and references its street, its settlement part, its administrative
- * units and its postcode through `ad:component`. The adapter resolves those references locally
- * against an index it builds in a first pass over every document in `inputPath`, so every type has
- * to be on disk before the first address is composed. Measured 2026-10-03, `resultType=hits` past
- * index 0 reports 1,704,196 `ad:Address`, 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`,
- * 1,769 `ad:AddressAreaName` and 1,415 `ad:PostalDescriptor`.
+ * `ad:Address` has a locator and references its street, its settlement part,
+ * its administrative units and its postcode through `ad:component`.
+ * The adapter resolves those references locally against an index it builds in a first pass over every
+ * document in `inputPath`, so every type has to be on disk before the first address is composed.
  *
- * Each type is harvested into its own directory under the source root, because a harvest's manifest
- * sits at a fixed name beside its data file and five types sharing one directory would overwrite
- * each other's manifest. A run would then re-harvest every type, and the 341 address pages are the
+ * Measured 2026-10-03, `resultType=hits` past index 0 reports 1,704,196 `ad:Address`,
+ * 29,315 `ad:ThoroughfareName`, 3,015 `ad:AdminUnitName`, 1,769 `ad:AddressAreaName`
+ * and 1,415 `ad:PostalDescriptor`.
+ *
+ * Each type is harvested into its own directory under the source root, because a
+ * harvest's manifest sits at a fixed name beside its data file and five types sharing
+ * one directory would overwrite each other's manifest.
+ * A run would then re-harvest every type, and the 341 address pages are the
  * expensive part of this acquisition:
  *
  *     sk-inspire/Address/Address.gml            + MANIFEST.json
  *     sk-inspire/ThoroughfareName/…             + MANIFEST.json
  *     …
  *
- * The adapter reads `inputPath` recursively, so that root is what {@linkcode skInspireInputPath}
- * states. The four component types are harvested before the addresses, so an interrupted run leaves
- * the small side of the join complete rather than leaving addresses whose component references the
- * harvest cannot answer.
+ * The adapter reads `inputPath` recursively, so that root is what {@linkcode skInspireInputPath} states.
+ * The four component types are harvested before the addresses, so an interrupted
+ * run leaves the small side of the join complete rather than leaving addresses
+ * whose component references the harvest cannot answer.
  *
  * ## What the service states about itself
  *
  * Measured 2026-10-03: `ImplementsResultPaging` is `TRUE`, `ImplementsSorting` is `TRUE`,
  * `CountDefault` is 5000, and the advertised `GetFeature` formats include
- * `application/gml+xml; version=3.2`, which is the one the adapter's markup reader takes. A
- * 5,000-feature page of `ad:Address` answered in 17 seconds carrying 13,879,456 bytes, so a full
- * harvest of that type is 341 requests and roughly 4.7 GB.
+ * `application/gml+xml; version=3.2`, which is the one the adapter's markup reader takes.
+ * A 5,000-feature page of `ad:Address` answered in 17 seconds carrying 13,879,456 bytes,
+ * so a full harvest of that type is 341 requests and roughly 4.7 GB.
  *
- * `CountDefault` is 5000 and no type reports 5000 features, so `statedFeatureCount` accepts each
- * type's `numberMatched` as a count rather than refusing it as a page cap. The register records one
- * response in nine with no `numberMatched` attribute at all.
- * `readCheckedWFSFeatureCount` reads such a response as no usable count, and the harvest then ends
- * on the first page that returns no features instead of recording a wrong total.
+ * `CountDefault` is 5000 and no type reports 5000 features, so `statedFeatureCount` accepts
+ * each type's `numberMatched` as a count rather than refusing it as a page cap.
+ * The register records one response in nine with no `numberMatched` attribute at all.
+ *
+ * `readCheckedWFSFeatureCount` reads such a response as no usable count, and the harvest
+ * then ends on the first page that returns no features instead of recording a wrong total.
  */
 
 import { readCheckedWFSFeatureCount, type APIClient } from "@mailwoman/core/api"
@@ -102,7 +107,7 @@ export const SK_INSPIRE_SORT_BY = "ad:inspireId"
 export const SK_INSPIRE_PAGE_SIZE = 5000
 
 /**
- * The feature types harvested, in the order they are taken.
+ * The feature types harvested, in the order they're taken.
  *
  * The four component types come first, each in the thousands, so an interrupted run
  * leaves the index side of the adapter's join complete.
@@ -161,8 +166,8 @@ export function skInspireHarvestFile(type: SKInspireType): string {
  * constant here, because a service's prefix is its own: this one publishes `ad:Address`
  * and Estonia's publishes `AD_Address:AD.Address`.
  *
- * @throws When the service stops publishing one of the five types, does not advertise
- * the GML format the adapter reads, or does not advertise result paging.
+ * @throws When the service stops publishing one of the five types, doesn't advertise
+ * the GML format the adapter reads, or doesn't advertise result paging.
  */
 export async function readSKInspireCapabilities(client: Pick<APIClient, "fetch">): Promise<WFSCapabilities> {
 	const capabilities = await readWFSCapabilities(client, { wfsURL: SK_INSPIRE_WFS, context: CONTEXT })
@@ -337,7 +342,7 @@ export function skInspireInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBu
  * Harvests Slovakia's five AD feature types under `<outRoot>/sk-inspire/<type>/`,
  * for `mailwoman corpus fetch sk-inspire`.
  *
- * Each type is reported separately and a type that fails does not stop the rest, because the
+ * Each type is reported separately and a type that fails doesn't stop the rest, because the
  * documents are read together by the adapter and a resumed run completes a partial directory.
  * Re-runnable per type: a complete harvest whose file still hashes to its manifest's digest
  * makes no request, and an interrupted one resumes at the page after the last that reached disk.

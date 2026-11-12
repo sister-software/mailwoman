@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The soil-capability route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
+ *   The soil-capability route on the geocode path, exercised through `geocodeAddress`
+ *   with mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   The first test checks the rollback contract.
+ *   With the layer absent, the geocode result must match a run where the field was never built.
  *   Rollback satisfies that contract by removing the argument.
  *
- *   A rated cell becomes one additive marker with the verdict's top kind and the share supporting its class.
- *   A mapped-but-unrated cell produces the same marker without a class and includes the shares that explain the absence.
+ *   A rated cell becomes one additive marker with the verdict's top kind
+ *   and the share supporting its class.
+ *   A mapped-but-unrated cell produces the same marker without a class
+ *   and includes the shares that explain the absence.
  *   A location outside every survey area produces no marker.
  */
 
@@ -37,7 +41,7 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 
 /**
  * The kind the mock classifier reports: a designation marker must name the verdict's
- * own top kind because a designation is not raised by intent.
+ * own top kind because a designation isn't raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 

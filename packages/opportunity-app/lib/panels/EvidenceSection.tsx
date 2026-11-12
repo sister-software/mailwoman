@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The evidence the selection links to: each selected building's part of the dossier report, the text of the
- *   building's `reportLines` records, and the cost and value report that `renderScenarioReport` writes for the
- *   selection. Both are shown as the model writes them, so the page and the reports cannot disagree.
+ *   The evidence the selection links to: each selected building's part of the
+ *   dossier report, the text of the building's `reportLines` records, and the cost
+ *   and value report that `renderScenarioReport` writes for the selection.
+ *
+ *   Both are shown as the model writes them, so the page and the reports cannot disagree.
  */
 
 import type { EntityID } from "@mailwoman/dossier"

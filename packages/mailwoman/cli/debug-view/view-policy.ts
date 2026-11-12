@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Holds the zoom, flag and frame-size rules shared by the static `--debug` capture and the interactive session.
+ * Holds the zoom, flag and frame-size rules shared by the static `--debug` capture
+ * and the interactive session.
  */
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"

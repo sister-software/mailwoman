@@ -83,7 +83,7 @@ export const HOUSE_VENUE_DEFAULT_SEED = 42
 /**
  * One country's tuples from an earlier tuples file, in file order.
  *
- * @throws When the file does not exist, or holds no tuple for the country,
+ * @throws When the file doesn't exist, or holds no tuple for the country,
  * so copying never writes an empty part.
  */
 export async function readCarriedTuples(path: PathBuilderLike, code: string): Promise<HouseVenueTuple[]> {

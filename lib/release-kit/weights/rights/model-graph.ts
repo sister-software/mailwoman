@@ -13,7 +13,7 @@
  *   the file and a later build can change it. The model card states `num_labels`, and a card is a claim
  *   about the graph rather than the graph. This reads the graph.
  *
- *   **This describes the supported inference interface.** It does not establish that reconstruction is
+ *   **This describes the supported inference interface.** It doesn't establish that reconstruction is
  *   impossible. A white-box extraction or inversion attack over the weights differs from what a caller
  *   can obtain by running the model. A reader of this record must keep those questions separate.
  */
@@ -59,7 +59,7 @@ export interface ModelGraphRecord {
 	 */
 	textEmittingOutput: boolean
 	/**
-	 * Why the graph could not be read, where it could not be.
+	 * Why the graph couldn't be read, where it couldn't be.
 	 *
 	 * A record that states no outputs and no reason would read as a graph with no outputs.
 	 */
@@ -79,7 +79,7 @@ const TEXT_CAPABLE_TYPES: ReadonlySet<string> = new Set(["string", "int32", "int
  * Reads a model graph's output signature.
  *
  * Returns a record carrying `unreadable` rather than throwing, so a rights record over
- * several packages reports the one graph it could not open instead of failing the whole pass.
+ * several packages reports the one graph it couldn't open instead of failing the whole pass.
  *
  * @param displayPath The path printed in `unreadable`.
  * A committed record prints a repository-relative path, so its bytes do not

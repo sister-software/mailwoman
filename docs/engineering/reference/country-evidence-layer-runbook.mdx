@@ -15,10 +15,11 @@ tags:
 
 # Onboard a country's evidence layer (pair-index overlay)
 
-This is the repeatable recipe for giving a new country a **retrieval-augmented decode prior** — a
-gazetteer-backed emission bias that resurrects a dead or starved place-hierarchy tag at decode
-time, on the **untouched shipped model**, with no retrain. It synthesizes the GB (`en-gb`) and NZ
-(`en-nz`) `dependent_locality` arcs into a procedure so that country N+1 is a recipe rather than an arc.
+This is the repeatable recipe for giving a new country a **retrieval-augmented decode prior**: a
+gazetteer-backed emission bias that makes the model emit a place-hierarchy tag it rarely or never
+emits. The bias applies at decode time, on the **untouched shipped model**, with no retrain. The page
+turns the GB (`en-gb`) and NZ (`en-nz`) `dependent_locality` work into a procedure the next country
+can follow.
 
 The two worked cases this page distills:
 
@@ -29,7 +30,7 @@ The two worked cases this page distills:
 - **NZ** — 3,134 pairs from LINZ-derived OpenAddresses, shipped in bundle 6.6.2 / npm 7.8.0 (δ=10,
   no β), including the repeated-name identity-pair convention.
 
-Both ship on the same v385 base model. The training-side resurrection lineage that preceded this
+Both ship on the same v385 base model (the model shipped in 6.6.0). The training-side resurrection lineage that preceded this
 capability closed after five mechanisms were falsified and three stop rules ran. The decode-side
 answer shipped in v385. See the
 [placetype-pair ship-prep scorecard](../../records/evals/2026-07-23-placetype-pair-scorecard.md)
@@ -40,20 +41,20 @@ The doctrine this sits inside is
 supplies **positive evidence only** — a pair's absence never penalizes anything, and the model
 keeps ownership of ambiguity. The prior adds a bias to the scores. It never overrides the model's decision.
 
-## When this is the right tool (prereqs & premise check)
+## Prerequisites
 
-Reach for a pair-index overlay only when **all** of these hold. If any fails, this is the wrong
-mechanism — stop here.
+Reach for a pair-index overlay only when **all** of these hold. If any fails, stop: a pair-index
+overlay is the wrong mechanism.
 
 1. **A dead or starved tag the model won't emit.** The worked case is `dependent_locality`: v385
    was trained into never emitting it (~93% of training rows have no such tag). Confirm the deficit
    directly — grade the shipped model on a real board for the tag and read the **raw BIO** rather than the
    decoded JSON (`decodeAsJSON` silently drops all-`O` spans, so a 0% read there can hide a
    non-emitting head). The GB and NZ boards both read `0/N` emit before the prior.
-2. **The deficit is roughly UNIFORM.** Measure the classifier's per-position logit gap to the tag
+2. **The deficit is roughly uniform.** Measure the classifier's per-position logit gap to the tag
    across the board. GB's gap mean was ~7.0 logits (4.95 min); NZ's ~7.8. A uniform deficit is what
    makes a single δ clear the whole board at once (see the Calibrate section). A ragged deficit
-   means per-position evidence the flat prior can't supply — a different problem.
+   needs per-position evidence. The flat prior can't supply it.
 3. **A CLOSED-vocabulary place-hierarchy relation** — a child place name under a parent place name,
    both drawn from a finite, authoritative register (`Fishburn` under `Stockton-on-Tees`). The
    pair index is a lookup table of real names. It cannot bias a name it has never seen.
@@ -61,20 +62,21 @@ mechanism — stop here.
 ### The closed-vs-open-vocab wall — do not cross it
 
 This mechanism works for **closed-vocab place names** and **fails for open-vocab spans** (venue,
-street). The failure is structural rather than a tuning gap, and the runs below falsified it with receipts.
+street). The failure is structural rather than a tuning gap, and the runs below measured it.
 Do not re-run these:
 
 - **Venue pairs (#1287)** and **street pairs (#1288)** were filed with probe designs and measured
   open. Venue/street surfaces are _generative_ (`Queens Park Cafe`, `North Cadbury Village Stores
-Ltd`) — they are BUILT from real place names, so a place-pair index matches fragments of them and
-  floods false positives. The confound is the mechanism's shadow rather than an edge case.
+Ltd`) — they're BUILT from real place names, so a place-pair index matches fragments of them and
+  floods false positives. Every venue built from a place name is a candidate false positive, so
+  the confound follows from how the mechanism works and isn't an edge case.
 - The related **healthy-tag reassignment** hypothesis (re-tagging namesakes) was also FALSIFIED:
   the parse was never wrong there (189/189 region tagging held). A prior that fires where the model
   is already right adds no benefit and risks regressions.
 
 The dividing line: a pair index biases a span the model _reads as one place_. If the target span is
-routinely embedded inside a longer generative name, you are on the open-vocab side of the wall and
-this recipe does not apply. The one change that graduated to a build proposal beyond
+routinely embedded inside a longer generative name, you're on the open-vocab side of the wall and
+this recipe doesn't apply. The one change that graduated to a build proposal beyond
 `dependent_locality` is **transition-level evidence** (β on the boundary transition) rather than a new tag
 class — see the Calibrate section.
 
@@ -87,10 +89,10 @@ Pick one authoritative **open** register per country and extract `(child, parent
 | GB      | none since 2026-10-17 | —         | Who's On First and ONS ward pairs without a register |
 | NZ      | LINZ → OpenAddresses  | CC-BY 4.0 | suburb (child) under post town (parent)              |
 
-Check the register's license decision before extracting. The GB row used to read HM Land Registry
-Price Paid Data's `CITY` under `DISTRICT`. Those are Royal Mail address fields that the download page
+Check the register's license decision before extracting. Don't use HM Land Registry Price Paid
+Data's `CITY` under `DISTRICT` for GB. Those are Royal Mail address fields that the download page
 excludes from the Open Government Licence, and `packages/corpus/data/license-decisions.json` refuses
-them, so `gazetteer pair-index` now refuses a GB `--source`. The register catalogue is
+them, so `gazetteer pair-index` refuses a GB `--source`. The register catalogue is
 [address data sources](./address-data-sources.mdx). A new country adds a row there.
 
 **Fold rules.** Child and parent are folded through `normalizeFSTToken` (NFKC-lower,
@@ -109,8 +111,8 @@ has zero, verified). Keep these rows. The `(x,x)` entry **is** the evidence of t
 tells the decode prior that when this name appears twice in adjacent fields, the first occurrence is
 the `dependent_locality` and the second is the post town. The prior's segment path keys on it (see
 the file map at the end of this page); without the row it cannot make the split. GB carrying zero
-identity pairs is why the rule is inert for GB today and free for a future GB build that records
-`CITY == DISTRICT` rows.
+identity pairs is why the rule is inert for GB today and free for a future GB index that records
+identity pairs.
 
 ## 2. Build the index
 
@@ -125,12 +127,12 @@ node mailwoman/out/cli.js gazetteer pair-index \
 
 The builder (`mailwoman/commands/gazetteer/pair-index.tsx`) streams the CSV, folds each
 `CITY`/`DISTRICT` pair, tags it `dependent_locality`, and writes `pair-index-<cc>.bin` through
-`serializePairIndex`. Notes that bite:
+`serializePairIndex`. Notes:
 
 - **`--delta` is required with no default.** The calibration step (not the build) owns the real
   value. A silent default would let an uncalibrated number ship unnoticed. `--transition-beta` is
-  optional and, when omitted, writes no header key at all — a byte-shape-identical, beta-less
-  artifact.
+  optional and, when omitted, writes no header key at all, so the artifact has the same byte
+  layout as a β-less one.
 - **Per-country self-check probes are mandatory (#1283).** `PROBE_PAIRS_BY_COUNTRY` in the builder
   holds a few known `(child, parent)` pairs per country code. After writing, the command re-reads
   the bytes through a fresh `PairIndexResolver` and prints `PROBE OK` / `PROBE MISS`. A country with
@@ -146,27 +148,26 @@ The builder (`mailwoman/commands/gazetteer/pair-index.tsx`) streams the CSV, fol
 
 ## 3. Candidate geometry — decide this before you calibrate
 
-The single most expensive lesson of the arc: **the false-positive surface is a candidate-geometry
+The most expensive lesson of the GB and NZ work is that **the false-positive surface is a candidate-geometry
 property rather than a δ magnitude.** Window mode (probe every sliding 1..3-word window against every other
 window, order-free) hit **79% venue-confound FP at δ=10**. A drop of δ to 8 only moved it to 53.5%.
-Recall and FP fall together, and the curves never separate. You cannot calibrate your way out of the
-wrong geometry. Pick the probe mode first, then calibrate within it.
+Recall and FP fall together, and the curves never separate. Pick the probe mode first, then
+calibrate within it.
 
 The shipped chain is `probeMode: "auto"` (default), a strictly ordered fall-through:
 
 1. **Segment path** — engages when the input splits into ≥2 comma-delimited segments. A candidate is
    an entire comma-delimited segment folded as one unit, so `North Cadbury Village Stores Ltd` is
-   one 5-word key that never equals the census's 2-word `north cadbury`. This is what defeats the
-   venue-confound class structurally: a real place fires only when the input comma-delimits it as its own field. This path also strips a same-field trailing postcode from a
+   one 5-word key that never equals the census's 2-word `north cadbury`. Because the key is the
+   whole segment, the venue-confound class can't match: a real place fires only when the input comma-delimits it as its own field. This path also strips a same-field trailing postcode from a
    parent-candidate key (#1308 — `…Henbury, Macclesfield SK11 9PD` folds to `macclesfield` rather than
    `macclesfield sk11 9pd`, so the bare parent still matches).
-2. **Anchored-adjacent path** — engages only on comma-free input (the population segment mode is
-   deterministically inert on, so any bias here is strictly additive against a guaranteed zero
-   matrix). Candidates are built by **position** rather than by the model's own spans: the parent anchor is
+2. **Anchored-adjacent path** — engages only on comma-free input. Segment mode never fires on that
+   input, so any bias here adds to a matrix that would otherwise be zero. Candidates are built by **position** rather than by the model's own spans: the parent anchor is
    the 1..3-word window immediately left of a postcode-shaped span (or string-final when no
    postcode), and the child is the adjacent window immediately left of the parent
-   (`child.endPos + 1 === parent.startPos`, longest-match-left). Adjacency + suffix-anchoring is what
-   keeps its FP at the segment floor (~3–5%) instead of window mode's 79% — a venue-embedded child
+   (`child.endPos + 1 === parent.startPos`, longest-match-left). Adjacency and suffix-anchoring keep
+   its FP at the segment floor (~3–5%), against window mode's 79%, because a venue-embedded child
    at string start is never immediately left of the post-town anchor.
 3. Otherwise the zero matrix (today's comma-free behavior).
 
@@ -178,8 +179,8 @@ Learn two structural findings before you design a new country's geometry:
 
 - **A model-derived segmentation cannot recover the target population.** The split comma-free recall
   needs is exactly the split the dead-tag deficit means the model _cannot make_ — a two-pass decode
-  that derives pseudo-segments from the model's own first pass is structurally inert on the very
-  rows it exists to serve (`Fishburn Stockton-on-Tees` reads as one fused `locality` span → one
+  that derives pseudo-segments from the model's own first pass produces no pairs on the rows it
+  exists to serve (`Fishburn Stockton-on-Tees` reads as one fused `locality` span → one
   pseudo-segment → no pair). The boundary source **must be non-model** (textual anchors). See the
   brainstorm-response Q1 verdict.
 - **The model's weak heads can't be a veto signal.** v385's venue head is itself starved on GB
@@ -190,12 +191,12 @@ Learn two structural findings before you design a new country's geometry:
 ## 4. Calibrate — the Option-A δ-sweep on the shipped model
 
 Calibrate δ against the **shipped** model (v385) rather than a training checkpoint. Sweep
-δ ∈ {3,4,5,6,7,10,12} and measure **four** numbers per δ:
+δ ∈ {3,4,5,6,7,10,12}, measure **three** numbers per δ, and read the trajectory as well as the
+endpoint:
 
 - **emit / tag-correct recall** on the golden dependent-locality board,
-- **golden no-DL FP** (a board with no dependent locality — must stay 0 at every δ),
-- **venue-confound FP** on real register-derived venue names (see step 5),
-- and read the trajectory as well as the endpoint.
+- **golden no-DL FP** (a board with no dependent locality, where FP must stay 0 at every δ),
+- **venue-confound FP** on real register-derived venue names (see step 5).
 
 The GB sweep on the untouched v385:
 
@@ -206,14 +207,14 @@ The GB sweep on the untouched v385:
 | **10** | **69/69 · 69/69**                     |                **0** |                 **3.34%** |
 | 12–15  | flat                                  |                    0 |                      flat |
 
-**The uniform-deficit finding → δ≈10 is a cross-locale constant rather than per-country tuning.** v385's
+**Because the deficit is uniform, δ≈10 holds across locales without per-country tuning.** v385's
 classifier deficit for the tag is large but uniform (~7.0 logits mean), so a δ that clears it clears
 the whole board at once — δ=10 saturates recall. NZ replicated the shape (gap mean 7.8 logits, same
 δ=10 works). Treat δ≈10 as the expected landing zone for a fresh country. A wildly different optimum
 is a signal to re-check the deficit-uniformity premise (step-0) rather than to keep sweeping. FP grows
-**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial. The
-smallest δ clearing the recall bar is required, and the trade lives entirely in the
-venue-confound floor.
+**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial. Use the
+smallest δ that clears the recall bar. Golden no-DL FP stays 0, so the venue-confound FP is the
+only cost of a larger δ.
 
 > **Measure in the shipped configuration.** The GB comma-free recall first registered as 50/69 was
 > measured through an `en-us`-shaped harness cache with no `postcode-gb.bin`, so the anchor channel
@@ -223,19 +224,19 @@ venue-confound floor.
 > drift. Pin the harness to the production default (`postcode-<cc>.bin` present, anchor + gazetteer
 > channels on) before you read any calibration number.
 >
-> **Correction, 2026-08-05 (#1467): for GB the production default has since moved, and it moved to
-> the configuration this callout was warning against.** `@mailwoman/neural-weights-en-gb` no longer
-> ships `postcode-gb.bin` — the encoder's GB anchor slot was never trained, so feeding it cost 24
-> exact-postcode rows on the `gb-golden` board (294/318 → 318/318 with the anchor inert). The
-> comma-free `dependent_locality` recall this note cites does drop with it, by one row per register
-> (201/207 → 198/207), which is the accepted trade. The rule the callout states is unchanged and
-> still the point: measure in the shipped configuration, whatever it currently is. Read the
-> overlay's `model-card.json` (`gb_artifacts.no_postcode_bin`) rather than assuming a locale's
-> channels from its siblings'.
+> **The GB configuration has changed twice since this measurement.** `@mailwoman/neural-weights-en-gb`
+> ships `postcode-gb.bin` (Code-Point Open), and its `model-card.json` records the binary as
+> `postcode_anchor`. On 2026-08-05 (#1467) the overlay stopped shipping the binary, because the
+> encoder's GB anchor slot was untrained and feeding it cost 24 exact-postcode rows on the
+> `gb-golden` board (294/318 → 318/318 with the anchor inert). The comma-free `dependent_locality`
+> recall this note cites dropped with it, by one row per register (201/207 → 198/207), which was the
+> accepted trade. The binary returned on 2026-08-06 in 9.0.0, with a model whose GB anchor slot is
+> trained; `gb_artifacts.no_postcode_bin` records the interim. The rule the callout states is
+> unchanged: measure in the shipped configuration, whatever it currently is. Read the overlay's
+> `model-card.json` rather than assuming a locale's channels from its siblings'.
 
 **The transition-β decision.** The emission δ can win the per-token argmax at the child-start piece
-while the global Viterbi still routes the path through a fused street/locality run — the token votes
-right, the path fuses anyway. When that happens, add a **transition-entry bonus**: `+β` on every
+while the global Viterbi still routes the path through a fused street/locality run. When that happens, add a **transition-entry bonus**: `+β` on every
 transition into `B-<tag>` at the child span's first piece. The bonus offsets the structural continuation
 penalty directly. The task-8 probe measured β=5 recovering 13/17 comma-free GB path-fusion misses (β=8:
 15/17) with zero collateral on 47 correct rows + 200 venue rows. GB ships β=5. **NZ ships without a
@@ -243,7 +244,7 @@ penalty directly. The task-8 probe measured β=5 recovering 13/17 comma-free GB 
 and absent by default. One refinement: a child immediately preceded by a venue-title preposition
 (`at` / `of` — `New Inn at Hoff`, `Church of St Mary`) keeps the emission bias but draws no
 transition bonus, because a prepositional predecessor marks a lexicalized venue title rather than an
-address field. Address syntax introduces dependent localities _positionally_, never prepositionally.
+address field.
 
 ## 5. The board battery (pre-registered)
 
@@ -253,25 +254,23 @@ knob iteration inside a pre-registration, and no dropped failing rows. The batte
 | Board                                  | What it measures                                         | Bar shape                                              |
 | -------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------ |
 | Golden dep-loc board                   | emit + tag-correct recall, prior on at δ\*               | materially above the `0/N` floor, tag-correct majority |
-| Golden no-DL FP                        | false emission where there is no dependent locality      | **0** at every δ                                       |
+| Golden no-DL FP                        | false emission where there's no dependent locality       | **0** at every δ                                       |
 | Comma-stripped metamorphic             | the anchored path on comma-free input                    | ≥ ~50/69 emit, ≥ 90% tag-correct (GB); do not regress  |
 | Venue-confound FP (real data)          | fragments of real venue names embedding real place names | ≤ 5% at δ\* (segment floor ~3.3%)                      |
 | Invariance `--baseline v385`           | label-preserving perturbations don't move the coordinate | no new drift, profile no worse than baseline           |
 | Byte-stability, golden us/fr + presets | non-target locales + the 6 demo presets unaffected       | **byte-identical**, both weights worlds                |
 
-Hard-won detail on the venue-confound board (**#1279 lesson**): build it from **real** venue data,
-never synthetic. The GB board is 6,500 UK Food Standards Agency establishment names that embed a
+Build the venue-confound board from **real** venue data, never synthetic (#1279). The GB board is 6,500 UK Food Standards Agency establishment names that embed a
 real place (`Bitterne Charcoal Grill` embeds `Bitterne`); the NZ board is 6,500 Overture NZ rows.
 The `en-nz` venue precision was first reported off a synthetic interim, then off a borrowed harness
 cache (0.862%), and only the shipped no-anchor-bin configuration gives the real numbers — segment
 3.569%, anchored 1.354%. Retire the synthetic the moment real data exists, and correct any
-borrowed-cache number in the same record it was published in, dated — measurement context matters
-and gets documented rather than buried.
+borrowed-cache number in the same record it was published in, with the date.
 
-Byte-stability is the doctrine's teeth: a shipped pair prior is auto-wired **only** when the
+A hard check enforces byte-stability: a shipped pair prior is auto-wired **only** when the
 resolved locale's country matches the index header's country (a hard check in
 `NeuralAddressClassifier.loadFromWeights`), so `en-us` / `fr-fr` parses are byte-identical by
-construction — assert it, then measure it anyway.
+construction. Assert this in a test and measure it as well.
 
 ## 6. Package the overlay
 
@@ -344,11 +343,11 @@ pair-index-gb.bin,pair-index-nz.bin …` uploads the built binaries alongside th
    `pairIndexURLs`, a 404 leaves `placetypePair` undefined (inert rather than an error), and the preset
    country-pin routes the right index. Repoint the demo after the npm publish lands rather than with it.
 
-## 8. The earned lessons
+## 8. Lessons
 
 The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
 
-- **Measure in the shipped configuration.** Twice in one night the same lesson bit: a harness cache
+- **Measure in the shipped configuration.** Two harness-cache errors happened in one night: a cache
   missing `postcode-<cc>.bin` silenced the anchor channel and under-counted recall (55/69 became
   50/69), and a borrowed cache mis-stated `en-nz` venue FP by 6×. Pin the harness to the production
   default before reading any number. Suspect the cache rather than the code, when an identical-artifact
@@ -357,8 +356,8 @@ The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
   moves recall and FP together and cannot separate the wrong geometry's curves. Choose segment /
   anchored / auto first. Sweep δ only inside the chosen geometry.
 - **Held-out generality or don't build.** Every mechanism was measured on held-out register rows +
-  real venue confounds before it shipped, and the ones that didn't generalize were killed with
-  receipts: venue pairs (#1287), street pairs (#1288), healthy-tag reassignment, model-derived
+  real venue confounds before it shipped, and the ones that didn't generalize were dropped on
+  measured results: venue pairs (#1287), street pairs (#1288), healthy-tag reassignment, model-derived
   two-pass segmentation. A curated in-isolation probe set (the rung-3 100%/0% number) hides exactly
   the failure mode a real confound board surfaces.
 - **Per-country calibration in the artifact header rather than in code.** δ and β live in the PIX1 header
@@ -367,19 +366,18 @@ The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
 - **The closed-vs-open-vocab wall is structural.** Place names (closed) work. Venue/street spans
   (open, generative) do not, and no amount of suppression tuning crosses it. The marker-word list
   (`house`, `road`, `street`, `flat`, `court`) and the title-preposition list (`at`, `of`) are
-  narrow, per-entry-justified lexical defenses, never a general venue-boundary detector. That is
+  narrow, per-entry-justified lexical defenses, never a general venue-boundary detector. That's
   why the segment restriction exists _alongside_ them rather than instead of them. Grow either list only
   with a per-word rationale line.
 - **The postcode-in-parent-field segment gap (#1308).** Free-text and idiomatic addresses write the
   postcode in the same comma-field as the post town with no comma between them (`…Plimmerton,
 Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate segment key (per the
   header country's codex shape) before probing, on the segment path only. The anchored path already
-  anchors left of the whole postcode span. Only a trailing run, never a segment that is only a
+  anchors left of the whole postcode span. Only a trailing run, never a segment that's only a
   postcode, and only for a country with a known codex shape (else byte-stable).
-- **Provenance is loud or it lies.** Per-country self-check probes (#1283), the `serializePairIndex`
+- **Provenance checks fail loudly.** Per-country self-check probes (#1283), the `serializePairIndex`
   duplicate throw, the header md5s, and the freshness guard all exist because a reassuring-looking
-  `PROBE MISS` / silent skip / stale byte-identical artifact verified no fact about the artifact. Loud beats silent at
-  every hand-off.
+  `PROBE MISS`, a silent skip or a stale byte-identical artifact verified no fact about the artifact.
 
 ## The shipped mechanism (file map)
 

@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `officialNameExact`: an official name (preferred form in an official language of the place's
- * country, `names.official = 1`) joins the name-exact sub-tier instead of the alias-exact one,
- * floor-conditioned on the holder's population. Unscoped "Åbo" must reach Turku, its official
- * Swedish name, rather than a hamlet whose primary is "Åbo", while a plain alias still loses to
- * the name holder and a gazetteer without the `official` column fails soft.
+ * `officialNameExact`: an official name (preferred form in an official language
+ * of the place's country, `names.official = 1`) joins the name-exact sub-tier
+ * instead of the alias-exact one, floor-conditioned on the holder's population.
+ *
+ * Unscoped "Åbo" must reach Turku, its official Swedish name, rather than a hamlet
+ * whose primary is "Åbo", while a plain alias still loses to the name holder
+ * and a gazetteer without the `official` column fails soft.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

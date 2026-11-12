@@ -41,7 +41,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
 
 ## Why it matters
 
-The within-token punctuation gap is **not a punctuation-tokenizer problem** and does not warrant a
+The within-token punctuation gap **isn't a punctuation-tokenizer problem** and doesn't warrant a
 punctuation-specific fix. It decomposes into:
 
 - the **#694 comma-less/delimiter** change (fixing concatenated-input segmentation — already validated),

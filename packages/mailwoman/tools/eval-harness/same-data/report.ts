@@ -4,7 +4,8 @@
 /**
  *   Renders the same-data benchmark's Markdown tables from generated results.
  *
- *   Every rate prints its denominator. A rate with a zero denominator prints as `unmeasured`.
+ *   Every rate prints its denominator.
+ *   A rate with a zero denominator prints as `unmeasured`.
  */
 
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"

@@ -3,15 +3,15 @@
 
 /**
  *   The test runs in a subprocess against real Ink because the interface calls `process.exit(1)`.
+ *
  *   It strips ANSI codes before checking stdout and stderr, so color cannot make a negative match pass.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
-
-import { stripAnsi } from "#cli-kit"
 
 function harness(thrown: string): string {
 	return `
@@ -35,11 +35,11 @@ async function runHarness(thrown: string): Promise<{ code: number | undefined; s
 			env: childEnv(),
 		})
 
-		return { code: 0, stdout: stripAnsi(result.stdout), stderr: stripAnsi(result.stderr) }
+		return { code: 0, stdout: stripANSI(result.stdout), stderr: stripANSI(result.stderr) }
 	} catch (thrownError) {
 		const error = thrownError as Error & { stdout?: string; stderr?: string; code?: number }
 
-		return { code: error.code, stdout: stripAnsi(error.stdout ?? ""), stderr: stripAnsi(error.stderr ?? "") }
+		return { code: error.code, stdout: stripANSI(error.stdout ?? ""), stderr: stripANSI(error.stderr ?? "") }
 	}
 }
 

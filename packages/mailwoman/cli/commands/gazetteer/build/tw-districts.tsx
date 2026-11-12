@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build tw-districts` — Taiwan's 鄉鎮市區 locality database from the Overture Maps addresses
- *   parquet (the civil-affairs registers, cdla-Permissive-2.0 and ogdl-Taiwan-1.0), each row scoped to its 縣市's WOF
- *   region. Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
+ *   `mailwoman gazetteer build tw-districts` — Taiwan's 鄉鎮市區 locality database from the Overture
+ *   Maps addresses parquet (the civil-affairs registers, cdla-Permissive-2.0 and ogdl-Taiwan-1.0),
+ *   each row scoped to its 縣市's WOF region.
+ *
+ *   Sealed 0444.
+ *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer or the DuckDB dev dependency.
  */
 
@@ -20,7 +23,7 @@ export const spec = {
 		release: { type: "string", description: "Overture release directory. Default 2026-06-17.0" },
 		parquet: {
 			type: "string",
-			description: "Taiwan addresses parquet. Default <data-root>/overture/<release>/addresses-tw.parquet",
+			description: "Taiwan addresses parquet. Default <data-root>/snapshots/overture/<release>/addresses-tw.parquet",
 		},
 		admin: { type: "string", description: "Admin WOF database. Default <data-root>/db/wof/admin-global-priority.db" },
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-tw-districts.db" },

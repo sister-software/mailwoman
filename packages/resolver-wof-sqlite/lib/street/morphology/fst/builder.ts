@@ -2,25 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build a street-morphology FST from libpostal's street_types dictionaries. The morphology FST maps
- *   street-typing affixes (Street/Avenue/rue/Calle/Straße/...) to a single synthetic placetype
- *   `"street_affix"`. Its source data and purpose differ from the admin FST.
+ *   Build a street-morphology FST from libpostal's street_types dictionaries.
+ *
+ *   The morphology FST maps street-typing affixes (Street/Avenue/rue/Calle/Straße/...)
+ *   to a single synthetic placetype `"street_affix"`.
+ *   Its source data and purpose differ from the admin FST.
  *   It also produces a separate binary artifact.
  *
- *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem: street
- *   tokens have no admin-FST anchor, so synth-street training pushed the model toward over-emitting
- *   `dependent_locality` on subcomponents. With the morphology FST, the neural decoder gets
- *   positive evidence for street-typing affixes and the adjacent name tokens, plus negative
- *   evidence away from `dependent_locality` on the same neighbors.
+ *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem:
+ *   street tokens have no admin-FST anchor, so synth-street training pushed the model
+ *   toward over-emitting `dependent_locality` on subcomponents.
+ *   With the morphology FST, the neural decoder gets positive evidence for
+ *   street-typing affixes and the adjacent name tokens, plus negative evidence
+ *   away from `dependent_locality` on the same neighbors.
  *
- *   Design rationale + the four-layer street-supplement architecture lives in
- *   `docs/articles/concepts/street-supplement-architecture.md`.
+ *   Design rationale + the four-layer street-supplement architecture lives
+ *   in `docs/articles/concepts/street-supplement-architecture.md`.
  *
- *   Source: `dictionaries/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is pipe-delimited
- *   surface forms with the canonical form first: avenue|av|ave|aven|avenu|avn|avnu|avnue
+ *   Source: `dictionaries/data/libpostal/dictionaries/{locale}/street_types.txt`.
+ *   Each line is pipe-delimited surface forms with the canonical form
+ *   first: avenue|av|ave|aven|avenu|avn|avnu|avnue
  *
- *   Output: an `FSTMatcher` ready to serialize via `serializeFST` to e.g.
- *   `fst-street-morphology.bin`.
+ *   Output: an `FSTMatcher` ready to serialize via `serializeFST` to e.g. `fst-street-morphology.bin`.
  */
 
 import { AU_STATE_ABBREVIATIONS } from "@mailwoman/codex/au/state"
@@ -83,7 +86,7 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Variant surface forms, in joined post-normalization form, that the trie never holds.
 	 *
-	 * A two-character street type that is also a region abbreviation, `ct` for court
+	 * A two-character street type that's also a region abbreviation, `ct` for court
 	 * and Connecticut or `la` for lane and Louisiana, reads as the region at parse time.
 	 * The artifact is locale-general, so the variant stays out for every locale.
 	 *
@@ -244,7 +247,7 @@ export async function buildStreetMorphologyFST(
 			// (Avenue is almost never anything but street-typing).
 			// The morphology prior caps bias separately.
 			// This value only feeds the cap formula `referential * cap`.
-			// No encyclopedic score — a street affix is not a place and has no article.
+			// No encyclopedic score — a street affix isn't a place and has no article.
 			referential: 1,
 			encyclopedic: null,
 			lat: 0,

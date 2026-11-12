@@ -4,8 +4,9 @@
 /**
  *   Assembles the structure-source register from each jurisdiction's sources and audits it.
  *
- *   Ask {@linkcode publishProblems} whether a source may reach a published layer. A source is admitted only under an
- *   elected decision that permits every operation in {@link PUBLISH_OPERATIONS}.
+ *   Ask {@linkcode publishProblems} whether a source may reach a published layer.
+ *   A source is admitted only under an elected decision that permits every
+ *   operation in {@link PUBLISH_OPERATIONS}.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

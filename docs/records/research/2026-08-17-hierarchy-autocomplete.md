@@ -12,7 +12,7 @@ memory / training knowledge rather than re-verified. Publications from 2025 onwa
 
 ## The plain answer
 
-Every **ingredient** has prior art and a name, but the **composition** does not. Completion over a
+Every **ingredient** has prior art and a name, but the **composition** doesn't. Completion over a
 weighted automaton with per-entry payloads is called "top-k completion" (Hsu & Ottaviano, WWW 2013)
 and ships in Lucene's suggest module. Every one of those systems treats the payload as an opaque
 byte string handed back to the caller [S]. Geocoders commonly materialize a place's parent chain
@@ -23,7 +23,7 @@ and GeoNames all denormalize the chain at index or build time [S]. The encoding 
 names: materialized path and Dewey labels [S]. Non-lexical structure _in the trie nodes_
 so the walk prunes on it also has an academic name. Roy & Chakrabarti's **"materialized trie"**
 (SIGMOD 2011) puts spatial summaries in trie nodes [S], but that structure holds geometry rather
-than an admin graph. I could not find, under any name, a completion automaton treated as the
+than an admin graph. I couldn't find, under any name, a completion automaton treated as the
 _enumeration surface for the containment graph itself_. In our design, one artifact family (FST +
 typed child→parent edge table + per-parent child-type distribution) answers three questions with
 one index: "what strings continue this prefix", "what contains this completion", and "what kinds
@@ -73,7 +73,7 @@ Chakrabarti's "materialized trie" as the closest ancestor with an academic name.
 
 **Covers:** the entire completion mechanic — weighted prefix walk, top-k expansion, even
 per-entry payload transport (Lucene) and hierarchy-shaped _key prefixes_ (ES geo context).
-**Does not cover:** any system that _interprets_ the payload as graph edges and walks it. In this
+**Doesn't cover:** any system that _interprets_ the payload as graph edges and walks it. In this
 family, payloads are opaque data, contexts are filters, and outputs are sums. No system in this
 family treats a `chain [u32;8]` as traversable ancestry.
 
@@ -113,7 +113,7 @@ family treats a `chain [u32;8]` as traversable ancestry.
 - Now OpenSearch-based, with a planet DB of ~95 GB as of 2026 [S — post-2025 datum]. `PhotonDoc` holds
   `addressParts: Map<AddressType, Map<String,String>>` plus a `ContextMap context` — parent names
   copied out of Nominatim's address hierarchy into every document at import [S]. Photon belongs to
-  the same family as Pelias. It materializes names at index time into a flat bag and does not
+  the same family as Pelias. It materializes names at index time into a flat bag and doesn't
   treat ids as a graph.
 
 ### Nominatim
@@ -157,7 +157,7 @@ family treats a `chain [u32;8]` as traversable ancestry.
 **Covers:** materializing parent chains at index time is the dominant shipped pattern (Pelias,
 Photon, Nominatim, Algolia, twofishes, and WOF/Overture upstream). Query-time derivation exists too
 (Carmen — spatial stacking). Twofishes specifically covers "every autocomplete hit returns its
-ancestry." **Does not cover:** putting the chain _in the automaton's own value bytes_ (everyone
+ancestry." **Doesn't cover:** putting the chain _in the automaton's own value bytes_ (everyone
 else joins against a feature store or flattens names into fields); typed placetype edges (PIX1) and
 per-parent child-type distributions (PCN1) as first-class index siblings, and ranking the enumeration by
 a population-anchored referential score (twofishes has `population`+`boost`, coarser).
@@ -172,7 +172,7 @@ a population-anchored referential score (twofishes has `population`+`boost`, coa
   spatial information into the node of trie" for spatial pruning during the prefix walk [S]. This is
   the closest academic idea _with a published name_ to "hierarchy in the completion structure's bones" — but the
   material embedded is geometric summaries, and the purpose is pruning rather than enumeration of an admin
-  graph. **Does not cover** admin ancestry at all.
+  graph. **Doesn't cover** admin ancestry at all.
 - **IR-tree family** (and R*-IF, KR*-tree, WIR-tree, LBAK-tree, S2I, IL-Quadtree): R-trees whose
   nodes store pseudo-document/inverted-file summaries for top-k spatial-keyword queries [S]. Spatial
   containment (MBR nesting) is in the structure, and admin containment never is.
@@ -194,7 +194,7 @@ a population-anchored referential score (twofishes has `population`+`boost`, coa
 ### Verdict
 
 **Covers:** trie-walk pruning by non-lexical per-node material (materialized trie — the name to
-cite); completions decorated with class/type info (DBpedia). **Does not cover:** any fusion of a
+cite); completions decorated with class/type info (DBpedia). **Doesn't cover:** any fusion of a
 completion trie with a _containment/ancestry graph_ (as opposed to geometry), in either direction.
 I found no paper on that specific fusion — this is the strongest support for the operator's novelty
 instinct.
@@ -249,7 +249,7 @@ neutralize the update cost entirely.
 
 **Covers:** every encoding option has a published name and characterization, and containment-during-ranking is
 established in both shipped geocoders (spatial form) and geoparsing research (hierarchy form).
-**Does not cover:** doing the congruence check with O(1) interval labels _inside_ an autocomplete /
+**Doesn't cover:** doing the congruence check with O(1) interval labels _inside_ an autocomplete /
 candidate ranker — the literature does joins or geometry. The encoding trade-off for candidate.db is
 an actual open design choice, covered in "What to borrow."
 
@@ -292,7 +292,7 @@ an actual open design choice, covered in "What to borrow."
 
 **Covers:** per-name language+role _flags_ (GeoNames, WOF) and per-language surface→role
 _dictionaries_ (libpostal); editorial exclusion of glosses (OSM); rule-based suffix-role handling
-(Japanese parsers). **Does not cover:** any system that explicitly models "this surface is a
+(Japanese parsers). **Doesn't cover:** any system that explicitly models "this surface is a
 translation-gloss of a common noun rather than a referring name" as a machine-readable role, or that
 conditions index membership on it. The role-lens table (surface × language/script → role) has
 assembled precedents but no existing instance. The `to` defect class is unmodeled everywhere. The
@@ -333,11 +333,11 @@ discriminator.
 ### Verdict
 
 **Covers:** the _mechanics_ of leftward/anywhere entry all have published names — suffix automaton,
-factor automaton, reversed-token index, infix suggester. Pick one and cite it. **Does not cover:**
+factor automaton, reversed-token index, infix suggester. Pick one and cite it. **Doesn't cover:**
 adjacency with _typed placetype semantics_ on the edge (PIX1's (surface, surface) → edge-type is a
 gazetteer-semantic object rather than a stringological one). The before-direction enumeration ("what can
 precede 'york'") is prior art; "what can precede it _and what containment relation does that
-predecessor stand in_" is not.
+predecessor stand in_" isn't.
 
 ---
 
@@ -375,7 +375,7 @@ predecessor stand in_" is not.
   already cites. Note AnalyzingInfixSuggester [S] as the precedent that an inverted index on
   token positions can beat an automaton here on implementation cost.
 - PIX1 already _is_ the typed-adjacency answer at the (child-name, parent-name) level. The research
-  found no published counterpart, so there is no external design to converge toward — document it
+  found no published counterpart, so there's no external design to converge toward — document it
   as its own design. The before-direction FST and PIX1 answer different questions (string
   adjacency vs containment edge). Keep them as separate artifacts. The Weimar-class confusion comes
   from using one in place of the other.
@@ -383,7 +383,7 @@ predecessor stand in_" is not.
 ### Gap 3: candidate.db ancestors encoding — fixed-slot chain vs interval labeling
 
 - **Keep the fixed-slot chain for the read path.** Every shipped geocoder that works this way
-  (twofishes, Pelias, Photon, WOF, Overture, GeoNames) validates it [S]; it gives O(1) "who is my
+  (twofishes, Pelias, Photon, WOF, Overture, GeoNames) validates it [S]; it gives O(1) "who's my
   level-k ancestor" which interval labels cannot, and it round-trips through the FST place entry
   unchanged.
 - **Add a pre/post interval pair (two u32s) per place at seal time** over the primary hierarchy.
@@ -391,7 +391,7 @@ predecessor stand in_" is not.
   scanning 8 slots or knowing Y's level_ (nested-set containment test [S]), and descendant
   enumeration as a contiguous range scan (`WHERE pre BETWEEN y.pre AND y.post`) — which is the
   candidate-table analog of the FST's BFS-descendants and what a "constrain to region" candidate
-  probe wants. The textbook objection is the cost of relabeling on update [S]. That cost does not
+  probe wants. The textbook objection is the cost of relabeling on update [S]. That cost doesn't
   apply here, because our databases are sealed read-only artifacts rebuilt whole (house doctrine).
   Interval labeling has always been safe in that regime. No shipped geocoder appears to have done
   this. The toponym literature's containment heuristics [S] indicate that the check is useful in

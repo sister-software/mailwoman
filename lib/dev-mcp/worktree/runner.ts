@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The worktree arm as a comparison arm: `worktree-arm.ts` runs the child and `compare.ts` scores, while this
- * module projects the child's answers onto the shape every arm answers in so the dependency stays one-way.
+ * The worktree arm as a comparison arm: `worktree-arm.ts` runs the child
+ * and `compare.ts` scores, while this module projects the child's answers onto the
+ * shape every arm answers in so the dependency stays one-way.
  */
 
 import type { ArmRunner, WorktreeArm } from "#dev-mcp/arms"

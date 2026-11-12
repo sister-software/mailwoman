@@ -6,17 +6,21 @@
  *
  *   A map keyed by tag cannot represent a span that slid one token left.
  *   It looks identical to a span that was replaced.
- *   Two arms that both emit `locality` do not show whether the locality moved.
- *   The diff matches spans by overlap first and tag second. This distinguishes four events:
  *
- *   - `retagged`  — same text, different tag.
- *   - `moved`     — same tag, different span.
+ *   Two arms that both emit `locality` do not show whether the locality moved.
+ *   The diff matches spans by overlap first and tag second.
+ *   This distinguishes four events:
+ *
+ *   - `retagged` — same text, different tag.
+ *   - `moved` — same tag, different span.
  *   - `removed` / `added` — a span with no counterpart at all.
  *   - `confidence` — same tag, same span, only the model's confidence changed.
  *
  *   The diff stores confidence changes per span instead of as a headline.
  *   A row can keep its answer while losing confidence on the deciding span.
- *   That row may be about to flip. An aggregate cannot show the change.
+ *
+ *   That row may be about to flip.
+ *   An aggregate cannot show the change.
  */
 
 import { flattenTreeNodes } from "#decoder/tree/shape"

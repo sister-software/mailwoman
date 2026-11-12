@@ -4,12 +4,18 @@
 /**
  *   Defines the compiled geographic model artifact, its canonical serialization and its reader.
  *
- *   Runtime consumers read the artifact instead of the authored records. The artifact includes the
- *   materialized `isA` closure so that consumers never traverse `concepts[].isA` at query time.
+ *   Runtime consumers read the artifact instead of the authored records.
+ *   The artifact includes the materialized `isA` closure so that consumers never
+ *   traverse `concepts[].isA` at query time.
  *
- *   Serialization is deterministic. Object keys use code-point order at every depth.
- *   The compiler sorts each table by identifier in code-point order. Arrays inside a record keep authored order.
- *   The artifact records no build time. Two builds of one document are byte-identical.
+ *   Serialization is deterministic.
+ *   Object keys use code-point order at every depth.
+ *
+ *   The compiler sorts each table by identifier in code-point order.
+ *   Arrays inside a record keep authored order.
+ *
+ *   The artifact records no build time.
+ *   Two builds of one document are byte-identical.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -129,7 +135,7 @@ const ARTIFACT_TABLES = [
 ] as const
 
 /**
- * Returns the reason `value` is not a compiled artifact, or `null` when it is one.
+ * Returns the reason `value` isn't a compiled artifact, or `null` when it is one.
  */
 function artifactProblem(value: unknown): string | null {
 	if (!isPlainObject(value)) return "a compiled geographic model must be an object"
@@ -153,8 +159,7 @@ function artifactProblem(value: unknown): string | null {
  * Reads a value from `JSON.parse` as a {@link CompiledGeographicModel}.
  *
  * The reader checks the format version, the model version and the presence of every table.
- * It does not revalidate records, because the compiler accepts only documents
- * that already passed validation.
+ * It doesn't revalidate records, because the compiler accepts only documents that already passed validation.
  */
 export function parseCompiledGeographicModel(input: unknown): CompiledGeographicModel {
 	const problem = artifactProblem(input)

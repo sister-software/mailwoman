@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the zoning metadata parsing and attribution checks against the published field text, including its markup.
+ *   Tests the zoning metadata parsing and attribution checks against the published
+ *   field text, including its markup.
  */
 
 import { htmlToText } from "@mailwoman/core/html/text"

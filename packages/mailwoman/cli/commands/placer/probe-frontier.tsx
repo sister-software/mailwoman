@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman placer probe-frontier` — the frontier probe: can the deployed coarse placer emit the
- *   placer-recoverable countries? Emits the branch verdict (data gap /
- *   under-confident / low-quality signal / no change) that drives the Phase-2 fix choice.
+ *   `mailwoman placer probe-frontier` — the frontier probe: can the deployed coarse
+ *   placer emit the placer-recoverable countries?
+ *
+ *   Emits the branch verdict (data gap / under-confident / low-quality signal / no change)
+ *   that drives the Phase-2 fix choice.
  */
 
 import { Text } from "ink"

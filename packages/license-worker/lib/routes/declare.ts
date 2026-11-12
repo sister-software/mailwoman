@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `POST /v1/declarations` records a declaration of intent and mints its first token. An `open-source` declaration
- *   answers the token and its refresh secret. The other intents answer a claim id, and `GET /v1/declarations/{claimID}`
- *   answers the token once the email has gone out, with the refresh secret exactly once, as the checkout claim does.
+ *   `POST /v1/declarations` records a declaration of intent and mints its first token.
+ *
+ *   An `open-source` declaration answers the token and its refresh secret.
+ *   The other intents answer a claim id, and `GET /v1/declarations/{claimID}` answers the token
+ *   once the email has gone out, with the refresh secret exactly once, as the checkout claim does.
  *   Both routes are rate limited per client address.
  */
 

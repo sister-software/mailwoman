@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * BAN download URLs and provenance metadata. The builder combines per-département CSV exports into
- * a national address-point extract under Licence Ouverte / Etalab 2.0.
+ * BAN download URLs and provenance metadata.
+ *
+ * The builder combines per-département CSV exports into a national address-point
+ * extract under Licence Ouverte / Etalab 2.0.
  */
 
 /**

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `KindBadge` — compact display of the Stage 2.5 kind-classifier verdict: the top kind + confidence
- *   as a pill, expanding to the alternatives on click. Shared by both explorers. The result type is
- *   kept structural (`kind: string`) so both the POI query classifier's `QueryKindResult` and the
- *   pipeline's projection satisfy it without a hard type dependency.
+ *   `KindBadge` — compact display of the Stage 2.5 kind-classifier verdict:
+ *   the top kind + confidence as a pill, expanding to the alternatives on click.
+ *
+ *   Shared by both explorers.
+ *   The result type is kept structural (`kind: string`) so both the POI query classifier's
+ *   `QueryKindResult` and the pipeline's projection satisfy it without a hard type dependency.
  */
 
 import type { KindView } from "@mailwoman/core/pipeline/client-result"

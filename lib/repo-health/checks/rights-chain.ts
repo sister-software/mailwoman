@@ -4,8 +4,8 @@
 /**
  * @file Checks that every document granting first-party rights mentions the licensor.
  *
- *   The check tests only that the licensor's name appears in each document. It does not compare what each document
- *   grants. The services operator, `Nirrus LLC`, is not the copyright holder and is intentionally left out.
+ *   The check tests only that the licensor's name appears in each document. It doesn't compare what each document
+ *   grants. The services operator, `Nirrius LLC`, isn't the copyright holder and is intentionally left out.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -34,7 +34,7 @@ const RIGHTS_DOCUMENTS: ReadonlyArray<readonly [path: string, role: string]> = [
 /**
  * The `rights-chain` check.
  *
- * It reports one error for each rights document that is unreadable or lacks the licensor's name.
+ * It reports one error for each rights document that's unreadable or lacks the licensor's name.
  */
 export const rightsChainCheck: RepoCheck = {
 	id: "rights-chain",

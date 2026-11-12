@@ -51,7 +51,7 @@ collects it without a single training step.
 ## Caveats, stated
 
 - Measured on the **v301 span-head artifact** (the archived `feat/727-span-head` branch's k-best
-  surface) — the only model with exported span scores. The JS decoder is not on main. This result is
+  surface) — the only model with exported span scores. The JS decoder isn't on main. This result is
   the consumer that justifies merging it.
 - **FR only** — the one locale with a complete street-name index on hand. Generalization needs
   per-country name sources (US TIGER/situs, NO Kartverket, PT/RO BAN-equivalents) behind one
@@ -64,7 +64,7 @@ collects it without a single training step.
 ## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
 
 The 14 breaks decompose into exactly two classes: **truncation wins** (10/14 — the picked street is
-a sub-span of gold that is itself in the index, typically the bare type word `rue`/`chemin`) and
+a sub-span of gold that's itself in the index, typically the bare type word `rue`/`chemin`) and
 **moved off a correct rank-1** (4/14 — gold at rank 1 but missing from the index on a
 hyphen/apostrophe fold, with the in-index pick 2–5 score units down). Two guards, pre-registered
 (breaks ≤6, fixes ≥135). G1 gives no evidence credit for pure street-type vocabulary. Under G2, evidence may

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The nsul builder's interface: the line classifier's input-tail behavior (BOM header, empty `pcds`,
- *   a postcode-shaped column holding something else or a truncated line), the vintage parse and a full
- *   fixture build through `buildNSULLayer` — the `uprn.db` join, both skipped classes, DDL, checks,
- *   coverage, manifest, seal — verified by reading the sealed artifact back through the production
- *   reader.
+ *   The nsul builder's interface: the line classifier's input-tail behavior
+ *   (BOM header, empty `pcds`, a postcode-shaped column holding something else or a truncated line),
+ *   the vintage parse and a full fixture build through `buildNSULLayer` —
+ *   the `uprn.db` join, both skipped classes, DDL, checks, coverage, manifest, seal —
+ *   verified by reading the sealed artifact back through the production reader.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"
@@ -257,10 +257,10 @@ describe("buildNSULLayer (fixture)", () => {
 				line(14_000_003, "RG40 4HR"),
 				line(14_000_005, "RG40 4HR"),
 				line(100_062_353_961, "PO21 1HR"),
-				// pcds empty: the postcode is not in Code-Point Open.
+				// pcds empty: the postcode isn't in Code-Point Open.
 				line(14_000_007, ""),
 			],
-			// A register row for a uprn uprn.db does not hold.
+			// A register row for a uprn uprn.db doesn't hold.
 			LN: [line(5, "SW1A 1AA")],
 		})
 

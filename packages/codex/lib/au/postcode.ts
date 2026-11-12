@@ -2,22 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Australian postcodes: four digits, written at the end of the last address line after the locality
- *   and state (`sydney NSW 2000`). Sources (accessed 2026-06-11):
+ *   Australian postcodes: four digits, written at the end of the last address line
+ *   after the locality and state (`sydney NSW 2000`).
+ *   Sources (accessed 2026-06-11):
  *
  *   - Australia Post's Correct Addressing brochure (SAP 8833878, Nov 2022) — every example includes a
- *       4-digit postcode and the brochure references envelopes "with preprinted four postcode
- *       squares".
+ *     4-digit postcode and the brochure references envelopes "with preprinted four postcode squares".
  *   - The barcode addressing booklet documents the coarse first-digit → state prior: "if the Postcode
- *       falls in the range 3000-3999 the State abbreviation will be VIC. 4000-4999 will be QLD,
- *       etc. … Exceptions to this include ACT Postcodes and Postcodes located on State borders."
- *       Because the booklet only enumerates VIC and QLD and flags exceptions, this module
- *       deliberately does not ship a full first-digit → state table. The shape is the interface,
- *       the geographic prior is the gazetteer's job.
+ *     falls in the range 3000-3999 the State abbreviation will be VIC. 4000-4999 will be QLD,
+ *     etc. … Exceptions to this include ACT Postcodes and Postcodes located on State borders."
+ *     Because the booklet only enumerates VIC and QLD and flags exceptions,
+ *     this module deliberately doesn't ship a full first-digit → state table.
+ *     The shape is the interface, the geographic prior is the gazetteer's job.
  *
- *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode`
- *   returns both. The function tests 4-digit shape. Both systems share that shape, so the function does
- *   not test membership.
+ *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode` returns both.
+ *   The function tests 4-digit shape.
+ *
+ *   Both systems share that shape, so the function doesn't test membership.
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet}
  */

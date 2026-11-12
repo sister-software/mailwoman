@@ -27,7 +27,7 @@ parent. So the bar's population is empty by construction:
 | `gb-golden.jsonl`          |  120 | `dependent_locality` × 69  |                   **0** |
 | `nz-suburb-golden.jsonl`   |  300 | `dependent_locality` × 246 |                   **0** |
 
-That is a real finding rather than a technicality: the construction argument the design rests on is not
+That's a real finding rather than a technicality: the construction argument the design rests on isn't
 reachable by any instrument built from shipped artifacts. The only pair indexes in the tree whose
 child tag has ≥2 allowed parents are the hierarchy-probe artifacts
 (`pair-index-locality-region-{us,fr}.bin`, child tag `locality`, allowed parents
@@ -42,7 +42,7 @@ and ZIP), child δ proxied to 10 so the child side is representative:
 |           8 |                160 |    **160/160** |
 |          20 |                160 |    **160/160** |
 
-Byte-identical at 2.5× the shipped child δ. The write is not silently absent — the unit tests assert
+Byte-identical at 2.5× the shipped child δ. The write isn't silently absent — the unit tests assert
 `+δ` lands on all three allowed parent labels of a `locality` child, and the gauntlet ON/OFF diff
 below shows the mechanism moving real cases.
 
@@ -50,8 +50,8 @@ below shows the mechanism moving real cases.
 
 ## B-2 — the positive side
 
-> Bar: **≥70% whole-edge-correct** … Report the child-only rate beside it. If the parent bias does
-> not move it, the mechanism is not doing what this document claims.
+> Bar: **≥70% whole-edge-correct** … Report the child-only rate beside it. If the parent bias doesn't
+> move it, the mechanism isn't doing what this document claims.
 
 Two boards, both `<neighbourhood>, <city>, <state>`, no postcode, held out from R5's graded 60 and
 drawn on a fresh seed. Gold from the admin gazetteer's own ancestry.
@@ -77,7 +77,7 @@ elsewhere. The defect lives in the tail.
 |           5 | 59/60 (98.3%) | 59/60 (98.3%) |
 |        6–20 | 59/60 (98.3%) | 59/60 (98.3%) |
 
-Child-only is flat across the whole sweep. Only the parent moves. That is the mechanism doing what
+Child-only is flat across the whole sweep. Only the parent moves. That's the mechanism doing what
 the document claims, and a reading of the general board without the sub-board would have hidden it.
 
 **Verdict: pass** (≥70% on both boards at parentDelta ≥ 4).
@@ -114,7 +114,7 @@ residual FP class. The parent bias adds zero false positives to it at any δ thr
 
 parentDelta ∈ [5, 20] clears B-2 (98.3% ≥ 70% on both boards) and B-3 (0.00% ≤ 2%) at once. δ=4
 clears both too (83.3% / 0.00%); δ=2 fails B-2's sub-board at 45.0%. **δ=5 is the smallest that
-saturates B-2**, and the curve is flat from there to 20. The choice is not knife-edge.
+saturates B-2**, and the curve is flat from there to 20. The choice isn't knife-edge.
 
 **Verdict: pass.**
 
@@ -162,7 +162,7 @@ postcode from the probe KEY but leaves `pieceIndices` spanning the segment, so a
 |        8–20 | **0/80 (0.0%)**         | 77/80      |
 
 `loc=[12210 Montpeyroux]` on every failing row — the child was right the whole time. A D-rule
-regression on a tier-1 locale, invisible below δ=6. That is one notch under the δ the sub-board
+regression on a tier-1 locale, invisible below δ=6. That's one notch under the δ the sub-board
 wanted. Fixed by recording the stripped range as `CandidateWindow.keyPieceIndices` and writing the
 parent bias over it. The child write still spans the whole segment, unchanged. Two unit tests pin
 both the FR leading-postcode and GB trailing-postcode shapes.
@@ -224,9 +224,9 @@ ON:  === Gauntlet · regression (54/55 counted cases pass, 61 tracked) ===
 The two runs are **byte-identical end to end** — `diff` over the whole transcript is empty, both legs
 `FAIL regression / PASS metamorphic` on the pre-existing `si-sentinel-apace` case. Zero newly-failing
 cases anywhere: the D-rule clears. The δ=6 derived-mechanism run above differs here because it
-promoted `gb-op2-nine-elms-bare`. The per-record mechanism at δ=5 does not move that case either way.
+promoted `gb-op2-nine-elms-bare`. The per-record mechanism at δ=5 doesn't move that case either way.
 
-The gauntlet not moving is not the mechanism failing to fire. Rebuilt brooklyn-class sub-board, 60 rows,
+The gauntlet not moving isn't the mechanism failing to fire. Rebuilt brooklyn-class sub-board, 60 rows,
 `<neighbourhood>, <city>, <state-abbrev>` drawn on seed 42 from `pair-index-us.bin` entries whose parent
 fold is a US state name, gold from the admin gazetteer's ancestry:
 
@@ -241,4 +241,4 @@ scripts and no longer exist, so the row set differs and the two numbers are not 
 
 The defect record's row, directly: `brooklyn, new york, ny` parses `dependent_locality=Brooklyn, locality=New York,
 region=NY` with the header's δ=5, and `dependent_locality=Brooklyn, locality=(none), region=New York`
-with `MAILWOMAN_PAIR_PARENT_DELTA=0`. That is the defect the arc was opened for, closed.
+with `MAILWOMAN_PAIR_PARENT_DELTA=0`. That's the defect the arc was opened for, closed.

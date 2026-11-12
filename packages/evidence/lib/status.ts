@@ -36,7 +36,7 @@ export const EpistemicStatus = {
 	 */
 	Inferred: "inferred",
 	/**
-	 * The evidence does not support a claim.
+	 * The evidence doesn't support a claim.
 	 *
 	 * This is the answer the evidence gives rather than a failure to try.
 	 */
@@ -103,8 +103,7 @@ export const AssertedProposition = {
 	 */
 	Grammar: "grammar",
 	/**
-	 * Postal routing that is not geographic hierarchy, such as BFPO, APO/FPO/DPO
-	 * or a foreign postcode prefix.
+	 * Postal routing that's not geographic hierarchy, such as BFPO, APO/FPO/DPO or a foreign postcode prefix.
 	 */
 	Routing: "routing",
 } as const

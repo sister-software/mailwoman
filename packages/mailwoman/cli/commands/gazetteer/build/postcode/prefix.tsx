@@ -2,21 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix index from a
- *   postcode database already in the data root.
+ *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix
+ *   index from a postcode database already in the data root.
  *
- *   `gb-codepoint` (OS Code-Point Open, OGL v3) and `gb-ni-osm` (OpenStreetMap, ODbL 1.0) are
- *   deliberately two files rather than one `postcode-prefix-gb.bin`: folding the NI nodes into the
- *   Code-Point file would put a share-alike obligation on an OGL artifact that no downstream check could
- *   see.
+ *   `gb-codepoint` (OS Code-Point Open, OGL v3) and `gb-ni-osm` (OpenStreetMap, ODbL 1.0)
+ *   are deliberately two files rather than one `postcode-prefix-gb.bin`:
+ *   folding the NI nodes into the Code-Point file would put a share-alike obligation
+ *   on an OGL artifact that no downstream check could see.
  *
- *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`, and the file is
- *   sealed read-only afterwards.
+ *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`,
+ *   and the file is sealed read-only afterwards.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix/index"
 import { PathBuilder } from "path-ts"
@@ -110,14 +111,19 @@ export const spec = {
 
 const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { md5File, median } = await import("@mailwoman/core/utils")
-
-		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
-			await import("@mailwoman/postcode/prefix/index")
-
-		const { buildPostcodePrefixIndex } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix")
+		const {
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+			utils: { md5File, median },
+			index: { PostcodePrefixIndexResolver, serializePostcodePrefixIndex },
+			prefix: { buildPostcodePrefixIndex },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			utils: import("@mailwoman/core/utils"),
+			index: import("@mailwoman/postcode/prefix/index"),
+			prefix: import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix"),
+		})
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
@@ -149,8 +155,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
 		)
 
-		// The database's own meta is the authority on where it came from and what it does
-		// not cover, so re-deriving that prose here would let the two drift.
+		// The database's own meta is the authority on where it came from and what it doesn't
+		// cover, so re-deriving that prose here would let the two drift.
 		const source = built.meta.source ?? "(unrecorded — the database's meta carries no `source`)"
 		const attribution = built.meta.attribution ?? "(unrecorded — the database's meta carries no `attribution`)"
 		const tier: PostcodePrefixTier = built.meta.tier === "build-local" ? "build-local" : "shipped"

@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Read-only lookups over a compiled artifact. Queries use prebuilt maps rather than traversing the graph.
- *   The lookup returns `undefined` for unknown concepts and an empty list for known concepts with no related facts.
+ *   Read-only lookups over a compiled artifact.
+ *
+ *   Queries use prebuilt maps rather than traversing the graph.
+ *   The lookup returns `undefined` for unknown concepts and an empty list for
+ *   known concepts with no related facts.
  */
 
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"

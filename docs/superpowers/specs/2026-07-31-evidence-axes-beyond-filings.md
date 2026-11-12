@@ -1,8 +1,8 @@
 # Evidence axes beyond the filing — design note
 
 2026-07-31. Operator field observations + Claude. This note spans 2b (plausibility), 3d (competition surface),
-and C5 (the label/pricing scraper). It is not a phase. It describes axes that the existing bundle shape should grow
-to include. The doctrine is unchanged and still applies: we disclose and do not accuse, an absence does not mean
+and C5 (the label/pricing scraper). It isn't a phase. It describes axes that the existing bundle shape should grow
+to include. The doctrine is unchanged and still applies: we disclose and do not accuse, an absence doesn't mean
 impossibility, and each claim cites its source.
 
 ## 1. The benchmark filter — the FCC's own fields already do the sorting
@@ -14,7 +14,7 @@ _own_ definitions instead of anyone's judgment:
 - **The 100/20 Mbps fixed benchmark** (the Commission's current standard): arithmetic decides whether a filing
   meets it.
 - **`low_latency`**: the BDC data model has this flag because round-trip latency is a
-  service-defining property that a speed figure does not show. Geostationary satellite fails it because of orbital
+  service-defining property that a speed figure doesn't show. Geostationary satellite fails it because of orbital
   geometry. That geometry is a physical limit and not a preference.
 
 The product therefore never has to call any technology good or bad. It reports: _of the N filings
@@ -55,7 +55,7 @@ supports a narrower claim:
 
 - **Comcast filed 2000 and markets 2000, an exact match.** The self-check corroborates the filing.
 - **WOW filed 1200, and its own site reports the address as unserviceable.** This divergence concerns availability
-  rather than speed. The disagreement is about _whether service exists at all_. That is a different and
+  rather than speed. The disagreement is about _whether service exists at all_. That's a different and
   more consequential axis than throughput.
 
 Two design consequences follow, and the second corrects the reasoning of the first revision:
@@ -64,23 +64,23 @@ Two design consequences follow, and the second corrects the reasoning of the fir
    compares advertised speed misses the case that matters most here. Compare serviceability first, and
    compare speed only where both sides agree that service exists.
 2. **The comparison stays direction-neutral as a precaution, and no observation supports that choice yet.** The corrected
-   example does not show under-claiming. Filings could still understate for mundane reasons,
+   example doesn't show under-claiming. Filings could still understate for mundane reasons,
    such as a vintage that predates a speed upgrade or conservative reporting. The comparison therefore keeps
    `filed_exceeds_channel` / `channel_exceeds_filed` / `agree` instead of a one-way over-claim
-   detector. This hedges against a case no one on this project has observed, and this note should not imply otherwise.
+   detector. This hedges against a case no one on this project has observed, and this note shouldn't imply otherwise.
    The output never uses a word that implies intent, in either direction.
 
 **Before reading any divergence as an error, encode the reporting standard.** BDC's availability
-definition is not "a customer is connected today". A location is reportable when the provider could
+definition isn't "a customer is connected today". A location is reportable when the provider could
 provision service there within a defined short window without extraordinary construction. Verify the
 exact current wording against the FCC's BDC reporting instructions before this ships. Franchise-area
 or plant-passing interpretations of that standard produce large gaps that fully comply with the rules, between
 a filing and a sales funnel that declines the order. The product reports the divergence and cites
-the standard. It does not infer that a filer misapplied the standard.
+the standard. It doesn't infer that a filer misapplied the standard.
 
 The Comcast case is also technologically self-consistent: "fiber to the street, coax to the
 home" is HFC, and HFC _is_ the filed cable technology code. The divergence is in the speed and
-availability fields and not in the technology field. Encode this so that the check does not flag correct
+availability fields and not in the technology field. Encode this so that the check doesn't flag correct
 technology reporting as a mismatch.
 
 **Constraints to respect:** these are third-party sites, so each provider's ToS and robots directives
@@ -107,7 +107,7 @@ This is a **schema requirement** and not a data-quality complaint:
 3. **M&A is a first-class event and not noise.** Consolidation is frequent enough in this sector that
    "the filer of record no longer exists as an independent entity" is a routine state. The spine
    should be able to report that state. The statement cites the
-   transaction record and does not characterize the transaction.
+   transaction record and doesn't characterize the transaction.
 
 This strengthens the case for Phase 3 in general. Without a time-aware identity layer, every
 competition count silently mixes vintages.
@@ -127,7 +127,7 @@ claimed. The sources differ sharply on licensing, and licensing decides which on
 - **FCC Measuring Broadband America** is federal, public domain, and panel-based, with a small sample and high
   trust.
 
-Neither M-Lab nor MBA gives address grain. Both give area-level distributions, so they are useful
+Neither M-Lab nor MBA gives address grain. Both give area-level distributions, so they're useful
 for _corroboration at area grain_. "Filed gigabit service in a block whose measured
 distribution has never exceeded X" is a coverage-qualified observation and not a verdict about any
 address.

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A Workbox plugin that keeps a torn response out of Cache Storage: one whose body is shorter or longer than its
- *   `Content-Length` header states. Mobile Safari's HTTP cache can hand a service worker such a body, and a cache-first
+ *   A Workbox plugin that keeps a torn response out of Cache Storage: one whose body
+ *   is shorter or longer than its `Content-Length` header states.
+ *
+ *   Mobile Safari's HTTP cache can hand a service worker such a body, and a cache-first
  *   route would otherwise answer every later request for that URL with it.
  */
 

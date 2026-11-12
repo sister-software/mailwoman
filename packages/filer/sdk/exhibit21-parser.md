@@ -1,7 +1,7 @@
 # Exhibit 21 parser interface
 
 SEC Exhibit 21 filings are semi-structured HTML rather than one stable format. This parser deliberately recognizes a
-small set of measured table, list, and plain-text shapes. It is not a general HTML parser. Uncertain rows increment
+small set of measured table, list, and plain-text shapes. It isn't a general HTML parser. Uncertain rows increment
 `unparseable` instead of fabricating a subsidiary or jurisdiction.
 
 ## Document and HTML handling
@@ -24,7 +24,7 @@ Otherwise the parser abstains rather than guessing alignment.
 List extraction takes each list item's own text and excludes nested child-list content. Plain-text fallback turns block
 boundaries into lines, removes bullets and known document headings, and caps candidate entity names at twelve words.
 Candidate lines may use a parenthesized jurisdiction, a tab or two-or-more-space column gap, or one conservative comma
-split. A suffix that is only a corporate designator is part of the company name, never a jurisdiction.
+split. A suffix that's only a corporate designator is part of the company name, never a jurisdiction.
 
 The parser returns every confident `{name, jurisdiction?}` plus the count it declined to parse. A row without a jurisdiction
 has an absent property rather than an empty string and never an inferred place.

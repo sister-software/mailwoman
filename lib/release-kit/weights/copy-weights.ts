@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -233,12 +233,12 @@ export async function copyWeights({
 }
 
 /**
- * Whether a weights workspace's published `files` array names an artifact.
+ * Whether a weights workspace's published `files` array identifies an artifact.
  *
  * The array is the publish contract, so it decides whether a missing source is an
  * absence the workspace states or a materialization that failed.
  * `en-nz` names no per-locale FST, so a skip is correct there and an error is
- * correct for a workspace that names one.
+ * correct for a workspace that identifies one.
  */
 async function declaresArtifact(context: MaterializationContext, workspace: string, name: string): Promise<boolean> {
 	const manifest = await readPackageJSON(resolvePath(context.repoRoot, workspace, "package.json"))
@@ -366,7 +366,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
  * The data root holds dated builds under `postcode-prefix/`, and the copy takes the
  * newest of each scope by modification time under the scope's shipped name.
  * An index whose header records tier `build-local` is refused rather than skipped, because a package
- * whose `files` array lists the file would otherwise publish bytes its license does not allow.
+ * whose `files` array lists the file would otherwise publish bytes its license doesn't allow.
  */
 async function materializePostcodePrefix(context: MaterializationContext, workspace: string, dir: string) {
 	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
@@ -408,7 +408,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : null
+	const source = entry.source ? currentSourcePath(entry.source).toString() : null
 
 	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : null
 
@@ -417,7 +417,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		.map((path) => resolvePath(context.repoRoot, path.trim()))
 		.join(",")
 
-	const banDir = entry.banDir ? resolvePath(context.dataRoot, entry.banDir) : null
+	const banDir = entry.banDir ? currentSourcePath(entry.banDir).toString() : null
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
 		if (!(await pathExists(path))) {

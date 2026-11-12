@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `normalize(raw, opts)` — the Stage 1 entry point. Composes NFC + punctuation + whitespace
- *   (always) with case-fold + abbreviation expansion (opt-in).
+ *   `normalize(raw, opts)` — the Stage 1 entry point.
+ *
+ *   Composes NFC + punctuation + whitespace (always) with case-fold + abbreviation expansion (opt-in).
  */
 
 import { expandAbbreviations } from "#abbreviations"

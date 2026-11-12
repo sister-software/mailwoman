@@ -38,7 +38,7 @@ tags. Data vintages are pinned by a SHA-256 manifest (§4).
 
 | Source          | Ours                                                                    | Pelias path                                                                                    |
 | --------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| WOF admin       | official per-country `whosonfirst-data-admin-XX` SQLites (we hold them) | `data/whosonfirst` verbatim — our combined 5.3 GB product is not used                          |
+| WOF admin       | official per-country `whosonfirst-data-admin-XX` SQLites (we hold them) | `data/whosonfirst` verbatim — our combined 5.3 GB product isn't used                           |
 | OpenAddresses   | standard-schema per-country CSVs (~20 countries held)                   | `data/openaddresses` verbatim. Fetch `us` + `fr` (OA-fr ≈ BAN, its upstream source)            |
 | TIGER           | 2024 shapefiles                                                         | `pelias/tiger` importer. 2020 unused                                                           |
 | GNAF (AU)       | derived, non-official schema                                            | not used — OA au countrywide instead                                                           |
@@ -105,7 +105,7 @@ before any import runs:
   comes from polylines, and OA/OSM/TIGER house numbers are conflated onto it. The US keeps
   interpolation without a US OSM Elasticsearch import.
 - **(b) Falsified, in our favor.** Per-country polyline extraction from any PBF is documented
-  (`docker_extract.sh`, osmium-based), and pre-reduced regional extracts exist. The build does not
+  (`docker_extract.sh`, osmium-based), and pre-reduced regional extracts exist. The build doesn't
   need a planet file.
 - **(c) Holds with an override.** `pelias/docker`'s large projects default to
   `ES_JAVA_OPTS=-Xmx8g`, and our project pins 4g. The runtime smoke test is deferred to staging as
@@ -116,7 +116,7 @@ before any import runs:
   this: the `polylines` importer writes those street-layer ES docs, and one per-state polyline
   reduce feeds both the ES street layer and the interpolation graph.
 - **(e) WOF importer scoping (check-in 2 probe).** `imports.whosonfirst.countryCode` accepts an
-  array of ISO codes, so the importer's own download is country-scoped. The importer will not pull
+  array of ISO codes, so the importer's own download is country-scoped. The importer won't pull
   the planet, and the files need no manual placement. This replaces the earlier manual-placement
   caution.
 

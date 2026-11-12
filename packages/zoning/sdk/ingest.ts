@@ -4,9 +4,11 @@
 /**
  *   Streams the Department's bulk zoning export through ogr2ogr as reprojected WGS84 features.
  *
- *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation. GDAL's
- *   GeoJSON writer rewinds every ring to RFC 7946 order. That turns holes into zoned areas. The source is
- *   in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honors.
+ *   The stream uses CSV with WKT geometry because the source marks holes by ring orientation.
+ *   GDAL's GeoJSON writer rewinds every ring to RFC 7946 order.
+ *
+ *   That turns holes into zoned areas.
+ *   The source is in EPSG:2157, declared in a legacy top-level `crs` member that GDAL honors.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"

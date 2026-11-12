@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The conformance-law fixture interface's refusals. Every case here is a row that must not load, because
- *   the alternative to a refusal is a row that grades under an undeclared default and reports as authored.
+ *   The conformance-law fixture interface's refusals.
+ *
+ *   Every case here is a row that mustn't load, because the alternative to a refusal is
+ *   a row that grades under an undeclared default and reports as authored.
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
- *   between them they are the whole reason the comparator set is closed. Both messages must include the
- *   fixture's own id. A refusal that does not name the row sends the reader to a file with no line to open.
+ *   between them they're the whole reason the comparator set is closed.
+ *   Both messages must include the fixture's own id.
+ *
+ *   A refusal that doesn't name the row sends the reader to a file with no line to open.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Grade seed cases before they are committed by using the gauntlet's own grader.
- *   Stamp each one's `status` with
- *   what the shipped pipeline does today: `pass` when it passes, `improvement_target` when it does not. A board author
- *   that writes statuses by hand writes what it hopes. This command writes what was measured.
- *   The regression layer then
- *   holds the passes as pins and reports the targets as tracked.
+ *   Grade seed cases before they're committed by using the gauntlet's own grader.
  *
- *   The shape is the regression runner's own loop (`regression.ts`): route the row's overlay country, geocode through
- *   the shared deps, project through `runOne`, grade through `checkCase`. A shared function rather than the shape
- *   keeps a board builder's verdict equal to the runner's.
+ *   Stamp each one's `status` with what the shipped pipeline does today: `pass`
+ *   when it passes, `improvement_target` when it doesn't.
+ *   A board author that writes statuses by hand writes what it hopes.
+ *
+ *   This command writes what was measured.
+ *   The regression layer then holds the passes as pins and reports the targets as tracked.
+ *
+ *   The shape is the regression runner's own loop (`regression.ts`): route the row's overlay country,
+ *   geocode through the shared deps, project through `runOne`, grade through `checkCase`.
+ *   A shared function rather than the shape keeps a board builder's verdict equal to the runner's.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

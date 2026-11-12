@@ -37,7 +37,7 @@ export interface AddressGeocode {
 
 	/**
 	 * Marks a delivery point, such as a PO box, rather than a building,
-	 * so the coordinate does not locate the addressee.
+	 * so the coordinate doesn't locate the addressee.
 	 */
 	poBox: boolean | null
 

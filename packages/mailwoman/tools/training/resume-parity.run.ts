@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Checks that a resumed Rust training run reproduces an uninterrupted one. It runs `trainer train` on a resolved
- *   config to the end, runs it again with the process killed after it logs `--kill-after`, resumes that run with
- *   `--resume auto`, and compares the two runs:
+ *   Checks that a resumed Rust training run reproduces an uninterrupted one.
  *
- *   - every `train_log.csv` cell except `wall_seconds`, keeping the resumed log's last row per step and kind;
- *   - the rows consumed by the resumed attempt against the same rows from the uninterrupted run. These are the
- *     batch identities;
+ *   It runs `trainer train` on a resolved config to the end, runs it again with the process killed
+ *   after it logs `--kill-after`, resumes that run with `--resume auto`, and compares the two runs:
+ *
+ *   - every `train_log.csv` cell except `wall_seconds`, keeping the resumed
+ *     log's last row per step and kind;
+ *   - the rows consumed by the resumed attempt against the same rows from the uninterrupted run.
+ *     These are the batch identities;
  *   - the final checkpoints' `rng_state.safetensors` bytes.
  *
- *   The kill lands after the step `--kill-after` names, so the resume starts from the newest checkpoint before it, and
- *   `--batch-size` maps that checkpoint's step to a realized-row offset. It writes `compare.json` under `--out` and
- *   exits 1 when anything differs.
+ *   The kill lands after the step `--kill-after` names, so the resume starts from the newest
+ *   checkpoint before it, and `--batch-size` maps that checkpoint's step to a realized-row offset.
+ *   It writes `compare.json` under `--out` and exits 1 when anything differs.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/resume-parity.run.ts --trainer <path to trainer> --config <resolved.json> \

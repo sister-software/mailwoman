@@ -71,7 +71,7 @@ Classify by hand, because the measurement cannot make this judgment. The classes
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `mistag_street` | the value is a fragment of a street phrase in the input              | `Avenida` ← `Avenida Corrientes`; `de Catalunya` ← `Rambla de Catalunya`; `Turner St` |
 | `mistag_poi`    | the value is the name of a venue or landmark                         | `Statue of Liberty`; `Great Mosque of Niamey`                                         |
-| `junk_span`     | the value is not a name at all                                       | `New` ← `New Territories, Hong Kong`; `near NAFTI`                                    |
+| `junk_span`     | the value isn't a name at all                                        | `New` ← `New Territories, Hong Kong`; `near NAFTI`                                    |
 | `fold_failure`  | **the place is real and we plausibly hold it under another surface** | see the three sub-mechanisms below                                                    |
 
 `fold_failure` covers three sub-mechanisms. `constraint-census` builds its keys with
@@ -569,7 +569,7 @@ describe("requireExclusionBasis", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/evidence/coverage.test.ts`
-Expected: fail — `requireExclusionBasis` is not exported.
+Expected: fail — `requireExclusionBasis` isn't exported.
 
 - [ ] **Step 3: Write the coverage module**
 
@@ -766,7 +766,7 @@ Saint-Denis  saint denis          saint denis       saint-denis
 Zürich       zu rich              zurich            zurich
 ```
 
-7 of 8 probe inputs disagree across the three, so `probeFold: "foldName@v1"` does not identify a fold. Append to
+7 of 8 probe inputs disagree across the three, so `probeFold: "foldName@v1"` doesn't identify a fold. Append to
 `packages/evidence/coverage.ts`:
 
 ```ts
@@ -875,7 +875,7 @@ export function shortCellToParentInt(h3CellShortInt: number, from: number, to: n
 
 In `packages/bdc/lib/sdk/filing-landscape.ts`, replace the body of `res9ShortCellToRes6Parent` with a call and
 keep the export. Its callers (`nearest-infrastructure.ts`, `plausibility.ts`, and its own parity test)
-should not have to change in this task:
+shouldn't have to change in this task:
 
 ```ts
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
@@ -891,7 +891,7 @@ yarn vitest run packages/bdc packages/spatial
 ```
 
 Expected: pass. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
-`build-bdc.ts`'s own coverage-cell derivation. That test is the regression check for this move and must not
+`build-bdc.ts`'s own coverage-cell derivation. That test is the regression check for this move and mustn't
 be edited.
 
 - [ ] **Step 13: Commit**
@@ -1010,7 +1010,7 @@ already states this task's requirement:
 
 That docstring now sits at `packages/resolver-wof-sqlite/lib/uprn/lookup.ts:6`.
 
-This task therefore does not build a probe. It adds the coverage consult and puts the answer in the type,
+This task therefore doesn't build a probe. It adds the coverage consult and puts the answer in the type,
 so a caller cannot skip it.
 
 **Files:**
@@ -1164,14 +1164,14 @@ export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 
 `UPRN_EXISTENCE_FOLD` uses the identity fold on purpose. This probe keys on a coordinate rather than a name, so
 no string folding can disagree. The same identity in both `probeFold` and `layerFold` records that the
-fold axis does not apply here, rather than silently omitting the check. Say so in the comment, or a future
+fold axis doesn't apply here, rather than silently omitting the check. Say so in the comment, or a future
 reader will take it for a stub.
 
 The function:
 
 1. `const cell = uprnH3Cell(latitude, longitude)` then `shortCellToParentInt(cell, UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
 2. `const coverage = await readLayerCoverage(schemadb, coverageCell)` — `undefined` means absent.
-3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null`. A hit means a point exists, so there is no exclusion to report.
+3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null`. A hit means a point exists, so there's no exclusion to report.
 4. `const manifest = await readLayerManifest(schemadb)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
 5. `return requireExclusionBasis({ layer: manifest.name, source: manifest.source, vintage: manifest.sourceVintage, h3Cell: coverageCell, cell: coverage, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries: new Set(["GB"]) })`.
 
@@ -1289,7 +1289,7 @@ describe("demote-only exclusions", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/resolver/street-evidence.test.ts`
-Expected: fail — `exclusions` is not a known option; `demoted` is not on the pick.
+Expected: fail — `exclusions` isn't a known option; `demoted` isn't on the pick.
 
 - [ ] **Step 3: Add the dependency**
 
@@ -1509,7 +1509,7 @@ describe("projectDerivation", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/evidence/derivation.test.ts`
-Expected: fail — `projectDerivation` is not exported.
+Expected: fail — `projectDerivation` isn't exported.
 
 - [ ] **Step 3: Implement the projection**
 
@@ -1624,7 +1624,7 @@ describe("H1 field offsets", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/tiger/lib/sdk/redistricting.test.ts`
-Expected: fail — `parseH1` is not exported.
+Expected: fail — `parseH1` isn't exported.
 
 - [ ] **Step 3: Add the columns**
 
@@ -1736,8 +1736,8 @@ Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for f
 
 Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 
-- **DESIGNATED, per commune:** the signal exists and is kept at ingest or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only and writes no row for the rest. An absent row means unknown, so never write a zero-completeness row.
-- **SOURCE_PRESENT only:** no per-commune signal exists, and the FR lexical arm does not ship. Record this as a closed negative result so that a later arc does not propose it again.
+- **DESIGNATED, per commune:** the signal exists and is kept at ingest or recoverable. Name the field, the communes it covers, and the ones it doesn't. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only and writes no row for the rest. An absent row means unknown, so never write a zero-completeness row.
+- **SOURCE_PRESENT only:** no per-commune signal exists, and the FR lexical arm doesn't ship. Record this as a closed negative result so that a later arc doesn't propose it again.
 
 Either verdict must state what was measured rather than what was assumed.
 
@@ -1760,7 +1760,7 @@ whether that is true of the data or only of the sentence."
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 
-**Codebase survey, 2026-08-21: what this plan does not build because it already exists.** `UPRNLookup`
+**Codebase survey, 2026-08-21: what this plan doesn't build because it already exists.** `UPRNLookup`
 (`resolver-wof-sqlite/uprn-lookup.ts`) already does the bounded nearest-point search Task 5 was going to
 write, and its docstring already makes the coverage consult the caller's obligation.
 `res9ShortCellToRes6Parent` already exists in `bdc/sdk/filing-landscape.ts`, so the plan moves it rather
@@ -1770,7 +1770,7 @@ than re-deriving it.
 `scorePair` / `decide` for the relation side when a later increment needs them.
 
 **Out of scope, found during the same survey.** `packages/resolver/lib/fold-name.ts`'s `foldName` claims to be
-diacritic-insensitive but is not. It maps each combining mark to a space, so 6 of 9 French commune pairs
+diacritic-insensitive but isn't. It maps each combining mark to a space, so 6 of 9 French commune pairs
 fail the comparison it exists to perform. Its one live call site (`street-tier.ts:516`) deletes the
 locality node on a false mismatch. This is a separate issue with a separate fix, so do not add it to a task
 here.

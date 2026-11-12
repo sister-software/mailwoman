@@ -22,7 +22,7 @@ const resolver = createWOFResolver(backend)
 const decorated = await resolver.resolveTree(tree)
 ```
 
-`resolveTree` returns a new tree. Nodes that resolved have `lat`/`lon`, a `placeID`, and `resolver_*` metadata. Nodes that did not are returned untouched.
+`resolveTree` returns a new tree. Nodes that resolved have `lat`/`lon`, a `placeID`, and `resolver_*` metadata. Nodes that didn't are returned untouched.
 
 ## Backend-agnostic on purpose
 
@@ -34,7 +34,7 @@ Two rules run through this package, and both exist because their opposites shipp
 
 **A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage database, and those databases contain a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
 
-**A missing answer is not a wrong answer.** An unresolvable span is returned as parsed. The resolver invents no centroid to fill a hole.
+**A missing answer isn't a wrong answer.** An unresolvable span is returned as parsed. The resolver invents no centroid to fill a hole.
 
 ## Which resolved place answers the query
 
@@ -58,7 +58,7 @@ Either an **exact hit on a unit-grade code** (`@mailwoman/codex`'s `UNIT_GRADE_P
 
 The two shapes live in one module deliberately. They express one claim and are consumed by different callers, and when they were separate the eval harnesses each froze one arm of the conditional as a constant — every grader correct on half the data and wrong on the other half, unconditionally, until a test compared them. `lib/admin/winner.test.ts` asserts they agree on every arm, and a mutation of either side fails it.
 
-A code system joins those tiers by measurement, never by its shape without a measurement. Canada is the worked example. Its urban LDU measures 78 m against rooftop truth and joined the tier, while its rural codes measure 2.08 km and did not. Canada Post already marks the difference with a `0` in the second character, so the code itself identifies its tier before any lookup runs.
+A code system joins those tiers by measurement, never by its shape without a measurement. Canada is the worked example. Its urban LDU measures 78 m against rooftop truth and joined the tier, while its rural codes measure 2.08 km and didn't. Canada Post already marks the difference with a `0` in the second character, so the code itself identifies its tier before any lookup runs.
 
 ## Coherence passes
 

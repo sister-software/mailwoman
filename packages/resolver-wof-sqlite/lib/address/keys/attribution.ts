@@ -36,7 +36,26 @@ export interface AddressLayerAttribution {
 	 * `license` object, or `null` when the caller has no definition for the source.
 	 */
 	recorded: unknown
+	/**
+	 * The distinct values this source's rows state as their authority, when those values
+	 * identify records rather than authorities (see {@linkcode AUTHORITY_RECORD_ID_SHARE})
+	 * and so are left out of this entry.
+	 * Absent when the source's authorities are kept.
+	 */
+	omittedAuthorities?: number
 }
+
+/**
+ * The share of a source's rows that may each state an authority value no other row shares
+ * before the source's authority values are read as record identifiers.
+ *
+ * An authority is a body that maintains a whole area's addresses, so a source's
+ * rows share a few authority values.
+ * In NAD release 24, every state but one holds at most one distinct `AddAuth` value per 5,000 rows.
+ *
+ * Idaho holds 78,956 distinct values across 79,656 rows: its provider wrote each record's id into the field.
+ */
+export const AUTHORITY_RECORD_ID_SHARE = 0.5
 
 /**
  * Writes `ATTRIBUTION.json` beside a built region's `lookup.db`, one entry per source
@@ -70,19 +89,25 @@ export async function writeAddressLayerAttribution(
 		.groupBy(["source_id", "authority"])
 		.execute()
 
-	const entries = tallies
-		.map((row): AddressLayerAttribution => {
-			const source = sources.get(row.source_id)
+	const bySource = Map.groupBy(tallies, (row) => row.source_id)
 
-			if (!source) throw new Error(`${files.detail} holds rows of source ${row.source_id}, which lookup.db lacks`)
+	const entries = [...bySource]
+		.flatMap(([sourceID, rows]): AddressLayerAttribution[] => {
+			const source = sources.get(sourceID)
 
-			return {
-				source: source.name,
-				authority: row.authority,
-				records: Number(row.records),
-				license: source.license,
-				recorded: recorded.get(source.name) ?? null,
+			if (!source) throw new Error(`${files.detail} holds rows of source ${sourceID}, which lookup.db lacks`)
+
+			const base = { source: source.name, license: source.license, recorded: recorded.get(source.name) ?? null }
+			const records = rows.reduce((sum, row) => sum + Number(row.records), 0)
+			const authorities = rows.filter((row) => row.authority != null).length
+			const singletons = rows.filter((row) => row.authority != null && Number(row.records) === 1).length
+
+			// A source most of whose rows each state an authority value no other row shares is stating record ids there.
+			if (authorities > 1 && singletons > records * AUTHORITY_RECORD_ID_SHARE) {
+				return [{ ...base, authority: null, records, omittedAuthorities: authorities }]
 			}
+
+			return rows.map((row) => ({ ...base, authority: row.authority, records: Number(row.records) }))
 		})
 		.toSorted((left, right) => right.records - left.records)
 

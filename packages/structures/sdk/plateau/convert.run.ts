@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Converts PLATEAU building tilesets to the 3D Tiles 1.1 form Earth serves, gzipping every file, under
- *   `<out>/3dtiles/<id>/`, and writes their records to `<out>/city-tilesets.json`.
+ *   Converts PLATEAU building tilesets to the 3D Tiles 1.1 form Earth serves, gzipping every file,
+ *   under `<out>/3dtiles/<id>/`, and writes their records to `<out>/city-tilesets.json`.
  *
  *   Usage: node packages/structures/sdk/plateau/convert.run.ts --out <dir> (--city <code> ... | --all)
  *
- *   Only tilesets under the elected PLATEAU site policy are converted. Upload `<out>/3dtiles/` to the tiles bucket's
- *   `3dtiles/` prefix with each object's `Content-Encoding` set to `gzip`, and copy the records into
- *   `packages/structures/data/city-tilesets.json`.
+ *   Only tilesets under the elected PLATEAU site policy are converted.
+ *   Upload `<out>/3dtiles/` to the tiles bucket's `3dtiles/` prefix with each object's `Content-Encoding`
+ *   set to `gzip`, and copy the records into `packages/structures/data/city-tilesets.json`.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"

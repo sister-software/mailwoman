@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The docs search modal. A native `<dialog>` opened with `showModal()` supplies the focus trap, the inert
- *   background, the backdrop, the close on Escape and the return of focus to the opener. The query field is an
- *   `<input type="search">` with the ARIA combobox role. DOM focus stays on the input, and
- *   `aria-activedescendant` identifies the selected hit. The component owns no data access: `search` is
- *   passed in. The hits a reader opened are kept as recent hits, a per-viewer convenience in
+ *   The docs search modal.
+ *
+ *   A native `<dialog>` opened with `showModal()` supplies the focus trap, the inert background,
+ *   the backdrop, the close on Escape and the return of focus to the opener.
+ *   The query field is an `<input type="search">` with the ARIA combobox role.
+ *
+ *   DOM focus stays on the input, and `aria-activedescendant` identifies the selected hit.
+ *   The component owns no data access: `search` is passed in.
+ *
+ *   The hits a reader opened are kept as recent hits, a per-viewer convenience in
  *   `localStorage`; the modal renders the same without them.
  */
 
@@ -350,7 +355,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-		// A key that commits or edits an IME composition is not a command.
+		// A key that commits or edits an IME composition isn't a command.
 		if (event.nativeEvent.isComposing) return
 
 		// The options on screen, if any, answer an earlier query, so the Enter waits for the field's query to settle.

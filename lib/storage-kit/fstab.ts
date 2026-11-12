@@ -4,8 +4,9 @@
 /**
  *   Render and splice one `/etc/fstab` line.
  *
- *   Kept as string functions over string input so the interesting part — that an existing entry for the same mount
- *   point is replaced rather than duplicated — is unit-testable without a privileged sandbox or a real fstab.
+ *   Kept as string functions over string input so the interesting part —
+ *   that an existing entry for the same mount point is replaced rather than duplicated —
+ *   is unit-testable without a privileged sandbox or a real fstab.
  */
 
 /**

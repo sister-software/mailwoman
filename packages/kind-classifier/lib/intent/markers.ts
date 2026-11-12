@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Marker derivation for the ROAD_TO_V9 §4 intent vocabulary. This code is pure and synchronous. It is the only place the
- * classifier turns a fired rule into something a caller reads.
+ * Marker derivation for the ROAD_TO_V9 §4 intent vocabulary.
  *
- * Three of the four intent kinds can raise their marker here from the string by itself. The fourth,
- * Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
- * Its trigger is the dominance margin of the resolved candidate list. `mailwoman/query-intent.ts` raises it
- * after the resolve against `DECISIVE_MARGIN_LOG10`. This module therefore never emits
- * `declared_ambiguity`, since a marker asserting ambiguity from the string by itself would declare every
- * bare city name ambiguous.
+ * This code is pure and synchronous.
+ * It is the only place the classifier turns a fired rule into something a caller reads.
+ *
+ * Three of the four intent kinds can raise their marker here from the string by itself.
+ * The fourth, Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
+ *
+ * Its trigger is the dominance margin of the resolved candidate list.
+ * `mailwoman/query-intent.ts` raises it after the resolve against `DECISIVE_MARGIN_LOG10`.
+ *
+ * This module therefore never emits `declared_ambiguity`, since a marker asserting
+ * ambiguity from the string by itself would declare every bare city name ambiguous.
  */
 
 import type { QueryIntentMarker, QueryKind } from "@mailwoman/core/pipeline"
@@ -66,7 +70,7 @@ export function deriveIntentMarkers(
 				 *
 				 * The order is stable: pair first, then the admin reading.
 				 * A consumer can index it.
-				 * This order does not rank the entries.
+				 * This order doesn't rank the entries.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},

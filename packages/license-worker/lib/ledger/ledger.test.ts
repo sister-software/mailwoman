@@ -106,15 +106,41 @@ test("state transitions write the license, subscription and payment states", asy
 
 	await createLicenseIfAbsent(ledger, row)
 
-	await setLicenseState(ledger, row.lid, LicenseState.Revoked, {
-		subscriptionState: "canceled",
-		paymentState: "refunded",
-	})
+	await expect(
+		setLicenseState(
+			ledger,
+			row.lid,
+			{ from: LicenseState.Active, to: LicenseState.Revoked },
+			{ subscriptionState: "canceled", paymentState: "refunded" }
+		)
+	).resolves.toBe("updated")
 
 	await expect(findLicenseBySubscription(ledger, row.subscription_id)).resolves.toMatchObject({
 		license_state: "revoked",
 		subscription_state: "canceled",
 		payment_state: "refunded",
+	})
+})
+
+test("a transition from a state the row no longer holds is a conflict and leaves the row as it was", async () => {
+	const ledger = openLedger(env.LICENSE_LEDGER)
+	const row = license("e")
+
+	await createLicenseIfAbsent(ledger, row)
+	await setLicenseState(ledger, row.lid, { from: LicenseState.Active, to: LicenseState.Revoked })
+
+	await expect(
+		setLicenseState(
+			ledger,
+			row.lid,
+			{ from: LicenseState.Active, to: LicenseState.Review },
+			{ paymentState: "refunded" }
+		)
+	).resolves.toBe("conflict")
+
+	await expect(findLicenseBySubscription(ledger, row.subscription_id)).resolves.toMatchObject({
+		license_state: "revoked",
+		payment_state: "pending",
 	})
 })
 

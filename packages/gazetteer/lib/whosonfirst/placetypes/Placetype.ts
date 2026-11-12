@@ -127,8 +127,7 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting less specific (i.e. Bigger or higher) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they
-	 * are not sequential, only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they're not sequential, only unique.
 	 */
 	static comparatorAsc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -145,8 +144,7 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting more specific (i.e. Smaller or lower) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they
-	 * are not sequential, only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they're not sequential, only unique.
 	 */
 	static comparatorDesc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -426,7 +424,7 @@ export class Placetype implements Disposable {
 			}
 		}
 
-		// Finally, there may be children who have registered before this placetype.
+		// Finally, there may be children who've registered before this placetype.
 		// We need to adopt them into our parentage...
 		const orphans = Placetype.#childrenOfParentName.get(definition.name)
 

@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests script routing with stub classifiers. A Latin line stays on the primary. A kanji or Hangul line
- *   runs on the family loaded once. A family whose load fails falls back to the primary with one report.
- *   A character-path primary always handles its own inputs. A routed parse drops the primary's gazetteer priors.
+ *   Tests script routing with stub classifiers.
+ *
+ *   A Latin line stays on the primary.
+ *   A kanji or Hangul line runs on the family loaded once.
+ *
+ *   A family whose load fails falls back to the primary with one report.
+ *   A character-path primary always handles its own inputs.
+ *   A routed parse drops the primary's gazetteer priors.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

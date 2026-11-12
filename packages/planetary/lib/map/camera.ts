@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the camera goes when a feature is selected. The zoom is the inverse of the pipeline's declutter rule: a
- *   feature first appears at the zoom that its diameter determines. The camera lands one or two levels past that so the
- *   selected label is on screen with its neighbors rather than by itself.
+ *   Where the camera goes when a feature is selected.
+ *
+ *   The zoom is the inverse of the pipeline's declutter rule: a feature first
+ *   appears at the zoom that its diameter determines.
+ *   The camera lands one or two levels past that so the selected label is on
+ *   screen with its neighbors rather than by itself.
  */
 
 /**
@@ -17,7 +20,7 @@ const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom:
 ]
 
 /**
- * The zoom for a feature smaller than every step or one whose diameter the source does not give.
+ * The zoom for a feature smaller than every step or one whose diameter the source doesn't give.
  */
 const SMALL_FEATURE_ZOOM = 9
 
@@ -61,7 +64,7 @@ function framingZoomForDiameter(diameterKm: number | null): number {
  * Whether the viewer asked for reduced motion.
  * A camera move then jumps instead of flying.
  *
- * Answers false where `matchMedia` does not exist, so a test environment without
+ * Answers false where `matchMedia` doesn't exist, so a test environment without
  * a window gets the animated default.
  */
 export function prefersReducedMotion(): boolean {

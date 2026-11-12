@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The bodies this pipeline builds. Every record and artifact states its body explicitly.
+ *   The bodies this pipeline builds.
+ *
+ *   Every record and artifact states its body explicitly.
  *   Each pipeline stage uses the selected body as its reference.
  */
 

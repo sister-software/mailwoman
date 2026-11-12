@@ -3,7 +3,9 @@
 
 /**
  *   Decodes one compact building tile into the buffers the GPU layer draws.
- *   `packages/hrt/crates/hrt-profile/src/building_buffers.rs` writes the tile and documents its record layout.
+ *
+ *   `packages/hrt/crates/hrt-profile/src/building_buffers.rs` writes the tile
+ *   and documents its record layout.
  */
 
 import { GuideMapPalette } from "@mailwoman/cartographer/base/theme"
@@ -105,7 +107,7 @@ export type FacadeClass = (typeof FacadeClass)[keyof typeof FacadeClass]
  * start along it, in the units the edge lengths are given in.
  *
  * Consecutive edges whose headings stay within {@link RUN_HEADING_COS} form one run,
- * so a vertex part way along a facade does not break its bays.
+ * so a vertex part way along a facade doesn't break its bays.
  * A ring whose first vertex lies part way along a wall joins its last run to its first,
  * as Arnis's `lay_out_facade_columns` does.
  * A zero-length edge joins the run it touches.
@@ -300,7 +302,7 @@ export function unitMeters(tileY: number): number {
  * Decodes a decompressed tile body for z14 row `tileY`, which sets the meters per
  * tile unit that pitched roofs are shaded with.
  *
- * @throws When the body does not start with `MWB2` or ends inside a record.
+ * @throws When the body doesn't start with `MWB2` or ends inside a record.
  */
 export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBuildingTile {
 	const view = new DataView(bytes)

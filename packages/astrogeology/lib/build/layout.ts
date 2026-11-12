@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Output directory and artifact file names for a body's build. Build, verify and publish all read them here.
+ *   Output directory and artifact file names for a body's build.
+ *   Build, verify and publish all read them here.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

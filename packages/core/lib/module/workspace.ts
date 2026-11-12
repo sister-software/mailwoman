@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Workspace names paired with their declared repo-relative directories. The root manifest is authoritative: package
- *   names are not paths (`@mailwoman/core` lives at `packages/core`), and deriving one from the other recreates the
- *   exact class of clean-command bug this registry exists to prevent.
+ *   Workspace names paired with their declared repo-relative directories.
+ *
+ *   The root manifest is authoritative: package names are not paths
+ *   (`@mailwoman/core` lives at `packages/core`), and deriving one from the other recreates
+ *   the exact class of clean-command bug this registry exists to prevent.
  */
 
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"

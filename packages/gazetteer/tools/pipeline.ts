@@ -5,11 +5,13 @@
  * The candidate-gazetteer build → promote → publish pipeline, as reusable functions the `mailwoman
  * gazetteer` commands compose.
  *
- * `fold` and `build` reuse the canonical package functions. The CLI and standalone scripts share
- * one implementation. A future `build-unified-wof --geonames-countries` will use it too. `publish` uses the
- * same TypeScript R2 publisher as the standalone release tool and bumps the demo's
- * `ADMIN_GAZETTEER_VERSION`; the demo resource file is the only repo-coupled path, so callers pass
- * it in.
+ * `fold` and `build` reuse the canonical package functions.
+ * The CLI and standalone scripts share one implementation.
+ *
+ * A future `build-unified-wof --geonames-countries` will use it too.
+ * `publish` uses the same TypeScript R2 publisher as the standalone release tool
+ * and bumps the demo's `ADMIN_GAZETTEER_VERSION`; the demo resource file is the
+ * only repo-coupled path, so callers pass it in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -38,10 +40,11 @@ import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
+import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { probeManifest } from "mailwoman/data/inventory"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
+import { buildWOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
 import {
 	candidateLayerManifest,
 	censusFolds,
@@ -50,12 +53,7 @@ import {
 	readFoldTerms,
 } from "#tools/pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#tools/pipeline/coverage-manifest"
-import {
-	DEFAULT_FOLD_COUNTRIES,
-	DEFAULT_IMPORTANCE_DB,
-	DEFAULT_WOF_PRIORITY_COUNTRIES,
-	geonamesAdminGapCountries,
-} from "#tools/pipeline/defaults"
+import { DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB, geonamesAdminGapCountries } from "#tools/pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 import { publishToPublicBucket } from "#tools/publish/public-bucket"
 
@@ -63,7 +61,7 @@ import { publishToPublicBucket } from "#tools/publish/public-bucket"
  * The canonical postcode-database set (filenames under `<data-root>/db/wof/`);
  * missing databases are skipped rather than fatal.
  *
- * Every member is spelled `postalcode-` because that is a routing interface: `deriveSchemaName`
+ * Every member is spelled `postalcode-` because that's a routing interface: `deriveSchemaName`
  * turns the filename into the attached SQL schema name and `pickExtractsForPlacetype`
  * tests it against the placetype, so a database stored as `postcode-<cc>.db` builds fine
  * and is then unreachable to `findPlace({ placetype: "postalcode" })`.
@@ -81,7 +79,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Northern Ireland is excluded from every permissive UK grant.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves.
-	// A miss on a BT code means not attested in OSM rather than that the code does not exist.
+	// A miss on a BT code means not attested in OSM rather than that the code doesn't exist.
 	// ODbL 1.0 is share-alike, so this artifact is never published and folds
 	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
@@ -94,7 +92,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postalcode-${cc}-overture.db`
 	),
-	// Singapore: a six-digit postcode names one building, so the per-postcode
+	// Singapore: a six-digit postcode identifies one building, so the per-postcode
 	// Overture centroid answers at rooftop grade.
 	"postalcode-sg-overture.db",
 ]
@@ -222,7 +220,7 @@ export interface FoldOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * Override to proceed when `adminIn` already contains alias rows for countries this run does not list.
+	 * Override to proceed when `adminIn` already contains alias rows for countries this run doesn't list.
 	 *
 	 * The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 */
@@ -315,10 +313,21 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
+	// The re-fold matches GeoNames places against the copy's WOF records, as the admin build does,
+	// so a place WOF holds adds its names to that record rather than coming back as a second row.
+	const index = buildWOFPlaceIndex(db)
+
 	const ingested = await ingestGeonamesAliases(db, countries, opts.geonamesDir ?? geonamesDir(), opts.onCountry, {
 		adminForCountries,
 		alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
+		existing: {
+			match: (place) => index.match(place),
+			claimName: (match, country, name) => index.claimName(match, country, name),
+			onGap: () => {},
+		},
 	})
+
+	index.dispose()
 
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
@@ -358,16 +367,6 @@ export interface BuildOptions {
 	 */
 	importanceDB?: string | false
 	/**
-	 * Countries judged by the cross-source currency backfill
-	 * (WOF localities resurrected only under a GeoNames attestation); default is the
-	 * WOF-priority set, the only countries whose admin comes from WOF repos.
-	 *
-	 * A country without a `<data-root>/geonames/<CC>.txt` dump is skipped loudly.
-	 *
-	 * Pass `false` to disable.
-	 */
-	currencyBackfillCountries?: readonly string[] | false
-	/**
 	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
 	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
@@ -403,14 +402,9 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build/candidate")
 
 	// `undefined` means "use the convention"; `false` means "the caller chose an empty column".
-	// Only the second may skip the resolve, so a missing artifact is not indistinguishable
+	// Only the second may skip the resolve, so a missing artifact isn't indistinguishable
 	// from a deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
-
-	const backfillCountries =
-		opts.currencyBackfillCountries === false
-			? undefined
-			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
 
 	// Include the committed capitals reference in the artifact so `capital_tier` works for
 	// npm consumers who pulled candidate.db (published packages do not ship the repo file).
@@ -449,53 +443,67 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		)
 	}
 
-	const result = await buildCandidateTable({
-		input: opts.adminDB,
-		output: opts.out,
-		postcodes: postcodeDatabases,
-		localities: localityDatabases,
-		...(importance ? { importance } : {}),
-		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
-		...(capitals?.length ? { capitals } : {}),
-		onProgress: opts.onProgress,
-	})
+	// The build writes a temporary file and swaps it in once sealed.
+	// `candidate.db` links to the output, so a reader never opens a half-built gazetteer,
+	// and a failed build leaves the previous one in place.
+	const tmp = `${opts.out}.tmp-${process.pid}`
 
-	// Facts about the artifact live IN the artifact: bake the measured hard-filter coverage
-	// record and guard-B bboxes pre-seal, because a shipped DB is never patched.
-	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
-	await emitCoverageManifest({ dbPath: opts.out })
+	await recoverInterruptedBuilds(opts.out)
 
-	// The layer manifest names its ancestor rather than restating the ancestor's sources,
-	// because a derived layer's provenance has to be a chain.
-	opts.onProgress?.("layer-manifest", "stamping provenance")
-	const sha = buildSHA(repoRootPath())
-
-	// Counted before the seal, because an upstream release is pruned from its bucket and a fold's share
-	// of the published artifact is then unrecoverable from anything but the artifact's own manifest.
-	const foldCensus = censusFolds(opts.out)
-
-	opts.onProgress?.(
-		"layer-manifest",
-		`folds: ${foldCensus.map((fold) => `${fold.fold} ${fold.rows} rows / ${fold.places} places`).join(", ")}`
-	)
-
-	await stampLayerManifest(
-		opts.out,
-		await candidateLayerManifest({
-			adminDBPath: opts.adminDB,
-			contributingDatabases: { postcodes: postcodeDatabases, localities: localityDatabases },
-			importance: Boolean(importance),
-			buildSHA: sha,
-			version: isoDate(),
-			createdAt: new Date().toISOString(),
-			foldCensus,
+	try {
+		const result = await buildCandidateTable({
+			input: opts.adminDB,
+			output: tmp,
+			postcodes: postcodeDatabases,
+			localities: localityDatabases,
+			...(importance ? { importance } : {}),
+			...(capitals?.length ? { capitals } : {}),
+			onProgress: opts.onProgress,
 		})
-	)
 
-	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	await sealDatabase(opts.out)
+		// Facts about the artifact live IN the artifact: bake the measured hard-filter coverage
+		// record and guard-B bboxes pre-seal, because a shipped DB is never patched.
+		opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
+		await emitCoverageManifest({ dbPath: tmp })
 
-	return result
+		// The layer manifest identifies its ancestor rather than restating the ancestor's
+		// sources, because a derived layer's provenance has to be a chain.
+		opts.onProgress?.("layer-manifest", "stamping provenance")
+		const sha = buildSHA(repoRootPath())
+
+		// Counted before the seal, because an upstream release is pruned from its bucket
+		// and a fold's share of the published artifact is then unrecoverable from anything
+		// but the artifact's own manifest.
+		const foldCensus = censusFolds(tmp)
+
+		opts.onProgress?.(
+			"layer-manifest",
+			`folds: ${foldCensus.map((fold) => `${fold.fold} ${fold.rows} rows / ${fold.places} places`).join(", ")}`
+		)
+
+		await stampLayerManifest(
+			tmp,
+			await candidateLayerManifest({
+				adminDBPath: opts.adminDB,
+				contributingDatabases: { postcodes: postcodeDatabases, localities: localityDatabases },
+				importance: Boolean(importance),
+				buildSHA: sha,
+				version: isoDate(),
+				createdAt: new Date().toISOString(),
+				foldCensus,
+			})
+		)
+
+		// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+		await sealDatabase(tmp)
+		await swapDatabaseIntoPlace(tmp, opts.out)
+
+		return result
+	} catch (error) {
+		await removePathIfPresent(tmp)
+
+		throw error
+	}
 }
 
 /**
@@ -562,7 +570,7 @@ export interface PublishOptions {
  * An absent or unreadable manifest refuses as well: an artifact that states no
  * tier cannot be said to permit publication.
  *
- * @throws When a refusal stands and `overrideRefusals` is not set.
+ * @throws When a refusal stands and `overrideRefusals` isn't set.
  */
 function assertCandidatePublishable(candidateDB: PathBuilderLike, key: string, overrideRefusals: boolean): void {
 	const probed = probeManifest(candidateDB)

@@ -3,11 +3,14 @@
 
 /**
  *   This test checks a `trace: true` session against the real classifier.
- *   It checks the recorded data and confirms that tracing leaves the answer unchanged.
- *   The debug view exists for inspection. If its extra decode moved a coordinate, the view would measure a different pipeline.
  *
- *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution), and skipping for the
- *   same reasons, so the two suites run and skip together.
+ *   It checks the recorded data and confirms that tracing leaves the answer unchanged.
+ *   The debug view exists for inspection.
+ *
+ *   If its extra decode moved a coordinate, the view would measure a different pipeline.
+ *
+ *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution),
+ *   and skipping for the same reasons, so the two suites run and skip together.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -88,8 +91,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(withTrace.timing.trace).toBeGreaterThan(0)
 				expect(without.timing.trace).toBeUndefined()
 			} finally {
-				traced[Symbol.dispose]()
-				plain[Symbol.dispose]()
+				await traced[Symbol.asyncDispose]()
+				await plain[Symbol.asyncDispose]()
 			}
 		},
 		TEST_TIMEOUT_MS

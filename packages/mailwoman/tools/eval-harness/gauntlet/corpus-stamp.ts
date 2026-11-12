@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The freshness interface between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
- *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder stamps what it wrote. Every runner that
- *   grades against the DB refuses when the stamp disagrees with the corpus on disk right now.
+ *   The freshness interface between the committed corpus (`cases/<cc>/*.jsonl`)
+ *   and its built artifact (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`).
  *
- *   Two guards deliberately differ in kind: content (`corpus_hash` against the live {@linkcode regressionCorpusHash})
- *   catches a stale artifact, while emptiness refuses a zero-row corpus before any grading ({@linkcode assertCorpusIsNonEmpty}),
+ *   The builder stamps what it wrote.
+ *   Every runner that grades against the DB refuses when the stamp disagrees
+ *   with the corpus on disk right now.
+ *
+ *   Two guards deliberately differ in kind: content (`corpus_hash` against the live
+ *   {@linkcode regressionCorpusHash}) catches a stale artifact, while emptiness
+ *   refuses a zero-row corpus before any grading ({@linkcode assertCorpusIsNonEmpty}),
  *   because an empty loader agrees with itself and a hash comparison cannot see it.
  */
 
@@ -90,7 +94,7 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
 
 /**
  * Throw unless the DB's stamp matches the corpus committed on disk right now. the message
- * names both hashes and the likely cause, because an artifact older than the corpus
+ * lists both hashes and the likely cause, because an artifact older than the corpus
  * wants a rebuild while a build from a stale `out/` wants a recompile first.
  *
  * @param kdb An open handle on the built DB.

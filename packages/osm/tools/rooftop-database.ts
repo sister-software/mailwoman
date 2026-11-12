@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds one country's OSM rooftop address-point database from a Geofabrik `.osm.pbf` extract, on the
- *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address/point/spine-schema`). The existing
- *   `AddressPointSqliteLookup` reads it with zero changes.
+ *   Builds one country's OSM rooftop address-point database from a Geofabrik `.osm.pbf` extract,
+ *   on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address/point/spine-schema`).
  *
- *   The output is an OpenStreetMap Derivative Database under ODbL 1.0. Its rows record
- *   `source = openstreetmap:<cc>`. The build records the extract's URL and SHA-256 in the database's
- *   `layer_manifest`. `README.md` states the licensing boundary.
+ *   The existing `AddressPointSqliteLookup` reads it with zero changes.
  *
- *   `build-rooftop-database.ts` runs this from the command line, and the `osm-address-points` recipe runs
- *   it for `mailwoman data build`.
+ *   The output is an OpenStreetMap Derivative Database under ODbL 1.0.
+ *   Its rows record `source = openstreetmap:<cc>`.
+ *
+ *   The build records the extract's URL and SHA-256 in the database's `layer_manifest`.
+ *   `README.md` states the licensing boundary.
+ *
+ *   `build-rooftop-database.ts` runs this from the command line, and the
+ *   `osm-address-points` recipe runs it for `mailwoman data build`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

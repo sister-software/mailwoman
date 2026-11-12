@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The download listing and selection, over the real `APIClient` and a stub transport, so no test reaches the network.
+ *   The download listing and selection, over the real `APIClient` and a stub transport,
+ *   so no test reaches the network.
  */
 
 import { APIClient } from "@mailwoman/core/api"

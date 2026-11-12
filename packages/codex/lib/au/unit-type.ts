@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Australia Post's sub-unit (flat/unit) types, from the barcode booklet's FLAT/UNIT TYPE table, and
- *   its rules for writing them. A sub-unit type takes a number and is written before the street
- *   number (`Suite 3 18 Jones St`). Flat, Unit, Apartment and the slash are interchangeable, so
- *   `2/100 Smith St` is flat or unit 2 at 100 Smith St. The slash never writes a floor or level, and
- *   the dash never writes a flat, unit, floor or level number.
+ *   Australia Post's sub-unit (flat/unit) types, from the barcode booklet's
+ *   FLAT/UNIT TYPE table, and its rules for writing them.
+ *
+ *   A sub-unit type takes a number and is written before the street number (`Suite 3 18 Jones St`).
+ *   Flat, Unit, Apartment and the slash are interchangeable, so `2/100 Smith St`
+ *   is flat or unit 2 at 100 Smith St. The slash never writes a floor or level,
+ *   and the dash never writes a flat, unit, floor or level number.
  *
  *   Floor and level types are `AU_LEVEL_DESIGNATORS`, from AS 4590.1.
  *

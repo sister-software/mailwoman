@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer affix-relabel`: export the codex US street-affix vocab (directionals +
- *   Pub-28 street suffixes) as a JSON lexicon for the Python training loader's affix-split relabel
- *   pass. Same one-source-of-truth pattern as `gazetteer anchor-lexicon`: the TS codex
- *   matchers stay canonical. Python consumes a dumb variant→canonical map so the relabel pass
- *   agrees with the affix database builder (which calls the codex matchers directly) by construction.
+ *   `mailwoman gazetteer affix-relabel`: export the codex US street-affix vocab
+ *   (directionals + Pub-28 street suffixes) as a JSON lexicon for the Python
+ *   training loader's affix-split relabel pass.
+ *
+ *   Same one-source-of-truth pattern as `gazetteer anchor-lexicon`: the TS codex matchers stay canonical.
+ *   Python consumes a dumb variant→canonical map so the relabel pass agrees with the affix
+ *   database builder (which calls the codex matchers directly) by construction.
  *
  *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
@@ -30,10 +33,10 @@ export const spec = {
 
 const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
-			await import("@mailwoman/codex/us")
-
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const {
+			us: { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP },
+			paths: { repoRootPathBuilder },
+		} = await allKeyed({ us: import("@mailwoman/codex/us"), paths: import("@mailwoman/core/paths") })
 
 		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json")
 

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for `rerankByStreetEvidence`. Drives real k-best hypotheses through a hand-built grammar
- *   and spanScores plus a mock classifier trace and mock evidence provider.
- *   The tests cover the byte-stable no-span-head fallback, the G1-skip move correction and tree re-materialization on a move.
+ *   Tests for `rerankByStreetEvidence`.
+ *
+ *   Drives real k-best hypotheses through a hand-built grammar and spanScores plus
+ *   a mock classifier trace and mock evidence provider.
+ *   The tests cover the byte-stable no-span-head fallback, the G1-skip move correction
+ *   and tree re-materialization on a move.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -101,7 +104,7 @@ describe("rerankByStreetEvidence", () => {
 	})
 
 	test("anchor check: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
-		// The rerank must not steal the region-labeled token.
+		// The rerank mustn't steal the region-labeled token.
 		const t = trace(tunedSpanScores())
 		t.tokens[1] = { ...t.tokens[1]!, label: "B-region" }
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence(["Rue Corsier"]), grammar())

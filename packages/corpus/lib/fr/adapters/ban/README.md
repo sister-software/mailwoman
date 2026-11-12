@@ -75,10 +75,10 @@ One `CanonicalRow` per BAN record:
   every corpus built from it, and `ban: 3.0` and similar appear as `source_weights` keys across
   the training configs. A rename of it is a data migration rather than an edit.
 
-`--country` is optional. A country value both rejects a jurisdiction BAN does not publish and keeps
+`--country` is optional. A country value both rejects a jurisdiction BAN doesn't publish and keeps
 only that jurisdiction's rows, so one multi-department extract can be read once per country.
 
-`region` is **not** populated, because BAN has no region column. The wof-admin and wof-postalcode
+`region` **isn't** populated, because BAN has no region column. The wof-admin and wof-postalcode
 adapters supply it at corpus build time through a postcode cross-reference. The training split key
 reads `region`, so a BAN-only row lands in the default `train` split unless it joins a WOF row
 that fills the region in.

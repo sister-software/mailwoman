@@ -19,7 +19,7 @@ name them:
    `Atlanta, Georgia` and a country in `Tbilisi, Georgia`.
 
 These are the two oldest axes of lexical semantics, and once you separate them the
-contradiction dissolves — they are orthogonal, and each has its own operation.
+contradiction dissolves — they're orthogonal, and each has its own operation.
 
 | Axis                            | Phenomenon               | Operation            | Lives in              |
 | ------------------------------- | ------------------------ | -------------------- | --------------------- |
@@ -52,7 +52,7 @@ _kinds_ of context, and each belongs in a different stage.
   only _inform_ the decision (a soft feature), never make it. See
   [closed-vocab fields are model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 - **Referent disambiguation — _which specific entity?_** ("Springfield" → which of
-  the 30-some?) This needs **context that is not in the address string** — a
+  the 30-some?) This needs **context that's not in the address string** — a
   coordinate, a focus point, the administrative hierarchy. So it belongs in the
   **resolver**, and it is exactly what [concordance](../understanding/the-problem/what-is-a-concordance.mdx)
   does: it brings gazetteer knowledge into the decision after the parse.
@@ -63,7 +63,7 @@ either over-commit (guess which Springfield from the text by itself) or under-co
 "Georgia" at all).
 
 A note on scale, because it surprises people: there are ~195 countries, and the
-country tag still felt hard. The size is not the problem. ~180 country names collide
+country tag still felt hard. The size isn't the problem. ~180 country names collide
 with no other set and are trivial. The difficulty is the **~12 surfaces that overlap the
 other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places, CA/GA/IN
 ↔ state codes, and Jordan/Chad ↔ given names). So "differentiate 195 countries" is
@@ -72,9 +72,9 @@ decidable from in-string context.
 
 ## Never drop a span
 
-several geocoders' parsers are **lossy by design**: a span that does not fit the winning
+several geocoders' parsers are **lossy by design**: a span that doesn't fit the winning
 interpretation is demoted to "accessory" information and folded into the
-resolver. That is fine if your only goal is "resolve to a point", and fatal the
+resolver. That's fine if your only goal is "resolve to a point", and fatal the
 moment you want to do anything _adjacent_ to geocoding — chiefly **record linkage**:
 deciding whether two rows from two datasets are the same entity.
 
@@ -98,7 +98,7 @@ Traditional parsers lean on **positional masks** (a field may only appear in slo
 and **user hints** (the query's origin country) as **hard filters**. They have to —
 a rules engine cannot read context, so it constrains the search space instead.
 
-A model that reads context does not need the crutch, but the _same signals are still
+A model that reads context doesn't need the crutch, but the _same signals are still
 useful_ — as **soft priors**, fed in as features the model or resolver can overrule
 when the string points elsewhere. A focus-country becomes a feature for the parser's
 [gazetteer anchor](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx). A focus-point

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Links `libtorch_cuda.so` into the `trainer` binary when `LIBTORCH` is a CUDA build.
 //!
 //! `torch-sys` 0.26.0 passes `-ltorch_cuda`, but the binary calls no symbol from it, so the linker's `--as-needed`

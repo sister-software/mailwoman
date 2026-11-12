@@ -4,8 +4,8 @@
 /**
  *   Estimates POI-layer completeness from two inventories with Chapman's capture-recapture estimator.
  *
- *   The interval covers sampling error only. When the two sources tend to capture the same places,
- *   the estimate overstates completeness.
+ *   The interval covers sampling error only.
+ *   When the two sources tend to capture the same places, the estimate overstates completeness.
  */
 
 import { foldName } from "@mailwoman/codex/normalize"

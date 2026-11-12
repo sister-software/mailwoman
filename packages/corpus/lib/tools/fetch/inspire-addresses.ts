@@ -4,21 +4,25 @@
 /**
  * Read an INSPIRE Addresses (AD) theme from a member state's WFS download service.
  *
- * The INSPIRE Directive makes Addresses a mandatory Annex I theme and accepts two kinds of download
- * service: a predefined-dataset ATOM feed and a Web Feature Service. Most member states publish the
- * second, so a file download reaches only a minority of them.
+ * The INSPIRE Directive makes Addresses a mandatory Annex I theme and accepts two kinds
+ * of download service: a predefined-dataset ATOM feed and a Web Feature Service.
+ * Most member states publish the second, so a file download reaches only a minority of them.
  *
- * An `ad:Address` feature holds its point, its lifecycle dates and its locator. Its street name,
- * postcode and administrative units are separate feature types that the address references through
- * `component`. A complete address therefore comes from several feature types.
+ * An `ad:Address` feature holds its point, its lifecycle dates and its locator.
+ * Its street name, postcode and administrative units are separate feature types
+ * that the address references through `component`.
  *
- * Measured on Slovakia's service, one address holds four component references that resolve to three
- * `ad:AdminUnitName` features and one `ad:PostalDescriptor`. One request per reference would cost
- * roughly four requests per address, 6.8 million for that service's 1,704,196 addresses. This module
- * therefore pages each feature type in bulk and joins locally.
+ * A complete address therefore comes from several feature types.
  *
- * A service's feature count is read with `readCheckedWFSFeatureCount` from `@mailwoman/core/api`,
- * which owns every WFS count this repository takes.
+ * Measured on Slovakia's service, one address holds four component references that
+ * resolve to three `ad:AdminUnitName` features and one `ad:PostalDescriptor`.
+ * One request per reference would cost roughly four requests per address,
+ * 6.8 million for that service's 1,704,196 addresses.
+ *
+ * This module therefore pages each feature type in bulk and joins locally.
+ *
+ * A service's feature count is read with `readCheckedWFSFeatureCount` from
+ * `@mailwoman/core/api`, which owns every WFS count this repository takes.
  */
 
 import { assertNoOGCServiceException, type APIClient } from "@mailwoman/core/api"
@@ -103,7 +107,7 @@ export interface WFSCapabilities {
 	/**
 	 * Whether the service advertises `ImplementsResultPaging`.
 	 *
-	 * A service that does not cannot be paged, so a caller has to take the whole
+	 * A service that doesn't cannot be paged, so a caller has to take the whole
 	 * type in one request or decline it.
 	 * A request past the first page of such a service silently repeats page one.
 	 */
@@ -215,7 +219,7 @@ export async function readWFSCapabilities(
 
 	// `application/json` is GeoServer's GeoJSON writer, and `application/geo+json` is
 	// the alias a service may advertise without implementing.
-	// The other JSON-ish formats have a different envelope, so they are left out rather than tried.
+	// The other JSON-ish formats have a different envelope, so they're left out rather than tried.
 	const jsonFormats = ["application/json", "application/geo+json"].filter((format) => outputFormats.includes(format))
 
 	const countDefault = /<(?:\w+:)?Constraint\s+name="CountDefault"[\s\S]{0,240}?<(?:\w+:)?DefaultValue>\s*(\d+)\s*</iu
@@ -376,7 +380,7 @@ const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
  *
  * A reference may leave the service: Estonia's first three slots address its Administrative
  * Units theme at `AU_haldusyksused` rather than its Addresses theme.
- * That is a reference this module reads. {@linkcode resolveComponents} reports it as
+ * That's a reference this module reads. {@linkcode resolveComponents} reports it as
  * unjoined against Addresses features rather than dropping it.
  */
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
@@ -447,7 +451,7 @@ export interface ComponentResolution {
 	unjoined: number
 	unjoinedExample: string | null
 	/**
-	 * References this module could not read a key from at all.
+	 * References this module couldn't read a key from at all.
 	 */
 	unreadable: number
 }

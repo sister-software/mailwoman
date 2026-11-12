@@ -2,27 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Counts address rows per country in an Overture release. It reports the number of rows that have a street,
- *   a house number and a postcode.
+ *   Counts address rows per country in an Overture release.
+ *
+ *   It reports the number of rows that have a street, a house number and a postcode.
  *
  *   This answers which jurisdictions a corpus build could admit from a permissively licensed bulk source.
- *   `OVERTURE_DEFAULT_LICENSE` is `CDLA-Permissive-2.0`, attribution-only, so a row from this source
- *   reaches a build without a share-alike obligation. The source register's 389 entries do not affect
- *   this result. The release is already on disk under the data root.
+ *   `OVERTURE_DEFAULT_LICENSE` is `CDLA-Permissive-2.0`, attribution-only,
+ *   so a row from this source reaches a build without a share-alike obligation.
  *
- *   A country whose file omits one of the projected columns is reported with the missing column specified rather than
- *   counted as zero, because a release that renames a column would otherwise read as a country with no
- *   streets.
+ *   The source register's 389 entries do not affect this result.
+ *   The release is already on disk under the data root.
  *
- *   `COUNT(DISTINCT …)` is deliberately absent. A distinct count over a corpus of this size exhausted the
- *   host twice on 2026-09-28. Row counts answer the admission question.
+ *   A country whose file omits one of the projected columns is reported with the
+ *   missing column specified rather than counted as zero, because a release that
+ *   renames a column would otherwise read as a country with no streets.
+ *
+ *   `COUNT(DISTINCT …)` is deliberately absent.
+ *   A distinct count over a corpus of this size exhausted the host twice on 2026-09-28.
+ *   Row counts answer the admission question.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/overture-address-census.run.ts \
  *     [--release 2026-06-17.0] [--min-street-rows 50000] [--json <out>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
@@ -45,7 +49,10 @@ interface CountryCensus {
 
 const { values } = parseArguments({
 	options: {
-		release: { type: "string", description: "Release directory under <data root>/overture (default: the newest)" },
+		release: {
+			type: "string",
+			description: "Release directory under <data root>/snapshots/overture (default: the newest)",
+		},
 		"min-street-rows": { type: "string", description: "Street-row floor a country must clear (default 50000)" },
 		json: { type: "string", description: "Write the per-country census to this path" },
 	},
@@ -57,7 +64,7 @@ if (!Number.isFinite(minStreetRows) || minStreetRows < 0) {
 	throw new Error(`--min-street-rows must be a non-negative number, read ${values["min-street-rows"]}`)
 }
 
-const overtureRoot = dataRootPath("overture")
+const overtureRoot = snapshotSourceDirectory("overture")
 
 /**
  * Release directory → the `addresses-<cc>.parquet` names it holds.

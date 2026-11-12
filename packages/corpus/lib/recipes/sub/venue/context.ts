@@ -5,7 +5,7 @@
  * @file Reads address context and derives street-side negatives for the sub-venue recipe.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -24,18 +24,18 @@ import type { LocaleBaseTuple } from "#surfaces/locale"
  * has exactly one implementation.
  *
  * The DE parts read the extracted `de/berlin.csv` and `de/sn/statewide.csv`.
- * They are the `europe.zip` members the recipe read before that archive left the data root,
- * with the md5s `9903d438…` and `623b099b…` that the note "a file's mtime is not
+ * They're the `europe.zip` members the recipe read before that archive left the data root,
+ * with the md5s `9903d438…` and `623b099b…` that the note "a file's mtime isn't
  * its data's vintage" in `corpus/agents.md` records.
  *
  * A missing part throws in {@link readLocaleTuples}, so the DE leg cannot emit zero rows silently.
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
-		{ path: dataRootPath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
-		{ path: dataRootPath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
+		{ path: currentSourcePath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
+		{ path: currentSourcePath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
 	],
-	ES: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
+	ES: [{ path: currentSourcePath("openaddresses", "extracted", "es", "countrywide.csv") }],
 }
 
 /**

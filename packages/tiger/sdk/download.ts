@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Raw `fetch` is deliberate for a multi-gigabyte streamed transfer: `APIClient`'s response caching
- *   and pacing do not apply.
+ *   Raw `fetch` is deliberate for a multi-gigabyte streamed transfer:
+ *   `APIClient`'s response caching and pacing do not apply.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

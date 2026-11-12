@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stage the range worker and the sqlite-wasm runtime into an app's public directory before Vite builds or
- *   serves, so the httpvfs readers find them at a same-origin path. The files are never bundled: the readers
- *   load them by URL at run time. A worker script must be a real file on the origin that serves the page.
+ *   Stage the range worker and the sqlite-wasm runtime into an app's public directory
+ *   before Vite builds or serves, so the httpvfs readers find them at a same-origin path.
+ *
+ *   The files are never bundled: the readers load them by URL at run time.
+ *   A worker script must be a real file on the origin that serves the page.
  */
 
 import { stageSQLiteRuntimeAssets } from "@mailwoman/resolver-wof-wasm/host-assets"

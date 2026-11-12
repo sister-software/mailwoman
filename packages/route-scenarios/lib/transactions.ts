@@ -2,18 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Optional transaction cases: an acquisition, a lease, wholesale access or a salvage sale. Each case states
- *   its integration month, the obligations it assumes and the proceeds it brings. The base case is unchanged.
+ *   Optional transaction cases: an acquisition, a lease, wholesale access or a salvage sale.
  *
- *   Four rules keep a case from counting an asset twice. A leased segment leaves the construction cost, and
- *   its lease payments are the case's obligations. Acquired subscribers join a selected building as existing
- *   subscribers. They take no activation cost, never count as new activations, and never exceed the
- *   building's occupied units. Salvage proceeds arrive in the horizon's last month only, because a plant sold
- *   earlier would still produce revenue in the later months of the table. An adjacent building enters a scenario only as
- *   a planned building with its own identity and unit evidence, and a transaction case has no field for an
- *   expansion value.
+ *   Each case states its integration month, the obligations it assumes and the proceeds it brings.
+ *   The base case is unchanged.
  *
- *   Each month reconciles. The base cash flow plus the avoided construction, the change in subscriber flows
+ *   Four rules keep a case from counting an asset twice.
+ *   A leased segment leaves the construction cost, and its lease payments are the case's obligations.
+ *
+ *   Acquired subscribers join a selected building as existing subscribers.
+ *   They take no activation cost, never count as new activations, and never
+ *   exceed the building's occupied units.
+ *
+ *   Salvage proceeds arrive in the horizon's last month only, because a plant sold
+ *   earlier would still produce revenue in the later months of the table.
+ *   An adjacent building enters a scenario only as a planned building with its own identity
+ *   and unit evidence, and a transaction case has no field for an expansion value.
+ *
+ *   Each month reconciles.
+ *   The base cash flow plus the avoided construction, the change in subscriber flows
  *   and the proceeds, minus the obligations, equals the case's cash flow.
  */
 
@@ -80,7 +87,7 @@ export interface TransactionRow {
 	calendarMonth: string
 	baseCashFlow: MinorUnits
 	/**
-	 * Construction the case does not pay, such as a leased segment's lines.
+	 * Construction the case doesn't pay, such as a leased segment's lines.
 	 */
 	avoidedConstruction: MinorUnits
 	/**

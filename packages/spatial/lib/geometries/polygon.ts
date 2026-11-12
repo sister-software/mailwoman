@@ -154,7 +154,7 @@ export function arealPolygons(geometry: ParsedGeometry | null): MultiPolygonRing
 
 /**
  * The polygons of a geometry that must be areal, throwing when the geometry
- * is not a `Polygon` or `MultiPolygon`.
+ * isn't a `Polygon` or `MultiPolygon`.
  */
 export function requireArealPolygons(geometry: ParsedGeometry, subject: string, context: string): MultiPolygonRings {
 	const polygons = arealPolygons(geometry)

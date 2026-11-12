@@ -33,7 +33,7 @@ promote (no silent check drift; treadmill guard: no knob iteration).
 
 The pre-registered digit bar above (`flat vs 0.902`) was written against the sibling en-gb-locale
 probe lineage's own 8k checkpoint (`v3.10.1-gb-probe2`) — a same-lineage probe number rather than a real
-ship baseline for a checkpoint forked from v385. That comparison is not apples-to-apples for
+ship baseline for a checkpoint forked from v385. That comparison isn't apples-to-apples for
 `v3.11.0-deploc-feed`, which forks from v385 (6.6.0) directly. The bar is **restated** against
 v385's own fresh-measured baseline, taken in the same session on the same board:
 
@@ -45,7 +45,7 @@ v385's own fresh-measured baseline, taken in the same session on the same board:
 | old bar (0.902, probe-anchor)        | historical context only — CI excludes it rather than the active bar |
 | **result**                           |                               **pass** (bar restated against 0.755) |
 
-The 0.902 probe-anchor number is retained in this record as historical context. It is not the bar
+The 0.902 probe-anchor number is retained in this record as historical context. It isn't the bar
 this ship decision was graded against.
 
 ---
@@ -236,7 +236,7 @@ Neither Task 6 nor Task 7 ran the Gauntlet. This task closed that gap and found 
 | held-out        | PASS                   | z=0.00 (candidate not by a measured margin worse), n=300 fresh FR/BAN draw                                                                                                                                                                           |
 | **combined**    | **fail — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                       |
 
-**This is not checkpoint-specific.** feed-2k independently fails the same layer with different
+**This isn't checkpoint-specific.** feed-2k independently fails the same layer with different
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
 Avenue, New York, NY"` 283.5km away (a different state entirely). Two different checkpoints from
 the same training lineage, two different NY/DC-class admin-resolution robustness regressions — the
@@ -304,7 +304,7 @@ pre-registered guards.
   different specific violations. This blocks promotion of either one until triaged — root-causing
   it is out of this task's scope (ship-prep rather than model debugging).
 - **val macro_f1 for feed-2k remains unrecoverable** from any log or doc found.
-- **`neural-weights-en-gb` has not shipped to npm.** This entire arc, prior included, is
+- **`neural-weights-en-gb` hasn't shipped to npm.** This entire arc, prior included, is
   pre-promotion. The `runtime-flags.mdx` `placetypePair` row stays Default-OFF.
 - If the operator ultimately promotes feed-2k instead of feed-8k, the shipped `pair-index-gb.bin`
   must be rebuilt at `--delta 4.5` and `neural-weights-en-gb/scripts/link-dev-weights.ts`'s
@@ -322,7 +322,7 @@ mechanistically (the resurrection change that likely over-fit the comma-structur
 **CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
 10k checkpoints — a stable learned behavior rather than training-run churn that a couple more steps would
 wash out. Every other guard still passes at 10k, including golden-us (at a 0.06pp margin), but the
-one regression this run existed to fix did not move at all.
+one regression this run existed to fix didn't move at all.
 
 **STOP RULE EXECUTED.** Per the recipe's own pre-registration ("no knob iteration inside this
 pre-registration"), a second attempt was not made. **The v3.11.x lineage is CLOSED for shipping** —
@@ -348,7 +348,7 @@ separately pre-registered recipe: **v3.12**, sketched at
 extended to the new locale extracts (the augmentation implementation already exists from v381), blocked on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field records this same verdict.
-That field holds the authoritative current status, and this scorecard does not.
+That field holds the authoritative current status, and this scorecard doesn't.
 
 ---
 

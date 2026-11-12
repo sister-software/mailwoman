@@ -29,7 +29,7 @@ export const Provenance = {
 	 * A built artifact with no manifest.
 	 *
 	 * The builder requires knowledge of which command made it.
-	 * A person may know that command even when the file does not record it.
+	 * A person may know that command even when the file doesn't record it.
 	 */
 	Unprovenanced: "unprovenanced",
 	/**
@@ -39,9 +39,9 @@ export const Provenance = {
 	 */
 	Foreign: "foreign",
 	/**
-	 * The file could not be opened as a database (locked, truncated, or not SQLite).
+	 * The file couldn't be opened as a database (locked, truncated, or not SQLite).
 	 *
-	 * Reported as its own state because "we could not look" is not "it has no manifest".
+	 * Reported as its own state because "we couldn't look" isn't "it has no manifest".
 	 */
 	Unreadable: "unreadable",
 } as const
@@ -66,7 +66,7 @@ export const FOREIGN_ROOTS: Record<string, string> = {
  * The `layer_manifest` columns the inventory reports.
  *
  * `build_cmd` is the one that matters: it is the difference between an artifact
- * that documents its own reproduction and one that does not.
+ * that documents its own reproduction and one that doesn't.
  */
 export interface LayerManifest {
 	name: string
@@ -100,13 +100,13 @@ export interface LayerManifest {
 	/**
 	 * The URL the build downloaded its input file from.
 	 *
-	 * Undefined for a row written before the column existed and for a build that did not record it.
+	 * Undefined for a row written before the column existed and for a build that didn't record it.
 	 */
 	source_url?: string
 	/**
 	 * The SHA-256 of the build's input file.
 	 *
-	 * Undefined for a row written before the column existed and for a build that did not record it.
+	 * Undefined for a row written before the column existed and for a build that didn't record it.
 	 */
 	source_sha256?: string
 }
@@ -137,7 +137,7 @@ export interface InventoryEntry {
 	/**
 	 * `active` when the active selection lists the artifact, `inactive` when it is installed and unselected.
 	 *
-	 * Absent for a file the catalog does not hold, such as one at a conventional path.
+	 * Absent for a file the catalog doesn't hold, such as one at a conventional path.
 	 */
 	selection?: "active" | "inactive"
 }
@@ -210,7 +210,7 @@ async function findDatabases(
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch (error) {
-			// A directory that does not exist holds no databases.
+			// A directory that doesn't exist holds no databases.
 			// Any other failure leaves the walk unable to say what the directory holds,
 			// and the system error names it.
 			if ((error as { code?: unknown } | null)?.code === "ENOENT") return
@@ -343,7 +343,7 @@ export async function takeInventory(options: {
  * The denominator excludes foreign and unreadable artifacts deliberately:
  * the number is meant to be improvable.
  * A rate that counts artifacts outside our provenance scope to provenance can
- * never reach 100% no matter what is fixed.
+ * never reach 100% no matter what's fixed.
  */
 export function inventorySentence(report: InventoryReport): string {
 	const ours = report.counts.manifested + report.counts.unprovenanced
@@ -373,7 +373,7 @@ export function inventorySentence(report: InventoryReport): string {
  * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *
  * Both artifacts pass every "has a manifest" check and neither can be rebuilt from its recorded contents.
- * So the inventory does not count the presence of a manifest as a property on its own.
+ * So the inventory doesn't count the presence of a manifest as a property on its own.
  *
  * The check is deliberately shallow: any token that looks like a path
  * (contains `/` and no shell metacharacter) must resolve under the repo root.
@@ -423,7 +423,7 @@ export function licenseHint(entry: InventoryEntry): string | null {
  * Returns `null` when the artifact records no count at all, so the caller omits
  * the line rather than printing a zero.
  * An artifact built before the `source_records` column exists is in that state.
- * So is an artifact whose build did not count its inputs.
+ * So is an artifact whose build didn't count its inputs.
  */
 export function sourceRecordsHint(entry: InventoryEntry): string | null {
 	if (entry.provenance !== Provenance.Manifested) return null

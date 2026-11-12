@@ -4,9 +4,10 @@
 /**
  *   Where the databases this resolver reads live under the data root's `db/` group.
  *
- *   Each constant is a lazy path builder: it reads `$MAILWOMAN_DATA_ROOT` when a path is requested,
- *   so a later environment change or a test stub is honored.
+ *   Each constant is a lazy path builder: it reads `$MAILWOMAN_DATA_ROOT` when a path
+ *   is requested, so a later environment change or a test stub is honored.
  *   Call it with a filename, as in `wofDatabasePath("admin-global-priority.db")`.
+ *
  *   A caller holding another data root uses the matching `…DatabaseRoot(dataRoot)` function.
  */
 
@@ -74,7 +75,7 @@ export const uprnDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("u
 export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("nsul")
 
 /**
- * Default WOF extracts for FTS when `--wof-db` is not provided.
+ * Default WOF extracts for FTS when `--wof-db` isn't provided.
  *
  * Includes the global admin-priority extract plus postcode extracts.
  * The routing in `pickExtractForPlacetype` sends each postcode query to the

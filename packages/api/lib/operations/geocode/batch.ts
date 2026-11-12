@@ -32,7 +32,7 @@ export type BatchRequest = z.infer<typeof BatchRequestSchema>
 
 /**
  * The failure slot for one batch row.
- * A row that throws does not fail its neighbors.
+ * A row that throws doesn't fail its neighbors.
  */
 export const BatchRowErrorSchema = z
 	.object({ input: z.string(), error: z.string() })

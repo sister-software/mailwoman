@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The parse result as a client renders it. The browser runtime produces it after classify + resolve.
- *   `@mailwoman/react` takes it as input. One definition prevents the producer and renderer from
- *   drifting apart. Every field a stage may leave unset is `null` here. A renderer that needs a value it
- *   cannot see shows absence rather than a default.
+ *   The parse result as a client renders it.
+ *
+ *   The browser runtime produces it after classify + resolve.
+ *   `@mailwoman/react` takes it as input.
+ *
+ *   One definition prevents the producer and renderer from drifting apart.
+ *   Every field a stage may leave unset is `null` here.
+ *
+ *   A renderer that needs a value it cannot see shows absence rather than a default.
  */
 
 export interface ParsedComponent {
@@ -55,7 +60,7 @@ export interface FSTProvenance {
  * The query kind as a client shows it.
  *
  * `kind` is any string here, while the pipeline's own `QueryKindResult` contains the typed union,
- * because a renderer must show a kind it does not know rather than refuse the result.
+ * because a renderer must show a kind it doesn't know rather than refuse the result.
  */
 export interface KindView {
 	kind: string

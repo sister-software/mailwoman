@@ -66,6 +66,7 @@ function Harness({
 			<span className="steplabels">{rt.loadingStepLabels.join("|")}</span>
 			<span className="error">{rt.errorMessage ?? ""}</span>
 			<span className="release-label">{rt.selectedRelease?.label ?? ""}</span>
+			<span className="absent">{rt.manifestAbsent ? "yes" : "no"}</span>
 			<button type="button" className="pick-v1" onClick={() => rt.selectVersion("v1")}>
 				v1
 			</button>
@@ -110,10 +111,25 @@ test("a rejecting loadAssets surfaces errorMessage and stays not-ready", async (
 	expect(text(container, ".progress")).toBe("")
 })
 
-test("a null manifest leaves nothing selected and never readies", async () => {
+test("a null manifest settles with no release: nothing selected, never ready, and no loading line", async () => {
 	const nullManifest = async () => null
 	const { container } = renderComponent(<Harness manifestLoader={nullManifest} />)
 
-	await vi.waitFor(() => expect(text(container, ".version")).toBe("none"), { timeout: 2000 })
+	await vi.waitFor(() => expect(text(container, ".absent")).toBe("yes"), { timeout: 2000 })
+	expect(text(container, ".version")).toBe("none")
 	expect(text(container, ".ready")).toBe("no")
+	expect(text(container, ".progress")).toBe("")
+	expect(text(container, ".error")).toBe("")
+})
+
+test("a rejecting loadManifest surfaces errorMessage and clears the loading line", async () => {
+	const failingManifest = async (): Promise<ReleaseManifest<TestRelease>> => {
+		throw new Error("manifest boom")
+	}
+
+	const { container } = renderComponent(<Harness manifestLoader={failingManifest} />)
+
+	await vi.waitFor(() => expect(text(container, ".error")).toBe("manifest boom"), { timeout: 2000 })
+	expect(text(container, ".progress")).toBe("")
+	expect(text(container, ".absent")).toBe("no")
 })

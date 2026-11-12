@@ -288,7 +288,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("excludes a span the named country's postcode syntax refuses", () => {
-		// libaddressinput states a syntax for the United States, and `1200 02` does not have it.
+		// libaddressinput states a syntax for the United States, and `1200 02` doesn't have it.
 		const roots = [postcodeNode("1200 02"), node({ tag: "country", value: "United States" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)

@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for the path-citation instrument (`scripts/docs/path-citations.mts`), check 5 of
- *   `check/docs-structure.mts`.
+ *   Unit tests for the path-citation instrument (`scripts/docs/path-citations.mts`),
+ *   check 5 of `check/docs-structure.mts`.
  *
- *   These tests pin the refusal boundary rather than the walk. The check's finding count is only meaningful if
- *   the classes it excludes are the ones its docstring names. A refusal that widens silently makes the count fall
- *   without anything being repaired. A refusal that narrows reports the regex rather than the tree. Pure strings only —
- *   the filesystem walk is exercised by running the check itself.
+ *   These tests pin the refusal boundary rather than the walk.
+ *   The check's finding count is only meaningful if the classes it excludes
+ *   are the ones its docstring names.
+ *
+ *   A refusal that widens silently makes the count fall without anything being repaired.
+ *   A refusal that narrows reports the regex rather than the tree.
+ *
+ *   Pure strings only — the filesystem walk is exercised by running the check itself.
  */
 
 import {
@@ -92,6 +96,7 @@ describe("isPointInTimeRecord", () => {
 	it("reads a declared record tree as a record", () => {
 		expect(isPointInTimeRecord("docs/records/plan/phases/PHASE_0_foundation.mdx")).toBe(true)
 		expect(isPointInTimeRecord("docs/records/retrospectives/2026-08-06-distance-to-done.md")).toBe(true)
+		expect(isPointInTimeRecord("docs/engineering/documentation-rebuild/source-to-target.md")).toBe(true)
 		expect(isPointInTimeRecord("config/vale/fixtures/dirty.md")).toBe(true)
 	})
 

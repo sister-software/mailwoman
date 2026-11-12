@@ -2,4 +2,4 @@
 # Keep the build context tiny: ignore everything, then re-allow only the two files the Dockerfile COPYs.
 *
 !docker/package.json
-!docker/server.mjs
+!docker/server.ts

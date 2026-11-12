@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The figures of the selection, as `selectionEconomics` returns them, each beside its origin. Every economic
- *   figure shows the word synthetic when the scenario's inputs are synthetic. When the model refuses the
- *   selection, its message stands in place of the figures, and no figure is shown. The status line is a live region
- *   that announces the recalculated figures after each change, and the links lead to the selection's evidence.
+ *   The figures of the selection, as `selectionEconomics` returns them, each beside its origin.
+ *
+ *   Every economic figure shows the word synthetic when the scenario's inputs are synthetic.
+ *   When the model refuses the selection, its message stands in place of the
+ *   figures, and no figure is shown.
+ *
+ *   The status line is a live region that announces the recalculated figures
+ *   after each change, and the links lead to the selection's evidence.
  */
 
 import { type EntityID, proseList } from "@mailwoman/dossier"

@@ -5,8 +5,8 @@
  *   The German leg of the `postal-guideline` evaluation recipe: a Postfach line in place of the street
  *   line, then the PLZ and Ort, as Deutsche Post's page states it ({@linkcode DE_POSTFACH_RULES}).
  *
- *   GeoNames writes a company name as the place of a large customer's PLZ and leaves that row's
- *   accuracy column empty, so the leg keeps only rows with an accuracy value.
+ *   GeoNames writes a company name as the place of a large customer's PLZ and leaves that
+ *   row's accuracy column empty, so the leg keeps only rows with an accuracy value.
  */
 
 import { DE_POSTFACH_RULES, formatPostfachNumber } from "@mailwoman/codex/de/postfach"

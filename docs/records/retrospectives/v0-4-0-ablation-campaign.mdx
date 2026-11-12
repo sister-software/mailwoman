@@ -43,7 +43,7 @@ The run diverged at step 1000 with the same loss pattern. The step-750 checkpoin
 
 `configs/v0_4_0-lr1.5e4.yaml`. By this point the bisect pattern was visible: 5e-4 → step 750, 3e-4 → step 1000. A pure-LR explanation predicted lr=1.5e-4 → step 1875 (linear) or ~step 2200 (proportional). It diverged at step 2000.
 
-A 3.3× LR drop delayed divergence by 2.7× in steps. The relationship is sub-linear. That shape indicates that LR controls _when_ the divergence appears but is not the root cause. The destabilizer is in the recipe rather than the LR setting. The step-1250 checkpoint at macro_f1 0.39 is preserved.
+A 3.3× LR drop delayed divergence by 2.7× in steps. The relationship is sub-linear. That shape indicates that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe rather than the LR setting. The step-1250 checkpoint at macro_f1 0.39 is preserved.
 
 ### Runs 4 & 5 — ablations at lr=5e-4
 
@@ -75,7 +75,7 @@ The run diverged at step 2250, with the same loss pattern as the full recipe at 
 
 `configs/v0_4_0-stableLR-source-only.yaml` with `max_steps=50000`.
 
-The run did not diverge. macro_f1 peaked at 0.42 at step ~2200 and declined gradually under cosine decay through the rest of the run. The step-2200 checkpoint became the shipped artifact: `v0_4_0-stableLR-source-only/step-002200`.
+The run didn't diverge. macro_f1 peaked at 0.42 at step ~2200 and declined gradually under cosine decay through the rest of the run. The step-2200 checkpoint became the shipped artifact: `v0_4_0-stableLR-source-only/step-002200`.
 
 ## The meta-bug
 
@@ -86,7 +86,7 @@ The smoke tested a different loss landscape from the from-scratch run. The low L
 **Process fix for future smokes**:
 
 - Use a constant LR for the verdict window, or
-- Set max_steps large enough that the cosine tail does not dominate. With warmup=1000 + cosine=N, the LR is > 60% of peak roughly through step `warmup + N/3`. Pick max_steps so the verdict window sits in that range. For example, 10000 keeps LR > 60% of peak through step ~4300.
+- Set max_steps large enough that the cosine tail doesn't dominate. With warmup=1000 + cosine=N, the LR is > 60% of peak roughly through step `warmup + N/3`. Pick max_steps so the verdict window sits in that range. For example, 10000 keeps LR > 60% of peak through step ~4300.
 
 ## Math sanity-check
 
@@ -94,7 +94,7 @@ Before deferring §1 and §3 we audited `model.py` and `crf.py` for implementati
 
 - `crf.py:155-164`: the `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`, which matches the docstring. The code has no NaN-prone path, and `.clamp(min=1)` guards the empty-batch edge case.
 - `model.py:270-300`: class_weights enter via `nn.functional.cross_entropy(..., weight=class_weights)`, the standard PyTorch path. The model constructor asserts `class_weights.shape == (num_labels,)`, which rules out a silent broadcast mismatch.
-- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. The §1 hypothesis was that per-token normalization brings CRF NLL to CE magnitude. That would make equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction safe. In practice, training destabilizes when §1 is active. Either per-token CRF NLL is not comparable to per-token CE on this corpus, or the magnitudes are comparable and some other dynamic dominates.
+- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. The §1 hypothesis was that per-token normalization brings CRF NLL to CE magnitude. That would make equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction safe. In practice, training destabilizes when §1 is active. Either per-token CRF NLL isn't comparable to per-token CE on this corpus, or the magnitudes are comparable and some other dynamic dominates.
 
 The audit found no implementation bug. The destabilization comes from an interaction in the recipe.
 
@@ -124,7 +124,7 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-This is v0.3.0's documented non-Latin byte-fallback failure mode. The v0.4.0 weights did not regress this subset. The eval suite counts v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
+This is v0.3.0's documented non-Latin byte-fallback failure mode. The v0.4.0 weights didn't regress this subset. The eval suite counts v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
 
 **The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact rather than a real recipe regression.**
 

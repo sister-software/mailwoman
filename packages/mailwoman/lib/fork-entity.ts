@@ -246,7 +246,7 @@ export interface ForkEntityAnswerTarget {
 	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
 	admin_coherence: AdminCoherenceReport | null
 	/**
-	 * The flat component map, cleared when the whole input names one entity.
+	 * The flat component map, cleared when the whole input identifies one entity.
 	 */
 	components?: Record<string, string | undefined>
 	locality?: string | null
@@ -263,7 +263,7 @@ export interface ForkEntityAnswerTarget {
  * Rewrites a result whose whole input is one entity's name as that entity and no other component.
  *
  * The parse read the name as admin words, so every component it produced and the hierarchy
- * the resolver built from them describe a place the input does not state.
+ * the resolver built from them describe a place the input doesn't state.
  */
 function answerAsWholeInputEntity(result: ForkEntityAnswerTarget, entity: ForkEntityHit): void {
 	applyForkEntityAnswer(result, entity, [])
@@ -331,7 +331,7 @@ function applyForkEntityAnswer(
 }
 
 /**
- * The maximum venue distance in meters from an anchor that is not a unit-grade postcode.
+ * The maximum venue distance in meters from an anchor that's not a unit-grade postcode.
  */
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
@@ -527,7 +527,7 @@ export function applyEntityTiers(
 
 /**
  * The near-anchor venue refinement's hit: the parsed venue's single exact-name entity near an admin,
- * postcode or street answer, or `null` when the refinement does not apply or finds none.
+ * postcode or street answer, or `null` when the refinement doesn't apply or finds none.
  */
 function venueNearAnswer(
 	result: Pick<ForkEntityAnswerTarget, "lat" | "lon" | "resolution_tier" | "venue">,
@@ -669,7 +669,7 @@ const LEADING_WORD_RETRY_MIN_REMAINDER = 2
  * Without its brand, `UTEA Old Street` leaves the street name `Old Street`.
  * A venue row of that name would then answer the query.
  *
- * A street-type word inside the name, as `Center` in `Aquatic Visitors Center (AVC)`, does not refuse it.
+ * A street-type word inside the name, as `Center` in `Aquatic Visitors Center (AVC)`, doesn't refuse it.
  */
 function probeVenueWithoutLeadingWord(
 	venueRaw: string,

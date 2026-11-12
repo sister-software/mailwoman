@@ -3,13 +3,16 @@
 	"version": "11.0.0",
 	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
+	"homepage": "https://github.com/sister-software/mailwoman#readme",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
-	"contributors": [
-		{
-			"name": "Teffen Ellis",
-			"email": "teffen@sister.software"
-		}
-	],
+	"author": {
+		"name": "Teffen Ellis",
+		"email": "teffen@sister.software",
+		"url": "https://sister.software"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git"

@@ -34,7 +34,7 @@ const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
  * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written.
  *
  * A config lacking either field admits every source.
- * The checker does not follow `extends` because every emitting workspace states both fields locally.
+ * The checker doesn't follow `extends` because every emitting workspace states both fields locally.
  */
 export interface CompileScope {
 	include?: readonly string[]
@@ -82,8 +82,8 @@ export function compilerAdmits(scope: CompileScope, path: string): boolean {
 }
 
 /**
- * Reads a workspace's compile scope, returning an empty scope that admits every source when there
- * is no `tsconfig.json`; TypeScript's own parser reads the file because the configs contain comments.
+ * Reads a workspace's compile scope, returning an empty scope that admits every source when there's no
+ * `tsconfig.json`; TypeScript's own parser reads the file because the configs contain comments.
  */
 async function readCompileScope(repoRoot: string, workspace: string): Promise<CompileScope> {
 	const configPath = resolvePath(repoRoot, workspace, "tsconfig.json")

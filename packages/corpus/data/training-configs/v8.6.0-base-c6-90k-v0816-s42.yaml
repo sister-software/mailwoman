@@ -8,7 +8,7 @@
 #    `Q618123`, `Q811979`, `Q473972` or `Q839954`, chosen from the top 550,000 QRank items: each
 #    language's label bare, the label followed by the country's name in that language for the seven languages written
 #    with a comma separator, and the first English alias. Places under human settlement, administrative territorial
-#    entity or country are left to WOF, except an unpopulated one that is also a site (Machu Picchu, a national park).
+#    entity or country are left to WOF, except an unpopulated one that's also a site (Machu Picchu, a national park).
 #    386 entities, chosen by a hash of the QID, are held out of the corpus in `entity-holdout.jsonl`; the
 #    famous-places test set's entities are exempt from that holdout.
 # 2. `data.source_reps` gives `wikidata-vital-places` 0.8. At geonames-features' 0.12 on its 1,606,022 rows, that
@@ -561,7 +561,7 @@ data:
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - codex-bare-postcode
     # On WOF rows the region and directional rewrites expand a word inside a place name (`AL MANĀMAH` to
     # `Alabama MANĀMAH`) under the original label, and the build already renders a `drop-commas` variant.

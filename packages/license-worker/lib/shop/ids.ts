@@ -4,9 +4,11 @@
 /**
  *   Exposes the Stripe object IDs for each mode, stored in `ids.json` beside this file.
  *
- *   The provisioner writes `ids.json`. The worker reads the Price allowlist from that file.
- *   The site and emails read Payment Links and the portal URL. All other code gets Stripe IDs from this module, so
- *   re-provisioning an account changes only `ids.json`.
+ *   The provisioner writes `ids.json`.
+ *   The worker reads the Price allowlist from that file.
+ *
+ *   The site and emails read Payment Links and the portal URL.
+ *   All other code gets Stripe IDs from this module, so re-provisioning an account changes only `ids.json`.
  */
 
 import type { ShopPlan } from "#shop/catalog"

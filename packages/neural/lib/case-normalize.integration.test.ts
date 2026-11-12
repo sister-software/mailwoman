@@ -3,8 +3,9 @@
 
 /**
  *   Input case-normalization, detection and transform.
- *   Mixed-case and non-ASCII input pass through unchanged. The transform preserves length,
- *   so token offsets survive.
+ *
+ *   Mixed-case and non-ASCII input pass through unchanged.
+ *   The transform preserves length, so token offsets survive.
  */
 
 import {

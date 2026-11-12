@@ -230,7 +230,7 @@ describe("overlapping national sources", () => {
 
 			expect(provider.for("fr").addressPoints?.find(FR_QUERIES[0]!)).toMatchObject({ source: "ban:fr" })
 			// A miss in the first source is its answer.
-			// The second is not consulted.
+			// The second isn't consulted.
 			expect(provider.for("fr").addressPoints?.find(FR_QUERIES[2]!) ?? null).toBeNull()
 		}
 
@@ -663,7 +663,7 @@ describe("the WOF extract set on the active selection, against the conventional 
 		const legacyPaths = await existingWOFDatabasePaths(null, legacy)
 		const selectedPaths = await existingWOFDatabasePaths(null, selected)
 
-		// The lookup names each attached schema after its file, so an installed extract keeps its file name.
+		// The lookup labels each attached schema after its file, so an installed extract keeps its file name.
 		expect(selectedPaths.map((path) => path.split("/").at(-1))).toEqual([adminName, postcodeName])
 
 		await expect(Promise.all(selectedPaths.map((path) => sha256File(path)))).resolves.toEqual(

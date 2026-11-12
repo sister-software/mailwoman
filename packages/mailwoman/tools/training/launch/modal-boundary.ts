@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Modal SDK behind {@linkcode ModalBoundary}. Credentials come from `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or
- *   the active profile in `~/.modal.toml`, as the SDK reads them.
+ *   The Modal SDK behind {@linkcode ModalBoundary}.
+ *
+ *   Credentials come from `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or the active
+ *   profile in `~/.modal.toml`, as the SDK reads them.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"

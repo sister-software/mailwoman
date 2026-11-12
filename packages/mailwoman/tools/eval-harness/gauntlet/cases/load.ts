@@ -4,8 +4,8 @@
 /**
  *   Load the curated regression corpus from `cases/<cc>/*.jsonl`.
  *
- *   The loader re-sorts rather than trusting file order: country dir ascending, then case `id` ascending within
- *   the file, so a hand-appended row at the bottom cannot change what the corpus is.
+ *   The loader re-sorts rather than trusting file order: country dir ascending, then case `id`
+ *   ascending within the file, so a hand-appended row at the bottom cannot change what the corpus is.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -48,7 +48,7 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 	let line = 0
 
 	// `skipEmpty: false` makes the line number true.
-	// Blank lines are dropped below after they are counted.
+	// Blank lines are dropped below after they're counted.
 	for await (const text of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
 

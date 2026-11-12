@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Run all thirteen Canadian province and territory codes through the production path.
  *
@@ -57,7 +60,7 @@ const SEATS: Readonly<Record<string, string>> = {
 }
 
 /**
- * The first letter of a Canadian postcode names its province.
+ * The first letter of a Canadian postcode identifies its province.
  *
  * The probe uses that letter to select a real code for each province without a name join.
  */
@@ -131,7 +134,7 @@ interface PostcodePick {
 }
 
 // Without `--weights-cache`, this grades the installed model.
-// That is the arm used to measure the change.
+// That's the arm used to measure the change.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
 

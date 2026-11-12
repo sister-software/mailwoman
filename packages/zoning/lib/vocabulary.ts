@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Department's product identity, declared vocabularies, stated limits and license status for the zoning layer.
+ *   The Department's product identity, declared vocabularies, stated limits
+ *   and license status for the zoning layer.
  */
 
 /**
@@ -196,7 +197,7 @@ export const GZT_PLAN_LEVEL_SET: ReadonlySet<string> = new Set(GZT_PLAN_LEVELS.m
 
 /**
  * The `CURRENT_PLAN` domain, verbatim, keyed by the published integer, where 1 means the
- * plan is not superseded and its validity window is stored separately on `zoning_plan`.
+ * plan isn't superseded and its validity window is stored separately on `zoning_plan`.
  */
 export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 	[1, "Current plan"],

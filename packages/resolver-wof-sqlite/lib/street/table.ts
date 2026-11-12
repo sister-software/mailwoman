@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The street table's schema and reads: merged streets and their crossings, with each row tied to the places that hold
- *   it by Who's On First id. The builder, a native reader and a Worker's range reader share these statements. The file
- *   holds no database client, so a Worker bundle can import it.
+ *   The street table's schema and reads: merged streets and their crossings,
+ *   with each row tied to the places that hold it by Who's On First id.
+ *
+ *   The builder, a native reader and a Worker's range reader share these statements.
+ *   The file holds no database client, so a Worker bundle can import it.
  *
  *   A read clusters on the written name, so a range reader fetches one run of pages for each lookup.
  */

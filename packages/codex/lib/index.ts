@@ -4,9 +4,9 @@
 /**
  *   Per-address-system postal reference data and branded types.
  *
- *   Each address system (the USPS for the United States, La Poste for France, Deutsche Post for
- *   Germany and others) has its own conventions for a postcode, a street suffix or a unit
- *   designator. This package is the shared, dependency-free home for that reference knowledge,
+ *   Each address system (the USPS for the United States, La Poste for France, Deutsche Post for Germany
+ *   and others) has its own conventions for a postcode, a street suffix or a unit designator.
+ *   This package is the shared, dependency-free home for that reference knowledge,
  *   kept apart from the tokenizer and solver in `@mailwoman/core`.
  */
 

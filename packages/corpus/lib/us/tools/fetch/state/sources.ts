@@ -2,18 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Re-fetch the state-level open-data sources (NY/TX/DE/or notaries, IA contractors, WA health
- *   providers, HI lobbyists). Reproducible recovery if `$MAILWOMAN_DATA_ROOT` is lost.
+ *   Re-fetch the state-level open-data sources (NY/TX/DE/or notaries, IA contractors,
+ *   WA health providers, HI lobbyists).
+ *   Reproducible recovery if `$MAILWOMAN_DATA_ROOT` is lost.
  *
- *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools`. Its
- *   upstream is an xlsx workbook that requires an openpyxl-driven sheet-concatenation pre-step
- *   before the adapter can consume it.
+ *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools`.
+ *   Its upstream is an xlsx workbook that requires an openpyxl-driven sheet-concatenation
+ *   pre-step before the adapter can consume it.
  *
  *   Each source lands in its own subdirectory of `<outRoot>/<slug>/` along with a `manifest.json`
  *   recording origin URL + download timestamp + sha256 so downstream adapters can verify provenance.
  *
- *   Invoke via `mailwoman corpus fetch state-sources --out-root <path>`. Uses Node's built-in fetch
- *   (gzip/brotli) and streaming sha256 instead of curl + sha256sum.
+ *   Invoke via `mailwoman corpus fetch state-sources --out-root <path>`.
+ *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum.
  */
 
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"

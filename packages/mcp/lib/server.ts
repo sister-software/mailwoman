@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   MCP server wiring — thin glue that registers `tools.ts`'s tool table on an `McpServer`. The tool table is the
- *   stable, tested interface (`tools.test.ts`); this module only adapts it to the SDK's `registerTool` signature and
- *   `CallToolResult` envelope. `cli.ts` owns building the real `MCPToolDeps` and connecting a transport.
+ *   MCP server wiring — thin glue that registers `tools.ts`'s tool table on an `McpServer`.
+ *
+ *   The tool table is the stable, tested interface (`tools.test.ts`); this module only
+ *   adapts it to the SDK's `registerTool` signature and `CallToolResult` envelope.
+ *   `cli.ts` owns building the real `MCPToolDeps` and connecting a transport.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"

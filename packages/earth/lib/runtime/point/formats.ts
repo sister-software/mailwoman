@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One point in every encoding the map offers to copy: the decimal pair, degrees-minutes-seconds, the plus
- *   code Google prints, the H3 cell at a resolution that follows the zoom, the geohash and the MGRS reference.
- *   The encoders are `@mailwoman/spatial`'s. The H3 encoder is imported on the first call, because its
- *   WebAssembly binary has no place in the entry chunk.
+ *   One point in every encoding the map offers to copy: the decimal pair,
+ *   degrees-minutes-seconds, the plus code Google prints, the H3 cell at a resolution
+ *   that follows the zoom, the geohash and the MGRS reference.
+ *
+ *   The encoders are `@mailwoman/spatial`'s.
+ *   The H3 encoder is imported on the first call, because its WebAssembly binary
+ *   has no place in the entry chunk.
  */
 
 import type { MapContextMenuRowProps } from "@mailwoman/react/map"

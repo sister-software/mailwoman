@@ -121,7 +121,7 @@ function evaluateCurve(curve: unknown, zoom: number): number {
 }
 
 /**
- * A road body width that is the wider of the Protomaps curve and the road's ground width at every zoom.
+ * A road body width that's the wider of the Protomaps curve and the road's ground width at every zoom.
  *
  * At low zoom the Protomaps curve keeps a road visible.
  * At street zoom the ground width takes over, so a road keeps its footprint as the map scales.

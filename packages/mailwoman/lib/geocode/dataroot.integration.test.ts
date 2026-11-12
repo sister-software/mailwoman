@@ -4,10 +4,12 @@
 /**
  *   A session's `dataRoot` must govern weights resolution as well as the gazetteer paths.
  *
- *   `createGeocodeSession` resolves gazetteer artifacts under `options.dataRoot`, and weights
- *   resolution is a ladder of which only the overlay rung is governed by `dataRoot`. A bogus root
- *   A real candidate.db passes the gazetteer check.
- *   The session checks the gazetteer first, then checks weights. The bogus root must fail at the weights check.
+ *   `createGeocodeSession` resolves gazetteer artifacts under `options.dataRoot`,
+ *   and weights resolution is a ladder of which only the overlay rung is governed by `dataRoot`.
+ *   A bogus root A real candidate.db passes the gazetteer check.
+ *
+ *   The session checks the gazetteer first, then checks weights.
+ *   The bogus root must fail at the weights check.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -64,7 +66,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}
 		} finally {
-			session.session[Symbol.dispose]()
+			await session.session[Symbol.asyncDispose]()
 		}
 	}, 60_000)
 })

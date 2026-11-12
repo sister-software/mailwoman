@@ -8,8 +8,8 @@
  *   `#pl/adapters/emuia/adapter`'s suite proves the adapter against a fixture of captured bytes.
  *   Neither proves that a harvest of the real service writes a document that adapter reads.
  *
- *   The test takes one 25-feature page, so the document stays unclosed. A partial harvest leaves it
- *   that way, and the test proves that the adapter reads the result.
+ *   The test takes one 25-feature page, so the document stays unclosed.
+ *   A partial harvest leaves it that way, and the test proves that the adapter reads the result.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -28,7 +28,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestEMUiAPL against the live service", 
 
 		const manifest = await harvestEMUiAPL(client, { outputDir: scratch.path, maxPages: 1, pageSize: 25 })
 
-		// The service reports its 1,000-feature page cap as `numberMatched`, which is not a count.
+		// The service reports its 1,000-feature page cap as `numberMatched`, which isn't a count.
 		expect(manifest.feature_count).toBeNull()
 		expect(manifest.feature_count_source).toMatch(/CountDefault|no usable count/u)
 		expect(manifest.pages).toHaveLength(1)

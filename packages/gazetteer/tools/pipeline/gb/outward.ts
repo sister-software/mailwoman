@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   GB outward district from a unit postcode, read from the postcode's shape so that spaced and
- *   unspaced GB datasets yield the same district.
+ *   GB outward district from a unit postcode, read from the postcode's shape
+ *   so that spaced and unspaced GB datasets yield the same district.
  */
 
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"

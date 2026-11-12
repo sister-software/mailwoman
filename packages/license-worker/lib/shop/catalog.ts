@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * This module defines shop configuration as data. `provision.ts` reconciles test and live Stripe accounts against it.
- * The worker's required objects are defined here instead of in a dashboard. Plan codes serve as Price lookup keys,
- * so provisioning can find a Price again without storing its id in git.
+ * This module defines shop configuration as data.
+ *
+ * `provision.ts` reconciles test and live Stripe accounts against it.
+ * The worker's required objects are defined here instead of in a dashboard.
+ *
+ * Plan codes serve as Price lookup keys, so provisioning can find a Price
+ * again without storing its id in git.
  */
 
 import type { CommercialPlan } from "#plans"

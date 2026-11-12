@@ -19,7 +19,7 @@ beforeAll(async () => {
 	await makeDirectories(root.path("whosonfirst-data-admin-gb", "data"))
 	// A non-WOF sibling dir that must be ignored
 	await makeDirectories(root.path("some-other-repo", "data"))
-	// A `data` dir buried too deep (depth 3+) that must not be discovered
+	// A `data` dir buried too deep (depth 3+) that mustn't be discovered
 	await makeDirectories(root.path("whosonfirst-data", "nested", "deeper", "data"))
 })
 
@@ -30,7 +30,7 @@ test("discoverAdminDataRoots: finds nested + flat whosonfirst data roots, skips 
 
 	expect(roots).toContain(root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data").toString())
 	expect(roots).toContain(root.path("whosonfirst-data-admin-gb", "data").toString())
-	// non-WOF sibling is not traversed (its name doesn't start with whosonfirst-data)
+	// non-WOF sibling isn't traversed (its name doesn't start with whosonfirst-data)
 	expect(roots).not.toContain(root.path("some-other-repo", "data").toString())
 	// `nested/deeper/data` sits at depth 3 from root.path — beyond the 2-level cap
 	expect(roots).not.toContain(root.path("whosonfirst-data", "nested", "deeper", "data").toString())
@@ -93,7 +93,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// New York City: the multi-parent locality, already repaired by an earlier pass.
-	// It has a full ancestor set, so it is not a candidate this time.
+	// It has a full ancestor set, so it isn't a candidate this time.
 	const nycID = 85_977_539
 	const brooklynID = 421_205_765
 	const nyStateID = 85_688_543
@@ -122,7 +122,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	const dataRoot = root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data")
 
 	// Brooklyn's real source hierarchy.
-	// The whole chain is present even though parent_id is not -4.
+	// The whole chain is present even though parent_id isn't -4.
 	await writeLocalJSONFile(
 		{
 			properties: {

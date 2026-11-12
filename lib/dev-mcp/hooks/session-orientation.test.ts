@@ -20,7 +20,7 @@ const REPO_ROOT = repoRootPathBuilder()
  * Roughly 2,500 tokens at four bytes each.
  *
  * The signature digest measured near 88,000 tokens for the same tree.
- * That output would not survive a compaction.
+ * That output wouldn't survive a compaction.
  *
  * If the listing grows past this, drop the per-workspace subpath limit rather than the budget.
  */

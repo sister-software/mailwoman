@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build a parquet file from the DeepSeek-generated kryptonite jsonl and emit the corpus-v0.4.0
- *   manifest. corpus-v0.4.0 is a pure adapter-addition revision: it points at every parquet file from
- *   v0.3.0 plus the new kryptonite file(s). No v0.3.0 bytes are touched or re-shuffled.
+ *   Build a parquet file from the DeepSeek-generated kryptonite jsonl and emit the
+ *   corpus-v0.4.0 manifest. corpus-v0.4.0 is a pure adapter-addition revision:
+ *   it points at every parquet file from v0.3.0 plus the new kryptonite file(s).
+ *   No v0.3.0 bytes are touched or re-shuffled.
  *
- *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also pins the
- *   DeepSeek model version + prompt versions used to produce the jsonl.
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also
+ *   pins the DeepSeek model version + prompt versions used to produce the jsonl.
  *
  *   Invoke via `mailwoman corpus recipe kryptonite \
  *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl \

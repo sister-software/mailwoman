@@ -41,7 +41,7 @@ describe("mapUnitProfile", () => {
 		])
 
 		// Read as one number both would say "not arable": a water body is ground the rating
-		// does not apply to, an unrated series is ground the survey chose not to rate.
+		// doesn't apply to, an unrated series is ground the survey chose not to rate.
 		expect(profile.notRateable).toBeCloseTo(0.6, 6)
 		expect(profile.unrated).toBeCloseTo(0.4, 6)
 		expect(profile.classShares.size).toBe(0)

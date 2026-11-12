@@ -5,24 +5,28 @@
  *   Reports which fields distinguish the rows an adapter's dedup key collapses onto one another.
  *
  *   A build's `MANIFEST.json` reports `deduped` per adapter and never records what the key dropped.
- *   `canonicalDedupKey` keys a row on `country`, the normalized `raw` line and the `components`
- *   dictionary, so two records that render the same line collapse however much else the publisher
- *   distinguished them by. This census names that else.
+ *   `canonicalDedupKey` keys a row on `country`, the normalized `raw` line
+ *   and the `components` dictionary, so two records that render the same line collapse
+ *   however much else the publisher distinguished them by.
+ *   This census names that else.
  *
  *   It complements `dedup-census.run.ts`, which reads a built `canonical.jsonl` and splits the
- *   duplicates still in that file by whether the runner's capped dedup set held their key. That
- *   question is about the runner's key capacity. This one is about the key's resolution, and it needs
- *   the rows the runner refused. A `canonical.jsonl` written by a run that deduplicated
- *   completely no longer holds them. So the default row source is the adapter itself, re-run over
- *   the same input the build read.
+ *   duplicates still in that file by whether the runner's capped dedup set held their key.
+ *   That question is about the runner's key capacity.
+ *
+ *   This one is about the key's resolution, and it needs the rows the runner refused.
+ *   A `canonical.jsonl` written by a run that deduplicated completely no longer holds them.
+ *
+ *   So the default row source is the adapter itself, re-run over the same input the build read.
  *
  *   Two reports come out of it.
  *
- *   The canonical-field report covers every row source. It groups the rows by `canonicalDedupKey` and
- *   counts, per `CanonicalRow` field outside the key, the number of collapsed groups that hold more than one
- *   value of that field. The fields the runner stamps after the adapter yields — `addressRole`,
- *   `register`, `surface` — are the adapter's constants under `--adapter`, so they
- *   read as identical whatever the build wrote.
+ *   The canonical-field report covers every row source.
+ *   It groups the rows by `canonicalDedupKey` and counts, per `CanonicalRow` field outside
+ *   the key, the number of collapsed groups that hold more than one value of that field.
+ *
+ *   The fields the runner stamps after the adapter yields — `addressRole`, `register`, `surface` —
+ *   are the adapter's constants under `--adapter`, so they read as identical whatever the build wrote.
  *
  *   The source-column report needs `--source-csv` and `--id-column`. It joins each collapsed group
  *   back to the publisher's own records and counts, per source column, the number of groups that hold more than
@@ -34,27 +38,29 @@
  *   column's group count it reports the number of records in the whole file that hold a non-empty value there,
  *   because a column that differs in no group may be constant within every group or empty throughout.
  *
- *   **Hashes rather than keys.** The distinct-key count of a national register exceeds what a V8
- *   `Set` holds, so group identity is the low 64 bits of the dedup key's MD5 digest and a field's
- *   identity within a group is a 32-bit FNV-1a hash of its value. A 64-bit collision merges two
- *   unrelated groups, and over 10 million keys its probability is about 2.7e-12. A 32-bit collision
- *   hides a real difference in one field of one group, at about 2.3e-10 per comparison. Neither rate
- *   changes a per-column group count that runs to the thousands, and a reader checking one group
- *   should read the printed example records rather than the counts.
+ *   **Hashes rather than keys.** The distinct-key count of a national register exceeds what
+ *   a V8 `Set` holds, so group identity is the low 64 bits of the dedup key's MD5 digest
+ *   and a field's identity within a group is a 32-bit FNV-1a hash of its value.
+ *   A 64-bit collision merges two unrelated groups, and over 10 million keys
+ *   its probability is about 2.7e-12.
+ *
+ *   A 32-bit collision hides a real difference in one field of one group, at about 2.3e-10 per comparison.
+ *   Neither rate changes a per-column group count that runs to the thousands, and a reader
+ *   checking one group should read the printed example records rather than the counts.
  *
  *   Usage:
  *
  *       node --max-old-space-size=8192 \
  *         packages/mailwoman/tools/dev-tools/corpus/dedup/cause-census.run.ts \
- *         --adapter ryhti --input /mnt/mw/corpus/sources/ryhti/open_address.csv \
- *         --source-csv /mnt/mw/corpus/sources/ryhti/open_address.csv --id-column address_key
+ *         --adapter ryhti --input $MAILWOMAN_CACHE_ROOT/sources/ryhti/open_address.csv \
+ *         --source-csv $MAILWOMAN_CACHE_ROOT/sources/ryhti/open_address.csv --id-column address_key
  *
  *       node --max-old-space-size=8192 \
  *         packages/mailwoman/tools/dev-tools/corpus/dedup/cause-census.run.ts \
  *         --canonical <build>/intermediate/<adapter>/canonical.jsonl
  *
- *   `--limit` caps the rows the adapter emits, so the run is a prefix of the file rather than a
- *   sample. A group whose members straddle the cap is reported with the members below it.
+ *   `--limit` caps the rows the adapter emits, so the run is a prefix of the file rather than a sample.
+ *   A group whose members straddle the cap is reported with the members below it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -70,7 +76,7 @@ import { CSVSpliterator, JSONSpliterator } from "spliterator"
 /**
  * The `CanonicalRow` fields that sit outside the dedup key.
  *
- * `raw`, `components`, `country` and `augmentation` are the key, so they are identical across
+ * `raw`, `components`, `country` and `augmentation` are the key, so they're identical across
  * a collapsed group by construction and reporting them would state the definition back.
  */
 const TRACKED_FIELDS = ["source", "source_id", "license", "locale", "addressRole", "register", "surface"] as const
@@ -503,7 +509,7 @@ function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
 async function readColumns(plan: CensusPlan): Promise<readonly string[]> {
 	// Every record holds the header's columns, so the first one answers this and the rest are left unread.
 	// The iterator is taken directly rather than through a loop that returns on its first pass.
-	// The loop form would read as a full iteration and is not one.
+	// The loop form would read as a full iteration and isn't one.
 	const records = csvRecords(plan)[Symbol.asyncIterator]()
 	const first = await records.next()
 

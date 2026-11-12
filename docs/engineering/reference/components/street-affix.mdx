@@ -88,11 +88,10 @@ observed under `en-GB` with the shipped weights on 2026-10-11, through `mwdev_di
 | `10 St, London`                | `house_number "10"`, `street "St"`, `locality "London"`          |
 | `Avenue, Paris`                | `street_prefix "Avenue"`, `street "Paris"` (0.52)                |
 
-Two patterns follow from the mechanisms above.
-
 **A lone affix becomes the whole street.** `Road` and the `St` in `10 St, London` have no
 neighboring word that could take the `street` tag, and the decoder tags the affix itself `street`.
-The street-miss fallback acts on such a span only when the geocode returns a null coordinate.
+The street-miss fallback acts on such a span only when the geocode returns a null coordinate and
+no fork was declared.
 
 **An affix across a comma takes its neighbor.** In `Manchester Art Gallery, Road` and
 `Avenue, Paris`, the morphology prior's neighbor search crosses the comma and gives the venue name

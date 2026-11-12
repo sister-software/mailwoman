@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two passes every mixture census runs over one epoch: the rows the source mixture draws, and the rows the
- *   trainer's emit step makes of the same stream.
+ *   The two passes every mixture census runs over one epoch: the rows the source mixture
+ *   draws, and the rows the trainer's emit step makes of the same stream.
  *
- *   Both passes open the mixture at the same seed. The draw pass reads it straight. The emit pass runs each drawn
- *   row through augmentation, with the config's per-source exclusions, on the same generator, and stops once the
- *   row budget is filled. Neither pass runs the shuffle buffer. The buffer reorders rows without changing counts.
- *   Neither pass runs the affix relabel. That pass rewrites labels without adding or removing rows. The grouping augmentation is left
- *   off, as the Python audits' emit policy left it.
+ *   Both passes open the mixture at the same seed.
+ *   The draw pass reads it straight.
+ *
+ *   The emit pass runs each drawn row through augmentation, with the config's per-source
+ *   exclusions, on the same generator, and stops once the row budget is filled.
+ *   Neither pass runs the shuffle buffer.
+ *
+ *   The buffer reorders rows without changing counts.
+ *   Neither pass runs the affix relabel.
+ *
+ *   That pass rewrites labels without adding or removing rows.
+ *   The grouping augmentation is left off, as the Python audits' emit policy left it.
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

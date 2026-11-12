@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `familyRollup` — the corporate-family reader. A corporate family (a holding/parent/subsidiary/management tree
- * spanning several different filers) is a rollup spec §4.1 keeps deliberately separate from an entity cluster. This
- * module reads only `filer_family` and never `filer_cluster`, so a family membership can never be returned here as an
- * entity-cluster member.
+ * `familyRollup` — the corporate-family reader.
  *
- * Exactly one of `familyID`/`nodeID` is required, mirroring `filerLookup`'s XOR discipline. The return is always
- * `FamilyRollup[]`, never `null`: empty when no row is found, at most one element for a `familyID` (a `family_id`
- * names exactly one family), and possibly more for a `nodeID`, because a node can legitimately belong to more than one
- * family at once.
+ * A corporate family (a holding/parent/subsidiary/management tree spanning several different filers)
+ * is a rollup spec §4.1 keeps deliberately separate from an entity cluster.
+ * This module reads only `filer_family` and never `filer_cluster`, so a family
+ * membership can never be returned here as an entity-cluster member.
+ *
+ * Exactly one of `familyID`/`nodeID` is required, mirroring `filerLookup`'s XOR discipline.
+ * The return is always `FamilyRollup[]`, never `null`: empty when no row is found,
+ * at most one element for a `familyID` (a `family_id` names exactly one family), and possibly
+ * more for a `nodeID`, because a node can legitimately belong to more than one family at once.
  *
  * Like `filerLookup`, this function reads the manifest before querying `filer_family`.
  * {@linkcode assertFamilySchemaVersion} refuses older artifacts with a rebuild-pointing error.
@@ -19,9 +21,10 @@
  * The half-open temporal predicate is copied verbatim from `filer-lookup.ts` — `valid_from <= asOf and (valid_to is
  * NULL or valid_to > asOf)` — because every reimplementation is another place for the readers to diverge.
  *
- * `members` grade themselves via `assertion`/`match_score` rather than `source`, because edgar's `edgar-exhibit-21`
- * writes an authoritative disclosure edge and an inferred corroboration in the same build, so one source name spans
- * both grades. See {@link FamilyRollupMember}.
+ * `members` grade themselves via `assertion`/`match_score` rather than `source`,
+ * because edgar's `edgar-exhibit-21` writes an authoritative disclosure edge
+ * and an inferred corroboration in the same build, so one source name spans both grades.
+ * See {@link FamilyRollupMember}.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

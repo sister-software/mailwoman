@@ -3,7 +3,9 @@
 
 /**
  *   This module manages local Pelias and Photon containers and queries their loopback endpoints.
- *   Operators build indexes and download source data manually. Queries report observations only; `mwdev_compare` performs scored comparisons.
+ *
+ *   Operators build indexes and download source data manually.
+ *   Queries report observations only; `mwdev_compare` performs scored comparisons.
  */
 
 import { APIClient } from "@mailwoman/core/api"

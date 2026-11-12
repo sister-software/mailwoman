@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Labels for undersea features, drawn from the GEBCO undersea gazetteer's browser asset that
- *   `@mailwoman/undersea` builds.
+ *   Labels for undersea features, drawn from the GEBCO undersea gazetteer's
+ *   browser asset that `@mailwoman/undersea` builds.
  *
- *   A trench, ridge or fracture zone is published as a line, so its name follows the line in spaced capitals.
+ *   A trench, ridge or fracture zone is published as a line, so its name
+ *   follows the line in spaced capitals.
  *   A seamount, deep or basin is published as a point or polygon, and the asset reduces it to a label point.
  */
 
@@ -26,7 +27,7 @@ const UnderseaLayerID = LayerID.bind(null, UnderseaTileSetID)
  * The label color: a pale blue.
  *
  * Undersea names sit over deep water, where the depth shading is darkest,
- * so a light color reads where a dark one would not.
+ * so a light color reads where a dark one wouldn't.
  */
 const UNDERSEA_LABEL_COLOR = "#dff1fb"
 

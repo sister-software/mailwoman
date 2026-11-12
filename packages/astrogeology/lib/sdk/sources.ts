@@ -2,10 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed records describe the source products. USGS regenerates the nomenclature archive nightly.
- *   A snapshot lock records the downloaded bytes and SHA-256. Builds read only the locked snapshot.
- *   Each DEM is pinned by URL and byte count. The first fetch records its SHA-256. Later fetches
- *   verify that checksum. Every row is public domain (USGS `<useconst>`).
+ *   Typed records describe the source products.
+ *
+ *   USGS regenerates the nomenclature archive nightly.
+ *   A snapshot lock records the downloaded bytes and SHA-256.
+ *
+ *   Builds read only the locked snapshot.
+ *   Each DEM is pinned by URL and byte count.
+ *
+ *   The first fetch records its SHA-256.
+ *   Later fetches verify that checksum.
+ *   Every row is public domain (USGS `<useconst>`).
  */
 
 import type { BuildableBodyID } from "#bodies"

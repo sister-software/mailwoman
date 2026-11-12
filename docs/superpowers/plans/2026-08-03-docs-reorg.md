@@ -158,7 +158,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: the six-door frame every Phase 3 task hangs pages on. Sidebar ids: `product`, `solutions`, `resources`, `developers`, `about`, `pricing` — Phase 3 tasks add doc ids to these lists.
 
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
-- [ ] **Step 2:** Write the nine seed pages with real content: the Get-started trio, Status, Support, the About trio, and Pricing. Their briefs are in Tasks 9 and 22. Write them to final quality now, because together they are the smallest site that can ship. Use the colleague voice and the frontmatter interface, and check every claim against `mailwoman/` source or `package.json` versions.
+- [ ] **Step 2:** Write the nine seed pages with real content: the Get-started trio, Status, Support, the About trio, and Pricing. Their briefs are in Tasks 9 and 22. Write them to final quality now, because together they're the smallest site that can ship. Use the colleague voice and the frontmatter interface, and check every claim against `mailwoman/` source or `package.json` versions.
 - [ ] **Step 3:** Rebuild nav: sidebars + sections + navbar + footer + front page. Front page fork: "Build with it" → Get started · "Make the case for it" → Solutions · "See the proof" → Benchmarks. Demo button prominent.
 - [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green, structure check `--strict` green, and `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill and eyeball nav and front page.
 - [ ] **Step 5: Commit** `feat(docs)!: six-door site skeleton; old tree parked under records`.

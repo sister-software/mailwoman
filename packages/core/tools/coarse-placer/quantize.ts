@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Int8-quantize the coarse-placer. The placer is a linear classifier with a dense
- *   [class][feature] fp32 weight matrix. Per-class symmetric int8 quantization shrinks the
- *   artifact while preserving the linear math exactly up to rounding. Per-class scales matter
- *   because class weight magnitudes differ (other's outlier-exposure rows push bigger weights than
- *   the in-map countries).
+ *   Int8-quantize the coarse-placer.
+ *
+ *   The placer is a linear classifier with a dense [class][feature] fp32 weight matrix.
+ *   Per-class symmetric int8 quantization shrinks the artifact while preserving
+ *   the linear math exactly up to rounding.
+ *
+ *   Per-class scales matter because class weight magnitudes differ
+ *   (other's outlier-exposure rows push bigger weights than the in-map countries).
  *
  *   Measure the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
  *

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The native-surface engine interface. Engine-agnostic like the drop-ins: the `mailwoman` CLI
- *   wires the real parse/geocode/resolve stack, and tests inject fixtures. `format` needs no
- *   engine method, because the routes wire it in-package from `@mailwoman/codex`.
+ *   The native-surface engine interface.
+ *
+ *   Engine-agnostic like the drop-ins: the `mailwoman` CLI wires the real
+ *   parse/geocode/resolve stack, and tests inject fixtures.
+ *   `format` needs no engine method, because the routes wire it in-package from `@mailwoman/codex`.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

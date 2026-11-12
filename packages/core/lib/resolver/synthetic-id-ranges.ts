@@ -13,7 +13,7 @@
  *   OSM postcodes both at 9.8e12). A docstring cannot enforce distinctness. this module and its test do.
  *
  *   Add a range here, never at the builder. Each holds at least 5e10 ids against a largest occupancy of 1.75 M
- *   (Code-Point Open), so spacing is not the constraint. the registry is.
+ *   (Code-Point Open), so spacing isn't the constraint. the registry is.
  */
 
 /**

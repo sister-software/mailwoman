@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `overture`: Overture Maps Addresses adapter. The `street` value keeps the locale's street keyword
- * verbatim. The downstream affix-relabel step splits `street_prefix` from that value.
+ * `overture`: Overture Maps Addresses adapter.
+ *
+ * The `street` value keeps the locale's street keyword verbatim.
+ * The downstream affix-relabel step splits `street_prefix` from that value.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

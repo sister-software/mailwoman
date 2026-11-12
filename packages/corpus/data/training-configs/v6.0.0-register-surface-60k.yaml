@@ -10,7 +10,7 @@
 #      register  the publication the underlying record came from, or null
 #      surface   attested, composed or invented
 #
-# 2. Rows are shuffled within a 250,000-row window before they are written. A source's epoch draw
+# 2. Rows are shuffled within a 250,000-row window before they're written. A source's epoch draw
 #    reads a small part of one row group, and rows used to reach parquet in country order, so a draw
 #    could see only one country. Because every row moved, a run on this corpus cannot serve as a
 #    controlled comparison with a run on v0.32.0.
@@ -353,7 +353,7 @@ data:
   augment_exclude_sources:
     - synth-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

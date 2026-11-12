@@ -4,9 +4,10 @@
 /**
  *   Ported tests for `api-engine.ts`, the wired `MailwomanAPIEngine` behind `mailwoman serve`.
  *
- *   The engine is built once because `createServeEngine()` performs its slow model and SQLite setup
- *   eagerly. The validation-layer 400 responses never reach the engine, so the error-path
- *   assertions run whether or not WOF and address-point data are present on this host.
+ *   The engine is built once because `createServeEngine()` performs its slow model
+ *   and SQLite setup eagerly.
+ *   The validation-layer 400 responses never reach the engine, so the error-path assertions run
+ *   whether or not WOF and address-point data are present on this host.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
@@ -35,7 +36,7 @@ const describeIfStack = describe.skipIf(!hasStack)
 async function weightsPresent(): Promise<boolean> {
 	try {
 		// Ask the resolver rather than probing a package path literal directly.
-		// A skip guard that stops matching does not fail, it skips, so the suite
+		// A skip guard that stops matching doesn't fail, it skips, so the suite
 		// disappears from the run while the run reports success.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {

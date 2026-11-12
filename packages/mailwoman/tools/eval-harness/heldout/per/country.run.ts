@@ -2,33 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scores a baseline and one or more candidates on the same held-out rows and writes the per-country table
- *   with every arm's per-row outcomes.
+ *   Scores a baseline and one or more candidates on the same held-out rows
+ *   and writes the per-country table with every arm's per-row outcomes.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/per/country.run.ts \
  *     --manifest <corpus MANIFEST.json> --baseline <weights cache> --candidates <cache>,<cache> --out <report .json> \
  *     [--provenance <history .json>]
  *
- *   `--dataset <dataset manifest .json>` scores a frozen, versioned sample (`heldout/dataset/freeze.run.ts`) in
- *   place of drawing one from `--manifest`; the rows file's sha256 is checked against the manifest. Every
- *   outcome includes the row's `group`. `release/evaluate.ts` uses that group for resampling.
+ *   `--dataset <dataset manifest .json>` scores a frozen, versioned sample
+ *   (`heldout/dataset/freeze.run.ts`) in place of drawing one from `--manifest`;
+ *   the rows file's sha256 is checked against the manifest.
+ *   Every outcome includes the row's `group`.
+ *   `release/evaluate.ts` uses that group for resampling.
  *
  *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
- *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it does
- *   not name is classed `unknown`.
+ *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it doesn't
+ *   name is classed `unknown`.
  *
- *   `--spec` names the release specification (default: the current one) whose capability requirements select
- *   the capability-probe sources. Their rows are reported in a `<country>/capability` entry rather than in the
- *   country's address cell.
+ *   `--spec` names the release specification (default: the current one) whose
+ *   capability requirements select the capability-probe sources.
+ *   Their rows are reported in a `<country>/capability` entry rather than in the country's address cell.
  *
- *   Each row is parsed by its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), so every arm's cache
- *   must hold every package the rows need. The report records the rule and the country-to-package map.
+ *   Each row is parsed by its country's shipped locale package (`HELDOUT_INFERENCE_RULE`),
+ *   so every arm's cache must hold every package the rows need.
+ *   The report records the rule and the country-to-package map.
  *
- *   Rows are parsed on `--workers` worker threads (`heldout/per/parse-cache`). Parses are kept under
- *   `$MAILWOMAN_DATA_ROOT/models/arms/heldout-parses/` and read back when the rows, the weights files and the commit
- *   all match, so a rerun or an added arm parses only what is new. The report's `parses` entry records, per arm,
- *   the cache file read or written, or why the cache was left unused. `--no-parse-cache` parses every arm again.
+ *   Rows are parsed on `--workers` worker threads (`heldout/per/parse-cache`).
+ *   Parses are kept under `$MAILWOMAN_DATA_ROOT/models/arms/heldout-parses/`
+ *   and read back when the rows, the weights files and the commit all match,
+ *   so a rerun or an added arm parses only what's new.
+ *
+ *   The report's `parses` entry records, per arm, the cache file read or written,
+ *   or why the cache was left unused.
+ *   `--no-parse-cache` parses every arm again.
  *
  *   After the per-country table it prints the exact-parse difference split by row kind, by provenance, by both,
  *   and by source within the unseen address rows, with the equal-country rate on address rows. `--from-report
@@ -129,6 +136,11 @@ const { values } = parseArguments({
 		"no-parse-cache": {
 			type: "boolean",
 			description: "Parse every arm again rather than reading parses cached for the same rows, weights and commit",
+		},
+		"no-hint": {
+			type: "boolean",
+			default: false,
+			description: "Parse without the row's country as the classifier's locale hint, as the runtime pipeline does",
 		},
 	},
 })
@@ -259,6 +271,7 @@ async function scoreAndReport(): Promise<void> {
 			packages,
 			workers: Number(values.workers),
 			threads: Number(values.threads),
+			localeHint: values["no-hint"] ? "none" : "row-country",
 			...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
 		})
 
@@ -320,7 +333,11 @@ async function scoreAndReport(): Promise<void> {
 			dataset,
 			provenance: values.provenance ?? null,
 			capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },
-			inference: { rule: HELDOUT_INFERENCE_RULE, packages: Object.fromEntries(packages) },
+			inference: {
+				rule: HELDOUT_INFERENCE_RULE,
+				packages: Object.fromEntries(packages),
+				localeHint: values["no-hint"] ? "none" : "row-country",
+			},
 			parses: arms.map((arm, i) => ({ arm, ...parseSources[i]! })),
 			rows: rows.length,
 			arms,

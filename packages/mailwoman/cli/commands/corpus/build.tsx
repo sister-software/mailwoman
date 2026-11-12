@@ -3,19 +3,25 @@
 
 /**
  *   End-to-end corpus build: drives every registered adapter (or the filtered subset) from `--inputs`.
- *   It runs synthesis and alignment. It computes the locality-holdout split and writes the final jsonl
- *   and parquet files plus per-stage manifests under `<out>/corpus-v<version>/`.
  *
- *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest. This lets the
- *   CLI handles partial builds during development.
+ *   It runs synthesis and alignment.
+ *   It computes the locality-holdout split and writes the final jsonl and parquet
+ *   files plus per-stage manifests under `<out>/corpus-v<version>/`.
  *
- *   A build whose `--inputs` names `wof-admin` or `wof-postalcode` needs
- *   `NODE_OPTIONS="--max-old-space-size=20480"`. Both adapters hold every source record in memory.
- *   Node's default heap makes the process abort with SIGABRT during the adapter phase. This command
- *   refuses such a launch through `assertHeapForAdapters`. `buildCorpus` prints the heap limit it has.
+ *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest.
+ *   This lets the CLI handles partial builds during development.
+ *
+ *   A build whose `--inputs` names `wof-admin` or `wof-postalcode`
+ *   needs `NODE_OPTIONS="--max-old-space-size=20480"`.
+ *   Both adapters hold every source record in memory.
+ *
+ *   Node's default heap makes the process abort with SIGABRT during the adapter phase.
+ *   This command refuses such a launch through `assertHeapForAdapters`.
+ *   `buildCorpus` prints the heap limit it has.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
@@ -186,7 +192,7 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 /**
  * Read the inline `--inputs` JSON map.
  *
- * @throws {CommandError} When the text is not JSON, or an entry is not an input path or options object.
+ * @throws {CommandError} When the text isn't JSON, or an entry isn't an input path or options object.
  */
 function readInlineAdapterInputs(
 	text: string,
@@ -211,11 +217,19 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
-		const { parseJSONStrict } = await import("@mailwoman/core/json")
-		const { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
-		const { defaultBuildJobs } = await import("@mailwoman/corpus/build/budget")
-		const { readBuildInputs } = await import("@mailwoman/corpus/build/inputs")
-		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
+		const {
+			json: { parseJSONStrict },
+			corpus: { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry },
+			budget: { defaultBuildJobs },
+			inputs: { readBuildInputs },
+			license: { compileLicenseExcludes },
+		} = await allKeyed({
+			json: import("@mailwoman/core/json"),
+			corpus: import("@mailwoman/corpus"),
+			budget: import("@mailwoman/corpus/build/budget"),
+			inputs: import("@mailwoman/corpus/build/inputs"),
+			license: import("@mailwoman/corpus/utils/license"),
+		})
 
 		// A record's `inputPath` is data-root-relative and a JSON map's is absolute,
 		// so the two forms are read by different functions rather than normalized into one.

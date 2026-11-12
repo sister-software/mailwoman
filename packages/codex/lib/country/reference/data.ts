@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   generated — do not edit by hand. Country calling codes (E.164), currencies (ISO 4217) and
- *   dependency status, derived from mledoze/countries (https://github.com/mledoze/countries, ODbL).
- *   nanp members map to 1. Regenerate with: mailwoman dev generate country-reference
+ *   generated — do not edit by hand.
+ *
+ *   Country calling codes (E.164), currencies (ISO 4217) and dependency status, derived from
+ *   mledoze/countries (https://github.com/mledoze/countries, ODbL). nanp members map to 1.
+ *   Regenerate with: mailwoman dev generate country-reference
  */
 
 /**

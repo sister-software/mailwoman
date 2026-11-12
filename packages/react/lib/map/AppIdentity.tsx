@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Renders the footer identity with the app name, an optional documentation link and the build
- *   commit. This component does not depend on the map.
+ *   Renders the footer identity with the app name, an optional documentation link and the build commit.
+ *   This component doesn't depend on the map.
  */
 
 import type { ReactNode } from "react"

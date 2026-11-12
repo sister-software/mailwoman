@@ -9,7 +9,7 @@ tags:
 
 # DeepSeek — max_tokens covers reasoning, notoutput
 
-A short article on one DeepSeek API quirk that has burned every mailwoman thread that called it with reasoning enabled. Read it before you write the next one.
+A short article on one DeepSeek API quirk that's burned every mailwoman thread that called it with reasoning enabled. Read it before you write the next one.
 
 ## The trap
 
@@ -35,9 +35,9 @@ Three changes to the worker:
 
 ## Why the API does it this way
 
-Models that produce reasoning tokens still price compute differently from vanilla generation. Those tokens cost the same as output tokens but are not returned to the caller. A shared budget for reasoning and output tokens gives one predictable cost ceiling. The parameter name does not advertise this meaning.
+Models that produce reasoning tokens still price compute differently from vanilla generation. Those tokens cost the same as output tokens but are not returned to the caller. A shared budget for reasoning and output tokens gives one predictable cost ceiling. The parameter name doesn't advertise this meaning.
 
-DeepSeek's documentation does state this, in a sentence buried under the reasoning-effort overview. If you discover the trap by reading the docs, well done. If you discover it by watching your corpus get silently truncated, you are in good company — Thread B2's first run was the first time we hit it inside the lab workflow, and the patch took longer than the original generation would have if we had set the budget right at the start.
+DeepSeek's documentation does state this, in a sentence buried under the reasoning-effort overview. If you discover the trap by reading the docs, well done. If you discover it by watching your corpus get silently truncated, you're in good company — Thread B2's first run was the first time we hit it inside the lab workflow, and the patch took longer than the original generation would have if we had set the budget right at the start.
 
 ## Rules for the next caller
 

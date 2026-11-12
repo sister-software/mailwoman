@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The hosted glyph and sprite assets a Protomaps style reads, mirrored under the public bucket so a style never
- *   depends on an upstream host at render time.
+ *   The hosted glyph and sprite assets a Protomaps style reads, mirrored under the
+ *   public bucket so a style never depends on an upstream host at render time.
  */
 
 /**

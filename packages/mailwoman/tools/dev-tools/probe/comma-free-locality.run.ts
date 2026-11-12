@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Does the comma-free register still find the locality? A rate rather than an anecdote.
+ *   Does the comma-free register still find the locality?
+ *   A rate rather than an anecdote.
  *
- *   This walks every fixture row with both `street` and `locality` fields. It drops commas and asks
- *   whether the gold locality still lands in the locality slot, so the question becomes a measurement with
- *   a denominator.
+ *   This walks every fixture row with both `street` and `locality` fields.
+ *   It drops commas and asks whether the gold locality still lands in the locality slot,
+ *   so the question becomes a measurement with a denominator.
  *
- *   Runs the raw classifier (`--raw`, what `eval-harness/invariance/runner.ts` grades) or the production
- *   runtime pipeline (default). The two disagree: the raw path never runs `@mailwoman/normalize`, so
- *   case normalization is absent and the register legs see different text.
+ *   Runs the raw classifier (`--raw`, what `eval-harness/invariance/runner.ts` grades)
+ *   or the production runtime pipeline (default).
+ *   The two disagree: the raw path never runs `@mailwoman/normalize`, so case
+ *   normalization is absent and the register legs see different text.
  *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/probe/comma-free-locality.run.ts --cache-root <dir> --label cand --country FR

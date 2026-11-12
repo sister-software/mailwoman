@@ -4,8 +4,8 @@
 /**
  *   `state-ia-contractors`: Iowa Active Construction Contractor Registrations CSV consumer.
  *
- *   Iowa Workforce Development publishes a public registry of active construction contractors. Each
- *   row includes a business name, street address, city/state/zip and contact info.
+ *   Iowa Workforce Development publishes a public registry of active construction contractors.
+ *   Each row includes a business name, street address, city/state/zip and contact info.
  *
  *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`.
  *

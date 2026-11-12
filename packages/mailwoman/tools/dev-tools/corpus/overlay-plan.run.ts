@@ -4,24 +4,25 @@
 /**
  *   Derive the overlay plan for the next corpus version from the previous version's manifest.
  *
- *   A corpus overlay is a parquet file added to a built corpus after the base build, carrying rows a recipe
- *   produced rather than an adapter. The previous corpus's manifest records every one of them with its
- *   `source` label and the split it entered, so readers can see which overlays the plan retains
- *   rather than maintained by hand.
+ *   A corpus overlay is a parquet file added to a built corpus after the base build,
+ *   carrying rows a recipe produced rather than an adapter.
+ *   The previous corpus's manifest records every one of them with its `source` label and the split it
+ *   entered, so readers can see which overlays the plan retains rather than maintained by hand.
  *
  *   Each overlay groups under its unsplit original. In a manifest assembled before split attributes, an entry
  *   ending `.train.parquet`, `.val.parquet` or `.test.parquet` is one output of the filename route `corpus
  *   split-overlay` used then, so several entries collapse to one original. This groups them and reports the
  *   original each came from.
  *
- *   **Every original is routed, including one holding no row the policy holds out.** `split-overlay` writes
- *   an attribute for every file, and one with empty held-out lists still records that the policy saw it.
+ *   **Every original is routed, including one holding no row the policy holds
+ *   out.** `split-overlay` writes an attribute for every file, and one with empty
+ *   held-out lists still records that the policy saw it.
  *   A hand-maintained per-file list can omit a file and silently overlap holdout with train.
  *   A complete route costs a few seconds per small file.
  *
- *   An original this cannot locate is reported by name and counted. It is never dropped from the plan,
- *   because an overlay missing from the next corpus is a silent loss of the rows a recipe was written
- *   to add.
+ *   An original this cannot locate is reported by name and counted.
+ *   It is never dropped from the plan, because an overlay missing from the next corpus
+ *   is a silent loss of the rows a recipe was written to add.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/overlay-plan.run.ts \
@@ -311,7 +312,7 @@ async function routedLists(
 		.toSorted((a, b) => a.localeCompare(b))
 
 	// `corpus split-overlay` writes one `<stem>.split.<policy hash>.json` beside each file it routed.
-	// Each names its parquet, so `overlay-manifest --split-attribute` takes them unpaired.
+	// Each identifies its parquet, so `overlay-manifest --split-attribute` takes them unpaired.
 	const splitAttribute = (await Globerator.from("*.split.*.json", { cwd: directory, onlyFiles: true }).toArray())
 		.map((entry) => basename(String(entry)))
 		.toSorted((a, b) => a.localeCompare(b))
@@ -350,7 +351,7 @@ async function routedLists(
 		// The manifest records the name held by the corpus.
 		// A corpus copy drops the `.migrated` infix that marks files from an older corpus.
 		// `overlay-manifest` resolves the file under `<newDir>`, so a list carrying the
-		// staged spelling resolves to a path the corpus does not have.
+		// staged spelling resolves to a path the corpus doesn't have.
 		parquet.push(name.replace(".migrated", ""))
 		source.push(label)
 	}

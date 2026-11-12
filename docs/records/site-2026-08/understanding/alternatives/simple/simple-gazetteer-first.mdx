@@ -19,7 +19,7 @@ This is the architecture behind [Airmail](https://github.com/ellenhp/airmail), t
 1. **Tokenize the input.** Split on whitespace and punctuation. Produce every n-gram up to some reasonable limit (trigrams are typically sufficient for place names).
 2. **Query a gazetteer index.** The index contains every place name from Who's On First, OpenStreetMap, GeoNames, or another gazetteer. Each entry has a name, placetype, parent chain, and coordinate. The index supports prefix search and fuzzy matching.
 3. **Rank results.** Score each hit by: name match quality (exact > prefix > fuzzy), placetype priority (locality > region > country, or configurable), population (larger places score higher, all else equal), and token coverage (an n-gram that covers more of the input scores higher).
-4. **Return the best placetype match.** The result is a place with a placetype, coordinate, and parent chain. The system does not distinguish between "this token is a street" and "this token is a locality." It only knows that an n-gram matches a place in the index.
+4. **Return the best placetype match.** The result is a place with a placetype, coordinate, and parent chain. The system doesn't distinguish between "this token is a street" and "this token is a locality." It only knows that an n-gram matches a place in the index.
 
 Because it never parses, the approach avoids every parsing problem. The gazetteer knows which places exist, the search engine finds which place names appear in the input, and the ranker picks the best one.
 
@@ -33,11 +33,11 @@ Because it never parses, the approach avoids every parsing problem. The gazettee
 
 ## What you lose
 
-- **Streets and building numbers.** For `123 Main St, Springfield, IL`, the gazetteer finds "Springfield, IL." "123 Main St" is not a place name, so the geocoder ignores it. The geocoder returns the city centroid. If you need street-level or building-level accuracy, this architecture does not provide it.
-- **Venue names.** For `Empire State Building, NYC`, the gazetteer finds "NYC." "Empire State Building" is not a place name in most gazetteers (WOF has some landmarks, but coverage is sparse). The geocoder returns the city centroid rather than the building.
-- **Component-level output.** The result is a place ("Springfield, IL") rather than a parse. The system does not tell you what tokens were the locality, what tokens were the region, and what tokens were noise. If you need structured output (`{locality: Springfield, region: IL, street: Main St}`), you need a parser.
+- **Streets and building numbers.** For `123 Main St, Springfield, IL`, the gazetteer finds "Springfield, IL." "123 Main St" isn't a place name, so the geocoder ignores it. The geocoder returns the city centroid. If you need street-level or building-level accuracy, this architecture doesn't provide it.
+- **Venue names.** For `Empire State Building, NYC`, the gazetteer finds "NYC." "Empire State Building" isn't a place name in most gazetteers (WOF has some landmarks, but coverage is sparse). The geocoder returns the city centroid rather than the building.
+- **Component-level output.** The result is a place ("Springfield, IL") rather than a parse. The system doesn't tell you what tokens were the locality, what tokens were the region, and what tokens were noise. If you need structured output (`{locality: Springfield, region: IL, street: Main St}`), you need a parser.
 - **Token coverage as a signal.** `Paris, France` and `Paris, Texas` both match a locality. The gazetteer returns both. The ranker picks Paris, France (higher population). If the input also contains `Texas`, the ranker should boost Paris, Texas, but it can do so only if it knows that `Texas` is a region containing Paris, Texas. Gazetteer-first architectures can add this as a post-ranking filter, but the core approach lacks it.
-- **Addresses that are not place names.** For `50 miles West of Socorro, New Mexico`, the gazetteer finds "Socorro, New Mexico." "50 miles West of" is not a place name and is dropped. The geocoder returns Socorro, 50 miles from the described location. Directional descriptions are invisible to the gazetteer.
+- **Addresses that are not place names.** For `50 miles West of Socorro, New Mexico`, the gazetteer finds "Socorro, New Mexico." "50 miles West of" isn't a place name and is dropped. The geocoder returns Socorro, 50 miles from the described location. Directional descriptions are invisible to the gazetteer.
 
 ## Where Mailwoman fits
 

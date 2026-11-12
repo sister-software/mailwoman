@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fits `crf-transitions.json` from a training config's rows: label bigrams over the pieces the trainer's row encoder
- *   labels, with add-one smoothing, centered so each row's most frequent successor scores 0.
+ *   Fits `crf-transitions.json` from a training config's rows: label bigrams over
+ *   the pieces the trainer's row encoder labels, with add-one smoothing, centered
+ *   so each row's most frequent successor scores 0.
  *
  *   Usage:
  *   node packages/mailwoman/tools/training/fit/transitions.run.ts --config <yaml> --model-card <model-card.json> \
  *     --out <crf-transitions.json> [--rows 200000] [--temperature 1] [--seed 42]
  *
- *   The label order is the model card's, and the fit refuses a card whose labels differ from the encoder's label schema.
+ *   The label order is the model card's, and the fit refuses a card whose labels
+ *   differ from the encoder's label schema.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

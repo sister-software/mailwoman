@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Register rules and the writing system bind all template READMEs and printed CLI text (they are public copy, and CLI help source strings are public copy under the wave-2 standing rule).
+- Register rules and the writing system bind all template READMEs and printed CLI text (they're public copy, and CLI help source strings are public copy under the wave-2 standing rule).
 - Templates never download data at scaffold time. The next-steps print offers `mailwoman data pull` and states sizes.
 - Version stamping: rendered templates pin exact published versions. Rendered output contains neither `latest` nor `workspace:*`.
 - Every commit leaves repo checks green: `yarn compile`, `yarn lint`, `yarn install --immutable`, docs build where docs change, and the new template smokes.

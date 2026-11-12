@@ -4,14 +4,19 @@
 /**
  *   Joins a corpus source id to the register sources whose data its rows are built from.
  *
- *   A corpus source id is the `source` value stored on every corpus row, keyed by a training config's
- *   `source_weights` and listed in a training manifest. The register scopes a source to one publisher in one
- *   jurisdiction and records its license decision. This table is the one record joining the two. Before it, a source whose
- *   register row was refused or never read could feed a corpus build and a training run: HM Land Registry Price Paid
- *   Data reached `rendered-gb` and `spliced-sub-venue` while its row read `unchecked` (#2635).
+ *   A corpus source id is the `source` value stored on every corpus row, keyed by a
+ *   training config's `source_weights` and listed in a training manifest.
+ *   The register scopes a source to one publisher in one jurisdiction and records its license decision.
  *
- *   The table is `packages/corpus/data/corpus-source-inputs.json`. A derived or synthetic source lists every input
- *   whose data reaches one of its rows. An input with no register row gets one in `source-additions.json`, under an
+ *   This table is the one record joining the two.
+ *   Before it, a source whose register row was refused or never read could feed a corpus
+ *   build and a training run: HM Land Registry Price Paid Data reached `rendered-gb`
+ *   and `spliced-sub-venue` while its row read `unchecked` (#2635).
+ *
+ *   The table is `packages/corpus/data/corpus-source-inputs.json`.
+ *   A derived or synthetic source lists every input whose data reaches one of its rows.
+ *
+ *   An input with no register row gets one in `source-additions.json`, under an
  *   `unchecked` decision, so the gap reads as a gap rather than as an absence.
  */
 
@@ -217,7 +222,7 @@ export function mappingInputsFor(mapping: CorpusSourceMapping, corpusVersion?: s
 /**
  * Reads the committed table and checks it against the register.
  *
- * @throws When the file does not parse or the audit reports a problem.
+ * @throws When the file doesn't parse or the audit reports a problem.
  */
 export async function readCorpusSourceInputs(
 	register: AddressSourceRegister,
@@ -248,11 +253,11 @@ export interface SourceRightsGap {
 	registerSource: string | null
 	licenseID: string | null
 	/**
-	 * The decision's review state, or `null` when there is no decision to read.
+	 * The decision's review state, or `null` when there's no decision to read.
 	 */
 	state: LicenseDecision["state"] | null
 	/**
-	 * The operations the decision does not permit.
+	 * The operations the decision doesn't permit.
 	 */
 	missing: SourceOperation[]
 	because: string
@@ -262,7 +267,7 @@ export interface SourceRightsGap {
  * Every reason a corpus source's rows may not be built into a corpus or trained on.
  *
  * An empty array is the only answer a caller may read as permission.
- * A source the table does not map answers one gap whose `registerSource` is `null`,
+ * A source the table doesn't map answers one gap whose `registerSource` is `null`,
  * because no mapping identifies that source's publishers.
  *
  * `corpusVersion` names a corpus already built, so a source whose inputs changed under
@@ -351,7 +356,7 @@ export interface RegisterDecisions {
 /**
  * Whether one register row holds a decision that permits every operation in {@linkcode TRAINING_OPERATIONS}.
  *
- * A row the register lacks, or whose license has no decision, does not.
+ * A row the register lacks, or whose license has no decision, doesn't.
  */
 export function registerSourcePermitsTraining(register: RegisterDecisions, registerSource: string): boolean {
 	const row = register.sources.find((entry) => entry.sourceID === registerSource)
@@ -423,7 +428,7 @@ export interface SourceRightsRecord {
 	sources_checked: string[]
 	gaps: SourceRightsGap[]
 	/**
-	 * Inputs whose corpus sources could not be read, so the check could not judge them,
+	 * Inputs whose corpus sources couldn't be read, so the check couldn't judge them,
 	 * such as a base corpus whose files name no source and whose manifest has no record.
 	 */
 	unverified: string[]
@@ -440,7 +445,7 @@ export interface SourceRightsAdmission {
 	 */
 	admit(source: string): readonly SourceRightsGap[]
 	/**
-	 * Admits several sources at once, so a refusal names every one of them.
+	 * Admits several sources at once, so a refusal lists every one of them.
 	 */
 	admitAll(sources: Iterable<string>): readonly SourceRightsGap[]
 	/**

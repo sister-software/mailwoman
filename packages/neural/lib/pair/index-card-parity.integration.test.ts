@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it, with
- *   the artifact as the arbiter: pair count and the calibrated `delta`/`transitionBeta` are compared
- *   because a rebuild from the same sources reproduces them exactly, while the card's `md5` is not
- *   compared because a PIX1 header embeds `buildDate` and identical sources produce different bytes
- *   on every rebuild.
+ *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it,
+ *   with the artifact as the arbiter: pair count and the calibrated `delta`/`transitionBeta`
+ *   are compared because a rebuild from the same sources reproduces them exactly,
+ *   while the card's `md5` isn't compared because a PIX1 header embeds `buildDate`
+ *   and identical sources produce different bytes on every rebuild.
  *
  *   Skips per-package when the binary is absent, since a lean checkout legitimately has none.
  */
@@ -99,7 +99,7 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// A card claiming a delta the binary does not contain would misdescribe the
+			// A card claiming a delta the binary doesn't contain would misdescribe the
 			// shipped behavior as well as the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 

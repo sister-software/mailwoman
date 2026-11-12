@@ -2,31 +2,52 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The check compares the artifact with a second path. A separate half tests locations outside its coverage.
+ *   The check compares the artifact with a second path.
+ *   A separate half tests locations outside its coverage.
  *
- *   The positive half samples points from the sealed artifact and asks the Department's feature service about them.
- *   The service supplies geometry through a separate distribution channel. This package has not touched that geometry.
- *   The check runs the point test on the service's rings. It compares two verdicts from the same authority.
+ *   The positive half samples points from the sealed artifact and asks the
+ *   Department's feature service about them.
+ *   The service supplies geometry through a separate distribution channel.
+ *
+ *   This package hasn't touched that geometry.
+ *   The check runs the point test on the service's rings.
+ *
+ *   It compares two verdicts from the same authority.
  *   This measures our conversion against the authority's published geometry.
  *
- *   The service returns geometry in the publisher's ring convention. `outSR=4326` returns the same clockwise-exterior
- *   rings as the bulk export. This path re-derives ring roles as ingest does. A point inside a hole then falls outside
- *   on both paths or inside on both paths.
+ *   The service returns geometry in the publisher's ring convention.
+ *   `outSR=4326` returns the same clockwise-exterior rings as the bulk export.
  *
- *   The negative half checks locations outside the publication area. The Department omits Donegal, one of 31 local
- *   authorities. The product also excludes Northern Ireland. Points in both areas must return `unknown` with no
- *   designation. A positive-only check could pass an artifact that reports the whole island as zoned. The layer treats
- *   a missing polygon as no zoning statement.
+ *   This path re-derives ring roles as ingest does.
+ *   A point inside a hole then falls outside on both paths or inside on both paths.
  *
- *   The channels use different coordinate precision. A boundary-point disagreement therefore does not establish a
- *   conversion defect. The archive publishes nine decimals through this package's ingest. The service rounds its JSON.
- *   A point within roughly a meter of a zone boundary can fall on opposite sides of the two rendered edges. The check
- *   reports these cases as `boundary_tolerance` with the distance to the nearest edge. The receipt includes their count.
+ *   The negative half checks locations outside the publication area.
+ *   The Department omits Donegal, one of 31 local authorities.
  *
- *   The distance measures to the edge rather than to the nearest vertex. A point a centimeter from a long edge can be
- *   meters from every vertex. In one sibling-layer near-miss, vertex distance measured 1.58 m and edge distance
- *   measured 0.009 m. The vertex measurement overstated distance by 175 times. It would make the stated boundary
- *   tolerance stricter and report a rendering difference as a conversion defect.
+ *   The product also excludes Northern Ireland.
+ *   Points in both areas must return `unknown` with no designation.
+ *
+ *   A positive-only check could pass an artifact that reports the whole island as zoned.
+ *   The layer treats a missing polygon as no zoning statement.
+ *
+ *   The channels use different coordinate precision.
+ *   A boundary-point disagreement therefore doesn't establish a conversion defect.
+ *
+ *   The archive publishes nine decimals through this package's ingest.
+ *   The service rounds its JSON.
+ *
+ *   A point within roughly a meter of a zone boundary can fall on opposite sides of the two rendered edges.
+ *   The check reports these cases as `boundary_tolerance` with the distance to the nearest edge.
+ *   The receipt includes their count.
+ *
+ *   The distance measures to the edge rather than to the nearest vertex.
+ *   A point a centimeter from a long edge can be meters from every vertex.
+ *
+ *   In one sibling-layer near-miss, vertex distance measured 1.58 m and edge distance measured 0.009 m.
+ *   The vertex measurement overstated distance by 175 times.
+ *
+ *   It would make the stated boundary tolerance stricter and report a rendering
+ *   difference as a conversion defect.
  */
 
 import type { OGCFeature } from "@mailwoman/core/api"
@@ -108,11 +129,11 @@ export interface VerifyZoningResult {
  * The check requires points from two populations.
  * The Donegal points are the case this layer's coverage posture exists for.
  *
- * The Department has not published that authority's zoning.
+ * The Department hasn't published that authority's zoning.
  * A builder that reads the absence as "unrestricted" would answer these points confidently.
  *
  * The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
- * island: zoning there is a different jurisdiction's instrument under a different planning act.
+ * island: zoning there's a different jurisdiction's instrument under a different planning act.
  */
 export const OUTSIDE_PUBLICATION_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Letterkenny town centre, Donegal", latitude: 54.9503, longitude: -7.7345 },
@@ -254,7 +275,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 /**
  * Whether the service's own geometry contains the point, decided here with the same
  * ring-role resolution and the same even-odd rule the artifact's reader uses.
- * So what is compared is a verdict against a verdict.
+ * So what's compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

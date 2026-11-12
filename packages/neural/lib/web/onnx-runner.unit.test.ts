@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for `WebONNXRunner`'s feed construction against a mocked onnxruntime-web session, so
- *   they need no model files.
+ *   Unit tests for `WebONNXRunner`'s feed construction against a mocked onnxruntime-web
+ *   session, so they need no model files.
  *
- *   Gazetteer-anchor-trained graphs declare `gazetteer_features` / `gazetteer_confidence` and
- *   `anchor_features` / `anchor_confidence` as required inputs. The runner must mirror
- *   `@mailwoman/neural`'s node `ONNXRunner`. It passes through caller-provided features and zero-fills
- *   a declared input the caller omits, rather than letting ORT throw. It also surfaces the optional
- *   `locale_logits` as `localeLogits` and `span_scores` as `spanScores` with the node runner's
- *   (token, length, type) unflattening.
+ *   Gazetteer-anchor-trained graphs declare `gazetteer_features` / `gazetteer_confidence`
+ *   and `anchor_features` / `anchor_confidence` as required inputs.
+ *   The runner must mirror `@mailwoman/neural`'s node `ONNXRunner`.
+ *
+ *   It passes through caller-provided features and zero-fills a declared input
+ *   the caller omits, rather than letting ORT throw.
+ *   It also surfaces the optional `locale_logits` as `localeLogits` and `span_scores`
+ *   as `spanScores` with the node runner's (token, length, type) unflattening.
  */
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
@@ -318,6 +320,48 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(session.release).toHaveBeenCalledTimes(1)
 		expect(runner.inputNames).toBeNull()
 		await expect(runner.infer([5])).rejects.toThrow(/released/)
+	})
+
+	test("release() waits for a run in flight before it frees the session", async () => {
+		let finishRun!: () => void
+		const order: string[] = []
+
+		const session = {
+			inputNames: ["input_ids", "attention_mask"],
+			run: vi.fn(
+				() =>
+					new Promise((resolve) => {
+						finishRun = () => {
+							order.push("run finished")
+							resolve({})
+						}
+					})
+			),
+			release: vi.fn(() => {
+				order.push("released")
+
+				return Promise.resolve()
+			}),
+		}
+
+		sessionCreateMock.mockResolvedValue(session)
+
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]))
+		const inference = runner.infer([5]).catch(() => {})
+
+		await vi.waitFor(() => expect(session.run).toHaveBeenCalled())
+
+		const released = runner.release()
+
+		// The session stays open while the run that started before release() is still using it.
+		await Promise.resolve()
+		expect(session.release).not.toHaveBeenCalled()
+
+		finishRun()
+		await inference
+		await released
+
+		expect(order).toEqual(["run finished", "released"])
 	})
 })
 

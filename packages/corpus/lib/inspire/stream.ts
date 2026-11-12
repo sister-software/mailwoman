@@ -2,27 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads addresses out of one INSPIRE document that interleaves them with the features they
- *   reference.
+ *   Reads addresses out of one INSPIRE document that interleaves them with the features they reference.
  *
- * A publisher shipping the Addresses theme as one document writes an `ad:Address` beside the
- * `ad:ThoroughfareName`, `ad:PostalDescriptor` and place-name features it references, and the order
- * is the publisher's own. Czechia interleaves them per municipality, and the Netherlands writes its
+ * A publisher shipping the Addresses theme as one document writes an `ad:Address`
+ * beside the `ad:ThoroughfareName`, `ad:PostalDescriptor` and place-name features
+ * it references, and the order is the publisher's own.
+ * Czechia interleaves them per municipality, and the Netherlands writes its
  * reference features before its first address.
  *
- * Either way a reader has to index as it goes, because a 32 GB document cannot be read twice from
- * one stream and the references are local. An address naming a feature the pass has not reached yet
- * is held rather than refused, since until the document ends an unresolved reference and an absent
- * one are the same observation. That distinction is what the repository's partial-read rule turns on.
+ * Either way a reader has to index as it goes, because a 32 GB document cannot be
+ * read twice from one stream and the references are local.
+ * An address naming a feature the pass hasn't reached yet is held rather than refused, since
+ * until the document ends an unresolved reference and an absent one are the same observation.
  *
- * A publisher that writes every reference before any address, as Wallonia, Brussels and Slovakia do,
- * needs no holding and indexes in a pass of its own instead. Those adapters call
- * `streamMarkupElements` directly.
+ * That distinction is what the repository's partial-read rule turns on.
  *
- * A publisher that writes every reference *after* its addresses needs the opposite of holding, and
- * {@linkcode streamIndexedInspireRows} serves it. The Dirección General del Catastro and the
- * Diputación Foral de Gipuzkoa both do, so holding would leave every address pending. Those two
- * read the member twice and index first.
+ * A publisher that writes every reference before any address, as Wallonia, Brussels
+ * and Slovakia do, needs no holding and indexes in a pass of its own instead.
+ * Those adapters call `streamMarkupElements` directly.
+ *
+ * A publisher that writes every reference *after* its addresses needs the opposite
+ * of holding, and {@linkcode streamIndexedInspireRows} serves it.
+ * The Dirección General del Catastro and the Diputación Foral de Gipuzkoa both do,
+ * so holding would leave every address pending.
+ * Those two read the member twice and index first.
  */
 
 import type { MarkupElement } from "@mailwoman/core/html/elements"
@@ -37,7 +40,7 @@ import type { CanonicalRow } from "#types"
  * `null` refuses the address.
  * The caller counts each refusal.
  *
- * `deferred` states that the address holds a reference the pass has not indexed yet,
+ * `deferred` states that the address holds a reference the pass hasn't indexed yet,
  * so the driver holds it and asks again once the document has ended.
  */
 export type InspireRowResult = CanonicalRow | null | "deferred"
@@ -138,7 +141,7 @@ export async function* streamInspireRows<Indexed>(
 	 */
 	const referenced = new Map<string, Indexed>()
 	/**
-	 * Addresses naming a reference the pass had not indexed when they arrived.
+	 * Addresses naming a reference the pass hadn't indexed when they arrived.
 	 */
 	const held: MarkupElement[] = []
 	let emitted = 0
@@ -207,15 +210,15 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * A factory rather than an iterable, because a byte stream is consumed by the first pass.
 	 * `inspireGMLChunks` inflates the archive member again.
 	 *
-	 * That is what makes the second pass cheap relative to holding every address.
+	 * That's what makes the second pass cheap relative to holding every address.
 	 */
 	chunks: () => AsyncIterable<string | Uint8Array>
 
 	/**
 	 * Builds a row from an address and the complete reference index.
 	 *
-	 * There is no `final` argument and no deferral: the first pass has read the whole document,
-	 * so a reference resolving to no feature is a value the reader asked for and could not read.
+	 * There's no `final` argument and no deferral: the first pass has read the whole document,
+	 * so a reference resolving to no feature is a value the reader asked for and couldn't read.
 	 * The caller raises on one rather than writing the address without it.
 	 */
 	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | null

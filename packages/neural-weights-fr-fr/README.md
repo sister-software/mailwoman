@@ -49,7 +49,7 @@ no JavaScript. It is loaded at inference time by `@mailwoman/neural`.
 Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the sequence-labeler half: a small transformer
-encoder doing BIO token classification over the address schema. It is not an LLM
+encoder doing BIO token classification over the address schema. It isn't an LLM
 and none of it is generative. Plain NER suits a closed label set over short strings.
 
 The design splits the problem in two: **the model learns the grammar, the
@@ -131,7 +131,7 @@ card records the full corpus + recipe provenance.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there is unmeasured.
+  and quality there's unmeasured.
 
 ## Attribution
 

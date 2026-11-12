@@ -10,7 +10,7 @@ import type { GeocodeTrace } from "#geocode/session"
 // #region Shared
 
 /**
- * What a row shows where the datum does not exist, kept as a single constant
+ * What a row shows where the datum doesn't exist, kept as a single constant
  * so every kind of absence reads the same.
  */
 export const ABSENT = "—"

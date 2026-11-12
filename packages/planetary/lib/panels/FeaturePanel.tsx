@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The selected feature as a definition list: what the archive records about it, in the archive's own terms, with the
- *   source identifier. Semantic html so a screen reader gets the same record a sighted reader does.
+ *   The selected feature as a definition list: what the archive records about it,
+ *   in the archive's own terms, with the source identifier.
  *
- *   It appears in `<MapSheet>` and does not create a separate panel. The glass, the position beside the control column, the
- *   phone treatment and the close button were all copied here once. A copy of a material drifts from it the first
- *   time the material changes.
+ *   Semantic html so a screen reader gets the same record a sighted reader does.
+ *
+ *   It appears in `<MapSheet>` and doesn't create a separate panel.
+ *   The glass, the position beside the control column, the phone treatment
+ *   and the close button were all copied here once.
+ *
+ *   A copy of a material drifts from it the first time the material changes.
  */
 
 import { MapSheet } from "@mailwoman/react/map/MapSheet"

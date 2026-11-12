@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The physical objects: a parcel holds buildings, a building has entrances and units. Each is its own
- *   entity with its own identifiers, so a count or a permission attaches to the object it describes.
+ *   The physical objects: a parcel holds buildings, a building has entrances and units.
+ *
+ *   Each is its own entity with its own identifiers, so a count or a permission
+ *   attaches to the object it describes.
  */
 
 import type { EntityID, EntityKind, ExternalID } from "#identifiers"

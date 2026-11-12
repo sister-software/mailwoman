@@ -9,8 +9,9 @@
  *   Neither proves that a harvest of the real service writes a file the adapter reads.
  *   Captured bytes cannot make that claim.
  *
- *   The test takes one 25-feature page. An unreachable service fails the test: a pass on a failed
- *   request is indistinguishable from a pass on an answer.
+ *   The test takes one 25-feature page.
+ *   An unreachable service fails the test: a pass on a failed request is
+ *   indistinguishable from a pass on an answer.
  */
 
 import { APIClient } from "@mailwoman/core/api"

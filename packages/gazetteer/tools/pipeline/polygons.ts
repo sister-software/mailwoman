@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `wof-polygons.db` from the Who's On First clones: one simplified boundary for each place `candidate.db` holds.
- *   Walks the clones the way the admin ingest does, and drops a superseded or deprecated record the same way.
+ *   Builds `wof-polygons.db` from the Who's On First clones: one simplified
+ *   boundary for each place `candidate.db` holds.
+ *
+ *   Walks the clones the way the admin ingest does, and drops a superseded
+ *   or deprecated record the same way.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -26,7 +29,7 @@ export interface BuildPolygonsOptions {
 	/**
 	 * The directory that holds the `whosonfirst-data-*` clones.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos/whosonfirst-data`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**

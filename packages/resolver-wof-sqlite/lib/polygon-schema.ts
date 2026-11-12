@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the polygon sidecar (`wof-polygons.db`) — the one table `WOFReverseGeocoder` probes for a
- *   place's geometry. The interface is the read/write interface and {@link createPolygonsTable} creates the table, so a
- *   column added to one is a compile error against the other.
+ *   Typed schema for the polygon sidecar (`wof-polygons.db`) — the one table
+ *   `WOFReverseGeocoder` probes for a place's geometry.
  *
- *   The sidecar is optional to the reverse geocoder: without it every result falls back to a centroid, so the reader
- *   checks for the table's presence rather than assuming it.
+ *   The interface is the read/write interface and {@link createPolygonsTable} creates
+ *   the table, so a column added to one is a compile error against the other.
+ *
+ *   The sidecar is optional to the reverse geocoder: without it every result falls back
+ *   to a centroid, so the reader checks for the table's presence rather than assuming it.
  */
 
 import type { Kysely } from "kysely"
@@ -21,7 +23,7 @@ export interface PolygonsTable {
 	 * The GeoJSON geometry, JSON-encoded.
 	 *
 	 * A row that fails to parse reads as no-polygon, never as an error.
-	 * A malformed geometry must not fail the whole reverse query.
+	 * A malformed geometry mustn't fail the whole reverse query.
 	 */
 	geom: string
 }

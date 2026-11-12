@@ -217,7 +217,7 @@ export interface BuildCorpusOptions {
 	alignRangeBytes?: number
 
 	/**
-	 * Sources whose parallel-build state is deleted before a resumed build, so they are
+	 * Sources whose parallel-build state is deleted before a resumed build, so they're
 	 * built again from their adapter run while every other finished source is reused.
 	 */
 	freshSources?: readonly string[]
@@ -308,7 +308,7 @@ export interface BuildCorpusManifest {
 	 */
 	profile: BuildProfile
 	/**
-	 * Rows dropped because the register does not call their source eligible.
+	 * Rows dropped because the register doesn't call their source eligible.
 	 *
 	 * This reads zero under {@linkcode BuildProfile.Exploratory}, applying no eligibility check.
 	 */

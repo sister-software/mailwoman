@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Regenerates the committed calling-code, currency and dependency table in `codex/country/reference/data.ts`.
+ * Regenerates the committed calling-code, currency and dependency table
+ * in `codex/country/reference/data.ts`.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
@@ -154,11 +156,7 @@ export async function generateCountryReference(
 		.map((k) => `\t${k}: ${serialize(rows[k]!)},`)
 		.join("\n")
 
-	const header = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+	const header = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   generated — do not edit by hand. Country calling codes (E.164), currencies (ISO 4217) and
  *   dependency status, derived from mledoze/countries (https://github.com/mledoze/countries, ODbL).
  *   nanp members map to 1. Regenerate with: mailwoman dev generate country-reference

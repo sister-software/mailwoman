@@ -22,7 +22,7 @@ by descending confidence. Extract phrases from longer queries before calling it.
 
 Unrestricted synonyms match at confidence `1`. Locale-restricted synonyms match
 at `1` for an exact locale or `0.5` for a shared language. A restricted synonym
-does not match an unknown locale.
+doesn't match an unknown locale.
 
 ## Category and brand APIs
 
@@ -43,7 +43,7 @@ Wikidata ID. `getAllBrands()` enumerates the brand table.
 
 The package also exposes separate locale-normalized and typo lookup functions.
 Their rules are implemented in [the lookup core](lib/lookup/core.ts).
-The default exact lookup does not invoke them.
+The default exact lookup doesn't invoke them.
 
 ## Browser use
 

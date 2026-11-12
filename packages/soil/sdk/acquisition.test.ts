@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The acquisition tests cover the failure body returned by Soil Data Access and the metadata that determines an
- *   artifact's vintage and license. They also cover the farmland scope that determines whether two rows are comparable.
+ *   The acquisition tests cover the failure body returned by Soil Data Access
+ *   and the metadata that determines an artifact's vintage and license.
  *
- *   The exception fixture is the live service's own response body. It was captured from a query with a bad column
- *   name. A query that exceeds the server timeout returns the same document shape with HTTP 200, so the test checks
- *   the response body rather than the status.
+ *   They also cover the farmland scope that determines whether two rows are comparable.
+ *
+ *   The exception fixture is the live service's own response body.
+ *   It was captured from a query with a bad column name.
+ *
+ *   A query that exceeds the server timeout returns the same document shape with HTTP 200,
+ *   so the test checks the response body rather than the status.
  */
 
 import { readOGCServiceException as readServiceException } from "@mailwoman/core/api"
@@ -53,7 +57,7 @@ describe("readServiceException", () => {
 	it("answers in linear time on a report whose exception element is never closed", () => {
 		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over: an opening tag
 		// with no closing partner, in a body a network service produced.
-		// It must return the "could not read" reading rather than spend the document.
+		// It must return the "couldn't read" reading rather than spend the document.
 		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
 		const started = performance.now()
 
@@ -97,7 +101,7 @@ describe("readFGDCMetadata", () => {
 		// The refresh is 2025.
 		// The ground was walked in 1960.
 		// A consumer reading the refresh as survey currency reads it wrong by sixty-five years,
-		// so both travel and the older one names its source.
+		// so both travel and the older one identifies its source.
 		expect(metadata.publicationDate).toBe("2025-09-09")
 		expect(metadata.oldestSourceDate).toBe("1960")
 		expect(metadata.oldestSourceTitle).toBe("Soil Survey of Polk County, Iowa")

@@ -22,7 +22,7 @@ test("isUSStateAbbreviation: false for non-state / malformed / non-string input"
 	expect(isUSStateAbbreviation("California")).toBe(false) // full name rather than abbreviation
 	expect(isUSStateAbbreviation("CAL")).toBe(false)
 	expect(isUSStateAbbreviation("C")).toBe(false)
-	expect(isUSStateAbbreviation(" CA ")).toBe(false) // predicate does not trim
+	expect(isUSStateAbbreviation(" CA ")).toBe(false) // predicate doesn't trim
 	expect(isUSStateAbbreviation("")).toBe(false)
 	expect(isUSStateAbbreviation(42)).toBe(false)
 	expect(isUSStateAbbreviation(null)).toBe(false)

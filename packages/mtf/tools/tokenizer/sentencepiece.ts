@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One SentencePiece training call, made with native `spm_train` and written in the Python wheel's model form.
+ *   One SentencePiece training call, made with native `spm_train` and written
+ *   in the Python wheel's model form.
  *
- *   The flags are the keyword arguments a `SentencePieceTrainer.train(**flags)` call took, in the same order and with
- *   the same values. Two lists go through files rather than the command line, because the CLI splits an inline list
- *   on commas and a user-defined symbol may itself be a comma. `minloglevel` sets only the wheel's log level and has
- *   no CLI flag, so it is left off the command line.
+ *   The flags are the keyword arguments a `SentencePieceTrainer.train(**flags)` call took,
+ *   in the same order and with the same values.
+ *   Two lists go through files rather than the command line, because the CLI splits an
+ *   inline list on commas and a user-defined symbol may itself be a comma.
  *
- *   `spm_train` sets every trainer flag on its spec, so the model records defaults the caller did not supply.
- *   The wheel's spec holds only fields supplied in the call. After training, the rewrite drops trainer and normalizer
- *   fields absent from the flags. This produces the same bytes the wheel produces for that call.
+ *   `minloglevel` sets only the wheel's log level and has no CLI flag, so it is left off the command line.
+ *
+ *   `spm_train` sets every trainer flag on its spec, so the model records defaults the caller didn't supply.
+ *   The wheel's spec holds only fields supplied in the call.
+ *
+ *   After training, the rewrite drops trainer and normalizer fields absent from the flags.
+ *   This produces the same bytes the wheel produces for that call.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the repository sync. The refusals matter most: a sync that moves a clone with unpushed corrections to the
+ *   Tests for the repository sync.
+ *
+ *   The refusals matter most: a sync that moves a clone with unpushed corrections to the
  *   fork's tip destroys the only copy, and the corrections are authored in these directories.
  */
 
@@ -23,9 +25,32 @@ import {
 	syncSentence,
 	syncWOFRepo,
 } from "#tools/pipeline/repos/sync"
-import { type ForkHost, type ForkUpdate, type RepoOrigin, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"
+import {
+	type ForkHost,
+	type ForkUpdate,
+	type RepoOrigin,
+	WOF_DEPRECATED_REPO,
+	wofRepoOrigin,
+} from "#tools/pipeline/wof/repo-origin"
 
 const REPO = "whosonfirst-data-admin-gb"
+
+/**
+ * An origin with an original.
+ * Every forked repository has one.
+ */
+interface ForkedOrigin extends RepoOrigin {
+	upstreamOrg: string
+	upstreamURL: string
+}
+
+function forkOrigin(repo: string): ForkedOrigin {
+	const origin = wofRepoOrigin(repo)
+
+	if (!origin.upstreamOrg || !origin.upstreamURL) throw new Error(`${repo} has no original`)
+
+	return { ...origin, upstreamOrg: origin.upstreamOrg, upstreamURL: origin.upstreamURL }
+}
 
 const clone = (over: Partial<CloneState> = {}): CloneState => ({
 	exists: true,
@@ -57,7 +82,7 @@ describe("sameRemote", () => {
 	})
 
 	it("separates the fork from upstream", () => {
-		const origin = wofRepoOrigin(REPO)
+		const origin = forkOrigin(REPO)
 
 		expect(sameRemote(origin.forkURL, origin.upstreamURL)).toBe(false)
 	})
@@ -69,7 +94,14 @@ describe("sameRemote", () => {
 })
 
 describe("remoteChanges", () => {
-	const origin = wofRepoOrigin(REPO)
+	const origin = forkOrigin(REPO)
+
+	it("gives the repository with no original an origin and no upstream remote", () => {
+		const own = wofRepoOrigin(WOF_DEPRECATED_REPO)
+
+		expect(own).toMatchObject({ upstreamOrg: null, upstreamURL: null })
+		expect(remoteChanges(own, {})).toEqual([{ kind: "add", remote: Remote.Origin, url: own.forkURL }])
+	})
 
 	it("moves an upstream origin onto the fork, adds upstream, and removes the old fork remote", () => {
 		expect(remoteChanges(origin, { origin: origin.upstreamURL, fork: origin.forkURL })).toEqual([
@@ -159,7 +191,7 @@ async function commit(client: GitClient, directory: PathBuilder, file: string): 
 /**
  * An upstream repository with one commit and a fork of it one commit ahead.
  */
-async function forkedFixture(scratch: PathBuilder, client: GitClient): Promise<RepoOrigin> {
+async function forkedFixture(scratch: PathBuilder, client: GitClient): Promise<ForkedOrigin> {
 	const upstream = scratch("upstream")
 	const fork = scratch("fork")
 
@@ -172,6 +204,37 @@ async function forkedFixture(scratch: PathBuilder, client: GitClient): Promise<R
 }
 
 describe("syncWOFRepo", () => {
+	it("clones a repository with no original from origin alone, without forking or merging", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-own-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const own = scratch.path("own")
+
+		await client.read(["init", "--quiet", "--initial-branch=main", own.toString()])
+		await commit(client, own, "README")
+
+		const origin: RepoOrigin = {
+			repo: WOF_DEPRECATED_REPO,
+			forkURL: `file://${own}`,
+			upstreamOrg: null,
+			upstreamURL: null,
+		}
+
+		const host = recordingHost()
+
+		const result = await syncWOFRepo(WOF_DEPRECATED_REPO, {
+			root: scratch.path("repos"),
+			host,
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.action).toBe(SyncAction.Clone)
+		expect(host.calls).toEqual([])
+		expect(result.forkUpdate).toBeNull()
+		expect(result.state.remotes).toEqual({ origin: origin.forkURL })
+	})
+
 	it("clones a missing repository from the fork, adds upstream, and reports transfer progress", async () => {
 		await using scratch = await temporaryDirectory("repos-sync-clone-")
 		await using client = new GitClient({ cwd: scratch.path })

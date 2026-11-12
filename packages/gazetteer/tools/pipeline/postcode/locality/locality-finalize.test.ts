@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The finalizer stamps terms already recorded in `meta` into a `postcode_locality` table and its
- *   `layer_manifest`. A second finalize replaces that manifest rather than failing because
- *   the table accumulates across country runs.
+ *   The finalizer stamps terms already recorded in `meta` into a `postcode_locality`
+ *   table and its `layer_manifest`.
+ *
+ *   A second finalize replaces that manifest rather than failing because the
+ *   table accumulates across country runs.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Build the US verified-coordinate held-out pool for the Gauntlet: fdic BankFind publishes every insured bank
- * branch with a real street address and a geocoded lat/lon, a public-domain US truth source absent from
- * Mailwoman's training corpus, so it measures US generalization. It writes a semicolon CSV pool to
- * $MAILWOMAN_DATA_ROOT/corpus/staging/fdic-us.csv. `holdout.ts` reservoir-samples that copy in
- * milliseconds instead of streaming the 5 GB BAN file.
+ * Build the US verified-coordinate held-out pool for the Gauntlet: fdic BankFind publishes
+ * every insured bank branch with a real street address and a geocoded lat/lon, a public-domain
+ * US truth source absent from Mailwoman's training corpus, so it measures US generalization.
+ *
+ * It writes a semicolon CSV pool to $MAILWOMAN_DATA_ROOT/corpus/staging/fdic-us.csv.
+ * `holdout.ts` reservoir-samples that copy in milliseconds instead of streaming the 5 GB BAN file.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"

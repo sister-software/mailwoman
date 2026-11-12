@@ -4,12 +4,14 @@
 /**
  *   Browser-runtime span SLO probe over `onnxruntime-web`'s wasm EP.
  *
- *   The file reports a wall-clock number rather than asserting one, since a timing threshold in
- *   CI is a flake generator.
+ *   The file reports a wall-clock number rather than asserting one, since a
+ *   timing threshold in CI is a flake generator.
  *
- *   It is a `.full.test.ts` file because it needs two staged weights caches under
- *   `$MAILWOMAN_TEMP_ROOT`. CI checkouts do not contain those caches. A test import in the fast leg
- *   would pull the onnxruntime web graph into the shared module graph during collection.
+ *   It is a `.full.test.ts` file because it needs two staged weights caches under `$MAILWOMAN_TEMP_ROOT`.
+ *   CI checkouts do not contain those caches.
+ *
+ *   A test import in the fast leg would pull the onnxruntime web graph into the
+ *   shared module graph during collection.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

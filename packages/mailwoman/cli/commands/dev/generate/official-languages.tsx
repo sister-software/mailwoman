@@ -3,8 +3,10 @@
 
 /**
  *   `mailwoman dev generate official-languages` — regenerate `codex/country/official-languages.ts`
- *   from Unicode CLDR supplemental data. Pass `--cldr-dir` to read cldr-territoryInfo.json +
- *   cldr-aliases.json from disk instead of fetching the pinned cldr-core release from jsdelivr.
+ *   from Unicode CLDR supplemental data.
+ *
+ *   Pass `--cldr-dir` to read cldr-territoryInfo.json + cldr-aliases.json from disk
+ *   instead of fetching the pinned cldr-core release from jsdelivr.
  */
 
 import { Text } from "ink"

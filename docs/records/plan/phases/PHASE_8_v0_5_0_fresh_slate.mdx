@@ -2,7 +2,7 @@
 
 **Goal:** retire the inherited debt from v0.1.0 by rebuilding tokenizer + model + corpus + pipeline architecture together, in one coordinated iteration. This release pays one large cost to remove several structural limits at once, rather than working around them across incremental releases.
 
-**Cadence:** ~3-6 weeks wall-clock, depending on training compute budget. With rented GPU this compresses. On local iGPU it does not.
+**Cadence:** ~3-6 weeks wall-clock, depending on training compute budget. With rented GPU this compresses. On local iGPU it doesn't.
 
 **Branch convention:** `feat/v0.5.0-fresh-slate` umbrella, with per-component sub-branches as the work decomposes.
 
@@ -87,7 +87,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - Output: `Array<{ span: Section; kindHypothesis: PhraseKind; confidence: number }>`
   - PhraseKind taxonomy includes NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND
   - Rule-based version ships first as proof-of-concept. The learned version is v0.5.0 stretch if time permits, otherwise v0.5.1
-- **Output:** new workspace + new stage in `runPipeline`. The pipeline keeps its existing behavior when the caller does not opt in (backward-compatible).
+- **Output:** new workspace + new stage in `runPipeline`. The pipeline keeps its existing behavior when the caller doesn't opt in (backward-compatible).
 - **Blocks:** Thread C (classifier conditioning), Thread D (reconcile consumes proposals).
 - **Blocked by:** no item. The rule-based version can start immediately.
 
@@ -97,7 +97,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 - **What:** bring the v0.4.0 sidecars + diagnostic tools into the v0.5.0 process from day one.
   - `corpus-audit` is already in tree (`corpus/scripts/audit.ts`) and runs directly against `corpus-v0.3.0`. Use it to verify Thread B's corpus mix before tokenizer training and before classifier training.
   - `diagnose_regression.py` is already in tree (`corpus-python/scripts/diagnose_regression.py`). Use it for v0.5.0 eval bucketing during the run rather than after the fact.
-  - The verdict-smoke framework is redesigned: **constant LR for the smoke window**, or `max_steps >= 10000` so the cosine tail does not dominate. Documented in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands. Both default to constant for end-to-end smokes.
+  - The verdict-smoke framework is redesigned: **constant LR for the smoke window**, or `max_steps >= 10000` so the cosine tail doesn't dominate. Documented in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands. Both default to constant for end-to-end smokes.
   - Decoder span-trim sidecar (commit `c72ab4c`, `core/decoder/build-tree.ts:58`) stays in main and covers the long tail of bio_slip cases the phrase grouper might miss.
 - **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. A record of it keeps v0.5.0 from repeating it.
 - **Output:** new [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) + `--smoke-mode` CLI flag + updated TODO.md.

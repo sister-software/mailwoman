@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval capability-manifest` is the capability-manifest generator. It measures the
- *   per-tier × address-system × tag mask-off/mask-on F1 block the `createScorer` load-time delta
- *   check consults. A dry run prints the block. `--write` inserts it into the model card,
- *   refusing if a `capabilities` block already exists.
+ *   `mailwoman eval capability-manifest` is the capability-manifest generator.
+ *
+ *   It measures the per-tier × address-system × tag mask-off/mask-on F1 block the
+ *   `createScorer` load-time delta check consults.
+ *   A dry run prints the block.
+ *
+ *   `--write` inserts it into the model card, refusing if a `capabilities` block already exists.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

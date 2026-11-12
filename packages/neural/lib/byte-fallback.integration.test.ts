@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The rooftop providers the Nominatim and Photon servers attach, read from one generation of the active
- *   selection. Both servers consult the national open register (BAN) and then the OpenStreetMap tier, and
- *   neither attaches national Overture. That order is the order they had before the selection existed.
+ *   The rooftop providers the Nominatim and Photon servers attach, read from
+ *   one generation of the active selection.
+ *
+ *   Both servers consult the national open register (BAN) and then the OpenStreetMap tier,
+ *   and neither attaches national Overture.
+ *   That order is the order they had before the selection existed.
  */
 
 import type { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
@@ -25,7 +28,7 @@ export interface ServingRooftopProviders extends Disposable {
 	generation: number | null
 	national: BANRegionDatabaseProvider
 	/**
-	 * `null` when `@mailwoman/osm` is not installed.
+	 * `null` when `@mailwoman/osm` isn't installed.
 	 */
 	osm: RegionDatabaseProvider | null
 }

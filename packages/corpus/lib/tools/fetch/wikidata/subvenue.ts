@@ -3,6 +3,7 @@
 
 /**
  * Fetches CC0 sub-venue concept labels and airport-terminal names from the Wikidata Query Service.
+ *
  * The labels are candidates that need curation before any recipe uses them as designators.
  */
 
@@ -171,7 +172,7 @@ export interface WikidataHostConfig {
 	 */
 	accept: string
 	/**
-	 * Whether a cached response body is one the host answered, so a cached error page is not replayed.
+	 * Whether a cached response body is one the host answered, so a cached error page isn't replayed.
 	 */
 	validate: (body: unknown) => boolean
 }

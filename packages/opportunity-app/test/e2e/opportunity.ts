@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What the browser specs expect from the application, computed by the model for the Example District and
- *   written in the words the application shows. The specs restate each wording here rather than importing the
- *   application's own, so a change of wording on either side fails them.
+ *   What the browser specs expect from the application, computed by the model for the
+ *   Example District and written in the words the application shows.
  *
- *   The `test` export records every request a page makes and fails the test when one leaves the preview server.
+ *   The specs restate each wording here rather than importing the application's own,
+ *   so a change of wording on either side fails them.
+ *
+ *   The `test` export records every request a page makes and fails the test
+ *   when one leaves the preview server.
  */
 
 import { buildDossier, type Dossier, type EntityID, type ISODate } from "@mailwoman/dossier"

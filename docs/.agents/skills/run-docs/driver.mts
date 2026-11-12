@@ -6,8 +6,8 @@
  * @file Headless driver for the @mailwoman/docs Docusaurus site.
  *
  *   Assumes a dev server is already listening (default http://localhost:7770) — start it with `yarn
- *   start` (foreground) or `yarn start &` (background) from docs/ first. The driver does NOT launch
- *   the server itself; that's a separate long-lived process and conflating the two makes failure
+ *   start` (foreground) or `yarn start &` (background) from docs/ first. The driver doesn't launch
+ *   the server itself. The server is a separate long-lived process, and conflating the two makes failure
  *   modes harder to read.
  *
  *   Usage: node .claude/skills/run-docs/driver.mjs screenshot <path> [out.png] node
@@ -103,7 +103,7 @@ function reportRoute(path: string, result: RouteResult) {
 	console.log(`check ${path}: ${flags.join(", ")}`)
 
 	for (const e of result.errors) {
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `e` is an in-memory console-error string; only its first line is wanted.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `e` is an in-memory console-error string. Only its first line is wanted.
 		console.log(`  ${e.split("\n")[0]}`)
 	}
 }
@@ -118,7 +118,7 @@ async function cmdCheck(path: string) {
 }
 
 async function cmdSmoke() {
-	// Real routes, not just "/docs/" — Docusaurus's bare /docs/ is a soft-404; the actual entry is /docs/understanding/.
+	// Docusaurus serves a soft 404 at the bare /docs/, so the list holds the real entry, /docs/understanding/.
 	const routes = ["/", "/demo/", "/research/", "/docs/understanding/", "/docs/plan/"]
 	let fail = 0
 
@@ -134,10 +134,10 @@ async function cmdSmoke() {
 			fail++
 
 			if (error instanceof Error) {
-				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message. Only its first line is logged.
 				console.log(`check ${r}: THREW ${error.message.split("\n")[0]}`)
 			} else {
-				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message. Only its first line is logged.
 				console.log(`check ${r}: THREW ${String(error).split("\n")[0]}`)
 			}
 		}

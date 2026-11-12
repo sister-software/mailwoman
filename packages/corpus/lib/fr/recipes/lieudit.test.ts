@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `fr-lieudit` recipe: end-to-end over a small fixture BAN département directory
- *   (mirroring `ban/sdk/ban.test.ts`'s header/row shape), verifying the dependent_locality/locality
- *   mapping, the own-line raw rendering, junk-row exclusion (delegated to `ban/sdk`'s `cleanLieuDit`),
- *   determinism under a fixed seed. It also tests the `--country-fraction` append.
+ *   Tests for the `fr-lieudit` recipe: end-to-end over a small fixture BAN département
+ *   directory (mirroring `ban/sdk/ban.test.ts`'s header/row shape), verifying the
+ *   dependent_locality/locality mapping, the own-line raw rendering, junk-row exclusion
+ *   (delegated to `ban/sdk`'s `cleanLieuDit`), determinism under a fixed seed.
+ *   It also tests the `--country-fraction` append.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"
@@ -180,7 +181,7 @@ describe("fr-lieudit recipe", () => {
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 
-		// Must not read both — exactly the one row from the uncompressed adresses-48.csv survives.
+		// Mustn't read both — exactly the one row from the uncompressed adresses-48.csv survives.
 		expect(stats.emitted).toBe(1)
 	})
 })

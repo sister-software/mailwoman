@@ -14,7 +14,7 @@ import type { JsonObject } from "type-fest"
  * The same predicate exists in `spliterator`, whose barrel also exports that
  * library's Node fs, worker-thread and xlsx readers.
  *
- * This module is on the browser client's static import path, so it must not reach that barrel.
+ * This module is on the browser client's static import path, so it mustn't reach that barrel.
  */
 export function isIterable(value: unknown): value is Iterable<unknown> {
 	return Symbol.iterator in new Object(value)
@@ -137,7 +137,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 }
 
 /**
- * Type-predicate for checking if a value appears to be a record, i.e. an object that is not an array.
+ * Type-predicate for checking if a value appears to be a record, i.e. an object that's not an array.
  *
  * @category Type Guard
  * @category Object

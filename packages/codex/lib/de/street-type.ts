@@ -12,11 +12,13 @@
  *   abbreviation table to salvage.
  *
  *   The second lesson is the collision, the German cousin of the US `KY` = Key / Kentucky problem.
- *   Some German place names end in what look like street suffixes — `-berg` (Nürnberg), `-burg`
- *   (Hamburg), `-dorf` (Düsseldorf), `-feld`, `-hof`, `-stadt`. If those counted as street markers,
- *   the city token in a `PLZ City` segment would masquerade as a street and wrongly flag the
- *   postcode as a house number. {@link DE_STREET_SUFFIXES} is therefore a curated, place-name-safe
- *   set. The suffixes that are distinctively streets and (almost) never the tail of a city name.
+ *   Some German place names end in what look like street suffixes — `-berg` (Nürnberg),
+ *   `-burg` (Hamburg), `-dorf` (Düsseldorf), `-feld`, `-hof`, `-stadt`.
+ *
+ *   If those counted as street markers, the city token in a `PLZ City` segment
+ *   would masquerade as a street and wrongly flag the postcode as a house number.
+ *   {@link DE_STREET_SUFFIXES} is therefore a curated, place-name-safe set.
+ *   The suffixes that are distinctively streets and (almost) never the tail of a city name.
  */
 
 /**
@@ -63,7 +65,7 @@ export type GermanStreetType = keyof typeof DE_STREET_TYPE_VARIANTS
  *
  * Deliberately excludes the suffixes that also end German city names — `-berg`,
  * `-burg`, `-dorf`, `-feld`, `-hof`, `-stadt`, `-heim`, `-bach`, `-tal` —
- * so a city token in a `PLZ City` segment is not mistaken for a street.
+ * so a city token in a `PLZ City` segment isn't mistaken for a street.
  */
 export const DE_STREET_SUFFIXES = [
 	"straße",

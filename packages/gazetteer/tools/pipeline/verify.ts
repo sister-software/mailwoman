@@ -124,6 +124,28 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		checks.push({ check: "place-abbr", ok: rows > 0, detail: `${rows} rows` })
 	}
 
+	// Every name and concordance states the dataset it came from, so a license filter can select by source.
+	// A database built before the column existed fails, because its rows' sources cannot be read back.
+	for (const table of ["names", "concordances"] as const) {
+		const columns = db.prepare(`SELECT name FROM pragma_table_info('${table}')`).all() as Array<{ name: string }>
+
+		if (!columns.some((column) => column.name === "source")) {
+			checks.push({ check: `${table}-source`, ok: false, detail: `${table} has no source column` })
+
+			continue
+		}
+
+		const untagged = (
+			db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE source IS NULL OR source = ''`).get() as { n: number }
+		).n
+
+		checks.push({
+			check: `${table}-source`,
+			ok: untagged === 0,
+			detail: untagged ? `${untagged.toLocaleString()} rows state no source` : "every row states its source",
+		})
+	}
+
 	{
 		const sprCount = (db.prepare("SELECT COUNT(*) n FROM spr WHERE is_current != 0").get() as { n: number }).n
 

@@ -1,0 +1,29 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
+.evidence-table {
+	overflow-x: auto;
+	margin-bottom: 1.5rem;
+	border: 1px solid var(--ss-color-edge);
+}
+
+.evidence-table:focus-visible {
+	outline: 2px solid var(--ss-color-selected);
+	outline-offset: 2px;
+}
+
+.evidence-table table {
+	width: 100%;
+	min-width: 48rem;
+	margin-bottom: 0;
+	table-layout: fixed;
+}
+
+.evidence-table--wide table {
+	min-width: 52rem;
+}
+
+.evidence-table th,
+.evidence-table td {
+	overflow-wrap: anywhere;
+}

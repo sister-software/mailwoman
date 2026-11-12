@@ -5,13 +5,15 @@
  * @file Writes the `wikidata-vital-places` parquet part and its entity holdout from a fetched inventory.
  *
  *   Usage:
- *     node packages/corpus/lib/tools/vital-places.run.ts --out <dir> --source-root <fetch root> [--exempt <jsonl>]
+ *     node packages/corpus/lib/tools/vital-places.run.ts --out <dir> [--source-root <fetch root>] [--exempt <jsonl>]
  *
- *   `--source-root` is the `--out` root `mailwoman corpus fetch wikidata-vital-places` wrote under.
+ *   `--source-root` is the `--out-root` `mailwoman corpus fetch wikidata-vital-places` wrote under,
+ *   by default the current-source root `$MAILWOMAN_CACHE_ROOT/sources/`.
  *   `--exempt` is a JSONL file with a `qid` on each row. Those entities always train.
  *   The part goes to `<out>/wikidata-vital-places-00000.parquet`, and the holdout and counts beside it.
  */
 
+import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
@@ -40,11 +42,12 @@ const { values } = parseArguments({
 
 if (!values.out) throw new Error("--out names the directory the part is written to")
 
-if (!values["source-root"])
-	throw new Error("--source-root names the fetch's --out root, such as <data root>/corpus/sources")
-
 const out = PathBuilder.from(resolvePath(values.out as string))
-const sourceDir = vitalPlacesPath(PathBuilder.from(resolvePath(values["source-root"] as string)))
+
+const sourceDir = vitalPlacesPath(
+	values["source-root"] ? PathBuilder.from(resolvePath(values["source-root"])) : currentSourcesRoot()
+)
+
 const rootsPath = sourceDir(VITAL_PLACES_FILES.classRoots)
 
 if (!(await pathExists(rootsPath))) {

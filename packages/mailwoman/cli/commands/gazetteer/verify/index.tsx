@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Structural promotion eval for the admin gazetteer: exits non-zero on any failure, so do not swap
- *   an artifact that fails here. The derived-FST freshness section is advisory and never affects the verdict.
+ *   Structural promotion eval for the admin gazetteer: exits non-zero on any failure,
+ *   so do not swap an artifact that fails here.
+ *
+ *   The derived-FST freshness section is advisory and never affects the verdict.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -27,10 +30,13 @@ export const spec = {
 const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel } =
-				await import("@mailwoman/gazetteer/tools/pipeline")
-
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+			const {
+				pipeline: { loadDefaultBaseline, verifyAdmin, verifyReversePanel },
+				paths: { wofDatabasePath },
+			} = await allKeyed({
+				pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+				paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			})
 
 			const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
 
@@ -49,7 +55,7 @@ const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 
 			if (options.fstFreshness) {
 				// Lazy: the FST module pulls the resolver and libpostal dictionaries a
-				// skipped section should not pay for.
+				// skipped section shouldn't pay for.
 				const { checkAdminDerivedFSTFreshness } = await import("@mailwoman/gazetteer/tools/pipeline/fst")
 				const rows = await checkAdminDerivedFSTFreshness(dbPath)
 				const stale = rows.filter((row) => row.staleReason)

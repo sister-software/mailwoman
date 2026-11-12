@@ -1,5 +1,5 @@
 ---
-title: Training-row encoder — the Rust encoder the training loader calls, and how its parity is checked
+title: Training-row encoder
 role: reference
 audience: maintainer
 owner: model
@@ -19,8 +19,9 @@ links both crates, and the TypeScript tools reach them through the `mtf-node` ad
 one generator, `mtf-sampler/src/pyrandom.rs`, which reproduces CPython 3.12's `random.Random`, and each stage draws
 where the stage of the deleted Python loader drew, so a seed selects the rows that loader selected.
 
-The Rust encoder and the Rust sampler each reproduce the Python code they replaced byte for byte. The encoded tensors
-are the model's inputs, so these changes move no model behavior and need no release verdict.
+The Rust encoder and the Rust sampler each reproduce the tensors of the deleted Python loader byte for byte (see
+Parity procedure). The encoded tensors are the model's inputs, so the Rust path moves no model behavior and needs no
+release verdict.
 
 ## What runs where
 
@@ -42,7 +43,7 @@ are the model's inputs, so these changes move no model behavior and need no rele
 | Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice` |
 
 The painters and the label projection compile without a regex engine. The serving side can therefore
-adopt them later through `mtf-wasm`. That adoption is a separate change, because the serving painters
+adopt them later through `mtf-wasm`. For now it keeps its own painters, because the serving painters
 differ from the training painters in three places:
 
 - `anchoredPostcodeSpans` upper-cases the text before matching, and training matches the raw case;
@@ -160,8 +161,8 @@ The grouping records stop short of 5,000 rows because, when they were captured, 
 on C6 rows whose tokens do not reach the end of `raw`, in the Python sampler and the Rust sampler alike. At
 probability 0.5, seed 43, the stream raised after 250 rows on `insert position 18 is not a token edge
 (raw='{114, СНТ «Пчёлка»')`; at 0.05 it raised after 1,994 rows on `'(22 Whampoa East S(338527)'`. The `osm-ru`
-row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet ends `raw` past the last token. Since #2878,
-`wrap_row` skips a row whose text does not begin and end on a token edge, in both samplers, and the stream runs on.
+row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet ends `raw` past the last token. `wrap_row`
+now skips a row unless its text begins and ends on a token edge (#2878), in both samplers, and the stream runs on.
 The skip takes no draw, so every row before the first such row is unchanged, and both grouping records still
 verify at 0 differing rows. No training config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
 the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip. That composition
@@ -171,7 +172,7 @@ The crate's own tests cover what a sample may miss: `encode_row_reference.rs` ag
 `encode_row` fixture, `text_reference.rs` against the recorded finder and string-operation answers for every
 scalar value in 17 templates, and `code_unit_parity.rs` from segmentation through acceptance counts.
 
-Each record verified with 0 differing rows against the Rust encoder (113,920 emitted rows in total). The broad
+Each record verified with 0 differing rows against the Rust encoder (113,936 emitted rows in total). The broad
 sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
 validation rows, where the validation draw exhausts below its 36,864-row limit.
 
@@ -238,8 +239,8 @@ corpus's files with seed 7 (2,375,564 rows) over the nine columns the sampler re
 `read_row_group` on the same list, alternating, at load 16. pyarrow took 36.12 and 38.97 ms per row group and the
 `parquet` crate 23.43 and 26.92 ms. The parity verifies give the end-to-end cost: a 5,000-row train record verifies
 in 22 to 33 s at a peak of 2.5 to 3.1 GB, where its Python capture took 225 to 335 s at 4.5 to 5.4 GB, and the
-36,864-row validation draw verifies in 131 s. These figures are the lab host's only. The Modal measurement waits
-for the next image build, since no Modal job ran for this change. Initialization is dominated by the sampler's stream
+36,864-row validation draw verifies in 131 s. These figures are from the lab host only. No Modal job measured the
+Rust sampler. Initialization is dominated by the sampler's stream
 setup: building the Rust encoder with the 2,286,339-key anchor table takes 2.04 s, against 5.46 s for the
 Python `json.load` of the same table.
 
@@ -252,7 +253,7 @@ run on the Python encoder, `v8.3.0-base-c6-90k-mixed-s42`, over the same steps o
 validation passes, Fisher capture and the run length. Its `source_reps` targets are scaled by 2,000 / 90,000,
 so it draws different rows in the same source proportions.
 
-### After the Python removal
+### Node binding profile
 
 `node packages/mailwoman/tools/training/sampler/parity.run.ts profile --config <yaml> [--set data.key=value]` times
 the same host step through `mtf-node`: the encoder build and the first batch, then sampling and encoding per batch

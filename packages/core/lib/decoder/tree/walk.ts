@@ -69,7 +69,7 @@ export function isGroundedNode(node: AddressNode): boolean {
  * Four per-node keys decide it, in this order:
  *
  * 1. A grounded node precedes an ungrounded one, because a component is what resolved.
- * 2. A node whose tag satisfies {@linkcode isAdminHierarchyTag} precedes one whose tag does not.
+ * 2. A node whose tag satisfies {@linkcode isAdminHierarchyTag} precedes one whose tag doesn't.
  * 3. Among the nodes outside that set, the higher label confidence precedes the lower.
  * 4. Document order breaks the remaining ties.
  *    `toSorted` preserves it.
@@ -80,7 +80,7 @@ export function isGroundedNode(node: AddressNode): boolean {
  * in the text while the model scores it below the street that follows.
  *
  * Inside the hierarchy set the canonical line runs finest to coarsest,
- * so position is the evidence and confidence is not: a coarser place name is more
+ * so position is the evidence and confidence isn't: a coarser place name is more
  * frequent in training and scores higher for that reason.
  *
  * A merged span takes the minimum of its token confidences (`span/bridge.ts`).
@@ -89,7 +89,7 @@ export function isGroundedNode(node: AddressNode): boolean {
  * Key 2 also moves hierarchy nodes ahead of other tags.
  * Every consumer reads this list one tag at a time (`decodeAsJSON` keys the flat
  * map by tag; `extractGeocodeResult` and `plus-code-override` search it by tag),
- * so the order between two different tags is not part of the interface.
+ * so the order between two different tags isn't part of the interface.
  *
  * A postcode span the shape check excluded is left out, so it fills no slot.
  */

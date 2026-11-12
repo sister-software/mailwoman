@@ -1,24 +1,24 @@
 ---
-title: The row count each recipe was asked for
+title: Corpus recipe row counts
 role: reference
 audience: maintainer
 owner: operations
 ---
 
-# The row count each recipe was asked for
+# Corpus recipe row counts
 
 A recipe emits the number of rows its `--count` flag names. The flag is required and has no
 default, so the number that decides how much of a country the corpus teaches lives in the command
 that built it rather than in any committed file.
 
-This page is that number, recovered by counting the rows of every recipe output on this machine's
-data root on 2026-09-22. It exists because #2357 asked where a country's share of the corpus is set
-and the repository held no answer.
+This page lists the row counts of every recipe output on this machine's data root, counted on
+2026-09-22. #2357 asked where a country's share of the corpus is set, and the repository held no
+answer.
 
-## What each recipe output holds
+## Row counts per recipe output
 
-`$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/` and `corpus/recipe-outputs-boundary-family/`, counted
-line by line rather than estimated from file size.
+The rows in `$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/` and `corpus/recipe-outputs-boundary-family/`
+were counted line by line rather than estimated from file size.
 
 Every name below is a filename on disk. A `synth-` filename keeps its name, because renaming a file
 breaks the command that reads it, and the `source` string on those rows is a separate value:
@@ -65,9 +65,9 @@ from `v0.7.0-de-holdout` on stores, so `synth-unit-v30.jsonl` holds rows whose `
 | `kryptonite-train.jsonl`   |   4,822 |
 | `german-val.jsonl`         |   4,000 |
 
-## What this answers, and what it does not
+## Scope of the recovered counts
 
-**GB's 800,000 street rows are a `--count 800000`.** They are not a cap the reader imposes.
+**GB's 800,000 street rows are a `--count 800000`.** They're not a cap the reader imposes.
 `RESERVOIR_CAP` in `packages/corpus/lib/international/recipes/locale.ts` is 1,200,000 and bounds the
 pool held in memory while a source is streamed. That bound never constrains a draw of 800,000. The four
 largest locale outputs — ES pedanía, GB, NZ and the FR lieu-dit recipe — were each drawn at that
@@ -78,11 +78,11 @@ that reached its target. `synth-fr-lieudit-v1.jsonl` at 799,997 is three short o
 one either ran with a different flag or exhausted its pool.
 
 **The invocation is still unrecorded.** An artifact count recovers what a
-recipe emitted. It does not recover the invocation, the seed, or the flags beside `--count`, and no
+recipe emitted. It doesn't recover the invocation, the seed, or the flags beside `--count`, and no
 file on this machine records them. A recipe output rebuilt from a different seed would count the
 same and contain different rows.
 
-## What records it from now on
+## The invocation sidecar
 
 `mailwoman corpus recipe` writes `<out>.invocation.json` beside every recipe output, after the rows,
 so a sidecar exists only beside a run that finished. It records the recipe name, its mode, the rows
@@ -127,7 +127,9 @@ column states the file's own count.
 PT, CH and HR each sampled 1,200,000 rows because `RESERVOIR_CAP` bounds the pool at that number and
 each country supplies more. SK and LU supply fewer rows than the cap, so their pool is the whole
 file and their draw is 68.3% and 91.2% of it. A country whose draw approaches its supply teaches
-that country's addresses close to exhaustively. That is a different regime from PT's 13.5%.
+that country's addresses close to exhaustively. PT's draw, by contrast, is 13.5% of its supply.
 
-Croatia's 1,003 city-noise drops are the only ones among the five. `cleanCityNoise` removes a row whose
-city value contains a comma, and those rows are excluded from the 1,680,503 the reservoir saw.
+Croatia's 1,003 city-noise drops are the only ones among the five. `cleanCityNoise` rejects a city
+value that contains a comma or four digits, and the recipe drops that row before it reaches the
+reservoir. The 1,003 rows are among HR's 1,680,503 supply rows but not among the rows the reservoir
+saw.

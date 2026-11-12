@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The placetype-pair prior's two registered decode-order test classes: a window the prior biases
- *   stays a united BIO span through the `enforceWordConsistency` heal. The prior leaves a word
- *   unchanged when the encoder is confident about it.
+ *   The placetype-pair prior's two registered decode-order test classes: a window the
+ *   prior biases stays a united BIO span through the `enforceWordConsistency` heal.
  *
- *   Both fixtures use the comma-free two-word "Shoreditch London" shape. They pass
- *   `probeMode: "window"` explicitly because the prior's default `"segment"` mode collapses this input to one inert
- *   segment that would never reach the decode-order behavior under test.
+ *   The prior leaves a word unchanged when the encoder is confident about it.
+ *
+ *   Both fixtures use the comma-free two-word "Shoreditch London" shape.
+ *   They pass `probeMode: "window"` explicitly because the prior's default `"segment"` mode collapses
+ *   this input to one inert segment that would never reach the decode-order behavior under test.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -167,7 +168,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
-	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) does not win
+	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) doesn't win
 	 * because "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased
 	 * dependent_locality reading (6 + 6 + 6 = 18) by 4, so a beta-less decode keeps
 	 * the fused path and the transitionBeta artifact flips it.

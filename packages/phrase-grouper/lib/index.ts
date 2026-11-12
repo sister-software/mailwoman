@@ -4,19 +4,20 @@
 /**
  *   `@mailwoman/phrase-grouper` — Stage 2.7 of the runtime pipeline.
  *
- *   Proposes coherent input units (boundary discovery) with a structural kind hypothesis +
- *   confidence. Decouples boundary discovery from type classification: Stage 3 conditions on these
- *   proposals so it answers the simpler "what type is this proposed span?" rather than jointly
- *   discovering boundaries and types. Stage 5 consumes the proposals as boundary candidates for
- *   joint decoding.
+ *   Proposes coherent input units (boundary discovery) with a structural kind hypothesis + confidence.
+ *   Decouples boundary discovery from type classification: Stage 3 conditions on
+ *   these proposals so it answers the simpler "what type is this proposed span?"
+ *   rather than jointly discovering boundaries and types.
  *
- *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation, capitalization,
- *   hyphenation, format-shape repetition) — never place-name dictionaries. v0.5.0 ships the
- *   rule-based v1. learned 1-2M-param span proposer reserved for v0.5.1.
+ *   Stage 5 consumes the proposals as boundary candidates for joint decoding.
  *
- *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase grouper
- *   for the design rationale and `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx` § E for the
- *   v0.5.0 thread.
+ *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation,
+ *   capitalization, hyphenation, format-shape repetition) — never place-name dictionaries.
+ *   v0.5.0 ships the rule-based v1. learned 1-2M-param span proposer reserved for v0.5.1.
+ *
+ *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase
+ *   grouper for the design rationale and `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx`
+ *   § E for the v0.5.0 thread.
  */
 
 export { groupPhrases, groupPhrasesSync } from "#group"

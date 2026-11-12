@@ -4,30 +4,36 @@
 /**
  *   Reads the parts of an INSPIRE Addresses feature that every publisher spells the same way.
  *
- * INSPIRE harmonizes the schema and leaves the rest to the publisher. Seven publishers this
- * repository reads all write `ad:Address` with the same element paths, and they disagree on four
- * things that each decide a value:
+ * INSPIRE harmonizes the schema and leaves the rest to the publisher.
+ * Seven publishers this repository reads all write `ad:Address` with the same element paths,
+ * and they disagree on four things that each decide a value:
  *
- * 1. The wrapper. Czechia writes `base:SpatialDataSet` with `base:member`. The Netherlands,
- *    Wallonia and Brussels write `gml:FeatureCollection` with `gml:featureMember`.
- * 2. The reference form. Czechia's `ad:component` href is an absolute WFS stored-query URL
- *    whose `Id=` parameter is the key. The Netherlands, Wallonia and Brussels write a local `#`
- *    fragment. Flanders writes an absolute data URI that a caller rewrites into a `resourceId`.
- * 3. Where the postcode lives. Czechia and Wallonia reference an `ad:PostalDescriptor`; the
- *    Netherlands puts it inline as a `LocatorDesignatorTypeValue/postalDeliveryIdentifier` locator and publishes no
- *    `ad:PostalDescriptor` at all.
- * 4. The locator vocabulary. Czechia types its number `buildingIdentifier`, the Netherlands
- *    `addressNumber`, Wallonia `LocatorDesignatorTypeValue/addressIdentifierGeneral`, Brussels
- *    `buildingIdentifier`.
- * 5. The prefix's case. Seven publishers write `ad:` and `gn:`. The Dirección General del Catastro
- *    and the Gobierno de Navarra bind the same namespaces to `AD:` and `GN:`. The Catastro also
- *    states a designator type and an administrative level as element text, `1` and `4`, where
- *    everyone else writes a codelist URI. The readers below therefore match an element name
- *    without regard to case, and accept either form of a coded value.
+ * 1. The wrapper.
+ *    Czechia writes `base:SpatialDataSet` with `base:member`.
+ *    The Netherlands, Wallonia and Brussels write `gml:FeatureCollection` with `gml:featureMember`.
+ * 2. The reference form.
+ *    Czechia's `ad:component` href is an absolute WFS stored-query URL whose `Id=` parameter is the key.
+ *    The Netherlands, Wallonia and Brussels write a local `#` fragment.
+ *    Flanders writes an absolute data URI that a caller rewrites into a `resourceId`.
+ * 3. Where the postcode lives.
+ *    Czechia and Wallonia reference an `ad:PostalDescriptor`; the Netherlands puts
+ *    it inline as a `LocatorDesignatorTypeValue/postalDeliveryIdentifier` locator
+ *    and publishes no `ad:PostalDescriptor` at all.
+ * 4. The locator vocabulary.
+ *    Czechia types its number `buildingIdentifier`, the Netherlands `addressNumber`, Wallonia
+ *    `LocatorDesignatorTypeValue/addressIdentifierGeneral`, Brussels `buildingIdentifier`.
+ * 5. The prefix's case.
+ *    Seven publishers write `ad:` and `gn:`.
+ *    The Dirección General del Catastro and the Gobierno de Navarra bind the
+ *    same namespaces to `AD:` and `GN:`.
+ *    The Catastro also states a designator type and an administrative level as element text,
+ *    `1` and `4`, where everyone else writes a codelist URI.
+ *    The readers below therefore match an element name without regard to case,
+ *    and accept either form of a coded value.
  *
- * So this module exposes the primitives and leaves composition to each adapter. A configuration
- * object describing those axes would state claims about files no one has read. These small
- * functions state none.
+ * So this module exposes the primitives and leaves composition to each adapter.
+ * A configuration object describing those axes would state claims about files no one has read.
+ * These small functions state none.
  *
  * The reference form is the exception, because its shapes are enumerable and measured:
  * {@linkcode componentJoinKey} reads all four.
@@ -190,7 +196,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
 		const value = inspireChild(locatorDesignator, "ad:designator")
 
 		// A void designator is reported by `voidDesignatorTypes` rather than here, because a
-		// value the publisher marked unknown is not a value and must not reach a component.
+		// value the publisher marked unknown isn't a value and mustn't reach a component.
 		if (!value || isVoid(value)) continue
 
 		const existing = byType.get(name)
@@ -222,7 +228,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
  *
  * A caller reads this when the difference changes what it does.
  * An adapter that refuses a row with no house number should report a void `buildingIdentifier` as
- * a value it could not read, and an absent one as an address the publisher states has no number.
+ * a value it couldn't read, and an absent one as an address the publisher states has no number.
  */
 export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string> {
 	const voided = new Set<string>()
@@ -350,10 +356,10 @@ const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
  * A URI with no id parameter is its own key.
  * Flanders publishes that form on both sides of the join.
  *
- * Its fragment is dropped, because a reference may hold one where the identifier does not:
+ * Its fragment is dropped, because a reference may hold one where the identifier doesn't:
  * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
  *
- * Whether a key joins is not a property of its spelling, so this reads a key
+ * Whether a key joins isn't a property of its spelling, so this reads a key
  * and the caller decides joinability against the features the publisher served.
  * A check based on the URL's shape once reported 15 of Flanders' 20 references as belonging
  * to another register, when every one of them addressed a feature of the same service.

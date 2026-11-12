@@ -4,15 +4,19 @@
 /**
  *   Report, and with `--delete` remove, corpus store directories no root reaches.
  *
- *   The roots are the version manifests listed by a frozen training manifest under
- *   `packages/corpus/data/training-manifests/` or by a model card (`packages/neural-weights-*\/model-card.json`).
- *   `store-gc.ts` defines reachability. Without `--delete` the tool only reports. With it, it removes an
- *   unreachable directory whose newest file is older than `--retain-days`, and it refuses to delete anything
- *   while any root's manifest is unreadable, because the reachable set is then unknown.
+ *   The roots are the version manifests listed by a frozen training
+ *   manifest under `packages/corpus/data/training-manifests/` or by a model
+ *   card (`packages/neural-weights-*\/model-card.json`).
+ *   `store-gc.ts` defines reachability.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/store/gc.run.ts [--versioned-root <dir>] [--store <dir> ...]
- *   node packages/mailwoman/tools/dev-tools/corpus/store/gc.run.ts --delete --retain-days 30
+ *   Without `--delete` the tool only reports.
+ *   With it, it removes an unreachable directory whose newest file is older than
+ *   `--retain-days`, and it refuses to delete anything while any root's manifest is
+ *   unreadable, because the reachable set is then unknown.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/store/gc.run.ts [--versioned-root <dir>]
+ *   [--store <dir> ...] node packages/mailwoman/tools/dev-tools/corpus/store/gc.run.ts
+ *   --delete --retain-days 30
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -112,7 +116,7 @@ for (const entry of reach) {
 	}
 }
 
-// A store root is `<version>/store`, read off the files inside one so an empty store is not listed.
+// A store root is `<version>/store`, read off the files inside one so an empty store isn't listed.
 const stores = values.store ?? [
 	...new Set(
 		(await Globerator.from("*/store/**/*", { cwd: versionedRoot, onlyFiles: true }).toArray()).map((relative) =>

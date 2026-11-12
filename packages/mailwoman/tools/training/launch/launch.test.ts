@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The launch lifecycle against a stub Modal boundary: preflight, detached start, duplicate refusal, status, restart
- *   after a stop, cancellation and the timeout.
+ *   The launch lifecycle against a stub Modal boundary: preflight, detached start,
+ *   duplicate refusal, status, restart after a stop, cancellation and the timeout.
  */
 
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -67,7 +67,7 @@ function harness() {
 	const preflightTimeouts: number[] = []
 	const sleeps: number[] = []
 	const locked = new Set<string>()
-	// The count of further starts Modal refuses for a name an exited sandbox has not yet released.
+	// The count of further starts Modal refuses for a name an exited sandbox hasn't yet released.
 	const releasing = { refusals: 0 }
 
 	const boundary: ModalBoundary = {
@@ -135,7 +135,7 @@ function harness() {
 			records.set(record.runKey, record)
 		},
 		lockRun: async (key) => {
-			if (locked.has(key)) throw new Error(`another start or restart of run ${key} holds its lock`)
+			if (locked.has(key)) throw new Error(`another start, restart or cancel of run ${key} holds its lock`)
 
 			locked.add(key)
 
@@ -287,7 +287,7 @@ describe("the training launch lifecycle", () => {
 		const spec = sandboxes.get(second.sandboxes[1]!)!.spec
 
 		expect(spec.env).toMatchObject({ MW_FRESH: "0", MW_FAIL_AT_STEP: "0" })
-		// A restart is a new launch, so an earlier launch's fault-injection marker does not apply to it.
+		// A restart is a new launch, so an earlier launch's fault-injection marker doesn't apply to it.
 		expect(spec.env?.["MW_LAUNCH_ID"]).not.toBe(first.environment.MW_LAUNCH_ID)
 		await expect(restartLaunch(runKey, deps)).rejects.toThrow(/is running/)
 
@@ -302,6 +302,18 @@ describe("the training launch lifecycle", () => {
 		await cancelLaunch(runKey, deps)
 		expect(terminated).toEqual([record.sandboxes[0]])
 		await expect(launchStatus(runKey, deps)).resolves.toMatchObject({ state: LaunchState.Stopped })
+	})
+
+	it("refuses a cancel while a start or restart holds the run's lock, and terminates no sandbox", async () => {
+		const { deps, terminated } = harness()
+
+		await startLaunch(CONFIG, OPTIONS, deps)
+
+		// A restart holding the lock may be recording a new sandbox, so the record a cancel read would be stale.
+		await using _held = await deps.lockRun(runKey)
+
+		await expect(cancelLaunch(runKey, deps)).rejects.toThrow(/holds its lock/)
+		expect(terminated).toEqual([])
 	})
 
 	it("fetches a run's output directory, or one checkpoint of it, from the volume", async () => {

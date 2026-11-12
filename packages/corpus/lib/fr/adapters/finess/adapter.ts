@@ -8,78 +8,95 @@
  * Input is the publisher's `etalab-cs1100502-stock-<date>.csv`, the resource titled `Extraction
  * Finess des Etablissements` on `https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements`.
  * The file is UTF-8 and semicolon-separated with RFC 4180 quoting. The publisher's description
- * (`etalab_cs1100502.pdf`) states tab-separated, and the file does not follow it. Line 1 is a comment
+ * (`etalab_cs1100502.pdf`) states tab-separated, and the file doesn't follow it. Line 1 is a comment
  * (`finess;etalab;111;2026-05-12`) and every other line opens with `structureet`. The adapter reads
  * the positional columns the description numbers: 4 `rs`, 5 `rslongue`, 8 `numvoie`, 9 `typvoie`, 10
  * `voie`, 11 `compvoie`, 12 `lieuditbp`, 14 `departement`, 16 `ligneacheminement` and 19
  * `categetab`, counted from 1. {@linkcode FinessColumn} holds them counted from 0.
  *
  * The publisher froze this extract at data dated 2026-05-04 and states on the dataset page that it
- * will not be updated again. Its successor is the Agence du Numérique en Santé's `FINESS -
- * Structures` JSON flow, a different schema this adapter does not read.
+ * won't be updated again. Its successor is the Agence du Numérique en Santé's `FINESS -
+ * Structures` JSON flow, a different schema this adapter doesn't read.
  *
  * ## Which rows are read
  *
- * `departement` holds a two-character code, and the overseas ones are `9A` Guadeloupe, `9B`
- * Martinique, `9C` Guyane, `9D` La Réunion, `9E` Saint-Pierre-et-Miquelon, `9F` Mayotte and `9J`
- * Wallis-et-Futuna. Saint-Barthélemy and Saint-Martin have no code of their own: their
- * establishments sit under `9A`, and the postcodes 97133 and 97150 separate them, so the adapter
- * assigns those two postcodes to BL and MF. A metropolitan row is refused under
- * {@linkcode FinessRefusal.NotOverseas}, which on the 2026-05-04 extract is most of the file.
+ * `departement` holds a two-character code, and the overseas ones are `9A` Guadeloupe,
+ * `9B` Martinique, `9C` Guyane, `9D` La Réunion, `9E` Saint-Pierre-et-Miquelon,
+ * `9F` Mayotte and `9J` Wallis-et-Futuna.
+ * Saint-Barthélemy and Saint-Martin have no code of their own: their
+ * establishments sit under `9A`, and the postcodes 97133 and 97150 separate them,
+ * so the adapter assigns those two postcodes to BL and MF.
+ *
+ * A metropolitan row is refused under {@linkcode FinessRefusal.NotOverseas},
+ * which on the 2026-05-04 extract is most of the file.
  *
  * ## Organizations only
  *
- * Every FINESS establishment is an organization's site: a hospital, a pharmacy, a laboratory, a
- * service office. Three categories house the people they serve in a private dwelling. In `462`
- * Lieux de vie et d'accueil the staff live with the people they receive. A FINESS category `238`
- * establishment, specialized family reception, places patients with host families, as a `236` Service de placement familial
- * does. An address in those three can be a family's home, so they are refused under
- * {@linkcode FinessRefusal.FamilyPlacement}, as is an establishment whose name states family
- * placement or a lieu de vie under another category. A row whose street type is TRE-R35's `CHEZ`,
- * or whose line opens with `CHEZ`, gives the person whose premises it is and is refused under
- * {@linkcode FinessRefusal.CareOfPerson}.
+ * Every FINESS establishment is an organization's site: a hospital, a pharmacy,
+ * a laboratory, a service office.
+ * Three categories house the people they serve in a private dwelling.
+ *
+ * In `462` Lieux de vie et d'accueil the staff live with the people they receive.
+ * A FINESS category `238` establishment, specialized family reception, places patients
+ * with host families, as a `236` Service de placement familial does.
+ *
+ * An address in those three can be a family's home, so they're refused under
+ * {@linkcode FinessRefusal.FamilyPlacement}, as is an establishment whose name states
+ * family placement or a lieu de vie under another category.
+ * A row whose street type is TRE-R35's `CHEZ`, or whose line opens with `CHEZ`, gives the
+ * person whose premises it is and is refused under {@linkcode FinessRefusal.CareOfPerson}.
  *
  * ## The street line
  *
- * `numvoie` is the number, `compvoie` its repetition index, `typvoie` a TRE-R35 street-type code and
- * `voie` the name. The code is expanded by {@linkcode expandFinessVoieType} and written first, as
- * French addresses write it: `R` and `DE PARIS` print `RUE DE PARIS`. The word takes the name's
- * case, so an all-capitals name keeps an all-capitals line. A name that already opens with the type
- * word (`CHE` and `CHEMIN SAFER MORANGE`) is not given it twice, and a name with no code is split by
- * {@linkcode splitFrenchStreetType}, which reads the BAN adapter's street-type dictionary first.
+ * `numvoie` is the number, `compvoie` its repetition index, `typvoie` a TRE-R35
+ * street-type code and `voie` the name.
+ * The code is expanded by {@linkcode expandFinessVoieType} and written first,
+ * as French addresses write it: `R` and `DE PARIS` print `RUE DE PARIS`.
  *
- * `compvoie` is one of `B`, `T`, `Q` or `C`. The first three are bis, ter and quater. `C` is
- * refused under {@linkcode FinessRefusal.RepetitionIndexAmbiguous}: INSEE's coding reads it as
- * quinquies, and the national extract holds 133 `C` against 31 `Q`, which is not the ratio of a
- * fifth repetition to a fourth and reads as a letter suffix entered in the index field.
+ * The word takes the name's case, so an all-capitals name keeps an all-capitals line.
+ * A name that already opens with the type word (`CHE` and `CHEMIN SAFER MORANGE`) isn't
+ * given it twice, and a name with no code is split by {@linkcode splitFrenchStreetType},
+ * which reads the BAN adapter's street-type dictionary first.
  *
- * A digit in `voie` is refused under {@linkcode FinessRefusal.StreetDigitUnplaced} unless the digits
- * name the street, as a numbered route (`NATIONALE 2`) or a date (`DU 22 MAI`) does. The number has
- * its own field, so a digit left in the street name is a box, a building or a door: `VALLÉE 3 BP 208`,
- * `DIAKA BAT A4 PORTE 2`.
+ * `compvoie` is one of `B`, `T`, `Q` or `C`.
+ * The first three are bis, ter and quater.
+ *
+ * `C` is refused under {@linkcode FinessRefusal.RepetitionIndexAmbiguous}: INSEE's coding reads
+ * it as quinquies, and the national extract holds 133 `C` against 31 `Q`, which isn't the ratio
+ * of a fifth repetition to a fourth and reads as a letter suffix entered in the index field.
+ *
+ * A digit in `voie` is refused under {@linkcode FinessRefusal.StreetDigitUnplaced} unless the
+ * digits name the street, as a numbered route (`NATIONALE 2`) or a date (`DU 22 MAI`) does.
+ * The number has its own field, so a digit left in the street name is a box, a building
+ * or a door: `VALLÉE 3 BP 208`, `DIAKA BAT A4 PORTE 2`.
  *
  * ## The lieu-dit and box line, and the routing line
  *
- * `lieuditbp` holds a lieu-dit, a post-office box, or both (`ZA ESPERANCE - BP 26`). The box becomes
- * `po_box` and the rest `dependent_locality`. A remainder that writes the same place as the locality
- * or the street is dropped, and one holding a digit is refused under
- * {@linkcode FinessRefusal.LieuDitDigitUnplaced}, because `1ER ETAGE MONTGERALD` and `VILLA N° 3`
- * name a floor and a building rather than a place. A remainder that opens with a building, floor or
- * landmark word (`IMMEUBLE SEMAFA`, `ANGLE DES RUES JEAN JAURES`) is left out of the row and counted
- * under {@linkcode FinessTrim.LieuDitPremiseDescriptor}, because the row stays an address without it.
+ * `lieuditbp` holds a lieu-dit, a post-office box, or both (`ZA ESPERANCE - BP 26`).
+ * The box becomes `po_box` and the rest `dependent_locality`.
  *
- * `ligneacheminement` is La Poste's routing line, `97100 BASSE TERRE` or `97331 CAYENNE CEDEX`. It
- * gives the postcode, the locality as La Poste routes it and the `cedex` phrase. Every codex layout
- * this adapter emits prints that phrase after the locality. French Polynesia is the exception.
+ * A remainder that writes the same place as the locality or the street is dropped,
+ * and one holding a digit is refused under {@linkcode FinessRefusal.LieuDitDigitUnplaced},
+ * because `1ER ETAGE MONTGERALD` and `VILLA N° 3` name a floor and a building rather than a place.
+ * A remainder that opens with a building, floor or landmark word
+ * (`IMMEUBLE SEMAFA`, `ANGLE DES RUES JEAN JAURES`) is left out of the row and counted under
+ * {@linkcode FinessTrim.LieuDitPremiseDescriptor}, because the row stays an address without it.
+ *
+ * `ligneacheminement` is La Poste's routing line, `97100 BASSE TERRE` or `97331 CAYENNE CEDEX`.
+ * It gives the postcode, the locality as La Poste routes it and the `cedex` phrase.
+ *
+ * Every codex layout this adapter emits prints that phrase after the locality.
+ * French Polynesia is the exception.
  *
  * ## Identity and license
  *
- * The row id is content-addressed over the aligned components, so two establishments at one address
- * under one name are one row. FINESS numbers identify establishments rather than addresses.
+ * The row id is content-addressed over the aligned components, so two establishments
+ * at one address under one name are one row.
+ * FINESS numbers identify establishments rather than addresses.
  *
  * data.gouv.fr publishes the dataset under the license whose id is `fr-lo`, titled `Licence Ouverte /
  * Open Licence`, and links its text at
- * `https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf`. That is version 1.0
+ * `https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf`. That's version 1.0
  * of October 2011. It grants the reuser the right to « Adapter, modifier, extraire et
  * transformer à partir de « l'Information », notamment pour créer des « Informations dérivées » »,
  * « Sous réserve de : Mentionner la paternité de « l'Information » : sa source (a minima le nom du
@@ -87,8 +104,8 @@
  * {@linkcode FR_FINESS_ATTRIBUTION} is the credit. The model card completes it with the
  * extraction date the fetch manifest records.
  *
- * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts every refusal
- * under its reason in `opts.dropped`.
+ * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts
+ * every refusal under its reason in `opts.dropped`.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -234,11 +251,11 @@ export const FinessColumn = {
 export type FinessColumn = (typeof FinessColumn)[keyof typeof FinessColumn]
 
 /**
- * Why a line did not become a row.
+ * Why a line didn't become a row.
  */
 export const FinessRefusal = {
 	/**
-	 * The line is not a `structureet` record, as the comment on line 1 is not.
+	 * The line isn't a `structureet` record, as the comment on line 1 isn't.
 	 */
 	NotEstablishment: "row:not-establishment",
 	/**
@@ -254,7 +271,7 @@ export const FinessRefusal = {
 	 */
 	CareOfPerson: "row:care-of-person",
 	/**
-	 * The routing line is not a five-digit postcode followed by a locality and an optional `CEDEX`.
+	 * The routing line isn't a five-digit postcode followed by a locality and an optional `CEDEX`.
 	 */
 	RoutingLineUnparsed: "row:routing-line-unparsed",
 	/**
@@ -274,11 +291,11 @@ export const FinessRefusal = {
 	 */
 	StreetNameAbsent: "row:street-name-absent",
 	/**
-	 * The street name holds a digit that does not name the street.
+	 * The street name holds a digit that doesn't name the street.
 	 */
 	StreetDigitUnplaced: "row:street-digit-unplaced",
 	/**
-	 * The lieu-dit holds a digit, as a floor, a building or a lot does and a place does not.
+	 * The lieu-dit holds a digit, as a floor, a building or a lot does and a place doesn't.
 	 */
 	LieuDitDigitUnplaced: "row:lieu-dit-digit-unplaced",
 	/**
@@ -286,7 +303,7 @@ export const FinessRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row holds.
+	 * The jurisdiction's layout doesn't print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -302,7 +319,7 @@ export type FinessRefusal = (typeof FinessRefusal)[keyof typeof FinessRefusal]
  */
 export const FinessTrim = {
 	/**
-	 * The lieu-dit line names part of a building or a landmark (`IMMEUBLE SEMAFA`), which is not a place.
+	 * The lieu-dit line names part of a building or a landmark (`IMMEUBLE SEMAFA`), which isn't a place.
 	 */
 	LieuDitPremiseDescriptor: "component:dependent_locality:premise-descriptor",
 } as const
@@ -402,7 +419,7 @@ function readStreet(
 		return out
 	}
 
-	// A name that already opens with its own type word, or with the code, is not given the word twice.
+	// A name that already opens with its own type word, or with the code, isn't given the word twice.
 	const [firstToken = "", ...rest] = name.split(" ")
 
 	if (rest.length && (isSamePlace(firstToken, word) || isSamePlace(firstToken, code))) {

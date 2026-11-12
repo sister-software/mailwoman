@@ -45,7 +45,7 @@ set the same separator bit — a parenthesized annotation is flattened to "a fie
 happened here, twice," and its content stays inline in the label sequence.
 
 **(c) Hyphens and slashes.** Hyphenated words get per-subword features: a loop over
-`string_next_hyphen_index` emits a feature for each constituent word that is in vocabulary
+`string_next_hyphen_index` emits a feature for each constituent word that's in vocabulary
 (`address_parser.c` around line 1379, confirmed in Al Barrentine's write-up:
 "For hyphenated words … there's a new feature for each distinct word in the hyphenated phrase"
 — [Statistical NLP on OpenStreetMap part 2](https://medium.com/@albarrentine/statistical-nlp-on-openstreetmap-part-2-80405b988718)).
@@ -79,7 +79,7 @@ slash-form sub-premises are under-represented.
   "FLAT 6-20" parsed into house_number, "Flat 2/19" works only in some positions — the
   hyphen/slash sub-premise quadrant, failing for the same reason ours does (the designator
   vocabulary is in dictionaries, but the punctuated identifier shape was never supervised).
-- [#125 "Suite/Apartment parsing is not correct"](https://github.com/openvenues/libpostal/issues/125):
+- [#125 `Suite/Apartment parsing is not correct`](https://github.com/openvenues/libpostal/issues/125):
   unit-vs-house-number confusion predates the 1.0 `unit` label.
 
 **Takeaway.** Punctuation-as-feature (not as token) is a real, shipped mechanism — but
@@ -109,7 +109,7 @@ character was in the original input text." Delimiters aren't tokens to classify 
 exception below); they're constraints on what spans may exist.
 
 **(b) Paired delimiters.** Quotes: treated as unpaired hard boundaries (the TODO above).
-Parentheses/brackets: **no handling at all** — they are not section boundaries and not
+Parentheses/brackets: **no handling at all** — they're not section boundaries and not
 stripped. A lone punctuation token does get classified: `AlphaNumericClassifier` assigns
 `PunctuationClassification` to tokens matching
 `/^[@&/\\#,+()$~%.!^'";:*?[\]<>{}]+$/`
@@ -227,7 +227,7 @@ char_filter provides most of it.
   ([Geocoding API docs](https://docs.mapbox.com/api/search/geocoding/)).
 - **HERE**: free-form `q` plus a qualified-query parameter whose syntax itself uses
   semicolon-separated `field=value` pairs. Punctuation normalization inside free-form queries
-  is not documented ([HERE Geocoding & Search docs](https://www.here.com/docs/category/geocoding-search-v7)).
+  isn't documented ([HERE Geocoding & Search docs](https://www.here.com/docs/category/geocoding-search-v7)).
 
 The direct summary: commercial systems document punctuation as _input interface_ (what you may
 send) rather than _mechanism_ (what they do with it). No design evidence to mine beyond "they
@@ -280,9 +280,9 @@ A one-table summary of who does what:
 No surveyed system parses paired delimiters as structure at query time. The only deliberate, shipped
 solution is **Nominatim's `strip-brace-terms`** — index-time variant generation. It encodes
 the key semantic: _bracketed content is an optional addendum, and the name is valid with and
-without it_. That is exactly our eval's gold convention 2 (annotations are not components, and
+without it_. That's exactly our eval's gold convention 2 (annotations are not components, and
 the row grades whether neighbors survive). Pelias's section mechanism is the nearest
-query-side analog — delimiters define spans that phrases must not cross — but Pelias never
+query-side analog — delimiters define spans that phrases mustn't cross — but Pelias never
 built pair-matching (their own TODO) and ignores parentheses entirely. libpostal flattens
 bracket structure into two anonymous boundary bits. Conclusion: our weak quadrant is weak
 _everywhere_. The survey's transferable mechanisms are (i) boundary-constraint semantics
@@ -351,7 +351,7 @@ exactly this bleed ("Main St, East Village"), while its unbuilt pair-matching TO
 gap we'd close. Nominatim's `strip-brace-terms` proves the "content is an optional addendum"
 semantics is the right read of bracketed annotations.
 **vs Stage 2.7 doc:** confirms the #518 paired-delimiter cue family and extends it with the
-decode-side crossing constraint. That doc does not yet name the constraint.
+decode-side crossing constraint. That doc doesn't yet name the constraint.
 
 ### M3. Dual-path slash/hyphen proposals, locale-conditioned (the Pelias PR #56 mechanism in our stack)
 

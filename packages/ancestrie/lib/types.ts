@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Public types for ancestrie, a materialized trie over an ancestry graph. Consumers provide the payload.
- *   They also provide the tokenizer. Domain-specific placetypes and gazetteers live in consumer payloads.
+ *   Public types for ancestrie, a materialized trie over an ancestry graph.
+ *
+ *   Consumers provide the payload.
+ *   They also provide the tokenizer.
+ *
+ *   Domain-specific placetypes and gazetteers live in consumer payloads.
  *   Consumers implement geocoding.
  */
 

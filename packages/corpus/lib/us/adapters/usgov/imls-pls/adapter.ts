@@ -4,12 +4,12 @@
 /**
  *   `usgov-imls-pls`: IMLS Public Libraries Survey outlet CSV consumer.
  *
- *   The Institute of Museum and Library Services publishes an annual Public Libraries Survey with one
- *   row per library outlet (~17K rows). Each row includes the library name, street address, city,
- *   ZIP, county and geocoordinates.
+ *   The Institute of Museum and Library Services publishes an annual Public Libraries
+ *   Survey with one row per library outlet (~17K rows).
+ *   Each row includes the library name, street address, city, ZIP, county and geocoordinates.
  *
- *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.ts`. Column
- *   names match the IMLS PLS outlet file header.
+ *   The adapter consumes the outlet CSV the operator pre-downloads via `fetch-imls-pls.ts`.
+ *   Column names match the IMLS PLS outlet file header.
  *
  *   Output: one row per outlet with `venue` (library name), `(house_number, street, locality,
  *   subregion, postcode)`, and lat/lon preserved in `source_id` stability.
@@ -104,7 +104,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					// No subregion: US postal addresses don't surface the county, so emitting subregion
 					// creates a phantom component with no raw-span to align to, quarantining ~21% of rows.
 					// The county is still available in the source CSV.
-					// It is not a postal-surface component here.
+					// It isn't a postal-surface component here.
 				}
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })

@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the manifest stamped by postcode and locality builders. Each test also checks the tier a builder states.
+ *   Tests the manifest stamped by postcode and locality builders.
+ *   Each test also checks the tier a builder states.
  *
- *   The candidate build reads a fold's `layer_manifest.tier` before folding it. These tests pin the value each builder writes.
- *   They call the Code-Point and Taiwan composers directly because full builds require an archive and parquet input.
+ *   The candidate build reads a fold's `layer_manifest.tier` before folding it.
+ *   These tests pin the value each builder writes.
+ *
+ *   They call the Code-Point and Taiwan composers directly because full builds
+ *   require an archive and parquet input.
  *   They also check the GeoNames tail's terms function for both country shapes.
  */
 

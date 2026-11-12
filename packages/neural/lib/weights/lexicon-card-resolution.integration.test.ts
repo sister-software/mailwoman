@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename: a
- *   card naming a generation the package does not ship must refuse rather than silently serve a
- *   different one.
+ *   The evidence-bundle lexicons resolve from the model-card rather than a hard-coded
+ *   filename: a card naming a generation the package doesn't ship must refuse
+ *   rather than silently serve a different one.
  *
  *   These tests build synthetic package layouts under a `cacheRoot.path` so they need no model
- *   binaries — `resolveWeights` only `existsSync`-probes `model.onnx` / `tokenizer.model`, and empty
- *   stubs are enough to reach the sibling-resolution code.
+ *   binaries — `resolveWeights` only `existsSync`-probes `model.onnx` / `tokenizer.model`,
+ *   and empty stubs are enough to reach the sibling-resolution code.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

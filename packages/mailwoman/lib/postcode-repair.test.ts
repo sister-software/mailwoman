@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The rung fires on the recorded contradiction — a letter-digit postcode span at ≥0.9 shape confidence with only misread-family nodes wholly inside it — and on no other input. Every veto case must stay byte-identical.
+ *   The rung fires on the recorded contradiction — a letter-digit postcode span at ≥0.9 shape
+ *   confidence with only misread-family nodes wholly inside it — and on no other input.
+ *   Every veto case must stay byte-identical.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

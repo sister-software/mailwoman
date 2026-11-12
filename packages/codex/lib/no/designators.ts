@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Norwegian postal designators: the delivery service, sub-premise, floor and relation words an address or a
- *   query uses.
+ *   Norwegian postal designators: the delivery service, sub-premise, floor
+ *   and relation words an address or a query uses.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/norEn.pdf UPU Norway addressing sheet (Posten Norge)}
  * @see {@link https://en.wiktionary.org/wiki/leilighet Wiktionary: leilighet}

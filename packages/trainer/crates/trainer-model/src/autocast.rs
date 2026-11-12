@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `torch.autocast(device_type, dtype)` as a guard.
 //!
 //! The Python loop runs the forward pass inside `torch.autocast` on an NVIDIA device in bf16 (#2871), and the

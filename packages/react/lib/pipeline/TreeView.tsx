@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `TreeView` — the parse's containment tree as nested lists with a guide rail per level. The tag tint follows the
- *   confidence tier. the value and score render in monospace.
+ *   `TreeView` — the parse's containment tree as nested lists with a guide rail per level.
+ *
+ *   The tag tint follows the confidence tier. the value and score render in monospace.
  */
 
 import type { ReactNode } from "react"

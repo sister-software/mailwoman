@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Multi-extract attach tests for `WOFSQLitePlaceLookup`; fixtures are on-disk because attach requires file paths.
+ *   Multi-extract attach tests for `WOFSQLitePlaceLookup`; fixtures are on-disk
+ *   because attach requires file paths.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

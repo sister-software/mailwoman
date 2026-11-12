@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   OpenAPI emit helpers. The document is always derived from the route table — never
- *   handwritten. 3.1 is the published flavor. 3.0 exists solely for client generators that lag
- *   (progenitor), replacing the old hand-downgrade step.
+ *   OpenAPI emit helpers.
+ *
+ *   The document is always derived from the route table — never handwritten. 3.1 is the
+ *   published flavor. 3.0 exists solely for client generators that lag (progenitor),
+ *   replacing the old hand-downgrade step.
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
@@ -51,7 +53,7 @@ export interface OpenAPIDocInfo {
  *
  * @param base The caller's `import.meta.url`.
  * The package resolves through the graph of the workspace that declares it.
- * That is the purpose of `resolve-from`.
+ * That's the purpose of `resolve-from`.
  * `@mailwoman/api-kit`'s graph would supply the answer if resolution started here.
  */
 export async function readServedDocumentInfo(

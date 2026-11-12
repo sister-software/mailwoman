@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_interface` tool definition provides the description, input schema and handler wiring an agent reads.
+ *   The `mwdev_interface` tool definition provides the description, input schema
+ *   and handler wiring an agent reads.
  *   The measurement lives in `../interface-report.ts`.
  */
 

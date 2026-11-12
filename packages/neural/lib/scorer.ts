@@ -200,8 +200,8 @@ export interface CreateScorerOpts {
 
 	/**
 	 * The per-locale FST gazetteer, such as `fst-<locale>.bin`, exposed through
-	 * {@link NeuralAddressClassifier.fstPath}: only the path is stored because `neural` does
-	 * not depend on `resolver-wof-sqlite`, and without it the pipeline applies no FST bias.
+	 * {@link NeuralAddressClassifier.fstPath}: only the path is stored because `neural` doesn't
+	 * depend on `resolver-wof-sqlite`, and without it the pipeline applies no FST bias.
 	 */
 	fstPath?: PathBuilderLike
 
@@ -257,7 +257,7 @@ export interface CreateScorerOpts {
 
 	/**
 	 * The serving tier whose certified capabilities the conventions check reads,
-	 * defaulting to `"server"`; the check has no effect for a tier the card does not certify.
+	 * defaulting to `"server"`; the check has no effect for a tier the card doesn't certify.
 	 */
 	tier?: string
 

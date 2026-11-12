@@ -65,7 +65,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `crf_loss_weight`
 
-**What it does.** Multiplier on the CRF NLL term in the dual-loss: `loss = CE + crf_loss_weight × CRF_NLL`. At 0.0, the CRF NLL is not computed during training (CE-only). The CRF at inference (structural BIO mask + Viterbi decode) is always active regardless.
+**What it does.** Multiplier on the CRF NLL term in the dual-loss: `loss = CE + crf_loss_weight × CRF_NLL`. At 0.0, the CRF NLL isn't computed during training (CE-only). The CRF at inference (structural BIO mask + Viterbi decode) is always active regardless.
 
 | Value   | Where                                       | What happened                            |
 | ------- | ------------------------------------------- | ---------------------------------------- |
@@ -77,7 +77,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent rather than a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
 
-**Upper bound.** 0.0 is the floor. There is no known ceiling because any value > 0 reintroduces the curvature conflict on this data. The structural CRF benefits (no orphan I-tags) are preserved at inference via the frozen mask. The training-side CRF NLL is unnecessary.
+**Upper bound.** 0.0 is the floor. There's no known ceiling because any value > 0 reintroduces the curvature conflict on this data. The structural CRF benefits (no orphan I-tags) are preserved at inference via the frozen mask. The training-side CRF NLL is unnecessary.
 
 ### `class_weights`
 
@@ -98,7 +98,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Whether it worked.** The v0.5.1 training run is still running. The eval at step 55K showed val_macro_f1=0.633 but we need the per-component breakdown to know if the hallucination was suppressed.
 
-**Risks.** A dependent_locality weight that is too low (e.g. 0.1) could make the model unable to learn it at all — if the data ever includes legitimate dependent_locality examples, the model would ignore them. 0.3 is a compromise: low enough to suppress hallucination, high enough that a clear signal still trains.
+**Risks.** A dependent_locality weight that's too low (e.g. 0.1) could make the model unable to learn it at all — if the data ever includes legitimate dependent_locality examples, the model would ignore them. 0.3 is a compromise: low enough to suppress hallucination, high enough that a clear signal still trains.
 
 ### `label_smoothing`
 

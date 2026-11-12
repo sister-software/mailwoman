@@ -42,7 +42,7 @@ export type CaseNormalization = "title-case" | "preserve"
  * How a caller sources an optional stage.
  *
  * - `"auto"` loads the bundled default when it is first needed.
- *   For a typical caller that is the first parse.
+ *   For a typical caller that's the first parse.
  * - `"none"` disables the stage.
  * - Any other value is the stage itself.
  */
@@ -134,6 +134,24 @@ export type WordConsistencySetting = "off" | WordConsistencyOpts
 export interface PipelineOpts {
 	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	userLocation?: UserLocation
+	/**
+	 * The ISO 3166-1 alpha-2 country passed to the classifier as its locale hint, such as `US`.
+	 *
+	 * When it is unset, the classifier receives no hint.
+	 * The pipeline derives no hint from `locale` or `userLocation`, so a caller states it explicitly.
+	 */
+	localeHint?: string
+	/**
+	 * What the pipeline parses a line break as.
+	 *
+	 * - `"keep"`, the default, parses the text as given.
+	 * - `"comma"` parses each line break, with the spaces around it, as `, `,
+	 *   the one-line form the corpus renders.
+	 *
+	 * A line break between the street line and the city line is absent from training (#2992).
+	 * The tree's offsets point into the normalized text, as they do for every other normalization.
+	 */
+	lineBreaks?: "keep" | "comma"
 	/**
 	 * The input register.
 	 * The default `"auto"` derives it from the query kind.
@@ -321,7 +339,8 @@ export const QueryIntentMarkerSchema = z
 		mechanism: z.string(),
 		/**
 		 * Human-readable text.
-		 * Branch on `code`, which is stable.
+		 *
+		 * Branch on `code`, because its values stay fixed across releases.
 		 */
 		message: z.string(),
 		/**
@@ -439,7 +458,7 @@ const POICategorySubjectSchema = z.object({
 	kind: z.literal("category"),
 	/**
 	 * Category IDs to search together.
-	 * The order does not rank these values.
+	 * The order doesn't rank these values.
 	 */
 	categoryIDs: z.array(z.string()),
 	matched: z.string(),
@@ -690,6 +709,13 @@ export interface ClassifierOpts {
 	 */
 	queryShape?: Pick<QueryShapeLite, "knownFormats">
 	inputMode?: InputMode
+	/**
+	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in.
+	 *
+	 * A model with a `locale_hint` input reads it as evidence it can overrule,
+	 * and other classifiers ignore it.
+	 */
+	localeHint?: string
 	fst?: FSTMatcherLike | null
 	fstBiasScale?: number
 	/**
@@ -717,7 +743,7 @@ export interface ClassifierOpts {
 	 * Venue-head lookups for the input's country.
 	 *
 	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
-	 * Absent, the prior does not run.
+	 * Absent, the prior doesn't run.
 	 */
 	venueHead?: VenueHeadLexiconLike
 	/**

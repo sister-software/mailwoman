@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The Korean permit registry (지방행정인허가데이터) as an `observation` source. It reads the delivered
- * CSVs and turns an aligned string into a corpus row.
+ * The Korean permit registry (지방행정인허가데이터) as an `observation` source.
  *
- * The publisher delivers CP949, one file per business category, with both address systems typed by
- * a clerk plus a planar coordinate in epsg:5174 and both postcodes. The adapter separates reading from
- * aligning so the alignment rate per file can be measured before any row enters a corpus.
+ * It reads the delivered CSVs and turns an aligned string into a corpus row.
+ *
+ * The publisher delivers CP949, one file per business category, with both address systems
+ * typed by a clerk plus a planar coordinate in epsg:5174 and both postcodes.
+ * The adapter separates reading from aligning so the alignment rate per file can
+ * be measured before any row enters a corpus.
  */
 
 import { sortedGlob } from "@mailwoman/core/fs/readers"
@@ -69,7 +71,7 @@ export interface PermitRow {
  *
  * The publisher's older and newer exports name the same field differently — `도로명주소`
  * against `도로명전체주소`, `좌표정보(X)` against `좌표정보(x)` — and a directory holds both vintages,
- * so each field names every spelling it has been delivered under.
+ * so each field lists every spelling it has been delivered under.
  */
 function firstColumn(row: Record<string, string | undefined>, ...names: readonly string[]): string {
 	for (const name of names) {
@@ -84,7 +86,7 @@ function firstColumn(row: Record<string, string | undefined>, ...names: readonly
 /**
  * A coordinate field as a number, or `null` when the field is empty.
  *
- * A non-empty field that is not a number, such as `198,000`, raises: Python's `float` did,
+ * A non-empty field that's not a number, such as `198,000`, raises: Python's `float` did,
  * and reading it as absent would drop the row from its district's centroid without a count.
  *
  * @throws Naming the value and the field.

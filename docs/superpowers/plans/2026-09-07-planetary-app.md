@@ -18,7 +18,7 @@
 - The app omits the Earth basemap layer, the sprite, and a Worker script. It also has no query parameter that switches the body.
 - Every distance or area claim goes through `@mailwoman/spatial` with the body. v1 makes no such claims.
 - Dependency ranges match existing declarations (`sherif`).
-- The component and hook names are the ones the second Earth runtime plan leaves in `@mailwoman/react/map` (`MapCanvas`). If that plan has not landed, `DemoMap` is the same component under its old name, and the rename changes this app's two import lines when it lands.
+- The component and hook names are the ones the second Earth runtime plan leaves in `@mailwoman/react/map` (`MapCanvas`). If that plan hasn't landed, `DemoMap` is the same component under its old name, and the rename changes this app's two import lines when it lands.
 - Branch: `git fetch origin main && git checkout -b feat/planetary origin/main`.
 
 ## File Structure
@@ -124,7 +124,7 @@ export interface StyleSpecificationComposition {
 }
 ```
 
-The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved value is not `null`, and `toJSON` spreads `sprite` only when not `null` and uses `this.glyphs`. Keep the two URL constants as module-level default constants (`PROTOMAPS_GLYPHS_URL`, `PROTOMAPS_SPRITE_URL`) so the comment above them stays the one place they are explained.
+The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved value isn't `null`, and `toJSON` spreads `sprite` only when not `null` and uses `this.glyphs`. Keep the two URL constants as module-level default constants (`PROTOMAPS_GLYPHS_URL`, `PROTOMAPS_SPRITE_URL`) so the comment above them stays the one place they're explained.
 
 - [ ] **Step 3: Run, then the cartographer and docs consumers**
 
@@ -143,7 +143,7 @@ git commit -m "feat(cartographer): the style composer takes base layers, the hil
 **Files:**
 
 - Create: `packages/cartographer/lib/planetary/index.ts`, `sources.ts`, `layers.ts`, `style.ts`
-- Modify: `packages/cartographer/package.json` (`exports["./planetary"]`), `packages/cartographer/lib/index.ts` if it re-exports subpaths (it does not need to)
+- Modify: `packages/cartographer/package.json` (`exports["./planetary"]`), `packages/cartographer/lib/index.ts` if it re-exports subpaths (it doesn't need to)
 - Test: `packages/cartographer/lib/planetary/style.test.ts`
 
 **Interfaces:**
@@ -580,7 +580,7 @@ test("an alias resolves to its feature", async () => {
 })
 ```
 
-Add Mare Tranquillitatis with its alias to the astrogeology Moon fixture if it is not among the five, so both packages' fixtures share it. `loadSearchIndex` fetches the bytes (in tests, `readLocalBuffer` through a `fetch` stub or a `file:` URL, whichever the reader's `from(Uint8Array)` makes simplest), builds `Ancestrie.from`, and `query` tokenizes with the reader's own tokenizer and calls `autocomplete(trie, tokens, { maxSuggestions: limit })`.
+Add Mare Tranquillitatis with its alias to the astrogeology Moon fixture if it isn't among the five, so both packages' fixtures share it. `loadSearchIndex` fetches the bytes (in tests, `readLocalBuffer` through a `fetch` stub or a `file:` URL, whichever the reader's `from(Uint8Array)` makes simplest), builds `Ancestrie.from`, and `query` tokenizes with the reader's own tokenizer and calls `autocomplete(trie, tokens, { maxSuggestions: limit })`.
 
 - [ ] **Step 2: The box**
 

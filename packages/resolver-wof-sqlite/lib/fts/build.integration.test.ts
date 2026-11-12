@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Behavioral tests for `buildPlaceSearchFTS` — formerly exercised through the retired
- *   `mailwoman-wof-build-fts` bin. the build/no-op/rebuild semantics belong to the module, so the tests target it
- *   directly.
+ *   Behavioral tests for `buildPlaceSearchFTS` — formerly exercised through the
+ *   retired `mailwoman-wof-build-fts` bin. the build/no-op/rebuild semantics belong
+ *   to the module, so the tests target it directly.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

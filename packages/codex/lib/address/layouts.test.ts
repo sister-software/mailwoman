@@ -154,7 +154,7 @@ describe("conventionClaimForCountry", () => {
 	it("reads a retrieved S42 template and marks the rest unread", () => {
 		// The stance separates three states a single boolean would merge.
 		// A template this repository has read can be set against the other sources.
-		// A template this repository has not read stays unread.
+		// A template this repository hasn't read stays unread.
 		// A jurisdiction outside the inventory has no such document at all.
 		const codes = [...new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])]
 
@@ -223,7 +223,7 @@ describe("conventionClaimForCountry", () => {
 
 	it("keeps both sides where the dataset and the Latin order disagree", () => {
 		// A country with a distinct `lfmt` gets two statements from libaddressinput, and they can differ.
-		// A single recorded statement would report agreement that the data does not show.
+		// A single recorded statement would report agreement that the data doesn't show.
 		const disagreeing: string[] = []
 
 		for (const claim of CLAIMS) {
@@ -477,7 +477,7 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("keeps the board-checked layout where it already states the local order", () => {
-		// CN and JP are hand-authored and largest-first, so the generated skeleton must not displace them.
+		// CN and JP are hand-authored and largest-first, so the generated skeleton mustn't displace them.
 		for (const cc of ["CN", "JP"]) {
 			expect(layoutForCountry(cc, "local"), cc).toBe(ADDRESS_LAYOUTS[cc])
 		}
@@ -541,7 +541,7 @@ describe("the admin run keeps its tier order in every layout", () => {
 	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality.
 	 *
 	 * The dataset supplies these orders.
-	 * This check does not judge them.
+	 * This check doesn't judge them.
 	 */
 	const TABLES = {
 		hand: ADDRESS_LAYOUTS,

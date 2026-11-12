@@ -33,7 +33,7 @@ const MAX_ABBREVIATION_LETTERS = 3
  */
 export const ONE_TOKEN_IMPORTANCE_FLOOR = 0.25
 /**
- * The minimum importance for a one-token surface that is also a person name, about 78,000 population.
+ * The minimum importance for a one-token surface that's also a person name, about 78,000 population.
  */
 export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 
@@ -62,7 +62,7 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
  * Loads libpostal directional words, folded with `fold`.
  *
  * The evidence lexicons exclude these words.
- * The shared FST curation list does not.
+ * The shared FST curation list doesn't.
  */
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
 	// The cache is keyed by fold function because different folds give different surfaces.
@@ -283,7 +283,7 @@ export interface BuiltLexicon {
 	 */
 	skippedRegionVocabulary: number
 	/**
-	 * Alternate names excluded because they are sub-phrases of the place's primary name.
+	 * Alternate names excluded because they're sub-phrases of the place's primary name.
 	 */
 	skippedSubPhrase: number
 	skippedProminence: number

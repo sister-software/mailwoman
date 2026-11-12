@@ -35,7 +35,7 @@ a lieu-dit pair index moves this board the way GB's index moved its board from 0
 
 - **B-R6.1 (no regression).** Run the full gauntlet with the FR index present and absent, graded
   through per-country overlays. Bar: **zero newly failing counted cases**. The FR rows in particular
-  (cedex, the comma-free Rue du Chevaleret row) must not move.
+  (cedex, the comma-free Rue du Chevaleret row) mustn't move.
 - **B-R6.2 (venue-confound floor).** Use a held-out FR confound board of lieu-dit surfaces at the
   start of venue names (the law-1 class). French lieux-dits commonly start with an article ("La Croix",
   "Le Moulin", "Les Granges") and collide with commercial names, so this is the risky bar. Bar:
@@ -59,7 +59,7 @@ That matches the training extract's ~1.69M figure, as expected, since both read 
 Both self-check probes hit.
 
 The artifact still had no effect. The board stayed at **0/80**, with 100% of its pairs present in
-the index. An artifact that is verifiably correct but has no effect points to a mechanism bug, so
+the index. An artifact that's verifiably correct but has no effect points to a mechanism bug, so
 the next step was diagnosis rather than tuning. The diagnosis found two defects, both in the shared
 probe chain and neither specific to French:
 
@@ -73,7 +73,7 @@ It applies only to countries in `LEADING_POSTCODE_COUNTRIES` and requires a full
 codex shape, so output for a country that never writes that form stays byte-identical.
 
 **2. A newline was not a segment boundary.** `computeGroupSegments` scanned only for `,`. Every row
-on the FR golden board is newline-delimited. That is the shape the formatter itself emits (La
+on the FR golden board is newline-delimited. That's the shape the formatter itself emits (La
 Poste's line 5). The whole address therefore collapsed into one segment, the segment path could
 never fire, and the prior fell through to the anchored path. A line break is at least as strong a
 boundary as a comma, and it now counts as one.
@@ -98,7 +98,7 @@ multi-line address, in every locale, had been skipping the segment path without 
   Fontaine", "Jardin Touve" for "Jardin du Touve"), and one involves an unbalanced quote. The prior
   fired on all 80.
 - **D-R6.4 disclosed.** All 80 of the board's pairs are in the index, so B-R6.3 measures how well
-  the mechanism works where the gazetteer has data. It does not measure generalization. This cannot be
+  the mechanism works where the gazetteer has data. It doesn't measure generalization. This cannot be
   avoided here, because the board and the index both derive from BAN. R5's B-R5.3 stated the same
   caveat.
 

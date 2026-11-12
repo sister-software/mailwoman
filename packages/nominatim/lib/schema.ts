@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must remain stable.
- *   Query schemas shape only the OpenAPI document. `routes.ts` parses requests.
+ *   Zod schemas for the Nominatim-compatible API.
+ *
+ *   Key names and envelopes match Nominatim and must remain stable.
+ *   Query schemas shape only the OpenAPI document.
+ *   `routes.ts` parses requests.
  */
 
 import { z } from "@hono/zod-openapi"

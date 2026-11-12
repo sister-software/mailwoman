@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the placetype specificity scale. The required case is that a `neighbourhood` must not
- *   count as covering a `locality`, because a surviving child must not read as covering its own
- *   dead parent.
+ *   Tests for the placetype specificity scale.
+ *
+ *   The required case is that a `neighbourhood` mustn't count as covering a `locality`,
+ *   because a surviving child mustn't read as covering its own dead parent.
  */
 
 import { describe, expect, it } from "vitest"
@@ -109,7 +110,7 @@ describe("isStrictlyFiner", () => {
 	it("separates a child rung from the SAME rung — the distinction a negated isAtLeastAsSpecific loses", () => {
 		expect(isStrictlyFiner("neighbourhood", "locality")).toBe(true)
 		// The equal case matters.
-		// A live locality covers a dead locality, so it is not strictly finer.
+		// A live locality covers a dead locality, so it isn't strictly finer.
 		expect(isStrictlyFiner("locality", "locality")).toBe(false)
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})
@@ -146,7 +147,7 @@ describe("the table", () => {
 		// Neither is an admin rung.
 		// `building+campus+venue` groups three tags for a thing at an address.
 		// `country+dependency` is WOF's own sovereignty hedge.
-		// The admin ladder itself is strictly ordered, because a tie there is a
+		// The admin ladder itself is strictly ordered, because a tie there's a
 		// silent disagreement with containment.
 		// See the agreement suite below.
 		const byRank = new Map<number, string[]>()

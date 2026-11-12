@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module defines where a training run writes on the volume and which directories a fresh start may clear.
+ *   This module defines where a training run writes on the volume and
+ *   which directories a fresh start may clear.
+ *
  *   It also maps config volume paths onto the host copy read by preflight audits.
  */
 
@@ -73,7 +75,7 @@ const LEGACY_RUN_DEPTH = 3
 const SHARED_ROOTS = new Set(["corpus", "corpus-python", "models", "audits", "gazetteer", "eval", "launch"])
 
 /**
- * Refuses an `output_dir` a fresh start must not clear: one outside the mount, or a shared root inside it.
+ * Refuses an `output_dir` a fresh start mustn't clear: one outside the mount, or a shared root inside it.
  *
  * An older config's `<mount>/models/checkpoints/<run>` is one run's directory and stays clearable.
  *

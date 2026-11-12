@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Resolves the evidence lexicon files of a weights package against the lexicon versions its model card declares.
+ *   Resolves the evidence lexicon files of a weights package against the lexicon
+ *   versions its model card declares.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

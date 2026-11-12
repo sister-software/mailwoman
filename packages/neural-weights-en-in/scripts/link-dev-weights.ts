@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dev-weights linker for `@mailwoman/neural-weights-en-in`: the country code is `in`, not the locale
- *   tag, so this builds `pair-index-in.bin`.
+ *   Dev-weights linker for `@mailwoman/neural-weights-en-in`: the country code is `in`,
+ *   not the locale tag, so this builds `pair-index-in.bin`.
  *
- *   Indian addresses put the PIN last ("Indiranagar, Bengaluru 560038"), so this locale needs no
- *   `LEADING_POSTCODE_COUNTRIES` entry — the trailing-postcode strip already folds the parent segment
- *   to a bare-city key — and its absence from that set is deliberate.
+ *   Indian addresses put the PIN last ("Indiranagar, Bengaluru 560038"), so this locale
+ *   needs no `LEADING_POSTCODE_COUNTRIES` entry — the trailing-postcode strip already folds
+ *   the parent segment to a bare-city key — and its absence from that set is deliberate.
  */
 
 import {

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Published list rates for forward geocoding, as the pricing calculator compares them. Each entry records the page it
- *   was read from and the date. `rates.test.ts` fails once the oldest reading is more than 120 days old, so a stale
- *   figure stops the test run instead of staying on the page.
+ *   Published list rates for forward geocoding, as the pricing calculator compares them.
+ *
+ *   Each entry records the page it was read from and the date.
+ *   `rates.test.ts` fails once the oldest reading is more than 120 days old,
+ *   so a stale figure stops the test run instead of staying on the page.
  */
 
 /**

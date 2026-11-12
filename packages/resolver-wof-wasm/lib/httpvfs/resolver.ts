@@ -3,6 +3,7 @@
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import { isPresent } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
@@ -15,7 +16,7 @@ import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-r
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 
 import type { MailwomanLookupLike } from "#browser-cascade"
-import { memoizeResettable, type RangeDatabase, tableExists } from "#httpvfs/database"
+import { type RangeDatabase, tableExists } from "#httpvfs/database"
 import type { SQLValue } from "#httpvfs/worker-protocol"
 
 type CandidateProbeRow = Pick<

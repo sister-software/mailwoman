@@ -2,11 +2,13 @@
 #
 # ghcr.io/sister-software/mailwoman — "docker run → geocoding endpoint" for non-JS stacks.
 #
-# This image does NOT build the monorepo. Its install stage pulls the PUBLISHED @mailwoman/* packages
-# from npm (mailwoman + the native API + the drop-in servers, weights included), so what runs here is
-# exactly what a consumer gets — which also makes every rebuild a nightly integration test of the
-# published artifacts. See docker/package.json for the exact dependency set and docker/server.mjs for
-# the entrypoint (a batteries-included native /v1 API that degrades to parse-only without a data volume).
+# The image installs the published @mailwoman/* packages from npm rather than building the monorepo:
+# mailwoman, the native API and the drop-in servers, with the weights. What runs here is what a consumer
+# installs. docker/package.json lists the packages, and docker/server.ts is the entrypoint, a native /v1
+# API that answers parse requests when no data volume is mounted.
+#
+# MAILWOMAN_VERSION sets the version of every package. The publish workflow passes the release version,
+# so a tagged image holds the packages of that release. A build without the argument installs `latest`.
 #
 # Model WEIGHTS ship IN the image (they arrive with @mailwoman/neural-weights-en-us). The gazetteer /
 # resolver DBs are volume-mounted read-only at $MAILWOMAN_DATA_ROOT (=/data): `-v <host-data>:/data:ro`.
@@ -16,22 +18,26 @@
 # slim (glibc, NOT musl/alpine). arm64 is a follow-up (needs the arm64 ORT prebuild verified).
 
 # ---- install stage: resolve + fetch the published npm packages ----
-FROM node:24-slim AS install
+FROM node:24.22.1-slim AS install
+
+ARG MAILWOMAN_VERSION=latest
 
 WORKDIR /app
 
 COPY docker/package.json ./package.json
 
-# No lockfile on purpose: docker/package.json pins "latest", so each build pulls the current published
-# line. onnxruntime-node's postinstall downloads its native binary here (needs network at build time).
-RUN npm install --omit=dev --no-audit --no-fund --loglevel=error \
+# Every package in docker/package.json is set to MAILWOMAN_VERSION before the install. The release
+# moves all @mailwoman/* packages in lockstep, so one version names a consistent set.
+# onnxruntime-node's postinstall downloads its native binary here, which needs network at build time.
+RUN node -e "const fs = require('node:fs'); const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8')); for (const name of Object.keys(manifest.dependencies)) manifest.dependencies[name] = process.env.MAILWOMAN_VERSION; fs.writeFileSync('package.json', JSON.stringify(manifest, null, 2))" \
+	&& npm install --omit=dev --no-audit --no-fund --loglevel=error \
 	&& npm cache clean --force
 
 # ---- runtime stage ----
-FROM node:24-slim AS runtime
+FROM node:24.22.1-slim AS runtime
 
 # libgomp1 = the OpenMP runtime onnxruntime-node links for threaded ONNX inference. Everything else the
-# prebuilt ORT binary needs (libstdc++6, libc) is already in node:24-slim.
+# prebuilt ORT binary needs (libstdc++6, libc) is already in node:24.22.1-slim.
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libgomp1 \
 	&& rm -rf /var/lib/apt/lists/*
@@ -42,8 +48,9 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 COPY --from=install --chown=node:node /app/node_modules ./node_modules
-COPY --chown=node:node docker/package.json ./package.json
-COPY --chown=node:node docker/server.mjs ./server.mjs
+COPY --from=install --chown=node:node /app/package.json ./package.json
+# Node 24 strips the types of a .ts file outside node_modules, so the entrypoint runs as source.
+COPY --chown=node:node docker/server.ts ./server.ts
 
 # Gazetteer / resolver DBs mount here read-only. Empty (the default) → the server boots parse-only.
 RUN mkdir -p /data && chown node:node /data
@@ -72,4 +79,4 @@ LABEL org.opencontainers.image.title="mailwoman" \
 #   node node_modules/@mailwoman/photon/out/cli/main.js       (Photon-compatible /api /reverse, port 2322)
 #   node node_modules/@mailwoman/libpostal/out/cli/main.js    (libpostal-compatible /parse /expand, port 8081)
 # See docker/README.md + docker/docker-compose.yml.
-CMD ["node", "server.mjs"]
+CMD ["node", "server.ts"]

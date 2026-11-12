@@ -4,9 +4,12 @@
 /**
  *   The committed node-census baseline for `verifyAdmin`.
  *
- *   update deliberately. Regenerate with `generateBaseline` (verify.ts) against a verified-good DB.
- *   Re-apply the required-restore unions and review the diff like code. A lagging baseline fails
- *   loudly. A hand-loosened baseline ships the next regression.
+ *   update deliberately.
+ *   Regenerate with `generateBaseline` (verify.ts) against a verified-good DB.
+ *
+ *   Re-apply the required-restore unions and review the diff like code.
+ *   A lagging baseline fails loudly.
+ *   A hand-loosened baseline ships the next regression.
  */
 
 import type { VerifyBaseline } from "#tools/pipeline/verify"

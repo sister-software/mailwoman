@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Smoke tests for the street-morphology FST builder. Walks the shipped libpostal dictionaries in
- *   `dictionaries/data/libpostal/dictionaries/` and asserts:
+ *   Smoke tests for the street-morphology FST builder.
+ *
+ *   Walks the shipped libpostal dictionaries in `dictionaries/data/libpostal/dictionaries/` and asserts:
  *
  *   - Build completes without error
  *   - Trie contains the canonical English/French/German affixes we expect

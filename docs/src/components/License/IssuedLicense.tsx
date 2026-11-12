@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The body of `/license/issued`: polls the worker's claim route and renders the key, refresh secret,
- *   `.env` fragment and install commands. Every answer the worker returns lives only in the DOM.
+ *   The body of `/license/issued`: polls the worker's claim route and renders the key,
+ *   refresh secret, `.env` fragment and install commands.
+ *   Every answer the worker returns lives only in the DOM.
  */
 
 import type { IssuedClaim } from "@mailwoman/license-worker/claim-interface"

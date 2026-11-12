@@ -32,7 +32,7 @@ hiragana municipality in 398 of 823 rows. On the macro the shared head and the c
 difference to the record is two names, and one of them accounts for 4.1% of the board's rows. #2165 tracks the
 per-municipality report (landed) and the kana-surface register (running).
 
-**Han unification did not cost what it was expected to.** Municipality names that contain a code point the CN rows
+**Han unification didn't cost what it was expected to.** Municipality names that contain a code point the CN rows
 also label (102 of the CN corpus's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
 against 0.9909 on the JP-only record. Names with none read 0.9217 against 0.9997, and 598 of those 598 are
 Kasumigaura. The cost shows on the Chinese side instead: two of the 14 CN board rows start the `locality_unit` one
@@ -97,7 +97,7 @@ that arm waits for is the scoped form: the city resolved first, the ward probed 
 (`locality`, `region`) also stay null for a JP tree. The coordinate is on the result and the components are in
 `components`.
 
-The Latin board did not move: `mwdev_compare` origin/main vs the working tree over the full regression board,
+The Latin board didn't move: `mwdev_compare` origin/main vs the working tree over the full regression board,
 board-routed, reads 0 rows differed (the run id is in the #2164 comment).
 
 **The scoped split (#2175).** The resolver walk now probes a compound municipality as a pair after the whole span
@@ -135,7 +135,7 @@ table, 1,889 accepted), 75 beyond 15 km. The first rebuild read the standing fol
 - `@mailwoman/neural-weights-cjk` 0.0.1 on npm (name reservation: card + vocabulary); `release.config.json` `charWeights.cjk` names the graph for the first functional release.
 - Trainer defects this launch found and fixed on main: the char-mode eval guard (5ca3d6ca0) and the label-set CSV columns (6c44386da); the record's probe-read correction (2ed1a0c37).
 
-## 5. What this does not decide
+## 5. What this doesn't decide
 
 - The `ja-jp` / `zh-cn` overlays and the release-list move (operator).
 - The CN numeral boundary.

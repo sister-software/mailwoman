@@ -4,17 +4,22 @@
 /**
  *   Reads complete elements out of a markup stream, one subtree at a time.
  *
- * `./document.ts` parses a whole document into memory and answers text queries against it. That fits
- * a page. It does not fit a feature collection: one INSPIRE Addresses download inflates to roughly 32
- * GB of GML, and the caller wants each `ad:Address` subtree rather than the document.
+ * `./document.ts` parses a whole document into memory and answers text queries against it.
+ * That fits a page.
  *
- * This module yields one matching element at a time, with its attributes and its nested children, and
- * holds only the elements a single chunk completed. A caller reads an attribute. `./document.ts`
- * cannot do that except on the root. A caller also walks a nested path. `elementTexts` flattens
- * that path.
+ * It doesn't fit a feature collection: one INSPIRE Addresses download inflates to roughly
+ * 32 GB of GML, and the caller wants each `ad:Address` subtree rather than the document.
  *
- * It decodes bytes with a streaming `TextDecoder`, so a multi-byte character split across two chunks
- * survives.
+ * This module yields one matching element at a time, with its attributes and its nested
+ * children, and holds only the elements a single chunk completed.
+ * A caller reads an attribute.
+ *
+ * `./document.ts` cannot do that except on the root.
+ * A caller also walks a nested path.
+ * `elementTexts` flattens that path.
+ *
+ * It decodes bytes with a streaming `TextDecoder`, so a multi-byte character
+ * split across two chunks survives.
  */
 
 import { Parser } from "htmlparser2"
@@ -86,7 +91,7 @@ export interface StreamMarkupOptions {
 /**
  * The elements matching `name`, each complete, in document order.
  *
- * A nested element of the same name is not yielded separately: capture starts at the
+ * A nested element of the same name isn't yielded separately: capture starts at the
  * outermost occurrence and ends when that one closes, so one `ad:Address` arrives once
  * whatever the number of `ad:Address` elements its own subtree contains.
  *

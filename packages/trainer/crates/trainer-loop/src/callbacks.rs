@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `train/callbacks/`: the console lines, `train_log.csv`, and the interval checkpoints.
 //!
 //! The Trackio mirror is retired: `train_log.csv` is the run's metric record, and a config that sets

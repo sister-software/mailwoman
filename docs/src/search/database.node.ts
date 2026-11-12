@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node-side `SearchDatabase` over the repository's SQLite client, for the tests. Imported by no browser
- *   module.
+ *   Node-side `SearchDatabase` over the repository's SQLite client, for the tests.
+ *   Imported by no browser module.
  */
 
 import type { SearchRecord } from "@mailwoman/react/search/types"

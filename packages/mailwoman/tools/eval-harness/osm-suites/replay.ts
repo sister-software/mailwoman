@@ -4,13 +4,19 @@
 /**
  *   Attributes a suite row's parse to the first decoder stage whose labels leave the gold labels.
  *
- *   A traced parse exposes four label sequences over the same pieces: the argmax of the model's logits, the argmax of
- *   the emissions after every prior and mask, the decoder's path, and the final labels after the repair passes. Each
- *   is compared with the gold labels aligned to those pieces, by tag. The comparison ignores B against I, because the
- *   the model opens multiple words of a span with B, and `buildAddressTree` merges adjacent spans of one tag. Street affix
- *   tags fold into `street` on both sides, so a whole-street gold span and a split-street prediction compare equal. A
- *   piece with no letter, mark or digit is ungraded, because the tree trims it from a span's edge. A row whose final
- *   labels match yet fails the exact grade is decided at tree construction or by the grade's convention.
+ *   A traced parse exposes four label sequences over the same pieces: the argmax
+ *   of the model's logits, the argmax of the emissions after every prior and mask,
+ *   the decoder's path, and the final labels after the repair passes.
+ *   Each is compared with the gold labels aligned to those pieces, by tag.
+ *
+ *   The comparison ignores B against I, because the the model opens multiple words of
+ *   a span with B, and `buildAddressTree` merges adjacent spans of one tag.
+ *   Street affix tags fold into `street` on both sides, so a whole-street gold span
+ *   and a split-street prediction compare equal.
+ *
+ *   A piece with no letter, mark or digit is ungraded, because the tree trims it from a span's edge.
+ *   A row whose final labels match yet fails the exact grade is decided at tree
+ *   construction or by the grade's convention.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
@@ -61,7 +67,7 @@ function bioParts(label: string): { prefix: string; tag: string | null } {
  * Labels with each street affix folded into `street`: a folded B that continues a street becomes an I.
  *
  * A `null` position (a piece with no text, excluded from comparison) passes through
- * and does not break a street run.
+ * and doesn't break a street run.
  */
 export function foldStreetLabels(labels: ReadonlyArray<string | null>): Array<string | null> {
 	const folded: Array<string | null> = []

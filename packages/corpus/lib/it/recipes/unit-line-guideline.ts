@@ -3,13 +3,15 @@
 
 /**
  *   The Italian leg of the `postal-unit-guideline` evaluation recipe, from Poste Italiane's
- *   {@linkcode IT_UNIT_LINE_RULES}: the third line gives the staircase, the floor and the door in
- *   that order (`scala B piano 2 interno 7`), the fourth the street and civic number, and the fifth
- *   the CAP, the locality and the province abbreviation.
+ *   {@linkcode IT_UNIT_LINE_RULES}: the third line gives the staircase, the floor
+ *   and the door in that order (`scala B piano 2 interno 7`), the fourth the street
+ *   and civic number, and the fifth the CAP, the locality and the province abbreviation.
  *
  *   Each row writes one, two or all three of the words, in the document's order, as one `unit` span.
- *   The document writes them in lower case, and the leg also writes them capitalized. The street is
- *   `Via` and another held-out place's name, the noun the document's own line-four template uses.
+ *   The document writes them in lower case, and the leg also writes them capitalized.
+ *
+ *   The street is `Via` and another held-out place's name, the noun the
+ *   document's own line-four template uses.
  */
 
 import { IT_UNIT_LINE_RULES } from "@mailwoman/codex/it"

@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval mask-regression`: the per-release mask-regression check, the "second
- *   lock" beside `createScorer`'s load-time capability delta check: re-runs the ship artifact
- *   mask-off vs mask-on and fails (exit 1) if any tag's unfolded F1 drops more than the threshold
- *   (default 2pp) under the conventions mask. Weight-dependent. Run at release time.
+ *   `mailwoman eval mask-regression`: the per-release mask-regression check,
+ *   the "second lock" beside `createScorer`'s load-time capability delta check:
+ *   re-runs the ship artifact mask-off vs mask-on and fails (exit 1) if any tag's unfolded
+ *   F1 drops more than the threshold (default 2pp) under the conventions mask.
+ *
+ *   Weight-dependent.
+ *   Run at release time.
+ *
  *   `eval promote` runs it automatically when the spec declares `requires_conventions`.
  */
 

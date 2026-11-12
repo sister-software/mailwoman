@@ -15,10 +15,14 @@ export function clamp(value: number, min: number, max: number): number {
 /**
  *   Python-parity numeric helpers.
  *
- *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
- *   the originals bit for bit. A postcode centroid that rounds differently is a different centroid.
- *   The extract containing it then differs from the reference. Divergence here never throws. It surfaces as an
- *   extract that disagrees with the reference and raises no error.
+ *   These exist because the gazetteer pipeline was ported from Python
+ *   and its outputs have to match the originals bit for bit.
+ *   A postcode centroid that rounds differently is a different centroid.
+ *
+ *   The extract containing it then differs from the reference.
+ *   Divergence here never throws.
+ *
+ *   It surfaces as an extract that disagrees with the reference and raises no error.
  */
 
 /**

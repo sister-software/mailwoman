@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   SHA-256 on `crypto.subtle` and the hex rendering of a byte string: the digest the license key id, the register and
- *   the license worker share. `@mailwoman/core/hash` keeps the synchronous `node:crypto` digests for files and build
- *   scripts. this module is the one a Worker or a browser can import.
+ *   SHA-256 on `crypto.subtle` and the hex rendering of a byte string: the digest
+ *   the license key id, the register and the license worker share.
+ *
+ *   `@mailwoman/core/hash` keeps the synchronous `node:crypto` digests for files
+ *   and build scripts. this module is the one a Worker or a browser can import.
  */
 
 export async function sha256Bytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {

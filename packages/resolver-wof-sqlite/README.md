@@ -37,7 +37,7 @@ for (const c of candidates) {
 
 Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail without logging, and both now throw when you build the lookup:
 
-- The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits. A caller could not tell that result from "this country has no places".
+- The name doesn't route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" isn't "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits. A caller couldn't tell that result from "this country has no places".
 - The database has `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
 
 The predicate is the **table rather than the filename**: a database with an `spr` table is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` has no `spr`, never makes that claim, and is exempt. That exemption keeps the documented default database list working.

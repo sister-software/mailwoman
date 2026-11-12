@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The synthetic ID registry requires every base to be distinct, ascending and above any real WOF ID, with room before
- *   the next base. Two builder pairs once shared a base: NZ localities and Code-Point, plus CZ districts and NI OSM. Each pair kept
- *   its own docstring of the ranges it believed taken.
+ *   The synthetic ID registry requires every base to be distinct, ascending
+ *   and above any real WOF ID, with room before the next base.
+ *
+ *   Two builder pairs once shared a base: NZ localities and Code-Point, plus CZ districts and NI OSM.
+ *   Each pair kept its own docstring of the ranges it believed taken.
  */
 
 import { describe, expect, test } from "vitest"

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Report-renderer tests. The renderer is pure — rows in, markdown out, `buildDate` injected — so
- *   the committed artifact's shape is asserted without touching a DB or a clock.
+ *   Report-renderer tests.
+ *
+ *   The renderer is pure — rows in, markdown out, `buildDate` injected — so the committed
+ *   artifact's shape is asserted without touching a DB or a clock.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

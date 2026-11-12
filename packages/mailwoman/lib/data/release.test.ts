@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The release manifest reader: an absent file is legacy mode, and a present file it cannot use is an error naming
- *   the file.
+ *   The release manifest reader: an absent file is legacy mode, and a present
+ *   file it cannot use is an error naming the file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

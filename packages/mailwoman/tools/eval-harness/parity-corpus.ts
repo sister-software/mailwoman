@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Parity-corpus eval scores parser output against hand-written expectations after folding case and whitespace.
+ *   Parity-corpus eval scores parser output against hand-written expectations
+ *   after folding case and whitespace.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -177,7 +178,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	const tallies = new Map(PARITY_FLOORS.map((f) => [f.label, { hit: 0, total: 0, failing: [] as string[] }]))
 	// Floor rates only cover rows whose gold has the tag.
-	// Precision covers the other rows and does not affect the verdict.
+	// Precision covers the other rows and doesn't affect the verdict.
 	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 

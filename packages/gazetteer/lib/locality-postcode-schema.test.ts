@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `postcode_locality` interface every resolver-attached database must present: the shipped column shape, the `(postcode, country)` probe index and the builders' positional insert in DDL column order.
+ *   The `postcode_locality` interface every resolver-attached database must present:
+ *   the shipped column shape, the `(postcode, country)` probe index and the
+ *   builders' positional insert in DDL column order.
  */
 
 import { allRows } from "@mailwoman/core/utils"

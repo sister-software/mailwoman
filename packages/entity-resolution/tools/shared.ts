@@ -9,6 +9,7 @@ import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/random"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { block, gbtScore, trainGBT, type GBTOpts, type TermFrequencyTable } from "@mailwoman/match"
 import { dirname } from "path-ts"
 
@@ -722,11 +723,8 @@ export async function trainCrossSourceModel(
 	})
 
 	const moduleSource =
+		spdxHeaderText(SourceHeaderSyntax.Slash) +
 		`/**\n` +
-		` * @copyright Sister Software\n` +
-		` * @license AGPL-3.0\n` +
-		` * @author Teffen Ellis, et al.\n` +
-		` *\n` +
 		options.moduleDoc +
 		` */\n\n` +
 		`import type { GBT } from "@mailwoman/match"\n\n` +

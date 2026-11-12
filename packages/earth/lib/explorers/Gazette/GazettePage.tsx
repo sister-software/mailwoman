@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gazette explorer: a name search over the published browser gazetteer, and a place page with the
- *   place's facts, its ancestors, the other places filed under the same key, and the record as the resolver
- *   reads it. Every link inside the page is a `pushState`, so the opened gazetteer and its range cache
- *   survive the visit. A permalink reopens them.
+ *   The gazette explorer: a name search over the published browser gazetteer,
+ *   and a place page with the place's facts, its ancestors, the other places filed
+ *   under the same key, and the record as the resolver reads it.
+ *
+ *   Every link inside the page is a `pushState`, so the opened gazetteer
+ *   and its range cache survive the visit.
+ *   A permalink reopens them.
  */
 
 import { parsePointQuery, type PointQuery, POINT_QUERY_LABEL, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"

@@ -3,6 +3,7 @@
 
 /**
  *   No code here loads a model, so this layer runs in CI.
+ *
  *   `renderLines` must reproduce a child's stdout byte-for-byte.
  *   Per-leg error handling must match the previous child processes.
  */

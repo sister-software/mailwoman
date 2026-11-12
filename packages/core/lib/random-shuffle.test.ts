@@ -3,12 +3,16 @@
 
 /**
  *   `shuffleWith` replaced four retyped Fisher-Yates walks.
- *   Three walks decide shipped data: frozen eval panel rows / fr-lieudit corpus recipe rows / coarse-placer split.
+ *
+ *   Three walks decide shipped data: frozen eval panel rows / fr-lieudit corpus
+ *   recipe rows / coarse-placer split.
  *   The test checks that `shuffleWith` draws in each loop's original order.
+ *
  *   A changed order silently rewrites an artifact that later runs do not read.
  *
  *   The fourth walk in `conformal-calibrate.run.ts` takes raw LCG state modulo `i + 1`.
  *   The other walks use `floor(random() * (i + 1))`.
+ *
  *   This walk uses the same swaps with a different sampler, so it goes through `shuffleBy`.
  *   The final case asserts that `shuffleBy` reproduces it and `shuffleWith` produces a different result.
  */
@@ -159,7 +163,7 @@ describe("shuffleWith", () => {
 		}
 
 		// And the sampler is why: handing the same generator to `shuffleWith`,
-		// which scales a float instead, does not reproduce it.
+		// which scales a float instead, doesn't reproduce it.
 		// The float sampler would silently move the split if this call site used it.
 		const mixed = (20_260_913 * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 		const scaled = makeGlibcLcgFloat64(mixed)

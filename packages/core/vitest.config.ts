@@ -3,13 +3,17 @@
 
 /**
  *   Per-package Vitest config that resolves `@mailwoman/core` subpath imports to source.
+ *
  *   The package `exports` field points at `./out/.../index.js` files produced by tsc.
  *   A clean checkout has no output files until tsc runs.
  *   These aliases let Vitest run from a clean checkout.
  *
  *   Several subpaths are single files instead of directories with an `index.ts`.
- *   `fs` uses the Node build at `fs/node.ts`. `objects` is the bare file `objects.ts`.
+ *   `fs` uses the Node build at `fs/node.ts`.
+ *
+ *   `objects` is the bare file `objects.ts`.
  *   `coarse-placer` and `kysley/*` also resolve to single files.
+ *
  *   Explicit entries come before the generic `<subpath> → <subpath>/index.ts` rule.
  *   That prevents resolution to a missing `index.ts` and mirrors the root config.
  */

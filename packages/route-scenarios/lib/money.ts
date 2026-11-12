@@ -4,20 +4,27 @@
 /**
  *   Amounts, percentages and discounting for the scenario calculator.
  *
- *   Every undiscounted amount is an integer count of the currency's minor unit, such as cents for USD, held
- *   in a number that must be a safe integer. Sums, differences and products of a whole quantity and a rate
- *   are therefore exact, and the shared-route example reproduces to the cent.
+ *   Every undiscounted amount is an integer count of the currency's minor unit,
+ *   such as cents for USD, held in a number that must be a safe integer.
+ *   Sums, differences and products of a whole quantity and a rate are therefore exact,
+ *   and the shared-route example reproduces to the cent.
  *
- *   A percentage is an integer count of basis points, so 10,000 basis points are 100 percent. A percentage of
- *   an amount can be a fraction of a minor unit. That value is rounded once, where it is produced, to the
- *   nearest minor unit with halves rounded away from zero.
+ *   A percentage is an integer count of basis points, so 10,000 basis points are 100 percent.
+ *   A percentage of an amount can be a fraction of a minor unit.
  *
- *   One rule governs discounting. An effective annual rate r gives the monthly rate (1 + r)^(1/12) - 1.
- *   Month m's discount factor is (1 + monthly rate)^m rounded to eight decimal places. The month's present
- *   value is its cash flow divided by that printed factor, computed exactly and rounded half away from zero
- *   to the minor unit. NPV is the sum of the monthly present values. The present-value column of a cash-flow
- *   table therefore adds up to the reported NPV, and a reader can reproduce each present value from the
- *   factor printed beside it.
+ *   That value is rounded once, where it is produced, to the nearest minor unit
+ *   with halves rounded away from zero.
+ *
+ *   One rule governs discounting.
+ *   An effective annual rate r gives the monthly rate (1 + r)^(1/12) - 1.
+ *
+ *   Month m's discount factor is (1 + monthly rate)^m rounded to eight decimal places.
+ *   The month's present value is its cash flow divided by that printed factor,
+ *   computed exactly and rounded half away from zero to the minor unit.
+ *
+ *   NPV is the sum of the monthly present values.
+ *   The present-value column of a cash-flow table therefore adds up to the reported NPV,
+ *   and a reader can reproduce each present value from the factor printed beside it.
  */
 
 import { formatPercent } from "@mailwoman/core/stats"

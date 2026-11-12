@@ -4,9 +4,12 @@
 import { env } from "cloudflare:workers"
 import { beforeAll, describe, expect, it } from "vitest"
 
+import { issueDeclaration } from "#declare"
+import type { LicenseEmail } from "#email/provider"
 import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
+import { currentIssuance, findDeclaration } from "#ledger/declarations"
 import { findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
 import { reconcileLedger } from "#reconcile"
 import { stripeClient } from "#stripe/client"
@@ -166,7 +169,7 @@ describe("reconciliation", () => {
 		expect(again.minted).toEqual([])
 		expect(email.sent).toEqual(["in_9"])
 
-		await setEmailState(ledger, "in_9", "failed")
+		await setEmailState(ledger, "in_9", { from: "sent", to: "failed" }, null)
 
 		const resent = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
@@ -174,10 +177,57 @@ describe("reconciliation", () => {
 		expect(email.sent).toEqual(["in_9", "in_9"])
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
 
-		await setEmailState(ledger, "in_9", "pending")
+		await setEmailState(ledger, "in_9", { from: "sent", to: "pending" }, null)
 
 		expect((await reconcileLedger(worker, deps, { sinceSeconds: WEEK })).resent).toEqual(["in_9"])
 		expect(email.sent).toEqual(["in_9", "in_9", "in_9"])
+	})
+
+	it("re-sends a declaration's email that failed, with the refresh secret the first attempt carried, and then forgets the secret", async () => {
+		const { worker, stripe, ledger } = await fixture("9d", { listInvoices: false })
+		const attempts: Array<{ key: string; refreshSecret: string | null }> = []
+
+		const refusing = {
+			send: async (message: LicenseEmail, key: string) => {
+				attempts.push({ key, refreshSecret: message.refreshSecret })
+
+				throw new Error("provider down")
+			},
+		}
+
+		const declared = await issueDeclaration(
+			worker,
+			{ ledger, email: refusing, fetch: globalThis.fetch },
+			{ intent: "academic", name: "Example University", email: "reconcile-9d@example.edu" }
+		)
+
+		if (declared.outcome !== "pending") throw new Error(`expected a pending declaration, got ${declared.outcome}`)
+
+		const first = await currentIssuance(ledger, declared.lid)
+
+		expect(first?.email_state).toBe("failed")
+
+		const accepting = {
+			send: async (message: LicenseEmail, key: string) => {
+				attempts.push({ key, refreshSecret: message.refreshSecret })
+
+				return { messageID: `msg_${key}` }
+			},
+		}
+
+		const report = await reconcileLedger(worker, { stripe, ledger, email: accepting }, { sinceSeconds: WEEK })
+
+		expect(report.resent).toContain(first?.issuance_id)
+		expect(attempts).toHaveLength(2)
+		expect(attempts[1]).toEqual({ key: first?.issuance_id, refreshSecret: attempts[0]?.refreshSecret })
+		expect(attempts[1]?.refreshSecret).toMatch(/^[A-Za-z0-9_-]{43}$/u)
+		expect((await currentIssuance(ledger, declared.lid))?.email_state).toBe("sent")
+		expect((await findDeclaration(ledger, declared.lid))?.refresh_secret_pending).toBeNull()
+
+		const again = await reconcileLedger(worker, { stripe, ledger, email: accepting }, { sinceSeconds: WEEK })
+
+		expect(again.resent).not.toContain(first?.issuance_id)
+		expect(attempts).toHaveLength(2)
 	})
 
 	it("lapses a license whose subscription Stripe now reads as canceled, and reports the correction by id", async () => {
@@ -218,7 +268,12 @@ describe("reconciliation", () => {
 		const report = await reconcileLedger(disputed.worker, deps, { sinceSeconds: WEEK })
 
 		expect(report.corrected).toContainEqual({ lid: expect.any(String), from: "revoked", to: "active" })
-		expect((await findLicenseBySubscription(disputed.ledger, "sub_11"))?.license_state).toBe("active")
+
+		// The won dispute replaces `disputed`, so a later pass reads the payment as settled rather than in dispute.
+		await expect(findLicenseBySubscription(disputed.ledger, "sub_11")).resolves.toMatchObject({
+			license_state: "active",
+			payment_state: "dispute_won",
+		})
 
 		const refunded = await fixture("12", { disputeStatus: "won", listInvoices: false, chargeRefunded: 25_000 })
 		const refundedDeps = { stripe: refunded.stripe, ledger: refunded.ledger, email: email.provider }
@@ -274,7 +329,7 @@ describe("reconciliation", () => {
 		const email = recordingEmail()
 		const deps = { stripe, ledger, email: email.provider }
 
-		await setEmailState(ledger, "in_14", "failed")
+		await setEmailState(ledger, "in_14", { from: "sent", to: "failed" }, null)
 
 		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
@@ -327,7 +382,7 @@ describe("reconciliation", () => {
 		const license = await findLicenseBySubscription(ledger, "sub_17")
 		const refusing = recordingEmail("mailbox full")
 
-		await setEmailState(ledger, "in_17", "failed")
+		await setEmailState(ledger, "in_17", { from: "sent", to: "failed" }, null)
 
 		const refused = await reconcileLedger(worker, { stripe, ledger, email: refusing.provider }, { sinceSeconds: WEEK })
 

@@ -4,10 +4,13 @@
 /**
  *   Builds one region's address layer, `lookup.db` and `detail.db`, from a stream of address records.
  *
- *   Records are staged once into a scratch database with one row per key they answer. Each key table is then
- *   written in key order with `INSERT … SELECT … ORDER BY`, so its B-tree pages hold contiguous keys.
+ *   Records are staged once into a scratch database with one row per key they answer.
+ *   Each key table is then written in key order with `INSERT … SELECT … ORDER BY`,
+ *   so its B-tree pages hold contiguous keys.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readFilesystemSpace, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { sourcePresentCoverageCells } from "@mailwoman/core/layers"
@@ -18,13 +21,14 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { latLngToCell } from "@sister.software/h3"
 import { type Kysely, sql } from "kysely"
-import { dirname, type PathBuilderLike } from "path-ts"
+import { basename, dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import {
 	ADDRESS_DUPLICATE_STACK_LIMIT,
 	type AddressDuplicateRule,
 	type DuplicateCandidate,
 	isDuplicateAddress,
+	isNearbyDuplicateAddress,
 } from "#address/duplicate"
 import { addressPostcodeKey } from "#address/keys/postcode"
 import {
@@ -133,6 +137,24 @@ export interface BuildAddressLayerOptions {
 	lookupPath: PathBuilderLike
 	detailPath: PathBuilderLike
 	/**
+	 * Where the staging database is written, the largest file a build makes.
+	 *
+	 * It defaults to beside `lookupPath`.
+	 * A directory on another disk keeps that file off the layer's disk.
+	 */
+	stagingDirectory?: PathBuilderLike
+	/**
+	 * Helper threads SQLite may use for each large sort: the staged key groups
+	 * and every key table's `INSERT … SELECT … ORDER BY`.
+	 *
+	 * SQLite starts each connection with none and caps the count at its compile-time
+	 * `SQLITE_MAX_WORKER_THREADS`, 8 in Node's build.
+	 * The sorted output is the same with any count.
+	 *
+	 * @defaultValue 0
+	 */
+	sortThreads?: number
+	/**
 	 * Called after every millionth record with the count staged so far.
 	 */
 	onProgress?: (records: number) => void
@@ -224,20 +246,69 @@ async function createStagingTables(db: Kysely<StagingDatabase>): Promise<void> {
  * row count differs from the rows staged for its level.
  */
 export async function buildAddressLayer(options: BuildAddressLayerOptions): Promise<AddressLayerBuildSummary> {
-	const stagingPath = `${options.lookupPath}.stage-${process.pid}`
+	const stagingName = `${basename(options.lookupPath.toString())}.stage-${process.pid}`
+
+	const stagingPath = options.stagingDirectory
+		? resolvePath(options.stagingDirectory, stagingName)
+		: `${options.lookupPath}.stage-${process.pid}`
+
+	if (options.stagingDirectory) {
+		await makeDirectories(options.stagingDirectory)
+	}
 
 	await Promise.all([makeDirectories(dirname(options.lookupPath)), makeDirectories(dirname(options.detailPath))])
 	await removePathIfPresent(stagingPath)
 
 	try {
 		const summary = await stageRecords(options, stagingPath)
+		const threads = sortThreadsPragma(options.sortThreads)
 
-		await writeLookup(options.lookupPath, stagingPath, summary, options.sources, options.manifest, options.checks ?? [])
-		await writeDetail(options.detailPath, stagingPath, summary)
+		await assertOutputSpace(options.lookupPath, stagingPath)
+
+		await writeLookup(
+			options.lookupPath,
+			stagingPath,
+			summary,
+			options.sources,
+			options.manifest,
+			options.checks ?? [],
+			threads
+		)
+
+		await writeDetail(options.detailPath, stagingPath, summary, threads)
 
 		return summary
 	} finally {
 		await removePathIfPresent(stagingPath)
+	}
+}
+
+/**
+ * The `PRAGMA threads` statement for `count` sorter helper threads, a whole number from 0.
+ */
+function sortThreadsPragma(count: number | undefined): string {
+	return `PRAGMA threads = ${Math.max(0, Math.floor(count ?? 0))}`
+}
+
+/**
+ * Throws before `lookup.db` and `detail.db` are written when their filesystem has
+ * less free space than the staging database occupies.
+ *
+ * The staging database holds every row both files are written from, so its size bounds what they need.
+ * A shortfall found here stops the build with the space it needs.
+ *
+ * Without the check, SQLite reports `database or disk is full` partway through writing.
+ */
+async function assertOutputSpace(lookupPath: PathBuilderLike, stagingPath: string): Promise<void> {
+	const needed = (await statPath(stagingPath)).size
+	const space = await readFilesystemSpace(dirname(lookupPath))
+
+	if (space.availableBytes < needed) {
+		throw new Error(
+			`${space.measuredAt} has ${ByteFormatter.formatIEC(space.availableBytes)} free, and writing ` +
+				`${basename(lookupPath.toString())} and detail.db from the staging database ${stagingPath} needs up to ` +
+				`${ByteFormatter.formatIEC(needed)}. Free space on that filesystem and build again.`
+		)
 	}
 }
 
@@ -247,6 +318,8 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 	db.exec(
 		`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}; PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF; PRAGMA cache_size = -400000;`
 	)
+
+	db.exec(sortThreadsPragma(options.sortThreads))
 
 	await createStagingTables(db)
 
@@ -360,16 +433,20 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 
 	// Removes the records a temporary table lists from the staged keys and details,
 	// counts them under `reason`, and lowers the counts the build's checks compare to match.
+	// The rows are streamed: one state can drop tens of millions of repeats,
+	// more than fit in the heap as objects.
 	const drop = (table: string, reason: string) => {
-		const dropped = db
+		let dropped = 0
+
+		for (const row of db
 			.prepare(`SELECT a.source_id, a.lat, a.lon FROM ${table} t JOIN address a USING (address_id)`)
-			.all() as Array<{
+			.iterate() as Iterable<{
 			source_id: number
 			lat: number
 			lon: number
-		}>
+		}>) {
+			dropped++
 
-		for (const row of dropped) {
 			const source = sourceNames.get(row.source_id)!
 			const cell = shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_LAYER_COVERAGE_RESOLUTION))
 			const remaining = (coverage.get(cell) ?? 0) - 1
@@ -395,7 +472,7 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		db.exec(`DELETE FROM stage WHERE address_id IN (SELECT address_id FROM ${table})`)
 		db.exec(`DELETE FROM address WHERE address_id IN (SELECT address_id FROM ${table})`)
 		db.exec(`DROP TABLE ${table}`)
-		records -= dropped.length
+		records -= dropped
 	}
 
 	// A point one source shares among more than `stackLimit` addresses locates none of them.
@@ -439,72 +516,104 @@ function markDuplicates(
 
 	const mark = db.prepare("INSERT OR IGNORE INTO duplicate VALUES (?)")
 
-	type Member = DuplicateCandidate & { addressID: number; rank: number }
+	type Member = DuplicateCandidate & { addressID: number; rank: number; postcode: boolean }
 
-	const settle = (group: Member[]) => {
-		for (const lower of group) {
-			if (group.some((higher) => higher.rank < lower.rank && isDuplicateAddress(rule, higher, lower))) {
-				mark.run(lower.addressID)
+	// Reads each street-and-number group the query yields, in key order, and marks every
+	// lower-ranked member that `repeats` judges a repeat of a higher-ranked one.
+	const settleGroups = (query: string, repeats: (higher: Member, lower: Member) => boolean) => {
+		let group: Member[] = []
+		let key = ""
+
+		const settle = () => {
+			for (const lower of group) {
+				if (group.some((higher) => higher.rank < lower.rank && repeats(higher, lower))) {
+					mark.run(lower.addressID)
+				}
 			}
 		}
+
+		for (const row of db.prepare(query).iterate() as Iterable<{
+			scope: string
+			street: string
+			key_number: string
+			address_id: number
+			source_id: number
+			unit: string | null
+			number: string
+			street_raw: string
+			names: string
+			lat: number
+			lon: number
+			stack: number
+			postcode: number
+		}>) {
+			const rowKey = `${row.scope}|${row.street}|${row.key_number}`
+
+			if (rowKey !== key) {
+				settle()
+				group = []
+				key = rowKey
+			}
+
+			const source = sourceNames.get(row.source_id)!
+			const names = parseJSONStrict<Array<{ level: string; value: string }>>(row.names)
+
+			group.push({
+				addressID: row.address_id,
+				rank: rule.rank(source),
+				source,
+				unit: row.unit,
+				number: row.number,
+				streetRaw: row.street_raw,
+				localities: names.filter((name) => name.level === "locality").map((name) => name.value),
+				lat: row.lat,
+				lon: row.lon,
+				stack: row.stack,
+				postcode: row.postcode === 1,
+			})
+		}
+
+		settle()
 	}
 
-	let group: Member[] = []
-	let key = ""
+	const memberColumns = `s.scope, s.street, s.number AS key_number, a.address_id, a.source_id, a.unit, a.number,
+		a.street_raw, a.names, a.lat, a.lon, coalesce(k.n, 1) AS stack`
+
+	const stackJoin =
+		"LEFT JOIN stack k ON k.source_id = a.source_id AND k.la = round(a.lat, 5) AND k.lo = round(a.lon, 5)"
 
 	db.exec("BEGIN")
 
-	for (const row of db
-		.prepare(
-			`SELECT s.scope, s.street, s.number AS key_number, a.address_id, a.source_id, a.unit, a.number, a.street_raw,
-				a.names, a.lat, a.lon, coalesce(k.n, 1) AS stack
-			 FROM stage s JOIN address a ON a.address_id = s.address_id
-			 LEFT JOIN stack k ON k.source_id = a.source_id AND k.la = round(a.lat, 5) AND k.lo = round(a.lon, 5)
-			 WHERE s.level = '${StagedLevel.Postcode}' AND (s.scope, s.street, s.number) IN (
-				SELECT scope, street, number FROM stage WHERE level = '${StagedLevel.Postcode}'
-				GROUP BY 1, 2, 3 HAVING count(DISTINCT source_id) > 1)
-			 ORDER BY s.scope, s.street, s.number`
-		)
-		.iterate() as Iterable<{
-		scope: string
-		street: string
-		key_number: string
-		address_id: number
-		source_id: number
-		unit: string | null
-		number: string
-		street_raw: string
-		names: string
-		lat: number
-		lon: number
-		stack: number
-	}>) {
-		const rowKey = `${row.scope}|${row.street}|${row.key_number}`
+	settleGroups(
+		`SELECT ${memberColumns}, 1 AS postcode
+		 FROM stage s JOIN address a ON a.address_id = s.address_id ${stackJoin}
+		 WHERE s.level = '${StagedLevel.Postcode}' AND (s.scope, s.street, s.number) IN (
+			SELECT scope, street, number FROM stage WHERE level = '${StagedLevel.Postcode}'
+			GROUP BY 1, 2, 3 HAVING count(DISTINCT source_id) > 1)
+		 ORDER BY s.scope, s.street, s.number`,
+		(higher, lower) => isDuplicateAddress(rule, higher, lower)
+	)
 
-		if (rowKey !== key) {
-			settle(group)
-			group = []
-			key = rowKey
-		}
+	// A record with no postcode key shares no postcode group, so it is compared at the region level
+	// with every record of its street and number, and repeats one only when their points are near.
+	db.exec(
+		`CREATE TEMP TABLE keyed (address_id INTEGER PRIMARY KEY);
+		 INSERT OR IGNORE INTO keyed SELECT address_id FROM stage WHERE level = '${StagedLevel.Postcode}'`
+	)
 
-		const source = sourceNames.get(row.source_id)!
-		const names = parseJSONStrict<Array<{ level: string; value: string }>>(row.names)
+	settleGroups(
+		`SELECT ${memberColumns}, p.address_id IS NOT NULL AS postcode
+		 FROM stage s JOIN address a ON a.address_id = s.address_id ${stackJoin}
+		 LEFT JOIN keyed p ON p.address_id = s.address_id
+		 WHERE s.level = '${StagedLevel.Region}' AND (s.street, s.number) IN (
+			SELECT g.street, g.number FROM stage g LEFT JOIN keyed q ON q.address_id = g.address_id
+			WHERE g.level = '${StagedLevel.Region}'
+			GROUP BY 1, 2 HAVING count(DISTINCT g.source_id) > 1 AND count(q.address_id) < count(*))
+		 ORDER BY s.street, s.number`,
+		(higher, lower) => !(higher.postcode && lower.postcode) && isNearbyDuplicateAddress(rule, higher, lower)
+	)
 
-		group.push({
-			addressID: row.address_id,
-			rank: rule.rank(source),
-			source,
-			unit: row.unit,
-			number: row.number,
-			streetRaw: row.street_raw,
-			localities: names.filter((name) => name.level === "locality").map((name) => name.value),
-			lat: row.lat,
-			lon: row.lon,
-			stack: row.stack,
-		})
-	}
-
-	settle(group)
+	db.exec("DROP TABLE keyed")
 	db.exec("COMMIT")
 	db.exec("DROP TABLE stack")
 }
@@ -515,12 +624,14 @@ async function writeLookup(
 	summary: AddressLayerBuildSummary,
 	terms: ReadonlyMap<string, AddressSourceTerms>,
 	manifest: AddressLayerManifest,
-	checks: readonly AddressLayerReadCheck[]
+	checks: readonly AddressLayerReadCheck[],
+	threads: string
 ): Promise<void> {
 	await buildSealedArtifact<AddressLookupDatabase, true, void>({
 		out: lookupPath,
 		createTables: async (db) => {
 			db.exec(`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}`)
+			db.exec(threads)
 			await createLayerManifestTable(db)
 			await createLayerCoverageTable(db)
 			await createAddressSourceTable(db)
@@ -623,11 +734,17 @@ async function writeLookup(
 	})
 }
 
-async function writeDetail(detailPath: PathBuilderLike, stagingPath: string, summary: AddressLayerBuildSummary) {
+async function writeDetail(
+	detailPath: PathBuilderLike,
+	stagingPath: string,
+	summary: AddressLayerBuildSummary,
+	threads: string
+) {
 	await buildSealedArtifact<AddressDetailDatabase, true, void>({
 		out: detailPath,
 		createTables: async (db) => {
 			db.exec(`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}`)
+			db.exec(threads)
 			await createAddressDetailTable(db)
 		},
 		ingest: async (db) => {

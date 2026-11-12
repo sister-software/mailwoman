@@ -9,7 +9,7 @@
  * A locale-independent string order for `Array.prototype.sort`.
  *
  * `localeCompare` answers differently under different ICU builds, so an artifact
- * sorted with it is not reproducible across machines.
+ * sorted with it isn't reproducible across machines.
  * This order is reproducible.
  *
  * It compares UTF-16 code units.

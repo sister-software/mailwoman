@@ -39,7 +39,7 @@ at 1 and the region bias stood. The street-morphology prior is ruled out: the fi
 with it off and on (run `3d4b9f88-9c6d-4e22-ad1c-1692bc660979`).
 
 The anchor channel fires on the postcode in both rows, and what it feeds is the postcode's country
-posterior and its centroid as `lat/90` and `lon/180`. It does not feed the region that contains the
+posterior and its centroid as `lat/90` and `lon/180`. It doesn't feed the region that contains the
 postcode, so the model holds a coordinate for `05448` and no name to match `Vermont` against. The
 resolver then reads the locality `Vermont` in Illinois, and the postcode under that parent records a
 `region_scope_miss` check, with `postcodeContainmentCoherence` off by default. Both are open designs:
@@ -65,7 +65,7 @@ Blvd` still scales down beside the type in its own segment. A house number's adj
 the comma: the first version of the bound kept it inside the segment too, and the board read
 `Terraza 38, Sofia Camarena 38, Loma Blanca, 45100 Zapopan, Jal., Mexico` resolving `Loma Blanca` as the
 locality of that name in Chihuahua, 1,242 km from the truth, because a number-after-street line writes
-the colonia after the comma and the scaled bias is what keeps a colonia that is also a locality
+the colonia after the comma and the scaled bias is what keeps a colonia that's also a locality
 elsewhere on its dependent reading.
 
 ## Grades
@@ -94,6 +94,6 @@ from 86.7 to 86.8 and `us.region` from 89.6 to 89.7, and the other 16 floors the
 
 The segment rule ships on the street-type adjacency, with the house-number adjacency as it was. It
 moves 6 golden dev rows toward the truth and none away, changes no board row, and passes the battery.
-The space-separated forms of the five rows stay as they are on this branch: the model reads the
+The space-separated forms of the five rows stay as they're on this branch: the model reads the
 state as a locality there with a margin the 2.00-logit region bias cannot cover, so that shape waits
 on a prior that feeds the postcode's Who's On First ancestry to the parse, filed as its own issue.

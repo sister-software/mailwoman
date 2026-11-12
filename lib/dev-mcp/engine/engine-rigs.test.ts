@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the rig registry and its result normalization. The lifecycle itself (podman, a warm-up wait) is not
- *   simulated. A mocked container runtime would assert that the mock works. What is pinned is the part a reader
- *   depends on and cannot check by eye: that each engine's identity lands in `sourceID`, because the whole reason to
+ *   Tests for the rig registry and its result normalization.
+ *
+ *   The lifecycle itself (podman, a warm-up wait) isn't simulated.
+ *   A mocked container runtime would assert that the mock works.
+ *
+ *   What's pinned is the part a reader depends on and cannot check by eye:
+ *   that each engine's identity lands in `sourceID`, because the whole reason to
  *   ask a rig anything is to learn which dataset answered.
  */
 

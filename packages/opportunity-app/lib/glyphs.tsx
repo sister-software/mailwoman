@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shapes that stand beside each state's color. Each glyph is decoration for a word the page also writes, so
- *   every glyph is hidden from assistive technology and the word states the fact.
+ *   The shapes that stand beside each state's color.
  *
- *   The two unknown states draw a dashed outline around a question mark, a circle for unknown coverage and a
- *   diamond for an unknown unit count. A selected building's glyph draws a heavier outline and a check mark. A
- *   verified segment is a solid line, a proposed segment a dashed line, and a shared segment a wider line.
+ *   Each glyph is decoration for a word the page also writes, so every glyph is
+ *   hidden from assistive technology and the word states the fact.
+ *
+ *   The two unknown states draw a dashed outline around a question mark, a circle
+ *   for unknown coverage and a diamond for an unknown unit count.
+ *   A selected building's glyph draws a heavier outline and a check mark.
+ *
+ *   A verified segment is a solid line, a proposed segment a dashed line,
+ *   and a shared segment a wider line.
  */
 
 import { BuildingState, SegmentStatus } from "@mailwoman/opportunity-map"

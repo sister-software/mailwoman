@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the compiled postcode syntax of every country, and the code-unit parity fixture, for the Python side of
- *   the code-unit channel (#2845).
+ *   Writes the compiled postcode syntax of every country, and the code-unit parity fixture,
+ *   for the Python side of the code-unit channel (#2845).
  *
- *   The training loader computes a code unit's accepting-country count from these patterns, and the inference feed
- *   computes it from `@mailwoman/postcode` directly. The fixture records the TypeScript features for a fixed set of
- *   inputs and piece spans, and the Python test reproduces them, so the two sides cannot drift.
+ *   The training loader computes a code unit's accepting-country count from these patterns,
+ *   and the inference feed computes it from `@mailwoman/postcode` directly.
+ *   The fixture records the TypeScript features for a fixed set of inputs and piece spans,
+ *   and the Python test reproduces them, so the two sides cannot drift.
  *
  *   Usage: `node packages/mailwoman/tools/dev-tools/postcode/code-unit-syntax.run.ts`
  */

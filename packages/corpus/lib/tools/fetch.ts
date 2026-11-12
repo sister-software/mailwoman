@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Registers the corpus source fetchers. They download raw files and manifests for the adapters to read.
+ * Registers the corpus source fetchers.
+ *
+ * They download raw files and manifests for the adapters to read.
  */
 
 import { fetchBrussels } from "#be/tools/fetch/brussels"

@@ -3,9 +3,13 @@
 
 /**
  *   Renders the body's style over `MapCanvas`.
- *   A label click selects the feature beneath it. A ring marks the selected ID.
+ *
+ *   A label click selects the feature beneath it.
+ *   A ring marks the selected ID.
+ *
  *   The camera frames a selection by its diameter.
- *   The map composes its style once per config. A selection changes only a layer filter.
+ *   The map composes its style once per config.
+ *   A selection changes only a layer filter.
  */
 
 import {

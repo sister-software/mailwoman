@@ -166,7 +166,7 @@ describe("openStreetMapAttributionRefusals", () => {
 	})
 
 	it("asks nothing of a package whose lineage records no OpenStreetMap source", async () => {
-		// A source the epoch drew zero rows from did not reach the trainer.
+		// A source the epoch drew zero rows from didn't reach the trainer.
 		await writeEffectiveManifest("fixture-clean", [
 			{ source: "osm", license: "ODbL-1.0", emittedRows: 0 },
 			{ source: "gnaf", license: "CC-BY-4.0", emittedRows: 1000 },

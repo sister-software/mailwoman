@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `MatchTable` — what the data held for each parsed component. Presentational.
+ *   `MatchTable` — what the data held for each parsed component.
+ *   Presentational.
  */
 
 import { isPresent } from "@mailwoman/core/objects"

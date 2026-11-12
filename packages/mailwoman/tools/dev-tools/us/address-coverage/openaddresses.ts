@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Adds OpenAddresses source runs to a state's address-point database, for the counties the census finds thin.
+ *   Adds OpenAddresses source runs to a state's address-point database,
+ *   for the counties the census finds thin.
  *
- *   A row keeps `openaddresses:<member>` as its source, so it names its contributing body. That value is absent from
- *   the corpus's situs source table, so no training recipe reads these rows.
+ *   A row keeps `openaddresses:<member>` as its source, so it identifies its contributing body.
+ *   That value is absent from the corpus's situs source table, so no training recipe reads these rows.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"

@@ -2,19 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `release.clean` removes whole generated trees rather than asking TypeScript to enumerate the outputs it still knows, so orphaned files left by a source rename or branch switch are removed too.
+ *   `release.clean` removes whole generated trees rather than asking TypeScript to enumerate the
+ *   outputs it still knows, so orphaned files left by a source rename or branch switch are removed too.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { removeDirectory } from "@mailwoman/core/fs/writers"
 import { assertDirectoryIsUntracked, cleanDirectory, cleanFile } from "@mailwoman/core/module/clean"
 import { WorkspacePackages, type WorkspacePackage } from "@mailwoman/core/module/workspace"
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { retiredWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { text } from "#release-kit/operations/inputs"
 
 const directoryNames = ["out", "dist"] as const

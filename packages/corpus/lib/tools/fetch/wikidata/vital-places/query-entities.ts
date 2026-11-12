@@ -4,11 +4,15 @@
 /**
  *   Reads the ranked items' records from the Wikidata Query Service instead of `wbgetentities`.
  *
- *   A `wbgetentities` answer holds every statement and every sitelink of an item, so a batch takes longer than a
- *   second to serve and the Robot policy then asks for a five-second wait before the next request. One query per batch
- *   asks only for the fields a record keeps: the sitelink count, the `P31` classes, the `P17` countries, the Earth
- *   coordinate, the population, and the labels and aliases in the configured languages. The truthy `wdt:` statements are
- *   the best-ranked ones. A record keeps that rank.
+ *   A `wbgetentities` answer holds every statement and every sitelink of an item,
+ *   so a batch takes longer than a second to serve and the Robot policy
+ *   then asks for a five-second wait before the next request.
+ *   One query per batch asks only for the fields a record keeps: the sitelink count,
+ *   the `P31` classes, the `P17` countries, the Earth coordinate, the population,
+ *   and the labels and aliases in the configured languages.
+ *
+ *   The truthy `wdt:` statements are the best-ranked ones.
+ *   A record keeps that rank.
  */
 
 import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -191,7 +195,7 @@ export interface FetchVitalEntitiesFromQueriesOptions {
  * Append a record for every ranked id the entities file lacks, one query per batch,
  * with a few queries in flight.
  *
- * An id already on disk is not asked for again, and a failed query is reported and left for a rerun.
+ * An id already on disk isn't asked for again, and a failed query is reported and left for a rerun.
  */
 export async function fetchVitalEntitiesFromQueries(
 	client: Pick<WikidataClient, "query">,

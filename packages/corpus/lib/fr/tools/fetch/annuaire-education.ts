@@ -6,17 +6,22 @@
  * `fr-annuaire-education-overseas` adapter.
  *
  * The education ministry publishes the directory as the OpenDataSoft dataset
- * `fr-en-annuaire-education` on `data.education.gouv.fr`. Its Explore API v2.1 serves the catalog
- * record (license, `modified`, record count) at `/api/explore/v2.1/catalog/datasets/<id>` and a whole
- * or filtered export at `/exports/jsonl?where=<ODSQL>`. The fetcher asks the export for the overseas
- * departments the adapter reads: 3,145 of the dataset's 68,564 records on 2026-10-03. It
- * writes them as JSON Lines.
+ * `fr-en-annuaire-education` on `data.education.gouv.fr`.
+ * Its Explore API v2.1 serves the catalog record (license, `modified`, record count)
+ * at `/api/explore/v2.1/catalog/datasets/<id>` and a whole or filtered export
+ * at `/exports/jsonl?where=<ODSQL>`.
  *
- * Two checks keep a short transfer from reading as a small directory. The records endpoint is asked
- * for the `total_count` of the same filter before the export, and the written file must hold exactly
- * that number of lines. A mismatch removes the file and fails the fetch. A re-run compares the catalog
- * record's `modified` against the manifest and makes no transfer when they agree and the file is on
- * disk at the recorded length.
+ * The fetcher asks the export for the overseas departments the adapter reads:
+ * 3,145 of the dataset's 68,564 records on 2026-10-03.
+ * It writes them as JSON Lines.
+ *
+ * Two checks keep a short transfer from reading as a small directory.
+ * The records endpoint is asked for the `total_count` of the same filter before the export,
+ * and the written file must hold exactly that number of lines.
+ *
+ * A mismatch removes the file and fails the fetch.
+ * A re-run compares the catalog record's `modified` against the manifest and makes no transfer
+ * when they agree and the file is on disk at the recorded length.
  */
 
 import { APIClient } from "@mailwoman/core/api"

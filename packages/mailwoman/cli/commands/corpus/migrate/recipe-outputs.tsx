@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
@@ -19,8 +20,13 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { movePath, removePathIfPresent } = await import("@mailwoman/core/fs/writers")
-		const { migrateRecipeOutput } = await import("@mailwoman/corpus/tools/migrate/recipe-output")
+		const {
+			writers: { movePath, removePathIfPresent },
+			recipeOutput: { migrateRecipeOutput },
+		} = await allKeyed({
+			writers: import("@mailwoman/core/fs/writers"),
+			recipeOutput: import("@mailwoman/corpus/tools/migrate/recipe-output"),
+		})
 
 		const files = extractDelimited(options.files)
 		const refused: string[] = []

@@ -29,7 +29,7 @@ const OPEN_LICENSE_URL = /creativecommons\.org\/(?:publicdomain|licenses\/by\/)/
  * terms is elected, so a definition that records no terms is admitted.
  * A definition that records terms is admitted only when those terms are an open grant.
  *
- * Share-alike, restricting text and a terms page this reader has not read are refused.
+ * Share-alike, restricting text and a terms page this reader hasn't read are refused.
  */
 export function isAdmittedLicense(license: unknown): boolean {
 	if (license == null) return true
@@ -65,8 +65,22 @@ const REVIEWED_OPEN: Readonly<Record<string, string>> = {
 }
 
 /**
+ * Sources refused whatever their recorded terms, with the reason that decided each.
+ *
+ * The US reading elects a file a US public body publishes.
+ * A private company's copy of one is refused when the public body's own file is in the plan.
+ */
+const REVIEWED_REFUSED: Readonly<Record<string, string>> = {
+	"us/fl/_loveland":
+		"Loveland Technologies' copy of a Florida parcel file (`phy_addr1`). " +
+		"`us/fl/statewide2` reads the Florida Department of Revenue's own address file.",
+}
+
+/**
  * Decides whether a source's rows are admitted, by its recorded license or a review of its terms.
  */
 export function isAdmittedSource(member: string, license: unknown): boolean {
+	if (member in REVIEWED_REFUSED) return false
+
 	return member in REVIEWED_OPEN || isAdmittedLicense(license)
 }

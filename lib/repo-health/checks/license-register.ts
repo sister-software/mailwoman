@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Refuse a tree whose committed well-known key file differs from the typed register it derives from. The doctor and
- *   `license verify --online` read the committed file from mailwoman.post. the shipped trust map reads the typed register.
- *   a difference between them is a key that one side trusts and the other does not. Parsed JSON is compared rather than text,
- *   so the repository formatter may lay the file out as it likes.
+ *   Refuse a tree whose committed well-known key file differs from the typed register it derives from.
+ *
+ *   The doctor and `license verify --online` read the committed file from mailwoman.post.
+ *   the shipped trust map reads the typed register. a difference between them is
+ *   a key that one side trusts and the other doesn't.
+ *   Parsed JSON is compared rather than text, so the repository formatter may lay the file out as it likes.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

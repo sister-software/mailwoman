@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_COVERAGE_FLOOR } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 
@@ -34,11 +35,19 @@ export const spec = {
 
 const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { md5File } = await import("@mailwoman/core/utils")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { bottomsOutAt, buildGranularityLadder } = await import("@mailwoman/gazetteer/tools/pipeline/granularity")
-		const { renderGranularityReport } = await import("@mailwoman/gazetteer/tools/pipeline/granularity/report")
+		const {
+			paths: { wofDatabasePath },
+			utils: { md5File },
+			dataRoot: { dataRootPath },
+			granularity: { bottomsOutAt, buildGranularityLadder },
+			report: { renderGranularityReport },
+		} = await allKeyed({
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			utils: import("@mailwoman/core/utils"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			granularity: import("@mailwoman/gazetteer/tools/pipeline/granularity"),
+			report: import("@mailwoman/gazetteer/tools/pipeline/granularity/report"),
+		})
 
 		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")
 		const rows = buildGranularityLadder(sourcePath)

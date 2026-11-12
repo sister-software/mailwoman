@@ -4,17 +4,22 @@
 /**
  *   Compares two ONNX graphs of one model on feeds the Node runtime builds.
  *
- *   The tool loads the classifier from a weights overlay (`--weights-overlay <root>`, a directory holding
- *   `<locale>/model.onnx` beside its tokenizer, card and lexicons) and parses held-out rows with it. Every feed the
- *   runtime passes to `InferenceSession.run` is recorded, so each probe holds the token ids, the attention mask,
- *   the soft-feature channels and the locale hint that serving computes. Every other row is parsed with its own
- *   country as `localeHint`, so the hint input is exercised as well as its "no hint" id. The recorded feeds are then
- *   run through `--reference` and `--candidate` on the CPU provider with the runner's session options, and every
- *   element of every output is compared.
+ *   The tool loads the classifier from a weights overlay (`--weights-overlay <root>`,
+ *   a directory holding `<locale>/model.onnx` beside its tokenizer, card and lexicons)
+ *   and parses held-out rows with it.
+ *   Every feed the runtime passes to `InferenceSession.run` is recorded, so each probe holds the token
+ *   ids, the attention mask, the soft-feature channels and the locale hint that serving computes.
  *
- *   The receipt records the two graphs' declared interfaces, the largest absolute difference per output with the probe
- *   that produced it, and a verdict against `--tolerance`. Every tenth probe is also run trimmed to its real length to
- *   vary the dynamic `sequence` axis. The first two probes are run once stacked as a batch of two.
+ *   Every other row is parsed with its own country as `localeHint`, so the hint
+ *   input is exercised as well as its "no hint" id.
+ *   The recorded feeds are then run through `--reference` and `--candidate` on the CPU
+ *   provider with the runner's session options, and every element of every output is compared.
+ *
+ *   The receipt records the two graphs' declared interfaces, the largest absolute difference
+ *   per output with the probe that produced it, and a verdict against `--tolerance`.
+ *   Every tenth probe is also run trimmed to its real length to vary the dynamic `sequence` axis.
+ *
+ *   The first two probes are run once stacked as a batch of two.
  *
  *   Usage: `node packages/neural/tools/onnx/export-parity.run.ts --weights-overlay <root> --reference <a.onnx>
  *   --candidate <b.onnx> --rows <heldout rows.jsonl> [--count 1000] [--tolerance 1e-4] [--threads 4] [--out <json>]`

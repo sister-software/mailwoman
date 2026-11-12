@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a Spanish address uses: the apartado, building and staircase words, floors, the ordinal
- *   marks, and the relation words of a query.
+ *   The designators a Spanish address uses: the apartado, building and staircase words,
+ *   floors, the ordinal marks, and the relation words of a query.
  *
- *   The UPU sheet writes `Plaza de las Descalzas 27, Esc 2, 3º, C` and `Edificio Lepanto`. The feminine mark
- *   `ª` is read from Wiktionary, because the sheet's examples write the masculine mark only.
+ *   The UPU sheet writes `Plaza de las Descalzas 27, Esc 2, 3º, C` and `Edificio Lepanto`.
+ *   The feminine mark `ª` is read from Wiktionary, because the sheet's examples
+ *   write the masculine mark only.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/espEn.pdf UPU, Spain addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/ª Wiktionary, ª}

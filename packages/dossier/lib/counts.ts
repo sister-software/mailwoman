@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit counts stay interpretable. Each count states what it counts (the stage), for which object, on
- *   which date, over which set of units (the membership key), and from which record. A total exists only
- *   when the contributing counts share stage and date and cover disjoint memberships. Otherwise the
- *   result is unresolved and lists the counts that conflict.
+ *   Unit counts stay interpretable.
+ *
+ *   Each count states what it counts (the stage), for which object, on which date,
+ *   over which set of units (the membership key), and from which record.
+ *   A total exists only when the contributing counts share stage and date and cover disjoint memberships.
+ *
+ *   Otherwise the result is unresolved and lists the counts that conflict.
  */
 
 import type { EntityID } from "#identifiers"

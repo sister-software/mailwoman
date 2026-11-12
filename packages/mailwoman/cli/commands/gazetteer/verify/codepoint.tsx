@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer verify-codepoint` — `promotion-eval.ts` for the Code-Point Open GB
- *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
- *   agreement, Northern Ireland coverage and ten hand-checked landmark probes.
+ *   `mailwoman gazetteer verify-codepoint` — `promotion-eval.ts` for the Code-Point Open GB database.
  *
- *   Reports results without deciding them. Both databases are opened read-only.
+ *   Compares it against the incumbent GeoNames `GB_full` rows on row membership,
+ *   coordinate agreement, Northern Ireland coverage and ten hand-checked landmark probes.
+ *
+ *   Reports results without deciding them.
+ *   Both databases are opened read-only.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -42,11 +45,15 @@ export const spec = {
 
 const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { isoDate } = await import("@mailwoman/core/utils")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-
-		const { runCodePointCheck, formatCodePointCheckReport } =
-			await import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/comparison")
+		const {
+			utils: { isoDate },
+			paths: { wofDatabasePath },
+			comparison: { runCodePointCheck, formatCodePointCheckReport },
+		} = await allKeyed({
+			utils: import("@mailwoman/core/utils"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			comparison: import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/comparison"),
+		})
 
 		const stamp = isoDate()
 

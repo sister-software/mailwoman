@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval oracle-k`: oracle-recall@k over segment-level k-best decodes (stage-2
- *   instrumentation). Measures the k-best rerank headroom the top-1 checks can't see: the rate at which the
- *   gold value appears anywhere in the top-k whole-segmentation hypotheses decoded from the current
- *   model's emissions. Informational (always exits 0). The standing floors stay on `eval parity`.
+ *   `mailwoman eval oracle-k`: oracle-recall@k over segment-level k-best decodes (stage-2 instrumentation).
+ *
+ *   Measures the k-best rerank headroom the top-1 checks can't see: the rate at
+ *   which the gold value appears anywhere in the top-k whole-segmentation hypotheses
+ *   decoded from the current model's emissions.
+ *   Informational (always exits 0).
+ *   The standing floors stay on `eval parity`.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

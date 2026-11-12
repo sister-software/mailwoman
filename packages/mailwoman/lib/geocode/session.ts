@@ -1,13 +1,19 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+/**
+ *   A geocode session: the services `#geocode/services` builds for one set of options,
+ *   and the operations that read them for each address.
+ *
+ *   The CLI, the API server and the evaluation tools geocode through this one session.
+ */
+
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
 	type ChannelPins,
+	type InputModeSelection,
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	type InputMode,
@@ -15,23 +21,17 @@ import {
 	type QueryKindResult,
 	type SoftChannelName,
 } from "@mailwoman/core/pipeline"
-import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
+import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
-import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { NeuralParseTrace } from "@mailwoman/neural"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
+import { ServiceRegistry } from "async-init"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
-import type { LayerCatalog } from "#data/catalog"
-import { holdActiveSelection } from "#data/retention"
-import { loadBundledCoarsePlacer } from "#default/placer"
-import { $public } from "#env"
-import { openBANRegionDatabases } from "#geocode/ban-layers"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -39,25 +39,16 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode/core"
-import { selectedParsePriorArtifacts, selectedStreetMorphologyPath } from "#geocode/fst-layers"
-import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
-import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { openOSMPlaces, openOSMRegionDatabases } from "#geocode/osm-layers"
-import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
-import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
-import type { CoastalErosionRoute } from "#observations/coastal-route"
-import type { AuthorityDesignationRoute } from "#observations/flood-route"
-import type { SoilCapabilityRoute } from "#observations/soil-route"
-import type { ZoningDesignationRoute } from "#observations/zoning-route"
-import { createStopwordPOIPhraseLookup } from "#poi/intent"
+import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {
-	capitalIndexFor,
-	type CapitalTier,
-	createResolverBackend,
-	existingWOFDatabasePaths,
-	resolveCandidateDBPath,
-	resolveWOFDatabasePaths,
-} from "#resolver-backend"
+	nationalDatabasesOf,
+	registerGenerationServices,
+	registerProcessServices,
+	resolveGenerationServices,
+	type ServiceTimings,
+} from "#geocode/services"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
+import type { CapitalTier } from "#resolver-backend"
 
 /**
  * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.
@@ -96,7 +87,7 @@ export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>)
 
 /**
  * The parsed geocode command options that a session reads, structural
- * so this module does not import the CLI specification.
+ * so this module doesn't import the CLI specification.
  */
 export interface GeocodeSessionOptions {
 	/**
@@ -265,12 +256,46 @@ export interface GeocodeRun {
 }
 
 /**
- * A geocoder with its models and databases loaded for one set of options,
- * disposable to close its database and layer handles.
+ * The settings one request may set on top of its session's.
  */
-export interface GeocodeSession extends Disposable {
+export interface GeocodeRequestOptions {
 	/**
-	 * Session construction phases in wall-clock milliseconds.
+	 * The register the parse reads the input in, `auto` by default.
+	 */
+	inputMode?: InputModeSelection
+
+	/**
+	 * Points the resolver prefers candidates near, in place of the session's `bias` when non-empty.
+	 */
+	bias?: GeocodeDeps["bias"]
+}
+
+/**
+ * The scopes a session builds from.
+ */
+export interface GeocodeSessionScope {
+	/**
+	 * A process scope from {@link createGeocodeProcessScope}, which the session
+	 * reads its classifier and resolver module from.
+	 *
+	 * The session then disposes only its own generation services and leaves the scope's services loaded.
+	 *
+	 * Absent, the session builds its own process services and disposes them with itself.
+	 */
+	process?: ServiceRegistry
+}
+
+/**
+ * A geocoder with its models and databases loaded for one set of options and one data generation.
+ *
+ * Its async disposal closes the database and layer handles it opened
+ * and releases its lease on the data generation.
+ */
+export interface GeocodeSession extends AsyncDisposable {
+	/**
+	 * Wall-clock milliseconds of each service the session built, plus `total` for the whole construction.
+	 *
+	 * Services build in parallel, so the per-service figures overlap.
 	 */
 	initTiming: PipelineTiming
 
@@ -292,26 +317,37 @@ export interface GeocodeSession extends Disposable {
 		 */
 		lexicons?: Partial<Record<SoftChannelName, string>>
 	}
-	geocode(input: string): Promise<GeocodeRun>
+	geocode(input: string, request?: GeocodeRequestOptions): Promise<GeocodeRun>
+
+	/**
+	 * Resolves an already-parsed tree against the session's resolver and the address-point
+	 * and interpolation databases of the tree's US state.
+	 *
+	 * An interpolation calibration in `opts` wins, then the interpolation database's own
+	 * header value, then the session's `interpCalibration`, then the per-state table.
+	 */
+	resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree>
+
+	/**
+	 * Closes the handles the session opened and releases its lease, leaving a process scope's services loaded.
+	 */
+	[Symbol.asyncDispose](): Promise<void>
 }
 
-async function resolveWOFPath(
-	options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">,
-	catalog: LayerCatalog
-): Promise<string[]> {
-	// A pinned list (`--resolve-db` or `$MAILWOMAN_WOF_DB`) is read as given.
-	// Otherwise the active selection's WOF extracts, else the conventional set.
-	const pinned = options.resolveDB || $public.MAILWOMAN_WOF_DB ? resolveWOFDatabasePaths(options.resolveDB) : null
-	const paths = await existingWOFDatabasePaths(pinned, options.dataRoot, catalog)
+/**
+ * A process scope holding the classifier and resolver module that sessions with these options share.
+ *
+ * A caller that builds several sessions over the process's life, such as a server reloading its data,
+ * passes the scope to each {@link createGeocodeSession}, and disposes the scope after the last session.
+ */
+export function createGeocodeProcessScope(
+	options: Pick<GeocodeSessionOptions, "locale" | "dataRoot" | "weightsCacheRoot">
+): ServiceRegistry {
+	const scope = new ServiceRegistry()
 
-	if (!paths.length) {
-		throw new CommandError(
-			`geocode found no resolver database under ${options.dataRoot}. Run \`mailwoman data pull candidate\`, ` +
-				"set $MAILWOMAN_DATA_ROOT, or pass --candidate-db / --resolve-db."
-		)
-	}
+	registerProcessServices(scope, options)
 
-	return paths
+	return scope
 }
 
 function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
@@ -328,417 +364,87 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
 }
 
 /**
- * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
- */
-export interface ForkEntityProbe {
-	deps: Pick<
-		GeocodeDeps,
-		"poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord" | "landmarks" | "osmPlaces"
-	>
-
-	/**
-	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
-	 * `POIExecutorLookup` declares no disposal.
-	 */
-	handle?: Disposable
-}
-
-/**
- * Opens the authority-designation route from the sealed flood layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadAuthorityDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<AuthorityDesignationRoute | null> {
-	const floodDBPath = await resolveLayerDatabasePath(options.dataRoot, "flood", catalog)
-
-	if (!(await pathExists(floodDBPath))) return null
-
-	try {
-		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
-
-		return createAuthorityDesignationRoute({ databasePath: floodDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Opens the soil-capability route from the sealed soil layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadSoilCapabilityRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<SoilCapabilityRoute | null> {
-	const soilDBPath = await resolveLayerDatabasePath(options.dataRoot, "soil", catalog)
-
-	if (!(await pathExists(soilDBPath))) return null
-
-	try {
-		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
-
-		return createSoilCapabilityRoute({ databasePath: soilDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Opens the coastal-erosion route from the sealed England coastal layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadCoastalErosionRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<CoastalErosionRoute | null> {
-	const coastalDBPath = await resolveLayerDatabasePath(options.dataRoot, "coastal", catalog)
-
-	if (!(await pathExists(coastalDBPath))) return null
-
-	try {
-		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
-
-		return createCoastalErosionRoute({ databasePath: coastalDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Opens the zoning route from the sealed Irish zoning layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadZoningDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<ZoningDesignationRoute | null> {
-	const zoningDBPath = await resolveLayerDatabasePath(options.dataRoot, "zoning", catalog)
-
-	if (!(await pathExists(zoningDBPath))) return null
-
-	try {
-		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
-
-		return createZoningDesignationRoute({ databasePath: zoningDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Loads the fork-to-entity probe's POI lookup and street-generic test, neither
- * when `poi.db` is absent or the probe is disabled, because the probe needs the
- * street-generic test to keep street queries from matching venues.
- */
-export async function loadForkEntityDeps(
-	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">,
-	catalog?: LayerCatalog
-): Promise<ForkEntityProbe> {
-	const poiDBPath = await resolveLayerDatabasePath(options.dataRoot, "poi", catalog)
-	// The rail-station layer sits beside the conventional poi.db as its own sealed database,
-	// because it is built from OSM under a different license and tier than the Overture places in poi.db.
-	// It has no registry entry, so it stays at that path when the selection lists a POI database elsewhere.
-	const stationsDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), STATIONS_DATABASE_FILE)
-	const paths = []
-
-	for (const path of [poiDBPath, stationsDBPath]) {
-		if (await pathExists(path)) {
-			paths.push(path)
-		}
-	}
-
-	if (options.forkEntity === false) return { deps: {} }
-
-	// The landmark layer sits beside `poi.db` under the same convention as the stations layer, and answers without it.
-	const landmarkDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), LANDMARK_DATABASE_FILE)
-
-	const landmarkLayer = (await pathExists(landmarkDBPath))
-		? new (await import("@mailwoman/resolver-wof-sqlite/landmark")).LandmarkSqliteLookup(landmarkDBPath)
-		: null
-
-	const osmPlaces = await openOSMPlaces(options.dataRoot)
-
-	const landmarkDeps = { ...(landmarkLayer ? { landmarks: landmarkLayer } : {}), ...(osmPlaces ? { osmPlaces } : {}) }
-
-	const landmarks = {
-		[Symbol.dispose]: () => {
-			landmarkLayer?.[Symbol.dispose]()
-			osmPlaces?.[Symbol.dispose]()
-		},
-	}
-
-	if (!paths.length) {
-		return { deps: landmarkDeps, handle: landmarks }
-	}
-
-	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite/poi"),
-		import("@mailwoman/resolver-wof-sqlite/street"),
-		import("#poi/venue-head-fit"),
-	])
-
-	// The street-morphology FST the active selection lists, else the loader's own data-root default.
-	const streetMorphologyPath = await selectedStreetMorphologyPath(options.dataRoot, catalog)
-	const morphology = await loadStreetMorphologyFST(streetMorphologyPath ? { artifactPath: streetMorphologyPath } : {})
-	const lookups = paths.map((databasePath) => new POILookup({ databasePath }))
-
-	return {
-		deps: {
-			poiLookup: { search: (query) => lookups.flatMap((lookup) => lookup.search(query)) },
-			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
-			rowFitsVenueHead,
-			isVenueCategoryWord,
-			...landmarkDeps,
-		},
-		handle: {
-			[Symbol.dispose]: () => {
-				for (const lookup of lookups) {
-					lookup[Symbol.dispose]()
-				}
-
-				landmarks[Symbol.dispose]()
-			},
-		},
-	}
-}
-
-/**
- * The file name of the rail-station POI layer, built by
- * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
- */
-export const STATIONS_DATABASE_FILE = "stations.db"
-
-/**
- * The file name of the landmark layer, built by `tools/dev-tools/landmarks/build.run.ts`
- * into the directory that holds `poi.db`.
- */
-export const LANDMARK_DATABASE_FILE = "landmarks.db"
-
-/**
- * Loads the gazetteer, neural model and optional layers.
+ * Builds the gazetteer, neural model and optional layers for one data generation.
  *
  * Returns a {@linkcode GeocodeSession} that reuses them across inputs.
+ * The services build in parallel, each once its own inputs resolve.
+ *
+ * When one fails, the session disposes every service that did open and rethrows that failure.
  */
-export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
+export async function createGeocodeSession(
+	options: GeocodeSessionOptions,
+	scope: GeocodeSessionScope = {}
+): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()
 	const progress = options.onProgress ?? (() => {})
 	const settings = geocodeSessionSettings(options)
+	const timings: ServiceTimings = {}
 
-	progress("Checking gazetteer…")
+	// A session without a process scope owns its classifier, so its one registry holds both scopes.
+	const registry = scope.process ? scope.process.createChild() : new ServiceRegistry()
 
-	// A session reading an active selection holds a lease on its generation,
-	// so a prune keeps those artifacts until the session is disposed.
-	// A data root with no selection takes no lease and receives no write.
-	// Every reader below takes this one snapshot, so the session reads one generation throughout.
-	const { catalog, lease } = await holdActiveSelection(options.dataRoot)
-	// Owns the lease and every handle opened below until the session is built,
-	// so a failure part-way through releases them.
-	// A pinned lease would keep a prune from reclaiming its generation for the life of the process.
-	using pending = new DisposableStack()
-
-	if (lease) {
-		pending.use(lease)
+	if (!scope.process) {
+		registerProcessServices(registry, options, timings)
 	}
 
-	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot, catalog)
-	const wofPath = candidateDB ? [] : await resolveWOFPath(options, catalog)
-	const pathsResolvedAt = performance.now()
+	registerGenerationServices(registry, options, settings, timings)
 
-	progress("Loading neural model…")
+	progress("Loading the gazetteer, neural model and data layers…")
 
-	let routed: ScriptRoutedClassifier<NeuralAddressClassifier>
+	let services: Awaited<ReturnType<typeof resolveGenerationServices>>
+	let bias: NonNullable<GeocodeDeps["bias"]>
 
 	try {
-		routed = await NeuralAddressClassifier.loadRoutedFromWeights({
-			locale: options.locale,
-			overlayRoot: resolvePath(options.dataRoot, "weights"),
+		services = await resolveGenerationServices(registry)
+		bias = parseBiasPoints(options.bias ?? null)
+	} catch (error) {
+		// The caller needs the construction failure, so a failure to close a half-built scope doesn't replace it.
+		await registry[Symbol.asyncDispose]().catch(() => {})
 
-			...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
-		})
-	} catch {
-		throw new CommandError(
-			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
-		)
+		throw error
 	}
 
+	const { routed, parsePriors, lookup, capitals, regionDatabases, explicitAddressPoints, explicitInterpolation } =
+		services
+
+	const {
+		designation: designationRoute,
+		soil: soilRoute,
+		coastal: coastalRoute,
+		zoning: zoningRoute,
+	} = services.layerRoutes
+
+	const { placer, osm: osmProvider, classifyKind: poiKindClassifier } = services
+	const forkEntityDeps = services.forkEntity.deps
 	const classifier = routed.primary
-
-	const { loadParsePriors } = await import("#geocode/parse-priors")
-	// The FSTs the active selection lists, else the files beside the weights.
-	const priorArtifacts = await selectedParsePriorArtifacts(classifier, options.locale, options.dataRoot, catalog)
-
-	const priors = await loadParsePriors(priorArtifacts, {
-		gazetteerPrior: settings.gazetteerPrior,
-		venueHeadPrior: settings.venueHeadPrior,
-		label: `locale ${options.locale}`,
-	})
-
+	const { priors, artifacts: priorArtifacts } = parsePriors
 	const { fst, streetMorphology, anchorRegions } = priors
-
 	const venueHeadCountry = options.defaultCountry ?? options.locale.split("-")[1] ?? null
 	const venueHead = priors.venueHeadFor(venueHeadCountry)
-
-	const weightsLoadedAt = performance.now()
-
-	progress("Opening resolver…")
-
-	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
-
-	try {
-		mod = await import("@mailwoman/resolver-wof-sqlite")
-	} catch {
-		throw new CommandError(
-			"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
-				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
-		)
-	}
-
-	const resolverImportedAt = performance.now()
-
-	const lookup = pending.use(
-		await createResolverBackend(mod, {
-			candidateDB,
-			catalog,
-			dataRoot: options.dataRoot,
-			wofPaths: wofPath,
-			variantAliasExemption: settings.variantAliasExemption,
-		})
-	)
-
-	const capitals = await capitalIndexFor(settings.capitalTier, candidateDB)
+	const resolver = createWOFResolver(lookup)
+	const nationalDatabases = nationalDatabasesOf(services.ban, services.overture)
 
 	const capitalLevel = capitals
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
-	const regionDatabaseProvider = pending.use(await USStateDatabaseProvider.create(mod, options.dataRoot, catalog))
-
-	const explicitAPLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
-
-	const explicitAP = pending.use(
-		options.addressPointsDB
-			? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAPLocale })
-			: null
-	)
-
-	const explicitIP = pending.use(
-		options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null
-	)
-
 	const databases: RegionDatabaseResolver =
-		explicitAP || explicitIP
+		explicitAddressPoints || explicitInterpolation
 			? (slug) => {
-					const base = explicitAP && explicitIP ? {} : regionDatabaseProvider.for(slug)
+					const base = explicitAddressPoints && explicitInterpolation ? {} : regionDatabases.for(slug)
 
-					return { addressPoints: explicitAP ?? base.addressPoints, interpolation: explicitIP ?? base.interpolation }
+					return {
+						addressPoints: explicitAddressPoints ?? base.addressPoints,
+						interpolation: explicitInterpolation ?? base.interpolation,
+					}
 				}
-			: regionDatabaseProvider.for
-
-	const backendsOpenedAt = performance.now()
-	progress("Loading optional data providers…")
-
-	const banDatabases = (await openBANRegionDatabases(options.dataRoot, catalog)).for
-	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), catalog)
-
-	const nationalDatabases = (country: string): RegionDatabases => {
-		const ban = banDatabases(country)
-
-		return ban.addressPoints || ban.streetCentroids ? ban : overtureProvider.for(country)
-	}
-
-	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
-	const osmProvider = pending.use(await openOSMRegionDatabases(options.dataRoot, catalog))
-
-	const optionalProvidersLoadedAt = performance.now()
-
-	let poiHandle: Disposable | null = null
-	let designationRoute: AuthorityDesignationRoute | null = null
-	let soilRoute: SoilCapabilityRoute | null = null
-	let coastalRoute: CoastalErosionRoute | null = null
-	let zoningRoute: ZoningDesignationRoute | null = null
-
-	const disposeQuietly = (handle: Disposable | null): void => {
-		try {
-			handle?.[Symbol.dispose]()
-		} catch {}
-	}
-
-	const dispose = (): void => {
-		disposeQuietly(lease)
-		disposeQuietly(explicitAP)
-		disposeQuietly(explicitIP)
-		disposeQuietly(regionDatabaseProvider)
-		disposeQuietly(osmProvider)
-		disposeQuietly(lookup)
-		disposeQuietly(poiHandle)
-		disposeQuietly(designationRoute)
-		disposeQuietly(soilRoute)
-		disposeQuietly(coastalRoute)
-		disposeQuietly(zoningRoute)
-	}
-
-	let placer: CoarsePlacer | null = null
-	let resolver: Resolver
-	let bias: NonNullable<GeocodeDeps["bias"]>
-	let forkEntityDeps: ForkEntityProbe["deps"]
-
-	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
-
-	const kindClassifierWithLexicon = createKindClassifier({
-		poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords),
-	})
-
-	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
-		kindClassifierWithLexicon(input, shape, {
-			locale: options.locale ?? "en-US",
-			confidence: 1,
-			alternatives: [],
-			script: [],
-			evidence: null,
-			source: "caller",
-		})
-
-	try {
-		progress("Loading geographic priors…")
-
-		placer = options.placeCountry
-			? await loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
-			: null
-
-		resolver = createWOFResolver(lookup)
-		bias = parseBiasPoints(options.bias ?? null)
-
-		const probe = await loadForkEntityDeps(options, catalog)
-
-		forkEntityDeps = probe.deps
-		poiHandle = probe.handle ?? null
-		designationRoute = await loadAuthorityDesignationRoute(options, catalog)
-		soilRoute = await loadSoilCapabilityRoute(options, catalog)
-		coastalRoute = await loadCoastalErosionRoute(options, catalog)
-		zoningRoute = await loadZoningDesignationRoute(options, catalog)
-	} catch (error) {
-		// `dispose` releases everything the stack holds and the handles opened in this block, so the stack lets go.
-		pending.move()
-		dispose()
-
-		throw error
-	}
+			: regionDatabases.for
 
 	const initializedAt = performance.now()
 	progress("Ready; geocoding…")
 
-	const initTiming: PipelineTiming = {
-		paths: pathsResolvedAt - initStartedAt,
-		weights: weightsLoadedAt - pathsResolvedAt,
-		resolver_import: resolverImportedAt - weightsLoadedAt,
-		backends: backendsOpenedAt - resolverImportedAt,
-		optional_providers: optionalProvidersLoadedAt - backendsOpenedAt,
-		placer_and_priors: initializedAt - optionalProvidersLoadedAt,
-		total: initializedAt - initStartedAt,
-	}
+	const initTiming: PipelineTiming = { ...timings, total: initializedAt - initStartedAt }
 
 	const parseDeps: Pick<
 		GeocodeDeps,
@@ -771,10 +477,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			: {}),
 	}
 
-	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | null> => {
+	const traceOf = async (
+		input: string,
+		requestParseDeps: typeof parseDeps
+	): Promise<Omit<GeocodeTrace, "resolver"> | null> => {
 		if (!options.trace) return null
 
-		const inputs = geocodeParseInputs(input, parseDeps)
+		const inputs = geocodeParseInputs(input, requestParseDeps)
 
 		try {
 			return {
@@ -789,12 +498,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 	}
 
-	const geocode = async (input: string): Promise<GeocodeRun> => {
+	const geocode = async (input: string, request: GeocodeRequestOptions = {}): Promise<GeocodeRun> => {
 		const startedAt = performance.now()
+		const requestParseDeps = request.inputMode ? { ...parseDeps, inputMode: request.inputMode } : parseDeps
+		const requestBias = request.bias?.length ? request.bias : bias
 
-		const parsedTree = await parseForGeocode(input, parseDeps)
+		const parsedTree = await parseForGeocode(input, requestParseDeps)
 		const parsedAt = performance.now()
-		const trace = await traceOf(input)
+		const trace = await traceOf(input, requestParseDeps)
 		const tracedAt = performance.now()
 
 		const resolverTrace: ResolveNodeTrace[] = []
@@ -823,6 +534,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const result = await geocodeAddress(input, {
 			classifier: routed,
+			...(request.inputMode ? { inputMode: request.inputMode } : {}),
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			...(anchorRegions ? { anchorRegions } : {}),
@@ -831,7 +543,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			nationalDatabases,
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
-			...(bias.length ? { bias } : {}),
+			...(requestBias.length ? { bias: requestBias } : {}),
 			...(inferredScopeOK && countryScope ? { defaultCountry: countryScope } : {}),
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 
@@ -882,8 +594,26 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 	}
 
-	// The session's `dispose` owns the lease and the handles from here.
-	pending.move()
+	const defaultScope = resolverDefaultCountry(options)
+
+	const resolveTree = (tree: AddressTree, incoming: ResolveOpts = {}): Promise<AddressTree> => {
+		const slug = regionSlugFromTree(tree)
+		const { addressPoints, interpolation } = databases(slug)
+		const defaultCountry = incoming.defaultCountry ?? defaultScope
+
+		const calibration =
+			incoming.interpolationRadiusCalibration == null && interpolation?.radiusCalibration == null
+				? (options.interpCalibration ?? interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug))
+				: null
+
+		return resolver.resolveTree(tree, {
+			...incoming,
+			...(defaultCountry ? { defaultCountry } : {}),
+			...(addressPoints ? { addressPoints } : {}),
+			...(interpolation ? { interpolation } : {}),
+			...(interpolation && calibration != null ? { interpolationRadiusCalibration: calibration } : {}),
+		})
+	}
 
 	return {
 		initTiming,
@@ -897,6 +627,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(Object.keys(classifier.lexiconPaths).length ? { lexicons: { ...classifier.lexiconPaths } } : {}),
 		},
 		geocode,
-		[Symbol.dispose]: dispose,
+		resolveTree,
+		[Symbol.asyncDispose]: () => registry[Symbol.asyncDispose](),
 	}
 }

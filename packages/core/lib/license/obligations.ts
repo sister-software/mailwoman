@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Summarizes the obligations of an SPDX license expression for `mailwoman doctor`. The summary is a debugging
- *   aid and gives no legal advice.
+ *   Summarizes the obligations of an SPDX license expression for `mailwoman doctor`.
+ *   The summary is a debugging aid and gives no legal advice.
  */
 
 import { stringifyJSON } from "#json"
@@ -90,7 +90,7 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// attribution list ships with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
 	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de la
-	// Información del INEGI", which names no Creative Commons license and includes no version.
+	// Información del INEGI", which identifies no Creative Commons license and includes no version.
 	// The terms permit copying, publishing, adapting, extracting and commercial use.
 	// They require the credit `Fuente: INEGI, <product name>`.
 	// They state no share-alike term.
@@ -194,7 +194,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
  * Returns the branch of mailwoman's license expression that applies to this installation.
  *
  * The commercial branch applies only when the key is `valid` and the published
- * key register has not marked it retired or unlisted.
+ * key register hasn't marked it retired or unlisted.
  * The doctor passes both the key and the register status.
  * The stamp runs offline and passes only the key.
  */
@@ -211,7 +211,7 @@ export function appliedLicenseBranch(
 /**
  * Chooses the applicable branch of an `A OR B` expression.
  *
- * The first `LicenseRef-` branch applies when there is a commercial agreement.
+ * The first `LicenseRef-` branch applies when there's a commercial agreement.
  * Otherwise the first open-source branch applies.
  * An expression without `OR` is returned unchanged.
  */

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture (`../test-fixtures/availability-micro.csv`) is a byte-realistic 12-column FCC BDC
- *   availability CSV: 2 providers × 2 census blocks, technology codes 50 (fiber) and 40 (cable), one row
- *   with a leading-zero `location_id`, one row whose `brand_name` is quoted with an embedded comma (quote
- *   handling coverage), and one exact duplicate row (reserved for a later task's dedup
- *   coverage — this test only asserts the raw parse yields it unfiltered).
+ *   Fixture (`../test-fixtures/availability-micro.csv`) is a byte-realistic 12-column
+ *   FCC BDC availability CSV: 2 providers × 2 census blocks, technology codes 50 (fiber)
+ *   and 40 (cable), one row with a leading-zero `location_id`, one row whose `brand_name`
+ *   is quoted with an embedded comma (quote handling coverage), and one exact duplicate row
+ *   (reserved for a later task's dedup coverage — this test only asserts the raw parse yields it unfiltered).
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -114,7 +114,7 @@ test("readAvailabilityRows: provider_id always comes from the function parameter
 test("readAvailabilityRows: a quoted brand_name with an embedded comma doesn't desync column alignment", () => {
 	const rows = parseFixture()
 	// Row 3 (index 2) has `"Frontera, Inc."` as its quoted brand_name.
-	// The comma inside must not be mistaken for a field delimiter, or every
+	// The comma inside mustn't be mistaken for a field delimiter, or every
 	// subsequent column on that row would shift.
 	const quotedRow = rows[2]!
 

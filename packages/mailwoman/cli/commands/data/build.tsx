@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `data build <recipe> --countries <cc>` builds a layer from source data through the installer: it plans
- *   the inputs and outputs, checks the build's tools before any download, acquires the inputs with receipts,
- *   builds, validates and installs each output, and activates the outputs with `--activate`. `--dry-run`
- *   stops after the plan without network access or data writes.
+ *   `data build <recipe> --countries <cc>` builds a layer from source data through
+ *   the installer: it plans the inputs and outputs, checks the build's tools
+ *   before any download, acquires the inputs with receipts, builds, validates
+ *   and installs each output, and activates the outputs with `--activate`.
  *
- *   The recipe's code ships in an optional package, so a customer who installs only published data never
- *   needs the build's tools. This command reports a missing package or tool before it acquires anything.
+ *   `--dry-run` stops after the plan without network access or data writes.
+ *
+ *   The recipe's code ships in an optional package, so a customer who installs
+ *   only published data never needs the build's tools.
+ *   This command reports a missing package or tool before it acquires anything.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -103,7 +106,7 @@ interface BuildCommandResult {
 /**
  * Load the recipe's implementation from its optional package.
  *
- * @returns Null when the package is not installed.
+ * @returns Null when the package isn't installed.
  */
 async function loadRecipe(
 	name: string,

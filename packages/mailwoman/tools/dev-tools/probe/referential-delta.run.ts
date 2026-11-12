@@ -4,29 +4,41 @@
 /**
  *   the D-rule measurement for ROAD_TO_V9 §2 R1's resolver half.
  *
- *   §2 R1 predicts a resolver delta of zero. Today's resolver already ranks namesakes by population.
- *   The split only names that key `referential`, and `referentialFromPopulation` is a monotone
- *   transform of population — so the order cannot move. Predicted is not measured. This probe
- *   measures it, on the live gazetteer, in the one regime where the prediction could fail.
+ *   §2 R1 predicts a resolver delta of zero.
+ *   Today's resolver already ranks namesakes by population.
  *
- *   where IT could fail. That is the full probe. `referentialFromPopulation` is
- *   `min(1, log2(1 + pop/1000) / 14)`: strictly increasing up to `REFERENTIAL_SATURATION_POPULATION`
- *   (16,383,000) and clamped to 1.0 above it. Two places that both clear that line score identically
- *   on referential while population would still separate them. A comparator keyed on referential
- *   by itself would therefore reorder the world's largest cities — so `compareReferential` includes a raw
- *   population tiebreak. This probe checks whether the tiebreak makes the orderings agree.
- *   It measures how much of the live gazetteer sits in the regime where the tiebreak matters. A
- *   claim about the saturated tail is exactly the kind of claim AGENTS.md directs us to spend one command on
- *   rather than reason about.
+ *   The split only names that key `referential`, and `referentialFromPopulation` is
+ *   a monotone transform of population — so the order cannot move.
+ *   Predicted isn't measured.
+ *
+ *   This probe measures it, on the live gazetteer, in the one regime where the prediction could fail.
+ *
+ *   where IT could fail.
+ *   That's the full probe.
+ *
+ *   `referentialFromPopulation` is `min(1, log2(1 + pop/1000) / 14)`: strictly increasing
+ *   up to `REFERENTIAL_SATURATION_POPULATION` (16,383,000) and clamped to 1.0 above it.
+ *   Two places that both clear that line score identically on referential
+ *   while population would still separate them.
+ *
+ *   A comparator keyed on referential by itself would therefore reorder the world's
+ *   largest cities — so `compareReferential` includes a raw population tiebreak.
+ *   This probe checks whether the tiebreak makes the orderings agree.
+ *
+ *   It measures how much of the live gazetteer sits in the regime where the tiebreak matters.
+ *   A claim about the saturated tail is exactly the kind of claim AGENTS.md directs
+ *   us to spend one command on rather than reason about.
  *
  *   two measurements:
  *
- *   1. **Gazetteer census** — every place at or above saturation plus every name-colliding pair where
- *      both bearers clear it. The second number is the population of cases where the tiebreak is
- *      required. if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
- *   2. **Live query replay** — every board query plus the namesake families, run through the real
- *      `findPlace`, with the returned candidate list re-sorted under both the pre-split key and
- *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.
+ *   1. **Gazetteer census** — every place at or above saturation plus every
+ *      name-colliding pair where both bearers clear it.
+ *      The second number is the population of cases where the tiebreak is required. if
+ *      it is zero the tiebreak is insurance, if it isn't, it is a bug fix.
+ *   2. **Live query replay** — every board query plus the namesake families,
+ *      run through the real `findPlace`, with the returned candidate list re-sorted
+ *      under both the pre-split key and `compareReferential`.
+ *      Any row whose id sequence differs is a real resolver delta and is printed.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/probe/referential-delta.run.ts [--board <path>]
  */

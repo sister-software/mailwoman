@@ -5,25 +5,29 @@
  *   The fixture holds six of Ceuta's own addresses and the seven features they reference.
  *
  * `fixtures/es-catastro/A.ES.SDGC.AD.55101.gml` holds six `AD:Address` elements and the seven
- * `AD:ThoroughfareName`, `AD:PostalDescriptor` and `AD:AdminUnitName` features they name, copied out
- * of `A.ES.SDGC.AD.55101.zip` as the publisher wrote them. Two changes were made and both are
- * stated here, because the rest is the publisher's text: a byte above 0x7F is written as its XML
- * numeric character reference, so the file reads as ASCII while denoting the same characters, and
- * trailing whitespace at the end of a line is gone. Neither changes what the parser sees.
+ * `AD:ThoroughfareName`, `AD:PostalDescriptor` and `AD:AdminUnitName` features they name,
+ * copied out of `A.ES.SDGC.AD.55101.zip` as the publisher wrote them.
+ * Two changes were made and both are stated here, because the rest is the publisher's text:
+ * a byte above 0x7F is written as its XML numeric character reference, so the file reads as ASCII
+ * while denoting the same characters, and trailing whitespace at the end of a line is gone.
+ * Neither changes what the parser sees.
  *
- * The six cover what the member varies. Two addresses on `CL SANTIAGO APOSTOL` have a plain number
- * and a number with a letter. Three have the `S-N` designator. Two of those also have the
- * truncated postal-descriptor reference `#ES.SDGC.PD.55.101.`, 70 of the member's 8,126.
+ * The six cover what the member varies.
+ * Two addresses on `CL SANTIAGO APOSTOL` have a plain number and a number with a letter.
+ *
+ * Three have the `S-N` designator.
+ * Two of those also have the truncated postal-descriptor reference `#ES.SDGC.PD.55.101.`,
+ * 70 of the member's 8,126.
+ *
  * One stands on the street whose name holds the accented byte.
  *
  * The declaration still reads `ISO-8859-1`, as the publisher's does, and
- * `decodes the member the publisher's declaration names` re-encodes the fixture to those bytes in a
- * scratch directory so the decode runs on real high bytes rather than on entity references.
+ * `decodes the member the publisher's declaration names` re-encodes the fixture to those bytes
+ * in a scratch directory so the decode runs on real high bytes rather than on entity references.
  *
- * Counts quoted against the whole member come from reading
- * `A.ES.SDGC.AD.55101.zip`, 354,647 bytes. Its one member is 11,861,975 bytes: 8,126 addresses,
- * 505 thoroughfare names, 5 postal descriptors, one administrative unit, 856 `S-N` designators and
- * 70 truncated postal-descriptor references.
+ * Counts quoted against the whole member come from reading `A.ES.SDGC.AD.55101.zip`, 354,647 bytes.
+ * Its one member is 11,861,975 bytes: 8,126 addresses, 505 thoroughfare names, 5 postal descriptors,
+ * one administrative unit, 856 `S-N` designators and 70 truncated postal-descriptor references.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -97,7 +101,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// The thoroughfare feature's text is ` CL SANTIAGO APOSTOL`, leading space included,
 		// and the Cadastre's `ldt` opens `CL SANTIAGO APOSTOL`.
-		// An expansion of `CL` to `Calle` would state something the publisher does not.
+		// An expansion of `CL` to `Calle` would state something the publisher doesn't.
 		expect(rows.every((row) => /^[A-Z]{2} /u.test(row.components.street ?? ""))).toBe(true)
 	})
 
@@ -144,7 +148,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// The committed fixture writes every high byte as a numeric character reference so it reads as text.
 		// The publisher writes the byte, so this test writes the byte too: `Ñ` is 0xD1 in ISO-8859-1
-		// and is not valid UTF-8, and the markup reader's own `TextDecoder("utf-8")` answers it with U+FFFD.
+		// and isn't valid UTF-8, and the markup reader's own `TextDecoder("utf-8")` answers it with U+FFFD.
 		// Node's `latin1` encoding is ISO-8859-1's single-byte mapping,
 		// so no transcoder is needed to write one.
 		const bytes = Buffer.from(utf8.replaceAll("&#209;", "Ñ"), "latin1")

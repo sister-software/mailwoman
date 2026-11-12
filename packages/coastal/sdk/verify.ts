@@ -4,27 +4,46 @@
 /**
  *   Compares two paths and checks locations outside the layer's coverage.
  *
- *   The positive half samples points from the sealed artifact and asks the EA's OGC API Features service about them.
- *   The service provides geometry through a separate distribution channel. This package has not touched that
- *   geometry. The point test runs again on the service's rings, so the comparison uses two verdicts from the same
- *   authority. This measures our conversion against the authority's published geometry.
+ *   The positive half samples points from the sealed artifact and asks the EA's
+ *   OGC API Features service about them.
+ *   The service provides geometry through a separate distribution channel.
  *
- *   The negative half checks two groups: inland English points plus Welsh and Scottish coastal points. Every point
- *   must return `unknown` with no designation. Wales publishes NCERM in the previous generation's vocabulary: three
- *   periods from a 2005 base and percentile bands. Scotland's Dynamic Coast explicitly prohibits property-level
- *   assessment. Neither system uses England's vocabulary. The inland English points test this layer's coverage
- *   boundary. A positive-only check could pass an artifact that reports the entire country as designated.
+ *   This package hasn't touched that geometry.
+ *   The point test runs again on the service's rings, so the comparison uses
+ *   two verdicts from the same authority.
  *
- *   The channels use different coordinate precision, so a boundary-point disagreement can reflect rendering rather
- *   than a conversion defect. The geodatabase publishes nine decimals through this package's ingest. The OGC service
- *   publishes six decimals, or about 10 cm. A point within roughly a meter of a zone boundary can fall on opposite
- *   sides of the two rendered edges. The check reports these as `boundary_tolerance` with distance to the nearest
- *   edge. The receipt includes their count.
+ *   This measures our conversion against the authority's published geometry.
  *
- *   The distance measures to the edge rather than to the nearest vertex. A point a centimeter from a long edge can be
- *   meters from every vertex. In one flood-verify near-miss, vertex distance was 1.58 m and edge distance was 0.009 m.
- *   The vertex measurement overstated distance by 175 times. Vertex-only measurements would make the boundary tolerance
- *   stricter than its stated value and report a rendering difference as a conversion defect.
+ *   The negative half checks two groups: inland English points plus Welsh and Scottish coastal points.
+ *   Every point must return `unknown` with no designation.
+ *
+ *   Wales publishes NCERM in the previous generation's vocabulary: three periods
+ *   from a 2005 base and percentile bands.
+ *   Scotland's Dynamic Coast explicitly prohibits property-level assessment.
+ *
+ *   Neither system uses England's vocabulary.
+ *   The inland English points test this layer's coverage boundary.
+ *
+ *   A positive-only check could pass an artifact that reports the entire country as designated.
+ *
+ *   The channels use different coordinate precision, so a boundary-point disagreement
+ *   can reflect rendering rather than a conversion defect.
+ *   The geodatabase publishes nine decimals through this package's ingest.
+ *
+ *   The OGC service publishes six decimals, or about 10 cm.
+ *   A point within roughly a meter of a zone boundary can fall on opposite sides of the two rendered edges.
+ *
+ *   The check reports these as `boundary_tolerance` with distance to the nearest edge.
+ *   The receipt includes their count.
+ *
+ *   The distance measures to the edge rather than to the nearest vertex.
+ *   A point a centimeter from a long edge can be meters from every vertex.
+ *
+ *   In one flood-verify near-miss, vertex distance was 1.58 m and edge distance was 0.009 m.
+ *   The vertex measurement overstated distance by 175 times.
+ *
+ *   Vertex-only measurements would make the boundary tolerance stricter than its stated value
+ *   and report a rendering difference as a conversion defect.
  */
 
 import type { OutsideCoverageRow } from "@mailwoman/core/layers"
@@ -196,7 +215,7 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 /**
  * Whether the service's own geometry contains the point, decided here with the
  * same even-odd rule the artifact's reader uses.
- * So what is compared is a verdict against a verdict.
+ * So what's compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

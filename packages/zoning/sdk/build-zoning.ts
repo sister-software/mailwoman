@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Build `zoning-ireland.db`, the sealed two-tier polygon layer. Its coverage basis and license tier can each refuse publication.
+ * Build `zoning-ireland.db`, the sealed two-tier polygon layer.
+ *
+ * Its coverage basis and license tier can each refuse publication.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers/stat"
@@ -59,7 +61,7 @@ export const PLAN_LEVEL_SCHEME = "IE-PLAN-LEVEL"
 
 /**
  * Feature ids per chunk process, bounded at 100,000 because h3's wasm heap cannot be
- * reset from JavaScript and does not survive an unbounded number of polyfill calls.
+ * reset from JavaScript and doesn't survive an unbounded number of polyfill calls.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -217,8 +219,8 @@ const WORST_PAIRS_REPORTED = 8
  *
  * @throws {Error} On a feature that reaches no cell, a feature count that disagrees
  * with the source's own declaration, an area total that disagrees with the publisher's,
- * a coverage row that would license a negative claim, a crosswalk edge table written while
- * the mapping is not a function, or a `shipped` tier asked for under an unresolved license.
+ * a coverage row that would license a negative claim, a crosswalk edge table written
+ * while the mapping isn't a function, or a `shipped` tier asked for under an unresolved license.
  */
 export async function buildZoningDatabase(options: BuildZoningOptions): Promise<BuildZoningResult> {
 	const tier = options.tier ?? LayerTier.BuildLocal
@@ -292,7 +294,7 @@ async function buildZoningResult(
 
 	const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
 
-	// The crosswalk is not a table: the build checks it rather than assuming it.
+	// The crosswalk isn't a table: the build checks it rather than assuming it.
 	const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
 
 	assertCrosswalkIsNotATable(ingested.crosswalkPairs, 0)
@@ -334,7 +336,7 @@ async function buildZoningResult(
 
 	// Both probes this artifact serves already use primary keys, so it needs no secondary indexes.
 	// An index over a `without rowid` table would roughly double the cell tier
-	// to serve a scan that is already short.
+	// to serve a scan that's already short.
 	const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
 	return {
@@ -452,7 +454,7 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 			vocabulary.set(key, existing ? [scheme, code, existing[2], existing[3] + rows] : [scheme, code, label, rows])
 		}
 
-		// The pairs merge as a union, because a mapping that is not a function can look like one inside any single chunk.
+		// The pairs merge as a union, because a mapping that's not a function can look like one inside any single chunk.
 		for (const [authorityCode, localCode, codes] of chunk.crosswalkPairs) {
 			const key = `${authorityCode}\u0000${localCode}`
 			const existing = crosswalkPairs.get(key)
@@ -496,7 +498,7 @@ export function nonFunctionalPairs(pairs: ReadonlyArray<CrosswalkPair>): Crosswa
 }
 
 /**
- * Refuse a crosswalk edge table while the publisher's mapping is not a function
+ * Refuse a crosswalk edge table while the publisher's mapping isn't a function
  * of the (authority, code) pair.
  *
  * @throws {Error} When edges would be written while any pair is non-functional.
@@ -681,7 +683,7 @@ function writeVocabularyRows(
 	for (const row of [...rows.values()].toSorted((left, right) =>
 		left.scheme === right.scheme ? (left.code < right.code ? -1 : 1) : left.scheme < right.scheme ? -1 : 1
 	)) {
-		// NULL rather than a plausible URL, because the definitions behind the code-to-label pairs were not retrievable.
+		// NULL rather than a plausible URL, because the definitions behind the code-to-label pairs weren't retrievable.
 		insert.run(row.scheme, row.code, row.label, null, null, row.declared, row.observedRows)
 
 		const census = bySchema.get(row.scheme) ?? { codes: 0, undeclared: 0, undeclaredCodes: [] }

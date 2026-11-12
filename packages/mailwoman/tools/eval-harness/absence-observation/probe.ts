@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Frozen definition and scoring for the absence-observation probe. Target rows expect an observation.
- *   Each control group expects silence. Rows from every group let the probe detect a route that fires everywhere.
+ *   Frozen definition and scoring for the absence-observation probe.
+ *
+ *   Target rows expect an observation.
+ *   Each control group expects silence.
+ *
+ *   Rows from every group let the probe detect a route that fires everywhere.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -228,7 +232,7 @@ export interface AbsenceRowResult {
 	observationLine: string | null
 	/**
 	 * POI route result.
-	 * The value `none` means the POI route did not run.
+	 * The value `none` means the POI route didn't run.
 	 */
 	poiResult: "none" | "abstain" | "intent"
 	abstainReason: string | null

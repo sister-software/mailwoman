@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The optional financing view. The project table is unfinanced, and this view adds debt draws, debt
- *   repayments, interest payments, grant receipts and equity contributions beside it without changing it.
- *   Each flow has its own identifier and enters once in each month of its range. A grant therefore appears
- *   here and never as a project receipt.
+ *   The optional financing view.
  *
- *   Every month reconciles: the net cash flow minus the month's financing flows equals the project table's
- *   cash flow for that month. The cash balance is the cumulative net cash flow, and the first month it falls
- *   below zero is reported as a funding gap.
+ *   The project table is unfinanced, and this view adds debt draws, debt repayments,
+ *   interest payments, grant receipts and equity contributions beside it without changing it.
+ *   Each flow has its own identifier and enters once in each month of its range.
+ *
+ *   A grant therefore appears here and never as a project receipt.
+ *
+ *   Every month reconciles: the net cash flow minus the month's financing flows
+ *   equals the project table's cash flow for that month.
+ *   The cash balance is the cumulative net cash flow, and the first month it
+ *   falls below zero is reported as a funding gap.
  */
 
 import type { CashFlowTable } from "#cash-flow"

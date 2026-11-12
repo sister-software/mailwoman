@@ -22,7 +22,7 @@ export const POISearchRequestSchema = z
 export type POISearchRequest = z.infer<typeof POISearchRequestSchema>
 
 /**
- * The answer when the query did not read as a POI query.
+ * The answer when the query didn't read as a POI query.
  */
 export const NotPOIQuerySchema = z
 	.object({ type: z.literal("not_poi_query") })

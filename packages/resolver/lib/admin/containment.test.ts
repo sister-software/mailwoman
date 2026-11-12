@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The admin-containment re-rank at the walk's deciding site: the qualifier is threaded onto exactly
- *   the lookups the setting covers, the partition runs after `rankByImportance`, and the
- *   `admin_containment` trace stamp reports the tri-state truthfully.
+ *   The admin-containment re-rank at the walk's deciding site: the qualifier is threaded onto
+ *   exactly the lookups the setting covers, the partition runs after `rankByImportance`,
+ *   and the `admin_containment` trace stamp reports the tri-state truthfully.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

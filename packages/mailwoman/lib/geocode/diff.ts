@@ -4,14 +4,14 @@
 /**
  *   Diff two geocodes of the same input — the parse diff plus what the resolver did with it.
  *
- *   A distance delta by itself shows that the answer moved and leaves the cause open. The three ways a geocode changes are
- *   different problems with different fixes: the parse changed (a different question was asked), a
- *   span resolved to a different place (ranking or gazetteer coverage), or the tier changed (a lookup
- *   missed and the same components fell through to a coarser rung).
+ *   A distance delta by itself shows that the answer moved and leaves the cause open.
+ *   The three ways a geocode changes are different problems with different fixes:
+ *   the parse changed (a different question was asked), a span resolved to
+ *   a different place (ranking or gazetteer coverage), or the tier changed
+ *   (a lookup missed and the same components fell through to a coarser rung).
  *
- *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs
- *   `haversine`. `@mailwoman/spatial` depends on `@mailwoman/core`, so putting this module in core would
- *   close a cycle.
+ *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs `haversine`.
+ *   `@mailwoman/spatial` depends on `@mailwoman/core`, so putting this module in core would close a cycle.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -63,7 +63,7 @@ export interface GeocodeDiff {
 	/**
 	 * The span-level difference between the two parses.
 	 *
-	 * When `parse.identical` is false the resolver was asked a different question and is not the suspect.
+	 * When `parse.identical` is false the resolver was asked a different question and isn't the suspect.
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
@@ -77,7 +77,7 @@ export interface GeocodeDiff {
 	 * Kilometers the final answer moved.
 	 *
 	 * Null when either arm returned no coordinate.
-	 * This differs from a zero-kilometer move and must not be read as one.
+	 * This differs from a zero-kilometer move and mustn't be read as one.
 	 */
 	movedKm: number | null
 	uncertaintyBefore: number | null

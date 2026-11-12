@@ -2,30 +2,36 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The score side of the candidate build: load a WOF admin database's `place_importance` into a
- *   lookup the candidate builder probes per place, so every candidate row can include the
- *   toponym-fame prior a bare city name is decided on.
+ *   The score side of the candidate build: load a WOF admin database's `place_importance`
+ *   into a lookup the candidate builder probes per place, so every candidate row can
+ *   include the toponym-fame prior a bare city name is decided on.
  *
- *   The join key is `(name_key, country, placetype)`, the same {@link normalizeLocalityForKey} the
- *   candidate build uses for its probe key, so the two sides fold identically. An id join is wrong
- *   here, because the score source (`admin-global-priority-importance.db`) and the candidate build's
- *   admin source are different snapshots whose ids disagree. An id join silently drops rows and
- *   leaves the ranking inert on the queries the prior exists for.
+ *   The join key is `(name_key, country, placetype)`, the same {@link normalizeLocalityForKey}
+ *   the candidate build uses for its probe key, so the two sides fold identically.
+ *   An id join is wrong here, because the score source (`admin-global-priority-importance.db`)
+ *   and the candidate build's admin source are different snapshots whose ids disagree.
  *
- *   The key by itself is not enough. `(warwick, US, locality)` covers eleven different places.
+ *   An id join silently drops rows and leaves the ranking inert on the queries the prior exists for.
+ *
+ *   The key by itself isn't enough.
+ *   `(warwick, US, locality)` covers eleven different places.
+ *
  *   The group's maximum would give every Warwick in America the fame of Warwick, Rhode Island.
  *   The join picks the nearest centroid when it falls within {@link IMPORTANCE_JOIN_RADIUS_KM}.
- *   Two artifacts describing the same settlement put its centroid
- *   in almost the same place. Two towns with the same name in one country do not.
  *
- *   `place_importance.importance` lands in the column verbatim, the pre-split conflation that is
- *   encyclopedia-derived where the concordance matched and a population-derived proxy everywhere
- *   else. See {@link CandidateTable.importance} for why the split `encyclopedic` channel is not what
- *   is written here.
+ *   Two artifacts describing the same settlement put its centroid in almost the same place.
+ *   Two towns with the same name in one country do not.
  *
- *   A place with no match gets NULL. NULL means the place's fame is unmeasured.
- *   The consumer (`resolver/toponym-prior.ts`) leaves an unmeasured candidate at the position
- *   population assigned it.
+ *   `place_importance.importance` lands in the column verbatim, the pre-split conflation that's
+ *   encyclopedia-derived where the concordance matched and a population-derived proxy everywhere else.
+ *   See {@link CandidateTable.importance} for why the split `encyclopedic`
+ *   channel isn't what's written here.
+ *
+ *   A place with no match gets NULL.
+ *   NULL means the place's fame is unmeasured.
+ *
+ *   The consumer (`resolver/toponym-prior.ts`) leaves an unmeasured candidate
+ *   at the position population assigned it.
  */
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -42,7 +48,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The nearest-centroid distances separate into a mode where the two snapshots agree
  * and a background rate of two different towns wearing one name in one country.
  *
- * The background rate does not decay with distance.
+ * The background rate doesn't decay with distance.
  * Ten kilometers separates the two populations.
  *
  * That distance matches the join's purpose.
@@ -110,7 +116,7 @@ export class ImportanceIndex {
 	 * Compare this number across rebuilds.
 	 * A jump means the score source and the admin source have drifted apart
 	 * and the join is being asked to guess.
-	 * It does not mean the radius is too tight.
+	 * It doesn't mean the radius is too tight.
 	 */
 	refused = 0
 
@@ -121,7 +127,7 @@ export class ImportanceIndex {
 
 	/**
 	 * The importance of the scored place nearest `(lat, lon)` sharing `name`'s folded key, `country`
-	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
+	 * and `placetype`, or null when there's no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
 	 * Null is unmeasured.
 	 * Keep the value null.

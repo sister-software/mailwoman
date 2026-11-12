@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Row schema and validation for the demo-cascade smoke eval. It lives apart from `smoke.ts` so tests can load it
- *   without the model or the hot database.
+ *   Row schema and validation for the demo-cascade smoke eval.
+ *
+ *   It lives apart from `smoke.ts` so tests can load it without the model or the hot database.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -20,12 +21,12 @@ export interface SmokeRowExpect {
 	id: number | null
 	/**
 	 * Place name for human cross-checking.
-	 * The eval does not grade it.
+	 * The eval doesn't grade it.
 	 */
 	name: string | null
 	/**
 	 * Placetype for human cross-checking.
-	 * The eval does not grade it.
+	 * The eval doesn't grade it.
 	 */
 	placetype: string | null
 	/**

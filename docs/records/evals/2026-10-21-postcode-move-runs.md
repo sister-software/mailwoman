@@ -102,7 +102,7 @@ None of the three runs can ship. Each fails release requirements v7, each misses
 promotion battery, and each regresses US and GB board rows.
 
 On this evidence the copy rate has no consistent effect. The board favours p005 and p015 over p000. The postcode sweep
-does not. On the held-out set, p015 falls furthest on venue_unit and DE.
+doesn't. On the held-out set, p015 falls furthest on venue_unit and DE.
 
 The ES and venue_unit losses are shared by all three runs, p000 included, so they belong to corpus v0.8.0 rather than to
 the move. The next measurement is the comparison of those rows' gold spans with the v0.8.0 training rows of the same

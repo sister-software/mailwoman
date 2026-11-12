@@ -4,20 +4,23 @@
 /**
  *   The full-scale locality-surface build against the live WOF admin DB.
  *
- *   not on the PR path by default. Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI
- *   leg (172s after the scan memoization), and it grows with the gazetteer. It runs in three places,
- *   each catching something the others cannot:
+ *   not on the PR path by default.
+ *   Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI leg
+ *   (172s after the scan memoization), and it grows with the gazetteer.
+ *
+ *   It runs in three places, each catching something the others cannot:
  *
  *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
- *   - `lexicon-nightly.yml` — data drift. The gazetteer is rebuilt outside any PR, so no path filter
- *       can see it. This is the only layer that catches that and the control for the fixture
- *       layer: if the fixture stops representing the real data, this check reports it.
+ *   - `lexicon-nightly.yml` — data drift.
+ *     The gazetteer is rebuilt outside any PR, so no path filter can see it.
+ *     This is the only layer that catches that and the control for the fixture layer:
+ *     if the fixture stops representing the real data, this check reports it.
  *   - `publish.yml` prepare — the release eval.
  *
- *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
- *   four laws against a seeded DB and is invariant to gazetteer size. What stays here is the
- *   coverage-scale claims — `entries > 10_000` and the nonzero skip counters — because those are
- *   claims about the gazetteer rather than about the laws.
+ *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts
+ *   the same four laws against a seeded DB and is invariant to gazetteer size.
+ *   What stays here is the coverage-scale claims — `entries > 10_000` and the nonzero skip
+ *   counters — because those are claims about the gazetteer rather than about the laws.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

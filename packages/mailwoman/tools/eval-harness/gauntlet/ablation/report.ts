@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ablation map renders unmeasured cells as absent rather than zero; {@linkcode ABLATION_ABSENT} covers the three distinct absences.
+ *   The ablation map renders unmeasured cells as absent rather than zero;
+ *   {@linkcode ABLATION_ABSENT} covers the three distinct absences.
  */
 
 import { toLinesText } from "@mailwoman/core/fs/writers"

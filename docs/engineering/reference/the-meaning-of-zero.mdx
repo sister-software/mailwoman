@@ -1,13 +1,11 @@
 # The meaning of zero
 
-> **A magnitude never encodes its own absence.**
+A magnitude mustn't encode its own absence. When `0` means both "we don't know" and
+"we measured zero", a consumer can't tell the two apart. Both readings are valid numbers, so
+neither raises an error or writes a log line, and the mechanism takes no action. This page states the rule and lists
+the places in the code where it was broken.
 
-When `0` means both "we don't know" and "we measured zero", no consumer can tell them apart — and
-both readings look like a number, so no error fires and no log line appears while the mechanism
-takes no action. This page is the invariant and the audit behind it.
-
-The operator stated this rule after the defect appeared twice in one day. Two occurrences in one day
-made it a bug class rather than a coincidence.
+The operator stated this rule after the defect appeared twice in one day. Two occurrences in one day made it a bug class.
 
 ## The rule
 
@@ -28,21 +26,20 @@ interface Evidence {
 ```
 
 [`StreetNameEvidenceProvider`](./registry-backed-structured-prediction.mdx) is the shape done right:
-`exists` answers "is there evidence", `confidence` answers "how much". They are never the same
-question.
+`exists` answers "is there evidence", and `confidence` answers "how much".
 
-**Re-encoding the domain does not fix it.** A proposal to move `importance` to `[-1, 1]` with `0` as
+Re-encoding the domain doesn't fix it. A proposal to move `importance` to `[-1, 1]` with `0` as
 the default and `-1` as "unknown" was considered and rejected against the data: it still collapses
 absence onto the value axis, and 82% of places would land on `-1`, so the axis would encode mostly
-one thing. The split is the fix. The range is a detail.
+one thing. The separate presence bit fixes it, and the choice of range doesn't.
 
 ## The audit
 
 Four confirmed sites, in descending order of how much they cost.
 
-### 1. The postcode-anchor channel — the bit exists and no code reads it
+### 1. The postcode-anchor channel
 
-`neural/postcode-anchor.ts` documents it:
+`packages/neural/lib/postcode/anchor.ts` documents it:
 
 ```ts
 /** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
@@ -51,23 +48,23 @@ confidence: number
 
 So `confidence: 0` means **either**:
 
-- `27` is not a postcode at all, **or**
-- `75008` absolutely is a postcode, and it exists in most countries that the posterior is uniform.
+- `27` isn't a postcode at all, **or**
+- `75008` is a postcode, and it exists in most countries, so the posterior is uniform.
 
 Those are opposite claims. The first means "ignore this token". The second means "this is a postcode,
 just don't trust the country."
 
 The type already has the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,
-where `"none"` is exactly "in no gazetteer". **No consumer reads it.** `soft-features.ts` builds the
-channel from `anchor.confidence` with no other input, so the model is fed one number and cannot recover the
-difference. The bit exists, travels as far as the type boundary, and is dropped on the floor.
+where `"none"` is exactly "in no gazetteer". The channel's consumer doesn't read it:
+`soft-features.ts` builds the channel from `anchor.confidence` with no other input, so the model is
+fed one number and can't recover the difference.
 
 This is the most expensive instance, because the anchor channel is how the model learns about
 postcodes at all.
 
 ### 2. Gazetteer importance — no bit at all (#1142)
 
-`neural/fst-prior.ts`:
+`packages/neural/lib/fst-prior.ts`:
 
 ```ts
 const impBias = entry.importance * biasScale * maxBias
@@ -79,38 +76,38 @@ if (impBias > existing) {
 ```
 
 `importance: 0` ⇒ `impBias: 0` ⇒ never greater than the initial `0` ⇒ **the tag is never biased**.
-An unknown place and a known-but-unimportant place are both perfectly inert, and 82% of places read
-`0`. The change looks configured and has no effect. Tracked on #1142.
+An unknown place and a known but unimportant place both get no bias, and 82% of places read `0`.
+The change looks configured and has no effect. Tracked on #1142.
 
-Measured on the Paris fixtures: only 3 of 43 surfaces were inert this way — so on that corpus the
-inertia is not what's protecting us, but the ambiguity is still live everywhere else.
+Measured on the Paris fixtures, only 3 of 43 surfaces were inert this way, so on that corpus the
+inertia does little harm. The ambiguity remains wherever else places read `0`.
 
-### 3. Zero-valued baselines — the same shape, caught in the act
+### 3. Zero-valued baselines
 
 `baseline-assert.ts` checks a reading against a registered value by relative deviation. At
 `value: 0` the relative band is undefined: every reading is either exactly right or infinitely wrong.
-The fix there was `tolerance_abs`, which is the same move in miniature. The row declares what "zero"
-means instead of letting the arithmetic guess.
+The fix there was `tolerance_abs`, an absolute tolerance the row declares. The check uses it
+instead of the relative band. It's the same split on a smaller scale: the row states what "zero"
+means instead of leaving it to the arithmetic.
 
 `span_scorer.py`'s `_NEG_INF = -1e4` is the sentinel-inside-the-value-domain version: a magic number
 living in the same space as real scores.
 
-## How to apply
+## New numeric fields
 
-When you add a numeric channel, score, rate, bias, or weight, ask **one** question:
+When you add a numeric channel, score, rate, bias, or weight, ask:
 
 > Can this field's zero mean "absent"?
 
 If yes, add the bit. If the bit already exists somewhere in the type, **check that the consumer reads
-it** — site 1 above is the reminder that an unread discriminator is the same as no discriminator,
-and it is harder to spot because the type looks correct.
+it**. An unread discriminator has the same effect as none (site 1), and it's harder to spot because
+the type looks correct.
 
-The tell, every time: the docstring reads "`0` when …". Grep for it.
+One tell is a docstring that reads "`0` when …", as at site 1. Grep for it.
 
-## Why this rule has its own page
+## The Phase 4a rerank
 
-Every instance costs a wrong verdict or a dead change, and none of them announce themselves. Phase 4a's
-rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with
-no street evidence to give — the instrument was dark, the number was well-formed, and the report read
-as a finding. That is the whole failure mode: **a magnitude carrying its own absence is a lie the type
-system will typecheck.**
+None of the sites above raised an error, and each cost a wrong verdict or a change with no effect.
+Phase 4a's rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a
+resolver with no street evidence to give. The number was well-formed, and the report presented it as
+a finding. The type checker accepts a magnitude that also encodes its own absence.

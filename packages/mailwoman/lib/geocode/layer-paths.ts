@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where each attached spatial layer lives under the data root, one list shared by the geocode session and
- *   `mailwoman doctor` so a layer the doctor describes is a layer the session would attach.
+ *   Where each attached spatial layer lives under the data root, one list shared by the geocode session
+ *   and `mailwoman doctor` so a layer the doctor describes is a layer the session would attach.
  */
 
 import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"

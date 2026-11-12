@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs component-level invariance checks through the production runtime pipeline without resolver I/O. With a
- *   baseline parser, only violations the baseline lacks count toward failure.
+ *   Runs component-level invariance checks through the production runtime pipeline without resolver I/O.
+ *
+ *   With a baseline parser, only violations the baseline lacks count toward failure.
  */
 
 import {
@@ -105,7 +106,7 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
  * Compares component maps.
  *
  * For `abbreviation-swap`, both maps are canonicalized first so the expected
- * spelling change does not count as a difference.
+ * spelling change doesn't count as a difference.
  */
 function compareForTransform(
 	transformID: string,

@@ -8,20 +8,21 @@
  *   name)` pairs into a `@mailwoman/poi-taxonomy` brand table: one row per Wikidata QID, its
  *   most-frequently observed name plus alias spellings that clear a noise floor.
  *
- *   The output (`poi-taxonomy/data/brands.json`) is committed — a rebuild against the same `poi.db`
- *   must be byte-identical. Every ordering decision in {@linkcode aggregateBrands} is an explicit,
- *   deterministic tie-break (rows desc → QID asc for brands. count desc → name asc for the modal
- *   pick. alphabetical for aliases), never left to SQL row order or `Map` iteration order.
+ *   The output (`poi-taxonomy/data/brands.json`) is committed.
+ *   A rebuild against the same `poi.db` must be byte-identical.
  *
- *   Two phases, split the way `build-poi.ts` splits ingest from materialize, so the aggregation
- *   logic is unit-testable without touching sqlite:
+ *   Every ordering decision in {@linkcode aggregateBrands} is an explicit, deterministic tie-break
+ *   (rows desc → QID asc for brands. count desc → name asc for the modal pick. alphabetical for aliases),
+ *   never left to SQL row order or `Map` iteration order.
+ *
+ *   Two phases, split the way `build-poi.ts` splits ingest from materialize,
+ *   so the aggregation logic is unit-testable without touching sqlite:
  *
  *   1. {@linkcode readBrandNameCounts} / {@linkcode readSourceLayer} — `node:sqlite`, read-only,
- *        the exact `group BY brand_wikidata, name` aggregate plus the source layer's manifest
- *        identity.
- *   2. {@linkcode aggregateBrands} — a pure function over an `Iterable<BrandNameCount>` (real rows
- *        or an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
- *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
+ *      the exact `group BY brand_wikidata, name` aggregate plus the source layer's manifest identity.
+ *   2. {@linkcode aggregateBrands} — a pure function over an `Iterable<BrandNameCount>`
+ *      (real rows or an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection
+ *      point (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -228,7 +229,7 @@ export interface BuildBrandTableOptions {
 /**
  * Builds a {@link POIBrandTable} in memory: read (or take injected) rows →
  * {@link aggregateBrands} → wrap with the source layer's manifest identity.
- * Does not write anything — see {@link writeBrandTable}.
+ * Doesn't write anything — see {@link writeBrandTable}.
  */
 export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promise<POIBrandTable> {
 	if (!opts.rows && !opts.dbPath) {

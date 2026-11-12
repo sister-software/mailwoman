@@ -19,7 +19,7 @@ import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board/runt
 /**
  * Resolves a committed pre-registration file from the package root.
  *
- * The path starts at the package root because `tsc` does not copy `.json` files into `out/`.
+ * The path starts at the package root because `tsc` doesn't copy `.json` files into `out/`.
  */
 export function preregistrationPath(directory: string, name: string): string {
 	return resolvePackagePath("mailwoman", "tools", "eval-harness", directory, name)
@@ -145,7 +145,7 @@ export interface SamplingRegistration {
  * Audits sampling settings.
  *
  * It reports a per-stratum target below `minimumTarget` and a minimum above the target.
- * It also reports a seed that is not an integer.
+ * It also reports a seed that's not an integer.
  */
 export function samplingProblems(sampling: SamplingRegistration, minimumTarget: number): string[] {
 	const problems: string[] = []

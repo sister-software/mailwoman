@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Punctuation normalization — fancy quotes / dashes to ascii equivalents. Identity-length: every
- *   fancy character is a single codepoint that maps to a single ascii char.
+ *   Punctuation normalization — fancy quotes / dashes to ascii equivalents.
+ *
+ *   Identity-length: every fancy character is a single codepoint that maps to a single ascii char.
  */
 
 import { identityMap } from "#offset-map"

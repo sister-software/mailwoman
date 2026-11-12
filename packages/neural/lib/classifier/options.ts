@@ -120,7 +120,7 @@ export interface NeuralAddressClassifierConfig {
 	weightsSource?: string
 
 	/**
-	 * The required channels `loadFromWeights` could not feed, empty when every required channel is fed.
+	 * The required channels `loadFromWeights` couldn't feed, empty when every required channel is fed.
 	 */
 	unfedChannels?: readonly UnfedChannelReport[]
 
@@ -380,7 +380,7 @@ export interface ParseOpts {
 	 * Venue-head lookups for the session's locale.
 	 *
 	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
-	 * Absent, the prior does not run.
+	 * Absent, the prior doesn't run.
 	 */
 	venueHead?: VenueHeadLexiconLike
 
@@ -492,7 +492,7 @@ export const AddressSystemConventionsSchema = z.union([
 /**
  * Reads an address-system conventions mode from a command-line or card string.
  *
- * @throws When the value is not `"off"`, `"auto"` or a known system code.
+ * @throws When the value isn't `"off"`, `"auto"` or a known system code.
  */
 export function parseAddressSystemConventions(value: string): AddressSystemConventions {
 	const result = AddressSystemConventionsSchema.safeParse(value)
@@ -509,8 +509,7 @@ export function parseAddressSystemConventions(value: string): AddressSystemConve
 /**
  * How a loader sets a behavior that the model card declares.
  *
- * - `"declared"` (the default) follows the card, and a card that does not
- *   declare the behavior leaves it off.
+ * - `"declared"` (the default) follows the card, and a card that doesn't declare the behavior leaves it off.
  * - `"on"` and `"off"` replace the card's declaration, a deliberate departure from how the model trained.
  */
 export const ModelCardToggleSchema = z.enum(["declared", "on", "off"])
@@ -561,7 +560,7 @@ function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): Tog
  * Whether a loader zeroes the gazetteer channel next to postcode-anchor hits.
  *
  * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
- * A model whose card does not declare it was trained without the choreography, so it is off.
+ * A model whose card doesn't declare it was trained without the choreography, so it is off.
  *
  * Every loader (Node, scorer, browser) resolves the setting here.
  */
@@ -575,7 +574,7 @@ export function gazetteerSuppressionFor(
 /**
  * Whether a loader merges same-tag spans split by short punctuation.
  *
- * The model card's `requires.bridge` decides, and a card that does not declare it leaves bridging off.
+ * The model card's `requires.bridge` decides, and a card that doesn't declare it leaves bridging off.
  *
  * Every loader (Node, scorer, browser) resolves the setting here.
  */
@@ -590,11 +589,11 @@ export function punctuationBridgingFor(
  * The address-system conventions mode a loader configures.
  *
  * A card that requires conventions supplies its `mode`, defaulting to `"auto"`.
- * A card that does not require them leaves conventions `"off"`.
+ * A card that doesn't require them leaves conventions `"off"`.
  *
  * Every loader (Node, scorer, browser) resolves the setting here.
  *
- * @throws When the card declares a mode that is not a known conventions mode.
+ * @throws When the card declares a mode that's not a known conventions mode.
  */
 export function addressSystemConventionsFor(
 	setting: ConventionsSetting,

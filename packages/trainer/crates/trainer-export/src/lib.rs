@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Exports a Mailwoman coarse-encoder checkpoint to ONNX and quantizes the graph to int8 without Python.
 //!
 //! The export reads a checkpoint directory as `MailwomanCoarseEncoder.save_pretrained` writes it, `config.json`

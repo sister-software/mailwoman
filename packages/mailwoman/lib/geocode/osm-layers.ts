@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Opens the OpenStreetMap address-point layers an operator built under the data root, for the geocode
- *   session and the Nominatim and Photon servers alike, so every path that serves OpenStreetMap rows applies
- *   the same license refusal.
+ *   Opens the OpenStreetMap address-point layers an operator built under the data root,
+ *   for the geocode session and the Nominatim and Photon servers alike, so every path
+ *   that serves OpenStreetMap rows applies the same license refusal.
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
@@ -71,7 +71,7 @@ export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<Landmark
 
 /**
  * Open the OpenStreetMap address-point layers under `dataRoot`, or return `null`
- * when `@mailwoman/osm`, an optional peer an operator installs to opt in, is not installed.
+ * when `@mailwoman/osm`, an optional peer an operator installs to opt in, isn't installed.
  *
  * A country the active selection lists an OpenStreetMap build for reads that build.
  * Every other country reads its conventional `db/osm/address-points-<cc>-<cc>.db`.

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared Ink helpers and types for CLI commands, living outside `commands/` so the router does not load
- *   it as a command and avoiding JSX because Node type stripping cannot compile it.
+ *   Shared Ink helpers and types for CLI commands, living outside `commands/` so the router
+ *   doesn't load it as a command and avoiding JSX because Node type stripping cannot compile it.
  */
 
 import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
@@ -132,7 +132,7 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 }
 
 /**
- * Writes machine-readable output straight to stdout so Ink does not wrap it.
+ * Writes machine-readable output straight to stdout so Ink doesn't wrap it.
  * Returns `null` so a render branch can return its result.
  */
 export function writeRawStdout(text: string | object): null {
@@ -296,15 +296,6 @@ export function splitNumberList(raw: string | null): number[] {
 	return extractDelimited(raw).map(Number)
 }
 
-const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
-
-/**
- * Removes ANSI escape sequences from child-process output.
- */
-export function stripAnsi(value: string): string {
-	return value.replaceAll(ANSI_PATTERN, "")
-}
-
 /**
  * The result shape shared by polygon-layer verifications.
  */
@@ -376,7 +367,7 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// A module-resolution error means the weights package is not installed.
+		// A module-resolution error means the weights package isn't installed.
 		// Any other error comes from weights that resolved but failed to load.
 		const absent = /Could not resolve/iu.test(message)
 		const { weightsPackageName } = await import("@mailwoman/neural/weights")

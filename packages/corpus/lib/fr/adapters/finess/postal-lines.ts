@@ -3,12 +3,12 @@
 
 /**
  * Readers for the three French postal-line shapes that the FINESS and Annuaire de l'éducation
- * publications share: the La Poste routing line (`97100 BASSE TERRE`, `97331 CAYENNE CEDEX`), a
- * line holding a post-office box among other text (`ZA ESPERANCE - BP 26`), and the comparison of
- * two place names written in different forms (`ST PIERRE` against `Saint-Pierre`).
+ * publications share: the La Poste routing line (`97100 BASSE TERRE`, `97331 CAYENNE CEDEX`),
+ * a line holding a post-office box among other text (`ZA ESPERANCE - BP 26`), and the comparison
+ * of two place names written in different forms (`ST PIERRE` against `Saint-Pierre`).
  *
- * Both adapters read French overseas registers, and both publishers write these lines the same
- * way, so the readers live in one module rather than in each adapter.
+ * Both adapters read French overseas registers, and both publishers write these lines
+ * the same way, so the readers live in one module rather than in each adapter.
  */
 
 import { matchCedex } from "@mailwoman/codex/fr/cedex"
@@ -34,9 +34,9 @@ const ACHEMINEMENT = /^(\d{5}) (.+)$/u
 /**
  * Split a La Poste routing line into postcode, locality and an optional trailing `CEDEX`.
  *
- * Returns `null` when the line does not open with a five-digit postcode,
- * holds no locality after it, or holds `CEDEX` anywhere but at its end, because none
- * of those is a routing line the French layout can print.
+ * Returns `null` when the line doesn't open with a five-digit postcode, holds no locality
+ * after it, or holds `CEDEX` anywhere but at its end, because none of those is
+ * a routing line the French layout can print.
  */
 export function parseAcheminementLine(line: string): AcheminementLine | null {
 	const collapsed = line.replaceAll(/\s+/gu, " ").trim()

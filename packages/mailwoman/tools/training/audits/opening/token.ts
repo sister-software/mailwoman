@@ -4,11 +4,17 @@
 /**
  *   Counts what a row's opening token teaches, at the draw level and at the emitted level.
  *
- *   A count is comparable only when its definition and its sampling level travel with it, so the opening-token
- *   definitions live here and are counted at both levels. The draw level counts rows straight off the mixture. The
- *   emitted level counts what fills the trainer's row budget after augmentation. Augmentation expands long addresses.
- *   A short-row source therefore takes a smaller share of the fixed budget there. A ratio across the two levels
- *   compares counts of different populations. The sampling is the epoch-mixture audit's: the same stream, seed convention and budget.
+ *   A count is comparable only when its definition and its sampling level travel with it,
+ *   so the opening-token definitions live here and are counted at both levels.
+ *   The draw level counts rows straight off the mixture.
+ *
+ *   The emitted level counts what fills the trainer's row budget after augmentation.
+ *   Augmentation expands long addresses.
+ *
+ *   A short-row source therefore takes a smaller share of the fixed budget there.
+ *   A ratio across the two levels compares counts of different populations.
+ *
+ *   The sampling is the epoch-mixture audit's: the same stream, seed convention and budget.
  */
 
 import { isDecimalDigits } from "@mailwoman/core/strings/unicode"

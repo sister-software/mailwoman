@@ -7,7 +7,7 @@ import { readLocalTextFileSync } from "#fs/readers"
 import { isFileSync } from "#fs/readers/stat"
 
 /**
- * The `.env` file a process started in `workingDirectory` reads, or `null` when there is none.
+ * The `.env` file a process started in `workingDirectory` reads, or `null` when there's none.
  *
  * `process.loadEnvFile` reads the working directory's own `.env`.
  * A git worktree has none, because the file is untracked and sits in the main checkout,
@@ -46,7 +46,7 @@ const GIT_DIRECTORY_LINE = /^gitdir:[\t ]*(.+?)[\t ]*$/mu
 
 /**
  * The main checkout of the repository whose worktree is `workingDirectory`,
- * or `null` when the directory is not a worktree's root.
+ * or `null` when the directory isn't a worktree's root.
  */
 function mainCheckoutOf(workingDirectory: string): string | null {
 	const pointer = resolvePath(workingDirectory, ".git")

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds a generation of the place autocomplete index into a staged directory the public-bucket publisher uploads:
+ *   Builds a generation of the place autocomplete index into a staged directory
+ *   the public-bucket publisher uploads:
  *
- *   node packages/mailwoman/tools/dev-tools/data/autocomplete-index.run.ts --out <stage> --version 2026-10-24
- *   [--candidate-db <path>] [--floor 20000]
+ *   node packages/mailwoman/tools/dev-tools/data/autocomplete-index.run.ts --out
+ *   <stage> --version 2026-10-24 [--candidate-db <path>] [--floor 20000]
  *
  *   Then publish the stage with `publish-public-bucket.run.ts --src <stage>` and bump
  *   `AUTOCOMPLETE_INDEX_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`.

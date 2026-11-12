@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes `neural-weights-<locale>/` package directories from an int8 model, its tokenizer and a checkpoint's
- *   `config.json`.
+ *   Writes `neural-weights-<locale>/` package directories from an int8 model,
+ *   its tokenizer and a checkpoint's `config.json`.
  *
- *   The card's eval section is the report `--eval-report` names, as JSON. Without one the card records that no golden
- *   set was evaluated. The checkpoint's `num_address_systems` decides whether the card holds the `address_systems`
- *   table, read from the committed address-system registry.
+ *   The card's eval section is the report `--eval-report` names, as JSON.
+ *   Without one the card records that no golden set was evaluated.
+ *
+ *   The checkpoint's `num_address_systems` decides whether the card holds the
+ *   `address_systems` table, read from the committed address-system registry.
  *
  *   Usage: `node packages/mailwoman/tools/release-tools/package/weights.run.ts --checkpoint <dir> --int8-model
  *   <model.onnx> --tokenizer <tokenizer.model> [--packages-root <dir>] [--locales en-us,fr-fr] [--corpus-version 0.1.0]
@@ -68,7 +70,7 @@ const config = await readLocalJSONFile<{ num_labels?: number; num_address_system
 	join(checkpoint, "config.json")
 )
 
-// The card writes the active set's labels, so a head of another width would ship a label map it does not emit.
+// The card writes the active set's labels, so a head of another width would ship a label map it doesn't emit.
 if (config.num_labels !== ACTIVE_BIO_LABELS.length) {
 	throw new Error(
 		`${checkpoint}/config.json has num_labels ${config.num_labels}; the card writes ${ACTIVE_BIO_LABELS.length} labels`

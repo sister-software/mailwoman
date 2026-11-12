@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Threshold-free, report-only census of three number-shape detectors over the committed Gauntlet board.
  *
@@ -21,7 +24,7 @@
  *
  * It also records each value's class-run signature (`D5`, `D2-D3`, `A1D1 D1A2`).
  *
- * This command changes no runtime behavior and is not a release eval.
+ * This command changes no runtime behavior and isn't a release eval.
  */
 
 import { UNIT_SHAPES } from "@mailwoman/codex/unit-shapes"

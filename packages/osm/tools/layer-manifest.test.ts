@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import { summarizeLicense } from "@mailwoman/core/license/obligations"
 import {

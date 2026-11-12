@@ -32,7 +32,7 @@ export interface AssertAllowedHostOptions {
 	 * Exact hostnames this client may reach.
 	 *
 	 * This check uses a `Set` lookup rather than a suffix check.
-	 * `host.attacker.example` must not match.
+	 * `host.attacker.example` mustn't match.
 	 * An `.endsWith(...)`-style test would admit it.
 	 */
 	allowed: ReadonlySet<string>
@@ -55,7 +55,7 @@ export interface AssertAllowedHostOptions {
 }
 
 /**
- * Reject a URL a designated client must not send its identifying headers to:
+ * Reject a URL a designated client mustn't send its identifying headers to:
  * https only, allowlisted hosts only.
  *
  * @throws {ResourceError} With URN kind `request` — never transient, because

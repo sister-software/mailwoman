@@ -62,7 +62,7 @@ The per-state split refutes the earlier explanation. The verdict above pinned Be
 | Berlin (`10xxx`)     |    36.1% |          **100.0%** |
 | Sachsen (`01–09xxx`) |    54.9% |               67.6% |
 
-Berlin's postcodes still collide with US ZIPs in German order. The ambiguity is unchanged, and the model gets the city right every single time. The layout held Berlin back, and the collision did not. Once the city sits where German puts it, the model tags it as a city, whether or not the postcode is ZIP-shaped.
+Berlin's postcodes still collide with US ZIPs in German order. The ambiguity is unchanged, and the model gets the city right every single time. The layout held Berlin back, and the collision didn't. Once the city sits where German puts it, the model tags it as a city, whether or not the postcode is ZIP-shaped.
 
 ### So what was the anchor fixing?
 
@@ -80,7 +80,7 @@ Cheapest first: fix the eval (done, that's the table above), then ship the both-
 
 ### What it means for multi-locale
 
-It un-blocks it. The German "wall" that survived three retrains — the order-extract collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias. That is the target, and it was reached in the locale we'd written off as our worst. The caveat is that native order is the easy direction. International-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
+It un-blocks it. The German "wall" that survived three retrains — the order-extract collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias. That's the target, and it was reached in the locale we'd written off as our worst. The caveat is that native order is the easy direction. International-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
 
 ## Next changes
 

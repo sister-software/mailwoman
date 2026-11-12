@@ -3,8 +3,10 @@
 
 /**
  *   Runs the rehearsal against scripted Stripe and worker services.
+ *
  *   The session collects the same fields as the Payment Link.
  *   The renewal step waits for each token and advances the clock between tokens.
+ *
  *   The renewed expiry matches the period end plus the grace period.
  */
 

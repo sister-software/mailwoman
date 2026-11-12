@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `buildToolTable` against stub deps — no MCP transport/server involved. `server.ts`/`cli.ts`'s actual wiring isn't
- *   covered by a CI job (no stdio smoke run exists as of this writing) — `cli.ts` top-level-`await`s a real stdio
- *   connection, so this test cannot import it. Its `tsc -b` type check and manual verification cover that surface.
+ *   `buildToolTable` against stub deps — no MCP transport/server involved.
+ *
+ *   `server.ts`/`cli.ts`'s actual wiring isn't covered by a CI job
+ *   (no stdio smoke run exists as of this writing) — `cli.ts` top-level-`await`s a
+ *   real stdio connection, so this test cannot import it.
+ *   Its `tsc -b` type check and manual verification cover that surface.
+ *
  *   The extractable decision-6 layer guards have direct unit tests in `layer-guards.test.ts`.
- *   This file checks that every registered tool is present and schemas accept canonical examples and reject invalid ones.
+ *   This file checks that every registered tool is present and schemas accept
+ *   canonical examples and reject invalid ones.
+ *
  *   It also checks that handlers route to the correct dependency with the correct arguments.
  */
 

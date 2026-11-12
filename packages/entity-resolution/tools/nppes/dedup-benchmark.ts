@@ -3,9 +3,11 @@
 
 /**
  * Builds a varied multi-record set per NPI from real data.
+ *
  * Runs the matcher without NPI values, then scores recovered clusters against the NPI grouping.
  *
- * Run: `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em] [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
+ * Run:
+ * `mailwoman registry scorer-eval nppes-benchmark [--state TX] [--max-npis 300] [--wof <admin.db>] [--data-root <dir>] [--no-train-em] [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

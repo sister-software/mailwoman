@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The graticule's geometry, apart from its component — the same split `place-render.ts` keeps from
- *   `ResolvedPlaceLayers.tsx`. Pure and node-testable; `#*` resolves `.ts` only, so this is also the file the test can
- *   import.
+ *   The graticule's geometry, apart from its component — the same split
+ *   `place-render.ts` keeps from `ResolvedPlaceLayers.tsx`.
+ *
+ *   Pure and node-testable; `#*` resolves `.ts` only, so this is also the file the test can import.
  */
 
 import type { FeatureCollection, MultiLineString } from "geojson"

@@ -8,11 +8,11 @@ prerequisites: "@mailwoman/registry, a CSV too big for memory, and gazetteer dat
 verified-with: mailwoman v6.1.0
 ---
 
-National datasets arrive as a single CSV in cases such as the NPPES provider registry (millions of rows), an FCC broadband availability release, or a state address export. You need every row normalized into the same shape, and ideally a coordinate for each one. Two problems stand in the way: the file does not fit in memory, and geocoding a million addresses sequentially takes hours. This recipe handles both with a simple streaming normalize stage and an optional threaded geocode stage that you add only when the per-row cost justifies it.
+National datasets arrive as a single CSV in cases such as the NPPES provider registry (millions of rows), an FCC broadband availability release, or a state address export. You need every row normalized into the same shape, and ideally a coordinate for each one. Two problems stand in the way: the file doesn't fit in memory, and geocoding a million addresses sequentially takes hours. This recipe handles both with a simple streaming normalize stage and an optional threaded geocode stage that you add only when the per-row cost justifies it.
 
 ## Start with a stream rather than a file
 
-`normalizeCSV` (from `@mailwoman/registry`) takes a path and a column mapping and returns an async iterable of `SourceRecord`s. It reads the header and then yields one normalized record per row. It never holds more than a row or two in memory, so the file size does not matter.
+`normalizeCSV` (from `@mailwoman/registry`) takes a path and a column mapping and returns an async iterable of `SourceRecord`s. It reads the header and then yields one normalized record per row. It never holds more than a row or two in memory, so the file size doesn't matter.
 
 ```ts
 import { normalizeCSV } from "@mailwoman/registry"
@@ -77,7 +77,7 @@ A worker cannot receive your geocoder, because a 4 GB SQLite handle and a loaded
 
 This design has two consequences:
 
-- **Each worker opens the DB read-only.** Each worker has its own handle to the same gazetteer file. The OS page cache is shared, so the data is not copied N times, but N readers do contend for it, as the next section shows.
+- **Each worker opens the DB read-only.** Each worker has its own handle to the same gazetteer file. The OS page cache is shared, so the data isn't copied N times, but N readers do contend for it, as the next section shows.
 - **Records arrive in completion order rather than input order.** The pool finishes rows as workers become free, so do not match the output to your input by position. Re-key by `record.id`, which is why the mapping always includes one.
 
 ## Don't reach for all your cores
@@ -94,7 +94,7 @@ A sweep over real NPPES addresses on a 16-core machine with a single 4 GB gazett
 |       4 |     47 rows/s |     1.1× |
 |       6 |     43 rows/s |       1× |
 
-Two workers produce peak throughput, and each additional worker lowers it. Six workers return to the single-threaded rate while using six cores. A per-worker inference-thread cap did not change the result because the shared database, rather than the CPU, sets the limit. Measure several `concurrency` values for your data and disk, starting low. The geocode-stage threads give a measured ~1.4× gain, and more workers erase it.
+Two workers produce peak throughput, and each additional worker lowers it. Six workers return to the single-threaded rate while using six cores. A per-worker inference-thread cap didn't change the result because the shared database, rather than the CPU, sets the limit. Measure several `concurrency` values for your data and disk, starting low. The geocode-stage threads give a measured ~1.4× gain, and more workers erase it.
 
 If your gazetteer fits in RAM or is spread across several disks, your throughput curve will be higher, so measure it. The default (`min(4, cores)`) is deliberately conservative, so that the default behavior improves throughput instead of overloading the database.
 

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The freshness check against mailwoman.post's well-known register is kept apart from the offline verification in
- *   `configured.ts` so a caller that needs only the offline answer never loads the HTTP client behind this one.
+ *   The freshness check against mailwoman.post's well-known register is kept apart
+ *   from the offline verification in `configured.ts` so a caller that needs only the
+ *   offline answer never loads the HTTP client behind this one.
  */
 
 import { APIClient, type APIClientConfig } from "#api/APIClient"
@@ -51,7 +52,7 @@ function siteAnsweredWithout(error: unknown): boolean {
 
 /**
  * A register, by shape: anything else the site hands back at the path
- * (a soft 404 page, a redirect's html) is not one, whatever status it came with.
+ * (a soft 404 page, a redirect's html) isn't one, whatever status it came with.
  */
 function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "keys"> {
 	return typeof document === "object" && document !== null && Array.isArray((document as { keys?: unknown }).keys)
@@ -59,7 +60,7 @@ function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "
 
 /**
  * Ask the well-known register about one key id, bounded to a few seconds
- * so a doctor run without a route to mailwoman.post does not hang on it.
+ * so a doctor run without a route to mailwoman.post doesn't hang on it.
  */
 export async function confirmLicenseKeyPublished(
 	kid: string,
@@ -67,7 +68,7 @@ export async function confirmLicenseKeyPublished(
 ): Promise<LicenseKeyPublication> {
 	await using client = new APIClient({
 		displayName: "license-keys",
-		// The doctor and `license verify --json` own stdout: the client's request line must not land in the document.
+		// The doctor and `license verify --json` own stdout: the client's request line mustn't land in the document.
 		logger: silentLogger(),
 		axios: { headers: { accept: "application/json" }, timeout: options.timeoutMs ?? 3000, ...options.axios },
 	})

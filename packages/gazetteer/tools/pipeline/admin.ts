@@ -6,15 +6,15 @@
  *
  *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
  *
- *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On success
- *   the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`, a log rather
- *   than a recipe. The recipe is `../defaults.ts`).
+ *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it.
+ *   On success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`,
+ *   a log rather than a recipe. The recipe is `../defaults.ts`).
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate } from "@mailwoman/core/utils"
@@ -27,10 +27,11 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { enrichAdmin } from "#tools/pipeline/admin/enrich"
 import { foldGeonames, type FoldGeonamesResult } from "#tools/pipeline/admin/fold/geonames"
 import { ingestOvertureDivisions } from "#tools/pipeline/admin/fold/overture"
+import { buildWOFPlaceIndex, type FoldGap } from "#tools/pipeline/admin/fold/wof-match"
 import { freezeAdmin } from "#tools/pipeline/admin/freeze"
 import { ingestWOF, type IngestWOFResult } from "#tools/pipeline/admin/ingest-wof"
 import { createGeoNamesAnchorLookup } from "#tools/pipeline/admin/label-point-adjudicator"
-import { adminLayerManifest } from "#tools/pipeline/admin/manifest"
+import { adminLayerManifest, type IngestCounts } from "#tools/pipeline/admin/manifest"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
@@ -47,7 +48,7 @@ export interface BuildAdminOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	dataDir?: PathBuilderLike
 	/**
@@ -101,7 +102,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -126,6 +127,13 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	let overtureIngested: number
 
 	let folded: FoldGeonamesResult
+
+	const gaps: FoldGap[] = []
+
+	/**
+	 * The `names` and `concordances` rows each source wrote, read back from the staging database.
+	 */
+	const contributed: IngestCounts = { wof: 0, overture: 0, geonames: 0 }
 
 	{
 		using db = new DatabaseClient<WOFDatabase>(ingestPath)
@@ -163,16 +171,52 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
 		)
 
+		// WOF holds every place it has a record of.
+		// A folded place that matches a WOF record adds its names to that record,
+		// and one that matches none is written and listed as a gap.
+		phase("match-index", "indexing WOF records for the folds")
+		const index = buildWOFPlaceIndex(db)
+		const wof = { index, onGap: (gap: FoldGap) => void gaps.push(gap) }
+
 		phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
-		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
-		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
+		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease, undefined, wof)
+		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions written as their own rows`)
 
 		// The A-class admin fold for the zero-coverage locales — country + region nodes +
 		// locality ancestry — scoped to the countries in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
-		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
-		phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places`)
+		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet, wof })
+		phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places written as their own rows`)
+
+		index.dispose()
+
+		// A fold that matched every place it read writes no row of its own, only names on WOF
+		// records, so the manifest's sources are the row sources the database holds.
+		for (const { source, rows } of db
+			.prepare(
+				`SELECT source, sum(n) AS rows FROM (
+				   SELECT source, count(*) AS n FROM names GROUP BY source
+				   UNION ALL SELECT source, count(*) AS n FROM concordances GROUP BY source
+				 ) GROUP BY source`
+			)
+			.all() as Array<{ source: string; rows: number }>) {
+			if (source === "wof" || source === "overture" || source === "geonames") {
+				contributed[source] = rows
+			}
+		}
+
+		const gapsPath = `${out}.fold-gaps.jsonl`
+
+		await writeLocalJSONLFile(gaps, gapsPath)
+		phase("fold-gaps", `${gaps.length.toLocaleString()} folded places match no WOF record → ${gapsPath}`)
+
+		// The fork worklist holds only the gaps whose source's data may enter WOF.
+		const candidates = gaps.filter((gap) => gap.upstreamEligible)
+		const candidatesPath = `${out}.wof-candidates.jsonl`
+
+		await writeLocalJSONLFile(candidates, candidatesPath)
+		phase("fold-gaps", `${candidates.length.toLocaleString()} of them may enter the WOF forks → ${candidatesPath}`)
 
 		phase("freeze")
 		await freezeAdmin(db, { dataDir, onPhase: phase })
@@ -240,9 +284,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build produced rather than the lists it was given, so a fold that
-			// ingested no places does not appear as a source — see manifest.ts.
-			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
+			// The counts the build produced rather than the lists it was given, so a fold
+			// that ingested no places doesn't appear as a source — see manifest.ts.
+			counts: contributed,
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },
 			version: isoDate(),

@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The release tool table over a synthetic registry: which operations become tools, what they are called, what a
+ * @file The release tool table over a synthetic registry: which operations become tools, what they're called, what a
  *   writing tool gains and what a call answers.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect, type ReleaseOperation } from "#release-kit"
+import { defineOperation, type ReleaseOperation } from "#release-kit"
 import { buildReleaseToolTable, registryTool, toolNameFor } from "#release-mcp"
 
 const read = defineOperation({

@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves how the Catastro harvest reads a two-level ATOM service. It states which entries
- *   belong to another publisher, and what it does where a feed states less than it needs.
+ *   Proves how the Catastro harvest reads a two-level ATOM service.
  *
- *   The bodies are the shapes `catastro.hacienda.gob.es` serves, reduced to the elements this
- *   harvest reads. The province feed holds ISO-8859-1 bytes because that level declares and
- *   writes them. A UTF-8 reading turns A Coruña's archive URL into an html error page.
+ *   It states which entries belong to another publisher, and what it does
+ *   where a feed states less than it needs.
  *
- *   `./catastro.integration.test.ts` reads the live service. This suite stubs the transport and
- *   runs the real `APIClient` over it, so the requests go through the same adapter and error
- *   mapping they do against the publisher.
+ *   The bodies are the shapes `catastro.hacienda.gob.es` serves, reduced to the elements this harvest reads.
+ *   The province feed holds ISO-8859-1 bytes because that level declares and writes them.
+ *
+ *   A UTF-8 reading turns A Coruña's archive URL into an html error page.
+ *
+ *   `./catastro.integration.test.ts` reads the live service.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the requests
+ *   go through the same adapter and error mapping they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -124,7 +127,7 @@ const CEUTA_FEED_URL = "http://www.catastro.hacienda.gob.es/INSPIRE/addresses/55
 const CORUNA_FEED_URL = "http://www.catastro.hacienda.gob.es/INSPIRE/addresses/15/ES.SDGC.ad.atom_15.xml"
 
 /**
- * A body that is a zip archive as far as the harvest reads it.
+ * A body that's a zip archive as far as the harvest reads it.
  *
  * The harvest stores the archive for the adapter rather than opening it,
  * so what the members hold is the adapter's test's business.
@@ -339,7 +342,7 @@ describe("harvestESCatastro", () => {
 		expect(summary).toMatchObject({ fetched: 2, skipped: 0, failed: 0 })
 
 		// The accented archive is requested percent-encoded.
-		// That is the URL that serves it.
+		// That's the URL that serves it.
 		expect(client.calls).toEqual([
 			ES_CATASTRO_SERVICE_FEED_URL,
 			CEUTA_FEED_URL,
@@ -462,7 +465,7 @@ describe("harvestESCatastro", () => {
 		await using client = stubClient([
 			{ body: Buffer.from(serviceXML(officeXML("55", "Ceuta")), "utf8") },
 			{ body: CEUTA_FEED },
-			// An html page under http 200 is what this host answers for a path that does not exist.
+			// An html page under http 200 is what this host answers for a path that doesn't exist.
 			{ body: "<html><body>Error</body></html>", headers: { "content-type": "text/html" } },
 		])
 

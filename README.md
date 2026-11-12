@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://mailwoman.post/demo"><strong>Live demo</strong></a> ·
   <a href="https://mailwoman.post">Docs & blog</a> ·
-  <a href="https://mailwoman.post/docs/developers/get-started/install-and-first-parse/">Getting started</a>
+  <a href="https://mailwoman.post/docs/start">Getting started</a>
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 Mailwoman turns free-text postal addresses into structured components (house number,
 street, locality, region, postcode, country) and resolves them to coordinates against an
 open gazetteer. It is a small transformer encoder (~30M params) that performs BIO token
-classification over a 33-label schema. It is **not** an LLM, and no part of it is
+classification over a 33-label schema. It **isn't** an LLM, and no part of it is
 generative. It performs conventional entity recognition. That method suits short, structured strings.
 
 It runs in Node.js and the browser, without Elasticsearch or a multi-gigabyte libpostal
@@ -86,10 +86,10 @@ console.log(decodeAsJSON(tree))
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```
 
-The [`mailwoman` package README](./packages/mailwoman/README.md) and [Getting
-started](https://mailwoman.post/docs/developers/get-started/install-and-first-parse) document the
-full library API: confidence, the per-stage pipeline result, resolution, browser loading, and
-configuration.
+The [`mailwoman` package README](./packages/mailwoman/README.md) describes the package's
+library and CLI usage. The [first parse](https://mailwoman.post/docs/start) shows an executed
+parser call, and the [library reference](https://mailwoman.post/docs/reference/library) lists
+the published interfaces.
 
 ## Drop-in servers
 
@@ -109,7 +109,7 @@ IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, and curr
 
 ## How it compares
 
-This table compares what each system needs to run. It does not compare accuracy. Mailwoman
+This table compares what each system needs to run. It doesn't compare accuracy. Mailwoman
 began as a fork of Pelias Parser and ships wire-compatible drop-ins for the other three.
 
 |                               | Mailwoman                       | libpostal          | Nominatim                  | Photon                         |
@@ -123,7 +123,7 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 
 ## Drop-in servers
 
-If you are migrating off Nominatim, Photon, or libpostal, each has a compatible server. The
+If you're migrating off Nominatim, Photon, or libpostal, each has a compatible server. The
 server keeps the same wire interface and reads a SQLite file instead of a cluster. A hosted
 Photon-compatible endpoint is live for evaluation:
 
@@ -154,7 +154,7 @@ calibrated probabilities. When it reports `0.88`, it is right about 88%
 of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.post/docs/developers/get-started/what-mailwoman-is/).
+Is](https://mailwoman.post/product).
 
 ## Locale coverage
 

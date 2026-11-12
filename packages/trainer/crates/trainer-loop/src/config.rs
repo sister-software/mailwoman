@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The resolved training config `mailwoman train config resolve` writes, and what the trainer builds from it.
 //!
 //! The TypeScript resolver applies every default the Python loader applies, so the trainer reads each field as

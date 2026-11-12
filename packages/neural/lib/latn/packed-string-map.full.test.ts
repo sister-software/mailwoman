@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares the packed table with a `Map` over the Latin family's locality-surface lexicon, both by key and through the
- *   painter.
+ *   Compares the packed table with a `Map` over the Latin family's locality-surface
+ *   lexicon, both by key and through the painter.
  *
- *   The file is the one `mwops release copy-weights` stages into `@mailwoman/neural-weights-en-us`, the Latin family's
- *   graph package. Its v7 build covers US, FR and DE places of the WOF placetypes `locality`, `localadmin` and
- *   `neighbourhood`. A pass here covers that lexicon only. A lexicon in another script needs its own parity test.
+ *   The file is the one `mwops release copy-weights` stages into
+ *   `@mailwoman/neural-weights-en-us`, the Latin family's graph package.
+ *   Its v7 build covers US, FR and DE places of the WOF placetypes `locality`,
+ *   `localadmin` and `neighbourhood`.
+ *
+ *   A pass here covers that lexicon only.
+ *   A lexicon in another script needs its own parity test.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

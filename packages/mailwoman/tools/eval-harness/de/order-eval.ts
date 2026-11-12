@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Both-order order-robustness eval harness over German addresses in native and international order with the postcode anchor fed and ablated, where the anchor setting differs only for an anchor-trained four-input model.
+ *   Both-order order-robustness eval harness over German addresses in native
+ *   and international order with the postcode anchor fed and ablated, where the anchor
+ *   setting differs only for an anchor-trained four-input model.
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"

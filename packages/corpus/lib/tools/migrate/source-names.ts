@@ -76,7 +76,7 @@ async function readSourceFacts(
 /**
  * Rewrite one parquet file's `source` column in place, through a temporary output.
  *
- * @throws When a row has a `source` the table does not name under either spelling.
+ * @throws When a row has a `source` the table doesn't name under either spelling.
  * An unknown value is refused rather than preserved, because preserving it would leave one
  * file holding both spellings and no later reader could tell which rows were rewritten.
  * @throws When the row count, the distinct `source` count or the ordered-`source_id`

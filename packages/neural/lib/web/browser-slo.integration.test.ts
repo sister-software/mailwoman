@@ -2,19 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures the decomposed cold path in a real browser against local artifacts. Each quantity is measured and
- *   asserted against its assigned budget. The test name identifies the arm (backend) that produced it.
+ *   Measures the decomposed cold path in a real browser against local artifacts.
  *
- *   This measures the neural browser runtime as a client bundles it —
- *   `@mailwoman/neural/web/onnx-runner` plus `@mailwoman/neural/tokenizer` through the package's
- *   compiled `out/` tree — so run `yarn compile` first, because a stale `out/` measures stale code.
- *   `@mailwoman/neural/web/loader` composes those into a `NeuralAddressClassifier` that also reaches
- *   `@mailwoman/core`, and the `bundle-graph` health check proves that graph bundles.
+ *   Each quantity is measured and asserted against its assigned budget.
+ *   The test name identifies the arm (backend) that produced it.
+ *
+ *   This measures the neural browser runtime as a client bundles it — `@mailwoman/neural/web/onnx-runner`
+ *   plus `@mailwoman/neural/tokenizer` through the package's compiled `out/` tree —
+ *   so run `yarn compile` first, because a stale `out/` measures stale code.
+ *   `@mailwoman/neural/web/loader` composes those into a `NeuralAddressClassifier` that also
+ *   reaches `@mailwoman/core`, and the `bundle-graph` health check proves that graph bundles.
  *
  *   The demo's FST gazetteer (`fst-en-us.bin`, ~22 MB) is deliberately outside this accounting.
  *
- *   Budgets are regression tripwires rather than targets. A failure means the quantity moved substantially.
- *   Read the receipt before changing a constant. Byte budgets assert raw bytes, the deterministic artifact-size signal.
+ *   Budgets are regression tripwires rather than targets.
+ *   A failure means the quantity moved substantially.
+ *
+ *   Read the receipt before changing a constant.
+ *   Byte budgets assert raw bytes, the deterministic artifact-size signal.
+ *
  *   The wire column is reported because it can be compared with a live-demo trace.
  *
  *   Run with the verbose reporter to see the numbers rather than the verdict:
@@ -800,7 +806,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 		// An inline route is matched before a mount, so the bundled worker is served from
 		// the same directory as the runtime files the mount below provides.
-		// That is the layout a host stages.
+		// That's the layout a host stages.
 		inlineRoutes.set(`${SQLITE_RUNTIME_PREFIX}range-worker.js`, {
 			body: await bundleBrowserEntry(RANGE_WORKER_ENTRY_SOURCE, "range-worker-entry.ts", BUNDLE_RESOLVE_DIR),
 			contentType: javascript,
@@ -888,7 +894,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 /**
  * URLs for every evidence artifact the shipped web loader fetches beside the model —
- * skipping the ones this weights package does not ship, since an overlay's absence
+ * skipping the ones this weights package doesn't ship, since an overlay's absence
  * is a packaging fact rather than a failure.
  */
 async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, origin: string): Promise<string[]> {
@@ -1029,7 +1035,7 @@ function formatReceipt(m: Measurement): string {
 /**
  * The whole probe runs once.
  *
- * A browser launch plus a 39 MB model load is not something to repeat per assertion.
+ * A browser launch plus a 39 MB model load isn't something to repeat per assertion.
  *
  * Generous rather than a performance target.
  */

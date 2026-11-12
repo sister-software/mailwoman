@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Interface tests for the Stage 2.7 span proposer. Unbalanced delimiters never propose. Annotation confidence follows content shape. Dual-path numeric readings emit both alternatives under one group. Codex conditions designator proposals. The proposer suppresses them inside confident annotations.
+ *   Interface tests for the Stage 2.7 span proposer.
+ *
+ *   Unbalanced delimiters never propose.
+ *   Annotation confidence follows content shape.
+ *
+ *   Dual-path numeric readings emit both alternatives under one group.
+ *   Codex conditions designator proposals.
+ *   The proposer suppresses them inside confident annotations.
  */
 
 import { describe, expect, it } from "vitest"

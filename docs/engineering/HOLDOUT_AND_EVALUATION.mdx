@@ -1,11 +1,11 @@
 ---
 sidebar_position: 3
-title: Held-out data and evaluation — the specification
+title: Held-out data and evaluation specification
 sidebar_label: Held-out data & evaluation
 description: How corpus rows are divided between training and evaluation, the checks that hold the division correct, what a candidate is compared against, and when a training run may start.
 ---
 
-# Held-out data and evaluation — the specification
+# Held-out data and evaluation specification
 
 **Adopted 2026-10-24** ([#2823](https://github.com/sister-software/mailwoman/issues/2823)). This page revises
 the proposal of 2026-10-22 under its review's nine acceptance criteria and writes in the four decisions the
@@ -43,9 +43,8 @@ every required component role, every parent region, every script and every layou
 unseen lexical values where lexical generalization is the capability under test. A population for which these
 cannot hold together is reported in the allocation report, and the report is where the decision is made.
 
-Motivation: corpus v0.8.0 held out whole first-level regions. In the US those were VT, ND and WY. In ES they were
-Asturias and the Balearic Islands. In IT they were Trento and Bolzano. Kerala, Cornwall, TAS and NT were among
-the others. Those regions then had zero region spans in training, and the model relabeled them as localities.
+Motivation: corpus v0.8.0 held out whole first-level regions, among them VT, ND and WY in the US, Asturias and
+the Balearic Islands in ES, Trento and Bolzano in IT, and Kerala, Cornwall, TAS and NT. Those regions then had zero region spans in training, and the model relabeled them as localities.
 Measured on the US golden set, 2,324 of 2,660 rows with a region lie on VT, ND or WY. Correct rows on that subset
 fell from 1,902 to 1,821, and the remaining 336 rows scored 254 correct under both models. The `us.region` score
 fell from 89.5 to 87.8 ([#2777](https://github.com/sister-software/mailwoman/issues/2777)). Those two are
@@ -55,11 +54,11 @@ measured scores. The registered floor at the time was 89.4.
 runs on the published model with the dataset the run will be graded on and answers three questions apart. First,
 can every required check read enough admissible evidence under the registered rules. Second, does the published
 model meet the absolute requirements. Third, what candidate identities are still pending. The first must be yes.
-The second informs the work and does not block a candidate meant to repair a published deficiency. The third is
+The second informs the work and doesn't block a candidate meant to repair a published deficiency. The third is
 recorded as pending and required before any verdict.
 
 Motivation: four from-scratch runs, about 17 GPU-hours, were trained before anyone checked that release
-specification v7 could return `pass` on this data. It could not. The candidate artifact was unregistered, and the
+specification v7 could return `pass` on this data. It couldn't. The candidate artifact was unregistered, and the
 comparison set for US, ES and IT was empty because the published model had trained on every row those countries
 hold in this corpus family.
 
@@ -75,7 +74,8 @@ three runs of the candidate against three runs of the control.
 Motivation for the seed rule: v8.1.0 trained with seed 42 against seed 43 flipped 87 regression-board rows of
 1,277 and 28 blocking cases of 643, a 25-pass gap. The corpus change under test, v8.2.0 against v8.1.0 at seed 42,
 flipped 93 rows with a 35-pass gap. One seed per run cannot tell those apart. The seed-noise floor rests on one
-seed pair, so its own variance is unknown. Two runs bound it for the change at hand without claiming more.
+seed pair, so its own variance is unknown. Three runs per arm (section 7.2) bound it for the change at hand
+without claiming more.
 
 ## 3. Identities
 
@@ -96,7 +96,7 @@ The held-out decision reads a row's components before the record-based validatio
 variant that changes the chosen key can change that earlier decision. The record-ancestry audit (section 4.4)
 checks every record's rows across train, validation and test.
 
-## 4. How rows are split, and the checks that hold the split correct
+## 4. The row split and its checks
 
 Every row receives exactly one of `train`, `val` or `test`. The assignment is deterministic and depends only on
 the row's content and the split policy in `packages/corpus/lib/utils/split.ts`. The policy identity is a hash
@@ -106,7 +106,7 @@ choice, and every split record states the hash it was made under.
 ### 4.1 The declared holdout path
 
 A country may declare small places to hold out, as postcode districts or localities. A key is a place below the
-first-level region. A region name, or a postcode prefix that covers a whole region, is not a valid key. EG
+first-level region. A region name, or a postcode prefix that covers a whole region, isn't a valid key. EG
 `postcode:42` once held out 1,000 of Port Said's 1,008 rows and in effect the governorate. Keys are chosen by a
 deterministic walk over the corpus, never by hand. The walk targets the country's current held-out share and lets
 the share fall rather than adding places. No first-level region with at least `HOLDOUT_CAP_MIN_ROWS` rows may lose
@@ -118,16 +118,16 @@ spelling that matches a region's surface form is excluded from the candidates.
 A country without a declared list holds out one place in fifty, chosen by a hash of its key (venue, else
 locality, else postcode). The region cap applies to each hash-selected place on its own. Its rows inside one
 region are divided by that region's rows, and its rows with no region by the country's rows with no region. A
-denominator under `HOLDOUT_CAP_MIN_ROWS` is not checked. A place over `heldOutRegionCap(0.02)`, which is 0.06,
-trains instead and is not replaced. Measured on v0.8.1 this returns 9 places in 7 countries, 2,067 rows, both EG
+denominator under `HOLDOUT_CAP_MIN_ROWS` isn't checked. A place over `heldOutRegionCap(0.02)`, which is 0.06,
+trains instead and isn't replaced. Measured on v0.8.1 this returns 9 places in 7 countries, 2,067 rows, both EG
 governorate postcodes among them.
 
-### 4.3 The source cap, sized by population
+### 4.3 The population-sized source cap
 
-A hash-selected place may hold only part of one source's held-out rows in its country. The 2026-10-22 proposal
-set that part at a flat quarter. The operator's decision of 2026-10-23 replaces the flat fraction with a ceiling
+A hash-selected place may hold only part of one source's held-out rows in its country. That part is a ceiling
 that scales with how much of the country the place is, so a small or less important place is represented in
-proportion rather than at a fixed share.
+proportion rather than at a fixed share. The operator decided this on 2026-10-23, and a flat quarter remains
+as the fallback described below.
 
 The rule's form: for a source `S` in country `C`, a hash-selected place `p` may hold at most
 `max(floor, k × share(p, C))` of `S`'s held-out rows in `C`, where `share(p, C)` is the place's population
@@ -136,7 +136,7 @@ resolves to, read from the admin gazetteer. A postcode key takes the population 
 rows under that postcode. The country's population is `COUNTRY_POPULATION` in
 `packages/codex/lib/country/population.ts`, derived from GeoNames. A key with no population reading, or a
 country GeoNames declines to estimate, falls back to the flat quarter and is listed as unsized in the allocation
-report. A place over its ceiling trains instead and is not replaced.
+report. A place over its ceiling trains instead and isn't replaced.
 
 The two parameters, `floor` and `k`, are registered only after the allocation report in section 4.5 has been
 produced over every country for a candidate pair, with the newly returned places inspected. A threshold fitted
@@ -152,8 +152,9 @@ KG 8. None is a required country, and each is marked experimental for evaluation
 
 ### 4.4 Checks that run before a manifest exists
 
-Each check below runs in the step that admits the corpus manifest, once per corpus, on the real rows, and refuses
-to admit the manifest when it fails. The parquet writer stages its manifest as `MANIFEST.unchecked.json`.
+Each check below belongs to the step that admits the corpus manifest: it runs once per corpus, on the real rows,
+and refuses to admit the manifest when it fails. Only the held-out span check runs there today, and section 10 gives
+the state of the others. The parquet writer stages its manifest as `MANIFEST.unchecked.json`.
 `admitParquetManifest` in `packages/corpus/lib/build/holdout-check.ts` runs the held-out span check over it,
 writes `HOLDOUT_CHECK.json` beside it with every finding, and moves it to `MANIFEST.json` only on a pass. A
 corpus the check refuses therefore has no manifest a training run can read, and the top-level manifest records
@@ -162,8 +163,7 @@ when the check ran, the countries it read and the files it counted.
 1. **Held-out span check** (`packages/corpus/lib/tools/overlay/held-out-spans.ts`). Two-sided: no train row
    holds a declared locality or postcode prefix, and every first-level region of every declared country keeps a
    train region-span share of at least half its country's median, over all rows and over no-postcode rows. A
-   region-name key is refused. It took 1,344 s on v0.8.1, and it now runs inside the build rather than behind an
-   environment variable.
+   region-name key is refused. It took 1,344 s on v0.8.1 and runs inside the build.
 2. **Concentration check.** For every source with 1,000 or more rows in a country, every held-out place stays
    under its ceiling from section 4.3, and the source keeps at least 100 held-out rows unless P1 gave them to
    training.
@@ -190,12 +190,12 @@ reduced supply stays visible when a derived floor passes.
 
 ## 5. Building a new split
 
-A split-policy change does not rebuild the corpus. The store holds every source's parsed rows as parquet, and a
+A split-policy change doesn't rebuild the corpus. The store holds every source's parsed rows as parquet, and a
 re-split writes a split-attribute file beside each parquet file and a new manifest. Measured: 853 files, 675.5
 million rows, 76 minutes on 8 workers, peak 937 MiB per worker, 391 MB of new files, against 4 h 04 min for the
 last full rebuild. The loader applies the attribute files as row filters at no measured throughput cost in that
 configuration, 21.2 batches per second on v0.8.1 against 20.6 on v0.8.0. That benchmark covers one loader and
-storage setup and does not establish equivalence under others.
+storage setup and doesn't establish equivalence under others.
 
 ### 5.1 Ordered shapes, closure supply, and the retention floor
 
@@ -227,7 +227,7 @@ subject to three rules in this precedence: the retention floor, geographic integ
    evaluation rows without any. A floor of 10 limits that loss to 274 combinations. The registration followed the census rather than
    the failures: the candidate table was priced over every country before the value was chosen.
 2. **Launch check.** A country×shape whose total closure supply is under the floor fails the pre-launch audit of
-   section 8. Training starts on a corpus that can teach every shape it is asked to learn.
+   section 8.
 3. **Proportionality and shortfall.** Where geography prevents the proportional allocation, the allocation
    report states the target share, the actual share and the cause per combo, as section 4.5 already requires of
    returned places. The census of 2026-11-01 measured the failure the rule prevents: 24 combos held 115 val and
@@ -295,7 +295,7 @@ confirmation. Every confirmation read is recorded in the next specification's ra
 confirmation and failed retires that set for recipe selection, and its successor is drawn and frozen before the
 next release-directed run.
 
-## 7. What a candidate is graded on, and the three-run rule
+## 7. Candidate grading and the three-run rule
 
 ### 7.1 The grading
 
@@ -322,7 +322,7 @@ read with `battery/groups.run.ts` over a battery report that holds all six runs.
   `k_a + k_b - 2` degrees of freedom.
 - A country counts as changed when its Holm-adjusted p, over every country with at least 200 decision rows, is
   below 0.05.
-- A difference that does not meet the bar is reported as unestablished, in place of a gain or a loss. A difference
+- A difference that doesn't meet the bar is reported as unestablished, in place of a gain or a loss. A difference
   smaller than the cell's smallest detectable difference for the runs used is unestablished by construction.
 - The tool lists the rows that move under the all-but-one agreement rule, and the difference of every regrouping
   of the pooled runs. A shape that moves in the observed split and also in splits that mix the two arms is noise.
@@ -343,7 +343,7 @@ difference a comparison detects (two-sided, alpha 0.05, power 0.8) is:
 | `osm-region-after-locality` |           30.2 |   17.1 |   13.4 |   11.4 |
 
 Two runs per arm therefore cannot resolve the 1.3-point difference the Phase 2 corpus change produced (p = 0.13 with
-three runs per arm). The earlier two-seed rule could not have either. `osm-region-after-locality` swings by more
+three runs per arm). `osm-region-after-locality` swings by more
 than 10 points between control seeds (95.2%, 83.7% and 92.2%), so a single comparison cannot read that suite.
 
 A run on the Rust trainer costs about $4.30 on an A100-40GB (#2887). A comparison against a control whose three
@@ -352,7 +352,7 @@ about $26.
 
 ### 7.3 When a screen run decides
 
-A screen run reads an arm at an intermediate checkpoint of one seed in place of the arm's final two-seed result.
+A screen run reads an arm at an intermediate checkpoint of one seed in place of the arm's final result.
 A screen decides a comparison between two arms only when all three of these hold:
 
 1. **The two arms share their stage structure up to the screen step.** Neither arm changes its data or its
@@ -362,7 +362,7 @@ A screen decides a comparison between two arms only when all three of these hold
    the two arms on the measure, on every seed screened.
 3. **A second seed's screen agrees in sign.**
 
-Otherwise the comparison runs both arms in full on two seeds.
+Otherwise the comparison runs both arms in full under section 7.2.
 
 The rule comes from the 30,000-step checkpoints of the three #2857 arms, exported locally from the Modal volume's
 checkpoints and graded in fp32 on the held-out structure board (measured 2026-10-29). H is the
@@ -409,7 +409,7 @@ screen decides any fp32-master comparison.
 
 The two measures disagree on the final order of A and B: the structure board puts B ahead by 0.040 to 0.055, and
 the battery puts A ahead by 0.4 points. A screen inherits whichever measure it is read on, so a screen decision
-names its measure. These are three arm pairs, each with two seeds, so the rule rests on 12 screen readings and
+identifies its measure. These are three arm pairs, each with two seeds, so the rule rests on 12 screen readings and
 stays provisional until another arm family is measured.
 
 ## 8. When a training run launches
@@ -423,24 +423,24 @@ A run launches only when all of the following hold, checked in this order:
 3. The configuration's floors and receipts were re-derived from this corpus.
 4. The corpus-receipt preflight passes on Modal's CPU before a GPU is allocated.
 5. The run has a written prediction: which checks it should move, by how much, and on which rows.
-6. When the corpus is new, the run is the single control (P5). A corpus change's second seed follows the control.
+6. When the corpus is new, the run is the single control (P5). A corpus change's candidate runs under section 7.2 follow the control.
 
 A bounded diagnostic run, one that will never be graded for release, may skip items 2 and 5 and is recorded as
 diagnostic in its configuration. Runs launch with automatic resume when the checkpoint matches the same run,
 corpus, tokenizer and configuration and restores optimizer and scheduler state. A changed configuration or a
 completed learning-rate schedule requires an explicit new-run decision.
 
-## 9. Costs, as measured in October 2026
+## 9. Measured costs (October 2026)
 
-| Operation                         | Cost                                   |
-| --------------------------------- | -------------------------------------- |
-| Full corpus build, parallel       | 4 h 04 min CPU                         |
-| Re-split, 853 files               | 76 min CPU, 8 workers                  |
-| Held-out span check               | 22 to 50 min CPU, now inside the build |
-| Held-out freeze and overlap audit | about 3 and 2.5 min per set            |
-| 90,000-step from-scratch run      | about 1.4 h on an A100, about $4.30    |
-| One candidate graded              | about 1 h CPU                          |
-| A change judged under section 7.2 | three candidate runs, about $13        |
+| Operation                         | Cost                                |
+| --------------------------------- | ----------------------------------- |
+| Full corpus build, parallel       | 4 h 04 min CPU                      |
+| Re-split, 853 files               | 76 min CPU, 8 workers               |
+| Held-out span check               | 22 to 50 min CPU, inside the build  |
+| Held-out freeze and overlap audit | about 3 and 2.5 min per set         |
+| 90,000-step from-scratch run      | about 1.4 h on an A100, about $4.30 |
+| One candidate graded              | about 1 h CPU                       |
+| A change judged under section 7.2 | three candidate runs, about $13     |
 
 The run figures come from #2887's run of `v8.3.0-base-c6-90k-mixed-s42` on the Rust trainer (2026-10-31), on an
 A100-40GB in a sandbox of 4 CPUs and 16 GiB. It trained 90,000 steps in 4,831 s, a cumulative 18.63 steps/s,

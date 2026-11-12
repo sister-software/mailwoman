@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Declarations for the parts of `@journeyapps/wa-sqlite` its own `src/types/index.d.ts` leaves undeclared: the JSPI
- *   build's loader, the `FacadeVFS` base class, and a bundled `.wasm` import. Wrangler supplies that import as a
- *   compiled `WebAssembly.Module`.
+ *   Declarations for the parts of `@journeyapps/wa-sqlite` its own `src/types/index.d.ts` leaves
+ *   undeclared: the JSPI build's loader, the `FacadeVFS` base class, and a bundled `.wasm` import.
+ *
+ *   Wrangler supplies that import as a compiled `WebAssembly.Module`.
  */
 
 declare module "@journeyapps/wa-sqlite/dist/wa-sqlite-jspi.mjs" {

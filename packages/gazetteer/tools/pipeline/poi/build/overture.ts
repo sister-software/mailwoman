@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, PathBuilder } from "path-ts"
 
@@ -90,7 +90,7 @@ export interface IngestPlacesOptions {
 
 	/**
 	 * The output directory for the per-country Parquet files, defaulting
-	 * to `<data-root>/overture/<release>/places`.
+	 * to `$MAILWOMAN_DATA_ROOT/snapshots/overture/<release>/places`.
 	 */
 	out?: string
 
@@ -123,7 +123,7 @@ export interface IngestPlacesResult {
  */
 export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPlacesResult> {
 	const release = opts.release ?? DEFAULT_RELEASE
-	const outDir = PathBuilder.from(opts.out ?? dataRootPath("overture", release, "places"))
+	const outDir = PathBuilder.from(opts.out ?? snapshotSourcePath("overture", release, "places"))
 	await makeDirectories(outDir)
 	const phase = opts.onPhase ?? (() => {})
 
@@ -195,7 +195,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
  * The default path of {@link ingestPlaceNames}'s output for a release.
  */
 export function placeNamesPath(release: string): string {
-	return dataRootPath("overture", release, "place-names", "names.parquet").toString()
+	return snapshotSourcePath("overture", release, "place-names", "names.parquet").toString()
 }
 
 /**

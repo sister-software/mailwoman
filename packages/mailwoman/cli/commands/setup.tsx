@@ -2,12 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman setup`: the first run as one command. It reads the data and config roots, runs the parser on a sample
- *   address, lists the tiers for the countries that matter with their size and whether each is free or licensed,
- *   states what works now per capability and the next smallest installation, and offers the three routes to a
- *   token. Both come from the plan `data pull --dry-run` prints. A declaration or an evaluation is made in place. A download is printed as the
- *   `data pull` command to run next, because a multi-gigabyte transfer has its own progress output and belongs to
- *   that command. `--no-interactive` prints the same report without prompts.
+ *   `mailwoman setup`: the first run as one command.
+ *
+ *   It reads the data and config roots, runs the parser on a sample address,
+ *   lists the tiers for the countries that matter with their size and whether each is free
+ *   or licensed, states what works now per capability and the next smallest installation,
+ *   and offers the three routes to a token.
+ *   Both come from the plan `data pull --dry-run` prints.
+ *
+ *   A declaration or an evaluation is made in place.
+ *   A download is printed as the `data pull` command to run next, because a multi-gigabyte
+ *   transfer has its own progress output and belongs to that command.
+ *   `--no-interactive` prints the same report without prompts.
  */
 
 import { Select, TextInput } from "@inkjs/ui"
@@ -73,7 +79,7 @@ async function runChecks(countries: readonly string[]): Promise<SetupReport> {
 	const dataRoot = dataRootPath()
 	const configRoot = configRootPath()
 
-	// The plan `data pull --dry-run` prints for these bundles, so setup and the pull agree on what is installed.
+	// The plan `data pull --dry-run` prints for these bundles, so setup and the pull agree on what's installed.
 	const plan = await readInstallationPlan(
 		dataRoot,
 		bundlesFor(countries).map((bundle) => bundle.name)

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Per-parse selections of the span proposer, placetype census and address-system conventions,
- *   asserted through the parse trace with a stub runner.
+ *   Per-parse selections of the span proposer, placetype census and address-system
+ *   conventions, asserted through the parse trace with a stub runner.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

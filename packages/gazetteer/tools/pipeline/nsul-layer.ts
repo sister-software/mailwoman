@@ -2,30 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Build `nsul.db` — the GB **uprn → unit-postcode register**: the ONS National Statistics uprn Lookup
- * (nsul) joined to the WGS84 point OS Open uprn publishes for the same uprn. Schema and the compact
- * postcode derivation live in `@mailwoman/resolver-wof-sqlite/nsul`, and the register is stored
- * rather than inferred from centroids and footprints.
+ * Build `nsul.db` — the GB **uprn → unit-postcode register**: the ONS National Statistics
+ * uprn Lookup (nsul) joined to the WGS84 point OS Open uprn publishes for the same uprn.
  *
- * The ONS portal item is acquired by hand into a vintage-dated
- * `$MAILWOMAN_DATA_ROOT/db/nsul/<yyyy-MM>/` directory holding the zip, its `.md5` sidecar and the
- * portal's `item.json`; a missing sidecar is recorded in words, never as an empty string.
+ * Schema and the compact postcode derivation live in `@mailwoman/resolver-wof-sqlite/nsul`,
+ * and the register is stored rather than inferred from centroids and footprints.
+ *
+ * The ONS portal item is acquired by hand into a vintage-dated `$MAILWOMAN_DATA_ROOT/db/nsul/<yyyy-MM>/`
+ * directory holding the zip, its `.md5` sidecar and the portal's `item.json`;
+ * a missing sidecar is recorded in words, never as an empty string.
  *
  * The eleven CSVs total 10.2 GB uncompressed and are streamed straight out of the archive
- * (`readZipEntry` → `TextSpliterator`) with only the inflate window and one line in memory, so the
- * build never extracts to disk and never holds a region file whole.
+ * (`readZipEntry` → `TextSpliterator`) with only the inflate window and one line in memory,
+ * so the build never extracts to disk and never holds a region file whole.
  *
- * The OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`) is ignored: the row's uprn joins `uprn.db` and
- * copies OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell` verbatim. A uprn absent from `uprn.db`
- * is counted `skipped-no-coordinate`, and a row whose `pcds` is empty is counted `skipped-no-postcode`.
+ * The OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`) is ignored: the row's uprn joins `uprn.db`
+ * and copies OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell` verbatim.
+ * A uprn absent from `uprn.db` is counted `skipped-no-coordinate`, and a row whose
+ * `pcds` is empty is counted `skipped-no-postcode`.
  *
- * The build is restricted by the archive md5 against the sidecar, an exact header match on every
- * region file, the region set exactly the eleven GB regions, the accounting identity
+ * The build is restricted by the archive md5 against the sidecar, an exact header match on
+ * every region file, the region set exactly the eleven GB regions, the accounting identity
  * `read = inserted + malformed + duplicate + no-postcode + no-coordinate`, and a row floor.
  *
- * GB only: ONS designates the register complete for GB, so every res-6 cell holding rows is written
- * `basis: designated, completeness: 1`; cells with no rows are left absent because without a GB
- * polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
+ * GB only: ONS designates the register complete for GB, so every res-6 cell holding rows is
+ * written `basis: designated, completeness: 1`; cells with no rows are left absent because
+ * without a GB polygon the builder cannot tell empty moorland from Northern Ireland or open sea.
  */
 
 import { ukCountryForGSS, type UkCountryCode } from "@mailwoman/codex/gb/country"
@@ -44,6 +46,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -113,7 +116,7 @@ const NSUL_COLUMN_COUNT = 29
 /**
  * Column positions read from each line.
  *
- * Every other column is a statistical geography this layer does not include.
+ * Every other column is a statistical geography this layer doesn't include.
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
@@ -205,9 +208,9 @@ export type NSULLineClass =
  * or the last column repeats it in every value (the G-NAF lesson).
  * A line is malformed in four cases:
  *
- * - its field count is not {@link NSUL_COLUMN_COUNT}
- * - its `uprn` is not a literal digit string within the safe-integer range
- * - its non-empty `pcds` does not have a unit-postcode shape
+ * - its field count isn't {@link NSUL_COLUMN_COUNT}
+ * - its `uprn` isn't a literal digit string within the safe-integer range
+ * - its non-empty `pcds` doesn't have a unit-postcode shape
  * - its `CTRY25CD` identifies no UK constituent country
  *
  * A postcode-shaped column holding anything else is a defect to count.
@@ -270,7 +273,7 @@ export interface NSULVintage {
 }
 
 /**
- * Parse the vintage out of an archive (or region file) name, or `null` when the name is not nsul's.
+ * Parse the vintage out of an archive (or region file) name, or `null` when the name isn't nsul's.
  */
 export function parseNSULVintage(name: string): NSULVintage | null {
 	const match = ARCHIVE_NAME.exec(name) ?? REGION_ENTRY.exec(name)
@@ -327,7 +330,7 @@ interface NSULItemRecord {
 
 /**
  * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources,
- * refusing a region set that is not exactly {@link NSUL_REGIONS}.
+ * refusing a region set that's not exactly {@link NSUL_REGIONS}.
  */
 export async function openNSULArchive(sourceDir: PathBuilderLike): Promise<{
 	archivePath: string
@@ -496,7 +499,7 @@ export interface BuildNSULLayerResult {
 	skippedDuplicate: number
 	/**
 	 * Lines whose `pcds` is empty.
-	 * The postcode is not in Code-Point Open.
+	 * The postcode isn't in Code-Point Open.
 	 *
 	 * Expected non-zero.
 	 * Recorded, never a defect.
@@ -535,7 +538,7 @@ export interface BuildNSULLayerResult {
 }
 
 /**
- * Read the `<archive>.md5` sidecar's digest, or `null` when there is none.
+ * Read the `<archive>.md5` sidecar's digest, or `null` when there's none.
  */
 async function readMD5Sidecar(archivePath: string): Promise<string | null> {
 	const text = await readLocalTextFile(`${archivePath}.md5`).catch(() => null)
@@ -703,7 +706,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 /**
  * The checks, in words.
  *
- * ONS publishes no row-count manifest for the collection, so they are internal
+ * ONS publishes no row-count manifest for the collection, so they're internal
  * consistency plus the truncation floor.
  * Empty on a clean build.
  */
@@ -782,13 +785,16 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const itemRaw = await readLocalTextFile(sourceDir("item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION } =
-		await import("@mailwoman/resolver-wof-sqlite/nsul")
-
-	const { compactPostcode } = await import("@mailwoman/postcode/display-form")
-
-	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	const {
+		nsul: { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION },
+		displayForm: { compactPostcode },
+		uprn: { UPRN_H3_RESOLUTION },
+	} = await allKeyed({
+		nsul: import("@mailwoman/resolver-wof-sqlite/nsul"),
+		displayForm: import("@mailwoman/postcode/display-form"),
+		uprn: import("@mailwoman/resolver-wof-sqlite/uprn"),
+	})
 
 	// Record which Open UPRN release the coordinates came from.
 	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnPath, { readOnly: true })

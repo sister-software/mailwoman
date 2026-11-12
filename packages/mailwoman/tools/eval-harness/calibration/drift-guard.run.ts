@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The calibration drift guard (#368 S6): re-applies a committed table to its confidences and exits 1 when the
- *   held-out calibrated ECE moved more than `--tolerance` from the value the table records.
+ *   The calibration drift guard (#368 S6): re-applies a committed table to its confidences and exits 1
+ *   when the held-out calibrated ECE moved more than `--tolerance` from the value the table records.
  *
- *   A swapped model or regenerated confidences left without a refit make the `conf=` a table produces drift out of
- *   calibration without an error. The guard measures on the held-out fifth the fit measured on, through the same
- *   recorded permutation, and exits 2 when the table records no calibrated ECE to compare with.
+ *   A swapped model or regenerated confidences left without a refit make the `conf=`
+ *   a table produces drift out of calibration without an error.
+ *   The guard measures on the held-out fifth the fit measured on, through the same recorded
+ *   permutation, and exits 2 when the table records no calibrated ECE to compare with.
  *
  *   Usage:
  *     node packages/mailwoman/tools/eval-harness/calibration/drift-guard.run.ts \

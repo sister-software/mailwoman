@@ -8,7 +8,7 @@ tags:
 
 # Input robustness — absorbing the mess users type
 
-Addresses in a test fixture are clean. Geocoder inputs can contain all caps from a compliance export, squeezed commas from a spreadsheet paste, a missing letter from fast typing, or `Ave` where the fixture said `Avenue`. A parser that works only on clean input is not usable in production.
+Addresses in a test fixture are clean. Geocoder inputs can contain all caps from a compliance export, squeezed commas from a spreadsheet paste, a missing letter from fast typing, or `Ave` where the fixture said `Avenue`. A parser that works only on clean input isn't usable in production.
 
 The useful test is whether `1600 PENNSYLVANIA AVE NW,WASHINGTON DC` resolves to the same rooftop as `1600 Pennsylvania Avenue NW, Washington, DC 20500`. This page describes how Mailwoman handles that input. Three layers remove surface noise before it can move the coordinate, and three checks verify each layer.
 
@@ -28,13 +28,13 @@ The trailing-punctuation trim fixed a real failure. A stray period attached to t
 
 Every transform is offset-mapped. The normalized string keeps a map back to the raw character positions, so a span the model finds in the clean text still points at the right bytes of the user's input. A normalization that corrupted the offsets would do more harm than good.
 
-This layer deliberately does **not** expand abbreviations at runtime. `normalize/abbreviations.ts` can turn `Rd` into `Road` and `Ave` into `Avenue`, and it is fully built. It is opt-in, and the runtime pipeline leaves it off (`normalize/compute.ts`). Abbreviation handling belongs to the model. A hard-coded `Ave → Avenue` rule in front of the parser would take a decision away from the model, and the model could not correct the rule if it proved wrong for a locale. See [What Mailwoman is](./what-mailwoman-is.mdx) for why hand-written knowledge stays out of the model's input path.
+This layer deliberately **doesn't** expand abbreviations at runtime. `normalize/abbreviations.ts` can turn `Rd` into `Road` and `Ave` into `Avenue`, and it is fully built. It is opt-in, and the runtime pipeline leaves it off (`normalize/compute.ts`). Abbreviation handling belongs to the model. A hard-coded `Ave → Avenue` rule in front of the parser would take a decision away from the model, and the model couldn't correct the rule if it proved wrong for a locale. See [What Mailwoman is](./what-mailwoman-is.mdx) for why hand-written knowledge stays out of the model's input path.
 
 ### Layer 2 — model-side case normalization
 
 Some noise is too locale-sensitive for Layer 1 but too systematic to leave to the corpus. The main example is casing. A model trained on mixed-case text is partly out of domain on an all-caps compliance record, where it drops tokens and sets wrong span boundaries. For example, `214 JONES RD, ELKHART, TX 75839` produced a locality of `ALESTINE`. For this reason, `neural/case-normalize.ts` title-cases an all-caps input before the model sees it (#690) and restores the trained mixed-case form of an all-lowercase input (#829). Both are on by default.
 
-The detection is deliberately strict. Only an input that is entirely uppercase or entirely lowercase qualifies, so ordinary mixed-case text passes through with an identical byte path. The transform must also keep offsets stable. It handles only pure-ASCII input, because title-casing accented or non-Latin text can change length (`ß`→`SS`, the Turkish dotted and dotless I) and break the offset mapping that Layer 1 preserves. Measured on TX HHSC data, locality recall went from 90.1% to 99.7%.
+The detection is deliberately strict. Only an input that's entirely uppercase or entirely lowercase qualifies, so ordinary mixed-case text passes through with an identical byte path. The transform must also keep offsets stable. It handles only pure-ASCII input, because title-casing accented or non-Latin text can change length (`ß`→`SS`, the Turkish dotted and dotless I) and break the offset mapping that Layer 1 preserves. Measured on TX HHSC data, locality recall went from 90.1% to 99.7%.
 
 ### Layer 3 — trained-in variation
 
@@ -52,7 +52,7 @@ The most important check is `mailwoman eval gauntlet --layer metamorphic` (`mail
 
 The check has three relation families, separated by how much a perturbation may change the answer:
 
-- **INV (invariance, ≤1m).** A label-preserving perturbation of a base address must not move the coordinate more than a meter (`INV_EPSILON_KM = 0.001`) or change the resolution tier. The perturbations are lowercasing, uppercasing, doubling the spaces, appending a stray dot, removing the space after a comma, and replacing an expanded suffix with its abbreviation. The `abbrev` case inverts the `normalize/` abbreviation table (`Avenue`→`Ave`). It passes because the model trains on both forms.
+- **INV (invariance, ≤1m).** A label-preserving perturbation of a base address mustn't move the coordinate more than a meter (`INV_EPSILON_KM = 0.001`) or change the resolution tier. The perturbations are lowercasing, uppercasing, doubling the spaces, appending a stray dot, removing the space after a comma, and replacing an expanded suffix with its abbreviation. The `abbrev` case inverts the `normalize/` abbreviation table (`Avenue`→`Ave`). It passes because the model trains on both forms.
 - **DIR (directional, ≤5km).** With the postcode removed, the result must still land within 5km of the result with the postcode. This keeps the #251 failure class, where the parser failed as soon as a user omitted the ZIP, as a permanent check.
 - **BAND (tolerance, ≤5km).** A _corrupting_ perturbation may change the parse, so requiring byte-identical output would be the wrong test. These perturbations are a single-character transposition or substitution, or a spelled-out ordinal or house number. The result must still land within a tolerance band of the clean coordinate. This family catches classes of input the pipeline never trained on.
 
@@ -68,7 +68,7 @@ The typo cases are measured with the anchor and gazetteer channels off. That set
 
 ### Golden `graceful/*` sets — labeled adversarial cases
 
-The golden set (`data/eval/golden/v0.1.2`) includes a small hand-labeled adversarial track under `graceful/*`. It covers typos (`Pensylvania`, `Portlnad`, `Fransisco`), incorrect casing, incorrect punctuation, and irregular whitespace. Around ten of these are single-character typo cases. The track is a stress test with expected components. It does not check coordinates. The parse should still succeed at lower confidence, and the labels define the expected result.
+The golden set (`data/eval/golden/v0.1.2`) includes a small hand-labeled adversarial track under `graceful/*`. It covers typos (`Pensylvania`, `Portlnad`, `Fransisco`), incorrect casing, incorrect punctuation, and irregular whitespace. Around ten of these are single-character typo cases. The track is a stress test with expected components. It doesn't check coordinates. The parse should still succeed at lower confidence, and the labels define the expected result.
 
 ### `perturb-golden.ts` — the one-off arena
 

@@ -6,11 +6,12 @@
  *
  * Street-led forms ("Tangavegen 40, 5620 Tørvikbygd") have a larger residual than the pc-first form.
  * A diacritic street head (…vegen/…veien with ø/å/æ) creates a leading-name-before-comma boundary.
+ *
  * The recipe cycles each tuple through all three real orders to balance polarity.
  *
- * 1. canonical  "«st» «n», «pc» «city»"   (the larger residual class)
+ * 1. canonical "«st» «n», «pc» «city»" (the larger residual class)
  * 2. city-first "«city», «pc», «st» «n»"
- * 3. pc-first   "«pc» «city», «st» «n»"   (the floor the others converge to)
+ * 3. pc-first "«pc» «city», «st» «n»" (the floor the others converge to)
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -47,7 +48,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 
 		// The split excludes every surface the digit board reserves, so a retrain
 		// grades the boundary form on unseen streets.
-		// There is no safe default, so the flag throws.
+		// There's no safe default, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {
@@ -132,7 +133,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			// Per row, because the id names this tuple's record.
+			// Per row, because the id identifies this tuple's record.
 			// Tuple files created before `sourceID` have no identifier to forward.
 			// A `null` base ID preserves that absence.
 			if (

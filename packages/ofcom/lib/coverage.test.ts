@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixtures under `test/fixtures/` copy rows verbatim from Ofcom's Connected Nations update Spring 2026
- *   fixed coverage data, January 2026 snapshot. The source is the fixed coverage and full-fiber take-up ZIP
- *   at version 2 of 2026-07-07, retrieved 2026-10-05 and published under OGL v3.0. Each fixture keeps its
- *   published file name and header.
+ *   The fixtures under `test/fixtures/` copy rows verbatim from Ofcom's Connected
+ *   Nations update Spring 2026 fixed coverage data, January 2026 snapshot.
  *
- *   The published files end lines with CRLF, and 119 of the 121 all-premises postcode files open with a
- *   UTF-8 byte-order mark. The fixtures use LF without the mark, and one test restores both.
+ *   The source is the fixed coverage and full-fiber take-up ZIP at version 2 of 2026-07-07,
+ *   retrieved 2026-10-05 and published under OGL v3.0.
+ *   Each fixture keeps its published file name and header.
+ *
+ *   The published files end lines with CRLF, and 119 of the 121 all-premises
+ *   postcode files open with a UTF-8 byte-order mark.
+ *   The fixtures use LF without the mark, and one test restores both.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -285,7 +288,7 @@ describe("parseOfcomCoverage refusals", () => {
 		)
 	})
 
-	// A quote closed on a later line is not an error to the reader: it joins the lines into one
+	// A quote closed on a later line isn't an error to the reader: it joins the lines into one
 	// record of the header's width, and only the record count tells that read from a shorter file.
 	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {
 		const text = await readLocalTextFile(fixture(POSTCODE_ALL))

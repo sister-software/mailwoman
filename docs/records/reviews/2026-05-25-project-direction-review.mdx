@@ -10,7 +10,7 @@ Mailwoman is a TypeScript-first address parser that runs in Node and the browser
 
 ---
 
-## What is strong
+## What's strong
 
 ### The architecture is well-decomposed
 
@@ -42,18 +42,18 @@ The v0.4.0 retrospective doesn't hide failure behind aggregate F1. It buckets fa
 
 ---
 
-## What is unproven or concerning
+## What's unproven or concerning
 
 ### Architecture is ahead of integration
 
-The docs describe a nearly complete v0.5.0 pipeline, but the runtime's default path does not use the strongest parts:
+The docs describe a nearly complete v0.5.0 pipeline, but the runtime's default path doesn't use the strongest parts:
 
 - `reconcileSpans` (Stage 5 joint decoding) is opt-in and tested only with mocked classifier top-K
 - Phrase proposals from Stage 2.7 are collected but not fed into the classifier
-- The classifier does not emit real top-K candidates in the TypeScript runtime
-- The Locale check exists as a workspace but is not wired as the factory default
+- The classifier doesn't emit real top-K candidates in the TypeScript runtime
+- The Locale check exists as a workspace but isn't wired as the factory default
 
-The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and shows a measured improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
+The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — hasn't been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and shows a measured improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
 
 ### Instability in training remains the central blocker
 
@@ -63,7 +63,7 @@ The CE-only repair (drop CRF loss from training, keep CRF as inference-time stru
 
 If CE-only trains stably to completion, the training instability is resolved and the focus shifts to quality — class weights, source weights, longer schedules, all of which were unsafe under dual-loss. If CE-only also diverges at higher step counts, the investigation shifts to the corpus/tokenizer pair (A1 tokenizer + corpus-v0.4.0 transliteration data).
 
-### Model quality is not yet at production level
+### Model quality isn't yet at production level
 
 The shipped v0.4.0 model has:
 
@@ -79,7 +79,7 @@ The shipped v0.4.0 model has:
 
 Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers labeling coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest. Without the rule classifiers, the neural model is nowhere near production-quality on most components.
 
-This observation is not fatal. The project is early-stage and the architecture is additive. It does mean the project's "what you can use today" story is limited, and the docs do not state that limitation.
+This observation isn't fatal. The project is early-stage and the architecture is additive. It does mean the project's "what you can use today" story is limited, and the docs do not state that limitation.
 
 ### The v0.5.0 scope bundle combined independent variables
 
@@ -89,7 +89,7 @@ To be fair: the v0.5.0 threads were designed to be parallel where possible, and 
 
 ### Synthetic corpus validation catches alignment but not semantics
 
-The substring-match validator (which caught ~1.1% of LLM-generated transliteration rows as misaligned) is correctly treated as critical. But it only proves annotated values appear in raw strings — it does not prove labels are complete, semantically correct, or distributionally sane. The ~73K DeepSeek-generated transliteration pairs are the most likely destabilizer in the v0.5.0 training divergence (they're the one remaining untested variable in the bisect), and they entered the corpus with only alignment validation rather than semantic spot-checking.
+The substring-match validator (which caught ~1.1% of LLM-generated transliteration rows as misaligned) is correctly treated as critical. But it only proves annotated values appear in raw strings — it doesn't prove labels are complete, semantically correct, or distributionally sane. The ~73K DeepSeek-generated transliteration pairs are the most likely destabilizer in the v0.5.0 training divergence (they're the one remaining untested variable in the bisect), and they entered the corpus with only alignment validation rather than semantic spot-checking.
 
 LLM data is useful for adversarial cases and transliteration coverage, but it should enter as a controlled curriculum with explicit batch-weight caps, source-specific gradient monitoring, and semantic spot-check sampling — not as 73K rows mixed uniformly into the training distribution.
 
@@ -134,7 +134,7 @@ These are all reasonable future work, but they multiply variables before the cur
 
 ## What the project should be
 
-Mailwoman should aim to be the **TypeScript-native open geocoding front-end**: a parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
+Mailwoman should aim to be the **TypeScript-native open geocoding front-end**: a parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It doesn't need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - **Easy to deploy.** `npm install @mailwoman/neural-weights-en-us` should work.
 - **Direct about ambiguity.** "Springfield" should return candidates rather than a confident wrong answer.
@@ -174,7 +174,7 @@ This is ~100 lines of TypeScript, zero GPU, runnable today. It validates the arc
 
 ### 3. Establish product-level eval checks
 
-The model should not be judged only as a tagger. Before any new weights ship, the eval report should include:
+The model shouldn't be judged only as a tagger. Before any new weights ship, the eval report should include:
 
 - Per-component P/R/F1
 - Full parse exact match

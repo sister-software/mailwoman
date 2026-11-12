@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Cross-language guard for the inference-side anchor features: the feature layout must match the
- *   training encoder (`feature_vector` in `mtf-channels::anchor`) or the model is
- *   fed garbage at inference. The pinned vectors fail if the TypeScript implementation drifts.
+ *   Cross-language guard for the inference-side anchor features: the feature layout
+ *   must match the training encoder (`feature_vector` in `mtf-channels::anchor`)
+ *   or the model is fed garbage at inference.
+ *
+ *   The pinned vectors fail if the TypeScript implementation drifts.
  */
 import { mulberry32 } from "@mailwoman/core/random"
 import { PostcodeBinaryResolver, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
@@ -299,7 +301,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2 but its outward SW1A is.
+		// SW1A 1AA isn't in V2 but its outward SW1A is.
 		// NI codes behave the same way.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
@@ -405,8 +407,8 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 /**
  * The ship obligation check: a lookup carrying keys only the shaped keyer can reach,
- * next to a card that does not declare `span_mode: "shaped"`, is a channel that
- * loads clean and feeds zeros on every row it exists for.
+ * next to a card that doesn't declare `span_mode: "shaped"`, is a channel that loads clean
+ * and feeds zeros on every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

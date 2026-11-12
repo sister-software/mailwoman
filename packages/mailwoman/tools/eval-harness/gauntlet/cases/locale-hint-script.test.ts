@@ -110,7 +110,7 @@ describe("the Japanese Overture gold set", () => {
 	})
 
 	it("carries kana on 178 rows, which is why kana cannot decide Japanese here", () => {
-		// Kana identifies Japanese and Han does not, but most Japanese place names are written in Han.
+		// Kana identifies Japanese and Han doesn't, but most Japanese place names are written in Han.
 		// A rule that required kana would abstain on most of this set.
 		// These rows stop at the municipality, so fuller addresses would contain more kana.
 		const kanaRowCount = japaneseRows.filter((row) => {

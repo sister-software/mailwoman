@@ -11,7 +11,7 @@
  *   Ported from the Python builders' `countries/tw/corpora/rows.py`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { SeededRandom } from "@mailwoman/core/random"
 import { countInto } from "@mailwoman/core/stats"
@@ -28,7 +28,7 @@ import { TW_ADMIN_LEVELS } from "#tw/registers"
  * The Overture-TW addresses the corpus reads.
  */
 export function twOvertureParquetPath() {
-	return dataRootPath("overture", "2026-06-17.0", "addresses-tw.parquet")
+	return snapshotSourcePath("overture", "2026-06-17.0", "addresses-tw.parquet")
 }
 
 /**

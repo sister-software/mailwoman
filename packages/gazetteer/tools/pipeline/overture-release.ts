@@ -4,10 +4,12 @@
 /**
  * Does a pinned Overture release still exist?
  *
- * Overture deletes releases from the bucket on roughly a monthly window. Every build that reads
- * Overture uses its own pin, so each pin dies silently when its release is pruned. The cost of
- * finding out late is why this exists: the admin build reaches `fold-overture` only after the WOF
- * ingest, so a dead pin surfaced after ~30 minutes as an `IO Error` that reads like a network fault.
+ * Overture deletes releases from the bucket on roughly a monthly window.
+ * Every build that reads Overture uses its own pin, so each pin dies silently when its release is pruned.
+ *
+ * The cost of finding out late is why this exists: the admin build reaches
+ * `fold-overture` only after the WOF ingest, so a dead pin surfaced after ~30
+ * minutes as an `IO Error` that reads like a network fault.
  *
  * Anonymous http against the public bucket rather than the S3 SDK or DuckDB, so this is answerable
  * before any heavy optional dependency loads and is the same listing a human would check.
@@ -24,7 +26,7 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  * Narrower than {@link APIClient} on purpose.
  * A parameter shaped like the whole client makes a test double an assertion instead of an object.
  *
- * That assertion can survive a signature change the double does not.
+ * That assertion can survive a signature change the double doesn't.
  */
 export interface OvertureListingClient {
 	fetch(request: {
@@ -104,8 +106,8 @@ export interface ReleaseCheck {
 	/**
 	 * `undefined` when the listing itself failed.
 	 *
-	 * An unreachable bucket does not show that a release was pruned.
-	 * A build must not refuse to start because the network blinked.
+	 * An unreachable bucket doesn't show that a release was pruned.
+	 * A build mustn't refuse to start because the network blinked.
 	 */
 	reachable: boolean
 	message: string
@@ -117,7 +119,7 @@ export interface ReleaseCheck {
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive.
  * This is a pre-flight whose only job is to turn a 30-minute failure into an immediate one.
  *
- * A build should not block on a network failure from this check.
+ * A build shouldn't block on a network failure from this check.
  * That would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
@@ -135,7 +137,7 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An empty listing is not an empty bucket — Overture has never held zero releases —
+	// An empty listing isn't an empty bucket — Overture has never held zero releases —
 	// so zero is treated as no answer, never as absence.
 	if (!available.length) {
 		return {

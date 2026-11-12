@@ -41,7 +41,7 @@ export const GeocodeRequestSchema = z
 		 * Points the resolver prefers candidates near, such as a map viewport's center and the device location.
 		 *
 		 * Bias reorders candidates of comparable rank.
-		 * It does not move a coordinate or add a candidate.
+		 * It doesn't move a coordinate or add a candidate.
 		 */
 		bias: z.array(Ref(GeocodeBiasPointSchema)).max(MAX_BIAS_POINTS).default([]),
 		/**

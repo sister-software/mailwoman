@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `anchor-absorption` recipe, a self-generated `--count`-row source built from
- *   {@link synthesizeAnchorAbsorptionRow}'s six-template mix (case-H / case-P-us-rural / case-P-de /
- *   anchor-fp / locale-ambig / standard), aligned to BIO and emitted as a labeled jsonl. The
- *   leading 5-digit on case-H/anchor-fp/locale-ambig is sampled from the real US ZIPs in the
+ *   `anchor-absorption` recipe, a self-generated `--count`-row source
+ *   built from {@link synthesizeAnchorAbsorptionRow}'s six-template mix
+ *   (case-H / case-P-us-rural / case-P-de / anchor-fp / locale-ambig / standard),
+ *   aligned to BIO and emitted as a labeled jsonl.
+ *
+ *   The leading 5-digit on case-H/anchor-fp/locale-ambig is sampled from the real US ZIPs in the
  *   postcode-anchor lookup, so the shaped-painted anchor fires on it exactly as inference does.
  */
 
@@ -91,8 +93,8 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 				stringifyJSON({
 					...aligned.row,
 					template: synth.template,
-					// The components are drawn from weighted template tables rather than read from a
-					// register, so the row teaches the absorption shape and names no published address.
+					// The components are drawn from weighted template tables rather than read from a register,
+					// so the row teaches the absorption shape and identifies no published address.
 					register: null,
 					surface: SurfaceOrigin.Invented,
 				})

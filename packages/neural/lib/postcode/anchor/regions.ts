@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The anchor-region lookup over PFX1 postcode-prefix indexes. Each index states the prefix
- *   granularities it holds in its header's `levels`, so the lookup derives a postcode's prefix
- *   from the index rather than from the country, and the same module serves Node and the browser.
+ *   The anchor-region lookup over PFX1 postcode-prefix indexes.
+ *
+ *   Each index states the prefix granularities it holds in its header's `levels`,
+ *   so the lookup derives a postcode's prefix from the index rather than from the country,
+ *   and the same module serves Node and the browser.
  */
 
 import type { AnchorRegionAncestor, AnchorRegionLookupLike } from "@mailwoman/core/pipeline"

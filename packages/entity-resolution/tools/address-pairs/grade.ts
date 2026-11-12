@@ -4,17 +4,19 @@
 /**
  *   Grades duplicate-detection arms against an adjudicated address pair set, per stratum.
  *
- *   An arm predicts, for each pair, whether the lower-ranked row repeats the higher-ranked row's delivery point and may
- *   be dropped. Each arm reads the unit as a precondition: two rows whose unit identifiers differ, or of which one
- *   states a unit and the other none, are different delivery points, because dropping the unit row would lose the
- *   unit.
+ *   An arm predicts, for each pair, whether the lower-ranked row repeats the
+ *   higher-ranked row's delivery point and may be dropped.
+ *   Each arm reads the unit as a precondition: two rows whose unit identifiers differ,
+ *   or of which one states a unit and the other none, are different delivery points,
+ *   because dropping the unit row would lose the unit.
  *
- *   - `rule` is the deterministic rule the layer build applies: the same postcode key, the same unit text, and points
- *     within 0.002 degrees.
+ *   - `rule` is the deterministic rule the layer build applies: the same postcode key,
+ *     the same unit text, and points within 0.002 degrees.
  *   - `rule-unit-identifier` is that rule with the unit compared by identifier, so `#2` and `UNIT 2` agree.
- *   - `fellegi-sunter` scores the postcode, locality and distance with `@mailwoman/match`. Its `m` and
- *     `u` are fitted by EM on an unlabeled population of candidate pairs, never on the labels. A point a source
- *     shares among more than five addresses locates none of them, so a pair touching one has no distance evidence.
+ *   - `fellegi-sunter` scores the postcode, locality and distance with `@mailwoman/match`.
+ *     Its `m` and `u` are fitted by EM on an unlabeled population of candidate pairs, never on the labels.
+ *     A point a source shares among more than five addresses locates none of them,
+ *     so a pair touching one has no distance evidence.
  *
  *   A pair adjudicated `unsure` is left out of every count.
  */

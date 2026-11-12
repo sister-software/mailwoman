@@ -1,12 +1,12 @@
 # Data policy
 
 This package compiles identifier data from published sources into lookup artifacts. This document states
-where the data comes from, under what terms, what the open profile does and does not hold, and how a
+where the data comes from, under what terms, what the open profile does and doesn't hold, and how a
 source update moves through the repository.
 
 ## Profiles
 
-A profile is a named set of pinned sources. An artifact's header states its profile, and every
+A profile is a set of pinned sources with an identifier such as `open-2026-11`. An artifact's header states its profile, and every
 predicate in this package answers for one profile. The built profile is `open-2026-11`.
 
 | Profile             | Sources                                                | Where                                |
@@ -51,7 +51,7 @@ pinned bytes. At the pinned publication:
   when the code is a current alpha-2 entry, `source-extension` for a code such as `XK`, `unstated` when
   the column is empty. The `airport-located-in-country` relation holds only the first kind.
 
-A miss means `not-found-in-snapshot`: the source holds no such code. It is not a claim that the issuing
+A miss means `not-found-in-snapshot`: the source holds no such code. It isn't a claim that the issuing
 authority never assigned it.
 
 OurAirports and Wikidata disagree on the country list in a way the coverage declaration records rather
@@ -61,7 +61,7 @@ than hides: OurAirports lists `XK`, `XP` and `ZZ`, which are not ISO codes, and 
 ## How a source update moves through the repository
 
 1. `node packages/registry/sdk/fetch.run.ts --repin` downloads the sources into
-   `$MAILWOMAN_DATA_ROOT/corpus/sources/registry/` and rewrites the lock. Without `--repin`, a changed
+   `$MAILWOMAN_CACHE_ROOT/sources/registry/` and rewrites the lock. Without `--repin`, a changed
    publication fails the run.
 2. `node packages/registry/tools/normalize.run.ts` rewrites `data/normalized/*.json` and
    `data/manifests/coverage.json`. The normalized files hold one record per line so the diff reads by
@@ -74,7 +74,7 @@ than hides: OurAirports lists `XK`, `XP` and `ZZ`, which are not ISO codes, and 
 
 Network access happens only in step 1. A build never fetches.
 
-## What is not committed
+## What's not committed
 
 The raw source files live under the data root and are not committed. The lock's digests identify them.
 `PROVENANCE.md` conventions for the corpus do not apply here because no row of these sources trains a

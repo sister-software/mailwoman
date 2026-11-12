@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman release merge-admin`: the one sanctioned `gh pr merge --admin` route. It runs the
- *   sub-second guards that the skipped checks would have run. It runs them synchronously and refuses
- *   to merge after a failure.
+ *   `mailwoman release merge-admin`: the one sanctioned `gh pr merge --admin` route.
  *
- *   The local checkout must be at the PR's head commit, because the guards measure the tree they run
- *   in. The command verifies the SHA and refuses with the checkout command otherwise.
+ *   It runs the sub-second guards that the skipped checks would have run.
+ *   It runs them synchronously and refuses to merge after a failure.
+ *
+ *   The local checkout must be at the PR's head commit, because the guards measure the tree they run in.
+ *   The command verifies the SHA and refuses with the checkout command otherwise.
  */
 
 import { gitHead } from "@mailwoman/core/git"

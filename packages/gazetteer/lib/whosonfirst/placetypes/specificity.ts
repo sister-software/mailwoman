@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   How specific a placetype is, the ordering `Placetype.ts` deliberately does not give you.
+ *   How specific a placetype is, the ordering `Placetype.ts` deliberately doesn't give you.
  *
- *   WOF placetype IDs follow assignment order. `Placetype.ts` states this in place.
+ *   WOF placetype IDs follow assignment order.
+ *   `Placetype.ts` states this in place.
  *   Consumers that compare placetypes use the ranks here.
  *
  *   This scale orders the eleven placetypes shared with `resolver-wof-sqlite/ancestry.ts`'s
- *   `PLACETYPE_DEPTH` identically. `specificity.test.ts` checks that agreement. The two scales
- *   differ in offset and in what an unranked placetype means, never in which of two placetypes is
- *   finer.
+ *   `PLACETYPE_DEPTH` identically.
+ *   `specificity.test.ts` checks that agreement.
+ *
+ *   The two scales differ in offset and in what an unranked placetype means,
+ *   never in which of two placetypes is finer.
  */
 
 import type { WhosOnFirstPlacetype } from "#whosonfirst/placetypes/definition"

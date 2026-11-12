@@ -4,8 +4,9 @@
 /**
  * The messages exchanged between `database.ts` on the page and `range-worker.ts` in its dedicated worker.
  *
- * This module exports types only. The worker script is staged and loaded by URL without a bundler, so it
- * cannot import a runtime value from a sibling module.
+ * This module exports types only.
+ * The worker script is staged and loaded by URL without a bundler, so it cannot
+ * import a runtime value from a sibling module.
  */
 
 /**

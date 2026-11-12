@@ -4,14 +4,16 @@
 /**
  *   Libpostal-compatible JSON projection.
  *
- *   Flattens the tree to `{ tag: value }`, one value per tag as libpostal does. When a tag occurs twice the
- *   span that `slotNodes` ranks first takes the slot: a grounded span before an ungrounded one, then
- *   document order for an administrative or postal rung and label confidence for every other tag.
+ *   Flattens the tree to `{ tag: value }`, one value per tag as libpostal does.
+ *   When a tag occurs twice the span that `slotNodes` ranks first takes the slot:
+ *   a grounded span before an ungrounded one, then document order for an administrative
+ *   or postal rung and label confidence for every other tag.
  *   Use `decodeAsTuples` if order or repetition matters.
  *
- *   A multi-role node, such as a city-state span tagged `region` that also plays `locality`, emits one entry per role
- *   from its `interpretations`, so `out.locality` still surfaces for a completed city-state. Every role shares the
- *   span's `value`.
+ *   A multi-role node, such as a city-state span tagged `region` that also
+ *   plays `locality`, emits one entry per role from its `interpretations`,
+ *   so `out.locality` still surfaces for a completed city-state.
+ *   Every role shares the span's `value`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -22,7 +24,7 @@ import { type AddressNode, type AddressTree, ComponentTagSchema } from "#decoder
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 
 /**
- * A span the flat projection could not represent.
+ * A span the flat projection couldn't represent.
  * This type records why.
  *
  * The flat map holds one value per tag.
@@ -125,7 +127,7 @@ export function decodeAsJSON(
 	}
 
 	// Always emitted when asked, `[]` included, so a caller that has to presence-check
-	// cannot tell "no field was dropped" from "this build does not report drops".
+	// cannot tell "no field was dropped" from "this build doesn't report drops".
 	if (opts.includeDropped) {
 		out.dropped = dropped
 	}

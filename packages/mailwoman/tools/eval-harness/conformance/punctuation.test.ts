@@ -2,20 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The punctuation law's required guards and exclusion rules. It also defines the failure line a violation produces.
+ *   The punctuation law's required guards and exclusion rules.
+ *   It also defines the failure line a violation produces.
  *
- *   The required pair is `punctuationBlindKey` and `punctuationApplicability`. The key refuses a pair that
- *   changed anything besides punctuation. The rules refuse a pair the key accepts when the transformation
- *   cannot account for its mark. The query may contain no punctuation. The mark may belong to a name. The row's
- *   comparator may read the transformed mark from a component value and report a pipeline defect.
+ *   The required pair is `punctuationBlindKey` and `punctuationApplicability`.
+ *   The key refuses a pair that changed anything besides punctuation.
  *
- *   Independence is asserted in both directions. That makes a seeded punctuation regression attributable.
- *   This law's audit refuses changes to case, spacing, or Unicode normalization. The case-folding and spacing
- *   classifiers refuse punctuation-only pairs. A failing arm here therefore cannot be a row from either of the
- *   other suites. Neither suite can absorb a punctuation failure.
+ *   The rules refuse a pair the key accepts when the transformation cannot account for its mark.
+ *   The query may contain no punctuation.
  *
- *   Every exclusion uses a real committed board row. One venue's name includes a point. The bare GB unit code
- *   has no punctuation. Two rows have an asserted span with the abbreviation point their comparator grades.
+ *   The mark may belong to a name.
+ *   The row's comparator may read the transformed mark from a component value and report a pipeline defect.
+ *
+ *   Independence is asserted in both directions.
+ *   That makes a seeded punctuation regression attributable.
+ *
+ *   This law's audit refuses changes to case, spacing, or Unicode normalization.
+ *   The case-folding and spacing classifiers refuse punctuation-only pairs.
+ *
+ *   A failing arm here therefore cannot be a row from either of the other suites.
+ *   Neither suite can absorb a punctuation failure.
+ *
+ *   Every exclusion uses a real committed board row.
+ *   One venue's name includes a point.
+ *
+ *   The bare GB unit code has no punctuation.
+ *   Two rows have an asserted span with the abbreviation point their comparator grades.
  */
 
 import { describe, expect, it } from "vitest"

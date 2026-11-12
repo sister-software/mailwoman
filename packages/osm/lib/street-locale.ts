@@ -3,8 +3,9 @@
 
 /**
  *   The countries the OSM rooftop build has an extract for, and the street locale each folds under.
- *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`, which the
- *   reader also calls, so a build and a query fold one street to one key.
+ *
+ *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`,
+ *   which the reader also calls, so a build and a query fold one street to one key.
  */
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"

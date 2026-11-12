@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! A run's batch encoding: sampled rows to the tensors `to_tensor_batch` hands the model.
 //!
 //! The SentencePiece path encodes through `mtf-channels` with the run's tokenizer, label table and lexicons, as

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the docs site lives, for every URL the license posture points at: the well-known key register and the
- *   `/license` page. One derivation serves both, so a configured `MAILWOMAN_DOCS_URL` moves them together.
+ *   Where the docs site lives, for every URL the license posture points at:
+ *   the well-known key register and the `/license` page.
+ *
+ *   One derivation serves both, so a configured `MAILWOMAN_DOCS_URL` moves them together.
  */
 
 import { $public } from "#env"

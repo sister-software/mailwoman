@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval preset-compare` — the 6 demo presets through the shipped baseline (and
- *   optionally a candidate model), one parse per line. The eval-model skill's quick demo-smoke
- *   companion; `eval promote` captures the same report into `<out-dir>/presets.md`.
+ *   `mailwoman eval preset-compare` — the 6 demo presets through the shipped baseline
+ *   (and optionally a candidate model), one parse per line.
+ *
+ *   The eval-model skill's quick demo-smoke companion; `eval promote` captures
+ *   the same report into `<out-dir>/presets.md`.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

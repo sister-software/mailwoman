@@ -4,10 +4,15 @@
 /**
  *   The WOF postcode-database build (`postalcode-<cc>.db`) — ingest the country's
  *   `whosonfirst-data-postalcode-<cc>` repo and fill `(0,0)` placeholder centroids.
- *   US builds use Census ZCTA and GeoNames. Other builds use GeoNames postal, admin parent-borrow,
- *   then hierarchy-ancestor fallback. The build creates FTS and seals the database.
+ *
+ *   US builds use Census ZCTA and GeoNames.
+ *   Other builds use GeoNames postal, admin parent-borrow, then hierarchy-ancestor fallback.
+ *
+ *   The build creates FTS and seals the database.
  *   Replaces the reopen-and-mutate pair (`fill-zcta-centroids.ts` / `backfill-postcode-centroids.ts`)
- *   that patched shipped databases after the fact. The fills now run during the build.
+ *   that patched shipped databases after the fact.
+ *
+ *   The fills now run during the build.
  *   The artifact is read-only from the moment it exists.
  */
 
@@ -40,7 +45,7 @@ export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**
@@ -99,7 +104,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		)
 	}
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"

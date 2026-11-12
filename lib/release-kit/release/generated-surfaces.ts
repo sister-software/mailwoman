@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regenerate every version-stamped generated document after a release bump. The man page embeds
- *   `mailwoman <version>` in its `.TH` line, so every bump stales it. The docs CLI reference contains
- *   no version stamp today, but it is generated from the same help tree, so regenerating both keeps
- *   one sequence.
+ *   Regenerate every version-stamped generated document after a release bump.
  *
- *   Runs after `mwops release prepare-version` and requires a compiled tree. The generators spawn
- *   the compiled CLI (the Ink commands cannot run under bare type-stripping), and the caller
- *   compiles instead of trusting whatever `out/` a runner left behind. Reports each generated file's
- *   changed/unchanged state so the prepare job can stage exactly what moved. A second run on the
- *   same tree is a no-op by construction, since the generators are deterministic over the compiled
- *   CLI.
+ *   The man page embeds `mailwoman <version>` in its `.TH` line, so every bump stales it.
+ *   The docs CLI reference contains no version stamp today, but it is generated from
+ *   the same help tree, so regenerating both keeps one sequence.
+ *
+ *   Runs after `mwops release prepare-version` and requires a compiled tree.
+ *   The generators spawn the compiled CLI (the Ink commands cannot run under bare type-stripping),
+ *   and the caller compiles instead of trusting whatever `out/` a runner left behind.
+ *
+ *   Reports each generated file's changed/unchanged state so the prepare job can stage exactly what moved.
+ *   A second run on the same tree is a no-op by construction, since the generators
+ *   are deterministic over the compiled CLI.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -31,7 +33,7 @@ const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly stri
 		file: "packages/mailwoman/man/mailwoman.1",
 		generator: ["packages/mailwoman/out/cli/main.js", "dev", "generate", "man-page"],
 	},
-	{ file: "docs/articles/developers/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.mts"] },
+	{ file: "docs/articles/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.mts"] },
 ]
 
 export interface GeneratedSurfaceState {

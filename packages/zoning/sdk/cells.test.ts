@@ -3,6 +3,7 @@
 
 /**
  *   Measures the index and the feature count used to select its resolution.
+ *
  *   It checks the count of features a polyfill-only index would drop.
  *   `classifyFeatureCells` cannot report that count because it refuses features that reach no cell.
  */
@@ -75,7 +76,7 @@ describe("ZoningCellIndex", () => {
 	it("reports candidates per cell, which is what a probe pays", () => {
 		const index = new ZoningCellIndex(10)
 
-		// The same polygon folded in twice: every cell it reaches now names two candidates.
+		// The same polygon folded in twice: every cell it reaches now lists two candidates.
 		index.add(classifyFeatureCells(BIG, 10, "a", "zoning cells"))
 		index.add(classifyFeatureCells(BIG, 10, "b", "zoning cells"))
 

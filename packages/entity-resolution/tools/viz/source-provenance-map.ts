@@ -3,7 +3,8 @@
 
 /**
  *   Sample `address_point.source` rows from a state database and render them by source in MapLibre.
- *   The output requires an http origin because the tile server does not serve `file:` origins.
+ *
+ *   The output requires an http origin because the tile server doesn't serve `file:` origins.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -76,7 +77,7 @@ function categorize(source: string): { bucket: string; publisher: string } {
 
 // Must stay a type alias. Rows come back from the driver as `Record<string, SQLOutputValue>[]` and
 // are asserted to `Row[]`; an object type alias includes an implicit index signature that makes that
-// assertion legal, an interface does not.
+// assertion legal, an interface doesn't.
 // oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature
 type Row = { lat: number; lon: number; source: string; number: string | null; street_raw: string | null }
 

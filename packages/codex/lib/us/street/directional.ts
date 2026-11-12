@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   USPS street **directionals** — the 8 cardinal/intercardinal prefixes (N, S, E, W, NE, NW, SE,
- *   SW). The leading-directional counterpart to {@link ./street-suffix.ts} (trailing street type):
- *   "N Main St" splits into a `street_prefix` directional ("N"), a `street` name ("Main"), and a
- *   `street_suffix` type ("St").
+ *   USPS street **directionals** — the 8 cardinal/intercardinal prefixes (N, S, E, W, NE, NW, SE, SW).
+ *
+ *   The leading-directional counterpart to {@link ./street-suffix.ts} (trailing street type):
+ *   "N Main St" splits into a `street_prefix` directional ("N"), a `street` name
+ *   ("Main"), and a `street_suffix` type ("St").
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Pub 28 Appendix C1}
  */
 

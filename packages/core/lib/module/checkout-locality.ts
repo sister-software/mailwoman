@@ -4,20 +4,24 @@
 /**
  *   Whether a repository entry point runs on its own checkout's packages.
  *
- *   Node resolves a bare `@mailwoman/*` specifier by walking up parent directories to the first
- *   `node_modules` that holds it. A worktree under `.claude/worktrees/<name>` without its own install
- *   therefore resolves `@mailwoman/core` from the primary checkout above it, and a worktree whose
- *   `node_modules` links to the primary checkout's does the same. Every command then exits 0.
+ *   Node resolves a bare `@mailwoman/*` specifier by walking up parent directories
+ *   to the first `node_modules` that holds it.
+ *   A worktree under `.claude/worktrees/<name>` without its own install therefore
+ *   resolves `@mailwoman/core` from the primary checkout above it, and a worktree
+ *   whose `node_modules` links to the primary checkout's does the same.
+ *   Every command then exits 0.
  *
  *   `repoRootPath` counts up from where `@mailwoman/core` was loaded.
  *   Every repository path then points into the other checkout.
- *   Health checks grade its files, `copy-weights` and the overlay linkers write into its workspaces,
- *   and a parse probe runs its compiled `out/`.
- *   This module compares the working tree holding the entry point with the working tree
- *   `@mailwoman/core` computed as the repository root.
+ *
+ *   Health checks grade its files, `copy-weights` and the overlay linkers write into
+ *   its workspaces, and a parse probe runs its compiled `out/`.
+ *   This module compares the working tree holding the entry point with the working
+ *   tree `@mailwoman/core` computed as the repository root.
  *
  *   Both sides are compared as canonical paths.
- *   The loaded side comes from `import.meta.url`, and Node and Vite report it after following symbolic links.
+ *   The loaded side comes from `import.meta.url`, and Node and Vite report it
+ *   after following symbolic links.
  *   The entry side is put through `realpath` as well.
  */
 

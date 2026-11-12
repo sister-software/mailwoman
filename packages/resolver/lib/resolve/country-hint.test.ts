@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the forward `country_hint` linkage. A region node carrying `metadata.country_hint`
- *   (an address-system recognizer's derived country, such as `recognizeUSRegions` stamping "US" on a
- *   2-letter US state abbrev) constrains that node's lookup to the hinted country, below a resolved
- *   parent's country but above the global defaults. It breaks the two-consistent-pairs tie where
- *   geographic consistency by itself cannot choose Maine over the more-populous Augusta under Messina.
+ *   Tests for the forward `country_hint` linkage.
+ *
+ *   A region node carrying `metadata.country_hint` (an address-system recognizer's derived country,
+ *   such as `recognizeUSRegions` stamping "US" on a 2-letter US state abbrev) constrains that node's
+ *   lookup to the hinted country, below a resolved parent's country but above the global defaults.
+ *   It breaks the two-consistent-pairs tie where geographic consistency by itself
+ *   cannot choose Maine over the more-populous Augusta under Messina.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"

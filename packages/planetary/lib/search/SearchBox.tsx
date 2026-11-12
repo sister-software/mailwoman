@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The search box: a combobox over the loaded artifact through the shared autocomplete hook and listbox, so the
- *   keyboard interface (arrows, Enter, Escape) and the aria wiring are the Earth geocoder's rather than a second copy.
+ *   The search box: a combobox over the loaded artifact through the shared
+ *   autocomplete hook and listbox, so the keyboard interface (arrows, Enter, Escape)
+ *   and the aria wiring are the Earth geocoder's rather than a second copy.
  */
 
 import { MapSearchBar } from "@mailwoman/react/map/MapSearchBar"

@@ -3,6 +3,7 @@
 
 /**
  *   Fixture-scale checks for Prague districts: name selection, A-feature preference, plus license terms.
+ *
  *   The artifact records its terms in `database_meta` and `layer_manifest`.
  */
 

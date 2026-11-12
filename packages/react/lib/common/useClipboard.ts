@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `useClipboard` — headless copy-to-clipboard with the async Clipboard API and a legacy `execCommand` fallback for insecure contexts, plus a transient "copied" flag that auto-resets.
+ * `useClipboard` — headless copy-to-clipboard with the async Clipboard API and a legacy
+ * `execCommand` fallback for insecure contexts, plus a transient "copied" flag that auto-resets.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"

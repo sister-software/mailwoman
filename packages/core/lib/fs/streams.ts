@@ -10,7 +10,7 @@
  *   `packages/core/lib/fs/*` is the only directory that imports it.
  *
  *   These are thin. What they add is the path type and one import site, so a caller that already imports the readers
- *   does not reach past them for a stream.
+ *   doesn't reach past them for a stream.
  */
 
 import { createReadStream, createWriteStream, type ReadStream, type WriteStream } from "node:fs"
@@ -38,7 +38,7 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
 /**
  * Open a path for streaming writes.
  *
- * Unlike the file writers in `./writers.ts`, this does not create the parent directory:
+ * Unlike the file writers in `./writers.ts`, this doesn't create the parent directory:
  * a stream that fails on the first chunk rather than at open time reports the missing
  * directory somewhere the caller is no longer looking.
  * Call `makeDirectories` first where the parent may be absent.
@@ -50,9 +50,9 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * portal ships CP949, Japan's postcode file Shift_JIS.
  * `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than after it.
  *
- * A line boundary found in CP949 bytes is not a line boundary.
+ * A line boundary found in CP949 bytes isn't a line boundary.
  *
- * Not `TextDecoder`, and the difference is not small.
+ * Not `TextDecoder`, and the difference isn't small.
  * Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and not the UHC
  * extension CP949 adds in lead bytes 0x81–0xA0.
  *
@@ -60,7 +60,7 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * differently: 6,475 become U+fffd and 2,349 become a different character with no error raised.
  * `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
- * It is not a rare corner.
+ * It isn't a rare corner.
  * One row in 48,000 of the Korean address register contains such a sequence.
  *
  * `더샾오피스텔`, bytes `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
@@ -102,7 +102,7 @@ export async function* decodeByteStream(
  * Same reasoning, same reason not to reach for `TextDecoder`, and it lives here
  * so a reader that finds one finds the other.
  * Use this when the whole file is a bounded size the publisher fixes.
- * Use the stream when it is not.
+ * Use the stream when it isn't.
  *
  * @category Files
  * @param encoding An `iconv-lite` label — `cp949`, `cp932`, `gbk`.

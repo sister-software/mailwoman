@@ -3,9 +3,11 @@
 
 /**
  *   A loaded gazetteer artifact declares facts about its own country coverage.
+ *
  *   The reader and the build share one derivation.
- *   A country absent from a coverage map was never measured. A
- *   measured-and-failed country is present with `hardFilterSafe: false`.
+ *   A country absent from a coverage map was never measured.
+ *
+ *   A measured-and-failed country is present with `hardFilterSafe: false`.
  */
 
 /**

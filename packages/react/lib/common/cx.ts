@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tiny classname joiner — the only utility the presentational units need. Kept in-package (rather
- *   than pulling `classnames`) so `@mailwoman/react` ships zero runtime deps beyond its `@mailwoman/*`
- *   siblings and the React peer.
+ *   Tiny classname joiner — the only utility the presentational units need.
+ *
+ *   Kept in-package (rather than pulling `classnames`) so `@mailwoman/react` ships zero
+ *   runtime deps beyond its `@mailwoman/*` siblings and the React peer.
  */
 
 export type ClassValue = string | number | false | null | undefined | Record<string, boolean>

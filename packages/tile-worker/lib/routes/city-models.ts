@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   City models as 3D Tiles 1.1, one file per request, from the tiles bucket's `3dtiles/` prefix, and landmark
- *   models as single binary glTF files from its `landmarks/` prefix.
+ *   City models as 3D Tiles 1.1, one file per request, from the tiles bucket's `3dtiles/`
+ *   prefix, and landmark models as single binary glTF files from its `landmarks/` prefix.
  *
- *   The converter stores each file gzipped. The route sends the stored bytes with `Content-Encoding: gzip`, so the
- *   Worker passes them through and the browser decompresses them. Each request reads one file of one tileset. The
- *   route offers no listing, so a whole city can be fetched only file by file, as the renderer asks for it.
+ *   The converter stores each file gzipped.
+ *   The route sends the stored bytes with `Content-Encoding: gzip`, so the Worker
+ *   passes them through and the browser decompresses them.
+ *
+ *   Each request reads one file of one tileset.
+ *   The route offers no listing, so a whole city can be fetched only file by file,
+ *   as the renderer asks for it.
  */
 
 import { ResourceError } from "@mailwoman/core/errors"

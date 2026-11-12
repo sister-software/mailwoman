@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A parallel build writes the corpus a serial build writes. These tests build three fixture sources split into
- *   several parquet parts, serially and with two and three workers, and compare every output byte for byte apart
- *   from the timestamps listed in `TIMESTAMP_FIELDS`. They then interrupt, break and contend for builds and check
- *   that a resumed build still lands on the serial bytes.
+ *   A parallel build writes the corpus a serial build writes.
+ *
+ *   These tests build three fixture sources split into several parquet parts,
+ *   serially and with two and three workers, and compare every output byte for byte
+ *   apart from the timestamps listed in `TIMESTAMP_FIELDS`.
+ *   They then interrupt, break and contend for builds and check that a resumed
+ *   build still lands on the serial bytes.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -315,9 +318,9 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		const hrsaDir = sourceStateDirectory(outDir("intermediate"), "usgov-hrsa-fqhc")
 		const hrsa = await readLocalJSONFile<SourceCompletionRecord>(hrsaDir(SOURCE_RECORD_FILE))
 
-		// Every ban part is on disk, and the record that would make them a source is not.
+		// Every ban part is on disk, and the record that would make them a source isn't.
 		await removePath(banDir(SOURCE_RECORD_FILE))
-		// The hrsa record stands and one of the parts it lists does not.
+		// The hrsa record stands and one of the parts it lists doesn't.
 		await removePath(hrsa.parts[0]!.path)
 
 		const messages: string[] = []
@@ -339,12 +342,17 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 	it("fails a source whose worker fails, finishes the others and resumes to the serial bytes", async () => {
 		const outDir = scratch.path("failed")
 		const inputs = fixtureInputs()
+		// The coordinator fingerprints a directory by its listing, and the ban adapter fails
+		// to read it as a CSV, so the failure happens inside the adapter's worker.
+		const unreadable = scratch.path("ban-input-is-a-directory")
+
+		await makeDirectories(unreadable)
 
 		await expect(
 			buildCorpus(
 				baseOptions(outDir, {
 					jobs: 2,
-					adapterInputs: { ...inputs, ban: { inputPath: scratch.path("no-such-ban.csv") } },
+					adapterInputs: { ...inputs, ban: { inputPath: unreadable } },
 				})
 			)
 		).rejects.toThrow(

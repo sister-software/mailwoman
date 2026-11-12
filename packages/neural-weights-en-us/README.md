@@ -57,7 +57,7 @@ Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the sequence-labeler half: a small transformer
 encoder (≈29.6M params) doing BIO token classification over a 33-label address
-schema. It is not an LLM and none of it is generative. Plain NER suits a closed label
+schema. It isn't an LLM and none of it is generative. Plain NER suits a closed label
 set over short strings.
 
 The design splits the problem in two: **the model learns the grammar, the
@@ -106,7 +106,7 @@ required channels in its `requires` block:
 Construct the scorer through `@mailwoman/neural`'s `createScorer` (the canonical
 `ProductionScorer`): it reads `requires` and **fails closed** if a declared
 channel isn't fed. Do not hand-wire the raw ONNX session with the anchor
-input zero-filled — that is the documented "anchor-off" trap that makes the model
+input zero-filled — that's the documented "anchor-off" trap that makes the model
 look far worse than it is. Every eval here is **anchor-on**.
 
 ## Evaluation
@@ -141,7 +141,7 @@ this weights package. See the situs-cascade eval under
 
 Two more notes on reading these:
 
-- **The model is not the bottleneck, and the resolver lands the right place.**
+- **The model isn't the bottleneck, and the resolver lands the right place.**
   locality-match credits the resolver's full locality group (locality ∪ borough ∪
   `localadmin`). New England towns are `localadmin` in the gazetteer. An
   earlier metric discarded that placetype, under-counting locality-match by ~14pp (the corrected
@@ -167,7 +167,7 @@ Confidences are isotonic-calibrated (PAVA) against held-out data, so "0.6" means
 right about 60% of the time. Held-out ECE: 0.067 raw → 0.0035 calibrated. The
 `calibration.json` / `calibration-per-locale.json` artifacts apply **opt-in** via
 `@mailwoman/core`'s `createCalibrator`; default parse output is byte-stable when
-they are omitted.
+they're omitted.
 
 ## Train
 
@@ -188,10 +188,10 @@ inference.
   input, because the option leaves that input untouched.
 - **Coverage rather than precision, is the frontier** for the assembled coordinate:
   where local rooftop/interpolation data is absent the coordinate is the
-  admin-centroid (legitimately tens of km from an edge address); the parse is not
+  admin-centroid (legitimately tens of km from an edge address); the parse isn't
   the bottleneck.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there is unmeasured.
+  and quality there's unmeasured.
 
 ## Attribution
 
@@ -204,8 +204,8 @@ training epoch emitted 103,322 of its 1,000,000 rows from those extracts and 15,
 
 `LICENSE.md` in this package lists every source whose rows reached the trainer and the attribution
 each one requires, and `PROVENANCE.json` records the effective training sources with their row counts.
-The training extracts are Derivative Databases under the ODbL, and they are separate artifacts from
-these weights. They are published under ODbL 1.0, with row counts and sha256 digests per file, at
+The training extracts are Derivative Databases under the ODbL, and they're separate artifacts from
+these weights. They're published under ODbL 1.0, with row counts and sha256 digests per file, at
 https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. See https://mailwoman.post/resources/osm/attribution for how Mailwoman reads the license,
 including the versions published before this notice was added.
 

@@ -198,7 +198,7 @@ export async function buildParseRig(
  * The `ResolveOpts` a run's flags pin, as a pure function of them.
  *
  * Separate from {@link buildParseRig} so a test can assert the mapping without a model and a gazetteer.
- * A pin the rig silently ignores does not fail.
+ * A pin the rig silently ignores doesn't fail.
  *
  * It reports the library default's values under the arm's name.
  * A measuring tool's false negative would look like a real absence.

@@ -4,10 +4,13 @@
 /**
  *   Stamp each parsed span with the ISO 15924 script it is written in.
  *
- *   This lives in `mailwoman` rather than in either package it draws on, because neither may reach the other:
- *   `@mailwoman/query-shape` owns `scriptForRange` and has no `@mailwoman/*` dependency at all.
- *   `@mailwoman/core` owns `AddressTree` and may not depend on query-shape. The entry package depends on both, so the
- *   join happens once, here, rather than as a re-typed fold on either side.
+ *   This lives in `mailwoman` rather than in either package it draws on,
+ *   because neither may reach the other: `@mailwoman/query-shape` owns `scriptForRange`
+ *   and has no `@mailwoman/*` dependency at all.
+ *   `@mailwoman/core` owns `AddressTree` and may not depend on query-shape.
+ *
+ *   The entry package depends on both, so the join happens once, here,
+ *   rather than as a re-typed fold on either side.
  */
 
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
@@ -17,7 +20,7 @@ import { classifyTokens, scriptForRange } from "@mailwoman/query-shape"
  * Write `script` onto every node of `tree`, in place.
  *
  * `text` must be the string the node offsets index into.
- * The normalized input rather than the raw one, since that is what the classifier labeled.
+ * The normalized input rather than the raw one, since that's what the classifier labeled.
  *
  * The raw string would silently mis-range every span on any input normalization touched.
  *

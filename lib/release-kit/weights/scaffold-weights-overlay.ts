@@ -4,11 +4,11 @@
 /**
  *   Create a data-only `@mailwoman/neural-weights-<locale>` overlay package.
  *
- *   It writes the overlay files and updates the required registration lists so
- *   setup is consistent and less error-prone.
+ *   It writes the overlay files and updates the required registration lists
+ *   so setup is consistent and less error-prone.
  *
- *   It intentionally does not edit `.github/workflows/publish.yml` because
- *   artifact lines there are explicit and should stay a manual choice.
+ *   It intentionally doesn't edit `.github/workflows/publish.yml` because artifact
+ *   lines there are explicit and should stay a manual choice.
  *
  *   Usage:
  *     yarn mwops release scaffold-weights-overlay --locale es-ES --artifact pair-index-es.bin
@@ -18,6 +18,7 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
@@ -98,7 +99,7 @@ export async function scaffoldWeightsOverlay(
 			license: "AGPL-3.0",
 			type: "module",
 			// `directory` names this package.
-			// It is the field that has been wrong every time a weights overlay was created by copying a sibling.
+			// It is the field that's been wrong every time a weights overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",
@@ -144,11 +145,7 @@ export async function scaffoldWeightsOverlay(
 	// Placeholder magnitudes below should be calibrated.
 	await writeLocalTextFile(
 		base
-			? `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+			? `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   Dev-weights linker for \`${packageName}\`.
  *
  *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the
@@ -164,11 +161,7 @@ await materializeDevOverlay({
 	localeFST: true,
 })
 `
-			: `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+			: `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   Dev-weights linker for \`${packageName}\`.
  *
  *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the

@@ -18,9 +18,9 @@ task bodies are left as written.
 - **A charge no longer references its invoice directly.** Under the pinned API the link runs `charge.payment_intent` →
   `invoicePayments.list({ payment: { type: "payment_intent", payment_intent } })` → `data[0].invoice`
   (`invoiceIDForCharge` in `lib/stripe/handlers.ts`).
-- **The claim route re-reads an unseen session.** A Checkout Session the ledger has not seen is retrieved from Stripe by
-  id and its license row created there, so the success page never depends on webhook order. Only a session Stripe does
-  not know is a 404.
+- **The claim route re-reads an unseen session.** A Checkout Session the ledger hasn't seen is retrieved from Stripe by
+  id and its license row created there, so the success page never depends on webhook order. Only a session Stripe doesn't
+  know is a 404.
 - **`takePendingRefreshSecret` is a read and a conditional clear.** `RETURNING` on the update by itself returns the cleared
   column, and that column is null.
 - **Reconciliation has a third sweep and a `failed` list.** Every license is compared with its subscription's current
@@ -39,7 +39,7 @@ task bodies are left as written.
   mode still requires the shipped register. `expires` derives from `invoice.lines[0].period.end`, not the
   subscription's current period. A verified event of a stray type or the other Stripe mode answers 200 and is logged.
   Only a failed signature answers 400, and Stripe retries every non-2xx. Refresh and status hold a per-lid and a
-  per-address limit independently. `/health` reports `ledger` and answers 503 when D1 does not respond.
+  per-address limit independently. `/health` reports `ledger` and answers 503 when D1 doesn't respond.
 
 **Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. The worker signs keys with `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
 
@@ -50,10 +50,10 @@ task bodies are left as written.
 ## Global Constraints
 
 - The worker imports four core subpaths and no others from core: `@mailwoman/core/license/key`, `@mailwoman/core/license/register`, `@mailwoman/core/crypto/base64url`, `@mailwoman/core/crypto/digest`. It imports no barrel, no `#env`, and no `fs`. The worker bundle test in core keeps those two subpaths `node:`-free. The worker's own `wrangler deploy --dry-run` in Task 9 checks that the worker's whole graph is `node:`-free.
-- The worker does not set the `nodejs_compat` flag. Every dependency must run on the Workers runtime as shipped. Stripe's SDK runs there through its fetch client and SubtleCrypto provider, `kysely` and `kysely-d1` are pure JS, and Hono is web-standard.
-- Secrets arrive through Wrangler secret bindings only: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `LICENSE_SIGNING_KEY_PEM`, `EMAIL_API_KEY`. None appears in `wrangler.toml`, in a test fixture that ships, in a log line, or in a response. `.dev.vars` is gitignored (confirm: `git check-ignore -q packages/license-worker/.dev.vars`; add the pattern to `.gitignore` if it is not).
+- The worker doesn't set the `nodejs_compat` flag. Every dependency must run on the Workers runtime as shipped. Stripe's SDK runs there through its fetch client and SubtleCrypto provider, `kysely` and `kysely-d1` are pure JS, and Hono is web-standard.
+- Secrets arrive through Wrangler secret bindings only: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `LICENSE_SIGNING_KEY_PEM`, `EMAIL_API_KEY`. None appears in `wrangler.toml`, in a test fixture that ships, in a log line, or in a response. `.dev.vars` is gitignored (confirm: `git check-ignore -q packages/license-worker/.dev.vars`; add the pattern to `.gitignore` if it isn't).
 - Production and sandbox are two Wrangler environments with separate D1 databases, secrets, key ids, Price IDs, and site origins. A sandbox signing key never enters the register in core.
-- Every event id is written in the same D1 batch as its effects. A duplicate event id is a 200 with no effect. Any failure after signature verification is a 500, so Stripe retries. A bad signature is a 400 and is not retried.
+- Every event id is written in the same D1 batch as its effects. A duplicate event id is a 200 with no effect. Any failure after signature verification is a 500, so Stripe retries. A bad signature is a 400 and isn't retried.
 - The webhook handler never trusts an event body's fields for entitlement: it retrieves the invoice, the subscription, and when needed the Checkout Session from Stripe by id.
 - `Cache-Control: no-store` on every route that can return a token. CORS admits exactly `SITE_ORIGIN` on the claim route and no origin on the others.
 - Money and time: `expires` is the subscription period end plus `graceDays` (14) as an inclusive UTC calendar date; `issued` is the invoice's paid date as a UTC calendar date. Both are persisted before signing so a retry reproduces the same payload.
@@ -572,7 +572,7 @@ The `request as unknown as Request` cast reconciles `@cloudflare/workers-types`'
 
 - Root `package.json` `workspaces`: add `"packages/license-worker"` in alphabetical position. Add a script `"test:license-worker": "yarn workspace @mailwoman/license-worker test"`.
 - Root `tsconfig.json`: add `{ "path": "./packages/license-worker" }` and `{ "path": "./packages/license-worker/tsconfig.test.json" }` beside the tile-worker entry.
-- `knip.json`: `"packages/license-worker": { "entry": ["lib/index.ts", "test/**/*.ts"] }` (vitest-pool-workers imports `cloudflare:test`, which knip does not know. Add `"ignoreDependencies": ["@cloudflare/vitest-pool-workers"]` if knip reports it unused).
+- `knip.json`: `"packages/license-worker": { "entry": ["lib/index.ts", "test/**/*.ts"] }` (vitest-pool-workers imports `cloudflare:test`, which knip doesn't know. Add `"ignoreDependencies": ["@cloudflare/vitest-pool-workers"]` if knip reports it unused).
 - `packages/release-kit/lib/release/stage.ts` `SANCTIONED_RELEASE_ABSENCES`: `"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes"`.
 - Root `vitest.config.ts` `exclude`: `"**/license-worker/**/*.test.ts"` with a comment in the shape of the react one: the tests import `cloudflare:test` and run under the Workers pool via the workspace's own `vitest.config.ts`; CI runs them as their own step.
 - `.github/workflows/test.yml`: add a step after the react browser step that runs `yarn test:license-worker` (read the react step and copy its shape. The Workers pool needs no browser).
@@ -582,7 +582,7 @@ Run `yarn install` (the lockfile changes, so commit it).
 - [x] **Step 5: Run the test**
 
 Run: `yarn workspace @mailwoman/license-worker test`
-Expected: pass, 1 test. If `cloudflare:test` fails to resolve, the pool did not install. Check `yarn why @cloudflare/vitest-pool-workers`.
+Expected: pass, 1 test. If `cloudflare:test` fails to resolve, the pool didn't install. Check `yarn why @cloudflare/vitest-pool-workers`.
 
 Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/lib/release-stage.integration.test.ts` (the `publishCount` pin stays 59, and the absence set grows by one).
 
@@ -831,7 +831,7 @@ CREATE TABLE stripe_events (
 );
 ```
 
-D1 migrations are SQL files by Wrangler's interface. That is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
+D1 migrations are SQL files by Wrangler's interface. That's the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
 
 - [x] **Step 4: Write the schema, client, and access module**
 
@@ -1088,7 +1088,7 @@ describe("the signing self-test", () => {
 })
 ```
 
-There is no `ok` case at unit level: an `ok` needs a key the shipped register lists, and no test key is. The route tests inject `signingStatus` through `AppDependencies`.
+There's no `ok` case at unit level: an `ok` needs a key the shipped register lists, and no test key is. The route tests inject `signingStatus` through `AppDependencies`.
 
 - [x] **Step 2: Run to verify they fail**
 
@@ -1114,7 +1114,7 @@ export function plusDays(date: string, days: number): string {
 }
 ```
 
-`toISOString().slice(0, 10)` is the shape `HELPER_HOMES` reports as `isoDate`'s; `isoDate` lives in `@mailwoman/core/utils/time`, which is not importable here (it sits behind `#env`'s graph). If `prefer-home` fires on these two lines, disable it at the site with the reason: the worker imports two core subpaths only.
+`toISOString().slice(0, 10)` is the shape `HELPER_HOMES` reports as `isoDate`'s; `isoDate` lives in `@mailwoman/core/utils/time`, which isn't importable here (it sits behind `#env`'s graph). If `prefer-home` fires on these two lines, disable it at the site with the reason: the worker imports two core subpaths only.
 
 ```ts
 // lib/identifiers.ts
@@ -1250,7 +1250,7 @@ export async function signingSelfTest(
 }
 ```
 
-`licenseKeyID` is imported for the sandbox-side check below. If it stays unused, drop it. (A sandbox deploy's kid is not in the register by design. `ISSUANCE_ENABLED` and a sandbox-only register override are how the sandbox mints: see Task 5's `trustedKeysForVerification` note.)
+`licenseKeyID` is imported for the sandbox-side check below. If it stays unused, drop it. (A sandbox deploy's kid isn't in the register by design. `ISSUANCE_ENABLED` and a sandbox-only register override are how the sandbox mints: see Task 5's `trustedKeysForVerification` note.)
 
 - [x] **Step 4: Run the tests**
 

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Host-owned: the state these controls manage (geolocation permission, the calibrated view, the dev-mode drawer) belongs to the host rather than the package.
+ *   Host-owned: the state these controls manage (geolocation permission, the calibrated view,
+ *   the dev-mode drawer) belongs to the host rather than the package.
  */
 
 import type React from "react"
@@ -40,7 +41,7 @@ export interface GeoBiasRowProps {
 /**
  * The chip avoids `.mw-map-chiprow` (whose overflow-scroll and edge-fade mask is built for a dozen chips)
  * and gives a failure its own line, because a denial turns the chip back off identically
- * to a manual toggle and the browser will not prompt again.
+ * to a manual toggle and the browser won't prompt again.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

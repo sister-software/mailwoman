@@ -4,18 +4,20 @@
 /**
  *   Venue-interior structural designators, sourced from the Who's On First placetype vocabulary.
  *
- *   These words are not a postal table and that is the point: the span proposer's other designator
- *   sources are mail-delivery standards (USPS Publication 28 C2, Australia Post amas, NZ Post
- *   ADV358) and correctly omit them, because mail is not delivered to a concourse, while the
- *   decoder's job is to pull an address apart with the richest vocabulary available. This module
- *   feeds `neural/span-proposer-lexicon.ts` and no module in `formatter/` reads it.
+ *   These words are not a postal table and that's the point: the span proposer's other designator
+ *   sources are mail-delivery standards (USPS Publication 28 C2, Australia Post amas, NZ Post ADV358)
+ *   and correctly omit them, because mail isn't delivered to a concourse, while the
+ *   decoder's job is to pull an address apart with the richest vocabulary available.
+ *   This module feeds `neural/span-proposer-lexicon.ts` and no module in `formatter/` reads it.
  *
- *   Provenance: `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation` and `wing`
- *   are WOF placetypes. `terminal` and `gate` are OpenStreetMap `aeroway` tag values absent from WOF's vocabulary.
+ *   Provenance: `arcade`, `building`, `campus`, `concourse`, `enclosure`,
+ *   `installation` and `wing` are WOF placetypes.
+ *   `terminal` and `gate` are OpenStreetMap `aeroway` tag values absent from WOF's vocabulary.
  *
- *   The pin is a type-only import (`satisfies readonly WhosOnFirstPlacetype[]`) erased at build, so
- *   the compiler refuses an entry WOF does not define at zero bundle cost. A value import of the
- *   vocabulary would pull `node:sqlite` through `PlacetypeDataSource` into the span proposer.
+ *   The pin is a type-only import (`satisfies readonly WhosOnFirstPlacetype[]`) erased at
+ *   build, so the compiler refuses an entry WOF doesn't define at zero bundle cost.
+ *   A value import of the vocabulary would pull `node:sqlite` through
+ *   `PlacetypeDataSource` into the span proposer.
  */
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
@@ -82,7 +84,7 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
  * Venue-interior designators that are also a street-type word written after a street's name,
  * in lowercase and joined to it without a separator: the Norwegian `gate` of `Friggs gate 6`.
  *
- * The proposer skips such a designator in that shape unless the input names an airport.
+ * The proposer skips such a designator in that shape unless the input identifies an airport.
  * An entry claims that some address system writes streets as "<Name> <entry> <number>".
  */
 export const STREET_FORMING_STRUCTURE_DESIGNATORS: readonly string[] = ["gate"]

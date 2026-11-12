@@ -4,14 +4,18 @@
 /**
  *   Reader for Ofcom's Connected Nations fixed-coverage files at postcode and census output-area level.
  *
- *   Each row describes all premises that Ofcom's premises base assigns to one area. A row is therefore
- *   area context, and it states no result for any building inside the area. Ofcom names no network at
- *   either level and withholds full-fiber availability at both.
+ *   Each row describes all premises that Ofcom's premises base assigns to one area.
+ *   A row is therefore area context, and it states no result for any building inside the area.
  *
- *   A postcode file publishes percentages only. Ofcom's guide lists `All Premises`, `All Matched Premises`
- *   and every `Number of premises…` field as present in "all except pc", so a postcode row has no
- *   premises denominator. The output-area file is the finest level that publishes one. A request for a
- *   field the file lacks throws {@linkcode OfcomCoverageFieldError} rather than returning an absent value.
+ *   Ofcom identifies no network at either level and withholds full-fiber availability at both.
+ *
+ *   A postcode file publishes percentages only.
+ *   Ofcom's guide lists `All Premises`, `All Matched Premises` and every `Number of premises…`
+ *   field as present in "all except pc", so a postcode row has no premises denominator.
+ *
+ *   The output-area file is the finest level that publishes one.
+ *   A request for a field the file lacks throws {@linkcode OfcomCoverageFieldError}
+ *   rather than returning an absent value.
  *
  *   The snapshot month, the premises set and the revision appear only in the published file name.
  *   The reader therefore requires that name and derives all three from it.
@@ -151,7 +155,7 @@ export interface OfcomCoverageRow<F extends OfcomCoverageField> {
 /**
  * A parsed file: its source facts and one row per area, keyed by {@linkcode OfcomCoverageRow.area}.
  *
- * An area with no row is an area the file does not report.
+ * An area with no row is an area the file doesn't report.
  * That case differs from an area whose premises have no coverage.
  */
 export interface OfcomCoverageFile<F extends OfcomCoverageField> {
@@ -160,7 +164,7 @@ export interface OfcomCoverageFile<F extends OfcomCoverageField> {
 }
 
 /**
- * A requested field that the file does not publish.
+ * A requested field that the file doesn't publish.
  */
 export class OfcomCoverageFieldError extends Error {
 	readonly file: string
@@ -202,7 +206,7 @@ const POSTCODE_AREA = "postcode area"
 const OUTPUT_AREA_KEY = "output_area"
 
 /**
- * Derives the source facts from a published file name, or throws when the name does not state them.
+ * Derives the source facts from a published file name, or throws when the name doesn't state them.
  */
 export function parseOfcomCoverageFileName(file: string): OfcomCoverageSource {
 	const groups = FILE_NAME.exec(file)?.groups

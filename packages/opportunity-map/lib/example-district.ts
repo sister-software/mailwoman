@@ -2,19 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The synthetic Example District. Every record, position, path, rate and assumption here is invented
- *   for the example, and its coordinates lie in the open South Atlantic, where no building stands.
+ *   The synthetic Example District.
  *
- *   Seven fictional buildings cover the five building states at the completed stage. Example Building A
- *   has a provider's availability record, Example Building B a surveyed empty fiber reading at its check,
- *   and Example Building C a source-present empty one. Example Garage records zero completed units, and
- *   Example Building E has no completed count. Example Building F lacks a check, a provider record and a
- *   district membership. Two sources place Example Building G in two districts, and two state different
+ *   Every record, position, path, rate and assumption here is invented for the example,
+ *   and its coordinates lie in the open South Atlantic, where no building stands.
+ *
+ *   Seven fictional buildings cover the five building states at the completed stage.
+ *   Example Building A has a provider's availability record, Example Building B a surveyed
+ *   empty fiber reading at its check, and Example Building C a source-present empty one.
+ *
+ *   Example Garage records zero completed units, and Example Building E has no completed count.
+ *   Example Building F lacks a check, a provider record and a district membership.
+ *
+ *   Two sources place Example Building G in two districts, and two state different
  *   positions for Example Building C.
  *
- *   The scenario plans A, B and C. A and B share a proposed trench. C reaches an existing duct that a
- *   synthetic plant record verifies. Construction costs USD 13,000.00 for A only, USD 16,000.00 for A
- *   and B, and USD 3,000.00 for C only.
+ *   The scenario plans A, B and C. A and B share a proposed trench.
+ *   C reaches an existing duct that a synthetic plant record verifies.
+ *
+ *   Construction costs USD 13,000.00 for A only, USD 16,000.00 for A and B, and USD 3,000.00 for C only.
  */
 
 import {

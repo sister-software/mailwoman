@@ -4,9 +4,10 @@
 /**
  *   The landmarks the map draws from a model in place of their footprint.
  *
- *   `data/landmarks.json` lists them. Three readers share the list: hrt leaves each landmark's footprints out of the
- *   building tiles, Earth hides those footprints in tiles built before the landmark joined the list, and Earth draws
- *   the model at the landmark's anchor.
+ *   `data/landmarks.json` lists them.
+ *   Three readers share the list: hrt leaves each landmark's footprints out of the
+ *   building tiles, Earth hides those footprints in tiles built before the landmark
+ *   joined the list, and Earth draws the model at the landmark's anchor.
  */
 
 import { readAccessor, readGLB } from "#glb"

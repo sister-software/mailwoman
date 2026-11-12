@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `crates/deflate64-wasm` for `wasm32-unknown-unknown` and writes the result to `wasm/deflate64.wasm`.
+ *   Builds `crates/deflate64-wasm` for `wasm32-unknown-unknown` and writes the
+ *   result to `wasm/deflate64.wasm`.
  *
  *   With `--check`, the tool builds without writing.
  *   It exits non-zero when the build's SHA-256 differs from the committed binary's.

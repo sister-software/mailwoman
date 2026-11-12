@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Sub-premise identifiers that a postal system writes as a symbol shape rather than after a designator word.
+ *   Sub-premise identifiers that a postal system writes as a symbol shape
+ *   rather than after a designator word.
  *
- *   Singapore and Malaysia write a unit as `#<floor>-<unit>`, so `#09-71` is unit 71 on the ninth floor. The
- *   United States writes `# 402` for a unit whose type is unstated. Each row records the countries whose
- *   operators publish its form, and rows are ordered most specific first, so `#09-71` matches the floor-unit
- *   row, and the bare-hash row never claims its first three characters.
+ *   Singapore and Malaysia write a unit as `#<floor>-<unit>`, so `#09-71` is unit 71 on the ninth floor.
+ *   The United States writes `# 402` for a unit whose type is unstated.
+ *
+ *   Each row records the countries whose operators publish its form, and rows
+ *   are ordered most specific first, so `#09-71` matches the floor-unit row,
+ *   and the bare-hash row never claims its first three characters.
  */
 
 /**

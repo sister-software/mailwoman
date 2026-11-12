@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tile board: the input's words as tiles the visitor drags into a new order or removes, the way word
- *   magnets on a fridge are rearranged. Each change rewrites the traced text, so the bands and readings
- *   follow the permutation. A probe traces the text once per tile with that tile removed and shows which
- *   other tokens changed label. That list is the confoundance reading under permutation.
+ *   The tile board: the input's words as tiles the visitor drags into a new order
+ *   or removes, the way word magnets on a fridge are rearranged.
+ *
+ *   Each change rewrites the traced text, so the bands and readings follow the permutation.
+ *   A probe traces the text once per tile with that tile removed and shows
+ *   which other tokens changed label.
+ *   That list is the confoundance reading under permutation.
  */
 
 import React, { useState } from "react"

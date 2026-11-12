@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves that one archive transfer counts what arrived rather than what a header claimed, and
- *   that a body which is not an archive is refused instead of being written under an archive's name.
+ *   Proves that one archive transfer counts what arrived rather than what a header claimed,
+ *   and that a body which isn't an archive is refused instead of being written under an archive's name.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -64,7 +64,7 @@ describe("downloadZipArchive", () => {
 		await using scratch = await temporaryDirectory("mailwoman-zip-archive-errorpage-")
 
 		// An html page under http 200 is what several of these hosts answer for a path that
-		// does not exist, so the status does not tell the two bodies apart.
+		// doesn't exist, so the status doesn't tell the two bodies apart.
 		await using client = stubClient([
 			{ body: "<html><body>Error</body></html>", headers: { "content-type": "text/html" } },
 		])

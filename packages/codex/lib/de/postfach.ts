@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Deutsche Post rule for a Postfach address: the Postfach number replaces the street and house
- *   number, and the PLZ and Ort line follows it.
+ *   The Deutsche Post rule for a Postfach address: the Postfach number replaces the street
+ *   and house number, and the PLZ and Ort line follows it.
  *
  * @see {@link https://www.deutschepost.de/de/b/briefumschlag-richtig-beschriften.html Deutsche Post, Briefumschlag richtig adressieren}
  */

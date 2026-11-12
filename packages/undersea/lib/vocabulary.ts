@@ -5,10 +5,12 @@
  *   The GEBCO undersea gazetteer as this layer reads it: the publisher's service, its three geometry
  *   layers, the citation the publisher asks for, and how a feature's display name is formed.
  *
- *   The IHO-IOC GEBCO Gazetteer of Undersea Feature Names is compiled by IHO-IOC and published by NOAA NCEI
- *   as a public ArcGIS item owned by `ncei_noaa`. GEBCO asks only for a citation, and its disclaimer excludes
- *   use for navigation or safety at sea. No adopted license reading covers it, so the layer rests on the
- *   operator's own election, recorded on issue #2896.
+ *   The IHO-IOC GEBCO Gazetteer of Undersea Feature Names is compiled by IHO-IOC
+ *   and published by NOAA NCEI as a public ArcGIS item owned by `ncei_noaa`.
+ *   GEBCO asks only for a citation, and its disclaimer excludes use for navigation or safety at sea.
+ *
+ *   No adopted license reading covers it, so the layer rests on the operator's
+ *   own election, recorded on issue #2896.
  */
 
 /**

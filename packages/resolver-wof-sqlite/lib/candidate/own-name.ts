@@ -5,15 +5,18 @@
  *   The own-name variant predicate: is an alias surface the holder's own primary name in another
  *   orthography, whether a romanization (`Брэст` → `brest`), a spacing or diacritic variant
  *   (`George Town` → `georgetown`), or an abbreviation expansion (`St. George's` → `Saint George's`)?
+ *
  *   The alternative is a different name that merely shares the folded key.
  *
- *   The comparator is `levenshteinSimilarity`. Jaro-Winkler's common-prefix bonus scores the required
- *   negative case (`chanchun` against `cancun`, 0.925) above real positives (`saint george s` against
- *   `st georges` expanded, 0.914), so no JW threshold separates them. Edit similarity separates every
- *   measured case with margin.
+ *   The comparator is `levenshteinSimilarity`.
+ *   Jaro-Winkler's common-prefix bonus scores the required negative
+ *   case (`chanchun` against `cancun`, 0.925) above real positives
+ *   (`saint george s` against `st georges` expanded, 0.914), so no JW threshold separates them.
+ *   Edit similarity separates every measured case with margin.
  *
- *   An unhandled script (Arabic, Hebrew, CJK, since the romanizer covers Cyrillic only) answers NULL,
- *   never "different name". Absence of a verdict must not stamp anything.
+ *   An unhandled script (Arabic, Hebrew, CJK, since the romanizer covers Cyrillic only)
+ *   answers NULL, never "different name".
+ *   Absence of a verdict mustn't stamp anything.
  */
 
 import { levenshteinSimilarity } from "@mailwoman/match/comparators"

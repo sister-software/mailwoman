@@ -7,7 +7,7 @@
 #   1. The corpus moves from v0.19.0 to v0.27.0. The new corpus adds 18,000 IN, PT and MX venue-led rows
 #      with real postcodes under the existing synth-house-venue source at weight 2.0.
 #   2. The country_weights map grows from 25 to 134 codes. It covers the earlier 25, IN, every
-#      gauntlet-board country, and KR and TW. Admitting a country does not change source draw shares,
+#      gauntlet-board country, and KR and TW. Admitting a country doesn't change source draw shares,
 #      because country_weights filters rows inside each source's stream.
 #
 # The checks against the shipped model on the full board:

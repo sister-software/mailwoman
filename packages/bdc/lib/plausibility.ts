@@ -3,11 +3,15 @@
 
 /**
  *   Collects BDC filings and infrastructure within the search radius as evidence for one broadband claim.
- *   The evidence can support a claim. An absent coverage region produces an abstention or lower confidence.
  *
- *   The filing channel uses `geoid` when present and otherwise approximates the block with the point's
- *   H3 cell. The physical channel needs a coordinate, so a geoid-only claim skips it. Only fiber and
- *   fixed wireless have physical-plant categories.
+ *   The evidence can support a claim.
+ *   An absent coverage region produces an abstention or lower confidence.
+ *
+ *   The filing channel uses `geoid` when present and otherwise approximates
+ *   the block with the point's H3 cell.
+ *   The physical channel needs a coordinate, so a geoid-only claim skips it.
+ *
+ *   Only fiber and fixed wireless have physical-plant categories.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -58,7 +62,7 @@ export type PlausibilityAbstainReason = "requires_build_local_layer" | "requires
 /**
  * One evidence item: a filing, a physical-plant hit within the search radius or an abstention.
  *
- * A filing that does not match the claimed technology or speed still counts as
+ * A filing that doesn't match the claimed technology or speed still counts as
  * evidence, with `corroborates: false`.
  */
 export type PlausibilityEvidence =
@@ -90,7 +94,7 @@ export type PlausibilitySharedEvidence =
  */
 export type PlausibilityCoverageAxisState =
 	| "covered"
-	/** The required BDC or POI dependency is not configured. */
+	/** The required BDC or POI dependency isn't configured. */
 	| "layer_missing"
 	/** The dependency exists, but the queried block or cell is unsurveyed. */
 	| "cell_unsurveyed"
@@ -118,7 +122,7 @@ export interface PlausibilityBundle {
 	 *
 	 * `high` requires both channels covered.
 	 * It is `insufficient_survey_data` when neither channel is covered, or
-	 * when the physical channel does not apply and filings are uncovered.
+	 * when the physical channel doesn't apply and filings are uncovered.
 	 */
 	coverage_confidence: "high" | "low" | "insufficient_survey_data"
 	coverage_detail: PlausibilityCoverageDetail
@@ -263,7 +267,7 @@ async function assertLayerSpineResolution(
 /**
  * Collect filing and physical evidence for a claim into one bundle.
  *
- * The result has no "implausible" verdict, because missing evidence does not disprove a claim.
+ * The result has no "implausible" verdict, because missing evidence doesn't disprove a claim.
  */
 export async function plausibilityCheck(claim: PlausibilityClaim, deps: PlausibilityDeps): Promise<PlausibilityBundle> {
 	let point: PointLiteral | null = claim.point ?? null

@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Census a downloaded bundle's own publisher stamps, so the terms recorded in `data/bundles.ts` can be checked
- *   against the bytes an operator holds rather than against prose written once and left to drift.
+ *   Census a downloaded bundle's own publisher stamps, so the terms recorded
+ *   in `data/bundles.ts` can be checked against the bytes an operator holds
+ *   rather than against prose written once and left to drift.
  *
- *   A bundle whose artifacts have no publisher column reports `none-recorded-in-the-artifacts` rather than an
- *   empty census. An artifact that is not on disk is reported as absent rather than contributing zero rows.
+ *   A bundle whose artifacts have no publisher column reports `none-recorded-in-the-artifacts`
+ *   rather than an empty census.
+ *   An artifact that's not on disk is reported as absent rather than contributing zero rows.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -48,7 +50,7 @@ export interface BundleSourceCensusResult {
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
-	 * Artifacts read and artifacts the data root does not hold.
+	 * Artifacts read and artifacts the data root doesn't hold.
 	 *
 	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
@@ -62,14 +64,14 @@ export interface BundleSourceCensusResult {
 	tallies: SourceTally[]
 	totalRows: number
 	/**
-	 * What could not be read, one message per artifact: an artifact present
+	 * What couldn't be read, one message per artifact: an artifact present
 	 * but unreadable rows receive their own status here.
 	 */
 	problems: string[]
 }
 
 /**
- * The stamps in one artifact, or a message saying why it could not be read.
+ * The stamps in one artifact, or a message saying why it couldn't be read.
  *
  * A `layer_manifest` has one row, so its `count(*)` is 1 and the tally reports one manifest row
  * rather than a row count; {@link BundleSourceCensus.shape} tells a caller which it is holding.

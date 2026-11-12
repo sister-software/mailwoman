@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The address register's key sets, the only thing a permit string is allowed to align against. The
- * permit registry's address field is an `observation` a clerk typed without validation, so every part
- * of a string — 시도, 시군구, road, 동, 리 — must be one the register lists under its parent.
+ * The address register's key sets, the only thing a permit string is allowed to align against.
+ *
+ * The permit registry's address field is an `observation` a clerk typed without validation,
+ * so every part of a string — 시도, 시군구, road, 동, 리 — must be one the register lists under its parent.
  */
 
 import { addToKeySet, UNIT_SEPARATOR, unitKey } from "#cjk/builder"

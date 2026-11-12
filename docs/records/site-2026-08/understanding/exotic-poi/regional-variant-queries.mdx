@@ -74,9 +74,9 @@ Some queries mix languages: `スタバ near Shibuya Station`. The brand name is 
 
 **Google** handles regional variants through its search model, trained on global query logs. "Servo" returns gas stations in Australia because Google's Australian users search for "servo" and click on gas station results. The mapping is learned from user behavior rather than hand-curated.
 
-This is the right approach for a global-scale geocoder with query log data. It does not work for a geocoder without query logs — you cannot learn that "servo" means gas station if you've never seen an Australian user search for it.
+This is the right approach for a global-scale geocoder with query log data. It doesn't work for a geocoder without query logs — you cannot learn that "servo" means gas station if you've never seen an Australian user search for it.
 
-**Nominatim** does not handle regional variants. The search is against OSM tags and names. Those tags use standard English categories. "Servo" returns no result unless an Australian mapper added `alt_name=servo` to a gas station, and almost no gas stations have that tag.
+**Nominatim** doesn't handle regional variants. The search is against OSM tags and names. Those tags use standard English categories. "Servo" returns no result unless an Australian mapper added `alt_name=servo` to a gas station, and almost no gas stations have that tag.
 
 **Pelias** has the same limitation. The search matches text tokens against name fields. Regional variants don't match unless they appear in the data.
 

@@ -57,7 +57,7 @@ export interface SourceCompletionRecord {
 	 * The byte ranges of the canonical file the source was aligned in.
 	 *
 	 * The files do not depend on them.
-	 * They are recorded for a reader of the build.
+	 * They're recorded for a reader of the build.
 	 */
 	alignRanges: { start: number; end: number }[]
 	/**

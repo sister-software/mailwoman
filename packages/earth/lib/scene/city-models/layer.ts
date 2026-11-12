@@ -2,17 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A MapLibre custom layer that draws converted city models, 3D Tiles 1.1 served by the tile worker, with
- *   3DTilesRendererJS and three.js on the map's own WebGL context and depth buffer.
+ *   A MapLibre custom layer that draws converted city models, 3D Tiles 1.1 served by the tile worker,
+ *   with 3DTilesRendererJS and three.js on the map's own WebGL context and depth buffer.
  *
- *   The tiles are in Earth-centered coordinates (ECEF). For each tileset the layer builds the matrix from ECEF to
- *   MapLibre's mercator world: a local east-north-up frame at the tileset's center, scaled to mercator units at that
- *   latitude and lowered by the geoid height, so the ellipsoidal heights sit on the map's ground. A city spans a few
- *   kilometers, where this linear frame stays within a few centimeters of the true projection.
+ *   The tiles are in Earth-centered coordinates (ECEF).
+ *   For each tileset the layer builds the matrix from ECEF to MapLibre's mercator world:
+ *   a local east-north-up frame at the tileset's center, scaled to mercator units at that latitude
+ *   and lowered by the geoid height, so the ellipsoidal heights sit on the map's ground.
  *
- *   The three.js camera takes MapLibre's projection matrix as its own, and its view matrix is the rest of MapLibre's
- *   mercator matrix composed with that frame. 3DTilesRendererJS then picks tiles by their screen-space error on the
- *   map's real camera, and the models write the same depth values as the map's own layers.
+ *   A city spans a few kilometers, where this linear frame stays within a few
+ *   centimeters of the true projection.
+ *
+ *   The three.js camera takes MapLibre's projection matrix as its own, and its view matrix
+ *   is the rest of MapLibre's mercator matrix composed with that frame. 3DTilesRendererJS
+ *   then picks tiles by their screen-space error on the map's real camera,
+ *   and the models write the same depth values as the map's own layers.
  */
 
 import { TilesRenderer } from "3d-tiles-renderer"
@@ -43,7 +47,7 @@ const CACHE_BYTES = 512 * 1024 * 1024
 
 /**
  * Above this globe-to-mercator transition the map draws as a globe, where the
- * layer's flat frame would not line up, so the layer waits.
+ * layer's flat frame wouldn't line up, so the layer waits.
  * Street zooms are fully mercator.
  */
 const MAX_PROJECTION_TRANSITION = 0.01

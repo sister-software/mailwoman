@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman clients generate` — emit all four surfaces' OpenAPI documents, generate a Python package and
- *   a Rust crate, then verify both build. Output lands under the gitignored `clients-build/`, and no
- *   generated file is committed.
+ *   `mailwoman clients generate` — emit all four surfaces' OpenAPI documents,
+ *   generate a Python package and a Rust crate, then verify both build.
+ *
+ *   Output lands under the gitignored `clients-build/`, and no generated file is committed.
  */
 
 import { Box, Text } from "ink"

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * POI subject detection for the `poi_query` kind. The lexicon is injected (`POIPhraseLookup`) so this
- * package keeps its bitter-lesson invariant (no dictionaries in-tree); the phrase table lives in
- * `@mailwoman/poi-taxonomy` and is wired in by `createRuntimePipeline` behind the `poiQueryKind` flag.
+ * POI subject detection for the `poi_query` kind.
+ *
+ * The lexicon is injected (`POIPhraseLookup`) so this package keeps its bitter-lesson
+ * invariant (no dictionaries in-tree); the phrase table lives in `@mailwoman/poi-taxonomy`
+ * and is wired in by `createRuntimePipeline` behind the `poiQueryKind` flag.
  * Spec §3.1.
  */
 
@@ -31,7 +33,7 @@ export interface POIPhraseMatch {
 	matchedPhrase: string
 	confidence: number
 	/**
-	 * How the phrase matched, or `null` when the lookup does not report it.
+	 * How the phrase matched, or `null` when the lookup doesn't report it.
 	 *
 	 * `short_label` is a category label without its trailing `restaurant`, `store` or `shop`
 	 * (`sushi`). {@linkcode matchPOISubject} accepts it only as a subject followed by an anchor.
@@ -39,7 +41,7 @@ export interface POIPhraseMatch {
 	 */
 	mechanism: "exact" | "locale_normalized" | "typo" | "short_label" | null
 	/**
-	 * The phrase the lookup received, or `null` when the lookup does not report it.
+	 * The phrase the lookup received, or `null` when the lookup doesn't report it.
 	 */
 	inputPhrase: string | null
 	/**
@@ -59,7 +61,7 @@ export interface POIPhraseMatch {
 	 * returns the categories one typed phrase could name, the curated reading first
 	 * (`credit union` → the `bank` rollup its synonym redirects to), while an affordance
 	 * rung returns every entity kind that affords one activity in a stable enumeration.
-	 * The enumeration does not express a preference.
+	 * The enumeration doesn't express a preference.
 	 *
 	 * - `"preference"`: the hits are a preference list; {@link matchPOISubject} keeps the first.
 	 *   The committed lexicon's shape.
@@ -168,9 +170,9 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
  * separator whose prefix hits the lexicon (≤ 8 tokens).
  *
  * Scans separators left-to-right, because a lexicon phrase may itself contain a bare separator
- * word ("walk in clinic") and the first separator is not necessarily the right split point.
+ * word ("walk in clinic") and the first separator isn't necessarily the right split point.
  * Returns null when the lexicon never fires, including comma-ridden full addresses
- * whose leading segment is not a phrase.
+ * whose leading segment isn't a phrase.
  *
  * The winning candidate's hits are listed per {@link reachedMatches}.
  */
@@ -302,7 +304,7 @@ export function scorePOICategory(matched: POISubjectMatch | null): number {
 /**
  * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence.
  *
- * `null` when the subject match is not a bare category, under the same conditions
+ * `null` when the subject match isn't a bare category, under the same conditions
  * as {@link scorePOICategory}.
  * The shared conditions keep the score and the evidence from disagreeing.
  */

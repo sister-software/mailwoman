@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The map draws the model's collections inside `MapCanvas`. Route segments are line layers: a verified segment
- *   is solid, a proposed segment dashed, and a shared segment wider. At the building scale each building with a
- *   resolved position is a marker in its state's shape, numbered as its row in the building list. At the district
- *   scale each district's buildings are dots, and the district's marker sits at the first position of its
- *   `MultiPoint`, because a centroid would be a position the model did not compute.
+ *   The map draws the model's collections inside `MapCanvas`.
  *
- *   The canvas draws no text, because a label layer needs a glyph host. Its words are page elements over the
- *   map, and they are hidden from assistive technology because the building list, the district table and the
- *   segment list beside the map state every fact the map shows.
+ *   Route segments are line layers: a verified segment is solid, a proposed
+ *   segment dashed, and a shared segment wider.
+ *   At the building scale each building with a resolved position is a marker in its
+ *   state's shape, numbered as its row in the building list.
+ *
+ *   At the district scale each district's buildings are dots, and the district's marker sits at the
+ *   first position of its `MultiPoint`, because a centroid would be a position the model didn't compute.
+ *
+ *   The canvas draws no text, because a label layer needs a glyph host.
+ *   Its words are page elements over the map, and they're hidden from assistive
+ *   technology because the building list, the district table and the segment list
+ *   beside the map state every fact the map shows.
  */
 
 import type { EntityID } from "@mailwoman/dossier"

@@ -158,7 +158,7 @@ describe("buildVenueHeadEmissionPriors", () => {
 		expect(venueAfterNumber[2]![B]).toBeCloseTo(3)
 		expect(venueAfterNumber[3]![I]).toBeCloseTo(3)
 
-		// A head that is not a street type keeps its bias after a number.
+		// A head that's not a street type keeps its bias after a number.
 		const gallery = build(lex, pieces("30", "City", "Gallery"), LABELS, { isStreetAffix })
 
 		expect(gallery[1]![B]).toBeCloseTo(2)

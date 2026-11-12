@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Read the EA flood geodatabase as a stream of WGS84 features through ogr2ogr. ogr2ogr is build tooling
- *   only. The reader asserts the declared EPSG before reading any feature. It checks each reprojected vertex against
- *   the declared bounding box to catch a swapped axis order. It compares `OGR_GEOM_AREA` with the
- *   encoded rings to check nesting and holes. Without the OSTN15 grid proj silently uses an approximate
- *   OSGB36 shift, so the identity read refuses the build.
+ *   Read the EA flood geodatabase as a stream of WGS84 features through ogr2ogr.
+ *   ogr2ogr is build tooling only.
+ *
+ *   The reader asserts the declared EPSG before reading any feature.
+ *   It checks each reprojected vertex against the declared bounding box to catch a swapped axis order.
+ *
+ *   It compares `OGR_GEOM_AREA` with the encoded rings to check nesting and holes.
+ *   Without the OSTN15 grid proj silently uses an approximate OSGB36 shift,
+ *   so the identity read refuses the build.
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"

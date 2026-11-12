@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Per-locale FST gazetteer build (`mailwoman gazetteer build fst`) — the decode-bias FST shipped as
- * `fst-<locale>.bin` in the weights packages, rebuilt with degenerate-surface curation.
+ * Per-locale FST gazetteer build (`mailwoman gazetteer build fst`) — the decode-bias FST shipped
+ * as `fst-<locale>.bin` in the weights packages, rebuilt with degenerate-surface curation.
  *
- * A name whose normalized surface is a bare function word, a bare street-type word, or a composition
- * of only function words is never inserted as a bias key, because the hazard is removed from the
- * artifact rather than guarded at decode time, so it cannot misfire on lowercase, comma-free,
- * any-locale input. The resolver's candidate tables are untouched, so excluded places stay findable.
+ * A name whose normalized surface is a bare function word, a bare street-type word,
+ * or a composition of only function words is never inserted as a bias key,
+ * because the hazard is removed from the artifact rather than guarded at decode time,
+ * so it cannot misfire on lowercase, comma-free, any-locale input.
+ * The resolver's candidate tables are untouched, so excluded places stay findable.
  *
- * Exclusion sources are the shipped libpostal dictionaries. The language set is uniform across locales
- * because a FR query hits the en-us FST on the default path.
+ * Exclusion sources are the shipped libpostal dictionaries.
+ * The language set is uniform across locales because a FR query hits the en-us FST on the default path.
  *
- * Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer.
- * artifacts are written to `--output` (default: a `fst-per-locale-curated/` sibling of the shipped
- * `fst-per-locale/`) — staged beside, never overwriting.
+ * Provenance (policy string + excluded-insertion count) is recorded in the artifact
+ * trailer. artifacts are written to `--output` (default: a `fst-per-locale-curated/`
+ * sibling of the shipped `fst-per-locale/`) — staged beside, never overwriting.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -102,7 +103,7 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 ])
 
 /**
- * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
+ * Every FST artifact that's a projection of the WOF admin DB, relative to the wof data-root dir.
  *
  * `fst-street-morphology.bin` and the retired `fst-global-priority.bin` are deliberately absent
  * so they cannot generate freshness rows that read as a rebuild obligation.
@@ -141,7 +142,7 @@ export interface FSTFreshnessRow {
  * A stale FST makes no statement about whether the database is sound, so this reports
  * rather than fails and leaves the exit code to the caller.
  * The exclusion-policy expectation applies only to locales the current builder can produce,
- * so a frozen artifact is not reported against a policy it cannot rebuild.
+ * so a frozen artifact isn't reported against a policy it cannot rebuild.
  */
 export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Promise<FSTFreshnessRow[]> {
 	const source = await readWOFSourceIdentity(dbPath)
@@ -196,7 +197,7 @@ export async function loadDegenerateSurfaces(
 	stopwordTokens: Set<string>
 }> {
 	// Keyed by fold identity then language set, because the FST and painter worlds
-	// fold differently by design and must not share an entry.
+	// fold differently by design and mustn't share an entry.
 	// The returned sets are shared and `buildLocalitySurfaceLexicon` mutates its copy,
 	// so this hands back a fresh shallow copy per call and caches only the parse.
 	let byLanguages = degenerateSurfacesMemo.get(fold)

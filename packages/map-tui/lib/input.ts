@@ -56,7 +56,7 @@ const MOUSE_SGR_PATTERN = /\u001B\[<(\d+);(\d+);(\d+)([Mm])/y
 const ARROW_PATTERN = /\u001B(?:\[|O)([ABCD])/y
 
 /**
- * Any other CSI sequence, consumed whole and ignored so an unhandled body is not re-scanned as key presses.
+ * Any other CSI sequence, consumed whole and ignored so an unhandled body isn't re-scanned as key presses.
  */
 const UNKNOWN_CSI_PATTERN = /\u001B\[[\d;<>?]*[\u0020-\u002F]*[\u0040-\u007E]/y
 
@@ -74,7 +74,7 @@ const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
 
 /**
- * Every "unrecognized but complete" sequence, in the order they are tried.
+ * Every "unrecognized but complete" sequence, in the order they're tried.
  *
  * One shared list keeps a new family from being added here and forgotten in the incomplete test.
  */
@@ -143,7 +143,7 @@ const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 }
 
 /**
- * One decoded chunk: its events, plus whatever trailing bytes could not be decoded yet.
+ * One decoded chunk: its events, plus whatever trailing bytes couldn't be decoded yet.
  */
 export interface DecodedInput {
 	events: MapTUIInput[]

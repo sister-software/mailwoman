@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests {@linkcode filerLinkageEval} by running the real build and clustering pipeline on scratch databases.
+ *   Tests {@linkcode filerLinkageEval} by running the real build and clustering
+ *   pipeline on scratch databases.
  *
- *   The control run must score perfectly. That check fails if the prediction is stubbed out.
+ *   The control run must score perfectly.
+ *   That check fails if the prediction is stubbed out.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

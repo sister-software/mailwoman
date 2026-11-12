@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CJK input normalization: the postal-mark strip, the full-width fold and the composition into
- *   the `normalize()` pipeline including the offset map back to raw.
+ *   CJK input normalization: the postal-mark strip, the full-width fold and the composition
+ *   into the `normalize()` pipeline including the offset map back to raw.
  */
 import { describe, expect, it } from "vitest"
 

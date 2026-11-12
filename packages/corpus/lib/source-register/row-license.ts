@@ -2,17 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The value a corpus row's `license` column holds: an SPDX identifier, or a `LicenseRef-*` id, taken from the
- *   license decisions of the register sources `corpus-source-inputs.json` maps the row's source to.
+ *   The value a corpus row's `license` column holds: an SPDX identifier,
+ *   or a `LicenseRef-*` id, taken from the license decisions of the register sources
+ *   `corpus-source-inputs.json` maps the row's source to.
  *
- *   A decision with an elected SPDX identifier contributes that identifier. Any other decision contributes
- *   `LicenseRef-<licenseID>`, so an unchecked or refused decision reads as its own decision key rather than as a
- *   grant. A source reading several register sources holds their distinct ids joined by ` AND `, the SPDX
- *   expression for terms that all apply. A source the table does not map, or maps to no register source, has no
- *   license id, and a writer refuses its rows rather than writing a placeholder.
+ *   A decision with an elected SPDX identifier contributes that identifier.
+ *   Any other decision contributes `LicenseRef-<licenseID>`, so an unchecked
+ *   or refused decision reads as its own decision key rather than as a grant.
  *
- *   A producer's own statement of its terms, such as `OS OpenData GB tuples (OGL-UK-3.0), rendered native-order`,
- *   is not a license id. The parquet writers record it in the file's `RECORD.json` under `licenseStatements`.
+ *   A source reading several register sources holds their distinct ids joined by
+ *   ` AND `, the SPDX expression for terms that all apply.
+ *   A source the table doesn't map, or maps to no register source, has no license id,
+ *   and a writer refuses its rows rather than writing a placeholder.
+ *
+ *   A producer's own statement of its terms, such as
+ *   `OS OpenData GB tuples (OGL-UK-3.0), rendered native-order`, isn't a license id.
+ *   The parquet writers record it in the file's `RECORD.json` under `licenseStatements`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -47,8 +52,8 @@ export function decisionLicenseID(decision: LicenseDecision): string {
 /**
  * The license decisions a source's register inputs point at, one per distinct `licenseID` in input order.
  *
- * `missing` lists each input whose `license` names a decision the register does not declare.
- * A caller decides whether that is a refusal or a recorded gap.
+ * `missing` lists each input whose `license` names a decision the register doesn't declare.
+ * A caller decides whether that's a refusal or a recorded gap.
  */
 export function inputDecisions<Decision extends LicenseDecision>(
 	inputs: readonly CorpusSourceInput[],
@@ -73,7 +78,7 @@ export function inputDecisions<Decision extends LicenseDecision>(
 /**
  * The `license` value for rows of a source, or `null` when the mapping lists no register source.
  *
- * @throws When an input points at a license decision the register does not declare.
+ * @throws When an input points at a license decision the register doesn't declare.
  */
 export function mappingLicenseID(
 	mapping: CorpusSourceMapping,

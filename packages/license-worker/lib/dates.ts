@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Calendar dates in UTC, as recorded in the token: a license runs to the end of its last day in UTC, so the arithmetic
- *   is on days, never on instants. `isoDate` in `@mailwoman/core/utils/time` has the same shape and sits behind core's
- *   Node-only graph. This worker must stay outside that graph.
+ *   Calendar dates in UTC, as recorded in the token: a license runs to the end of its
+ *   last day in UTC, so the arithmetic is on days, never on instants.
+ *
+ *   `isoDate` in `@mailwoman/core/utils/time` has the same shape and sits behind core's Node-only graph.
+ *   This worker must stay outside that graph.
  */
 
 export function calendarDateUTC(unixSeconds: number): string {

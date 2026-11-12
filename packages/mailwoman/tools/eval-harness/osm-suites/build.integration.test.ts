@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The OpenStreetMap suites built from two small extracts, filtered against a training corpus that holds one
- *   of their rows, with each suite's lineage recording the PBF digest, the policy and the filter.
+ *   The OpenStreetMap suites built from two small extracts, filtered against
+ *   a training corpus that holds one of their rows, with each suite's lineage
+ *   recording the PBF digest, the policy and the filter.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

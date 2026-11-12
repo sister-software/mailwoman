@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it, vi } from "vitest"

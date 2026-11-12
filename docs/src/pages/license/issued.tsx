@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   /license/issued — the page Stripe returns a buyer to. Browser-only: it reads `session_id` from the query and polls
- *   the license worker's claim route. A page that renders a key is not for search engines.
+ *   /license/issued — the page Stripe returns a buyer to.
+ *
+ *   Browser-only: it reads `session_id` from the query and polls the license worker's claim route.
+ *   A page that renders a key isn't for search engines.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"

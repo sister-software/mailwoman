@@ -7,7 +7,7 @@ description: Terms governing Mailwoman websites, commercial licensing, support, 
 
 Last updated: September 21, 2026.
 
-Sister Software is currently operated by **Nirrus LLC**, a Delaware limited liability company.
+Sister Software is currently operated by **Nirrius LLC**, a Delaware limited liability company.
 
 These Terms of Service ("Terms") govern your use of websites, commercial licensing systems, support, evaluations, design-partner programs, and other services operated by Sister Software ("Sister Software", "we", "us").
 
@@ -20,13 +20,13 @@ Mailwoman is available under separate software licensing terms, including:
 - the **GNU Affero General Public License v3.0 only (AGPL-3.0-only)**; and
 - commercial licensing terms where applicable.
 
-These Terms do not grant, restrict, replace, or modify rights provided by an applicable software license.
+These Terms don't grant, restrict, replace, or modify rights provided by an applicable software license.
 
 Your rights to install, copy, modify, distribute, embed, or operate Mailwoman are determined by the software license under which you use it.
 
 If these Terms conflict with an applicable software license regarding rights to the software, the software license controls.
 
-The legal entity operating Sister Software's websites and commercial services does not necessarily own all copyrights, trademarks, datasets, models, or other intellectual property associated with Mailwoman. Applicable license documents identify the rights being granted and, where relevant, the party granting them.
+The legal entity operating Sister Software's websites and commercial services doesn't necessarily own all copyrights, trademarks, datasets, models, or other intellectual property associated with Mailwoman. Applicable license documents identify the rights being granted and, where relevant, the party granting them.
 
 ## 2. Self-hosted operation
 
@@ -34,7 +34,7 @@ Mailwoman is designed to run on infrastructure you control.
 
 Ordinary parsing, geocoding, resolution, and related workload processing occur on your computer, browser, server, or other infrastructure.
 
-Sister Software does not operate Mailwoman as a hosted geocoding service merely because we operate:
+Sister Software doesn't operate Mailwoman as a hosted geocoding service merely because we operate:
 
 - the Mailwoman website;
 - documentation;
@@ -44,7 +44,7 @@ Sister Software does not operate Mailwoman as a hosted geocoding service merely 
 - support channels, or
 - other business services related to Mailwoman.
 
-Your locally processed addresses, coordinates, customer records, query histories, and other workload data are not transferred to us through ordinary Mailwoman operation.
+Ordinary Mailwoman operation keeps your locally processed addresses, coordinates, customer records, query histories, and other workload data on your systems and transfers none of it to us.
 
 ## 3. Websites and services we operate
 
@@ -109,7 +109,7 @@ We may offer prospective or existing customers access to Mailwoman through a pil
 
 These programs may be offered at a reduced fee or no fee.
 
-A reduced or waived pilot fee does not establish the price of later commercial use.
+A reduced or waived pilot fee doesn't establish the price of later commercial use.
 
 The applicable written offer may define:
 
@@ -133,17 +133,17 @@ Unless we agree otherwise in writing:
 - either party may discontinue participation, and
 - continued commercial use after the pilot requires an applicable software license or other agreement.
 
-A free pilot does not automatically convert into a paid subscription.
+A free pilot doesn't automatically convert into a paid subscription.
 
 ## 7. Your data
 
 You retain your rights in information and data you provide to Sister Software.
 
-Ordinary Mailwoman workload data processed entirely on your infrastructure is not provided to Sister Software and is outside the scope of our services.
+Ordinary Mailwoman workload data processed entirely on your infrastructure isn't provided to Sister Software and is outside the scope of our services.
 
 If you intentionally provide data to us for support, evaluation, benchmarking, model development, integration, or other commercial work, you grant us the limited rights reasonably necessary to perform that work.
 
-We do not acquire ownership of your:
+We don't acquire ownership of your:
 
 - customer records;
 - address lists;
@@ -164,7 +164,7 @@ Our handling of personal information is also governed by our [Privacy Policy](/p
 
 Subject to applicable third-party rights, you may use results generated from your own inputs by Mailwoman.
 
-Sister Software does not claim ownership merely because Mailwoman produced an:
+Sister Software doesn't claim ownership merely because Mailwoman produced an:
 
 - address interpretation;
 - coordinate;
@@ -179,7 +179,7 @@ Some results may depend on third-party datasets, models, or other materials.
 
 Those materials may be subject to copyright, attribution, database-right, share-alike, or other obligations independent of the Mailwoman software license.
 
-A Mailwoman commercial license does not grant rights that belong to third parties.
+A Mailwoman commercial license doesn't grant rights that belong to third parties.
 
 ## 9. Third-party software and data
 
@@ -187,25 +187,25 @@ Mailwoman incorporates or interoperates with software, models, datasets, and ser
 
 Third-party materials remain subject to their respective licenses and terms.
 
-Sister Software cannot waive or grant rights belonging to a third party.
+Sister Software can't waive or grant rights belonging to a third party.
 
-Before redistributing data, models, or derived datasets, you are responsible for reviewing the applicable third-party notices and provenance information.
+Before redistributing data, models, or derived datasets, you're responsible for reviewing the applicable third-party notices and provenance information.
 
-That responsibility covers what you do with the material. It does not shift to you the permissions Sister Software needs for its own acquisition, preparation, hosting, and distribution of the material we publish. Those remain ours.
+That responsibility covers what you do with the material. It doesn't shift to you the permissions Sister Software needs for its own acquisition, preparation, hosting, and distribution of the material we publish. Those remain ours.
 
 ### Optional datasets
 
-Reference-data bundles are separate materials. Each one is rows a third party published, and its original license, notices, and conditions govern that material. Neither a Mailwoman software license nor a commercial license waives them, and the publishers of those rows are not licensors of anything Sister Software offers.
+Reference-data bundles are separate materials. Each one is rows a third party published, and its original license, notices, and conditions govern that material. Neither a Mailwoman software license nor a commercial license waives them, and no publisher of those rows is a licensor of anything Sister Software offers.
 
 Your runtime choice of bundles to download applies to your installation. The permissions we need to prepackage, host, and distribute a bundle are separate, and your choice neither grants nor limits those permissions.
 
-`mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, terms, conditions, and open questions before any transfer begins.
+`mailwoman data pull` prints each bundle's publishers, terms, conditions, and open questions before any transfer begins. `mailwoman data --list` lists every bundle with its size.
 
 ### Pretrained artifacts
 
-A pretrained package's inputs are fixed when the model is trained, including inputs inherited from a base package whose model graph a data-only overlay decodes through. If you install a package without downloading a reference-data bundle, the installation does not change that lineage or remove a notice attached to it.
+A pretrained package's inputs are fixed when the model is trained, including inputs inherited from a base package whose model graph a data-only overlay decodes through. If you install a package without downloading a reference-data bundle, the installation doesn't change that lineage or remove a notice attached to it.
 
-Each published `@mailwoman/neural-weights-*` package includes a `PROVENANCE.json` recording, per artifact, what we hold about its inputs and which questions we have not answered. It records gaps as gaps: a package whose model card names no training sources reads as recording none. That is a different statement from having none. No artifact is recorded there as cleared for any particular use, and a generated notice explains what we hold rather than granting a right we lack.
+Each published `@mailwoman/neural-weights-*` package includes a `PROVENANCE.json` recording, per artifact, what we hold about its inputs and which questions we've not answered. It records gaps as gaps: a package whose model card identifies no training sources reads as recording none. That's a different statement from having none. No artifact is recorded there as cleared for any particular use, and a generated notice explains what we hold rather than granting a right we lack.
 
 ## 10. Confidential information
 
@@ -218,7 +218,7 @@ Each party will use reasonable care to guard information that:
 
 Confidential information may be used only for the purpose for which it was disclosed.
 
-This obligation does not apply to information that:
+This obligation doesn't apply to information that:
 
 - becomes public without breach of an obligation;
 - was already lawfully known to the receiving party;
@@ -234,13 +234,13 @@ You may provide suggestions, bug reports, feature requests, benchmark results, o
 
 You allow us to use that feedback to improve Mailwoman and related products and services without restriction or payment.
 
-This permission does not transfer ownership of:
+This permission doesn't transfer ownership of:
 
 - your customer data;
 - confidential information;
 - proprietary datasets;
 - source code provided under separate terms, or
-- other intellectual property that is not reasonably considered feedback.
+- other intellectual property that's not reasonably considered feedback.
 
 Intellectual-property terms for specifically commissioned work may be addressed separately.
 
@@ -257,7 +257,7 @@ You may not use infrastructure or services operated by Sister Software to:
 
 This section applies only to systems operated by Sister Software.
 
-It does not impose additional restrictions on independently granted open-source rights to Mailwoman software.
+It doesn't impose additional restrictions on independently granted open-source rights to Mailwoman software.
 
 ## 13. Fees, billing, and taxes
 
@@ -276,11 +276,11 @@ Each subscription renews under the billing terms accepted at purchase.
 
 Promotional pricing, credits, discounts, pilots, and design-partner pricing apply only for their stated scope and duration.
 
-A reduced or waived fee does not obligate Sister Software to offer the same terms for future service.
+A reduced or waived fee doesn't obligate Sister Software to offer the same terms for future service.
 
 ## 14. Availability and support
 
-Unless expressly agreed otherwise in writing, these Terms do not create:
+Unless expressly agreed otherwise in writing, these Terms don't create:
 
 - an uptime guarantee;
 - service-level agreement;
@@ -303,11 +303,11 @@ To the maximum extent permitted by law, Sister Software disclaims implied warran
 
 The geocoding, address interpretation, geographic inference, and source datasets may contain errors, omissions, outdated information, or ambiguity.
 
-Mailwoman results should not be treated as authoritative where an incorrect result could create material safety, legal, financial, or other consequences without appropriate independent verification.
+Mailwoman results shouldn't be treated as authoritative where an incorrect result could create material safety, legal, financial, or other consequences without appropriate independent verification.
 
 ## 16. Limitation of liability
 
-To the maximum extent permitted by law, Nirrus LLC, Sister Software, and persons providing the covered services will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages arising from these Terms or services operated by Sister Software.
+To the maximum extent permitted by law, Nirrius LLC, Sister Software, and persons providing the covered services won't be liable for indirect, incidental, special, consequential, exemplary, or punitive damages arising from these Terms or services operated by Sister Software.
 
 This includes loss of:
 
@@ -317,9 +317,9 @@ This includes loss of:
 - goodwill, or
 - data.
 
-Except for liability that cannot legally be limited, aggregate liability arising from a paid service covered by these Terms will not exceed the amount paid for that service during the twelve months immediately preceding the event giving rise to the claim.
+Except for liability that can't legally be limited, aggregate liability arising from a paid service covered by these Terms won't exceed the amount paid for that service during the twelve months immediately preceding the event giving rise to the claim.
 
-For services provided without charge, aggregate liability will not exceed US$100.
+For services provided without charge, aggregate liability won't exceed US$100.
 
 A separate written agreement may establish different liability terms.
 
@@ -337,7 +337,7 @@ We may suspend or terminate access to infrastructure we operate if you:
 - use the service unlawfully, or
 - interfere with operation of the service.
 
-Termination of these Terms does not revoke rights previously and independently granted to you under an open-source license.
+Termination of these Terms doesn't revoke rights previously and independently granted to you under an open-source license.
 
 Commercial software-license termination is governed by the applicable commercial license agreement.
 
@@ -347,7 +347,7 @@ We may update these Terms as our services, business structure, providers, or leg
 
 Changes apply prospectively from the date the revised Terms are published.
 
-A change to these Terms does not retroactively alter:
+A change to these Terms doesn't retroactively alter:
 
 - an open-source software license;
 - an executed commercial license agreement;
@@ -357,23 +357,23 @@ A change to these Terms does not retroactively alter:
 
 ## 19. Changes to the operating entity
 
-Sister Software is currently operated by Nirrus LLC.
+Sister Software is currently operated by Nirrius LLC.
 
 Responsibility for websites, commercial services, interfaces, or other business operations associated with Sister Software may later move to another legal entity.
 
 If that occurs, these Terms and the Privacy Policy will be updated to identify the responsible entity, and any notice or consent required by applicable law or an existing agreement will be provided.
 
-A change in the entity operating Sister Software's services does not by itself transfer ownership of Mailwoman intellectual property or alter software-license rights previously granted.
+A change in the entity operating Sister Software's services doesn't by itself transfer ownership of Mailwoman intellectual property or alter software-license rights previously granted.
 
-Nirrus LLC may assign agreements relating to the services covered by these Terms to a successor or affiliated entity as part of a merger, reorganization, financing, sale, or transfer of the relevant business, subject to applicable law and any separate contractual restrictions.
+Nirrius LLC may assign agreements relating to the services covered by these Terms to a successor or affiliated entity as part of a merger, reorganization, financing, sale, or transfer of the relevant business, subject to applicable law and any separate contractual restrictions.
 
 ## 20. Applicable law
 
-Unless a separate written agreement states otherwise, these Terms and services operated by Nirrus LLC are governed by the laws of the State of Delaware, United States, without regard to conflict-of-law principles.
+Unless a separate written agreement states otherwise, these Terms and services operated by Nirrius LLC are governed by the laws of the State of Delaware, United States, without regard to conflict-of-law principles.
 
-This provision applies to these Terms as terms of services operated by Nirrus LLC.
+This provision applies to these Terms as terms of services operated by Nirrius LLC.
 
-It does not determine ownership of Mailwoman intellectual property, modify an open-source license, or override governing-law provisions contained in a separate software license or commercial agreement.
+It doesn't determine ownership of Mailwoman intellectual property, modify an open-source license, or override governing-law provisions contained in a separate software license or commercial agreement.
 
 ## 21. Entire agreement
 
@@ -386,6 +386,6 @@ Separate software licenses, commercial license agreements, order forms, statemen
 Questions about these Terms, commercial licensing, design-partner programs, or other services may be sent to:
 
 **Sister Software**
-currently operated by **Nirrus LLC**, a Delaware limited liability company
+currently operated by **Nirrius LLC**, a Delaware limited liability company
 
 `support [at] sister [dot] software`

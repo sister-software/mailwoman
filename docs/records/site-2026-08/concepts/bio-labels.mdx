@@ -97,7 +97,7 @@ Saint    → O                        ← the model wasn't sure, picked O
 Petersburg → I-locality             ← the model was confident, picked I-locality
 ```
 
-The result is structurally **invalid**. An `I-locality` is by definition "inside a locality span", and the previous token is not in a locality span. There is no `B-locality` to be inside of. This is called an **orphan-I**.
+The result is structurally **invalid**. An `I-locality` is by definition "inside a locality span", and the previous token isn't in a locality span. There's no `B-locality` to be inside of. This is called an **orphan-I**.
 
 What happens when the decoder reconstructs the span? Its treatment of the orphan-I determines the result:
 
@@ -110,7 +110,7 @@ Neither is what the data wants: `B-locality, I-locality`.
 
 The fix is decode-time rather than learned. A fixed **BIO-validity table** pins the impossible transitions — `O → I-X`, `B-X → I-Y` where `X ≠ Y` — to negative infinity, and the **Viterbi algorithm** searches for the highest-scoring label sequence that respects the table, rather than picking each token's label independently. The orphan-I is structurally excluded: there's no valid path through it.
 
-The result: a model that is uncertain about "Saint" between `O` and `B-locality` will still produce a structurally valid sequence at decode time. "Saint Petersburg" comes out as one locality span. See [CRF decoder](./crf-decoder.mdx) for why this is narrower than a full learned CRF, and what that page's name still refers to.
+The result: a model that's uncertain about "Saint" between `O` and `B-locality` will still produce a structurally valid sequence at decode time. "Saint Petersburg" comes out as one locality span. See [CRF decoder](./crf-decoder.mdx) for why this is narrower than a full learned CRF, and what that page's name still refers to.
 
 ```mermaid
 flowchart LR

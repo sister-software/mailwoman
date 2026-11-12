@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Locale-profile types. A `LocaleProfile` declares everything locale-specific about
- *   classification: the optional weights package for the neural classifier, the locale's
- *   supported `ComponentTag`s, plus its per-component policy overrides.
+ *   Locale-profile types.
  *
- *   A profile is keyed by its `locale` field. `InMemoryLocaleRegistry.get` returns the profile
- *   for that exact BCP-47 tag.
+ *   A `LocaleProfile` declares everything locale-specific about classification:
+ *   the optional weights package for the neural classifier, the locale's supported
+ *   `ComponentTag`s, plus its per-component policy overrides.
+ *
+ *   A profile is keyed by its `locale` field.
+ *   `InMemoryLocaleRegistry.get` returns the profile for that exact BCP-47 tag.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

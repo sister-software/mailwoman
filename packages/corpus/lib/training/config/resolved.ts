@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds and writes the versioned resolved training config the Rust trainer and sampler read: the typed config with
- *   every default applied, the values derived from it, and its source-rights admission.
+ *   Builds and writes the versioned resolved training config the Rust trainer
+ *   and sampler read: the typed config with every default applied, the values
+ *   derived from it, and its source-rights admission.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

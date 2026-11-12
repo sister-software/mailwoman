@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `SpanHighlight` — a displaCy-style span ribbon over the raw input: each tagged span is a column with the text on
- *   top, tinted by its confidence tier, with the tag beneath. Gaps (delimiters, unparsed characters) fall through as
- *   plain text, so a dropped span is visible as a literal break in the color.
+ *   `SpanHighlight` — a displaCy-style span ribbon over the raw input: each tagged span is
+ *   a column with the text on top, tinted by its confidence tier, with the tag beneath.
+ *
+ *   Gaps (delimiters, unparsed characters) fall through as plain text,
+ *   so a dropped span is visible as a literal break in the color.
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"

@@ -4,19 +4,30 @@
 /**
  *   The authority's mapped footprint determines which cells may receive a `designated` coverage claim.
  *
- *   The footprint encodes the coverage statement for each affected cell. The EA states that the Flood Zone
- *   mapping "covers all of England". Zone 1 is land outside Zones 2 and 3. The hazard polygons therefore omit
- *   Zone 1. A footprint built from those polygons would report every Zone 1 location as unmapped. That would
- *   reverse the coverage result this layer must provide.
+ *   The footprint encodes the coverage statement for each affected cell.
+ *   The EA states that the Flood Zone mapping "covers all of England".
  *
- *   The flood authority does not publish an England boundary. The national statistical authority's country
- *   boundary supplies the outline needed to convert the coverage statement into cells. `flood_map_extent` records
- *   that artifact. The coverage claim depends on the outline used for clipping.
+ *   Zone 1 is land outside Zones 2 and 3.
+ *   The hazard polygons therefore omit Zone 1.
  *
- *   The clip is conservative. `interiorCoverageCellSet` keeps only cells that lie wholly inside the outline.
- *   England–Wales and England–Scotland border strips receive no coverage row. A point there reads unknown
- *   because the EA's statement may not cover it. An interior cell classification would claim that the authority
- *   determined coverage for a location it did not assess.
+ *   A footprint built from those polygons would report every Zone 1 location as unmapped.
+ *   That would reverse the coverage result this layer must provide.
+ *
+ *   The flood authority doesn't publish an England boundary.
+ *   The national statistical authority's country boundary supplies the outline
+ *   needed to convert the coverage statement into cells.
+ *
+ *   `flood_map_extent` records that artifact.
+ *   The coverage claim depends on the outline used for clipping.
+ *
+ *   The clip is conservative.
+ *   `interiorCoverageCellSet` keeps only cells that lie wholly inside the outline.
+ *
+ *   England–Wales and England–Scotland border strips receive no coverage row.
+ *   A point there reads unknown because the EA's statement may not cover it.
+ *
+ *   An interior cell classification would claim that the authority determined
+ *   coverage for a location it didn't assess.
  */
 
 import { interiorCoverageCellSet, type ParsedGeometry } from "@mailwoman/spatial"

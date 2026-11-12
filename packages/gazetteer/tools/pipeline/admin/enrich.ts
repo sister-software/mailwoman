@@ -4,14 +4,17 @@
 /**
  *   Admin-gazetteer enrichment, the two post-build steps that must run in order:
  *
- *   1. Region abbreviations: WOF region records contain only the full name. `findPlace('IL')`
- *      returns no place without the abbreviation, killing the parent constraint the resolve walk
- *      depends on. The abbreviations come from the packaged chromium-i18n / libaddressinput dataset
- *      (`dictionaries/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
- *      `sub_names` are index-aligned. These fields supply the abbreviations.
- *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept a 2-letter
- *      region abbreviation as an exact match. Derived from the step-1 rows, so it must run after
- *      them. Both enrichment steps must precede the FTS build.
+ *   1. Region abbreviations: WOF region records contain only the full name.
+ *      `findPlace('IL')` returns no place without the abbreviation, killing the
+ *      parent constraint the resolve walk depends on.
+ *      The abbreviations come from the packaged chromium-i18n / libaddressinput
+ *      dataset (`dictionaries/data/chromium-i18n/ssl-address/<CC>.json`),
+ *      whose tilde-delimited `sub_keys` and `sub_names` are index-aligned.
+ *      These fields supply the abbreviations.
+ *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept
+ *      a 2-letter region abbreviation as an exact match.
+ *      Derived from the step-1 rows, so it must run after them.
+ *      Both enrichment steps must precede the FTS build.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -66,7 +69,7 @@ export async function enrichAdmin<DB>(
 	}
 
 	const insert = db.prepare(
-		"INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'region', ?, 'abbr', 0)"
+		"INSERT INTO names (id, name, placetype, country, language, lastmodified, source) VALUES (?, ?, 'region', ?, 'abbr', 0, 'libaddressinput')"
 	)
 
 	let added = 0

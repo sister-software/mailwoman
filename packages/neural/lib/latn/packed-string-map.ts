@@ -2,21 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A read-only map from strings to 32-bit integers, packed into typed arrays, for the Latin SentencePiece family's
- *   evidence lexicons.
+ *   A read-only map from strings to 32-bit integers, packed into typed arrays,
+ *   for the Latin SentencePiece family's evidence lexicons.
  *
- *   It lives under `latn/` because its only data so far is that family's: the lexicons the `@mailwoman/neural-weights-en-us`
- *   graph package ships for en-US, en-GB, en-AU, en-IN, en-NZ, de-DE, es-ES, fr-FR and it-IT. Keys compare as exact
- *   UTF-8 bytes with no normalization. The painter in `#gazetteer-inference` folds case and strips punctuation before a
- *   lookup, and that fold is what decides which languages the lexicons serve. A family in another script moves this
- *   module to a shared home only with a parity test over that family's own lexicon.
+ *   It lives under `latn/` because its only data so far is that family's:
+ *   the lexicons the `@mailwoman/neural-weights-en-us` graph package ships for en-US,
+ *   en-GB, en-AU, en-IN, en-NZ, de-DE, es-ES, fr-FR and it-IT.
+ *   Keys compare as exact UTF-8 bytes with no normalization.
  *
- *   A `Map<string, number>` keeps one JavaScript string and one table entry per key. For a lexicon of a few hundred
- *   thousand place names that is tens of MiB of heap. This table keeps the keys' UTF-8 bytes in one buffer, their offsets
- *   and values beside them, and an open-addressing slot table, so the heap holds a handful of objects.
+ *   The painter in `#gazetteer-inference` folds case and strips punctuation before a lookup,
+ *   and that fold is what decides which languages the lexicons serve.
+ *   A family in another script moves this module to a shared home only with a
+ *   parity test over that family's own lexicon.
  *
- *   For the 392,653-entry locality-surface lexicon the four buffers take about 10 MiB, against about 18 MiB of heap for
- *   the `Map` and its key strings, measured in a workerd heap snapshot.
+ *   A `Map<string, number>` keeps one JavaScript string and one table entry per key.
+ *   For a lexicon of a few hundred thousand place names that's tens of MiB of heap.
+ *
+ *   This table keeps the keys' UTF-8 bytes in one buffer, their offsets and values beside them,
+ *   and an open-addressing slot table, so the heap holds a handful of objects.
+ *
+ *   For the 392,653-entry locality-surface lexicon the four buffers take about 10 MiB, against
+ *   about 18 MiB of heap for the `Map` and its key strings, measured in a workerd heap snapshot.
  */
 
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"

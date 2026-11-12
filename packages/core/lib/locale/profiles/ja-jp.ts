@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ja-JP locale profile. Lists the `ComponentTag`s the Japanese locale uses.
+ *   Ja-JP locale profile.
+ *   Lists the `ComponentTag`s the Japanese locale uses.
  */
 
 import type { LocaleProfile } from "#locale/locale"

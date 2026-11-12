@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The input checks the map model shares. An input the model cannot use throws {@link MapInputError},
- *   whose `path` locates the input, such as `paths[shared-trench].coordinates`.
+ *   The input checks the map model shares.
+ *
+ *   An input the model cannot use throws {@link MapInputError}, whose `path` locates
+ *   the input, such as `paths[shared-trench].coordinates`.
  */
 
 import type { Coordinates2D } from "@mailwoman/spatial"

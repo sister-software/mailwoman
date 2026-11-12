@@ -2,26 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Implements `mailwoman gazetteer postcode-binary`. It writes one `postcode-<cc>.bin` per country
- *   from the SQLite postcode databases. `PostcodeBinaryResolver` in `@mailwoman/neural` reads these
- *   file. Per-country files let the browser fetch only the locale it needs.
+ *   Implements `mailwoman gazetteer postcode-binary`.
  *
- *   The database `name` column already holds the normalized postcode key that the anchor queries, so
- *   the command serializes it unchanged.
+ *   It writes one `postcode-<cc>.bin` per country from the SQLite postcode databases.
+ *   `PostcodeBinaryResolver` in `@mailwoman/neural` reads these file.
  *
- *   `--gb-granularity` selects the GB key set. `unit`, the default, holds every unit plus its outward
- *   district and matches the anchor model's training data. `outward` holds only districts and is small
- *   enough for a browser bundle. `gazetteer-pipeline/postcode/binary.ts` derives the outward district
- *   from the postcode's shape, so it handles both spaced and space-stripped sources.
+ *   Per-country files let the browser fetch only the locale it needs.
  *
- *   The command checks each locale's key count against a floor before writing and throws when the count
- *   is too low. Without `--locale`, the sources come from `POSTCODE_BINARY_SOURCES`. Per-locale progress
- *   goes to stderr.
+ *   The database `name` column already holds the normalized postcode key that the
+ *   anchor queries, so the command serializes it unchanged.
+ *
+ *   `--gb-granularity` selects the GB key set.
+ *   `unit`, the default, holds every unit plus its outward district
+ *   and matches the anchor model's training data.
+ *
+ *   `outward` holds only districts and is small enough for a browser bundle.
+ *   `gazetteer-pipeline/postcode/binary.ts` derives the outward district from the
+ *   postcode's shape, so it handles both spaced and space-stripped sources.
+ *
+ *   The command checks each locale's key count against a floor before writing
+ *   and throws when the count is too low.
+ *   Without `--locale`, the sources come from `POSTCODE_BINARY_SOURCES`.
+ *   Per-locale progress goes to stderr.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { allRows } from "@mailwoman/core/utils"
 import type { GBGranularity } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -44,7 +52,7 @@ interface LocaleSource {
 
 /**
  * Binary size above which the command prints a note suggesting the browser granularity.
- * The command does not enforce it.
+ * The command doesn't enforce it.
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
@@ -71,11 +79,15 @@ export const spec = {
  */
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
-
-		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
-			await import("@mailwoman/gazetteer/tools/pipeline/postcode/binary")
+		const {
+			paths: { wofDatabasePath },
+			binaryResolver: { serializePostcodeBinary },
+			binary: { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES },
+		} = await allKeyed({
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			binaryResolver: import("@mailwoman/postcode/binary-resolver"),
+			binary: import("@mailwoman/gazetteer/tools/pipeline/postcode/binary"),
+		})
 
 		const outDir = resolvePathBuilder(options.out)
 

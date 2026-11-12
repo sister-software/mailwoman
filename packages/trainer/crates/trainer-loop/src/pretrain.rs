@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The MLM pre-training run: `train/pretrain.py`.
 //!
 //! Every batch is masked on the CPU from the loop's own generator (`torch.Generator().manual_seed(seed)`), which

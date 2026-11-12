@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The non-interactive wizard on the compiled CLI, as a first-run smoke: it reports the roots, runs the sample parse
- *   and lists the tiers for the asked country. Run `yarn compile` before this suite.
+ *   The non-interactive wizard on the compiled CLI, as a first-run smoke: it reports the
+ *   roots, runs the sample parse and lists the tiers for the asked country.
+ *   Run `yarn compile` before this suite.
  */
 
 import { runFile } from "@mailwoman/core/process"

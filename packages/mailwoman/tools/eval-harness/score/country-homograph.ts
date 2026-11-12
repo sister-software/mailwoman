@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Country homograph scorer, the baseline for the model-first country change. Measures
- *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
- *   over-fire confusion: the count of gold region/locality spans mistagged as `country` (the
- *   "trailing token = country" failure), and the count of missed gold country spans.
+ *   Country homograph scorer, the baseline for the model-first country change.
+ *
+ *   Measures country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval,
+ *   plus the over-fire confusion: the count of gold region/locality spans mistagged as `country`
+ *   (the "trailing token = country" failure), and the count of missed gold country spans.
  *
  *   Every printed line goes through the `report` sink, one call per line.
  */
@@ -44,7 +45,7 @@ export interface ScoreCountryHomographOptions {
 	 * Gazetteer-anchor lexicon, fed when the path exists so a gazetteer-trained
 	 * model (v0.9.12+) gets its candidate-tag clues.
 	 *
-	 * Harmless for older models (the runner skips inputs the ONNX does not declare).
+	 * Harmless for older models (the runner skips inputs the ONNX doesn't declare).
 	 *
 	 * Unlike `score-affix`, this probe defaults this path to `data/gazetteer/anchor-lexicon-v1.json`.
 	 */

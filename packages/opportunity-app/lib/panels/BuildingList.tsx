@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The building list is the keyboard path of the map. Each building is a checkbox row: Tab reaches it and Space
- *   selects or clears it. The checkbox's accessible description gives the word selected when the building is
- *   selected, its state in words and its unit denominator, and the row lists the source records behind the state by
- *   identifier. The number beside each label is the number on the building's map marker.
+ *   The building list is the keyboard path of the map.
+ *
+ *   Each building is a checkbox row: Tab reaches it and Space selects or clears it.
+ *   The checkbox's accessible description gives the word selected when the building
+ *   is selected, its state in words and its unit denominator, and the row lists
+ *   the source records behind the state by identifier.
+ *
+ *   The number beside each label is the number on the building's map marker.
  */
 
 import type { EntityID } from "@mailwoman/dossier"

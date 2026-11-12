@@ -2,23 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Postcode area → constituent country, the Royal Mail mapping — and the concrete proof of the
- *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
+ *   Postcode area → constituent country, the Royal Mail mapping — and the concrete proof of
+ *   the lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
- *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), derived
- *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
- *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
- *   département from the first two digits. The only fact we _can_ derive is which of the
- *   four UK countries an area predominantly falls in — and even that has border exceptions:
+ *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`),
+ *   derived after the sorting town Royal Mail routes it through rather than
+ *   after a county or a constituent country.
+ *   There's no clean postcode→admin hierarchy to inherit the way France gives
+ *   you a département from the first two digits.
+ *
+ *   The only fact we _can_ derive is which of the four UK countries an area
+ *   predominantly falls in — and even that has border exceptions:
  *
  *   - **TD** (Galashiels) and **SY** (Shrewsbury) straddle the Scotland/England and Wales/England
- *       borders respectively. each is assigned to its majority country here (TD → Scotland, SY →
- *       Wales). A handful of individual postcodes on the wrong side of the line are a gazetteer
- *       concern rather than a thing this coarse table tries to model.
+ *     borders respectively. each is assigned to its majority country here (TD → Scotland, SY → Wales).
+ *     A handful of individual postcodes on the wrong side of the line are a gazetteer concern
+ *     rather than a thing this coarse table tries to model.
  *
  *   This module maps Royal Mail areas to constituent countries.
  *   Several areas need a hand-built non-England set with documented border exceptions.
- *   UK postcodes identify postal areas. Counties remain separate administrative units.
+ *
+ *   UK postcodes identify postal areas.
+ *   Counties remain separate administrative units.
  */
 
 import type { UkCountryCode } from "#gb/country"
@@ -113,7 +118,7 @@ function isAreaShape(area: unknown): area is string {
  * England is by far the largest, so the default is transparent and the non-England
  * exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
  * Returns null for invalid input (not one-or-two letters), so a malformed
- * token is not silently called England.
+ * token isn't silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 	if (!isAreaShape(area)) return null

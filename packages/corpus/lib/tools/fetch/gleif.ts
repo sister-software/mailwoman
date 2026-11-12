@@ -4,30 +4,33 @@
 /**
  * Download the GLEIF Level 1 golden copy for the `gleif-lei` adapter.
  *
- * GLEIF publishes the whole LEI-CDF record set three times a day as one zipped CSV. The publish API at
- * {@linkcode GLEIF_LATEST_PUBLISH_URL} names the current file, its byte length, its record count and the
- * CDF version it follows, so this module reads that answer first and downloads the file it names.
+ * GLEIF publishes the whole LEI-CDF record set three times a day as one zipped CSV.
+ * The publish API at {@linkcode GLEIF_LATEST_PUBLISH_URL} names the current file,
+ * its byte length, its record count and the CDF version it follows, so this module
+ * reads that answer first and downloads the file it names.
  *
- * Three measured properties of the host decide what this module does. Measured on 2026-10-03 against the
- * `2026-10-03 08:00:00` publish:
+ * Three measured properties of the host decide what this module does.
+ * Measured on 2026-10-03 against the `2026-10-03 08:00:00` publish:
  *
  * 1. **The API's `size` is the archive's length.** It stated 507,006,221 and the host answered a
  *    `HEAD` with `content-length` 507,006,221 and a one-byte range with `Content-Range: bytes
  *    0-9/507006221`. The transfer is checked against the API's figure, so a truncated body or a
  *    publish replaced mid-transfer is refused rather than recorded.
- * 2. **The host honors `Range`.** An interrupted transfer resumes through
- *    {@linkcode resumableDownload}. The request names `accept-encoding: identity`, because the host
- *    compresses small responses on the fly and a range must count the archive's own bytes.
- * 3. **Each publish has its own file name**, date-prefixed as
- *    `20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip`. The archive is kept under that
- *    name, so a partial transfer of one publish never resumes into another, and the adapter reads the
- *    newest name in the directory.
+ * 2. **The host honors `Range`.** An interrupted transfer resumes through {@linkcode resumableDownload}.
+ *    The request names `accept-encoding: identity`, because the host compresses small
+ *    responses on the fly and a range must count the archive's own bytes.
+ * 3. **Each publish has its own file name**, date-prefixed
+ *    as `20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip`.
+ *    The archive is kept under that name, so a partial transfer of one publish never
+ *    resumes into another, and the adapter reads the newest name in the directory.
  *
- * The archive is kept zipped. Its one CSV member decompresses to several gigabytes, and the adapter
- * streams the member out of the archive rather than reading an extracted copy.
+ * The archive is kept zipped.
+ * Its one CSV member decompresses to several gigabytes, and the adapter streams the
+ * member out of the archive rather than reading an extracted copy.
  *
- * The receipt written beside the archive records the URL, the publish date, the byte count and the
- * sha256 of the archive. Together they identify the bytes a corpus row was read from.
+ * The receipt written beside the archive records the URL, the publish date,
+ * the byte count and the sha256 of the archive.
+ * Together they identify the bytes a corpus row was read from.
  */
 
 import { APIClient } from "@mailwoman/core/api"

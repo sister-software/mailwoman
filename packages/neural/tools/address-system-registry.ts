@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The committed address-system registry: the id of every distinct component order in `@mailwoman/codex`'s layouts,
- *   and the system of each country in each script it has a layout for.
+ *   The committed address-system registry: the id of every distinct component order in
+ *   `@mailwoman/codex`'s layouts, and the system of each country in each script it has a layout for.
  *
- *   The address-system head has one output per id, so ids are append-only. `mailwoman dev generate address-systems`
- *   derives the registry from codex's layouts, and the label schema references the systems by these ids.
+ *   The address-system head has one output per id, so ids are append-only.
+ *   `mailwoman dev generate address-systems` derives the registry from codex's layouts,
+ *   and the label schema references the systems by these ids.
  *
- *   The file sits under `packages/trainer/data`, where the Rust trainer reads it (`DataFiles::in_repository`).
+ *   The file sits under `packages/trainer/data`, where the Rust trainer reads
+ *   it (`DataFiles::in_repository`).
  */
 
 import type { AddressScript } from "@mailwoman/codex/address/layouts"
@@ -45,7 +47,7 @@ export interface AddressSystemRegistry {
 }
 
 /**
- * Reads the committed registry, or null when it has not been generated.
+ * Reads the committed registry, or null when it hasn't been generated.
  */
 export async function readAddressSystemRegistry(path = ADDRESS_SYSTEMS_PATH): Promise<AddressSystemRegistry | null> {
 	return readLocalJSONFile<AddressSystemRegistry>(path).catch((error: NodeJS.ErrnoException) => {
@@ -58,7 +60,7 @@ export async function readAddressSystemRegistry(path = ADDRESS_SYSTEMS_PATH): Pr
 /**
  * The committed registry's systems, as the label schema references them.
  *
- * @throws When the registry has not been generated.
+ * @throws When the registry hasn't been generated.
  */
 export async function readAddressSystemsReference(): Promise<LabelSchemaAddressSystems> {
 	const registry = await readAddressSystemRegistry()

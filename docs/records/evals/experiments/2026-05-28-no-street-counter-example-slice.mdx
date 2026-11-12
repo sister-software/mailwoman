@@ -11,7 +11,7 @@ The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
 morphology FST as a decoder-only fix is insufficient because the model is too
 overconfident on its synth-street-induced dep_loc predictions. The recipe per
 DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
-addresses where the model should not emit street labels at all.
+addresses where the model shouldn't emit street labels at all.
 
 This eval doc captures the new synthesizer + pipeline glue that produces that
 counter-distribution extract.
@@ -94,8 +94,8 @@ runnable:
 ## What this doesn't fix
 
 - **Non-US locale gap.** The harness showed neural at 0% on most non-US/non-FR
-  locales. This extract helps with US/FR/DE/GB venue-vs-street confusion but does
-  not fix the locale-distribution gap. Per-locale corpus expansion is a v0.7+
+  locales. This extract helps with US/FR/DE/GB venue-vs-street confusion but doesn't
+  fix the locale-distribution gap. Per-locale corpus expansion is a v0.7+
   topic.
 - **Unit designator schema gap.** The Australian unit-notation tests
   (`Unit 12/345`, `Apt 12`) fail because the Stage 3 schema has no

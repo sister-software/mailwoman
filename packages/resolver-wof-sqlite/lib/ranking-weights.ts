@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The locality-ranking weights and their shipped defaults live here because each value is a measured tuning decision
- *   with its rationale attached. This block reads as a reference table outside the lookup's control flow.
+ *   The locality-ranking weights and their shipped defaults live here because each
+ *   value is a measured tuning decision with its rationale attached.
+ *
+ *   This block reads as a reference table outside the lookup's control flow.
  *   Tests import it directly to pin one change at a time.
  */
 
@@ -99,11 +101,11 @@ export interface RankingWeights {
 	 * Its job is to break ties among candidates that match the query equally well,
 	 * as in "Springfield" → Springfield IL over Springfield MA.
 	 *
-	 * It does not promote a place that matches the query worse.
+	 * It doesn't promote a place that matches the query worse.
 	 * Tiers keep match quality as the primary key and prominence as the secondary key within each tier.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`),
-	 * so a pathological exact match outside that window is not rescued.
+	 * so a pathological exact match outside that window isn't rescued.
 	 *
 	 * @defaultValue `true`
 	 */

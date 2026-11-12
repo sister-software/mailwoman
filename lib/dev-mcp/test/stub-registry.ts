@@ -8,7 +8,7 @@
 
 import type { GeocodeSession } from "mailwoman/geocode"
 
-import type { EffectiveConfig, Engine, EngineRegistryLike } from "#dev-mcp/engine/registry"
+import type { EffectiveConfig, EngineLease, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import type { TreeFingerprint } from "#dev-mcp/tree-fingerprint"
 
 /**
@@ -39,8 +39,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 			throw new Error("stubEngineRegistry: this case was not given an engine to acquire")
 		},
 		summaries: () => [],
-		evict: () => true,
-		evictAll: () => 0,
+		evict: async () => true,
+		evictAll: async () => 0,
 		...overrides,
 	}
 }
@@ -49,9 +49,12 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
  * Build an engine double: pass the session behavior the case reads, while `session`
  * is asserted rather than completed because `GeocodeSession` is the real pipeline's
  * surface, far wider than any test drives.
+ *
+ * The double is a lease with an empty release, so `acquire` can return it as is.
  */
-export function stubEngine(overrides: StubEngineOverrides): Engine {
+export function stubEngine(overrides: StubEngineOverrides): EngineLease {
 	return {
+		[Symbol.dispose]: () => {},
 		engineID: overrides.engineID ?? "stub",
 		effective: { ...overrides.effective } as EffectiveConfig,
 		fingerprint: { ...STUB_FINGERPRINT, ...overrides.fingerprint },

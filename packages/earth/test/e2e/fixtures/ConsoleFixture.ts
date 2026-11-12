@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Console and page-error capture fixture. It buffers console messages, page errors and failed requests matching
  *   the policy for the test's lifetime. Test bodies call `assertNoFailEvents()` to enforce both policy lists

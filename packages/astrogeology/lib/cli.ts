@@ -4,6 +4,7 @@
 
 /**
  *   `astrogeology` runs the `fetch`, `build`, `verify`, and `publish` commands.
+ *
  *   The first positional argument selects a command.
  *   The rest are parsed using that command's spec.
  *   `--help` is handled before the command runs.
@@ -33,6 +34,7 @@ const COMMAND_NAMES = ["fetch", "build", "verify", "publish"] as const
 type CommandName = (typeof COMMAND_NAMES)[number]
 
 function loadCommand(name: CommandName): Promise<CommandModule> {
+	// effect-loads: packages/astrogeology/lib/commands
 	return import(new URL(`${name}.js`, COMMANDS_ROOT).href) as Promise<CommandModule>
 }
 

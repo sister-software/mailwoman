@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Builds an ONNX `GraphProto` one node at a time.
 //!
 //! Initializers that hold the same type, shape and bytes are stored once, as the onnxscript optimizer behind the

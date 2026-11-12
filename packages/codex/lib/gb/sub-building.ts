@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Royal Mail's Postcode Address File rules for the premises above a street address. A Sub
- *   Building Name such as `Flat 1` is never present on its own: a Building Name or a Building Number
- *   is always present with it. A Building Number opens the first thoroughfare line.
+ *   Royal Mail's Postcode Address File rules for the premises above a street address.
  *
- *   The guide names two unit designators in its examples. `Flat 1` is its example of a Sub Building
- *   Name, and `Suite 1-3` appears in an actual address as a Building Name. The guide gives no list of
- *   designators beyond these.
+ *   A Sub Building Name such as `Flat 1` is never present on its own: a Building Name
+ *   or a Building Number is always present with it.
+ *   A Building Number opens the first thoroughfare line.
+ *
+ *   The guide lists two unit designators in its examples.
+ *   `Flat 1` is its example of a Sub Building Name, and `Suite 1-3` appears in
+ *   an actual address as a Building Name.
+ *   The guide gives no list of designators beyond these.
  *
  * @see {@link https://www.poweredbypaf.com/wp-content/uploads/2017/07/Latest-Programmers_guide_Edition-7-Version-6.pdf Royal Mail, PAF Programmers' Guide, Edition 7 Version 6}
  */

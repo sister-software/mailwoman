@@ -2,44 +2,48 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Download the Administration du cadastre et de la topographie's BD-Adresses CSV for the
- * `bd-adresses` adapter.
+ * Download the Administration du cadastre et de la topographie's BD-Adresses
+ * CSV for the `bd-adresses` adapter.
  *
- * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
- * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
- * not declare.
+ * The acquisition belongs under a `tools/` root.
+ * `@mailwoman/corpus` is one of the `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`,
+ * which keep their tooling under `lib/`, so this module sits beside `#fi/tools/fetch/ryhti`
+ * rather than in an `sdk/` root the workspace doesn't declare.
  *
- * `data.public.lu` states `cc-zero` for this dataset. The address-source register elects
- * `CC0-1.0` for it under `lu-property-building-1`. CC0 asks for no attribution, and crediting the ACT
- * remains good practice, so the manifest records the publisher beside the license.
+ * `data.public.lu` states `cc-zero` for this dataset.
+ * The address-source register elects `CC0-1.0` for it under `lu-property-building-1`.
+ *
+ * CC0 asks for no attribution, and crediting the ACT remains good practice,
+ * so the manifest records the publisher beside the license.
  *
  * Four measured properties decide what this module does:
  *
- * 1. **The download URL holds the edition's own timestamp.** The dataset is republished weekly
- *    and the CSV resource's `url` reads
+ * 1. **The download URL holds the edition's own timestamp.** The
+ *    dataset is republished weekly and the CSV resource's `url` reads
  *    `https://download.data.public.lu/resources/adresses-georeferencees-bd-adresses/20260928-023119/addresses.csv`,
- *    where the path segment is the publication time. A hardcoded URL therefore pins one edition and
- *    404s on the next. The module reads {@linkcode LU_BD_ADRESSES_DATASET_URL} and takes the `url`
- *    of the resource whose `format` is `csv`. The resource's own `latest`,
- *    `https://data.public.lu/fr/datasets/r/<resource id>`, answers http 302 to the same dated path,
- *    and the dated path is the one downloaded, so the bytes and the checksum recorded beside them
- *    belong to one edition.
+ *    where the path segment is the publication time.
+ *    A hardcoded URL therefore pins one edition and 404s on the next.
+ *    The module reads {@linkcode LU_BD_ADRESSES_DATASET_URL} and takes the `url`
+ *    of the resource whose `format` is `csv`.
+ *    The resource's own `latest`, `https://data.public.lu/fr/datasets/r/<resource id>`,
+ *    answers http 302 to the same dated path, and the dated path is the one downloaded,
+ *    so the bytes and the checksum recorded beside them belong to one edition.
  * 2. **The publisher states an md5 for the file.** The resource records
  *    `checksum: {type: "md5", value: "…"}` and a `filesize`, measured as
- *    `c2df2f3c18b846144bb5d5dc57fc14ca` and 28,186,970 on the 2026-09-28 edition. The transfer is
- *    checked against both, so a truncated body is a reported failure rather than a short CSV that
- *    parses. A publisher that one day states a digest of another type is reported rather than
- *    skipped silently.
- * 3. **The file opens with a UTF-8 byte-order mark**, `EF BB BF`. The portal's `filesize` counts it.
+ *    `c2df2f3c18b846144bb5d5dc57fc14ca` and 28,186,970 on the 2026-09-28 edition.
+ *    The transfer is checked against both, so a truncated body is a reported failure
+ *    rather than a short CSV that parses.
+ *    A publisher that one day states a digest of another type is reported rather than skipped silently.
+ * 3. **The file opens with a UTF-8 byte-order mark**, `EF BB BF`.
+ *    The portal's `filesize` counts it.
  *    A reader that discards the mark therefore reports three bytes fewer than the portal does.
  *    The module writes the body to disk unaltered and checks the digest over the bytes as delivered.
- * 4. **The re-run check is the stated checksum against the manifest.** The dataset API answer is
- *    roughly 15 KB, so comparing it costs one small request instead of 28 MB.
+ * 4. **The re-run check is the stated checksum against the manifest.** The dataset API
+ *    answer is roughly 15 KB, so comparing it costs one small request instead of 28 MB.
  *
- * The CSV is the only one of the three bulk files this reads. The GeoJSON is 80,836,067 bytes and
- * the shapefile 19,681,289 for the same records, and `#lu/adapters/bd-adresses/adapter` hands
- * `opts.inputPath` to `CSVSpliterator.fromAsync`.
+ * The CSV is the only one of the three bulk files this reads.
+ * The GeoJSON is 80,836,067 bytes and the shapefile 19,681,289 for the same records,
+ * and `#lu/adapters/bd-adresses/adapter` hands `opts.inputPath` to `CSVSpliterator.fromAsync`.
  */
 
 import { APIClient } from "@mailwoman/core/api"

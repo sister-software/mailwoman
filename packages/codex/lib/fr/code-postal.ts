@@ -3,24 +3,29 @@
 
 /**
  *   French postcodes (code postal): the branded type and shape, plus normalization rules.
- *   The module maps the first two digits to a département. Of the three systems, this is the postcode-to-admin prior with the fewest
- *   exceptions.
+ *
+ *   The module maps the first two digits to a département.
+ *   Of the three systems, this is the postcode-to-admin prior with the fewest exceptions.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, and here:
  *
  *   - A US ZIP's first digit maps to a loose band of states.
  *   - A German PLZ's first digit maps to a Leitzone that crosses Bundesland borders.
- *   - A French code postal's first two digits are the département number directly (`75008` → 75, Paris;
- *       `13001` → 13, Bouches-du-Rhône). The French prefix identifies the admin unit directly.
- *       The région follows from the département. This is the tightest of the three priors.
+ *   - A French code postal's first two digits are the département number directly
+ *     (`75008` → 75, Paris; `13001` → 13, Bouches-du-Rhône).
+ *     The French prefix identifies the admin unit directly.
+ *     The région follows from the département.
+ *     This is the tightest of the three priors.
  *
- *   The exceptions are the interesting part: Corsica shares prefix `20` across two départements (`2A`
- *   Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code), and the overseas DOM use a
- *   three-digit prefix (`971`–`976`). `departementOfCodePostal` handles both. Two further
- *   real-world caveats it does not try to model: a handful of communes sit under a neighboring
- *   département's code (e.g. some `05`/`04` border villages), and a cedex code can include a
- *   large-volume-mail prefix that differs from the geographic one — both rare enough to leave to
- *   the gazetteer.
+ *   The exceptions are the interesting part: Corsica shares prefix `20` across two
+ *   départements (`2A` Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code),
+ *   and the overseas DOM use a three-digit prefix (`971`–`976`).
+ *   `departementOfCodePostal` handles both.
+ *
+ *   Two further real-world caveats it doesn't try to model: a handful of communes sit
+ *   under a neighboring département's code (e.g. some `05`/`04` border villages),
+ *   and a cedex code can include a large-volume-mail prefix that differs from the
+ *   geographic one — both rare enough to leave to the gazetteer.
  */
 
 import type { Tagged } from "type-fest"
@@ -32,7 +37,7 @@ import { FR_REGIONS, type FrenchRegionInfo } from "#fr/region"
  * A French postcode: five digits (`75008`).
  *
  * Same shape as a US ZIP or a German PLZ.
- * The shape by itself does not disambiguate the country.
+ * The shape by itself doesn't disambiguate the country.
  *
  * @category Postal
  * @type string
@@ -57,7 +62,7 @@ export const CODE_POSTAL_PATTERN = /^\d{5}$/
  * Normalize a code-postal surface form to the bare five digits: strip an `F-` country
  * courtesy prefix and surrounding whitespace (`F-75008` → `75008`).
  *
- * @returns Null if the result is not five digits.
+ * @returns Null if the result isn't five digits.
  */
 export function normalizeCodePostal(raw: unknown): CodePostal | null {
 	if (typeof raw !== "string") return null

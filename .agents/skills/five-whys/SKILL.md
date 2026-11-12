@@ -34,7 +34,7 @@ skill inherits the same words rather than redefining them.
 
 ## When to use
 
-- A failure's cause is not established and a fix is being considered.
+- A failure's cause isn't established and a fix is being considered.
 - A draft diagnosis or another agent's report contains a judgment word (`decisive`, `mis-constructed`,
   `clearly`, `obviously`, `warrants its place`, `paid for itself`, `the real question is`) or a
   number with no denominator.
@@ -45,8 +45,8 @@ skill inherits the same words rather than redefining them.
 ## When not to use
 
 - Routine status narration with no failure at stake.
-- A cause that is already direct and verified — do not force five levels.
-- Prose for published docs pages — that is the writing system's register rather than a diagnosis.
+- A cause that's already direct and verified — do not force five levels.
+- Prose for published docs pages — that's the writing system's register rather than a diagnosis.
 - Small talk. Warmth is allowed. Agreement must contain information, per the house style.
 
 ## The method
@@ -74,7 +74,7 @@ Tag every link as one of:
 - **decision** — the team chooses a tradeoff or product behavior. Name the tradeoff.
 - **unknown** — the current evidence cannot answer it. The chain stops here.
 
-A correlation is not a cause. Same antecedent plus same failure is a lead rather than a link. A link states the
+A correlation isn't a cause. Same antecedent plus same failure is a lead rather than a link. A link states the
 mechanism by which the antecedent produces the failure. When the repository can answer the next why with a
 focused diagnostic, run it before asking anyone anything.
 
@@ -87,7 +87,7 @@ asking the operator.
 - **Rung 2** — what the stage chose and why: `mwdev_trace`, `mwdev_diff_parse`, `mwdev_diagnose`.
 - **Rung 3** — which input or constraint permitted it: `mwdev_minimal_pairs` (which token), `mwdev_lookup`
   (does the source know the string), `mwdev_constraints` (what a constraint cost).
-- **Rung 4** — why the test did not catch it: read the test; `mwdev_census` (does the mechanism fire at
+- **Rung 4** — why the test didn't catch it: read the test; `mwdev_census` (does the mechanism fire at
   all), `mwdev_interface` (does the tree obey its interface).
 - **Rung 5** — why the interface allows it: read the interface, then the issue.
 - **Assumption checks** — `mwdev_provenance` (which artifacts the engine is really reading),
@@ -150,7 +150,7 @@ out."
 A refusal is already distinguishable — `intent_markers` carries `kind: poi_query` with a full message. The issue's framing is stale at HEAD. The real remaining gap is that the successful parse is discarded.
 ```
 
-What it hides: what is distinguishable from what, what changed at HEAD, and why the gap is "real".
+What it hides: what's distinguishable from what, what changed at HEAD, and why the gap is "real".
 
 Write instead: "The trace records `intent_markers.kind = poi_query` with the full message, so a refusal is recoverable
 from the parse output. The issue's example no longer matches HEAD (<the one thing that changed>). The remaining gap:
@@ -166,7 +166,7 @@ What it hides: what an overlay does, and what the divergence implies for the pro
 
 Write instead: "Under the harness's per-row country config for fr-FR, the street span's boundary includes the commune
 text: `street "Allée Pierre Barthas, Sète"`. The CLI probe and the board run different parse paths (#1669). The
-board's path is the graded one, so the probe's clean run does not transfer."
+board's path is the graded one, so the probe's clean run doesn't transfer."
 
 ### 7. The standing failure
 
@@ -239,7 +239,7 @@ What it hides: what 0/95 asserts, what the FR rows assert, and distance presente
 Write instead: "The pre-registered namesake grid (95 rows) asserts the resolver picks the asserted place for each row,
 so a pass is 0 wrong picks. The FR rows assert the fr-FR overlay cases still differ as pinned. After the change,
 `Queen Street, Bristol` resolves to Bristol, England — the asserted place. The old pick was the other Bristol, 5,274 km
-away. The distance only sizes the old miss. It is not a score."
+away. The distance only sizes the old miss. It isn't a score."
 
 ### 13. The value judgment
 
@@ -251,7 +251,7 @@ What it hides: a value judgment where the concrete consequence belongs.
 
 Write instead: "Returning `ComponentTag` instead of `string` from `flattenTreeNodes` breaks four comparisons — `n.tag
 === "city" | "state" | "postal_code" | "house_number_prefix"` — in the demo and its smoke mirror. None of those
-literals is a `ComponentTag`. They are libpostal labels and could never match."
+literals is a `ComponentTag`. They're libpostal labels and could never match."
 
 The rules the entries encode:
 
@@ -263,21 +263,21 @@ The rules the entries encode:
    and the consequence. "Swallows" is established repo idiom for span-boundary inclusion and is fine when
    the boundary is stated. It is jargon when the mechanism stays implied.
 3. **A number states its denominator, threshold, artifact, and arm.** "41/58" must answer what the other
-   17 have in common, or say they are not one class. A delta is never unattributed: name the rows that
+   17 have in common, or say they're not one class. A delta is never unattributed: name the rows that
    moved.
 4. **An entity is a name rather than an ID.** WOF IDs, row names, and test names get the address or place name
    beside them.
 5. **A technical term in prose is defined in one sentence at first use, or replaced by its mechanism.**
    Code comments may use the identifier. Prose must define it or state the mechanism beside it.
-6. **A claim of absence states where it looked.** "Does not exist on this host" → the paths checked and
-   the tool that reported them. Presumption of absence is not evidence. A repo with this project's
-   history does not accept "no one built it" without receipts. For known artifacts the one call is
+6. **A claim of absence states where it looked.** "Doesn't exist on this host" → the paths checked and
+   the tool that reported them. Presumption of absence isn't evidence. A repo with this project's
+   history doesn't accept "no one built it" without receipts. For known artifacts the one call is
    `mwdev_provenance` (§Artifact absence claims).
 7. **A report gives the tool's name and attributes the tool's vocabulary.** "Census reproduces" → `mwdev_census`.
    State that "firings" and the tool's "resolved" count are the tool's terms.
 8. **Work links its issue, and a task's name states what it does.** "The A5 trace repair" → the issue, and
    the task list asserts completion. If a task needs a short name, the name states the change.
-9. **Distance is not a success metric unless the task grades on distance.** A parse and a geocode are
+9. **Distance isn't a success metric unless the task grades on distance.** A parse and a geocode are
    graded on identifying the right place: conformance, span coherence to gazetteer ancestry, currency,
    provenance. State distance only when the eval uses it, and say why it matters for this task.
 10. **A conclusion word appears after its evidence rather than instead of it.** The gauntlet defines one
@@ -301,7 +301,7 @@ Written (shipped on #1814):
 >
 > #1814 changes a tested interface. geocode-core-place-country.test.ts pinned #1738's "a disagreeing bearer
 > keeps the posterior soft"; the fix withholds it. My argument is that at w = 1 the soft anchor overturns a
-> 0.88 prominence lead by 0.04 — a prior that decides is not a prior — and Montréal's outcome is unchanged
+> 0.88 prominence lead by 0.04 — a prior that decides isn't a prior — and Montréal's outcome is unchanged
 > either way. The alternative (keep it at a reduced weight) needs a measured weight and has no population
 > to measure on. That's flagged on the PR.
 
@@ -313,8 +313,8 @@ The same report, written against this skill's interface:
 >
 > The code calls the country guess a _soft anchor_: a gentle nudge real evidence can override. But the
 > guess is a probability between 0 and 1, added at full strength, and the gap between the two Bristols is
-> only 0.885. The "nudge" is larger than the thing it is nudging. It does not tip close calls. It decides
-> them. The word "soft" in its name is not true.
+> only 0.885. The "nudge" is larger than the thing it is nudging. It doesn't tip close calls. It decides
+> them. The word "soft" in its name isn't true.
 >
 > #1738 exists because `1001 Boulevard Saint-Laurent, Montréal` used to answer Montréal-la-Cluse, a
 > village in France. When the guesser disagrees with the country the most prominent place of that name is
@@ -356,5 +356,5 @@ operator must make is stated with its evidence and its cost.
 `mwdev_provenance` answers "does this artifact exist, and at which path?" It reports each artifact's
 presence, size, mtime, symlink target, and sealed state, including `wof-hot.db`. For that database it uses
 `promotion-eval.ts`'s lookup order: `$MAILWOMAN_WOF_HOT_DB`, then the staged demo database. An
-absence claim for a known artifact cites that report. A fresh search is for artifacts the report does
-not list, and finding one is a reason to add it there.
+absence claim for a known artifact cites that report. A fresh search is for artifacts the report doesn't
+list, and finding one is a reason to add it there.

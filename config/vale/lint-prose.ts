@@ -32,7 +32,7 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
 	const ignoreFileName = value === "code" ? "code" : "docs"
 	const ignorePatterns = await loadValeIgnore(repoRootPathBuilder("config", "vale", `${ignoreFileName}.valeignore`))
 
-	const filePatterns = value === "code" ? ["*.ts", "*.tsx", "*.yaml", "*.yml"] : ["*.md", "*.mdx"]
+	const filePatterns = value === "code" ? ["*.ts", "*.mts", "*.tsx", "*.yaml", "*.yml"] : ["*.md", "*.mdx"]
 
 	return [...filePatterns, ...ignorePatterns]
 }
@@ -54,7 +54,7 @@ const DOCS_DIRECTORIES_OUTSIDE_GIT: readonly string[] = ["scratchpad"]
 /**
  * Markdown under {@link DOCS_DIRECTORIES_OUTSIDE_GIT}, as repository-relative paths.
  *
- * A directory that does not exist contributes no path, because a clone without a scratchpad is ordinary.
+ * A directory that doesn't exist contributes no path, because a clone without a scratchpad is ordinary.
  */
 async function documentsOutsideGit(): Promise<string[]> {
 	const found: string[] = []
@@ -73,7 +73,7 @@ async function documentsOutsideGit(): Promise<string[]> {
 }
 
 /**
- * Whether a run that names no path reads {@link DOCS_DIRECTORIES_OUTSIDE_GIT}.
+ * Whether a run that identifies no path reads {@link DOCS_DIRECTORIES_OUTSIDE_GIT}.
  *
  * A run naming a path reads it, so `lint-prose.ts -s docs scratchpad/<date>/<file>.md` lints that document.
  * A run naming none skips those directories.
@@ -242,7 +242,7 @@ async function lint(surface: Surface, narrowing: readonly string[], staged: bool
 	const checks: ValeCheck[] = [{ configPath: configFor(surface).toString(), files: filteredSurfaceFiles }]
 
 	if (surface === "code") {
-		const sourceFiles = filteredSurfaceFiles.filter((file) => /\.(?:ts|tsx)$/u.test(file))
+		const sourceFiles = filteredSurfaceFiles.filter((file) => /\.(?:ts|mts|tsx)$/u.test(file))
 
 		if (sourceFiles.length) {
 			checks.push({ configPath: configFor("code-terms").toString(), files: sourceFiles })

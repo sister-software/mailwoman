@@ -2,43 +2,64 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `localities-tw-districts.db` — Taiwan's 鄉鎮市區 (the township / county-administered-city / district tier)
- *   as one locality row each, derived from the civil-affairs address register rather than from WOF.
+ *   Build `localities-tw-districts.db` — Taiwan's 鄉鎮市區
+ *   (the township / county-administered-city / district tier) as one locality row each,
+ *   derived from the civil-affairs address register rather than from WOF.
  *
- *   why not WOF: the admin artifact stores the tier twice. Both copies fail a Han query. A parsed
- *   `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record that stores the Han
- *   name (WOF 102026697) has no parent and a centroid 54 km away in the hills, while the correctly parented record
- *   (WOF 890467835) stores only the Latin `Linkou`. The training board holds 289 units.
- *   Of those, 102 have no Han-keyed TW row. Another 15 have a row only on a namesake in another 縣市.
+ *   why not WOF: the admin artifact stores the tier twice.
+ *   Both copies fail a Han query.
+ *
+ *   A parsed `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record
+ *   that stores the Han name (WOF 102026697) has no parent and a centroid 54 km away in the hills,
+ *   while the correctly parented record (WOF 890467835) stores only the Latin `Linkou`.
+ *   The training board holds 289 units.
+ *
+ *   Of those, 102 have no Han-keyed TW row.
+ *   Another 15 have a row only on a namesake in another 縣市.
  *   Ten have a row only on a parentless place.
  *
- *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan
- *   (`overture/<release>/addresses-tw.parquet`). Its rows come from the civil-affairs bureaus' registers under the
- *   Open Government Data License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
- *   (`situs address-points --country TW`). Overture declares no identifier for the addresses theme, so the expression
- *   is the register's own. `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
- *   the register's own administrative pair. This build does no free-text grouping and uses no thin-group threshold.
- *   Every pair is a real unit. The smallest pair (金門縣烏坵鄉, 3 points) is reported rather than dropped.
+ *   source + LICENSE: the pinned Overture Maps addresses parquet for
+ *   Taiwan (`overture/<release>/addresses-tw.parquet`).
+ *   Its rows come from the civil-affairs bureaus' registers under the Open Government
+ *   Data License, Taiwan, v1.0 — the same input and the same license expression as
+ *   the rooftop tier (`situs address-points --country TW`).
  *
- *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
- *   parsed `subregion` onto — with the median address point as the centroid and the p5–p95 envelope as the bbox. The
- *   縣市 is matched to its WOF region by name. The build tries the official `zho` name first,
- *   then a Han name that identifies exactly one region. It then tries the name without its 縣/市 suffix.
- *   That step lets 桃園市 reach the region WOF still names 桃園縣. The build writes the match as an `ancestors` row.
- *   The candidate build then stamps the row with the region's scope. `names`
- *   stores the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
- *   an address-point count is not a population), so a row wins only where its key is the answer.
+ *   Overture declares no identifier for the addresses theme, so the expression is the register's own.
+ *   `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區, the register's own administrative pair.
  *
- *   Run: mailwoman gazetteer build tw-districts [--release <overture release>] [--parquet <path>] [--admin <path>]
- *   [--out <localities-tw-districts.db>]
+ *   This build does no free-text grouping and uses no thin-group threshold.
+ *   Every pair is a real unit.
+ *
+ *   The smallest pair (金門縣烏坵鄉, 3 points) is reported rather than dropped.
+ *
+ *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier
+ *   `placetypeMapForCountry("tw")` maps a parsed `subregion` onto — with the median
+ *   address point as the centroid and the p5–p95 envelope as the bbox.
+ *   The 縣市 is matched to its WOF region by name.
+ *
+ *   The build tries the official `zho` name first, then a Han name that identifies exactly one region.
+ *   It then tries the name without its 縣/市 suffix.
+ *
+ *   That step lets 桃園市 reach the region WOF still names 桃園縣.
+ *   The build writes the match as an `ancestors` row.
+ *
+ *   The candidate build then stamps the row with the region's scope.
+ *   `names` stores the register's spelling as the official name and its 臺/台 twin as an alias.
+ *
+ *   Population is 0 (unmeasured: an address-point count isn't a population),
+ *   so a row wins only where its key is the answer.
+ *
+ *   Run: mailwoman gazetteer build tw-districts [--release <overture release>]
+ *   [--parquet <path>] [--admin <path>] [--out <localities-tw-districts.db>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -124,7 +145,7 @@ export interface TaiwanRegionName {
  * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
  * `null` is a real absence.
  *
- * A 縣市 the admin artifact does not know — and the caller reports it rather than guessing.
+ * A 縣市 the admin artifact doesn't know — and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | null {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
@@ -183,7 +204,7 @@ export interface TaiwanDistrictGroup {
 
 export interface BuildTWDistrictsOptions {
 	/**
-	 * The Overture release directory under `<data-root>/overture/`.
+	 * The Overture release directory under `$MAILWOMAN_DATA_ROOT/snapshots/overture/`.
 	 *
 	 * @defaultValue {@linkcode OVERTURE_ADDRESSES_RELEASE}
 	 */
@@ -191,7 +212,7 @@ export interface BuildTWDistrictsOptions {
 	/**
 	 * The Taiwan addresses parquet.
 	 *
-	 * @defaultValue `<data-root>/overture/<release>/addresses-tw.parquet`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/snapshots/overture/<release>/addresses-tw.parquet`
 	 */
 	parquetPath?: string
 	/**
@@ -221,7 +242,7 @@ export interface BuildTWDistrictsResult {
 	 */
 	scoped: number
 	/**
-	 * The 縣市 names no WOF region answered to, each with its group count.
+	 * The 縣市 names that no WOF region answered to, each with its group count.
 	 */
 	unmatchedRegions: Array<{ region: string; groups: number }>
 	/**
@@ -311,10 +332,16 @@ async function readDistrictGroups(
  * (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+		resolverWofSqlite: { buildPlaceSearchFTS },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
-	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
+	const parquetPath = opts.parquetPath ?? snapshotSourcePath("overture", release, "addresses-tw.parquet")
 	const adminPath = opts.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)
 	const outPath = opts.out ?? wofDatabasePath("localities-tw-districts.db")
 	const tmpPath = `${outPath}.tmp`

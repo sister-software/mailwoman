@@ -11,7 +11,7 @@
 # 20,000 val / 20,000 board, 47 prefectures, per-prefecture cap 42,978, board municipalities held
 # out on the probe's bucket rule. BIO char coverage 1.0000 on every split.
 #
-# --- from scratch. There is no `init_from`, and that is a decision rather than an omission. -------------
+# --- from scratch. There's no `init_from`, and that's a decision rather than an omission. -------------
 #
 # Three independent reasons the probe checkpoint cannot warm-start this run:
 #   1. `classifier.weight` is (33, 384) there and (47, 384) here. `train.py`'s init_from path calls
@@ -31,7 +31,7 @@
 # --- The head param group (`train.classifier_learning_rate`) ------------------------------------
 #
 # The v8 plans all state the #727 head-expansion rule: "a freshly-added head/label group needs its
-# own param-group LR — the existing warm layers and the cold new label rows must not share a
+# own param-group LR — the existing warm layers and the cold new label rows mustn't share a
 # learning rate. Bake this into the JP training config."
 #
 # read this before tuning IT, because the rule's premise is only half-present here:
@@ -43,12 +43,12 @@
 #   * The granularity is the whole head rather than the 14 fresh rows. `classifier` is one `nn.Linear`
 #     (47, 384); a PyTorch param group owns whole tensors, so rows 33..46 cannot be separated from
 #     rows 0..32. A gradient hook cannot substitute: Adam's update is scale-invariant in the
-#     gradient (m-hat / sqrt(v-hat)), so scaling 14 rows' gradients does not create a per-row LR.
+#     gradient (m-hat / sqrt(v-hat)), so scaling 14 rows' gradients doesn't create a per-row LR.
 #     Splitting the 14 out would mean a second `nn.Linear` and a concat in `forward` — a model-shape
-#     change rather than a config change, and it is not what the shipped mechanism does.
-#   * The premise ("existing warm layers") does not hold on a from-scratch run. #727's precedent
+#     change rather than a config change, and it isn't what the shipped mechanism does.
+#   * The premise ("existing warm layers") doesn't hold on a from-scratch run. #727's precedent
 #     numbers (inherited 1e-5 stalled at 0.004, own 1e-3 converged) come from a fresh head on a
-#     pretrained encoder. Here the encoder is cold too, so this is not a rescue. It is an ordinary
+#     pretrained encoder. Here the encoder is cold too, so this isn't a rescue. It is an ordinary
 #     head/body LR-ratio change with an unmeasured effect on this corpus.
 #
 # So: 1.0e-3 is a 2x ratio over the 5.0e-4 base rather than #727's 100x. It is set deliberately modest
@@ -66,7 +66,7 @@
 # --- Watch items (things this config chose, that the 2k probe should read) -----------------------
 #
 #   * `label_smoothing: 0.1` over 47 labels of which 28 have zero support in this corpus (the 28 are
-#     true zeros: the Latin stage3 tags JP does not use, plus `building_name`, which Overture-JP
+#     true zeros: the Latin stage3 tags JP doesn't use, plus `building_name`, which Overture-JP
 #     has no column for). Smoothing spreads target mass across all 47, so it puts a small standing
 #     positive gradient on rows that should stay firmly negative. The probe used the same setting
 #     over 33 labels with fewer dead rows. If the dead rows start firing, this is the first suspect.
@@ -122,7 +122,7 @@ train:
   batch_size: 256
   eval_batch_size: 512
   learning_rate: 5.0e-4
-  # The head param group. See the long note above for what this does and does not do.
+  # The head param group. See the long note above for what this does and doesn't do.
   classifier_learning_rate: 1.0e-3
   warmup_steps: 1000
   max_steps: 24000

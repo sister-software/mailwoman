@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared plumbing for the Latin off-map outlier builders (`build-outlier-latin.ts` — Overture,
- *   `build-outlier-oa.ts` — OpenAddresses): the address-string assembler and its shape variants.
- *   It also provides the dedup/cap loop and the other-row jsonl encoding. The builders differ in where the
- *   locality comes from and in OA's PO-box guard, so both are parameters here.
+ *   Shared plumbing for the Latin off-map outlier builders
+ *   (`build-outlier-latin.ts` — Overture, `build-outlier-oa.ts` — OpenAddresses):
+ *   the address-string assembler and its shape variants.
+ *
+ *   It also provides the dedup/cap loop and the other-row jsonl encoding.
+ *   The builders differ in where the locality comes from and in OA's PO-box guard,
+ *   so both are parameters here.
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
@@ -15,7 +18,7 @@ import { isPresent } from "#objects"
 
 /**
  * Shortest raw string kept as an outlier example.
- * Below it there is no example to learn from.
+ * Below it there's no example to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
 

@@ -37,7 +37,7 @@ The head trained correctly and we verified it before reading anything:
 **It learned. What it learned is worse than not having it.** It learned on the corpus T1c identified
 as the missing condition, so the explanation "it wasn't trained on the right data" no longer applies.
 
-The config's own instruction applies: **do not tune `span_loss_weight` and re-run.** That is the
+The config's own instruction applies: **do not tune `span_loss_weight` and re-run.** That's the
 treadmill the arc's guard forbids.
 
 ## The shape of the whole arc, in one table
@@ -66,9 +66,9 @@ The arc asked whether a better decode could find the gold parse. The gold parse 
 to be found, because it was not in the training data. **The instrument that showed the gold parse was
 absent led us to add it to the training data.** Four phases bought that result.
 
-## What survives, and what does not
+## What survives, and what doesn't
 
-**Does not survive:** the span head, the k-best decode as a product surface, the flag (§6 of the
+**Doesn't survive:** the span head, the k-best decode as a product surface, the flag (§6 of the
 review follow-up), option C, and — by premise-collapse — the name-index rerank.
 
 **Survives, and is now the standing instrumentation:** `oracle-k` (the headroom tracker), the

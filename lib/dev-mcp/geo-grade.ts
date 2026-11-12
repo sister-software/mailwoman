@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The function grades two arms against a truth coordinate, the only axis a cross-engine comparison has: `grade.ts`'s
- *   component, place-id and tier expectations do not survive an arm answering from a foreign vocabulary, so this module
- *   owns one metric — haversine distance from the top-1 result to the truth point, thresholded at 1 / 5 / 25 km, with a
- *   no-result a miss at every threshold.
+ *   The function grades two arms against a truth coordinate, the only axis a cross-engine
+ *   comparison has: `grade.ts`'s component, place-id and tier expectations do not
+ *   survive an arm answering from a foreign vocabulary, so this module owns one metric —
+ *   haversine distance from the top-1 result to the truth point, thresholded at 1
+ *   / 5 / 25 km, with a no-result a miss at every threshold.
  *
- *   A parity claim is a TOST against a bound chosen before the measurement — ±5 pp at 25 km — and it can come back
- *   "not equivalent and not different", the answer an underpowered run should give.
+ *   A parity claim is a TOST against a bound chosen before the measurement — ±5 pp at 25 km —
+ *   and it can come back "not equivalent and not different", the answer an underpowered run should give.
  */
 
 import type { NullableLatLon } from "@mailwoman/spatial"
@@ -19,7 +20,7 @@ import { wilsonInterval } from "#dev-mcp/power"
 
 /**
  * The pre-registered distance thresholds: a threshold chosen after seeing
- * where the arms landed is not a threshold.
+ * where the arms landed isn't a threshold.
  */
 export const DISTANCE_THRESHOLDS_KM = [1, 5, 25] as const
 
@@ -43,7 +44,7 @@ const Z_CRITICAL_95_ONE_SIDED = 1.645
 const PERCENT = 100
 
 /**
- * `null` is not infinity: it flows into {@link hitAt} as a miss at every threshold
+ * `null` isn't infinity: it flows into {@link hitAt} as a miss at every threshold
  * while staying distinguishable from an arm that missed by 400 km.
  */
 export function distanceKm(answer: NullableLatLon, truthLat: number, truthLon: number): number | null {
@@ -68,7 +69,7 @@ export function thresholdKey(thresholdKm: number): string {
 
 /**
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer":
- * an arm that moves a result from 40 km to 30 km still has not found the address.
+ * an arm that moves a result from 40 km to 30 km still hasn't found the address.
  *
  * A metric that rewards this change would report progress on rows where no usable result changed.
  */
@@ -145,7 +146,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * An equivalence-test failure does not mean the arms differ: an estimate already outside the bound
+ * An equivalence-test failure doesn't mean the arms differ: an estimate already outside the bound
  * is a difference, while a small difference with too wide an interval is an underpowered run.
  */
 function equivalence(
@@ -214,7 +215,7 @@ export function tostEquivalence(
 	const standardErrorPP = Math.sqrt(variance) * PERCENT
 
 	if (standardErrorPP === 0) {
-		// A zero standard error is not zero uncertainty: both arms sat exactly at 0
+		// A zero standard error isn't zero uncertainty: both arms sat exactly at 0
 		// or 1, where the normal approximation has no variance, so the Wilson interval
 		// bounds the difference conservatively instead.
 		const halfWidthPP = (wilsonHalfWidth(successesA, n) + wilsonHalfWidth(successesB, n)) * PERCENT

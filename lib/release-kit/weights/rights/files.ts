@@ -3,10 +3,14 @@
 
 /**
  *   Render a weights package's two rights files from its {@link WeightsRightsRecord}.
- *   `LICENSE.md` states the terms this repository grants. `PROVENANCE.json` records artifact sources and unresolved facts.
  *
- *   Neither file asserts clearance. `PROVENANCE.json` records the model card's statements and marks other facts
- *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
+ *   `LICENSE.md` states the terms this repository grants.
+ *   `PROVENANCE.json` records artifact sources and unresolved facts.
+ *
+ *   Neither file asserts clearance.
+ *   `PROVENANCE.json` records the model card's statements and marks other facts unresolved.
+ *
+ *   `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
 import { isIdentical } from "@mailwoman/core/identical"
@@ -121,7 +125,7 @@ export interface ProvenanceDocument {
 		 */
 		excluded: Array<{ source: string; because: string }>
 		/**
-		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
+		 * Sources the epoch emitted that the corpus manifest doesn't name, each at its three stages.
 		 *
 		 * `corpus_rows` counts rows of the source in the corpus.
 		 * `drawn_rows` counts rows sampled by the epoch.
@@ -147,7 +151,7 @@ export interface ProvenanceDocument {
 	 * A `null` statement means the label requires attribution and the text is written
 	 * from each source's register entry or the card's own attribution entries.
 	 *
-	 * A label this repository does not recognize is listed too, because an unrecognized
+	 * A label this repository doesn't recognize is listed too, because an unrecognized
 	 * license's obligations are unknown rather than absent.
 	 *
 	 * `null` when no effective training manifest is committed for the corpus the card records.
@@ -545,14 +549,15 @@ export function renderLicenseFile(record: WeightsRightsRecord): string {
 
 ${GENERATED_BY}
 
-## The terms Sister Software grants
+## License terms
 
 This package is distributed under \`${record.license}\`.
 
 Under the AGPL-3.0-only branch, three obligations attach: keep the copyright notices, license a
 modified copy under the same terms, and offer corresponding source to people who use a modified copy
 over a network (section 13). Under a commercial agreement, the source offer and the share-alike
-condition do not apply to the code and model artifacts Sister Software authors.
+condition do not apply to the code and model artifacts Teffen Ellis authors or that are contributed to
+her. Nirrius LLC (d/b/a Sister Software) grants the commercial agreement.
 
 - Open-source terms: https://github.com/sister-software/mailwoman/blob/main/LICENSE.md
 - Commercial terms, as executed at checkout: https://mailwoman.post/license/terms/commercial-2026-10

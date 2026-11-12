@@ -16,7 +16,7 @@
 export const GoogleGeocoderStatus = {
 	OK: "OK",
 	/**
-	 * A legitimate, cacheable answer: the address does not resolve.
+	 * A legitimate, cacheable answer: the address doesn't resolve.
 	 */
 	ZeroResults: "ZERO_RESULTS",
 	OverDailyLimit: "OVER_DAILY_LIMIT",
@@ -130,7 +130,7 @@ export interface GoogleGeocodeResult {
 	 */
 	types: string[]
 	/**
-	 * Set only when Google could not match the query as given and fell back to something looser.
+	 * Set only when Google couldn't match the query as given and fell back to something looser.
 	 *
 	 * Absence means an exact match.
 	 * `OracleGeocodeResult.partialMatch` coerces that value rather than passing it through.

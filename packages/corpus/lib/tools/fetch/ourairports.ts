@@ -4,8 +4,8 @@
 /**
  * Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc.
  *
- * Source: https://davidmegginson.github.io/ourairports-data
- * License: public domain, with a courtesy credit requested.
+ * Source: https://davidmegginson.github.io/ourairports-data License: public domain,
+ * with a courtesy credit requested.
  */
 
 import { APIClient } from "@mailwoman/core/api"

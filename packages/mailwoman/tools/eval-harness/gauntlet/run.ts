@@ -3,18 +3,20 @@
 
 /**
  *   The Gauntlet evaluation runs all three layers and emits one combined verdict.
+ *
  *   A model ship checks against the full-pipeline integration set alongside per-tag F1:
  *
  *     1. regression  — the curated executable bug log. A fixed bug must stay fixed (conditioned on status=pass).
  *     2. metamorphic — un-gameable INV/DIR relations. Surface-form robustness (conditional minus tracked xfails).
  *     3. held-out    — candidate-vs-prod z-test on a fresh draw. The generalization check (only with --candidate).
  *
- *   `ablation` is a measurement layer reachable only via `--layer`. It is absent from the combined verdict because
- *   its expectations come from the gazetteer at run time. A ship failure based on this measurement would invite
- *   corpus tuning instead of parser changes.
+ *   `ablation` is a measurement layer reachable only via `--layer`.
+ *   It is absent from the combined verdict because its expectations come from the gazetteer at run time.
  *
- *   A thrown layer error is caught, printed and counted as a failed layer. This preserves isolated-failure semantics
- *   without a child process.
+ *   A ship failure based on this measurement would invite corpus tuning instead of parser changes.
+ *
+ *   A thrown layer error is caught, printed and counted as a failed layer.
+ *   This preserves isolated-failure semantics without a child process.
  *
  *   Wired into the release flow as a `before:release` check, where a non-zero exit blocks the ship.
  */
@@ -38,7 +40,7 @@ import type { SwitchPin } from "#tools/eval-harness/switch-pin"
  * The first three make up the combined verdict.
  * `ablation` and `clarity` are reachable only via `--layer`.
  *
- * They are absent from the combined check and cannot block a ship.
+ * They're absent from the combined check and cannot block a ship.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation" | "clarity"
 

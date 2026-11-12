@@ -5,6 +5,7 @@
  * @file Lists the scoped Cloudflare API tokens this repository uses. Each role holds the permissions one consumer
  *   needs and the environment key the consumer reads. The deploy role serves `wrangler deploy` and
  *   `wrangler r2 object put`. The cache-purge role serves a purge of a stale object on `public.mailwoman.post`.
+ *   The firewall role serves the custom rule that keeps the bucket's gazetteer path browser-only.
  *
  *   Cloudflare lets a token create tokens when it holds "Account API Tokens: Edit". The minter role is that
  *   token. The operator creates it once from a dashboard link that pre-fills the permission, and
@@ -29,6 +30,7 @@ export const CloudflareTokenRoleID = {
 	Minter: "minter",
 	Deploy: "deploy",
 	CachePurge: "cache-purge",
+	Firewall: "firewall",
 } as const
 
 export type CloudflareTokenRoleID = (typeof CloudflareTokenRoleID)[keyof typeof CloudflareTokenRoleID]
@@ -92,6 +94,17 @@ export const CLOUDFLARE_TOKEN_ROLES: readonly CloudflareTokenRole[] = [
 		env: "CLOUDFLARE_CACHE_PURGE_TOKEN",
 		purpose: `Purges cached URLs on ${MAILWOMAN_ZONE.name}.`,
 		permissions: [{ group: "Cache Purge", key: "cache", type: "purge", scope: "zone" }],
+		minted: true,
+	},
+	{
+		id: CloudflareTokenRoleID.Firewall,
+		name: "mailwoman firewall rules",
+		env: "CLOUDFLARE_FIREWALL_TOKEN",
+		purpose: `Reads and writes ${MAILWOMAN_ZONE.name}'s custom firewall rules, for the bucket's browser-only access rule.`,
+		permissions: [
+			{ group: "Zone WAF Write", key: "zone_waf", type: "edit", scope: "zone" },
+			{ group: "Zone Read", key: "zone", type: "read", scope: "zone" },
+		],
 		minted: true,
 	},
 ]

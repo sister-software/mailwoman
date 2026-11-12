@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `post /v1/licenses/refresh`: a wrong secret and an unknown lid answer with the same body, so the route confirms no lid's existence. Rate limits apply independently per lid and address, so a stranger who learns a lid cannot spend its owner's allowance.
+ * `post /v1/licenses/refresh`: a wrong secret and an unknown lid answer with the
+ * same body, so the route confirms no lid's existence.
+ *
+ * Rate limits apply independently per lid and address, so a stranger who learns
+ * a lid cannot spend its owner's allowance.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

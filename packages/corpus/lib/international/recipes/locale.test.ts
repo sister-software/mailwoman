@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the locale recipe's city cleanup, CSV reading, country appending and district overrides against small
- *   fixtures.
+ *   Tests the locale recipe's city cleanup, CSV reading, country appending
+ *   and district overrides against small fixtures.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"

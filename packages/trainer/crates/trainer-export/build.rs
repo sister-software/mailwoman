@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Generates the ONNX message types from `proto/onnx.proto` with prost.
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Console message classification policy for e2e tests. FAIL_PATTERNS — substrings / regexes that indicate a real
  *   bug. Add entries when the operator reports a new symptom so the next regression fails the suite instead of slipping

@@ -9,10 +9,10 @@
 const NAME_FORM_SEPARATOR = " / "
 
 /**
- * The street names an OSM `addr:street` value answers to: the value itself and,
+ * The street names that an OSM `addr:street` value answers to: the value itself and,
  * when it joins several language forms with ` / `, each form on its own.
  *
- * A query names one form, so a rooftop row keyed only on the joined value matches neither.
+ * A query identifies one form, so a rooftop row keyed only on the joined value matches neither.
  */
 export function streetNameForms(street: string): string[] {
 	if (!street.includes(NAME_FORM_SEPARATOR)) return [street]

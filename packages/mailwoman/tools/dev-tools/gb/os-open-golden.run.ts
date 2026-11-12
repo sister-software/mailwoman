@@ -2,22 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the Great Britain golden board `tools/eval-harness/fixtures/gb/os-open-golden.jsonl` from the
- *   `gb-os-open` adapter's canonical rows: Code-Point Open, OS Open Names and OS Open Roads, under the
- *   Open Government Licence v3.0.
+ *   Writes the Great Britain golden board `tools/eval-harness/fixtures/gb/os-open-golden.jsonl`
+ *   from the `gb-os-open` adapter's canonical rows: Code-Point Open, OS Open Names
+ *   and OS Open Roads, under the Open Government Licence v3.0.
  *
- *   It replaced `gb-golden.jsonl` on 2026-10-17. That board's rows were HM Land Registry Price Paid Data
- *   address fields. Royal Mail and Ordnance Survey license those fields only for personal or non-commercial use
+ *   It replaced `gb-golden.jsonl` on 2026-10-17.
+ *   That board's rows were HM Land Registry Price Paid Data address fields.
+ *
+ *   Royal Mail and Ordnance Survey license those fields only for personal or non-commercial use
  *   and for displaying residential property price information (#2635).
  *
- *   One row per postcode area: the area's row with the lowest `source_id`, which is a content hash, so the
- *   pick is deterministic and unrelated to the file's order. The adapter draws each row's house number at
- *   random, so the board keeps the street, the locality and the postcode and drops the number. The rows
- *   have no `dependent_locality`, because OS OpenData records none. A board consumer that grades that
- *   tag reads zero rows for it.
+ *   One row per postcode area: the area's row with the lowest `source_id`, which is a
+ *   content hash, so the pick is deterministic and unrelated to the file's order.
+ *   The adapter draws each row's house number at random, so the board keeps the street,
+ *   the locality and the postcode and drops the number.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/gb/os-open-golden.run.ts [--input <canonical.jsonl>] [--out <path>]
+ *   The rows have no `dependent_locality`, because OS OpenData records none.
+ *   A board consumer that grades that tag reads zero rows for it.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/gb/os-open-golden.run.ts
+ *   [--input <canonical.jsonl>] [--out <path>]
  */
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"

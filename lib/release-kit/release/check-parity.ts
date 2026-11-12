@@ -4,19 +4,20 @@
 /**
  *   Release-train version-parity check.
  *
- *   The demo repoint is a separate step from the npm publish (mailwoman-release Step 5), so
- *   demo-vs-npm drift is structural. This check is structural too. It fails when a surface trails
- *   npm, anywhere it can appear:
+ *   The demo repoint is a separate step from the npm publish (mailwoman-release Step 5),
+ *   so demo-vs-npm drift is structural.
+ *   This check is structural too.
+ *   It fails when a surface trails npm, anywhere it can appear:
  *
- *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket, the
- *      exact URL the demo fetches) against the latest published npm version.
- *   2. The docs release matrix (`docs/engineering/releases.mdx` "(current)" row) against the same
- *      npm version.
+ *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket,
+ *      the exact URL the demo fetches) against the latest published npm version.
+ *   2. The docs release matrix (`docs/engineering/releases.mdx` "(current)" row)
+ *      against the same npm version.
  *
  *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), after its install step.
- *   This module reaches `@mailwoman/core` plus the shared releases-matrix parser in
- *   `verify-metadata.ts`. `warnOnly` downgrades mismatches to warnings (useful mid-release, before
- *   the repoint lands).
+ *   This module reaches `@mailwoman/core` plus the shared releases-matrix parser in `verify-metadata.ts`.
+ *
+ *   `warnOnly` downgrades mismatches to warnings (useful mid-release, before the repoint lands).
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"

@@ -12,7 +12,7 @@ invented rubric — _how far is mailwoman from something we can call done?_
 headline number against its primary artifact rather than the document that cites it, and check the
 drop-in parity claims against the workspaces instead of the table that summarizes them.
 
-Three numbers in the brief that opened this review did not match their primary artifacts. They are
+Three numbers in the brief that opened this review didn't match their primary artifacts. They're
 corrected in place below and collected in [Corrections](#corrections-to-numbers-in-circulation).
 The same pattern runs through the whole document: the receipts are accurate, and several of the
 summaries built on top of them have drifted.
@@ -76,7 +76,7 @@ and the default disagree.
 The README states the operational form: _"no Elasticsearch and no multi-gigabyte libpostal
 install,"_ three wire-compatible drop-ins, ~30 MB model plus a SQLite gazetteer. The north-star
 framing recorded in project memory — beat Pelias's rules parser without Elasticsearch — has a
-measured answer, and it is not yet yes (§2.4).
+measured answer, and it isn't yet yes (§2.4).
 
 ---
 
@@ -111,10 +111,10 @@ sound and documented. What matters for a position read is the **absolute** numbe
 F1 is **75.2**, and the standing campaign target in the live parity floors is **0.90**.
 
 **arena.perturb 78 → 66 is a real 12-point drop on the perturbation arena, and it appears in the
-ledger and nowhere else.** It does not appear in the release row, the Run B record, or the model card.
+ledger and nowhere else.** It doesn't appear in the release row, the Run B record, or the model card.
 It clears its floor (59.9) because that floor was ratcheted from an era with n=100 while the arena
 now regenerates 398 cases — so the floor held the old bar and the rebuilt would have been looser. The
-number is defensible. Its absence from every narrative surface is not. It is the most important
+number is defensible. Its absence from every narrative surface isn't. It is the most important
 unrecorded finding in this review.
 
 **Live parity check, 321 fixtures — both floors fail in both arms:**
@@ -129,7 +129,7 @@ The v9.0.0 release row quotes both of these as gains (".83→.93", ".66→.71") 
 each remains below its bar. The check record it links to is titled _"measurement only. No promotion
 decision is taken or implied here"_ and its combined gauntlet verdict is **fail in both arms**. The
 promotion decision was taken separately and deliberately (ROAD_TO_V9 §1, "promotes with conditions,"
-operator-ratified) — that is a legitimate call. The release note reads as though the record endorsed
+operator-ratified) — that's a legitimate call. The release note reads as though the record endorsed
 it, and the record states otherwise.
 
 **Run B's own pre-registered sheet: 5 PASS, 1 FAIL (G3 invariance, 4 new violations), 2 MIXED,
@@ -157,7 +157,7 @@ unstamped and, per #1525's own operator note, stale.
 
 Each demotion is defensible on its own terms. #1526's rationale is correct: _"a 'pass' status on a
 row that fails at HEAD is a mis-status rather than a check"_. The aggregate effect is that
-**71% of the gauntlet corpus (218 of 306) does not check**, and the headline that circulates is the
+**71% of the gauntlet corpus (218 of 306) doesn't check**, and the headline that circulates is the
 number after the failures were removed from the denominator.
 
 ### 2.3 The country sweep — what coverage looks like
@@ -183,7 +183,7 @@ absolute terms, as predicted. Class 3 (country-distinctive addressing structures
 137 = 22%, the safest.
 
 **27 rows resolve to no result.** The batch note's own wording: _"the direct failure, and the one that
-does not violate the meaning-of-zero requirement."_
+doesn't violate the meaning-of-zero requirement."_
 
 **29 of the 114 share one root cause, and it is a data defect rather than a model one.** `candidate.db` and
 `admin-global-priority.db` disagree on what a synthetic place id means: **743,853 of 1,670,055 joined
@@ -268,25 +268,25 @@ serves `/` and `/openapi.json`.
 
 ### 2.6 Per-surface summary
 
-| Surface              | Where we sit                                                                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                               |
-| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                     |
-| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed, and dependent_locality 0 → 205/207. **GB is not a declared tier**. It has capability without a tier claim |
-| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                                |
-| Geocode              | 71% on the 393-row oracle sweep. 27 rows resolve to no result. Last competitor measurement had Pelias ahead 88 to 80                                                |
-| Drop-in APIs         | Routes ship, zero upstream parity tests, listed parameter gaps in all three                                                                                         |
-| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                     |
-| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                         |
-| Docs                 | Site ships. The repo-root documents have drifted (§5.4)                                                                                                             |
-| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                     |
-| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                              |
+| Surface              | Where we sit                                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                              |
+| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                    |
+| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed, and dependent_locality 0 → 205/207. **GB isn't a declared tier**. It has capability without a tier claim |
+| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                               |
+| Geocode              | 71% on the 393-row oracle sweep. 27 rows resolve to no result. Last competitor measurement had Pelias ahead 88 to 80                                               |
+| Drop-in APIs         | Routes ship, zero upstream parity tests, listed parameter gaps in all three                                                                                        |
+| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                    |
+| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                        |
+| Docs                 | Site ships. The repo-root documents have drifted (§5.4)                                                                                                            |
+| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                    |
+| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                             |
 
 ---
 
 ## 3. The open-issue review
 
-The project has 74 open issues. The classification below marks each call that is a judgment rather than a reading of the record.
+The project has 74 open issues. The classification below marks each call that's a judgment rather than a reading of the record.
 
 ### (a) DONE-BLOCKING — 14
 
@@ -324,7 +324,7 @@ Two need a note. **#1176 (the v8 CJK epic)** states its success criterion as _"v
 that parses JP… the first non-Latin parse claim mailwoman makes."_ v8 shipped without it and v9
 shipped without it, and ROAD_TO_V9 §8 parks it explicitly. The epic has outlived two majors of its
 own name. **#598 (record matching)** is parked by an operator decision with the evidence recorded.
-That is a deliberate park rather than a stall.
+That's a deliberate park rather than a stall.
 
 ### (d) STALE — recommend closing with receipts, 5
 
@@ -340,7 +340,7 @@ That is a deliberate park rather than a stall.
 three files for 18 lines and its own message states that the 125-row over-greed is now a recorded failure
 mode (suffix-boundary, #1539) and that the training change that would address it is recorded. The behavior is recorded rather than
 fixed. #1516 is half done and **its title
-describes the half that is not**.
+describes the half that's not**.
 
 ### (e) INFRA / PROCESS — 4
 
@@ -466,16 +466,16 @@ the designed fix and **none of those three bars has been run**.
 
 The same failure shape recurs where a venue name contains digits or a street-type word: the venue's
 year read as a postcode, the venue fragment read as an outward code, `Pier 39`'s long-standing unit-tag
-quirk. The v9 sub-venue extract is the first training-side fix for it. The class is not resolved.
+quirk. The v9 sub-venue extract is the first training-side fix for it. The class isn't resolved.
 
 ### 5.4 The instruments have been lying, and some still are
 
-Most of the last week's receipts record checks that did not measure what they claimed:
+Most of the last week's receipts record checks that didn't measure what they claimed:
 
 - `expectPlaceID`/`expectPlaceName` were in the schema, the DDL and the builder, and `checkCase`
   read neither. Every family-A row graded green while returning an Austrian hamlet. Fixed #1525.
 - The invariance runner grades the raw classifier with en-US for every row. It scored Run B's
-  _gained_ GB capability as a loss. **This is not fixed.**
+  _gained_ GB capability as a loss. **This isn't fixed.**
 - `regression.db` can be rebuilt from a stale compiled tree. #1525 added stamping, but the shared
   artifact is currently unstamped.
 - `gazetteer postcode-binary` wrote an empty GB bin and exited 0.
@@ -489,7 +489,7 @@ The fixes are landing quickly, but more defects of this kind are likely.
 
 Four PR/VG/VI rows were demoted from blocking because they pass under the old model _"by margins their
 own notes call accidental."_ Puerto Rico has TIGER coverage the corpus never ingested. This is a
-known, bounded data fix (ROAD_TO_V9 §5-C) that has not started.
+known, bounded data fix (ROAD_TO_V9 §5-C) that's not started.
 
 ### 5.6 Documentation drift at the repo root
 
@@ -507,22 +507,22 @@ shape. The first four files a stranger opens in the repo are not.
 
 ### 5.7 The coverage register that ROAD_TO_V9 required
 
-§5-B, tier B: _"the release notes state coverage directly (the 'what mailwoman does not cover'
-register)."_ No such register exists anywhere in the tree. The v9.0.0 release row names four
-territory rows and the truncation pair. It does not list the 27 no-coordinate rows or the 114-row
-sweep failure taxonomy. **This is the one ROAD_TO_V9 B-tier item that did not land**, and it is the
+§5-B, tier B: _"the release notes state coverage directly (the 'what mailwoman doesn't cover'
+register)."_ No such register exists anywhere in the tree. The v9.0.0 release row lists four
+territory rows and the truncation pair. It doesn't list the 27 no-coordinate rows or the 114-row
+sweep failure taxonomy. **This is the one ROAD_TO_V9 B-tier item that didn't land**, and it is the
 cheapest remaining item on the list.
 
 ### 5.8 JP has no serving path
 
 A model that scores 0.9928 on a held-out 20,000-row board, holding out whole municipalities, sits in
-`$MAILWOMAN_DATA_ROOT/models/v8-jp-full-s42/step-024000/` and cannot be called by anything. There is
+`$MAILWOMAN_DATA_ROOT/models/v8-jp-full-s42/step-024000/` and cannot be called by anything. There's
 no `neural-weights-ja-jp` workspace. The one `ja-jp` artifact in the tree, `fst-ja-jp.bin`, is
 described by its own module as _"an artifact no command can rebuild."_
 
 ---
 
-## 6. What is in fact strong
+## 6. What's in fact strong
 
 This section states what the record shows, without extrapolation.
 
@@ -536,7 +536,7 @@ measurement down.
 **The v9 anchor fix.** The #1467 root cause was that every training config used a 67,708-key anchor
 lookup with _zero letter-containing keys_, so the GB slot never received gradient. The fix was
 verified with Fisher mass on the GB slot at 11.28% against CA/JP exact-zero controls. gb-golden went 294 → 318
-of 318 across three registers, and GB `dependent_locality` went 0 → 205/207. That is a real capability
+of 318 across three registers, and GB `dependent_locality` went 0 → 205/207. That's a real capability
 gain with a mechanism-level receipt rather than a metric that moved.
 
 **FR.** `fr.region` 44.1 → 81.2, `fr.cedex_real` 90.5 → 99.8, held-out BAN beating production at
@@ -555,7 +555,7 @@ ships ancestry only, with zero coordinates, because inventing coordinates would 
 **The corpus of failures.** The project has 306 gauntlet cases across 115 countries, 400
 oracle-verified sweep candidates, per-country JSONL, ablation ladders, and a degradation map. Most
 projects at this stage know what works. This one has a written, structured, growing account of what
-does not. 71% of the gauntlet does not check because someone refused to grade a failing row as a
+doesn't. 71% of the gauntlet doesn't check because someone refused to grade a failing row as a
 pass.
 
 **JP.** The JP model scores 0.9928 at 15 km against a pre-registered 0.70, on a board that holds out
@@ -583,7 +583,7 @@ needs engineers assigned to it.
 This review's first finding is the gap between what the receipts show and what the summaries say.
 The measurements are accurate. The narrative built on top of them has drifted. A release row quotes
 two failing floors as gains. "88/88" is a denominator after six demotions. The `README` promises
-calibrated confidences that a default consumer does not get. A 12-point arena drop exists in one
+calibrated confidences that a default consumer doesn't get. A 12-point arena drop exists in one
 JSON file and nowhere else. The team can close that gap with a week of writing rather than a
 quarter of engineering. Each project claim about completion can then match a receipt.
 

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Generator for `data/geographic-model.json` — the committed compiled artifact, built from the
- * authored records under `data/model/`.
+ * Generator for `data/geographic-model.json` — the committed compiled artifact,
+ * built from the authored records under `data/model/`.
  *
  * A committed artifact is these bytes run through `oxfmt`, which inlines short arrays that
- * `JSON.stringify` cannot reproduce, so the freshness check compares the parsed artifact against a
- * fresh compile and asserts byte equality between two compiles instead.
+ * `JSON.stringify` cannot reproduce, so the freshness check compares the parsed artifact
+ * against a fresh compile and asserts byte equality between two compiles instead.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

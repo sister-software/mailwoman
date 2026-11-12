@@ -4,11 +4,15 @@
 /**
  *   The command a reader types to run this CLI, for the follow-up commands a command prints.
  *
- *   A package runner that started this process decides first, because `npx` and `yarn` put the bin they ran on
- *   `PATH` for the child. Otherwise a `mailwoman` executable on `PATH` is typed as `mailwoman`. Otherwise the
- *   lockfile in the nearest project directory picks the runner. A runner's own prefix (`yarn mailwoman`,
- *   `pnpm exec mailwoman`, `bunx mailwoman`) is used only when that project installs the package. `npx mailwoman`
- *   covers every other case, and fetches the package on first use.
+ *   A package runner that started this process decides first, because `npx`
+ *   and `yarn` put the bin they ran on `PATH` for the child.
+ *   Otherwise a `mailwoman` executable on `PATH` is typed as `mailwoman`.
+ *
+ *   Otherwise the lockfile in the nearest project directory picks the runner.
+ *   A runner's own prefix (`yarn mailwoman`, `pnpm exec mailwoman`, `bunx mailwoman`)
+ *   is used only when that project installs the package.
+ *
+ *   `npx mailwoman` covers every other case, and fetches the package on first use.
  */
 
 import { liveEnv } from "@mailwoman/core/env"

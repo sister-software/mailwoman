@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `nn/span_scorer.py`: the semi-Markov span scorer, its segment-transition CRF and the gold segmentation.
 //!
 //! The scorer gives every `(start, length, type)` span a score, `(B, S, max_span, T)`, from the classifier's input.

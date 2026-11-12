@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the OpenStreetMap evaluation suites by address shape from the per-country extracts, filters them to
- *   rows neither compared model trained on, and freezes each as a held-out dataset with its lineage.
+ *   Builds the OpenStreetMap evaluation suites by address shape from the
+ *   per-country extracts, filters them to rows neither compared model trained on,
+ *   and freezes each as a held-out dataset with its lineage.
+ *
  *   `grade.run.ts` beside it grades models on the frozen suites.
  *
  *   Usage:
@@ -13,9 +15,9 @@
  *     [--training-config <config .yaml>] [--path-root /mnt/mw] [--per-country 200] [--seed 2868] \
  *     [--countries al,au]
  *
- *   Name each compared model by its `--model-card`, or by its `--training-config` when the card's
- *   `training.corpus_version` is stale. It reads the extracts and writes only under `--out`, which may not lie
- *   under the extract directory.
+ *   Name each compared model by its `--model-card`, or by its `--training-config`
+ *   when the card's `training.corpus_version` is stale.
+ *   It reads the extracts and writes only under `--out`, which may not lie under the extract directory.
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"

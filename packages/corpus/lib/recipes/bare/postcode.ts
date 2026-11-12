@@ -3,12 +3,13 @@
 
 /**
  * `bare-postcode` — a postcode without another address component, in the country's format.
- * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the detector
- * calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
+ *
+ * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the
+ * detector calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
@@ -51,7 +52,7 @@ interface PostcodeSource {
 	country: string
 }
 
-const EXTRACTED = dataRootPath("openaddresses", "extracted")
+const EXTRACTED = currentSourcePath("openaddresses", "extracted")
 
 /**
  * Each file's publisher has a register row whose elected decision permits transform
@@ -120,7 +121,7 @@ export function selectPostcodes(codes: Iterable<string>, limit: number, seed: nu
 }
 
 /**
- * Return every required input path that is absent, preserving declaration order for diagnostics.
+ * Return every required input path that's absent, preserving declaration order for diagnostics.
  */
 export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 	paths: readonly P[],
@@ -133,7 +134,7 @@ export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 
 /**
  * Every surface a country writes for one postcode, spaced form first, or `[]`
- * when this recipe defines no form for that country or the code does not fit.
+ * when this recipe defines no form for that country or the code doesn't fit.
  *
  * Exported so a test can pin that every rendered surface is one {@linkcode detectedAsPostcode} accepts.
  */
@@ -148,7 +149,7 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 /**
  * Whether `known-formats.ts` reads this surface as a postcode across its whole span.
  *
- * A surface the detector does not recognize would train the model on a string
+ * A surface the detector doesn't recognize would train the model on a string
  * the query-shape prior cannot then support.
  */
 export function detectedAsPostcode(surface: string): boolean {
@@ -184,7 +185,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		if (missing.length) {
 			throw new Error(
 				`bare-postcode is missing ${missing.length} of ${SOURCES.length} required OpenAddresses files, ` +
-					`starting with ${missing[0]}. Fetch the per-source runs into \`openaddresses/extracted/\` ` +
+					`starting with ${missing[0]}. Fetch the per-source runs into ${EXTRACTED} ` +
 					"(anonymous, see packages/corpus/CLAUDE.md)."
 			)
 		}
@@ -256,7 +257,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 				for (const surface of surfaces) {
 					if (perCountry.get(country)! >= budget) break
 
-					// A surface the detector does not read as a postcode is a disagreement
+					// A surface the detector doesn't read as a postcode is a disagreement
 					// between this table and `known-formats.ts`.
 					if (!detectedAsPostcode(surface)) {
 						unrecognized++

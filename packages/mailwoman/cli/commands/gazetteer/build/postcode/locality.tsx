@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build postcode-locality --recipe base|jp|kr|tw` — the postcode →
- *   containing-locality tables, ported from the four standalone builders. Per-recipe options:
+ *   `mailwoman gazetteer build postcode-locality --recipe base|jp|kr|tw` builds the
+ *   postcode to containing-locality tables, ported from the four standalone builders.
+ *   Per-recipe options:
  *
  *   - `base` — PIP-containment from a WOF admin repo: `--country --admin-repo --postcode-db --output`
- *     (+ `--radius-km`, `--max-candidates`). `--finalize` freezes an accumulated multi-country table.
+ *     (+ `--radius-km`, `--max-candidates`).
+ *     `--finalize` freezes an accumulated multi-country table.
  *   - `jp` — KEN_ALL authoritative name-match: `--country JP --postal-names --geonames --admin-db --output`.
  *   - `kr` — GeoNames point-primary match: `--geonames --admin-db --output`.
  *   - `tw` — postal XML + polygon bridge: `--postal-xml --divisions --admin-db --output`.
  *
- *   Every recipe seals its artifact 0444. The pipeline modules are lazy-imported so `--help` never
- *   faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
+ *   Every recipe seals its artifact 0444.
+ *   The pipeline modules are lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { CommandError } from "@mailwoman/core/scripting/command"

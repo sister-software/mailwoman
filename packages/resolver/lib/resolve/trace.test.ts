@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
@@ -166,7 +169,7 @@ describe("Resolver-interior trace", () => {
 		expect(traced?.reachableIn).toContainEqual({ placetype: "region", n: 1 })
 		expect(backend.calls.map((c) => c.placetype)).toContain("region")
 
-		// Without the flag, the same miss is not probed.
+		// Without the flag, the same miss isn't probed.
 		const quietBackend = new BandedBackend([
 			{ ...WHITBY_PLACES[1]!, id: 3, name: "Nowheresville", placetype: "region" },
 		])

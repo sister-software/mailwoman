@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Probe-1 read-out (parity campaign): score a checkpoint on the held-out fragment-dev split with
- *   the pre-registered separator metrics:
+ *   Probe-1 read-out (parity campaign): score a checkpoint on the held-out fragment-dev
+ *   split with the pre-registered separator metrics:
  *
- *   - Token-level tag accuracy against span-level exact match, where a token-F1 rise with a lagging
- *       span-exact-match confirms the span-head ceiling.
- *   - Trailing-number-to-postcode rate on street and number rows, where persistence above noise
- *       confirms the numeric-neighbor confusion survives data.
+ *   - Token-level tag accuracy against span-level exact match, where a token-F1 rise
+ *     with a lagging span-exact-match confirms the span-head ceiling.
+ *   - Trailing-number-to-postcode rate on street and number rows, where persistence
+ *     above noise confirms the numeric-neighbor confusion survives data.
  *
- *   Fixture: fragment-dev.jsonl (rows never trained on, schema matching corpus rows). Grade candidates
- *   via `--weights-cache` package-shaped dirs only (the zero-fill trap).
+ *   Fixture: fragment-dev.jsonl (rows never trained on, schema matching corpus rows).
+ *   Grade candidates via `--weights-cache` package-shaped dirs only (the zero-fill trap).
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"

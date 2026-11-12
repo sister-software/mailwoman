@@ -4,8 +4,9 @@
 /**
  *   Tests for the fragment board's interval math and fixture interface.
  *
- *   The interval is the reason this board exists. It turns "3/15" into "somewhere between 4% and
- *   48%", and if the math is wrong the board launders an anecdote into a decimal.
+ *   The interval is the reason this board exists.
+ *   It turns "3/15" into "somewhere between 4% and 48%", and if the math is wrong
+ *   the board launders an anecdote into a decimal.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

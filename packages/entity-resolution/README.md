@@ -96,7 +96,7 @@ A nonexistent path satisfies that requirement.
 
 So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pass `candidate.db` to
 `--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
-backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
+backend queries `place_search`/`spr`, which a candidate gazetteer doesn't have.
 
 An argument required only to discard it is a defect in this command. Documented rather than fixed.
 
@@ -108,7 +108,7 @@ Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `
 - [`@mailwoman/match`](../match) — the low-level block/score/cluster primitives
 - [`@mailwoman/record`](../record) — `SourceRecord` schema and normalizers
 - [`@mailwoman/address-id`](../address-id) — exact-match join key
-- [Match messy records to one entity each](https://mailwoman.post/docs/developers/how-to/match-messy-records)
+- [Compare candidate duplicate addresses](https://mailwoman.post/docs/guides/match-records)
 
 ## License
 

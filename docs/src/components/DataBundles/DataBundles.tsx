@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The published-bundle tables on `/docs/product/data-products`, rendered from the `runtime-assets` plugin's global
- *   data rather than typed into the page. The first table is the registry's own figures, with each size summed from
- *   the bundle's artifacts. The second is the committed snapshot of what the bucket serves, dated, so a reader can
- *   see how old the measurement is. `BundleSize` and `BundleFileCount` render one bundle's figure inline for the prose
- *   around the tables.
+ *   The published-bundle tables on `/product/limits-and-status`, rendered from the
+ *   `runtime-assets` plugin's global data rather than typed into the page.
  *
- *   A page that asks for a bundle absent from the registry fails the build here rather than rendering a blank.
+ *   The first table is the registry's own figures, with each size summed from the bundle's artifacts.
+ *   The second is the committed snapshot of what the bucket serves, dated,
+ *   so a reader can see how old the measurement is.
+ *
+ *   `BundleSize` and `BundleFileCount` render one bundle's figure inline for the prose around the tables.
+ *
+ *   A page that asks for a bundle absent from the registry fails the build here
+ *   rather than rendering a blank.
  *
  *   Usage in MDX:
  *

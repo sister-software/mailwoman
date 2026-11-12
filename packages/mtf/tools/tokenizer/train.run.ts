@@ -4,12 +4,17 @@
 /**
  *   Train a versioned SentencePiece tokenizer from a corpus's train split.
  *
- *   The tool writes `tokenizer.model`, `tokenizer.vocab`, `model_card.json` and `META.json` under `--output`. The card
- *   records the byte-fallback rate on `--eval-fixture`, so a tokenizer's coverage is a measured number. The training
- *   runs native `spm_train` from SentencePiece v0.2.2 and writes the model the Python wheel writes for the same call.
+ *   The tool writes `tokenizer.model`, `tokenizer.vocab`, `model_card.json`
+ *   and `META.json` under `--output`.
+ *   The card records the byte-fallback rate on `--eval-fixture`, so a tokenizer's
+ *   coverage is a measured number.
  *
- *   `--corpus` takes a corpus tree (the parent of `train/`), a directory holding exactly one `corpus-v*` tree, or a
- *   version (`v0.3.0` or `0.3.0`), which resolves to `corpus/versioned/vX/corpus-vX` under the data root.
+ *   The training runs native `spm_train` from SentencePiece v0.2.2 and writes the
+ *   model the Python wheel writes for the same call.
+ *
+ *   `--corpus` takes a corpus tree (the parent of `train/`), a directory holding
+ *   exactly one `corpus-v*` tree, or a version (`v0.3.0` or `0.3.0`), which resolves
+ *   to `corpus/versioned/vX/corpus-vX` under the data root.
  *
  *   Usage:
  *

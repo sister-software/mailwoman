@@ -3,8 +3,8 @@
 
 /**
  *   A polygon layer's stored ring blob: an 8-byte header, then a `(u32 pointCount, u32 polygonIndex)`
- *   pair per ring, then `[lon, lat]` pairs on an 8-byte boundary so the reader takes a
- *   `Float64Array` view; `polygonIndex` is required because one feature's rings belong to several polygons.
+ *   pair per ring, then `[lon, lat]` pairs on an 8-byte boundary so the reader takes a `Float64Array`
+ *   view; `polygonIndex` is required because one feature's rings belong to several polygons.
  */
 
 import type { LatLonBounds } from "#bbox"
@@ -86,8 +86,8 @@ export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 }
 
 /**
- * The ring table plus a `Float64Array` over the coordinates, throwing when the blob's version is not
- * {@linkcode RING_BLOB_VERSION} or its declared ring table does not account for the bytes present.
+ * The ring table plus a `Float64Array` over the coordinates, throwing when the blob's version isn't
+ * {@linkcode RING_BLOB_VERSION} or its declared ring table doesn't account for the bytes present.
  */
 function openRings(blob: Uint8Array): {
 	ringCount: number
@@ -95,7 +95,7 @@ function openRings(blob: Uint8Array): {
 	polygonIndices: Uint32Array
 	coordinates: Float64Array
 } {
-	// `blob.byteOffset` is not always zero: node:sqlite hands back a view into a shared buffer.
+	// `blob.byteOffset` isn't always zero: node:sqlite hands back a view into a shared buffer.
 	const view = new DataView(blob.buffer, blob.byteOffset, blob.byteLength)
 	const version = view.getUint32(0, true)
 
@@ -234,7 +234,7 @@ export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number
 
 /**
  * Both readings of one feature's area, in square meters: `nested` respects ring
- * orientation (holes subtract) and `allExterior` does not (holes add).
+ * orientation (holes subtract) and `allExterior` doesn't (holes add).
  */
 export function ringAreaReadings(polygons: MultiPolygonRings): {
 	nested: number

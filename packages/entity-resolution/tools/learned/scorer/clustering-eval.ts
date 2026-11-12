@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Learned-scorer clustering A/B. A better pairwise scorer need not lift the assembled clustering F1,
- *   because that F1 depends on the threshold and connected components. This measures the clustering F1
- *   directly. It splits the NPIs into train and eval, trains a GBT and an LR on train pairs labeled by
- *   same NPI, then clusters the eval records three ways through the same `resolveEntities` pipeline
- *   (FS baseline, GBT scorer, LR scorer), sweeping the link threshold for each.
+ *   Learned-scorer clustering A/B.
  *
- *   The FS arm is the benchmark baseline (same model: address-frequency plus collapsed spatial,
- *   EM-fit), and the split is in-domain, held out by NPI rather than by state.
+ *   A better pairwise scorer need not lift the assembled clustering F1, because that
+ *   F1 depends on the threshold and connected components.
+ *   This measures the clustering F1 directly.
+ *
+ *   It splits the NPIs into train and eval, trains a GBT and an LR on train pairs labeled by
+ *   same NPI, then clusters the eval records three ways through the same `resolveEntities`
+ *   pipeline (FS baseline, GBT scorer, LR scorer), sweeping the link threshold for each.
+ *
+ *   The FS arm is the benchmark baseline (same model: address-frequency plus collapsed spatial, EM-fit),
+ *   and the split is in-domain, held out by NPI rather than by state.
  *
  *   Run: `mailwoman registry scorer-eval clustering [--npis 2000] [--split 0.67] [--seed 1]
  *   [--out-md <md>]`

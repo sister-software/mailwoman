@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The compare handler's interface, driven through a stub registry so no weights load and no gazetteer opens.
+ *   The compare handler's interface, driven through a stub registry
+ *   so no weights load and no gazetteer opens.
  */
 
 import { describe, expect, it } from "vitest"
@@ -175,7 +176,7 @@ describe("mwdev_compare", () => {
 	it("caveats a zero-difference result, because that is also what an unfired pin looks like", async () => {
 		// Learned on 2026-08-16: this tool's first real run reported "0 of 558 differed —
 		// tight enough to read as a real absence" for a pin that never reached a decode.
-		// The number could not tell the two apart, so the result must not be relayed as though it could.
+		// The number couldn't tell the two apart, so the result mustn't be relayed as though it could.
 		const same = (input: string) => input
 		const tools = await tableWith([stubEngine("a", { x: 1 }, same), stubEngine("b", { x: 2 }, same)])
 

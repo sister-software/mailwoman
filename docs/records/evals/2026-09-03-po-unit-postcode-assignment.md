@@ -22,7 +22,7 @@ register.
 | Footprints         | OS Open Map – Local, tiles SU (md5 `8ca1f100…`) and SZ (md5 `8ac47c52…`), `Building` layer clipped to the PO box | 318,373 polygons                    | OGL-UK-3.0                                                                                                |
 
 The PO box is 50.5662–50.9745 N, 1.5863 W–0.5857 W. Centroids from neighboring areas are included so
-a boundary point is not forced into PO.
+a boundary point isn't forced into PO.
 
 ## Method
 
@@ -69,11 +69,11 @@ from Code-Point Open are a coverage gap of the centroid source rather than of th
 ## Consequences
 
 1. The GB artifact is a sealed build of NSUL joined to Open UPRN's coordinates. The register is open,
-   and the reconstruction does not replace it.
+   and the reconstruction doesn't replace it.
 2. Northern Ireland has no Open UPRN and no NSUL. The method as measured here would be wrong on about
    three points in ten. The NI run of the design record still measures internal consistency, with this
    expectation recorded first.
-3. The runtime decoration step (F4) is not earned.
+3. The runtime decoration step (F4) isn't earned.
 
 ## Reproduce
 

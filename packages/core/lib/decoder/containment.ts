@@ -4,11 +4,12 @@
 /**
  *   Containment rule for the address tree.
  *
- *   Each tag lists permitted parents in priority order (most-preferred first). The tree builder
- *   resolves each span's parent by walking this list and picking the first tag that has at least
- *   one labeled span. if multiple spans share that tag, the one nearest to this span in char
- *   distance wins. Spans whose tag is absent from this map (or has no labeled parent) become
- *   roots.
+ *   Each tag lists permitted parents in priority order (most-preferred first).
+ *   The tree builder resolves each span's parent by walking this list and picking the
+ *   first tag that has at least one labeled span. if multiple spans share that tag,
+ *   the one nearest to this span in char distance wins.
+ *
+ *   Spans whose tag is absent from this map (or has no labeled parent) become roots.
  *
  *   Tags absent from a map are treated as root-only (no parent ever accepted).
  *
@@ -16,15 +17,17 @@
  *
  *   Address systems disagree on hierarchy: a US street address nests `house_number → street →
  *   locality`, while a Japanese block address nests `building_number → sub_block → block →
- *   district` — there is no `street` parent at all. Today a single global map suffices only because
+ *   district` — there's no `street` parent at all. Today a single global map suffices only because
  *   the tag sets don't collide, but the moment the resolver or tree builder hardcodes the Western
  *   shape, retrofitting a second system gets expensive (DeepSeek resolver consult, 2026-05-30).
  *
- *   The cheap insurance is this indirection: callers ask `containmentFor(system)` rather than
- *   importing one global constant. Every system resolves to `WESTERN_PARENT_OF`, and a country
- *   that numbers houses inside settlements to `SETTLEMENT_PARENT_OF`. When a distinct system map
- *   lands (Phase 6 JP), it slots in here with zero call-site churn. See `AddressSystem` in
- *   `./types.ts`.
+ *   The cheap insurance is this indirection: callers ask `containmentFor(system)`
+ *   rather than importing one global constant.
+ *   Every system resolves to `WESTERN_PARENT_OF`, and a country that numbers houses
+ *   inside settlements to `SETTLEMENT_PARENT_OF`.
+ *
+ *   When a distinct system map lands (Phase 6 JP), it slots in here with zero call-site churn.
+ *   See `AddressSystem` in `./types.ts`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

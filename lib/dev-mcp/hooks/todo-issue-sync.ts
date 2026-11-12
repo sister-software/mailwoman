@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue, asynchronously:
- *   no write happens unless the checkout has a linked issue, the tool is `TodoWrite`, and the issue contains both
- *   markers. A lock and a replaceable payload file serialize concurrent updates.
+ *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub
+ *   issue, asynchronously: no write happens unless the checkout has a linked issue,
+ *   the tool is `TodoWrite`, and the issue contains both markers.
+ *
+ *   A lock and a replaceable payload file serialize concurrent updates.
  */
 
 import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
@@ -131,7 +133,7 @@ export async function workerMain(
 	const dir = stateDir(cwd)("todo-sync")
 	const lock = dir("lock")
 
-	// Wait for the lock so this worker's payload is not left unsynced.
+	// Wait for the lock so this worker's payload isn't left unsynced.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {
@@ -197,7 +199,7 @@ async function main(): Promise<void> {
 	try {
 		await (values.worker ? workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false) : hookMain())
 	} catch {
-		// Hook failures must not interrupt the caller's turn.
+		// Hook failures mustn't interrupt the caller's turn.
 	}
 }
 

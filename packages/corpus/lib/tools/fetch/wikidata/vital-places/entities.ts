@@ -2,34 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The entity leg: `wbgetentities` on the Wikidata API, in batches of {@linkcode DEFAULT_ENTITY_BATCH}
- * ids, for the ranked candidates.
+ * The entity leg: `wbgetentities` on the Wikidata API, in batches of
+ * {@linkcode DEFAULT_ENTITY_BATCH} ids, for the ranked candidates.
  *
- * The API answers an id list where the query service times out on a world-scale class query
- * (measured 2026-11-03: 5,171 items with no timeout against 27 of 29 per-class `GROUP BY` counts
- * failing after about 135 s each). Each entity's classes, country, coordinate, population, sitelink
- * count and the requested languages' labels and aliases are kept. The class verdict is a later phase's.
+ * The API answers an id list where the query service times out on a world-scale
+ * class query (measured 2026-11-03: 5,171 items with no timeout against 27 of 29
+ * per-class `GROUP BY` counts failing after about 135 s each).
+ * Each entity's classes, country, coordinate, population, sitelink count
+ * and the requested languages' labels and aliases are kept.
+ * The class verdict is a later phase's.
  *
- * Records are appended to a JSONL file as each request answers, and a rerun reads the ids already on
- * disk before it asks for the rest. Entity answers therefore skip the HTTP cache: the JSONL file is the
- * resume record, and a cached answer averaged about 100 KB per entity (1.85 GB for 18,600 entities).
+ * Records are appended to a JSONL file as each request answers, and a rerun reads
+ * the ids already on disk before it asks for the rest.
+ * Entity answers therefore skip the HTTP cache: the JSONL file is the resume record,
+ * and a cached answer averaged about 100 KB per entity (1.85 GB for 18,600 entities).
  *
  * The requests follow Wikimedia's published limits:
  *
- * - https://wikitech.wikimedia.org/wiki/Robot_policy, "Action API rules": "If unauthenticated, keep the
- *   concurrency of your requests to 1 at a time, and below 5 requests per second overall." "If
- *   authenticated, you can raise the concurrency to 3 overall, and the number of requests per second to
- *   10." "Avoid using expensive API endpoints: if your request takes more than 1 second to serve, please
- *   wait 5 seconds before making another request."
- * - https://www.mediawiki.org/wiki/API:Etiquette: "If your task is not interactive, i.e. a user is not
- *   waiting for the result, you should use the `maxlag` parameter." "Use GZip compression when making API
- *   calls by setting `Accept-Encoding: gzip` to reduce bandwidth usage."
- * - https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits: "limit the number of concurrent requests
- *   to 3 or fewer"; unauthenticated bot requests with a compliant User-Agent, and accounts with few
- *   edits, get 200 requests per minute.
- * - https://www.mediawiki.org/wiki/Manual:Maxlag_parameter: a lagged replica answers `maxlag` requests
- *   with status 200, an `error.code` of `maxlag`, the `lag` in seconds and a `Retry-After` header;
- *   "pause your script for at least 5 seconds before trying again".
+ * - https://wikitech.wikimedia.org/wiki/Robot_policy, "Action API rules": "If unauthenticated,
+ *   keep the concurrency of your requests to 1 at a time, and below 5 requests per second overall."
+ *   "If authenticated, you can raise the concurrency to 3 overall,
+ *   and the number of requests per second to 10."
+ *   "Avoid using expensive API endpoints: if your request takes more than 1 second to serve,
+ *   please wait 5 seconds before making another request."
+ * - https://www.mediawiki.org/wiki/API:Etiquette: "If your task isn't interactive,
+ *   i.e. a user isn't waiting for the result, you should use the `maxlag` parameter."
+ *   "Use GZip compression when making API calls by setting `Accept-Encoding: gzip`
+ *   to reduce bandwidth usage."
+ * - https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits: "limit the number of
+ *   concurrent requests to 3 or fewer"; unauthenticated bot requests with a compliant
+ *   User-Agent, and accounts with few edits, get 200 requests per minute.
+ * - https://www.mediawiki.org/wiki/Manual:Maxlag_parameter: a lagged replica answers
+ *   `maxlag` requests with status 200, an `error.code` of `maxlag`, the `lag` in seconds
+ *   and a `Retry-After` header; "pause your script for at least 5 seconds before trying again".
  *
  * {@linkcode ACTION_API_LIMITS} holds the concurrency and spacing of each mode, a request that takes
  * more than {@linkcode SLOW_REQUEST_MS} to serve holds its worker for {@linkcode SLOW_REQUEST_WAIT_MS},
@@ -673,7 +678,7 @@ export function claimItemIDs(entity: WikidataEntityBody, property: string): stri
 /**
  * The best-ranked coordinate on Earth, or `null`.
  *
- * A coordinate on another globe, such as a Martian crater's, is not a place an address refers to.
+ * A coordinate on another globe, such as a Martian crater's, isn't a place an address refers to.
  */
 export function readEarthCoordinate(entity: WikidataEntityBody): LatLon | null {
 	for (const claim of rankedClaims(entity, PROPERTY.coordinate)) {
@@ -799,7 +804,7 @@ export interface FetchVitalEntitiesOptions {
 /**
  * The concurrency a run uses: the one asked for, capped by the mode.
  *
- * @throws When the request is not a positive integer.
+ * @throws When the request isn't a positive integer.
  */
 export function resolveConcurrency(mode: WikimediaRequestMode, requested?: number | null): number {
 	const cap = ACTION_API_LIMITS[mode].concurrency
@@ -839,7 +844,7 @@ function describeMode(client: Pick<WikidataAPIClient, "loggedInAs">): string {
  * Append a record for every ranked id the entities file lacks, one batch per request,
  * with up to the mode's concurrency of workers taking the remaining batches in turn.
  *
- * An id already on disk is not requested again.
+ * An id already on disk isn't requested again.
  * Each worker's records are appended through one write queue, a batch's lines together,
  * so the file holds whole lines in the order the batches finished.
  *

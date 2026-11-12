@@ -4,7 +4,8 @@
 /**
  *   Counts what a row's opening token teaches over one epoch, at the draw and emitted levels.
  *
- *   Usage: node packages/mailwoman/tools/training/audits/opening/token.run.ts <config> [--json <path>] [--draws <n>]
+ *   Usage: node packages/mailwoman/tools/training/audits/opening/token.run.ts
+ *   <config> [--json <path>] [--draws <n>]
  */
 
 import { censusArguments, runMixtureCensus } from "../census.ts"

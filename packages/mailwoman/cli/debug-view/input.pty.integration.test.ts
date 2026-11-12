@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the debug view's input field through a real PTY. It checks the bytes a terminal sends for Alt+Backspace
- *   and the values Ink's keypress parser assigns to them. A component test sees only the input passed to `useInput`.
+ *   Tests the debug view's input field through a real PTY.
+ *
+ *   It checks the bytes a terminal sends for Alt+Backspace and the values Ink's
+ *   keypress parser assigns to them.
+ *   A component test sees only the input passed to `useInput`.
  *
  *   The PTY probe checks two terminal sequences:
  *
- *   - `\x17` (ctrl+W — the tty's `werase`, and what iTerm2 sends for ⌥⌫ by default) arrives as
- *       `input: "w", key.ctrl: true`, because Ink resolves ctrl+letter to the letter. `ink-text-input` guards only
- *       ctrl+C, so its insert branch typed the `w`: `hello world` → `hello worldw`. That is the reported
- *       "alt+backspace inserts a w".
- *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`, and was treated as a plain
- *       backspace — one character deleted rather than one word.
+ *   - `\x17` (ctrl+W — the tty's `werase`, and what iTerm2 sends for ⌥⌫ by default) arrives
+ *     as `input: "w", key.ctrl: true`, because Ink resolves ctrl+letter to the letter.
+ *     `ink-text-input` guards only ctrl+C, so its insert branch typed the `w`:
+ *     `hello world` → `hello worldw`.
+ *     That's the reported "alt+backspace inserts a w".
+ *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`,
+ *     and was treated as a plain backspace — one character deleted rather than one word.
  *
- *   Both sequences must delete the word before the cursor. The field must also remove the resolved letter.
+ *   Both sequences must delete the word before the cursor.
+ *   The field must also remove the resolved letter.
  *
  *   The test uses util-linux `script` with its `-e` and `-c` options.
  *   It skips when another `script` executable appears first on `PATH`, like `map-tui/cli.pty.test.ts`.
@@ -120,7 +125,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 			expect(samples).toContain("VALUE=[hello ]")
 			expect(samples).toContain("VALUE=[hello there]")
 			// Ctrl+W deletes a word.
-			// Ink's resolved letter does not reach the value.
+			// Ink's resolved letter doesn't reach the value.
 			expect(samples.at(-1)).toBe("VALUE=[hello ]")
 			expect(samples).not.toContain("VALUE=[hello worldw]")
 			expect(samples).not.toContain("VALUE=[hello therew]")

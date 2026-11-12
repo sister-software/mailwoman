@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The registry of storage operations — the only executable entry point of this package. Knip treats it as
- *   such. An operation that is not listed here is dead code. The `mwops` adapter iterates this array and
- *   never import an operation module directly.
+ *   The registry of storage operations — the only executable entry point of this package.
+ *
+ *   Knip treats it as such.
+ *   An operation that's not listed here is dead code.
+ *
+ *   The `mwops` adapter iterates this array and never import an operation module directly.
  */
 
 import { findOperation } from "@mailwoman/core/scripting"
 
 import type { StorageOperation } from "#storage-kit/operation"
 import { installSudoersOperation, installUdevRuleOperation } from "#storage-kit/operations/install-rules"
+import { migrateOperation } from "#storage-kit/operations/migrate"
 import { planOperation } from "#storage-kit/operations/plan"
 import { prepareOperation } from "#storage-kit/operations/prepare"
 import { statusOperation } from "#storage-kit/operations/status"
@@ -25,6 +29,7 @@ export const storageOperations: ReadonlyArray<StorageOperation<unknown, unknown>
 	prepareOperation,
 	verifyOperation,
 	statusOperation,
+	migrateOperation,
 	installUdevRuleOperation,
 	installSudoersOperation,
 ] as ReadonlyArray<StorageOperation<unknown, unknown>>

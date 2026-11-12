@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The state-code contrast rows the country-balanced recipe renders: each US state whose code is also another
- *   country's code, joined to the sample localities and postcodes generated from Who's On First.
+ *   The state-code contrast rows the country-balanced recipe renders: each US state
+ *   whose code is also another country's code, joined to the sample localities
+ *   and postcodes generated from Who's On First.
  */
 
 import { US_STATE_BY_ABBREVIATION, type USStateAbbreviation } from "@mailwoman/codex/us"

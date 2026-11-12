@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]` — the whole chain for one body over its
- *   locked sources: rows → features → ndjson → tippecanoe → metadata. DEM → hillshade → metadata. the search artifact.
- *   the manifest. Refuses when the lock lacks a source: the build reads pins, never the network.
+ *   `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]` — the whole chain
+ *   for one body over its locked sources: rows → features → ndjson → tippecanoe → metadata.
+ *
+ *   DEM → hillshade → metadata. the search artifact. the manifest.
+ *   Refuses when the lock lacks a source: the build reads pins, never the network.
  */
 
 import { Spinner } from "@inkjs/ui"

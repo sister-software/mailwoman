@@ -3,7 +3,9 @@
 
 /**
  * Defines the schema used by the claim route and published in its OpenAPI document.
- * The success page and rehearsal use this schema for their responses. TypeScript types are inferred from it.
+ *
+ * The success page and rehearsal use this schema for their responses.
+ * TypeScript types are inferred from it.
  */
 
 import { z } from "zod"
@@ -32,7 +34,7 @@ export type ClaimResponse = z.infer<typeof ClaimResponseSchema>
 export type IssuedClaim = Extract<ClaimResponse, { status: "issued" }>
 
 /**
- * Returns `null` for a body that does not match the schema, so a 200 whose fields are missing is no claim.
+ * Returns `null` for a body that doesn't match the schema, so a 200 whose fields are missing is no claim.
  */
 export function parseClaimResponse(body: unknown): ClaimResponse | null {
 	const parsed = ClaimResponseSchema.safeParse(body)

@@ -4,10 +4,12 @@
 /**
  *   Reads a depth for each undersea feature from the terrarium elevation tiles the map draws.
  *
- *   The GEBCO service records no depth. The tiles hold NOAA ETOPO1 bathymetry offshore, at about 1.8 km per
- *   sample, so a depth here is the grid's value near the feature rather than a surveyed sounding.
- *   The feature's generic term decides whether it gets a depth: a deep, trench or basin reports its deepest
- *   sample, and {@link depthKindOf} states why a rise gets none.
+ *   The GEBCO service records no depth.
+ *   The tiles hold NOAA ETOPO1 bathymetry offshore, at about 1.8 km per sample,
+ *   so a depth here is the grid's value near the feature rather than a surveyed sounding.
+ *
+ *   The feature's generic term decides whether it gets a depth: a deep, trench or basin
+ *   reports its deepest sample, and {@link depthKindOf} states why a rise gets none.
  */
 
 import sharp from "sharp"
@@ -95,7 +97,7 @@ export interface DepthSampleRequest {
 	positions: ReadonlyArray<readonly [number, number]>
 	/**
 	 * True when the positions are points whose surroundings should be searched.
-	 * A line's vertices are read as they are.
+	 * A line's vertices are read as they're.
 	 */
 	window: boolean
 	kind: UnderseaDepthKind

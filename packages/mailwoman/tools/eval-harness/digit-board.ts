@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Board that checks whether the parser tags digits in Norwegian address fragments as a house number or a postcode.
+ *   Board that checks whether the parser tags digits in Norwegian address
+ *   fragments as a house number or a postcode.
  */
 
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"

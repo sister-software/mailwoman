@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Every label and predicate here is US SEC filing vocabulary rather than a fact about html tables.
- * it lives in `@mailwoman/filer` because `carriesLegalDesignation` reaches `@mailwoman/record`, whose
- * dependency on `@mailwoman/formatter` and `@mailwoman/core` would close an import cycle inside core.
+ * Every label and predicate here is US SEC filing vocabulary rather than a fact about
+ * html tables. it lives in `@mailwoman/filer` because `carriesLegalDesignation`
+ * reaches `@mailwoman/record`, whose dependency on `@mailwoman/formatter`
+ * and `@mailwoman/core` would close an import cycle inside core.
  */
 
 import { canonicalizeOrganizationName } from "@mailwoman/record"
@@ -129,7 +130,7 @@ export function carriesLegalDesignation(value: string): boolean {
 
 /**
  * True when one cell holds several entity values the source kept in separate blocks.
- * a block boundary by itself is not enough because exporters emit soft line wraps as
+ * a block boundary by itself isn't enough because exporters emit soft line wraps as
  * block boundaries, so both cumulative sides must contain their own legal designation
  * before the cell reads as multiple entities.
  */

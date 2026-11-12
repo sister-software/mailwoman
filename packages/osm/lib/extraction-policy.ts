@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The country extraction policies of the OpenStreetMap address-point build. Each country's policy lives
- *   in `lib/<cc>/extraction-policy.ts` and states which publisher regions may supply the country and which
- *   outline clips it out of a region that holds other countries. The policy is OpenStreetMap-specific: postal
- *   conventions stay in `@mailwoman/codex`, and corpus rendering stays in `@mailwoman/corpus`.
+ *   The country extraction policies of the OpenStreetMap address-point build.
  *
- *   A policy selects inputs and clipping. It makes no claim that every address of the country is mapped.
+ *   Each country's policy lives in `lib/<cc>/extraction-policy.ts` and states which publisher regions
+ *   may supply the country and which outline clips it out of a region that holds other countries.
+ *   The policy is OpenStreetMap-specific: postal conventions stay in `@mailwoman/codex`,
+ *   and corpus rendering stays in `@mailwoman/corpus`.
+ *
+ *   A policy selects inputs and clipping.
+ *   It makes no claim that every address of the country is mapped.
  */
 
 import { extractionPolicy as CA } from "#ca/extraction-policy"
@@ -49,7 +52,7 @@ export interface OSMExtractionPolicy {
 	 * The outline that clips the country out of a region holding other countries,
 	 * by its publisher's ISO 3166-1 alpha-3 key.
 	 *
-	 * A region whose only country is this one is not clipped, as the rooftop builder has never clipped one.
+	 * A region whose only country is this one isn't clipped, as the rooftop builder has never clipped one.
 	 */
 	outline: { publisher: "geoBoundaries"; iso3: string }
 }

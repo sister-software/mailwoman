@@ -4,13 +4,15 @@
 /**
  * An admin tail carrying a postcode is a locality query.
  *
- * The cases run through the real `computeQueryShape` rather than a hand-built shape, so a test asserts the
- * production reading instead of the rule's assumption: a postcode makes the whole input alphanumeric.
- * The postcode also registers a known-format hit. `scoreLocalityOnly` rejects both cases.
+ * The cases run through the real `computeQueryShape` rather than a hand-built shape,
+ * so a test asserts the production reading instead of the rule's assumption:
+ * a postcode makes the whole input alphanumeric.
+ * The postcode also registers a known-format hit.
+ * `scoreLocalityOnly` rejects both cases.
  *
- * The verdict decides the parse register (`deriveInputMode`), whose `formatted` register withholds the
- * street-type and locality-surface lexicons, so the verdict on these rows decides whether the decoder sees
- * that evidence at all.
+ * The verdict decides the parse register (`deriveInputMode`), whose `formatted`
+ * register withholds the street-type and locality-surface lexicons, so the verdict on
+ * these rows decides whether the decoder sees that evidence at all.
  */
 
 import { computeQueryShape } from "@mailwoman/query-shape/compute"

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tree resolution over a browser-side place lookup, with the lookup kept structural (`MailwomanLookupLike`).
+ *   Tree resolution over a browser-side place lookup, with the lookup kept
+ *   structural (`MailwomanLookupLike`).
  */
 
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
@@ -377,7 +378,7 @@ export async function runCascade(
 
 	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
 
-	// An ambiguous international postcode must not out-pin the parsed city across countries,
+	// An ambiguous international postcode mustn't out-pin the parsed city across countries,
 	// so the locality wins the pin and the postcode stays in the list.
 	const top = collected[0]!
 	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)

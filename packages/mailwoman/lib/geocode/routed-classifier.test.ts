@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `parseForGeocode` over a classifier that routes by script: the routed classifier is asked for, the postal mark
- *   follows its encoder rather than the primary's. A classifier without `forInput` is unchanged.
+ *   `parseForGeocode` over a classifier that routes by script: the routed classifier is
+ *   asked for, the postal mark follows its encoder rather than the primary's.
+ *   A classifier without `forInput` is unchanged.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

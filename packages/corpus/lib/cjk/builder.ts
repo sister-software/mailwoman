@@ -514,7 +514,7 @@ export function verifyCJKRecord(
  * The schema is read as data, because `@mailwoman/neural` depends on `@mailwoman/gazetteer`,
  * which depends on this package.
  *
- * @throws When the schema names no such label set.
+ * @throws When the schema identifies no such label set.
  */
 export async function readLabelSetTags(name: string): Promise<Set<string>> {
 	const path = repoRootPath("packages", "neural", "data", "label-schema.v1.json")
@@ -663,7 +663,7 @@ export async function sealCharVocab(corpusDirectory: PathBuilderLike, name: stri
 /**
  * Reads a character vocabulary a builder wrote.
  *
- * The object's key order is not the vocabulary's order, because JSON parsing
+ * The object's key order isn't the vocabulary's order, because JSON parsing
  * lists integer-like keys such as `"1"` first.
  * A caller reads its characters and size, and orders them itself.
  *

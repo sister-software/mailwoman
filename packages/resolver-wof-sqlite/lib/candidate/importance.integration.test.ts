@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests for {@link loadImportanceIndex} / {@link ImportanceIndex}, the name-keyed, geographically disambiguated join that fills the candidate gazetteer's `importance` column.
+ * Tests for {@link loadImportanceIndex} / {@link ImportanceIndex}, the name-keyed,
+ * geographically disambiguated join that fills the candidate gazetteer's `importance` column.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

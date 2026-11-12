@@ -2,11 +2,11 @@
 
 The reviewed activity-phrase lexicon for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: the surface forms a person types for an activity (`pick up a prescription` → `obtain_medication`), each entry carrying the committed record that attests it and the locales it applies to.
 
-Recognition only. This package makes no statement about the world — which establishments afford an activity, in which country, on whose authority — that knowledge lives in `@mailwoman/geographic-model`, and a phrase here is valid only when it names an activity concept that model defines. Zero runtime dependencies.
+Recognition only. This package makes no statement about the world — which establishments afford an activity, in which country, on whose authority — that knowledge lives in `@mailwoman/geographic-model`, and a phrase here is valid only when it identifies an activity concept that model defines. Zero runtime dependencies.
 
 ## Provenance discipline
 
-Every entry belongs to one of four attestation classes — a committed query, a derived form of one, a clause quoted from the compiled concept's description, or a regional register copied from a committed synonym — and the test suite re-checks each attestation against its source on every run. [`data/PROVENANCE.md`](./data/PROVENANCE.md) records the rules. An entry without a checkable attestation does not load.
+Every entry belongs to one of four attestation classes — a committed query, a derived form of one, a clause quoted from the compiled concept's description, or a regional register copied from a committed synonym — and the test suite re-checks each attestation against its source on every run. [`data/PROVENANCE.md`](./data/PROVENANCE.md) records the rules. An entry without a checkable attestation doesn't load.
 
 ## Release posture
 

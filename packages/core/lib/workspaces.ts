@@ -3,8 +3,10 @@
 
 /**
  *   This function expands the root manifest's `workspaces` field to the directories it names.
+ *
  *   It supports only a single trailing `*` segment, and a `!directory` entry excludes one literal directory.
  *   A literal entry without a manifest is an error instead of an empty result.
+ *
  *   The function refuses patterns it cannot expand instead of reporting no matches.
  */
 

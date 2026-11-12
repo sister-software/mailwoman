@@ -2,20 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The streaming pass — every feature into `coastal_zone_area` (or `coastal_ground_instability`) and into
- *   `coastal_zone_cell` — as a unit of work that can run over part of the source.
+ *   The streaming pass — every feature into `coastal_zone_area` (or `coastal_ground_instability`)
+ *   and into `coastal_zone_cell` — as a unit of work that can run over part of the source.
  *
- *   Bounded per range of the authority's own feature ids, because h3's wasm heap cannot be reset from
- *   JavaScript and does not survive an unbounded number of polyfill calls. A build that completes only when
- *   fragmentation happens to stay low is not reproducible.
+ *   Bounded per range of the authority's own feature ids, because h3's wasm heap cannot
+ *   be reset from JavaScript and doesn't survive an unbounded number of polyfill calls.
+ *   A build that completes only when fragmentation happens to stay low isn't reproducible.
  *
- *   The domain checks run here and throw: an unknown policy, policy interpretation or defense type is a
- *   source-schema change. The ingest step rejects it instead of mapping it to a nearest neighbor or null,
- *   because that mapping converts "the source changed" into "there is no data here". The defense check
- *   compares case-folded and stores the source's own string for the source's inconsistent capitalization.
+ *   The domain checks run here and throw: an unknown policy, policy interpretation
+ *   or defense type is a source-schema change.
+ *   The ingest step rejects it instead of mapping it to a nearest neighbor or null,
+ *   because that mapping converts "the source changed" into "there's no data here".
  *
- *   The chunk owns no artifact. It appends rows to a database that the parent created and will seal.
- *   It returns counts for the parent to add. Chunks run one at a time against that file, so no writers overlap.
+ *   The defense check compares case-folded and stores the source's own string
+ *   for the source's inconsistent capitalization.
+ *
+ *   The chunk owns no artifact.
+ *   It appends rows to a database that the parent created and will seal.
+ *
+ *   It returns counts for the parent to add.
+ *   Chunks run one at a time against that file, so no writers overlap.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

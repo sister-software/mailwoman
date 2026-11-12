@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker mints two identifiers. This module also defines the stored form of the secret identifier.
+ *   The worker mints two identifiers.
+ *
+ *   This module also defines the stored form of the secret identifier.
  */
 
 import { toBase64URL } from "@mailwoman/core/crypto/base64url"

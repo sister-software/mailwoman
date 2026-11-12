@@ -3,15 +3,20 @@
 
 /**
  *   Download and alphabetize libpostal's `resources/dictionaries`.
+ *
  *   The normalizer uses per-language abbreviation and street-type tables.
  *   It also uses synonym tables.
+ *
  *   The script shallow-clones {@link https://github.com/openvenues/libpostal openvenues/libpostal}.
  *   It sorts each dictionary file in place and copies the `dictionaries/` tree beside this script.
  *
- *   Replaces the bash `resources-download.sh`. `git clone` runs through `GitClient`.
- *   Everything else is `@mailwoman/core/fs`. The script sorts in-process with a plain
- *   code-point `Array.sort()`, which matches `LC_ALL=C sort` byte order — deterministic and free of
- *   the shell `sort`'s locale dependency (the original relied on the ambient locale).
+ *   Replaces the bash `resources-download.sh`.
+ *   `git clone` runs through `GitClient`.
+ *
+ *   Everything else is `@mailwoman/core/fs`.
+ *   The script sorts in-process with a plain code-point `Array.sort()`, which matches
+ *   `LC_ALL=C sort` byte order — deterministic and free of the shell `sort`'s locale
+ *   dependency (the original relied on the ambient locale).
  *
  *   ## Usage
  *

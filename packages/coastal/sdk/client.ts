@@ -3,14 +3,15 @@
 
 /**
  *   Client for the Environment Agency's NCERM catalogue entry, ISO record and spatial services.
+ *
  *   The geodatabase download streams through `download.ts` instead of this client.
  *
- *   - The OGC service slug is spelled `ncern`. The correctly spelled slug returns 404, so
- *     `vocabulary.ts` keeps the misspelling as a constant.
+ *   - The OGC service slug is spelled `ncern`.
+ *     The correctly spelled slug returns 404, so `vocabulary.ts` keeps the misspelling as a constant.
  *   - The download host rejects HEAD and ignores `Range`, so file size cannot show freshness.
  *     {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date instead.
- *   - The abstract holds the attribution statement twice. Only the second copy has a year.
- *     {@linkcode parseAttributionStatement} rejects copies without a year.
+ *   - The abstract holds the attribution statement twice.
+ *     Only the second copy has a year. {@linkcode parseAttributionStatement} rejects copies without a year.
  */
 
 import {

@@ -4,7 +4,7 @@
 /**
  * @file Populations the gazetteer records at a fraction of their size, corrected against the record's own concordance.
  *
- *   This file records corrections for review. The build must not rewrite populations from a
+ *   This file records corrections for review. The build mustn't rewrite populations from a
  *   same-name-parent ratio. The detector cannot distinguish a district's mis-recorded namesake
  *   city from a small village with the district name. Both places are real.
  *

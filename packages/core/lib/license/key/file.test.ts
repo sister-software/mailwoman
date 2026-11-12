@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The config-root license files. `$public` reads `process.env` on every access, so the test points the config root and
- *   the key variable at a scratch directory with `vi.stubEnv` and the modules under test see it.
+ *   The config-root license files.
+ *
+ *   `$public` reads `process.env` on every access, so the test points the config root and the
+ *   key variable at a scratch directory with `vi.stubEnv` and the modules under test see it.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"

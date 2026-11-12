@@ -6,7 +6,7 @@
  *   fast suite stays offline.
  *
  *   The publisher serves `IDENA:DIRECC_Txt_Direcciones` from `https://idena.navarra.es/ogc/wfs`,
- *   181,098 features carrying `MUNICIPIO`, `ENTIDAD`, `CODPOSTAL`, `VIA` and `PORTAL`. That is the
+ *   181,098 features carrying `MUNICIPIO`, `ENTIDAD`, `CODPOSTAL`, `VIA` and `PORTAL`. That's the
  *   register the INSPIRE partitions are drawn from, served by a second service, so it is this
  *   source's publisher-side oracle: partition 1's `AD.Address.1` composes
  *   `CALLE CALLEJA, 4, 31280 Abáigar`, and `DIRECC_Txt_Direcciones.1` reads `MUNICIPIO` `Abáigar`,
@@ -14,12 +14,12 @@
  *
  *   Two differences between the publisher's own two services are normalized here rather than in the
  *   adapter, because the INSPIRE GML is the elected source and this layer is the check. The layer
- *   writes `S/N` in `PORTAL` where it holds no number. That is the statement the GML designator
+ *   writes `S/N` in `PORTAL` where it holds no number. That's the statement the GML designator
  *   makes. And it separates a letter suffix differently, `3 - A` against the GML's `3 A`, so the
  *   comparison drops the separator on both sides.
  *
  *   Across all three partitions measured against this layer, 1,298 of 1,457 rows agreed on street,
- *   number, postcode and settlement at once. The 159 that did not are two street names in Eulate
+ *   number, postcode and settlement at once. The 159 that didn't are two street names in Eulate
  *   where the publisher's two services disagree with each other: the INSPIRE GML writes
  *   `CALLE COPALACIO ALTO` and `CALLE COPALACIO BAJO`, and this layer writes `COPARACIO`. Partition
  *   100 is therefore not in this fixture, and that disagreement is the publisher's rather than the
@@ -120,7 +120,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-navarra rows against IDENA:DIRECC_Txt_D
 			const feed = await response.text()
 
 			// The register rests on the feed's own `rights`, so the assertion is that the
-			// feed still states it rather than that its byte count has not moved.
+			// feed still states it rather than that its byte count hasn't moved.
 			expect(feed).toContain("Creative Commons Attribution 4.0 International (CC BY 4.0)")
 			expect(feed).toContain("AD_Navarra_1.gml.zip")
 		},

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares the in-place matcher with the object matcher over every state of the staged en-US FST gazetteer, the
- *   file `mwops release copy-weights` writes into `@mailwoman/neural-weights-en-us`.
+ *   Compares the in-place matcher with the object matcher over every state of the staged en-US FST
+ *   gazetteer, the file `mwops release copy-weights` writes into `@mailwoman/neural-weights-en-us`.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

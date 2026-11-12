@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Israeli postal designators in Hebrew: the premise, sub-premise, floor and relation words an address or a
- *   query uses.
+ *   Israeli postal designators in Hebrew: the premise, sub-premise, floor
+ *   and relation words an address or a query uses.
  *
  * @see {@link https://he.wikipedia.org/wiki/תא_דואר Hebrew Wikipedia: תא דואר}
  * @see {@link https://en.wiktionary.org/wiki/קומה Wiktionary: קומה}

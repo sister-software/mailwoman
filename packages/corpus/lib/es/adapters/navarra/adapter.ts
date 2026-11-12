@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `es-navarra`: the INSPIRE Addresses theme the Gobierno de Navarra publishes, read from its zipped
- * GML partitions.
+ * `es-navarra`: the INSPIRE Addresses theme the Gobierno de Navarra publishes,
+ * read from its zipped GML partitions.
  *
  * The ATOM service at
  * `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`
@@ -13,11 +13,13 @@
  * no such mapping and this adapter claims none. It reads one archive or a directory of them. A
  * caller harvests all 272 by pointing it at the directory.
  *
- * This publisher is read entirely from its references' titles. No other INSPIRE reader
- * here reads its addresses that way. Its own file publishes no `AD:ThoroughfareName`,
- * `AD:PostalDescriptor` or `AD:AdminUnitName` feature at all: partition 1 holds 29 distinct element
- * names across 115 addresses and none of them is a component feature. Each address instead holds
- * six `AD:component` references whose `xlink:title` states the value:
+ * This publisher is read entirely from its references' titles.
+ * No other INSPIRE reader here reads its addresses that way.
+ *
+ * Its own file publishes no `AD:ThoroughfareName`, `AD:PostalDescriptor`
+ * or `AD:AdminUnitName` feature at all: partition 1 holds 29 distinct element names
+ * across 115 addresses and none of them is a component feature.
+ * Each address instead holds six `AD:component` references whose `xlink:title` states the value:
  *
  * | `xlink:href` | `xlink:title` | read as |
  * | --- | --- | --- |
@@ -28,30 +30,37 @@
  * | `ThoroughfareName` | `CALLE CALLEJA` | the street |
  * | `PostalDescriptor` | `31280` | the postcode |
  *
- * The counts are exact and regular: 690 references over 115 addresses in partition 1, 1,728 over 288
- * in partition 100 and 6,324 over 1,054 in partition 250. Each address holds six references, one of
- * each shape above.
+ * The counts are exact and regular: 690 references over 115 addresses in partition 1,
+ * 1,728 over 288 in partition 100 and 6,324 over 1,054 in partition 250.
+ * Each address holds six references, one of each shape above.
  *
- * The two place titles are not the same value. In Abáigar and Eulate the `5thOrder` title repeats the
- * municipality, and in Bera it states a *concejo* the municipality contains: `Suspela` and `Dornaku`
- * beside `Bera`. The fifth order is below the municipal fourth, so the title is written as a
- * dependent locality where it differs from the municipality and left out where it repeats it.
+ * The two place titles are not the same value.
+ * In Abáigar and Eulate the `5thOrder` title repeats the municipality, and in Bera it
+ * states a *concejo* the municipality contains: `Suspela` and `Dornaku` beside `Bera`.
  *
- * `Comunidad Foral de Navarra` is the autonomous community's own name rather than the province name a
- * Spanish address writes, and the publisher's own address layer has no region column, so no
- * `region` is written.
+ * The fifth order is below the municipal fourth, so the title is written as a dependent
+ * locality where it differs from the municipality and left out where it repeats it.
  *
- * The publisher's own rendering is in a different service, and it agrees. `IDENA` publishes
- * `IDENA:DIRECC_Txt_Direcciones`, 181,098 features, each with `MUNICIPIO`, `ENTIDAD`, `CODPOSTAL`,
- * `VIA` and `PORTAL`. Partition 1's `AD.Address.1` composes `CALLE CALLEJA, 4, 31280 Abáigar`, and
- * that layer's `DIRECC_Txt_Direcciones.1` reads `MUNICIPIO` `Abáigar`, `ENTIDAD` `Abáigar`,
- * `CODPOSTAL` `31280`, `VIA` `CALLE CALLEJA`, `PORTAL` `4`. The adapter's integration test checks a
- * sample of rows against that layer, the publisher-side oracle for this source.
+ * `Comunidad Foral de Navarra` is the autonomous community's own name rather than
+ * the province name a Spanish address writes, and the publisher's own address layer
+ * has no region column, so no `region` is written.
  *
- * Two values state an absence rather than a value. A `PostalDescriptor` title of `0` is the publisher
- * holding no postcode, measured in Bera. A designator of `S/N` is *sin número*, and `#es/cadastre`
- * reads it for all four Spanish cadastres. A designator may also hold a space-separated letter,
- * `18 A` and `34 A` in Eulate. The adapter keeps that letter as the publisher wrote it.
+ * The publisher's own rendering is in a different service, and it agrees.
+ * `IDENA` publishes `IDENA:DIRECC_Txt_Direcciones`, 181,098 features, each with
+ * `MUNICIPIO`, `ENTIDAD`, `CODPOSTAL`, `VIA` and `PORTAL`.
+ *
+ * Partition 1's `AD.Address.1` composes `CALLE CALLEJA, 4, 31280 Abáigar`, and that
+ * layer's `DIRECC_Txt_Direcciones.1` reads `MUNICIPIO` `Abáigar`, `ENTIDAD` `Abáigar`,
+ * `CODPOSTAL` `31280`, `VIA` `CALLE CALLEJA`, `PORTAL` `4`.
+ * The adapter's integration test checks a sample of rows against that layer,
+ * the publisher-side oracle for this source.
+ *
+ * Two values state an absence rather than a value.
+ * A `PostalDescriptor` title of `0` is the publisher holding no postcode, measured in Bera.
+ *
+ * A designator of `S/N` is *sin número*, and `#es/cadastre` reads it for all four Spanish cadastres.
+ * A designator may also hold a space-separated letter, `18 A` and `34 A` in Eulate.
+ * The adapter keeps that letter as the publisher wrote it.
  */
 
 import { type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
@@ -131,7 +140,7 @@ const THOROUGHFARE_HREF = "thoroughfarename"
 const POSTAL_DESCRIPTOR_HREF = "postaldescriptor"
 
 /**
- * The stored-query id prefix of the administrative-unit reference that is the municipality.
+ * The stored-query id prefix of the administrative-unit reference that's the municipality.
  *
  * The other two are `AD_ADMINUNITNAME_PAI_`, the country, and `AD_ADMINUNITNAME_COM_`,
  * the autonomous community, and neither belongs to a written address.
@@ -161,7 +170,7 @@ interface ReferencedTitles {
 }
 
 /**
- * The street, postcode and place names an address's own references state.
+ * The street, postcode and place names that an address's own references state.
  *
  * Each reference is placed by its href rather than by its position, because the six are written in one
  * order in the three partitions measured and that order is the publisher's rather than the schema's.

@@ -3,6 +3,7 @@
 
 /**
  *   Render linked entities from a GeoJSON file in MapLibre, colored by source combination.
+ *
  *   `crossAgencyOnly` removes links whose sources belong to one agency.
  */
 
@@ -53,7 +54,7 @@ const label = (s: string) => SOURCE_LABELS[s] ?? s
  * Which agency each source belongs to.
  *
  * The two FCC datasets (RHC posted-services + commitments) are one agency.
- * So an NPPES↔FCC or FCC↔TX link is cross-agency, but an RHC↔commitments link is not.
+ * So an NPPES↔FCC or FCC↔TX link is cross-agency, but an RHC↔commitments link isn't.
  *
  * `--cross-agency-only` keeps only the entities whose sources span >1 agency: the harder,
  * more striking "no shared key across agencies" subset (most of the raw links are FCC-internal).

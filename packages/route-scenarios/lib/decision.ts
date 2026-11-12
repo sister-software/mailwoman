@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The decision outputs of a scenario: the capex range from stated adjustments, the extra construction
- *   spend the NPV target leaves room for, and the take rate the target needs.
+ *   The decision outputs of a scenario: the capex range from stated adjustments, the extra
+ *   construction spend the NPV target leaves room for, and the take rate the target needs.
  *
- *   An extra construction spend is paid in a stated month, because its month sets its discounted value. The
- *   affordable amount is the largest whole number of minor units that, added to that month's construction,
- *   keeps the NPV at or above the target under the rounding rule of `money.ts`.
+ *   An extra construction spend is paid in a stated month, because its month sets its discounted value.
+ *   The affordable amount is the largest whole number of minor units that, added to that month's
+ *   construction, keeps the NPV at or above the target under the rounding rule of `money.ts`.
  *
- *   A take rate is active subscribers divided by occupied eligible units in a stated month. Activations reach
- *   the scenario's take rate through its uptake rule, so the break-even search varies the uptake's take rate
- *   in whole basis points from 0 to 100 percent and keeps everything else fixed. It reports the lowest one
- *   whose NPV reaches the target, or `unreachable` when 100 percent misses it.
+ *   A take rate is active subscribers divided by occupied eligible units in a stated month.
+ *   Activations reach the scenario's take rate through its uptake rule,
+ *   so the break-even search varies the uptake's take rate in whole basis points
+ *   from 0 to 100 percent and keeps everything else fixed.
  *
- *   The low and high capex cases are scenarios built from stated adjustments, and no probability is attached
- *   to either.
+ *   It reports the lowest one whose NPV reaches the target, or `unreachable` when 100 percent misses it.
+ *
+ *   The low and high capex cases are scenarios built from stated adjustments,
+ *   and no probability is attached to either.
  */
 
 import { type CashFlowTable, projectCashFlow } from "#cash-flow"

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module classifies the lines a commit added to data files. A vocabulary sweep that rewrites a key or value
- *   in a data file changes a stored string, and the compiler and tests can pass while every reader of that string
- *   breaks. The classification separates comment lines from key and value lines so a reviewer reads only the second
- *   group.
+ *   This module classifies the lines a commit added to data files.
+ *
+ *   A vocabulary sweep that rewrites a key or value in a data file changes a stored string,
+ *   and the compiler and tests can pass while every reader of that string breaks.
+ *   The classification separates comment lines from key and value lines
+ *   so a reviewer reads only the second group.
  */
 
 import { TextSpliterator } from "spliterator"

@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Validation of supplied records before a dossier is built. An error is a record the dossier cannot use
- *   (a dangling reference, including a claim derived from a claim that is not supplied, a duplicate id, a
- *   malformed date, a reading, check, membership or position whose subject is not a building, a position
- *   outside the range of latitude and longitude, a probability outside 0 to 1 or without a basis, a
- *   negative duration). A warning is a record the dossier will use with a stated limit (a missing
- *   availability date, a missing event date, unknown signing authority, an external identifier without
- *   evidence). The report prints an identifier without evidence with the words `source unstated`.
+ *   Validation of supplied records before a dossier is built.
+ *
+ *   An error is a record the dossier cannot use (a dangling reference, including a claim derived
+ *   from a claim that's not supplied, a duplicate id, a malformed date, a reading, check,
+ *   membership or position whose subject isn't a building, a position outside the range of latitude
+ *   and longitude, a probability outside 0 to 1 or without a basis, a negative duration).
+ *   A warning is a record the dossier will use with a stated limit (a missing availability date,
+ *   a missing event date, unknown signing authority, an external identifier without evidence).
+ *
+ *   The report prints an identifier without evidence with the words `source unstated`.
  */
 
 import type { ProviderAvailability } from "#availability"

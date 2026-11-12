@@ -1,3 +1,6 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
 /**
  * Mailwoman's additions to the Sister Software docs theme (`@sister.software/docusaurus-theme`), which supplies the
  * fonts, tokens, Infima mapping and classic-theme restyle. Only Mailwoman-specific controls live here.

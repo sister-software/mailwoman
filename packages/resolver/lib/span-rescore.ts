@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Recover a dropped or fragmented locality from the raw text when a parse fails to resolve, by
- *   matching contiguous raw-token spans against the same-country gazetteer. Default-on with an
- *   explicit `ResolveOpts.spanRescore: false` opt-out.
+ *   Recover a dropped or fragmented locality from the raw text when a parse fails to resolve,
+ *   by matching contiguous raw-token spans against the same-country gazetteer.
+ *
+ *   Default-on with an explicit `ResolveOpts.spanRescore: false` opt-out.
  */
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
@@ -59,7 +60,7 @@ export interface SpanRescoreOptions {
 	 */
 	postalCompoundRecovery?: boolean
 	/**
-	 * Returns whether a word is a POI category, so a venue's last word is not re-read as a locality.
+	 * Returns whether a word is a POI category, so a venue's last word isn't re-read as a locality.
 	 * A caller without the taxonomy leaves every span eligible.
 	 */
 	isVenueCategoryWord?: (word: string) => boolean
@@ -111,7 +112,7 @@ export interface RescoreCandidate {
 	 * Whether the span is a proper sub-span that leaves a word of the name behind,
 	 * as `Manchester` leaves `The` and `Art Gallery` in `The Manchester Art Gallery`.
 	 *
-	 * Such a span may scope a venue lookup, but it is not by itself an answer to the input.
+	 * Such a span may scope a venue lookup, but it isn't by itself an answer to the input.
 	 */
 	dropsName: boolean
 }
@@ -156,7 +157,7 @@ export function postcodeCodeSubset(postcode: string): string {
 const BARE_TOPONYM_FETCH = 20
 
 /**
- * True when the tree names its own admin context — a region, subregion, country,
+ * True when the tree identifies its own admin context — a region, subregion, country,
  * postcode or house number the parser read out of the input — so the soft-country
  * prior stands down and the hard filter keeps its say.
  */
@@ -192,7 +193,7 @@ function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): bool
 
 /**
  * True if any node in the tree already has a resolved place id — the brake on span rescore.
- * with `weakReading`, a node whose resolution is weak under that reading does not hold it.
+ * with `weakReading`, a node whose resolution is weak under that reading doesn't hold it.
  */
 export function hasResolvedPlace(
 	roots: readonly AddressNode[],
@@ -207,7 +208,7 @@ export function hasResolvedPlace(
  *
  * The whole span stays probeable.
  * Single-token spans are excluded.
- * The guard does not depend on confidence.
+ * The guard doesn't depend on confidence.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -229,7 +230,7 @@ function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Ar
 /**
  * The confident ranges split by what a span containing one means: `hard`
  * (house number, postcode, street body) refuses any overlap, while `affix` refuses
- * a span only when it does not strictly contain the affix.
+ * a span only when it doesn't strictly contain the affix.
  */
 interface ConfidentRanges {
 	hard: Array<[number, number]>
@@ -238,7 +239,7 @@ interface ConfidentRanges {
 
 /**
  * The character ranges the parse read as street material, context only
- * when the range does not overlap the span under test.
+ * when the range doesn't overlap the span under test.
  */
 function streetRanges(roots: readonly AddressNode[]): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -404,7 +405,7 @@ export async function findRescoreCandidate(
 	 * Whether every token a sub-span leaves behind is context rather than identity,
 	 * testing the remainder's shape rather than the span being proper.
 	 *
-	 * A span that is its own comma-separated segment states the location,
+	 * A span that's its own comma-separated segment states the location,
 	 * as `Kalkaska` does in `Evergreen Cemetery, Kalkaska`.
 	 * Otherwise each remaining token must be a subdivision code, a number,
 	 * or part of a street the parse read beside the span.

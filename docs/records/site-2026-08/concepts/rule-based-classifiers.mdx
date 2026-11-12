@@ -34,7 +34,7 @@ Each classifier:
 
 ## A worked example — the postcode classifier
 
-The postcode classifier is probably the simplest. Postcode detection is a regex problem. It does not need machine learning.
+The postcode classifier is probably the simplest. Postcode detection is a regex problem. It doesn't need machine learning.
 
 ```ts
 const US_POSTCODE = /^\d{5}(-\d{4})?$/  // 10118 or 10118-1234
@@ -101,7 +101,7 @@ Notes:
 
 - **Confidence is moderate** (0.6) because dictionary matches can be misleading. "New" starts several city names, so a 1-token match on "New" is weaker evidence than a 3-token match on "New York City".
 - **An n-gram sweep** handles multi-word cities. The classifier tries spans of length 1, 2, and 3 and emits a proposal for each match.
-- **The classifier does not exclude overlapping matches.** If "New York" matches as a locality and "New" matches as a different component, both proposals are emitted. The solver picks one self-consistent combination.
+- **The classifier doesn't exclude overlapping matches.** If "New York" matches as a locality and "New" matches as a different component, both proposals are emitted. The solver picks one self-consistent combination.
 
 ## What rule classifiers are good at
 
@@ -144,6 +144,6 @@ The neural classifier takes over one component at a time, after it proves itself
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.mdx): the components that rule classifiers label
+- [What's an address?](../understanding/the-problem/what-is-an-address.mdx): the components that rule classifiers label
 - [How the model reasons](./how-the-model-reasons.mdx): the learned alternative, from emissions through decoding
 - [How it works now](../understanding/our-approach/how-it-works-now.mdx): the hybrid in operation

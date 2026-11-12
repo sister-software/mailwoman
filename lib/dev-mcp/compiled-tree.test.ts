@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The RULE these two functions apply is `@mailwoman/core/module/compiled-freshness` and is tested there. What is
- *   tested here is what this package adds: the workspace SET a spawned CLI loads and the refusal.
+ *   The RULE these two functions apply is `@mailwoman/core/module/compiled-freshness` and is tested there.
+ *
+ *   What's tested here is what this package adds: the workspace SET a spawned CLI loads and the refusal.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

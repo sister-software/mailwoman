@@ -1,5 +1,5 @@
 ---
-title: Layer installation — the catalog, the active selection and the installation lifecycle
+title: Layer installation
 role: reference
 audience: maintainer
 owner: operations
@@ -15,8 +15,7 @@ This page specifies how `mailwoman data pull` installs a published artifact, how
 which installed artifact to read, and how an installation is upgraded, rolled back, pruned and
 migrated. It is the accepted form of the design tracked in
 [#2868](https://github.com/sister-software/mailwoman/issues/2868). The proposal it came from is kept
-as a dated record, [the 2026-10-28 layer paths plan](../../records/plan/2026-10-28-layer-paths-plan-v2.md). Its
-sentences were split and reworded on 2026-10-30 to pass the prose rules, with each proposal's content unchanged.
+as a dated record, [the 2026-10-28 layer paths plan](../../records/plan/2026-10-28-layer-paths-plan-v2.md).
 The artifact shape every layer database embeds is in the [spatial-layer interface](./layer-interface.mdx).
 
 ## Three records
@@ -116,8 +115,8 @@ interface is `BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one regi
    to a Geofabrik region (`packages/osm/sdk/geofabrik/regions.ts`), and lists one input per region and
    one outline per country it clips. `--region` names one region for every requested country. The plan
    reads no network and writes no file, and `--dry-run` stops after it.
-2. Check prerequisites. The build reads the extract with GDAL's OSM driver, so `ogr2ogr` must run. A
-   missing tool refuses the build before any transfer.
+2. Check prerequisites. The build reads the extract with GDAL's OSM driver, so `ogr2ogr` must run. If it is
+   missing, the build is refused before any transfer.
 3. Acquire. Each input stages under `tmp/acquire/` with the receipt-backed transfer `data pull` uses,
    and the verified file is kept at `src/<source>/<name>/<release>/` with its receipt. A kept input with
    the same remote identity and SHA-256 is reused, so two countries derived from one region read one file.
@@ -134,7 +133,7 @@ Each output's manifest records `recipe: "osm-address-points"`, the extract as `s
 SHA-256, and a `derivation`: the policy name and version, the outline's SHA-256 when the build clipped,
 the row filter, and the counts (rows read, kept, outside the outline, without a street). A country is
 clipped when its region holds another country or only part of it. A country built from its own extract
-is not clipped, as the command-line builder has never clipped one.
+isn't clipped, as the command-line builder has never clipped one.
 
 `lib/data/build.integration.test.ts` builds Germany and the Netherlands from one fixture region through
 a local registry: the extract transfers once, each country keeps only its own points, a repeated build
@@ -155,7 +154,7 @@ generation the active one replaced, as a new generation. `mailwoman data activat
 (`activateInstallation`) selects an installed installation.
 
 A session reads one generation (`LayerCatalog.read`) and keeps it until it reloads. The per-state
-provider reads `active.json` once per warm, so every state resolves from the same generation.
+provider reads `active.json` once per call to its `warm` method, so every state resolves from the same generation.
 
 ## Source order and the meaning of an outcome
 
@@ -173,14 +172,14 @@ conventional paths and `releases.json`:
 - `resolveDatabasePath` in `packages/mailwoman/lib/data/release.ts`, which the per-state address-point
   and interpolation provider calls.
 
-A data root without `active.json` resolves exactly as it did before the selection existed. No source
-precedence or fallback changed.
+A data root without `active.json` resolves through the explicit option, the environment pin, the conventional
+paths and `releases.json`, in that order.
 
 ## Retention
 
-`packages/mailwoman/lib/data/retention.ts` defines the policy. Prune keeps every artifact the active
-generation, the generation before it (two in all by default, `--retain` changes it), or a
-generation a live session holds references. A geocode session that reads a selection writes a lease
+`packages/mailwoman/lib/data/retention.ts` defines the policy. Prune keeps every artifact referenced by the
+active generation, by the generation before it, or by a generation that a live session holds. That's two
+generations by default, and `--retain` changes the number. A geocode session that reads a selection writes a lease
 and removes it on disposal. A data root that cannot be written takes no lease. Prune deletes only
 installed artifacts under `db/<role>/<sha256>/`. A file at a conventional path, a partial transfer
 and a source input are kept. Execution reads the generation and the leases again under both locks
@@ -194,15 +193,15 @@ artifact with no manifest, with a registry record that supplies one), `source-re
 no manifest), `unknown-provenance`, or `blocked-wal` (a WAL sidecar is present). It reports symlink
 targets, hard links and paths outside the data root. The plan registers files in place as `legacy`
 installations, copies 0 bytes, and states its rollback. This release plans only: `mailwoman data
-migrate` runs with `--dry-run` and refuses without it. The [migration guide](../../articles/developers/how-to/migrate-a-data-root.mdx)
-explains how to read the plan.
+migrate` runs with `--dry-run` and refuses without it. The [retired migration guide](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/articles/developers/how-to/migrate-a-data-root.mdx)
+explains how to read the plan in that release.
 
 ## Diagnostics
 
 `readInstallationState` (`packages/mailwoman/lib/data/state.ts`) reads three lists: artifacts the
-active generation selects, installed artifacts it does not select, and transfers that stopped with
+active generation selects, installed artifacts it doesn't select, and transfers that stopped with
 partial bytes. `data status`, `data inventory`, `data bom` and `doctor` read it, so they report the
-same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request did not
+same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request didn't
 complete (unavailable, insufficient access, refused obligation, missing dependency, unsupported,
 corrupt, transfer, cancelled, sibling failed, activation, insufficient disk), in human output and in
 `--json`.
@@ -228,7 +227,7 @@ shared readers, on 2026-10-29.
 ## Every reader on the selection
 
 Each reader below consults the selection after its explicit pins and before its conventional path. A
-reader whose role has no selection entry reads exactly the file it read before.
+reader whose role has no selection entry reads its conventional path.
 `lib/geocode/selection-parity.integration.test.ts` reads the same bytes from the conventional path and
 from an installed, selected artifact, and every difference list it records is empty.
 
@@ -245,12 +244,12 @@ from an installed, selected artifact, and every difference list it records is em
 
 Three providers serve the address-point role: BAN, national Overture and the OpenStreetMap tier. One
 selection entry may list sources of more than one of them. A national provider reads the entry's first
-source that the OpenStreetMap recipe did not build (`isNationalAddressPointArtifact`), and the
+source that the OpenStreetMap recipe didn't build (`isNationalAddressPointArtifact`), and the
 OpenStreetMap tier reads the first one it did build (`isOSMBuiltArtifact`, the manifest's `recipe`). The
-session still consults the national tier first and the OpenStreetMap tier only when the national tier has
-no database for the country. That is the order the two had when each read its own file.
+session consults the national tier first and the OpenStreetMap tier only when the national tier has
+no database for the country.
 
-The WOF lookup names each attached schema after its file and routes placetypes by that name, so an
+The WOF lookup labels each attached schema after its file and routes placetypes by that name, so an
 installed WOF extract keeps its conventional file name (`admin-global-priority.db`, `postalcode-us.db`).
 Unlike the other roles, every installed source of the WOF entry is attached, because the conventional
 set was attached whole.
@@ -267,4 +266,4 @@ Still on their conventional paths, with the reason:
 - The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
   data root, and read the files beside its weights.
 - A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
-  for that country needs a locale scope the selection does not have.
+  for that country needs a locale scope the selection doesn't have.

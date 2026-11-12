@@ -6,26 +6,32 @@
  *
  * The extract is a resource of the data.gouv.fr dataset
  * `finess-extraction-du-fichier-des-etablissements`, whose API record at
- * `https://www.data.gouv.fr/api/1/datasets/finess-extraction-du-fichier-des-etablissements/` lists
- * every resource with its URL, `last_modified`, `filesize` and a SHA-1 `checksum`. The establishment
- * extract is the resource whose file matches `etalab-cs1100502-stock-<date>-<time>.csv`. The
- * geolocated extract `etalab-cs1100507-…` and the history archive sit beside it and are not read.
- * {@linkcode selectFinessExtract} picks the newest establishment extract the record lists, so the
- * fetcher follows a republication without a code change.
+ * `https://www.data.gouv.fr/api/1/datasets/finess-extraction-du-fichier-des-etablissements/`
+ * lists every resource with its URL, `last_modified`, `filesize` and a SHA-1 `checksum`.
+ * The establishment extract is the resource whose file matches `etalab-cs1100502-stock-<date>-<time>.csv`.
+ *
+ * The geolocated extract `etalab-cs1100507-…` and the history archive sit beside it
+ * and are not read. {@linkcode selectFinessExtract} picks the newest establishment extract
+ * the record lists, so the fetcher follows a republication without a code change.
  *
  * The publisher froze the extract at data dated 2026-05-04 and states on the dataset page that it
- * will not be updated again, so a re-run normally finds the recorded file current and makes no
- * transfer.
+ * won't be updated again, so a re-run normally finds the recorded file current and makes no transfer.
  *
- * The transfer is checked against the record: the byte count against `filesize` and the SHA-1
- * against `checksum`. The record's SHA-1 can describe an earlier upload of the same object. Measured
- * on 2026-10-03, the record states `d3c2c0e68a413974dffbe0aabf093e3f40414967` and `last_modified`
- * 2026-05-12, while the object `static.data.gouv.fr` serves has `last-modified` 2026-07-02, SHA-1
- * `8be4bdc362f3f382e3a7de2a26da6c3a5e6074f3` on two separate transfers, the record's 35,786,629
- * bytes, and an ETag equal to its MD5. Where the SHA-1 disagrees, the storage host's ETag MD5
- * decides, and the manifest records all three digests. A file that matches neither is an
- * interrupted transfer or an error page and is removed rather than recorded. The manifest records the SHA-256 the corpus tooling compares,
- * the resource's `last_modified`, and the extract's own first line (`finess;etalab;111;2026-05-12`),
+ * The transfer is checked against the record: the byte count against `filesize`
+ * and the SHA-1 against `checksum`.
+ * The record's SHA-1 can describe an earlier upload of the same object.
+ *
+ * Measured on 2026-10-03, the record states `d3c2c0e68a413974dffbe0aabf093e3f40414967`
+ * and `last_modified` 2026-05-12, while the object `static.data.gouv.fr` serves has
+ * `last-modified` 2026-07-02, SHA-1 `8be4bdc362f3f382e3a7de2a26da6c3a5e6074f3` on two
+ * separate transfers, the record's 35,786,629 bytes, and an ETag equal to its MD5.
+ * Where the SHA-1 disagrees, the storage host's ETag MD5 decides,
+ * and the manifest records all three digests.
+ *
+ * A file that matches neither is an interrupted transfer or an error page
+ * and is removed rather than recorded.
+ * The manifest records the SHA-256 the corpus tooling compares, the resource's
+ * `last_modified`, and the extract's own first line (`finess;etalab;111;2026-05-12`),
  * That line states the extraction date Licence Ouverte's attribution requires.
  */
 
@@ -39,8 +45,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { FR_FINESS_ADAPTER_ID, FR_FINESS_ATTRIBUTION, FR_FINESS_LICENSE } from "#fr/adapters/finess/adapter"
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, loadCollectionFiles, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 /**
  * The dataset's slug on data.gouv.fr.
@@ -181,17 +188,26 @@ export interface DownloadFinessOptions {
 	 * Download even where the manifest records the same resource and the file is on disk.
 	 */
 	force?: boolean
+	/**
+	 * The dataset record a caller already read, so the record isn't requested twice.
+	 */
+	dataset?: DataGouvDataset
 	retryDelayMs?: number
 	report?: (line: string) => void
 }
 
-export type FetchFinessOptions = BaseFetchOptions & Pick<DownloadFinessOptions, "force">
+export type FetchFinessOptions = SnapshotFetchOptions
 
 /**
- * The directory `#fr/adapters/finess/adapter` reads under a fetch root.
+ * The date an establishment extract's name states, as the vintage `YYYY-MM-DD`:
+ * `etalab-cs1100502-stock-20260512-0339.csv` is `2026-05-12`.
  */
-export function finessInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
-	return outRoot(FR_FINESS_ADAPTER_ID)
+export function finessVintage(filename: string): string {
+	const date = /-stock-(\d{4})(\d{2})(\d{2})-\d{4}\.csv$/u.exec(filename)
+
+	if (!date) throw new Error(`${FR_FINESS_ADAPTER_ID}: ${filename} states no extraction date`)
+
+	return `${date[1]}-${date[2]}-${date[3]}`
 }
 
 /**
@@ -212,7 +228,7 @@ export async function downloadFinessExtract(
 
 	report?.(`=== ${FR_FINESS_ADAPTER_ID}`)
 
-	const dataset = await readFinessDataset(client)
+	const dataset = options.dataset ?? (await readFinessDataset(client))
 	const resource = selectFinessExtract(dataset)
 	const manifestPath = destDir("MANIFEST.json")
 	const recorded = (await loadCollectionFiles(manifestPath)) as Map<string, FinessExtractManifest>
@@ -330,11 +346,13 @@ export async function downloadFinessExtract(
 }
 
 /**
- * Download the FINESS establishment extract into `<outRoot>/fr-finess-overseas/`.
+ * Download the newest FINESS establishment extract into its snapshot, `fr-finess-overseas/<YYYY-MM-DD>/`.
  *
  * The registry entry point.
- * `#fr/adapters/finess/adapter` is pointed at {@linkcode finessInputPath},
- * and reads the newest extract in it.
+ * The vintage is the extraction date in the extract's name, read from the
+ * dataset record before the download.
+ *
+ * `#fr/adapters/finess/adapter` is pointed at a vintage directory and reads the extract in it.
  */
 export async function fetchFinessOverseas(
 	options: FetchFinessOptions,
@@ -342,11 +360,15 @@ export async function fetchFinessOverseas(
 ): Promise<FetchSummary> {
 	await using client = new APIClient({ displayName: FR_FINESS_ADAPTER_ID, retry: true })
 
+	const dataset = await readFinessDataset(client)
+	const { filename } = selectFinessExtract(dataset)
+
 	// Awaited rather than returned: `await using` disposes the client when this scope exits.
-	return await downloadFinessExtract(client, {
-		outputDir: finessInputPath(options.outRoot),
-		force: options.force,
-		retryDelayMs: options.retryDelayMs,
-		report,
-	})
+	return await fetchSnapshot(
+		options.snapshots,
+		FR_FINESS_ADAPTER_ID,
+		finessVintage(filename),
+		(outputDir) => downloadFinessExtract(client, { outputDir, dataset, retryDelayMs: options.retryDelayMs, report }),
+		report
+	)
 }

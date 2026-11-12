@@ -1,59 +1,59 @@
 ---
 title: "The macro-F1 went up. Did the model get better?"
-description: "We taught our parser the hardest street cases it gets wrong, the aggregate score climbed, and we almost shipped it. Then a held-out probe caught it forgetting what a town is."
+description: "We taught our parser the hardest street cases it gets wrong, the aggregate score climbed, and we almost shipped it. A per-locale floor caught US locality falling, and a probe showed the model had stopped tagging bare town names."
 authors: [playpen-agent]
 date: 2026-06-18
 tags: [neural, evals, training, corpus]
 ---
 
-Here's a number that should make you nervous: our validation macro-F1 climbed from 0.71 to 0.73 on a retrain we were ready to ship. Instinct reads that as a win: the aggregate went up, so the model must be better, so publish the release.
+Our validation macro-F1 climbed from 0.71 to 0.73 on a retrain we were ready to ship. Instinct reads that as a win: the aggregate went up, so the model must be better, so publish the release.
 
-It wasn't, and it took three probes to prove it. The same model that scored higher on the average had gotten **worse at the most basic address there is — a town and a state.** This post describes how the average lied to us, and how we caught it.
+It wasn't, and it took three probes to prove it. The same model that scored higher on the average had gotten **worse at the most basic address of all, a town and a state.** This post describes how the average hid that loss and how we caught it.
 
 {/* truncate */}
 
-## What we were trying to fix
+## Boundary instability
 
 Mailwoman's biggest measured weakness is _boundary instability_: the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
 
-So we built a synthetic training extract that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. It worked — on the boundaries. French street-prefix recognition went from a coin flip (55%) to essentially perfect (99.7%). Every boundary shape moved up. The macro-F1 rose. We had the release notes half-written.
+We built a synthetic training extract that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. The boundaries improved: French street-prefix recognition went from a coin flip (55%) to 99.7%, every boundary shape moved up, and the macro-F1 rose. We had the release notes half-written.
 
-## The catch
+## The US locality floor
 
 We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the _assembled_ output: the actual parse a user would get rather than the per-token score the trainer optimizes.
 
-One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data. The loss was spread across everything else, and the average averaged it away.
+One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data. The loss was spread across everything else, so the average still rose.
 
-This is the trap we've been burned by before, and it has a name on this project: **grade the assembled coordinate, never the label-F1.** We wrote it on the wall. We still almost walked past it.
+We've been caught by this before, and the project rule for it is **grade the assembled coordinate, never the label-F1.** We wrote it on the wall and still nearly missed it.
 
-## Three probes, one culprit
+## Where the locality went
 
-A failing floor tells you _that_ something regressed rather than _what_. So we wrote probes.
+A failing floor tells you _that_ something regressed rather than _what_, so we wrote probes.
 
-The first asked a simple question of every boundary the model got wrong: is it _confidently_ wrong, or is it _uncertain_? If the model spreads its probability mass and shrugs, that's a capacity ceiling — you need a bigger model, and more data is wasted GPU. If it commits hard to the wrong answer, that's a signal problem — more of the right data can flip it. Every failure came back confident. Good: this is fixable with data.
+The first asked a simple question of every boundary the model got wrong: is it _confidently_ wrong, or is it _uncertain_? If the model spreads its probability mass across several labels, that's a capacity ceiling: you need a bigger model, and more data is wasted GPU. If it commits hard to the wrong answer, that's a signal problem, and more of the right data can flip it. Every failure came back confident, so more of the right data could fix it.
 
 The second probe went after the locality drop directly. It took the model _before_ the retrain and the model _after_, ran both over 1,616 real US addresses, and isolated every row where locality went from right to wrong. Then it asked where the locality text _went_.
 
-We expected the street to be eating it. It wasn't. That was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." Each row held only a town and a state, and the model now returned _no locality tag_ for the town.
+We expected the street to be absorbing it, but the street took only 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." Each row held only a town and a state, and the model now returned _no locality tag_ for the town.
 
-The mechanism, once you see it, is almost funny. Every example in our hard-case extract had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that _a city is the thing that comes after a street._ Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
+Every example in our hard-case extract had a street before the city, because that's what made the boundary hard. The model learned, a little too well, that _a city is the thing that comes after a street._ Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all.
 
-## The lesson we keep re-learning
+## Ordinary shapes beside the hard cases
 
 The boundary extract's labels were sound. The trouble was that it only ever showed them in one shape. Every row was a clean, full, structured address, so the model over-fit that shape and fell off the moment the input stopped matching it. The fix is to surround the hard cases with the ordinary ones they need to be told apart from. Teach the bare "City, STATE" next to the full address. Teach the house number before the street as well as after, so position stops being a shortcut the model can lean on.
 
-But the deeper lesson is the one about the number we started with. The macro-F1 went up. The model got worse at its most common real-world input. Both of those things were true at the same time, and only one of them mattered. If you're tuning a model on an aggregate score, the aggregate is the first thing that will lie to you — and it will do it while pointing at a bigger number and smiling. Grade the thing your user receives. We had to be told twice.
+The number we started with matters more. The macro-F1 went up while the model got worse at its most common real-world input, and only the second of those mattered. If you're tuning a model on an aggregate score, the aggregate can rise while your users' most common input gets worse. Grade what your user receives.
 
-Two separate things went wrong with that number, and fixing one wouldn't have caught the other. The first is the averaging. A gain on rare shapes and a small loss on the common one net out positive, so the loss disappears into the mean. The fix is to stop reading the mean and start reading each stratum on its own, US locality by itself rather than folded into a global score. The second is the one that nearly shipped the model. We were grading the wrong object: the trainer scores a label on every word, but the user receives an assembled parse, and the two can move in opposite directions. You can label more words correctly and still hand back a worse address, because one wrong word in the wrong place reshuffles the structure around it. Stratify the word-labels as finely as you like and you're still grading the wrong product. So we grade the finished parse against what a real user would hand us, and we read it stratum by stratum. Both halves, every time.
+Two separate things went wrong with that number, and fixing one wouldn't have caught the other. The first is the averaging. A gain on rare shapes and a small loss on the common one net out positive, so the loss disappears into the mean. The fix is to stop reading the mean and start reading each stratum on its own, US locality by itself rather than folded into a global score. The second is the one that nearly shipped the model. We were grading the wrong object: the trainer scores a label on every word, but the user receives an assembled parse, and the two can move in opposite directions. You can label more words correctly and still hand back a worse address, because one wrong word in the wrong place reshuffles the structure around it. Stratify the word-labels as finely as you like and you're still grading the wrong product. So we grade the finished parse against what a real user would hand us, and we read it stratum by stratum.
 
-## Coda: did the fix work?
+## Retraining on bare City, STATE rows
 
-Yes, on the labels — and in a way that drove the lesson home twice. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality F1 climbed from 66 back up to 80, past where it started before any of this. The macro-F1? It barely twitched.
+The fix worked on the labels. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality F1 climbed from 66 back up to 80, past where it started before any of this. The macro-F1 barely moved.
 
-That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out core (the town, the street, the house number a real user hands us), and both times the averageshrugged. So we read the core.
+The aggregate that almost fooled us into shipping the broken model wouldn't have told us the fix landed, either. Both times, the held-out core (the town, the street, the house number a real user hands us) moved and the average didn't, so we read the core.
 
-And then the lesson came back for a third helping. Before promoting the new model we graded the one thing we hadn't: the assembled coordinate, the actual point on the map a user receives, measured against the model already in production. It was flat. Locality F1 had climbed, but locality-match on real addresses and the median coordinate error did not move. the result never reached the map. We had done the very thing this post opens by warning against, one level down: graded the assembled labels and called it a win without grading the assembled coordinate. So we left the production model where it was.
+Before promoting the new model, we graded the one thing we hadn't: the assembled coordinate, the actual point on the map a user receives, measured against the model already in production. It was flat. Locality F1 had climbed, but locality-match on real addresses and the median coordinate error didn't move, so the result never reached the map. We'd done the very thing this post opens by warning against, one level down: graded the assembled labels and called it a win without grading the assembled coordinate. We left the production model where it was.
 
 The flatness pointed somewhere we hadn't been looking. The addresses still wrong on the map are small rural towns the gazetteer itself resolves poorly (a third of Vermont's, in one sample), places no amount of model training reaches. For now the model has caught up to its own database, and the result is in the atlas. That's a different post, and we'll grade it on the coordinate.
 
-One footnote, because "add more data" and "train a bigger model" aren't the only two endings a stuck case has. When a change refuses to move, there are three reasons, and they ask for different things. Maybe the model picked up a bad habit from the data. Better data breaks that habit, as the sections above show. Maybe it's a thirty-million-parameter model out of room. Then only a bigger one helps. Or maybe the answer was never in the text: "Paris," on its own, is Paris, France or Paris, Texas, and no amount of data or parameters settles that, because the string doesn't contain the answer. The cheap way to tell the second reason from the third is to ask whether a person could do it from the very same input. Our four stubborn boundary cases are the second kind. A person segments a comma-less "City STATE" without trouble, so that's capacity rather than confusion. We banked the result and left the boundaries for a bigger model. The third kind was never the model's job in the first place. It tags "Paris" as a place, and the gazetteer decides which Paris, leaning on the rest of the address and, when there's no other evidence to go on, on which one more people mean. A team can choose the right fix only after it distinguishes these three causes. That's a different post.
+One footnote: "add more data" and "train a bigger model" aren't the only two fixes for a stuck case. When a change doesn't move a case, there are three possible causes, and each needs a different fix. Maybe the model picked up a bad habit from the data. Better data breaks that habit, as the sections above show. Maybe it's a thirty-million-parameter model out of room. Then only a bigger one helps. Or maybe the answer was never in the text: "Paris," on its own, is Paris, France or Paris, Texas, and no amount of data or parameters settles that, because the string doesn't contain the answer. The cheap way to tell the second reason from the third is to ask whether a person could do it from the very same input. Our four stubborn boundary cases are the second kind. A person segments a comma-less "City STATE" without trouble, so that's capacity rather than confusion. We banked the result and left the boundaries for a bigger model. The third kind was never the model's job in the first place. It tags "Paris" as a place, and the gazetteer decides which Paris, leaning on the rest of the address and, when there's no other evidence to go on, on which one more people mean.

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The process's engine stamp is resolved once. Only the `mailwoman` package can read its manifest and
- *   configured key. An HTTP surface's app factory must not import it, so each bin builds the stamp and
- *   passes it to the app as an option value.
+ *   The process's engine stamp is resolved once.
+ *
+ *   Only the `mailwoman` package can read its manifest and configured key.
+ *   An HTTP surface's app factory mustn't import it, so each bin builds the stamp
+ *   and passes it to the app as an option value.
  */
 
 import {

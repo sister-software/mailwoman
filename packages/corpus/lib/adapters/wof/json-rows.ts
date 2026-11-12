@@ -209,9 +209,9 @@ export interface NameSlot {
 const PREFERRED_KEY = /^name:([a-z]{3})_x_preferred$/
 
 /**
- * Build the per-record name-slot list: the canonical `"default"` slot, then every
- * value of every `name:*` variant, deduplicated so a redundant `"default"`-equivalent
- * row is not emitted under a localized key.
+ * Build the per-record name-slot list: the canonical `"default"` slot,
+ * then every value of every `name:*` variant, deduplicated so a redundant
+ * `"default"`-equivalent row isn't emitted under a localized key.
  */
 export function nameSlotsFor(rec: WOFRecord, options: NameSlotOptions = {}): NameSlot[] {
 	const canonicalSelfName = options.canonicalName?.(rec) ?? rec.name

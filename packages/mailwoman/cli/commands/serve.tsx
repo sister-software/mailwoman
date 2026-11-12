@@ -4,9 +4,9 @@
 import cluster, { type Worker } from "node:cluster"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import type { ServerHandle } from "@mailwoman/api-kit"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { allKeyed } from "@mailwoman/core/promises"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import rather than `* as process`.
 // The ESM namespace object for `node:process` only reflects the process object's own
@@ -17,6 +17,8 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
+import { primaryExitAfterWorkerExit } from "#cli/kit/cluster/exit"
+import { clusterReload, relayClusterReloads } from "#cli/kit/cluster/reload"
 import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
 interface ServerConfig {
@@ -40,13 +42,15 @@ export const spec = {
 
 // note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code sequence
 // to move: the process deliberately never exits. WorkerStatus is event-subscription UI with
-// cleanup. ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There is
+// cleanup. ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There's
 // no `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
 
 	useEffect(() => {
+		relayClusterReloads()
+
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap. refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
@@ -57,6 +61,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// but at the primary, where the exit handler below can see it.
 		let anyListened = false
 		let liveWorkerCount = cpus
+		let shuttingDown = false
 
 		cluster.on("listening", () => {
 			// One notice per server, from the primary, the first time a worker binds.
@@ -74,17 +79,22 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 
 			liveWorkerCount--
 
-			if (liveWorkerCount === 0 && !anyListened) {
-				// A boot that never listened is a failed boot — supervisors must see nonzero.
-				process.exit(1)
+			const exit = primaryExitAfterWorkerExit({ liveWorkers: liveWorkerCount, anyListened, shuttingDown })
+
+			if (exit) {
+				console.error(`serve: ${exit.reason}`)
+
+				process.exit(exit.code)
 			}
 		})
 
 		// Graceful shutdown: a term/INT delivered to the primary pid (docker stop, systemctl stop)
 		// never reaches worker JS handlers — Node's cluster teardown bypasses them.
 		// Forward the signal explicitly so each worker's serveNode drain runs, then exit
-		// once they're gone (bounded — a hung worker must not wedge the shutdown).
+		// once they're gone (bounded — a hung worker mustn't wedge the shutdown).
 		const forward = (signal: NodeJS.Signals) => {
+			shuttingDown = true
+
 			const alive = Object.values(cluster.workers ?? {}).filter(isPresent)
 
 			if (!alive.length) {
@@ -107,7 +117,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 			}
 
 			setTimeout(() => {
-				// A wedged worker must not survive the primary holding the port.
+				// A wedged worker mustn't survive the primary holding the port.
 				for (const worker of alive) {
 					if (!worker.isDead()) {
 						worker.process.kill("SIGKILL")
@@ -199,16 +209,29 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, host } }) => {
 	useEffect(() => {
-		let handle: ServerHandle | null = null
+		let handle: AsyncDisposable | null = null
 		let disposed = false
 
 		void (async () => {
-			const { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } = await import("@mailwoman/api")
-			const { serveNode } = await import("@mailwoman/api-kit")
-			const { $public } = await import("#env")
-			const { createServeEngine } = await import("#api-engine")
+			const {
+				api: { createMailwomanAPI, MAILWOMAN_API_DOC_INFO },
+				apiKit: { serveNode },
+				env: { $public },
+				apiEngine: { createServeEngine },
+			} = await allKeyed({
+				api: import("@mailwoman/api"),
+				apiKit: import("@mailwoman/api-kit"),
+				env: import("#env"),
+				apiEngine: import("#api-engine"),
+			})
 
-			const { engine, preflight } = await createServeEngine()
+			const serveEngine = await createServeEngine()
+			const { preflight } = serveEngine
+
+			// A reload in any worker reloads every worker.
+			const engine = serveEngine.engine.reload
+				? { ...serveEngine.engine, reload: clusterReload(serveEngine.engine.reload) }
+				: serveEngine.engine
 
 			if (!preflight.ok) {
 				// Every cluster worker runs createServeEngine() independently, so with --cpus N every
@@ -249,13 +272,19 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				onListen: () => cluster.worker?.send("HTTP server ready"),
 			})
 
-			if (disposed) {
+			// The listener drains its connections before the engine closes the sessions they read.
+			const closeAll = async () => {
 				await server[Symbol.asyncDispose]()
+				await serveEngine[Symbol.asyncDispose]()
+			}
+
+			if (disposed) {
+				await closeAll()
 
 				return
 			}
 
-			handle = server
+			handle = { [Symbol.asyncDispose]: closeAll }
 
 			// Duplicate signal deliveries (group signal + primary forward) must be no-ops — the drain runs once.
 			let draining = false
@@ -266,7 +295,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 
 				console.error(`[serve] worker ${process.pid} draining`)
 
-				void handle?.[Symbol.asyncDispose]().finally(() => process.exit(0))
+				void closeAll().finally(() => process.exit(0))
 			}
 
 			process.on("SIGINT", shutdown)

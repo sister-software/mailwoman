@@ -4,15 +4,19 @@
 /**
  *   Reads road links with names from an OS Open Roads GML tile.
  *
- *   The GML product is one file per 100 km National Grid square. A tile holds `road:RoadLink`,
- *   `road:RoadNode` and `road:MotorwayJunction` features. Only the links hold a centreline and a
- *   name. A link with a name has a `road:name1` and a `road:roadNameTOID`. Its `xlink:href` is `#`
- *   followed by the roadNameTOID that OS Open Names uses as its `ID`. A link with only a road number
- *   includes `road:roadNumberTOID`; a link without a name or road number has neither field.
+ *   The GML product is one file per 100 km National Grid square.
+ *   A tile holds `road:RoadLink`, `road:RoadNode` and `road:MotorwayJunction` features.
  *
- *   The centreline is a `gml:LineString` in EPSG:27700, written as a `gml:posList` of easting and
- *   northing pairs. The reader honors the line's `srsDimension` so a 3D tile would still read its
- *   first two ordinates.
+ *   Only the links hold a centreline and a name.
+ *   A link with a name has a `road:name1` and a `road:roadNameTOID`.
+ *
+ *   Its `xlink:href` is `#` followed by the roadNameTOID that OS Open Names uses as its `ID`.
+ *   A link with only a road number includes `road:roadNumberTOID`; a link without a name
+ *   or road number has neither field.
+ *
+ *   The centreline is a `gml:LineString` in EPSG:27700, written as a `gml:posList`
+ *   of easting and northing pairs.
+ *   The reader honors the line's `srsDimension` so a 3D tile would still read its first two ordinates.
  */
 
 import { openReadStream } from "@mailwoman/core/fs/streams"
@@ -78,7 +82,7 @@ export function createOpenRoadsReadStats(): OpenRoadsReadStats {
 const LINE_PATH = ["net:centrelineGeometry", "gml:LineString"] as const
 
 /**
- * Reads a link described by a `road:RoadLink` element or returns the reason it could not read one.
+ * Reads a link described by a `road:RoadLink` element or returns the reason it couldn't read one.
  */
 export function readOpenRoadsLink(element: MarkupElement): OpenRoadsLink | "unnamed" | "malformed-geometry" {
 	const name1 = (textAtPath(element, "road:name1") ?? "").trim()

@@ -2,7 +2,7 @@
 #
 # It keeps the v4.4.0 recipe and schedule, including the suffix-boundary settings, and changes the corpus:
 #   1. The counter-form sources synth-fr-bare-street-v22 and synth-cz-pcfirst-preposition-v21 replace
-#      their older generations. Fine-tunes did not fix these classes, so they need a base run.
+#      their older generations. Fine-tunes didn't fix these classes, so they need a base run.
 #   2. synth-bare-country-v23 teaches that a bare country name such as "Japan" is a country. Its 277 rows
 #      repeat about 20 times per epoch even at weight 1.0.
 #   3. synth-trailing-region-es-v23 adds Spanish "locality, region, Spain" tails built from WOF pairs.

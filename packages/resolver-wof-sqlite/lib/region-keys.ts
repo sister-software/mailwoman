@@ -3,14 +3,16 @@
 
 /**
  *   Both consumers use this expansion to compare parsed region qualifiers with stored keys.
- *   Admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a qualifier and the winner's ancestry
- *   to decide `confirmed` or `contradicted`. The candidate backend's admin-containment re-rank
- *   (`candidate-lookup.ts`) uses the same fold to find region-class rows. The shared function keeps
- *   both decisions aligned.
  *
- *   Lives here rather than in `mailwoman` because the dependency points this way. `mailwoman`
- *   depends on `@mailwoman/resolver-wof-sqlite` (which owns the fold and already depends on codex),
- *   never the reverse.
+ *   Admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a qualifier
+ *   and the winner's ancestry to decide `confirmed` or `contradicted`.
+ *   The candidate backend's admin-containment re-rank (`candidate-lookup.ts`)
+ *   uses the same fold to find region-class rows.
+ *   The shared function keeps both decisions aligned.
+ *
+ *   Lives here rather than in `mailwoman` because the dependency points this way.
+ *   `mailwoman` depends on `@mailwoman/resolver-wof-sqlite`
+ *   (which owns the fold and already depends on codex), never the reverse.
  */
 
 import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
@@ -129,7 +131,7 @@ export function regionKeys(value: string, countryAlpha2?: string | null): Set<st
 
 	// The empty fold stays in the set on purpose.
 	// The admin-coherence verdicts have always compared the empty key
-	// (two empty-folding strings intersect → `confirmed`), and this move must not shift a verdict.
+	// (two empty-folding strings intersect → `confirmed`), and this move mustn't shift a verdict.
 	// A consumer probing a table by key filters the empty string out itself.
 	return keys
 }
@@ -158,7 +160,7 @@ export function regionKeys(value: string, countryAlpha2?: string | null): Set<st
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string | null): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)
-	// Snapshot before widening: the loop adds `county <key>` members that must not themselves be revisited.
+	// Snapshot before widening: the loop adds `county <key>` members that mustn't themselves be revisited.
 	const bare = [...keys]
 
 	for (const key of bare) {

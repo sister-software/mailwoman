@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The bare-city-name class where the model reads a bare famous name as a `street`, so span-rescore
- *   is the only tier that resolves it: when the span covers the whole unqualified input the gazetteer
- *   is probed unscoped and the locale country becomes an additive bonus instead of a filter, while
- *   every other shape keeps the hard filter byte-for-byte.
+ *   The bare-city-name class where the model reads a bare famous name as a `street`,
+ *   so span-rescore is the only tier that resolves it: when the span covers the whole unqualified
+ *   input the gazetteer is probed unscoped and the locale country becomes an additive bonus
+ *   instead of a filter, while every other shape keeps the hard filter byte-for-byte.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -108,7 +108,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 5.06,
 		exactMatch: true,
 	},
-	// Weimar / Thüringen: a 2-token span containing a real exact match must not outrank the 1-token gold.
+	// Weimar / Thüringen: a 2-token span containing a real exact match mustn't outrank the 1-token gold.
 	{
 		...EMPTY_PLACE_FIELDS,
 		id: 8,
@@ -234,7 +234,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when the span is only PART of the raw input", async () => {
-		// A partial span is not a bare toponym: 'Weimar Thüringen' keeps the DE-scoped 'Weimar' probe.
+		// A partial span isn't a bare toponym: 'Weimar Thüringen' keeps the DE-scoped 'Weimar' probe.
 		const raw = "Weimar Thüringen"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 		const calls: Array<{ text: string; country?: string }> = []
@@ -251,7 +251,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), {})
 
 		expect(hit?.place.country).toBe("DE")
-		// One probe per span: no widened re-probe when there is no filter to soften.
+		// One probe per span: no widened re-probe when there's no filter to soften.
 		expect(calls).toHaveLength(1)
 	})
 

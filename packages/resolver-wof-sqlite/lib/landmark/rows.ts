@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The landmark table's read, shared by the native lookup and the range-read lookup a Worker uses. It holds no database
- *   client, so a Worker bundle can import it.
+ *   The landmark table's read, shared by the native lookup and the range-read lookup a Worker uses.
+ *
+ *   It holds no database client, so a Worker bundle can import it.
  */
 
 import type { LandmarkHit, LandmarkKind } from "@mailwoman/core/resolver"

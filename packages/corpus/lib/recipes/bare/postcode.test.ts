@@ -26,7 +26,7 @@ describe("renderBarePostcode", () => {
 
 	it("accepts a code the source already spaced", () => {
 		// OpenAddresses stores Swedish codes spaced ("162 68") and Czech ones compact ("11900");
-		// the rendering must not depend on which spelling the publisher chose.
+		// the rendering mustn't depend on which spelling the publisher chose.
 		expect(renderBarePostcode("SE", "162 68")).toEqual(["162 68", "16268"])
 	})
 
@@ -132,7 +132,7 @@ describe("the rendering agrees with known-formats", () => {
 	}
 
 	it("refuses a surface the detector reads as something else", () => {
-		// The guard's own polarity: a four-digit group by itself is not a postcode shape any
+		// The guard's own polarity: a four-digit group by itself isn't a postcode shape any
 		// pattern claims over its whole span, so the recipe would refuse it rather than emit it.
 		expect(detectedAsPostcode("1012")).toBe(false)
 		expect(detectedAsPostcode("119 000")).toBe(false)

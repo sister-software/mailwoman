@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the postal-city alias table (`postal-city-alias-<cc>.db`, built by
- *   `scripts/build-postal-city-alias.ts`) — the one declaration of the columns shared by
- *   the builder and the reader ({@link WOFPostalCityAliasLookup}). Like {@link CandidateTable}, the
- *   interface is a Kysely `Database` interface plus the table DDL as a string, so a column rename in
- *   the builder is a compile error in the reader.
+ *   Typed schema for the postal-city alias table (`postal-city-alias-<cc>.db`,
+ *   built by `scripts/build-postal-city-alias.ts`) — the one declaration of the columns
+ *   shared by the builder and the reader ({@link WOFPostalCityAliasLookup}).
+ *
+ *   Like {@link CandidateTable}, the interface is a Kysely `Database` interface plus the table
+ *   DDL as a string, so a column rename in the builder is a compile error in the reader.
  *
  *   Provenance discipline (provenance-first): this is a sibling table to the PIP-derived
- *   `postcode_locality` data, never mixed into it — one table, one provenance class. Each row is an
- *   observed `(postcode, postal_city, geo_locality)` aggregate from Overture's `postal_city` field
- *   with a usage count `n`; `divergent = 1` exactly when `postal_city != geo_locality` (the alias
- *   signal — the only rows the resolver consumes).
+ *   `postcode_locality` data, never mixed into it — one table, one provenance class.
+ *   Each row is an observed `(postcode, postal_city, geo_locality)` aggregate from
+ *   Overture's `postal_city` field with a usage count `n`; `divergent = 1` exactly when
+ *   `postal_city != geo_locality` (the alias signal — the only rows the resolver consumes).
  */
 
 import type { Kysely } from "kysely"

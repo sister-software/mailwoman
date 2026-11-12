@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reports the clones in the WOF repos root. This supplies the other half of `country-plan`.
+ *   Reports the clones in the WOF repos root.
+ *   This supplies the other half of `country-plan`.
  *
- *   `country-plan` reads the built artifact to learn what source serves each country. It cannot report files on disk
- *   that await a build. For the WOF leg, `ingestWOF` globs `**\/data\/**\/*.geojson` under the repos root and reads no
- *   list. The directory contents form the recipe. The next build includes any clone, whether or not someone declared
- *   it. A declaration without a clone will produce no coverage.
+ *   `country-plan` reads the built artifact to learn what source serves each country.
+ *   It cannot report files on disk that await a build.
  *
- *   Every clone sits directly under the root at `<root>/<name>`. Any other directory there is a stray: the ingest's
- *   glob reads its GeoJSON as well, so a second copy of a repository inside a stray makes the ingested value depend on
- *   filesystem enumeration order. The audit lists strays so a sync or a build log can say so.
+ *   For the WOF leg, `ingestWOF` globs `**\/data\/**\/*.geojson` under the repos root and reads no list.
+ *   The directory contents form the recipe.
+ *
+ *   The next build includes any clone, whether or not someone declared it.
+ *   A declaration without a clone will produce no coverage.
+ *
+ *   Every clone sits directly under the root at `<root>/<name>`.
+ *   Any other directory there's a stray: the ingest's glob reads its GeoJSON as well, so a second copy
+ *   of a repository inside a stray makes the ingested value depend on filesystem enumeration order.
+ *   The audit lists strays so a sync or a build log can say so.
  */
 
 import { entryLeadsToDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -24,8 +30,8 @@ import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 export interface ClonedRepo {
 	name: string
 	/**
-	 * `head` of the checkout, or `null` for a directory that is not a git checkout
-	 * or when commits were not read.
+	 * `head` of the checkout, or `null` for a directory that's not a git checkout
+	 * or when commits weren't read.
 	 */
 	commit: string | null
 	/**
@@ -47,8 +53,7 @@ export interface ReposAudit {
 	 * Symbolic links under the root, by name, whether or not they resolve.
 	 *
 	 * The sync never creates one.
-	 * The admin ingest does not follow links, so a build omits a repository that
-	 * is reachable only through one.
+	 * The admin ingest doesn't follow links, so a build omits a repository that's reachable only through one.
 	 */
 	links: string[]
 }
@@ -80,7 +85,7 @@ export function isRepositoryDirectory(name: string): boolean {
 }
 
 /**
- * `head` for a checkout, or `null` when the directory is not one.
+ * `head` for a checkout, or `null` when the directory isn't one.
  *
  * A clone without git metadata can be a directory extracted from an archive.
  * The audit reports its vintage as absent and continues checking the root.
@@ -94,7 +99,7 @@ function headOf(dir: PathBuilder): string | null {
 }
 
 /**
- * Walk the repos root and report every clone, its vintage, and every directory that is not a clone.
+ * Walk the repos root and report every clone, its vintage, and every directory that's not a clone.
  */
 export async function auditReposRoot(
 	root: PathBuilderLike,

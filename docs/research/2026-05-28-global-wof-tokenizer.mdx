@@ -5,9 +5,7 @@ authors: [playpen-agent]
 tags: [neural, training, infrastructure]
 ---
 
-The v0.5.0-a1 tokenizer was trained exclusively on US and French addresses. When it encountered Chinese, Japanese, Korean, Thai, or Arabic text, it fell back to encoding individual bytes — 50-75% of tokens for CJK scripts. Every byte-fallback token is a lost opportunity for the model to learn meaningful subword patterns.
-
-Today we fixed that.
+The v0.5.0-a1 tokenizer was trained exclusively on US and French addresses. When it encountered Chinese, Japanese, Korean, Thai, or Arabic text, it fell back to encoding individual bytes. For CJK scripts, 50-75% of tokens were byte-fallback. Today we replaced it with a tokenizer trained on Who's On First place names.
 
 {/* truncate */}
 
@@ -15,7 +13,7 @@ Today we fixed that.
 
 Who's On First ships one GitHub repo per country, each containing GeoJSON files for every administrative place. Every place has localized name variants — "New York" has a `name:zho` of "纽约", a `name:jpn` of "ニューヨーク", a `name:kor` of "뉴욕", and dozens more.
 
-We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB) — 1.74 million GeoJSON files — and built them into a unified SQLite database using our WAL + Freeze pipeline:
+We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB), 1.74 million GeoJSON files in all, and built them into a unified SQLite database using our WAL + Freeze pipeline:
 
 | Country   | GeoJSON files | Time      |
 | --------- | ------------- | --------- |
@@ -28,7 +26,7 @@ We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB) — 1.74 million Geo
 | KR        | 54K           | -         |
 | **Total** | **1.74M**     | **3 min** |
 
-The result: 1.29 million places with 10.2 million name variants in 20+ languages. 768K Chinese names, 184K Japanese, 264K French, 261K German, 285K Arabic.
+The database holds 1.29 million places with 10.2 million name variants in 20+ languages. 768K Chinese names, 184K Japanese, 264K French, 261K German, 285K Arabic.
 
 ## The tokenizer
 
@@ -42,7 +40,7 @@ We extracted a balanced multi-script training set (2.19M lines) from the global 
 - 94K Korean
 - 160K other (Thai, Hindi, Hebrew, Greek, ...)
 
-SentencePiece trained in 28 seconds. Same 48K vocab size as before, same user-defined symbols (US state abbreviations, postcode formats). The difference: the vocab now allocates subword pieces for CJK characters, Hangul syllables, Thai consonant clusters, and Arabic word fragments — instead of wasting slots on Latin-only subwords that the old training data biased toward.
+SentencePiece trained in 28 seconds. Same 48K vocab size as before, same user-defined symbols (US state abbreviations, postcode formats). The vocab now allocates subword pieces for CJK characters, Hangul syllables, Thai consonant clusters, and Arabic word fragments, where the old training data had biased it toward Latin-only subwords.
 
 ## The result
 
@@ -72,4 +70,4 @@ The global WOF build pipeline follows the WAL + Freeze design brief:
 2. **Ingest**: WAL mode, parallel file reads (asyncParallelIterator), single-thread writer, batched transactions
 3. **Freeze**: WAL checkpoint, journal_mode=DELETE, create indexes, ANALYZE, VACUUM INTO
 
-The frozen artifact is a clean 1.09 GB SQLite with no sidecars, verified read-only, integrity-checked. It's available for download from the [Hugging Face bucket](https://huggingface.co/buckets/sister-software/mailwoman).
+The frozen artifact is a 1.09 GB SQLite file with no sidecars. We checked that it opens read-only and passes an integrity check. It's available for download from the [Hugging Face bucket](https://huggingface.co/buckets/sister-software/mailwoman).

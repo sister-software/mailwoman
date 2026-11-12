@@ -100,6 +100,12 @@ export class WebONNXRunner implements NeuralRunner {
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
 	#generation = 0
+	/**
+	 * Inferences in flight, counted from their start.
+	 * `release()` waits for the count to reach zero.
+	 */
+	#active = 0
+	#idle: PromiseWithResolvers<void> | null = null
 
 	#modelBytes: Uint8Array | null
 
@@ -139,7 +145,7 @@ export class WebONNXRunner implements NeuralRunner {
 			const generation = this.#generation
 
 			// A release() during the load increments the generation and frees this session,
-			// so a stale load must not store it.
+			// so a stale load mustn't store it.
 			const adopt = (session: ort.InferenceSession) => {
 				if (generation !== this.#generation) return session
 
@@ -185,7 +191,10 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Garbage collection never reclaims that memory.
 	 *
 	 * It may be called more than once.
-	 * When a load is in progress, it waits for the session and then releases it.
+	 * When a load is in progress, it waits for the session.
+	 *
+	 * It then waits for every inference that started before it, and releases the
+	 * session once none is still running on it.
 	 */
 	async release(): Promise<void> {
 		this.#modelBytes = null
@@ -201,6 +210,11 @@ export class WebONNXRunner implements NeuralRunner {
 
 		try {
 			const session = await pending
+
+			if (this.#active) {
+				this.#idle ??= Promise.withResolvers<void>()
+				await this.#idle.promise
+			}
 
 			await session.release()
 		} catch {}
@@ -218,23 +232,24 @@ export class WebONNXRunner implements NeuralRunner {
 	/**
 	 * Runs a character-input graph on one padded encoding, like `ONNXRunner.inferChars`.
 	 */
-	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
-		const session = await this.#ensureSession()
-		const packed = packCharFeed(charIDs, attentionMask)
+	inferChars: InferCharsFunction = (charIDs, attentionMask) =>
+		this.#inflight(async () => {
+			const session = await this.#ensureSession()
+			const packed = packCharFeed(charIDs, attentionMask)
 
-		const output = await session.run({
-			char_ids: new ort.Tensor("int64", packed.charIDs.data, packed.charIDs.dims),
-			attention_mask: new ort.Tensor("int64", packed.attentionMask.data, packed.attentionMask.dims),
+			const output = await session.run({
+				char_ids: new ort.Tensor("int64", packed.charIDs.data, packed.charIDs.dims),
+				attention_mask: new ort.Tensor("int64", packed.attentionMask.data, packed.attentionMask.dims),
+			})
+
+			return decodeInferOutput(
+				{
+					...(output.logits ? { logits: outputTensor(output.logits) } : {}),
+					...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
+				},
+				packed.seqLen
+			)
 		})
-
-		return decodeInferOutput(
-			{
-				...(output.logits ? { logits: outputTensor(output.logits) } : {}),
-				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
-			},
-			packed.seqLen
-		)
-	}
 
 	/**
 	 * Runs one token-id sequence like `ONNXRunner.infer`.
@@ -242,60 +257,80 @@ export class WebONNXRunner implements NeuralRunner {
 	 * A soft-feature channel is fed only when the graph declares it.
 	 * A declared channel that the caller omits is zero-filled, so the session never rejects a missing input.
 	 */
-	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
-		const session = await this.#ensureSession()
-		const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
+	infer: InferFunction = (tokenIDs, anchor, gazetteer, country, evidence) =>
+		this.#inflight(async () => {
+			const session = await this.#ensureSession()
+			const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
 
-		const feeds: Record<string, ort.Tensor> = {
-			attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
-		}
-
-		if (session.inputNames.includes(INPUTS_EMBEDS)) {
-			if (!this.#embeddings) {
-				throw new Error(`this graph declares ${INPUTS_EMBEDS}; pass the release's embedding table as \`embeddings\``)
+			const feeds: Record<string, ort.Tensor> = {
+				attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
 			}
 
-			const embeds = await this.#embeddings.embed(tokenIDs, this.fixedSeqLen)
+			if (session.inputNames.includes(INPUTS_EMBEDS)) {
+				if (!this.#embeddings) {
+					throw new Error(`this graph declares ${INPUTS_EMBEDS}; pass the release's embedding table as \`embeddings\``)
+				}
 
-			feeds[INPUTS_EMBEDS] = new ort.Tensor("float32", embeds.data, embeds.dims)
-		} else {
-			feeds["input_ids"] = new ort.Tensor("int64", inputIDs.data, inputIDs.dims)
+				const embeds = await this.#embeddings.embed(tokenIDs, this.fixedSeqLen)
+
+				feeds[INPUTS_EMBEDS] = new ort.Tensor("float32", embeds.data, embeds.dims)
+			} else {
+				feeds["input_ids"] = new ort.Tensor("int64", inputIDs.data, inputIDs.dims)
+			}
+
+			const packed = packSoftChannelFeeds(
+				session.inputNames,
+				this.fixedSeqLen,
+				seqLen,
+				anchor,
+				gazetteer,
+				country,
+				evidence
+			)
+
+			for (const [name, feed] of packed) {
+				feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
+			}
+
+			const hint = packLocaleHintFeed(session.inputNames, evidence?.localeHint)
+
+			if (hint) {
+				feeds["locale_hint"] = new ort.Tensor("int64", hint.data, hint.dims)
+			}
+
+			const output = await session.run(feeds)
+			const logits = output["logits"]
+			const localeLogits = output["locale_logits"]
+			const spanScores = output["span_scores"]
+			const addressSystemLogits = output["address_system_logits"]
+
+			return decodeInferOutput(
+				{
+					...(logits ? { logits: outputTensor(logits) } : {}),
+					...(localeLogits ? { localeLogits: outputTensor(localeLogits) } : {}),
+					...(spanScores ? { spanScores: outputTensor(spanScores) } : {}),
+					...(addressSystemLogits ? { addressSystemLogits: outputTensor(addressSystemLogits) } : {}),
+				},
+				seqLen
+			)
+		})
+
+	/**
+	 * Counts `work` among the inferences in flight from its start, before it reaches the session,
+	 * so a `release()` frees the session only once every inference that started before it has finished.
+	 */
+	async #inflight<T>(work: () => Promise<T>): Promise<T> {
+		this.#active++
+
+		try {
+			return await work()
+		} finally {
+			this.#active--
+
+			if (!this.#active) {
+				this.#idle?.resolve()
+				this.#idle = null
+			}
 		}
-
-		const packed = packSoftChannelFeeds(
-			session.inputNames,
-			this.fixedSeqLen,
-			seqLen,
-			anchor,
-			gazetteer,
-			country,
-			evidence
-		)
-
-		for (const [name, feed] of packed) {
-			feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
-		}
-
-		const hint = packLocaleHintFeed(session.inputNames, evidence?.localeHint)
-
-		if (hint) {
-			feeds["locale_hint"] = new ort.Tensor("int64", hint.data, hint.dims)
-		}
-
-		const output = await session.run(feeds)
-		const logits = output["logits"]
-		const localeLogits = output["locale_logits"]
-		const spanScores = output["span_scores"]
-		const addressSystemLogits = output["address_system_logits"]
-
-		return decodeInferOutput(
-			{
-				...(logits ? { logits: outputTensor(logits) } : {}),
-				...(localeLogits ? { localeLogits: outputTensor(localeLogits) } : {}),
-				...(spanScores ? { spanScores: outputTensor(spanScores) } : {}),
-				...(addressSystemLogits ? { addressSystemLogits: outputTensor(addressSystemLogits) } : {}),
-			},
-			seqLen
-		)
 	}
 }

@@ -134,4 +134,34 @@ describe("autocomplete index", () => {
 		await expect(index.query("   ")).resolves.toEqual([])
 		expect(loads).toEqual([])
 	})
+
+	it("query reads the manifest and a partition again after a read that rejected", async () => {
+		let manifestReads = 0
+		let partitionReads = 0
+
+		const index = new PlaceAutocompleteIndex(
+			async () => {
+				manifestReads++
+
+				if (manifestReads === 1) throw new Error("manifest dropped")
+
+				return manifest
+			},
+			async () => {
+				partitionReads++
+
+				if (partitionReads === 1) throw new Error("partition dropped")
+
+				return londonTrie()
+			}
+		)
+
+		await expect(index.query("londo", 1)).rejects.toThrow("manifest dropped")
+		await expect(index.query("londo", 1)).rejects.toThrow("partition dropped")
+
+		const answered = await index.query("londo", 1)
+
+		expect(answered.map((hit) => hit.name)).toEqual(["London"])
+		expect([manifestReads, partitionReads]).toEqual([2, 2])
+	})
 })

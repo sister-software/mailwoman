@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The application's data shapes — the messy record that goes in and the canonical entity that
- *   comes out. Plain interfaces over the `@mailwoman/record` types.
+ *   The application's data shapes — the messy record that goes in and the canonical entity that comes out.
+ *   Plain interfaces over the `@mailwoman/record` types.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"

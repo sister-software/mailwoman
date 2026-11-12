@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker's bindings, validated on every request and refused when a var still has a placeholder value. Vars are
- *   strings in Wrangler. the two booleans are parsed here so no route compares a string to "true".
+ *   The worker's bindings, validated on every request and refused when a var still has a placeholder value.
+ *
+ *   Vars are strings in Wrangler. the two booleans are parsed here so no route compares a string to "true".
  */
 
 import type { D1Database, RateLimit, SendEmail } from "@cloudflare/workers-types"

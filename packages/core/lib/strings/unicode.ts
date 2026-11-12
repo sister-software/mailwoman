@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Character classes and splits over JavaScript's own Unicode properties: `\p{Nd}` for a decimal digit, `\p{L}` for
- *   a letter, and `\s` (WhiteSpace and LineTerminator) for whitespace, all at the running Node's Unicode version.
+ *   Character classes and splits over JavaScript's own Unicode properties: `\p{Nd}` for
+ *   a decimal digit, `\p{L}` for a letter, and `\s` (WhiteSpace and LineTerminator)
+ *   for whitespace, all at the running Node's Unicode version.
  */
 
 const DECIMAL_DIGITS = /^\p{Nd}+$/u

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tokenizer interface for alignment. Each token comes back with its (start, end) character offsets so
- * BIO labels can be assigned by span overlap with component spans, independent of how the tokenizer
- * chose its splits. The interface is deliberately minimal — only what alignment needs.
+ * Tokenizer interface for alignment.
+ *
+ * Each token comes back with its (start, end) character offsets so BIO labels can be assigned
+ * by span overlap with component spans, independent of how the tokenizer chose its splits.
+ * The interface is deliberately minimal — only what alignment needs.
  */
 
 import type { TextSpan } from "@mailwoman/query-shape"
@@ -20,7 +22,7 @@ export interface Tokenizer {
  * Whitespace + punctuation tokenizer (pure JS).
  *
  * Tokens are maximal runs of unicode word characters (`\p{L}`, `\p{N}`, `\p{M}`, plus `'`, `-`, `_`);
- * everything else is a separator and is not emitted, so the spans cover only token regions.
+ * everything else is a separator and isn't emitted, so the spans cover only token regions.
  * The lossiness at the edges is intentional, because alignment can still label every meaningful span.
  */
 export function whitespaceTokenizer(): Tokenizer {
@@ -72,7 +74,7 @@ export function cjkAwareTokenizer(): Tokenizer {
 				}
 
 				// A Han run may contain Latin letters or digits (`3分场2队`); those stay glued
-				// to their neighbors only if they are Han too, so every code point of a
+				// to their neighbors only if they're Han too, so every code point of a
 				// Han-containing token becomes its own token.
 				let offset = token.start
 

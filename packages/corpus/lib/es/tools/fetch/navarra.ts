@@ -2,46 +2,48 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Harvest the INSPIRE Addresses archives the Gobierno de Navarra publishes into the directory
- * `#es/adapters/navarra/adapter` reads.
+ * Harvest the INSPIRE Addresses archives the Gobierno de Navarra publishes into
+ * the directory `#es/adapters/navarra/adapter` reads.
  *
- * The service is one ATOM document rather than two levels. The service document at
+ * The service is one ATOM document rather than two levels.
+ * The service document at
  * `https://filescartografia.navarra.es/2_CARTOGRAFIA_TEMATICA/2_7_CATASTRO/2_7_3_INSPIRE_ATOM/2_7_3_3_AD/Addresses_ServiceATOM_Navarra.xml`
  * lists one entry per partition, and each entry links that partition's zipped GML directly.
+ *
  * Measured 2026-10-03: the document answered http 200 with 671,131 bytes holding 272 entries,
  * sha256 `6971dd61d87e2fc047e953e956b09c6cc88aaa92e16ffb3bbc4750a1edb1ab60`.
  *
  * Four properties of this service decide the harvest's shape.
  *
- * 1. **The archive link is the `enclosure` link, and the `alternate` link is not it.** Each entry
- *    lists six links, three of which address the same archive under `enclosure`, `section` and
- *    `alternate`. The entry's *first* `alternate` link is the relative href
- *    `Addresses_DatasetATOM_Navarra.xml`, which is the dataset feed, so a reader taking the first
- *    `alternate` link downloads an ATOM document in place of the archive. This harvest takes
- *    `enclosure` and refuses an entry that lists none.
+ * 1. **The archive link is the `enclosure` link, and the `alternate` link isn't it.** Each entry lists
+ *    six links, three of which address the same archive under `enclosure`, `section` and `alternate`.
+ *    The entry's *first* `alternate` link is the relative href `Addresses_DatasetATOM_Navarra.xml`,
+ *    which is the dataset feed, so a reader taking the first `alternate` link
+ *    downloads an ATOM document in place of the archive.
+ *    This harvest takes `enclosure` and refuses an entry that lists none.
  * 2. **An entry leaves its own area unstated.** Every one of the 272 entries is titled
  *    `Address Navarra` and every `<id>` is empty, so the archive's own file name,
- *    `AD_Navarra_<n>.gml.zip`, is the only statement of which partition an entry offers. The
- *    numbers are not contiguous: the 272 published partitions run from 1 to 908. A partition
- *    therefore cannot be selected by place from the feed, and this module claims no mapping from a
- *    partition number to a municipality.
- * 3. **The `length` attribute is one number repeated.** All 272 entries claim 34,987 bytes, while
- *    partition 1 delivers 7,476. Every byte count this module records is counted off the delivered
- *    body.
+ *    `AD_Navarra_<n>.gml.zip`, is the only statement of which partition an entry offers.
+ *    The numbers are not contiguous: the 272 published partitions run from 1 to 908.
+ *    A partition therefore cannot be selected by place from the feed, and this module
+ *    claims no mapping from a partition number to a municipality.
+ * 3. **The `length` attribute is one number repeated.** All 272 entries claim
+ *    34,987 bytes, while partition 1 delivers 7,476.
+ *    Every byte count this module records is counted off the delivered body.
  * 4. **Every entry states one `<updated>`, which is also the feed's own.** All 272 read
- *    `2026-04-14T12:06:58Z`, so the value dates the publication rather than the file. It is still
- *    the freshness signal a re-run compares, because a new edition moves it. A skip requires the
- *    feed to state a value: where it states none, both sides read an empty string and an equality
- *    test would keep an archive of unknown age for as long as the feed stayed silent.
+ *    `2026-04-14T12:06:58Z`, so the value dates the publication rather than the file.
+ *    It is still the freshness signal a re-run compares, because a new edition moves it.
+ *    A skip requires the feed to state a value: where it states none, both sides read an empty string
+ *    and an equality test would keep an archive of unknown age for as long as the feed stayed silent.
  *
- * A full harvest is 273 requests and roughly 10 MB: a systematic sample of 10 of the 272 archives
- * on 2026-10-03 ran from 7,476 to 112,830 bytes. The harvest is bound by round trips rather than by
- * bandwidth and is dispatched serially through one `APIClient` at
- * {@linkcode ES_NAVARRA_REQUEST_INTERVAL_MS}.
+ * A full harvest is 273 requests and roughly 10 MB: a systematic sample of 10 of the
+ * 272 archives on 2026-10-03 ran from 7,476 to 112,830 bytes.
+ * The harvest is bound by round trips rather than by bandwidth and is dispatched serially
+ * through one `APIClient` at {@linkcode ES_NAVARRA_REQUEST_INTERVAL_MS}.
  *
- * The archives stay compressed. `#es/adapters/navarra/adapter` reads the GML member through
- * `inspireGMLChunks`, which inflates from the archive, and partition 1's member is 307,117 bytes
- * against its archive's 7,476.
+ * The archives stay compressed.
+ * `#es/adapters/navarra/adapter` reads the GML member through `inspireGMLChunks`, which inflates
+ * from the archive, and partition 1's member is 307,117 bytes against its archive's 7,476.
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
@@ -134,7 +136,7 @@ export interface ESNavarraPartition {
  * The partitions the service document lists.
  *
  * @throws When the document holds no entry, when an entry lists no `enclosure` link, when a linked
- * archive's file name is not `AD_Navarra_<n>.gml.zip`, or when two entries point to one archive.
+ * archive's file name isn't `AD_Navarra_<n>.gml.zip`, or when two entries point to one archive.
  * Each of those would otherwise write zero archives while reporting a completed run.
  */
 export function readESNavarraServiceFeed(feed: AtomFeed): readonly ESNavarraPartition[] {
@@ -233,7 +235,7 @@ export interface HarvestESNavarraOptions {
 	/**
 	 * Harvest only these partition numbers, for a probe or to repair specific partitions.
 	 *
-	 * A number the service document does not list is reported as a failure rather than ignored.
+	 * A number the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	partitions?: readonly string[] | null
 	/**
@@ -279,10 +281,10 @@ async function isCurrent(
 }
 
 /**
- * The partitions this run considers, and the numbers a caller supplied that the feed does not list.
+ * The partitions this run considers, and the numbers a caller supplied that the feed doesn't list.
  *
- * A number the caller asked for and the service document does not list is returned
- * rather than dropped, because a partition that is not published is a different
+ * A number the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a partition that's not published is a different
  * condition from a selection that holds no partition.
  */
 function selectPartitions(
@@ -364,8 +366,8 @@ export async function harvestESNavarra(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, ESNavarraArchiveEntry>()
 
-	// An entry for a partition this run does not consider is kept, so a bounded
-	// run never drops what an earlier run recorded.
+	// An entry for a partition this run doesn't consider is kept, so a bounded run
+	// never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESNavarraArchiveEntry)
 	}

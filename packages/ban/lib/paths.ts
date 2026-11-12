@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the BAN databases live under the data root's `db/` group:
- *   the address-point and street-centroid databases and their attribution records.
+ *   Where the BAN databases live under the data root's `db/` group: the address-point
+ *   and street-centroid databases and their attribution records.
  */
 
 import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"

@@ -58,11 +58,11 @@ golden check on five tags, so it was not shipped.
 
 ## Known open
 
-The **French** comma-free case (`181 Rue du Chevaleret Paris`) is not fixed and stays a tracked #1101
-xfail. It is not French-specific and not a resolver gap: it is the **no-anchor bare-terminal-locality**
-case. A locality that is the last token with no trailing state or postcode to anchor it. A trailing state
+The **French** comma-free case (`181 Rue du Chevaleret Paris`) isn't fixed and stays a tracked #1101
+xfail. It isn't French-specific and not a resolver gap: it is the **no-anchor bare-terminal-locality**
+case. A locality that's the last token with no trailing state or postcode to anchor it. A trailing state
 (`Washington DC`) or a postcode before the locality (`75013 Paris`) anchors the segmentation and resolves
 correctly. A bare terminal toponym is in fact ambiguous against a street continuation, and the punct-drop
-augmentation does not disambiguate it. A locality name-index
+augmentation doesn't disambiguate it. A locality name-index
 ([#30](https://github.com/sister-software/mailwoman/issues/30)) or a targeted no-anchor augmentation,
 tracked separately. It is low-frequency — nearly all real geocoding traffic includes a postcode or region.

@@ -21,7 +21,7 @@ produces.
 
 ## Decisions taken
 
-**The runtime does not change.** A valid key changes what is reported, never what runs. This keeps the
+**The runtime doesn't change.** A valid key changes what's reported, never what runs. This keeps the
 boundary PR #2117 set: `doctor` and `license verify` remain advisory, and no code path refuses work for
 lack of a key.
 
@@ -30,7 +30,7 @@ branch, from the same two inputs the doctor uses (the package's `license` expres
 configured key's offline verification). No output re-derives it.
 
 **Responses never include the licensee or the key id.** The doctor prints those locally for the
-operator. A Photon deployment serving the public must not expose its operator's commercial relationship
+operator. A Photon deployment serving the public mustn't expose its operator's commercial relationship
 in every response. The stamp states which branch applies and makes no statement about who holds it.
 
 **The notice prints on every CLI invocation, TTY or not.** A notice that only prints to a terminal
@@ -39,7 +39,7 @@ can redirect. Only a valid key silences the notice, and no environment variable 
 
 **The report uses the doctor's vocabulary.** The doctor reports three obligations: attribution,
 share-alike on modifications, and the source offer to network users. The notice states the source
-offer, because that is the obligation a network deployment incurs and the one the commercial
+offer, because that's the obligation a network deployment incurs and the one the commercial
 agreement waives.
 
 **Drop-in protocols stay intact.** A field is added only where the protocol has room for one. Where it
@@ -69,7 +69,7 @@ wire:
 | `notice`      | present only when `license` is `AGPL-3.0-only`; absent otherwise                                          |
 
 An expired, unknown, invalid or retired key reads as `AGPL-3.0-only` with the notice present, the
-same reading the doctor gives it. The stamp does not say why, and the doctor does.
+same reading the doctor gives it. The stamp doesn't say why, and the doctor does.
 
 ### Home
 
@@ -123,7 +123,7 @@ A commercial license waives that obligation: https://mailwoman.post/license
 The launcher must keep its single static import (its header explains the compile-cache ordering). The
 notice code is therefore loaded by dynamic import after `dispatchCommand()` resolves, and the notice is
 written before `process.exitCode` is set. It prints for every exit code, including a usage error, and for `--help`
-and `--version`. It does not print when the key verifies `valid`. It prints for an expired key with the
+and `--version`. It doesn't print when the key verifies `valid`. It prints for an expired key with the
 expiry date appended to the first line:
 
 ```
@@ -222,7 +222,7 @@ CLI, in `packages/mailwoman/test/`:
 HTTP, in each app's existing test file:
 
 - every route, including `/health` and `/openapi.json`, sends both headers when an `engine` option
-  is given and neither when it is not.
+  is given and neither when it isn't.
 - Nominatim results include `engine` and an unchanged `licence`. The Photon collection includes `engine`
   as a top-level member, and every feature is unchanged. Libpostal bodies are byte-identical with and
   without the option.

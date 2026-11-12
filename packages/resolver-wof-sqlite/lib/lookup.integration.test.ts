@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests for `WOFSQLitePlaceLookup` against an in-memory fixture DB that mimics a real WOF SQLite distribution without a checked-in binary.
+ * Tests for `WOFSQLitePlaceLookup` against an in-memory fixture DB that mimics a
+ * real WOF SQLite distribution without a checked-in binary.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -191,8 +192,8 @@ const FIXTURE: FixturePlace[] = [
 	},
 
 	// Alias-bag boundary fixture: two aliases whose concatenation straddles the phrase "York New".
-	// The exact tier must not promote this place for that straddling query,
-	// while each alias on its own ("New City") still warrants the exact tier.
+	// The exact tier mustn't promote this place for that straddling query, while each
+	// alias on its own ("New City") still warrants the exact tier.
 	{
 		id: 999_000_001,
 		parent_id: 85_633_147,
@@ -413,7 +414,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 
 	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
 		// "York New" straddles the bag "Old York <sep> New City".
-		// Its tokens and-match the row, but the exact tier must not promote it.
+		// Its tokens and-match the row, but the exact tier mustn't promote it.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		withFTS[Symbol.dispose]()
@@ -440,7 +441,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 			const cands = await disposable.findPlace({ text: "Paris" })
 			expect(cands.length).toBeGreaterThan(0)
 		}
-		// After the using block the original db handle still works because the lookup does not own it.
+		// After the using block the original db handle still works because the lookup doesn't own it.
 		const after = db.prepare(`SELECT COUNT(*) AS n FROM spr`).get() as { n: number }
 		expect(after.n).toBe(FIXTURE.length)
 	})
@@ -464,7 +465,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
 		// A smoke test.
 		// SQLite silently downgrades a write-mode open to read-only on an owned 0444 file,
-		// so this proves a sealed file resolves end-to-end and does not distinguish the open mode.
+		// so this proves a sealed file resolves end-to-end and doesn't distinguish the open mode.
 		// The open mode itself is enforced by the DatabaseSync spy in `lookup-readonly-open.test.ts`.
 		await using dirDirectory = await temporaryDirectory("mw-wof-ro-")
 		const dir = dirDirectory.path

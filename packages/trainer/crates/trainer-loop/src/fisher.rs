@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `optim/fisher.py`: Fisher capture and the EWC penalty.
 //!
 //! The capture keeps the running sum of each trainable parameter's squared gradient over the window and writes the

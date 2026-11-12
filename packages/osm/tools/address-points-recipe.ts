@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `osm-address-points` build recipe: one address-point database per requested country, derived from
- *   a Geofabrik extract. `mailwoman data build osm-address-points --countries <cc>` runs it through the
- *   installer. The installer acquires the inputs, validates each output and activates it.
+ *   The `osm-address-points` build recipe: one address-point database per requested
+ *   country, derived from a Geofabrik extract.
  *
- *   Countries that share a region read one acquired extract. A country derived from a region that holds
- *   other countries is clipped to its outline, and the outline's digest is recorded in that country's
- *   derivation. A country derived from its own extract is not clipped, as the command-line builder has never
- *   clipped one.
+ *   `mailwoman data build osm-address-points --countries <cc>` runs it through the installer.
+ *   The installer acquires the inputs, validates each output and activates it.
+ *
+ *   Countries that share a region read one acquired extract.
+ *   A country derived from a region that holds other countries is clipped to its outline,
+ *   and the outline's digest is recorded in that country's derivation.
+ *
+ *   A country derived from its own extract isn't clipped, as the command-line builder has never clipped one.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

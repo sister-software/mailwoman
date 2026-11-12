@@ -4,11 +4,14 @@
 /**
  *   Open a built data artifact.
  *
- *   This is the other half of the sealed-artifact invariant in `../utils/sealed-db.ts`: that module owns the
- *   filesystem side (seal, unseal-refusal, atomic swap) and stays free of a static `node:sqlite` import, because it
- *   flows through the `@mailwoman/core/utils` barrel into consumers that cannot resolve one. The open lives here, where
- *   `DatabaseClient` is already imported and the cost is paid. The open is asynchronous: the write branch awaits the
- *   seal check against the filesystem before the handle is constructed.
+ *   This is the other half of the sealed-artifact invariant in `../utils/sealed-db.ts`:
+ *   that module owns the filesystem side (seal, unseal-refusal, atomic swap)
+ *   and stays free of a static `node:sqlite` import, because it flows through the
+ *   `@mailwoman/core/utils` barrel into consumers that cannot resolve one.
+ *   The open lives here, where `DatabaseClient` is already imported and the cost is paid.
+ *
+ *   The open is asynchronous: the write branch awaits the seal check against the
+ *   filesystem before the handle is constructed.
  */
 
 import type { PathBuilderLike } from "path-ts"

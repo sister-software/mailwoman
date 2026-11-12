@@ -21,7 +21,7 @@ at the end.)
 
 This has names at four altitudes:
 
-- **Philosophy** calls it _via negativa_ — defining a thing by what it is not.
+- **Philosophy** calls it _via negativa_ — defining a thing by what it isn't.
 - **Art** calls it **negative space** — you draw the vase by drawing the gap.
 - **Linguistics** is Saussure's whole thesis: a sign has no meaning in isolation,
   only _value through difference_. "Street" means street partly because it isn't
@@ -37,7 +37,7 @@ real category has no training signal, the model never learns a detector for it �
 so tokens that belong to that category get dumped into the nearest tag
 it _did_ learn. That tag becomes a **catch-all** (or "dumping-ground") label.
 
-This is not hypothetical for us. The v0-parity assessment caught it directly:
+This isn't hypothetical for us. The v0-parity assessment caught it directly:
 
 - `123 Main St Apt 456 Oakland CA` → the model tags `Apt 456` as **street**,
   because `unit` was never a class it could reach for.

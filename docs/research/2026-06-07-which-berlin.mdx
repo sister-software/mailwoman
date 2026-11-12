@@ -5,42 +5,36 @@ authors: [playpen-agent]
 tags: [neural, resolver, hubris]
 ---
 
-Ask a geocoder for "Berlin" and it has to make a choice. There's the one in Germany, There's also Berlin, New Hampshire (population nine thousand and change), Berlin, Wisconsin, Berlin, Connecticut, and a dozen more scattered across the United States like the name was on sale. The parser hands you the word `Berlin` tagged as a locality. Something downstream has to decide _which_ dot on the map that is. How would you even know if it picked right?
+Ask a geocoder for "Berlin" and it has to make a choice. There's the one in Germany. There's also Berlin, New Hampshire (population nine thousand and change), Berlin, Wisconsin, Berlin, Connecticut, and a dozen more scattered across the United States like the name was on sale. The parser hands you the word `Berlin` tagged as a locality. Something downstream has to decide _which_ dot on the map that is, and we needed a way to check whether it picked right.
 
-For a long time our answer was a scorecard that checked the name. Did the resolved place's name equal the expected name? Tick. Move on. It is a completely reasonable thing to measure, and it was lying to us for months.
+For a long time our check was a scorecard that asked whether the resolved place's name equaled the expected name. It is a reasonable thing to measure, and for months it hid wrong-country picks from us.
 
 {/* truncate */}
 
 ## The gold star for New Hampshire
 
-The name check can't see the following failure. Feed it a German address, let the resolver land on Berlin, New Hampshire, and ask the scorecard how it did. The resolved name is "Berlin." The expected name is "Berlin." Tick. Gold star. We put a Berlin address an ocean away from Berlin and the metric congratulated us for it.
+The name check can't see the following failure. Feed it a German address, let the resolver land on Berlin, New Hampshire, and ask the scorecard how it did. The resolved name is "Berlin." The expected name is "Berlin." The check passes even though we put a Berlin address an ocean away from Berlin.
 
-This isn't a contrived edge case. Bare locality names collide constantly across borders, and a name-only check is structurally blind to the collision. Whenever the model dropped a German locality on its American namesake, our headline number stayed perfectly, serenely flat. The bug and the scorecard were made for each other.
+Bare locality names collide constantly across borders, and a name-only check cannot see the collision. Whenever the model dropped a German locality on its American namesake, our headline number didn't move. We found the problem by accident, while working on something else.
 
-We only tripped over it by accident, chasing something else entirely.
+## The postcode hint under the name metric
 
-## The hint that showed zero improvement, loudly
+Every address includes a postcode, and a postcode mostly pins down a country. So we built a small extractor that turns the postcode into a guess about which country you're in, and we ran a simulation: feed that country guess into the resolver's ranking, give candidates from the right country a nudge, and see how much the name-match score improves. It didn't change.
 
-Every address includes a postcode, and a postcode mostly pins down a country. So we built a small extractor that turns the postcode into a guess about which country you're in, and we ran a simulation: feed that country guess into the resolver's ranking, give candidates from the right country a nudge, and see how much the name-match score improves.
-
-It improved by zero. Flat line.
-
-Which, briefly, looked like a dead end. The hint was supposed to help and the number said it didn't. Then it clicked: the number _couldn't_ say it helped, because the number grades by name, and fixing a wrong-country pick doesn't change the name. We'd handed our metric exactly the kind of improvement it was built to ignore.
+Briefly, that looked like a dead end. The hint was supposed to help and the number said it didn't. But the number _couldn't_ show the hint helping, because it grades by name, and fixing a wrong-country pick doesn't change the name. We'd handed our metric exactly the kind of improvement it was built to ignore.
 
 ## Measure the distance and the floor falls out
 
-So we threw out the name check and graded by distance instead. We have the real government coordinates for every test address, so we can ask the only question that matters: how far is the resolver's pick from where the address really is?
+So we threw out the name check and graded by distance instead. We have the real government coordinates for every test address, so we can measure how far the resolver's pick is from where the address really is.
 
 The picture inverted immediately. On German addresses, the postcode hint dragged 33 picks back across the Atlantic to where they belonged, erasing about 117,000 kilometers of total error. On American addresses it pulled 333 of them more than 100 km closer to the truth and pushed only 7 the wrong way, a roughly fifty-to-one trade. The hint moved picks by a continent's width, and the name scorecard had been sitting there the whole time reporting that absolutely no change was happening.
 
-A metric you can satisfy without being right will let you be wrong forever, cheerfully, in production. "Berlin" matches "Berlin" no matter which one you meant. The distance to the real point does not care what you call the place. It measures whether you found it. We switched the yardstick, and we're building the country hint into the resolver for real now that we can finally see what it does.
+"Berlin" matches "Berlin" no matter which one you meant. The distance to the real point doesn't care what you call the place. It measures whether you found it. We switched the yardstick, and we're building the country hint into the resolver for real now that we can finally see what it does.
 
-## The same week, the same lesson
+## The parser's confidence calibration
 
-This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 meant right-nine-times-in-ten. It didn't, until we fit a correction that made it direct (the [calibration writeup](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx) has the details, including a comparison with weather-forecast calibration).
+This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 meant right-nine-times-in-ten. It didn't, until we fit a calibration correction (the [calibration writeup](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx) has the details, including a comparison with weather-forecast calibration).
 
-Both are the same realization wearing different hats. A geocoder reports numbers about itself constantly: how confident it is in a tag, how well it scored on a benchmark. Those numbers are worthless decoration until you've checked that they mean what they say. A confidence that isn't calibrated is a vibe with a decimal point. A benchmark you can game is a way to feel good while shipping the wrong Berlin.
-
-So the next time a metric tells you everything is fine, ask it the one thing it isn't measuring. Ours was measuring the spelling. It should have been measuring the distance.
+Both are the same realization wearing different hats. A geocoder reports numbers about itself constantly: how confident it is in a tag, how well it scored on a benchmark. Those numbers are worthless decoration until you've checked that they mean what they say.
 
 _The harness, the per-row deltas, and the reproducible reports live in `scripts/eval/anchor-resolver-delta.ts` and `docs/articles/evals/`. Numbers in this post are generated rather than hand-typed._

@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures the number of board rows whose expected street receives paint from the `street_type` evidence
- *   lexicon, per country.
+ *   Measures the number of board rows whose expected street receives paint from
+ *   the `street_type` evidence lexicon, per country.
  *
- *   `data/gazetteer/street-type-lexicon-v3.json` is built from `@mailwoman/codex fr/us/gb/de/ca`, so
- *   the channel is silent on a street written with a street word from any other address system. A row
- *   whose street receives no paint gives the model a zero `street_type` feature over the real street,
- *   while a venue name leading with a covered word such as `Plaza` receives a positive one.
+ *   `data/gazetteer/street-type-lexicon-v3.json` is built from `@mailwoman/codex fr/us/gb/de/ca`,
+ *   so the channel is silent on a street written with a street word from any other address system.
+ *   A row whose street receives no paint gives the model a zero `street_type` feature over the real
+ *   street, while a venue name leading with a covered word such as `Plaza` receives a positive one.
  *
- *   The scan is `gazetteerCharPaint`, the same function the classifier feeds, rather than a
- *   reimplementation of the artifact's `word_norm` and n-gram rules.
+ *   The scan is `gazetteerCharPaint`, the same function the classifier feeds,
+ *   rather than a reimplementation of the artifact's `word_norm` and n-gram rules.
  *
- *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/street/type/lexicon-coverage.run.ts [--show 20] [--json <out>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/corpus/street/type/lexicon-coverage.run.ts
+ *   [--show 20] [--json <out>]
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

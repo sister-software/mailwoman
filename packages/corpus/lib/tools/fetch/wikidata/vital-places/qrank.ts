@@ -4,14 +4,16 @@
 /**
  * The QRank candidate list: every Wikidata item ranked by its Wikimedia pageviews over the past 52 weeks.
  *
- * QRank is published at `https://qrank.toolforge.org/` by Sascha Brawer. Its homepage states "The QRank data
- * is dedicated to the Public Domain via Creative Commons Zero 1.0", and its `datapackage.json` lists the
- * license as `CC0-1.0`, so the list adds no share-alike term to the selection.
+ * QRank is published at `https://qrank.toolforge.org/` by Sascha Brawer.
+ * Its homepage states "The QRank data is dedicated to the Public Domain via Creative
+ * Commons Zero 1.0", and its `datapackage.json` lists the license as `CC0-1.0`,
+ * so the list adds no share-alike term to the selection.
  *
- * The file is one gzip-compressed CSV with the columns `Entity,QRank`, sorted by decreasing rank, about
- * 126 MB compressed (measured 2026-11-04: 126,008,420 bytes for the 2026-11-01 build). The host answers range
- * requests with 206, so {@linkcode downloadQRank} resumes an interrupted transfer, and `datapackage.json`
- * names the current build's version and sha256. The re-run check compares both before downloading again.
+ * The file is one gzip-compressed CSV with the columns `Entity,QRank`, sorted by decreasing rank,
+ * about 126 MB compressed (measured 2026-11-04: 126,008,420 bytes for the 2026-11-01 build).
+ * The host answers range requests with 206, so {@linkcode downloadQRank} resumes an
+ * interrupted transfer, and `datapackage.json` names the current build's version and sha256.
+ * The re-run check compares both before downloading again.
  */
 
 import type { APIClient } from "@mailwoman/core/api"

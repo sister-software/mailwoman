@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Checks representative command snapshots and the committed generated page. It also checks deterministic rendering and omission of host paths and timestamps.
+ * Checks representative command snapshots and the committed generated page.
+ *
+ * It also checks deterministic rendering and omission of host paths and timestamps.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -15,7 +17,7 @@ import {
 	COMMANDS_DIRECTORY,
 	escapeCell,
 	OUTPUT_PATH,
-	renderCLIReference,
+	renderRebuildCLIReference,
 	renderDefault,
 	renderTable,
 	type CLISurface,
@@ -42,14 +44,14 @@ describe("generate-cli-reference", () => {
 		}
 
 		surface = await collectCLISurface()
-		page = renderCLIReference(surface)
+		page = renderRebuildCLIReference(surface)
 	}, 60_000)
 
 	it("renders `mailwoman doctor` exactly", () => {
 		expect(sectionFor(page, "doctor")).toMatchInlineSnapshot(`
 			"### \`mailwoman doctor\`
 
-			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is reported, never fatal, and every failing line prints the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license imposes (attribution, share-alike, source offer).
+			Check whether this machine can run mailwoman, and what each missing component costs you. The checks cover the runtime first (node, ONNX), then the model weights, then the optional data layers that geocoding needs. A missing data layer is reported without failing the command, and every failing line prints the command that fixes it. The report ends with the license that applies: the branch of mailwoman's license for this installation, and the obligations that each attached layer's recorded license imposes (attribution, share-alike, source offer).
 
 			\`\`\`
 			mailwoman doctor [options]
@@ -94,12 +96,17 @@ describe("generate-cli-reference", () => {
 
 		expect(
 			committed,
-			"docs/articles/developers/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
+			"docs/articles/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
 		).toBe(page)
 	})
 
+	it("keeps published checks separate from checkout flags", () => {
+		expect(page).toContain("## Published 11.0.0 checks")
+		expect(page).toContain("current checkout's compiled command specifications")
+	})
+
 	it("renders deterministically and leaks no host path or timestamp", () => {
-		expect(renderCLIReference(surface)).toBe(page)
+		expect(renderRebuildCLIReference(surface)).toBe(page)
 
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")

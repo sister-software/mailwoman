@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dutch postcodes: four digits then two letters (`1012 LG`), the PC6 level CBS publishes a polygon
- *   for. The surface may include the space or omit it. Both spellings are attested.
+ *   Dutch postcodes: four digits then two letters (`1012 LG`), the PC6 level CBS publishes a polygon for.
  *
- *   This module holds the key form — compact and upper-case — because that is what a gazetteer row,
- *   an anchor-lookup key and a corpus recipe compare against. A spaced or lower-case value silently
- *   matches no row. The surface forms belong to the other two NL patterns in the repository:
- *   `POSTCODE_SHAPES`' NL row scans a line for either spelling. `@mailwoman/core/resolver`'s
- *   `NL_PC6` accepts either on a bare-postcode tree. Neither is anchored on the key.
+ *   The surface may include the space or omit it.
+ *   Both spellings are attested.
+ *
+ *   This module holds the key form — compact and upper-case — because that's what a
+ *   gazetteer row, an anchor-lookup key and a corpus recipe compare against.
+ *   A spaced or lower-case value silently matches no row.
+ *
+ *   The surface forms belong to the other two NL patterns in the repository:
+ *   `POSTCODE_SHAPES`' NL row scans a line for either spelling.
+ *   `@mailwoman/core/resolver`'s `NL_PC6` accepts either on a bare-postcode tree.
+ *   Neither is anchored on the key.
  */
 
 import type { Tagged } from "type-fest"

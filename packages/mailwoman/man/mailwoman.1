@@ -60,9 +60,9 @@ Options:
 .nf
 Usage: mw parse <address...> [options]
 
-Label the parts of an address — house number, street, locality, postcode — without looking anything
-up: the output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then
-resolves those parts against the gazetteer to produce a coordinate.
+Label the parts of an address, such as house number, street, locality, and postcode, without looking
+anything up. The output is your input, segmented and tagged. `mailwoman geocode` runs this same
+parse, then resolves those parts against the gazetteer to produce a coordinate.
 
 Arguments:
   address                   Formatted postal address
@@ -141,7 +141,7 @@ Options:
   \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override
                                               a wrong country scope. (default: true)
   \-\-[no\-]fork\-entity                          Probe POI data for exact entities when a fork parse
-                                              does not resolve. (default: true)
+                                              doesn't resolve. (default: true)
   \-\-[no\-]postcode\-shape\-coherence             Exclude a postcode span whose shape fits no postcode
                                               syntax of a country the address mentions. (default:
                                               true)
@@ -196,11 +196,12 @@ Options:
 .nf
 Usage: mw doctor [options]
 
-Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node,
-ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is
-reported, never fatal, and every failing line prints the one command that closes it. Then the
-license posture: the branch of mailwoman's license that applies to this installation, and the
-obligations each attached layer's recorded license imposes (attribution, share\-alike, source offer).
+Check whether this machine can run mailwoman, and what each missing component costs you. The checks
+cover the runtime first (node, ONNX), then the model weights, then the optional data layers that
+geocoding needs. A missing data layer is reported without failing the command, and every failing
+line prints the command that fixes it. The report ends with the license that applies: the branch of
+mailwoman's license for this installation, and the obligations that each attached layer's recorded
+license imposes (attribution, share\-alike, source offer).
 
 
 Options:
@@ -223,9 +224,9 @@ Options:
 .nf
 Usage: mw data [options]
 
-Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data
-\-\-list` shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already
-on disk, and `mailwoman doctor` reports the one you are missing.
+Fetch the reference databases that geocoding needs. They're far too large to ship inside the npm
+package. `data \-\-list` shows what exists, `data pull <bundle>` downloads one, `data status` reports
+what's already on disk, and `mailwoman doctor` reports which ones you still need.
 
 
 Options:

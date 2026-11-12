@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the query-intent markers that depend on the resolved answer. `geocodeAddressOnce` appends
- *   them to the kind classifier's markers. The markers never change which answer wins.
+ *   Builds the query-intent markers that depend on the resolved answer.
  *
- *   The winning-margin threshold, the coincident-place radius and the margin function come from the
- *   ablation-expectation module, so the repository has one definition of a winning margin.
+ *   `geocodeAddressOnce` appends them to the kind classifier's markers.
+ *   The markers never change which answer wins.
  *
- *   WOF can store a large city twice, once as `locality` and once as `localadmin`, with the same
- *   population. Without collapsing coincident places first, every major city would look ambiguous.
+ *   The winning-margin threshold, the coincident-place radius and the margin function come from
+ *   the ablation-expectation module, so the repository has one definition of a winning margin.
+ *
+ *   WOF can store a large city twice, once as `locality` and once as `localadmin`,
+ *   with the same population.
+ *   Without collapsing coincident places first, every major city would look ambiguous.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
@@ -111,8 +114,8 @@ export interface DeclaredAmbiguityOpts {
  * Returns a `declared_ambiguity` marker when a bare place-name query has no
  * candidate that leads by the winning margin.
  *
- * @returns `null` when the query is not a bare toponym, when fewer than two distinct
- * places can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
+ * @returns `null` when the query isn't a bare toponym, when fewer than two distinct places
+ * can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
 	if (!opts.kinds.includes("bare_toponym")) return null
@@ -136,7 +139,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 	const places = ranked.map(toAblationPlace).filter((p): p is AblationPlace => p !== null)
 
 	// With fewer than two rankable places the margin is unmeasured.
-	// The FTS path does not always stamp a prominence.
+	// The FTS path doesn't always stamp a prominence.
 	if (places.length < 2) return null
 
 	const distinct = collapseCoincident(places)

@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build poi-brands` — the POI brand lexicon builder, part 1 of 2 (part 2 wires
- *   `lookupPOIBrand` into the runtime pipeline. no pipeline wiring here). Thin wiring only: the read +
- *   aggregate + write logic lives in `gazetteer-pipeline/poi/build-brands.ts`, mirroring `build/poi.tsx`'s
- *   thin-command style. Reads a built `poi.db` read-only — never writes one.
+ *   `mailwoman gazetteer build poi-brands` — the POI brand lexicon builder, part 1 of 2
+ *   (part 2 wires `lookupPOIBrand` into the runtime pipeline. no pipeline wiring here).
  *
- *   `writeBrandTable`'s plain `JSON.stringify` doesn't collapse short primitive arrays onto one line the
- *   way `oxfmt` does (e.g. `"aliases": ["Foo"]` vs a 3-line array) — the process-y bit (shelling out, like
- *   `poi.tsx`'s own `git rev-parse`) belongs at the command layer rather than in the pure/testable builder. Runs
- *   `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
+ *   Thin wiring only: the read + aggregate + write logic lives in
+ *   `gazetteer-pipeline/poi/build-brands.ts`, mirroring `build/poi.tsx`'s thin-command style.
+ *   Reads a built `poi.db` read-only — never writes one.
+ *
+ *   `writeBrandTable`'s plain `JSON.stringify` doesn't collapse short primitive arrays
+ *   onto one line the way `oxfmt` does (e.g. `"aliases": ["Foo"]` vs a 3-line array) —
+ *   the process-y bit (shelling out, like `poi.tsx`'s own `git rev-parse`) belongs
+ *   at the command layer rather than in the pure/testable builder.
+ *   Runs `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 
 import { runFileSync } from "@mailwoman/core/process"

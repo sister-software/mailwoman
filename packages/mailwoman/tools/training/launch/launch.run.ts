@@ -15,12 +15,17 @@
  *     node packages/mailwoman/tools/training/launch/launch.run.ts fetch <run key> --out <dir> [--checkpoint <step-NNNNNN>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts sync --corpus <entry>
  *
- *   `start` resolves the config and admits its source rights. It runs the preflight against the host copy
- *   of the volume under `MAILWOMAN_DATA_ROOT`, and starts one detached sandbox. `--dry-run` runs everything up to the
- *   sandbox and prints what it would start, without contacting Modal. `restart` resumes a stopped run from its newest
- *   complete checkpoint in a fresh sandbox. `fetch` copies the run's output directory, or one checkpoint of it, from
- *   the volume to the host. Every command prints the run key the others take. `sync` stages the bucket's
- *   `corpus/<entry>/` onto the volume (`sync.ts`) and waits for it.
+ *   `start` resolves the config and admits its source rights.
+ *   It runs the preflight against the host copy of the volume under `MAILWOMAN_DATA_ROOT`,
+ *   and starts one detached sandbox.
+ *
+ *   `--dry-run` runs everything up to the sandbox and prints what it would start, without contacting Modal.
+ *   `restart` resumes a stopped run from its newest complete checkpoint in a fresh sandbox.
+ *
+ *   `fetch` copies the run's output directory, or one checkpoint of it, from the volume to the host.
+ *   Every command prints the run key the others take.
+ *
+ *   `sync` stages the bucket's `corpus/<entry>/` onto the volume (`sync.ts`) and waits for it.
  */
 
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
@@ -160,7 +165,7 @@ function dependencies(configPath: string | null, dryRun: boolean): LaunchDepende
 			acquireDirectoryLock(
 				resolvePath(settings.MAILWOMAN_DATA_ROOT, "launch", "runs", `${key}.lock`),
 				(held) =>
-					`another start or restart of run ${key} holds its lock` +
+					`another start, restart or cancel of run ${key} holds its lock` +
 					(held ? ` (pid ${held.pid} on ${held.host}, since ${held.started_at})` : "")
 			),
 		sleep: (milliseconds) => sleep(milliseconds),

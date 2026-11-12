@@ -24,7 +24,7 @@ const AUTOCOMPLETE_LOCALE = "en-US"
  * Resolves the FST artifact from an explicit flag, then the environment, then the `en-US`
  * gazetteer FST the active selection lists, then the application data directory.
  *
- * The filename is lowercase on both halves of the locale tag because that is what the
+ * The filename is lowercase on both halves of the locale tag because that's what the
  * builder writes (`gazetteer-pipeline/fst.ts`'s artifact list).
  *
  * @throws {@link UnreadableArtifactError} when the selection or the selected FST cannot be read.

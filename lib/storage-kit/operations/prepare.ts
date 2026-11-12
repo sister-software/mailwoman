@@ -3,13 +3,18 @@
 
 /**
  *   `storage.prepare` partitions and formats the data-root volume.
- *   It mounts the volume and sets compression properties. It verifies its work before returning.
  *
- *   This operation can erase a device. Before writing, guards verify the operator's serial and transport claims.
- *   They also confirm that the device is unmounted and does not back the root filesystem. The guards list every
- *   failure reason so the operator can correct all invocation problems at once.
+ *   It mounts the volume and sets compression properties.
+ *   It verifies its work before returning.
  *
- *   `--dry-run` runs the guards and prints the steps. Its verdict matches `storage.plan`.
+ *   This operation can erase a device.
+ *   Before writing, guards verify the operator's serial and transport claims.
+ *
+ *   They also confirm that the device is unmounted and doesn't back the root filesystem.
+ *   The guards list every failure reason so the operator can correct all invocation problems at once.
+ *
+ *   `--dry-run` runs the guards and prints the steps.
+ *   Its verdict matches `storage.plan`.
  */
 
 import { readFile, writeFile } from "node:fs/promises"

@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `post /v1/webhooks/stripe`. The body is read once as text and verified untouched. Stripe retries any non-2xx answer
- *   for three days, so the only 400 is a signature that does not verify, where a retry is the right result. an event
- *   that verifies but is not one this worker acts on, or is from the other Stripe mode, answers 200 and is logged, so
- *   a destination configured with a stray event type does not retry for three days. An event id already in the ledger
- *   answers 200 without running anything, so Stripe's redelivery is inert. Otherwise the handler runs first and the
- *   event id is recorded after it succeeds. A crash between the two leaves no record, so Stripe retries and the handler's
- *   own writes are idempotent by primary key, so the retry finds its work done. A prior record would turn one crash
- *   into a payment without a matching invoice.
+ *   `post /v1/webhooks/stripe`.
+ *
+ *   The body is read once as text and verified untouched.
+ *   Stripe retries any non-2xx answer for three days, so the only 400 is a signature that
+ *   doesn't verify, where a retry is the right result. an event that verifies but isn't
+ *   one this worker acts on, or is from the other Stripe mode, answers 200 and is logged,
+ *   so a destination configured with a stray event type doesn't retry for three days.
+ *
+ *   An event id already in the ledger answers 200 without running anything,
+ *   so Stripe's redelivery is inert.
+ *   Otherwise the handler runs first and the event id is recorded after it succeeds.
+ *
+ *   A crash between the two leaves no record, so Stripe retries and the handler's own
+ *   writes are idempotent by primary key, so the retry finds its work done.
+ *   A prior record would turn one crash into a payment without a matching invoice.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

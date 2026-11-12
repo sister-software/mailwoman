@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode database from Ordnance Survey
- *   Code-Point Open (OGL v3). Acquires the archive from the open OS Downloads API, verifies it against
- *   OS's published md5. It converts OSGB36 eastings/northings to WGS84 and writes a sealed database to a new
- *   dated path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
+ *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode database
+ *   from Ordnance Survey Code-Point Open (OGL v3).
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland is outside this product.
+ *   Acquires the archive from the open OS Downloads API, verifies it against OS's published md5.
+ *   It converts OSGB36 eastings/northings to WGS84 and writes a sealed database to a new dated path.
+ *
+ *   Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
+ *
+ *   Coverage is England, Scotland and Wales.
+ *   Northern Ireland is outside this product.
+ *
  *   The database records that scope in its own `meta`; see the pipeline module for the licensing reason.
  *
- *   The pipeline module is lazy-imported so `--help` never faults without the optional
- *   `@mailwoman/resolver-wof-sqlite` peer.
+ *   The pipeline module is lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"

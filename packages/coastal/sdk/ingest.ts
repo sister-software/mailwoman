@@ -4,15 +4,19 @@
 /**
  *   Streams the NCERM file geodatabase as WGS84 features through ogr2ogr, one layer at a time.
  *
- *   Every NCERM layer is published in British National Grid (EPSG:27700, meters). Each layer's declared EPSG code
- *   is checked before any feature is read. `readOGRLayerIdentity` also checks the OSTN15 datum grid.
- *   Every reprojected vertex is then checked against the declared bounding box. This catches a swapped axis
- *   order that the EPSG check cannot see.
+ *   Every NCERM layer is published in British National Grid (EPSG:27700, meters).
+ *   Each layer's declared EPSG code is checked before any feature is read.
  *
- *   The `OGR_GEOM_AREA` column is computed by gdal in source meters before reprojection. Callers compare it with
- *   the area of the encoded rings to check ring nesting and hole handling.
+ *   `readOGRLayerIdentity` also checks the OSTN15 datum grid.
+ *   Every reprojected vertex is then checked against the declared bounding box.
  *
- *   Each scenario layer uses its own name for the distance column. The query aliases it to `distance_m`.
+ *   This catches a swapped axis order that the EPSG check cannot see.
+ *
+ *   The `OGR_GEOM_AREA` column is computed by gdal in source meters before reprojection.
+ *   Callers compare it with the area of the encoded rings to check ring nesting and hole handling.
+ *
+ *   Each scenario layer uses its own name for the distance column.
+ *   The query aliases it to `distance_m`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -130,7 +134,7 @@ const BBOX_MARGIN_DEGREES = 0.01
 /**
  * Reads one layer's EPSG code, feature count and field names before any feature is streamed.
  *
- * @throws {Error} When the layer is missing, or its declared EPSG code is not `expectEPSG`.
+ * @throws {Error} When the layer is missing, or its declared EPSG code isn't `expectEPSG`.
  */
 export async function readCoastalSourceIdentity(layer: string, options: CoastalIngestOptions): Promise<OGRLayerSchema> {
 	const identity = await readOGRLayerIdentity({
@@ -324,7 +328,7 @@ function numberOf(value: number | string | null | undefined): number | null {
 /**
  * Streams one scenario's erosion zones.
  *
- * The layer identity is read here when the caller does not pass one.
+ * The layer identity is read here when the caller doesn't pass one.
  */
 export async function* readCoastalScenarioFeatures(
 	scenario: CoastalScenario,

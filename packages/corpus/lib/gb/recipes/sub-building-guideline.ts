@@ -3,13 +3,15 @@
 
 /**
  *   The British leg of the `postal-unit-guideline` evaluation recipe, from Royal Mail's
- *   {@linkcode GB_SUB_BUILDING_RULES}: the Sub Building Name (`Flat 3`) on its own line, the
- *   Building Number opening the thoroughfare line, then the post town in capitals and the postcode.
+ *   {@linkcode GB_SUB_BUILDING_RULES}: the Sub Building Name (`Flat 3`) on its own line,
+ *   the Building Number opening the thoroughfare line, then the post town in capitals and the postcode.
  *
- *   The leg writes only `Flat`. The guide's other example, `Suite`, is a Pub 28 designator that
- *   `spliced-unit` and `synthetic-secondary` write. `Flat` does appear in attested training rows,
- *   such as the Isle of Man Land Registry's sub-unit names, but no training recipe draws it as a
- *   designator.
+ *   The leg writes only `Flat`.
+ *   The guide's other example, `Suite`, is a Pub 28 designator that `spliced-unit`
+ *   and `synthetic-secondary` write.
+ *
+ *   `Flat` does appear in attested training rows, such as the Isle of Man Land Registry's
+ *   sub-unit names, but no training recipe draws it as a designator.
  *
  *   The street name is another held-out place's name with a codex street type.
  */

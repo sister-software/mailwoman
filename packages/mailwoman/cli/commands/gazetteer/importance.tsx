@@ -3,21 +3,27 @@
 
 /**
  *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database.
- *   Downloads Nominatim's `wikimedia-importance.csv.gz`. It joins the data through the `concordances`
- *   table and writes two scores per place.
  *
- *   The two-score split keeps `referential` (population-anchored, the ranking backbone) and
- *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus the
- *   legacy `importance` column via `blendImportance`. Schema, DDL, the referential derivation and the
- *   blend live in `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing
- *   either score.
+ *   Downloads Nominatim's `wikimedia-importance.csv.gz`.
+ *   It joins the data through the `concordances` table and writes two scores per place.
  *
- *   The table is added to the `--db` in place. The WOF DB must already contain `concordances` and
- *   `place_population` for the fallback. Run `mailwoman gazetteer build admin` first.
+ *   The two-score split keeps `referential` (population-anchored, the ranking backbone)
+ *   and `encyclopedic` (the Wikipedia join, NULL when there's no article) in their own
+ *   columns, plus the legacy `importance` column via `blendImportance`.
+ *   Schema, DDL, the referential derivation and the blend live in
+ *   `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing either score.
  *
- *   A Wikidata id can map to more than one current WOF place. The join is not a function.
- *   `gazetteer-pipeline/importance-fanout.ts` resolves the candidates. It keeps coincident candidates,
- *   selects a winner when population distinguishes them and drops the id when neither condition applies.
+ *   The table is added to the `--db` in place.
+ *   The WOF DB must already contain `concordances` and `place_population` for the fallback.
+ *   Run `mailwoman gazetteer build admin` first.
+ *
+ *   A Wikidata id can map to more than one current WOF place.
+ *   The join isn't a function.
+ *
+ *   `gazetteer-pipeline/importance-fanout.ts` resolves the candidates.
+ *   It keeps coincident candidates, selects a winner when population distinguishes them
+ *   and drops the id when neither condition applies.
+ *
  *   Dropped places fall through to the population fallback instead of remaining blank.
  */
 
@@ -25,6 +31,7 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import type { FanoutCandidate } from "@mailwoman/gazetteer/tools/pipeline/importance-fanout"
@@ -64,17 +71,19 @@ export const spec = {
 
 const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-
-		const { blendImportance, createPlaceImportanceTable } =
-			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
-
-		const { referentialFromPopulation } = await import("@mailwoman/core/resolver")
-
-		const { TextSpliterator } = await import("spliterator")
-
-		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } =
-			await import("@mailwoman/gazetteer/tools/pipeline/importance-fanout")
+		const {
+			client: { DatabaseClient },
+			placeImportanceSchema: { blendImportance, createPlaceImportanceTable },
+			resolver: { referentialFromPopulation },
+			spliterator: { TextSpliterator },
+			importanceFanout: { emptyFanoutStats, recordFanout, resolveConcordanceFanout },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			placeImportanceSchema: import("@mailwoman/resolver-wof-sqlite/place-importance-schema"),
+			resolver: import("@mailwoman/core/resolver"),
+			spliterator: import("spliterator"),
+			importanceFanout: import("@mailwoman/gazetteer/tools/pipeline/importance-fanout"),
+		})
 
 		const dbPath = options.db
 		const tsvPath = options.tsv

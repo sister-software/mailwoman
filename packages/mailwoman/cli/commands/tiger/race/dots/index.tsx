@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman tiger race-dots` — race-by-dot-density ndjson builder (the Cooper Center "Racial Dot
- *   Map" recipe) from a tiger DB built by `tiger fetch` + `tiger redistricting`. Pipe the output
- *   through tippecanoe, then render with `tiger race-dots-map`.
+ *   `mailwoman tiger race-dots` — race-by-dot-density ndjson builder (the Cooper Center
+ *   "Racial Dot Map" recipe) from a tiger DB built by `tiger fetch` + `tiger redistricting`.
+ *
+ *   Pipe the output through tippecanoe, then render with `tiger race-dots-map`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -21,7 +22,7 @@ export const spec = {
 	options: {
 		db: {
 			type: "string",
-			description: "TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db)",
+			description: "TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/db/tiger/tiger-oc.db)",
 		},
 		out: {
 			type: "string",

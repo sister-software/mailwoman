@@ -4,9 +4,10 @@
 /**
  *   Bundles tiny consumers of each narrow import with esbuild and checks what each bundle retains.
  *
- *   A country-only consumer must hold no airport payload, a collision-only consumer no record or name, and no browser
- *   graph may reach a `node:` module. The checks read the emitted bundle for the base64 text of the excluded artifacts
- *   and for strings only a record pool holds, so they measure the emitted bytes rather than the import graph.
+ *   A country-only consumer must hold no airport payload, a collision-only consumer no record
+ *   or name, and no browser graph may reach a `node:` module.
+ *   The checks read the emitted bundle for the base64 text of the excluded artifacts and for strings
+ *   only a record pool holds, so they measure the emitted bytes rather than the import graph.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

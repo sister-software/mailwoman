@@ -20,7 +20,7 @@ export { DefaultMailwomanPaths } from "#env/paths"
  * A variable already in `process.env` wins over the file.
  * The views have always used this precedence.
  *
- * An absent `.env` is the common case and is not an error.
+ * An absent `.env` is the common case and isn't an error.
  */
 const envFile = resolveEnvFile()
 
@@ -29,7 +29,7 @@ if (envFile) {
 		// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
 		process.loadEnvFile(envFile)
 	} catch {
-		// The file exists and the runtime could not read it.
+		// The file exists and the runtime couldn't read it.
 		// The process environment comes from `process.env` only.
 	}
 }
@@ -44,8 +44,8 @@ if (envFile) {
  * Duplicate keys are rejected.
  *
  * Fields must validate independently: object-level refinements are rejected by Zod's `pick`.
- * Defaults and transforms run only when the raw value changes, so they must
- * not depend on other mutable state.
+ * Defaults and transforms run only when the raw value changes, so they mustn't
+ * depend on other mutable state.
  */
 export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Record<never, never>>(
 	schema: z.ZodObject<Shape>,

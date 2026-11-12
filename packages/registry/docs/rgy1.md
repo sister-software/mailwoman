@@ -14,7 +14,7 @@ no reader compares strings and no comparator has to agree across languages.
 
 Every integer is unsigned little-endian. Version 1 limits every offset and length to `u32`, so an
 artifact is smaller than 4 GiB. Every offset is relative to byte 0 of the artifact, never to a backing
-buffer. A reader given a subarray behaves as it would given the same bytes alone.
+buffer. A reader given a subarray behaves as it would given a buffer that holds only those bytes.
 
 `align8(x)` is `x` rounded up to a multiple of 8.
 
@@ -42,10 +42,10 @@ The header is one JSON object serialized without whitespace, with its keys in by
 nested object's keys in byte order. Numbers are integers. Strings are UTF-8 with JSON's mandatory escapes
 only. The writer produces this form by serializing a `serde_json::Map`, which is a `BTreeMap`.
 
-The header carries no wall-clock time, host path or hash of the artifact itself. The artifact's SHA-256
+The header stores no wall-clock time, host path or hash of the artifact itself. The artifact's SHA-256
 lives in `data/manifests/artifacts.json`, written by `tools/generate.run.ts` after the bytes exist.
 
-Fields every artifact carries:
+Fields every artifact stores:
 
 | Key                    | Meaning                                                                      |
 | ---------------------- | ---------------------------------------------------------------------------- |
@@ -84,8 +84,8 @@ Sections appear in directory order, each starting at a multiple of 8 at or after
 end, with zero bytes in any gap. The first section starts at the first payload offset. Fewer than eight
 zero bytes may follow the last section, so the total length is a multiple of 8.
 
-A reader refuses an unknown kind marked required and skips an unknown kind that is not. A known kind
-with an encoding the reader does not implement is refused.
+A reader refuses an unknown kind marked required and skips an unknown kind that's not. A known kind
+with an encoding the reader doesn't implement is refused.
 
 ## Keys
 

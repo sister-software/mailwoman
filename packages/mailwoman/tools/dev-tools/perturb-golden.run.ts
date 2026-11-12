@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -52,7 +55,7 @@ async function main(): Promise<void> {
 	const out: string[] = []
 
 	/**
-	 * Per class: cases written plus rows the class could not change.
+	 * Per class: cases written plus rows the class couldn't change.
 	 *
 	 * A class that covers one country reports a large unperturbed count here
 	 * rather than looking like a class that produced fewer cases.
@@ -86,7 +89,7 @@ async function main(): Promise<void> {
 			for (const p of PERTURBATIONS) {
 				const input = p.apply(row.raw, row.components)
 
-				// A perturbation that changed no value is not a case, except `lowercase`,
+				// A perturbation that changed no value isn't a case, except `lowercase`,
 				// whose register leg is graded on every row.
 				if (input === row.raw && p.name !== "lowercase") {
 					unperturbed.set(p.name, (unperturbed.get(p.name) ?? 0) + 1)

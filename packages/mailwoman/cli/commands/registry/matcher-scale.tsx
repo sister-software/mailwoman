@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry matcher-scale` — the pure-Node matcher scale eval (block → Fellegi-Sunter →
- *   cluster over synthetic geo-clustered records at increasing N. wall-clock + peak RSS). Emits the
- *   markdown report to stdout. Tip: run with `node --expose-gc` for cleaner per-size RSS.
+ *   `mailwoman registry matcher-scale` runs the pure-Node matcher scale eval: block,
+ *   Fellegi-Sunter and cluster over synthetic geo-clustered records at increasing N,
+ *   measuring wall-clock time and peak RSS.
+ *
+ *   Emits the markdown report to stdout.
+ *   Tip: run with `node --expose-gc` for cleaner per-size RSS.
  */
 
 import { Text } from "ink"

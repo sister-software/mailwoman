@@ -3,7 +3,9 @@
 
 /**
  * Records designated locations without changing the selected answer.
- * No designation does not establish safety because the source cannot distinguish inland locations from unmapped coast.
+ *
+ * No designation doesn't establish safety because the source cannot distinguish
+ * inland locations from unmapped coast.
  */
 
 import {
@@ -45,7 +47,7 @@ export interface CoastalErosionObservation {
 	indexCellIndex: string
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no claim that a location is not at risk.
+	 * Why this layer's coverage licenses no claim that a location isn't at risk.
 	 */
 	coverageLimit: string
 	layer: ObservationLayerRecord

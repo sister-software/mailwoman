@@ -6,18 +6,23 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  *   OverpassQL export emitter over a POI intent (spec §1: "we print the query. we never run it").
- *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
- *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
- *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
  *
- *   This package must not depend on `@mailwoman/core`, so `OverpassIntentLike` below is a local
- *   structural type covering exactly what the emitter reads. `POIIntent` (`@mailwoman/core/pipeline`)
- *   is structurally assignable to it — callers pass a real `POIIntent` without a cast.
+ *   Overpass isn't a serving backend — this exists so users who live in
+ *   Overpass-turbo can take a mailwoman intent there.
+ *   The category→OSM-tag mapping is the caller's input (from `@mailwoman/poi-taxonomy`'s `osmTag`);
+ *   the emitter is a pure string builder.
+ *
+ *   This package mustn't depend on `@mailwoman/core`, so `OverpassIntentLike` below
+ *   is a local structural type covering exactly what the emitter reads.
+ *   `POIIntent` (`@mailwoman/core/pipeline`) is structurally assignable to it —
+ *   callers pass a real `POIIntent` without a cast.
+ *
  *   `mailwoman/poi-overpass.ts` is a thin re-export of this module, kept for backward compatibility.
  *
- *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor scope are string
- *   equality, so `escapeQL` by itself is correct. The brand/name branches interpolate into a `~"…"`
- *   regex context, so they need `escapeQLRegex` to neutralize regex metacharacters first.
+ *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor
+ *   scope are string equality, so `escapeQL` by itself is correct.
+ *   The brand/name branches interpolate into a `~"…"` regex context, so they need
+ *   `escapeQLRegex` to neutralize regex metacharacters first.
  */
 
 /**

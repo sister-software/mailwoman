@@ -52,7 +52,7 @@ export type SpecifierFamily = (typeof SpecifierFamily)[keyof typeof SpecifierFam
 const SOURCE_EXTENSION = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * A replacement that changes family changes who is allowed to write it, so this is the
+ * A replacement that changes family changes who's allowed to write it, so this is the
  * predicate a rewrite is filtered by rather than a description of one.
  */
 export function specifierFamily(specifier: string): SpecifierFamily {

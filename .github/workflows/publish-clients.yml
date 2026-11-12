@@ -89,7 +89,7 @@ jobs:
           name: mailwoman-client-python
           path: dist
 
-      # `--trusted-publishing always` fails the step if the OIDC exchange does not happen.
+      # `--trusted-publishing always` fails the step if the OIDC exchange doesn't happen.
       - name: Publish to PyPI (Trusted Publishing)
         run: uv publish --trusted-publishing always dist/*
 
@@ -119,7 +119,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: | # shell
           if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
-            echo "::error::CARGO_REGISTRY_TOKEN is not resolvable — is it still set in the 'cargo' GitHub environment?"
+            echo "::error::CARGO_REGISTRY_TOKEN isn't resolvable — is it still set in the 'cargo' GitHub environment?"
             exit 1
           fi
           cargo publish

@@ -4,7 +4,7 @@
 /**
  * @file Independently derives Exhibit 21 subsidiary expectations from the vendored filings.
  *
- *   This implementation deliberately does not import the production Exhibit 21 parser or its vocabulary.
+ *   This implementation deliberately doesn't import the production Exhibit 21 parser or its vocabulary.
  *   It parses a DOM directly and records which rows it declines to interpret. A reviewer still compares its
  *   output with the source documents before changing `expected.json`.
  */

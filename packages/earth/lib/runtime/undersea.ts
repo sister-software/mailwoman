@@ -4,8 +4,10 @@
 /**
  *   Earth's search over the GEBCO undersea gazetteer.
  *
- *   The admin gazetteer holds administrative places only, so a query such as `Mariana Trench` finds no
- *   undersea feature there. It can match an admin place instead: the Northern Mariana Islands.
+ *   The admin gazetteer holds administrative places only, so a query such as
+ *   `Mariana Trench` finds no undersea feature there.
+ *   It can match an admin place instead: the Northern Mariana Islands.
+ *
  *   An input that equals a feature's whole display name therefore puts that feature first.
  *   A partial name only adds suggestions.
  */

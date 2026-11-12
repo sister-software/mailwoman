@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pre-registered CJK board read: each row scored once and folded into the blended totals and two breakdowns.
+ *   The pre-registered CJK board read: each row scored once and folded into
+ *   the blended totals and two breakdowns.
  *
- *   The check is the blended fraction. The per-register split, the per-municipality macro and the gold-exact count are
- *   readings beside it and cannot move the check. `predict` is injected, so the scoring runs without a model.
+ *   The check is the blended fraction.
+ *   The per-register split, the per-municipality macro and the gold-exact count
+ *   are readings beside it and cannot move the check.
+ *   `predict` is injected, so the scoring runs without a model.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

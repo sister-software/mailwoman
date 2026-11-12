@@ -6,10 +6,10 @@
  *
  *   Covers all 50 states + DC + the five primary territories (PR, GU, VI, MP, AS).
  *
- *   The data is public-domain US Census reference (FIPS PUB 5-2, withdrawn but still the canonical
- *   numeric ID used by every tiger product). It is reproduced here so the tiger adapter can resolve
- *   `statefp` columns (e.g. `"50"`) into a `region` component (e.g. `"VT"`) without an extra DB
- *   join.
+ *   The data is public-domain US Census reference (FIPS PUB 5-2, withdrawn
+ *   but still the canonical numeric ID used by every tiger product).
+ *   It is reproduced here so the tiger adapter can resolve `statefp` columns (e.g. `"50"`)
+ *   into a `region` component (e.g. `"VT"`) without an extra DB join.
  */
 
 /**

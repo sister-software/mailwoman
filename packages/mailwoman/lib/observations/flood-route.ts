@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Attaches an authority's flood designation to a geocode answer as an observation. The route
- *   never changes answer selection.
+ *   Attaches an authority's flood designation to a geocode answer as an observation.
+ *   The route never changes answer selection.
  */
 
 import {
@@ -84,7 +84,7 @@ export const DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The hazard there is unknown.
+	 * The hazard there's unknown.
 	 * Never report it as low.
 	 */
 	"outside_authority_footprint",

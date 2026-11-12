@@ -4,7 +4,7 @@ Scope notes for database construction and inline SQL across the repository. The 
 in the root `AGENTS.md`; this file covers how a database artifact is built and which SQL stays raw,
 and it exists because each decision below cost a real investigation to establish.
 
-If you are building a database, remember that they are readonly artifacts which should not be modified after creation. A script that builds a database must finish the build first. It then moves the previous version to a temp directory and moves the new version into place. This order ensures that the database is always in a consistent state, even if the build script fails halfway through.
+If you're building a database, remember that they're readonly artifacts which shouldn't be modified after creation. A script that builds a database must finish the build first. It then moves the previous version to a temp directory and moves the new version into place. This order ensures that the database is always in a consistent state, even if the build script fails halfway through.
 
 When making a database, use Kysley as the database connector. It is a thin wrapper around SQLite that provides a simple interface for creating and querying databases and is backed by the native `node:sqlite` module. It is the only supported database connector for this repo.
 Table DDL goes through Kysely's schema-builder rather than raw `db.exec("CREATE TABLE …")`. The idiom, established across #745–#749:

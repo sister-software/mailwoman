@@ -4,12 +4,13 @@
 /**
  *   Tokenizer parity test — the single essential assertion in Phase 3.
  *
- *   Loads `tokenizer-v0.1.0.model` (the same file that Phase 2 used to tokenize the corpus) and a
- *   reference fixture of `(raw, pieces, ids)` triples. Asserts that the TS tokenizer
- *   produces byte-for-byte identical pieces + ids for each raw.
+ *   Loads `tokenizer-v0.1.0.model` (the same file that Phase 2 used to tokenize the corpus)
+ *   and a reference fixture of `(raw, pieces, ids)` triples.
+ *   Asserts that the TS tokenizer produces byte-for-byte identical pieces + ids for each raw.
  *
- *   If a single fixture entry diverges, the TS tokenizer has drifted from what the training pipeline
- *   encoded and downstream BIO decoding will produce nonsense. Regenerate the fixture via:
+ *   If a single fixture entry diverges, the TS tokenizer has drifted from what the
+ *   training pipeline encoded and downstream BIO decoding will produce nonsense.
+ *   Regenerate the fixture via:
  *
  *   ```
  *   node packages/neural/tools/fixtures/tokenizer-parity.run.ts \

@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A reading of one spatial layer over one extent. Zero records means absence only when the layer's
- *   coverage basis supports an exclusion. A `source_present` layer that found no record reports that the
- *   source looked, and absence stays unknown. A positive reading beside an empty one is a conflict to
- *   show.
+ *   A reading of one spatial layer over one extent.
+ *
+ *   Zero records means absence only when the layer's coverage basis supports an exclusion.
+ *   A `source_present` layer that found no record reports that the source looked,
+ *   and absence stays unknown.
+ *
+ *   A positive reading beside an empty one is a conflict to show.
  */
 
 import { type CoverageBasis, supportsExclusion } from "@mailwoman/evidence"

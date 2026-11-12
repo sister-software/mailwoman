@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer capitals` — build the capital-status reference from the GeoNames
- *   gazetteer dumps (`mailwoman corpus fetch geonames-dump`). See
- *   `gazetteer-pipeline/capitals.ts` for what the reference is and how the resolver consumes it.
+ *   `mailwoman gazetteer capitals` — build the capital-status reference from the
+ *   GeoNames gazetteer dumps (`mailwoman corpus fetch geonames-dump`).
+ *
+ *   See `gazetteer-pipeline/capitals.ts` for what the reference is and how the resolver consumes it.
  *
  *   Output: data/gazetteer/capitals-v1.json (small, committed, provenance-tracked).
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -31,9 +33,15 @@ export const spec = {
 
 const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCapitalsReference } = await import("@mailwoman/gazetteer/tools/pipeline/capitals")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const {
+			capitals: { buildCapitalsReference },
+			dataRoot: { dataRootPath },
+			paths: { repoRootPathBuilder },
+		} = await allKeyed({
+			capitals: import("@mailwoman/gazetteer/tools/pipeline/capitals"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/core/paths"),
+		})
 
 		const result = await buildCapitalsReference({
 			geonamesDir: options.geonames ?? dataRootPath("geonames"),

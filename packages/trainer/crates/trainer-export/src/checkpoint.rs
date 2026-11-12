@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Reads the tensors of a `pytorch_model.bin` that `torch.save(model.state_dict(), path)` wrote.
 //!
 //! The file is a zip archive (torch's default format since 1.6). `<prefix>/data.pkl` pickles the state dict, each

@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Static, dependency-light command routing. Summaries live here so root help can eventually list every command without
- * importing their implementations. A loader is the only edge from the router to a command module.
+ * Static, dependency-light command routing.
+ *
+ * Summaries live here so root help can eventually list every command without
+ * importing their implementations.
+ * A loader is the only edge from the router to a command module.
  */
 
 import type { UnsafeCLIArguments } from "@mailwoman/core/scripting/arguments"

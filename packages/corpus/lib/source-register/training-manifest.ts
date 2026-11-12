@@ -5,8 +5,9 @@
  *   The frozen record of sources that contributed rows to one corpus build.
  *   It also records the applicable terms.
  *
- *   Its digest is over the manifest with `contentDigest` emptied, so two builds over identical inputs
- *   produce the same digest. A change to a source, its elected grant, row count or recipe changes the digest.
+ *   Its digest is over the manifest with `contentDigest` emptied, so two builds
+ *   over identical inputs produce the same digest.
+ *   A change to a source, its elected grant, row count or recipe changes the digest.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -56,7 +57,7 @@ export interface TrainingSourceRecord {
 	license: string
 	/**
 	 * Every license label assigned to the source's rows, with a row count for each label
-	 * when there is more than one.
+	 * when there's more than one.
 	 *
 	 * A recipe stamps a description of its own output into the column, and one recipe can stamp
 	 * several, so a synthetic source reads several labels where an adapter's source reads one.
@@ -65,8 +66,8 @@ export interface TrainingSourceRecord {
 	 */
 	licenseValues?: Record<string, number>
 	/**
-	 * The register's decisions for the source's register inputs when the build ran, combined
-	 * by {@linkcode combineSourceDecisions}, or `null` when they could not all be found.
+	 * The register's decisions for the source's register inputs when the build ran,
+	 * combined by {@linkcode combineSourceDecisions}, or `null` when they couldn't all be found.
 	 *
 	 * The inputs are the ones `corpus-source-inputs.json` maps the source to, so the
 	 * decision is found through the mapping rather than through {@linkcode license}.
@@ -101,7 +102,7 @@ export interface TrainingInputDecision {
  */
 export interface TrainingSourceDecision extends TrainingInputDecision {
 	/**
-	 * Each decision the combination read, in `licenseID` order, when there is more than one.
+	 * Each decision the combination read, in `licenseID` order, when there's more than one.
 	 *
 	 * A combined `state` names one state where the inputs can hold several,
 	 * such as an elected grant beside an unchecked one, and the record is frozen
@@ -111,11 +112,11 @@ export interface TrainingSourceDecision extends TrainingInputDecision {
 }
 
 /**
- * Why a source's decision could not be found.
+ * Why a source's decision couldn't be found.
  */
 export const TrainingDecisionGapReason = {
 	/**
-	 * `corpus-source-inputs.json` does not map the source.
+	 * `corpus-source-inputs.json` doesn't map the source.
 	 */
 	Unmapped: "unmapped",
 	/**
@@ -123,7 +124,7 @@ export const TrainingDecisionGapReason = {
 	 */
 	NoRegisterInput: "no-register-input",
 	/**
-	 * The mapping points at a `licenseID` the register does not declare.
+	 * The mapping points at a `licenseID` the register doesn't declare.
 	 */
 	MissingDecision: "missing-decision",
 } as const
@@ -243,7 +244,7 @@ export interface TrainingManifest {
 	builtAt: string
 	/**
 	 * The build profile, so a reader can tell a corpus whose sources were checked
-	 * from one whose sources were not.
+	 * from one whose sources weren't.
 	 */
 	profile: string
 	/**
@@ -377,11 +378,11 @@ function decisionGapReason(record: TrainingSourceRecord): string | null {
 }
 
 /**
- * The sources in a manifest whose terms did not permit an operation
- * when the build ran, with the reason for each.
+ * The sources in a manifest whose terms didn't permit an operation when the build ran,
+ * with the reason for each.
  *
- * A source recorded with a {@linkcode TrainingDecisionGapReason.NoRegisterInput} gap is
- * not listed: every input reaching its rows was written in this repository, so no third
+ * A source recorded with a {@linkcode TrainingDecisionGapReason.NoRegisterInput} gap
+ * isn't listed: every input reaching its rows was written in this repository, so no third
  * party's terms apply, and `sourceRightsGaps` admits it into a build on the same reading.
  */
 export function sourcesNotPermitting(

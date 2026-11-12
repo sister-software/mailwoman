@@ -46,7 +46,7 @@ function fail(message: string): never {
 /**
  * Bumps the root manifest, every release workspace manifest and `release.config.json` to one target version.
  *
- * @throws When the target is not greater than the current version, or when any of
+ * @throws When the target isn't greater than the current version, or when any of
  * those files already disagree on the current version.
  */
 export async function prepareReleaseVersion(

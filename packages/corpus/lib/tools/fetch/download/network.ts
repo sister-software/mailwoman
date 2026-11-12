@@ -52,7 +52,7 @@ export interface BaseFetchOptions {
 	 * which is the whole cost of that file.
 	 * The retry count is the behavior under test there.
 	 *
-	 * The pause between attempts is not, so it is a caller's to shorten.
+	 * The pause between attempts isn't, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }
@@ -78,6 +78,13 @@ export interface SourceManifest {
 	filename: string
 	sha256: string
 	bytes: number
+	/**
+	 * The version the publisher stated for the file when it was fetched: an ETag,
+	 * a `Last-Modified` header or a metadata field such as data.gov.sg's `lastUpdatedAt`.
+	 *
+	 * A fetcher skips a file on disk only when the publisher still states this version.
+	 */
+	publisher_version?: string
 }
 
 /**

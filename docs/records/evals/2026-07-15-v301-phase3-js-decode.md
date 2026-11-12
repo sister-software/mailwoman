@@ -6,7 +6,7 @@ title: "#727 Phase 3 — the JS k-best decode, measured on production config"
 
 Phase 3 built the JS/WASM side: `span_scores` through `ONNXRunner` → `NeuralParseTrace` → a k-best
 semi-Markov decode (`neural/semi-markov-decode.ts`, 11 tests, brute-force verified like its Python
-twin). That unlocks the measurement Phase 1 **could not make**: `seg@1` with the anchor / gazetteer /
+twin). That unlocks the measurement Phase 1 **couldn't make**: `seg@1` with the anchor / gazetteer /
 country channels **fed**, against the real 0.573 baseline.
 
 ## The headline, and it corrects me
@@ -24,7 +24,7 @@ country channels **fed**, against the real 0.573 baseline.
 Phase 1's +7.9pp was measured in the channel-starved Python check, where `token@1` reads 0.4906
 instead of 0.5693. **A large part of that gap was the BIO head's starvation rather than the span head's
 strength.** Feed the channels and the BIO head recovers most of it. The Phase-1 doc flagged the
-absolutes as non-comparable. It did not anticipate that the _margin_ would shrink this much, and the
+absolutes as non-comparable. It didn't anticipate that the _margin_ would shrink this much, and the
 direct correction belongs at the top rather than in a footnote.
 
 ## What survives the correction — and it's the part that matters
@@ -34,9 +34,9 @@ same instrument, channels fed both times. That was Phase 1's actual falsifier, a
 
 **2. The secondary read passed: oracle@10 rose 0.749 → 0.7753** (+2.6pp), oracle@5 0.663 → 0.7228
 (+6.0pp). The config pre-registered this: _"If seg@1 crosses but oracle@10 is flat, the scorer
-reshuffled the list without learning better spans."_ It is not flat. The **list** in fact improved.
+reshuffled the list without learning better spans."_ It isn't flat. The **list** in fact improved.
 
-**3. On the class the arc targets, it is not close:**
+**3. On the class the arc targets, it isn't close:**
 
 | Paris fixture (n=63, bare-fragment heavy) | v264   | **v301 span decode** |
 | ----------------------------------------- | ------ | -------------------- |
@@ -51,11 +51,11 @@ state: **+23.8pp at rank 1**, and oracle@5 clears **0.90** on this fixture.
 
 The span head's value is **concentrated exactly where the BIO head fails**. On contextful addresses —
 most of the general corpus — BIO + channels already works and the span decode adds ~0 at rank 1.
-On bare fragments it adds 24 points. That is a coherent result rather than a disappointing one: it is the
+On bare fragments it adds 24 points. That's a coherent result rather than a disappointing one: it is the
 night-3 partition (66% of street failures are bare fragments) showing up in the ledger.
 
-**But it also means `seg@1` by itself does not justify shipping the decode.** A +0.75pp aggregate margin
-is not a reason to change production. The case is the **list**: oracle@5 0.723 / oracle@10 0.775
+**But it also means `seg@1` by itself doesn't justify shipping the decode.** A +0.75pp aggregate margin
+isn't a reason to change production. The case is the **list**: oracle@5 0.723 / oracle@10 0.775
 against a shipped 0.573 is ~15–20 points of headroom that only a **reranker** can collect — which is
 Phase 4, and which is now the required phase rather than a nice-to-have.
 
@@ -93,16 +93,16 @@ flat buffer must produce the same nested array on both sides.
 | v301 (span graph)             | 14.82                | **yes**    |
 | **delta**                     | **+0.08 ms (+0.5%)** |            |
 
-That is the **full** cost — this runner unflattens the span tensor on _every_ inference, so it
+That's the **full** cost — this runner unflattens the span tensor on _every_ inference, so it
 includes the decode-side marshalling as well as the graph. Reproducible via
 `neural-web/span-slo.bench.test.ts` (reported, never asserted — a wall-clock threshold in CI is a
 flake generator).
 
 Combined with Phase 2's size check (+0.22 MB int8, +0.57%), the browser cost of carrying the span head
-is **+0.5% latency and +0.6% download** — and that is while _reading_ the spans. A browser that never
+is **+0.5% latency and +0.6% download** — and that's while _reading_ the spans. A browser that never
 decodes them pays neither.
 
-**Still not done, deliberately:** the loader does not fetch `semi-crf-transitions.json`. No browser code
+**Still not done, deliberately:** the loader doesn't fetch `semi-crf-transitions.json`. No browser code
 consumes it yet — the rerank is Phase 4 — and wiring a fetch for data with no consumer
 is the speculative structure this project keeps refusing (cf. the `<= -0.5` importance band, #1142).
 

@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The constraint account: per row, whether the decoded parse violates C4 or C6 of `decoder-grammar.mdx` §5,
- * and for each violation the decoder's own explanation of why the violating reading won.
+ * The constraint account: per row, whether the decoded parse violates C4 or C6 of `decoder-grammar.mdx`
+ * §5, and for each violation the decoder's own explanation of why the violating reading won.
  *
  * The parse is the one the held-out battery grades, `NeuralAddressClassifier.parse` with `postcodeRepair`
- * and the row's country as the locale hint, on the locale package `HELDOUT_INFERENCE_RULE` names. The geocode
- * pipeline corrects or drops some model errors after the parse, so the mechanism account cannot see them.
+ * and the row's country as the locale hint, on the locale package `HELDOUT_INFERENCE_RULE` names.
+ * The geocode pipeline corrects or drops some model errors after the parse,
+ * so the mechanism account cannot see them.
  *
- * The registry the predicates read is the gazetteer FST and street-morphology FST the row's locale package
- * ships. The parse itself runs without them, as the battery's does, so the explanation's `fst` term is zero.
+ * The registry the predicates read is the gazetteer FST and street-morphology
+ * FST the row's locale package ships.
+ * The parse itself runs without them, as the battery's does, so the explanation's `fst` term is zero.
  */
 
 import { buildAddressTree, groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -44,7 +46,7 @@ export interface ConstraintAccountInput {
 	country: string | null
 	/**
 	 * The expected reading, echoed beside the observed one for a reader to compare.
-	 * The account does not grade it.
+	 * The account doesn't grade it.
 	 */
 	expected: string | null
 }

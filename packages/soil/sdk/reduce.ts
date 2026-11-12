@@ -5,8 +5,11 @@
  *   Reduces the delineations that reach a cell into that cell's capability-class distribution.
  *
  *   The result is a distribution because most map units mix several soil components.
- *   The survey cannot separate those components at its mapping scale. Shares are normalized over the mapped part of the cell.
- *   `mapped_share` records how large that part is. Capability class 8 is a rated class, so it is stored as a
+ *   The survey cannot separate those components at its mapping scale.
+ *
+ *   Shares are normalized over the mapped part of the cell.
+ *   `mapped_share` records how large that part is.
+ *   Capability class 8 is a rated class, so it is stored as a
  *   class share. The unrated share, the no-data share and the not-rateable share each have their own column.
  */
 
@@ -109,7 +112,7 @@ export function mapUnitProfile(
 		}
 
 		// A miscellaneous area, such as rock outcrop or water, cannot take a capability rating.
-		// Any other component with a NULL rating is a soil that the survey did not rate.
+		// Any other component with a NULL rating is a soil that the survey didn't rate.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
 		} else {

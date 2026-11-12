@@ -127,7 +127,7 @@ const TEN = 10
 const HUNDRED = 100
 
 /**
- * A Japanese numeral in either register as an integer, or `null` when the text is not one.
+ * A Japanese numeral in either register as an integer, or `null` when the text isn't one.
  *
  * It reads bare digits (ASCII or full width), the digit-string kanji register (`〇一二`),
  * and the positional kanji register up to 百 (`二十三`).

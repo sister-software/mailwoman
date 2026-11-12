@@ -2,37 +2,47 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build `localities-nz-linz.db`, the NZ suburb/locality database. The candidate gazetteer contains
- *   NZ's region and major-locality tiers but no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland
- *   suburb) has no row and the resolver can only mis-answer or abstain.
+ *   Build `localities-nz-linz.db`, the NZ suburb/locality database.
+ *
+ *   The candidate gazetteer contains NZ's region and major-locality tiers
+ *   but no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row
+ *   and the resolver can only mis-answer or abstain.
  *
  *   Source and license: the LINZ-derived OpenAddresses NZ countrywide extract
- *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ "NZ Street Address" via
- *   OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the same lane the
- *   country-evidence runbook already ships pair-index data from). It is not derived from any
- *   Nominatim import, so the ODbL comparison arm stays a comparison arm. The build refuses to run
- *   unless the source's MD5 sidecar matches. It stamps the source MD5 and vintage into the database's
- *   `database_meta` table so provenance travels with the artifact.
+ *   (`$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ
+ *   "NZ Street Address" via OpenAddresses, CC-BY 4.0 with attribution to Land Information New
+ *   Zealand (the same lane the country-evidence runbook already ships pair-index data from).
+ *   It isn't derived from any Nominatim import, so the ODbL comparison arm stays a comparison arm.
  *
- *   Shape: one `spr` row per (city, district) group. The city column is the address's
- *   suburb/locality line. 49 names span more than one district (`Hillsborough` is both an
- *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
- *   address point. A few depot-coded outliers cannot move a median. The bbox is the group's p5–p95 envelope.
- *   Placetype is `locality`, the tier NZ addressing uses for suburbs and bare
- *   parsed toponyms. A `neighbourhood` row would be invisible to the locality filter group.
- *   and widening that group is a global ranking change this database must not smuggle in. Population
- *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
- *   a database row ranks behind any populated namesake and wins only where its key is the answer.
+ *   The build refuses to run unless the source's MD5 sidecar matches.
+ *   It stamps the source MD5 and vintage into the database's `database_meta` table
+ *   so provenance travels with the artifact.
+ *
+ *   Shape: one `spr` row per (city, district) group.
+ *   The city column is the address's suburb/locality line. 49 names span more than one district
+ *   (`Hillsborough` is both an Auckland and a Christchurch suburb), so the group key is the pair.
+ *
+ *   Coordinates are the median address point.
+ *   A few depot-coded outliers cannot move a median.
+ *
+ *   The bbox is the group's p5–p95 envelope.
+ *   Placetype is `locality`, the tier NZ addressing uses for suburbs and bare parsed toponyms.
+ *
+ *   A `neighbourhood` row would be invisible to the locality filter group. and widening
+ *   that group is a global ranking change this database mustn't smuggle in.
+ *   Population is deliberately 0/unmeasured (meaning-of-zero: an address-point count isn't a population),
+ *   so a database row ranks behind any populated namesake and wins only where its key is the answer.
  *
  *   Run: mailwoman gazetteer build nz-localities [--csv <countrywide.csv>] [--out <localities-nz-linz.db>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { isoDate } from "@mailwoman/core/utils"
@@ -78,7 +88,7 @@ export interface BuildNZLocalitiesOptions {
 	/**
 	 * The linz-derived OpenAddresses NZ countrywide CSV.
 	 *
-	 * @defaultValue `<data-root>/openaddresses/extracted/nz/countrywide.csv`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted/nz/countrywide.csv`
 	 */
 	csvPath?: PathBuilderLike
 	/**
@@ -127,9 +137,18 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}
 ): Promise<{ out: string; inserted: number; skippedGroups: number; sourceMD5: string }> {
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
+	const {
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+		resolverWofSqlite: { buildPlaceSearchFTS },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
+	const csvPath = PathBuilder.from(
+		opts.csvPath ?? currentSourcePath("openaddresses", "extracted", "nz", "countrywide.csv")
+	)
+
 	const outPath = (opts.out ?? wofDatabasePath("localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 

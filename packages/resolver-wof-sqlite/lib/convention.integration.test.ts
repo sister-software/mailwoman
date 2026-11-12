@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Geographic Rule Engine convention model: the pure `mergeConventions`/`resolveConvention` engine and live `findPlace` dispatch through an injected convention.
+ * Geographic Rule Engine convention model: the pure `mergeConventions`/`resolveConvention`
+ * engine and live `findPlace` dispatch through an injected convention.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

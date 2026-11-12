@@ -4,8 +4,9 @@
 /**
  *   Implements the `mailwoman data` command group and its bare invocation.
  *
- *   Output goes through {@linkcode writeRawStdout} instead of Ink. An Ink frame at least as tall as the
- *   viewport clears the scrollback. The bundle list can exceed a short terminal.
+ *   Output goes through {@linkcode writeRawStdout} instead of Ink.
+ *   An Ink frame at least as tall as the viewport clears the scrollback.
+ *   The bundle list can exceed a short terminal.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -20,9 +21,9 @@ import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundl
  * A bare `mailwoman data` prints the longer explanation from {@link overview}.
  */
 export const description =
-	"Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` " +
-	"shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already on disk, and " +
-	"`mailwoman doctor` reports the one you are missing."
+	"Fetch the reference databases that geocoding needs. They're far too large to ship inside the npm package. `data --list` " +
+	"shows what exists, `data pull <bundle>` downloads one, `data status` reports what's already on disk, and " +
+	"`mailwoman doctor` reports which ones you still need."
 
 /**
  * The command specification for `mailwoman data`.

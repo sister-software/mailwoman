@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/react/map` — the geocoder map surface, kept behind its own subpath so `maplibre-gl`
- *   / `react-map-gl` (WebGL + DOM at import) never enter the package-root graph. This subpath import
- *   pulls the map deps. importing `@mailwoman/react` (root) does not. Consumers who only want the
- *   parse/POI explorers never pay for maplibre.
+ *   `@mailwoman/react/map` — the geocoder map surface, kept behind its own subpath
+ *   so `maplibre-gl` / `react-map-gl` (WebGL + DOM at import) never enter the package-root graph.
+ *
+ *   This subpath import pulls the map deps. importing `@mailwoman/react` (root) doesn't.
+ *   Consumers who only want the parse/POI explorers never pay for maplibre.
  *
  *   The host must supply `maplibre-gl` + `react-map-gl` (peer deps) and import
  *   `maplibre-gl/dist/maplibre-gl.css` + `@mailwoman/react/styles.css` itself.

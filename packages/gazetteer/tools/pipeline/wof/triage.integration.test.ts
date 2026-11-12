@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the WOF currency triage. The fixture is the Medway cluster that motivated the pass — the real four
- *   records, with their real currency states — plus the legal-form and ghost-town shapes the ledger must tell apart.
+ *   Tests for the WOF currency triage.
  *
- *   The required assertion is the containment verdict. A same-name-string test called 21,010 US rows holes. The
- *   samples were `Commonwealth of Pennsylvania` and `Town of Cary`. If containment stops working, the ledger's hole
- *   count silently inflates by an order of magnitude and every review built on it is wrong.
+ *   The fixture is the Medway cluster that motivated the pass — the real four records, with their
+ *   real currency states — plus the legal-form and ghost-town shapes the ledger must tell apart.
+ *
+ *   The required assertion is the containment verdict.
+ *   A same-name-string test called 21,010 US rows holes.
+ *
+ *   The samples were `Commonwealth of Pennsylvania` and `Town of Cary`.
+ *   If containment stops working, the ledger's hole count silently inflates by an
+ *   order of magnitude and every review built on it is wrong.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -107,7 +112,7 @@ describe("triageWOFCurrency", () => {
 		expect(byName.get("Gillingham")?.currencyClass).toBe(CurrencyClass.DeprecatedNoSuccessor)
 		expect(byName.get("Medway")?.currencyClass).toBe(CurrencyClass.NotCurrentUnstated)
 
-		// Chatham is live, so it is not a subject.
+		// Chatham is live, so it isn't a subject.
 		// No live record bears the other three names.
 		expect(byName.has("Chatham")).toBe(false)
 
@@ -190,7 +195,7 @@ describe("triageWOFCurrency", () => {
 		})
 
 		expect(rows.every((r) => r.attestation.state === "unmeasured")).toBe(true)
-		// And the summary refuses to publish an attested count it could not measure.
+		// And the summary refuses to publish an attested count it couldn't measure.
 		expect(summary.every((s) => s.uncoveredAttested === null)).toBe(true)
 	})
 
@@ -202,7 +207,7 @@ describe("triageWOFCurrency", () => {
 		await writeLocalTextFile(
 			[
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
-				// An S-class row for Gillingham must not attest — feature class is the check.
+				// An S-class row for Gillingham mustn't attest — feature class is the check.
 				geonamesLine(2, "Gillingham", 51.376, 0.577, "S", 90_000),
 			],
 			scratch.path("GB.txt")

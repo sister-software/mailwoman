@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry convert tx-hhsc` — convert the TX hhsc nursing-facilities TSV (which ships
- *   an authoritative `Geo Location` per facility) into the OaRow jsonl the resolver eval consumes,
- *   so the geocoder can be graded against provided coordinates via
- *   `oa-resolver-eval --address-points`.
+ *   `mailwoman registry convert tx-hhsc` — convert the TX hhsc nursing-facilities TSV
+ *   (which ships an authoritative `Geo Location` per facility) into the OaRow jsonl
+ *   the resolver eval consumes, so the geocoder can be graded against provided
+ *   coordinates via `oa-resolver-eval --address-points`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

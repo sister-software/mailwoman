@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The claim page's reducer: the phases a buyer can land in and the events that end polling. The clock is the
- *   events', so the deadline is asserted by arithmetic rather than by waiting.
+ *   The claim page's reducer: the phases a buyer can land in and the events that end polling.
+ *
+ *   The clock is the events', so the deadline is asserted by arithmetic rather than by waiting.
  */
 
 import { describe, expect, it } from "vitest"

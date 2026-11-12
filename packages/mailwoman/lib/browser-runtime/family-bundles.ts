@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   On-demand weights families in the browser. The input's script selects a family through the router the Node
- *   engine ships, the family's own release manifest selects the release, and that release's bundle loads once per
- *   page and reads every later input in the same script. The base release keeps reading the inputs the router
- *   leaves with the caller.
+ *   On-demand weights families in the browser.
+ *
+ *   The input's script selects a family through the router the Node engine ships,
+ *   the family's own release manifest selects the release, and that release's bundle
+ *   loads once per page and reads every later input in the same script.
+ *   The base release keeps reading the inputs the router leaves with the caller.
  */
 
 import { scriptFamilyForText } from "@mailwoman/neural/classifier/script-router"
+import { Service } from "async-init"
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchReleasesManifest, type ReleaseInfo, type ReleasesManifest } from "#browser-runtime/manifest"
@@ -52,14 +55,25 @@ export interface FamilyBundlesOptions<TAssets> {
 }
 
 /**
+ * One family's loaded bundle, or `null` assets when the bucket publishes no release for the family.
+ * Its disposal gives the assets' native memory back.
+ */
+interface LoadedBundle<TAssets> extends AsyncDisposable {
+	assets: TAssets | null
+}
+
+/**
  * The bundles of the weights families a page has needed so far, each loaded on its first input.
+ *
+ * Each family is an `async-init` `Service`: concurrent inputs share one load,
+ * and a load that fails is forgotten so the next input in that script retries it.
  */
 export class FamilyBundles<TAssets> {
 	readonly #baseFamily: string
 	readonly #fetchManifest: (family: string) => Promise<ReleasesManifest | null>
 	readonly #load: (family: string, release: ReleaseInfo) => Promise<TAssets>
 	readonly #dispose: ((assets: TAssets) => Promise<void> | void) | null
-	readonly #bundles = new Map<string, Promise<TAssets | null>>()
+	readonly #bundles = new Map<string, Service<LoadedBundle<TAssets>>>()
 
 	constructor(options: FamilyBundlesOptions<TAssets>) {
 		this.#baseFamily = options.baseFamily ?? DEFAULT_LOCALE
@@ -84,19 +98,26 @@ export class FamilyBundles<TAssets> {
 	 * A load that fails is forgotten, so the next input in that script retries it.
 	 */
 	ensure(family: string): Promise<TAssets | null> {
-		const pending = this.#bundles.get(family)
+		let bundle = this.#bundles.get(family)
 
-		if (pending) return pending
+		if (!bundle) {
+			bundle = new Service(async () => {
+				const assets = await this.#loadFamily(family)
 
-		const load = this.#loadFamily(family)
+				return {
+					assets,
+					[Symbol.asyncDispose]: async () => {
+						if (assets) {
+							await this.#dispose?.(assets)
+						}
+					},
+				}
+			})
 
-		this.#bundles.set(family, load)
+			this.#bundles.set(family, bundle)
+		}
 
-		load.catch(() => {
-			this.#bundles.delete(family)
-		})
-
-		return load
+		return bundle.resolve().then((loaded) => loaded.assets)
 	}
 
 	/**
@@ -113,16 +134,14 @@ export class FamilyBundles<TAssets> {
 	 * Gives every loaded bundle back and forgets it.
 	 */
 	async dispose(): Promise<void> {
-		const pending = [...this.#bundles.values()]
+		const bundles = [...this.#bundles.values()]
 
 		this.#bundles.clear()
 
-		for (const load of pending) {
-			const assets = await load.catch(() => null)
-
-			if (assets) {
-				await this.#dispose?.(assets)
-			}
+		// A bundle's disposal waits for a load still in flight.
+		// A load that failed has no assets to give back.
+		for (const bundle of bundles) {
+			await bundle[Symbol.asyncDispose]()
 		}
 	}
 

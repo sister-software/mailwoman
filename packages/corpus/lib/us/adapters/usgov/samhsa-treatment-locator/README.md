@@ -34,7 +34,7 @@ out of the row, as the `usgov-nppes` adapter leaves out its own.
 
 The README originally pointed operators at "a CSV the operator
 pre-downloads from the SAMHSA Open Data Foundry." During Tier 0 corpus
-expansion (2026-05-17) we could not locate the export anywhere on the
+expansion (2026-05-17) we couldn't locate the export anywhere on the
 public web:
 
 - `findtreatment.gov/locator` is an interactive SPA — no "Download all"
@@ -66,8 +66,8 @@ public web:
   ("Suite C, behind main building") — and would be a parallel,
   weaker NPPES.
 - **Find via FOIA / SAMHSA dev channels (deferred rather than chosen).**
-  The data exists (the locator UI is backed by it); the access path is
-  not in our hands on a useful timeline. The path stays on the
+  The data exists (the locator UI is backed by it); the access path isn't
+  in our hands on a useful timeline. The path stays on the
   follow-up list, and no work waits on it.
 
 ### Impact
@@ -170,7 +170,7 @@ Rows are silently dropped when:
 - `street1` (and `street2`) are both empty.
 - `city` is empty.
 - `zip` is empty.
-- `state` is not a recognized USPS abbreviation (50 states + DC + 5
+- `state` isn't a recognized USPS abbreviation (50 states + DC + 5
   primary territories).
 
 ## License

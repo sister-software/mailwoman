@@ -73,7 +73,7 @@ Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
 (109 → 76) and precision rises (43.7% → 64.6%) for the same reason: the ruler stops
 counting correct same-org merges as errors, and the geocode-first building key
 catches the most of them. The climb comes from a more precise yardstick, and the
-model does not change.
+model doesn't change.
 
 ## Why we trust the org-name ruler
 
@@ -87,15 +87,15 @@ Every hard pair the matcher merges at a shared address is a correct merge that
 NPI-truth was scoring as an error.
 
 That result also settled the model question. An earlier experiment added
-"corroboration" features aimed at reducing over-merges, and precision did not
+"corroboration" features aimed at reducing over-merges, and precision didn't
 move. The gold set explains why: there was almost no over-merge to reduce.
 The scorer's precision objective targets errors that do not exist here. The
 ruler was the thing that needed to change.
 
 ## The discipline
 
-Report the number that matches the entity you are resolving. For NPPES
-organization dedup that is the **org-name F1 — ~60.7% by the address-string key,
+Report the number that matches the entity you're resolving. For NPPES
+organization dedup that's the **org-name F1 — ~60.7% by the address-string key,
 ~68.1% by the geocode-first building key** — not the NPI-level 53.6%, which mostly
 measures NPI over-segmentation, a property of the registry rather than of the matcher.
 State the ruler next to the number every time. A dedup F1 without a stated

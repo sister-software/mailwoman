@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Hierarchy campaign R2 — borough (child, parent) pairs from the shipped WOF admin DB, emitted
- *   in the pair-index entry shape. Boroughs project onto `dependent_locality` (the schema umbrella
- *   term — see plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag.
- *   no format change.
+ *   Hierarchy campaign R2 — borough (child, parent) pairs from the shipped WOF admin DB,
+ *   emitted in the pair-index entry shape.
  *
- *   Scope discipline: the extractor is country-filtered — only locales with a carrier package and
- *   a contextually-alive tag receive entries (GB/London first. a perfect index against a dead tag
- *   is zero, the v385 control's lesson). The 211-borough census (2026-08-01): London 33, Tokyo 23,
- *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-direction names from the directional-homograph class).
- *   Include them only when their locale carrier exists. Apply law-1-style directional care.
+ *   Boroughs project onto `dependent_locality` (the schema umbrella term — see
+ *   plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag. no format change.
+ *
+ *   Scope discipline: the extractor is country-filtered — only locales
+ *   with a carrier package and a contextually-alive tag receive entries
+ *   (GB/London first. a perfect index against a dead tag is zero, the v385 control's lesson).
+ *   The 211-borough census (2026-08-01): London 33, Tokyo 23, Paris 20, Rotterdam 23,
+ *   Amsterdam 8 (compass-direction names from the directional-homograph class).
+ *
+ *   Include them only when their locale carrier exists.
+ *   Apply law-1-style directional care.
+ *
  *   Berlin-style duplicates (locality + localadmin parents) dedupe on (child, parent) surface.
  *
  *   currency (added 2026-08-02, after the fact): both ends of the pair must be live — `is_current != 0 and
@@ -50,7 +55,7 @@ export interface BoroughPair {
 	 *
 	 * The child's tag cannot represent the borough-parent relationship under the pre-PIX2 containment
 	 * approach. the borough-parent relationship at all: `WESTERN_PARENT_OF` gives `dependent_locality`
-	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" isn't that.
 	 */
 	parentTag: ComponentTag
 }
@@ -101,7 +106,7 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	// India is the one country where parent aliases are enabled.
 	// The team measured the behavior there.
-	// Indian cities have official renames that WOF has not promoted: it stores Bangalore
+	// Indian cities have official renames that WOF hasn't promoted: it stores Bangalore
 	// while addresses today use Bengaluru (renamed 2014, present as an `eng` variant).
 	// Without expansion the pair exists and never fires — "12 MG Road, Indiranagar,
 	// Bengaluru" emitted no dependent locality at all.
@@ -119,7 +124,7 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	},
 	// ES and IT need aliases for the reason India did, in their own languages rather than English:
 	// WOF stores `Rome` for a city written `Roma`, and `Cordoba` for one written `Córdoba`.
-	// The fold does not strip accents, so `cordoba` and `córdoba` are different keys
+	// The fold doesn't strip accents, so `cordoba` and `córdoba` are different keys
 	// and the unaccented WOF form would never match a real address.
 	ES: {
 		children: ["borough", "neighbourhood"],
@@ -208,7 +213,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		// and folding all of them in would bloat the artifact with scripts this Latin
 		// model never sees and surfaces no English-written address uses.
 		// The existing surface-expansion probe (`pair-index-hierarchy-probe.ts`) checks
-		// on `official = 1`; that is right for name-exactness checks but too strict here,
+		// on `official = 1`; that's right for name-exactness checks but too strict here,
 		// because it is exactly the rows a rename leaves behind.
 		// Positive evidence only: an extra parent key can only create a match where the writer used that name.
 		const aliasRows = !expandParentAliases

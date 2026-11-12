@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The economics of a selection of buildings, and the totals of a portfolio of projects. A selection's
- *   figures come from one calculation in `@mailwoman/route-scenarios` over the whole selection: its eligible
- *   units, the construction cost with each shared segment charged once, NPV, first revenue and funding. The
- *   model never adds standalone building estimates, because a shared segment would then be charged once
- *   for each building that uses it.
+ *   The economics of a selection of buildings, and the totals of a portfolio of projects.
  *
- *   A portfolio is a set of projects, each a selection from one scenario. Its totals are the sums of the
- *   projects' figures, so they count only projects that share no building and no segment. A portfolio
- *   whose projects overlap throws {@link OverlappingProjectsError}. The error lists each overlapping pair
- *   of projects with the buildings and segments the pair shares.
+ *   A selection's figures come from one calculation in `@mailwoman/route-scenarios`
+ *   over the whole selection: its eligible units, the construction cost with each
+ *   shared segment charged once, NPV, first revenue and funding.
+ *   The model never adds standalone building estimates, because a shared segment would
+ *   then be charged once for each building that uses it.
+ *
+ *   A portfolio is a set of projects, each a selection from one scenario.
+ *   Its totals are the sums of the projects' figures, so they count only projects
+ *   that share no building and no segment.
+ *
+ *   A portfolio whose projects overlap throws {@link OverlappingProjectsError}.
+ *   The error lists each overlapping pair of projects with the buildings and segments the pair shares.
  */
 
 import { type Dossier, type EntityID, proseList } from "@mailwoman/dossier"

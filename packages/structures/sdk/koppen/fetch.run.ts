@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Downloads the Koppen-Geiger climate classification the facade crate samples per building: Beck et al. 2023,
- *   "High-resolution (1 km) Koppen-Geiger maps for 1901-2099 based on constrained CMIP6 projections", Scientific
- *   Data 10, 724, CC BY 4.0. The 0.1 degree map of the 1991-2020 period, `koppen_geiger_0p1.tif`, is the layer
+ *   Downloads the Koppen-Geiger climate classification the facade crate samples per building:
+ *   Beck et al. 2023, "High-resolution (1 km) Koppen-Geiger maps for 1901-2099 based
+ *   on constrained CMIP6 projections", Scientific Data 10, 724, CC BY 4.0.
+ *
+ *   The 0.1 degree map of the 1991-2020 period, `koppen_geiger_0p1.tif`, is the layer
  *   `hrt-facade` reads: one byte per cell, class 1 to 30, 0 for ocean.
  *
  *   Usage: node packages/structures/sdk/koppen/fetch.run.ts --out <dir> [--url <archive url>]
  *
- *   Data transfers run on AWS, never on the lab host. The script writes the archive and its SHA-256 beside it, and
- *   stops there: the conversion to the crate's grid is the next step, once the archive's checksum is recorded under
+ *   Data transfers run on AWS, never on the lab host.
+ *   The script writes the archive and its SHA-256 beside it, and stops there: the conversion
+ *   to the crate's grid is the next step, once the archive's checksum is recorded under
  *   `packages/structures/data/licenses/` with the publisher's terms, per `packages/structures/AGENTS.md`.
  */
 

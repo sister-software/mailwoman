@@ -3,9 +3,10 @@
 
 /**
  *   `no-street` recipe — synthetic no-street counter-example rows: tuples →
- *   {@link synthesizeNoStreetRow} → aligned LabeledRow. The corpus-side counterweight to the
- *   `invented-street` source — venue+admin and admin-only rows with explicit absence of any
- *   street-side component.
+ *   {@link synthesizeNoStreetRow} → aligned LabeledRow.
+ *
+ *   The corpus-side counterweight to the `invented-street` source — venue+admin
+ *   and admin-only rows with explicit absence of any street-side component.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `?runtime=fake` mounts the canned runtime the shell smoke and the stories use, so a deployment can be checked without a model download.
+ *   `?runtime=fake` mounts the canned runtime the shell smoke and the stories use,
+ *   so a deployment can be checked without a model download.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -191,7 +192,7 @@ function TracePage({ query }: { query: string | null }) {
  * Each submitted query is a history entry, as on Google Maps, so the back
  * button returns to the previous search.
  *
- * An emptied field is not a search, so it rewrites the entry instead, and a query
+ * An emptied field isn't a search, so it rewrites the entry instead, and a query
  * equal to the URL's leaves the history as it is.
  */
 function writeQueryToURL(query: string): void {

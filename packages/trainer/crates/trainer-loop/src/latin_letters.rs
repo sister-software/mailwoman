@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // Generated from CPython 3.12.3, Unicode 15.0.0: the code points whose category starts with `L` and whose name
 // starts with "LATIN" or "FULLWIDTH LATIN", as inclusive ranges. See `address_systems.rs` for the recipe.
 

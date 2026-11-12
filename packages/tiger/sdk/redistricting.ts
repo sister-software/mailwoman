@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pull a state's Census 2020 P.L. 94-171 redistricting counts (table P2 — Hispanic-or-Latino by
- *   race, per block) into the `pl_block` table of a tiger {@link DatabaseClient} DB, keyed on the
- *   same 15-char block `geoid` as {@link fetchTIGER}'s `tabblock20`. Join the two for block-level
- *   race + geometry (e.g. a dot-density map).
+ *   Pull a state's Census 2020 P.L. 94-171 redistricting counts (table P2 — Hispanic-or-Latino
+ *   by race, per block) into the `pl_block` table of a tiger {@link DatabaseClient} DB,
+ *   keyed on the same 15-char block `geoid` as {@link fetchTIGER}'s `tabblock20`.
  *
- *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header
- *   (`<st>geo<yr>.pl`) and three data segments. segment 1 (`<st>00001<yr>.pl`) contains P1 + P2. We
- *   join the header (filtered to sumlev 750 = block) to segment 1 by logrecno. Field offsets are
- *   fixed by the 2020 P.L. layout (verified against the real files).
+ *   Join the two for block-level race + geometry (e.g. a dot-density map).
+ *
+ *   Keyless public data.
+ *   The per-state ZIP holds a pipe-delimited geographic header (`<st>geo<yr>.pl`)
+ *   and three data segments. segment 1 (`<st>00001<yr>.pl`) contains P1 + P2.
+ *
+ *   We join the header (filtered to sumlev 750 = block) to segment 1 by logrecno.
+ *   Field offsets are fixed by the 2020 P.L. layout (verified against the real files).
  *
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
@@ -22,6 +25,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { tigerDatabaseRoot } from "#paths"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "#schema"
 import { downloadIfNeeded } from "#sdk/download"
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "#state"
@@ -52,7 +56,7 @@ const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
  * / 916,517, the published CA 2020 figures.
  *
  * `occupied + vacant === housing_units` is the invariant that distinguishes a correct
- * offset from a plausible one. {@link parseH1} refuses a row when it does not hold.
+ * offset from a plausible one. {@link parseH1} refuses a row when it doesn't hold.
  */
 export const SEG2_FIELD_COUNT = 152
 /**
@@ -134,7 +138,7 @@ export interface FetchRedistrictingOptions {
 	/**
 	 * Output SQLite path.
 	 *
-	 * @defaultValue `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 * @defaultValue `<dataRoot>/db/tiger/tiger.db` (same DB as `fetchTIGER`).
 	 */
 	outPath?: string
 	/**
@@ -201,7 +205,7 @@ export async function* fetchRedistricting(
 
 	const cacheDir = dataRoot("census", "redistricting", String(vintage), state)
 	// Same stable `tiger.db` default as fetchTIGER — pl_block lives alongside tabblock20 in one DB.
-	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
+	const outPath = PathBuilder.from(options.outPath ?? tigerDatabaseRoot(dataRoot)("tiger.db"))
 	await makeDirectories(cacheDir)
 	await makeDirectories(outPath.dirname())
 

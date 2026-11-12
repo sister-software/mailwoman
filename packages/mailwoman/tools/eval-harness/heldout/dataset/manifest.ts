@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A versioned evaluation dataset: a held-out sample frozen into a manifest that can be committed, beside a
- *   rows file whose sha256 the manifest records.
+ *   A versioned evaluation dataset: a held-out sample frozen into a manifest that can
+ *   be committed, beside a rows file whose sha256 the manifest records.
  *
- *   The manifest records the corpus manifest the sample was drawn from (path, sha256, corpus version), the
- *   sampling rule and seed, the source set, the available and sampled counts per country and row kind, and one
- *   entry per row: identity, country, source, kind, group, a hash of its expected spans, and its annotation
- *   provenance. The rows file holds the text and spans the grader parses.
+ *   The manifest records the corpus manifest the sample was drawn from (path, sha256, corpus version),
+ *   the sampling rule and seed, the source set, the available and sampled counts per country
+ *   and row kind, and one entry per row: identity, country, source, kind, group,
+ *   a hash of its expected spans, and its annotation provenance.
+ *   The rows file holds the text and spans the grader parses.
  *
- *   The dataset version is derived from what decides membership: the drawn-from corpus manifest's sha256, the
- *   sampling rule and the source set. A changed rule or source set therefore yields a new version, and two
- *   manifests with one version hold the same rows unless a corpus manifest was rewritten in place. The
- *   rows hash then exposes. {@linkcode compareHeldoutDatasets} reports what changed between two versions.
+ *   The dataset version is derived from what decides membership: the drawn-from corpus
+ *   manifest's sha256, the sampling rule and the source set.
+ *   A changed rule or source set therefore yields a new version, and two manifests with
+ *   one version hold the same rows unless a corpus manifest was rewritten in place.
+ *
+ *   The rows hash then exposes. {@linkcode compareHeldoutDatasets} reports
+ *   what changed between two versions.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"

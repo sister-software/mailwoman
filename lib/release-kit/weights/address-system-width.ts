@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares each staged weights package's graph with its card's address-system table before a release packs it.
+ *   Compares each staged weights package's graph with its card's address-system table
+ *   before a release packs it.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

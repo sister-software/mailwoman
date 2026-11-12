@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `optim/schedules.py`'s three schedules under `torch.optim.lr_scheduler.LambdaLR`'s stepping, and the resume
 //! restamp.
 //!

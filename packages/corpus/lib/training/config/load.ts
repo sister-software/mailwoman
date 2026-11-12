@@ -2,19 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads a training run config into the schema's defaults and types it. `#training/config/admission` checks the
- *   corpus sources a typed config admits, and `#training/config/resolved` writes the versioned resolved config the
- *   Rust trainer and sampler read.
+ *   Reads a training run config into the schema's defaults and types it.
  *
- *   The merge and coercion reproduce those of the deleted Python loader (`config/load.py`). A known key replaces the
- *   default and an unknown key is refused with its dotted path and file. A numeric string converts only under a
- *   field annotated exactly `int` or `float`. The three held-out floor lists are validated with the Python
- *   loader's messages.
+ *   `#training/config/admission` checks the corpus sources a typed config admits, and
+ *   `#training/config/resolved` writes the versioned resolved config the Rust trainer and sampler read.
  *
- *   The resolver then refuses three values the Python loader admits. The first is a non-string
- *   `country_weights` key. `DataConfig.__post_init__` refuses it only at construction, and a loaded YAML is
- *   merged after construction. The second is a value whose type its field does not declare. The third is a
- *   mapping key that a JSON object reader would move out of its YAML position.
+ *   The merge and coercion reproduce those of the deleted Python loader (`config/load.py`).
+ *   A known key replaces the default and an unknown key is refused with its dotted path and file.
+ *
+ *   A numeric string converts only under a field annotated exactly `int` or `float`.
+ *   The three held-out floor lists are validated with the Python loader's messages.
+ *
+ *   The resolver then refuses three values the Python loader admits.
+ *   The first is a non-string `country_weights` key.
+ *
+ *   `DataConfig.__post_init__` refuses it only at construction, and a loaded
+ *   YAML is merged after construction.
+ *   The second is a value whose type its field doesn't declare.
+ *
+ *   The third is a mapping key that a JSON object reader would move out of its YAML position.
  */
 
 import { countriesDeclaredBy, type CountrySet } from "@mailwoman/codex/country/sets"
@@ -176,7 +182,7 @@ const RETIRED_KEYS: ReadonlySet<string> = new Set([
 /**
  * Merges `src` into `dst` key by key, as `merge_into` does.
  *
- * A key the dataclass does not declare is refused under `strict` and skipped otherwise.
+ * A key the dataclass doesn't declare is refused under `strict` and skipped otherwise.
  * A mapping under a nested section merges into it, and every other value replaces
  * the field through {@linkcode coerceField}.
  *
@@ -578,7 +584,7 @@ function toPlain(value: ConfigValue, path: string): unknown {
 /**
  * Checks a loaded config's values against their declared types and returns them as JSON values.
  *
- * @throws {TrainingConfigError} naming every field whose value its declaration does not admit.
+ * @throws {TrainingConfigError} naming every field whose value its declaration doesn't admit.
  */
 export function typedTrainingConfig(config: ConfigInstance, source: string): TrainingConfig {
 	const result = TrainingConfigSchema.safeParse(toPlain(config, "config"))
@@ -600,7 +606,7 @@ export function typedTrainingConfig(config: ConfigInstance, source: string): Tra
  *
  * A country at weight zero admits no row.
  *
- * @throws {TypeError} When a key is not an ISO 3166-1 alpha-2 code, naming the config.
+ * @throws {TypeError} When a key isn't an ISO 3166-1 alpha-2 code, naming the config.
  */
 export function weightedCountries(config: TrainingConfig, source = "data.country_weights"): WeightedCountries {
 	const codes = Object.entries(config.data.country_weights)

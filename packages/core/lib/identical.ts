@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Deep identity for JSON-shaped values, wrapping the runtime's `isDeepStrictEqual` so a record whose
- *   fields were reordered no longer reads as changed. Node-only: `node:util` has no browser build, and
- *   `objects.ts` stays on the browser client's static import path.
+ *   Deep identity for JSON-shaped values, wrapping the runtime's `isDeepStrictEqual`
+ *   so a record whose fields were reordered no longer reads as changed.
+ *
+ *   Node-only: `node:util` has no browser build, and `objects.ts` stays on the
+ *   browser client's static import path.
  */
 
 import { isDeepStrictEqual } from "node:util"

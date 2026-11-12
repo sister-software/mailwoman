@@ -2,10 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Held-out fresh-draw Gauntlet. It is the generalization check. Each run draws a fresh random
- *   sample with truth coordinates (BAN for FR). The candidate and current production model run on the same draw.
- *   A two-proportion z-test compares them. The candidate ships only when it matches or exceeds production at the
- *   locality tolerance. This paired comparison controls for data drift and coverage gaps.
+ *   Held-out fresh-draw Gauntlet.
+ *
+ *   It is the generalization check.
+ *   Each run draws a fresh random sample with truth coordinates (BAN for FR).
+ *
+ *   The candidate and current production model run on the same draw.
+ *   A two-proportion z-test compares them.
+ *
+ *   The candidate ships only when it matches or exceeds production at the locality tolerance.
+ *   This paired comparison controls for data drift and coverage gaps.
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
@@ -155,7 +161,7 @@ export function holdoutSources(): Record<string, SourceDef> {
  * A seeded default would turn the generalization measure into a fixed set.
  *
  * It also returns `drawnFrom`, the count of parseable rows the reservoir saw,
- * since the sample size by itself does not identify what it was drawn from.
+ * since the sample size by itself doesn't identify what it was drawn from.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,

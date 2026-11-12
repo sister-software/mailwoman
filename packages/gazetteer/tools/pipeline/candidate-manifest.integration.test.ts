@@ -4,9 +4,12 @@
 /**
  *   The candidate manifest's provenance chain and four ways the chain can fail.
  *
- *   The lab holds thirteen candidate builds and about ten admin builds. No record currently pairs them.
- *   The manifest chain records those pairs. An absent ancestor must remain absent because substituting a filename
- *   would look like provenance without identifying an ancestor build.
+ *   The lab holds thirteen candidate builds and about ten admin builds.
+ *   No record currently pairs them.
+ *
+ *   The manifest chain records those pairs.
+ *   An absent ancestor must remain absent because substituting a filename would look
+ *   like provenance without identifying an ancestor build.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -199,7 +202,7 @@ describe("ancestorIdentity — the four states", () => {
 describe("candidateLayerManifest", () => {
 	it("records the ancestor as its source, not the ancestor's sources", async () => {
 		// The ancestor's sources are "whosonfirst+overture+geonames". and unfalsifiable of this file.
-		// It could not say which admin build this came from.
+		// It couldn't say which admin build this came from.
 		const root = await scratchDirectory()
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-08-17.0")
@@ -249,7 +252,7 @@ describe("candidateLayerManifest", () => {
 
 	it("composes its license from every fold's own terms rather than the ancestor's alone", async () => {
 		// The defect this replaces: a literal `ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` stood here
-		// while the postcode folds supplied 23.90% of the table's places under terms it did not name.
+		// while the postcode folds supplied 23.90% of the table's places under terms it didn't name.
 		const root = await scratchDirectory()
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "ODbL-1.0 AND CC-BY-4.0")

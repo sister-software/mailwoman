@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build-time utilities for the runtime-assets plugin, running in Node.js only (Docusaurus config/plugin context) and never bundled into the client.
+ *   Build-time utilities for the runtime-assets plugin, running in Node.js only
+ *   (Docusaurus config/plugin context) and never bundled into the client.
  *
- *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed on this file's `import.meta.url`, and no code touches `import.meta.resolve`, because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter. Only a docs build can verify a change to that.
+ *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed
+ *   on this file's `import.meta.url`, and no code touches `import.meta.resolve`,
+ *   because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter.
+ *   Only a docs build can verify a change to that.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

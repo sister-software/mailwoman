@@ -127,7 +127,7 @@ describe("recaseUniform", () => {
 	it("keeps entity-form initialisms upper-case rather than title-casing them into nonsense", () => {
 		expect(recaseUniform("SOUTHERN LIGHT LLC")).toBe("Southern Light LLC")
 		expect(recaseUniform("HARGRAY COMMUNICATIONS GROUP LP")).toBe("Hargray Communications Group LP")
-		// A preceding comma does not stop the designation from being recognized.
+		// A preceding comma doesn't stop the designation from being recognized.
 		expect(recaseUniform("ACME FIBER, LLC")).toBe("Acme Fiber, LLC")
 		// "Inc" is title-cased like an ordinary word.
 		expect(recaseUniform("OTELCO TELEPHONE INC")).toBe("Otelco Telephone Inc")

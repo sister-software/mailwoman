@@ -2,31 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Asks whether the street a board row expects appears in that country's address register. It also
- *   asks whether that street appears alongside the row's locality.
+ *   Asks whether the street a board row expects appears in that country's address register.
+ *
+ *   It also asks whether that street appears alongside the row's locality.
  *
  *   #2399's first task. A candidate assigned a leading venue name to `street` on rows where the real
- *   street sits second. The decode path holds no index of street names to separate the two. This
- *   measures whether such an index would have answered the question before one is built: a street the
- *   register attests is separable from a venue name the register does not.
+ *   street sits second.
+ *   The decode path holds no index of street names to separate the two.
  *
- *   The registers read here are the ones the corpus adapters already read. GB comes from the `gb-os-open`
- *   adapter's canonical rows (Code-Point Open, OS Open Names and OS Open Roads, OGL v3.0). It read HM Land
- *   Registry Price Paid Data until 2026-10-17. Royal Mail and Ordnance Survey license its address fields
- *   only for personal or non-commercial use (#2635). The OS rows' locality is OS Open Names' populated
- *   place rather than a post town: every Great Portland Street row reads `City of Westminster`, so a London
- *   row's with-locality count reads zero. Every other country comes from its Overture addresses extract. That extract keeps the locality in
- *   `address_levels` rather than in `postal_city`.
+ *   This measures whether such an index would have answered the question before one is built:
+ *   a street the register attests is separable from a venue name the register doesn't.
  *
- *   A row whose country has no register on disk is reported as unmeasured rather than as absent. The two
- *   readings support different decisions.
+ *   The registers read here are the ones the corpus adapters already read.
+ *   GB comes from the `gb-os-open` adapter's canonical rows
+ *   (Code-Point Open, OS Open Names and OS Open Roads, OGL v3.0).
+ *
+ *   It read HM Land Registry Price Paid Data until 2026-10-17.
+ *   Royal Mail and Ordnance Survey license its address fields only for personal
+ *   or non-commercial use (#2635).
+ *
+ *   The OS rows' locality is OS Open Names' populated place rather than a post town: every Great
+ *   Portland Street row reads `City of Westminster`, so a London row's with-locality count reads zero.
+ *   Every other country comes from its Overture addresses extract.
+ *
+ *   That extract keeps the locality in `address_levels` rather than in `postal_city`.
+ *
+ *   A row whose country has no register on disk is reported as unmeasured rather than as absent.
+ *   The two readings support different decisions.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/street/attestation.run.ts \
  *     --ids es-op3-label-cabestreros,gb-op2-east-west-fortess [--release 2026-05-20.0] [--json <out>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -95,7 +104,7 @@ if (missing.length) throw new Error(`No board row for: ${missing.join(", ")}`)
  * The most recent release on this host holds extracts truncated at 800,000 rows,
  * so a measurement against it reads zero for a street the full extract attests.
  */
-const overtureRoot = dataRootPath("overture")
+const overtureRoot = snapshotSourceDirectory("overture")
 const releases = new Set<string>()
 
 for await (const entry of Globerator.from("*/addresses-*.parquet", { cwd: overtureRoot, absolute: false })) {

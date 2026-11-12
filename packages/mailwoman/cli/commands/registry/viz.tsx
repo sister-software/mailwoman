@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (html/SVG). The map
- *   figures (`cross-dataset-map`, `source-provenance-map`) must be served over localhost to render
- *   their basemap (the house tile server cors-restricts to localhost + the docs domains). PNG
- *   rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG` in
- *   `@mailwoman/entity-resolution/tools` (lazy playwright).
+ *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (html/SVG).
+ *
+ *   The map figures (`cross-dataset-map`, `source-provenance-map`) must be served over localhost to
+ *   render their basemap (the house tile server cors-restricts to localhost + the docs domains).
+ *   PNG rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG`
+ *   in `@mailwoman/entity-resolution/tools` (lazy playwright).
  */
 
 import { Text } from "ink"

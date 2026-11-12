@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the standard promotion battery and checks its spec floors. It writes one machine-readable verdict.
- *   `--model` compares raw artifacts and supports delta checks. `--weights-cache` selects the in-distribution path
- *   with absolute floors.
+ *   Runs the standard promotion battery and checks its spec floors.
  *
- *   Every leg runs in-process. Written `.md` artifacts match the prior child stdout capture byte for byte.
+ *   It writes one machine-readable verdict.
+ *   `--model` compares raw artifacts and supports delta checks.
+ *
+ *   `--weights-cache` selects the in-distribution path with absolute floors.
+ *
+ *   Every leg runs in-process.
+ *   Written `.md` artifacts match the prior child stdout capture byte for byte.
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -467,7 +471,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// A paired run treats fp32 as the arm that does not ship.
+		// A paired run treats fp32 as the arm that doesn't ship.
 		// An unpaired run ships this arm.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 

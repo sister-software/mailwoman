@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Operator results measure the explanation section. Blocker accuracy is the number of investigated
- *   explanations that held, over the dispositions with a recorded result. Time saved is the operator's
- *   baseline less the minutes spent, summed over the results that record both. Each measure states its
- *   denominator, and a measure with no qualifying result is unknown rather than zero.
+ *   Operator results measure the explanation section.
+ *
+ *   Blocker accuracy is the number of investigated explanations that held,
+ *   over the dispositions with a recorded result.
+ *   Time saved is the operator's baseline less the minutes spent, summed over the results that record both.
+ *
+ *   Each measure states its denominator, and a measure with no qualifying
+ *   result is unknown rather than zero.
  */
 
 import { type OperatorDisposition, type Statement, StatementKind } from "#explanations"

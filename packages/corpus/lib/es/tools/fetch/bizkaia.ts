@@ -2,43 +2,55 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Harvests the INSPIRE Addresses theme the Diputación Foral de Bizkaia publishes into the
- *   directory `#es/adapters/bizkaia/adapter` reads.
+ *   Harvests the INSPIRE Addresses theme the Diputación Foral de Bizkaia publishes
+ *   into the directory `#es/adapters/bizkaia/adapter` reads.
  *
  *   ## Two services, because the archives hold only addresses
  *
- *   The ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml` lists
- *   one entry per municipality, each offering that municipality's addresses as a zipped GML through a
- *   `rel="enclosure"` link. Those archives hold no `ad:ThoroughfareName`, `ad:PostalDescriptor` or
- *   `ad:AdminUnitName` feature: every `ad:component` reference an address writes is a stored-query
- *   URL on the publisher's WFS that the ATOM service does not republish. An adapter handed only those
- *   archives therefore reads every address in the province without its street, its postcode or
- *   its municipality. This harvest acquires both services into one directory for that reason.
+ *   The ATOM download service at `https://apli.bizkaia.eus/apps/Danok/INSPIRE/addresses.xml`
+ *   lists one entry per municipality, each offering that municipality's addresses
+ *   as a zipped GML through a `rel="enclosure"` link.
+ *   Those archives hold no `ad:ThoroughfareName`, `ad:PostalDescriptor` or `ad:AdminUnitName`
+ *   feature: every `ad:component` reference an address writes is a stored-query URL
+ *   on the publisher's WFS that the ATOM service doesn't republish.
  *
- *   Each component type is read in one request. This service serves a type no other way. Its
- *   capabilities document states `ImplementsResultPaging` as `FALSE` and `CountDefault` as `1000`, so
- *   a reader that paged a type would receive the first page again. The harvest therefore asks
- *   `RESULTTYPE=hits` for the type's count and then asks for that number of features in one `GetFeature`,
- *   and {@linkcode fetchBizkaiaComponentDocument} raises where the document returns fewer than the
- *   count. A truncated component document is the failure that would otherwise reach the adapter as
- *   an unresolved reference per address.
+ *   An adapter handed only those archives therefore reads every address in the
+ *   province without its street, its postcode or its municipality.
+ *   This harvest acquires both services into one directory for that reason.
  *
- *   A component document's own bytes are not reproducible. Its `wfs:FeatureCollection` holds a
- *   `timeStamp` attribute holding the moment of the request, so two identical harvests differ in
- *   that element and therefore in their digests. The manifest records each document's byte count and
- *   sha256 as what arrived, never as a value a later run compares against.
+ *   Each component type is read in one request.
+ *   This service serves a type no other way.
+ *
+ *   Its capabilities document states `ImplementsResultPaging` as `FALSE` and `CountDefault`
+ *   as `1000`, so a reader that paged a type would receive the first page again.
+ *   The harvest therefore asks `RESULTTYPE=hits` for the type's count and then asks for that
+ *   number of features in one `GetFeature`, and {@linkcode fetchBizkaiaComponentDocument}
+ *   raises where the document returns fewer than the count.
+ *
+ *   A truncated component document is the failure that would otherwise reach the
+ *   adapter as an unresolved reference per address.
+ *
+ *   A component document's own bytes are not reproducible.
+ *   Its `wfs:FeatureCollection` holds a `timeStamp` attribute holding the moment of the request,
+ *   so two identical harvests differ in that element and therefore in their digests.
+ *
+ *   The manifest records each document's byte count and sha256 as what arrived,
+ *   never as a value a later run compares against.
  *
  *   ## What decides a skip
  *
- *   The service document states one `<updated>`, repeated on all of its entries, rather than a
- *   modification time per municipality: the 112 entries served on 2026-10-03 all read
- *   `2026-10-01T02:40:20Z`, which is the feed document's own modification time. One request therefore
- *   states the freshness of every archive the service offers, as ČÚZK's does, and a re-run requests
- *   only the municipalities whose archive is missing or no longer the recorded length. Whether that
- *   value moves whenever an archive is replaced is inferred from one observation rather than
- *   established: on 2026-10-03 the feed read `2026-10-01T02:40:20Z` and `ES.BFA.AD.001.zip` was
- *   served with `Last-Modified: Thu, 01 Oct 2026 00:01:15 GMT`. Each archive's own `last-modified` is
- *   recorded beside its entry so a later run can check that inference against the record.
+ *   The service document states one `<updated>`, repeated on all of its entries,
+ *   rather than a modification time per municipality: the 112 entries served on 2026-10-03
+ *   all read `2026-10-01T02:40:20Z`, which is the feed document's own modification time.
+ *   One request therefore states the freshness of every archive the service offers,
+ *   as ČÚZK's does, and a re-run requests only the municipalities whose archive
+ *   is missing or no longer the recorded length.
+ *
+ *   Whether that value moves whenever an archive is replaced is inferred from one observation
+ *   rather than established: on 2026-10-03 the feed read `2026-10-01T02:40:20Z`
+ *   and `ES.BFA.AD.001.zip` was served with `Last-Modified: Thu, 01 Oct 2026 00:01:15 GMT`.
+ *   Each archive's own `last-modified` is recorded beside its entry so a later
+ *   run can check that inference against the record.
  *
  *   The component documents state no version at all. The WFS answers them under `Cache-Control:
  *   no-cache` with no `Last-Modified`, so a run holds no value to compare and every run that
@@ -327,7 +339,7 @@ export interface HarvestESBizkaiaOptions {
 	/**
 	 * Harvest only these five-digit municipality codes, for a probe or to repair specific ones.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	municipalities?: readonly string[]
 	/**
@@ -517,7 +529,7 @@ export async function harvestESBizkaia(
 	const recordedManifest = await readManifest<ESBizkaiaHarvestManifest>(manifestPath)
 	const files = new Map<string, ESBizkaiaArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept, so a bounded
+	// An entry for a municipality this run doesn't consider is kept, so a bounded
 	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESBizkaiaArchiveEntry)
@@ -628,10 +640,10 @@ export async function harvestESBizkaia(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller asked for that the feed does not list.
+ * The municipalities this run considers, and the codes a caller asked for that the feed doesn't list.
  *
- * A code the caller asked for and the service document does not list is returned
- * rather than dropped, because a municipality that is not published is a different
+ * A code the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a municipality that's not published is a different
  * condition from a selection that holds no municipality.
  */
 function selectMunicipalities(
@@ -669,7 +681,7 @@ function selectMunicipalities(
  * Download one municipality's archive and answer the manifest entry for it.
  *
  * The transfer runs on the harvest's own client through {@linkcode downloadZipArchive},
- * which refuses a body that does not begin with a zip signature.
+ * which refuses a body that doesn't begin with a zip signature.
  */
 async function fetchArchive(
 	client: Pick<APIClient, "fetch">,

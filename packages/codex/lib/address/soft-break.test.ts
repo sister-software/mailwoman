@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests soft breaks. They render as a line break in multi-line output and as a space in single-line output.
+ *   Tests soft breaks.
  *
- *   Great Britain prints the post town and postcode on separate lines, but its single-line form is
- *   `27 Minories, London EC3N 1DE`.
+ *   They render as a line break in multi-line output and as a space in single-line output.
+ *
+ *   Great Britain prints the post town and postcode on separate lines,
+ *   but its single-line form is `27 Minories, London EC3N 1DE`.
  */
 
 import { describe, expect, it } from "vitest"
@@ -33,7 +35,7 @@ describe("GB's single-line form", () => {
 	it("moves the postcode's separator when the post town is absent, and nothing else", () => {
 		// The soft break belongs to the postcode line, so it follows whichever line precedes the postcode.
 		// This case records current behavior.
-		// Real usage without a post town has not been measured.
+		// Real usage without a post town hasn't been measured.
 		expect(
 			formatAddress({ house_number: "27", street: "Minories", postcode: "EC3N 1DE" }, "GB", {
 				singleLine: true,

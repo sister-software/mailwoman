@@ -4,8 +4,9 @@
 /**
  *   Classifies a gazetteer place ID by the source that minted it.
  *
- *   `spr.id` is a real Who's On First ID only for WOF rows. The Overture and GeoNames folds mint synthetic IDs
- *   in reserved ranges above every WOF ID. Those IDs do not resolve on spelunker.
+ *   `spr.id` is a real Who's On First ID only for WOF rows.
+ *   The Overture and GeoNames folds mint synthetic IDs in reserved ranges above every WOF ID.
+ *   Those IDs do not resolve on spelunker.
  */
 
 import {

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Maps component tags to resolver placetypes, expands placetype filters into equivalence groups and detects
- *   a widened match.
+ *   Maps component tags to resolver placetypes, expands placetype filters into
+ *   equivalence groups and detects a widened match.
  */
 
 import type { ComponentTag } from "#component"
@@ -17,7 +17,7 @@ import type { ComponentTag } from "#component"
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
 /**
- * The map used when a backend does not supply its own.
+ * The map used when a backend doesn't supply its own.
  *
  * `street` and `house_number` are absent because WOF admin has no rows for them.
  * They resolve through the situs extracts.
@@ -74,7 +74,7 @@ export function placetypeMapForCountry(countryCode: string | null): PlacetypeMap
  * - `county` also accepts `macrocounty`.
  *
  * Every lookup backend uses this table, so the Node and browser resolvers stay consistent.
- * A placetype without an entry, such as `borough`, is not expanded.
+ * A placetype without an entry, such as `borough`, isn't expanded.
  */
 export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
 	locality: ["locality", "borough", "localadmin"],
@@ -111,7 +111,7 @@ export function expandPlacetypeFilter(placetypes: readonly string[] | null): str
  * Group members that are a broader tier than the requested placetype.
  *
  * The `borough` and `localadmin` members of the `locality` group are peers of
- * `locality`, so they are excluded from this set.
+ * `locality`, so they're excluded from this set.
  */
 const MACRO_FALLBACK_PLACETYPES: ReadonlySet<string> = new Set(["macroregion", "macrocounty"])
 

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Guards the French street-prefix convention and the GB postcode pattern without loading model
- *   weights. The FR assertion prevents `street_prefix` from being forbidden again.
+ *   Guards the French street-prefix convention and the GB postcode pattern without loading model weights.
+ *
+ *   The FR assertion prevents `street_prefix` from being forbidden again.
  */
 
 import { describe, expect, it } from "vitest"
@@ -18,14 +19,12 @@ describe("FR address-system conventions (#719)", () => {
 		expect(fr!.forbiddenTags ?? []).not.toContain("street_prefix")
 	})
 
-	it("KEEPS street_suffix forbidden — FR has no trailing street suffix (measured: zero leakage, free constraint)", () => {
-		const fr = conventionsForSystem("fr")
-		expect(fr!.forbiddenTags ?? []).toContain("street_suffix")
+	it("forbids no tag, so a French-looking address outside France keeps its street_suffix (#2987)", () => {
+		expect(conventionsForSystem("fr")!.forbiddenTags).toBeUndefined()
 	})
 
-	it("the literal table row agrees with the lookup (no aliasing surprise)", () => {
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).not.toContain("street_prefix")
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).toContain("street_suffix")
+	it("the literal table row agrees with the lookup", () => {
+		expect(ADDRESS_SYSTEM_CONVENTIONS.fr).toBe(conventionsForSystem("fr"))
 	})
 })
 

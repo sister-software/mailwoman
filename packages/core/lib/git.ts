@@ -25,6 +25,7 @@ import {
 	type ProcessTaskOptions,
 	runFile,
 	runFileSync,
+	spawnProcess,
 } from "#process"
 import { TypedEventTarget } from "#utils/events"
 
@@ -129,7 +130,7 @@ export interface GitTransferOptions extends Pick<ProcessTaskOptions, "stdin" | "
  *
  * Initialize it with `construct(GitClient, options)` from `async-init` to resolve
  * {@linkcode GitClient.root} and {@linkcode GitClient.commonDirectory} before use.
- * A client that will clone into a directory that does not exist yet is used without initialization.
+ * A client that will clone into a directory that doesn't exist yet is used without initialization.
  */
 export class GitClient extends TypedEventTarget<GitClientEventMap> implements AsyncDisposable {
 	public readonly cwd: PathBuilderLike
@@ -412,7 +413,7 @@ export async function dirtyTrackedFiles(
  * This answers a cache's question: has anything at all changed since a derived artifact was built.
  *
  * A key built from the narrower reading goes stale after a staged edit or a new file.
- * and a stale index reports that a helper written an hour ago does not exist.
+ * and a stale index reports that a helper written an hour ago doesn't exist.
  */
 export async function workingTreeStatus(
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
@@ -489,11 +490,45 @@ export async function trackedFiles(
 }
 
 /**
+ * {@linkcode trackedFiles} as a stream, for a repository whose listing outgrows the 64 MiB buffer.
+ *
+ * A Who's On First postcode clone tracks about 1.7 million files, more than that buffer holds.
+ * Paths arrive as git writes them, so memory holds one chunk of the listing at a time.
+ *
+ * @throws After the last path when `git ls-files` exits non-zero, so a caller never
+ * treats a listing that stopped early as complete.
+ */
+export async function* streamTrackedFiles(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	pathspecs: string[] = []
+): AsyncGenerator<string> {
+	const child = spawnProcess("git", ["ls-files", "-z", ...pathspecs], {
+		cwd: repoRoot,
+		stdio: ["ignore", "pipe", "pipe"],
+	})
+
+	const exited = new Promise<{ code: number | null; stderr: string }>((resolve, reject) => {
+		let stderr = ""
+
+		child.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString("utf8")))
+		child.on("error", reject)
+		child.on("close", (code) => resolve({ code, stderr }))
+	})
+
+	// Untrimmed, so a path that starts or ends with a space keeps it.
+	yield* TextSpliterator.fromAsync(child.stdout, { delimiter: "\0", skipEmpty: true, trim: false })
+
+	const { code, stderr } = await exited
+
+	if (code !== 0) throw new Error(`git ls-files exited ${code} in ${repoRoot.toString()}: ${stderr.trim()}`)
+}
+
+/**
  * Every path in the working tree that Git includes, repo-relative: the tracked ones
- * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
+ * and the untracked ones an ignore rule doesn't cover, optionally narrowed by git pathspecs.
  *
  * This is the set a checker over repository contents needs. {@linkcode trackedFiles}
- * answers what is committed.
+ * answers what's committed.
  * A newly written file is absent from that set, so a checker could report a clean result without opening it.
  *
  * `--exclude-standard` applies `.gitignore`, so a build output stays out
@@ -527,7 +562,7 @@ export async function workingTreeFiles(
  * The old path never appears, so the result contains only paths that still exist.
  *
  * Disabled rename detection reports every move as a deletion of the old path.
- * That is the path a stale literal holds.
+ * That's the path a stale literal holds.
  *
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
  * against 11,483 for the reading that answers the wrong set.

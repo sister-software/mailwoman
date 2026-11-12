@@ -5,28 +5,33 @@
  * `fr-lieudit` recipe: FR lieu-dit (hamlet/place) `dependent_locality` coverage.
  *
  * Streams every BAN `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
- * `extractBANAddrPoints`, which surfaces a cleaned `lieuDit` per record. Only rows carrying a clean
- * lieu-dit survive into the pool.
+ * `extractBANAddrPoints`, which surfaces a cleaned `lieuDit` per record.
+ * Only rows carrying a clean lieu-dit survive into the pool.
  *
- * The recipe maps lieu-dit to `dependent_locality` and commune to `locality`. It renders to match the
- * formatter's FR `place`-slot convention. House and street go on line 1.
- * The lieu-dit appears by itself on line 2. Postcode and commune go on line 3.
+ * The recipe maps lieu-dit to `dependent_locality` and commune to `locality`.
+ * It renders to match the formatter's FR `place`-slot convention.
+ *
+ * House and street go on line 1.
+ * The lieu-dit appears by itself on line 2.
+ *
+ * Postcode and commune go on line 3.
  * This follows French postal convention (La Poste's line 5).
  *
- * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
- * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
+ * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to `--count`.
+ * With-replacement draws at a large `--count` would produce a large duplicate rate.
  *
- * A row's jurisdiction comes from its INSEE commune code, as it does in the `ban` adapter reading
- * the same files. The BAN fetcher downloads departments 971, 972, 973, 974 and 976 beside the
- * metropolitan ones, so this recipe emits Guadeloupe, Martinique, French Guiana, Réunion and
- * Mayotte rows, and labeling them `FR` would mislabel their country and their locale.
+ * A row's jurisdiction comes from its INSEE commune code, as it does in the
+ * `ban` adapter reading the same files.
+ * The BAN fetcher downloads departments 971, 972, 973, 974 and 976 beside the metropolitan ones,
+ * so this recipe emits Guadeloupe, Martinique, French Guiana, Réunion and Mayotte rows,
+ * and labeling them `FR` would mislabel their country and their locale.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample, shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -157,7 +162,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 	options: [
 		{
 			flag: "--ban-dir <dir>",
-			description: "BAN adresses-<dept>.csv directory. Default $MAILWOMAN_DATA_ROOT/corpus/sources/ban",
+			description: "BAN adresses-<dept>.csv directory. Default $MAILWOMAN_CACHE_ROOT/sources/ban",
 		},
 		{
 			flag: "--country-fraction <f>",
@@ -168,7 +173,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-lieudit")
 		const count = opts.count ?? 800_000
-		const banDir = opts.banDir ?? dataRootPath("corpus", "sources", "ban")
+		const banDir = opts.banDir ?? currentSourcePath("ban")
 		const countryFraction = opts.countryFraction ?? 0
 
 		if (!(countryFraction >= 0 && countryFraction <= 1)) {
@@ -223,7 +228,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 
 			// The envelope form is the house and street line, the lieu-dit by itself on
 			// its own line, then the postcode and commune line.
-			// That is La Poste's line 5.
+			// That's La Poste's line 5.
 			let raw = formatAddress(components, country)
 
 			if (!raw) {

@@ -5,7 +5,7 @@ architecture?
 
 **Verdict: MIXED, and the mix is informative. The capability is real and lies outside a word-unit
 tagger's output space, as the `12/345` row below shows. We exercise it only when a partner word licenses it — which is the same defect,
-for the third time, in a third component. The architecture is not the problem. The license is.**
+for the third time, in a third component. The architecture isn't the problem. The license is.**
 
 ---
 
@@ -16,8 +16,8 @@ intra-word disagreement. We can, and do: on `Tindvegen nedre 44B` our model emit
 at 0.604 on the first digit piece and `I-postcode` at 0.587/0.765 on its continuations. Viterbi then
 legally resolves to postcode, discarding the piece that was right.
 
-That is a real liability. But the flexibility that lets us be wrong is the same flexibility that lets
-us be right, so the question is not "is incoherence bad". It is **whether the per-piece unit provides
+That's a real liability. But the flexibility that lets us be wrong is the same flexibility that lets
+us be right, so the question isn't "is incoherence bad". It is **whether the per-piece unit provides
 more than it costs**. Two arms, one axis:
 
 - **BENEFIT** — rows where the correct answer requires splitting _inside_ a whitespace word. Not in a
@@ -35,8 +35,8 @@ Unit 12/345 Main St
 `12/345` is one whitespace word carrying two components — unit 12 at number 345, the standard AU/NZ
 form. Our parity gold has demanded this since the v1 rules era (`v1-address.aus-2`).
 
-This is not deepparse scoring lower. **The correct answer is not in its output space.** One word gets
-one tag. There is no assignment of tags-to-words that yields unit=12 _and_ house_number=345. No amount
+This isn't deepparse scoring lower. **The correct answer isn't in its output space.** One word gets
+one tag. There's no assignment of tags-to-words that yields unit=12 _and_ house_number=345. No amount
 of training or data fixes that — it is the unit of decision.
 
 An existence proof needs one instance and it has one. The per-piece unit provides a class of answers a
@@ -55,11 +55,11 @@ word unit cannot express.
 | `Main St 44B` _(control)_    | street ✓, house_number ✓                               | correct            |
 
 **The last two rows do the work.** `Tindvegen 44B` — an unfamiliar Norwegian street — parses
-correctly. Add one word and `Tindvegen nedre 44B` breaks. So the cost arm is not "unfamiliar street
+correctly. Add one word and `Tindvegen nedre 44B` breaks. So the cost arm isn't "unfamiliar street
 breaks the digit."
 
 And the bottom two failures are **not digit ownership at all**: the model called the _street_ a
-locality. That is Track A's bare-street polarity defect — the one v310fixed for French —
+locality. That's Track A's bare-street polarity defect — the one v310fixed for French —
 leaking in. With no street recognized, the digit has no street to attach to, so it cannot be a house
 number. Only **3 of 5** cost rows are actual digit ownership.
 
@@ -79,7 +79,7 @@ Unit 12/345          ->  unit "Unit 12", house_number "345"   SPLIT
 The designator word licenses the split. Remove it and the identical characters collapse to one span.
 Deepparse, for the record, splits neither — it cannot.
 
-That is the same shape as the two defects already on the board:
+That's the same shape as the two defects already on the board:
 
 | #   | license                                                | consequence                   | status                              |
 | --- | ------------------------------------------------------ | ----------------------------- | ----------------------------------- |
@@ -87,8 +87,8 @@ That is the same shape as the two defects already on the board:
 | 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (Track B)                      |
 | 3   | a **designator word** licenses the _intra-word split_  | `12/345` → one span           | open (this page)                    |
 
-**One defect, three components: the model will not read a component without its co-occurring
-partner.** It has learned the joint distribution and not the marginals. That is a training-data
+**One defect, three components: the model won't read a component without its co-occurring
+partner.** It has learned the joint distribution and not the marginals. That's a training-data
 property rather than an architecture property — and instance 1 was fixed with a phenomenon extract plus a
 counter-distribution, without touching the architecture at all.
 
@@ -106,18 +106,18 @@ counter-distribution, without touching the architecture at all.
 
 **The remaining risk:**
 
-- Their failure mode is bounded. Ours is not. A word-unit tagger's worst case is a wrong tag. Ours is
+- Their failure mode is bounded. Ours isn't. A word-unit tagger's worst case is a wrong tag. Ours is
   a _self-contradictory_ one, and Viterbi resolves it by discarding a first piece that was correct
   (0.604 `B-house_number`, outvoted 3-to-1 by its own continuations). We destroy information we
   already had.
 - The `enforceWordConsistency` heal cannot reach this class, and the arithmetic shows why: the vote
   sums softmax mass, and the continuations have more of it (postcode 1.53 vs house_number 0.65 on
   `▁3|9|A`). It works exactly as designed and still lands on postcode. Do not tune it for this.
-- We collect the benefit only under license. An unexercised capability is not a capability.
+- We collect the benefit only under license. An unexercised capability isn't a capability.
 
 **Not settled here:** the arc's own research places a lower-fertility vocab _upstream_ of any span
 head, and the span head was built and closed first — a conditional verdict flagged on its parked PR.
-This page does not re-open it. But note the direction: if the license defect is a data property
+This page doesn't re-open it. But note the direction: if the license defect is a data property
 and the extract fixes it, the vocab work is an optimization rather than a prerequisite.
 
 ## Caveats
@@ -125,8 +125,8 @@ and the extract fixes it, the vocab work is an optimization rather than a prereq
 - The control set is 16 hand-built rows plus 6 minimal pairs. It is an **existence proof and a
   mechanism probe rather than a score.** No CI is quoted and none should be.
 - Three rows are marked `contested` (`Apt4B`, `1-2-3 Chome`, `Eberswalder Straße 100 104`) — each
-  turns on a schema call we have not made — and are excluded from every count above.
-- deepparse is good research and this is not a scoreboard. It ties us where the schemas overlap and
+  turns on a schema call we've not made — and are excluded from every count above.
+- deepparse is good research and this isn't a scoreboard. It ties us where the schemas overlap and
   beats us on one tag. The representational asymmetry runs both ways, and this page is about ours.
 
 ## Reproduce

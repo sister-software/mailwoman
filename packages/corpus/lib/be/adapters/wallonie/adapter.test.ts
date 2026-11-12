@@ -2,29 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture at `fixtures/wallonie/AD.Addresses.gml` is ten addresses and the fifteen component
- *   features they reference, extracted from the publisher's own file.
+ *   The fixture at `fixtures/wallonie/AD.Addresses.gml` is ten addresses and the fifteen
+ *   component features they reference, extracted from the publisher's own file.
  *
- *   Every byte is the Service public de Wallonie's own. It was taken on 2026-10-02 from
+ *   Every byte is the Service public de Wallonie's own.
+ *   It was taken on 2026-10-02 from
  *   `https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/b62f8405-2ce3-449f-8a61-5fc2f38d8b73/AD.Addresses.gml.zip`,
- *   106,665,832 bytes, sha256 `8eebae71d793632c22c9902e8420bc50e0e572c97de15b7d10051b29b59e208a`, which
- *   is the archive the address-source register records for `be-property-building-2`. The fixture is
- *   that archive's member `AD.Addresses.gml` with its own XML declaration, root element and
- *   `gml:boundedBy` kept, holding 25 of its 1,830,903 `gml:featureMember` elements verbatim. Every
- *   byte stands as the publisher wrote it: `diff` against the extraction reports no difference.
+ *   106,665,832 bytes, sha256 `8eebae71d793632c22c9902e8420bc50e0e572c97de15b7d10051b29b59e208a`,
+ *   which is the archive the address-source register records for `be-property-building-2`.
  *
- *   It keeps the publisher's member order, every address before any component, because that order is
- *   what makes the join take two passes. A fixture with the components first would pass a one-pass
- *   reader that the 5,163,917,131-byte file defeats.
+ *   The fixture is that archive's member `AD.Addresses.gml` with its own XML declaration, root element
+ *   and `gml:boundedBy` kept, holding 25 of its 1,830,903 `gml:featureMember` elements verbatim.
+ *   Every byte stands as the publisher wrote it: `diff` against the extraction reports no difference.
+ *
+ *   It keeps the publisher's member order, every address before any component,
+ *   because that order is what makes the join take two passes.
+ *   A fixture with the components first would pass a one-pass reader that the
+ *   5,163,917,131-byte file defeats.
  *
  *   The ten addresses show the defects and the shapes the file writes: `ad:validTo` and
- *   `ad:endLifespanVersion` void with a `nilReason` on every one, a populated
- *   `addressNumberExtension` on every one (`B001`, `C003`, `D004`, `0001`, `0RCH`, `B002`, `0002`,
- *   `A002`, `008B`, `BP3`), which the whole archive writes a value in on 347,859 of its addresses, two
- *   addresses differing only by that extension, nine municipality references to Braine-l'Alleud and
- *   one to Beauvechain. Beauvechain's `ad:AddressAreaName` is a different name (`Hamme-Mille`) and
- *   therefore a dependent locality. The two `#BE.AdminUnitName.1000` and `#BE.AdminUnitName.3000`
- *   references to the country and the region that every address in the file writes.
+ *   `ad:endLifespanVersion` void with a `nilReason` on every one, a populated `addressNumberExtension`
+ *   on every one (`B001`, `C003`, `D004`, `0001`, `0RCH`, `B002`, `0002`, `A002`, `008B`, `BP3`),
+ *   which the whole archive writes a value in on 347,859 of its addresses, two addresses differing
+ *   only by that extension, nine municipality references to Braine-l'Alleud and one to Beauvechain.
+ *   Beauvechain's `ad:AddressAreaName` is a different name (`Hamme-Mille`)
+ *   and therefore a dependent locality.
+ *
+ *   The two `#BE.AdminUnitName.1000` and `#BE.AdminUnitName.3000` references to the country
+ *   and the region that every address in the file writes.
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"

@@ -4,14 +4,16 @@
 /**
  *   The citation stored on each row of a per-country postal rule table.
  *
- *   A module header's `@see` link tells a reader where a rule came from. A row that stores its
- *   citation lets a generator or a check read the source with the rule: the document, its edition,
- *   the section, the sentence quoted from the fetched copy, and the hash of that copy. A row
- *   without a citation is refused by {@linkcode assertPostalGuidelineCitation}.
+ *   A module header's `@see` link tells a reader where a rule came from.
+ *   A row that stores its citation lets a generator or a check read the source
+ *   with the rule: the document, its edition, the section, the sentence quoted
+ *   from the fetched copy, and the hash of that copy.
  *
- *   Two rule shapes share the citation: {@linkcode PoBoxGuidelineRule} for a post-office box and its
- *   national equivalents, and {@linkcode PostalUnitGuidelineRule} for a unit, floor, staircase,
- *   entrance or building designator.
+ *   A row without a citation is refused by {@linkcode assertPostalGuidelineCitation}.
+ *
+ *   Two rule shapes share the citation: {@linkcode PoBoxGuidelineRule} for a post-office box
+ *   and its national equivalents, and {@linkcode PostalUnitGuidelineRule} for a unit,
+ *   floor, staircase, entrance or building designator.
  */
 
 /**
@@ -39,7 +41,7 @@ export interface PostalGuidelineCitation {
 	 */
 	quote: string
 	/**
-	 * How the quote was transcribed when it is not one contiguous run of the copy's text,
+	 * How the quote was transcribed when it isn't one contiguous run of the copy's text,
 	 * such as table cells whose column padding was collapsed to one space.
 	 * Null when the quote is contiguous.
 	 */

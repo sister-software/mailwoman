@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A workspace that compiles `lib/` to `out/` exposes its modules through one `"./*"` pattern. An explicit subpath key
- *   remains only when the pattern cannot express it: the `"."` entry, a module that is not `.ts`, a non-code file, or
- *   an entry with conditions other than `types`, `node` and `default`.
+ *   A workspace that compiles `lib/` to `out/` exposes its modules through one `"./*"` pattern.
  *
- *   An importer writes the module's path under `lib/`, so `@mailwoman/zoning/sdk/cells` names `lib/sdk/cells.ts`.
- *   A subpath key that renames its file, such as `./address-layout` for `lib/address/layout.ts`, is reported, and the fix
- *   rewrites each importer to the path spelling.
+ *   An explicit subpath key remains only when the pattern cannot express it:
+ *   the `"."` entry, a module that's not `.ts`, a non-code file, or an entry with
+ *   conditions other than `types`, `node` and `default`.
  *
- *   The same workspaces publish TypeScript from `lib/` only. A root config and a package-root `tools/` directory stay
- *   out of the tarball.
+ *   An importer writes the module's path under `lib/`, so `@mailwoman/zoning/sdk/cells`
+ *   names `lib/sdk/cells.ts`.
+ *   A subpath key that renames its file, such as `./address-layout` for `lib/address/layout.ts`,
+ *   is reported, and the fix rewrites each importer to the path spelling.
+ *
+ *   The same workspaces publish TypeScript from `lib/` only.
+ *   A root config and a package-root `tools/` directory stay out of the tarball.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

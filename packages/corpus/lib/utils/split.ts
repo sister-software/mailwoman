@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Splits corpus rows into train, val and test by holding out whole places: a random row split leaks by
- * neighborhood, because the model can memorize a street it saw in train. Rows inside a held-out place
- * go to val or test 50/50 by a hash of `source_id`; every other row goes to train.
+ * Splits corpus rows into train, val and test by holding out whole places: a random row
+ * split leaks by neighborhood, because the model can memorize a street it saw in train.
  *
- * A holdout change takes effect at the next corpus rebuild. Each versioned corpus keeps the
- * `SPLIT_MANIFEST.json` it was built with, because adding a holdout to a built corpus would leak rows
- * the model already trained on.
+ * Rows inside a held-out place go to val or test 50/50 by a hash of `source_id`;
+ * every other row goes to train.
+ *
+ * A holdout change takes effect at the next corpus rebuild.
+ * Each versioned corpus keeps the `SPLIT_MANIFEST.json` it was built with, because adding
+ * a holdout to a built corpus would leak rows the model already trained on.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
@@ -117,9 +119,9 @@ export interface SplitManifest {
  * - Candidates are postcode districts of a fixed length (US 3, AU 3, RO 4, LV and the
  *   French overseas jurisdictions the full postcode), or, where most rows have no postcode,
  *   localities grouped by spelling with accents and punctuation removed.
- *   A locality whose spelling matches a region surface is not a candidate.
+ *   A locality whose spelling matches a region surface isn't a candidate.
  *   Each candidate accounts for at least 1% of the country's v0.8.0 held-out rows.
- * - They are walked in the order of `hashBucket(\`${country}|${candidate}\`, 2 ** 32)`
+ * - They're walked in the order of `hashBucket(\`${country}|${candidate}\`, 2 ** 32)`
  *   and taken while the country's held-out rows stay at or under its v0.8.0 held-out rows,
  *   because a borderline row goes to training.
  *   A country whose candidates under that bound number fewer than two takes its smallest
@@ -664,7 +666,7 @@ export interface HashedPlaceRegionCount {
  *
  * A place's rows in a region are divided by that region's rows, and its rows with
  * no region by the country's rows with no region.
- * A denominator under {@link HOLDOUT_CAP_MIN_ROWS} is not checked.
+ * A denominator under {@link HOLDOUT_CAP_MIN_ROWS} isn't checked.
  *
  * @param denominators Rows per `${country}|${region}`, with an empty region for rows with no region.
  */
@@ -698,7 +700,7 @@ export function hashedPlacesOverCap(
  * {@link HOLDOUT_CAP_MIN_ROWS} rows (or of its country's rows with no region).
  *
  * {@link hashedPlacesOverCap} chose this table from the v0.8.1 rows.
- * A place that leaves the holdout is not replaced by another, so the country's held-out
+ * A place that leaves the holdout isn't replaced by another, so the country's held-out
  * share falls: a borderline row goes to training, as in {@link defaultHoldouts}.
  *
  * The cap bounds a place's share of a region.
@@ -735,7 +737,7 @@ function trainedPlaceSet(table: Record<string, readonly string[]>, country: stri
 /**
  * Returns the place the hashed holdout selects for a row of a country without a
  * {@link defaultHoldouts} entry, before {@link hashedHoldoutTrainedPlaces} is applied,
- * or null when the hash does not select its place.
+ * or null when the hash doesn't select its place.
  */
 export function hashSelectedPlace(
 	country: string,

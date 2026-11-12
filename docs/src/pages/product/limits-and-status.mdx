@@ -1,0 +1,63 @@
+---
+title: Limits and release status
+description: What Mailwoman 11.0.0 publishes, what a user can build or install, and what the current evidence establishes.
+---
+
+# Limits and release status
+
+This page records the evidence checked on 9 November 2026 for published `mailwoman@11.0.0`. A package declaration, a downloadable data bundle, an installed database, and a coordinate-graded evaluation answer different availability questions. Check your own installation before relying on a coordinate result.
+
+| Question                             | Checked answer for 11.0.0                                                                                                                                 | Evidence boundary                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What does npm publish?               | The `mailwoman` CLI and parser library, with separately installed model packages. The en-US weights package is 11.0.0 and identifies its model as 10.8.0. | Published package metadata and model card.                                                                                                        |
+| What data can be downloaded?         | The package registry declares `candidate`, `poi`, `fr`, and `us` bundles.                                                                                 | Registry estimates describe the declared bundle entries. This page checked no downloaded files.                                                   |
+| What can a user build locally?       | The published CLI exposes the `osm-address-points` recipe for <Countries codes="CA DE FR GB ID NL NZ PK PL VN" />.                                        | A recipe and an eligible country describe a possible build. Its source data and output each need their own acquisition and installation.          |
+| What was installed for this check?   | The published CLI reported missing artifacts for all four bundles in the verification host's default data root.                                           | A reader must check their own installation separately.                                                                                            |
+| What has coordinate-graded evidence? | The maintained scope declaration cites dated coordinate panels for its graded tiers and separate character-path evidence.                                 | The evaluation ledger doesn't establish a coordinate panel for the exact 11.0.0 release and model 10.8.0. That release-matched status is unknown. |
+
+- Node.js 24 LTS or later. The published `mailwoman@11.0.0` package declares the range `^24.22.1 || >=26.12.1`.
+
+The published `@mailwoman/neural-weights-en-us@11.0.0` model card identifies model version `10.8.0`. A [first parse](/docs/start) was executed with those packages. The parser runs without a gazetteer. The geocoder and native server need suitable local geographic data.
+
+## Downloadable data in the published registry
+
+The table gives the package registry's `approxBytes` estimates. This verification environment didn't download the files to measure their sizes. The `us` bundle consists of per-state files. The registry declares 103 artifacts for that bundle.
+
+| Bundle      | Registry description                                          | Declared artifacts | Registry `approxBytes` total |
+| ----------- | ------------------------------------------------------------- | -----------------: | ---------------------------: |
+| `candidate` | Global administrative candidates and postcode coverage        |                  1 |                2,880,921,600 |
+| `poi`       | Point-of-interest layer for <Countries codes="US CA MX FR" /> |                  1 |                3,889,184,768 |
+| `fr`        | French BAN address points                                     |                  1 |                6,952,509,440 |
+| `us`        | <Country code="US" /> address-point and interpolation files   |                103 |               41,463,517,184 |
+
+The published `mailwoman data --list` command prints these four names and rounded size estimates. The totals above sum each bundle's declared artifact `approxBytes` values. A bundle's listed geographic reach doesn't mean that every address in that area has a matching point. [Data and licensing](/product/data-and-licensing) describes recorded sources and unresolved rights questions for each bundle.
+
+The [data and locales reference](/docs/reference/data-and-locales) lists each bundle's role, dependency, and locale mechanism.
+
+The published `mailwoman data build --help` command names `osm-address-points` as its build recipe. Its published recipe lists <Countries codes="CA DE FR GB ID NL NZ PK PL VN" /> as eligible countries. A build requires its source inputs and a completed run. The repository also contains other build tooling. Only `osm-address-points` appeared in the published CLI help checked for this page.
+
+To inspect your own installation, run `mailwoman data status` and `mailwoman doctor` in the environment that will serve requests. In the verification host's default data root, `mailwoman data status` exited 1 and reported each of the four bundles as missing. No geocode response was verified for this page.
+
+## Locale claims and evaluation
+
+The maintained [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json) assign these locale tiers. The tiers describe project claims and delivery mechanisms. Which data bundles a reader's machine holds is a separate question, answered by `mailwoman data status`.
+
+| Scope classification      | Countries in the maintained register                                         | What the classification records                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Tier 1                    | <Countries join="plain" codes="US FR" />                                     | First-class claim with project evaluation records.                                                    |
+| Tier 2                    | <Countries join="plain" codes="AT AU BE CH CZ DE DK ES FI HR IT NL PL PT" /> | Trained locales with dated coordinate panels.                                                         |
+| Tier 3                    | <Countries join="plain" codes="NO SE" />                                     | Trained exposure with thinner dated coordinate evidence.                                              |
+| Tier 4                    | <Countries join="plain" codes="CZ PL SI SK" />                               | Shipped diacritic-tokenizer mechanism. <Countries codes="CZ PL" /> also belong to tier 2.             |
+| Tier 5                    | <Countries join="plain" codes="JP KR TW" />                                  | Published character-path mechanism with country-specific evidence described in the scope declaration. |
+| Untiered shipping locales | <Countries join="plain" codes="CN GB IN NZ" />                               | The scope register records why each of these shipping locales sits outside the tiers.                 |
+
+The scope declaration cites coordinate evaluations for its graded tiers and describes separate <Countries codes="JP KR TW" /> evidence. Those records come from earlier artifacts and dated panels. The [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json) has a model 10.8.0 entry with label and arena metric groups. A coordinate-graded result for the exact 11.0.0 published package and current data bundles is unknown from that ledger. The `candidate` bundle's declared 244-country coverage describes place data. The scope declaration supplies the separate evidence for evaluated accuracy.
+
+For the current API fields and their evidence scopes, read the [result schema](/docs/reference/schema). [Start with one parse](/docs/start) before installing geographic data, or return to the [product overview](/product) for the parser and geocoder split.
+
+The [benchmark evidence index](/evidence/benchmarks) separates historical panels from evidence for the published 11.0.0 release.
+
+## Sources checked
+
+- Published [`mailwoman@11.0.0` package metadata](https://www.npmjs.com/package/mailwoman/v/11.0.0), [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/bundles.ts), and [`osm-address-points` recipe](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/osm/tools/address-points-recipe.ts).
+- Published [en-US model card](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/model-card.json), plus the [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json), and [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json).

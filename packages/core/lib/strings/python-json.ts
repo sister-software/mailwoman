@@ -4,12 +4,14 @@
 import { stringifyJSON } from "#json"
 
 /**
- *   Python's one-line `json.dumps`, kept for the two hashes whose recorded values were computed over its bytes.
+ *   Python's one-line `json.dumps`, kept for the two hashes whose recorded
+ *   values were computed over its bytes.
  *
- *   `rowIdentity` in `packages/mailwoman/tools/training/sampler.ts` hashes a sampled row as the encoder-parity records
- *   store it, so a sampler change verifies against the 15 records. The DeepSeek transliteration batch id in
- *   `packages/corpus/lib/recipes/deepseek/batches.ts` hashes the seed ids as the first requested batches did, so a
- *   resumed run skips the batches already requested. New output uses `orderedJSON` from `@mailwoman/core/json`.
+ *   `rowIdentity` in `packages/mailwoman/tools/training/sampler.ts` hashes a sampled row as
+ *   the encoder-parity records store it, so a sampler change verifies against the 15 records.
+ *   The DeepSeek transliteration batch id in `packages/corpus/lib/recipes/deepseek/batches.ts` hashes the
+ *   seed ids as the first requested batches did, so a resumed run skips the batches already requested.
+ *   New output uses `orderedJSON` from `@mailwoman/core/json`.
  */
 
 /**
@@ -77,7 +79,7 @@ function pythonValue(value: unknown, options: Required<PythonJSONOptions>): stri
 /**
  * `json.dumps(value, sort_keys=…, ensure_ascii=…)` on one line, byte for byte.
  *
- * @throws When a number is not an integer.
+ * @throws When a number isn't an integer.
  */
 export function pythonJSONDumps(value: unknown, options: PythonJSONOptions = {}): string {
 	return pythonValue(value, { sortKeys: options.sortKeys ?? false, ensureASCII: options.ensureASCII ?? true })

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   An in-memory `CacheStorage` for the Node tests. Each cache stores bodies as bytes and answers `match` with a fresh
- *   `Response`, as Cache Storage does, so a test can read a stored entry more than once.
+ *   An in-memory `CacheStorage` for the Node tests.
+ *
+ *   Each cache stores bodies as bytes and answers `match` with a fresh `Response`,
+ *   as Cache Storage does, so a test can read a stored entry more than once.
  */
 
 import type { RangeChunkCacheStorage } from "#range-chunks"

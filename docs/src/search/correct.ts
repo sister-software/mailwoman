@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typo correction against the index vocabulary. The trigram table over `terms` proposes candidates
- *   that share character windows with the token. The edit distance decides whether one is close enough.
- *   A term that shares no three-character window with the token is never proposed, so a transposition
- *   inside a word of four letters or fewer is not corrected.
+ *   Typo correction against the index vocabulary.
+ *
+ *   The trigram table over `terms` proposes candidates that share character windows with the token.
+ *   The edit distance decides whether one is close enough.
+ *
+ *   A term that shares no three-character window with the token is never proposed,
+ *   so a transposition inside a word of four letters or fewer isn't corrected.
  */
 
 import type { SearchDatabase } from "./database.ts"

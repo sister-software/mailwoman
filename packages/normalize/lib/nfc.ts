@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unicode NFC normalization. For inputs already in NFC (the common case) this is a no-op. When the
- *   input has combining characters (`e` + `́` → `é`), NFC composes them — the normalized string can
- *   be shorter than the raw.
+ *   Unicode NFC normalization.
+ *
+ *   For inputs already in NFC (the common case) this is a no-op.
+ *   When the input has combining characters (`e` + `́` → `é`), NFC composes them —
+ *   the normalized string can be shorter than the raw.
  *
  *   The offset map assigns each output index to the first code point of its source sequence.
  */

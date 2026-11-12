@@ -33,7 +33,7 @@ export const TIGERClassCode = {
 	 * A permanent structure built out into a body of water to keep a shore from eroding,
 	 * to enclose a sheltered marina or harbor, or to hold a navigation channel in place.
 	 *
-	 * Water does not pass beneath it.
+	 * Water doesn't pass beneath it.
 	 * Water does pass beneath a pier or dock.
 	 *
 	 * Groins, seawalls and bulwarks belong to this class.
@@ -308,7 +308,7 @@ export const TIGERClassCode = {
 	 * A subdivision of the three main islands of the U.S. Virgin Islands (USVI).
 	 *
 	 * Estates have legal boundaries and are much smaller than the Census Subdistricts
-	 * (the USVI county subdivisions), and an estate does not always fall inside a single subdistrict.
+	 * (the USVI county subdivisions), and an estate doesn't always fall inside a single subdistrict.
 	 */
 	Estate: "G4050",
 
@@ -926,13 +926,12 @@ export const TIGERClassCode = {
 
 	/**
 	 * The boundary between land and water, while water is present, for a water
-	 * feature that is not present all year.
+	 * feature that's not present all year.
 	 */
 	IntermittentShoreline: "P0003",
 
 	/**
-	 * An edge that is neither a legal or statistical boundary nor a shoreline
-	 * or other visible ground feature.
+	 * An edge that's neither a legal or statistical boundary nor a shoreline or other visible ground feature.
 	 *
 	 * Such edges bound area landmarks or separate one water feature from another,
 	 * as where a bay meets the ocean.
@@ -995,7 +994,7 @@ export const TIGERClassCode = {
 	ServiceDrive: "S1640",
 
 	/**
-	 * A walking path that is too narrow for vehicles or closed to them by law.
+	 * A walking path that's too narrow for vehicles or closed to them by law.
 	 */
 	WalkwayPedestrianTrail: "S1710",
 
@@ -1038,12 +1037,12 @@ export const TIGERClassCode = {
 	WinterTrail: "S1810",
 
 	/**
-	 * A path for pedal or small motorized bicycles that is too narrow for vehicles or closed to them by law.
+	 * A path for pedal or small motorized bicycles that's too narrow for vehicles or closed to them by law.
 	 */
 	BikePathOrTrail: "S1820",
 
 	/**
-	 * A path for horses that is too narrow for vehicles or closed to them by law.
+	 * A path for horses that's too narrow for vehicles or closed to them by law.
 	 */
 	BridlePath: "S1830",
 } as const

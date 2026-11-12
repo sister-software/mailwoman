@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads one OpenStreetMap address extract (`osm-<cc>-<yymmdd>.corpus.jsonl`, written by
- *   `@mailwoman/osm`'s `emit-corpus-jsonl`) into evaluation rows, and reads the lineage its build left beside
- *   it: the stats sidecar and the PBF receipt it names.
+ *   Reads one OpenStreetMap address extract (`osm-<cc>-<yymmdd>.corpus.jsonl`,
+ *   written by `@mailwoman/osm`'s `emit-corpus-jsonl`) into evaluation rows, and reads the
+ *   lineage its build left beside it: the stats sidecar and the PBF receipt it names.
  *
- *   Each row is rendered exactly as the `osm` corpus adapter renders a training row: the adapter's own
- *   `componentsForOSMRow`, the codex formatter, and the adapter's `stableSourceID` over the rendered
- *   components. A suite row therefore holds the `source_id` a training row of the same address holds.
- *   The overlap audit matches on that identity. The mapped OpenStreetMap tags stay on the row under `mapped`, apart
- *   from the components derived from them.
+ *   Each row is rendered exactly as the `osm` corpus adapter renders a training row:
+ *   the adapter's own `componentsForOSMRow`, the codex formatter, and the adapter's
+ *   `stableSourceID` over the rendered components.
+ *   A suite row therefore holds the `source_id` a training row of the same address holds.
  *
- *   The extract is parsed with one sequential `JSONSpliterator.fromAsync` per file, the primitive the parse
- *   cost calls for, and its lines are counted with the raw `AsyncSpliterator.count` scan.
+ *   The overlap audit matches on that identity.
+ *   The mapped OpenStreetMap tags stay on the row under `mapped`, apart from
+ *   the components derived from them.
+ *
+ *   The extract is parsed with one sequential `JSONSpliterator.fromAsync` per file, the primitive the
+ *   parse cost calls for, and its lines are counted with the raw `AsyncSpliterator.count` scan.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -221,7 +224,7 @@ interface ExtractStats {
  * A sidecar or receipt the build listed and that cannot be read throws with its path,
  * because a suite without its source's digest records no lineage.
  *
- * @throws When the sidecar is missing, or lists a receipt that is missing or records no SHA-256.
+ * @throws When the sidecar is missing, or lists a receipt that's missing or records no SHA-256.
  */
 export async function readExtractLineage(path: string): Promise<OSMExtractLineage> {
 	const statsPath = `${path}.stats.json`

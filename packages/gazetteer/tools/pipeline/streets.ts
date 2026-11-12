@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the street table from a source's road network: merged streets, the places that hold them, and the
- *   crossings where two streets share a node. A source supplies network edges and every step below reads only those,
- *   so one method serves every country. The build holds the network in memory, and one country's source fits.
+ *   Builds the street table from a source's road network: merged streets, the places
+ *   that hold them, and the crossings where two streets share a node.
+ *
+ *   A source supplies network edges and every step below reads only those,
+ *   so one method serves every country.
+ *   The build holds the network in memory, and one country's source fits.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

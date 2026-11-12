@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A dot is a representation rather than a record: a random position inside the block it belongs to,
- *   making no statement about any individual address.
+ *   A dot is a representation rather than a record: a random position inside the block
+ *   it belongs to, making no statement about any individual address.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { tigerDatabasePath } from "#paths"
 import type { TIGERDatabase } from "#schema"
 
 const MAX_PLACEMENT_TRIES = 60
@@ -94,7 +95,7 @@ export async function raceDots(
 	options: RaceDotsOptions = {},
 	report?: (line: string) => void
 ): Promise<RaceDotsResult> {
-	const DB = options.db || dataRootPath("tiger", "tiger-oc.db")
+	const DB = options.db || tigerDatabasePath("tiger-oc.db")
 	const OUT = options.out || tempRootPath("race-dots.ndjson")
 	const PER = options.per ?? 10
 	const LAYER = options.layer || "dots"

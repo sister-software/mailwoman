@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Prints a CJK board read. The check line states the blended fraction and no other figure.
+ *   Prints a CJK board read.
+ *
+ *   The check line states the blended fraction and no other figure.
  */
 
 import { pyFixed } from "@mailwoman/core/numeric"

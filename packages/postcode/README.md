@@ -56,7 +56,7 @@ The package answers three different questions about a postcode, and each answer 
   field (`observed`, `unobserved` or `out-of-coverage`, with each index's scope and coverage note), and that field
   never changes the syntax answer.
 - **Geography:** which places does the code point to? PCB1 records candidate places for a code, and PFX1 records
-  weighted ancestors for a prefix. A character prefix is not geographic containment, so a prefix match is evidence
+  weighted ancestors for a prefix. A character prefix isn't geographic containment, so a prefix match is evidence
   about the code's region only, and the place a full code names needs an exact PCB1 match.
 
 A consumer keeps these apart. A five-digit token is syntactically valid in several countries at once (`110 00` matches CZ, SK, SE and
@@ -78,7 +78,7 @@ the parse names:
 - A span one of those countries accepts is confirmed, and the accepting countries narrow the postcode lookup.
 - A span none of them accepts is excluded. It keeps its tag and its text, and the postcode slot in the result stays
   empty. It never becomes a house number, and it never overwrites a house number the parse found.
-- A parse that names no country leaves the span as it is.
+- A parse that identifies no country leaves the span as it is.
 
 The check removes a wrong postcode. It never invents one, and it never relabels a span as something else.
 

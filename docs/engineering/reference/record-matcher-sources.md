@@ -9,18 +9,17 @@ tags:
 # Record-matcher source-data catalog
 
 This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
-resolves, with their schemas, column mappings, and join keys. They are **real public compliance and reporting
-datasets**. They have **no shared entity key across them**, and each one repeats entities heavily. The matcher
-deduplicates and cross-links these records. Those links make cross-dataset analysis possible. Our scope is the **resolution**, and the
-data consumer interprets any correlations that appear.
+resolves, with their schemas, column mappings, and join keys. They're real public compliance and reporting
+datasets. They have no shared entity key across them, and each one repeats entities heavily. The matcher
+deduplicates and cross-links these records. Those links make cross-dataset analysis possible. Our scope is the
+resolution, and the data consumer interprets any correlations that appear.
 
 The data lives in `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`, which is persistent storage rather than `/tmp`.
 The NPPES registry is 4.8 GB / 9.6M rows, so every reader streams it (`streamRows`, #616) and never uses
 `readFileSync`.
 
-The committed `ColumnMapping`s live in the benchmark and correlation scripts
-(`scripts/record-matcher/{nppes-dedup-benchmark,cross-dataset-correlation}.ts`). This page is a human-readable
-index of them.
+The committed `ColumnMapping`s live in `packages/entity-resolution/configs/record-matcher-sources.json`. This page
+is a human-readable index of them.
 
 ## The datasets
 
@@ -82,7 +81,6 @@ Each row has the columns `Filing HCP` and `Participating HCP`. Split each row in
 | `organization` | `Facility Name`                                                                                      |
 | `address`      | `Physical Address` + `Physical Address CITY` + `Physical Address State` + `Physical Address Zipcode` |
 | `phone`        | `Facility Phone Number`                                                                              |
-| `coordinate`   | `Geo Location` (`lat,lon` — the pre-geocoded seed + geocoder-validation ground truth, #619)          |
 
 `Medicare Provider Number` / `Medicaid Provider Number` are present and could later join to NPPES via CMS
 certification data.
@@ -102,5 +100,5 @@ certification data.
 
 All files are public downloads. NPPES comes from the NPPES NPI Registry, FCC RHC from the USAC/FCC open-data
 portal, and TX HHSC from the Texas Health and Human Services open-data site. The dates in the filenames are
-download dates. The downloads need no credentials and involve no scraping. They are public compliance
-disclosures published in a form that is hard to analyze, and the matcher exists to solve that problem.
+download dates. The downloads need no credentials and involve no scraping. They're public compliance
+disclosures, published in a form that's hard to analyze.

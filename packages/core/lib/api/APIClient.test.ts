@@ -14,6 +14,7 @@ import { isTransientResourceError, ResourceErrorKind, resourceErrorKind } from "
 import { createFakeClock, drainMicrotasks, maxCountInSlidingWindow, VirtualClock } from "#api/test/clocks"
 import { stubTransport } from "#api/test/transport"
 import { ResourceError } from "#errors/schema"
+import { stringifyJSON } from "#json"
 
 function get(url: string): AxiosRequestConfig {
 	return { url }
@@ -316,6 +317,45 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 
 		expect(dispatchTimes).toEqual([0, 0, COOLDOWN_MS])
 	})
+
+	it("a superseded cooldown's timer leaves the current window's count alone", async () => {
+		class ExposedCooldown extends APIClient {
+			open(ms: number): void {
+				this.setCooldown(ms)
+			}
+		}
+
+		const clock = new VirtualClock()
+		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
+
+		const client = new ExposedCooldown({
+			displayName: "cooldown-superseded",
+			requestsPerMinute: 3,
+			clock,
+			axios,
+		})
+
+		await client.fetch(get("/superseded/0.json"))
+
+		// The second cooldown replaces the first and ends first.
+		client.open(10_000)
+		client.open(5000)
+
+		await clock.advance(5000)
+		await Promise.all([client.fetch(get("/superseded/1.json")), client.fetch(get("/superseded/2.json"))])
+
+		// The first cooldown's timer fires here, inside the window the 5s dispatches opened.
+		await clock.advance(5000)
+
+		const later = [3, 4, 5].map((index) => client.fetch(get(`/superseded/${index}.json`)))
+
+		await drainMicrotasks()
+
+		// The window holds two dispatches, so one more spends the budget of three and the rest wait.
+		expect(dispatchTimes).toEqual([0, 5000, 5000, 10_000])
+
+		await clock.runUntilSettled(Promise.all(later))
+	})
 })
 
 describe("APIClient: minRequestIntervalMs strict pacing (A2)", () => {
@@ -405,6 +445,22 @@ describe("APIClient: bounded retry (A3)", () => {
 		expect((caught as ResourceError).status).toBe(403)
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect(calls).toHaveLength(1)
+	})
+
+	it("keeps a bearer token out of the mapped error's cause", async () => {
+		const { axios } = stubTransport([{ status: 403, statusText: "Forbidden" }])
+
+		const client = new APIClient({
+			displayName: "redact-403",
+			clock: createFakeClock(),
+			axios: { ...axios, headers: { Authorization: "Bearer cfat_secret_token" } },
+		})
+
+		const caught = await client.fetch(get("/forbidden.json")).catch((error: unknown) => error)
+		const cause = (caught as ResourceError).cause as { config?: unknown; request?: unknown }
+
+		expect(stringifyJSON(cause.config)).not.toContain("cfat_secret_token")
+		expect(cause.request).toBeUndefined()
 	})
 
 	it("does not retry a 404 either, and maps it to a skippable ResourceError", async () => {
@@ -540,7 +596,7 @@ describe("APIClient: bounded retry (A3)", () => {
 
 describe("APIClient: the pacing check sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
-		// A cache hit must not burn a pacer sleep: `/Archives/` documents are cached for a
+		// A cache hit mustn't burn a pacer sleep: `/Archives/` documents are cached for a
 		// century by design, so warm re-runs are the expected mode of a bulk crawl.
 		const REPEATS = 6
 

@@ -4,8 +4,8 @@
 /**
  *   Tests that the loader ignores file layout and attributes each issue to its source file.
  *
- *   The order test reverses the file list passed to the merge, because a test cannot control
- *   `readdir` order on a real filesystem.
+ *   The order test reverses the file list passed to the merge, because a test
+ *   cannot control `readdir` order on a real filesystem.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

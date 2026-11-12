@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two host-configuration writes the storage operations depend on, as operations rather than a
- *   shell script: they take typed input, declare their effect and are reachable from the same
- *   registry as everything else.
+ *   The two host-configuration writes the storage operations depend on, as operations
+ *   rather than a shell script: they take typed input, declare their effect
+ *   and are reachable from the same registry as everything else.
  */
 
 import { writeFile } from "node:fs/promises"

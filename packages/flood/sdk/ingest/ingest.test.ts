@@ -4,9 +4,10 @@
 /**
  *   The datum guard, against real `projinfo --summary` output.
  *
- *   Both fixtures below came off the same machine and the same command, minutes apart: the first before
- *   `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` was installed and the second after. The difference in the output is
- *   six words. the difference in the artifact is 3.4 meters over every coordinate in England.
+ *   Both fixtures below came off the same machine and the same command, minutes apart:
+ *   the first before `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` was installed and the second after.
+ *   The difference in the output is six words. the difference in the artifact is
+ *   3.4 meters over every coordinate in England.
  */
 
 import { assessDatumTransformation } from "@mailwoman/spatial/projection/transform"

@@ -2,32 +2,54 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for `coastal-england.db`. The two-tier polygon layer stores the authority's unsimplified rings as
- *   the truth table and H3 cells as a summary. Two ground-instability layers remain separate from both. The schema
- *   also includes the layer-interface tables from `@mailwoman/core/layers`.
+ *   Typed schema for `coastal-england.db`.
  *
- *   `area_id` is scoped by scenario. Within a scenario, the authority's feature ID is the key. A frontage ID cannot
- *   serve as the key because each frontage appears in all twelve scenarios with a different distance. The source's
- *   `frontageid` is also non-unique within a layer. `NCERM_NFI_2055_0CC` contains 7,379 features and 7,369 distinct
- *   frontage IDs. Frontage 39260 appears ten times. Across all twelve layers, 89,211 features share fewer frontage
- *   IDs. A frontage-only key would collide on 835 rows. The key is `<scenario key>:<objectid>`. `frontage_id` remains
- *   an attribute for readers that need to join by frontage.
+ *   The two-tier polygon layer stores the authority's unsimplified rings as the
+ *   truth table and H3 cells as a summary.
+ *   Two ground-instability layers remain separate from both.
  *
- *   The cell table names polygons instead of classes. The flood layer returns a zone code from a two-value domain.
- *   Its index accumulates cells by code. An erosion answer identifies a frontage polygon
- *   with its own distance, policy and defense. The index stores a key for each polygon and scenario. Overlap occurs
- *   in the source: 3,727 of 7,492 features on `NCERM_SMP_2105_95CC` have a non-zero `maxoverlap`. A cell can name
- *   several polygons in one scenario. A reading reports each polygon that contains the point.
+ *   The schema also includes the layer-interface tables from `@mailwoman/core/layers`.
  *
- *   Cell tables use `without rowid`; geometry tables use ordinary rowids. Small fixed-width rows are probed by their
- *   exact primary key, so they fit the B-tree. A geometry blob would make every index page a geometry page if stored
- *   in that B-tree.
+ *   `area_id` is scoped by scenario.
+ *   Within a scenario, the authority's feature ID is the key.
  *
- *   The whole-cell set is compacted per feature, so it uses mixed resolutions. Each row stores its own
- *   `resolution` value. A probe walks `cellToParent` from the index resolution up to the coarsest resolution
- *   present. `layer_coverage` remains at one resolution because
- *   `recoverShortCellResolution` from `@mailwoman/spatial` recovers one resolution from the stored cells
- *   and throws when a table mixes them.
+ *   A frontage ID cannot serve as the key because each frontage appears in all
+ *   twelve scenarios with a different distance.
+ *   The source's `frontageid` is also non-unique within a layer.
+ *
+ *   `NCERM_NFI_2055_0CC` contains 7,379 features and 7,369 distinct frontage IDs.
+ *   Frontage 39260 appears ten times.
+ *
+ *   Across all twelve layers, 89,211 features share fewer frontage IDs.
+ *   A frontage-only key would collide on 835 rows.
+ *
+ *   The key is `<scenario key>:<objectid>`.
+ *   `frontage_id` remains an attribute for readers that need to join by frontage.
+ *
+ *   The cell table names polygons instead of classes.
+ *   The flood layer returns a zone code from a two-value domain.
+ *
+ *   Its index accumulates cells by code.
+ *   An erosion answer identifies a frontage polygon with its own distance, policy and defense.
+ *
+ *   The index stores a key for each polygon and scenario.
+ *   Overlap occurs in the source: 3,727 of 7,492 features on `NCERM_SMP_2105_95CC`
+ *   have a non-zero `maxoverlap`.
+ *
+ *   A cell can name several polygons in one scenario.
+ *   A reading reports each polygon that contains the point.
+ *
+ *   Cell tables use `without rowid`; geometry tables use ordinary rowids.
+ *   Small fixed-width rows are probed by their exact primary key, so they fit the B-tree.
+ *
+ *   A geometry blob would make every index page a geometry page if stored in that B-tree.
+ *
+ *   The whole-cell set is compacted per feature, so it uses mixed resolutions.
+ *   Each row stores its own `resolution` value.
+ *
+ *   A probe walks `cellToParent` from the index resolution up to the coarsest resolution present.
+ *   `layer_coverage` remains at one resolution because `recoverShortCellResolution` from
+ *   `@mailwoman/spatial` recovers one resolution from the stored cells and throws when a table mixes them.
  */
 
 import type { layerschemadatabase, MappedExtentTable } from "@mailwoman/core/layers"
@@ -167,7 +189,7 @@ export interface CoastalZoneCellTable {
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell does not encode its resolution.
+	 * A short cell doesn't encode its resolution.
 	 * A table that mixes resolutions requires this column for probes.
 	 */
 	resolution: number
@@ -230,7 +252,7 @@ export interface CoastalGroundInstabilityTable {
  * That empty state is the recorded claim.
  *
  * The Environment Agency publishes no coverage statement for NCERM.
- * There is no footprint to record.
+ * There's no footprint to record.
  *
  * `layer_coverage` therefore stores `basis = source_present`.
  *

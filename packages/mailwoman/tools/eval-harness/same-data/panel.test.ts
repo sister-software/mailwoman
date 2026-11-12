@@ -4,8 +4,8 @@
 /**
  *   Tests the same-data panel builder.
  *
- *   The homograph gold alternates between the largest bearer and a smaller one. If the gold were
- *   always the largest bearer, a population prior by itself would pass the panel.
+ *   The homograph gold alternates between the largest bearer and a smaller one.
+ *   If the gold were always the largest bearer, a population prior by itself would pass the panel.
  *
  *   Strata draw from disjoint pools, so no place appears on both sides of a paired comparison.
  */

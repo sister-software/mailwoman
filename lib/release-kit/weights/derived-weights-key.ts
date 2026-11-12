@@ -142,10 +142,10 @@ export function derivedWeightsDir(key: string): string {
 }
 
 /**
- * The reason a store entry must not be served (or stashed), or `null` when it looks like a product.
+ * The reason a store entry mustn't be served (or stashed), or `null` when it looks like a product.
  *
- * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
- * below the lowest calibrated floor for that country — for GB that is the outward floor,
+ * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count
+ * sits below the lowest calibrated floor for that country — for GB that's the outward floor,
  * so a legitimate outward-granularity bin is never false-refused while an empty or collapsed one is.
  * The calibrated per-granularity check remains the builder's.
  * This one only has the header to read.

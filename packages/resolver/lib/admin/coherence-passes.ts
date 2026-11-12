@@ -6,7 +6,7 @@ import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
-import { decorateNode, isResolvedWithCoord } from "#decorate-node"
+import { decorateNode, isResolvedWithCoord, PICK_METADATA_KEYS } from "#decorate-node"
 
 const REGION_LINEAGE_PLACETYPES: ReadonlySet<string> = new Set(PLACETYPE_FILTER_GROUPS["region"] ?? ["region"])
 
@@ -20,7 +20,7 @@ function placeIDValue(node: AddressNode): string | null {
  * Un-resolves a parent-fallback pick whose stamped ancestors name a region other than
  * the resolved region above it, marking it `parent_fallback_refused`.
  *
- * A pick whose ancestor chain names no region is kept, because the fallback
+ * A pick whose ancestor chain identifies no region is kept, because the fallback
  * exists for places with incomplete hierarchies.
  */
 export function applyParentFallbackContradiction(roots: readonly AddressNode[]): void {
@@ -196,17 +196,8 @@ function revertResolverDecoration(node: AddressNode): void {
 	node.source = typeof priorSource === "string" ? priorSource : null
 	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : null
 
-	for (const key of [
-		"classifier_source",
-		"classifier_source_id",
-		"resolver_score",
-		"resolver_prominence",
-		"resolver_name",
-		"resolver_country",
-		"resolution_quality",
-		"postcode_city_mismatch",
-	]) {
-		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
+	for (const key of ["classifier_source", "classifier_source_id", ...PICK_METADATA_KEYS]) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object isn't on a hot path
 		delete meta[key]
 	}
 
@@ -221,7 +212,7 @@ function revertResolverDecoration(node: AddressNode): void {
  * Re-picks a locality to the place with the same name inside the country specified in
  * the address, when that country is the locality's nearest admin context.
  *
- * It leaves the locality unchanged when it already resolved to that place or
+ * It leaves the locality unchanged when it already resolved inside that country or
  * when that country has no locality with the same name.
  */
 export async function applyExplicitCountryCoherence(
@@ -253,10 +244,16 @@ async function reconcileExplicitCountry(
 	backend: ResolverBackend
 ): Promise<void> {
 	// A span tagged `country` may hold a constituent country such as `England`.
-	// That is a subdivision of GB rather than a sovereign state, and it still fixes the country.
+	// That's a subdivision of GB rather than a sovereign state, and it still fixes the country.
 	const iso2 = matchCountry(countryNode.value)?.iso2 ?? matchSubdivision(countryNode.value)?.country
 
 	if (!iso2) return
+
+	// A pick already inside the written country agrees with it, so the pass keeps it.
+	// The re-query asks for the locality placetype only.
+	// Re-picking would replace a dependent locality's contained neighborhood with
+	// a same-name locality elsewhere in the country.
+	if (isResolvedWithCoord(localityNode) && localityNode.metadata?.["resolver_country"] === iso2) return
 
 	const scoped = await backend.findPlace({
 		text: localityNode.value,

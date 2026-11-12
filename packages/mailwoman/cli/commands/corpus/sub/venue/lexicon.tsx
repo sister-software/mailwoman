@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus sub-venue-lexicon` regenerates the sub-venue designator lexicon from the
- *   fetched sources. The output is deterministic, so the same inputs produce byte-identical output.
+ *   `mailwoman corpus sub-venue-lexicon` regenerates the sub-venue designator
+ *   lexicon from the fetched sources.
+ *
+ *   The output is deterministic, so the same inputs produce byte-identical output.
  *   Run `oxfmt` over the result before committing.
  *
  *   ```sh
@@ -15,12 +17,15 @@
  *     --out          corpus/data/sub-venue-lexicon.json
  *   ```
  *
- *   `--extracts` takes `region=path` pairs because the region is the axis every curation decision is
- *   taken on and no extract filename identifies it reliably (`ile-de-france` is FR, `great-britain` is
- *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
- *   be promoted. That is the correct failure rather than a convenience.
+ *   `--extracts` takes `region=path` pairs because the region is the axis every
+ *   curation decision is taken on and no extract filename identifies it reliably
+ *   (`ile-de-france` is FR, `great-britain` is GB).
+ *   A bare path is accepted and lands region `""`, which means the surfaces
+ *   it produces can never be promoted.
+ *   That's the correct failure rather than a convenience.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
@@ -59,10 +64,13 @@ function parseExtracts(extractSpec: string | null | undefined): Array<{ path: st
 
 const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { generateSubVenueLexicon } = await import("@mailwoman/corpus/tools/sub/venue/lexicon")
-
-		const { readOvertureLayerVintage, readOvertureSubVenues } =
-			await import("@mailwoman/corpus/tools/overture-subvenue")
+		const {
+			lexicon: { generateSubVenueLexicon },
+			overtureSubvenue: { readOvertureLayerVintage, readOvertureSubVenues },
+		} = await allKeyed({
+			lexicon: import("@mailwoman/corpus/tools/sub/venue/lexicon"),
+			overtureSubvenue: import("@mailwoman/corpus/tools/overture-subvenue"),
+		})
 
 		const overtureRows = options.overtureDB ? await readOvertureSubVenues({ databasePath: options.overtureDB }) : null
 

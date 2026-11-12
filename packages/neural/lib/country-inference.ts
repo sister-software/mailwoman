@@ -2,28 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Inference-side country-lexicon features, the third atlas soft-feed channel. Country is a closed,
- *   enumerable class of about 250 surfaces that the learned grammar mislabels in the WOF-admin and
- *   resolver hierarchy case, where "United States of America, Wyoming, <locality>" reads as a leading
- *   street. This channel injects a per-piece multi-hot clue that the piece is part of a recognized
- *   country surface phrase. The clue informs and the model decides.
+ *   Inference-side country-lexicon features, the third atlas soft-feed channel.
  *
- *   The matcher reuses the gazetteer's phrase-scan (`gazetteerCharPaint`), so the two channels cannot
- *   drift on how a phrase is matched. Only the vocabulary (`country-surface-lexicon-v1.json`, built
- *   by `packages/mailwoman/tools/dev-tools/codex/country/surface-lexicon.ts`) and the emitted 2-dim
- *   feature differ.
+ *   Country is a closed, enumerable class of about 250 surfaces that the learned
+ *   grammar mislabels in the WOF-admin and resolver hierarchy case, where "United
+ *   States of America, Wyoming, <locality>" reads as a leading street.
+ *   This channel injects a per-piece multi-hot clue that the piece is part of
+ *   a recognized country surface phrase.
+ *   The clue informs and the model decides.
  *
- *   The emitted per-piece feature is `[country_surface, country_ambiguous]`. `country_surface` marks
- *   a piece inside a recognized country surface phrase. `country_ambiguous` marks a homograph that is
- *   also a US region, such as "Georgia", or a curated common-word name such as "America". The model
- *   learns to trust unambiguous long and code forms strongly. It trusts ambiguous forms weakly,
- *   preserving recall on phrases such as "Republic of Georgia".
+ *   The matcher reuses the gazetteer's phrase-scan (`gazetteerCharPaint`),
+ *   so the two channels cannot drift on how a phrase is matched.
+ *   Only the vocabulary (`country-surface-lexicon-v1.json`, built by
+ *   `packages/mailwoman/tools/dev-tools/codex/country/surface-lexicon.ts`)
+ *   and the emitted 2-dim feature differ.
  *
- *   The gazetteer's own `country` slot already contains these surfaces. The shipped model consumes them.
- *   The WOF-admin case still fails. That slot shares one projection with region, po_box, cedex and homograph.
+ *   The emitted per-piece feature is `[country_surface, country_ambiguous]`.
+ *   `country_surface` marks a piece inside a recognized country surface phrase.
+ *
+ *   `country_ambiguous` marks a homograph that's also a US region, such as "Georgia",
+ *   or a curated common-word name such as "America".
+ *   The model learns to trust unambiguous long and code forms strongly.
+ *
+ *   It trusts ambiguous forms weakly, preserving recall on phrases such as "Republic of Georgia".
+ *
+ *   The gazetteer's own `country` slot already contains these surfaces.
+ *   The shipped model consumes them.
+ *
+ *   The WOF-admin case still fails.
+ *   That slot shares one projection with region, po_box, cedex and homograph.
+ *
  *   `suppressGazetteerNearPostcode` zeroes the slot next to a postcode, including in "…12345 USA".
- *   A separate channel
- *   gives country its own projection and confidence weight, so that suppression cannot reach it.
+ *   A separate channel gives country its own projection and confidence weight,
+ *   so that suppression cannot reach it.
  */
 
 import {

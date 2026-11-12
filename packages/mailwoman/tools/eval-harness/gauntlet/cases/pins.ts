@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures and checks the regression-corpus pins in `load.integration.test.ts`. It updates those pins without loading a model or gazetteer.
+ *   Measures and checks the regression-corpus pins in `load.integration.test.ts`.
+ *   It updates those pins without loading a model or gazetteer.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

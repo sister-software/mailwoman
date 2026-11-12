@@ -11,7 +11,7 @@ PR-and-flag. The verdict that motivates the soft-signal-at-0.9 choice:
   **bias** country-level disambiguation (region + locality namesake collisions), the same way a postcode
   pins it today — so `Plauen, …` (DE) stops resolving to a US/IT namesake, and an off-map address stops
   getting pinned to a wrong in-map country.
-- **Non-goal:** it is **not** a check. It never filters candidates, never abstains the pipeline, never
+- **Non-goal:** it **isn't** a check. It never filters candidates, never abstains the pipeline, never
   overrides an explicit `--default-country`/locale or a stronger signal. A wrong guess costs a little
   ranking weight, never a dropped or wrong-filtered result. (This is why ~0.9 is safe — see Threshold.)
 
@@ -29,10 +29,10 @@ So the coarse-placer becomes **another `anchorPosterior` source** — no new ran
 
 ## Composition with the postcode anchor (precedence)
 
-Both emit country posteriors, and they must not double-count.
+Both emit country posteriors, and they mustn't double-count.
 
 - **Postcode anchor present → it wins.** A postcode pins the country far more reliably than a whole-string
-  guess. The coarse-placer posterior is **not applied** when the #369 postcode posterior exists.
+  guess. The coarse-placer posterior **isn't applied** when the #369 postcode posterior exists.
 - **No postcode anchor → coarse-placer fills the gap**, at a **lower `anchorWeight`** than the postcode
   anchor's 2.0 (proposed **1.0**) — it's a broader, softer signal, so it should blend more gently with
   `score`.

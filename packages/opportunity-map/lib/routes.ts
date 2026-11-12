@@ -3,13 +3,16 @@
 
 /**
  *   The route scale of the map: one GeoJSON line for each route segment a selection of buildings uses.
- *   A segment's path and its basis are supplied beside the scenario, because `@mailwoman/route-scenarios`
- *   prices segments without geometry.
  *
- *   A segment is verified only when its basis is a source record that the dossier admitted. A segment whose
- *   basis is an operator assumption is proposed construction. A segment that more than one selected building
- *   uses is shared. Each segment's amount is the construction cost that `constructionCost` charges for it
- *   once in the selection.
+ *   A segment's path and its basis are supplied beside the scenario, because
+ *   `@mailwoman/route-scenarios` prices segments without geometry.
+ *
+ *   A segment is verified only when its basis is a source record that the dossier admitted.
+ *   A segment whose basis is an operator assumption is proposed construction.
+ *
+ *   A segment that more than one selected building uses is shared.
+ *   Each segment's amount is the construction cost that `constructionCost`
+ *   charges for it once in the selection.
  */
 
 import type { Dossier, EntityID } from "@mailwoman/dossier"

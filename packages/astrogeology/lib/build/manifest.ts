@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The build manifest records what a build read and wrote. It stores each output's SHA-256 and size.
- *   It also records the exact tool invocations. The build writes it beside the outputs after validation.
+ *   The build manifest records what a build read and wrote.
+ *
+ *   It stores each output's SHA-256 and size.
+ *   It also records the exact tool invocations.
+ *
+ *   The build writes it beside the outputs after validation.
  *   The verify step recomputes the record against those outputs.
  */
 

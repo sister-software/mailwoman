@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The address-source register — which jurisdictions exist, what research has resolved for each and what is known
- *   about every source's terms.
+ *   The address-source register — which jurisdictions exist, what research has
+ *   resolved for each and what's known about every source's terms.
  *
- *   It is a backlog made checkable. Almost every source row is refused on several conditions at once, so ask
+ *   It is a backlog made checkable.
+ *   Almost every source row is refused on several conditions at once, so ask
  *   {@linkcode ingestEligibilityProblems} for the reasons rather than reading a status as permission.
  */
 

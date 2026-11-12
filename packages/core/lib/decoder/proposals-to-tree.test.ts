@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `treeToProposals`, the inverse of `proposalsToTree`, used to bring the whole-text neural parse
- *   into the arbitration layer's proposal currency.
+ *   `treeToProposals`, the inverse of `proposalsToTree`, used to bring the whole-text
+ *   neural parse into the arbitration layer's proposal currency.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

@@ -1,5 +1,5 @@
 ---
-title: Decoder grammar interface — the objective we decode, the one we mean, and the measurement between them
+title: Decoder grammar interface
 role: reference
 audience: maintainer
 owner: model
@@ -33,7 +33,7 @@ factorization of the score and two small typed grammars stored as data. The mode
 content.** Here, a rule is a term in a score whose firings can be counted. It is neither a case in
 code nor only a tendency in the weights.
 
-## 1. The grammar we decode today, exactly
+## 1. The grammar the shipped decoder uses
 
 The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Outside markers over
 `ComponentTag`). The decoder (`packages/neural/lib/viterbi.ts`) solves:
@@ -104,7 +104,7 @@ production: a POI under a POI (`Cafe at St Mary's` located at `Church of St Mary
 case was handled by widening `unit`'s parents instead of adding a venue→venue edge. That addition
 is schema work, and this page tracks it as open.
 
-## 3. Toponym-internal grammar, and the vocabulary for it
+## 3. Toponym-internal grammar and vocabulary
 
 Standard toponymy decomposes a place name into:
 
@@ -113,7 +113,7 @@ Standard toponymy decomposes a place name into:
 - **modifier / qualifier** — `New`, `North`, `Greater`, `People's`
 
 In this vocabulary, `New York` is modifier + specific. `People's Republic of China` is modifier +
-generic + `of` + specific. It has real internal grammatical structure and is **not** one opaque
+generic + `of` + specific. It has real internal grammatical structure and **isn't** one opaque
 prefix lexeme. `Port of Spain` is generic + `of` + specific. `Elephant and Castle Road` contains a
 coordinator inside its specific element. A token-level reading therefore misparses it as a
 junction.
@@ -160,7 +160,7 @@ This parameter sets how much score a well-formed name missing from the gazetteer
 can be calibrated, and it is D-rule-testable. The scattered discounts it replaces are the
 current system's implicit, global setting of the same quantity.
 
-## 5. Constraints as measurable predicates — not intuitions
+## 5. Constraints as measurable predicates
 
 The taxonomy below was **induced from the 19 board rows that regress under every candidate of the
 v5.0.0 line** (see the [2026-08-23 retrospective](../../records/evals/retrospectives/2026-08-23-v500-from-scratch-base.md)).
@@ -176,7 +176,7 @@ coherence record applies the same rule to the resolver-side checker.
 | C1  | spans disjoint, uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                               |
 | C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                              |
 | C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                                |
-| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector built** (below) — the grouper computes the units and does not bind the decode                                                                     |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector built** (below) — the grouper computes the units and doesn't bind the decode                                                                      |
 | C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system/conventions.ts` is the natural home, but templates are not yet stated as machine-readable sequences |
 | C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector built** (below) — walks the FST for covering entries over every decoded boundary                                                                  |
 
@@ -202,7 +202,7 @@ WOF role attribute is viable only under the schema-emulation strategy that
 [`SCHEMA.mdx`](./SCHEMA.mdx#typescript-representation) rejects. Within-country variation, such as
 the US urban form beside the rural route, is the known gap.
 
-## 6. The board rows, mapped
+## 6. Board rows by predicate
 
 | address                                                                             | failure under the v5.0.0 line                                                                            | predicate                              |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
@@ -225,34 +225,34 @@ the US urban form beside the rural route, is the known gap.
    `Passeig de Gràcia`, `Passeig de Sant Joan`, and the swallowed `Unit 1` in
    `Somewhere In Bangkok Thai Restaurant, 1103 Queen St Unit 1, Southington, CT 06489`. These 3 rows
    were attributed against a placebo run with the same base, seed, and steps. `Unter den Linden`,
-   the city splits, and the GB venue cluster did not change, although they produce the same kinds of invalid tag sequences in other surface families. The emissions memorize instances of a
-   constraint. Models transfer constraints only across inputs with similar representations, so transfer
+   the city splits, and the GB venue cluster didn't change, although they produce the same kinds of invalid tag sequences in other surface families. In this run, the added
+   instances fixed only rows in their own surface family. Models transfer constraints only across inputs with similar representations, so transfer
    reaches a narrower set than the rule's scope.
 3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
    taught the model that _text in the trailing position is administrative_. v4.8.0 applied that
    lesson by position and broke venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
-   `locality="Ye Three Lords"`). Four weight adjustments could not separate the intended lesson
+   `locality="Ye Three Lords"`). Four weight adjustments couldn't separate the intended lesson
    from the damage, because both use the same representational axis.
 
-## 8. implementation map
+## 8. Implementation map
 
 | target-grammar object           | existing artifact                                                                | status                                      |
 | ------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
 | span + type + confidence decode | the #727 span head; `semi-crf-transitions.json` parse path (`classifier.ts:132`) | trained experimentally and unshipped        |
-| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists, but output does not bind the decode |
+| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists, but output doesn't bind the decode  |
 | `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
 | POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
 | `G_c` segment templates         | `packages/codex/lib/address/system/conventions.ts`                               | home exists, templates not machine-readable |
 | `G_name` toponym grammar        | street domain only (street-type lexicon, morphology FST, affix tags)             | toponym modifier/generic inventories absent |
 | registry evidence               | FST prior, country-surface clues, anchor channel                                 | present — token-granular, hence the §4 leak |
 
-The system already computes every cue the target grammar consumes. The only change needed is the
-**output space**. Per-token labels spread span-shaped evidence across tokens, and §4 shows that this
+The table lists which cues the system computes and which are absent. The change this page proposes
+is to the **output space**. Per-token labels spread span-shaped evidence across tokens, and §4 shows that this
 evidence can then raise the scores of parses it should rule out.
 
 ## 9. Registered next measurements
 
-1. **Constraint-violation census** (C4 and C6 detectors are buildable from existing artifacts):
+1. **Constraint-violation census** (the C4 and C6 detectors are built and run as `mwdev_diagnose` with `account: "constraints"`, §5):
    label every board failure with its violated predicates, and read the census before any decode
    change.
 2. **Ablation prediction**: suppressing the country-surface clue on tokens covered by a longer
@@ -283,5 +283,5 @@ evidence can then raise the scores of parses it should rule out.
      `ParseOpts.cardinalityFilter: true` turns it on under Viterbi decoding, and the trace records the rank it took as
      `cardinalityFilter`.
    - Label-bigram transitions fitted from 199,967 training rows (`fit-transitions.run.ts`) added to the BIO masks at
-     0.5, 1 and 2 times break 508, 884 and 3,974 of the 18,517 control rows' decoded paths. They are not offered as a
+     0.5, 1 and 2 times break 508, 884 and 3,974 of the 18,517 control rows' decoded paths. They're not offered as a
      switch.

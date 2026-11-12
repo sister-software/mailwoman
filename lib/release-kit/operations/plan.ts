@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { computeReleasePlan, type ReleasePlanDestinations, type ReleasePlanPackage } from "#release-kit/release/plan"
 
 const planPackage: z.ZodType<ReleasePlanPackage> = z.object({

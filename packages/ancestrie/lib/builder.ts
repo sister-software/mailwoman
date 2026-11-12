@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build side of the ancestrie: accumulate entries into a token trie, then seal — compute pre/post
- *   interval labels over the primary-parent forest and serialize to the versioned binary described
- *   in `format.ts`. The output is canonical: sealing the same entry set yields identical bytes
- *   regardless of add order (see the canonical output note in the format doc), so artifact diffs
- *   mean data changed, never that a build iterated differently.
+ *   Build side of the ancestrie: accumulate entries into a token trie, then seal —
+ *   compute pre/post interval labels over the primary-parent forest and serialize
+ *   to the versioned binary described in `format.ts`.
  *
- *   No Node imports — the builder runs anywhere the reader does. Serialization is a build-time
- *   operation all the same. the reader (`reader.ts`) is the runtime surface.
+ *   The output is canonical: sealing the same entry set yields identical bytes
+ *   regardless of add order (see the canonical output note in the format doc),
+ *   so artifact diffs mean data changed, never that a build iterated differently.
+ *
+ *   No Node imports — the builder runs anywhere the reader does.
+ *   Serialization is a build-time operation all the same. the reader (`reader.ts`) is the runtime surface.
  */
 
 import type { AncestrieHeader } from "#format"
@@ -296,7 +298,7 @@ export class AncestrieBuilder {
 	 * It then serializes the result.
 	 *
 	 * @throws on a primary-parent cycle.
-	 * Does not consume the builder — sealing twice yields identical bytes.
+	 * Doesn't consume the builder — sealing twice yields identical bytes.
 	 */
 	seal(options: SealOptions = {}): Uint8Array {
 		const states = canonicalizeTrie(this.root)

@@ -2,20 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build coastal` — acquire the Environment Agency's `Mapping (England, 2024)` dataset
- *   for National Coastal Erosion Risk and build the sealed `coastal-england.db` layer. This file only wires steps: the catalogue
- *   read, download, build and verify steps all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
- *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
+ *   `mailwoman gazetteer build coastal` — acquire the Environment Agency's `Mapping (England, 2024)`
+ *   dataset for National Coastal Erosion Risk and build the sealed `coastal-england.db` layer.
  *
- *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
- *   The measurement costs a full pass over the chosen scenarios per candidate and produces a table
- *   instead of an artifact. The table reports each scenario separately. Twelve layers cover the same
- *   frontages with different extents. A pooled share would average a
- *   present-day designation together with a 2105 projection and describe neither.
+ *   This file only wires steps: the catalogue read, download, build and verify steps all live in
+ *   `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink or the network in the loop.
+ *   Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--scenarios` selects the smoke rung. `--limit` narrows it further. A one-scenario build over a real
- *   prefix of the source exercises the field names, the per-layer distance column, the value domains, the
- *   projection and the seal. Fixtures cannot exercise those source-dependent checks.
+ *   `--measure-resolutions` doesn't build.
+ *   The index resolution is measured for this layer.
+ *
+ *   The measurement costs a full pass over the chosen scenarios per candidate
+ *   and produces a table instead of an artifact.
+ *   The table reports each scenario separately.
+ *
+ *   Twelve layers cover the same frontages with different extents.
+ *   A pooled share would average a present-day designation together with a
+ *   2105 projection and describe neither.
+ *
+ *   `--scenarios` selects the smoke rung.
+ *   `--limit` narrows it further.
+ *
+ *   A one-scenario build over a real prefix of the source exercises the field names,
+ *   the per-layer distance column, the value domains, the projection and the seal.
+ *   Fixtures cannot exercise those source-dependent checks.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
@@ -115,7 +125,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		// The catalogue read supplies the product's ISO revision date and the direct file URL.
 		// Both are read rather than assembled: the EA's file service keys on an opaque
 		// id with no relationship to the dataset id, so a hard-coded URL survives a
-		// republish by pointing at a file that is no longer the product.
+		// republish by pointing at a file that's no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
 		const sourceVintage = options.sourceVintage ?? catalogue?.revisionDate
 

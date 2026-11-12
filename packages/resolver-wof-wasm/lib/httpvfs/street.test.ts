@@ -3,10 +3,11 @@
 
 /**
  *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
- *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub of the
- *   range-read database handle, plus `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no $MAILWOMAN_DATA_ROOT
- *   dependency, CI-safe. Integration against real extracts is the docs site's street-tier browser
- *   spec.
+ *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub of
+ *   the range-read database handle, plus `resolveStreet`'s tier ordering with stub lookups.
+ *
+ *   Synthetic in-memory extracts — no $MAILWOMAN_DATA_ROOT dependency, CI-safe.
+ *   Integration against real extracts is the docs site's street-tier browser spec.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

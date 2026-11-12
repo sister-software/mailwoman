@@ -4,8 +4,10 @@
 /**
  *   Encodes and verifies offline commercial-license tokens of the form `mwl1.<payload>.<signature>`.
  *
- *   Ed25519 signs the payload. Verification checks the signature against trusted public keys. The module uses WebCrypto,
- *   so it runs in Node, browsers and Workers.
+ *   Ed25519 signs the payload.
+ *   Verification checks the signature against trusted public keys.
+ *
+ *   The module uses WebCrypto, so it runs in Node, browsers and Workers.
  */
 
 import { z } from "zod"
@@ -63,7 +65,7 @@ export const LicenseIntent = {
 export type LicenseIntent = (typeof LicenseIntent)[keyof typeof LicenseIntent]
 
 /**
- * The prefix of a scope entry that is an atlas tier rather than a package.
+ * The prefix of a scope entry that's an atlas tier rather than a package.
  */
 export const TIER_SCOPE_PREFIX = "tier:"
 
@@ -86,7 +88,7 @@ export const LicenseKeyPayloadSchema = z.object({
 	issued: CalendarDate,
 	/**
 	 * The last valid date, inclusive.
-	 * A key without it does not expire.
+	 * A key without it doesn't expire.
 	 */
 	expires: CalendarDate.nullable().optional(),
 	/**

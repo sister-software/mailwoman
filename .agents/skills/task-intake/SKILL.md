@@ -14,7 +14,7 @@ todo progress into that issue.
 
 Use this skill for an authorized implementation or training arc expected to produce a PR or require a
 handoff. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator
-asks for one. The number of steps does not grant permission to write to GitHub.
+asks for one. The number of steps doesn't grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 
@@ -55,7 +55,7 @@ The hook's interface is:
 - **`TodoWrite` only** — `TaskCreate`/`TaskUpdate` send deltas a stateless hook cannot fold into a
   list. In those sessions, update the issue at milestones by hand.
 - **One link per checkout** — `.claude/state/linked-issue` is last-writer-wins, so concurrent sessions
-  in one checkout should not both link. Worktrees have their own state dir and do not collide.
+  in one checkout shouldn't both link. Worktrees have their own state dir and do not collide.
 
 ## Step 4 — close out
 
@@ -63,7 +63,7 @@ The hook's interface is:
   as forgotten rather than deferred.
 - Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
   list, creates a Vale-checked body that contains `Closes #<n>`, and starts a tracked CI monitor.
-- PR creation starts verification. It does not complete the task. Poll the monitor through `mwdev_job`,
+- PR creation starts verification. It doesn't complete the task. Poll the monitor through `mwdev_job`,
   inspect failed check logs, fix failures, push, and follow checks for the new head.
 - PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
   After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool
@@ -71,5 +71,5 @@ The hook's interface is:
 - The tool persists `.claude/state/tracked-ci.json`, and a Claude Code `PostToolUse` hook records the
   creating session as its owner. The Claude Code Stop hook checks the current PR head directly on GitHub
   and blocks the owning session's handoff while checks are absent, pending, failing, or unreadable. It
-  does not block another session in the same checkout, and Codex registers no CI Stop hook.
+  doesn't block another session in the same checkout, and Codex registers no CI Stop hook.
 - Keep the CI marker so a later push requires fresh verification.

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes a `layer_manifest` into a freshly built database. Call it before `sealDatabase`, because a
- *   sealed database is read-only.
+ *   Writes a `layer_manifest` into a freshly built database.
+ *
+ *   Call it before `sealDatabase`, because a sealed database is read-only.
  */
 
 import { gitSync } from "@mailwoman/core/git"
@@ -54,7 +55,7 @@ export interface FoldLayerManifestInput {
 	 *
 	 * Build-local artifacts use that form for inputs with no declared terms.
 	 *
-	 * A value that is neither stops the build rather than reaching the manifest.
+	 * A value that's neither stops the build rather than reaching the manifest.
 	 */
 	license: string
 	attribution?: string
@@ -67,8 +68,8 @@ export interface FoldLayerManifestInput {
 	/**
 	 * Input record count per publisher, counted during the build.
 	 *
-	 * The absent field records that the build did not count.
-	 * That is what every artifact built before the field existed.
+	 * The absent field records that the build didn't count.
+	 * That's what every artifact built before the field existed.
 	 *
 	 * Overture removes a release from its bucket once a newer one lands, so a count
 	 * omitted here cannot be recovered from the input afterwards.
@@ -83,7 +84,7 @@ export interface FoldLayerManifestInput {
  * An admissible expression that stays unresolved, one naming a `LicenseRef-`, is recorded as
  * written, because `assertTierMatchesLicense` is what decides whether a tier may rest on it.
  *
- * @throws When the value is prose that resolves to no expression and is not an admissible one.
+ * @throws When the value is prose that resolves to no expression and isn't an admissible one.
  */
 function manifestLicenseExpression(name: string, license: string): string {
 	const record = readLicenseRecord(license)

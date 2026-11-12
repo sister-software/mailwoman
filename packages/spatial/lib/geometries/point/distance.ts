@@ -4,7 +4,7 @@
 /**
  * @file Great-circle distances between `GeoPointInput` values or plain coordinates.
  *
- *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, and a distance must not pay for that.
+ *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, and a distance mustn't pay for that.
  *   Points are read through `#geometries/point/coordinates` instead.
  */
 

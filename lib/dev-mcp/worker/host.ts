@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The shim's half of the worker protocol: fork, handshake, call correlation, restart and crash policy, importing
- * Node builtins only so the never-stale shim can load it apart from `worker.ts`.
+ * The shim's half of the worker protocol: fork, handshake, call correlation, restart and crash policy,
+ * importing Node builtins only so the never-stale shim can load it apart from `worker.ts`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -109,7 +109,7 @@ export interface RestartReport {
 	 * Empty when the worker held no running job.
 	 *
 	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
-	 * because "no job was running" and "I could not find out" are different facts.
+	 * because "no job was running" and "I couldn't find out" are different facts.
 	 */
 	killed_jobs: KilledJob[]
 	killed_jobs_note: string | null
@@ -134,6 +134,14 @@ export class WorkerHost implements AsyncDisposable {
 	 * so the exit handler can tell an ordered death from a crash.
 	 */
 	#expectingExit = false
+	/**
+	 * The start in progress, from the fork to the ready message.
+	 *
+	 * Every start shares it.
+	 * A worker that exits before ready fails this start, and that failure goes to the
+	 * start's caller, so the exit handler forks no second worker for it.
+	 */
+	#starting: Promise<void> | null = null
 
 	constructor(options: WorkerHostOptions) {
 		this.#options = {
@@ -160,7 +168,19 @@ export class WorkerHost implements AsyncDisposable {
 		return this.#degraded
 	}
 
-	async start(): Promise<void> {
+	/**
+	 * Forks the worker and resolves once it reports ready.
+	 * A call made while a start is in progress joins that start.
+	 */
+	start(): Promise<void> {
+		this.#starting ??= this.#spawn().finally(() => {
+			this.#starting = null
+		})
+
+		return this.#starting
+	}
+
+	async #spawn(): Promise<void> {
 		const child = forkProcess(this.#options.workerPath, this.#options.workerArgs, {
 			stdio: ["ignore", "pipe", "pipe", "ipc"],
 			// A clean argv: inherited inspector/debug flags would collide on ports across respawns.
@@ -175,7 +195,7 @@ export class WorkerHost implements AsyncDisposable {
 		})
 
 		child.on("message", (message: WorkerMessage) => this.#onMessage(message))
-		child.on("exit", (code, signal) => this.#onExit(code, signal))
+		child.on("exit", (code, signal) => this.#onExit(child, code, signal))
 
 		this.#child = child
 
@@ -206,6 +226,12 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	async call(name: string, args: Record<string, unknown>): Promise<unknown> {
+		// A call made during a start waits for the ready message.
+		// A start that fails leaves the checks below to report it.
+		if (this.#starting) {
+			await this.#starting.catch(() => {})
+		}
+
 		if (this.#degraded) {
 			throw new Error(
 				`The worker is DEGRADED (${this.#degraded}). Call mwdev_restart to respawn it deliberately; the host ` +
@@ -215,7 +241,7 @@ export class WorkerHost implements AsyncDisposable {
 
 		const child = this.#child
 
-		if (!child || !child.connected) {
+		if (!child || !child.connected || !this.#ready) {
 			throw new Error("The worker is not running. Call mwdev_restart.")
 		}
 
@@ -238,7 +264,7 @@ export class WorkerHost implements AsyncDisposable {
 		// changes what a client may send and a name-only compare would suppress the
 		// tools/list_changed it needs to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
-		// Asked before the kill, while there is still a registry to ask, since
+		// Asked before the kill, while there's still a registry to ask, since
 		// after the kill the id resolves to no job.
 		const { jobs: killedJobs, note: killedJobsNote } = await this.#runningJobs()
 
@@ -325,8 +351,9 @@ export class WorkerHost implements AsyncDisposable {
 		}
 	}
 
-	#onExit(code: number | null, signal: string | null): void {
-		if (this.#expectingExit) return
+	#onExit(child: ChildProcess, code: number | null, signal: string | null): void {
+		// A child the host no longer tracks has been replaced, so its exit leaves the current worker's state as it is.
+		if (this.#expectingExit || child !== this.#child) return
 
 		this.#rejectPending(
 			new Error(`The worker died mid-call (code ${code}, signal ${signal}). Last stderr:\n${this.#stderrTail}`)
@@ -338,6 +365,9 @@ export class WorkerHost implements AsyncDisposable {
 		this.#ready = null
 		this.#child = null
 
+		// An exit before ready fails the start in progress, and that start's caller handles it.
+		if (this.#starting) return
+
 		if (this.#crashTimes.length >= CRASH_LIMIT) {
 			this.#degraded = `${this.#crashTimes.length} unexpected exits within ${CRASH_WINDOW_MS / 1000}s; last stderr tail:\n${this.#stderrTail}`
 
@@ -345,7 +375,7 @@ export class WorkerHost implements AsyncDisposable {
 		}
 
 		// One immediate respawn, because a lazily-booted worker is cheap to bring back
-		// and a transient OOM kill during a heavy board run should not take the whole surface down.
+		// and a transient OOM kill during a heavy board run shouldn't take the whole surface down.
 		void this.start().catch((error: unknown) => {
 			this.#degraded = `respawn failed: ${error instanceof Error ? error.message : String(error)}`
 		})

@@ -4,10 +4,12 @@
 /**
  *   An FST matcher that answers from the serialized binary in place.
  *
- *   {@link FSTMatcher} holds one `Map` per state and one object per place entry. For a national gazetteer those
- *   objects take several times the size of the file. This matcher keeps the file's bytes and two typed-array hash tables: one from
- *   an edge token to its string index, and one from a (state, string index) pair to the edge's target state. Place
- *   entries are decoded when a query reaches their state.
+ *   {@link FSTMatcher} holds one `Map` per state and one object per place entry.
+ *   For a national gazetteer those objects take several times the size of the file.
+ *
+ *   This matcher keeps the file's bytes and two typed-array hash tables: one from an edge token
+ *   to its string index, and one from a (state, string index) pair to the edge's target state.
+ *   Place entries are decoded when a query reaches their state.
  */
 
 import type { AncestrieMatch } from "@mailwoman/ancestrie"
@@ -323,7 +325,7 @@ export class BinaryFSTMatcher {
 	}
 
 	/**
-	 * Returns the state the edge labeled `token` leads to from `stateID`, or 0 when there is no such edge.
+	 * Returns the state the edge labeled `token` leads to from `stateID`, or 0 when there's no such edge.
 	 */
 	#target(stateID: number, token: string): number {
 		const stringIndex = this.#tokenIndex(token)

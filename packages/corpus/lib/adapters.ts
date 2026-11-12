@@ -4,38 +4,46 @@
 /**
  *   Adapter registry bootstrap.
  *
- *   The module registers every built-in adapter with `defaultAdapterRegistry` when loaded. The CLI
- *   (`commands/corpus/list.tsx`, `commands/corpus/run.tsx`) imports it once at startup.
+ *   The module registers every built-in adapter with `defaultAdapterRegistry` when loaded.
+ *   The CLI (`commands/corpus/list.tsx`, `commands/corpus/run.tsx`) imports it once at startup.
  *
- *   Each adapter has its own directory, and the publisher decides which parent it sits under. An
- *   adapter reading one country's publisher lives under that country, at `lib/<iso2>/adapters/<id>/`:
- *   G-NAF under `au`, Digitaal Vlaanderen under `be`, ČÚZK under `cz`, Klimadatastyrelsen under
- *   `dk`, Maa- ja Ruumiamet under `ee`, Ryhti under `fi`, BAN, FINESS and the Annuaire de l'éducation under `fr`, ANAC under `it`, the
- *   Administration du
- *   cadastre et de la topographie under `lu`, the State Address Register under `lv`, Kartverket's Matrikkelen
- *   under `no`, EMUiA under `pl`, Romania's school network under `ro`, and the FCC and USGov readers under `us`. A national publisher
- *   stays there even when its own files cover that state's dependencies, because the publisher is
- *   what the adapter reads: BAN covers France and ten overseas jurisdictions, Matrikkelen covers
- *   Norway and Svalbard, and Ryhti's one national file covers Åland beside the Finnish mainland.
+ *   Each adapter has its own directory, and the publisher decides which parent it sits under.
+ *   An adapter reading one country's publisher lives under that country,
+ *   at `lib/<iso2>/adapters/<id>/`: G-NAF under `au`, Digitaal Vlaanderen under `be`,
+ *   ČÚZK under `cz`, Klimadatastyrelsen under `dk`, Maa- ja Ruumiamet under `ee`,
+ *   Ryhti under `fi`, BAN, FINESS and the Annuaire de l'éducation under `fr`,
+ *   ANAC under `it`, the Administration du cadastre et de la topographie under `lu`,
+ *   the State Address Register under `lv`, Kartverket's Matrikkelen under `no`, EMUiA under
+ *   `pl`, Romania's school network under `ro`, and the FCC and USGov readers under `us`.
  *
- *   Flanders is the counter-case. Its adapter sits under `be` and covers the Flemish
- *   Region only, because Brussels and Wallonia publish the INSPIRE theme through their own
- *   services, so Belgium needs three adapters rather than one.
+ *   A national publisher stays there even when its own files cover that state's
+ *   dependencies, because the publisher is what the adapter reads: BAN covers France
+ *   and ten overseas jurisdictions, Matrikkelen covers Norway and Svalbard,
+ *   and Ryhti's one national file covers Åland beside the Finnish mainland.
  *
- *   Spain needs four, for the same reason. `es-catastro` reads the Dirección General del Catastro's
- *   52 provinces. `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres. Those
- *   cadastres state their own terms. The national feed links them rather than serving them.
+ *   Flanders is the counter-case.
+ *   Its adapter sits under `be` and covers the Flemish Region only, because Brussels
+ *   and Wallonia publish the INSPIRE theme through their own services,
+ *   so Belgium needs three adapters rather than one.
  *
- *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
- *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
- *   plus `./po-box/`.
+ *   Spain needs four, for the same reason.
+ *   `es-catastro` reads the Dirección General del Catastro's 52 provinces.
  *
- *   A new adapter joins the `BUILTIN_ADAPTERS` list below. A test that needs a pristine registry
- *   constructs its own `InMemoryAdapterRegistry` rather than mutating the default.
+ *   `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres.
+ *   Those cadastres state their own terms.
+ *   The national feed links them rather than serving them.
  *
- *   The WOF adapters keep their canonical ids, `wof-admin` and `wof-postalcode`, so existing
- *   `mailwoman corpus build` callsites continue to work. `./wof/admin/json/` and
- *   `./wof/postalcode-json/` hold the implementations.
+ *   An adapter reading a publisher that's not any one country's lives here, at `lib/adapters/<id>/`.
+ *   That's the aggregators, `./openaddresses/`, `./osm/`, `./overture/`,
+ *   `./geonames/` and `./wof/`, plus `./po-box/`.
+ *
+ *   A new adapter joins the `BUILTIN_ADAPTERS` list below.
+ *   A test that needs a pristine registry constructs its own `InMemoryAdapterRegistry`
+ *   rather than mutating the default.
+ *
+ *   The WOF adapters keep their canonical ids, `wof-admin` and `wof-postalcode`,
+ *   so existing `mailwoman corpus build` callsites continue to work.
+ *   `./wof/admin/json/` and `./wof/postalcode-json/` hold the implementations.
  */
 
 import { cordisAdapter } from "#adapters/cordis/adapter"

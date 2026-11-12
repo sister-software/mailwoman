@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy
- * CLI. This module never imports the help renderer. `@isaacs/cliui` is reached only from
- * {@link renderCommandHelp}.
+ * Framework-neutral command metadata and the small `node:util.parseArgs`
+ * adapter behind Mailwoman's lazy CLI.
+ *
+ * This module never imports the help renderer.
+ * `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -167,7 +169,7 @@ function validateCommandSpec(spec: CommandSpec): void {
 			throw new TypeError(`Command ${spec.name} cannot declare root-owned option -${option.short}.`)
 		}
 
-		// A retired spelling that is also a live option would delete the live one's value on every run.
+		// A retired spelling that's also a live option would delete the live one's value on every run.
 		if (option.deprecatedName && option.deprecatedName in (spec.options ?? {})) {
 			throw new TypeError(
 				`Command ${spec.name} names --${option.deprecatedName} as the old spelling of --${name} while declaring it.`
@@ -444,7 +446,7 @@ export const isCorpusVersion = (value: string): boolean => /^\d+(\.\d+)*(-[A-Za-
  * and volume path from the same string.
  * All three readers therefore use this spelling.
  *
- * Repository code does not derive the entry name.
+ * Repository code doesn't derive the entry name.
  * An operator supplies it through `corpus build --out`, and 3 of the 84 entries on the
  * lab host use a label rather than a version (`board-hk`, `board-sg`, `smoke-schema`).
  * The check accepts a leading `v`, a dot, or a bare label.

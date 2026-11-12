@@ -10,9 +10,11 @@ import { createOxlintConfig, DefaultIgnorePatterns } from "@sister.software/oxli
 import { JSON_PARSE, JSON_STRINGIFY, restrictedPropertiesExcept } from "./config/oxlint/restricted-properties.ts"
 
 const config = createOxlintConfig({
-	spdxLicenseIdentifier: "AGPL-3.0",
 	// Mailwoman ships Ink UIs, so the React rules stay on.
 	react: true,
+	// `mailwoman/spdx-header` owns file headers.
+	// The shared header rule looks for a leading JSDoc block, so on an SPDX header
+	// it would insert a second, old-style header.
 	headers: false,
 	restrictProcessGlobals: true,
 	// A number used as a comparison threshold needs a name.
@@ -105,10 +107,10 @@ const NODE_TIER_NEURAL_FILES = [
 ]
 
 /**
- * Node-only modules that the browser tier must not import as values.
+ * Node-only modules that the browser tier mustn't import as values.
  *
  * Export conditions do not apply to relative specifiers.
- * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` does not.
+ * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` doesn't.
  */
 const NODE_ONLY_NEURAL_MODULES = [
 	"./onnx-runner.ts",
@@ -172,7 +174,7 @@ export default {
 		},
 		{
 			// The files the Node-builtin restriction points at, and the call sites using
-			// builtins core does not wrap yet — each may import its builtin directly.
+			// builtins core doesn't wrap yet — each may import its builtin directly.
 			files: [
 				// `@mailwoman/sqlite` opens connections, so it may import `node:sqlite`.
 				"packages/sqlite/**/*.ts",
@@ -195,13 +197,14 @@ export default {
 				// Corpus tests sit beside their modules and start local HTTP and TCP servers.
 				"packages/corpus/lib/**/*.test.ts",
 				"packages/corpus/lib/**/*.test.tsx",
-				// These files use builtins that core does not wrap yet, such as readline,
+				// These files use builtins that core doesn't wrap yet, such as readline,
 				// worker_threads, cluster, http and https.
 				"packages/filer/sdk/form499.ts",
 				"packages/filer/sdk/provider-list.ts",
 				"packages/mailwoman/cli/native/commands/geocode.ts",
 				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
 				"packages/mailwoman/cli/commands/serve.tsx",
+				"packages/mailwoman/cli/kit/cluster/reload.ts",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
 				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",
@@ -216,6 +219,13 @@ export default {
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// A test may import modules in a set order, as when one evaluates only after an earlier one sets up a mock.
+			files: ["**/*.test.ts", "**/*.test.tsx"],
+			rules: {
+				"mailwoman/no-serial-dynamic-imports": "off",
 			},
 		},
 		{
@@ -318,9 +328,11 @@ export default {
 		"mailwoman/no-import-meta-resolve": "error",
 		"mailwoman/no-raw-git-spawn": "error",
 		"mailwoman/no-relative-dynamic-import": "error",
+		"mailwoman/no-serial-dynamic-imports": "error",
 		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
+		"mailwoman/spdx-header": "error",
 		"typescript/no-restricted-imports": [
 			"error",
 			{

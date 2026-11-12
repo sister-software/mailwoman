@@ -16,7 +16,7 @@
 - **`erasableSyntaxOnly: true`** applies repo-wide. Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
 - **Do not read `process.env` or `process.argv` directly.** oxlint enforces this in CI (`sister-software/no-process-globals`). The only approved accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
 - **Data-root paths go through `@mailwoman/core/utils`** with `dataRootPath(...)` / `dataRootPath()`. The `$MAILWOMAN_DATA_ROOT` default is defined in one place (`core/utils/data-root.ts`). Never hardcode it again. Docs and help text should reference `$MAILWOMAN_DATA_ROOT`.
-- **Acronym casing:** acronyms capitalize as whole camelCase components, as in `parseJSON`, `readID` and `modelURL`, not `parseJson` / `readId`. This rule does not apply to `snake_case` DB columns or wire keys.
+- **Acronym casing:** acronyms capitalize as whole camelCase components, as in `parseJSON`, `readID` and `modelURL`, not `parseJson` / `readId`. This rule doesn't apply to `snake_case` DB columns or wire keys.
 - **Two pre-commit checks run on every commit**, and both reject commits with failures that are easy to miss:
   1. `oxfmt --check` runs on staged files, and it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
   2. An MDX safety check rejects a raw `<` before an alphanumeric in markdown prose (for example `<1s`), because MDX parses it as a JSX tag. Put it in backticks.
@@ -202,7 +202,7 @@ sleep 30 && gh run list --workflow=cache-prune.yml --limit 1
 
 Expected: the run is green and the log lists `KEEP (newest <lang>)` lines and `DELETE` lines, with **no** deletions performed.
 
-⚠ Read the `DELETE` list before proceeding. If it names anything that is not a `codeql-overlay-base-database-*` key, stop. The filter is wrong.
+⚠ Read the `DELETE` list before proceeding. If it names anything that's not a `codeql-overlay-base-database-*` key, stop. The filter is wrong.
 
 - [ ] **Step 4: Apply it once by hand**
 
@@ -474,7 +474,7 @@ export function derivedWeightsDir(key: string): string {
 Run: `yarn vitest run scripts/derived-weights-key.test.ts`
 Expected: pass, 7 tests.
 
-⚠ If `DERIVED_WEIGHTS_INPUTS` names a path that does not exist in this checkout, that is fine at runtime (it hashes as absent) but wrong as a spec. Verify each one:
+⚠ If `DERIVED_WEIGHTS_INPUTS` names a path that doesn't exist in this checkout, that's fine at runtime (it hashes as absent) but wrong as a spec. Verify each one:
 
 ```bash
 for f in release.config.json data/gazetteer/borough-pairs.json data/gazetteer/london-pairs-v2.jsonl \
@@ -598,7 +598,7 @@ process.stderr.write(`built soft-feed → ${workspace}/pair-index-${country}.bin
 
 - [ ] **Step 7: Verify the round trip locally**
 
-⚠ This writes real files into `neural-weights-*/`. That is what `copy-weights.ts` does by design, and it is idempotent — but it replaces the `link-dev-weights` symlinks with real copies. Re-run `yarn vitest run neural/test/weights.test.ts` afterwards to restore them.
+⚠ This writes real files into `neural-weights-*/`. That's what `copy-weights.ts` does by design, and it is idempotent — but it replaces the `link-dev-weights` symlinks with real copies. Re-run `yarn vitest run neural/test/weights.test.ts` afterwards to restore them.
 
 ```bash
 yarn compile
@@ -913,7 +913,7 @@ grep -rn "loadPersonNameSurfaces" --include="*.ts" --include="*.tsx" . | grep -v
 Run: `time yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`
 Expected: pass, and meaningfully faster than the 236.9s baseline. Record the number — the spec estimates ~130s.
 
-⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to record the scan count.
+⚠ If it isn't faster, the memo isn't being hit. Add a temporary `console.error` in the miss branch and re-run to record the scan count.
 
 - [ ] **Step 7: Commit**
 
@@ -1522,9 +1522,9 @@ git push
 gh pr create --fill --base main
 ```
 
-Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary contains the "skipped (path-conditional)" block. On a PR that does touch it: the job runs the full build.
+Expected on a PR that **doesn't** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary contains the "skipped (path-conditional)" block. On a PR that does touch it: the job runs the full build.
 
-⚠ Verify the aggregator still reports. `test` is the required status check and both the ruleset and publish.yml's auto-merge match on that exact context name — adding a `needs` entry must not rename it.
+⚠ Verify the aggregator still reports. `test` is the required status check and both the ruleset and publish.yml's auto-merge match on that exact context name — adding a `needs` entry mustn't rename it.
 
 - [ ] **Step 6: Commit**
 
@@ -1644,7 +1644,7 @@ grep -n "link-dev-weights.ts" neural/test/weights.test.ts
 Run: `yarn vitest run neural/test/weights.test.ts`
 Expected: pass, same test count as baseline. Record the new wall-clock.
 
-- [ ] **Step 4: Share the en-gb classifier where the load does not vary**
+- [ ] **Step 4: Share the en-gb classifier where the load doesn't vary**
 
 Inspect what each pair-prior test passes to `loadFromWeights`:
 
@@ -1732,7 +1732,7 @@ EOF
 - Consumes: the freed cache quota from Task 1.
 - Produces: no artifact other tasks import.
 
-- [ ] **Step 1: Confirm `out/` is not tracked**
+- [ ] **Step 1: Confirm `out/` isn't tracked**
 
 Run:
 
@@ -1767,7 +1767,7 @@ In `.github/workflows/test.yml`, insert immediately **before** every `- name: Co
     key: out-${{ runner.os }}-${{ hashFiles('**/tsconfig.json', 'tsconfig.base.json', 'yarn.lock') }}-${{ github.sha }}
 ```
 
-⚠ The `github.sha` component means every commit is a fresh key and a fresh save. That is intentional for correctness, but it fills the cache quickly. That is why Task 1 has to land first and why the prune runs daily. If quota pressure returns, narrow the key to a hash of the source files rather than the SHA, and re-verify that a source-only change still busts it.
+⚠ The `github.sha` component means every commit is a fresh key and a fresh save. That's intentional for correctness, but it fills the cache quickly. That's why Task 1 has to land first and why the prune runs daily. If quota pressure returns, narrow the key to a hash of the source files rather than the SHA, and re-verify that a source-only change still busts it.
 
 - [ ] **Step 3: Verify the compile step shortens**
 
@@ -1780,9 +1780,9 @@ gh api repos/sister-software/mailwoman/actions/runs/<id>/jobs \
 
 Expected on the second run: `Compile` ≤ 15s (was 29–36s), and `Restore compiled tree` a few seconds.
 
-⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is expected. The key includes `github.sha`, so all legs of the _same_ run miss. The saving shows up on re-runs and on later pushes. If the first-run miss costs more than the re-run saving, drop `github.sha` from the key and hash the sources directly.
+⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That's expected. The key includes `github.sha`, so all legs of the _same_ run miss. The saving shows up on re-runs and on later pushes. If the first-run miss costs more than the re-run saving, drop `github.sha` from the key and hash the sources directly.
 
-- [ ] **Step 4: Confirm the cache is not blowing the quota**
+- [ ] **Step 4: Confirm the cache isn't blowing the quota**
 
 Run: `gh api repos/sister-software/mailwoman/actions/cache/usage`
 Expected: still under 8 GB after several runs. If not, tighten the key as described above and re-run the Task 1 prune.
@@ -1890,7 +1890,7 @@ If a cap wins, add it to the CI script in `package.json`:
     "ci:test:slow": "vitest --run --maxWorkers=8 mailwoman/test mailwoman/commands/geocode.test.ts resolver-wof-sqlite neural/test",
 ```
 
-If no value beats the default on either axis, **change no setting** and record the measurement in the commit message. A cap that does not help only adds configuration to maintain.
+If no value beats the default on either axis, **change no setting** and record the measurement in the commit message. A cap that doesn't help only adds configuration to maintain.
 
 - [ ] **Step 6: Commit**
 
@@ -1961,7 +1961,7 @@ Check every criterion from the spec:
 | `evidence-lexicons` PR path invariant to gazetteer size       | fixture test unchanged by a rebuild                                |
 | no net loss of assertions                                     | every law still asserted on every PR                               |
 
-⚠ Report every number, including any that miss. A criterion that is not met is a finding and must stay in the report. Say which criterion missed and by how much.
+⚠ Report every number, including any that miss. A criterion that's not met is a finding and must stay in the report. Say which criterion missed and by how much.
 
 - [ ] **Update the spec with the measured outcome**
 

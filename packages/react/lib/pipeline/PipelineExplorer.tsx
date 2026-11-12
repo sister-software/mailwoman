@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `PipelineExplorer` — the composed parse+resolve tester. Drives the injected {@link PipelineRuntime}
- *   through {@link useParsePipeline}, renders the core result (kind badge, component table, resolved
- *   place, candidate picker), and slots host-supplied panels (span highlight, tree, timing, …) around
- *   it. No model/gazetteer code here — composition + a `ClientOnly` SSR boundary only.
+ *   `PipelineExplorer` — the composed parse+resolve tester.
+ *
+ *   Drives the injected {@link PipelineRuntime} through {@link useParsePipeline},
+ *   renders the core result (kind badge, component table, resolved place, candidate picker),
+ *   and slots host-supplied panels (span highlight, tree, timing, …) around it.
+ *   No model/gazetteer code here — composition + a `ClientOnly` SSR boundary only.
  */
 
 import type { ReactNode } from "react"

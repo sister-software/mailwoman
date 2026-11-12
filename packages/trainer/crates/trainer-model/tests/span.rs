@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The span scorer's gold segmentation, partition function and gold path score, on small inputs whose answers are
 //! enumerated by hand, as the Python trainer's span-scorer test checked its module.
 

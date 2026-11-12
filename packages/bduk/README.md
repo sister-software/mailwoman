@@ -11,13 +11,13 @@ Source record: [`docs/records/research/2026-10-05-uk-infrastructure-source-audit
 Each row is one UPRN that BDUK assessed in an Open Market Review (OMR), with its postcode, its subsidy
 control status, whether it has a gigabit-capable connection now and in suppliers' plans, and the BDUK
 contracts that include it. BDUK's premises base is OS AddressBase Premium filtered to postal addresses
-that are not demolished. A UPRN the release omits is a premises that BDUK did not assess, and the release
+that are not demolished. A UPRN the release omits is a premises that BDUK didn't assess, and the release
 gives it no status.
 
 `current_gigabit` is BDUK's view from suppliers' returns to the OMR and from its own delivery data. The
 user guide states that suppliers who send no return leave gaps, and that the view can differ from
 Ofcom's and thinkbroadband's. A `false` therefore states BDUK's view rather than an observed absence of a
-network. The release names no network for commercial coverage, and its Grey/Black status covers one
+network. The release identifies no network for commercial coverage, and its Grey/Black status covers one
 qualifying network or several.
 
 ## Usage
@@ -51,7 +51,7 @@ An empty cell reads as `null`, so it stays distinct from `false` and from zero. 
 the header lacks throws `BDUKColumnError`, whose message lists each missing column. A cell outside its
 column's vocabulary or form throws `BDUKValueError`, whose message gives the value, its line and its UPRN.
 The reader also
-throws on an empty file, a repeated header label, a UPRN that is empty, longer than 12 digits or repeated
+throws on an empty file, a repeated header label, a UPRN that's empty, longer than 12 digits or repeated
 in a file, a row whose width differs from the header's, and a parsed row count that differs from the
 file's line count. A directory read throws when the directory holds no CSV file, when its files state
 different OMR months, and when a selected UPRN appears in two files.

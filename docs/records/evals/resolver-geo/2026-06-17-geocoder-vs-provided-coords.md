@@ -29,7 +29,7 @@ parse resolves to the wrong locality entirely.
 ## The direct surprise — v0 out-parses neural on this distribution
 
 Graded through the same resolver, **the rules parser (v0) beats neural on locality-match here: 96.8% vs
-90.1%** (and coord p50 3.0 vs 3.4 km). That is the **inverse** of the clean-OpenAddresses result, where
+90.1%** (and coord p50 3.0 vs 3.4 km). That's the **inverse** of the clean-OpenAddresses result, where
 neural leads 84.0% vs 82.1% (`2026-06-17-per-type-headtohead.md`).
 
 The cause, **confirmed** by a direct probe (`scripts/eval/case-check.ts`): these are **ALL-CAPS

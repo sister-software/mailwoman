@@ -4,15 +4,18 @@
 /**
  *   Per-country accuracy of two or more models on the same held-out corpus rows.
  *
- *   The regression board holds rows for the locales the model already served, so a corpus change that adds
- *   countries shows its gains only where the board happens to hold a row. This grader reads rows that
- *   `corpus split-overlay` routed to the test split and scores every arm on the same rows. Each row is parsed
- *   with its own country as the locale hint.
+ *   The regression board holds rows for the locales the model already served, so a corpus
+ *   change that adds countries shows its gains only where the board happens to hold a row.
+ *   This grader reads rows that `corpus split-overlay` routed to the test split
+ *   and scores every arm on the same rows.
+ *   Each row is parsed with its own country as the locale hint.
  *
- *   Every arm records one outcome per row, keyed by a stable row identity, so a later step can compute paired
- *   differences between the published model and a candidate. The primary outcome is exact parse correctness
- *   (`score/exact-parse`). Two diagnostics remain: a gold span counts as recovered when the parse holds its
- *   text, folded, under the same tag, and `goldRecovered` marks a row whose every gold span was recovered.
+ *   Every arm records one outcome per row, keyed by a stable row identity, so a later
+ *   step can compute paired differences between the published model and a candidate.
+ *   The primary outcome is exact parse correctness (`score/exact-parse`).
+ *
+ *   Two diagnostics remain: a gold span counts as recovered when the parse holds its text, folded,
+ *   under the same tag, and `goldRecovered` marks a row whose every gold span was recovered.
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
@@ -59,12 +62,12 @@ export interface HeldoutRow {
 export type HeldoutRowKind = "gazetteer" | "address"
 
 /**
- * What is known about whether either compared model saw a row in training.
+ * What's known about whether either compared model saw a row in training.
  *
  * - `verified_unseen`: a recorded exclusion history shows neither the published model
  *   nor the candidate trained on the row.
- * - `unseen_by_candidate`: a recorded history shows the candidate did not train on the row,
- *   while the published model did or its history is not established.
+ * - `unseen_by_candidate`: a recorded history shows the candidate didn't train on the row,
+ *   while the published model did or its history isn't established.
  *   A minimum check may read such a row.
  *   A comparative check may not, because the row favors the published model.
  * - `known_overlap`: a recorded history shows at least one of them trained on the row.
@@ -72,7 +75,7 @@ export type HeldoutRowKind = "gazetteer" | "address"
  *
  * A class other than `unknown` is assigned only from a {@linkcode ProvenanceHistory}
  * entry for the row's identity.
- * Membership in the test split is not evidence: a row moved into the test split by a
+ * Membership in the test split isn't evidence: a row moved into the test split by a
  * split repair may have been in the published model's training data.
  */
 export type HeldoutProvenance = "verified_unseen" | "unseen_by_candidate" | "known_overlap" | "unknown"
@@ -240,7 +243,7 @@ export const HELDOUT_GROUP_COLUMNS = ["source_id", "base_source_id"] as const
  * Addresses on one street or in one small place also remain separate groups
  * unless `base_source_id` links them.
  *
- * A larger unit for that shared place or source structure needs a key the corpus does not yet record.
+ * A larger unit for that shared place or source structure needs a key the corpus doesn't yet record.
  *
  * @throws When neither column holds a non-empty string: an unreadable grouping column
  * is refused rather than defaulted to the row's own identity.
@@ -319,13 +322,13 @@ export interface HeldoutSamplingRule {
 	 */
 	excludes?: { datasetID: string; version: string }
 	/**
-	 * Manifest file paths the sample did not read, such as a file that lacks a grouping column.
+	 * Manifest file paths the sample didn't read, such as a file that lacks a grouping column.
 	 */
 	skippedFiles?: string[]
 }
 
 /**
- * A frozen dataset whose groups a new sample must not draw.
+ * A frozen dataset whose groups a new sample mustn't draw.
  */
 export interface HeldoutSampleExclusion {
 	datasetID: string
@@ -572,7 +575,7 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 /**
  * Scores one parse of one row, given every node of the parse as a flat span.
  *
- * The outcome does not depend on the order of `spans`, so a parse read back from a worker
+ * The outcome doesn't depend on the order of `spans`, so a parse read back from a worker
  * or a cache scores as the tree it came from does.
  */
 export function scoreHeldoutSpans(
@@ -626,7 +629,7 @@ export function scoreHeldoutSpans(
  * A row whose source is in `capabilitySources` keeps its outcome for the capability checks.
  * The scorer totals that outcome in its country's capability cell rather than its address cell.
  *
- * A release specification names those sources through `capabilityProbeSources`.
+ * A release specification identifies those sources through `capabilityProbeSources`.
  *
  * Refuses rows that share an identity, because paired outcomes are joined by identity.
  */
@@ -764,7 +767,7 @@ const loadFromCache: HeldoutClassifierLoader = (locale, cacheRoot) =>
  * Returns `classifier` when its loader fed every required channel.
  *
  * @throws When the loader reports an unfed required channel: a degraded configuration
- * is not the product the requirements describe.
+ * isn't the product the requirements describe.
  */
 export function assertFedClassifier<T extends Pick<HeldoutClassifier, "unfedChannels">>(
 	classifier: T,
@@ -789,7 +792,7 @@ export function assertFedClassifier<T extends Pick<HeldoutClassifier, "unfedChan
  * parsing each row with the package {@linkcode HELDOUT_INFERENCE_RULE} names and recording it per row.
  *
  * @throws When a package the rows need is absent from the cache, or its loader reports an unfed
- * required channel: a degraded configuration is not the product the requirements describe.
+ * required channel: a degraded configuration isn't the product the requirements describe.
  */
 export async function scoreHeldoutWeights(
 	rows: readonly HeldoutRow[],
@@ -806,6 +809,13 @@ export async function scoreHeldoutWeights(
 		 * Called after each row with the rows scored so far and the total, for progress reporting.
 		 */
 		onRow?: (scored: number, total: number) => void
+		/**
+		 * Whether each row's country is the classifier's locale hint (`row-country`)
+		 * or no hint is passed (`none`, as the runtime pipeline parses).
+		 *
+		 * @defaultValue `"row-country"`
+		 */
+		localeHint?: "row-country" | "none"
 	} = {}
 ): Promise<HeldoutArmResult> {
 	const packages = options.packages ?? (await readHeldoutLocalePackages())
@@ -834,7 +844,7 @@ export async function scoreHeldoutWeights(
 					await classifierFor(localeFor(row))
 				).parse(row.raw, {
 					postcodeRepair: true,
-					...(row.country ? { localeHint: row.country } : {}),
+					...(row.country && options.localeHint !== "none" ? { localeHint: row.country } : {}),
 				})
 			),
 		history,

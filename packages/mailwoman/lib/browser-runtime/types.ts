@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The structural interfaces the browser runtime composes over: each `…Like` mirrors a package type by shape so a
- *   host bundle can name the classifier, the FST matcher and the parse trace while those packages stay dynamic
- *   imports on the load path.
+ *   The structural interfaces the browser runtime composes over: each `…Like` mirrors
+ *   a package type by shape so a host bundle can name the classifier, the FST matcher
+ *   and the parse trace while those packages stay dynamic imports on the load path.
  */
 
 import type { ChannelPins } from "@mailwoman/core/pipeline"

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Jaro-Winkler is the default record-linkage comparator for names. {@link nameSimilarity} adds
- *   the literature's token/edit fallback because J-W scores a compound surname's second half near zero.
+ *   Jaro-Winkler is the default record-linkage comparator for names. {@link nameSimilarity} adds the
+ *   literature's token/edit fallback because J-W scores a compound surname's second half near zero.
  */
 
 import { distance as levenshteinDistance } from "fastest-levenshtein"

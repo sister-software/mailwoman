@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The cell classifier lives in `@mailwoman/spatial`, and this layer adds the candidates-per-cell and polyfill-only zero-cell measurements the resolution is chosen from.
+ * The cell classifier lives in `@mailwoman/spatial`, and this layer adds the candidates-per-cell
+ * and polyfill-only zero-cell measurements the resolution is chosen from.
  */
 
 import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type MultiPolygonRings } from "@mailwoman/spatial"
@@ -61,7 +62,7 @@ export interface CellIndexMeasurement {
 	multiCandidateShare: number
 	/**
 	 * Features a center-in-polygon polyfill would have returned no cell for —
-	 * see {@link polyfillFindsNothing} — and `null` where the measurement did not run it.
+	 * see {@link polyfillFindsNothing} — and `null` where the measurement didn't run it.
 	 */
 	polyfillZeroCellFeatures: number | null
 	/**

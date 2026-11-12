@@ -3,15 +3,20 @@
 
 /**
  *   This module defines the shape of each operator capability.
+ *
  *   An operation has an ID and a declared effect.
  *   It accepts typed input and returns typed output.
+ *
  *   Its `run` function performs the operation.
  *   An adapter such as the private `mwops` CLI or an MCP server views a registry of operations.
  *   The adapter adds no separate logic.
  *
  *   An operation family chooses its effect union and context.
- *   Release operations are one example. Storage and shop are two others.
+ *   Release operations are one example.
+ *
+ *   Storage and shop are two others.
  *   The family binds its effect and context through {@link operationDefiner}.
+ *
  *   A call site infers input and output types from its schemas.
  *   The `run` function receives the family's context without the caller naming it.
  */
@@ -19,6 +24,33 @@
 import type { ZodType } from "zod"
 
 import type { ParseArgsOptionsConfig } from "#scripting/arguments"
+
+/**
+ * What an operation or a state machine's effect does to the world, declared rather than inferred.
+ *
+ * `external-write` marks the writes that leave this machine: a publish to npm,
+ * Hugging Face or R2, a ledger row, a Stripe call, an email.
+ */
+export const OperationEffect = {
+	/**
+	 * Reads the checkout, the data root, a database or a registry.
+	 * It makes no changes.
+	 */
+	Read: "read",
+	/**
+	 * Writes inside the checkout or the data root (a staging tree, a materialized binary, a generated surface).
+	 */
+	LocalWrite: "local-write",
+	/**
+	 * Writes to a system outside this machine.
+	 *
+	 * A release operation with this effect is irreversible and credentialed,
+	 * and only the plan → execute interface can reach it.
+	 */
+	ExternalWrite: "external-write",
+} as const
+
+export type OperationEffect = (typeof OperationEffect)[keyof typeof OperationEffect]
 
 /**
  * What every operation receives beside its input, whatever its family.

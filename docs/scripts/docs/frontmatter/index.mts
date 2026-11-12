@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared plumbing for the docs structural checks. It walks `docs/articles` and parses each page's frontmatter block.
+ *   Shared plumbing for the docs structural checks.
+ *
+ *   It walks `docs/articles` and parses each page's frontmatter block.
  *   It also derives the Docusaurus doc id.
  *
- *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only, quotes stripped, with nested values recording the key but no value — so no YAML dependency reaches the pre-install CI path.
+ *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only,
+ *   quotes stripped, with nested values recording the key but no value —
+ *   so no YAML dependency reaches the pre-install CI path.
  */
 
 // This file is reached by `check-docs-structure.ts`, which the Docs workflow runs

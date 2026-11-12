@@ -4,29 +4,32 @@
 /**
  *   USPS Publication 28 — Military / Diplomatic Post Office designators.
  *
- *   Military and diplomatic overseas addresses use a distinct addressing scheme: instead of a city
- *   name, a standardized location-class code (APO, FPO, DPO) appears on the city line, followed by
- *   the armed-forces "state" code (AA, AE, AP) and a 09xxx ZIP code. The unit/PSC/CMR line
- *   appearing above the city line identifies the specific installation unit, postal service center,
- *   or community mail room.
+ *   Military and diplomatic overseas addresses use a distinct addressing scheme: instead of a
+ *   city name, a standardized location-class code (APO, FPO, DPO) appears on the city line,
+ *   followed by the armed-forces "state" code (AA, AE, AP) and a 09xxx ZIP code.
+ *   The unit/PSC/CMR line appearing above the city line identifies the specific
+ *   installation unit, postal service center, or community mail room.
  *
  *   Sources (accessed 2026-06-12):
  *
- *   - **USPS Publication 28, Chapter 7** ("Armed Forces and Diplomatic Post Offices") defines the three
- *       armed-forces location codes and three state-code regions. The publication states: "Use APO with AA
- *       (Americas), AE (Europe/Middle East/Africa/Canada), or AP (Pacific)"; "FPO (Fleet Post
- *       Office) for Navy ships and shore installations"; "DPO (Diplomatic Post Office) for US
- *       embassies and missions." Full URL: https://pe.usps.com/text/pub28/28c7_001.htm
+ *   - **USPS Publication 28, Chapter 7** ("Armed Forces and Diplomatic Post Offices")
+ *     defines the three armed-forces location codes and three state-code regions.
+ *     The publication states: "Use APO with AA (Americas), AE (Europe/Middle East/Africa/Canada),
+ *     or AP (Pacific)"; "FPO (Fleet Post Office) for Navy ships and shore installations";
+ *     "DPO (Diplomatic Post Office) for US embassies and missions."
+ *     Full URL: https://pe.usps.com/text/pub28/28c7_001.htm
  *   - **USPS Publication 28, Appendix B** gives the complete list of accepted unit-line formats: `unit
  *       <id>`, `PSC <id> BOX <box>`, `CMR <id> BOX <box>`, and `unit <id> BOX <box>`. The same
  *       appendix notes the two-digit unit ranges for PSC/CMR/unit assignment by theater. Full URL:
  *       https://pe.usps.com/text/pub28/28apb_001.htm
- *   - The **Armed Forces "state" codes** (AA, AE, AP) are defined in the same USPS appendix and are
- *       also the official USPS abbreviations for the three Armed Forces addressing regions. See:
+ *   - The **Armed Forces "state" codes** (AA, AE, AP) are defined in the same USPS appendix
+ *     and are also the official USPS abbreviations for the three Armed Forces addressing regions.
+ *     See:
  *       https://pe.usps.com/text/pub28/28apb_002.htm
- *   - "DPO" for Diplomatic Post Offices was added as a distinct code in 2011 (USPS Customer/ Industry
- *       Notice 61). It does not replace APO in diplomatic mail — both exist, with DPO used
- *       specifically for State Department overseas posts and APO/FPO retained for DoD.
+ *   - "DPO" for Diplomatic Post Offices was added as a distinct code in 2011
+ *     (USPS Customer/ Industry Notice 61).
+ *     It doesn't replace APO in diplomatic mail — both exist, with DPO used specifically
+ *     for State Department overseas posts and APO/FPO retained for DoD.
  *
  * @see {@link https://pe.usps.com/text/pub28/28c7_001.htm USPS Pub 28 Chapter 7 — Military Addresses}
  * @see {@link https://pe.usps.com/text/pub28/28apb_001.htm USPS Pub 28 Appendix B — Armed Forces Addresses}

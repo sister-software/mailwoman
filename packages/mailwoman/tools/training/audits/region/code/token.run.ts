@@ -4,7 +4,8 @@
 /**
  *   Counts what a two-letter uppercase token teaches over one epoch, and prints the codes read both ways.
  *
- *   Usage: node packages/mailwoman/tools/training/audits/region/code/token.run.ts <config> [--json <path>] [--draws <n>]
+ *   Usage: node packages/mailwoman/tools/training/audits/region/code/token.run.ts
+ *   <config> [--json <path>] [--draws <n>]
  */
 
 import { censusArguments, runMixtureCensus } from "../../census.ts"

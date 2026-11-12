@@ -3,6 +3,7 @@
 
 /**
  *   Normalizes CJK punctuation and width variants without transliterating names or numeral kanji.
+ *
  *   Offset-map entries for contracted half-width katakana point to the first source unit.
  */
 

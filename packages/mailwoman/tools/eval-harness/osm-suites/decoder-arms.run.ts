@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Replays the suite rows under decoder arms over one traced parse's emissions, and counts the rows each arm fixes and
- *   breaks against the shipped BIO masks.
+ *   Replays the suite rows under decoder arms over one traced parse's emissions,
+ *   and counts the rows each arm fixes and breaks against the shipped BIO masks.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/osm-suites/decoder-arms.run.ts --suites /mnt/mw/corpus/heldout/osm-suites \
  *     --arm <weights cache> --replay-rows <V54 rows.jsonl> --failures <failure-list.json> \
  *     --transitions <crf-transitions.json> --out <directory>
  *
- *   Each row is parsed once with the trace on. Its post-prior emissions are decoded using only the BIO masks (the
- *   shipped decode), under the masks plus the fitted transitions at temperatures 0.5, 1 and 2, and by the cardinality
- *   filter over the 20 best masked paths. Each path is compared with the gold labels as `replay.ts` compares them. The
- *   cardinality arm is also parsed in full with `cardinalityFilter` and graded exactly. A row's population (both
- *   seeds fail, both pass) comes from the V54 replay's rows, and its families from the failure list.
+ *   Each row is parsed once with the trace on.
+ *   Its post-prior emissions are decoded using only the BIO masks (the shipped decode),
+ *   under the masks plus the fitted transitions at temperatures 0.5, 1 and 2,
+ *   and by the cardinality filter over the 20 best masked paths.
+ *
+ *   Each path is compared with the gold labels as `replay.ts` compares them.
+ *   The cardinality arm is also parsed in full with `cardinalityFilter` and graded exactly.
+ *
+ *   A row's population (both seeds fail, both pass) comes from the V54 replay's rows,
+ *   and its families from the failure list.
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"

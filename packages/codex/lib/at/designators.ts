@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators an Austrian address uses: the Postfach, floors, and the relation words of a query. The
- *   floor and relation words are the German ones.
+ *   The designators an Austrian address uses: the Postfach, floors, and the relation words of a query.
+ *   The floor and relation words are the German ones.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/autEn.pdf UPU, Austria addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/in_der_Nähe Wiktionary, in der Nähe}

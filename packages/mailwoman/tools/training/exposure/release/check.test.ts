@@ -33,7 +33,7 @@ describe("exposure release check", () => {
 	test("the completed-run check reads realized draws only", () => {
 		const floors = { "streetless-premise-identity": { floor: 1000, evidence: "exposure-curve-ru.json" } }
 
-		// An expectation is not substituted for an unlogged realization.
+		// An expectation isn't substituted for an unlogged realization.
 		expect(completedRun(report("replayed_draws", { streetless: 5000 }), CLAIM, floors)[0]!.verdict).toBe(
 			Verdict.Unmeasured
 		)

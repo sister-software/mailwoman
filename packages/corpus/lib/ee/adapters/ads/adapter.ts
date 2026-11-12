@@ -2,47 +2,55 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ads`: Estonia's INSPIRE Addresses (AD) theme, published by Maa- ja Ruumiamet out of the
- * Aadressiandmete süsteem.
+ * `ads`: Estonia's INSPIRE Addresses (AD) theme, published by Maa- ja Ruumiamet
+ * out of the Aadressiandmete süsteem.
  *
- * Input is newline-delimited GeoJSON: one `AD_Address:AD.Address` feature per line, as the service's
- * `outputFormat=application/json` writes them. A page of the service is a `FeatureCollection`, and the
- * acquisition step appends each page's `features` to the file, so the adapter streams a 729,973-feature
- * extract without holding a page in memory.
+ * Input is newline-delimited GeoJSON: one `AD_Address:AD.Address` feature per line,
+ * as the service's `outputFormat=application/json` writes them.
+ * A page of the service is a `FeatureCollection`, and the acquisition step appends each page's `features`
+ * to the file, so the adapter streams a 729,973-feature extract without holding a page in memory.
  *
- * GeoServer flattens the INSPIRE application schema here, so every component value arrives inline on
- * the feature's `properties` and the adapter resolves no reference. The county, the municipality, the
- * settlement unit, the address area, the thoroughfare and the postal descriptor each occupy one of six
- * fixed `component<n>_xlink_title` slots. An unused slot holds the string `unpopulated` rather than a
- * void object. The slot a value lands in is fixed: slot 1 holds the county, slot 2 the municipality,
- * slot 3 the settlement unit, slot 4 the address area, slot 5 the thoroughfare and slot 6 the postal
- * descriptor.
+ * GeoServer flattens the INSPIRE application schema here, so every component value arrives
+ * inline on the feature's `properties` and the adapter resolves no reference.
+ * The county, the municipality, the settlement unit, the address area, the thoroughfare
+ * and the postal descriptor each occupy one of six fixed `component<n>_xlink_title` slots.
  *
- * The field whose name matches the INSPIRE designator holds an internal ADS code, and the house
- * number sits in the locator's name-spelling element. Estonia writes that ADS code in
- * `locator_addresslocator_designator_locatordesignator_designator` (`7_1DOW`, `7_3P4Y`, `6_0MU3`).
- * The human-readable number is in `locator_addresslocator_name_locatorname_name_spelling_text`. The
- * designator's own type states `addressNumber` on the street rows, so that field is tempting to
- * read. A reader that takes it would stamp `7_1DOW` as the house number on every row.
+ * An unused slot holds the string `unpopulated` rather than a void object.
+ * The slot a value lands in is fixed: slot 1 holds the county, slot 2 the municipality, slot 3 the
+ * settlement unit, slot 4 the address area, slot 5 the thoroughfare and slot 6 the postal descriptor.
  *
- * The locator name takes one of two roles, and the feature's structure decides which. A feature that
- * holds a thoroughfare or an address area writes its number there, and one that holds neither writes
- * the farm or building name that designates the addressable unit. The two never co-occur. The adapter
- * therefore reads `house_number` where a thoroughfare element exists and `venue` where none does, so a
- * farm name never arrives labeled as a number.
+ * The field whose name matches the INSPIRE designator holds an internal ADS code,
+ * and the house number sits in the locator's name-spelling element.
+ * Estonia writes that ADS code in `locator_addresslocator_designator_locatordesignator_designator`
+ * (`7_1DOW`, `7_3P4Y`, `6_0MU3`).
  *
- * Slots 4 and 5 hold a malformed `href`: it addresses the `AU_haldusyksused` workspace with an
- * `AD_Address` type and answers HTTP 400 `Unknown namespace [AD_Address]`. The adapter reads the slot's
- * `title` and never follows an `href`.
+ * The human-readable number is in `locator_addresslocator_name_locatorname_name_spelling_text`.
+ * The designator's own type states `addressNumber` on the street rows, so that field is tempting to read.
+ *
+ * A reader that takes it would stamp `7_1DOW` as the house number on every row.
+ *
+ * The locator name takes one of two roles, and the feature's structure decides which.
+ * A feature that holds a thoroughfare or an address area writes its number there, and one
+ * that holds neither writes the farm or building name that designates the addressable unit.
+ *
+ * The two never co-occur.
+ * The adapter therefore reads `house_number` where a thoroughfare element exists
+ * and `venue` where none does, so a farm name never arrives labeled as a number.
+ *
+ * Slots 4 and 5 hold a malformed `href`: it addresses the `AU_haldusyksused` workspace
+ * with an `AD_Address` type and answers HTTP 400 `Unknown namespace [AD_Address]`.
+ * The adapter reads the slot's `title` and never follows an `href`.
  *
  * A row with no thoroughfare element is the ordinary rural case rather than a defect.
  *
- * Maa- ja Ruumiamet's dataset record states Creative Commons CC0 1.0 in `otherConstraints`. The
- * address-source register elected that license and records it under `spdx` as `CC0-1.0`. CC0 reserves no act, so the
- * adapter stamps that label on every row and the model card needs no attribution clause, although
- * crediting the publisher stays good practice.
+ * Maa- ja Ruumiamet's dataset record states Creative Commons CC0 1.0 in `otherConstraints`.
+ * The address-source register elected that license and records it under `spdx` as `CC0-1.0`.
  *
- * The adapter honors `opts.limit` and `opts.signal`. `opts.country` is optional and accepts only `EE`.
+ * CC0 reserves no act, so the adapter stamps that label on every row and the model card
+ * needs no attribution clause, although crediting the publisher stays good practice.
+ *
+ * The adapter honors `opts.limit` and `opts.signal`.
+ * `opts.country` is optional and accepts only `EE`.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -65,7 +73,7 @@ export const ADS_ADAPTER_ID = "ads"
  * The one jurisdiction this adapter emits.
  *
  * The service covers Estonia whole, so the set has one member and `opts.country` either
- * matches `EE` or asks for a jurisdiction the dataset does not publish.
+ * matches `EE` or asks for a jurisdiction the dataset doesn't publish.
  */
 export const ADS_COUNTRIES: readonly string[] = ["EE"]
 
@@ -204,7 +212,7 @@ export function createADSAdapter(): CorpusAdapter {
 				} else if (locatorName) {
 					// With no thoroughfare the locator name is the site or building name
 					// that designates the addressable unit.
-					// That is how a rural Estonian address works.
+					// That's how a rural Estonian address works.
 					components.venue = locatorName
 				}
 

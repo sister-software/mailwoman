@@ -13,9 +13,9 @@
  *   (`Brook`, `Copse`, `Dell`, `Hollow`, `Spinney`) that read as thoroughfare types in the UK and
  *   essentially nowhere else.
  *
- *   So detection is, like French, a whole-token match — {@link isBritishStreetWord} asks "is this
- *   token a known British thoroughfare word" rather than testing a suffix — because these are
- *   distinct trailing words rather than fused endings.
+ *   So detection is, like French, a whole-token match — {@link isBritishStreetWord} asks
+ *   "is this token a known British thoroughfare word" rather than testing a suffix —
+ *   because these are distinct trailing words rather than fused endings.
  */
 
 /**
@@ -86,7 +86,7 @@ const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)
  * `Crescent`, `Mews`, `Close`, `Road`.
  *
  * Matches the whole token rather than a suffix, so an unrelated place name
- * (`Tokyo`, `Bordeaux`) is not flagged the way an `-endsWith` test might.
+ * (`Tokyo`, `Bordeaux`) isn't flagged the way an `-endsWith` test might.
  */
 export function isBritishStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false

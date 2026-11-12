@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Explains a query that resolved to no place and suggests which component, such as a city or a
- *   state, the visitor could add.
+ *   Explains a query that resolved to no place and suggests which component,
+ *   such as a city or a state, the visitor could add.
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"

@@ -4,9 +4,11 @@
 /**
  *   Prune a tokenizer's unused pieces and the int8 model's matching embedding rows.
  *
- *   `--train-counts` is the per-piece count `utilization.run.ts` writes; `--eval-fired` is a JSON file whose
- *   `fired_ids` lists the pieces the evaluation surface uses. The tool writes `tokenizer.model`, `model.onnx`,
- *   `id-map.json` and `prune-report.json` under `--out-dir`. `verify.run.ts prune` then checks the result.
+ *   `--train-counts` is the per-piece count `utilization.run.ts` writes; `--eval-fired`
+ *   is a JSON file whose `fired_ids` lists the pieces the evaluation surface uses.
+ *   The tool writes `tokenizer.model`, `model.onnx`, `id-map.json`
+ *   and `prune-report.json` under `--out-dir`.
+ *   `verify.run.ts prune` then checks the result.
  *
  *   Usage: `node packages/mtf/tools/tokenizer/prune.run.ts --tokenizer <model> --onnx <int8 onnx>
  *   --train-counts <json> --eval-fired <json> --out-dir <dir>`

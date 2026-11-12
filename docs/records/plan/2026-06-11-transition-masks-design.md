@@ -20,14 +20,14 @@ matrix (which is structural-BIO-only today). Candidate first rows, each with mea
 
 ## The pre-registered failure mode (DeepSeek, 2026-06-10 — the one keeper from that consult)
 
-The rule that forbids `I-postcode → B-street` does not make the orphan digit correct — it forces the
+The rule that forbids `I-postcode → B-street` doesn't make the orphan digit correct — it forces the
 probability somewhere, and the most likely refuge is `I-postcode`: the digit gets ABSORBED INTO
 the postcode, corrupting it worse than the split did ("4711" + street "0 …" at least kept four
 correct digits; "47110…" absorbing a house number corrupts every digit of the field). Any transition-
 mask implementation must ship with this as a regression TEST CASE: the FR digit-split rows +
 the glue rows, asserted not-worse under the mask.
 
-## Why it is not being built tonight
+## Why it isn't being built tonight
 
 1. The motivating classes are now covered upstream: the digit-split died with the #511 relabel
    (in-weights, measured 6→2 FR misses with no mask), and the glue class died with the #513

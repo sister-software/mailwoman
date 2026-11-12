@@ -4,10 +4,13 @@
 /**
  *   Publishes a package for the first time and configures its npm trusted publisher.
  *
- *   The npm CLI handles the second factor. Each write runs with `--no-browser` and this terminal's stdio,
- *   so npm prints its approval URL here and polls while the operator approves it on any machine. This
- *   module also copies the URL to the terminal clipboard over OSC 52. Each write needs its own approval,
- *   because `npm trust` accepts no `--otp` flag. After trust is configured, CI publishes over OIDC.
+ *   The npm CLI handles the second factor.
+ *   Each write runs with `--no-browser` and this terminal's stdio, so npm prints its
+ *   approval URL here and polls while the operator approves it on any machine.
+ *
+ *   This module also copies the URL to the terminal clipboard over OSC 52.
+ *   Each write needs its own approval, because `npm trust` accepts no `--otp` flag.
+ *   After trust is configured, CI publishes over OIDC.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -126,7 +129,7 @@ async function runNPMWrite(task: ProcessTask, log: (line: string) => void): Prom
 }
 
 /**
- * Throws when the workflow file does not exist in this repository.
+ * Throws when the workflow file doesn't exist in this repository.
  *
  * The registry accepts a trust config for any workflow file name without checking that the file exists.
  * A wrong name then fails every CI publish with a bare `E404 Not Found - PUT`.
@@ -203,7 +206,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	// The packer also rewrites the development `exports` map for consumers.
 	await packWorkspaceForPublish(dir, tgz)
 
-	// A local workspace may lack derived binaries when the build has not produced
+	// A local workspace may lack derived binaries when the build hasn't produced
 	// them. npm accepts the resulting incomplete tarball.
 	// Published versions are immutable, so the audit runs before the publish.
 	const audit = verifyTarball(tgz)
@@ -255,7 +258,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 
 	// An existing-config check with `npm trust list` would need its own second factor,
 	// so the write runs unconditionally.
-	// A failure does not block the remaining publishes.
+	// A failure doesn't block the remaining publishes.
 	// Npm has already printed the reason, so the log adds only the retry command.
 	try {
 		await runNPMWrite(npmWrite(args), log)
@@ -293,7 +296,7 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 	}
 
 	// Every directory is checked before the first publish.
-	// A first publish can target a package that the release list does not include,
+	// A first publish can target a package that the release list doesn't include,
 	// so this is where a held-out workspace would otherwise leak.
 	for (const dir of options.dirs) {
 		assertWorkspacePublishable(dir)

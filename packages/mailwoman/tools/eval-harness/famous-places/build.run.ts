@@ -4,16 +4,20 @@
 /**
  *   Builds the frozen famous-places fixture from the Wikidata query service.
  *
- *   Usage:
- *   node packages/mailwoman/tools/eval-harness/famous-places/build.run.ts [--out <jsonl>]
+ *   Usage: node packages/mailwoman/tools/eval-harness/famous-places/build.run.ts [--out <jsonl>]
  *
- *   The entities are the capital of every sovereign state (`P36`, the country taken from the state), a hand-picked
- *   list of landmark articles on the English Wikipedia, and the most written-about national parks, waterfalls,
- *   canyons and geysers by `wikibase:sitelinks`, the number of Wikipedia language editions with an article. Each
- *   entity is written bare in English, with its country, and in its country's language where that label differs.
- *   Coordinates come from `P625`. Wikidata data is CC0.
+ *   The entities are the capital of every sovereign state (`P36`, the country taken from the state),
+ *   a hand-picked list of landmark articles on the English Wikipedia, and the most
+ *   written-about national parks, waterfalls, canyons and geysers by `wikibase:sitelinks`,
+ *   the number of Wikipedia language editions with an article.
+ *   Each entity is written bare in English, with its country, and in its country's
+ *   language where that label differs.
  *
- *   The output is a frozen fixture: it is rebuilt deliberately and committed, because Wikidata changes daily.
+ *   Coordinates come from `P625`.
+ *   Wikidata data is CC0.
+ *
+ *   The output is a frozen fixture: it is rebuilt deliberately and committed,
+ *   because Wikidata changes daily.
  */
 
 import { setTimeout as sleep } from "node:timers/promises"
@@ -231,7 +235,7 @@ const LANDMARK_TITLES = [
 /**
  * The natural-feature groups ranked by language-edition count.
  *
- * A large class times out when walked by subclass, so each names its classes directly.
+ * A large class times out when walked by subclass, so each identifies its classes directly.
  */
 const NATURAL_GROUPS: Array<{ kind: string; selection: string; limit: number }> = [
 	{ kind: "national-park", selection: "?item wdt:P31 wd:Q46169.", limit: 30 },

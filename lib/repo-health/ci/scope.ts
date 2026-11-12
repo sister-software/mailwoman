@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Selects CI suites from changed workspaces and their transitive consumers.
  *
@@ -8,10 +11,14 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, isAbsolute, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
+
+import { type RuntimeReads, summarizeRuntimeReads } from "#repo-health/ci/runtime-reads"
+import { readImportedPaths } from "#repo-health/effects/census"
 
 /**
  * A workspace records the dependencies used to select its consumers.
@@ -21,11 +28,10 @@ export interface CIWorkspace {
 	directory: string
 	dependencies: string[]
 	/**
-	 * Tests whose syntax imports runtime-input access.
-	 *
-	 * These retain the workspace's transitive inputs in addition to their module imports.
+	 * What each of the workspace's modules may read at runtime, by repository-relative path,
+	 * for each module that reads a file outside its imports.
 	 */
-	runtimeTests?: string[]
+	runtimeReads?: Record<string, RuntimeReads>
 }
 
 /**
@@ -37,6 +43,11 @@ export interface CIScope {
 	affected: string[]
 	fastFiles: string[]
 	slowFiles: string[]
+	/**
+	 * The selected test files that read under the data root.
+	 * Only a `mailwoman-data` runner holds the data root.
+	 */
+	dataRootFiles: string[]
 	fast: boolean
 	slow: boolean
 	earth: boolean
@@ -112,58 +123,9 @@ function excludedFromRootTests(file: string): boolean {
 	)
 }
 
-const RUNTIME_INPUT_MODULE =
-	/^(?:@mailwoman\/core\/(?:fs|module|paths|data-root)(?:\/|$)|node:(?:fs|child_process|sqlite)(?:\/|$))/u
-
-function hasRuntimeInputAccess(source: ts.SourceFile): boolean {
-	let found = false
-
-	const visit = (node: ts.Node): void => {
-		if (found) return
-
-		if (ts.isIdentifier(node) && node.text === "JSONSpliterator") {
-			found = true
-
-			return
-		}
-
-		if (
-			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
-			node.moduleSpecifier &&
-			ts.isStringLiteral(node.moduleSpecifier) &&
-			RUNTIME_INPUT_MODULE.test(node.moduleSpecifier.text)
-		) {
-			found = true
-
-			return
-		}
-
-		if (ts.isCallExpression(node)) {
-			const argument = node.arguments[0]
-
-			if (
-				(node.expression.kind === ts.SyntaxKind.ImportKeyword ||
-					(ts.isIdentifier(node.expression) && node.expression.text === "require")) &&
-				argument &&
-				ts.isStringLiteral(argument) &&
-				RUNTIME_INPUT_MODULE.test(argument.text)
-			) {
-				found = true
-
-				return
-			}
-		}
-
-		ts.forEachChild(node, visit)
-	}
-
-	visit(source)
-
-	return found
-}
-
 /**
- * Reads manifest dependencies and literal source imports, including imports in tests.
+ * Reads manifest dependencies and literal source imports, including imports in tests,
+ * and what each module may read at runtime outside its imports.
  */
 export async function readCIWorkspaces(repoRoot: string, files: readonly string[]): Promise<CIWorkspace[]> {
 	const directories = await readWorkspaceDirectories(repoRoot)
@@ -198,6 +160,8 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 	}
 
 	const queue = files.filter((file) => /\.[cm]?[jt]sx?$/u.test(file) && workspaceForFile(file, workspaces))
+	const importedPathsOf = await readImportedPaths({ repoRoot, trackedFiles: files })
+	const packageDirectories = new Map(workspaces.map((workspace) => [workspace.name, workspace.directory]))
 
 	await Promise.all(
 		Array.from({ length: 8 }, async () => {
@@ -211,8 +175,24 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					true
 				)
 
-				if (/\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(file) && hasRuntimeInputAccess(source)) {
-					;(owner.runtimeTests ??= []).push(file)
+				const declaredLoads = new Set<string>()
+
+				const reads = summarizeRuntimeReads(source, file, {
+					repoRoot,
+					packageDirectories,
+					importedPaths: importedPathsOf(file),
+					declared: declaredLoads,
+				})
+
+				if (reads) {
+					;(owner.runtimeReads ??= {})[file] = reads
+				}
+
+				// A declared path that doesn't exist would match no change and drop the tests that depend on it.
+				for (const declared of declaredLoads) {
+					if (!(await pathExists(resolvePath(repoRoot, declared)))) {
+						throw new Error(`${file} declares effect-loads: ${declared}, and no such path exists in the checkout`)
+					}
 				}
 
 				const addImport = (specifier: string): void => {
@@ -256,6 +236,21 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 	)
 
 	return workspaces
+}
+
+/**
+ * The test files among `selected` whose runtime reads reach under the data root.
+ */
+export function dataRootReaders(workspaces: readonly CIWorkspace[], selected: readonly string[]): string[] {
+	const readers = new Set(
+		workspaces.flatMap((workspace) =>
+			Object.entries(workspace.runtimeReads ?? {})
+				.filter(([, reads]) => reads.dataRoot)
+				.map(([file]) => file)
+		)
+	)
+
+	return [...new Set(selected)].filter((file) => readers.has(file)).toSorted()
 }
 
 /**
@@ -353,6 +348,7 @@ export function selectCIScope(
 		affected: affectedDirectories,
 		fastFiles,
 		slowFiles,
+		dataRootFiles: dataRootReaders(workspaces, [...fastFiles, ...slowFiles]),
 		fast: full || fastFiles.length > 0,
 		slow: full || slowFiles.length > 0,
 		earth: has("@mailwoman/earth"),

@@ -2,7 +2,7 @@
 
 **Goal:** add a resolver layer that takes parsed components and resolves them to canonical place identifiers + coordinates, with source provenance threaded through the output. The parser and geocoder share one representation — the same `AddressTree` the decoder already produces, decorated in-place.
 
-**Status:** opened 2026-05-20, supersedes the [original sketch](#changelog). Phases 0–3 have shipped (`@mailwoman/neural@2.1.0` on npm, with the CLI + per-component policy live). Real-world deployment has not yet generated feedback, but the team has accepted the architectural risk of beginning Phase 4 work now so that the output shape (`src` attr already reserved on the XML serializer) can land before downstream consumers depend on its absence.
+**Status:** opened 2026-05-20, supersedes the [original sketch](#changelog). Phases 0–3 have shipped (`@mailwoman/neural@2.1.0` on npm, with the CLI + per-component policy live). Real-world deployment hasn't yet generated feedback, but the team has accepted the architectural risk of beginning Phase 4 work now so that the output shape (`src` attr already reserved on the XML serializer) can land before downstream consumers depend on its absence.
 
 **Branch:** sub-phase branches off `main` (`feature/phase-4-<increment>`). Each sub-phase ships independently.
 
@@ -14,7 +14,7 @@ Three forcing functions:
 
 1. **The XML serializer already reserves the `src` attribute** (serialize-xml.ts:18 `../../core/decoder/serialize-xml.ts`). The TODO comment is a public commitment. A release that adds the attr is non-breaking only because consumers don't depend on its absence _yet_. Every release that goes out without `src` makes the eventual flip costlier.
 2. **The neural classifier emits proposals with `source` + `source_id` fields that the decoder discards.** That's free debugging signal we're throwing away.
-3. **Resolver feedback into parsing was the project creator's original vision** (per `reference/ARCHITECTURE.md`'s opening). The resolver is not bolted on — it shares the `AddressTree` representation.
+3. **Resolver feedback into parsing was the project creator's original vision** (per `reference/ARCHITECTURE.md`'s opening). The resolver isn't bolted on — it shares the `AddressTree` representation.
 
 ## Architecture decision: Option B (SQLite FTS5 + WOF SQLite)
 

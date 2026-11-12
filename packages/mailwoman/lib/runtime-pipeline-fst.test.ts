@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   FST-distribution arc (2026-07-25): the runtime pipeline's weights-FST auto-load. The classifier
- *   exposes the sibling path (`fstPath`); `createRuntimePipeline` deserializes + wires it as the
- *   default gazetteer on the first call (lazy), with `fst: false` as the byte-stable opt-out.
+ *   FST-distribution arc (2026-07-25): the runtime pipeline's weights-FST auto-load.
+ *
+ *   The classifier exposes the sibling path (`fstPath`); `createRuntimePipeline`
+ *   deserializes + wires it as the default gazetteer on the first call (lazy),
+ *   with `fst: false` as the byte-stable opt-out.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

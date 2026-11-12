@@ -60,7 +60,7 @@ const YEARLY_PLAN = planOrThrow("commercial-yearly-v1")
 
 /**
  * The monthly plan's headline price, e.g. `$250`, derived from `SHOP_PLANS` so a price change reaches
- * the card and Stripe together and a card can never advertise a number the checkout does not charge.
+ * the card and Stripe together and a card can never advertise a number the checkout doesn't charge.
  */
 export const PRICE_MONTHLY = formatAmount(MONTHLY_PLAN.unitAmount, MONTHLY_PLAN.currency)
 

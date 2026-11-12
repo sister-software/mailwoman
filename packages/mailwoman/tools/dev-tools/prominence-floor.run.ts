@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The prominence-floor benchmark asks whether a `minWinningScore` floor reduces invented selections
- *   in every population band. It also checks whether the reduction occurs only where the gold is large enough to clear the floor.
+ *   The prominence-floor benchmark asks whether a `minWinningScore` floor reduces
+ *   invented selections in every population band.
+ *
+ *   It also checks whether the reduction occurs only where the gold is large enough to clear the floor.
  *
  *   Four phases, run separately so the expensive one happens once:
  *

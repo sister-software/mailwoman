@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The bare-toponym admin race. This is the policy for a query that is one bare name ("Japan",
- *   "Georgia"). The locality placetype filter makes country/region namesakes unreachable at any
- *   rank, so the resolver's lookup runs these side races for the tree's lone locality-tagged span
- *   and promotes an admin namesake under the rules each prober documents. Split from `resolve.ts`
- *   so the walk file holds the walk and this one holds the race policy.
+ *   The bare-toponym admin race.
+ *
+ *   This is the policy for a query that's one bare name ("Japan", "Georgia").
+ *   The locality placetype filter makes country/region namesakes unreachable at any rank,
+ *   so the resolver's lookup runs these side races for the tree's lone locality-tagged span
+ *   and promotes an admin namesake under the rules each prober documents.
+ *
+ *   Split from `resolve.ts` so the walk file holds the walk and this one holds the race policy.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -71,7 +74,7 @@ export function pickLargerAdmin(country: ResolvedPlace | null, region: ResolvedP
  * Alias roles the side races refuse to answer through.
  *
  * A lone bare token that only reaches a place via an abbreviation row ("Tó" folds onto Toledo's "TO")
- * or a translation-gloss row did not identify that place.
+ * or a translation-gloss row didn't identify that place.
  * The role-NULL exonym tier stays open, so 格鲁吉亚 can win the country race through its display-name alias.
  *
  * An artifact without the role column ignores the exclusion and the races behave as before.

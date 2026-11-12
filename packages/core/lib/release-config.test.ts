@@ -3,12 +3,15 @@
 
 /**
  *   This test covers two derivations from `release.config.json`.
+ *
  *   It also checks the invariant formerly enforced by a lint check.
  *
  *   `WEIGHTS_PACKAGE_BY_COUNTRY` used to be a hand-written table in the coverage census.
  *   `repo-health`'s `locale-tables` check guarded against a second copy of the config lists.
+ *
  *   The census omitted `ja-jp` and `zh-cn` after the config began shipping them.
  *   Consumers then read those omissions as countries without weight packages.
+ *
  *   The table is now derived from the config, so this test checks that derivation for every shipping locale.
  */
 
@@ -49,7 +52,7 @@ describe("weightsPackageByCountry", () => {
 
 	it("contributes nothing for a tag with no region, rather than a blank key", () => {
 		// The census would report a blank key as a country.
-		// A blank key does not identify a country.
+		// A blank key doesn't identify a country.
 		expect([...weightsPackageByCountry({ locales: ["en", "fr-fr"] }).keys()]).toEqual(["FR"])
 	})
 

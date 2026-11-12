@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regression tests for the `bounds` camera path: an animated `fitBounds` must omit the `duration` KEY, since
- *   maplibre's `Camera.flyTo` branches on `'duration' in options` and an undefined value coerces to `NaN`.
+ *   Regression tests for the `bounds` camera path: an animated `fitBounds` must omit the
+ *   `duration` KEY, since maplibre's `Camera.flyTo` branches on `'duration' in options`
+ *   and an undefined value coerces to `NaN`.
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"

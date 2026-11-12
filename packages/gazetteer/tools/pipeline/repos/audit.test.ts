@@ -4,8 +4,9 @@
 /**
  *   The repos-root audit, against fixture trees.
  *
- *   Every clone sits at `<root>/<name>`. The audit's other job is reporting each directory that is not a clone,
- *   because the admin ingest globs the whole root and reads a stray's GeoJSON as well.
+ *   Every clone sits at `<root>/<name>`.
+ *   The audit's other job is reporting each directory that's not a clone, because the
+ *   admin ingest globs the whole root and reads a stray's GeoJSON as well.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

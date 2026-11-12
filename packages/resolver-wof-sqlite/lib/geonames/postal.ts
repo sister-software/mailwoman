@@ -2,18 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fold GeoNames postcode rows into a WOF or unified postcode extract as first-class `postalcode`
- *   places for countries whose WOF postalcode repos do not exist.
+ *   Fold GeoNames postcode rows into a WOF or unified postcode extract as first-class
+ *   `postalcode` places for countries whose WOF postalcode repos do not exist.
  *
  *   Two laws are enforced here in code rather than in a runbook.
  *
- *   1. The name law. A postcode row's `name` is stored in the sanitized-query token shape with
- *      every non-letter and non-number stripped. `sanitizeFTSQuery` reduces the parsed token to
- *      that shape at lookup time. A stored `"110 00"` or `"11-041"` can never match the
- *      query `"11000"` or `"11041"`. The display form is preserved as an alt row in `names`.
- *   2. The medoid law. A postcode whose rows contain scattered points has no single true center.
- *      Their average puts the code somewhere no address is. The medoid is the member point
- *      nearest the group's mean.
+ *   1. The name law.
+ *      A postcode row's `name` is stored in the sanitized-query token shape with
+ *      every non-letter and non-number stripped.
+ *      `sanitizeFTSQuery` reduces the parsed token to that shape at lookup time.
+ *      A stored `"110 00"` or `"11-041"` can never match the query `"11000"` or `"11041"`.
+ *      The display form is preserved as an alt row in `names`.
+ *   2. The medoid law.
+ *      A postcode whose rows contain scattered points has no single true center.
+ *      Their average puts the code somewhere no address is.
+ *      The medoid is the member point nearest the group's mean.
  *
  *   `build-unified-wof --geonames-postal-countries`, standalone folds and the `mailwoman
  *   gazetteer` commands share one implementation. The GeoNames postal dump is
@@ -76,7 +79,7 @@ export interface MedoidSupport {
 	 * Distinct coordinates among them.
 	 *
 	 * One means every row refers to the same point.
-	 * In a dump whose coordinates are computed, that is one value inherited N times
+	 * In a dump whose coordinates are computed, that's one value inherited N times
 	 * rather than N sources agreeing.
 	 */
 	distinctPoints: number
@@ -222,7 +225,7 @@ export async function ingestGeonamesPostal(
 	)
 
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', ?, '', 0)`
+		`INSERT INTO names (id, name, placetype, country, language, lastmodified, source) VALUES (?, ?, 'postalcode', ?, '', 0, 'geonames')`
 	)
 
 	let nextID = GEONAMES_POSTAL_ID_BASE

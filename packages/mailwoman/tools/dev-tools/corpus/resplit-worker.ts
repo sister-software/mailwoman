@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `parallelMapWorkers` handler behind `resplit.run.ts`. Each worker thread reads the retention table at the
- *   path in its `userData` once. It then splits every file dispatched to it with `splitOverlaySlice`, its DuckDB
+ *   The `parallelMapWorkers` handler behind `resplit.run.ts`.
+ *
+ *   Each worker thread reads the retention table at the path in its `userData` once.
+ *   It then splits every file dispatched to it with `splitOverlaySlice`, its DuckDB
  *   instance held to the threads and memory the coordinator gave each worker.
  */
 

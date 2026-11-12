@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Branded identifier types. A brand is a declaration-only unique symbol, so a branded value is a plain string at
- *   runtime and the compiler refuses to pass one namespace's code where another's is expected.
+ *   Branded identifier types.
  *
- *   A branded value records that a validator accepted it under a documented profile at the time of the call. The
- *   issuing authority's later assignments are outside what the brand records.
+ *   A brand is a declaration-only unique symbol, so a branded value is a plain string at runtime
+ *   and the compiler refuses to pass one namespace's code where another's is expected.
+ *
+ *   A branded value records that a validator accepted it under a documented profile at the time of the call.
+ *   The issuing authority's later assignments are outside what the brand records.
  */
 
 /**

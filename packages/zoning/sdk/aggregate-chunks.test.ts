@@ -4,15 +4,18 @@
 /**
  *   The chunk merge is the part of the batched path a fixture build cannot reach.
  *
- *   These two merges produce a well-formed but wrong artifact when they fail. Neither would fail
- *   anything else.
+ *   These two merges produce a well-formed but wrong artifact when they fail.
+ *   Neither would fail anything else.
  *
- *   1. coverage counts ADD rather than replace. A coverage cell straddles chunk boundaries, so taking the
- *      last chunk's value reports the cell as holding only the last range's polygons.
- *   2. crosswalk pairs merge AS A union. A mapping that is not a function can look like one inside any single
- *      chunk — Cork County Council's `Special Policy Area` takes 14 generic types across the county.
- *      A chunk holding a prefix of its feature IDs may have seen one. A per-chunk verdict would report the
- *      mapping as a function and license an edge table the publisher never authored.
+ *   1. coverage counts ADD rather than replace.
+ *      A coverage cell straddles chunk boundaries, so taking the last chunk's value
+ *      reports the cell as holding only the last range's polygons.
+ *   2. crosswalk pairs merge AS A union.
+ *      A mapping that's not a function can look like one inside any single chunk —
+ *      Cork County Council's `Special Policy Area` takes 14 generic types across the county.
+ *      A chunk holding a prefix of its feature IDs may have seen one.
+ *      A per-chunk verdict would report the mapping as a function and license an
+ *      edge table the publisher never authored.
  */
 
 import { describe, expect, it } from "vitest"
@@ -21,7 +24,7 @@ import { aggregateChunks, nonFunctionalPairs } from "#sdk/build-zoning"
 import type { ZoningChunkResult } from "#sdk/ingest/chunk"
 
 /**
- * One chunk report, with everything a caller does not care about at its zero.
+ * One chunk report, with everything a caller doesn't care about at its zero.
  */
 function chunk(overrides: Partial<ZoningChunkResult> = {}): ZoningChunkResult {
 	return {
@@ -68,7 +71,7 @@ describe("aggregateChunks", () => {
 		expect(merged.crosswalkPairs[0]![2]).toEqual(["C2.1", "M1", "R2"])
 
 		// each chunk by itself looks like A function.
-		// That is the whole reason the pairs merge here rather than being decided per chunk.
+		// That's the whole reason the pairs merge here rather than being decided per chunk.
 		expect(nonFunctionalPairs([["CO", "Special Policy Area", ["C2.1"]]])).toHaveLength(0)
 		expect(nonFunctionalPairs(merged.crosswalkPairs)).toHaveLength(1)
 	})

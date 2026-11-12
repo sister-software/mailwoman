@@ -4,20 +4,27 @@
 /**
  *   Builds the OpenStreetMap evaluation suites, one per address shape, from the per-country extracts.
  *
- *   1. Collect. The extract files are fanned out with `parallelMap` at a concurrency of 2 to 3, each read by
- *      one sequential `JSONSpliterator.fromAsync`. Every rendered row is classified by shape, and each shape
- *      keeps, per country, the rows with the lowest `sha256(<seed>:<row id>)`, one per record.
- *   2. Filter by training overlap. Each shape's sample is audited with the held-out overlap audit against the
- *      corpora and model cards of the compared models, and only `verified_unseen` rows stay: rows that neither
- *      compared model trained on by identity or by record. When the audit cannot establish a model's training
- *      corpus, the audit classes every row `unknown`, the suite holds zero rows, and its lineage records why.
- *   3. Freeze each suite as a held-out dataset (`heldout/dataset/manifest.ts`), which `heldout/per/country.run.ts`
- *      grades, with a lineage file beside it: each extract's digest, the PBF digest its receipt records, the
- *      extraction parameters its stats sidecar states, the country's OpenStreetMap extraction policy and
- *      version where `@mailwoman/osm` has one, the shape filter, the sampling rule, and a summary of the audit: each
- *      compared model's training corpus and where it was read (a model card, or the training config of a model
- *      whose card does not record it), and each corpus manifest's digest and rows read. The full audit lists every
- *      training file. It is written once as `osm-suites.audit.json`, and each lineage cites it by digest.
+ *   1. Collect.
+ *      The extract files are fanned out with `parallelMap` at a concurrency of 2 to 3,
+ *      each read by one sequential `JSONSpliterator.fromAsync`.
+ *      Every rendered row is classified by shape, and each shape keeps, per country,
+ *      the rows with the lowest `sha256(<seed>:<row id>)`, one per record.
+ *   2. Filter by training overlap.
+ *      Each shape's sample is audited with the held-out overlap audit against the corpora
+ *      and model cards of the compared models, and only `verified_unseen` rows stay:
+ *      rows that neither compared model trained on by identity or by record.
+ *      When the audit cannot establish a model's training corpus, the audit classes every
+ *      row `unknown`, the suite holds zero rows, and its lineage records why.
+ *   3. Freeze each suite as a held-out dataset (`heldout/dataset/manifest.ts`),
+ *      which `heldout/per/country.run.ts` grades, with a lineage file beside it:
+ *      each extract's digest, the PBF digest its receipt records, the extraction
+ *      parameters its stats sidecar states, the country's OpenStreetMap extraction policy
+ *      and version where `@mailwoman/osm` has one, the shape filter, the sampling rule,
+ *      and a summary of the audit: each compared model's training corpus and where it was
+ *      read (a model card, or the training config of a model whose card doesn't record it),
+ *      and each corpus manifest's digest and rows read.
+ *      The full audit lists every training file.
+ *      It is written once as `osm-suites.audit.json`, and each lineage cites it by digest.
  *
  *   The builder reads the extracts and writes only under the output directory it is given.
  */

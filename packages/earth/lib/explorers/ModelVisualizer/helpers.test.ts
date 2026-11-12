@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Pure-function tests for the ModelVisualizer render helpers. The browser suite validates rendering
- *   via Storybook (ModelVisualizer.stories.tsx) against the committed fixture.
+ *   Pure-function tests for the ModelVisualizer render helpers.
+ *
+ *   The browser suite validates rendering via Storybook (ModelVisualizer.stories.tsx)
+ *   against the committed fixture.
  */
 
 import type { NeuralParseTrace } from "@mailwoman/neural"

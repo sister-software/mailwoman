@@ -1,7 +1,7 @@
 # Confidence calibration (task #59, #240 PR3)
 
 Post-hoc isotonic calibration of the neural decoder's per-span softmax confidence — the `conf=` a
-resolver or human reads off a parse. A CE-trained model's softmax is not a calibrated probability.
+resolver or human reads off a parse. A CE-trained model's softmax isn't a calibrated probability.
 This calibration maps it to one (Expected Calibration Error 0.067 → 0.004 on the held-out eval, as reported in
 [`../../../docs/articles/evals/2026-06-07-isotonic-calibration.md`](../../../docs/articles/evals/2026-06-07-isotonic-calibration.md)).
 
@@ -32,7 +32,7 @@ The held-out split is a permutation of the records. `permutations.json` holds Nu
 `default_rng(20260607).permutation(n)` for the committed inputs (13,457 and 35,600 records) and the
 2,000-span test fixture, so a refit of a committed table splits the records as the NumPy fitter did.
 On 2026-10-29 the TypeScript fitter wrote tables and reports byte-equal to the NumPy fitter's for
-`confidences-v413.jsonl` and `confidences-v530.jsonl`. A seed and size the file does not hold is split
+`confidences-v413.jsonl` and `confidences-v530.jsonl`. A seed and size the file doesn't hold is split
 by `mulberry32`, a different generator, so that fit is a new fit with its own report.
 
 ## What's committed vs regenerated

@@ -2,94 +2,115 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `gleif-lei`: the GLEIF Level 1 golden copy, read for the legal and headquarters addresses of the
- * legal entities that hold a Legal Entity Identifier.
+ * `gleif-lei`: the GLEIF Level 1 golden copy, read for the legal and headquarters
+ * addresses of the legal entities that hold a Legal Entity Identifier.
  *
- * Input is the publisher's own LEI-CDF 3.1 CSV, one record per LEI, as
- * `https://goldencopy.gleif.org` serves it zipped. `opts.inputPath` is the `.csv.zip` archive, an
- * extracted `.csv`, or the directory `#tools/fetch/gleif` writes, in which case the newest archive
- * by its date-prefixed name is read. The CSV member is streamed out of the archive, so the several
- * gigabytes it decompresses to never sit on disk or in memory.
+ * Input is the publisher's own LEI-CDF 3.1 CSV, one record per LEI,
+ * as `https://goldencopy.gleif.org` serves it zipped.
+ * `opts.inputPath` is the `.csv.zip` archive, an extracted `.csv`, or the directory
+ * `#tools/fetch/gleif` writes, in which case the newest archive by its date-prefixed name is read.
+ *
+ * The CSV member is streamed out of the archive, so the several gigabytes it
+ * decompresses to never sit on disk or in memory.
  *
  * ## License
  *
- * GLEIF's LEI Data Terms of Use, at {@linkcode GLEIF_LICENSE_URL}, read on 2026-10-03, place the
- * data served through the Access Service under CC0 1.0 Universal. The terms define the Access
- * Service as the facility for looking up or downloading single LEIs, their related reference data,
- * or the whole LEI set or a subset of it. The golden copy falls under that definition. GLEIF's open-data page
- * also places the data on GLEIF's website under CC0. The same terms ask a user not to create the
- * impression that derived data or services are provided or endorsed by GLEIF. That is why
- * {@linkcode GLEIF_ATTRIBUTION} credits the source rather than the corpus.
+ * GLEIF's LEI Data Terms of Use, at {@linkcode GLEIF_LICENSE_URL}, read on 2026-10-03,
+ * place the data served through the Access Service under CC0 1.0 Universal.
+ * The terms define the Access Service as the facility for looking up or downloading single
+ * LEIs, their related reference data, or the whole LEI set or a subset of it.
+ *
+ * The golden copy falls under that definition.
+ * GLEIF's open-data page also places the data on GLEIF's website under CC0.
+ *
+ * The same terms ask a user not to create the impression that derived data
+ * or services are provided or endorsed by GLEIF.
+ * That's why {@linkcode GLEIF_ATTRIBUTION} credits the source rather than the corpus.
  *
  * ## Organization addresses only
  *
- * The register holds legal entities, and three of its fields identify an entity that is a natural
- * person trading in their own name. {@linkcode readGLEIFEntity} refuses each:
+ * The register holds legal entities, and three of its fields identify an entity that's a
+ * natural person trading in their own name. {@linkcode readGLEIFEntity} refuses each:
  *
  * 1. `Entity.EntityCategory` = `SOLE_PROPRIETOR`.
- * 2. `Entity.LegalForm.EntityLegalFormCode` naming an ISO 20275 form that is a sole
- *    proprietorship, from {@linkcode GLEIF_SOLE_PROPRIETOR_LEGAL_FORMS}. A registrant can file the
- *    form without the category, and the form is the registrar's own statement of what the entity is.
- * 3. `Entity.LegalForm.OtherLegalForm`, the free-text form a registrant writes where no ELF code
- *    fits, matching {@linkcode SOLE_PROPRIETOR_FORM_TEXT}: `SOLE TRADER`, `Ditta Individuale`,
- *    `Entreprise Individuelle`, `empresario individual`.
+ * 2. `Entity.LegalForm.EntityLegalFormCode` naming an ISO 20275 form that's a sole
+ *    proprietorship, from {@linkcode GLEIF_SOLE_PROPRIETOR_LEGAL_FORMS}.
+ *    A registrant can file the form without the category, and the form is the
+ *    registrar's own statement of what the entity is.
+ * 3. `Entity.LegalForm.OtherLegalForm`, the free-text form a registrant writes
+ *    where no ELF code fits, matching {@linkcode SOLE_PROPRIETOR_FORM_TEXT}: `SOLE TRADER`,
+ *    `Ditta Individuale`, `Entreprise Individuelle`, `empresario individual`.
  *
- * No check on the legal name is applied. The `Surname, Firstname` test `it-anac` uses matched
- * company names here (`Experity, Inc`, `Octante, Lda`, `Slovalco, a.s.`) on nearly every hit, and the
- * category and form fields above are the registrant's and the LOU's own statement.
+ * No check on the legal name is applied.
+ * The `Surname, Firstname` test `it-anac` uses matched company names here
+ * (`Experity, Inc`, `Octante, Lda`, `Slovalco, a.s.`) on nearly every hit, and the category
+ * and form fields above are the registrant's and the LOU's own statement.
  *
- * `MailRouting` is never read into a row. It holds the care-of line, and on Scandinavian records it
- * holds a person's name: `c/o Marius Vinje`. A street line that opens with a care-of marker refuses the
- * address for the same reason.
+ * `MailRouting` is never read into a row.
+ * It holds the care-of line, and on Scandinavian records it holds a person's name: `c/o Marius Vinje`.
+ *
+ * A street line that opens with a care-of marker refuses the address for the same reason.
  *
  * ## The street line
  *
- * `FirstAddressLine` holds the street and the number together, and `AddressNumber` repeats the
- * number on a minority of records. The split follows the country's own street order.
- * {@linkcode houseNumberLeadsStreet} reads that order from the layout `formatAddressRow` renders with.
+ * `FirstAddressLine` holds the street and the number together, and `AddressNumber`
+ * repeats the number on a minority of records.
+ * The split follows the country's own street order. {@linkcode houseNumberLeadsStreet}
+ * reads that order from the layout `formatAddressRow` renders with.
+ *
  * A number-first country then takes `splitStreetLine` and a number-last country `splitTrailingStreetLine`.
  * Where the publisher's `AddressNumber` is present, the split must agree with it.
  *
- * Three normalizations run first. A copy of the publisher's own `City` value at the start or the end
- * of the line is removed, because several LOUs write `WARSZAWA PUŁAWSKA 182` with `City` `Warszawa`.
- * A civic-number marker is removed, so Romania's `Piata Presei Libere, nr. 3-5` splits to the street
- * `Piata Presei Libere` rather than `Piata Presei Libere, nr.`. A period closing a trailing number,
- * as Hungary writes `Bagoly utca 23.`, is removed. A whole line of the form `PO BOX 309` then
- * becomes `po_box` rather than a street.
+ * Three normalizations run first.
+ * A copy of the publisher's own `City` value at the start or the end of the line is removed,
+ * because several LOUs write `WARSZAWA PUŁAWSKA 182` with `City` `Warszawa`.
  *
- * **A line holding a digit the split could not place refuses the address**, and so does a line with
- * no digit at all: in this register a digitless first line is a building about as frequently (`UGLAND HOUSE`,
- * `KYDD BUILDING`) as a street, and no field separates the two. An English ordinal inside a street name
- * (`5TH AVENUE`) is a name rather than a number.
+ * A civic-number marker is removed, so Romania's `Piata Presei Libere, nr. 3-5` splits
+ * to the street `Piata Presei Libere` rather than `Piata Presei Libere, nr.`.
+ * A period closing a trailing number, as Hungary writes `Bagoly utca 23.`, is removed.
  *
- * The value the split leaves as `street` must then read as a street. It is refused where it still holds
- * a comma (`CAVES CORPORATE CENTRE, BUILDING 2` under the Bahamas' number-last layout), where it holds
- * a building or in-building word (`1302 DOMINION CENTRE`, `903 PLATINUM TOWER`, `APTO 2`), and where it
- * is only a generic word (`910 Street`). Each of those numbers a room, an office or a building, and
- * labeling it `house_number` beside a building name labeled `street` would teach the wrong boundary.
+ * A whole line of the form `PO BOX 309` then becomes `po_box` rather than a street.
  *
- * `AdditionalAddressLine.1`–`3` mix building names, districts, floors and second street lines, and
- * no field states which, so they reach no row. The golden copy's "AddressNumberWithinBuilding" field becomes `unit` when it
- * holds a letter, as `Suite 4` does. A bare number there would render as a second house number.
+ * **A line holding a digit the split couldn't place refuses the address**, and so does a
+ * line with no digit at all: in this register a digitless first line is a building about as
+ * frequently (`UGLAND HOUSE`, `KYDD BUILDING`) as a street, and no field separates the two.
+ * An English ordinal inside a street name (`5TH AVENUE`) is a name rather than a number.
+ *
+ * The value the split leaves as `street` must then read as a street.
+ * It is refused where it still holds a comma (`CAVES CORPORATE CENTRE, BUILDING 2`
+ * under the Bahamas' number-last layout), where it holds a building
+ * or in-building word (`1302 DOMINION CENTRE`, `903 PLATINUM TOWER`, `APTO 2`),
+ * and where it is only a generic word (`910 Street`).
+ *
+ * Each of those numbers a room, an office or a building, and labeling it `house_number`
+ * beside a building name labeled `street` would teach the wrong boundary.
+ *
+ * `AdditionalAddressLine.1`–`3` mix building names, districts, floors and second
+ * street lines, and no field states which, so they reach no row.
+ * The golden copy's "AddressNumberWithinBuilding" field becomes `unit`
+ * when it holds a letter, as `Suite 4` does.
+ * A bare number there would render as a second house number.
  *
  * ## Region
  *
- * `Region` is an ISO 3166-2 code such as `SK-KI`, which is not how an address writes the region.
+ * `Region` is an ISO 3166-2 code such as `SK-KI`, which isn't how an address writes the region.
  * It reaches a row only where the code's suffix is the written form.
- * `matchSubdivisionIn` answers for the United States, Canada and Australia. A code whose
- * country prefix differs from `Country` refuses the address as contradicting it.
+ *
+ * `matchSubdivisionIn` answers for the United States, Canada and Australia.
+ * A code whose country prefix differs from `Country` refuses the address as contradicting it.
  *
  * ## One row per address
  *
- * Registered agents give one address to thousands of entities. The adapter emits each rendered
- * address once per country: the key is the address rendered without its venue, and the first
- * entity read at that address keeps the venue. The headquarters address is read only where it
- * differs from the legal address in some field.
+ * Registered agents give one address to thousands of entities.
+ * The adapter emits each rendered address once per country: the key is the address rendered
+ * without its venue, and the first entity read at that address keeps the venue.
+ *
+ * The headquarters address is read only where it differs from the legal address in some field.
  *
  * Only a country for which `layoutForCountry` returns a layout is emitted.
  *
- * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts every refusal in
- * `opts.dropped`.
+ * The adapter honors `opts.limit`, `opts.signal` and `opts.country`,
+ * and counts every refusal in `opts.dropped`.
  */
 
 import { formatAddressRow, scriptOfComponents } from "@mailwoman/codex/address/format"
@@ -213,7 +234,7 @@ const SOLE_PROPRIETOR_FORM_TEXT =
 	/\b(?:sole\s+(?:trader|proprietor(?:ship)?)|individuals?\s+acting\s+in\s+a\s+business\s+capacity|ditta\s+individuale|impresa\s+individuale|entreprise\s+individuelle|empresario\s+individual|einzel(?:unternehmen|unternehmer(?:in)?|kauf(?:mann|frau))|enkeltmandsvirksomhed|enskild\s+(?:firma|näringsidkare)|enkeltpersonforetak|eenmanszaak|egyéni\s+vállalkozó)\b/iu
 
 /**
- * Why an entity or one of its addresses did not become a row.
+ * Why an entity or one of its addresses didn't become a row.
  */
 export const GLEIFRefusal = {
 	/**
@@ -237,7 +258,7 @@ export const GLEIFRefusal = {
 	 */
 	CountryAbsent: "country-absent",
 	/**
-	 * The country is not an ISO 3166-1 alpha-2 code.
+	 * The country isn't an ISO 3166-1 alpha-2 code.
 	 */
 	CountryNotAlpha2: "country-not-alpha-2",
 	/**
@@ -265,7 +286,7 @@ export const GLEIFRefusal = {
 	 */
 	StreetLineWithoutNumber: "street-line-without-number",
 	/**
-	 * The first line holds a digit the split could not place as a house number.
+	 * The first line holds a digit the split couldn't place as a house number.
 	 */
 	StreetNumberUnplaced: "street-number-unplaced",
 	/**
@@ -362,7 +383,7 @@ const REQUIRED_COLUMNS = [
 const CARE_OF = /^(?:c\s*\/\s*o\b|c\/-|care\s+of\b|attn\b|attention\b)/iu
 
 /**
- * A whole line that is a post-office box, as `PO BOX 309`, `P.O. Box 10240` or `P O BOX 472`.
+ * A whole line that's a post-office box, as `PO BOX 309`, `P.O. Box 10240` or `P O BOX 472`.
  */
 const PO_BOX_LINE = /^(?:p\.?\s?o\.?\s?box|post\s+office\s+box)\s*(?:no\.?\s*)?\d+[a-z]?$/iu
 
@@ -401,7 +422,7 @@ const PREMISE_WORD =
 const ZERO_NUMBER = /^0+$/u
 
 /**
- * A street name that is only a generic word, as a number-first split of `910 Street` leaves it.
+ * A street name that's only a generic word, as a number-first split of `910 Street` leaves it.
  */
 const GENERIC_ONLY = /^(?:street|road|avenue|st|rd|ave)\.?$/iu
 
@@ -679,7 +700,7 @@ function placeStreetNumber(
 }
 
 /**
- * Why a value about to be labeled `street` is not a street name, or `null` where it may be one.
+ * Why a value about to be labeled `street` isn't a street name, or `null` where it may be one.
  */
 function streetRefusal(street: string): GLEIFRefusal | null {
 	if (street.includes(",")) return GLEIFRefusal.StreetLineSegmented

@@ -3,21 +3,25 @@
 
 /**
  *   `<MapCanvas>` — the declarative map shell for the geocoder demo, over `react-map-gl/maplibre` (v8).
- *   Phase 1 is the shell only: a `<Map>` that takes a host-composed `mapStyle`, an initial (or
- *   controlled) view state and a `children` slot for overlays/markers from later phases.
+ *
+ *   Phase 1 is the shell only: a `<Map>` that takes a host-composed `mapStyle`, an initial
+ *   (or controlled) view state and a `children` slot for overlays/markers from later phases.
  *   No overlay/marker/camera logic lives here yet.
  *
  *   node-import safety: this module imports `react-map-gl/maplibre` (which pulls `maplibre-gl` — WebGL
  *   + DOM at import) at module scope, so it is reachable only through the `@mailwoman/react/map`
- *   subpath, never from the package root (`index.ts`). The bare `import("@mailwoman/react")` a node
- *   consumer (or the CI smoke IMPORT_CHECK) runs must never transitively load this file. Keep it out of
- *   the root barrel.
+ *   subpath, never from the package root (`index.ts`).
+ *   The bare `import("@mailwoman/react")` a node consumer (or the CI smoke IMPORT_CHECK)
+ *   runs must never transitively load this file.
+ *   Keep it out of the root barrel.
  *
- *   CSS: the package imports no CSS from its modules (the node-safe invariant), so a host that renders
- *   `<MapCanvas>` must import `maplibre-gl/dist/maplibre-gl.css` itself (plus `@mailwoman/react/styles.css`
- *   for the `.mw-demo-map` container). `<MapCanvas>` is intrinsically a client component. A host that
- *   server-renders should wrap it in a client boundary (the package's `ClientOnly`), exactly as the
- *   composed `Geocoder` will in a later phase.
+ *   CSS: the package imports no CSS from its modules (the node-safe invariant),
+ *   so a host that renders `<MapCanvas>` must import `maplibre-gl/dist/maplibre-gl.css`
+ *   itself (plus `@mailwoman/react/styles.css` for the `.mw-demo-map` container).
+ *   `<MapCanvas>` is intrinsically a client component.
+ *
+ *   A host that server-renders should wrap it in a client boundary (the package's `ClientOnly`),
+ *   exactly as the composed `Geocoder` will in a later phase.
  */
 
 import { useState } from "react"
@@ -34,7 +38,7 @@ import { StarfieldLayer } from "#map/StarfieldLayer"
 export type MapCanvasStyle = NonNullable<MapProps["mapStyle"]>
 
 /**
- * Override for the `<Map>` props `<MapCanvas>` does not surface explicitly
+ * Override for the `<Map>` props `<MapCanvas>` doesn't surface explicitly
  * (e.g. `minZoom`, `attributionControl`, `maplibreLogo`).
  *
  * The controlled fields MapCanvas owns are omitted so they can't be set twice.
@@ -89,7 +93,7 @@ export interface MapCanvasProps {
 	 */
 	style?: CSSProperties
 	/**
-	 * Other `<Map>` props that MapCanvas does not surface explicitly.
+	 * Other `<Map>` props that MapCanvas doesn't surface explicitly.
 	 */
 	mapProps?: MapCanvasExtraProps
 	/**

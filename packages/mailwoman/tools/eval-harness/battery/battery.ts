@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scores a baseline and candidate models on the frozen suites of {@linkcode BATTERY_SUITES}, tags each wrong row by
- *   cause, and renders the comparison as markdown.
+ *   Scores a baseline and candidate models on the frozen suites of {@linkcode BATTERY_SUITES},
+ *   tags each wrong row by cause, and renders the comparison as markdown.
  *
- *   A row is right when every field matches after joining street prefix, name and suffix, lowercasing, and dropping
- *   commas. On the `osm-` suites that matches the suite scorer's exact-match counts within 5 rows per suite and arm.
+ *   A row is right when every field matches after joining street prefix, name
+ *   and suffix, lowercasing, and dropping commas.
+ *   On the `osm-` suites that matches the suite scorer's exact-match counts within 5 rows per suite and arm.
+ *
  *   On the `photon-` suites it is needed because their US labels keep the street whole.
  */
 

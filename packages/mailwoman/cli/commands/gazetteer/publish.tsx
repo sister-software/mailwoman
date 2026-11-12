@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer publish [<candidate-db>]` — upload the candidate gazetteer to R2 (the demo's
- *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. The version defaults to today's
- *   date + `a` (e.g. `2026-06-27a`), the immutable convention.
+ *   `mailwoman gazetteer publish [<candidate-db>]` — upload the candidate gazetteer to
+ *   R2 (the demo's byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`.
  *
- *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first. This
- *   is an in-repo operator command because it updates the demo's resources file.
+ *   The version defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
+ *
+ *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first.
+ *   This is an in-repo operator command because it updates the demo's resources file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
@@ -43,9 +45,15 @@ export const spec = {
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
-		const { defaultGazetteerVersion, publishGazetteer } = await import("@mailwoman/gazetteer/tools/pipeline")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			paths: { repoRootPathBuilder },
+			pipeline: { defaultGazetteerVersion, publishGazetteer },
+			paths2: { wofDatabasePath },
+		} = await allKeyed({
+			paths: import("@mailwoman/core/paths"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())

@@ -3,6 +3,7 @@
 
 /**
  *   Detect unambiguous region abbreviations (e.g., "DC", "NY", "CA") for the locality soft prior.
+ *
  *   Only fires after a comma-space boundary in en-us — the canonical "City, ST ZIP" pattern.
  */
 

@@ -4,8 +4,9 @@
 /**
  *   Tests {@linkcode familyRollup} against rows inserted directly into an in-memory database.
  *
- *   A node can belong to several families, so `familyRollup` always returns an array. The reader takes
- *   `display_names` from the authoritative edge that `filer_family.naming_node_id` points to.
+ *   A node can belong to several families, so `familyRollup` always returns an array.
+ *   The reader takes `display_names` from the authoritative edge that
+ *   `filer_family.naming_node_id` points to.
  */
 
 import { isoDate } from "@mailwoman/core/utils"

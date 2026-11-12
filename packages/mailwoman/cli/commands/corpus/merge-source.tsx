@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus merge-source --inputs <a.parquet,b.parquet> --out <merged.parquet>` — merge one
- *   source's overlay parquet files into a single file whose rows are shuffled across them.
+ *   `mailwoman corpus merge-source --inputs <a.parquet,b.parquet> --out <merged.parquet>` —
+ *   merge one source's overlay parquet files into a single file whose rows are shuffled across them.
  *
- *   An epoch draws a bounded number of rows per source and reads one row-group to get them, so a
- *   source whose countries sit in separate files reaches only the countries of the file the draw lands
- *   in. The command merges and shuffles records so every output row-group contains every country in the source.
+ *   An epoch draws a bounded number of rows per source and reads one row-group to get them, so a source
+ *   whose countries sit in separate files reaches only the countries of the file the draw lands in.
+ *   The command merges and shuffles records so every output row-group contains every country in the source.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

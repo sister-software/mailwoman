@@ -37,7 +37,7 @@ idempotency instead.
 
 **Customers manage billing through Stripe's no-code Customer Portal without a Mailwoman login.** A "Manage billing" link on the
 `/license` page opens Stripe's portal login. A customer recovers the key with `mailwoman license refresh` and the
-per-license secret issued at purchase, so a "My Licenses" web page is not needed until a customer holds several
+per-license secret issued at purchase, so a "My Licenses" web page isn't needed until a customer holds several
 licenses.
 
 **The design uses no Cloudflare Queue.** Stripe retries an undelivered webhook with backoff for up to three days. A
@@ -63,7 +63,7 @@ reports which one occurred.
 
 ## Prerequisites the code cannot supply
 
-These items are operator work. The first sale waits on them, and the implementation does not:
+These items are operator work. The first sale waits on them, and the implementation doesn't:
 
 1. **Self-executing terms.** `COMMERCIAL-LICENSE.md` states that it is a non-self-executing template and that no rights are
    granted until terms are agreed in writing. A paid Checkout cannot grant under that text. A versioned clickwrap
@@ -74,7 +74,7 @@ These items are operator work. The first sale waits on them, and the implementat
 2. **Merchant identity.** The Stripe account's legal name matches the licensor the terms identify.
 3. **A release that trusts the worker's key.** The worker's public key enters `TRUSTED_LICENSE_SIGNING_KEYS` and the
    well-known register, and a mailwoman release publishes, before the first token is sold. A token signed by a key
-   the installed release does not trust reads `unknown_key`.
+   the installed release doesn't trust reads `unknown_key`.
 4. **Stripe objects.** Two Products or one Product with two Prices (monthly, yearly), two Payment Links, the Customer
    Portal enabled, a webhook destination for the events listed below, and the test-mode twins of all of it.
 5. **A transactional email account.** One provider with an HTTP API and an idempotency key per message.
@@ -109,7 +109,7 @@ Three places, each with one job:
 `generateLicenseSigningKeyPair`. The four Ed25519 helpers leave `#hash`, which reaches `node:fs` for `sha256File`, for a
 new `packages/core/lib/crypto/ed25519.ts` on `globalThis.crypto.subtle`: import and export of SPKI and PKCS8 DER, PEM
 as a base64 transform of those bytes, sign, verify. Node 24 implements Ed25519 in `SubtleCrypto`, as do `workerd` and
-every current browser, so there is one implementation and no condition is needed for it. `sha256Hex`, which
+every current browser, so there's one implementation and no condition is needed for it. `sha256Hex`, which
 `licenseKeyID` uses on the DER bytes, moves beside it onto `crypto.subtle.digest`; `#hash` keeps the file digests.
 
 WebCrypto requires asynchronous signing and verification. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
@@ -133,7 +133,7 @@ A core module that needs a platform-specific implementation gets two files and a
 
 is the shape for a neutral module. A split module adds `"workerd"` and `"browser"` entries pointing at its web file,
 as `@mailwoman/neural/onnx-runner` does with its `browser` condition today. The bundle test below decides whether a
-subpath is neutral or needs the split. The design does not guess.
+subpath is neutral or needs the split. The design doesn't guess.
 
 **The bundle test.** `packages/core/lib/worker-bundle.integration.test.ts` runs esbuild with
 `--platform=neutral --conditions=workerd,worker,browser` over an entry that imports `@mailwoman/core/license/key` and
@@ -218,7 +218,7 @@ constructor and a 300-second tolerance, and accepts only these event types:
   secret. It mints no token, because the first `invoice.paid` does.
 - `invoice.paid` — the mint. Retrieves the invoice and its subscription from Stripe (never trusting the event body),
   confirms `paid`, that the one line item's Price is allowlisted, that live/test mode matches the environment, and that
-  the subscription's `licenses` row exists. When the row does not exist yet, because this event outran
+  the subscription's `licenses` row exists. When the row doesn't exist yet, because this event outran
   `checkout.session.completed`, it lists the Checkout Session for the subscription and creates the row from it, so
   ordering cannot lose a licensee name. Computes `issued` (the invoice's paid date, UTC) and `expires` (the period end
   plus `graceDays`, as an inclusive UTC calendar date), persists both, signs, stores the token, and enqueues no job:
@@ -265,7 +265,7 @@ latest `expires`.
 
 `stripe_events`: `event_id` (PK), `type`, `object_id`, `received_at`, `outcome`.
 
-Tokens at rest are what the customer already holds, so they are stored as written. The D1 database is customer data
+Tokens at rest are what the customer already holds, so they're stored as written. The D1 database is customer data
 and gets the same retention, export, and deletion handling as the Stripe account.
 
 ### Reconciliation
@@ -361,7 +361,7 @@ Worker integration (Miniflare):
 - A valid signature over the untouched body passes, and a one-byte mutation is a 400.
 - The same event twice is one token.
 - Two events for one invoice in either order are one token.
-- A D1 failure after verification is a 500, and the event id is not recorded.
+- A D1 failure after verification is a 500, and the event id isn't recorded.
 - The claim route answers `pending` before `invoice.paid` and the same token afterward.
 - CORS admits `SITE_ORIGIN` only.
 - `ISSUANCE_ENABLED=false` refuses the mint and still answers refresh.
@@ -370,7 +370,7 @@ Stripe sandbox end to end:
 
 - Payment Link → Checkout → webhooks → token.
 - `mailwoman license verify` on the current release reads `unknown_key` for the sandbox key, because the shipped
-  register does not contain it. It reads `valid` once the test register is injected. That pair demonstrates that trust
+  register doesn't contain it. It reads `valid` once the test register is injected. That pair demonstrates that trust
   is release-bound.
 - A card that fails 3DS mints no token.
 - A renewal in Stripe's test clock mints a second token with the next period's dates.

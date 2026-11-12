@@ -4,8 +4,8 @@
 /**
  *   Reads populated places from a GeoNames country dump and emits locality rows.
  *
- *   Region and country names come from `admin1CodesASCII.txt` and `countryInfo.txt` in the same directory. When a
- *   file is missing, rows omit that component.
+ *   Region and country names come from `admin1CodesASCII.txt` and `countryInfo.txt` in the same directory.
+ *   When a file is missing, rows omit that component.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address/format"

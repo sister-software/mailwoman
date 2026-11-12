@@ -41,7 +41,7 @@ approximation running in O(1) passes (Kramár et al. 2024, _AtP\*: An efficient 
 for localizing LLM behavior to components_ [S]; note also _When Attribution Patching Lies_ (2026)
 [S] on AtP's false negatives and a second-order correction). For a 6-layer encoder with ~8 heads +
 1 MLP per layer over ~32 SentencePiece pieces, an **exhaustive** sweep is ≈ 6 × 9 × 32 ≈ 1,700
-patch sites per input. That is a couple of GPU batches: well under a second per case, or seconds
+patch sites per input. That's a couple of GPU batches: well under a second per case, or seconds
 on ONNX CPU. Exhaustive _path_ patching over all component pairs takes a few hundred thousand
 forward passes, or minutes. A full causal trace of every row of the 558-row dev board would
 take under an hour on the lab GPU, so it can run as a nightly board metric. We do not need AtP
@@ -69,7 +69,7 @@ decision.
 
 ### 1.2 Integrated gradients, occlusion, and simpler attribution
 
-**What they are.** Integrated Gradients (Sundararajan, Taly & Yan 2017, _Axiomatic Attribution for
+**What they're.** Integrated Gradients (Sundararajan, Taly & Yan 2017, _Axiomatic Attribution for
 Deep Networks_ [M]) integrates input gradients along a baseline→input path. Occlusion (Zeiler &
 Fergus 2014 [M]) ablates input pieces and measures output change. DeepLIFT (Shrikumar et al. 2017
 [M]) and SHAP (Lundberg & Lee 2017 [M]) are relatives. All are input-attribution: they answer
@@ -94,14 +94,14 @@ gradient attributions can fail sanity checks (Adebayo et al. 2018, _Sanity Check
 Maps_ [M]); none of these are causal guarantees — for required claims, confirm with patching.
 
 **Weimar verdict.** IG would have put essentially all attribution mass on the raw token embeddings
-and none on the (zero) channels. That is the "confident parse, silent evidence" signature. A
+and none on the (zero) channels. That's the "confident parse, silent evidence" signature. A
 one-line input predicate produces the same flag without computing a gradient.
 
 ### 1.3 Why attention weights are not the explanation
 
-Jain & Wallace 2019, _Attention is not Explanation_ [S]: attention distributions correlate poorly
+Jain & Wallace 2019, _Attention isn't Explanation_ [S]: attention distributions correlate poorly
 with gradient-based importance and admit adversarial alternative distributions yielding the same
-predictions. Wiegreffe & Pinter 2019, _Attention is not not Explanation_ [S]: the rebuttal —
+predictions. Wiegreffe & Pinter 2019, _Attention isn't not Explanation_ [S]: the rebuttal —
 existence of an alternative distribution constructed ad hoc doesn't prove unfaithfulness, and tests
 must be model-consistent — but even the rebuttal claims only that attention _may sometimes_ contain
 explanatory signal rather than that it's faithful. Serrano & Smith 2019, _Is Attention Interpretable?_
@@ -125,13 +125,13 @@ the labels came out right.
   detector spanning the model/resolver boundary. The actual failure lived at that boundary.
 - **Exact interchange interventions as _input_ experiments**: because the interpretable concepts
   are input columns, swapping channel values between paired inputs is a causal experiment needing
-  no model surgery at all. A luxury LLM interpretability does not have.
+  no model surgery at all. A luxury LLM interpretability doesn't have.
 
 ---
 
 ## 2. Sparse autoencoders (SAEs)
 
-**What they are.** Dictionary-learning decompositions of activations into overcomplete sparse
+**What they're.** Dictionary-learning decompositions of activations into overcomplete sparse
 "monosemantic" features: Anthropic's line — Bricken et al. 2023,
 _Towards Monosemanticity: Decomposing Language Models With Dictionary Learning_ [S]; Templeton et al. 2024, _Scaling
 Monosemanticity_ [M] — plus architecture successors: TopK SAEs (Gao et al. 2024, _Scaling and
@@ -172,7 +172,7 @@ LLM, SAEs are useful because you _don't know what the concepts are_. Our situati
 the label vocabulary is 33 BIO tags. For "does the model internally represent German-place
 morphology?" a supervised linear probe answers in minutes and — per the 2025 results — likely
 better. The one actual SAE use-case for us: an _exploratory inventory_ of what grammar features a
-trained checkpoint contains that we did not think to probe for (e.g., a "Latin-script diacritic +
+trained checkpoint contains that we didn't think to probe for (e.g., a "Latin-script diacritic +
 Germanic suffix" feature), run once as a weekend experiment, treated as hypothesis generation whose
 outputs get confirmed by probes/patching. Sparse feature circuits (Marks et al. 2024 [M]) would be
 the follow-on if that inventory proves rich.
@@ -192,9 +192,9 @@ same fact for a thousandth of the effort.
 
 **The framing that matters:** mailwoman's evidence channels are already a _partial, leaky concept
 bottleneck at the input_ — interpretable concept columns the model may consult, with a raw
-token-embedding bypass around them. That is a deliberate architecture choice (the concepts doc's
+token-embedding bypass around them. That's a deliberate architecture choice (the concepts doc's
 "features, never overrides"; the override failure mode is documented project history). So the
-relevant literature is not "how to build a bottleneck" but "how to _measure and steer_ reliance on
+relevant literature isn't "how to build a bottleneck" but "how to _measure and steer_ reliance on
 one that leaks."
 
 **Concept bottleneck models.** Koh et al. 2020, _Concept Bottleneck Models_ (ICML) [S/M]: predict
@@ -207,8 +207,8 @@ Procedure of Concept Bottleneck Models_ (ICML) [S]; _Avoiding Leakage Poisoning:
 Interventions Under Distribution Shifts_ (2025) [S]; a 2025 survey of risks/limitations of
 concept-based models and even a 2026 _In Defense of Information Leakage in Concept-based Models_
 [S]. The field now treats leakage as a tradeoff. Hard bottlenecks make interventions valid, but
-they lose accuracy on inputs the concept vocabulary does not cover. For us, that is every place
-the gazetteer does not know. **The Weimar case shows that we want the leak.** A hard bottleneck
+they lose accuracy on inputs the concept vocabulary doesn't cover. For us, that's every place
+the gazetteer doesn't know. **The Weimar case shows that we want the leak.** A hard bottleneck
 (parsing only from channels) would have had zero input and would have had to abstain or emit
 garbage. The bypass produced the correct parse. The failure happened downstream, so the right
 implementation _flags_ bypass decisions instead of preventing them.
@@ -226,7 +226,7 @@ _Finding Alignments Between Interpretable Causal Variables and Distributed Neura
 (DAS) [S]; Boundless DAS (Wu et al. 2023) [S]. These _train_ the model so that specified causal
 variables (e.g., "country", "this-span-is-a-locality") live in designated activation subspaces and
 respond correctly to interventions. Since we own the PyTorch training loop and a retrain costs
-~1 hour, IIT is affordable here in a way it is not for LLM labs. An interchange loss can tie a
+~1 hour, IIT is affordable here in a way it isn't for LLM labs. An interchange loss can tie a
 small residual subspace to the country variable. The model then exposes that variable as a
 readable value, and a per-decision explanation becomes a read of that subspace instead of a
 forensic investigation.
@@ -319,7 +319,7 @@ from adjacent literatures:
    requires only K+1's own calibration rows, and existing classes' guarantees are untouched. Marginal
    calibration would need a global refit and silently shifts everyone's coverage.
 3. **Exchangeability honesty**: a ledger triaged over months by a human whose taxonomy is drifting
-   is not exchangeable. Use weighted/rolling-window conformal (_Conformal Prediction Beyond
+   isn't exchangeable. Use weighted/rolling-window conformal (_Conformal Prediction Beyond
    Exchangeability_, Barber et al. 2023 [M]; label-shift variant Podkopaev & Ramdas 2021 [M]) and
    version the vocabulary the way the eval ledger already versions scores.
 4. Alternative posterior implementation — evidential deep learning (Sensoy et al. 2018, _Evidential
@@ -355,7 +355,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 | Hard concept bottleneck      | Would have been forced to abstain (zero concept input) — and been wrong, since the parse was right. It shows why the bypass is a feature at parse time. |
 | RRR gradient penalty         | Would push reliance toward channels — the wrong change here. The model's grammar-only decision was correct.                                             |
 | IIT/DAS country register     | A trained country subspace would have output "DE" as a first-class readable value for the resolver to check against.                                    |
-| Calibration (parse level)    | No flag — correctly confident. Calibration is not an error-shape detector.                                                                              |
+| Calibration (parse level)    | No flag — correctly confident. Calibration isn't an error-shape detector.                                                                               |
 | Mondrian conformal diagnosis | Classifies the case into "evidence-silent + resolver country flip" with per-class coverage, or emits a novelty p-value before that class exists.        |
 
 ---

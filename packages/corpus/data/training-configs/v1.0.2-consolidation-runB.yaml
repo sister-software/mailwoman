@@ -1,6 +1,6 @@
 # === v1.0.0-consolidation (#466) — the v0-parity flag-plant ======================================
 # One model carrying every proven parity change, at a larger step budget (the cumulative-dilution
-# lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
+# lesson: never stack N sources into a fixed 20k budget — give them room). This isn't a single-variable
 # experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
@@ -165,7 +165,7 @@ train:
   grad_clip_norm: 1.0
   max_steps: 20000
   # eval every 2k → the DeepSeek capacity-tell is at step 8000 (8k into the resume): if suffix < 55 and
-  # country < 84.5 there, stop — that is the equilibrium ceiling, escalate to a wider model (do not iterate).
+  # country < 84.5 there, stop — that's the equilibrium ceiling, escalate to a wider model (do not iterate).
   eval_every_steps: 2000
   save_every_steps: 2000
   log_every_steps: 50

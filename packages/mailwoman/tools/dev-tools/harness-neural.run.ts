@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Neural test harness: the arena scorer behind `external-arenas.ts` and the pre-ship eval
- *   battery. It reads the 30+ `mailwoman/test/address.*.test.ts` files plus sibling
- *   the intersection tests. It also reads the venue tests and the compound_street tests.
+ *   Neural test harness: the arena scorer behind `external-arenas.ts` and the pre-ship eval battery.
+ *
+ *   It reads the 30+ `mailwoman/test/address.*.test.ts` files plus sibling the intersection tests.
+ *   It also reads the venue tests and the compound_street tests.
+ *
  *   The tool extracts each assertion call via the TS AST.
- *   It grades each input's neural parse (`NeuralAddressClassifier`) against the expected
- *   records. `--falsehoods <dir>` adds jsonl row files (the external arena fixtures).
+ *   It grades each input's neural parse (`NeuralAddressClassifier`) against the expected records.
+ *
+ *   `--falsehoods <dir>` adds jsonl row files (the external arena fixtures).
  *
  *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing
- *   `{ file, locale, input, expected, neural_pass, neural_actual, ... }` so downstream scripts
- *   (`summarize-arenas.ts`) can cluster failures by tag/locale/address-shape.
+ *   `{ file, locale, input, expected, neural_pass, neural_actual, ... }` so downstream
+ *   scripts (`summarize-arenas.ts`) can cluster failures by tag/locale/address-shape.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/harness-neural.run.ts\
  *   --tests mailwoman/test\
@@ -211,8 +214,8 @@ function localeFromFilename(file: string): string {
 /**
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS object.
  *
- * @returns `null` for anything that is not a literal-of-literals (we intentionally do not
- * try to evaluate variables or computed properties. None of the test files use those forms).
+ * @returns `null` for anything that's not a literal-of-literals (we intentionally do not try
+ * to evaluate variables or computed properties. None of the test files use those forms).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}

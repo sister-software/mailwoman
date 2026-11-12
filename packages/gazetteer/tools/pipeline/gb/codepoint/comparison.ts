@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
- * `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
+ * `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent
+ * GeoNames `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
- * The swap changes data sources rather than refreshing one source. The tool reports evidence for a decision.
+ * The swap changes data sources rather than refreshing one source.
+ * The tool reports evidence for a decision.
+ *
  * A large coordinate delta points toward GeoNames because its GB provenance is unclear.
  *
  * The tool reports which postcodes appear in each source, keyed exactly on sanitized `spr.name`.
- * It reports the distance distribution for shared postcodes because a mean hides both modes in bimodal disagreement.
+ * It reports the distance distribution for shared postcodes because a mean
+ * hides both modes in bimodal disagreement.
+ *
  * It also counts Northern Ireland explicitly because Code-Point Open omits it by product definition.
  */
 
@@ -99,7 +103,7 @@ export interface IncumbentOnlyBreakdown {
 	 */
 	crownDependencies: number
 	/**
-	 * Everything else: postcodes the incumbent has and the current OS register does not.
+	 * Everything else: postcodes the incumbent has and the current OS register doesn't.
 	 *
 	 * These are terminated postcodes.
 	 * The incumbent snapshot never dropped them.
@@ -173,7 +177,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * The three city-center probes near 500-900 m use loose bounds because each landmark is a district.
  * Both databases agree there to within 3 m.
  *
- * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA`
+ * `CF99 1SN` isn't a typo: the Senedd's postcode changed from `CF99 1NA`
  * and the incumbent GeoNames snapshot still lists the retired one.
  * This is a small example of the terminated-postcode residual.
  */

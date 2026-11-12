@@ -5,15 +5,19 @@
  *   Intersection synthesizer — v0.7 coverage fix (night-3, DeepSeek-decided).
  *
  *   The 2026-05-29 harness diagnostic found the neural model emits `intersection_a`/`intersection_b`
- *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St"). It never learned
- *   the tags because the corpus has no intersection training signal. The corpus has no generator.
- *   Real-data adapters don't emit intersection-formatted rows. Intersections are 65 of the 376 harness
- *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
- *   supplement source (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
+ *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St").
+ *   It never learned the tags because the corpus has no intersection training signal.
  *
- *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into BIO labels
- *   (B-/I-intersection_a, O on the connector, B-/I-intersection_b). Surface forms of both streets
- *   must occur verbatim in `raw` so alignment lands.
+ *   The corpus has no generator.
+ *   Real-data adapters don't emit intersection-formatted rows.
+ *
+ *   Intersections are 65 of the 376 harness assertions (17%), all 0% neural.
+ *   This generator produces the missing signal as a small targeted supplement source
+ *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
+ *
+ *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into
+ *   BIO labels (B-/I-intersection_a, O on the connector, B-/I-intersection_b).
+ *   Surface forms of both streets must occur verbatim in `raw` so alignment lands.
  *
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */

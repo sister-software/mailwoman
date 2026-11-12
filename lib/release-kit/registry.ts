@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This registry is the package's executable entry point. Knip treats it as such.
- *   Knip reports any operation omitted from this array as dead code. The retired `scripts/**`
- *   entry glob could not provide that check. Adapters (`mwops` and the release MCP server)
- *   iterate this array. They do not import operation modules directly.
+ *   This registry is the package's executable entry point.
+ *
+ *   Knip treats it as such.
+ *   Knip reports any operation omitted from this array as dead code.
+ *
+ *   The retired `scripts/**` entry glob couldn't provide that check.
+ *   Adapters (`mwops` and the release MCP server) iterate this array.
+ *   They do not import operation modules directly.
  */
 
 import { findOperation as findRegisteredOperation } from "@mailwoman/core/scripting"

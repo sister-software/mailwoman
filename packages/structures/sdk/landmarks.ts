@@ -4,11 +4,14 @@
 /**
  *   Converts a published landmark glTF into the single-mesh form Earth draws.
  *
- *   The map draws a landmark in one color with flat shading, like its buildings, so the conversion keeps only
- *   triangle positions. It applies every node transform, merges all triangle primitives into one, joins vertices
- *   with equal positions, and drops normals, texture coordinates, materials and images. The result is scaled
- *   uniformly to the landmark's height, with the center of its horizontal extent at the origin and its lowest point
- *   at zero. Its axes stay glTF's: x east, y up, and z south before the landmark's yaw.
+ *   The map draws a landmark in one color with flat shading, like its buildings,
+ *   so the conversion keeps only triangle positions.
+ *   It applies every node transform, merges all triangle primitives into one, joins vertices
+ *   with equal positions, and drops normals, texture coordinates, materials and images.
+ *
+ *   The result is scaled uniformly to the landmark's height, with the center of its
+ *   horizontal extent at the origin and its lowest point at zero.
+ *   Its axes stay glTF's: x east, y up, and z south before the landmark's yaw.
  */
 
 import { GLTFComponentType, readAccessor, readGLB, writeGLB, type GLTFDocument } from "#glb"

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Node decoration shared by the resolver walk and its post-walk passes, in its own module so the
- *   coherence passes do not import the walk.
+ *   Node decoration shared by the resolver walk and its post-walk passes,
+ *   in its own module so the coherence passes do not import the walk.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -12,7 +12,7 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
 /**
- * The widest stored extent, in degrees, that is a single point: about 10 meters, narrower than any place.
+ * The widest stored extent, in degrees, that's a single point: about 10 meters, narrower than any place.
  */
 const POINT_EXTENT_DEGREES = 0.0001
 
@@ -29,16 +29,59 @@ export function isResolvedWithCoord(n: AddressNode): boolean {
 }
 
 /**
+ * The metadata keys that describe the place a node resolved to, or that place's
+ * relation to the node's parent.
+ *
+ * Each value is true of one place only.
+ * A pass that replaces the place removes them, because the new place may supply none of them.
+ */
+export const PICK_METADATA_KEYS = [
+	"resolver_score",
+	"resolver_name",
+	"resolver_prominence",
+	"resolver_country",
+	"resolver_referential",
+	"resolver_encyclopedic",
+	"resolver_importance",
+	"resolver_matched_alias",
+	"resolver_bbox",
+	"postcode_city_mismatch",
+	"resolution_quality",
+	"ancestors",
+	"contained_by_parent",
+	"admin_containment",
+	"parent_fallback",
+	"variant_alias_exemption",
+] as const
+
+/**
  * Stamp a node with resolver-supplied attribution, displacing any prior classifier `source`
  * / `sourceID` into `metadata.classifier_source` / `metadata.classifier_source_id`
  * and surfacing runner-up candidates on `alternatives`.
+ *
+ * A node the resolver already decorated keeps its classifier stamps as the first decoration wrote them.
+ * When the new place differs from the one the node holds, the {@linkcode PICK_METADATA_KEYS}
+ * and `alternatives` of the previous place are removed before the new place is written.
  */
 export function decorateNode(
 	node: AddressNode,
 	resolved: CoordinateOptionalPlace,
 	alternatives: ResolvedPlace[]
 ): void {
-	if (node.source || node.sourceID) {
+	if (node.source === "resolver") {
+		// A pass can decorate a node again with the place it already holds, and that place's stamps stay true.
+		if (node.placeID !== `wof:${resolved.id}`) {
+			const meta = { ...node.metadata }
+
+			for (const key of PICK_METADATA_KEYS) {
+				// oxlint-disable-next-line typescript/no-dynamic-delete -- removing the listed keys from a copied plain record
+				delete meta[key]
+			}
+
+			node.metadata = meta
+			delete node.alternatives
+		}
+	} else if (node.source || node.sourceID) {
 		const meta = { ...node.metadata }
 
 		if (node.source) {

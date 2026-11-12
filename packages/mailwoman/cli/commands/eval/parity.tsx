@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval parity`: the rescued v1 parity corpus scored against a checkpoint,
- *   parse-only. Includes the plan-2 pre-registered floors (house_number/postcode ≥ 0.97, street
- *   family ≥ 0.90). A non-zero exit means the checkpoint does not yet clear the bar the held
- *   plan-2 production swaps re-run against. Per-country full-agreement table gauges the accent-
- *   mangle + fragment campaign's progress.
+ *   `mailwoman eval parity`: the rescued v1 parity corpus scored against a checkpoint, parse-only.
+ *
+ *   Includes the plan-2 pre-registered floors (house_number/postcode ≥ 0.97, street family ≥ 0.90).
+ *   A non-zero exit means the checkpoint doesn't yet clear the bar the held
+ *   plan-2 production swaps re-run against.
+ *
+ *   Per-country full-agreement table gauges the accent- mangle + fragment campaign's progress.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

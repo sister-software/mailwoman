@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Japan designators: the delivery service, premise, sub-premise, floor, block-numbering and relation words
- *   that a Japanese address or query uses. Floors come from the Japanese floor lexicon.
+ *   Japan designators: the delivery service, premise, sub-premise, floor, block-numbering
+ *   and relation words that a Japanese address or query uses.
+ *   Floors come from the Japanese floor lexicon.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/jpnEn.pdf UPU Japan addressing profile}
  * @see {@link https://en.wiktionary.org/wiki/私書箱 Wiktionary 私書箱}

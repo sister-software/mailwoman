@@ -26,11 +26,11 @@ span decode's MARGINAL value over the extract : -12.7pp
 
 §6 valued the flag "for the list and the target class (+23.8pp Paris)". On that target class the
 span decode is now **second best, behind a simpler thing**. An opt-in path that loses to the default
-is not a feature.
+isn't a feature.
 
-## 2. What this does and does not establish
+## 2. What this does and doesn't establish
 
-**It does not establish "span decode < token decode."** The comparison is between **artifacts** —
+**It doesn't establish "span decode < token decode."** The comparison is between **artifacts** —
 v301 (old corpus) + span vs v310 (new corpus) + token. Two variables move at once.
 
 **It is exactly the ship question.** "Should we ship this flag?" is a question about artifacts, and
@@ -48,30 +48,30 @@ the +23.8pp was the span head's to give. T1c and T2 falsified the belief:
 - **T2** fixed the distribution. The class the span decode was ordered to rescue got rescued by
   data — further, and without a decode change.
 
-The decision was correct given what was known. The premise moved underneath it. That is what a
+The decision was correct given what was known. The premise moved underneath it. That's what a
 pre-registered plan is for: §6's own text made the flag conditional (_"Tier 1a decides whether the
-flag has a regression cost that has not been identified yet"_), and the tiers below it kept going.
+flag has a regression cost that's not been identified yet"_), and the tiers below it kept going.
 
-## 4. Off-by-default is not free
+## 4. Off-by-default isn't free
 
 The tempting move is to ship it off by default on the assumption that an unused flag adds no cost.
 An off-by-default flag still adds the following:
 
 - an **API surface** we have to keep.
 - a **maintenance burden** on a decode path that no check validates.
-- an **implicit endorsement** of weights trained on a corpus we have since replaced.
+- an **implicit endorsement** of weights trained on a corpus we've since replaced.
 - a **worse experience for anyone who opts in**. Those users are the flag's only population.
 
 ## 5. The one open question — and it is the last one
 
 Everything above compares artifacts. The within-model question has never been asked on a corpus that
-teaches bare streets, because **no span head has ever been trained on one**. That is
+teaches bare streets, because **no span head has ever been trained on one**. That's
 `v3.2.0-fragment-span` (run `ap-jcRsH8TNQny84vVeOWLG8f`), one variable off v310: the head.
 
 Pre-registered kill shot: **`seg@1` must beat v310's `token@1` = 56/63 (0.889)** — the bar the flag
 failed by 12.7pp. If an extract-trained span head cannot beat an extract-trained plain decode on the target
-class, the span head has no case **at any weight**, and the arc closes. The arc does not then tune
-`span_loss_weight` or re-run. That is the treadmill the arc's own guard forbids.
+class, the span head has no case **at any weight**, and the arc closes. The arc doesn't then tune
+`span_loss_weight` or re-run. That's the treadmill the arc's own guard forbids.
 
 ## 6. What the arc bought anyway
 
@@ -85,7 +85,7 @@ the license. The license finding built T2's extract, and the extract fixed the c
 
 The arc asked whether a better decode could find the correct parse. The reply turned out to be that
 the correct parse was never in the list to be found, because it was not in the training data. **The instrument
-that proved the answer wasn't there is what led us to put it there.**
+that proved the answer wasn't there's what led us to put it there.**
 
 ---
 

@@ -6,11 +6,13 @@
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
- *   1. the split with a diacritic surface. The board keeps diacritics. a diacritic-stripping norm
- *      would leak `Tømmerlien` silently. Pinned in both directions.
- *   2. the counter-distribution. A model that sees only bare `{street} {number}` can flip its
- *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
- *      digit. The bare-locality and bare-postcode counter rows must both exist and have no street.
+ *   1. the split with a diacritic surface.
+ *      The board keeps diacritics. a diacritic-stripping norm would leak `Tømmerlien` silently.
+ *      Pinned in both directions.
+ *   2. the counter-distribution.
+ *      A model that sees only bare `{street} {number}` can flip its default from "bare ->
+ *      locality" to "bare -> street", and stop emitting postcode to win the digit.
+ *      The bare-locality and bare-postcode counter rows must both exist and have no street.
  */
 
 import { describe, expect, it } from "vitest"
@@ -62,7 +64,7 @@ describe("no-fragment", () => {
 			const c = r.components!
 
 			// A signal row has a street and may have a house_number, but never a postcode or locality.
-			// That is the whole license: read the street without its partners.
+			// That's the whole license: read the street without its partners.
 			expect(c.postcode).toBeUndefined()
 			expect(c.locality).toBeUndefined()
 			expect(c.street).toBeTruthy()

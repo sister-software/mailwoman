@@ -49,7 +49,7 @@ function isRejectKey(key: string): boolean {
 }
 
 /**
- * The rows a run asked for and did not get, by every way it can fail to get one.
+ * The rows a run asked for and didn't get, by every way it can fail to get one.
  */
 export function rejects(tally: Tally): number {
 	let total = 0
@@ -172,7 +172,7 @@ function formatRejects(tally: Tally): string {
  * Runs every pending batch with at most `concurrency` requests in flight, checkpointing completed
  * ids every {@linkcode CHECKPOINT_EVERY} completions and once at the end, and prints the summary.
  *
- * A worker's rejection is not caught: a worker answers an API failure as a tally,
+ * A worker's rejection isn't caught: a worker answers an API failure as a tally,
  * so a rejection is a defect in the run, and the checkpoint keeps the ids completed before it.
  */
 export async function runBatches<Batch>(

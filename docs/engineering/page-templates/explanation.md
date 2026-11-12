@@ -33,11 +33,11 @@ than the last.
 ## Exemplar paragraph
 
 > A person reading an address by hand answers two questions. First, they decide where the pieces start and stop. For
-> example, `1600 Amphitheatre Parkway` is one piece and `Mountain View` is another. Only then do you decide
-> what each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
+> example, `1600 Amphitheatre Parkway` is one piece and `Mountain View` is another. Only then do they decide
+> what each piece is. The phrase grouper (stage 2.7) answers the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
 > span?" instead of discovering boundaries and types at once. The separation costs a page of plumbing and
-> provides a smaller question at the point where errors are expensive, because a boundary the grouper proposes
+> gives the stage 3 model a smaller question where errors are expensive, because a boundary the grouper proposes
 > can be reconsidered, while a boundary a joint decoder has already committed to cannot.
 
 <!-- illustrative -->

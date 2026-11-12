@@ -308,7 +308,7 @@ export interface ResolutionState {
 	/**
 	 * The tree's first region value.
 	 *
-	 * The region and locality nodes are siblings, so the walk would not otherwise
+	 * The region and locality nodes are siblings, so the walk wouldn't otherwise
 	 * pass the region to the locality lookup.
 	 * It applies only with {@link ResolutionState.adminContainmentRerank}
 	 * and no caller-supplied default country.
@@ -523,7 +523,7 @@ const ROOFTOP_NAMESAKE_LIMIT = 25
  *
  * A rooftop row is an observed point, so an unreconciled locality is never moved onto it.
  * The node records the distance as `rooftop_outside_locality_km`, and the result
- * reports the locality as a component the answer did not follow.
+ * reports the locality as a component the answer didn't follow.
  */
 export async function applyRooftopConsistency(
 	roots: readonly AddressNode[],

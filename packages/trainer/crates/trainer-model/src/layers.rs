@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The `torch.nn` modules the encoder is built from, each constructed and applied as torch 2.13 does it.
 //!
 //! A constructor registers its tensors in the order the Python module registers them and draws its default

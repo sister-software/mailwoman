@@ -4,10 +4,12 @@
 /**
  *   The ISO 3166-1 jurisdiction an INSEE commune code belongs to.
  *
- * Every French source this repository reads keys its rows by INSEE commune code, and France's
- * overseas departments and collectivities are separate ISO 3166-1 jurisdictions. A reader that
- * labels every INSEE-coded row `FR` therefore mislabels the overseas ones. This module is the one
- * home for that mapping, so the BAN adapter and the French recipes that read the same files agree.
+ * Every French source this repository reads keys its rows by INSEE commune code,
+ * and France's overseas departments and collectivities are separate ISO 3166-1 jurisdictions.
+ * A reader that labels every INSEE-coded row `FR` therefore mislabels the overseas ones.
+ *
+ * This module is the one home for that mapping, so the BAN adapter and the French
+ * recipes that read the same files agree.
  */
 
 /**
@@ -53,8 +55,8 @@ export const INSEE_COUNTRIES: readonly string[] = ["FR", ...Object.values(COUNTR
  * The country a row belongs to, read from its INSEE commune code.
  *
  * A code outside the overseas prefixes is metropolitan France.
- * An empty or short code also reads `FR`, because a missing commune code does
- * not move the row to another country.
+ * An empty or short code also reads `FR`, because a missing commune code doesn't
+ * move the row to another country.
  */
 export function countryOfInseeCode(codeInsee: string): string {
 	return COUNTRY_BY_INSEE_DEPARTMENT[codeInsee.trim().slice(0, 3)] ?? "FR"

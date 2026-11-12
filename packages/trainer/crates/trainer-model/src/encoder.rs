@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `MailwomanCoarseEncoder`: construction, the supervised forward pass with its losses, and the MLM forward pass.
 //!
 //! Construction registers every tensor in the order `nn/encoder/model.py` does and draws every default

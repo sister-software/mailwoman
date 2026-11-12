@@ -47,7 +47,7 @@ const ort = await import("onnxruntime-web/webgpu")
 
 ## Why CI never catches this
 
-Headless Chromium (Playwright, Puppeteer, Selenium) does not expose a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the WebGPU probe fails silently and falls back to WASM. WASM handles int8 QDQ ops correctly, so your tests pass.
+Headless Chromium (Playwright, Puppeteer, Selenium) doesn't expose a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the WebGPU probe fails silently and falls back to WASM. WASM handles int8 QDQ ops correctly, so your tests pass.
 
 This means any test suite that runs in headless mode will never exercise the WebGPU code path. The bug only manifests on real browsers with real GPUs.
 

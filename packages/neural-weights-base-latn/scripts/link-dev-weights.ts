@@ -3,12 +3,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Materialize the base-latn overlay's dev artifacts. The overlay includes only the shared model,
- *   tokenizer, calibration and lexicons, while locale-specific data stays in each locale overlay.
+ *   Materialize the base-latn overlay's dev artifacts.
  *
- *   The model pair is the same source en-us links. `$MAILWOMAN_DEV_MODEL` or
- *   `$MAILWOMAN_DEV_TOKENIZER` overrides it. This workspace is parked and unpublished, so it
- *   has no digest card. The shared metadata from en-us appears in the soft-feed list, where a
+ *   The overlay includes only the shared model, tokenizer, calibration and lexicons,
+ *   while locale-specific data stays in each locale overlay.
+ *
+ *   The model pair is the same source en-us links.
+ *   `$MAILWOMAN_DEV_MODEL` or `$MAILWOMAN_DEV_TOKENIZER` overrides it.
+ *
+ *   This workspace is parked and unpublished, so it has no digest card.
+ *   The shared metadata from en-us appears in the soft-feed list, where a
  *   missing source warns and continues.
  */
 

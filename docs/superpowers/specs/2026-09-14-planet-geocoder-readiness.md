@@ -6,7 +6,7 @@ number here is reproducible from tracked files. Where a question needs `candidat
 lists it as unanswered rather than estimated.
 
 The question behind it: mailwoman's release list ships eleven locales, and the repository's own tables, guards and
-boards were built when it shipped two. This records where those have kept up and where they have not.
+boards were built when it shipped two. This records where those have kept up and where they haven't.
 
 ## What the repository claims, by three different registers
 
@@ -16,7 +16,7 @@ boards were built when it shipped two. This records where those have kept up and
 | Release list   | eleven locales over eleven countries — AU CN DE ES FR GB IN IT JP NZ US                                                    | `release.config.json` (`locales` + `charWeights[].overlays`) |
 | Country tables | 35 country sets across 29 files, each its own subset                                                                       | measured, below                                              |
 
-The three do not agree, and they are not meant to identically. A tier is a claim about measurement, the release
+The three do not agree, and they're not meant to identically. A tier is a claim about measurement, the release
 list is a claim about artifacts, a table is a claim about one mechanism. What follows is the places where they
 contradict rather than merely differ.
 
@@ -31,7 +31,7 @@ countries with exactly one row   59 of 130
 rows in the eleven shipping countries   455 of 1,261
 ```
 
-**Not every row checks.** `mailwoman data coverage`'s docstring draws the distinction — "a board row that is not
+**Not every row checks.** `mailwoman data coverage`'s docstring draws the distinction — "a board row that's not
 `status: pass` tracks rather than checks" — and a third of the board is tracking:
 
 ```
@@ -81,11 +81,11 @@ places a planet geocoder is about to be judged — the other 119 countries — a
 per country beside corpus rows, training admission, the weights package and gazetteer places, and its
 docstring at the time stated the reason this survey exists. Five registers that disagree hold the answer,
 and a reading of any single register gives a confident wrong answer. The docstring also stated that
-training is not verification, because a board row whose status is not `pass` tracks a case rather than
+training isn't verification, because a board row whose status isn't `pass` tracks a case rather than
 checks it. The command now lives at `packages/mailwoman/cli/commands/data/coverage.tsx`, and its current
 header no longer contains that text.
 
-What is new here is having read the board-rows column across all 130 countries at once and stated what the
+What's new here is having read the board-rows column across all 130 countries at once and stated what the
 distribution means. Reproduce it with that command rather than with a throwaway. The counts above come from the
 committed case files, so they need no artifact, while the command's other four registers do.
 
@@ -106,12 +106,12 @@ guards unconditionally."
 
 Read against the board table above, the list looks less like an oversight and more like _the countries where a
 regression is detectable_ — GB 152, FR 67, DE 16 are three of the four best-covered. But US has 105 rows, second
-only to GB, so that reading does not hold either. Either the list is wrong or the D-rule's scope grew past tier 1
+only to GB, so that reading doesn't hold either. Either the list is wrong or the D-rule's scope grew past tier 1
 without `SCOPE.mdx` recording it, and only the operator can say which.
 
 Scope of the claim: `runArc` is a maintainer diagnostic rather than the release pipeline. The promotion battery and the
-regression board may catch a US regression by other means. What is measured here is that the constant encoding
-"unconditionally" does not name its primary locale.
+regression board may catch a US regression by other means. What's measured here is that the constant encoding
+"unconditionally" doesn't name its primary locale.
 
 ### The cross-country plausibility guard is fail-open for four shipping locales
 
@@ -128,7 +128,7 @@ Zealand. JP and CN published in the CJK arc at 9.3.0, after the boxes were measu
 
 This is adjacent to #2266. Its failures are all cross-country: `WA Sammamish` answering Wa in Ghana (11,279 km)
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
-or Chinese answer there is no box to check against.
+or Chinese answer there's no box to check against.
 
 Four additional boxes are a small data change and a real behavior change. The guard would begin firing where it
 never has — so it needs the board rather than a commit.
@@ -148,12 +148,12 @@ NZ 11   IN 10   PL 10   JP  9   BR  9   BE  8   CZ  8   HR  8   NO  8
 ```
 
 **CA (14) and NL (14) outrank JP (9) and match IN (10), and neither ships a locale.** The tables encode a
-Europe-and-North-America center the release list has already moved past. That is not itself a defect — most of
+Europe-and-North-America center the release list has already moved past. That's not itself a defect — most of
 these subsets are deliberate — but it is the shape to expect a twelfth locale to meet.
 
-One class of absence is correctly handled and is recorded here so it is not re-reported: `HARD_PLACE_COUNTRY_SAFELIST`
+One class of absence is correctly handled and is recorded here so it isn't re-reported: `HARD_PLACE_COUNTRY_SAFELIST`
 and `MEASURED_COUNTRY_COVERAGE` omit CN, IN, JP and NZ, and their docstrings say absence means the soft prior with
-no recall regression, with the measurement that kept FI (69.5%) and PL (77.8%) out cited in place. Absence there is
+no recall regression, with the measurement that kept FI (69.5%) and PL (77.8%) out cited in place. Absence there's
 a measured state rather than a gap.
 
 ## Script cannot encode the CJK distinction, except for Korean
@@ -169,7 +169,7 @@ repository holds:
 | `gauntlet cases/cn/organizational-units.jsonl`    |                  59 |                     0 |                     0 |      59 — 100% |
 
 Korean is categorical: the address vocabulary itself — 로, 길, 동, 시 — is Hangul, and every Korean row today is
-labeled `ja-JP`. Japanese is not: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are
+labeled `ja-JP`. Japanese isn't: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are
 Han, so script offers almost no signal for the Japanese/Chinese distinction.
 
 The Japanese figure is a floor with a narrow denominator. That gold set contains postcode + prefecture +
@@ -179,7 +179,7 @@ municipality and no component below that level — median input 16 characters, p
 
 ## What the gazetteer holds, per country
 
-Answered after the fact through the `mailwoman-dev` MCP daemon. The daemon runs in the operator's environment and therefore has the data root a plain checkout does not. Places in `admin-global-priority.db`:
+Answered after the fact through the `mailwoman-dev` MCP daemon. The daemon runs in the operator's environment and therefore has the data root a plain checkout doesn't. Places in `admin-global-priority.db`:
 
 ```
 IN 1,113,550   CN 678,311   US 259,485   RU 159,485   PL 154,742
@@ -198,7 +198,7 @@ are right.
 ### One reading here was the instrument rather than the data
 
 `mwdev_sources` reports **NL = 28** for this artifact, against 19,812 in the `-coverage` generation. Taken at face
-value that reads as the promoted gazetteer losing the Netherlands. It has not:
+value that reads as the promoted gazetteer losing the Netherlands. It hasn't:
 
 | Path                                     |                    Amsterdam |                    Rotterdam | Utrecht |           Groningen |
 | ---------------------------------------- | ---------------------------: | ---------------------------: | ------: | ------------------: |
@@ -209,9 +209,9 @@ The census counts `spr` rows. The resolver reads the FTS index. Only the first i
 narrow is that the `spr` count for NL moved 19,812 → 28 between generations while the FTS content stayed rich,
 and no evidence reachable from here explains why or what still reads `spr`.
 
-## What is still unanswered
+## What's still unanswered
 
-This list exists so the next reader does not mistake silence for absence:
+This list exists so the next reader doesn't mistake silence for absence:
 
 - **Whether any ranking change is safe.** Needs the regression board and the promotion battery. Every open item on
   #2266, plus #2267, #2268, #2269 and #2272, sits behind this.

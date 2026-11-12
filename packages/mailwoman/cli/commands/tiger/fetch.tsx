@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman tiger fetch --state <FIPS>` — download a state's tiger tabulation blocks (2020) into a
- *   SQLite database via the Kysely `DatabaseClient`. Geometry is stored as GeoJSON text (no
- *   SpatiaLite).
+ *   `mailwoman tiger fetch --state <FIPS>` — download a state's tiger tabulation blocks
+ *   (2020) into a SQLite database via the Kysely `DatabaseClient`.
+ *   Geometry is stored as GeoJSON text (no SpatiaLite).
  *
- *   A valid cached ZIP is reused. Re-running a state replaces its rows. Pass
- *   `--county <FIPS3>` to load one county (handy for downstream per-county work).
+ *   A valid cached ZIP is reused.
+ *   Re-running a state replaces its rows.
+ *
+ *   Pass `--county <FIPS3>` to load one county (handy for downstream per-county work).
  */
 
 import { Spinner } from "@inkjs/ui"

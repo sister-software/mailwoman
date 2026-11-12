@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `storage.verify` — every property `storage.prepare` was supposed to establish, asserted again from scratch.
+ *   `storage.verify` — every property `storage.prepare` was supposed to establish,
+ *   asserted again from scratch.
  *
- *   This operation makes the preparation verifiable. `prepare` calls it at the end.
- *   It can also run independently afterward, so "did anyone remember to set the compression property on the database subtrees" stops
- *   being something a person has to hold in their head.
+ *   This operation makes the preparation verifiable.
+ *   `prepare` calls it at the end.
+ *
+ *   It can also run independently afterward, so "did anyone remember to set the compression
+ *   property on the database subtrees" stops being something a person has to hold in their head.
  */
 
 import { z } from "zod"

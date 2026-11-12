@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One chunk of the zoning ingest, as its own process — spawned by `buildZoningDatabase`, never run by hand.
+ *   One chunk of the zoning ingest, as its own process — spawned by
+ *   `buildZoningDatabase`, never run by hand.
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"
@@ -27,7 +28,7 @@ await runIngestChunkScript({
 				exportPath: requiredArgument("zoning ingest-chunk", "export", values.export ?? null),
 				...(values["object-id-from"] ? { objectIDFrom: Number(values["object-id-from"]) } : {}),
 				...(values["object-id-to"] ? { objectIDTo: Number(values["object-id-to"]) } : {}),
-				// A range's count is not knowable up front: the source reports only the layer total,
+				// A range's count isn't knowable up front: the source reports only the layer total,
 				// so the parent checks the sum against the whole file.
 				declaredFeatureCount: 0,
 			}),

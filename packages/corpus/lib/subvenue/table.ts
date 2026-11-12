@@ -78,7 +78,7 @@ export interface SubVenueSurface {
 	 * The phrase, lowercased for Latin script and left as written otherwise.
 	 *
 	 * The Turkish `İ` (U+0130) is `\p{Script=Latin}` and folds to `i` plus a combining dot above, so it
-	 * round-trips through a form its own locale would not write (no shipped code depends on that today).
+	 * round-trips through a form its own locale wouldn't write (no shipped code depends on that today).
 	 */
 	phrase: string
 	recordID: string
@@ -190,7 +190,7 @@ export interface SubVenueLexiconTable {
  *
  * `tier` is added here: the seven WOF placetypes plus `terminal`/`gate` are all venue-interior,
  * while `campus` and `building` name a whole venue about as frequently as a part of one
- * but are marked `subvenue` because that is the role the span proposer uses them in.
+ * but are marked `subvenue` because that's the role the span proposer uses them in.
  */
 export const SHIPPED_DESIGNATOR_SEED: ReadonlyArray<{
 	id: string

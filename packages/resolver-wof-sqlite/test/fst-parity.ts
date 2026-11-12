@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares the in-place FST matcher with the object matcher `deserializeFST` builds from the same bytes, over every
- *   state, every edge and every token path from the root.
+ *   Compares the in-place FST matcher with the object matcher `deserializeFST` builds from
+ *   the same bytes, over every state, every edge and every token path from the root.
  */
 
 import { expect } from "vitest"

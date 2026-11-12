@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `gazetteer pair-index` refuses a Great Britain tuple CSV. The only one it has read is HM Land
- *   Registry Price Paid Data. The license register refuses its address fields, so a GB build
- *   reads only the secondary sources. A `--source` for GB stops before opening any file.
+ *   `gazetteer pair-index` refuses a Great Britain tuple CSV.
+ *
+ *   The only one it has read is HM Land Registry Price Paid Data.
+ *   The license register refuses its address fields, so a GB build reads only the secondary sources.
+ *   A `--source` for GB stops before opening any file.
  */
 
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { mailwomanCLIPath } from "#metadata"
 
 const cliBin = await mailwomanCLIPath()
@@ -44,7 +46,7 @@ describe("mailwoman gazetteer pair-index --country gb --source <csv>", () => {
 		expect(failure).toBeInstanceOf(Error)
 
 		const { stdout = "", stderr = "" } = failure as { stdout?: string; stderr?: string }
-		const output = stripAnsi(`${stdout}\n${stderr}`).replaceAll(/\s+/g, " ")
+		const output = stripANSI(`${stdout}\n${stderr}`).replaceAll(/\s+/g, " ")
 
 		expect(output).toContain("a Great Britain build reads no tuple CSV")
 	})

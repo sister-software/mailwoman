@@ -4,11 +4,13 @@
 /**
  *   The two conditions an INSPIRE Addresses reader must report rather than read as an absence.
  *
- * An `ad:Address` states its street, its postcode and its place names by reference, and states the
- * parts of its number as typed designators. Both forms can hold a value the reader asked for and
- * could not read: a reference whose target the service never served, and a designator the publisher
- * marked `xsi:nil`. An empty component for either would publish an address the publisher did not
- * state, so each raises and names what it could not read.
+ * An `ad:Address` states its street, its postcode and its place names by reference,
+ * and states the parts of its number as typed designators.
+ * Both forms can hold a value the reader asked for and couldn't read: a reference whose
+ * target the service never served, and a designator the publisher marked `xsi:nil`.
+ *
+ * An empty component for either would publish an address the publisher didn't state,
+ * so each raises and states what it couldn't read.
  *
  * The errors live beside {@linkcode "#inspire/address"} because every publisher of this theme writes
  * both forms, so an adapter for the next one reports the same two conditions in the same words.
@@ -53,11 +55,11 @@ export class VoidDesignatorError extends Error {
 /**
  * Raised when a publication's archive cannot answer what the adapter asked it for.
  *
- * An archive holding no component feature is not a smaller publication.
+ * An archive holding no component feature isn't a smaller publication.
  * Every address references a fixed set of components, so an empty index turns each
  * row into a row with no street rather than into fewer rows.
  *
- * That is the absence the repository's partial-read rule refuses.
+ * That's the absence the repository's partial-read rule refuses.
  *
  * The adapter id records which publisher failed, so one class serves every
  * publisher that ships its theme as one archive.

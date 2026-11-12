@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Dev-weights linker for `@mailwoman/neural-weights-es-es`: it builds the index that makes
- *   `resolveWeights({locale: "es-es"})` surface `pairIndexPath` in local dev.
+ *   Dev-weights linker for `@mailwoman/neural-weights-es-es`: it builds the index that
+ *   makes `resolveWeights({locale: "es-es"})` surface `pairIndexPath` in local dev.
  *
  *   The index is inert without the `es` entry in `LEADING_POSTCODE_COUNTRIES`
- *   (`neural/pair/prior-windows.ts`): Spanish addresses write the
- *   código postal first ("28013 Madrid"), so a parent segment folds to a key no bare-municipio entry
- *   matches.
+ *   (`neural/pair/prior-windows.ts`): Spanish addresses write the código postal first
+ *   ("28013 Madrid"), so a parent segment folds to a key no bare-municipio entry matches.
  */
 
 import {

@@ -3,7 +3,9 @@
 
 /**
  *   A linear country classifier over hashed character n-gram and script features.
- *   Confidence is temperature-calibrated. Predictions below the threshold abstain.
+ *
+ *   Confidence is temperature-calibrated.
+ *   Predictions below the threshold abstain.
  *   The module runs in Node and browsers.
  */
 

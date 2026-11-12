@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `astrogeology publish --body <moon|mars> [--out <dir>] [--dry-run]` — publish a verified build: the two archives
- *   under the tile worker's key layout, the search artifact and the manifest under a versioned prefix on the public
- *   bucket, then fetch each public URL and report its status.
+ *   `astrogeology publish --body <moon|mars> [--out <dir>] [--dry-run]` —
+ *   publish a verified build: the two archives under the tile worker's key layout,
+ *   the search artifact and the manifest under a versioned prefix on the public bucket,
+ *   then fetch each public URL and report its status.
  *
- *   the version is part OF the KEY so a republish never overwrites an artifact a deployed app pins: the manifest's
- *   build date compacted to `yyyymmdd` plus the first eight hex characters of a SHA-256 over every output's checksum.
+ *   the version is part OF the KEY so a republish never overwrites an artifact a
+ *   deployed app pins: the manifest's build date compacted to `yyyymmdd` plus the first
+ *   eight hex characters of a SHA-256 over every output's checksum.
  */
 
 import { Spinner } from "@inkjs/ui"

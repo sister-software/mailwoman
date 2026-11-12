@@ -4,21 +4,21 @@
 /**
  *   The fixture is the service's own response text, in the two documents a build saves.
  *
- * `fixtures/sk-inspire/addresses.gml` holds twelve `wfs:member` elements copied byte for byte out of
- * four `GetFeature` pages of `ad:Address` on `https://rageo.minv.sk/geoserver/ad/wfs`, and
- * `components.gml` holds the twenty-three features they reference, fetched by `resourceID` from the
- * same service. Each file opens with a served `wfs:FeatureCollection` root element, so its
- * `numberMatched`, `numberReturned` and `timeStamp` describe the request its root came from rather
- * than the file. The reader consults none of the three.
+ * `fixtures/sk-inspire/addresses.gml` holds twelve `wfs:member` elements copied byte for byte
+ * out of four `GetFeature` pages of `ad:Address` on `https://rageo.minv.sk/geoserver/ad/wfs`,
+ * and `components.gml` holds the twenty-three features they reference,
+ * fetched by `resourceID` from the same service.
+ * Each file opens with a served `wfs:FeatureCollection` root element, so its `numberMatched`,
+ * `numberReturned` and `timeStamp` describe the request its root came from rather than the file.
+ * The reader consults none of the three.
  *
- * The twelve cover what the service varies: four addresses with a street that write both an
- * `addressNumber` and a `buildingIdentifier`, four street-less addresses whose `ad:AddressAreaName`
- * states a settlement part other than the municipality, two street-less addresses that reference no
- * address area at all, and one of each from a fourth page.
+ * The twelve cover what the service varies: four addresses with a street that write
+ * both an `addressNumber` and a `buildingIdentifier`, four street-less addresses whose
+ * `ad:AddressAreaName` states a settlement part other than the municipality, two street-less
+ * addresses that reference no address area at all, and one of each from a fourth page.
  *
- * The two files together are also the point of the split: an address in one document references a
- * feature in the other, so the suite exercises the join across documents that the service's paging
- * forces.
+ * The two files together are also the point of the split: an address in one document references a feature
+ * in the other, so the suite exercises the join across documents that the service's paging forces.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -174,7 +174,7 @@ describe("sk-inspire adapter against the fixture WFS pages", () => {
 		const { rows } = await rowsFrom(fixtureDir)
 
 		// `PostalDescriptor.4018` states `<ad:postCode>04018</ad:postCode>`,
-		// so the code is five digits and the feature's own id is not.
+		// so the code is five digits and the feature's own id isn't.
 		expect(rows.find((r) => r.source_id.endsWith("Address.4208424"))?.components.postcode).toBe("04018")
 
 		expect(rows.find((r) => r.source_id.endsWith("Address.4208424"))?.raw).toBe("Skalická 1771/4, 04018 Košice-Krásna")

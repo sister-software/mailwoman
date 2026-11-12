@@ -167,7 +167,7 @@ export interface DataBundle {
 	countries?: readonly string[]
 
 	/**
-	 * The serving role of every artifact that names no {@link BundleArtifact.family}.
+	 * The serving role of every artifact that identifies no {@link BundleArtifact.family}.
 	 */
 	role?: ServingRole
 
@@ -324,10 +324,9 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
 				"Credit OpenStreetMap contributors for the Northern Ireland postcode fold, and keep the Open Database License on that fold and on any database derived from it.",
-				"Read the Open Database License before redistributing this database or a database derived from it. Its share-alike term for the Overture Divisions rows is the first unresolved question below.",
+				"This file is a Derivative Database of Overture Divisions under the Open Database License 1.0, as a whole. The Overture rows share its tables, ids, ancestry and importance passes with the other sources' rows, so they form one database with them and are not an independent part of a collective database. Credit `© OpenStreetMap contributors, Overture Maps Foundation`, and keep the Open Database License on this file and on any database derived from it.",
 			],
 			unresolved: [
-				"Whether the Open Database License's share-alike term reaches the rest of this database through the Overture Divisions rows. The expression on the artifact records ODbL-1.0, and what that requires of a redistributor depends on whether those rows form a Derivative Database with the others, an independent part of a Collective Database, or an extraction below the threshold the license sets. The Northern Ireland postcode fold is settled in the terms above.",
 				"Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download.",
 				"Which Overture record each of those places came from. `fold-overture` writes a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible.",
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
@@ -461,7 +460,7 @@ function describeExpression(expression: string): string {
  * The prose contains publisher names and conditions no manifest holds.
  * The expression line states the implication of {@link BundleRights.expression}.
  *
- * A pull uses it to decide when the artifact is not yet on disk.
+ * A pull uses it to decide when the artifact isn't yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -523,7 +522,7 @@ export function summarizeBundleRights(bundle: DataBundle): BundleRightsSummary {
 export interface ArtifactTermsObservation {
 	path: string
 	/**
-	 * `absent` means the file is not on disk.
+	 * `absent` means the file isn't on disk.
 	 *
 	 * `unmanifested` means it has no `layer_manifest`.
 	 * `unreadable` means opening it failed.

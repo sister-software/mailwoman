@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Tensor comparison for the staged comparison: the largest absolute and relative difference, and the first
 //! element that breaks a tolerance.
 

@@ -4,9 +4,13 @@
 /**
  *   Finds relative markdown links under `docs/` whose targets do not exist on disk.
  *
- *   Only `./` and `../` targets are checked. A bare `docs/x.md` could be a repo path or a Docusaurus doc id. An
- *   absolute `/docs/…` link is a route. The `#anchor` is dropped before resolution. A target directory passes
- *   because Docusaurus serves its index page.
+ *   Only `./` and `../` targets are checked.
+ *   A bare `docs/x.md` could be a repo path or a Docusaurus doc id.
+ *
+ *   An absolute `/docs/…` link is a route.
+ *   The `#anchor` is dropped before resolution.
+ *
+ *   A target directory passes because Docusaurus serves its index page.
  */
 
 // The Docs workflow runs `check/docs-structure.ts`, which imports this file, before `yarn install`.
@@ -43,7 +47,7 @@ const SKIP_DIRECTORIES = new Set(["node_modules", "build", ".docusaurus", "stati
 const RELATIVE_LINK = /\]\((\.\.?\/[^)#\s]+)(#[^)\s]*)?\)/g
 
 /**
- * A relative link whose target does not exist.
+ * A relative link whose target doesn't exist.
  */
 export interface BrokenLink {
 	/**

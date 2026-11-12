@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The three time concepts a claim needs: when the source observed the fact, when the record became
- *   available, and when the application retrieved it. A dossier built for an `asOf` date admits a record
- *   by its availability date only, so a decision dated 2022 cannot rest on a record published in 2023.
+ *   The three time concepts a claim needs: when the source observed the fact,
+ *   when the record became available, and when the application retrieved it.
+ *
+ *   A dossier built for an `asOf` date admits a record by its availability date only,
+ *   so a decision dated 2022 cannot rest on a record published in 2023.
  */
 
 /**

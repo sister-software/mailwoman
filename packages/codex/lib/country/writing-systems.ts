@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generated, so do not edit by hand. The written scripts of each ISO 3166-1 territory's official languages,
- *   derived from Unicode CLDR 47.0.0 supplemental territoryInfo and likelySubtags. A combined ISO 15924
- *   code expands to the Unicode Script property values it covers, so Japanese gives Hani, Hira and Kana.
+ *   Generated, so do not edit by hand.
+ *
+ *   The written scripts of each ISO 3166-1 territory's official languages, derived from
+ *   Unicode CLDR 47.0.0 supplemental territoryInfo and likelySubtags.
+ *   A combined ISO 15924 code expands to the Unicode Script property values it covers,
+ *   so Japanese gives Hani, Hira and Kana.
+ *
  *   Regenerate with: node packages/mailwoman/tools/dev-tools/codex/country/writing-systems.run.ts
  *
  *   250 territories by script count:

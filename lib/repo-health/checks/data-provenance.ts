@@ -8,14 +8,14 @@
  *   No automated pass can tell whether a JSON file came from a generator or a person.
  *
  *   `PROVENANCE.md` records per artifact what wrote it and how a reader checks it. The check requires the record to
- *   name every artifact. It does not verify artifact contents.
+ *   name every artifact. It doesn't verify artifact contents.
  *
- *   Coverage names every artifact file directly in the directory and every immediate subdirectory, because each of
+ *   Coverage lists every artifact file directly in the directory and every immediate subdirectory, because each of
  *   the dictionaries package's three data directories is one level down and a file-only rule reports no finding about
  *   any of them.
  *
  *   A subdirectory is recorded as an entry rather than traversed: requiring every file at any depth would ask
- *   `packages/dictionaries/data/PROVENANCE.md` to list 1,112 vendored dictionary files, a list that is difficult to review and keep current.
+ *   `packages/dictionaries/data/PROVENANCE.md` to list 1,112 vendored dictionary files, a list that's difficult to review and keep current.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -29,7 +29,7 @@ const DOCUMENTATION_FILES: ReadonlySet<string> = new Set(["PROVENANCE.md", "READ
 
 /**
  * The names of the directories committed directly inside `directory`, derived from the tracked-file
- * list so an untracked scratch directory a build left behind is not reported as undocumented.
+ * list so an untracked scratch directory a build left behind isn't reported as undocumented.
  */
 function immediateSubdirectories(trackedFiles: readonly string[], directory: string): string[] {
 	const prefix = `${directory}/`
@@ -51,7 +51,7 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
 
 /**
  * Reads every package's `data` directory that already contains a `PROVENANCE.md`
- * and reports each artifact the file does not name.
+ * and reports each artifact the file doesn't name.
  */
 export const dataProvenanceCheck: RepoCheck = {
 	id: "data-provenance",

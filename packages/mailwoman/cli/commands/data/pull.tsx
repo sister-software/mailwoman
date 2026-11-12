@@ -2,18 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `data pull` installs published artifacts. It plans the request with the same planner `setup` reads, prints
- *   the plan's terms, sizes, disk and activation changes, and with `--dry-run` stops there without network
- *   access or data writes. Otherwise it executes the plan: each artifact is acquired with a receipt into the data
- *   root's staging area, verified, sealed and installed, and a bundle whose readers consult the active selection
- *   is activated by one atomic replacement of `active.json` once every artifact of the bundle is installed.
- *   On a terminal, each download redraws one line with a bar, its bytes, total, percent, rate and time remaining.
+ *   `data pull` installs published artifacts.
+ *
+ *   It plans the request with the same planner `setup` reads, prints the plan's terms, sizes, disk
+ *   and activation changes, and with `--dry-run` stops there without network access or data writes.
+ *   Otherwise it executes the plan: each artifact is acquired with a receipt into
+ *   the data root's staging area, verified, sealed and installed, and a bundle whose
+ *   readers consult the active selection is activated by one atomic replacement of
+ *   `active.json` once every artifact of the bundle is installed.
+ *
+ *   On a terminal, each download redraws one line with a bar, its bytes, total,
+ *   percent, rate and time remaining.
  *   Without a terminal, the same line is written to stderr at every tenth of the transfer.
  *
- *   Each bundle's terms print first as a summary: the recorded expression, the publishers, the first sentence of
- *   each condition, and the number of open rights questions. `--terms` prints the full prose.
+ *   Each bundle's terms print first as a summary: the recorded expression, the publishers,
+ *   the first sentence of each condition, and the number of open rights questions.
+ *   `--terms` prints the full prose.
  *
- *   It never builds from source. For a request with no published artifact, it prints the build as a separate command.
+ *   It never builds from source.
+ *   For a request with no published artifact, it prints the build as a separate command.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -298,11 +305,14 @@ async function pull(
 	// Its warnings and errors still print.
 	const logger: IRuntimeLogger = { ...createConsoleLogger("mailwoman data"), debug: () => {}, trace: () => {} }
 
+	const { dataClientHeaders } = await import("#data/remote")
+
 	await using client = new APIClient({
 		displayName: "mailwoman data",
 		logger,
 		minRequestIntervalMs: 150,
 		retry: true,
+		axios: { headers: await dataClientHeaders() },
 	})
 
 	const controller = new AbortController()

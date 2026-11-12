@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Regenerate the fixture that the ModelVisualizer Storybook entry and its test read: one real `NeuralParseTrace` from the
- *   locally-resolved en-us weights (`@mailwoman/neural-weights-en-us`). Committed so docs CI
- *   never needs a model download. Re-run after any trace-schema change or weights bump:
+ *   Regenerate the fixture that the ModelVisualizer Storybook entry and its test read: one real
+ *   `NeuralParseTrace` from the locally-resolved en-us weights (`@mailwoman/neural-weights-en-us`).
+ *
+ *   Committed so docs CI never needs a model download.
+ *   Re-run after any trace-schema change or weights bump:
  *
  *       mailwoman dev generate trace-fixture ["custom address"]
  *
  *   note: on machines without the anchor lookup ($MAILWOMAN_DATA_ROOT), loadFromWeights warns
- *   and the trace's `anchor` channel is absent — the component's "channel not fed" state. The
- *   deployed demo feeds anchor from postcode-<cc>.bin, so regenerate on a lab box for a
- *   fully-fed fixture when that state matters.
+ *   and the trace's `anchor` channel is absent — the component's "channel not fed" state.
+ *   The deployed demo feeds anchor from postcode-<cc>.bin, so regenerate on a lab
+ *   box for a fully-fed fixture when that state matters.
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"

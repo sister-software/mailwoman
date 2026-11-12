@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Provider presence as a dated relation between a provider and an entity. The answer for a date is
- *   available, withdrawn or unknown. It records what the provider advertised. Uptake needs its own record.
- *   A record can state the extent at which its source states availability, such as a census block, so a
- *   reader can tell an answer for the premises from an answer for a wider area.
+ *   Provider presence as a dated relation between a provider and an entity.
+ *
+ *   The answer for a date is available, withdrawn or unknown.
+ *   It records what the provider advertised.
+ *
+ *   Uptake needs its own record.
+ *   A record can state the extent at which its source states availability, such as a census
+ *   block, so a reader can tell an answer for the premises from an answer for a wider area.
  */
 
 import type { EntityID } from "#identifiers"

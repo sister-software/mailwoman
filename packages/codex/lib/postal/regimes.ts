@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Postal regimes whose addressing does not follow their ISO 3166-1 country code.
+ *   Postal regimes whose addressing doesn't follow their ISO 3166-1 country code.
  *
- *   Most code keys addressing behavior by country. This table records exceptions to that model.
- *   Examples include one code shared across postal systems, routing codes shaped like geography,
- *   postcodes that cross borders and landmark-direction addresses.
- *   Each record states how much of the regime this repository models. The record keeps known gaps visible.
- *   The table describes regimes and defines no layouts. Its seven families come from section 7
- *   of the global address corpus specification.
+ *   Most code keys addressing behavior by country.
+ *   This table records exceptions to that model.
+ *
+ *   Examples include one code shared across postal systems, routing codes shaped like
+ *   geography, postcodes that cross borders and landmark-direction addresses.
+ *   Each record states how much of the regime this repository models.
+ *
+ *   The record keeps known gaps visible.
+ *   The table describes regimes and defines no layouts.
+ *
+ *   Its seven families come from section 7 of the global address corpus specification.
  */
 
 /**
@@ -21,7 +26,7 @@ export const RegimeCoverage = {
 	 */
 	Modeled: "modeled",
 	/**
-	 * Some support exists, but it does not cover the regime's own addressing.
+	 * Some support exists, but it doesn't cover the regime's own addressing.
 	 * The record's note lists the gaps.
 	 */
 	Partial: "partial",
@@ -91,7 +96,7 @@ export interface PostalRegime {
 	 */
 	shape: string
 	/**
-	 * How the repository currently handles these addresses and what is missing.
+	 * How the repository currently handles these addresses and what's missing.
 	 */
 	note: string
 }

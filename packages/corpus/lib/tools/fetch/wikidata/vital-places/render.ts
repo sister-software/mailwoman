@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The `wikidata-vital-places` training rows: each inventory place rendered as `venue` rows, with an entity-grouped
- * holdout.
+ * The `wikidata-vital-places` training rows: each inventory place rendered as
+ * `venue` rows, with an entity-grouped holdout.
  *
- * A settlement or administrative area is left to Who's On First, since its rows already teach the name. Every other place
- * becomes rows of three forms: each language's label bare, the label followed by the country's name in that language
- * for the languages written with a comma separator, and the first English alias bare.
+ * A settlement or administrative area is left to Who's On First, since its rows already teach the name.
+ * Every other place becomes rows of three forms: each language's label bare,
+ * the label followed by the country's name in that language for the languages written
+ * with a comma separator, and the first English alias bare.
  *
- * The holdout is chosen by a hash of the QID, so every form and language of a held-out place stays out of training.
+ * The holdout is chosen by a hash of the QID, so every form and language of a
+ * held-out place stays out of training.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

@@ -3,45 +3,51 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture test for `config/vale/styles/*.yml` (the published-prose and agent-reply rules) and
- *   `config/vale/.vale-chat.ini` — see `lib/dev-mcp/hooks/vale/response/check.ts`).
+ *   Fixture test for `config/vale/styles/*.yml` (the published-prose and agent-reply rules)
+ *   and `config/vale/.vale-chat.ini` — see `lib/dev-mcp/hooks/vale/response/check.ts`).
  *
- *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
- *   has two fixtures. The dirty one is written to trip every rule file at least once, and also
- *   embeds a code fence, a JSX tag, an import line and a `<details>` block full of the same banned
- *   words, none of which may be flagged — that is the TokenIgnores/BlockIgnores coverage. The clean
- *   one must pass with zero alerts. A rule that stops firing, or an ignore pattern that starts
- *   leaking banned words out of a fence/import/JSX/details block into real alerts, shows up here as
- *   the wrong fixture producing the wrong verdict.
+ *   There is no vitest harness for a set of Vale YAML rule files, so this is the test.
+ *   Each style has two fixtures.
+ *
+ *   The dirty one is written to trip every rule file at least once, and also embeds a code
+ *   fence, a JSX tag, an import line and a `<details>` block full of the same banned words,
+ *   none of which may be flagged — that is the TokenIgnores/BlockIgnores coverage.
+ *   The clean one must pass with zero alerts.
+ *
+ *   A rule that stops firing, or an ignore pattern that starts leaking banned
+ *   words out of a fence/import/JSX/details block into real alerts, shows up here
+ *   as the wrong fixture producing the wrong verdict.
  *
  *   `dirty.md` also holds negative assertions, each checked only by its line staying quiet:
  *
- *   - The phrase "full-text search" sits in plain prose and must not trip `Terms.yml`'s
- *     `text search` swap. That swap is guarded precisely so the FTS5 vocabulary this repo ships
- *     survives it.
+ *   - The phrase "full-text search" sits in plain prose and must not trip `Terms.yml`'s `text search` swap.
+ *     That swap is guarded precisely so the FTS5 vocabulary this repo ships survives it.
  *   - A backticked `neighbourhood` (a real Who's On First placetype) and a backticked `licence`
- *     (Nominatim's response field) must not trip `Spelling.yml`, nor must the JSON fence carrying
- *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
- *     those two en-GB-looking identifiers can stay on the swap list.
- *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
- *     backticked, so `AmbiguousShorthand` must stay quiet on all three. That is how a
- *     interface-tied name survives the vocabulary ban without being renamed.
+ *     (Nominatim's response field) must not trip `Spelling.yml`, nor must the JSON fence carrying both.
+ *     Vale's markdown parser skips inline code and fences natively, which is the whole
+ *     reason those two en-GB-looking identifiers can stay on the swap list.
+ *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote`
+ *     are backticked, so `AmbiguousShorthand` must stay quiet on all three.
+ *     That is how a interface-tied name survives the vocabulary ban without being renamed.
  *
- *   The code leg exists because that last mechanism does not reach a source comment. Vale's
- *   markdown parser skips inline code. Its comment scanner has no markdown parser, so a
- *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
+ *   The code leg exists because that last mechanism does not reach a source comment.
+ *   Vale's markdown parser skips inline code.
+ *
+ *   Its comment scanner has no markdown parser, so a backticked identifier in a `//`
+ *   comment is flagged exactly like bare prose (measured on
  *   @vvago/vale 3.17.0). `AmbiguousShorthandCode.yml` therefore protects interface-tied
- *   names by name, and `dirty.ts` asserts the negative that matters: a backticked `the check` must
- *   still fire. If it stops, the Code rule has been replaced by the markdown one and every name in
- *   the exceptions list is relying on a mechanism that is not there.
+ *   names by name, and `dirty.ts` asserts the negative that matters:
+ *   a backticked `the check` must still fire.
+ *   If it stops, the Code rule has been replaced by the markdown one and every name
+ *   in the exceptions list is relying on a mechanism that is not there.
  *
  *   Run from anywhere:
  *
  *       node config/vale/check-rules.ts
  *       yarn workspace @mailwoman/docs lint:prose:fixtures
  *
- *   Wired into the docs CI job (`.github/workflows/docs-build.yml`) so a rule regression fails
- *   loudly instead of silently drifting.
+ *   Wired into the docs CI job (`.github/workflows/docs-build.yml`) so a rule
+ *   regression fails loudly instead of silently drifting.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -142,6 +148,7 @@ const LEGS: StyleLeg[] = [
 			"styles.CommaAndClausePile",
 			"styles.CommaNo",
 			"styles.NamesVerb",
+			"styles.Contractions",
 		],
 		cleanCountsEverySeverity: false,
 		cleanMustBeAbsent: ["styles.CommaAndClausePile"],
@@ -169,6 +176,7 @@ const LEGS: StyleLeg[] = [
 			"styles.CommaAndClausePile",
 			"styles.CommaNo",
 			"styles.NamesVerb",
+			"styles.Contractions",
 		],
 		cleanCountsEverySeverity: true,
 	},

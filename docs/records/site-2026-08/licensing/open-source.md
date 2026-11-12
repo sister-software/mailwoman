@@ -36,7 +36,7 @@ If our work has helped you, please consider donating to Mailwoman's developer fu
 
 ### Limitations
 
-- This license does not provide any warranty.
+- This license doesn't provide any warranty.
 - This license includes a limitation of liability.
 
 ## Commercial Usage

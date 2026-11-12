@@ -3,17 +3,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwops` binary: argv in, exit code out. Everything else is `dispatch.ts`, so the routing is testable without a
- *   process.
+ *   The `mwops` binary: argv in, exit code out.
  *
- *   The checkout-locality guard runs before anything else loads. A worktree without its own install resolves
- *   `@mailwoman/*` from the checkout above it, and every operation here reads or writes through
- *   `repoRootPath`. The guard is the one static import beyond the command runner, so a worktree whose
- *   tool graph would not load against the other checkout's packages still reaches it.
+ *   Everything else is `dispatch.ts`, so the routing is testable without a process.
  *
- *   Elevation lives at the entry point. `storage prepare` writes a partition table and `/etc/fstab`, so
- *   it needs root — and acquiring root means re-exec'ing. Re-exec replaces the process.
- *   Re-execution belongs at an entry point. A capability deep in a call graph should not manage it.
+ *   The checkout-locality guard runs before anything else loads.
+ *   A worktree without its own install resolves `@mailwoman/*` from the checkout above it,
+ *   and every operation here reads or writes through `repoRootPath`.
+ *
+ *   The guard is the one static import beyond the command runner, so a worktree whose
+ *   tool graph wouldn't load against the other checkout's packages still reaches it.
+ *
+ *   Elevation lives at the entry point.
+ *   `storage prepare` writes a partition table and `/etc/fstab`, so it needs root —
+ *   and acquiring root means re-exec'ing.
+ *
+ *   Re-exec replaces the process.
+ *   Re-execution belongs at an entry point.
+ *
+ *   A capability deep in a call graph shouldn't manage it.
  *   The wrapper resolves the privilege once and elevates if the requested operation declares a host write.
  *   It hands dispatch a plain boolean.
  */

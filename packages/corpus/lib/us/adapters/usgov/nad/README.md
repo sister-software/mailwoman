@@ -23,14 +23,16 @@ single training-data upgrade available.
 ## Input
 
 The adapter reads the release Parquet file that `mailwoman corpus fetch nad`
-writes: `usgov-nad/bulk/<member>.parquet` under the sources root, such as
-`TXT_NAD_r24.parquet` for release 24. The fetcher reads every column of the
-release text as text and sorts rows by `State`, `County` and `UUID`.
+writes into the release's snapshot: `usgov-nad/<release>/<member>.parquet` under
+`$MAILWOMAN_DATA_ROOT/snapshots/`, such as `r24/TXT_NAD_r24.parquet` for release 24.
+The release archive it converts is a current download at
+`$MAILWOMAN_CACHE_ROOT/sources/usgov-nad/bulk/nad.zip`. The fetcher reads every
+column of the release text as text and sorts rows by `State`, `County` and `UUID`.
 
 ```sh
 mailwoman corpus fetch nad
 npx mailwoman corpus run usgov-nad \
-  --input $MAILWOMAN_DATA_ROOT/corpus/sources/usgov-nad/bulk/TXT_NAD_r24.parquet \
+  --input $MAILWOMAN_DATA_ROOT/snapshots/usgov-nad/r24/TXT_NAD_r24.parquet \
   --output $MAILWOMAN_DATA_ROOT/corpus/aligned/
 ```
 
@@ -69,7 +71,7 @@ One `CanonicalRow` per NAD record where the address quad is populated:
 
 Rows are dropped (silently) when:
 
-- `State` is not a recognized USPS abbreviation or territory code
+- `State` isn't a recognized USPS abbreviation or territory code
 - All locality alternates are empty (`Post_City`, `Inc_Muni`, `Census_Plc`,
   `Uninc_Comm`)
 - `Zip_Code` is empty (postcode is required — NAD records always have one

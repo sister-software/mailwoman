@@ -4,7 +4,8 @@
 /**
  *   Counts bare numbers in comma segments over one epoch, at both the draw and emitted levels.
  *
- *   Usage: node packages/mailwoman/tools/training/audits/comma/segment/number.run.ts <config> [--json <path>] [--draws <n>]
+ *   Usage: node packages/mailwoman/tools/training/audits/comma/segment/number.run.ts
+ *   <config> [--json <path>] [--draws <n>]
  */
 
 import { censusArguments, runMixtureCensus } from "../../census.ts"

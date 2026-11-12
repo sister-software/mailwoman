@@ -11,7 +11,7 @@ test("AU_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {
 	expect(AU_POSTCODE_PATTERN.test("200")).toBe(false) // too short
 	expect(AU_POSTCODE_PATTERN.test("20000")).toBe(false) // too long
 	expect(AU_POSTCODE_PATTERN.test("20A0")).toBe(false) // letters
-	expect(AU_POSTCODE_PATTERN.test(" 2000")).toBe(false) // pattern itself does not tolerate whitespace
+	expect(AU_POSTCODE_PATTERN.test(" 2000")).toBe(false) // pattern itself doesn't tolerate whitespace
 })
 
 test("normalizeAuPostcode: trims and returns a valid four-digit postcode", () => {
@@ -36,7 +36,7 @@ test("normalizeAuPostcode: rejects wrong-shape / non-string → null", () => {
 test("isAuPostcode: predicate is true only for an already-normalized four-digit string", () => {
 	expect(isAuPostcode("2000")).toBe(true)
 	expect(isAuPostcode("0800")).toBe(true)
-	// the predicate does not trim — it tests the shape verbatim
+	// the predicate doesn't trim — it tests the shape verbatim
 	expect(isAuPostcode(" 2000 ")).toBe(false)
 	expect(isAuPostcode("200")).toBe(false)
 	expect(isAuPostcode("ABCD")).toBe(false)

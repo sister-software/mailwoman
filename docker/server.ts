@@ -4,9 +4,9 @@
 /**
  *   Container entrypoint that serves the `/v1` API on `0.0.0.0:3000`.
  *
- *   The API parser needs the bundled English weights and returns `501` when they are absent. The
- *   geocode and batch endpoints also need a gazetteer mounted at `$MAILWOMAN_DATA_ROOT` and return
- *   `503` when no gazetteer is available.
+ *   The API parser needs the bundled English weights and returns `501` when they're absent.
+ *   The geocode and batch endpoints also need a gazetteer mounted at `$MAILWOMAN_DATA_ROOT`
+ *   and return `503` when no gazetteer is available.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
@@ -156,7 +156,11 @@ async function buildEngine() {
 const engine = await buildEngine()
 const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
 
-await using handle = await serveNode({
+// The handle lives as long as the process.
+// A `using` binding at module scope would dispose it, and close the server,
+// as soon as this module finished evaluating.
+// `shutdown` disposes it instead.
+const handle = await serveNode({
 	fetch: app.fetch,
 	port: PORT,
 	hostname: HOST,

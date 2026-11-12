@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Two fixture builds stand for two vintages of one state's files. Each build loads cable and fiber to
- *   the premises: the filed block holds cable rows, and a neighbor block in the same res-6 cell holds a
- *   fiber row. Three more blocks reach no build: one a resolver places in the covered cell, one it
- *   places in an uncovered cell, and one it cannot place.
+ *   Two fixture builds stand for two vintages of one state's files.
+ *
+ *   Each build loads cable and fiber to the premises: the filed block holds cable rows,
+ *   and a neighbor block in the same res-6 cell holds a fiber row.
+ *   Three more blocks reach no build: one a resolver places in the covered cell,
+ *   one it places in an uncovered cell, and one it cannot place.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

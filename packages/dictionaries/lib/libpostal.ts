@@ -4,10 +4,11 @@
 /**
  *   Runtime readers of the vendored libpostal dictionaries.
  *
- *   The dictionaries are mostly build input: the corpus street-decompose adapters read
- *   them. `gazetteer-pipeline/{fst,street-morphology,evidence-lexicons}` compile them into the
- *   artifacts the parser loads at runtime. The POI category lookup reads one language's stopwords
- *   at session start.
+ *   The dictionaries are mostly build input: the corpus street-decompose adapters read them.
+ *   `gazetteer-pipeline/{fst,street-morphology,evidence-lexicons}` compile them
+ *   into the artifacts the parser loads at runtime.
+ *
+ *   The POI category lookup reads one language's stopwords at session start.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

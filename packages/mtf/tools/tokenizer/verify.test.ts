@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pruning checks against tokenizers and graphs that disagree on purpose. Both checks are one-sided: a check
- *   that under-counts reports a sound surgery, so each case is a known difference the check must find.
+ *   The pruning checks against tokenizers and graphs that disagree on purpose.
+ *
+ *   Both checks are one-sided: a check that under-counts reports a sound surgery,
+ *   so each case is a known difference the check must find.
  */
 
 import { describe, expect, it } from "vitest"

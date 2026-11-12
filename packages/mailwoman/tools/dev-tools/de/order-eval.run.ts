@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Standalone entry for the DE both-order robustness leg. The measurement lives in
- *   `#tools/eval-harness/de/order-eval`, and the promotion check calls it in-process.
- *   This entry maps a failed run to exit 1. Keep logic in the module.
+ *   Standalone entry for the DE both-order robustness leg.
  *
- *   Run: node packages/mailwoman/tools/dev-tools/de/order-eval.run.ts --model <onnx> --card <model-card.json>
+ *   The measurement lives in `#tools/eval-harness/de/order-eval`, and the
+ *   promotion check calls it in-process.
+ *   This entry maps a failed run to exit 1.
+ *   Keep logic in the module.
+ *
+ *   Run: node packages/mailwoman/tools/dev-tools/de/order-eval.run.ts --model
+ *   <onnx> --card <model-card.json>
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"

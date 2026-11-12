@@ -51,13 +51,13 @@ adjusted distributions finds the best valid label sequence. This is the same
 shallow-fusion pattern modern speech recognizers use to blend an acoustic
 model with a language model.
 
-It is **not** a context-free grammar. v0 mailwoman (the rule-based ancestor)
+It **isn't** a context-free grammar. v0 mailwoman (the rule-based ancestor)
 was closer to one. Each rule classifier fires independently on token features,
 and solvers reconcile globally. The neural model doesn't enumerate productions.
 It learns continuous-valued biases where each token's interpretation depends
 on every other token via attention weights.
 
-It is **not** a context-sensitive grammar either. CSG would require explicit
+It **isn't** a context-sensitive grammar either. CSG would require explicit
 context-conditioned rules. The neural model learns soft, probabilistic,
 context-dependent biases without explicit grammar rules.
 

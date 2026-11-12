@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Audits a held-out dataset for overlap with the listed training corpora and writes the `--provenance` file
- *   `heldout/per/country.run.ts` reads.
+ *   Audits a held-out dataset for overlap with the listed training corpora
+ *   and writes the `--provenance` file `heldout/per/country.run.ts` reads.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts \
@@ -13,11 +13,13 @@
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
  *     [--path-root /mnt/mw] [--verify-file-sha256]
  *
- *   Name a model by `--training-configs` when its card's `training.corpus_version` is stale: the config's
- *   `data.corpus_dir` then names its corpus.
+ *   Name a model by `--training-configs` when its card's `training.corpus_version` is stale:
+ *   the config's `data.corpus_dir` then identifies its corpus.
  *
- *   Name the candidate's corpus, the published model's corpus, and every earlier corpus either was trained on.
- *   Each training file is read through DuckDB projecting only the id columns. A partial read is refused.
+ *   Name the candidate's corpus, the published model's corpus, and every earlier
+ *   corpus either was trained on.
+ *   Each training file is read through DuckDB projecting only the id columns.
+ *   A partial read is refused.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

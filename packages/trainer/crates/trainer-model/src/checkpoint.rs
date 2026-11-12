@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The model half of a checkpoint directory: `model.safetensors` beside `config.json`.
 //!
 //! A Rust checkpoint stores the state dict in safetensors under the Python state-dict names. A directory the

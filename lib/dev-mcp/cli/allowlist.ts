@@ -4,13 +4,18 @@
 /**
  *   Which CLI verbs this server may run.
  *
- *   The boundary the whole surface is built on: **gather evidence, never change state that anything else reads.** The
- *   CLI's surface is larger than this server's and will stay that way, so this server provides a passthrough. A
- *   passthrough with no allowlist would hand back every build, publish and ledger write the boundary excludes.
+ *   The boundary the whole surface is built on: **gather evidence, never change
+ *   state that anything else reads.** The CLI's surface is larger than this server's
+ *   and will stay that way, so this server provides a passthrough.
+ *   A passthrough with no allowlist would hand back every build, publish
+ *   and ledger write the boundary excludes.
  *
- *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
- *   `mw gazetteer nuke`, a deny-list permits it and an allow-list does not. The cost is that a new read-only verb has
- *   to be added here before it can be used. This makes an omitted entry fail closed.
+ *   allow-list rather than deny-list, on purpose.
+ *   A deny-list is wrong by default: the day someone adds `mw gazetteer nuke`,
+ *   a deny-list permits it and an allow-list doesn't.
+ *
+ *   The cost is that a new read-only verb has to be added here before it can be used.
+ *   This makes an omitted entry fail closed.
  */
 
 /**

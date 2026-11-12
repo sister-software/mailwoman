@@ -12,7 +12,7 @@ This Agreement is an alternative to the AGPL-3.0-only license. If you do not acc
 
 ## 1. Parties
 
-Licensor: Teffen Ellis (DBA Sister Software)
+Licensor: Nirrius LLC (d/b/a Sister Software)
 Contact: teffen@sister.software
 
 Licensee: The individual or legal entity obtaining rights under this Agreement.
@@ -28,7 +28,7 @@ Upon payment of applicable fees and subject to this Agreement, Licensor grants L
 - Incorporate Mailwoman into proprietary software products
 - Deploy Mailwoman in SaaS or hosted services without AGPL copyleft obligations
 
-This grant covers only the code and model artifacts authored by Licensor. It does not extend to third-party components bundled with Mailwoman (including libpostal dictionaries, Google libaddressinput metadata, and Who's On First reference data), which remain governed by their own licenses. Any attribution, share-alike, or other obligations attaching to those third-party components continue to apply and are not waived or relicensed by this Agreement. See `THIRD_PARTY_NOTICES.md`.
+This grant covers only the code and model artifacts that Licensor has authority to license: those authored by Teffen Ellis, and contributions licensed to Teffen Ellis under the contributor terms in `CONTRIBUTING.md`, which Licensor licenses with her permission. It does not extend to third-party components bundled with Mailwoman (including libpostal dictionaries, Google libaddressinput metadata, and Who's On First reference data), which remain governed by their own licenses. Any attribution, share-alike, or other obligations attaching to those third-party components continue to apply and are not waived or relicensed by this Agreement. See `THIRD_PARTY_NOTICES.md`.
 
 ---
 
@@ -46,9 +46,9 @@ Licensee may NOT:
 
 ## 4. Attribution
 
-Attribution to Licensor is not required in end-user-facing software unless mutually agreed in writing.
+Attribution to Licensor or to Teffen Ellis is not required in end-user-facing software unless mutually agreed in writing.
 
-This waiver is limited to Licensor's own attribution. It does not reach the attribution required by any third-party
+This waiver is limited to the attribution owed to Licensor and to Teffen Ellis. It does not reach the attribution required by any third-party
 component distributed with Mailwoman. Those obligations are described in Section 2 and continue to apply, and Licensor
 has no power to waive them.
 

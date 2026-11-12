@@ -7,34 +7,44 @@
  *   already lives in one pinned Overture parquet, so this fans the per-state `mailwoman situs
  *   address-points` command out across every covered state.
  *
- *   parallelism: states build concurrently via spliterator's `parallelMap` (the house
- *   bounded-concurrency primitive — same one `build-unified-wof` uses to fan out file reads behind
- *   a single writer). Each state is an isolated child process (its own DuckDB + SQLite heap), so N
- *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's
- *   DuckDB scan is capped at `--threads` (default: cores / concurrency), so concurrency × threads ≈
- *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop rather than the
- *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
+ *   parallelism: states build concurrently via spliterator's `parallelMap` (the house bounded-concurrency
+ *   primitive — same one `build-unified-wof` uses to fan out file reads behind a single writer).
+ *   Each state is an isolated child process (its own DuckDB + SQLite heap),
+ *   so N states run at once with no shared-memory risk.
  *
- *   Each per-state child owns its own DB's atomic write. this driver only spawns children (skipping
- *   complete databases) and writes the small `attribution.json` manifest incrementally — so there is
- *   no national-DB temp-then-rename here, the large-artifact atomicity lives one level down in the
- *   database builder. Progress streams to stderr. the final summary lands on stdout.
+ *   To avoid oversubscribing cores, each child's DuckDB scan is capped at `--threads`
+ *   (default: cores / concurrency), so concurrency × threads ≈ cores.
+ *   The per-state steady-state bottleneck is the single-threaded SQLite insert loop
+ *   rather than the scan, so N concurrent inserts is where the wall-clock saving comes from.
+ *   Sequentialise via `--concurrency 1`.
+ *
+ *   Each per-state child owns its own DB's atomic write. this driver only spawns
+ *   children (skipping complete databases) and writes the small `attribution.json`
+ *   manifest incrementally — so there's no national-DB temp-then-rename here,
+ *   the large-artifact atomicity lives one level down in the database builder.
+ *   Progress streams to stderr. the final summary lands on stdout.
  *
  *   licensing (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
- *   OpenAddresses (32%, government open data) with zero OpenStreetMap/ODbL rows. So the default is
- *   no license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
- *   only obligation is attribution: the per-row `overture:<dataset>` provenance is summarized into
- *   `<out-dir>/attribution.json`. Pass `--license-filter <datasets>` to build a narrowed database.
+ *   OpenAddresses (32%, government open data) with zero OpenStreetMap/ODbL rows.
+ *   So the default is no license filter — `--license-filter NAD` would drop a
+ *   third of coverage for no benefit.
  *
- *   idempotency: a state is skipped only if its database is complete — non-empty `address_point` table
- *   and the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/vacuum
- *   not reached — e.g. a killed run) is detected as incomplete and rebuilt. `--force` rebuilds
- *   regardless.
+ *   The only obligation is attribution: the per-row `overture:<dataset>` provenance
+ *   is summarized into `<out-dir>/attribution.json`.
+ *   Pass `--license-filter <datasets>` to build a narrowed database.
+ *
+ *   idempotency: a state is skipped only if its database is complete — non-empty
+ *   `address_point` table and the `idx_ap_streetkey` index present.
+ *   A half-built database (data inserted, indexing/vacuum not reached — e.g. a killed run)
+ *   is detected as incomplete and rebuilt.
+ *   `--force` rebuilds regardless.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
@@ -49,7 +59,6 @@ import {
 	type CommandComponent,
 	positiveInteger,
 	splitUSStateCodes,
-	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -149,8 +158,13 @@ interface StateManifestEntry {
 
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { scriptEntryPath } = await import("@mailwoman/core/scripting/arguments")
-		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			arguments: { scriptEntryPath },
+			paths: { addressPointDatabasePath },
+		} = await allKeyed({
+			arguments: import("@mailwoman/core/scripting/arguments"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)
 
@@ -263,7 +277,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			}
 
 			if (r.code !== 0) {
-				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripAnsi(r.err || "").slice(-600)}`)
+				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripANSI(r.err || "").slice(-600)}`)
 
 				manifest.states[r.state] = { ok: false }
 
@@ -275,7 +289,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			// The child's parse-relevant facts span its Ink summary (stdout) + plain
 			// progress (stderr) — combine + strip ansi, then match without line anchors
 			// so the summary's "✓ "/" " render prefixes don't defeat the regex.
-			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
+			const text = stripANSI(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)
 			const datasets: Record<string, number> = {}
 

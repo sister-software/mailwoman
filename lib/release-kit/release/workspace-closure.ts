@@ -37,7 +37,7 @@ export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<M
  * optional or peer dependency, transitively, computed so a package added to a
  * seed's graph is picked up without editing a list.
  *
- * @throws When a seed or a reached dependency names no workspace: a `workspace:`
+ * @throws When a seed or a reached dependency identifies no workspace: a `workspace:`
  * specifier that resolves nowhere is a broken manifest rather than an absence.
  */
 export async function walkWorkspaceClosure(
@@ -56,7 +56,7 @@ export async function walkWorkspaceClosure(
 
 		const dir = byName.get(name)
 
-		// The private root package supplies shared tooling to workspaces, but it is not a workspace to pack.
+		// The private root package supplies shared tooling to workspaces, but it isn't a workspace to pack.
 		if (name === rootManifest.name) continue
 
 		if (!dir) throw new Error(`workspace closure: ${name} names no workspace in the root package.json`)

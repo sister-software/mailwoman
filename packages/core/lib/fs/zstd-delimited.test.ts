@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The reader must return the same rows for compressed and uncompressed delimited files. This lets the corpus be stored as `.zst`.
- *   spliterator decompresses by magic bytes and reads `part.jsonl.zst` when asked for `part.jsonl`, so a path is the
- *   whole source description. These tests pin the behavior the corpus build depends on.
+ *   The reader must return the same rows for compressed and uncompressed delimited files.
+ *
+ *   This lets the corpus be stored as `.zst`. spliterator decompresses by magic bytes and reads
+ *   `part.jsonl.zst` when asked for `part.jsonl`, so a path is the whole source description.
+ *   These tests pin the behavior the corpus build depends on.
  */
 
 import { resolvePath } from "path-ts"
@@ -81,7 +83,7 @@ describe("the compressed-sibling lookup", () => {
 
 	it("prefers the .zst sibling over the plain file", async () => {
 		// Both copies hold the same rows here, so the read cannot tell them apart.
-		// The opt-out proves the plain file is readable on its own and the default does not depend on it.
+		// The opt-out proves the plain file is readable on its own and the default doesn't depend on it.
 		await expect(readRows(plain)).resolves.toEqual(ROWS)
 		await expect(readRows(plain, { preferCompressed: false })).resolves.toEqual(ROWS)
 	})

@@ -6,7 +6,7 @@ This record answers two questions that were deliberately left out of the `sdk/` 
 decided on measurements rather than inside a file move. The first is whether the remaining ten `lib/sdk/`
 directories should be renamed. The second is whether `coastal`, `flood`, `soil` and `zoning` should be one
 package instead of four. §1 and §4 give both measurements with the commands that produced them. **Both
-results contradicted the expected answer**, so they are recorded here rather than acted on.
+results contradicted the expected answer**, so they're recorded here rather than acted on.
 
 ---
 
@@ -18,22 +18,22 @@ results contradicted the expected answer**, so they are recorded here rather tha
    imported through an acquisition barrel. Both are already fixed, and neither fix was a rename (§2).
    1b. **Do it when the next breaking release happens anyway.** Operator direction, 2026-09-01: a consumer
    should pay for renames once. That direction was given when a second rename, of the retired four-way
-   vocabulary word, looked like it had to ship in the same release. Measurement showed it did not. That
+   vocabulary word, looked like it had to ship in the same release. Measurement showed it didn't. That
    rename touched **4** published subpaths against `sdk/`'s 83, so it was an internal refactor with a small
    external edge, and it shipped continuously instead (§6). `sdk/` is therefore the only rename left, and it
    still waits for a release it can share.
 2. **If it is renamed anyway, the word is `acquire/`**, because `soil/lib/sdk/acquire.ts` already chose it,
    and the migration must ship with the enforcement rule in the same PR (§3).
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
-   **0.18% of their lines**. There is almost no code to de-duplicate, and a shared package would impose one
+   **0.18% of their lines**. There's almost no code to de-duplicate, and a shared package would impose one
    abstraction over four implementations that differ substantially (§4).
 4. **A shared package may still be justified for a different reason**, namely a single tested
    interface for the ingest stages. That design argument must be made on its own evidence, and this record
-   does not make it (§4.3).
+   doesn't make it (§4.3).
 
 ---
 
-## 1. What is there
+## 1. What's there
 
 Eleven packages had `lib/sdk/`, and `spatial` no longer does. The ten that remain are all dataset packages,
 and no runtime package has one. The directory therefore does correspond to a real category, as the audit
@@ -61,11 +61,11 @@ grep -rl '"#sdk/' packages --include='*.ts' | grep -v /out/ | wc -l
 Every package is published at 9.2.0, so all 88 subpaths are public. A rename is 87 internal specifier edits
 plus 88 breaking subpath changes.
 
-## 2. Why the rename is not the fix
+## 2. Why the rename isn't the fix
 
 The audit that prompted this work proposed the rename as the fix for drift. Two findings argue against it.
 
-**The same fix was tried before, and it did not last.** The 2026-07-09 regroup moved
+**The same fix was tried before, and it didn't last.** The 2026-07-09 regroup moved
 `mailwoman/sdk/{cli,test}` to `cli-kit/` and `test-kit/`, added the one-line `AGENTS.md` rule, and stated
 that "`sdk` submodule meaning is restored: data acquisition only." By 2026-09-01, `filer/lib/sdk/` and
 `bdc/lib/sdk/` held domain analysis again. A directory name cannot enforce itself, and a second rename would
@@ -78,7 +78,7 @@ repeat the first attempt.
   dependency rule could have caught it, and none did.
 - The `filer`/`bdc` "drift" was largely a measurement error. The audit's table of external importers
   (`frn` 6, `form499` 5, `common` 5) counts `#sdk/*` specifiers **inside the owning package**.
-- An edge check found the one actual architectural violation. The naming argument could not have
+- An edge check found the one actual architectural violation. The naming argument couldn't have
   detected it. `mcp/lib/cli.ts` took four symbols from `@mailwoman/filer/sdk`, a barrel that `export *`s
   seventeen modules. An MCP request path therefore loaded the SEC and CORES HTTP clients and the EDGAR
   ingest to reach three functions. The fix moved those three modules to the filer package root, without a
@@ -104,7 +104,7 @@ The rename requires all three of these conditions:
 2. **Clean break without shims.** This is the established approach. CHANGELOG "Unreleased" lists the
    two breaks already made this way.
 3. **One package per commit**, largest last. `ban` (5 files / 3 subpaths) and `tiger` (5 / 2) go first,
-   because they are small enough that a mistake is visible. `filer` (20 / 14) and `soil` (11 / 14) go last.
+   because they're small enough that a mistake is visible. `filer` (20 / 14) and `soil` (11 / 14) go last.
 
 ## 4. The `layer-kit` question
 
@@ -125,7 +125,7 @@ was measured on a tree where wave 2 of #2041 had already extracted the common co
 (~45 lines each), the four `read*SourceIdentity` readers, nine batched-commit loops, four ingest-chunk
 runners, four two-phase build handles, four manifest blocks, four byte-identical `#readCoverage` methods,
 the CKAN reader pair and the five identical client factories now live in `core/layers`, `core/api`,
-`spatial` and `sqlite`. The 0.18% therefore shows that **the extraction worked**. It does not show that
+`spatial` and `sqlite`. The 0.18% therefore shows that **the extraction worked**. It doesn't show that
 these packages were never duplicated. Anyone re-running this after a future extraction should expect the
 same pattern and interpret it the same way.
 
@@ -151,16 +151,16 @@ Files with the same name also differ in size:
 ### 4.2 What that means
 
 **The four packages share a vocabulary rather than an implementation.** The 2.1× size difference in
-`ingest.ts` between `coastal` and `flood` does not come from two copies of one function that drifted. They
-are two different ingests given the same filename because they perform the same stage. A separate
+`ingest.ts` between `coastal` and `flood` doesn't come from two copies of one function that drifted. They're
+two different ingests given the same filename because they perform the same stage. A separate
 `layer-kit` would therefore remove almost no code. It would require inventing an abstraction general
 enough to cover all four, and the line counts show that no such abstraction exists yet.
 
-This is the opposite of the usual finding, and it is why the audit's instinct ("the larger prize") should
-not be accepted without measurement. `@mailwoman/core/layers`, which all four already share, holds the
+This is the opposite of the usual finding, and it is why the audit's instinct ("the larger prize") shouldn't
+be accepted without measurement. `@mailwoman/core/layers`, which all four already share, holds the
 code they have in common, and that code is already extracted.
 
-### 4.3 The interface question already has a home — and it is not a new package
+### 4.3 The interface question already has a home — and it isn't a new package
 
 `@mailwoman/core/layers` **is** the interface package. A fifth layer today already inherits
 `runIngestChunkScript`, `buildSealedArtifact`, `polygonLayerManifest`, `designatedCoverageCells`,
@@ -182,7 +182,7 @@ during #2041, and the fourth is tracked:
 stages a new layer must supply, and count the ones it must re-derive rather than inherit. Today that count
 is the four rows above. If that count is judged too high, the work is to extract those four into
 `core/layers`, each parameterized by the difference in its row (a tolerance parameter, a per-scenario
-driver hook). The work does not require a new package.
+driver hook). The work doesn't require a new package.
 
 ## 5. Ordered plan, if §0.1 is overruled
 
@@ -194,7 +194,7 @@ driver hook). The work does not require a new package.
 5. One CHANGELOG "Unreleased" entry per package, listing every removed subpath.
 6. `AGENTS.md`: replace the `sdk/` bullet rather than amending it again.
 
-## 6. The other rename in flight — DONE, and it did not need the release
+## 6. The other rename in flight — DONE, and it didn't need the release
 
 §0.1b planned to ship this rename and the retired-vocabulary rename in one breaking release. That plan
 assumed the vocabulary change touched more public surface than `sdk/`'s 83 subpaths. Measurement showed the
@@ -239,7 +239,7 @@ The word deliberately remains in three places. The Vale rules that refuse it mus
 gazetteer, real surnames and given names in the libpostal dictionaries, and dated notes inside committed
 board rows. A rename would corrupt data to satisfy a style rule.
 
-One item is open. Those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they are part of the pinned
+One item is open. Those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they're part of the pinned
 corpus content hash. Each edit requires a deliberate re-pin, so a sweep must preserve them.
 
 ## 7. How to reproduce each number

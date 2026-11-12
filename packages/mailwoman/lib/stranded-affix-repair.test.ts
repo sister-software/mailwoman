@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the stranded-affix repair. The required cases are the refusals: this pass rewrites a place name, so
- *   the interesting question is never "does it join `Brixton` to `Hill`" but "what does it leave unchanged".
+ *   Tests for the stranded-affix repair.
+ *
+ *   The required cases are the refusals: this pass rewrites a place name, so the interesting
+ *   question is never "does it join `Brixton` to `Hill`" but "what does it leave unchanged".
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

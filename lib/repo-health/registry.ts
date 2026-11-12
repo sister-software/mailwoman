@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The registry of repository health checks — the only executable entry point of this package. Knip
- *   treats as such. A check that is not listed here is dead code and knip reports it. `mwops health <id>` and
- *   `mwops health all` iterate this array.
+ *   The registry of repository health checks — the only executable entry point of this package.
+ *
+ *   Knip treats as such.
+ *   A check that's not listed here is dead code and knip reports it.
+ *
+ *   `mwops health <id>` and `mwops health all` iterate this array.
  */
 
 import type { RepoCheck } from "#repo-health/check"
@@ -17,6 +20,7 @@ import { dataProvenanceCheck } from "#repo-health/checks/data-provenance"
 import { debtCheck } from "#repo-health/checks/debt"
 import { docLinkTargetsCheck } from "#repo-health/checks/doc-link-targets"
 import { duplicateExportedShapeCheck } from "#repo-health/checks/duplicate-exported-shape"
+import { effectsRegisterCheck } from "#repo-health/checks/effects-register"
 import { exportNameAffixCheck } from "#repo-health/checks/export-name-affix"
 import { exportsCheck } from "#repo-health/checks/exports"
 import { licenseRegisterCheck } from "#repo-health/checks/license-register"
@@ -35,7 +39,10 @@ import { privateNameShadowsCheck } from "#repo-health/checks/private-name-shadow
 import { publishedBundlesCheck } from "#repo-health/checks/published-bundles"
 import { rightsChainCheck } from "#repo-health/checks/rights-chain"
 import { runtimeFlagsCheck } from "#repo-health/checks/runtime-flags"
+import { sideEffectsCheck } from "#repo-health/checks/side-effects"
+import { spdxHeaderCheck } from "#repo-health/checks/spdx-header"
 import { stalePathLiteralsCheck } from "#repo-health/checks/stale-path-literals"
+import { stateColumnWritesCheck } from "#repo-health/checks/state-column-writes"
 import { stylesheetCheck } from "#repo-health/checks/stylesheet-check"
 import { testLayoutCheck } from "#repo-health/checks/test-layout"
 import { thirdPartyNoticesCheck } from "#repo-health/checks/third-party-notices"
@@ -57,6 +64,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
 	packageLicenseCheck,
 	rightsChainCheck,
+	spdxHeaderCheck,
 	thirdPartyNoticesCheck,
 	licenseRegisterCheck,
 	localeTablesCheck,
@@ -92,6 +100,9 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	countryLiteralSetsCheck,
 	debtCheck,
 	bundleGraphCheck,
+	sideEffectsCheck,
+	effectsRegisterCheck,
+	stateColumnWritesCheck,
 	vocabCensusCheck,
 	exportsCheck,
 	typecheckTestsCheck,

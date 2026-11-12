@@ -46,7 +46,7 @@ fails every component. The unbalanced-delimiter rows exist to catch exactly that
 
 `*` = paired-delimiter classes (the proposer's target). Component accuracy %, 200 rows, folded gold.
 
-## Verdict: the span proposer does not warrant its revival (as implemented)
+## Verdict: the span proposer doesn't warrant its revival (as implemented)
 
 At **every** bias tested, the Stage 2.7 span proposer is a no-op or a regression on the paired-delimiter
 classes it was built for:
@@ -65,7 +65,7 @@ semantics need a **fix** rather than a parameter sweep. The bias has the wrong s
 delimited content rather than absorb it. An unchanged revival would regress the very class it targets.
 **Recommendation: do not revive on these numbers. If pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
 exhaustive sweep — but a feature that's a no-op at default and net-negative at the two non-trivial settings
-has not cleared the bar #518 set.)
+hasn't cleared the bar #518 set.)
 
 ## The finding that matters more: neural already wins, and its failure mode isn't v0's
 
@@ -84,7 +84,7 @@ The head-to-head is the real takeaway:
   (86.9 vs 80.8), slash (71.8 vs 61.5). Its rules handle `123 1/2`, `O'Brien`, `St.` precisely. Neural
   wobbles on fractional house numbers and absorbs trailing tokens.
 
-The implication for the roadmap: the punctuation-stress change most likely to raise these scores is **not** a new span
+The implication for the roadmap: the punctuation-stress change most likely to raise these scores **isn't** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
 break, and it's a sharper, cheaper target than reviving Stage 2.7.

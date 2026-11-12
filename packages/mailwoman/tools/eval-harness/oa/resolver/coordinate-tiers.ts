@@ -7,6 +7,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { TextSpliterator } from "spliterator"
@@ -83,8 +84,13 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
-		const { USStateDatabaseProvider } = await import("#geocode/regions")
-		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		const {
+			regions: { USStateDatabaseProvider },
+			resolverWofSqlite: { AddressPointSqliteLookup, StreetInterpolator },
+		} = await allKeyed({
+			regions: import("#geocode/regions"),
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+		})
 
 		cascadeProvider = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
@@ -131,7 +137,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 /**
  * The postcode-anchor reads' inputs.
  *
- * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's.
+ * `minConfidence` is the floor below which the anchor's coordinate isn't trusted over the resolver's.
  * A penalized house-number span scores ~0.2 (single-country times the house-number penalty),
  * while an ambiguous real code scores at least 0.52 (valid in three countries or fewer),
  * so a 0.5 floor keeps the latter and rejects the former.
@@ -168,8 +174,8 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 
 		if (!placed.length) continue
 		// When the eval fixes a country, accept only a placed candidate from it,
-		// never fall back to another country's centroid (a US ZIP that is coordless here
-		// but a valid 5-digit shape in DE/FR/IT must not borrow Europe's point).
+		// never fall back to another country's centroid (a US ZIP that's coordless here
+		// but a valid 5-digit shape in DE/FR/IT mustn't borrow Europe's point).
 		// With no country fixed, take the first placed.
 		const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]
 

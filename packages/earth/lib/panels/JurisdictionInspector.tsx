@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<JurisdictionInspector>` draws the legend of whichever jurisdiction fill is switched on, and a card
- *   with the hovered jurisdiction's measures. It renders inside the map container, so both position
- *   against the map rather than the page.
+ *   `<JurisdictionInspector>` draws the legend of whichever jurisdiction fill is switched on,
+ *   and a card with the hovered jurisdiction's measures.
+ *
+ *   It renders inside the map container, so both position against the map rather than the page.
  */
 
 import { addressSystemColor, JurisdictionLayerID, JurisdictionLegends } from "@mailwoman/cartographer/jurisdictions"

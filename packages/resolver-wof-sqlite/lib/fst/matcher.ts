@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   In-memory FST matcher. Built by `fst-builder.ts`, queried at runtime for emission priors and CLI
- *   introspection. The structure is a deterministic trie over normalized tokens with PlaceEntry
- *   arrays at accepting states.
+ *   In-memory FST matcher.
+ *
+ *   Built by `fst-builder.ts`, queried at runtime for emission priors and CLI introspection.
+ *   The structure is a deterministic trie over normalized tokens with PlaceEntry arrays at accepting states.
  */
 
 import type { AncestrieMatch } from "@mailwoman/ancestrie"

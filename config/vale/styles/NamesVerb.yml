@@ -2,8 +2,14 @@
 ##
 ## "The flag names the file" hides what the code does with the file. Say what happens instead:
 ## the flag selects, reads, writes, points to, or identifies it.
+##
+## The token matches "names" before a determiner, a possessive or demonstrative, a number word, or an
+## inline code span, the positions where the word acts as a verb. A plural noun such as "place names"
+## is usually followed by a verb or punctuation and passes. "that" is left out because "names that
+## contain" is a noun with a relative clause as often as a verb with an object.
 extends: existence
 message: "'%s' uses 'names' as a verb. Say what the subject does with the thing it identifies."
 level: error
 tokens:
-  - '\Wnames\s(a|the)'
+  - '\Wnames\s(?:a|an|the|its|their|his|her|this|these|those|each|every|both|no|one|two|three|four|which|what|whichever)\b'
+  - '\Wnames\s`'

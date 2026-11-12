@@ -12,13 +12,13 @@ Everything numeric here was re-measured today against the committed fixture
 
 ## Verdict in one paragraph
 
-`resolver_score` is not one number. On the FTS backend it is a negated bm25 plus about six points of additive tiers.
+`resolver_score` isn't one number. On the FTS backend it is a negated bm25 plus about six points of additive tiers.
 On the candidate backend it is exactly `log10(population + 1)`. The two live on scales that do not overlap
 (FTS localities 9–44, candidate localities 0–7), and within the FTS backend a second code path returns a bounded
 `[0, 1]` blend instead. Its own type documented this at the time. The doc comment said that the backend defines the scale and that callers
 should read the score as an ordinal. The field's comment at `packages/core/lib/resolver/types.ts:48` now reads
 `Resolver-defined ranking score`.
-So the interesting question is not "what threshold abstains" but **"is this number ordinal within one query, or is it
+So the interesting question isn't "what threshold abstains" but **"is this number ordinal within one query, or is it
 a magnitude you can compare across queries?"** — and the answer is the former. Measured on the fixture, a single
 score threshold separates a correct locality from a garbage locality with Youden J = 0.357 (FTS) / 0.573 (candidate).
 The classifier's own span confidence, already on the same node and already in `[0, 1]` for both backends, gets
@@ -34,7 +34,7 @@ J = 0.929 / 0.917 on the same populations. **The signal that abstains is upstrea
 node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 ```
 
-There is no normalization, calibration, or clamping between the backend and that line.
+There's no normalization, calibration, or clamping between the backend and that line.
 
 ### FTS backend — `resolver-wof-sqlite/lookup.ts`
 
@@ -129,7 +129,7 @@ Scripts live in the gitignored `scripts/diagnostic/` (`score-probe.ts`, `score-r
 
 ---
 
-## 3. The reproduction, including what did not reproduce
+## 3. The reproduction, including what didn't reproduce
 
 ### Resolve rates
 
@@ -139,9 +139,9 @@ Scripts live in the gitignored `scripts/diagnostic/` (`score-probe.ts`, `score-r
 | candidate | 41 / 105                       | **18 / 35**               | 62             |
 
 The mailfail report's headline was "35 of 110 probes produced at least one coordinate". Re-measured on the 105
-committed rows that is 33 (FTS) — consistent, since the fixture drops the oversized `size` rows.
+committed rows that's 33 (FTS) — consistent, since the fixture drops the oversized `size` rows.
 
-**The 33 is not 33 defects.** Nineteen of the resolving FTS probes have a bar _weaker_ than `no-resolve`, and the
+**The 33 isn't 33 defects.** Nineteen of the resolving FTS probes have a bar _weaker_ than `no-resolve`, and the
 fixture is right to grade them that way: `﻿350 5th Ave, New York, NY` (leading BOM), `Café de Flore, Paris` (NFD
 accents), `רחוב דיזנגוף 100, תל אביב`, the U+2028-separated address, the repeated-address size row, the CSV and YAML
 rows that contain `New York`, and `Springfield` are **real place names inside awkward wrappers**. Those matches are
@@ -164,14 +164,14 @@ Best single threshold, sweeping every observed score:
 | FTS       | ≥ 18.73   | 100.0%        | 35.7%            | **0.357** |
 | candidate | ≥ 3.67    | 74.0%         | 83.3%            | **0.573** |
 
-Nine of the 14 FTS violations score above the _lowest-scoring correct_ control locality. That is the finding, stated
-without the sign confusion: **there is no threshold on this field that separates the two populations**, and the
+Nine of the 14 FTS violations score above the _lowest-scoring correct_ control locality. That's the finding, stated
+without the sign confusion: **there's no threshold on this field that separates the two populations**, and the
 thresholds that do best are different numbers on different backends because the scales are different.
 
-### What did not reproduce
+### What didn't reproduce
 
 The framing this task arrived with was that **wrong answers score higher than right ones** — FTS 25.67 vs 24.33,
-candidate 6.52 vs 6.07. On the definitions above, that inequality does not hold: correct localities score _higher_
+candidate 6.52 vs 6.07. On the definitions above, that inequality doesn't hold: correct localities score _higher_
 than garbage localities on both backends (25.63 vs 21.05 on FTS, 4.47 vs 2.26 on candidate).
 
 The sign flips when you pool tags. The distance-to-truth grades for every resolved node on the candidate backend are:
@@ -187,8 +187,8 @@ scores on that backend (5.31–7.59, vs 0.00–6.44 for localities and a flat 0.
 is therefore **dominated by tag rather than by correctness** — 6.43 is close to the 6.52 in the original claim. Tag composition is
 therefore the likely mechanism behind that claim.
 
-This correction does not make the score usable. It gives a second, independent reason to avoid thresholding on it:
-`resolver_score` is not comparable across tags _within_ one backend, and it is not comparable across backends either. Any pooled mean over
+This correction doesn't make the score usable. It gives a second, independent reason to avoid thresholding on it:
+`resolver_score` isn't comparable across tags _within_ one backend, and it isn't comparable across backends either. Any pooled mean over
 this field is measuring composition.
 
 ### The scale table: the whole argument
@@ -199,11 +199,11 @@ this field is measuring composition.
 | candidate | 0.00 – 7.01  | 5.31 – 7.59  | 0.00 (always) |
 
 A threshold of `5` means "reject nearly everything" on FTS and "accept most cities" on candidate. A threshold of `20`
-is unreachable on candidate. There is no shared unit.
+is unreachable on candidate. There's no shared unit.
 
 ---
 
-## 4. What separates the two populations, since the score does not
+## 4. What separates the two populations, since the score doesn't
 
 Same populations, same runs, other fields already present on the node:
 
@@ -259,13 +259,13 @@ caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declar
 - **Cost.** Small and contained: one optional interface field, one line in `resolve.ts:1076`, two backend
   implementations. It adds no new features and needs neither model work nor an artifact rebuild.
 - **What it buys.** At the measured optimum it drops 36% (FTS) / 83% (candidate) of `no-resolve` violations. The
-  candidate number is decent. The FTS number is not.
-- **What it does not buy.** It cannot fix the tag-incomparability — `5.31` is a plausible region and an implausible
-  locality on the same backend — so the profile would really need to be per-`(backend, placetype)`, and by then you
-  are hand-tuning six constants against a 14-row violation set.
+  candidate number is decent. The FTS number isn't.
+- **What it doesn't buy.** It cannot fix the tag-incomparability — `5.31` is a plausible region and an implausible
+  locality on the same backend — so the profile would really need to be per-`(backend, placetype)`, and by then you're
+  hand-tuning six constants against a 14-row violation set.
 - **Evidence required to promote.** A per-backend, per-placetype threshold sweep on a violation set 10× this one,
   plus a no-regression run on the fragment boards and the gauntlet (the bare-locality and homonym rows are exactly
-  what a score floor kills). The D-rule applies: default-on with a known tier-1 regression is not shippable.
+  what a score floor kills). The D-rule applies: default-on with a known tier-1 regression isn't shippable.
 - **Assessment.** This is the cheapest option that could work, and it is the one most likely to need repeated
   re-tuning. The measurement above shows that its ceiling is low on the FTS backend.
 
@@ -308,14 +308,14 @@ one preserved beside it as `resolver_score_raw`.
   change to a shipped interface, so it wants a major.
 - **What it buys.** One threshold that means the same thing everywhere, and it repairs `normalizeResolverScore`'s
   saturation as a side effect (a calibrated `[0, 1]` score is exactly what that combiner was written expecting).
-- **What it does not buy.** Calibration does not create separation. On the measured data the _ordering_ barely
+- **What it doesn't buy.** Calibration doesn't create separation. On the measured data the _ordering_ barely
   separates the populations, and a monotone remap of that signal separates them no better. Design C
   is a prerequisite for cross-backend comparison rather than a solution to abstention.
 - **Evidence required to promote.** A held-out calibration set per backend (score → observed correctness rate), a
   reliability curve showing the calibrated value is a probability, and a demonstration that the ordering
   survives the remap on the resolver evals. Plus the usual major-version consumer sweep.
 
-**If you only take one thing:** Designs B and C are complementary rather than alternatives, and B does not depend on C.
+**If you only take one thing:** Designs B and C are complementary rather than alternatives, and B doesn't depend on C.
 Design C makes the number comparable. Design B makes the decision possible. Design C without Design B would produce a
 well-calibrated number that still cannot abstain.
 
@@ -324,15 +324,15 @@ well-calibrated number that still cannot abstain.
 ## 6. What was not tested
 
 - **One locale.** `en-US` weights, US control set. The confidence distribution is a model property and will differ
-  per locale. The score scales are backend properties and will not.
+  per locale. The score scales are backend properties and won't.
 - **One control shape.** All 150 control rows are full US street addresses. The _control_ contains no bare localities,
   fragments, or non-Latin script (the garbage set contains some non-Latin script). The corroboration signal's zero measured cost
-  is an artifact of that shape and should not be quoted without this caveat.
+  is an artifact of that shape and shouldn't be quoted without this caveat.
 - **No FTS postcode database.** The FTS leg ran against the admin database only, so it produced no postcode nodes and
   never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source rather than measured.
 - **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted and no reliability curve was drawn.
 - **No `prominence` measurement.** It is argued for on the strength of its definition (bounded, same meaning on both
-  backends) rather than a measured separation — it was not captured in these runs. That is a one-line probe change
+  backends) rather than a measured separation — it was not captured in these runs. That's a one-line probe change
   and should be the first thing anyone does before adopting Design A or B.
 - **Small violation set.** 14 (FTS) / 18 (candidate) rows clear the `no-resolve` bar. Every J above should be read
   as directional.

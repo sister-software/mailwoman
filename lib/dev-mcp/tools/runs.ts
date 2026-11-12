@@ -3,9 +3,12 @@
 
 /**
  *   The `mwdev_runs` tool definition provides the description an agent reads and its input schema.
- *   It also provides the handler wiring. The measurement itself lives in the package root. This file is the interface.
- *   The description is the
- *   required half of it.
+ *
+ *   It also provides the handler wiring.
+ *   The measurement itself lives in the package root.
+ *
+ *   This file is the interface.
+ *   The description is the required half of it.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

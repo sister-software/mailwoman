@@ -2,21 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr). The
- *   dump is a `;`-delimited, header-first CSV in which every row already contains the full tuple —
- *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there is no OSM-style
- *   "association gap" (a point with no street): BAN is a structured government register rather than a
- *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
+ *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr).
+ *
+ *   The dump is a `;`-delimited, header-first CSV in which every row already contains
+ *   the full tuple — `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`,
+ *   `lon`/`lat` — so there's no OSM-style "association gap" (a point with no street):
+ *   BAN is a structured government register rather than a community tag soup.
+ *   We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
  *   `.csv.gz` inputs are transparently gunzipped.
  *
- *   The columns are located BY name off the header row (never by fixed position) so a future BAN
- *   schema addition can't silently shift the tuple. Values contain no embedded `;` (the dumps are
- *   uniform-arity — verified 23 fields across every département), so a plain split is both correct and
- *   fast. a literal `"` inside a field (rare) is kept verbatim, never treated as a CSV quote wrapper.
+ *   The columns are located BY name off the header row (never by fixed position)
+ *   so a future BAN schema addition can't silently shift the tuple.
+ *   Values contain no embedded `;` (the dumps are uniform-arity — verified 23 fields
+ *   across every département), so a plain split is both correct and fast. a literal `"`
+ *   inside a field (rare) is kept verbatim, never treated as a CSV quote wrapper.
  *
  *   Also reads `nom_ld` ("nom du lieu-dit"), the hamlet/place name filled on 6.94% of rows nationally —
- *   surfaced as {@link BANAddrRecord.lieuDit}, cleaned of the survey-documented junk/dup patterns via
- *   {@link cleanLieuDit} (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
+ *   surfaced as {@link BANAddrRecord.lieuDit}, cleaned of the survey-documented junk/dup patterns
+ *   via {@link cleanLieuDit} (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
  */
 
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
@@ -67,7 +70,7 @@ export interface BANAddrRecord {
 	 */
 	codeInsee: string | null
 	/**
-	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not.
+	 * `certification_commune` — 1 when the commune certified the address, 0 when it didn't.
 	 * Null when the column is blank.
 	 *
 	 * Preserved verbatim so a coverage basis can be computed per commune rather than inferred from a share.
@@ -167,7 +170,7 @@ export function cleanLieuDit(raw: string | null, commune: string | null): string
 
 /**
  * Throw if the dump's header is missing a required column.
- * A rename upstream must not silently skip every row.
+ * A rename upstream mustn't silently skip every row.
  */
 function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The installation id is a UUID the CLI mints on its first license or data-pull action and keeps under the config
- *   root beside the key file. Every declare, evaluate, refresh and download request reports it, and the ledger records
- *   it with the request. A token is never bound to it, so a token refreshed on one machine works on another.
+ *   The installation id is a UUID the CLI mints on its first license or data-pull action
+ *   and keeps under the config root beside the key file.
+ *
+ *   Every declare, evaluate, refresh and download request reports it,
+ *   and the ledger records it with the request.
+ *   A token is never bound to it, so a token refreshed on one machine works on another.
  */
 
 import { configRootPath } from "#data-root"

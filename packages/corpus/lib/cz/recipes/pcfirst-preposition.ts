@@ -4,10 +4,10 @@
 /**
  * `cz-pcfirst-preposition`: the Czech pc-first prepositional-locality recipe.
  *
- * A leading postcode is mis-assigned as a house number while a multi-word "nad/pod/u X" locality
- * shatters. This recipe supplies real prepositional localities in the order that breaks, so the
- * model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
- * cycle and the canonical and city-first orders keep the polarity balanced.
+ * A leading postcode is mis-assigned as a house number while a multi-word "nad/pod/u X" locality shatters.
+ * This recipe supplies real prepositional localities in the order that breaks, so the
+ * model learns that a leading postcode before a multi-word name is a postcode. pc-first
+ * leads the cycle and the canonical and city-first orders keep the polarity balanced.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -77,7 +77,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
 				// The street-less form `«city» «pc», Česko` omits street and number from the
-				// components because the surface does not include them.
+				// components because the surface doesn't include them.
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
@@ -103,7 +103,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			// Per row, because the id names this tuple's record.
+			// Per row, because the id identifies this tuple's record.
 			// A tuples file written before `sourceID` existed has none.
 			// `null` means the recipe had no id to forward.
 			if (

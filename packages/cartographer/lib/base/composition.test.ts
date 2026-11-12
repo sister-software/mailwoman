@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import { expect, test } from "vitest"
 

@@ -4,27 +4,30 @@
 /**
  *   The fixture holds both halves of this publisher's join, so the tests exercise the join itself.
  *
- * `fixtures/es-bizkaia/ES.BFA.AD.001.gml` holds five `ad:Address` features copied out of the member
- * of `ES.BFA.AD.001.zip`, Abadiño's archive, and `components.gml` holds the seven features they
- * reference, copied out of three `GetFeature` responses from
- * `https://geo.bizkaia.eus/arcgisserverinspire/…`. The addresses and the features they name are in
- * different files on the publisher's side too, and the suite therefore exercises the cross-file join
- * rather than simulating it.
+ * `fixtures/es-bizkaia/ES.BFA.AD.001.gml` holds five `ad:Address` features copied
+ * out of the member of `ES.BFA.AD.001.zip`, Abadiño's archive, and `components.gml`
+ * holds the seven features they reference, copied out of three `GetFeature` responses
+ * from `https://geo.bizkaia.eus/arcgisserverinspire/…`.
+ * The addresses and the features they name are in different files on the publisher's side too,
+ * and the suite therefore exercises the cross-file join rather than simulating it.
  *
- * One change was made to the address file and it is stated here, because the rest is the publisher's
- * text: the archive's member uses CRLF line endings and the fixture uses LF. The component file is
- * byte-for-byte as the service served it.
+ * One change was made to the address file and it is stated here, because the rest is the
+ * publisher's text: the archive's member uses CRLF line endings and the fixture uses LF.
+ * The component file is byte-for-byte as the service served it.
  *
- * The five addresses are one of each shape the designator's number field takes: `003`, `008A`,
- * `001BIS`, `033005` and `019A02`. The publisher's adapter header tabulates those shapes. Their
- * `ad:LocatorName` values are the publisher's own cross-rendering, and
- * `reconstructs the publisher's own LocatorName from the joined street and the designator` puts the
- * composed street and number back against them.
+ * The five addresses are one of each shape the designator's number field takes:
+ * `003`, `008A`, `001BIS`, `033005` and `019A02`.
+ * The publisher's adapter header tabulates those shapes.
+ *
+ * Their `ad:LocatorName` values are the publisher's own cross-rendering, and
+ * `reconstructs the publisher's own LocatorName from the joined street and the designator`
+ * puts the composed street and number back against them.
  *
  * Counts quoted against the whole publication come from reading `ES.BFA.AD.001.zip`, 108,458 bytes.
- * Its member holds 5,916,116 bytes and 1,360 addresses. The WFS holds 6,921
- * `ad:ThoroughfareName`, 96 `ad:PostalDescriptor` and 113 `ad:AdminUnitName` features, all 113 of
- * the last at `3rdOrder`.
+ * Its member holds 5,916,116 bytes and 1,360 addresses.
+ *
+ * The WFS holds 6,921 `ad:ThoroughfareName`, 96 `ad:PostalDescriptor` and 113
+ * `ad:AdminUnitName` features, all 113 of the last at `3rdOrder`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

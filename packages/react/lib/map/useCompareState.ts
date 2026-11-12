@@ -4,9 +4,13 @@
 /**
  *   `useCompareState` — the small headless state machine behind the demo's compare toggle
  *   (`_app.tsx:142-143, 1238-1305`): whether compare mode is on and which version to compare against.
- *   The off state clears the chosen version. A selected compare version equal to the primary is
- *   rejected (the picker filters it out, this guards the programmatic path). The second parse itself is a
- *   host concern surfaced through `panels.compare` — this hook owns only the toggle + selection.
+ *
+ *   The off state clears the chosen version.
+ *   A selected compare version equal to the primary is rejected
+ *   (the picker filters it out, this guards the programmatic path).
+ *
+ *   The second parse itself is a host concern surfaced through `panels.compare` —
+ *   this hook owns only the toggle + selection.
  */
 
 import { useCallback, useState } from "react"

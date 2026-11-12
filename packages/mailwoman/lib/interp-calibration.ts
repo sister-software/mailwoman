@@ -3,16 +3,17 @@
 
 /**
  *   Per-region split-conformal multipliers for the interpolation tier's `uncertainty_m` radius.
- *   Multiply the raw claimed radius (half the matched tiger segment length) by the region's factor
- *   to get a calibrated ~90%-coverage interval.
  *
- *   The factor is regional, rising with rurality, so the region selects its own multiplier rather
- *   than using one global value.
+ *   Multiply the raw claimed radius (half the matched tiger segment length) by the
+ *   region's factor to get a calibrated ~90%-coverage interval.
  *
- *   Source of record: `data/calibration/interp-radius-conformal.json` (the eval artifact and
- *   rationale). Embedded here as a constant so the published package and the server ship it without
- *   a runtime data-file dependency. **Keep the two in sync** when the full 50-state sweep fills in.
- *   and update both.
+ *   The factor is regional, rising with rurality, so the region selects its own
+ *   multiplier rather than using one global value.
+ *
+ *   Source of record: `data/calibration/interp-radius-conformal.json` (the eval artifact and rationale).
+ *   Embedded here as a constant so the published package and the server ship
+ *   it without a runtime data-file dependency. **Keep the two in sync**
+ *   when the full 50-state sweep fills in. and update both.
  */
 
 export interface InterpCalibrationTable {

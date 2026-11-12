@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The exact-match tier's name probes, the two case-folded equality lookups that decide whether a
- *   candidate holds the query text as its own name, an alias, or an official name.
+ *   The exact-match tier's name probes, the two case-folded equality lookups that decide
+ *   whether a candidate holds the query text as its own name, an alias, or an official name.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -76,7 +76,7 @@ export function exactMatchIDs<DB>(
 			}
 		}
 	} catch {
-		// Extract without place_search either, so there is no exact-match tier.
+		// Extract without place_search either, so there's no exact-match tier.
 		// The caller falls back to weighted-sum order.
 	}
 

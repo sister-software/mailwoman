@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Synchronous reader for `soil.db` that returns the soil survey's capability-class distribution at a coordinate.
+ *   Synchronous reader for `soil.db` that returns the soil survey's capability-class
+ *   distribution at a coordinate.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -40,7 +41,7 @@ export const SoilReadingKind = {
 	DesignatedNoRating: "designated_no_rating",
 	/**
 	 * The layer has no coverage for this location.
-	 * This does not imply low capability.
+	 * This doesn't imply low capability.
 	 */
 	Unknown: "unknown",
 } as const
@@ -63,7 +64,7 @@ export interface SoilCapabilityDistribution {
 	 */
 	unratedShare: number
 	/**
-	 * The share of miscellaneous areas that the rating does not apply to.
+	 * The share of miscellaneous areas that the rating doesn't apply to.
 	 */
 	notRateableShare: number
 	/**
@@ -144,10 +145,9 @@ export interface SoilCapabilityReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statements of what the product does not cover.
+	 * The authority's own statements of what the product doesn't cover.
 	 *
-	 * Every reading includes them because the survey supports planning only
-	 * and does not replace onsite study.
+	 * Every reading includes them because the survey supports planning only and doesn't replace onsite study.
 	 */
 	limits: ReadonlyArray<string>
 }

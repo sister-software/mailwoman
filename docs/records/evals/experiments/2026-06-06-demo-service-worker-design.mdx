@@ -1,6 +1,6 @@
 # Demo service-worker cache (S38) — design notes before we build
 
-_Written during night-7 as the groundwork for the operator's "service worker cache" ask. We did **not**
+_Written during night-7 as the groundwork for the operator's "service worker cache" ask. We **didn't**
 ship a service worker this shift: the investigation below turned up enough cross-origin sharp edges that a
 blind end-of-shift implementation would have been the wrong call. This is the map so the next session starts
 with the gotchas already paid for rather than a from-scratch spike._
@@ -57,7 +57,7 @@ Implications for the cache:
 ### Sharp edge 2 — CORS lives on the HF leg, and the CDN leg is unconfirmed
 
 The HF 302 sends `access-control-allow-origin: https://huggingface.co`. The final signed CDN `200`, probed
-with `HEAD` this shift, did **not** visibly include an `access-control-allow-origin` header. A `HEAD` is not
+with `HEAD` this shift, **didn't** visibly include an `access-control-allow-origin` header. A `HEAD` isn't
 authoritative for `GET` CORS, though. The demo reads these bytes today, so the browser receives a
 readable (CORS-clean) response on the real `GET` by some path. **Verify in a browser before building**, because the
 answer forks the design:
@@ -84,7 +84,7 @@ message (not only in `activate`) matters because the SW doesn't reactivate on an
 
 ## plugin-pwa vs hand-rolled
 
-`@docusaurus/plugin-pwa` is **not** installed. It's the conventional choice and gives you the manifest +
+`@docusaurus/plugin-pwa` **isn't** installed. It's the conventional choice and gives you the manifest +
 registration plumbing, but its Workbox precache manifest is built for **same-origin, build-time-known** assets.
 Our heavy assets are **cross-origin and version-dynamic** (chosen at runtime from the release picker), which is
 exactly what a Workbox precache manifest can't enumerate. You'd end up writing a custom `runtimeCaching` route
@@ -159,7 +159,7 @@ them are visible to `tsc` or a single-page render:
 5. **Signed-URL expiry** — the cached path must never re-hit the expiring CDN URL (covered by #2, but add an
    explicit assertion that the SW served the body without a redirect).
 
-Playwright drives all five with a real Chromium + service-worker support. That is the check this feature needs,
+Playwright drives all five with a real Chromium + service-worker support. That's the check this feature needs,
 and it takes a full session of careful work rather than an end-of-shift add-on.
 
 ## Recommendation

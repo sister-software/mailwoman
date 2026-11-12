@@ -62,7 +62,7 @@ export interface DerivationInputs {
 	/**
 	 * Every option that changes the file's bytes, including its source, split and part.
 	 *
-	 * It is serialized by {@linkcode canonicalJSON}, so key order does not change the hash.
+	 * It is serialized by {@linkcode canonicalJSON}, so key order doesn't change the hash.
 	 */
 	config: unknown
 	/**
@@ -130,7 +130,7 @@ export interface ParquetFileRecord {
 	licenseValues: LicenseTally
 	/**
 	 * The producers' own statements of the rows' terms, with a row count for each statement.
-	 * The `license` column does not retain these statements.
+	 * The `license` column doesn't retain these statements.
 	 *
 	 * Absent from a record written before #2741.
 	 */
@@ -442,7 +442,7 @@ export interface WriteParquetRecordOptions {
 	/**
 	 * Rows per license label, per source, counted while the file was written.
 	 *
-	 * A record names one source, so a tally with more than one is refused.
+	 * A record identifies one source, so a tally with more than one is refused.
 	 */
 	tally: SourceLicenseTally
 	derivation: DerivationInputs

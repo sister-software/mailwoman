@@ -4,10 +4,11 @@
 /**
  *   `@mailwoman/entity-resolution` — the geocode-first record-matching application.
  *
- *   {@link resolveEntities} runs the whole matcher (block → score → cluster) over normalized
- *   contact/organization {@link SourceRecord}s and returns canonical {@link ResolvedEntity entities};
- *   {@link toGeoJSON} exports them for QGIS. This is the clinic-funding use case mailwoman was built
- *   for, finally standing on a calibrated, label-free matcher.
+ *   {@link resolveEntities} runs the whole matcher (block → score → cluster) over
+ *   normalized contact/organization {@link SourceRecord}s and returns canonical
+ *   {@link ResolvedEntity entities}; {@link toGeoJSON} exports them for QGIS.
+ *   This is the clinic-funding use case mailwoman was built for, finally standing
+ *   on a calibrated, label-free matcher.
  */
 
 export * from "#address-key"

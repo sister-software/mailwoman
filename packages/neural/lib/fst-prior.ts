@@ -598,8 +598,8 @@ function segmentIndexes(groups: readonly WordGroup[], pieces: ReadonlyArray<{ pi
  * A street type's adjacency stays inside the match's segment: in `05448 New St, Vermont` the
  * state follows a comma, so the street type before the comma leaves its region bias whole.
  * A house number's adjacency crosses the comma, because a convention that writes the number
- * after the street, as in `Sofia Camarena 38, Loma Blanca`, writes the colonia next, and the
- * scaled bias keeps a colonia that is also a locality elsewhere on its dependent reading.
+ * after the street, as in `Sofia Camarena 38, Loma Blanca`, writes the colonia next,
+ * and the scaled bias keeps a colonia that's also a locality elsewhere on its dependent reading.
  */
 function streetContextScale(
 	groups: WordGroup[],

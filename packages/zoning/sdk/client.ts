@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The Department's ArcGIS item, its feature service and the Hub download job, read through {@linkcode APIClient}; the bulk export streams to disk on raw `fetch` instead.
+ * The Department's ArcGIS item, its feature service and the Hub download job, read through
+ * {@linkcode APIClient}; the bulk export streams to disk on raw `fetch` instead.
  */
 
 import { APIClient, type APIClientConfig, assertNoArcGISError } from "@mailwoman/core/api"
@@ -197,7 +198,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * Ask the Hub for a bulk GeoJSON export and return the result URL, a 302 that the caller has to follow.
 	 *
-	 * @throws {Error} When the job is not `Completed`, or names no result URL.
+	 * @throws {Error} When the job isn't `Completed`, or identifies no result URL.
 	 * A partial job that answered with a status and no URL would otherwise present as an empty download.
 	 */
 	public async readExportURL(): Promise<string> {

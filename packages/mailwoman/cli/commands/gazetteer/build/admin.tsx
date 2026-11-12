@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build admin`: the turnkey admin-gazetteer build: WOF ingest → Overture
- *   divisions (real `division_area` extents + country nodes) → GeoNames folds → freeze →
- *   enrich (region abbrevs + place_abbr) → FTS → the structural verify check (node census,
- *   reverse EU panel) → seal 0444. Builds to a staging path. swapping over the live DB is a separate,
- *   deliberate step (releasing.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
+ *   `mailwoman gazetteer build admin`: the turnkey admin-gazetteer build: WOF ingest,
+ *   then Overture divisions (real `division_area` extents + country nodes),
+ *   GeoNames folds, freeze, enrich (region abbrevs + place_abbr), FTS, the structural
+ *   verify check (node census, reverse EU panel), and seal 0444.
+ *
+ *   Builds to a staging path. swapping over the live DB is a separate, deliberate step (releasing.md).
+ *   The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
@@ -28,7 +30,7 @@ export const spec = {
 	name: "admin",
 	description: "Build and verify the global admin gazetteer.",
 	options: {
-		data: { type: "string", description: "WOF repos root. Default <data-root>/src/wof-repos" },
+		data: { type: "string", description: "WOF repos root. Default <cache-root>/sources/wof-repos" },
 		out: { type: "string", description: "Output path. Default <data-root>/db/wof/admin-global-priority.REBUILD.db" },
 		"overture-countries": { type: "string", description: "CSV override of the Overture country set" },
 		"geonames-countries": { type: "string", description: "CSV override of the GeoNames country set" },

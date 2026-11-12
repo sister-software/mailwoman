@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Integration test for `mailwoman skill install [--dest <dir>]`. It runs the compiled CLI and checks that the
- *   packaged Claude Code skill reaches `<dest>/.claude/skills/mailwoman/`. Cases cover the default destination,
- *   a second idempotent run, the explicit `--dest` override and reinstall removal of stale files.
+ *   Integration test for `mailwoman skill install [--dest <dir>]`.
+ *
+ *   It runs the compiled CLI and checks that the packaged Claude Code skill
+ *   reaches `<dest>/.claude/skills/mailwoman/`.
+ *   Cases cover the default destination, a second idempotent run, the explicit
+ *   `--dest` override and reinstall removal of stale files.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

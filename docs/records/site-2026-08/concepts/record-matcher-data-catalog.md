@@ -13,7 +13,7 @@ The machine-readable catalog — provenance plus the `ColumnMapping` per source 
 
 ## Join model
 
-There is **no shared key across publishers**. The NPI is internal to NPPES. The HCP Number is internal to the FCC. The Facility ID is internal to TX HHSC. So the matcher doesn't join on an identifier — it joins on the **geocoded location** (each address goes through mailwoman's parser + resolver to a coordinate) plus **name/organization agreement**. That geocode-first, label-free approach is the premise of the contact/org matcher ([#598](https://github.com/sister-software/mailwoman/issues/598), [#615](https://github.com/sister-software/mailwoman/issues/615)): the resolved _place_ is the key rather than the address string.
+There's **no shared key across publishers**. The NPI is internal to NPPES. The HCP Number is internal to the FCC. The Facility ID is internal to TX HHSC. So the matcher doesn't join on an identifier — it joins on the **geocoded location** (each address goes through mailwoman's parser + resolver to a coordinate) plus **name/organization agreement**. That geocode-first, label-free approach is the premise of the contact/org matcher ([#598](https://github.com/sister-software/mailwoman/issues/598), [#615](https://github.com/sister-software/mailwoman/issues/615)): the resolved _place_ is the key rather than the address string.
 
 ## Sources
 

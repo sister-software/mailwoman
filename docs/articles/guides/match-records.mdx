@@ -1,0 +1,149 @@
+---
+title: Match candidate address records
+description: Score candidate address pairs, select an example threshold from separate labeled pairs, and inspect both error directions.
+role: guide
+source-of-truth: packages/match/lib/blocking.ts, packages/match/lib/fellegi-sunter.ts
+verified-with: published @mailwoman/match v11.0.0
+---
+
+# Match candidate address records
+
+Use this procedure when you've labeled address pairs and need to inspect a matching policy before linking records. This example compares street text and postcode exactly. It leaves apartment units out of the score on purpose, so that a false match shows up in the evaluation. The addresses below are synthetic, and the exercise uses no parser or geographic database.
+
+The procedure scores pairs of address records. Entity resolution of people or organizations is a separate task: it needs evidence that distinguishes occupants at a shared address, and its resulting clusters need their own evaluation.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+
+Install the matcher:
+
+```sh
+npm install --save-exact @mailwoman/match@11.0.0
+```
+
+## Create separate tuning and evaluation pairs
+
+Save the following as `match-records.ts`. Each pair has a known address identity label. The `T` pairs select a threshold. The `E` pairs evaluate that threshold and have different street addresses from the `T` pairs. `block` proposes a pair only when both postcodes agree, and a pair that blocking leaves out receives no score.
+
+```ts
+import { block, exactKey, scorePair, similarityComparison } from "@mailwoman/match"
+
+interface AddressRecord {
+	street: string
+	unit: string
+	postcode: string
+}
+type LabeledPair = [id: string, truth: boolean, a: AddressRecord, b: AddressRecord]
+
+const record = (street: string, unit: string, postcode: string): AddressRecord => ({ street, unit, postcode })
+const address = (r: AddressRecord) => `${r.street}${r.unit ? `, ${r.unit}` : ""}, Springfield, IL ${r.postcode}`
+
+const tune: LabeledPair[] = [
+	["T1", true, record("101 Oak Street", "Apt 1", "62701"), record("101 Oak Street", "Apt 1", "62701")],
+	["T2", true, record("203 Elm Street", "", "62702"), record("203 Elm Street", "", "62702")],
+	["T3", false, record("305 Pine Street", "", "62703"), record("307 Pine Street", "", "62703")],
+	["T4", false, record("409 Ash Street", "", "62704"), record("411 Ash Street", "", "62704")],
+]
+const evaluation: LabeledPair[] = [
+	["E1", true, record("501 Cedar Street", "Apt 1", "62705"), record("501 Cedar Street", "Apt 1", "62705")],
+	["E2", true, record("603 Maple Street", "", "62706"), record("603 Maple St", "", "62706")],
+	["E3", false, record("705 Birch Street", "Apt 1", "62707"), record("705 Birch Street", "Apt 2", "62707")],
+	["E4", false, record("807 Willow Street", "", "62708"), record("809 Willow Street", "", "62708")],
+	["E5", true, record("901 Poplar Street", "", "62709"), record("901 Poplar Street", "", "62710")],
+	["E6", false, record("1003 Walnut Street", "", "62711"), record("1005 Walnut Street", "", "62711")],
+]
+
+const levels = [
+	{ label: "exact", minSimilarity: 1, m: 0.8, u: 0.2 },
+	{ label: "different", minSimilarity: 0, m: 0.2, u: 0.8 },
+]
+const compare = (name: string, extract: (r: AddressRecord) => string) =>
+	similarityComparison({ name, extract, levels, similarity: (a: string, b: string) => Number(a === b) })
+const model = {
+	lambda: 0.5,
+	comparisons: [compare("street", (r) => r.street), compare("postcode", (r) => r.postcode)],
+}
+const candidateKey = exactKey((r: AddressRecord) => r.postcode)
+const score = ([id, truth, a, b]: LabeledPair) => {
+	const { pairs, droppedBlocks } = block([a, b], candidateKey)
+	if (droppedBlocks.length) throw new Error(`${id}: a block was dropped`)
+	return { id, truth, a, b, weight: pairs.length ? scorePair(model, a, b).weight : null }
+}
+
+const tuning = tune.map(score)
+const tuningWeights = (truth: boolean) =>
+	tuning
+		.filter((p) => p.truth === truth)
+		.map((p) => {
+			if (p.weight === null) throw new Error(`${p.id}: a tuning pair was blocked`)
+			return p.weight
+		})
+const highestNegative = Math.max(...tuningWeights(false))
+const lowestPositive = Math.min(...tuningWeights(true))
+if (highestNegative >= lowestPositive)
+	throw new Error("Tuning pairs overlap: a negative pair scored at or above a positive pair")
+const threshold = (highestNegative + lowestPositive) / 2
+
+console.log(
+	`Tuning: ${tuning.length} pairs; highest negative ${highestNegative} bits; lowest positive ${lowestPositive} bits; midpoint threshold ${threshold} bits`
+)
+for (const p of tuning) console.log(`${p.id} truth=${p.truth ? "match" : "non-match"} weight=${p.weight}`)
+
+const tested = evaluation.map(score)
+console.log(`Evaluation: ${tested.length} independent pairs`)
+for (const p of tested) {
+	const decision = p.weight === null ? "blocked" : p.weight >= threshold ? "match" : "non-match"
+	console.log(`${p.id} truth=${p.truth ? "match" : "non-match"} weight=${p.weight ?? "none"} decision=${decision}`)
+	if ((p.truth && decision !== "match") || (!p.truth && decision === "match")) {
+		console.log(`  left: ${address(p.a)}`)
+		console.log(`  right: ${address(p.b)}`)
+	}
+}
+
+const positives = tested.filter((p) => p.truth)
+const negatives = tested.filter((p) => !p.truth)
+const blockingMisses = positives.filter((p) => p.weight === null).length
+const thresholdMisses = positives.filter((p) => p.weight !== null && p.weight < threshold).length
+const falseMatches = negatives.filter((p) => p.weight !== null && p.weight >= threshold).length
+console.log(
+	`Misses: ${blockingMisses + thresholdMisses}/${positives.length} positive pairs (blocking ${blockingMisses}; threshold ${thresholdMisses})`
+)
+console.log(`False matches: ${falseMatches}/${negatives.length} negative pairs`)
+```
+
+The two comparison levels give an exact field agreement `log2(0.8 / 0.2) = 2` bits and a disagreement `log2(0.2 / 0.8) = -2` bits. The example sets `lambda` to `0.5`, so its prior weight is `log2(0.5 / 0.5) = 0` bits. These model parameters were chosen for illustration, and their calibration for customer addresses is unknown. A two-field exact agreement therefore scores 4 bits. One agreement and one disagreement score 0 bits. The midpoint between the tuning set's highest negative score of 0 and lowest positive score of 4 selects 2 bits.
+
+## Run and inspect both error directions
+
+Run `node match-records.ts`. The published 11.0.0 package returned the complete output below:
+
+```text
+Tuning: 4 pairs; highest negative 0 bits; lowest positive 4 bits; midpoint threshold 2 bits
+T1 truth=match weight=4
+T2 truth=match weight=4
+T3 truth=non-match weight=0
+T4 truth=non-match weight=0
+Evaluation: 6 independent pairs
+E1 truth=match weight=4 decision=match
+E2 truth=match weight=0 decision=non-match
+  left: 603 Maple Street, Springfield, IL 62706
+  right: 603 Maple St, Springfield, IL 62706
+E3 truth=non-match weight=4 decision=match
+  left: 705 Birch Street, Apt 1, Springfield, IL 62707
+  right: 705 Birch Street, Apt 2, Springfield, IL 62707
+E4 truth=non-match weight=0 decision=non-match
+E5 truth=match weight=none decision=blocked
+  left: 901 Poplar Street, Springfield, IL 62709
+  right: 901 Poplar Street, Springfield, IL 62710
+E6 truth=non-match weight=0 decision=non-match
+Misses: 2/3 positive pairs (blocking 1; threshold 1)
+False matches: 1/3 negative pairs
+```
+
+The evaluation contains three labeled positive pairs and three labeled negative pairs. At the selected 2-bit threshold, one of the three positive pairs misses because the street abbreviation changes the exact comparison. One more positive pair misses before scoring because its postcodes differ. One of the three negative pairs falsely matches because the example model ignores apartment units. The six-pair result describes this synthetic fixture. A product accuracy estimate or a threshold for another dataset needs that dataset's own labeled pairs.
+
+For your own records, label pairs before choosing a threshold. Keep the pairs used to evaluate the selected threshold separate from those used to select it. Inspect every block that was dropped, and sample pairs that blocking left out, because a pair the blocker never proposed stays unscored at any threshold. Add the fields that distinguish records in your domain, then rerun the evaluation and inspect false matches and misses with their original inputs.
+
+The [`@mailwoman/match` package](../reference/packages-and-runtime.mdx) provides the scoring and blocking functions used here. The [library reference](../reference/library.mdx) covers parsing and geocoding interfaces.

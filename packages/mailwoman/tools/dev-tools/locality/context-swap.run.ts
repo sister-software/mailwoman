@@ -4,24 +4,34 @@
 /**
  *   Does a locality resolve differently because of its name, or because of the admin context around it?
  *
- *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas over a region-stratified panel, a 97.7-point
- *   spread. `Greensboro Bend, VT 05842` and `Horseshoe Bend, AR 72512` share a tail word and a shape. One answers a
- *   locality and the other answers none.
+ *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas over a
+ *   region-stratified panel, a 97.7-point spread.
+ *   `Greensboro Bend, VT 05842` and `Horseshoe Bend, AR 72512` share a tail word and a shape.
+ *   One answers a locality and the other answers none.
  *
- *   This holds the locality fixed and varies what stands beside it. Two modes:
+ *   This holds the locality fixed and varies what stands beside it.
+ *   Two modes:
  *
- *   `--mode swap` re-renders each subject under every host region. `--mode grid` runs the 2x2 that separates the two
- *   things a swap moves together: home region with home postcode, home region with the donor's postcode,
- *   the donor's region with the home postcode, plus both. Measured on the v5.7.0 candidate over 60 Arkansas localities that fail at
- *   home: 0/60, 36/60, 30/60, 58/60.
+ *   `--mode swap` re-renders each subject under every host region.
+ *   `--mode grid` runs the 2x2 that separates the two things a swap moves together:
+ *   home region with home postcode, home region with the donor's postcode,
+ *   the donor's region with the home postcode, plus both.
  *
- *   Postcodes are real codes drawn from the panel, but a crossed pairing denotes no place. No coordinate is claimed
- *   for it. The grade is only whether the locality assigned to the row came back. The result is about what
- *   the decode conditions on rather than about the world.
+ *   Measured on the v5.7.0 candidate over 60 Arkansas localities that fail at home:
+ *   0/60, 36/60, 30/60, 58/60.
  *
- *   The arms geocode in place rather than through a written panel. `readCoordPanel` keys on (country, region,
- *   locality). The grid's arms differ only in the postcode, so routing them through a panel file collapses each
- *   pair of arms into one row. One panel read supplies the same rows to both rendered arms and avoids the key.
+ *   Postcodes are real codes drawn from the panel, but a crossed pairing denotes no place.
+ *   No coordinate is claimed for it.
+ *
+ *   The grade is only whether the locality assigned to the row came back.
+ *   The result is about what the decode conditions on rather than about the world.
+ *
+ *   The arms geocode in place rather than through a written panel.
+ *   `readCoordPanel` keys on (country, region, locality).
+ *
+ *   The grid's arms differ only in the postcode, so routing them through a panel
+ *   file collapses each pair of arms into one row.
+ *   One panel read supplies the same rows to both rendered arms and avoids the key.
  *
  *   Usage:
  *
@@ -63,7 +73,7 @@ const { localities } = await readCoordPanel(values.eval!, { country: values.coun
 
 /**
  * Each region keeps one real postcode, so a crossed row uses a code that exists even
- * though its pairing does not.
+ * though its pairing doesn't.
  */
 const postcodeOf = new Map<string, string>()
 

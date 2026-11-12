@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/promises"
+
 import {
 	type CommandSpec,
 	CommandTaskResult,
@@ -40,9 +42,15 @@ export const spec = {
 
 const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#tools/coverage/census")
-		const { repoRootPath } = await import("@mailwoman/core/paths")
-		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
+		const {
+			census: { censusCoverage, newestManifest, resolveTrainingConfig },
+			paths: { repoRootPath },
+			scopeConfig: { readScopeConfig },
+		} = await allKeyed({
+			census: import("#tools/coverage/census"),
+			paths: import("@mailwoman/core/paths"),
+			scopeConfig: import("@mailwoman/core/scope-config"),
+		})
 
 		const repoRoot = repoRootPath()
 

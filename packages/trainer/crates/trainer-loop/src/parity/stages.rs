@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Stages 0 to 6 of plan §3.3 for one matrix cell, against `trainer_parity capture`'s record.
 //!
 //! - Stage 0: the batches the Rust sampler and encoder build equal the recorded Python batches, tensor for tensor.

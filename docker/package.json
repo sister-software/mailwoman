@@ -2,7 +2,7 @@
 	"name": "mailwoman-docker",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Dependency manifest for the ghcr.io/sister-software/mailwoman image — installs the PUBLISHED @mailwoman/* packages (weights included). Not published; consumed only by the root Dockerfile's install stage. Ranges track the latest published line so a rebuild doubles as a nightly integration test of the npm artifacts.",
+	"description": "The package set the ghcr.io/sister-software/mailwoman image installs from npm, weights included. The root Dockerfile's install stage sets every version to its MAILWOMAN_VERSION build argument, which the publish workflow sets to the release version. The `latest` values here are what a build without that argument installs.",
 	"type": "module",
 	"dependencies": {
 		"@mailwoman/api": "latest",

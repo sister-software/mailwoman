@@ -2,24 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * The written street-type word for a FINESS `typvoie` code, and the test for a street name whose
- * digits belong to the name.
+ * The written street-type word for a FINESS `typvoie` code, and the test for a
+ * street name whose digits belong to the name.
  *
  * ## Where the codes come from
  *
- * FINESS codes `typvoie` against the Agence du Numérique en Santé's terminology TRE-R35 `TypeVoie`,
- * published in the Nomenclatures des Objets de Santé at
- * `https://mos.esante.gouv.fr/NOS/TRE_R35-TypeVoie/FHIR/TRE-R35-TypeVoie` and as FHIR JSON at
- * `https://ansforge.github.io/IG-terminologie-de-sante/ig/main/CodeSystem-TRE-R35-TypeVoie.json`.
- * The list holds 170 codes, each one to four capital letters as the FINESS schema's "typeTypeVoie"
- * pattern `[A-Z]{1,4}` requires. Every code the overseas rows of the 2026-05-04 extract use is in it.
+ * FINESS codes `typvoie` against the Agence du Numérique en Santé's terminology
+ * TRE-R35 `TypeVoie`, published in the Nomenclatures des Objets de Santé at
+ * `https://mos.esante.gouv.fr/NOS/TRE_R35-TypeVoie/FHIR/TRE-R35-TypeVoie` and as FHIR JSON
+ * at `https://ansforge.github.io/IG-terminologie-de-sante/ig/main/CodeSystem-TRE-R35-TypeVoie.json`.
+ * The list holds 170 codes, each one to four capital letters as the FINESS schema's
+ * "typeTypeVoie" pattern `[A-Z]{1,4}` requires.
  *
- * {@linkcode expandFinessVoieType} reads the codex's `FR_VOIE_TYPES` in reverse first, mapping each
- * abbreviation and each canonical word back to its canonical word, so `R` reads `rue` and `AV`
- * reads `avenue`. {@linkcode TRE_R35_VOIE_TYPES} then supplies the codes that table does not hold,
- * transcribed from TRE-R35, and the one code where the two disagree: TRE-R35 writes `PASS` for
- * `passe`, where `FR_VOIE_TYPES` lists `pass` as an abbreviation of `passage`. The publisher's list
- * decides that code, so the local table is consulted before the reverse lookup.
+ * Every code the overseas rows of the 2026-05-04 extract use is in it.
+ *
+ * {@linkcode expandFinessVoieType} reads the codex's `FR_VOIE_TYPES` in reverse first,
+ * mapping each abbreviation and each canonical word back to its canonical word, so `R` reads `rue`
+ * and `AV` reads `avenue`. {@linkcode TRE_R35_VOIE_TYPES} then supplies the codes that table
+ * doesn't hold, transcribed from TRE-R35, and the one code where the two disagree: TRE-R35
+ * writes `PASS` for `passe`, where `FR_VOIE_TYPES` lists `pass` as an abbreviation of `passage`.
+ * The publisher's list decides that code, so the local table is consulted before the reverse lookup.
  */
 
 import { FR_VOIE_TYPES, type FrenchVoieType, isFrenchStreetWord } from "@mailwoman/codex/fr/voie"
@@ -28,7 +30,7 @@ import { foldToken } from "@mailwoman/codex/normalize"
 import { decomposeFrStreet } from "#fr/street-decompose"
 
 /**
- * TRE-R35 codes that `FR_VOIE_TYPES` does not resolve, or resolves to another word,
+ * TRE-R35 codes that `FR_VOIE_TYPES` doesn't resolve, or resolves to another word,
  * with the word an address writes for each.
  *
  * Five zone codes keep their acronym, because the acronym is the written form:
@@ -39,7 +41,7 @@ import { decomposeFrStreet } from "#fr/street-decompose"
  * A lieu-dit is written by its name only, so the code adds no word to the line.
  *
  * `VAL` keeps the code as its word.
- * TRE-R35 displays it as `Vallée, vallon`, two words the code does not choose between,
+ * TRE-R35 displays it as `Vallée, vallon`, two words the code doesn't choose between,
  * and `Val` is itself the written word in French place names such as `Val-d'Isère`.
  */
 export const TRE_R35_VOIE_TYPES: Readonly<Record<string, string | null>> = {
@@ -122,7 +124,7 @@ export function expandFinessVoieType(code: string): string | null | undefined {
 }
 
 /**
- * TRE-R35's one-word street types, folded, for the words the BAN reader's dictionary does not hold.
+ * TRE-R35's one-word street types, folded, for the words the BAN reader's dictionary doesn't hold.
  */
 const TRE_R35_WORDS: ReadonlySet<string> = new Set(
 	Object.values(TRE_R35_VOIE_TYPES)
@@ -140,7 +142,7 @@ export interface FrenchStreetSplit {
 
 /**
  * Split a written street into its leading type word and its name, or return `null`
- * where the first word is not a street type.
+ * where the first word isn't a street type.
  *
  * The BAN reader's {@linkcode decomposeFrStreet} is consulted first, then TRE-R35's words and the
  * codex's `FR_VOIE_TYPES`, which hold the overseas types it lacks (`quartier`, `lotissement`, `ZAC`).
@@ -187,7 +189,7 @@ const NUMBERED_NAMES: readonly RegExp[] = [
 /**
  * Whether the digits in a street name belong to the name.
  *
- * A name with no digit is not in question and returns `true`.
+ * A name with no digit isn't in question and returns `true`.
  * A name such as `VALLÉE 3 BP 208` or `DIAKA BAT A4 PORTE 2` returns `false`, which is the
  * case a reader refuses rather than print a box or a door number as part of a street.
  */

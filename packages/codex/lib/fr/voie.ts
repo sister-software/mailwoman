@@ -9,11 +9,10 @@
  *   - US — the type is a trailing word with a standardized abbreviation (`Main Street` → `ST`).
  *   - German — the type is a fused trailing suffix (`Hauptstraße`).
  *   - French — the type is a leading standalone word (`Rue de la Paix`, `Avenue des Champs-Élysées`).
- *       It includes common abbreviations (`bd`, `av`, `pl`) but no single national standard like
- *       USPS Pub-28.
+ *     It includes common abbreviations (`bd`, `av`, `pl`) but no single national standard like USPS Pub-28.
  *
- *   So French detection is "is this token a known voie word", position-first — which is why
- *   {@link isFrenchStreetWord} matches a whole token rather than a suffix.
+ *   So French detection is "is this token a known voie word", position-first —
+ *   which is why {@link isFrenchStreetWord} matches a whole token rather than a suffix.
  */
 
 import { foldToken } from "#normalize"
@@ -87,8 +86,8 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
  * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) —
  * `Rue`, `BD`, `Allée`, `impasse`.
  *
- * Matches the whole token (French types lead the street name, they are not fused suffixes),
- * so a city or surname is not caught the way a suffix test might.
+ * Matches the whole token (French types lead the street name, they're not fused suffixes),
+ * so a city or surname isn't caught the way a suffix test might.
  */
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false

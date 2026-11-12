@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman dev jsonl-to-parquet --input <labeled.jsonl> --output <database.parquet>` converts a
- *   jsonl of LabeledRow objects to a Parquet database matching the v0.5.0 corpus schema. The
- *   char-offset span triple is required on every row. A row without it fails loudly with its
- *   line number.
+ *   `mailwoman dev jsonl-to-parquet --input <labeled.jsonl> --output <database.parquet>` converts
+ *   a jsonl of LabeledRow objects to a Parquet database matching the v0.5.0 corpus schema.
+ *
+ *   The char-offset span triple is required on every row.
+ *   A row without it fails loudly with its line number.
  */
 
 import { Text } from "ink"

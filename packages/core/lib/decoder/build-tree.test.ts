@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import { describe, expect, test } from "vitest"
 
 import { buildAddressTree } from "#decoder/build-tree"
@@ -529,7 +532,7 @@ describe("a house number in a numbered settlement without a street", () => {
 	})
 
 	test("stays a root without a country, or in a country the codex does not list with a cited source", () => {
-		// EG shows the form in the held-out suites but has no cited source (#2880), so it is not listed.
+		// EG shows the form in the held-out suites but has no cited source (#2880), so it isn't listed.
 		for (const country of [undefined, "US", "EG"]) {
 			const tree = buildAddressTree(RAW, TOKENS, { country })
 

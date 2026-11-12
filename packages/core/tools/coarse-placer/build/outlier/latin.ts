@@ -2,29 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Latin-script off-map outlier exposure for the coarse-placer. The `other` class is trained on
- *   non-Latin and non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map countries
- *   written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained Latin country,
- *   the "Latin-off-map residual". The fix assembles real off-map addresses from the Overture
- *   per-country address parquet and appends them as `country: "other"`.
+ *   Latin-script off-map outlier exposure for the coarse-placer.
  *
- *   Discipline: countries split into train (their rows feed train/val `other`) and heldout (rows go
- *   only to the dedicated test file), so generalization to off-map countries the model never saw
- *   stays measurable. The in-map test.jsonl is left untouched so the before/after in-map regression
- *   check stays clean. The Latin metric lives in its own file.
+ *   The `other` class is trained on non-Latin and non-CJK scripts (Cyrillic, Arabic, …) from
+ *   WOF names, so off-map countries written in Latin script (Poland, Brazil, Mexico, …)
+ *   still mis-place to a trained Latin country, the "Latin-off-map residual".
+ *   The fix assembles real off-map addresses from the Overture per-country address parquet
+ *   and appends them as `country: "other"`.
  *
- *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
- *   dedicated test file and appends fresh `other` rows (so don't run it twice onto the same splits
- *   without rebuilding train/val).
+ *   Discipline: countries split into train (their rows feed train/val `other`)
+ *   and heldout (rows go only to the dedicated test file), so generalization to
+ *   off-map countries the model never saw stays measurable.
+ *   The in-map test.jsonl is left untouched so the before/after in-map regression check stays clean.
+ *   The Latin metric lives in its own file.
+ *
+ *   Run after build-dataset + the exposure outliers (it appends).
+ *   Re-runnable: it rewrites the dedicated test file and appends fresh `other` rows
+ *   (so don't run it twice onto the same splits without rebuilding train/val).
  *
  *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
- *   $MAILWOMAN_DATA_ROOT/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
+ *   $MAILWOMAN_DATA_ROOT/snapshots/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
-import { dataRootPath } from "#data-root"
+import { snapshotSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
@@ -51,7 +54,7 @@ export interface BuildOutlierLatinOptions {
 	/**
 	 * Overture release dir.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/snapshots/overture/<OVERTURE_ADDRESSES_RELEASE>`
 	 */
 	overture?: PathBuilderLike
 	/**
@@ -124,7 +127,7 @@ export async function buildOutlierLatin(
 	report?: (line: string) => void
 ): Promise<BuildOutlierLatinResult> {
 	const PER = options.perCountry ?? 6000
-	const overtureDir = options.overture || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
+	const overtureDir = options.overture || snapshotSourcePath("overture", OVERTURE_ADDRESSES_RELEASE)
 	const dataDir = options.data || defaultDataDir()
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.

@@ -2,61 +2,74 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Harvests Poland's INSPIRE Addresses (AD) theme into the GML file that
- * `#pl/adapters/emuia/adapter` reads.
+ * Harvests Poland's INSPIRE Addresses (AD) theme into the GML file that `#pl/adapters/emuia/adapter` reads.
  *
- * Główny Urząd Geodezji i Kartografii publishes the Państwowy Rejestr Granic through MapServer at
- * {@linkcode PL_EMUIA_WFS}. Its dataset record states one condition of use in `otherConstraints`,
- * `Brak warunków dostępu i użytkowania` — no conditions for access and use — which the
- * address-source register elected. No license instrument is recorded, so the publisher's own words are
- * the label, and that statement grants the reproduction a paged harvest performs.
+ * Główny Urząd Geodezji i Kartografii publishes the Państwowy Rejestr Granic
+ * through MapServer at {@linkcode PL_EMUIA_WFS}.
+ * Its dataset record states one condition of use in `otherConstraints`,
+ * `Brak warunków dostępu i użytkowania` — no conditions for access and use —
+ * which the address-source register elected.
+ *
+ * No license instrument is recorded, so the publisher's own words are the label,
+ * and that statement grants the reproduction a paged harvest performs.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
- * What is particular to Poland is five measurements, taken on 2026-10-02:
+ * What's particular to Poland is five measurements, taken on 2026-10-02:
  *
- * 1. `ms:AD.Address` is the only feature type the service publishes, and the payload is the Polish
- *    register's own schema with every address value inline, so the harvest takes that one type and
- *    resolves no reference.
+ * 1. `ms:AD.Address` is the only feature type the service publishes, and the
+ *    payload is the Polish register's own schema with every address value inline,
+ *    so the harvest takes that one type and resolves no reference.
  * 2. The service serves GML and no JSON. Its `GetFeature` `outputFormat` parameter advertises four
  *    values — `application/gml+xml; version=3.2`, `text/xml; subtype=gml/3.2.1`, `text/xml;
  *    subtype=gml/3.1.1` and `text/xml; subtype=gml/2.1.2` — and answers with
  *    `text/xml; subtype="gml/3.2.1"`.
- * 3. A page holds at most 1,000 features whatever `count` asks for. `count=5000` answers
- *    `numberReturned="1000"`, and the capabilities document states `CountDefault` as 1000. The page
- *    size is therefore the service's cap rather than a choice, and a full harvest is one request per
- *    thousand features.
- * 4. The service states no count of its own. `resultType=hits` answers `numberMatched="1000"` both
- *    bare and at `startIndex=1`, which is that same cap, and a feature page answers
- *    `numberMatched="unknown"`. `readCheckedWFSFeatureCount` proves a reported count against a page
- *    of the type, and a count equal to the page cap passes that check because no page can exceed the
- *    cap — a 10-feature probe agrees with 1000. `statedFeatureCount` refuses a count equal to the
- *    advertised `CountDefault` for that reason, so this service is harvested with no count and the
- *    harvest ends on the first page that returns no features. The size is read from the service when
- *    a caller asks for it, by `countWFSFeaturesByPaging`, and no count is written into this file.
- * 5. The service honors a sort. `ImplementsSorting` is `TRUE`, `sortBy=ms:id` answers HTTP 200 and
- *    `sortBy=ms:id D` returns the register's last rows first. That proves the parameter is applied.
- *    `PagingIsTransactionSafe` is `FALSE`, which is the service stating that a paged sequence may
- *    shift under edits made while it is being read. The sort bounds that shift to the rows whose
- *    `ms:id` changed rather than leaving the whole sequence unordered.
+ * 3. A page holds at most 1,000 features whatever `count` asks for.
+ *    `count=5000` answers `numberReturned="1000"`, and the capabilities document
+ *    states `CountDefault` as 1000.
+ *    The page size is therefore the service's cap rather than a choice,
+ *    and a full harvest is one request per thousand features.
+ * 4. The service states no count of its own.
+ *    `resultType=hits` answers `numberMatched="1000"` both bare and at `startIndex=1`,
+ *    which is that same cap, and a feature page answers `numberMatched="unknown"`.
+ *    `readCheckedWFSFeatureCount` proves a reported count against a page of the type,
+ *    and a count equal to the page cap passes that check because no page can exceed
+ *    the cap — a 10-feature probe agrees with 1000.
+ *    `statedFeatureCount` refuses a count equal to the advertised `CountDefault`
+ *    for that reason, so this service is harvested with no count and the harvest
+ *    ends on the first page that returns no features.
+ *    The size is read from the service when a caller asks for it, by `countWFSFeaturesByPaging`,
+ *    and no count is written into this file.
+ * 5. The service honors a sort.
+ *    `ImplementsSorting` is `TRUE`, `sortBy=ms:id` answers HTTP 200
+ *    and `sortBy=ms:id D` returns the register's last rows first.
+ *    That proves the parameter is applied.
+ *    `PagingIsTransactionSafe` is `FALSE`, which is the service stating that a paged
+ *    sequence may shift under edits made while it is being read.
+ *    The sort bounds that shift to the rows whose `ms:id` changed rather than
+ *    leaving the whole sequence unordered.
  *
- * A measurement by paging rests on monotone presence: that an index holding a feature implies every
- * smaller index holds one. A WFS offers no such guarantee, and a bisection over a service where it
- * fails reports the first gap rather than the extent. The figure is therefore reported with the date
- * it was taken, never stored as a constant: the register recorded 8,625,921 on 2026-10-01, and on
- * 2026-10-02 `startIndex=8626950` returned one feature while `startIndex=8626951` returned none, so
- * the service then held 8,626,951. Such growth is ordinary
- * business for a municipal address register.
+ * A measurement by paging rests on monotone presence: that an index holding a
+ * feature implies every smaller index holds one.
+ * A WFS offers no such guarantee, and a bisection over a service where it fails
+ * reports the first gap rather than the extent.
  *
- * At 1,000 features per page and 1,607,180 bytes per page, a full harvest at that size is 8,627
- * requests and about 13.9 GB.
+ * The figure is therefore reported with the date it was taken, never stored as a constant:
+ * the register recorded 8,625,921 on 2026-10-01, and on 2026-10-02 `startIndex=8626950` returned
+ * one feature while `startIndex=8626951` returned none, so the service then held 8,626,951.
+ * Such growth is ordinary business for a municipal address register.
  *
- * The harvest assembles one GML document rather than one file per page, because the adapter opens
- * `opts.inputPath` as a single markup stream. The first page's root tag opens the file with its
- * namespace declarations kept and its per-page `numberReturned`, `numberMatched` and `timeStamp`
- * dropped, since those describe one page and the manifest records them per page. The closing tag is
- * written when the harvest reaches the end of the type, so a partial harvest is an unclosed document
- * — which the adapter's scanner still reads member by member, and which a resumed run appends to
- * after truncating back to the last page boundary.
+ * At 1,000 features per page and 1,607,180 bytes per page, a full harvest at
+ * that size is 8,627 requests and about 13.9 GB.
+ *
+ * The harvest assembles one GML document rather than one file per page, because the
+ * adapter opens `opts.inputPath` as a single markup stream.
+ * The first page's root tag opens the file with its namespace declarations kept
+ * and its per-page `numberReturned`, `numberMatched` and `timeStamp` dropped,
+ * since those describe one page and the manifest records them per page.
+ *
+ * The closing tag is written when the harvest reaches the end of the type, so a partial
+ * harvest is an unclosed document — which the adapter's scanner still reads member by member,
+ * and which a resumed run appends to after truncating back to the last page boundary.
  */
 
 import { countWFSFeaturesByPaging, readCheckedWFSFeatureCount, type APIClient } from "@mailwoman/core/api"
@@ -162,7 +175,7 @@ export interface HarvestEMUiAOptions {
 	 *
 	 * Off by default.
 	 * The measurement costs about 2·log2(n) requests — 51 for a register of this size — and the
-	 * harvest does not need it: paging to the first empty page reads the type whole either way.
+	 * harvest doesn't need it: paging to the first empty page reads the type whole either way.
 	 *
 	 * It supplies a denominator for the progress lines and a figure for the manifest,
 	 * and it rests on the monotone-presence assumption this module's header states.
@@ -222,8 +235,8 @@ export async function readEMUiAFeatureCount(
  * from this file's constants, so a service that stops publishing either raises here
  * instead of producing a harvest of something else.
  *
- * @throws When the service publishes no Addresses type, does not advertise the GML
- * format the adapter reads, or does not advertise result paging.
+ * @throws When the service publishes no Addresses type, doesn't advertise the GML
+ * format the adapter reads, or doesn't advertise result paging.
  */
 export async function readEMUiACapabilities(client: Pick<APIClient, "fetch">): Promise<WFSCapabilities> {
 	const capabilities = await readWFSCapabilities(client, { wfsURL: PL_EMUIA_WFS, context: CONTEXT })

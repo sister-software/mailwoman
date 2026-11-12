@@ -4,17 +4,25 @@
 /**
  * The constraint census — what our checks cost, measured per constraint rather than per row.
  *
- * `census.ts` measures whether a mechanism in the parse path fires (L0/L1). This module examines misses in the
- * resolver path. It records the constraint in force and whether the resolver held the row anyway.
+ * `census.ts` measures whether a mechanism in the parse path fires (L0/L1).
+ * This module examines misses in the resolver path.
  *
- * This measurement distinguishes two kinds of miss. A lookup that missed in band X while the same key exists
- * in band Y is a reachability failure. The gazetteer has the row, but the query checked the wrong band. A key
- * that exists nowhere is a coverage fact. Both return `null` to a caller. One calls for a retrieval fix. The
- * other calls for data acquisition. The census reports them separately.
+ * It records the constraint in force and whether the resolver held the row anyway.
  *
- * Keys are folded with `normalizeLocalityForKey`, the fold the candidate build writes and its readers
- * probe. A `toLowerCase()` approximation silently moves rows from the reachability column into the
- * coverage one.
+ * This measurement distinguishes two kinds of miss.
+ * A lookup that missed in band X while the same key exists in band Y is a reachability failure.
+ *
+ * The gazetteer has the row, but the query checked the wrong band.
+ * A key that exists nowhere is a coverage fact.
+ *
+ * Both return `null` to a caller.
+ * One calls for a retrieval fix.
+ *
+ * The other calls for data acquisition.
+ * The census reports them separately.
+ *
+ * Keys are folded with `normalizeLocalityForKey`, the fold the candidate build writes and its readers probe.
+ * A `toLowerCase()` approximation silently moves rows from the reachability column into the coverage one.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
@@ -91,7 +99,7 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * The gazetteer contains the row in another band, but the query could not reach it.
+	 * The gazetteer contains the row in another band, but the query couldn't reach it.
 	 * A cross-band retry can move this count.
 	 */
 	n_reachability: number
@@ -181,7 +189,7 @@ export async function runConstraintCensus(
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
 	// The census always enables tracing and the band probe because it needs both
 	// inputs do without and neither can change an answer.
-	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
+	using engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(
 		conventionCandidateDBPath(engine.effective.dataRoot)
@@ -219,7 +227,7 @@ export async function runConstraintCensus(
 				fired.set(key, (fired.get(key) ?? 0) + 1)
 
 				if (rec.picked) {
-					// A constraint that ever accompanies a pick is not inert, whatever its miss rate.
+					// A constraint that ever accompanies a pick isn't inert, whatever its miss rate.
 					for (const check of rec.checks) {
 						pickedUnder.add(check)
 					}

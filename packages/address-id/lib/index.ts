@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/address-id` builds a stable key from a normalized, geocoded address:
- *   `<state>.<H3-cell>.<hash>`.
+ *   `@mailwoman/address-id` builds a stable key from a normalized, geocoded
+ *   address: `<state>.<H3-cell>.<hash>`.
  *
  *   Parts (see {@link createPostalAddressID}):
  *
  *   - **state** — 2-letter region prefix (`tx`, `ca`, ...), from input state or ZIP; `xx` if unknown.
  *   - **H3 cell** — coarse location from coordinates (`latLngToCell` at {@link ADDRESS_H3_RESOLUTION}).
- *   - **hash** — hash of the normalized address text. This part identifies the address.
+ *   - **hash** — hash of the normalized address text.
+ *     This part identifies the address.
  *
  */
 
@@ -27,7 +28,7 @@ export const ADDRESS_H3_RESOLUTION = 9
 
 /**
  * A stable address primary key, `<state>.<H3-cell>.<hash>`.
- * Branded so it is not confused with a plain string.
+ * Branded so it isn't confused with a plain string.
  */
 export type PostalAddressID = string & { readonly __postalAddressID: unique symbol }
 

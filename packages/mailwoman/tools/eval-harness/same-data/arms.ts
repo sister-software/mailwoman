@@ -3,20 +3,22 @@
 
 /**
  *   The three arms of the same-data benchmark each read one frozen fixture row.
+ *
  *   Each answers with a selection, a confidence and a machine-readable reason.
  *
- *   `observeEvidence` runs before the arm resolves and its receipt travels with the result, so the equality
- *   check covers what each arm consumed rather than the file it was handed. A validator reading only the
- *   file cannot catch an arm that filtered the pool on its way in.
+ *   `observeEvidence` runs before the arm resolves and its receipt travels with the result,
+ *   so the equality check covers what each arm consumed rather than the file it was handed.
+ *   A validator reading only the file cannot catch an arm that filtered the pool on its way in.
  *
- *   All three report confidence the same way: the winner's margin over the runner-up within that arm's own
- *   considered set, normalized into [0, 1], and is 1 when there was no runner-up. The arms score on different
- *   scales, so bins are not comparable between them. Calibration asks whether an arm's confidence
- *   tracks its own accuracy.
+ *   All three report confidence the same way: the winner's margin over the runner-up within that
+ *   arm's own considered set, normalized into [0, 1], and is 1 when there was no runner-up.
+ *   The arms score on different scales, so bins are not comparable between them.
  *
- *   `picked: null` on every trace, or no admin node carrying a `placeID`, is recorded as an abstention with
- *   the checks that produced it. A row that raised is a harness failure recorded in `error`, and is never
- *   scored as an abstention.
+ *   Calibration asks whether an arm's confidence tracks its own accuracy.
+ *
+ *   `picked: null` on every trace, or no admin node carrying a `placeID`,
+ *   is recorded as an abstention with the checks that produced it.
+ *   A row that raised is a harness failure recorded in `error`, and is never scored as an abstention.
  */
 
 import { collectNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -72,7 +74,7 @@ export interface ArmRowResult {
 	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate.
 	 *
 	 * Null when the arm abstained or the selected candidate has no coordinate,
-	 * since absence of a distance is not a distance of zero.
+	 * since absence of a distance isn't a distance of zero.
 	 */
 	wrongArea: boolean | null
 	distanceKm: number | null

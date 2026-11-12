@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the data-root overlay rung and the artifact report that describes it. A weights workspace contains
- *   no `model.onnx`. Before the rung, a fresh checkout resolved the package and found it empty.
- *   It could not geocode.
+ *   Tests the data-root overlay rung and the artifact report that describes it.
+ *
+ *   A weights workspace contains no `model.onnx`.
+ *   Before the rung, a fresh checkout resolved the package and found it empty.
+ *   It couldn't geocode.
  *
  *   Only `model` and `tokenizer` throw, while the sibling artifacts resolve
- *   `existsSync → undefined` by design, so a checkout that finds the two binaries parses while missing
- *   every lexicon and FST, scoring worse and reporting no failure. The artifact report is what keeps
- *   that from being a quiet failure.
+ *   `existsSync → undefined` by design, so a checkout that finds the two binaries parses
+ *   while missing every lexicon and FST, scoring worse and reporting no failure.
+ *   The artifact report is what keeps that from being a quiet failure.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -137,7 +139,7 @@ describe("resolveWeights — the artifact report", () => {
 
 		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
-		// A report whose length varied with what resolved could not answer "how much am I missing".
+		// A report whose length varied with what resolved couldn't answer "how much am I missing".
 		expect(artifacts.length).toBeGreaterThan(10)
 		expect(artifacts.filter((a) => a.origin === null).length).toBeGreaterThan(0)
 		expect(new Set(artifacts.map((a) => a.name)).size).toBe(artifacts.length)

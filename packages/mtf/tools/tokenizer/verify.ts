@@ -4,13 +4,16 @@
 /**
  *   The two checks a pruned tokenizer and model pass before release.
  *
- *   B1, segmentation identity: the original and pruned tokenizers produce the same piece sequence, modulo the id
- *   renumbering, on every evaluation text and on a random sample of the training rows.
+ *   B1, segmentation identity: the original and pruned tokenizers produce the same piece sequence,
+ *   modulo the id renumbering, on every evaluation text and on a random sample of the training rows.
  *
- *   B2, logit identity: the original and pruned int8 models answer the evaluation inputs with the same output bits.
- *   The graphs differ only in the embedding table and the kept rows are the same bytes, so any difference is a defect
- *   of the surgery. Every channel input is fed zeros, because the identity must hold for any channel values. The
- *   release battery covers realistic inputs.
+ *   B2, logit identity: the original and pruned int8 models answer the evaluation
+ *   inputs with the same output bits.
+ *   The graphs differ only in the embedding table and the kept rows are the same bytes,
+ *   so any difference is a defect of the surgery.
+ *
+ *   Every channel input is fed zeros, because the identity must hold for any channel values.
+ *   The release battery covers realistic inputs.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

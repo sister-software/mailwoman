@@ -3,8 +3,10 @@
 
 /**
  *   Builds the navbar's mega menus from the docs sidebars.
- *   Each sidebar category becomes a section in the menu's rail, and each document becomes a link with the first
- *   sentence of its frontmatter `description` under it, so a new page joins its menu when it joins its sidebar.
+ *
+ *   Each sidebar category becomes a section in the menu's rail, and each document
+ *   becomes a link with the first sentence of its frontmatter `description` under it,
+ *   so a new page joins its menu when it joins its sidebar.
  */
 
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"

@@ -5,12 +5,12 @@
  * @file Reports a branch on one hard-coded country in code that serves every country.
  *
  *   A comparison such as `country === "US"` in a shared module gives one country a path the rest of the
- *   planet does not get, and the code has no mark of it. The venue-head exclusion read subdivision codes for
+ *   planet doesn't get, and the code has no mark of it. The venue-head exclusion read subdivision codes for
  *   US, CA and AU from codex tables while a planetary source sat in the admin database. The check makes
  *   every such branch declare itself.
  *
  *   A branch is admitted in three places. A module under a country directory or with a country file name is
- *   per-country code by its home. Its path has a segment that is a lowercase ISO 3166-1 alpha-2 code, such as
+ *   per-country code by its home. Its path has a segment that's a lowercase ISO 3166-1 alpha-2 code, such as
  *   `packages/corpus/lib/us/` or `postcode/locality/jp.ts`. A module under `packages/codex/` holds per-country data by definition. Anywhere else, the
  *   statement's line or the line above it contains `country-branch: <reason>`, which states why the rule is
  *   one country's and what planetary source would replace it.
@@ -51,8 +51,8 @@ const COMPARISONS = new Set<ts.SyntaxKind>([
 ])
 
 /**
- * Returns whether a repository-relative path is a per-country home: a segment that
- * is a two-letter lowercase code, or the codex package.
+ * Returns whether a repository-relative path is a per-country home: a segment that's
+ * a two-letter lowercase code, or the codex package.
  */
 export function isCountryHome(file: string): boolean {
 	if (file.startsWith("packages/codex/")) return true

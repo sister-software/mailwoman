@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two baseline rows replay known-bad readings. If either ever passes, the mechanism is decorative.
+ *   The two baseline rows replay known-bad readings.
+ *   If either ever passes, the mechanism is decorative.
  */
 
 import { describe, expect, it } from "vitest"
@@ -131,7 +132,7 @@ describe("profiles", () => {
 	})
 
 	it("never mixes harnesses within one profile", async () => {
-		// A profile must not mix harnesses.
+		// A profile mustn't mix harnesses.
 		// The token@1 row is the one legitimate crossover, so `js-ship-config` is shared
 		// and everything else is single-harness.
 		for (const name of await listProfiles()) {

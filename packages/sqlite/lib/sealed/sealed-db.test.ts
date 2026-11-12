@@ -3,13 +3,33 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { runProcess } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { openBuiltClient } from "#sealed"
-import { isSealed, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
+import {
+	isSealed,
+	recoverInterruptedBuilds,
+	SealedArtifactError,
+	sealDatabase,
+	swapDatabaseIntoPlace,
+} from "#sealed/db"
+
+/**
+ * The pid of an exited process.
+ *
+ * A sibling whose file name ends in that pid reads as left by a killed build.
+ */
+async function exitedPID(): Promise<number> {
+	const result = await runProcess(process.execPath, ["-e", "process.stdout.write(String(process.pid))"])
+
+	return Number(result.stdout)
+}
 
 const fixtures = new AsyncDisposableStack()
 
@@ -96,5 +116,41 @@ describe("swapDatabaseIntoPlace", () => {
 		await expect(pathExists(final)).resolves.toBe(true)
 		using restored = new DatabaseSync(final.toString(), { readOnly: true })
 		expect((restored.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
+	})
+})
+
+describe("recoverInterruptedBuilds", () => {
+	it("moves a killed build's set-aside version back into an empty slot and removes its other leftovers", async () => {
+		const dir = fixtures.use(await temporaryDirectory("sealed-recover-")).path
+		const final = dir("artifact.db")
+		const dead = await exitedPID()
+
+		await writeLocalTextFile("published", dir(`artifact.db.old-${dead}`))
+		await writeLocalTextFile("half-built", dir(`artifact.db.tmp-${dead}`))
+		await writeLocalTextFile("journal", dir(`artifact.db.tmp-${dead}-wal`))
+		// This process is alive, so its temp file belongs to a build in progress.
+		await writeLocalTextFile("building", dir(`artifact.db.tmp-${process.pid}`))
+
+		await recoverInterruptedBuilds(final)
+
+		await expect(readLocalTextFile(final)).resolves.toBe("published")
+		await expect(pathExists(dir(`artifact.db.old-${dead}`))).resolves.toBe(false)
+		await expect(pathExists(dir(`artifact.db.tmp-${dead}`))).resolves.toBe(false)
+		await expect(pathExists(dir(`artifact.db.tmp-${dead}-wal`))).resolves.toBe(false)
+		await expect(pathExists(dir(`artifact.db.tmp-${process.pid}`))).resolves.toBe(true)
+	})
+
+	it("removes a killed build's set-aside version when the slot already holds an artifact", async () => {
+		const dir = fixtures.use(await temporaryDirectory("sealed-recover-")).path
+		const final = dir("artifact.db")
+		const dead = await exitedPID()
+
+		await writeLocalTextFile("current", final)
+		await writeLocalTextFile("older", dir(`artifact.db.old-${dead}`))
+
+		await recoverInterruptedBuilds(final)
+
+		await expect(readLocalTextFile(final)).resolves.toBe("current")
+		await expect(pathExists(dir(`artifact.db.old-${dead}`))).resolves.toBe(false)
 	})
 })

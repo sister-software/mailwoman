@@ -6,7 +6,8 @@
  *   race counts (table P2) into the `pl_block` table, keyed on the same block geoid as `tiger
  *   fetch`'s `tabblock20`. Join the two for block-level race + geometry.
  *
- *   A valid cached ZIP is reused. Re-running a state or `--county` replaces its rows.
+ *   A valid cached ZIP is reused.
+ *   Re-running a state or `--county` replaces its rows.
  */
 
 import { Spinner } from "@inkjs/ui"

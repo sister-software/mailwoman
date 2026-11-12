@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One chunk of the coastal ingest, as its own process — spawned by `buildCoastalDatabase`, never run by hand.
+ *   One chunk of the coastal ingest, as its own process — spawned by
+ *   `buildCoastalDatabase`, never run by hand.
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"
@@ -36,7 +37,7 @@ await runIngestChunkScript({
 				skipInstability: !values.instability,
 				...(values["object-id-from"] ? { objectIDFrom: Number(values["object-id-from"]) } : {}),
 				...(values["object-id-to"] ? { objectIDTo: Number(values["object-id-to"]) } : {}),
-				// A range's own count is not knowable up front — `ogrinfo` reports a layer's total
+				// A range's own count isn't knowable up front — `ogrinfo` reports a layer's total
 				// and no narrower count — so the chunk makes no claim about its size.
 				declaredFeatureCount: 0,
 			}),

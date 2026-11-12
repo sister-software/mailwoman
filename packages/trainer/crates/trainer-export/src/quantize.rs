@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! Int8 dynamic quantization, reproducing onnxruntime 1.30.0's
 //! `quantize_dynamic(model_input, model_output, weight_type=QuantType.QInt8)` with its defaults: per-tensor scales
 //! (`per_channel=False`), the full integer range (`reduce_range=False`), symmetric int8 weights

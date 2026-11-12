@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   GeoJSON wire atoms shared by the geo-shaped http surfaces (photon, nominatim). Envelope
- *   builders only — surface-specific property schemas live with their routes, per the anti-meta
- *   guardrails in the 2026-07-12 design spec.
+ *   GeoJSON wire atoms shared by the geo-shaped http surfaces (photon, nominatim).
+ *
+ *   Envelope builders only — surface-specific property schemas live with their routes,
+ *   per the anti-meta guardrails in the 2026-07-12 design spec.
  */
 
 import { z } from "@hono/zod-openapi"

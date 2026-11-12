@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Comparison cases for one scenario. Each case changes one stated assumption of the base case, such as
- *   the first service month, the uptake, the price, the construction rates or the timing of a building's
- *   works, and keeps the same selected buildings and accounting conventions. A case that changes a
- *   convention is refused, because its NPV would then differ for a reason the comparison does not show.
+ *   Comparison cases for one scenario.
  *
- *   The no-build case keeps the buildings and their occupancy and holds every flow at zero. It is the
- *   baseline the other cases are measured against.
+ *   Each case changes one stated assumption of the base case, such as the first service month,
+ *   the uptake, the price, the construction rates or the timing of a building's works,
+ *   and keeps the same selected buildings and accounting conventions.
+ *   A case that changes a convention is refused, because its NPV would
+ *   then differ for a reason the comparison doesn't show.
+ *
+ *   The no-build case keeps the buildings and their occupancy and holds every flow at zero.
+ *   It is the baseline the other cases are measured against.
  */
 
 import type { Dossier, EntityID } from "@mailwoman/dossier"

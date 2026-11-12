@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reports WOF currency holes as a reviewable ledger. No output from this command changes a resolve.
+ *   Reports WOF currency holes as a reviewable ledger.
+ *   No output from this command changes a resolve.
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { TriageRow, TriageSummary } from "@mailwoman/gazetteer/tools/pipeline/wof/triage"
 import { Box, Text } from "ink"
@@ -33,10 +35,17 @@ export const spec = {
 
 const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { isoDate } = await import("@mailwoman/core/utils")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { CoverageVerdict, triageWOFCurrency } = await import("@mailwoman/gazetteer/tools/pipeline/wof/triage")
+		const {
+			utils: { isoDate },
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+			triage: { CoverageVerdict, triageWOFCurrency },
+		} = await allKeyed({
+			utils: import("@mailwoman/core/utils"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			triage: import("@mailwoman/gazetteer/tools/pipeline/wof/triage"),
+		})
 
 		const adminDB = options.admin ?? wofDatabasePath("admin-global-priority.db")
 		const geonamesDir = options.geonames ?? dataRootPath("geonames")

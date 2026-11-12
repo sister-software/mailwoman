@@ -3,7 +3,9 @@
 
 /**
  *   The `mwdev_parse_compare` tool definition provides the description and input schema an agent reads.
- *   It also wires the handler. The measurement lives in `#parse/compare/report`.
+ *
+ *   It also wires the handler.
+ *   The measurement lives in `#parse/compare/report`.
  */
 
 import { z } from "zod"

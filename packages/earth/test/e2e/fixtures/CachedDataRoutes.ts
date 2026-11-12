@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * @file Disk-backed route cache for the heavy data-origin fetches (the ~39 MB ONNX model, the
  *   gazetteer's sqlite range reads, the FSTs, basemap tiles).

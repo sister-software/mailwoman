@@ -5,15 +5,19 @@
  * `nl-postcode`: the Dutch full-form postcode recipe.
  *
  * The model reads the digits-first NL postcode "1012 LG" as a house number plus a two-letter
- * street, so "1012 LG Amsterdam" becomes house_number 1012, street "LG", locality Amsterdam. That
- * spurious street context then pulls the locality into the US situs tier. The `\d{4} [A-Z]{2}`
- * shape does not parse natively. The soft query-shape prior cannot overcome the strong
- * house-number reading of a leading four-digit token.
+ * street, so "1012 LG Amsterdam" becomes house_number 1012, street "LG", locality Amsterdam.
+ * That spurious street context then pulls the locality into the US situs tier.
  *
- * This recipe is the model-first fix as data. It supplies real NL (street, number, postcode, city)
- * tuples in the orders Dutch addresses use, with the full postcode tagged as one postcode span. Both
- * the spaced and unspaced forms are emitted so the model learns the digits-first postcode regardless
- * of spacing. The three orders keep polarity balanced.
+ * The `\d{4} [A-Z]{2}` shape doesn't parse natively.
+ * The soft query-shape prior cannot overcome the strong house-number reading of a leading four-digit token.
+ *
+ * This recipe is the model-first fix as data.
+ * It supplies real NL (street, number, postcode, city) tuples in the orders Dutch
+ * addresses use, with the full postcode tagged as one postcode span.
+ *
+ * Both the spaced and unspaced forms are emitted so the model learns the
+ * digits-first postcode regardless of spacing.
+ * The three orders keep polarity balanced.
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
@@ -117,7 +121,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			// Per row, because the id names this tuple's record.
+			// Per row, because the id identifies this tuple's record.
 			// A tuples file written before `sourceID` existed has none.
 			// `null` means the recipe had no id to forward.
 			if (

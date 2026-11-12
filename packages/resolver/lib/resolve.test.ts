@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -801,6 +804,39 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			{ id: 85_688_541, placetype: "region", name: "Illinois" },
 			{ id: 85_633_147, placetype: "country", name: "United States" },
 		])
+	})
+
+	test("IncludeAncestors reads the lineage of a place a later pass gave the node (#2994)", async () => {
+		const place = (id: number, country: string): ResolvedPlace => ({
+			...EMPTY_PLACE_FIELDS,
+			id,
+			name: id === 99 ? "Lebanon" : "Beirut",
+			placetype: id === 99 ? "country" : "locality",
+			country,
+			lat: id,
+			lon: id,
+			score: 1,
+			exactMatch: true,
+		})
+
+		// The walk's scoped lookup answers a US namesake, and the explicit-country pass's
+		// unscoped lookup answers the Lebanese place, so the pass replaces the walk's pick.
+		const backend: ResolverBackend = {
+			async findPlace(query) {
+				if (query.placetype === "country" || query.text === "Lebanon") return [place(99, "LB")]
+
+				return query.parentID == null && query.country === "LB" ? [place(2, "LB")] : [place(1, "US")]
+			},
+			ancestors: (id) => [{ id: Number(id) * 10, placetype: "region", name: `region of ${id}` }],
+		}
+
+		const input = tree("Beirut, Lebanon", [node("country", "Lebanon", 8, 15, [node("locality", "Beirut", 0, 6)])])
+		const result = await createWOFResolver(backend).resolveTree(input, { includeAncestors: true })
+		const locality = result.roots[0]?.children[0]
+
+		expect(locality?.metadata?.["explicit_country_repicked"]).toBe(true)
+		expect(locality?.placeID).toBe("wof:2")
+		expect(locality?.metadata?.["ancestors"]).toEqual([{ id: 20, placetype: "region", name: "region of 2" }])
 	})
 
 	test("IncludeAncestors is OFF by default — no ancestors metadata", async () => {

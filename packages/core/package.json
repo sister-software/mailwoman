@@ -267,6 +267,11 @@
 			"node": "./lib/scripting.ts",
 			"default": "./out/scripting.js"
 		},
+		"./state-machine": {
+			"types": "./out/state-machine.d.ts",
+			"node": "./lib/state-machine.ts",
+			"default": "./out/state-machine.js"
+		},
 		"./scripting/ingest-chunk-script": {
 			"types": "./out/scripting/ingest-chunk-script.d.ts",
 			"node": "./lib/scripting/ingest-chunk-script.ts",
@@ -617,6 +622,11 @@
 			"node": "./lib/json.ts",
 			"default": "./out/json.js"
 		},
+		"./spdx-header": {
+			"types": "./out/spdx-header.d.ts",
+			"node": "./lib/spdx-header.ts",
+			"default": "./out/spdx-header.js"
+		},
 		"./binary-frame": {
 			"types": "./out/binary-frame.d.ts",
 			"node": "./lib/binary-frame.ts",
@@ -631,6 +641,11 @@
 			"types": "./out/promises.d.ts",
 			"node": "./lib/promises.ts",
 			"default": "./out/promises.js"
+		},
+		"./memoize": {
+			"types": "./out/memoize.d.ts",
+			"node": "./lib/memoize.ts",
+			"default": "./out/memoize.js"
 		},
 		"./stats": {
 			"types": "./out/stats.d.ts",
@@ -673,7 +688,7 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.1",
-		"async-init": "^1.0.0",
+		"async-init": "^1.1.0",
 		"axios": "^1.21.0",
 		"axios-cache-interceptor": "^1.13.0",
 		"change-case": "^5.4.4",

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags.
- *   this is the interface that makes the rows useful as counter-distribution training data.
+ *   Tests for the no-street synthesizer.
+ *
+ *   Verifies that every emitted row has no street-side tags. this is the interface
+ *   that makes the rows useful as counter-distribution training data.
  */
 
 import { makeLcg } from "@mailwoman/core/random"

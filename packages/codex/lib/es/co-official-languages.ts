@@ -2,28 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Spain's co-official languages by province — the languages a person in that province writes an address in beside
- *   Castilian. The Constitution (art. 3.2) makes each community's Statute of Autonomy the instrument that declares a
- *   co-official language, so the table follows the statutes:
+ *   Spain's co-official languages by province — the languages a person in that
+ *   province writes an address in beside Castilian.
  *
- *   - Catalan (`cat`): the Statute of Catalonia (2006, art. 6) for Barcelona, Girona, Lleida and Tarragona. the Statute
- *     of the Balearic Islands (2007, art. 4). The Statute of the Valencian Community (2006, art. 6)
- *     covers Alicante, Castellón and Valencia. Who's On First stores Valencian entries under `cat`.
- *   - Occitan (`oci`, Aranese): the Statute of Catalonia (2006, art. 6.5) makes it official throughout Catalonia.
+ *   The Constitution (art. 3.2) makes each community's Statute of Autonomy the instrument
+ *   that declares a co-official language, so the table follows the statutes:
+ *
+ *   - Catalan (`cat`): the Statute of Catalonia (2006, art. 6) for Barcelona, Girona,
+ *     Lleida and Tarragona. the Statute of the Balearic Islands (2007, art. 4).
+ *     The Statute of the Valencian Community (2006, art. 6) covers Alicante, Castellón and Valencia.
+ *     Who's On First stores Valencian entries under `cat`.
+ *   - Occitan (`oci`, Aranese): the Statute of Catalonia (2006, art. 6.5) makes
+ *     it official throughout Catalonia.
  *   - Galician (`glg`): the Statute of Galicia (1981, art. 5) for A Coruña, Lugo, Ourense and Pontevedra.
- *   - Basque (`eus`): the Statute of the Basque Country (1979, art. 6) for Álava, Biscay and Gipuzkoa. the Foral Law
- *     18/1986 of Navarre for its Basque-speaking zone.
+ *   - Basque (`eus`): the Statute of the Basque Country (1979, art. 6) for Álava, Biscay
+ *     and Gipuzkoa. the Foral Law 18/1986 of Navarre for its Basque-speaking zone.
  *
- *   Asturian and Aragonese are guarded by their statutes and not co-official, so Asturias, Huesca, Teruel and Zaragoza
- *   have no entry. Ceuta, Melilla and the province-less territories also have no entry.
+ *   Asturian and Aragonese are guarded by their statutes and not co-official,
+ *   so Asturias, Huesca, Teruel and Zaragoza have no entry.
+ *   Ceuta, Melilla and the province-less territories also have no entry.
  *
- *   why a table. Who's On First stores preferred province names in several languages.
+ *   why a table.
+ *   Who's On First stores preferred province names in several languages.
+ *
  *   For languages not spoken in a province, its preferred name may belong to the autonomous community.
- *   Zamora's Catalan preferred name is `Castella i Lleó`. Seville's Asturian name is `Andalucía`.
- *   Ourense's Occitan name is `Galícia`. If every language's name were treated as a province surface, the data would
- *   teach those pairs. The statute specifies which languages a province's
- *   addresses are written in. This table stores that answer, keyed by the province's Castilian name as the gazetteer
- *   spells it in its `spa` preferred form.
+ *   Zamora's Catalan preferred name is `Castella i Lleó`.
+ *
+ *   Seville's Asturian name is `Andalucía`.
+ *   Ourense's Occitan name is `Galícia`.
+ *
+ *   If every language's name were treated as a province surface, the data would teach those pairs.
+ *   The statute specifies which languages a province's addresses are written in.
+ *
+ *   This table stores that answer, keyed by the province's Castilian name as the
+ *   gazetteer spells it in its `spa` preferred form.
  */
 
 /**

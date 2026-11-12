@@ -30,7 +30,7 @@ whenever the hot DB is present and skips with a loud note when it isn't.
   runner's own output. A copied id records the current behavior as truth. A
   truth copied from current behavior is exactly the failure mode this eval exists to catch.
 - **Do not massage a failing row.** A FAIL here is a finding (it may be a real
-  bug — that is the point). If the gazetteer itself changes (a WOF id
+  bug — that's the point). If the gazetteer itself changes (a WOF id
   supersedes another), update the row with a note explaining the re-verification.
 
 ## Row schema

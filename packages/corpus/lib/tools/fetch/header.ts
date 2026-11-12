@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * This module reads a delimited file's header line and refuses one that drops a column an adapter
- * indexes.
+ * This module reads a delimited file's header line and refuses one that drops a column an adapter indexes.
  *
  * A fetch module checks the file it has written against the columns its adapter reads by name,
- * because a renamed column reaches the adapter as an empty string on every row rather than as an
- * error. The check belongs here rather than in each publisher's module: every caller needs the same
- * two steps, and each one that wrote them again would also be a second answer to how the file is
- * parsed.
+ * because a renamed column reaches the adapter as an empty string on every row rather than as an error.
+ * The check belongs here rather than in each publisher's module: every caller needs the same two steps,
+ * and each one that wrote them again would also be a second answer to how the file is parsed.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -49,11 +47,11 @@ export async function readDelimitedHeader(path: PathBuilderLike, columnDelimiter
 }
 
 /**
- * Refuse a header that does not name every column a caller reads.
+ * Refuse a header that doesn't name every column a caller reads.
  *
  * @param columns The header {@linkcode readDelimitedHeader} returned.
  * @param required The columns the adapter indexes by name.
- * @param context What is being checked.
+ * @param context What's being checked.
  * This value opens the message.
  * @throws Naming the columns that are absent, so a renamed column is a reported failure
  * rather than an empty string on every row the adapter emits.

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Reliability curves compare reported confidence with observed correctness. This module contains pure calculations.
+ * Reliability curves compare reported confidence with observed correctness.
+ *
+ * This module contains pure calculations.
  * `surfaces.ts` collects confidence values for each surface.
  */
 

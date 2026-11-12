@@ -7,7 +7,7 @@
 ## Execution notes
 
 - **Module count:** `mailwoman --version` reads 136 with the key-file read on the launcher path, from 132; `fs/writers`
-  and `data-root` were not on it before. The pin's baseline constant moved with it.
+  and `data-root` weren't on it before. The pin's baseline constant moved with it.
 - **`decodeLicenseKeyPayload`** joined `@mailwoman/core/license/key`: `verify --online` asks the worker about the lid a
   token contains even when this build cannot verify the token, because the license's status decides whether the customer
   needs an upgrade or a purchase. The payload is read as written and used for no other purpose.
@@ -30,8 +30,8 @@
 - The key-file read joins the CLI launcher's path: `packages/mailwoman/lib/cli/kit/module-count.test.ts` pins `mailwoman --version` at or under 200 modules (132 today). `fs/readers` and `data-root` are already on that path through the manifest read. No new module may join it.
 - The HTTP client lives outside the `@mailwoman/core/license` barrel, as `publication.ts` does, so the launcher never loads it.
 - HTTP goes through `APIClient` (`@mailwoman/core/api`), never raw `fetch`, with a bounded timeout and `silentLogger()` so stdout stays a document.
-- A secret file is created `0600` through `writePrivateTextFile`; the key file is not a secret and uses `writeLocalTextFile`.
-- The CLI never writes a token this build does not trust: `refresh` and `adopt` verify offline against `trustedLicenseSigningKeys()` first and refuse `unknown_key` with the action (upgrade mailwoman).
+- A secret file is created `0600` through `writePrivateTextFile`; the key file isn't a secret and uses `writeLocalTextFile`.
+- The CLI never writes a token this build doesn't trust: `refresh` and `adopt` verify offline against `trustedLicenseSigningKeys()` first and refuse `unknown_key` with the action (upgrade mailwoman).
 - Public status words are the worker's: `active`, `lapsed`, `revoked`, `unknown`; the client adds `unreachable`. No reason, name or date travels with them.
 - Site: exact-origin CORS on the worker admits `https://mailwoman.post`, so the claim call is a plain `fetch` from the page. The page never stores the token or the secret anywhere but the DOM.
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
@@ -133,7 +133,7 @@ Check how `$public` reads the environment before relying on `vi.stubEnv`: `packa
 
 - [x] **Step 2: Run to verify it fails**
 
-Run: `yarn vitest run packages/core/lib/license/key-file.test.ts`. Expected: fail, `readConfiguredLicenseToken` is not exported.
+Run: `yarn vitest run packages/core/lib/license/key-file.test.ts`. Expected: fail, `readConfiguredLicenseToken` isn't exported.
 
 - [x] **Step 3: Implement**
 
@@ -520,8 +520,8 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 Behavior:
 
-- `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action. Add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file. With `--secret`, the payload must contain `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date. `unknown_key` → refuse: "this release does not trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
-- `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline. `valid` → write the key file and print `status: active`, `expires`, the path. `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment has not been recorded yet. The key arrives by email" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
+- `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action. Add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file. With `--secret`, the payload must contain `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date. `unknown_key` → refuse: "this release doesn't trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
+- `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline. `valid` → write the key file and print `status: active`, `expires`, the path. `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment hasn't been recorded yet. The key arrives by email" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
 - `license verify --online`: when the payload contains `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.post: <word>` beside the publication line. The exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
 - Every message that includes a URL uses `licenseWorkerURL()`.
 
@@ -840,7 +840,7 @@ it("a self-service key reports the lid status as its own word; revoked and lapse
 })
 ```
 
-In `runner.test.ts`'s valid-key case, add `checkLicenseStatus: async () => "active"` to the injected dependencies and assert `check.license.lidStatus` is `"active"` when the payload contains a lid (give the fixture payload a `lid`), and that `checkLicenseStatus` is not called for a payload without one (a spy that throws).
+In `runner.test.ts`'s valid-key case, add `checkLicenseStatus: async () => "active"` to the injected dependencies and assert `check.license.lidStatus` is `"active"` when the payload contains a lid (give the fixture payload a `lid`), and that `checkLicenseStatus` isn't called for a payload without one (a spy that throws).
 
 - [x] **Step 2: Run to verify it fails**
 
@@ -1201,10 +1201,16 @@ The docs site is a browser bundle, so raw `fetch` is right here (the `APIClient`
 
 - `polling`: "Confirming your payment with Stripe…" and a note that this takes a few seconds.
 - `issued`: licensee, scope `all`, `issued`, `expires`. Show the token in a `<pre>` with a copy button (`useClipboard` from `@mailwoman/react`, the pattern in `docs/src/components/PermalinkButton/PermalinkButton.tsx`); when `refresh_secret` is present, its own `<pre>` and copy button under a one-line warning "Shown once. Keep it with the key. It is what fetches renewals."; the `.env` fragment `MAILWOMAN_LICENSE_KEY="…"`; the two commands `mailwoman license adopt "<token>" --secret "<secret>"` (or without `--secret` when absent) and `mailwoman license verify --online`; the billing portal link when `BILLING_PORTAL_URL` is set; "The same key is in your email."
+
+<!-- verbatim-quote -->
+
 - `waiting_too_long`: "Your payment is recorded but the key is not ready yet. It arrives by email on its own. If it has not arrived within an hour, write to <SUPPORT_EMAIL> with your session id <sessionID>."
 - `revoked`: "This license has been revoked. Write to <SUPPORT_EMAIL>."
 - `not_found`: "Stripe does not know this session. Use the link Stripe sent you, or write to <SUPPORT_EMAIL>."
 - `unreachable`: "license.mailwoman.post did not answer. The key arrives by email on its own. Reload to try again."
+
+<!-- /verbatim-quote -->
+
 - No `session_id` in the query: "This page is where Stripe sends you after payment. Purchase at /license." with a link.
 
 `docs/src/pages/license/issued.tsx`:
@@ -1233,12 +1239,12 @@ const IssuedPage: React.FC = () => (
 export default IssuedPage
 ```
 
-Add `<meta name="robots" content="noindex">` for this page through Docusaurus `Head` (`@docusaurus/Head`) inside the Layout: a page that renders a token must not be indexed.
+Add `<meta name="robots" content="noindex">` for this page through Docusaurus `Head` (`@docusaurus/Head`) inside the Layout: a page that renders a token mustn't be indexed.
 
 - [x] **Step 5: Run the test and render the page**
 
 Run: `yarn vitest run docs/license-claim.test.ts`. Expected: pass.
-With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/license/issued/?session_id=cs_test_probe"` and a screenshot. Expected: the page reaches `unreachable` or `not_found` (the real worker is not deployed yet), renders the matching copy, and logs no console error other than the failed fetch. Also `--check /license/issued/` without a query: the "provide at /license" copy.
+With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/license/issued/?session_id=cs_test_probe"` and a screenshot. Expected: the page reaches `unreachable` or `not_found` (the real worker isn't deployed yet), renders the matching copy, and logs no console error other than the failed fetch. Also `--check /license/issued/` without a query: the "provide at /license" copy.
 
 - [x] **Step 6: Commit**
 

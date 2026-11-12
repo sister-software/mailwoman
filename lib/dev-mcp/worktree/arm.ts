@@ -6,10 +6,14 @@
  *
  *   One Node process cannot load two versions of a module, so the child imports the worktree's source.
  *
- *   A git worktree has no `node_modules`. A symlink to the main checkout's directory would not work, because
- *   yarn's workspace links resolve back into the main checkout. This module builds a symlink farm instead:
- *   third-party packages link to the main checkout. Each workspace in {@link FINGERPRINTED_WORKSPACES}
- *   links into the worktree. Other workspaces, including `neural-weights-*`, keep their main-checkout links
+ *   A git worktree has no `node_modules`.
+ *   A symlink to the main checkout's directory wouldn't work, because yarn's
+ *   workspace links resolve back into the main checkout.
+ *
+ *   This module builds a symlink farm instead: third-party packages link to the main checkout.
+ *   Each workspace in {@link FINGERPRINTED_WORKSPACES} links into the worktree.
+ *
+ *   Other workspaces, including `neural-weights-*`, keep their main-checkout links
  *   because their weight files are not committed.
  */
 
@@ -50,12 +54,12 @@ interface WorkspaceLink {
 /**
  * Reads the workspace list from a checkout and returns each workspace's name and directory.
  *
- * It reads the worktree's own manifests, so a workspace that did not exist at the ref is not linked in.
+ * It reads the worktree's own manifests, so a workspace that didn't exist at the ref isn't linked in.
  */
 async function workspaceLinks(root: PathBuilder): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
 
-	// A listed directory that does not exist at this ref is skipped.
+	// A listed directory that doesn't exist at this ref is skipped.
 	for (const directory of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
 		const manifestPath = root(directory, "package.json")
 		const { name } = await readPackageJSON(manifestPath)
@@ -138,7 +142,8 @@ for (const input of request.inputs) {
 	}
 }
 
-session[Symbol.dispose]()
+// A ref from before the session's teardown became async declares Symbol.dispose instead.
+await (session[Symbol.asyncDispose] ? session[Symbol.asyncDispose]() : session[Symbol.dispose]())
 process.stdout.write(JSON.stringify({ answers }))
 `
 
@@ -217,7 +222,7 @@ export async function runWorktreeArm(args: {
 			try {
 				gitSync(["worktree", "remove", "--force", worktree.toString()], { cwd: repoRoot })
 			} catch {
-				// A failed removal must not hide the arm's own error.
+				// A failed removal mustn't hide the arm's own error.
 				// The parent removal and the prune still clean up.
 			}
 		})

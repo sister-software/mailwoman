@@ -45,7 +45,7 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
 /**
  * Returns the npm `--prefix` install directory of a locale's weights package under `cacheRoot`.
  *
- * It does not check that the directory exists.
+ * It doesn't check that the directory exists.
  */
 export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: string): PathBuilder {
 	const normalized = PathBuilder.from(cacheRoot)
@@ -107,7 +107,7 @@ export interface ResolveWeightsOpts {
 	/**
 	 * A weights cache root.
 	 *
-	 * When set, resolution uses only that cache and throws if the locale's package is not installed there.
+	 * When set, resolution uses only that cache and throws if the locale's package isn't installed there.
 	 */
 	cacheRoot?: PathBuilderLike | null
 
@@ -206,22 +206,22 @@ export interface ResolvedWeights {
 	anchorLookupPath?: { path: string; binary: boolean }
 
 	/**
-	 * The gazetteer lexicon, present when it exists and the tier is not `pocket`.
+	 * The gazetteer lexicon, present when it exists and the tier isn't `pocket`.
 	 */
 	gazetteerLexiconPath?: string
 
 	/**
-	 * The country-surface lexicon, present when it exists and the tier is not `pocket`.
+	 * The country-surface lexicon, present when it exists and the tier isn't `pocket`.
 	 */
 	countryLexiconPath?: string
 
 	/**
-	 * The street-type evidence lexicon, present when it exists and the tier is not `pocket`.
+	 * The street-type evidence lexicon, present when it exists and the tier isn't `pocket`.
 	 */
 	streetTypeLexiconPath?: string
 
 	/**
-	 * The locality-surface evidence lexicon, present when it exists and the tier is not `pocket`.
+	 * The locality-surface evidence lexicon, present when it exists and the tier isn't `pocket`.
 	 */
 	localitySurfaceLexiconPath?: string
 

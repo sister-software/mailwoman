@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests that the French fragment recipe requires reserved surfaces, emits standalone streets and
- *   preserves bare localities as counterexamples.
+ *   Tests that the French fragment recipe requires reserved surfaces, emits standalone
+ *   streets and preserves bare localities as counterexamples.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

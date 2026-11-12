@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Quarterly docs freshness sweep: list maintained pages whose `review-by:` frontmatter date has passed, as a ready-to-file Markdown issue body on stdout.
+ *   Quarterly docs freshness sweep: list maintained pages whose `review-by:`
+ *   frontmatter date has passed, as a ready-to-file Markdown issue body on stdout.
  *
- *   Pages without `review-by:` are skipped by design, because the field is the opt-in that marks a page as maintained.
+ *   Pages without `review-by:` are skipped by design, because the field is the
+ *   opt-in that marks a page as maintained.
  *
- *   Run locally: `yarn workspace @mailwoman/docs freshness-report` (or `node docs/scripts/list-stale-docs.ts` from the repo root).
+ *   Run locally: `yarn workspace @mailwoman/docs freshness-report`
+ *   (or `node docs/scripts/list-stale-docs.ts` from the repo root).
  */
 
 import { collectDocPages } from "./docs/frontmatter/index.mts"

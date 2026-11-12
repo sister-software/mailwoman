@@ -2,19 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete that component
- * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor shows what the
- * component contributed, aggregated per (component, locale).
+ * Gauntlet ablation layer — the required map.
  *
- * This layer measures component ablations and does not contribute to the combined verdict. It stores no expected
- * values. Its verdict reports whether the instrument ran. A map of all-zero cells means "not measured"; it does not
- * mean "no check failed".
+ * For every corpus row that asserts a component, delete that component from the input
+ * and re-run the full pipeline: the displacement from the row's own undeleted anchor
+ * shows what the component contributed, aggregated per (component, locale).
  *
- * Every variant grades against a graceful-degradation ladder synthesized per row from the gazetteer, with the
- * expected rung computed from the components the deletion left behind rather than from the variant's own output.
- * Three results are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
- * justifies, or it abstained where the surviving evidence justifies no pick. Substitution is a hard fail at every
- * rung, because a coordinate cannot redeem a slot refilled by the wrong token.
+ * This layer measures component ablations and doesn't contribute to the combined verdict.
+ * It stores no expected values.
+ *
+ * Its verdict reports whether the instrument ran.
+ * A map of all-zero cells means "not measured"; it doesn't mean "no check failed".
+ *
+ * Every variant grades against a graceful-degradation ladder synthesized per row from
+ * the gazetteer, with the expected rung computed from the components the deletion
+ * left behind rather than from the variant's own output.
+ * Three results are passes: the answer held at the base rung, it coarsened to a rung the surviving
+ * evidence still justifies, or it abstained where the surviving evidence justifies no pick.
+ *
+ * Substitution is a hard fail at every rung, because a coordinate cannot redeem
+ * a slot refilled by the wrong token.
  *
  * Link every weights overlay before believing a number here, or the map measures the instrument.
  */
@@ -71,7 +78,7 @@ function isWordChar(c: string | null): boolean {
 
 /**
  * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets,
- * where boundary-safe means the character on each side is not a letter or digit.
+ * where boundary-safe means the character on each side isn't a letter or digit.
  *
  * This is the guard that keeps a locality `York` from being carved out of a region
  * `New York`, which a plain `indexOf` silently mutilates.
@@ -127,7 +134,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
  *    An empty asserted value gives the ablation no text to remove.
  *    A deletion count would create support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
+ * 2. `not-verbatim` — the asserted value isn't in the input (an assertion about the
  *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
  *    A deletion would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
@@ -260,7 +267,7 @@ interface CaseRow {
  * Read from the built DB when it has the column.
  * Otherwise, read from the committed seed.
  *
- * The dual path is not belt-and-braces: `ablation_expect` landed with the expectation
+ * The dual path isn't belt-and-braces: `ablation_expect` landed with the expectation
  * model (2026-08-05) and the shared `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`
  * predates it, so a layer that only read the column would silently ignore every pin
  * until someone rebuilt a database this layer has no business rebuilding.
@@ -329,7 +336,7 @@ function timestampDir(now: Date): PathBuilder {
  * Run the ablation layer over the curated corpus.
  *
  * @returns `pass` — which reports only whether the instrument ran (at least one measured cell).
- * A map is not a check.
+ * A map isn't a check.
  * No result here can fail a ship.
  */
 export async function runAblationLayer(
@@ -559,7 +566,7 @@ export async function runAblationLayer(
 			unavailableReason: gazetteer.unavailableReason,
 			overrideSource: overrides.source,
 			overrideCount: overrides.byCaseID.size,
-			// Cases whose ladder could not be built, with the reason.
+			// Cases whose ladder couldn't be built, with the reason.
 			// The complement of `ladderGradedCount` at the row level, kept per case so a thin
 			// expectation column is attributable to the gazetteer rather than to the parser.
 			ladderProblems,

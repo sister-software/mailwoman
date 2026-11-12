@@ -4,7 +4,9 @@
 /**
  *   The inventory's classifications, against a fixture data root.
  *
- *   These tests keep four artifact states distinct. They check manifest presence and read success separately.
+ *   These tests keep four artifact states distinct.
+ *   They check manifest presence and read success separately.
+ *
  *   They also check that third-party artifacts stay outside Mailwoman's inventory counts.
  */
 
@@ -75,7 +77,7 @@ describe("takeInventory — the four states stay distinct", () => {
 		await manifested(root("db", "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
 		bare(root("db", "wof", "candidate.db"))
 		// Not SQLite at all.
-		// "We could not look" must not read as "it has no manifest".
+		// "We couldn't look" mustn't read as "it has no manifest".
 		await writeLocalTextFile("this is not a database", root("db", "wof", "broken.db"))
 
 		const report = await takeInventory({ dataRoot: root })

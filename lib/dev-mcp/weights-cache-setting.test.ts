@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A cache-path typo would otherwise grade the shipped model and label the answer with the candidate's name, so the engine refuses before the session build.
+ *   A cache-path typo would otherwise grade the shipped model and label the answer with
+ *   the candidate's name, so the engine refuses before the session build.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -70,7 +71,7 @@ describe("weights_cache — the setting", () => {
 
 	it("is ABSENT from the effective config when unset", () => {
 		// Not `undefined`, absent: the effective config is hashed into the engine id and reported as
-		// provenance, so an explicit `weightsCacheRoot: null` would claim a choice the caller did not make.
+		// provenance, so an explicit `weightsCacheRoot: null` would claim a choice the caller didn't make.
 		expect(resolveConfig({})).not.toHaveProperty("weightsCacheRoot")
 	})
 
@@ -114,7 +115,7 @@ describe("weights_cache — the guard", () => {
 	})
 
 	it("checks the locale the engine will actually load", async () => {
-		// A cache staged for en-us does not match the fr-fr locale this engine loads.
+		// A cache staged for en-us doesn't match the fr-fr locale this engine loads.
 		// The resolver would otherwise fall through to the installed fr-fr package
 		// without reporting the mismatch.
 		const root = await stageCache("ok")

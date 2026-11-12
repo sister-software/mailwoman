@@ -2,37 +2,65 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Download Geofabrik extracts into `$MAILWOMAN_DATA_ROOT/db/osm/geofabrik` and write a receipt beside each.
+ *   Download Geofabrik extracts as dated snapshots and write a receipt beside each.
  *
- *   A file takes the name `<leaf>-<YYMMDD>.osm.pbf` from the server's `Last-Modified` date. That name
- *   matches the extracts already on disk (`pakistan-260819.osm.pbf`). A file already present under that
- *   name is kept, and its receipt is written only when missing.
+ *   The vintage is the UTC date of the server's `Last-Modified` header, and each
+ *   region keeps its own vintages: `europe/germany` served on 2026-10-17 lands at
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/europe/germany/2026-10-17/germany.osm.pbf`,
+ *   with `germany.osm.pbf.receipt.json` beside it.
+ *   The download goes to a staging directory beside the vintage.
+ *
+ *   The staging directory moves into place once the file and its receipt are written.
+ *
+ *   A vintage on disk is kept, and the region is skipped before any transfer.
+ *   To replace one, state it with `--vintage` and pass `--force`.
+ *
+ *   A `--vintage` that differs from the date Geofabrik serves is refused,
+ *   because the file would be misdated.
+ *
+ *   `--out-root` replaces the snapshot root, so a vintage lands
+ *   at `<out-root>/geofabrik/<region>/<vintage>/`.
  *
  *   Usage:
  *     node packages/osm/tools/fetch/extract.ts --region russia --region asia/china
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { assertVintage, snapshotSourcesRoot } from "@mailwoman/core/data-root"
+import { SnapshotExistsError, assertSnapshotWritable, writeSnapshot } from "@mailwoman/core/fs/snapshot"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { PathBuilder } from "path-ts"
 
-import { osmDatabasePath } from "#paths"
+import { geofabrikExtractFileName, geofabrikExtractPath, geofabrikSnapshotDirectory } from "#paths"
+import { extractReceiptPath } from "#sdk/extract/receipt"
 import { downloadExtract, geofabrikURL } from "#sdk/fetch"
+import { geofabrikVintage } from "#sdk/geofabrik/snapshot"
 
 const { values } = parseArguments({
 	options: {
 		region: { type: "string", multiple: true },
-		dir: { type: "string" },
+		"out-root": { type: "string" },
+		vintage: { type: "string" },
+		force: { type: "boolean" },
 	},
 })
 
 const regions = values.region ?? []
 
-if (!regions.length) throw new Error("usage: fetch-extract --region <geofabrik/path> [--region …] [--dir <dir>]")
+if (!regions.length) {
+	throw new Error(
+		"usage: fetch-extract --region <geofabrik/path> [--region …] [--out-root <dir>] [--vintage <YYYY-MM-DD> --force]"
+	)
+}
 
-const directory = values.dir ?? osmDatabasePath("geofabrik").toString()
+const stated = values.vintage || null
 
-await makeDirectories(directory)
+if (stated != null) {
+	assertVintage(stated)
+}
+
+const snapshotRoot = values["out-root"] ? PathBuilder.from(values["out-root"]) : snapshotSourcesRoot()
+const writeOptions = { vintageFromCaller: stated != null, force: values.force ?? false }
 
 for (const region of regions) {
 	const head = await fetch(geofabrikURL(region), { method: "HEAD" })
@@ -43,22 +71,41 @@ for (const region of regions) {
 
 	if (!modified) throw new Error(`Geofabrik sent no Last-Modified for ${region}; the file cannot be dated`)
 
-	const stamp = new Date(modified).toISOString().slice(2, 10).replaceAll("-", "")
-	const leaf = region.split("/").at(-1)!
-	const destination = `${directory}/${leaf}-${stamp}.osm.pbf`
-	const receiptPath = `${destination}.receipt.json`
+	const vintage = geofabrikVintage(modified)
 
-	if (await pathExists(destination)) {
-		console.log(`[osm] ${destination} present; skipped`)
+	if (stated != null && stated !== vintage) {
+		throw new Error(`${region}: Geofabrik serves vintage ${vintage} (${modified}), not the --vintage ${stated} given`)
+	}
+
+	const destination = geofabrikExtractPath(region, vintage, snapshotRoot)
+	const vintageDirectory = geofabrikSnapshotDirectory(region, snapshotRoot)(vintage)
+
+	try {
+		// Checked before the transfer, so a kept vintage costs no download.
+		await assertSnapshotWritable(vintageDirectory, writeOptions)
+	} catch (error) {
+		if (!(error instanceof SnapshotExistsError)) throw error
+
+		console.log(`[osm] ${region} vintage ${vintage} is on disk at ${vintageDirectory}; kept`)
 
 		continue
 	}
 
 	console.log(`[osm] ${region} → ${destination} (${head.headers.get("content-length")} bytes, ${modified})`)
 
-	const receipt = await downloadExtract(region, destination)
+	await writeSnapshot(vintageDirectory, writeOptions, async (staging) => {
+		const staged = PathBuilder.from(staging)(geofabrikExtractFileName(region))
+		const receipt = await downloadExtract(region, staged.toString())
 
-	await writeLocalJSONFile(receipt, receiptPath)
+		// Geofabrik can publish a new file between the HEAD and the download.
+		if (receipt.last_modified && geofabrikVintage(receipt.last_modified) !== vintage) {
+			throw new Error(
+				`${region}: the download is dated ${receipt.last_modified}, and the HEAD dated it ${modified}; fetch again`
+			)
+		}
 
-	console.log(`[osm] ${destination}: ${receipt.bytes} bytes, sha256 ${receipt.sha256}`)
+		await writeLocalJSONFile(receipt, extractReceiptPath(staged))
+
+		console.log(`[osm] ${destination}: ${receipt.bytes} bytes, sha256 ${receipt.sha256}`)
+	})
 }

@@ -4,12 +4,14 @@
 /**
  *   Resolve the `wof-hot.db` used by the demo-cascade smoke test.
  *
- *   `promotion-eval.ts`, the smoke module and the provenance report must use the same lookup order. The database
- *   exists only in a staged demo release. The smoke test skips when the file is absent, so provenance must report
+ *   `promotion-eval.ts`, the smoke module and the provenance report must use the same lookup order.
+ *   The database exists only in a staged demo release.
+ *
+ *   The smoke test skips when the file is absent, so provenance must report
  *   the exact path that the test checks.
  *
- *   Keep this module limited to environment and path handling. The provenance report imports it without loading the
- *   neural or resolver modules.
+ *   Keep this module limited to environment and path handling.
+ *   The provenance report imports it without loading the neural or resolver modules.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"

@@ -1,15 +1,14 @@
-# Closed-vocab fields: model-first, with a soft gazetteer anchor
+# Closed-vocabulary fields
 
 This page describes how Mailwoman handles the closed-vocabulary address fields `country`,
 `po_box` and `cedex`. We resolve them **inside the model**, with a gazetteer fed in as a
 soft feature, instead of overriding the model with a deterministic post-parse lookup.
 
-:::info[Supersedes the night-9 overlay conclusion]
-A first pass (2026-06-09 night shift) concluded that a deterministic post-parse overlay
-(`ClosedVocabTagger`, issue #464) should tag these fields. That conclusion was
-**reversed** after review. It rested on an unfair comparison, and it contradicts the
-project's model-first approach. This page is the corrected design record. The design was
-reviewed in a two-turn DeepSeek consultation, and the rationale follows below.
+:::info[Earlier design]
+An earlier design, from 2026-06-09, tagged these fields with a deterministic post-parse
+overlay (`ClosedVocabTagger`, issue #464). Review rejected it: it rested on an unfair
+comparison, and it contradicts the project's model-first approach. The next section gives
+the reasons. The design on this page was reviewed in a two-turn DeepSeek consultation.
 :::
 
 :::tip[Generalized to street registries]
@@ -30,16 +29,16 @@ positive-evidence-only rule.
 3. **The training corpus covers starved closed-vocab fields** with the same negative-space recipe
    that fixed `unit`. See [negative space](../../records/site-2026-08/concepts/negative-space-coverage.mdx).
 
-## Why not a deterministic overlay — the reasoning
+## Rejected alternative: a deterministic overlay
 
-**The over-firing came from the training data.** The night-9
+**The over-firing came from the training data.** The 2026-06-09
 `country` recipe produced almost entirely _trailing-country_ rows. The model learned the
 shortcut "trailing token ⇒ country" and tagged cities and regions as countries (49 F1, 23%
-precision). A skewed training distribution caused this result, and it does not show a
+precision). A skewed training distribution caused this result, and it doesn't show a
 limit of the transformer+CRF architecture. Context-sensitive token classifiers (BERT+CRF,
-LUKE, BLINK) routinely resolve gazetteer homographs from local context. A context-sensitive tagger labels "Atlanta,
-Georgia" as a region and "Tbilisi, Georgia" as a country is the _canonical_ task of a
-context-sensitive tagger.
+LUKE, BLINK) routinely resolve gazetteer homographs from local context. The _canonical_ task of a
+context-sensitive tagger is to label "Atlanta, Georgia" as a region and "Tbilisi, Georgia" as a
+country.
 
 **The "deterministic = 100%" result was misleading.** It was measured on a curated eval
 with **zero homographs**, against a badly trained model. A flat lookup _cannot_ handle the
@@ -56,21 +55,20 @@ post-parse override is exactly the substitution we ruled out.
 wrong _continent_ downstream, so a hard guarantee is a reasonable goal. The
 **resolver should enforce it using calibrated confidence** (we ship isotonic `conf=`). If
 the model has low confidence _and_ the gazetteer has an unambiguous match, the resolver may
-prefer the lookup as a candidate. That is a re-rank at the resolution layer instead of a
+prefer the lookup as a candidate. That's a re-rank at the resolution layer instead of a
 substitution in the parser, and it provides the same safety.
 
 ## Revised taxonomy (three tiers, all model-first)
 
-The night-9 split of "open-vocab → train / closed-vocab → deterministic" was too coarse. The
-useful partition is by _what the field needs to learn_:
+The 2026-06-09 split of "open-vocab → train / closed-vocab → deterministic" was too coarse.
+This page partitions the fields by _what each needs to learn_, and no tier uses a
+deterministic _override_:
 
 | Tier                                                 | Fields                                   | Treatment                                                                                                                                                 |
 | ---------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                     |
 | **Closed-vocab, without homographs, starved**        | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" are unambiguous, so an anchor is unnecessary. Train them like `unit` |
 | **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature         |
-
-None of the tiers uses a deterministic _override_.
 
 ## Architecture: a soft gazetteer anchor
 
@@ -91,8 +89,6 @@ decides every tag. The features are:
   (is-country / country+region-homograph / cedex / po_box). It adds negligible cost and
   lets the model learn a distinct behavior for each signal.
 
-The codex matcher is reused. It stops overriding the model and instead supplies features to it.
-
 ## Data + training recipe
 
 The recipe keeps the model from learning the positional shortcut and gives it enough
@@ -112,7 +108,7 @@ examples to learn from context:
   held-out set at _production prevalence_ (~5%) so the transition prior stays
   representative.
 
-## Eval-first — because the last measurement misled us
+## Evaluation plan
 
 Before any retrain, build a **hard homograph eval that a shortcut cannot pass** (~500–1000
 rows). Re-measure the current model on it to get the _true_ baseline. The 27% figure was a
@@ -132,13 +128,13 @@ flat. Run DeepSeek's A/B/C control: the current model, the soft feature on the o
 and the soft feature on the balanced corpus. The control shows whether the _feature_ or the
 _data_ improves `country`, so we can skip the feature if balanced data without the feature is enough.
 
-## How the field handles this (prior art)
+## Prior art
 
 Current systems follow one of two approaches:
 
 - **Parse-time structured tagging** produces an authoritative field-tagged record
   (Mailwoman, Pelias, libpostal, deepparse). Over-firing occurs in this approach.
-- **Index-time disambiguation** does not commit to a parse and lets retrieval decide
+- **Index-time disambiguation** doesn't commit to a parse and lets retrieval decide
   (Airmail).
 
 | System                     | Approach to `country` / closed-vocab                                                                                                        | Lexicon used as                                                                   |
@@ -154,8 +150,8 @@ Current systems follow one of two approaches:
 **Where we sit.** Current systems fall into two groups. libpostal and deepparse learn every
 label and share the over-firing risk. Pelias, Nominatim and libaddressinput treat country
 deterministically, but none of them is an ML parser. Our position is to _keep the model
-authoritative for every field and feed it the gazetteer as a soft feature_. We call this
-the **model-first synthesis**: the lexicon informs the model without overriding it. The
+authoritative for every field and feed it the gazetteer as a soft feature_, so the lexicon
+informs the model without overriding it. The
 closest related design is Airmail. Airmail gives closed categorical vocabulary a
 deterministic _channel_ (its OSM tags) alongside the fuzzy path. Airmail applies that
 channel at index time, however, and takes the _opposite_ approach to label granularity. It

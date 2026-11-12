@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<MapControls>` — the map controls injected into the geocoder via `GeocoderPanels.mapControls` (rendered as
- *   `<MapCanvas>` children, inside the react-map-gl `<Map>` context): the {@link JurisdictionInspector}'s
- *   legend and hover card, and in developer mode the bottom-right feature-inspector {@link DebugControl}. Both
- *   are fed the underlying maplibre map handle.
+ *   `<MapControls>` — the map controls injected into the geocoder via `GeocoderPanels.mapControls`
+ *   (rendered as `<MapCanvas>` children, inside the react-map-gl `<Map>` context):
+ *   the {@link JurisdictionInspector}'s legend and hover card, and in developer mode
+ *   the bottom-right feature-inspector {@link DebugControl}.
+ *   Both are fed the underlying maplibre map handle.
  *
  *   `?no-3d` leaves out the deck.gl scene, so the geocoder's browser tests run without the 3D overlay.
  *
- *   The layer control is not here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
- *   layout puts it under the example chips. a MapLibre corner control cannot sit in that column.
+ *   The layer control isn't here.
+ *   It reaches the chrome's top column through `GeocoderPanels.layers`, where the layout
+ *   puts it under the example chips. a MapLibre corner control cannot sit in that column.
  */
 
 import type React from "react"

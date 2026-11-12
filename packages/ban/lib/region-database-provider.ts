@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The BAN rooftop extract provider the geocode cascade consults for the national open-register
- *   precision tier, ahead of the community OSM tier. The registry is deliberately FR-only today.
+ *   The BAN rooftop extract provider the geocode cascade consults for the national
+ *   open-register precision tier, ahead of the community OSM tier.
+ *   The registry is deliberately FR-only today.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

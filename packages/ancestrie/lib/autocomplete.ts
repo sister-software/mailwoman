@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Autocomplete over a sealed ancestrie: prefix walk plus BFS expansion collecting ranked suggestions, each carrying its containment lineage.
+ *   Autocomplete over a sealed ancestrie: prefix walk plus BFS expansion collecting
+ *   ranked suggestions, each carrying its containment lineage.
  *
- *   Both interpretations of the last token always run — it can be a complete edge and a partial of longer edges at once — because letting a successful walk short-circuit silently drops every longer completion.
+ *   Both interpretations of the last token always run — it can be a complete edge
+ *   and a partial of longer edges at once — because letting a successful walk
+ *   short-circuit silently drops every longer completion.
  */
 
 import type {

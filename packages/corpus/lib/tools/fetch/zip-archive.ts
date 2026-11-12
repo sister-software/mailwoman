@@ -11,7 +11,7 @@
  *
  *   The body is checked against the zip local-file-header signature rather than against a length.
  *   Two publishers answer a withdrawn or misspelled path with an html page under http 200, and the
- *   advertised media type does not settle what arrived either: ČÚZK advertises
+ *   advertised media type doesn't settle what arrived either: ČÚZK advertises
  *   `application/gml+xml` on a body it serves as `application/zip`, and the Dirección General del
  *   Catastro advertises `application/atom+xml` on its zipped GML. The signature is the one statement
  *   the body itself makes.
@@ -62,7 +62,7 @@ export interface DownloadZipArchiveOptions {
 /**
  * Downloads one zip archive to `dest` and answers its byte count, digest and served modification time.
  *
- * @throws When the body does not begin with a zip signature, so an html error page
+ * @throws When the body doesn't begin with a zip signature, so an html error page
  * is never written to disk under an archive's name.
  */
 export async function downloadZipArchive(

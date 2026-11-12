@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Installs the libtorch the trainer crates link: the `libtorch-shared-with-deps` archive of the version and
- *   sha256 `launch/image.ts` pins, unpacked to `<out>/libtorch`.
+ *   Installs the libtorch the trainer crates link: the `libtorch-shared-with-deps` archive
+ *   of the version and sha256 `launch/image.ts` pins, unpacked to `<out>/libtorch`.
  *
- *   The default `--out` is the repository's git-ignored `.cache`, where the root `.cargo/config.toml` points
- *   `LIBTORCH`, so `cargo build --workspace` and `cargo test -p trainer-loop` find it with no variable set.
+ *   The default `--out` is the repository's git-ignored `.cache`, where the
+ *   root `.cargo/config.toml` points `LIBTORCH`, so `cargo build --workspace`
+ *   and `cargo test -p trainer-loop` find it with no variable set.
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/libtorch.run.ts [--variant cpu | cu130] [--out <dir>]

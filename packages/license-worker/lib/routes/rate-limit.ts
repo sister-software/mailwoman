@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One binding, several keys. A route limited only by a public identifier lets anyone who learns it spend its
- *   owner's allowance, so the refresh and status routes hold a per-lid key and a per-address key independently and
- *   refuse when either is spent.
+ *   One binding, several keys.
+ *
+ *   A route limited only by a public identifier lets anyone who learns it spend
+ *   its owner's allowance, so the refresh and status routes hold a per-lid key
+ *   and a per-address key independently and refuse when either is spent.
  */
 
 import type { RateLimit } from "@cloudflare/workers-types"

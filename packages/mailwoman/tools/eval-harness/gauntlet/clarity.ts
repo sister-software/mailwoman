@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Renders one board row at several levels of clarity, from its full address down to a bare name, and grades each
- *   rendering against the row's truth point.
+ *   Renders one board row at several levels of clarity, from its full address down to
+ *   a bare name, and grades each rendering against the row's truth point.
  *
- *   The axes follow the `wof-admin` training adapter: how much context a place is written with, and which form each
- *   level is written in. A rendering keeps or drops the spans of a row's asserted components, so a row whose value is
- *   absent from its input cannot render that level and reports why.
+ *   The axes follow the `wof-admin` training adapter: how much context a place is
+ *   written with, and which form each level is written in.
+ *   A rendering keeps or drops the spans of a row's asserted components, so a row whose
+ *   value is absent from its input cannot render that level and reports why.
  */
 
 import { countrySurfaceForms } from "@mailwoman/codex/country/country"

@@ -35,7 +35,7 @@ Fields per row: `{raw, country, edge_class, standardized, source}`.
 
 The labeled, runnable subset of the catalog: the 38 in-scope English-Latin
 addresses (US/GB/CA/AU/NZ/IE). It excludes the non-Latin/RTL/Japan-block rows
-because they are out of the en-US/fr-FR model's scope. It also excludes the USPS `##` format
+because they're out of the en-US/fr-FR model's scope. It also excludes the USPS `##` format
 templates because they aren't real addresses. Labeled into our schema
 DeepSeek-assisted then spot-checked: every surface form is verified verbatim
 against `raw`, and the tricky calls (military APO/region mapping,

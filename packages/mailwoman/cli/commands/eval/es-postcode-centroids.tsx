@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval es-postcode-centroids` builds per-postcode centroid `spr` DBs from a local
- *   Overture addresses parquet, the `--postcodes` inputs that releasing.md's candidate-gazetteer
- *   recipe cites. Despite the historical `es-` name, the `--country` flag covers every locale with
- *   adequate Overture postcode fill. Use `--pc-len 0` for the Overture-to-Overture or non-numeric
- *   formats. The command needs the optional `@duckdb/node-api` peer dep and is maintainer-only.
+ *   `mailwoman eval es-postcode-centroids` builds per-postcode centroid `spr` DBs from a local Overture
+ *   addresses parquet, the `--postcodes` inputs that releasing.md's candidate-gazetteer recipe cites.
+ *
+ *   Despite the historical `es-` name, the `--country` flag covers every locale
+ *   with adequate Overture postcode fill.
+ *   Use `--pc-len 0` for the Overture-to-Overture or non-numeric formats.
+ *
+ *   The command needs the optional `@duckdb/node-api` peer dep and is maintainer-only.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

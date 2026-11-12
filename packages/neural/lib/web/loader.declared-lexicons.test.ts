@@ -3,8 +3,9 @@
 
 /**
  *   The browser loader must resolve evidence-lexicon filenames from the model card's
- *   `requires.<channel>.lexicon` declarations exactly as the Node resolver does. The sibling defaults
- *   are a legacy fallback for bundles that predate the declarations.
+ *   `requires.<channel>.lexicon` declarations exactly as the Node resolver does.
+ *
+ *   The sibling defaults are a legacy fallback for bundles that predate the declarations.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

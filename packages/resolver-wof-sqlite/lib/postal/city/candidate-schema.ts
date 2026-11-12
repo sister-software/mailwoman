@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the postal-city candidate side-index, a small `(name_key, postcode)` →
- *   geo-locality table alongside the byte-range `candidate` table.
- *   The candidate-backend resolver (the demo and CLI default) can then match the FTS coordinate-first scorer.
- *   It resolves a user-typed postal city ("Antioch", 37013) to the geographic locality the postcode
- *   resolve a user-typed postal city ("Antioch", 37013) to the geographic locality the postcode
- *   sits in ("Nashville").
+ *   Typed schema for the postal-city candidate side-index, a small `(name_key, postcode)`
+ *   to geo-locality table alongside the byte-range `candidate` table.
  *
- *   The `candidate` B-tree is keyed `(name_key, country_id, region_id, placetype_id, …)` and ranked
- *   population-first, so it has no postcode dimension. A cloned alias row cannot satisfy both
- *   purposes, because a sentinel rank is bare-name-safe and then loses to any in-region homonym.
+ *   The candidate-backend resolver (the demo and CLI default) can then match
+ *   the FTS coordinate-first scorer.
+ *   It resolves a user-typed postal city ("Antioch", 37013) to the geographic
+ *   locality the postcode resolve a user-typed postal city ("Antioch", 37013) to the
+ *   geographic locality the postcode sits in ("Nashville").
+ *
+ *   The `candidate` B-tree is keyed `(name_key, country_id, region_id, placetype_id, …)`
+ *   and ranked population-first, so it has no postcode dimension.
+ *   A cloned alias row cannot satisfy both purposes, because a sentinel rank is
+ *   bare-name-safe and then loses to any in-region homonym.
+ *
  *   The exact `(name_key, postcode)` probe bypasses population and region ranking entirely.
  *   It runs only when the query includes a postcode, leaving the common no-postcode path untouched.
  */

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the admin-coherence verdicts for region and country qualifiers plus their pass-through in
- *   `toGauntletResult`.
+ *   Tests the admin-coherence verdicts for region and country qualifiers plus
+ *   their pass-through in `toGauntletResult`.
  */
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
@@ -51,7 +51,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
-		// Unicode folding cannot equate "Thüringen" with "Thuringia", and the check does not read the alias table.
+		// Unicode folding cannot equate "Thüringen" with "Thuringia", and the check doesn't read the alias table.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -89,7 +89,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("self-confirmation: a region-tagged winner IS the region qualifier's resolution", () => {
-		// The resolver's alias-aware match is the evidence, so the name is not re-checked by folding.
+		// The resolver's alias-aware match is the evidence, so the name isn't re-checked by folding.
 		const winner: AdminCoherenceWinner = { tag: "region", countryCode: "DE" }
 
 		expect(assessAdminCoherence({ region: "Thüringen" }, winner).region).toBe("confirmed")
@@ -97,7 +97,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
 		// "Batumi, Georgia" parses "Georgia" as the region.
-		// The region ancestor (Adjara) does not match.
+		// The region ancestor (Adjara) doesn't match.
 		// The country evidence does.
 		// The bridge reads the same country keys as the country verdict.
 		const batumi: AdminCoherenceWinner = {
@@ -111,7 +111,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Georgia" }, batumi).region).toBe("confirmed")
 
-		// The codex table lists RU only as "Russian Federation", so "Russia" does not match
+		// The codex table lists RU only as "Russian Federation", so "Russia" doesn't match
 		// and the verdict stays contradicted.
 		const moskva: AdminCoherenceWinner = {
 			tag: "locality",

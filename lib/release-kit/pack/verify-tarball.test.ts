@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the tarball audit that compares a manifest's `files`, `exports`, `imports` and `bin` against the
- *   packed file list.
+ *   Tests the tarball audit that compares a manifest's `files`, `exports`,
+ *   `imports` and `bin` against the packed file list.
  */
 
 import { describe, expect, it } from "vitest"

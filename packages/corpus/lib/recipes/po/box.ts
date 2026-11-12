@@ -107,7 +107,7 @@ export const poBoxRecipe: CorpusRecipe = {
 			}
 
 			// US military/diplomatic rows, self-contained, one per input line at --military-ratio.
-			// The default of 0 keeps the output byte-stable, because random() is not called when the ratio is 0.
+			// The default of 0 keeps the output byte-stable, because random() isn't called when the ratio is 0.
 			// US-only.
 			if (militaryRatio > 0 && random() < militaryRatio) {
 				const mil = synthesizeMilitaryPoBoxRow({ random })

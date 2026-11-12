@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One chunk of the flood ingest, as its own process — spawned by `buildFloodDatabase`, never run by
- *   hand. The process boundary and the stdout interface live with `runIngestChunkScript`; what stays here
- *   is only this product's flags and its feature-source constructor.
+ *   One chunk of the flood ingest, as its own process — spawned by `buildFloodDatabase`, never run by hand.
+ *
+ *   The process boundary and the stdout interface live with `runIngestChunkScript`;
+ *   what stays here is only this product's flags and its feature-source constructor.
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"

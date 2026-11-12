@@ -3,10 +3,13 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 /**
- *   Rescore-ceiling probe: sizes how much of the unresolved tail a parse and resolve rescoring
- *   loop could recover, against a true gazetteer coverage gap. For each coord-golden row: parse
- *   (the shipped model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold
- *   locality is in the gazetteer (findPlace) plus what the model emitted. Bucket each failure:
+ *   Rescore-ceiling probe: sizes how much of the unresolved tail a parse and resolve
+ *   rescoring loop could recover, against a true gazetteer coverage gap.
+ *
+ *   For each coord-golden row: parse (the shipped model) -> resolveTree -> resolved?
+ *   For each unresolved row, ask whether the gold locality is in the gazetteer
+ *   (findPlace) plus what the model emitted.
+ *   Bucket each failure:
  *     - swap     : gold is in the gazetteer and the model emitted a different locality token,
  *                  so a constrained rescore that swaps in the gold token recovers it.
  *     - needsK   : gold is in the gazetteer and the model emitted no locality, so only a K-best
@@ -14,12 +17,15 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *     - emitUnres: model emitted the gold locality but `resolveTree` still failed to resolve it.
  *                  Resolver ranking or a country filter may explain that result.
  *     - covGap   : gold not in the gazetteer, so rescoring can't help.
- *   recoverable = swap + needsK. Same resolver for baseline and gold-check.
+ *   recoverable = swap + needsK.
+ *   Same resolver for baseline and gold-check.
  *
- *   Run: node packages/mailwoman/tools/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
+ *   Run: node packages/mailwoman/tools/dev-tools/rescore-ceiling-probe.run.ts
+ *   [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -54,8 +60,14 @@ const LOCALES: [string, string][] = [
 ]
 
 async function main() {
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		scorer: { createScorer },
+		resolverWofSqlite: { WOFSQLitePlaceLookup },
+	} = await allKeyed({
+		scorer: import("@mailwoman/neural/scorer"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: resolvePath(WOF) })
 	const resolver = createWOFResolver(lookup)
 

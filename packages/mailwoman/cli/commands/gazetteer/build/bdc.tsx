@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   List → download → build lives in `@mailwoman/bdc/sdk`, so this stays thin and unit-testable without Ink or network
- *   in the loop. Progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
+ *   List → download → build lives in `@mailwoman/bdc/sdk`, so this stays thin
+ *   and unit-testable without Ink or network in the loop.
+ *
+ *   Progress goes to stderr and the summary to stdout, mirroring `poi.tsx`.
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
@@ -62,9 +65,15 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 			import("@mailwoman/bdc/sdk/list-files"),
 		])
 
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { parseProviderList } = await import("@mailwoman/filer/sdk/provider-list")
+		const {
+			client: { DatabaseClient },
+			dataRoot: { dataRootPath },
+			providerList: { parseProviderList },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			providerList: import("@mailwoman/filer/sdk/provider-list"),
+		})
 
 		// Fail-fast guard: `populateBDCProviderTable` runs only after the availability ingest
 		// and `writeLayerManifest`, so a typo'd --provider-list-path would otherwise surface
@@ -130,7 +139,9 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
 		const buildSHA = resolveBuildSHA(repoRootPath())
-		const tigerDBPath = resolvePath(dataRootPath("tiger", "tiger.db"))
+		// `@mailwoman/tiger` is an optional dependency of this package, so its paths load only here.
+		const { tigerDatabasePath } = await import("@mailwoman/tiger/paths")
+		const tigerDBPath = resolvePath(tigerDatabasePath("tiger.db"))
 
 		console.error(`▸ build: ${out}`)
 

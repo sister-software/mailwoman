@@ -3,7 +3,7 @@
 
 /**
  * @file What the catalog holds under a data root, in three separate lists: the artifacts the active generation
- *   selects, the installed artifacts it does not select, and acquisitions that stopped before they installed.
+ *   selects, the installed artifacts it doesn't select, and acquisitions that stopped before they installed.
  *
  *   `data status`, `data inventory` and `doctor` read this one report, so they agree on the active generation.
  *   A record that cannot be read raises an error with its path, never an empty list.

@@ -64,9 +64,9 @@ For webpack: use `asset/resource` rules on the `.wasm` extension and pass the re
 
 ## Which pin the browser shows
 
-`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgment and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
+`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgment and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that's the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
 
-One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
+One rung isn't the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
 
 Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below the `locality` placetype by itself. A rank between them placed the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those rows. For example, `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, so the tier has three members and not one.
 

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the `postcode_locality` databases (`postcode-locality-<cc>.db`) — the postcode →
- *   candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
+ *   Typed schema for the `postcode_locality` databases (`postcode-locality-<cc>.db`): the postcode
+ *   to candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
  *
- *   One table, several builds: the European point-in-polygon build and the CJK name/point-match
- *   builds (JP, KR, TW) all emit this shape. A single resolver strategy can therefore consume
- *   every database. The DDL lives here rather than in one builder. A column added to the row interface
- *   then causes a compile error in any builder that fails to fill it.
+ *   One table, several builds: the European point-in-polygon build and the CJK
+ *   name/point-match builds (JP, KR, TW) all emit this shape.
+ *   A single resolver strategy can therefore consume every database.
  *
- *   The builders' bulk insert stays a positional prepared statement for throughput — but its column
- *   list comes from {@link POSTCODE_LOCALITY_COLUMNS} and its table from
+ *   The DDL lives here rather than in one builder.
+ *   A column added to the row interface then causes a compile error in any builder that fails to fill it.
+ *
+ *   The builders' bulk insert stays a positional prepared statement for throughput —
+ *   but its column list comes from {@link POSTCODE_LOCALITY_COLUMNS} and its table from
  *   {@link createPostcodeLocalityTable}, so the positional order cannot drift from the DDL.
  */
 

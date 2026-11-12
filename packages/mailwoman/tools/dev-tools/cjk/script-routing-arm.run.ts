@@ -1,6 +1,9 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
  * Compares the Latin and character models on regression-board rows that contain a CJK script,
- * for the rows the shipped router does not send to the character model.
+ * for the rows the shipped router doesn't send to the character model.
  *
  * The probe scores two routing rules over those rows:
  *

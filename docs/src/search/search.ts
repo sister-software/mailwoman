@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   One query: the lexical rows, a vocabulary correction when they are empty, then one hit per section
- *   with a cap per page, each with its snippet. A second ranked list, such as a vector arm, would merge here.
+ *   One query: the lexical rows, a vocabulary correction when they're empty,
+ *   then one hit per page before further matching sections, each with its snippet.
+ *
+ *   A second ranked list, such as a vector arm, would merge here.
  */
 
 import { queryTokens } from "@mailwoman/react/search/tokens"
@@ -15,7 +17,7 @@ import { lexicalRows } from "./lexical.ts"
 import { snippet } from "./snippet.ts"
 
 /**
- * The hit count a query returns when the caller names no limit.
+ * The hit count a query returns when the caller identifies no limit.
  */
 export const DEFAULT_LIMIT = 8
 
@@ -30,12 +32,13 @@ export const MAX_LIMIT = 20
 export const HITS_PER_PAGE = 3
 
 /**
- * One hit per section, at most {@link HITS_PER_PAGE} per page, in rank order.
+ * Show each matching page once before further sections, with at most {@link HITS_PER_PAGE} hits per page.
  */
 export function collapseBySection(ranked: readonly SearchRecord[], limit: number): SearchRecord[] {
 	const sections = new Set<string>()
 	const perPage = new Map<string, number>()
-	const kept: SearchRecord[] = []
+	const firstByPage: SearchRecord[] = []
+	const furtherSections: SearchRecord[] = []
 
 	for (const record of ranked) {
 		const section = `${record.url}#${record.anchor}`
@@ -45,12 +48,15 @@ export function collapseBySection(ranked: readonly SearchRecord[], limit: number
 
 		sections.add(section)
 		perPage.set(record.url, onPage + 1)
-		kept.push(record)
 
-		if (kept.length === limit) break
+		if (onPage === 0) {
+			firstByPage.push(record)
+		} else {
+			furtherSections.push(record)
+		}
 	}
 
-	return kept
+	return [...firstByPage, ...furtherSections].slice(0, limit)
 }
 
 /**

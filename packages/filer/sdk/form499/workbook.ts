@@ -4,10 +4,10 @@
 /**
  * @file Form 499 filer database, read from the FCC's own xlsx export.
  *
- *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape is not something
+ *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape isn't something
  *   the FCC publishes. It is what a human produced by hand-massaging this workbook, column by column, into
  *   the tuple configured for our parser. Because the tuple is positional, every column had to be massaged
- *   exactly. That pipeline could not be reproduced from the original workbook.
+ *   exactly. That pipeline couldn't be reproduced from the original workbook.
  *
  *   This reads the published workbook directly: 122 columns, a real header row, 19,852 filers in the
  *   2025-12-07 vintage. The 17-column TSV path stays for the artifacts already produced against it.
@@ -37,7 +37,7 @@
  *   {@linkcode assertWorkbookHeader} refuses a header missing any of them.
  *
  *   **Memory:** `XLSXSpliterator` materializes the sheet — xlsx is a ZIP of XML with shared strings in a
- *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine. this note exists so
+ *   separate entry, so bounded-memory streaming isn't available. ~20k × 122 is fine. this note exists so
  *   the reader materializes the sheet, so avoid large workbooks.
  */
 
@@ -202,7 +202,7 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * Convert the workbook's `M/D/yyyy` filing date to ISO `yyyy-MM-DD`.
  *
  * Returns `""` for anything that isn't that shape rather than inventing a date.
- * That is deliberate and it is not silent: `lastFiledAt` becomes `valid_from`,
+ * That's deliberate and it isn't silent: `lastFiledAt` becomes `valid_from`,
  * and `assertISODate` throws on a non-ISO value.
  *
  * An unconverted date therefore fails the build at the write point.

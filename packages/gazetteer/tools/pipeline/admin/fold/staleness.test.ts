@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file A fold output older than the admin database it came from is stale. a fresh one, or a path that is not a fold
- *   output, is not.
+ * @file A fold output older than the admin database it came from is stale. a fresh one, or a path that's not a fold
+ *   output, isn't.
  */
 
 import { describe, expect, it } from "vitest"

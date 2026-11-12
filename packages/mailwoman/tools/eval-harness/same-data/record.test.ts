@@ -4,15 +4,18 @@
 /**
  *   What the recorder withholds defines the withheld-gold stratum.
  *
- *   `same-data-resolver-v1` withholds the ids the `gn:id` concordance linked. That leaves the gazetteer's
- *   second row for the same settlement answerable — 285,478 of 2,689,326 populated localities share a
- *   folded name with a `localadmin` within 5 km — so an arm returning the twin was graded as selecting
- *   where no correct candidate exists, on 10 of that panel's 100 withheld rows.
+ *   `same-data-resolver-v1` withholds the ids the `gn:id` concordance linked.
+ *   That leaves the gazetteer's second row for the same settlement answerable —
+ *   285,478 of 2,689,326 populated localities share a folded name with a `localadmin`
+ *   within 5 km — so an arm returning the twin was graded as selecting where no correct
+ *   candidate exists, on 10 of that panel's 100 withheld rows.
  *
- *   `withholdEveryDenotingRow` is the corrected rule and it is off by default, because turning it on
- *   changes what the stratum means after the v1 arms have run. These tests pin both halves.
- *   The default stays id-equality byte-for-byte. The opt-in catches the twin without catching a real
- *   namesake at distance.
+ *   `withholdEveryDenotingRow` is the corrected rule and it is off by default,
+ *   because turning it on changes what the stratum means after the v1 arms have run.
+ *   These tests pin both halves.
+ *
+ *   The default stays id-equality byte-for-byte.
+ *   The opt-in catches the twin without catching a real namesake at distance.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

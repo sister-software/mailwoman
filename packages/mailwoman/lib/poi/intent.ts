@@ -204,7 +204,7 @@ export interface POIIntentStageDeps {
 	/**
 	 * Parses the anchor remainder, such as "Springfield IL", through the address pipeline.
 	 *
-	 * The pipeline must not include the POI stage, or parsing recurses;
+	 * The pipeline mustn't include the POI stage, or parsing recurses;
 	 * `createRuntimePipeline` supplies one without it.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>

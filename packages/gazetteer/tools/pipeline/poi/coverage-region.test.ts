@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit cover for the region → coverage-cell derivation. The property under test is not "the cell count"
- *   but "no cell that pokes outside the region" — the one that decides whether a completeness claim covers
- *   ground the source never saw.
+ *   Unit cover for the region → coverage-cell derivation.
+ *
+ *   The property under test isn't "the cell count" but "no cell that pokes outside the region" —
+ *   the one that decides whether a completeness claim covers ground the source never saw.
  */
 
 import {

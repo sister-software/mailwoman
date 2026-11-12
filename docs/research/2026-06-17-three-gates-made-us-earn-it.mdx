@@ -1,6 +1,6 @@
 ---
 slug: three-checks-made-us-warrant-it
-title: "We built the fix for our worst weakness. Three checks made us warrant it."
+title: "We built training data for our worst weakness, and three checks blocked it"
 authors: [playpen-agent]
 tags: [neural, evals, training, corpus]
 date: 2026-06-17
@@ -14,7 +14,7 @@ shipping a fix that improves the headline number while introducing hidden errors
 
 {/* truncate */}
 
-## The weakness with several faces
+## Boundary instability
 
 Boundary instability means that where two address components meet, the model puts the boundary
 in the wrong place. For `Country Club Rd`, the street name absorbs its own suffix. For
@@ -33,26 +33,27 @@ spread across enough real-looking addresses that a retrain learns the boundary f
 instead of memorizing the strings. The steps were to generate it, baseline the current model to
 measure the size of the gap, write the recipe, and add it to the corpus.
 
-## Check one: the extract that graded on a curve
+## Check one: the thin extract inflated the baseline
 
 The first version drew from a thin vocabulary of sixteen street names and a handful of cities.
 Twenty thousand rows from sixteen streets means the model sees `Country Club Rd` a thousand
-times, so it learns the word and not the boundary. We expected that. We did not expect the
+times, so it learns the word and not the boundary. We expected that. We didn't expect the
 baseline result: the current model scored 48% on the suffix boundary and 70% on the French
-prefix against that thin data. Those scores looked reasonable.
+prefix against that thin data.
 
-We then tripled the vocabulary to a hundred streets and real cities, with every row unique, and
-the same model scored 41 and 48. The thin data had two effects. It taught the word instead of
-the boundary, and it inflated the baseline score. The runbook already warns that thin diversity
-teaches memorization instead of the boundary. The warning now has a measurement next to it.
+When we tripled the vocabulary to a hundred streets and real cities, with every row unique, the
+same model scored 41 and 48. The thin data had two effects. It taught the word instead of the
+boundary, and it inflated the baseline score. The runbook already warns that thin diversity
+teaches memorization instead of the boundary, and this run measured it at 48 to 41 and 70 to 48.
 
 ## Check two: the postcode that was already a house number
 
 To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the extract used
 Australian addresses. The base-consistency lint blocked it. In our training corpus the token
 `3000` appears thousands of times, always as a US house number, and the extract labeled it as an
-Australian postcode. A coverage extract cannot outweigh the base corpus it is added to. It can
-only conflict with the base corpus and degrade results slowly over one to three releases. That has
+Australian postcode. With the base corpus labeling `3000` as a house number thousands of times,
+the extract's labels couldn't outweigh it and would only conflict with it, degrading results
+slowly over one to three releases. That's
 happened to us before. The lint caught the conflict before we spent any GPU-hours on it. We
 removed Australia, the extract now covers base locales only, and the slash convention became a
 separate task that must also add base coverage for its locale.
@@ -63,19 +64,18 @@ With the extract limited to the locales we train on, the lint found another prob
 corpus, tokens like Paris, Springfield, and Burlington are mostly streets (Paris Avenue,
 Springfield Street) and only rarely cities. Our extract labels them as localities. Either label
 can be correct depending on context, and the model may be context-aware enough to handle it. The
-lint does not assume that. It flagged the minority sense, because the last time we let a similar
+lint doesn't assume that. It flagged the minority sense, because the last time we let a similar
 case through, a theater on 5th Avenue caused an extract to label `5th Avenue` as a venue. The
 retrain will track this number, and a cleaner extract will draw its cities from names that the corpus
 already labels as cities.
 
-## Why we didn't retrain
+## The retrain we didn't run
 
 At the end of the night, the extract was built and the baseline measured. The recipe was written
 and approved, the corpus assembled, and the manifest tested against the real base. Every
-checklist item was complete, and a training run needed one more command. We deliberately did not
-run it.
+checklist item was complete, and a training run needed one more command. We chose not to run it.
 
-The three checks were the main work of the night. The taxonomy identified the weakness. The
-checks blocked the fix three times, once for the data and twice for the corpus. Each block cost
-a few minutes and prevented a retrain whose headline numbers would have looked fine while its
-labels were wrong. **The checks give us the fastest way we know to fix a serious weakness correctly: they block a fix until it passes.**
+Most of the night's work went into the three checks. The taxonomy identified the weakness, and
+the checks blocked the fix three times, once for the data and twice for the corpus. Each block
+cost a few minutes and prevented a retrain whose headline numbers would have looked fine while
+its labels were wrong.

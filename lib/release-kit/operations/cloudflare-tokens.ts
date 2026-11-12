@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Cloudflare token operations: report each role's token, mint the scoped tokens into a new file, and purge
- *   cached URLs with the cache-purge token. The roles live in `#release-kit/deploy/cloudflare-tokens`.
+ *   The Cloudflare token operations: report each role's token, mint the scoped tokens
+ *   into a new file, and purge cached URLs with the cache-purge token.
+ *   The roles live in `#release-kit/deploy/cloudflare-tokens`.
  */
 
 import {
@@ -14,6 +15,7 @@ import {
 } from "@mailwoman/core/cloudflare"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
+import { OperationEffect } from "@mailwoman/core/scripting"
 import Cloudflare from "cloudflare"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
@@ -26,7 +28,7 @@ import {
 	MAILWOMAN_ZONE,
 } from "#release-kit/deploy/cloudflare-tokens"
 import { $private, $public } from "#release-kit/env"
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { flag, list } from "#release-kit/operations/inputs"
 
 function accountID(): string {

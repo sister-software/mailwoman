@@ -135,7 +135,7 @@ export function kryptoniteWorker(
 }
 
 /**
- * Generates every planned kryptonite batch the checkpoint does not already hold.
+ * Generates every planned kryptonite batch the checkpoint doesn't already hold.
  */
 export async function emitKryptonite(
 	options: KryptoniteOptions,

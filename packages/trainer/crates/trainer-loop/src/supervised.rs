@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The supervised run: `train/trainer.py`'s `train`, `train/setup.py`, and `train/loop.py`'s optimizer loop.
 //!
 //! `step` counts optimizer steps, not micro-batches, so it lines up with `train.max_steps` whatever

@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write the CycloneDX document naming every data artifact a release can deliver and the terms each one
- *   includes. `docs/src/pages/license.mdx` renders its bundle table from the committed copy.
+ *   Write the CycloneDX document naming every data artifact a release can deliver
+ *   and the terms each one includes.
  *
- *   Output goes through {@linkcode writeRawStdout} rather than Ink. An Ink frame at least as tall as the
- *   viewport emits `\x1b[2J\x1b[3J\x1b[H`. The `3J` code wipes the scrollback.
+ *   `docs/src/pages/license.mdx` renders its bundle table from the committed copy.
+ *
+ *   Output goes through {@linkcode writeRawStdout} rather than Ink.
+ *   An Ink frame at least as tall as the viewport emits
+ *   `\x1b[2J\x1b[3J\x1b[H`. The `3J` code wipes the scrollback.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

@@ -4,18 +4,21 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
- *   The `release.config.json` version bump as a purely textual replacement. The file is
- *   oxfmt-formatted, with single-line arrays and an order the generic parse-then-stringify write
- *   path would reformat wholesale. Its `weights` block is the model identity a code-only release
- *   must never touch. The bump edits exactly one line. It refuses anything it cannot do
- *   exactly.
+ *   The `release.config.json` version bump as a purely textual replacement.
+ *
+ *   The file is oxfmt-formatted, with single-line arrays and an order the generic
+ *   parse-then-stringify write path would reformat wholesale.
+ *   Its `weights` block is the model identity a code-only release must never touch.
+ *
+ *   The bump edits exactly one line.
+ *   It refuses anything it cannot do exactly.
  */
 
 /**
  * Replace the top-level `"version"` line, requiring exactly one match of the current value.
  *
  * @throws When the line is absent (a reformatted or hand-edited file, so bump it by hand
- * and fix the formatter drift) or when the current version does not match
+ * and fix the formatter drift) or when the current version doesn't match
  * (the sync check's job, restated here so a caller cannot skip it).
  */
 export function bumpReleaseConfigVersion(text: string, currentVersion: string, targetVersion: string): string {

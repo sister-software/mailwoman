@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Holds every bit of the built collision index equal to a set intersection computed from the normalized JSON, and
- *   checks the discriminated interpretations the operator's rule reads.
+ *   Holds every bit of the built collision index equal to a set intersection computed from the
+ *   normalized JSON, and checks the discriminated interpretations the operator's rule reads.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

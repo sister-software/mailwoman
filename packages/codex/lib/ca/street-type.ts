@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Canadian street types and directionals — bilingual, because Canada Post recognizes both English
- *   and French forms on the same national network.
+ *   Canadian street types and directionals — bilingual, because Canada Post recognizes
+ *   both English and French forms on the same national network.
  *
  *   The informative contrast with `us/street-suffix.ts`, `de/street-type.ts`, and `fr/voie.ts`:
  *
@@ -16,10 +16,11 @@
  *       vocabulary and stays position-agnostic — it cannot assume a side the way the
  *       single-language files do.
  *
- *   The directionals follow the same bilingual convention. French `Ouest`
- *   abbreviates to `O`, not `W`. A naive English-only matcher reading `Rue Sherbrooke O` would miss
- *   the quadrant entirely. {@link CA_DIRECTIONALS} spells out the French abbreviations so `O` =
- *   Ouest = West is recognized.
+ *   The directionals follow the same bilingual convention.
+ *   French `Ouest` abbreviates to `O`, not `W`.
+ *
+ *   A naive English-only matcher reading `Rue Sherbrooke O` would miss the quadrant entirely.
+ *   {@link CA_DIRECTIONALS} spells out the French abbreviations so `O` = Ouest = West is recognized.
  */
 
 import { foldToken } from "#normalize"

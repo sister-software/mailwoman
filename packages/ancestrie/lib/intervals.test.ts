@@ -3,8 +3,9 @@
 
 /**
  *   Tests the pre/post interval truth table for ancestor, descendant, sibling, self and disjoint cases.
- *   It also tests descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
- *   plus cycle rejection at seal.
+ *
+ *   It also tests descendant range scans, the DAG primary-parent rule,
+ *   declared-but-absent parents, plus cycle rejection at seal.
  */
 
 import { describe, expect, it } from "vitest"

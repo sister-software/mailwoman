@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Downloads each converted landmark's model from its `sourceURL`, resolving a Sketchfab page through
- *   `SKETCHFAB_API_KEY`, converts it with `convertLandmarkModel`, and
- *   writes it gzipped to `<out>/<model path>`, such as `<out>/landmarks/eiffel-tower.glb`.
+ *   Downloads each converted landmark's model from its `sourceURL`, resolving a Sketchfab
+ *   page through `SKETCHFAB_API_KEY`, converts it with `convertLandmarkModel`, and writes
+ *   it gzipped to `<out>/<model path>`, such as `<out>/landmarks/eiffel-tower.glb`.
  *
  *   Usage: node packages/structures/sdk/landmarks/convert.run.ts --out <dir> [--landmark <id> ...]
  *
- *   Upload `<out>/landmarks/` to the tiles bucket's `landmarks/` prefix with each object's `Content-Encoding` set to
- *   `gzip`. The tile worker serves the stored bytes with that encoding.
+ *   Upload `<out>/landmarks/` to the tiles bucket's `landmarks/` prefix with each
+ *   object's `Content-Encoding` set to `gzip`.
+ *   The tile worker serves the stored bytes with that encoding.
  */
 
 import { gzip } from "@mailwoman/core/fs/compression"

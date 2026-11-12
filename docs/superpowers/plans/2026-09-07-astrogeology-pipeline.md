@@ -705,7 +705,7 @@ node packages/astrogeology/out/cli.js fetch --body mars --kind nomenclature
 cat packages/astrogeology/sources.lock.json
 ```
 
-Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB, so run them on the lab rather than in CI). The `fetch` command is written in Task 7. For this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
+Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB, so run them on the lab rather than in CI). The `fetch` command is written in Task 7. For this step, a three-line `node -e` over `downloadPinned` is acceptable if the command doesn't exist yet, but the lock content is what gets committed.
 
 ```bash
 git add packages/astrogeology
@@ -790,7 +790,7 @@ const args = [
 ]
 ```
 
-`-r1` turns off tippecanoe's point dropping. Point dropping would otherwise thin the layer by density. The per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there is no shared shape to extract.
+`-r1` turns off tippecanoe's point dropping. Point dropping would otherwise thin the layer by density. The per-feature `minzoom` is the only declutter. `packages/mailwoman/lib/coverage/core.ts` runs tippecanoe through `zx`. This package runs it through `runFile`. Its argument list serves a different layer with different flags, so there's no shared shape to extract.
 
 - [ ] **Step 3: Metadata**
 
@@ -953,7 +953,7 @@ import numpy, sys
 " 2>/dev/null || true
 ```
 
-`gdal_create` writes a flat raster. A flat DEM shades to a uniform image. That image proves the chain runs but not that shading sees relief. Add relief with a second command that GDAL provides: `gdal_calc.py -A dem-64.tif --outfile=dem-64.tif --calc="(A*0)+ (numpy.indices((64,64))[0]*40)" --overwrite` gives a north–south ramp of 40 m per row. If `gdal_calc.py` is not on the lab, write the ramp with `gdal_translate -scale` over a gradient PNG, or with `@mailwoman/core`'s own GeoTIFF writer if one exists (`grep -rln "GeoTIFF\|geotiff" packages/core/lib`). The point is a small committed raster with a gradient, and the command that made it goes in the test file's header.
+`gdal_create` writes a flat raster. A flat DEM shades to a uniform image. That image proves the chain runs but not that shading sees relief. Add relief with a second command that GDAL provides: `gdal_calc.py -A dem-64.tif --outfile=dem-64.tif --calc="(A*0)+ (numpy.indices((64,64))[0]*40)" --overwrite` gives a north–south ramp of 40 m per row. If `gdal_calc.py` isn't on the lab, write the ramp with `gdal_translate -scale` over a gradient PNG, or with `@mailwoman/core`'s own GeoTIFF writer if one exists (`grep -rln "GeoTIFF\|geotiff" packages/core/lib`). The point is a small committed raster with a gradient, and the command that made it goes in the test file's header.
 
 The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts the archive exists, that `pmtiles tile out.pmtiles 0 0 0` returns a PNG (the first eight bytes are `89 50 4E 47 0D 0A 1A 0A`), and that the tile at z1 differs from a uniform image (at least two distinct byte values in the decoded PNG is enough. Decode with `sharp` from the workspace, or compare two tiles' bytes for inequality).
 
@@ -1012,7 +1012,7 @@ git commit -m "feat(astrogeology): the search artifact over feature names, and t
 
 **Interfaces:**
 
-- Consumes: `CommandSpec`, `ParsedCommandComponent`, `useCommandTask`, `CommandTaskResult` from `mailwoman/cli-kit`; `runDropInCLI` is for drop-in servers and is not used here.
+- Consumes: `CommandSpec`, `ParsedCommandComponent`, `useCommandTask`, `CommandTaskResult` from `mailwoman/cli-kit`; `runDropInCLI` is for drop-in servers and isn't used here.
 - Produces: `astrogeology fetch --body <moon|mars> [--kind nomenclature|dem]`, `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]`, `astrogeology verify --body <moon|mars>`, `astrogeology publish --body <moon|mars> [--dry-run]`; `publishTiles(options): Promise<string>` and `uploadToBucket(options): Promise<string>` from `mailwoman/tiles/publish`. The planetary app pins the printed `version`.
 
 - [ ] **Step 1: Read the two CLIs this one copies from**

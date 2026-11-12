@@ -84,7 +84,7 @@ describe("adminLadderFor", () => {
 	})
 
 	// The second route to postcode-first.
-	// The code is ordinary and the address system is not.
+	// The code is ordinary and the address system isn't.
 	it("leads with an area-grade postcode for a country whose codes outrank its localities", () => {
 		expect(adminLadderFor({ ...DE_PLZ, country: "DE" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
 		expect(adminLadderFor({ ...DE_PLZ, country: "de" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)

@@ -4,14 +4,14 @@
 /**
  *   Run the three unbiased capability arenas through harness-neural.
  *
- *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage), so
- *   it over-represents that lineage's cases. These three arenas come from outside it and together
- *   map the capability surface:
+ *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage),
+ *   so it over-represents that lineage's cases.
+ *   These three arenas come from outside it and together map the capability surface:
  *
  *   1. Libpostal, the statistical parser's hand-curated adversarial cases (clean, canonical)
  *   2. Perturbation, golden v0.1.2 with rule-defeating transforms (noisy, degraded)
- *   3. Postal-standards, postal-authority example addresses with edge formats by class (military
- *        APO/FPO, PO-box variety, secondary-unit, intl)
+ *   3. Postal-standards, postal-authority example addresses with edge formats by class
+ *      (military APO/FPO, PO-box variety, secondary-unit, intl)
  *
  *   All three are scored with --postcode-repair.
  *
@@ -20,14 +20,16 @@
  *   tokenizer=/path/tokenizer.model\
  *   modelcard=/path/model-card.json node packages/mailwoman/tools/dev-tools/external-arenas.run.ts
  *
- *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail) and, for the
- *   postal arena, a breakdown by edge_class. Run `yarn compile` first, since the harness resolves
+ *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail)
+ *   and, for the postal arena, a breakdown by edge_class.
+ *   Run `yarn compile` first, since the harness resolves
  *   @mailwoman/neural to its compiled out/ tree.
  *
- *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process (when the spec floors
- *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md`, the file
- *   the verdict assembler column-reads for `arena.perturb`. A throw here produced the child's
- *   non-zero exit. The check still aborts on that error.
+ *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process
+ *   (when the spec floors `arena.perturb`) and captures `${report}${reportError}` into
+ *   `<out-dir>/arenas.md`, the file the verdict assembler column-reads for `arena.perturb`.
+ *   A throw here produced the child's non-zero exit.
+ *   The check still aborts on that error.
  *
  *   Scope note (de-shell): the three inner probes this still spawns as child processes are
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (three times) and `summarize-arenas.run.ts`.

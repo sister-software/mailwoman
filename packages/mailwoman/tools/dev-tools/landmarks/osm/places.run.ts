@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `<data root>/db/osm/places-osm.db` by scrolling places out of a running Photon index's embedded
- *   OpenSearch.
+ *   Builds `<data root>/db/osm/places-osm.db` by scrolling places out of a
+ *   running Photon index's embedded OpenSearch.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/landmarks/osm/places.run.ts --vintage <yyyy-mm-dd> [--countries us,vn]
- *   [--opensearch http://127.0.0.1:9201] [--out <path>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/landmarks/osm/places.run.ts --vintage
+ *   <yyyy-mm-dd> [--countries us,vn] [--opensearch http://127.0.0.1:9201] [--out <path>]
  */
 
 import { dataRootPath, databaseRootPath } from "@mailwoman/core/data-root"

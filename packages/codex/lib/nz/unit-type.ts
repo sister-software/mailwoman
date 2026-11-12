@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   NZ Post's Unit Type element from ADV358, and where the unit is written. The Unit line sits below
- *   the recipient and above the delivery (street) line, and opens with the Unit Type followed by the
- *   Unit Identifier. A Unit Identifier written on the delivery line instead goes before the street
+ *   NZ Post's Unit Type element from ADV358, and where the unit is written.
+ *
+ *   The Unit line sits below the recipient and above the delivery (street) line,
+ *   and opens with the Unit Type followed by the Unit Identifier.
+ *   A Unit Identifier written on the delivery line instead goes before the street
  *   number with a slash (`2/153 Grange Road`).
  *
- *   The Unit Type is spelt in full where possible. `Flat` and `Unit` have no shorter form.
+ *   The Unit Type is spelt in full where possible.
+ *   `Flat` and `Unit` have no shorter form.
  *
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, June 2011)}
  */

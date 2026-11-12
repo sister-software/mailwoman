@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A locale whose overlay is absent from the weights cache is graded base-only, so `--refuse-country` states which
- *   locales the read could not speak for.
+ *   A locale whose overlay is absent from the weights cache is graded base-only,
+ *   so `--refuse-country` states which locales the read couldn't speak for.
  *
  *   Every id must match a row: a typo that promotes no row reads exactly like a list already applied.
  *
- *   Rows are read from the case files rather than through `loadRegressionCases`, which omits a row's source file.
+ *   Rows are read from the case files rather than through `loadRegressionCases`,
+ *   which omits a row's source file.
  *
- *   Run: node packages/mailwoman/tools/dev-tools/apply-board-promotions.run.ts --ids <file> [--to pass]
- *   [--refuse-country de,es,gb,in,it,nz] [--dry-run]
+ *   Run: node packages/mailwoman/tools/dev-tools/apply-board-promotions.run.ts --ids
+ *   <file> [--to pass] [--refuse-country de,es,gb,in,it,nz] [--dry-run]
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

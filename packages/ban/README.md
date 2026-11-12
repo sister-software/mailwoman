@@ -16,7 +16,7 @@ supplies the missing coverage.
 The OpenStreetMap tier is ODbL. BAN is published under the **License Ouverte / Open License 2.0
 (Etalab)**, which requires attribution only and has **no share-alike** clause. The built database
 therefore ships under the same terms as the permissive Mailwoman core (Who's On First, Overture,
-OpenAddresses, GeoNames), and it does not require lawyer sign-off. The one standing obligation is
+OpenAddresses, GeoNames), and it doesn't require lawyer sign-off. The one standing obligation is
 attribution:
 
 - **This package contains code only.** It contains no BAN bytes.
@@ -26,18 +26,18 @@ attribution:
 
 ## Build the database
 
-BAN's per-département dumps land under `$MAILWOMAN_DATA_ROOT/…/ban/` (or the corpus source dir). The build
-streams them without an external CLI or DuckDB, so it has few dependencies and does not run out of memory
+BAN's per-département dumps are a current source under `$MAILWOMAN_CACHE_ROOT/sources/ban/`. The build
+streams them without an external CLI or DuckDB, so it has few dependencies and doesn't run out of memory
 on the 26M-row national set.
 
 ```bash
 # 1. Download the per-département dumps (or the national adresses-france.csv.gz):
 #    https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-<dept>.csv.gz
-#    → $MAILWOMAN_DATA_ROOT/db/ban/sources/   (or reuse an existing corpus/sources/ban)
+#    → $MAILWOMAN_CACHE_ROOT/sources/ban/   (where `mailwoman corpus fetch ban` writes them)
 
 # 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/db/ban/address-points-fr.db, sealed 0444):
 node packages/ban/out/tools/build/address-point-database.js \
-  --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
+  --csv-dir $MAILWOMAN_CACHE_ROOT/sources/ban --release 2026-05-18
 
 # Validate on a few départements first (transient; skips the provenance rewrite):
 node packages/ban/out/tools/build/address-point-database.js --depts 48,2A,05 --out /tmp/ban-sample.db
@@ -53,5 +53,5 @@ additive file, and the build never touches the OSM database beside it.
 consults it **ahead of** the OSM `osmExtracts` tier, because a national authoritative register outranks
 the community fallback, and only for a non-US parse. BAN rows store their own postcode and commune, so the
 lookup keys on the scoped (`postcode` → `locality`) probes and needs no bbox fall-through. Interpolation
-for house numbers that BAN does not list is not built yet. BAN adds the exact-point tier, and its point
+for house numbers that BAN doesn't list isn't built yet. BAN adds the exact-point tier, and its point
 density is the reason to use it.

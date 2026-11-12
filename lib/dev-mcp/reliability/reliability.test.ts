@@ -4,10 +4,11 @@
 /**
  *   The reliability math, on samples whose answer is arithmetic rather than a model's.
  *
- *   A calibration curve is the one measurement that is worthless when it is subtly wrong: an ECE computed against the
- *   wrong denominator, or a table that drops its empty bins, still reads as a plausible number and still gets quoted
- *   into a threshold decision. So the binning, the weighting and the eval table are pinned here against samples
- *   constructed to have a known answer.
+ *   A calibration curve is the one measurement that's worthless when it is subtly wrong:
+ *   an ECE computed against the wrong denominator, or a table that drops its empty bins,
+ *   still reads as a plausible number and still gets quoted into a threshold decision.
+ *   So the binning, the weighting and the eval table are pinned here against
+ *   samples constructed to have a known answer.
  */
 
 import { describe, expect, it } from "vitest"

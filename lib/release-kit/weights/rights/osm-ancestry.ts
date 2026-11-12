@@ -2,19 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Whether a weights package's model descends from OpenStreetMap data, and whether the package
- *   identifies that ancestry where a reader looks.
+ *   Whether a weights package's model descends from OpenStreetMap data, and
+ *   whether the package identifies that ancestry where a reader looks.
  *
- *   A package has OpenStreetMap ancestry when its own effective training manifest records a source
- *   derived from OpenStreetMap that reached the trainer, or when a package its `mailwoman.baseWeights`
- *   chain reaches does. An overlay that sampled no OpenStreetMap row still decodes through its base's
- *   graph, so it inherits that graph's ancestry. A package with ancestry must include the
- *   OpenStreetMap entry in its own model card's attribution and the OpenStreetMap statement in its
- *   README, because a consumer who installs that package reads those two files and none of its base's.
+ *   A package has OpenStreetMap ancestry when its own effective training manifest
+ *   records a source derived from OpenStreetMap that reached the trainer, or
+ *   when a package its `mailwoman.baseWeights` chain reaches does.
+ *   An overlay that sampled no OpenStreetMap row still decodes through its base's graph,
+ *   so it inherits that graph's ancestry.
  *
- *   A card cannot record the checkpoint a model was initialized from. `model_lineage` is prose, and
- *   the training manifests are keyed by corpus rather than by checkpoint, so ancestry through a
- *   fine-tune is unread here. {@link INITIALIZATION_ANCESTRY_UNREAD} states that gap in the audit.
+ *   A package with ancestry must include the OpenStreetMap entry in its own model card's
+ *   attribution and the OpenStreetMap statement in its README, because a consumer who
+ *   installs that package reads those two files and none of its base's.
+ *
+ *   A card cannot record the checkpoint a model was initialized from.
+ *   `model_lineage` is prose, and the training manifests are keyed by corpus
+ *   rather than by checkpoint, so ancestry through a fine-tune is unread here.
+ *   {@link INITIALIZATION_ANCESTRY_UNREAD} states that gap in the audit.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -30,7 +34,7 @@ import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weight
 const README_NOTICE = "© OpenStreetMap contributors"
 
 /**
- * Why ancestry through fine-tuning is not part of this check, stated in the audit's unresolved list.
+ * Why ancestry through fine-tuning isn't part of this check, stated in the audit's unresolved list.
  */
 export const INITIALIZATION_ANCESTRY_UNREAD =
 	"No model card records the checkpoint its model was initialized from as a field: `model_lineage` is prose, and " +

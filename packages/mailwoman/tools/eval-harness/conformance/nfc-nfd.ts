@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Canonical-form invariance suite. It asserts that NFC and NFD spellings of an address parse equivalently.
+ *   Canonical-form invariance suite.
+ *
+ *   It asserts that NFC and NFD spellings of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -166,7 +168,7 @@ export interface CanonicalFormCoverage {
 	 */
 	transformed: number
 	/**
-	 * Eligible inputs grouped by the canonical form they are written in.
+	 * Eligible inputs grouped by the canonical form they're written in.
 	 */
 	eligibleByState: Record<CanonicalFormState, number>
 }

@@ -3,6 +3,7 @@
 
 /**
  *   Golden snapshot of the soft-feature choreography: known addresses produce known feature tensors.
+ *
  *   A drift in the channel wiring or the near-postcode suppression window makes these fail.
  *
  *   The file uses small inline fixtures with 2–3 entries instead of the production lookup and lexicon.

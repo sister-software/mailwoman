@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Rule-based locale detection from `QueryShape` that uses only universal structural cues — script class and known postcode formats — never place-name dictionaries.
+ * Rule-based locale detection from `QueryShape` that uses only universal structural cues —
+ * script class and known postcode formats — never place-name dictionaries.
  */
 
 import type { QueryShapeFormatsView } from "@mailwoman/query-shape"

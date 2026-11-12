@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The key and applicability rule are separate guards. `İstanbul` clears the key check and fails the applicability check.
+ *   The key and applicability rule are separate guards.
+ *
+ *   `İstanbul` clears the key check and fails the applicability check.
  *   Each exclusion uses a committed board row instead of a synthetic string.
  */
 
@@ -81,7 +83,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-		// A bare lowercase fold does not match the sharp s to its expansion.
+		// A bare lowercase fold doesn't match the sharp s to its expansion.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 

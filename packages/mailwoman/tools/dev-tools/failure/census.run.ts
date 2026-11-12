@@ -4,6 +4,7 @@
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 /**
  *   Failure census: every parity disagreement on a candidate (grade-cache), bucketed by mechanism.
+ *
  *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/failure/census.run.ts`
  */
 import { groupTuplesByTag } from "@mailwoman/core/decoder"

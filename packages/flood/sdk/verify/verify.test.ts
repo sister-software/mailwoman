@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The check compares two verdicts from distinct files. Its negative half must fail an
- *   artifact that would answer Zone 1 outside England.
+ *   The check compares two verdicts from distinct files.
+ *
+ *   Its negative half must fail an artifact that would answer Zone 1 outside England.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -157,7 +158,7 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
-		// The negative half must not pass on a point the footprint covers: an artifact
+		// The negative half mustn't pass on a point the footprint covers: an artifact
 		// that answered a designation everywhere would slip through a check that only
 		// ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({

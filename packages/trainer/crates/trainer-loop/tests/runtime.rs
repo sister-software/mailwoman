@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The runtime block of a parity report: what it reads from the loaded libtorch, and its refusal of a build
 //! configuration that names no version.
 

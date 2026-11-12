@@ -5,12 +5,16 @@
  *   The `mwdev_symbol` tool definition provides the agent-facing description and input schema.
  *   Its handler calls the search in `../symbol-index.ts`.
  *
- *   The pull half of the duplicate-avoidance pair. `../hooks/symbol-precheck.ts` pushes the same answer at write time
- *   without being asked. this is for deciding before writing, when the question is "does this already exist" and the
- *   answer changes what gets written.
+ *   The pull half of the duplicate-avoidance pair.
+ *   `../hooks/symbol-precheck.ts` pushes the same answer at write time without being
+ *   asked. this is for deciding before writing, when the question is "does this
+ *   already exist" and the answer changes what gets written.
  *
- *   The tool offers two search modes. `query` matches an identifier fragment.
- *   `describes` matches each declaration's docstring and can find symbols whose names share no substring with the query.
+ *   The tool offers two search modes.
+ *   `query` matches an identifier fragment.
+ *
+ *   `describes` matches each declaration's docstring and can find symbols whose
+ *   names share no substring with the query.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -22,10 +26,10 @@ import { loadPurposeIndex, searchPurpose } from "#dev-mcp/symbol/purpose"
 import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
 
 /**
- * What the sweep does not read.
+ * What the sweep doesn't read.
  *
  * Stated on every result, including the empty ones: a zero here means "no declaration
- * in the covered set", never "this symbol does not exist".
+ * in the covered set", never "this symbol doesn't exist".
  */
 const NOT_COVERED = [
 	".tsx files — a component is a different reuse question",
@@ -36,7 +40,7 @@ const NOT_COVERED = [
 ] as const
 
 /**
- * What the `describes` half does not read, on top of the list above.
+ * What the `describes` half doesn't read, on top of the list above.
  */
 const DESCRIBES_NOT_COVERED = [
 	"a declaration with no docstring — there is no sentence to match",

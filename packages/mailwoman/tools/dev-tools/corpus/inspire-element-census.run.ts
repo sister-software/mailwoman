@@ -2,25 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Count every distinct element name in an INSPIRE Addresses publication, over the whole file rather
- *   than a sample, and report whether the publisher writes the elements through which a natural
- *   person's name reaches an address.
+ *   Count every distinct element name in an INSPIRE Addresses publication, over the whole file
+ *   rather than a sample, and report whether the publisher writes the elements through
+ *   which a natural person's name reaches an address.
  *
- *   A register source needs a personal-data reading before it is ingest-eligible, and only `absent`
- *   admits a source. For the INSPIRE Addresses schema that reading rests on one fact:
- *   `ad:locatorName` is the free-text `GeographicalName` through which a family name or a business name
- *   reaches an address, so a publisher that never writes it holds no party on an address. A count of
- *   zero over a sample does not establish absence, so this reads the whole member.
+ *   A register source needs a personal-data reading before it is ingest-eligible,
+ *   and only `absent` admits a source.
+ *   For the INSPIRE Addresses schema that reading rests on one fact: `ad:locatorName` is
+ *   the free-text `GeographicalName` through which a family name or a business name reaches
+ *   an address, so a publisher that never writes it holds no party on an address.
  *
- *   It reads the archive through {@linkcode inspireGMLChunks}, the same entry every INSPIRE adapter
- *   uses, so the census and the adapters read the same bytes. It counts element names over the decoded
- *   stream rather than through a schema-aware parse, because the census must cover every element the
- *   file uses and a parse that knows the schema reports only the elements it looks for.
+ *   A count of zero over a sample doesn't establish absence, so this reads the whole member.
  *
- *   Two boundary conditions decide whether the count is right. A chunk boundary can fall inside a tag
- *   name or inside a multi-byte character, so the stream is decoded with a stateful decoder and the
- *   text after the final `<` is held for the next chunk. Without that hold an element split across
- *   a boundary goes uncounted, and without the stateful decoder a split character becomes U+FFFD.
+ *   It reads the archive through {@linkcode inspireGMLChunks}, the same entry every
+ *   INSPIRE adapter uses, so the census and the adapters read the same bytes.
+ *   It counts element names over the decoded stream rather than through a
+ *   schema-aware parse, because the census must cover every element the file uses
+ *   and a parse that knows the schema reports only the elements it looks for.
+ *
+ *   Two boundary conditions decide whether the count is right.
+ *   A chunk boundary can fall inside a tag name or inside a multi-byte character, so the stream is
+ *   decoded with a stateful decoder and the text after the final `<` is held for the next chunk.
+ *
+ *   Without that hold an element split across a boundary goes uncounted,
+ *   and without the stateful decoder a split character becomes U+FFFD.
  *
  *   Run:
  *
@@ -28,9 +33,11 @@
  *       node packages/mailwoman/tools/dev-tools/corpus/inspire-element-census.run.ts --input <path> --member <name in the archive>
  *       node packages/mailwoman/tools/dev-tools/corpus/inspire-element-census.run.ts --url <https://…/AD.zip>
  *
- *   `--url` writes the publication to a temporary directory and removes it afterwards. A zip is read
- *   through its central directory. That directory sits at the end of the archive, so reading one entry
- *   needs the whole file on disk rather than a forward stream.
+ *   `--url` writes the publication to a temporary directory and removes it afterwards.
+ *   A zip is read through its central directory.
+ *
+ *   That directory sits at the end of the archive, so reading one entry needs the
+ *   whole file on disk rather than a forward stream.
  */
 
 import { pipeline } from "node:stream/promises"
@@ -113,7 +120,7 @@ for await (const chunk of chunks) {
 	bytes += buffer.length
 
 	// `stream: true` holds a partial multi-byte character until its remaining bytes arrive,
-	// so a boundary inside one character does not decode to U+FFFD.
+	// so a boundary inside one character doesn't decode to U+FFFD.
 	const text = carry + decoder.decode(buffer, { stream: true })
 
 	// A tag starting before the boundary may not have ended yet, so everything from

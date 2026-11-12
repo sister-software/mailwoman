@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus jsonl the
- *   `@mailwoman/corpus` `osm` adapter reads.
+ *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the
+ *   per-country corpus jsonl the `@mailwoman/corpus` `osm` adapter reads.
  *
  *   ⚠ ODbL: the output is derived from OpenStreetMap and has the share-alike obligation.
  */
@@ -74,7 +74,7 @@ export interface OSMCorpusJSONLStats {
 	outsideOutline: number | null
 	/**
 	 * Rows written without an `addr:street`.
-	 * They are a subset of `written`.
+	 * They're a subset of `written`.
 	 */
 	noStreet: number
 	/**

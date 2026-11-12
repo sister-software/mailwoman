@@ -95,7 +95,7 @@ Portland St, London W1W 8QJ` loses `London` from the venue and retags the traili
 
 ## Decision
 
-v7.4.0 does not ship: the D-rule refuses it on four locales and the battery misses two US floors. The run
+v7.4.0 doesn't ship: the D-rule refuses it on four locales and the battery misses two US floors. The run
 answers the question #2511 left open, whether the venue rows belong in a from-scratch base at this share:
 the venue and thin-system rows improve, and the bare-street rows pay for them. The next arm keeps
 `spliced-venue-locality` and removes or lowers the share of `fragment-venue-bare`, whose bare multi-word names are the

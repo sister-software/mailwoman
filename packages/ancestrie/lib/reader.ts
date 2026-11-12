@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Read side of the ancestrie. Zero-copy-ish: the tables stay in the source buffer and are read
- *   through a DataView on demand — only the token strings are decoded eagerly (a walk compares
- *   them), and payload bytes are returned as subarray views over the artifact. No Node imports
- *   anywhere on this path — the reader runs in the browser via
- *   `fetch(url).then((r) => r.arrayBuffer())` exactly as it runs on the server, the same discipline
- *   as `@mailwoman/neural`'s `pair-index-resolver.ts`.
+ *   Read side of the ancestrie.
+ *
+ *   Zero-copy-ish: the tables stay in the source buffer and are read through a DataView
+ *   on demand — only the token strings are decoded eagerly (a walk compares them),
+ *   and payload bytes are returned as subarray views over the artifact.
+ *   No Node imports anywhere on this path — the reader runs in the browser via
+ *   `fetch(url).then((r) => r.arrayBuffer())` exactly as it runs on the server,
+ *   the same discipline as `@mailwoman/neural`'s `pair-index-resolver.ts`.
  *
  *   One artifact answers three question families from the same walk:
  *
  *   - Lexical: `walk` / `walkFrom` / `continuations` — what continues this prefix.
  *   - Identity: `entriesAt` / `getEntry` — which ranked entries accept here.
- *   - Containment: `contains` (O(1) pre/post interval test, both directions), `descendantsOf`
- *       (contiguous range scan), `ancestorsOf` / `parentsOf` (chain hops). See `format.ts` for the
- *       interval encoding and the DAG-canonicalization rule.
+ *   - Containment: `contains` (O(1) pre/post interval test, both directions),
+ *     `descendantsOf` (contiguous range scan), `ancestorsOf` / `parentsOf` (chain hops).
+ *     See `format.ts` for the interval encoding and the DAG-canonicalization rule.
  */
 
 import type { AncestrieHeader, AncestrieSections } from "#format"
@@ -179,7 +181,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Decode one entry by id, or `undefined` when the id names no entry.
+	 * Decode one entry by id, or `undefined` when the id identifies no entry.
 	 */
 	getEntry(id: number): AncestrieRecord | null {
 		const ordinal = this.ordinalOf(id)

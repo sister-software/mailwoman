@@ -4,10 +4,12 @@
 /**
  *   Maps GeoNames gold entities to sets of WOF IDs through the WOF concordance table.
  *
- *   The benchmark grades by identity through this join because distance cannot tell apart two
- *   close-together places that share a name. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
- *   IDs. The join admits a set only when every member passes the name, country and distance checks in
- *   {@link readGoldSets}.
+ *   The benchmark grades by identity through this join because distance cannot tell
+ *   apart two close-together places that share a name.
+ *   A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of IDs.
+ *
+ *   The join admits a set only when every member passes the name, country
+ *   and distance checks in {@link readGoldSets}.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"

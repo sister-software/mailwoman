@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Admin-tier wrong-region probe. When no street extract covers an address, the admin cascade can
- *   resolve the locality by name and, when the region or postcode constraint is weak, pick the
- *   population-dominant foreign namesake instead of the in-state Texas city. This probes a curated
- *   set of TX namesake cities, with and without ZIP. It flags any result outside the Texas bounding
- *   box.
+ *   Admin-tier wrong-region probe.
+ *
+ *   When no street extract covers an address, the admin cascade can resolve the
+ *   locality by name and, when the region or postcode constraint is weak, pick the
+ *   population-dominant foreign namesake instead of the in-state Texas city.
+ *   This probes a curated set of TX namesake cities, with and without ZIP.
+ *   It flags any result outside the Texas bounding box.
  *
  *   Run: `mailwoman registry scorer-eval namesake-probe`
  */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The legend names each shape of the map and the building list in words, in the order of the state rules.
+ *   The legend lists each shape of the map and the building list in words, in the order of the state rules.
  */
 
 import { BuildingState, SegmentStatus } from "@mailwoman/opportunity-map"

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The FST binary-format constants, shared by the Node serializer/deserializer (`fst-serialize.ts`)
- *   and the browser deserializer (`fst-deserialize-web.ts`). This module stays platform-free.
- *   It uses no Buffer at module scope. Both runtimes convert {@link FST_MAGIC_BYTES} themselves.
+ *   The FST binary-format constants, shared by the Node serializer/deserializer
+ *   (`fst-serialize.ts`) and the browser deserializer (`fst-deserialize-web.ts`).
+ *
+ *   This module stays platform-free.
+ *   It uses no Buffer at module scope.
+ *   Both runtimes convert {@link FST_MAGIC_BYTES} themselves.
  */
 
 import type { PlacetypeID } from "#fst/types"
@@ -22,7 +25,7 @@ import type { PlacetypeID } from "#fst/types"
  *
  * It later stayed at 4 through the v5 two-score split until someone updated it by hand.
  *
- * A check that is the writer's version cannot drift from it.
+ * A check that's the writer's version cannot drift from it.
  */
 export const FST_FORMAT_VERSION = 5
 

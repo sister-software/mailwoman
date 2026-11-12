@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Browser-mode render test for the resolved-place and host overlays. The component tree is asserted
- *   synchronously and the WebGL-dependent assertions are awaited best-effort so a Chromium without software
- *   WebGL skips them rather than flaking.
+ *   Browser-mode render test for the resolved-place and host overlays.
+ *
+ *   The component tree is asserted synchronously and the WebGL-dependent assertions are
+ *   awaited best-effort so a Chromium without software WebGL skips them rather than flaking.
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"

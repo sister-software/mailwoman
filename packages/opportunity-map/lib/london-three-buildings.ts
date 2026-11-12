@@ -2,50 +2,62 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Three London residential buildings as one dossier dated 2026-10-05, built from public records. The
- *   record `docs/records/research/2026-10-05-uk-three-building-competition-sources.md` selects the
- *   buildings and states every value below with its source and dates. No value here is synthetic, and the
- *   fixture holds no economic input.
+ *   Three London residential buildings as one dossier dated 2026-10-05, built from public records.
  *
- *   - London Development Database (Greater London Authority, London Datastore `2jxq0`): one row per
- *     building, with its planning authority, borough reference, site address, postcode, grid reference,
- *     permission, start and completion dates, and proposed residential units. A building's position is
- *     the row's grid reference converted with `osgb36ToWGS84`, so it locates the planning site's
- *     reference point. The row states the site's planning authority and postcode, and those are the
- *     building's two memberships. The row's planning authority and borough reference are the building's
- *     identifier, and the row is its evidence.
+ *   The record `docs/records/research/2026-10-05-uk-three-building-competition-sources.md`
+ *   selects the buildings and states every value below with its source and dates.
+ *   No value here is synthetic, and the fixture holds no economic input.
+ *
+ *   - London Development Database (Greater London Authority, London Datastore `2jxq0`):
+ *     one row per building, with its planning authority, borough reference, site address, postcode,
+ *     grid reference, permission, start and completion dates, and proposed residential units.
+ *     A building's position is the row's grid reference converted with `osgb36ToWGS84`,
+ *     so it locates the planning site's reference point.
+ *     The row states the site's planning authority and postcode, and those are
+ *     the building's two memberships.
+ *     The row's planning authority and borough reference are the building's identifier,
+ *     and the row is its evidence.
  *   - Referred planning applications since 2011 (Greater London Authority, London Datastore `2w1xz`):
- *     the Stage 2 total units of 28-30 Addiscombe Grove and of 130-154, 154a Pentonville Road. The file
- *     holds no row for 112-132 Cricklewood Lane.
- *   - ONS Postcode Directory, February 2026, and National Statistics UPRN Lookup, June 2026: the
- *     postcodes and output areas that the record infers. Each enters as an inferred claim. No source
- *     states a building's output area, so the fixture holds no output-area membership.
+ *     the Stage 2 total units of 28-30 Addiscombe Grove and of 130-154, 154a Pentonville Road.
+ *     The file holds no row for 112-132 Cricklewood Lane.
+ *   - ONS Postcode Directory, February 2026, and National Statistics UPRN Lookup,
+ *     June 2026: the postcodes and output areas that the record infers.
+ *     Each enters as an inferred claim.
+ *     No source states a building's output area, so the fixture holds no output-area membership.
  *   - Ofcom Connected Nations fixed coverage, January 2026: each output area's premises and gigabit
- *     counts and each postcode's gigabit percentage, for all premises and for residential premises. A
- *     figure describes every premises in an area, so it enters as an inferred claim on the network axis
- *     and never as a layer reading, an availability record or a check.
- *   - The UPRN-level release from Building Digital UK, May 2026 OMR and premises in BDUK plans, London archive:
- *     for each of a building's postcodes, the UPRNs the release lists with that postcode, the count of
- *     them NSUL places within 50 m of the planning grid reference, and four counts over those within
- *     50 m: `current_gigabit` true, classed Gigabit White, classed Gigabit Under Review, and in BDUK's
- *     premises base. A listed premises belongs to the building only through the postcode's link and the
- *     50 m rule, so each postcode's counts enter as one inferred claim on the network axis. The release
- *     names no network. `london-three-buildings.full.test.ts` recomputes the counts from the extracted
- *     London files and `nsul.db`.
- *   - Environment Agency Flood Map for Planning, as built into the host's `flood.db`: the reading and
- *     claim that `floodLayerReading` returned at each position. The source record's dates are the
- *     database manifest's, and `london-three-buildings.full.test.ts` recomputes the records from the
- *     database.
+ *     counts and each postcode's gigabit percentage, for all premises and for residential premises.
+ *     A figure describes every premises in an area, so it enters as an inferred claim on
+ *     the network axis and never as a layer reading, an availability record or a check.
+ *   - The UPRN-level release from Building Digital UK, May 2026 OMR and premises in BDUK plans,
+ *     London archive: for each of a building's postcodes, the UPRNs the release lists
+ *     with that postcode, the count of them NSUL places within 50 m of the planning
+ *     grid reference, and four counts over those within 50 m: `current_gigabit` true,
+ *     classed Gigabit White, classed Gigabit Under Review, and in BDUK's premises base.
+ *     A listed premises belongs to the building only through the postcode's link and the 50
+ *     m rule, so each postcode's counts enter as one inferred claim on the network axis.
+ *     The release identifies no network.
+ *     `london-three-buildings.full.test.ts` recomputes the counts from the
+ *     extracted London files and `nsul.db`.
+ *   - Environment Agency Flood Map for Planning, as built into the host's `flood.db`:
+ *     the reading and claim that `floodLayerReading` returned at each position.
+ *     The source record's dates are the database manifest's, and
+ *     `london-three-buildings.full.test.ts` recomputes the records from the database.
  *
- *   A unit count stays at the stage its source states. The LDD row's proposed units and the referral
- *   row's total units count the residential units of one permission. The referral row names that
- *   permission by its borough reference. The two counts therefore share a membership key and the
- *   permission date, and a difference between them stays a conflict. The fixture holds zero completed or
- *   occupied counts, zero availability checks and zero provider records.
+ *   A unit count stays at the stage its source states.
+ *   The LDD row's proposed units and the referral row's total units count the
+ *   residential units of one permission.
  *
- *   A source that dates its observation to a month records the month in its title and the month's last
- *   day as `observedAt`. The ONS Postcode Directory became available on 2026-02-27, before the last day
- *   of its month, so its record states no observation date and the claims that cite it print as undated.
+ *   The referral row names that permission by its borough reference.
+ *   The two counts therefore share a membership key and the permission date,
+ *   and a difference between them stays a conflict.
+ *
+ *   The fixture holds zero completed or occupied counts, zero availability checks
+ *   and zero provider records.
+ *
+ *   A source that dates its observation to a month records the month in its title
+ *   and the month's last day as `observedAt`.
+ *   The ONS Postcode Directory became available on 2026-02-27, before the last day of its month,
+ *   so its record states no observation date and the claims that cite it print as undated.
  */
 
 import {

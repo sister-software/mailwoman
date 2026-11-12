@@ -9,7 +9,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { mulberry32, shuffleWith } from "@mailwoman/core/random"
 
 /**
- * Rows held in memory while shuffling, when the caller names no window.
+ * Rows held in memory while shuffling, when the caller identifies no window.
  *
  * Five 50,000-row groups span more than one output row-group and reach `wof-admin`'s whole
  * 13-country set, while a window below `ROW_GROUP_SIZE` draws from no more than one row-group.

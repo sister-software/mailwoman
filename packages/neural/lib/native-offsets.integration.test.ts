@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Convention pins for the native offsets the `@mailwoman/mtf` runtime reproduces from SentencePiece v0.2.2.
+ *   Convention pins for the native offsets the `@mailwoman/mtf` runtime
+ *   reproduces from SentencePiece v0.2.2.
  *
- *   Three behaviors are pinned: a piece following a non-BMP character lands on the correct UTF-16
- *   range while the rest of the input stays aligned. A `▁`-prefixed piece's native span is trimmed
- *   to the word start while a bare `▁` collapses to a zero-width range. The coarse normalizer
- *   alignment of the all-caps class matches the training convention.
+ *   Three behaviors are pinned: a piece following a non-BMP character lands on the
+ *   correct UTF-16 range while the rest of the input stays aligned.
+ *   A `▁`-prefixed piece's native span is trimmed to the word start
+ *   while a bare `▁` collapses to a zero-width range.
+ *
+ *   The coarse normalizer alignment of the all-caps class matches the training convention.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

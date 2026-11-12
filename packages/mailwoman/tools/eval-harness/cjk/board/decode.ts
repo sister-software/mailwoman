@@ -4,8 +4,8 @@
 /**
  *   Turns a per-character label sequence back into the surfaces a CJK board row claims.
  *
- *   The reconstruction is the pre-registered one: contiguous B/I runs of one tag over the row's code points. Every
- *   offset here counts code points, the unit the board's `span_starts` and `span_ends` use.
+ *   The reconstruction is the pre-registered one: contiguous B/I runs of one tag over the row's code points.
+ *   Every offset here counts code points, the unit the board's `span_starts` and `span_ends` use.
  */
 
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"

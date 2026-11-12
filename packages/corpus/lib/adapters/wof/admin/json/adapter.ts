@@ -4,38 +4,44 @@
 /**
  *   `wof-admin`: Who's On First admin GeoJSON-bundle adapter.
  *
- *   **Phase 1.5.1 pivot.** The original Phase 1.5 SQLite adapter (formerly at
- *   `packages/corpus/lib/adapters/wof-admin/`, removed in this same change) was replaced by this
- *   one because the SQLite distribution path was unworkable for the real corpus build:
+ *   **Phase 1.5.1 pivot.** The original Phase 1.5 SQLite adapter
+ *   (formerly at `packages/corpus/lib/adapters/wof-admin/`, removed in this same change) was replaced
+ *   by this one because the SQLite distribution path was unworkable for the real corpus build:
  *
  *   1. `dist.whosonfirst.org/sqlite/` is dead (nxdomain); the Geocode-Earth mirror is the only one.
- *   2. The Geocode-Earth-hosted postalcode DB tags every row `mz:is_current = -1` ("unknown but treated
- *        as active"); the SQLite adapter's `is_current = 1` predicate emitted zero rows.
- *   3. The `names` table in the SQLite distribution is empty — localized `name:*` variants live in a
- *        separate distribution. The St. Petersburg / Mt. Vernon / Ft. Lauderdale alternation cases
- *        (the original Phase 1.5.1 motivator) cannot be solved on the SQLite path even with a
- *        patched `is_current` predicate.
+ *   2. The Geocode-Earth-hosted postalcode DB tags every row `mz:is_current = -1`
+ *      ("unknown but treated as active"); the SQLite adapter's `is_current = 1`
+ *      predicate emitted zero rows.
+ *   3. The `names` table in the SQLite distribution is empty — localized `name:*`
+ *      variants live in a separate distribution.
+ *      The St. Petersburg / Mt.
+ *      Vernon / Ft.
+ *      Lauderdale alternation cases (the original Phase 1.5.1 motivator) cannot be
+ *      solved on the SQLite path even with a patched `is_current` predicate.
  *
- *   Input: a directory containing one or more cloned `whosonfirst-data-admin-<cc>` GitHub repos. Each
- *   repo has `data/XXX/YYY/ZZZ/<wof-id>.geojson` files; `**\/*.geojson` walks the tree recursively.
- *   Alternate-geometry siblings (`-alt-*`) are skipped — they're separate exports of the same
- *   record rather than new records.
+ *   Input: a directory containing one or more cloned `whosonfirst-data-admin-<cc>` GitHub repos.
+ *   Each repo has `data/XXX/YYY/ZZZ/<wof-id>.geojson` files; `**\/*.geojson` walks the tree recursively.
+ *
+ *   Alternate-geometry siblings (`-alt-*`) are skipped — they're separate exports
+ *   of the same record rather than new records.
  *
  *   Per record, the adapter emits one row per `(name-variant, hierarchy-variant)` pair:
  *
- *   - **Name variants**: the canonical `wof:name` (slot key `default`) plus every `name:*` localized
- *       variant present on the feature (`name:eng_x_preferred`, `name:eng_x_colloquial`,
- *       `name:rus_x_preferred`, ...). This is the Phase 1.5.1 fix for the St. Petersburg case:
- *       `"Saint Petersburg"` (canonical) and `"St. Petersburg"` (eng_x_colloquial) both become
- *       training rows for the same WOF id.
- *   - **Hierarchy variants** (unchanged from the SQLite adapter): locality → 3 variants, region → 2,
- *       country → 1, county → 1.
+ *   - **Name variants**: the canonical `wof:name` (slot key `default`)
+ *     plus every `name:*` localized variant present on the feature
+ *     (`name:eng_x_preferred`, `name:eng_x_colloquial`, `name:rus_x_preferred`, ...).
+ *     This is the Phase 1.5.1 fix for the St. Petersburg case: `"Saint Petersburg"` (canonical)
+ *     and `"St. Petersburg"` (eng_x_colloquial) both become training rows for the same WOF id.
+ *   - **Hierarchy variants** (unchanged from the SQLite adapter): locality → 3 variants,
+ *     region → 2, country → 1, county → 1.
  *
- *   `source_id` is `wof-admin-<wof_id>-<name-slot>-<hierarchy-variant>`. The previous SQLite adapter
- *   used `wof-admin-<wof_id>-<hierarchy-variant>` (no name slot); the new format adds a name-slot
- *   segment so the colloquial / preferred / per-locale variants survive dedup independently.
+ *   `source_id` is `wof-admin-<wof_id>-<name-slot>-<hierarchy-variant>`.
+ *   The previous SQLite adapter used `wof-admin-<wof_id>-<hierarchy-variant>`
+ *   (no name slot); the new format adds a name-slot segment so the colloquial /
+ *   preferred / per-locale variants survive dedup independently.
  *
- *   License: CC0. The adapter stamps every row with `CC0-1.0`.
+ *   License: CC0.
+ *   The adapter stamps every row with `CC0-1.0`.
  */
 
 import { layoutForCountry, layoutPrintsLargestFirst, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
@@ -135,7 +141,7 @@ export function layoutCountryForLanguage(language: string): string | null {
 		.map(([code]) => code)
 
 	// The local-script layout's order, because a language's own hierarchies are written in its script.
-	// A country whose local layout states no order (Macau, Singapore) does not vote.
+	// A country whose local layout states no order (Macau, Singapore) doesn't vote.
 	const layoutOf = (code: string): string | null => {
 		const layout = layoutForCountry(code, "local")
 		const largestFirst = layout ? layoutPrintsLargestFirst(layout) : null

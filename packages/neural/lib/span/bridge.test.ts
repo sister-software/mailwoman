@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Interface tests for punctuation-gap span bridging (the v4.4.0 corrective). Essential properties:
- *   dotted fragments merge through their punctuation O-tokens. space-only gaps never merge (the
- *   Saint-Albans guard). different tags never merge. the merged confidence is the minimum of the
- *   fragments.
+ *   Interface tests for punctuation-gap span bridging (the v4.4.0 corrective).
+ *
+ *   Essential properties: dotted fragments merge through their punctuation O-tokens.
+ *   space-only gaps never merge (the Saint-Albans guard). different tags never merge.
+ *   the merged confidence is the minimum of the fragments.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -96,7 +97,7 @@ describe("bridgePunctuationGaps", () => {
 		it("blocks a same-tag merge whose gap contains a proposed span boundary", () => {
 			// "Joe's 'Pizza' Shop" with a quoted span over 'Pizza'.
 			// The gap " '" between two venue fragments is bridgeable (apostrophe + space),
-			// but the opening quote at index 6 is a structural boundary the merge must not straddle.
+			// but the opening quote at index 6 is a structural boundary the merge mustn't straddle.
 			const text = "Joe's 'Pizza' Shop"
 			const input = [tok("Joe's", 0, "B-venue"), tok("Pizza", 7, "B-venue")]
 			// Without the constraint the bridge merges (regression guard for the test itself):

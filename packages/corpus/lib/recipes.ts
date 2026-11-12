@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The recipe registry. A recipe derives rows from attested data; `recipes/sources.ts` records which
- *   operation each one performs, and only the `invented-*` recipes compose a row with no real record
- *   behind it. Each recipe ({@link CorpusRecipe}) is what one root-level
- *   build script used to be. the `mailwoman corpus recipe <recipe>` command dispatches to them. A new
- *   recipe is a new entry here rather than a new script.
+ *   The recipe registry.
+ *
+ *   A recipe derives rows from attested data; `recipes/sources.ts` records which operation each
+ *   one performs, and only the `invented-*` recipes compose a row with no real record behind it.
+ *   Each recipe ({@link CorpusRecipe}) is what one root-level build script used to be.
+ *   the `mailwoman corpus recipe <recipe>` command dispatches to them.
+ *   A new recipe is a new entry here rather than a new script.
  */
 
 import { cnOrganizationalUnitsRecipe } from "#cn/recipes/organizational-units"

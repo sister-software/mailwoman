@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads and writes binary glTF (GLB) files: the JSON document, the binary chunk, and the accessors the city model
- *   and landmark converters read.
+ *   Reads and writes binary glTF (GLB) files: the JSON document, the binary chunk,
+ *   and the accessors the city model and landmark converters read.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"

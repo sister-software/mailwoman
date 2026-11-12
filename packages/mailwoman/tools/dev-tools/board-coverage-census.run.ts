@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `pass` checks a run and `improvement_target` only tracks, so a raw row count conflates a country that can
- *   go red with one that cannot. The gazetteer share is the denominator.
+ *   `pass` checks a run and `improvement_target` only tracks, so a raw row count
+ *   conflates a country that can go red with one that cannot.
+ *   The gazetteer share is the denominator.
  *
  *   The loader walks two-letter directories only, so `generalization/` is outside every number here.
  *

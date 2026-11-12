@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Turn one authority polygon into the H3 cells that summarize it, done once at build time so the
- *   runtime probes structure instead of geometry.
+ *   Turn one authority polygon into the H3 cells that summarize it, done once at build time
+ *   so the runtime probes structure instead of geometry.
  */
 
 import {
@@ -89,7 +89,7 @@ function canContainCell(box: LatLonBounds, resolution: number): boolean {
 export interface FeatureCells {
 	/**
 	 * The resolution this feature was indexed at — the target, or coarser
-	 * where the target's estimate did not fit.
+	 * where the target's estimate didn't fit.
 	 */
 	resolution: number
 	/**
@@ -97,7 +97,7 @@ export interface FeatureCells {
 	 */
 	whole: H3Cell[]
 	/**
-	 * Cells the feature reaches but does not fill, so a point in one needs the ray cast.
+	 * Cells the feature reaches but doesn't fill, so a point in one needs the ray cast.
 	 */
 	partial: H3Cell[]
 }
@@ -320,8 +320,8 @@ export function featureCellRows(cells: FeatureCells): Array<{
 }
 
 /**
- * The coverage cell a row at `cell` belongs to, derived with `cellToParent` rather than a
- * fresh `latLngToCell` so a fringe row does not land in a neighboring coverage cell.
+ * The coverage cell a row at `cell` belongs to, derived with `cellToParent` rather than
+ * a fresh `latLngToCell` so a fringe row doesn't land in a neighboring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
 	return cellToParent(cell, coverageResolution)

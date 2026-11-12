@@ -4,8 +4,9 @@
 /**
  *   The rate at which a tokenizer falls back to raw bytes, overall and per script.
  *
- *   `mtf-tokenizer byte-fallback` encodes each line with the model and assigns it a script from the Unicode name of
- *   its letters, through the tables `mtf-channels` generates from CPython's Unicode database.
+ *   `mtf-tokenizer byte-fallback` encodes each line with the model and assigns it a
+ *   script from the Unicode name of its letters, through the tables `mtf-channels`
+ *   generates from CPython's Unicode database.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

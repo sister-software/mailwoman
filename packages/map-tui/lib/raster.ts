@@ -10,7 +10,7 @@
  * need to bounds-check geometry themselves.
  *
  * The polyline and circle primitives floor their coordinates to integers on entry;
- * {@link fillPolygon} does not.
+ * {@link fillPolygon} doesn't.
  * Its scanline edge math keeps ring vertices as given, see its own docstring.
  */
 

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The geocoder lives at earth.mailwoman.post. A retired docs route forwards a visitor there with their query intact
- *   (`location.replace` keeps `?q=`, which a `meta refresh` cannot), and shows the link for a client that does not
- *   run the script. GitHub Pages serves no server-side redirect, so this page is the redirect.
+ *   The geocoder lives at earth.mailwoman.post.
+ *
+ *   A retired docs route forwards a visitor there with their query intact
+ *   (`location.replace` keeps `?q=`, which a `meta refresh` cannot), and shows
+ *   the link for a client that doesn't run the script.
+ *   GitHub Pages serves no server-side redirect, so this page is the redirect.
  */
 
 import Head from "@docusaurus/Head"

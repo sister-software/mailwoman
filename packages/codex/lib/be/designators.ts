@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The designators a Belgian address uses, in Dutch, French and German: the Postbus and boîte postale, the
- *   box number literals `bus`, `bte` and `box`, the building, floor and room words, and the relation words of a
- *   query.
+ *   The designators a Belgian address uses, in Dutch, French and German: the Postbus
+ *   and boîte postale, the box number literals `bus`, `bte` and `box`, the building,
+ *   floor and room words, and the relation words of a query.
  *
- *   The bpost sheet lists `n°` and `nr` as marks that must not stand between a street number and its box number.
- *   The rows record them as number marks. The German premise words have no row, because the sheet lists German
- *   thoroughfare types only.
+ *   The bpost sheet lists `n°` and `nr` as marks that mustn't stand between a
+ *   street number and its box number.
+ *   The rows record them as number marks.
+ *
+ *   The German premise words have no row, because the sheet lists German thoroughfare types only.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/belEn.pdf UPU, Belgium addressing sheet}
  * @see {@link https://en.wiktionary.org/wiki/nabij Wiktionary, nabij}

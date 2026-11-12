@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Training configs as the TypeScript training tools read them: loaded through the config resolver, with
- *   `section.key=value` overrides and the volume paths re-rooted to their host copies.
+ *   Training configs as the TypeScript training tools read them: loaded through the config resolver,
+ *   with `section.key=value` overrides and the volume paths re-rooted to their host copies.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -65,7 +65,7 @@ function plain(value: PythonValue): unknown {
  * Applies `section.key=value` overrides, each value parsed as YAML so `false`,
  * `16` and `null` take their types.
  *
- * @throws When an override names no existing field.
+ * @throws When an override identifies no existing field.
  */
 export function applyOverrides(config: TrainingConfig, overrides: readonly string[]): TrainingConfig {
 	for (const override of overrides) {
@@ -108,7 +108,7 @@ export function rerootToHost(config: TrainingConfig): TrainingConfig {
 /**
  * The config a record was captured with: its recorded path, or the committed config of the same name.
  *
- * When the committed file's SHA-256 is not the recorded one, the revision of it
+ * When the committed file's SHA-256 isn't the recorded one, the revision of it
  * with the recorded bytes is read from the file's git history, across its renames,
  * and written once under `<data root>/cache/recorded-configs/`.
  *

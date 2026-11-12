@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Emirati postal designators: the delivery service in English and the premise, sub-premise, floor and
- *   relation words in Arabic.
+ *   Emirati postal designators: the delivery service in English and the premise,
+ *   sub-premise, floor and relation words in Arabic.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/areEn.pdf UPU United Arab Emirates addressing sheet (Emirates Post)}
  * @see {@link https://en.wiktionary.org/wiki/near Wiktionary: near (translations)}

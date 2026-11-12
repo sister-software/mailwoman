@@ -2,22 +2,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Venue-head emission bias. A venue head is a word that marks the phrase around it as a venue
- *   name: `Gallery` ends `Manchester Art Gallery`, `Musée` starts `Musée d'Orsay`, and the suffix
- *   `館` ends `国立西洋美術館`. The lexicon reports a bias for a word in one of three positions. A
- *   last-word or suffix head biases itself and the words before it toward `venue`. A first-word
- *   head biases itself and the words after it.
+ *   Venue-head emission bias.
+ *
+ *   A venue head is a word that marks the phrase around it as a venue name: `Gallery` ends
+ *   `Manchester Art Gallery`, `Musée` starts `Musée d'Orsay`, and the suffix `館` ends `国立西洋美術館`.
+ *   The lexicon reports a bias for a word in one of three positions.
+ *
+ *   A last-word or suffix head biases itself and the words before it toward `venue`.
+ *   A first-word head biases itself and the words after it.
  *
  *   A first-word or last-word head is read only when the word has a neighbor in the same segment,
- *   so a single-word input such as `Rijksmuseum` receives a bias only through its suffix entry. A
- *   lone word is as likely a locality as a venue, and the table's position rates were measured on
- *   names of two or more words.
+ *   so a single-word input such as `Rijksmuseum` receives a bias only through its suffix entry.
+ *   A lone word is as likely a locality as a venue, and the table's position rates
+ *   were measured on names of two or more words.
  *
- *   The extension stays inside one comma-separated segment and stops at an identifier word: one that
- *   contains a digit, or one of a single letter. A house number or postcode is never part of the venue
- *   name it sits beside, and the `B` of `Concourse B` or the `C` of `Terminal C` belongs to the designator
- *   before it. Each word further from the head receives the head's bias multiplied by `extensionDecay`
- *   once more.
+ *   The extension stays inside one comma-separated segment and stops at an identifier word:
+ *   one that contains a digit, or one of a single letter.
+ *   A house number or postcode is never part of the venue name it sits beside, and the `B`
+ *   of `Concourse B` or the `C` of `Terminal C` belongs to the designator before it.
+ *
+ *   Each word further from the head receives the head's bias multiplied by `extensionDecay` once more.
  *   The prior composes with the admin FST and the street-morphology prior through
  *   `addEmissionMatrix`; where the admin FST also claims a word, the decoder weighs both biases.
  */
@@ -79,7 +83,7 @@ export function buildVenueHeadEmissionPriors(
 	const isCountryName = opts.isCountryName ?? (() => false)
 	const words = wordsWithSegments(groupPiecesIntoWords(pieces), pieces)
 
-	// A segment that is a country name holds no venue head: `america` heads `Bank of America`,
+	// A segment that's a country name holds no venue head: `america` heads `Bank of America`,
 	// and `United States of America` is the country.
 	const segmentTexts = new Map<number, string[]>()
 
@@ -131,7 +135,7 @@ export function buildVenueHeadEmissionPriors(
 		if (sameSegment(following) && isStreetAffix(following!.group.fstToken)) continue
 		const scaled = (bias: number | null): number | null => (bias === null ? null : Math.min(maxBias, bias * biasScale))
 
-		// A head that is itself a street type closes a street name when a house number
+		// A head that's itself a street type closes a street name when a house number
 		// opens the span, as `Plaza` does in `30 Rockefeller Plaza`.
 		// The table measured `plaza` and `center` as venue heads on names without a number,
 		// so its rate applies to an unnumbered name only.

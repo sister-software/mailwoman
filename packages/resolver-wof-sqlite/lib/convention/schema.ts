@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the convention asset — the `address_convention` table `SqliteConventionSource` probes, plus the
- *   `meta` provenance row every sealed artifact here includes. The interface is the read/write interface and
- *   {@link createAddressConventionTable} creates the table, so a column added to one is a compile error against the
- *   other.
+ *   Typed schema for the convention asset — the `address_convention` table `SqliteConventionSource`
+ *   probes, plus the `meta` provenance row every sealed artifact here includes.
+ *
+ *   The interface is the read/write interface and {@link createAddressConventionTable}
+ *   creates the table, so a column added to one is a compile error against the other.
  */
 
 import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"

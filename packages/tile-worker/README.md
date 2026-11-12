@@ -32,10 +32,10 @@ A `.bin` tile reads an archive of PMTiles tile type `Unknown`, such as the compa
 Terrain requests support zoom levels 0 through 15.
 
 `/styles/<style>.json` answers a style built by `createBasemapStyle` in `@mailwoman/cartographer/base/standalone`:
-one vector source that names the planet tile template, zoom range and attribution read from the archive, and the
+one vector source that holds the planet tile template, zoom range and attribution read from the archive, and the
 `@protomaps/basemaps` layers. `<style>` is `light`, `dark`, `white`, `grayscale`, `black`, `mailwoman` or
 `mailwoman-dark`; an unknown name answers HTTP 404. The optional `lang` query parameter sets the label language
-(default `en`); a malformed tag answers HTTP 400. Because the style carries the tile template itself, a client that
+(default `en`); a malformed tag answers HTTP 400. Because the style holds the tile template itself, a client that
 cannot read TileJSON, such as QGIS, needs only this URL. In QGIS, add a generic vector tile connection with the URL
 `https://tiles.mailwoman.post/planet.v4/{z}/{x}/{y}.mvt`, zoom 0 to 15, and this style URL.
 
@@ -59,7 +59,7 @@ extend that key with their route directories.
 Database requests read `db/<file>` independently of `PMTILES_PATH`.
 
 A database GET requires a supported `Range` header and returns HTTP 206.
-A database HEAD advertises range support without reading R2, so it does not
+A database HEAD advertises range support without reading R2, so it doesn't
 confirm that the object exists. Database responses bypass the response cache.
 Tile and TileJSON responses use the Worker cache.
 

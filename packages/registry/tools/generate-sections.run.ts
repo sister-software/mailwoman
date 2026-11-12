@@ -14,6 +14,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 
 interface SectionDefinitions {
 	envelope: { magic: string; version: number; headerOffset: number; directoryEntryBytes: number; alignment: number }
@@ -27,11 +28,7 @@ const definitions = await readLocalJSONFile<SectionDefinitions>(registry("defini
 
 const constant = (name: string): string => name.toUpperCase().replaceAll("-", "_")
 
-const typescript = `/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
+const typescript = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   The RGY1 section kinds. Generated from definitions/sections.json by tools/generate-sections.run.ts. Edit the
  *   definition rather than this file.
  */
@@ -90,11 +87,7 @@ ${definitions.kinds.map((kind) => `\t[SectionKind.${constant(kind.name)}]: ${str
 }
 `
 
-const rust = `// @copyright Sister Software
-// @license AGPL-3.0
-// @author Teffen Ellis, et al.
-
-//! The RGY1 section kinds. Generated from \`definitions/sections.json\` by
+const rust = `${spdxHeaderText(SourceHeaderSyntax.Slash)}//! The RGY1 section kinds. Generated from \`definitions/sections.json\` by
 //! \`tools/generate-sections.run.ts\`. Edit the definition rather than this file.
 
 pub const MAGIC: &[u8; 4] = b${stringifyJSON(definitions.envelope.magic)};

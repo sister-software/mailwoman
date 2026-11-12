@@ -4,8 +4,9 @@
 /**
  *   The names of the published Protomaps tile artifacts.
  *
- *   The module holds only string constants, so a browser or worker bundle that needs a tileset name loads
- *   no path builder and no environment reader. The URL builders that read those live in `asset-paths.ts`.
+ *   The module holds only string constants, so a browser or worker bundle that needs
+ *   a tileset name loads no path builder and no environment reader.
+ *   The URL builders that read those live in `asset-paths.ts`.
  */
 
 /**

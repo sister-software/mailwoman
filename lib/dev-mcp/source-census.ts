@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * What data the repository holds, per country and per artifact — the question before `lookup-sources.ts`'s "does this
- * source know this string".
+ * What data the repository holds, per country and per artifact — the question
+ * before `lookup-sources.ts`'s "does this source know this string".
  *
- * A row count by itself can mislead. The report includes `join` and `parentLinked`: `postalcode-geonames-intl.db` holds
- * 395,544 PT postcodes and is `spr`-only. Even `postalcode-intl.db`'s `ancestors` table reaches no locality when
- * every `parent_id` is `-1`. A zero-byte or table-less extract is reported unreadable rather than as zero rows.
+ * A row count by itself can mislead.
+ * The report includes `join` and `parentLinked`: `postalcode-geonames-intl.db`
+ * holds 395,544 PT postcodes and is `spr`-only.
  *
- * Absence is reported, never omitted: "the query returned no rows" and "we never looked there" are different facts.
+ * Even `postalcode-intl.db`'s `ancestors` table reaches no locality when every `parent_id` is `-1`.
+ * A zero-byte or table-less extract is reported unreadable rather than as zero rows.
+ *
+ * Absence is reported, never omitted: "the query returned no rows" and "we
+ * never looked there" are different facts.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

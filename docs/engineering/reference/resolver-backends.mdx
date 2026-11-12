@@ -1,11 +1,11 @@
 ---
 title: Resolver backends
-description: The two gazetteer backends, why the candidate table is the default, and the 2×2 any backend comparison has to run.
+description: The FTS and candidate-table gazetteer backends, how one is selected, and how to compare them.
 ---
 
 Mailwoman resolves places through one of two SQLite backends. They rank differently and contain
-different rows. Until 2026-08-04, choosing a backend also silently chose a country policy, so every
-comparison between them compared four conditions instead of two.
+different rows. The backend and the country policy are separate settings: `--country-scope` sets the
+policy (see [Country scope](#country-scope)).
 
 |             | `WOFSQLitePlaceLookup` (FTS)               | `WOFCandidateTableLookup` (candidate)     |
 | ----------- | ------------------------------------------ | ----------------------------------------- |
@@ -17,7 +17,7 @@ comparison between them compared four conditions instead of two.
 
 ## Selection
 
-`resolveCandidateDBPath` (`mailwoman/resolver-backend.ts`) reads, in order:
+`resolveCandidateDBPath` (`packages/mailwoman/lib/resolver-backend.ts`) reads, in order:
 
 1. an explicit option (`--candidate-db`),
 2. `$MAILWOMAN_CANDIDATE_DB`,
@@ -26,12 +26,9 @@ comparison between them compared four conditions instead of two.
 Each source is used only if the file exists on disk. `none` in either the explicit option or the env
 variable pins the FTS backend.
 
-The convention-path fallback makes the candidate table the default. `photon` and `nominatim` already
-checked that path in their own code. `parse`, `geocode`, `serve` and `registry` stopped at the env
-variable, so `doctor` had a "trap" check that warned about a candidate.db on disk that no tool would
-use. That check now reports an ordinary passing line.
+The convention-path fallback makes the candidate table the default.
 
-## Country scope is a separate switch
+## Country scope
 
 `--country-scope` (`parse`, `geocode`) decides whether `--locale`'s region subtag scopes the
 resolver, independent of which backend is selected:
@@ -56,9 +53,8 @@ on candidate. That looks like a backend difference, but the country filter cause
 | candidate + `dc=none` | 48.856599, 2.342841 — `Paris` **FR**            |
 
 The names come from the gazetteer's own `name` field, re-read on 2026-08-04. The `dc=US` candidate
-row was first recorded as "Dallas TX". The coordinate lands in Dallas, but the place
-`wof:404526387` is `Paris Township`. The correction matters because the table shows that both
-backends match the string `Paris`, and a metro name in that cell would hide that.
+coordinate lands in Dallas, but the place `wof:404526387` is `Paris Township`. The table gives the
+place's name rather than the metro's, so it shows that both backends match the string `Paris`.
 
 **Any comparison between backends must pin `--country-scope` to `locale` or `none` on both
 arms**, or run the full 2×2. See
@@ -67,9 +63,9 @@ investigation that established this, and
 [`2026-08-03-postcode-locality-scoping.md`](../../records/evals/2026-08-03-postcode-locality-scoping.md)
 for the country-filter half. That half is still an open decision.
 
-## Why candidate is the default
+## Candidate and FTS on the tier-1 locales
 
-These results were measured on 2026-08-04 on the two tier-1 locales, using 150 committed
+Candidate is the default because of these results. They were measured on 2026-08-04 on the two tier-1 locales, using 150 committed
 OpenAddresses rows for each, with country scope pinned identically across arms. Each row is graded
 by the great-circle distance from the resolved **locality-tier** coordinate to the real address
 point.
@@ -93,11 +89,12 @@ Candidate moves 1 US row and 19 FR rows inside the 25 km line and moves none out
 gains are in the tail. Worst-case error drops from 692 km to 20 km on US and from 572 km to 53 km on
 FR, and FR's p90 drops from 144.2 km to 2.4 km.
 
-### Residuals, listed
+### Residuals
 
-The regressions below are real, and the candidate backend shipped as the default despite them. The
-project grades the assembled coordinate, and on that measure candidate is equal or better at every
-threshold on both tier-1 locales.
+The candidate backend shipped as the default with the regressions below. The project grades the
+assembled coordinate. On that measure candidate is equal or better at every threshold on both tier-1
+locales except two US columns, where FTS leads by one row at ≤5 km (101 against 100) and by 0.03 km at
+p50 (3.19 against 3.22).
 
 - **FR: 1 row of 150 stops resolving.** The row is
   `Chemin de l'Acco des Guérins 128, 05130 Venterol`. Two French communes are called Venterol (05 and
@@ -112,7 +109,7 @@ threshold on both tier-1 locales.
   coherence check to use. `Ottawa, ON` passes only because the candidate table happens to contain a
   synthetic Overture row with the name "Ottawa, ON".
 
-### A trap when you measure this yourself
+### Which tier to grade
 
 Do not grade "the deepest coordinated node". The candidate table holds 3.66 M postcodes, and the
 FTS admin distribution has none, so "deepest" means _postcode_ on one arm and _locality_ on the
@@ -121,7 +118,7 @@ compares a commune centroid (0.5 km from the address) against a postcode-area ce
 French communes are small, and one postcode spans several of them. Choose one specific tier and grade
 both arms at that tier.
 
-To reproduce, pass the model, tokenizer and model card explicitly, because the eval does not resolve
+To reproduce, pass the model, tokenizer and model card explicitly, because the eval doesn't resolve
 installed weights:
 
 ```bash
@@ -132,11 +129,11 @@ mailwoman eval oa-resolver \
   [--candidate-db <path>]
 ```
 
-## What the candidate backend does not implement
+## What the candidate backend doesn't implement
 
-`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` does not
+`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` doesn't
 implement it. Its public surface is `findPlace` and `close`. The published `candidate.db` holds a
-`candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup does not answer
+`candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup doesn't answer
 `ancestors()` from it. On the candidate backend, `includeAncestors` (default off) therefore leaves
 `metadata.ancestors` unset, and the Nominatim and Photon drop-ins cannot expose a containment
 lineage.
@@ -147,7 +144,7 @@ lineage.
    drop-ins cannot serve ancestry from the candidate backend.
 2. Port the remaining FTS-only paths: the NL postcode retry ladder, the `near`/`maxDistanceKm` hard
    filters, and the Geographic Rule Engine conventions.
-3. Remove the last hard pin. `commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly
+3. Remove the last hard pin. `packages/mailwoman/cli/commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly
    on purpose, so that migrated evals reproduce the retired scripts' numbers. It needs an explicit
    flag before the class is removed.
 
@@ -155,17 +152,17 @@ The pin, ~16 test suites, and every `MAILWOMAN_CANDIDATE_DB=none` caller depend 
 Those callers would lose all resolution instead of falling
 back.
 
-## Scores are not comparable across backends
+## Resolver scores
 
 `node.metadata.resolver_score` is derived from bm25 on FTS (≈19–41) and from population/`neg_rank`
-on candidate (≈5–7). A consumer must not keep a hardcoded threshold across a backend switch.
+on candidate (≈5–7). A consumer mustn't keep a hardcoded threshold across a backend switch.
 
 Within either backend, the score also **cannot screen out errors**. On 40 gold rows, the range of
 scores for wrong answers falls inside the range for correct answers, and their mean is _higher_ (FTS
 25.67 wrong vs 24.33 correct, candidate 6.52 vs 6.07). Any threshold that discards errors also
 discards correct answers, so this field cannot support an abstention mechanism in its current form.
 
-## Synthetic WOF IDs are not stable
+## Synthetic WOF IDs
 
 Every gazetteer build reassigns the Overture-derived `8000000000000+` range, and the range differs
 between the two databases. **ID-equality grading is invalid for that range**, across backends and

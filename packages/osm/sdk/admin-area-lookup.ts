@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The administrative area containing a point for extract address points whose mappers
- *   left `addr:city` off.
+ *   The administrative area containing a point for extract address points
+ *   whose mappers left `addr:city` off.
  *
- *   In Serbia's extract most address points have no `addr:city`, while the settlement each one stands in
- *   is drawn as an `admin_level=9` boundary in the same file. A lookup over those boundaries reads the
- *   settlement from the point's position rather than from a tag.
+ *   In Serbia's extract most address points have no `addr:city`, while the settlement
+ *   each one stands in is drawn as an `admin_level=9` boundary in the same file.
+ *   A lookup over those boundaries reads the settlement from the point's position rather than from a tag.
  *
- *   The boundaries are bucketed by a grid over their bounding boxes, so a point is ray-cast only against
- *   the few areas whose box covers its cell. Where areas nest at one level, the one with the smallest box
- *   is the answer.
+ *   The boundaries are bucketed by a grid over their bounding boxes, so a point is
+ *   ray-cast only against the few areas whose box covers its cell.
+ *   Where areas nest at one level, the one with the smallest box is the answer.
  */
 
 import { geometryBBox, geometryContains } from "@mailwoman/spatial"

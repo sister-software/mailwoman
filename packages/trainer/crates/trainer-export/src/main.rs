@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! `trainer-export`: the Python-free ONNX export and int8 quantization.
 //!
 //! - `export-onnx --checkpoint <dir> --output <model.onnx> [--char-window N]`: the opset-17 float32 graph of a

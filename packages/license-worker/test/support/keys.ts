@@ -3,9 +3,10 @@
 
 /**
  *   A signing pair minted per test run and an environment whose secret and `kid` match it.
+ *
  *   The shipped register excludes this pair, as the signing self-test requires.
- *   A route test that needs a minted token injects
- *   `signingStatus: () => "ok"` through the app's dependencies and verifies against `publicKeyPEM` here.
+ *   A route test that needs a minted token injects `signingStatus: () => "ok"` through
+ *   the app's dependencies and verifies against `publicKeyPEM` here.
  */
 
 import { generateLicenseSigningKeyPair, licenseKeyID } from "@mailwoman/core/license/key"

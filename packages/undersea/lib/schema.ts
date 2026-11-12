@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Typed schema for the undersea layer database, with the layer-interface tables from `@mailwoman/core/layers`.
+ *   Typed schema for the undersea layer database, with the layer-interface
+ *   tables from `@mailwoman/core/layers`.
  *
- *   One row is one gazetteer record under one geometry kind. The gazetteer can publish the same `FEATURE_ID`
- *   in more than one service layer, so the key is the id and the kind together.
- *   The geometry is stored verbatim as GeoJSON text, because the table holds about 5,400 rows and no reader
- *   probes it by shape.
+ *   One row is one gazetteer record under one geometry kind.
+ *   The gazetteer can publish the same `FEATURE_ID` in more than one service layer,
+ *   so the key is the id and the kind together.
+ *
+ *   The geometry is stored verbatim as GeoJSON text, because the table holds about
+ *   5,400 rows and no reader probes it by shape.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"

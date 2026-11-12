@@ -2,22 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Address phenomena measured over corpus rows: unary predicates over one row, relational ones over a pair.
+ *   Address phenomena measured over corpus rows: unary predicates over one row,
+ *   relational ones over a pair.
  *
- *   The phenomenon ids are the `ConventionClaimID` values of `@mailwoman/codex/address/convention-claims`. That
- *   module records what a published layout states. This one records what a corpus row contains. The two share ids
- *   so a report can place them side by side.
+ *   The phenomenon ids are the `ConventionClaimID` values of `@mailwoman/codex/address/convention-claims`.
+ *   That module records what a published layout states.
  *
- *   A row is a list of `(tag, start, end)` spans over its `raw` text. A built corpus row holds those spans
- *   (`span_starts`, `span_ends`, `span_tags`). A canonical adapter row holds a component map instead, and
- *   {@linkcode spansFromComponents} locates each value in `raw`.
+ *   This one records what a corpus row contains.
+ *   The two share ids so a report can place them side by side.
  *
- *   Every unary predicate returns `null` when the row does not hold the components the phenomenon is about, and a
- *   short string naming the form the row exercises when it does. A caller counts each form.
+ *   A row is a list of `(tag, start, end)` spans over its `raw` text.
+ *   A built corpus row holds those spans (`span_starts`, `span_ends`, `span_tags`).
  *
- *   Offsets index the row's code points, as the Python predicates indexed a `str`. Case folding and script names
- *   follow CPython 3.12's Unicode tables through the `mtf-node` addon, because the folded text decides where a
- *   component is found.
+ *   A canonical adapter row holds a component map instead, and {@linkcode spansFromComponents}
+ *   locates each value in `raw`.
+ *
+ *   Every unary predicate returns `null` when the row doesn't hold the components the
+ *   phenomenon is about, and a short string naming the form the row exercises when it does.
+ *   A caller counts each form.
+ *
+ *   Offsets index the row's code points, as the Python predicates indexed a `str`.
+ *   Case folding and script names follow CPython 3.12's Unicode tables through the
+ *   `mtf-node` addon, because the folded text decides where a component is found.
  */
 
 import { CLAIM_ARITY, ClaimArity, ConventionClaimID, reorderedPairs } from "@mailwoman/codex/address/convention-claims"
@@ -116,7 +122,7 @@ export class Row {
 }
 
 /**
- * A component value that does not occur in the row's raw text.
+ * A component value that doesn't occur in the row's raw text.
  */
 export class LocateError extends Error {
 	constructor(message: string) {
@@ -140,7 +146,7 @@ function byStart(spans: Span[]): Span[] {
 /**
  * Locates each component value in `raw`, case-folded, without reusing a located range.
  *
- * @throws {LocateError} When a value does not occur.
+ * @throws {LocateError} When a value doesn't occur.
  * The caller reports such a row as unreadable rather than measuring it as carrying fewer components.
  */
 export function spansFromComponents(
@@ -318,7 +324,7 @@ function tagOrder(row: Row): string[] {
 }
 
 /**
- * For two renderings of one address: `reordered` or `same-order`, or `null` when the pair does not qualify.
+ * For two renderings of one address: `reordered` or `same-order`, or `null` when the pair doesn't qualify.
  *
  * The pair qualifies when both rows hold the same set of tags, at least two spans,
  * and text in different scripts.

@@ -8,8 +8,8 @@
 >
 > **Result, in one paragraph.** All 400 candidates went through the Google oracle
 > (`@mailwoman/geocode-oracle`, country-restricted, `language=en`): 400/400 resolved, zero `ZERO_RESULTS`,
-> so every address in this file exists as written. Seven came back `partial_match` — the drafted string is
-> not the string Google answered about — and were parked rather than promoted. The remaining 393 went through the
+> so every address in this file exists as written. Seven came back `partial_match` — the drafted string isn't
+> the string Google answered about — and were parked rather than promoted. The remaining 393 went through the
 > production pipeline (the gauntlet harness with no options, per-country weights overlay): **114 FAILED and
 > are promoted** to `cases/<cc>/regression.jsonl` as `improvement_target`, **279 PASSED** and are parked in
 > `cases/generalization/country-sweep-2026-08-05-passes.jsonl` (the loader walks two-letter dirs only, so
@@ -21,7 +21,7 @@
 > rows were class-3 too. Exonym/renamed/script was the SAFEST class (30 of 137, 22%) — the fold work
 > already shipped mostly holds.
 >
-> **The sharpest finding is not in any class.** 29 of the 114 failures share one measured cause: the
+> **The sharpest finding isn't in any class.** 29 of the 114 failures share one measured cause: the
 > shipped `candidate.db` and `admin-global-priority.db` disagree about what a synthetic place id means, so
 > `geocode "Gaborone"` returns Gaborone's WOF id carrying the name and coordinate of a hamlet in Austrian
 > Styria. See the batch note for the counts and the receipt.
@@ -695,7 +695,7 @@
 
 ### AD — Andorra
 
-- [ ] `Andorra la Vella` — `city_country_same` — MED — capital vs country prefix; "Andorra" bare must not collapse to the country.
+- [ ] `Andorra la Vella` — `city_country_same` — MED — capital vs country prefix; "Andorra" bare mustn't collapse to the country.
 - [ ] `Les Escaldes` — `bare_city_global` — MED — "Escaldes-Engordany" parish; "Les Escaldes" by itself is common.
 
 ### LI — Liechtenstein
@@ -1113,7 +1113,7 @@
 ### PW — Palau
 
 - [ ] `Koror` — `bare_city_global` — MED — state/town same-name. The old capital.
-- [ ] `Ngerulmud` — `renamed_city` — MED — the capital since 2006 — the class of capitals that few users can name. Must not fall back to Koror.
+- [ ] `Ngerulmud` — `renamed_city` — MED — the capital since 2006 — the class of capitals that few users can name. Mustn't fall back to Koror.
 
 ### CK — Cook Islands
 

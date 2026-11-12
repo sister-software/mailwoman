@@ -3,11 +3,13 @@
 
 /**
  *   `mailwoman gazetteer build venue-heads` writes `@mailwoman/poi-taxonomy/data/venue-heads.json`,
- *   the venue head words the venue-head prior reads. `--fetch` first copies the Overture release's
- *   place names to the data root.
+ *   the venue head words the venue-head prior reads.
+ *
+ *   `--fetch` first copies the Overture release's place names to the data root.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -40,8 +42,14 @@ export const spec = {
 
 const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { ingestPlaceNames, placeNamesPath } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
-		const { buildVenueHeadTable } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/venue-heads")
+		const {
+			overture: { ingestPlaceNames, placeNamesPath },
+			venueHeads: { buildVenueHeadTable },
+		} = await allKeyed({
+			overture: import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture"),
+			venueHeads: import("@mailwoman/gazetteer/tools/pipeline/poi/build/venue-heads"),
+		})
+
 		const log = (line: string): void => console.error(line)
 
 		if (options.fetch) {

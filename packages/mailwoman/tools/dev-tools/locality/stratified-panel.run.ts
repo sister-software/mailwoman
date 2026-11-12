@@ -4,20 +4,31 @@
 /**
  *   Write a coordinate panel that draws evenly across a country's regions.
  *
- *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` contains 2,000 rows over 7 of the 50 states plus DC.
- *   Five of the 7 states are the five regions `spliced-suffix-boundary` draws from. A rate measured on it is a rate
- *   for those regions. The 97.7-point interior spread is invisible there. No tool in the repository
- *   built the panel that exposed it.
+ *   The default US panel `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` contains
+ *   2,000 rows over 7 of the 50 states plus DC.
+ *   Five of the 7 states are the five regions `spliced-suffix-boundary` draws from.
+ *
+ *   A rate measured on it is a rate for those regions.
+ *   The 97.7-point interior spread is invisible there.
+ *   No tool in the repository built the panel that exposed it.
  *
  *   The draw uses GeoNames' postal export through `readTriplesFromGeonames`.
  *   That reader applies the known-locality filter and selects each country's locality column.
- *   Column 3 is the city for the US and admin2 for PT/MX/IN. `applyLocalityQuota` then draws the panel.
- *   One city's postcode list cannot fill a region. The quota draws a fixed count per region.
- *   A region contributes fewer rows when the source holds fewer. The run reports regions that came up short.
  *
- *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
- *   map and to reject a gross mis-geocode. It is not a locality centroid, so a probe grading rooftop distance against
- *   it is grading the wrong thing. Each row records that in `coordinate_basis`.
+ *   Column 3 is the city for the US and admin2 for PT/MX/IN.
+ *   `applyLocalityQuota` then draws the panel.
+ *
+ *   One city's postcode list cannot fill a region.
+ *   The quota draws a fixed count per region.
+ *
+ *   A region contributes fewer rows when the source holds fewer.
+ *   The run reports regions that came up short.
+ *
+ *   The coordinate is the postcode's, straight from the export's own columns.
+ *   It is good enough to place a row on a map and to reject a gross mis-geocode.
+ *
+ *   It isn't a locality centroid, so a probe grading rooftop distance against it is grading the wrong thing.
+ *   Each row records that in `coordinate_basis`.
  *
  *   Run:
  *
@@ -150,8 +161,8 @@ let keptSourceForm = 0
 for (const triple of quotaed) {
 	if (!coordinateOf.has(triple.postcode)) continue
 
-	// A country whose subdivisions codex does not list keeps the source's form, counted so the
-	// run reports how much of the panel that is rather than writing two kinds of row silently.
+	// A country whose subdivisions codex doesn't list keeps the source's form, counted so the
+	// run reports how much of the panel that's rather than writing two kinds of row silently.
 	const subdivision = matchSubdivisionIn(triple.cc, triple.region)
 
 	if (!subdivision) {
@@ -187,9 +198,9 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 
 	// The bucket head preserves source order.
 	// The source orders postcodes within each state.
-	// For a region stratum that is harmless.
+	// For a region stratum that's harmless.
 	// The stratum already fixes the state.
-	// For a shape stratum it is not: the first 400 suffix-tail names in US.txt are all Alaskan,
+	// For a shape stratum it isn't: the first 400 suffix-tail names in US.txt are all Alaskan,
 	// so a shape draw taken from the head measures one state per bucket.
 	// A seeded shuffle spreads each shape across the country.
 	// The region draw keeps its existing order so the numbers already published against

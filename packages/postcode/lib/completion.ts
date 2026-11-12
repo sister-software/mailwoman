@@ -4,11 +4,13 @@
 /**
  *   Whether a partial postcode can still complete, and for which countries.
  *
- *   The answer keeps two kinds of evidence apart. Syntax completion states that some suffix makes the text a whole
- *   postcode under a country's rule, the rule `postcodeSyntax` compiles from libaddressinput and
- *   `written-forms.ts`. Membership reports whether a PFX1 prefix index holds an allocated prefix consistent with the
- *   text. A code can satisfy the syntax and be unallocated, and an index covers only part of some countries, so
- *   membership is a separate field with its own coverage and never changes the syntax answer.
+ *   The answer keeps two kinds of evidence apart.
+ *   Syntax completion states that some suffix makes the text a whole postcode under a country's
+ *   rule, the rule `postcodeSyntax` compiles from libaddressinput and `written-forms.ts`.
+ *
+ *   Membership reports whether a PFX1 prefix index holds an allocated prefix consistent with the text.
+ *   A code can satisfy the syntax and be unallocated, and an index covers only part of some countries,
+ *   so membership is a separate field with its own coverage and never changes the syntax answer.
  */
 
 import { acceptPostcode, postcodeSyntax } from "#country-formats"
@@ -205,7 +207,7 @@ function membershipFor(
  * The syntax answer comes from `PrefixAutomaton`, compiled from the same pattern
  * `postcodeSyntax` matches whole, so a text answers true here at every prefix
  * length of every postcode `acceptPostcode` accepts.
- * Membership is reported beside it from the supplied PFX1 indexes and does not filter the syntax answer.
+ * Membership is reported beside it from the supplied PFX1 indexes and doesn't filter the syntax answer.
  *
  * @example
  *   canComplete("SW1", { countries: "GB" }).canComplete // true

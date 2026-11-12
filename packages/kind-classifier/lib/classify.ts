@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `classifyKind` is the entry point for Stage 2.5 (kind classification), composing the per-kind rules
- * from `rules.ts` and `intent-rules.ts` and returning alternatives sorted by confidence.
+ * `classifyKind` is the entry point for Stage 2.5 (kind classification), composing the per-kind
+ * rules from `rules.ts` and `intent-rules.ts` and returning alternatives sorted by confidence.
  *
- * Per the project's "possibilities not constraints" principle, every kind that fires above 0 surfaces
- * in `alternatives` and the caller decides whether to act on the top kind only: `bare_toponym` and
- * `route_pair` are scored below their structural incumbent precisely so they land in `alternatives`,
- * where they inform the markers without moving the routing decision.
+ * Per the project's "possibilities not constraints" principle, every kind that fires above
+ * 0 surfaces in `alternatives` and the caller decides whether to act on the top kind only:
+ * `bare_toponym` and `route_pair` are scored below their structural incumbent precisely
+ * so they land in `alternatives`, where they inform the markers without moving the routing decision.
  */
 
 import type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
@@ -125,14 +125,14 @@ export interface KindClassifierOpts {
 	 * POI phrase lexicon (spec §3.1); when present the `poi_query`
 	 * and `poi_category` scorers join the rule set.
 	 *
-	 * They are injected rather than imported so this package stays dictionary-free.
+	 * They're injected rather than imported so this package stays dictionary-free.
 	 * When absent, the returned classifier behaves identically to {@link classifyKind}.
 	 */
 	poiLexicon?: POIPhraseLookup
 }
 
 /**
- * Build a kind classifier that is exactly {@link classifyKind} without options,
+ * Build a kind classifier that's exactly {@link classifyKind} without options,
  * or that additionally scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4)
  * and merges them into the ranked result when given a `poiLexicon`.
  */

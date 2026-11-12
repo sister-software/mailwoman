@@ -223,7 +223,7 @@ test("buildAncestorNameIndex: resolves the nearest ancestor's name per tag, excl
 
 	expect(index.get(3)).toEqual({ locality: "Portland", region: "Oregon" })
 	expect(index.get(2)).toEqual({ region: "Oregon" })
-	// The root's own region name is not its own ancestor.
+	// The root's own region name isn't its own ancestor.
 	expect(index.get(1)).toEqual({})
 })
 

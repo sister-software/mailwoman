@@ -3,17 +3,20 @@
 
 /**
  *   Build a PFX1 postcode-prefix index from a postcode database.
- *   Group unit postcodes by prefix. Measure each group's dispersion and attach the admin ancestry the prefix asserts.
+ *
+ *   Group unit postcodes by prefix.
+ *   Measure each group's dispersion and attach the admin ancestry the prefix asserts.
  *
  *   A GB outward code is the compact form minus its last three characters, never a greedy
  *   `^([A-Z]{1,2}\d{1,2})`; {@link outwardOf} is the one place the rule lives.
  *
- *   A database that publishes a `coverage_meaning_of_zero` meta key declares itself partial and gets
- *   the ancestry-only tier, because a centroid over a partial enumeration describes the sample rather
- *   than the prefix. The tier is a property of the source and is deliberately not overridable.
+ *   A database that publishes a `coverage_meaning_of_zero` meta key declares itself partial
+ *   and gets the ancestry-only tier, because a centroid over a partial enumeration
+ *   describes the sample rather than the prefix.
+ *   The tier is a property of the source and is deliberately not overridable.
  *
- *   The US arm asserts a region by point-in-polygon under a unanimity rule, because a WOF gazetteer
- *   join contradicts the ZIP numbering plan at a higher rate.
+ *   The US arm asserts a region by point-in-polygon under a unanimity rule, because a
+ *   WOF gazetteer join contradicts the ZIP numbering plan at a higher rate.
  */
 
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
@@ -104,7 +107,7 @@ export interface BuildPostcodePrefixResult {
 	 */
 	radiiP95Km: number[]
 	/**
-	 * Units the US arm dropped because their coordinate is not a location, by reason.
+	 * Units the US arm dropped because their coordinate isn't a location, by reason.
 	 *
 	 * The GB arm drops no units, so this record is empty for that arm.
 	 * Reported separately from {@link BuildPostcodePrefixResult.skippedShort}
@@ -136,7 +139,7 @@ const MIN_COMPACT_POSTCODE_LENGTH = 5
 /**
  * The outward code of a compact unit postcode: everything but the last three characters.
  *
- * See the module docstring for why this is not a regex.
+ * See the module docstring for why this isn't a regex.
  */
 export function outwardOf(compact: string): string | null {
 	if (compact.length < MIN_COMPACT_POSTCODE_LENGTH) return null

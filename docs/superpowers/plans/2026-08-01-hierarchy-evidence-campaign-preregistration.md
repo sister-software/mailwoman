@@ -72,9 +72,9 @@ admin DB, via `mailwoman gazetteer census`.
 **Why a second artifact instead of folding these links into the pair index.** A pair entry
 ASSERTS a surface is a dependent locality, so every batch needs a venue-confound board before it
 ships (R4b's law-1 discipline). A census node asserts no fact about any surface — it can only tilt
-a reading the model already entertains under a parent it already identified. That is what makes it
+a reading the model already entertains under a parent it already identified. That's what makes it
 the safe carrier for the long tail. GB by itself has 22,843 WOF dep-loc-class links, and
-boarding them individually is not a plan.
+boarding them individually isn't a plan.
 
 **Scope: data + loader + offline probe. no decode wiring, and the header ships with NO `delta`** —
 a calibrated bias is a later rung's output, and an artifact carrying an unmeasured one would ship an
@@ -85,14 +85,14 @@ unmeasured change.
 - **B-C1 (artifact sanity).** Build reports 0 unmapped placetypes. The self-check readback finds
   nodes for London/Manchester/Birmingham with nonzero dependent-locality mass. Artifact ≤ 2 MB.
 - **B-C2 (discrimination).** Median dependent-locality LIFT over the GB base rate, across the
-  parents of a held-out GB dep-loc sample, is **≥ 2.0×**. A lift near 1 means the census is not
+  parents of a held-out GB dep-loc sample, is **≥ 2.0×**. A lift near 1 means the census isn't
   conditional evidence at all and the rung closes NEGATIVE.
 - **B-C3 (marginal value over PIX1).** Of sampled GB dep-loc links whose (child, parent) misses the
   shipped pair index, **≥ 20%** have a census node with nonzero dependent-locality share. Near 0%
   would mean the census covers only what the index already covers, and the rung closes NEGATIVE.
 - **D-C4 (required disclosure rather than a pass/fail bar).** Report the census's dep-loc mass on the
   56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
-  London parent: **the census cannot discriminate at span level by construction.** That is the
+  London parent: **the census cannot discriminate at span level by construction.** That's the
   finding to state directly rather than to bury. It is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
@@ -109,8 +109,8 @@ covered parent — London, Manchester, Birmingham alike — reads share 100.0%, 
 mechanism.** The pre-registration exists to stop exactly the move of without output swapping in a
 friendlier statistic, so the miss stands in the record.
 
-The diagnosis identifies which statistic holds the information. A census node's evidence is
-not "what fraction of this parent's children are dependent localities", because by construction
+The diagnosis identifies which statistic holds the information. A census node's evidence isn't
+"what fraction of this parent's children are dependent localities", because by construction
 that fraction is all of them. It is **presence and magnitude across the parent population** — most localities have no such
 children at all and never enter the artifact.
 
@@ -146,7 +146,7 @@ admits a parent precisely because it has such a child. Every sampled parent was 
 census by construction. The reading (20,186 of 22,843 links miss the shipped pair index, and 97.1% of
 those misses have census parent coverage) is recorded as void rather than as a pass.
 
-The one fact in it that is not circular, because it concerns the other artifact: **the shipped pair
+The one fact in it that's not circular, because it concerns the other artifact: **the shipped pair
 index resolves only 2,657 of WOF's 22,843 GB dependent-locality links — 11.6%.** The tail this arc
 set out to cover is real and mostly uncovered.
 
@@ -154,7 +154,7 @@ set out to cover is real and mostly uncovered.
   tuples — HM Land Registry, a source the census never read — and measure the fraction with
   nonzero census dependent-locality mass, both unweighted and weighted by PPD row volume (the
   unit real queries arrive in). Bar: **≥ 20% unweighted**. Report the weighted figure alongside.
-  A large gap between the two is itself the finding about where the census does and does not speak.
+  A large gap between the two is itself the finding about where the census does and doesn't speak.
 
 **D-C4 (disclosure) confirmed as predicted.** All 56 law-1 confound rows share the London parent
 with the true positives, so the census has dependent-locality mass on 100% of them. The census
@@ -187,4 +187,4 @@ neighborhood records — coverage rather than fact, and the reader treats it as 
 **Not shipped in the weights package.** `placetype-census-gb.bin` is buildable via `mailwoman
 gazetteer census` and stays out of `neural-weights-en-gb/` until something consumes it — an
 un-wired 137 KB in every published tarball is dead weight, and shipping it would imply a
-mechanism that does not exist yet.
+mechanism that doesn't exist yet.

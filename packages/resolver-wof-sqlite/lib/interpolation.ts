@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * House-number interpolation: when the exact address-point tier misses, estimate the coordinate from tiger street-segment ranges by parity-aware range match and linear interpolation along the segment polyline.
+ * House-number interpolation: when the exact address-point tier misses,
+ * estimate the coordinate from tiger street-segment ranges by parity-aware range match
+ * and linear interpolation along the segment polyline.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -133,7 +135,7 @@ export class StreetInterpolator<
 	/**
 	 * Resources this instance opened.
 	 *
-	 * A caller-supplied connection is not in here, so disposal cannot reach it.
+	 * A caller-supplied connection isn't in here, so disposal cannot reach it.
 	 */
 	readonly #resources: DisposableStack
 	readonly #byPostcode:

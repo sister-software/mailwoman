@@ -2,29 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer anchor-lexicon`: build the gazetteer-anchor lexicon (knowledge-ladder rung
- *   3.2). One generated artifact, built only from codex, consumed by both the
- *   Python trainer (gazetteer_anchor.py) and the TS inference side, so the two matchers cannot
- *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
+ *   `mailwoman gazetteer anchor-lexicon`: build the gazetteer-anchor lexicon (knowledge-ladder rung 3.2).
  *
- *   The lexicon maps normalized surface forms → a candidate-tag bitmask: country=1, region=2,
- *   po_box=4, cedex=8, homograph=16 (set iff country∩region by construction). Two entry maps with
- *   different match rules (encoded as data so both consumers share them):
+ *   One generated artifact, built only from codex, consumed by both the Python trainer
+ *   (gazetteer_anchor.py) and the TS inference side, so the two matchers cannot drift
+ *   (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
+ *
+ *   The lexicon maps normalized surface forms → a candidate-tag bitmask: country=1,
+ *   region=2, po_box=4, cedex=8, homograph=16 (set iff country∩region by construction).
+ *   Two entry maps with different match rules (encoded as data so both consumers share them):
  *
  *   - `entries`: case-insensitive, keyed lowercase ("georgia", "costa rica", "timor-leste").
- *   - `code_entries`: exact-uppercase only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
- *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land
- *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
- *       titlecase).
+ *   - `code_entries`: exact-uppercase only ("CA", "GA", "IN", "USA"), because
+ *     "in"/"ca" as common lowercase words would fire everywhere.
+ *     Country/region surfaces ≤3 alphabetic chars land here. po_box/cedex designators
+ *     stay case-insensitive regardless of length ("Box 17" is titlecase).
  *
- *   The anchor supplies membership clues. The model decides every tag (model-first, see
- *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
- *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
+ *   The anchor supplies membership clues.
+ *   The model decides every tag (model-first, see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
+ *
+ *   A "Box" hit inside "Box Canyon Rd" is fine: the homograph/contrast training
+ *   teaches the model to read context.
  *
  *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
@@ -69,13 +73,17 @@ const isShortCode = (s: string): boolean => {
 
 const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
-		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")
-
-		const { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } =
-			await import("@mailwoman/codex/us")
-
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const {
+			codex: { wordNorm, wordNormLower },
+			country: { COUNTRY_LOOKUP },
+			us: { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION },
+			paths: { repoRootPathBuilder },
+		} = await allKeyed({
+			codex: import("@mailwoman/codex"),
+			country: import("@mailwoman/codex/country"),
+			us: import("@mailwoman/codex/us"),
+			paths: import("@mailwoman/core/paths"),
+		})
 
 		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json")
 

@@ -5,7 +5,7 @@
  * @file `mwdev_sources` — what data we hold, per country, per artifact.
  *
  *   The tests that matter are the ones about absence, because every one of them corresponds to a wrong conclusion
- *   somebody could draw from a row count: an extract with rows but no join tables reads as usable and is not. A country
+ *   somebody could draw from a row count: an extract with rows but no join tables reads as usable and isn't. A country
  *   asked for and missing must come back as a zero rather than as a missing key. And an unreadable file is a finding,
  *   never an exception that takes the whole census down with it.
  */
@@ -98,7 +98,7 @@ describe("censusArtifact", () => {
 	})
 
 	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", async () => {
-		// 395,544 PT postcodes in an extract with no ancestry table is not 395,544 usable triples.
+		// 395,544 PT postcodes in an extract with no ancestry table isn't 395,544 usable triples.
 		// This is the exact shape that made a real config declare PT unbuildable
 		// while the rows were sitting there.
 		const row = await censusArtifact(extract("postalcode-geonames-intl.db"))

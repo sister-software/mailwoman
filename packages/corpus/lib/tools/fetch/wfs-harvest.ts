@@ -4,31 +4,38 @@
 /**
  * The paging, manifest and resumption code that every paged WFS harvest shares.
  *
- * `./inspire-addresses.ts` owns what an INSPIRE Addresses service exposes — its capabilities, its
- * feature-type names and its GeoJSON pages. This module owns what a harvest of any paged WFS does
- * with those pages: it appends each one to the single file an adapter's `inputPath` points at,
- * records the page in a manifest beside it, and resumes from that manifest after an interrupted run.
+ * `./inspire-addresses.ts` owns what an INSPIRE Addresses service exposes —
+ * its capabilities, its feature-type names and its GeoJSON pages.
+ * This module owns what a harvest of any paged WFS does with those pages: it appends
+ * each one to the single file an adapter's `inputPath` points at, records the page in a
+ * manifest beside it, and resumes from that manifest after an interrupted run.
  *
- * One file rather than one file per page, because the adapters read one. `#ee/adapters/ads/adapter`
- * opens `opts.inputPath` as newline-delimited JSON and `#pl/adapters/emuia/adapter` opens it as one
- * markup stream, so a directory of pages reaches neither. The manifest therefore records each page's
- * byte range inside that file: `offset`, `bytes` and the sha256 of exactly those bytes. A range is
- * what makes a page verifiable after it has been concatenated into its neighbors, and what lets an
- * interrupted append be truncated back to a page boundary rather than discarding the harvest.
+ * One file rather than one file per page, because the adapters read one.
+ * `#ee/adapters/ads/adapter` opens `opts.inputPath` as newline-delimited JSON and
+ * `#pl/adapters/emuia/adapter` opens it as one markup stream, so a directory of pages reaches neither.
  *
- * Three properties of a WFS make this harder than reading pages until they run out, and each is
- * handled here rather than by each country's module:
+ * The manifest therefore records each page's byte range inside that file: `offset`,
+ * `bytes` and the sha256 of exactly those bytes.
+ * A range is what makes a page verifiable after it has been concatenated into its neighbors, and what
+ * lets an interrupted append be truncated back to a page boundary rather than discarding the harvest.
  *
- * 1. A service may ignore `startIndex` and answer every page with the first. `countWFSFeaturesByPaging`
- *    in `@mailwoman/core/api` refuses such a service by comparing two pages' leading feature. A
- *    harvest sees the same defect as two consecutive pages with equal bytes. It refuses that pair.
- * 2. A service's own `numberMatched` may be a per-request cap rather than a count. The caller states
- *    what its count is and where it came from, and {@linkcode PagedWFSHarvestOptions.featureCount}
- *    holds both. No count is written into this module, and a harvest with no usable count ends on
- *    the first page that returns no features.
- * 3. A page may return fewer features than `count` asks for. The next `startIndex` therefore advances
- *    by the features the service returned rather than by the page size, so a service that caps a page
- *    below the requested size is read whole instead of being read in strides that skip features.
+ * Three properties of a WFS make this harder than reading pages until they run out,
+ * and each is handled here rather than by each country's module:
+ *
+ * 1. A service may ignore `startIndex` and answer every page with the first.
+ *    `countWFSFeaturesByPaging` in `@mailwoman/core/api` refuses such a service
+ *    by comparing two pages' leading feature.
+ *    A harvest sees the same defect as two consecutive pages with equal bytes.
+ *    It refuses that pair.
+ * 2. A service's own `numberMatched` may be a per-request cap rather than a count.
+ *    The caller states what its count is and where it came from, and
+ *    {@linkcode PagedWFSHarvestOptions.featureCount} holds both.
+ *    No count is written into this module, and a harvest with no usable count
+ *    ends on the first page that returns no features.
+ * 3. A page may return fewer features than `count` asks for.
+ *    The next `startIndex` therefore advances by the features the service returned
+ *    rather than by the page size, so a service that caps a page below the requested
+ *    size is read whole instead of being read in strides that skip features.
  */
 
 import { APIClient, assertNoOGCServiceException, type CheckedWFSFeatureCount } from "@mailwoman/core/api"
@@ -114,8 +121,8 @@ export function rootCount(root: MarkupRoot, attribute: string): number | null {
 /**
  * The document's first element tag.
  *
- * @throws When the body holds no element tag, so a response that is not markup
- * reads as unreadable rather than as a page of no features.
+ * @throws When the body holds no element tag, so a response that's not markup reads
+ * as unreadable rather than as a page of no features.
  */
 export function readMarkupRoot(body: string, context: string): MarkupRoot {
 	const match = ROOT_OPENING_TAG.exec(body)
@@ -138,8 +145,8 @@ export function readMarkupRoot(body: string, context: string): MarkupRoot {
  * The content between a document's root tags.
  * For a `wfs:FeatureCollection` those are its members.
  *
- * @throws When the root element is not closed, so a truncated transfer reads as
- * unreadable rather than as a page of no features.
+ * @throws When the root element isn't closed, so a truncated transfer reads as unreadable
+ * rather than as a page of no features.
  */
 export function rootContent(body: string, root: MarkupRoot, context: string): string {
 	const closing = `</${root.name}>`
@@ -159,7 +166,7 @@ export function rootContent(body: string, root: MarkupRoot, context: string): st
  *
  * A harvest assembles several pages under one root element, so the first page's counts
  * and timestamp would describe the assembled file wrongly.
- * They are dropped and the manifest records them per page.
+ * They're dropped and the manifest records them per page.
  */
 const PAGE_ATTRIBUTES = /\s(?:[\w.-]+:)?(?:numberMatched|numberReturned|timeStamp|next|previous)\s*=\s*"[^"]*"/giu
 
@@ -254,7 +261,7 @@ export interface FeatureCountStatement {
 }
 
 /**
- * The count a service states, or no count and the reason there is none.
+ * The count a service states, or no count and the reason there's none.
  *
  * `readCheckedWFSFeatureCount` proves a reported `numberMatched` against a page of the same type.
  * That comparison catches a service whose count is smaller than one of its own pages.
@@ -366,7 +373,7 @@ export interface WFSHarvestManifest {
 	filename: string
 	page_size: number
 	/**
-	 * The service's own count where it states a usable one, and `null` where it does not.
+	 * The service's own count where it states a usable one, and `null` where it doesn't.
 	 */
 	feature_count: number | null
 	feature_count_source: string
@@ -591,7 +598,7 @@ async function reconcileHarvestFile(
 /**
  * What a caller knows about the request it is about to make before it has asked the service.
  *
- * The type name and the output format come from a capabilities document, so they are not here:
+ * The type name and the output format come from a capabilities document, so they're not here:
  * the point of this check is to answer whether a harvest is already current without sending a request.
  */
 export interface HarvestCurrencyExpectation {
@@ -711,9 +718,17 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 			return manifest
 		}
 
-		options.report?.(`  ${dataPath} hashes to ${digest} rather than ${manifest.sha256} — harvesting it again`)
+		options.report?.(
+			`  ${dataPath} hashes to ${digest} rather than ${manifest.sha256} — removing it and harvesting from the first page`
+		)
 
-		manifest = { ...manifest, complete: false, sha256: null }
+		// The reconcile step hashed the last page and matched the size, so the change
+		// sits in the header, an earlier page or the footer.
+		// The manifest records no digest for the header, so no prefix of the file can be
+		// proven intact, and the harvest starts over from an empty file.
+		await removePathIfPresent(dataPath)
+
+		manifest = emptyManifest(options)
 	}
 
 	const atPageCap = (): boolean => typeof options.maxPages === "number" && manifest.pages.length >= options.maxPages
@@ -804,7 +819,7 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 		)
 
 		// The service's own answer rather than the page size: a service that caps a page below the
-		// requested size would otherwise be read in strides that skip the features it did not return.
+		// requested size would otherwise be read in strides that skip the features it didn't return.
 		startIndex += page.numberReturned
 	}
 
@@ -871,7 +886,7 @@ export interface RunWFSHarvestOptions {
 	minRequestIntervalMs: number
 
 	/**
-	 * Runs the harvest against a client the caller does not own.
+	 * Runs the harvest against a client the caller doesn't own.
 	 */
 	harvest: (client: Pick<APIClient, "fetch">) => Promise<WFSHarvestManifest>
 

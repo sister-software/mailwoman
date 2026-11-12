@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { flag, flagDefaultOn, list, text } from "#release-kit/operations/inputs"
 import { stageWeightsCache } from "#release-kit/weights/stage-weights-cache"
 
@@ -61,7 +62,7 @@ export const stageWeightsCacheOperation = defineOperation({
 		})
 
 		// `outputSchema` serializes the report to JSON.
-		// That is the boundary where the two directory builders become strings.
+		// That's the boundary where the two directory builders become strings.
 		// `stageWeightsCache` returns them intact so a library caller derives an artifact
 		// path from `packageDir` rather than rebuilding the cache layout.
 		return {

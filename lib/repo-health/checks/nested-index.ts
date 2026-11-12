@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A module below a package's `lib/` takes the directory's name, so `lib/<dir>/index.ts` sits beside that directory as
- *   `lib/<dir>.ts`. The source roots beside `lib/` (`sdk/`, `tools/`, `cli/`) follow the same rule. The `"./*"` export pattern resolves `<package>/<dir>` to that file, keeping the specifier a
- *   directory index used to provide. The package root `lib/index.ts` is the one index a package keeps.
+ *   A module below a package's `lib/` takes the directory's name, so `lib/<dir>/index.ts`
+ *   sits beside that directory as `lib/<dir>.ts`.
  *
- *   A test of the index moves with it, so `lib/<dir>/index.test.ts` and `lib/<dir>/<dir>.test.ts` become
- *   `lib/<dir>.test.ts` and stay beside their module.
+ *   The source roots beside `lib/` (`sdk/`, `tools/`, `cli/`) follow the same rule.
+ *   The `"./*"` export pattern resolves `<package>/<dir>` to that file,
+ *   keeping the specifier a directory index used to provide.
  *
- *   A file-routed tree reverses the rule. The `mailwoman` CLI router reads `commands/<group>/index.js` as the command
- *   of a group that also has subcommands, so inside that tree a group's own module is `<group>/index.tsx`, and a
- *   `<group>.tsx` beside `<group>/` is reported instead.
+ *   The package root `lib/index.ts` is the one index a package keeps.
+ *
+ *   A test of the index moves with it, so `lib/<dir>/index.test.ts` and
+ *   `lib/<dir>/<dir>.test.ts` become `lib/<dir>.test.ts` and stay beside their module.
+ *
+ *   A file-routed tree reverses the rule.
+ *   The `mailwoman` CLI router reads `commands/<group>/index.js` as the command of
+ *   a group that also has subcommands, so inside that tree a group's own module is
+ *   `<group>/index.tsx`, and a `<group>.tsx` beside `<group>/` is reported instead.
  */
 
 import { DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -77,7 +83,7 @@ export function findNestedIndexes(trackedFiles: readonly string[]): NestedIndex[
 	const indexes: NestedIndex[] = []
 
 	for (const entry of byDirectory.values()) {
-		// A directory holding only index tests has no module to rename, so it is not reported here.
+		// A directory holding only index tests has no module to rename, so it isn't reported here.
 		if (entry.files.every((file) => TEST_SUFFIX.test(file.suffix))) continue
 
 		// A test with the directory's name covers the index when no module of that name sits beside it.

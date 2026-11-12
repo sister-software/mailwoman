@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Explains a decode by the terms of the objective the decoder maximized: for each decoded span, the
- *   best reading that labels the span differently and the score difference term by term, and for each
- *   prior, what it added to the decoded reading and which spans it changed.
+ *   Explains a decode by the terms of the objective the decoder maximized: for each decoded span,
+ *   the best reading that labels the span differently and the score difference term by term,
+ *   and for each prior, what it added to the decoded reading and which spans it changed.
  */
 
 import { addEmissionMatrix } from "#query-shape-prior"

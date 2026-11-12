@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row includes its place and
- *   region names inline.
+ *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows.
+ *   Each dump row includes its place and region names inline.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address/format"

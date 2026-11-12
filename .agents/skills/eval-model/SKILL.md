@@ -1,6 +1,6 @@
 ---
 name: eval-model
-description: Deciding whether a model change may ship. Release eligibility comes from a release verdict against registered quality requirements, alongside the promotion battery, run through the warm-engine mwdev tools. The six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
+description: Deciding whether a model change may ship. Release eligibility comes from a release verdict against registered quality requirements, alongside the promotion battery, run through the warm-engine mwdev tools. The six-address preset check is a SMOKE test for tag collapse and doesn't decide. Use before promoting any model, and read it before writing a probe script.
 ---
 
 ## Six addresses do not decide
@@ -9,14 +9,14 @@ This skill used to open with six US presets and a v0.5.3 baseline, under the hea
 It is kept below because it still catches what it was written to catch — a collapsed tagger, a
 tokenizer/model mismatch — and checking for those failures takes thirty seconds before any expensive run.
 
-It is not the shipping decision, and treating it as one ships a model graded on six US rows. Those rows lack truth
+It isn't the shipping decision, and treating it as one ships a model graded on six US rows. Those rows lack truth
 coordinates, a non-US locale, and geocoding, and they use a baseline from a model several majors old.
 
 ## What decides
 
 Release eligibility comes from a release verdict against registered quality requirements (policy adopted
 2026-10-20, #2763). Iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` states the procedure, and
-`docs/articles/developers/knowledge-base/address-intelligence/release-quality.mdx` explains the policy. The D-rule and its FR, GB and DE
+`docs/articles/explanation/data-and-model-quality.mdx` explains the policy to readers. The D-rule and its FR, GB and DE
 veto are removed. The procedure:
 
 1. **Freeze the evaluation sample** with `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts`. Then
@@ -31,7 +31,7 @@ veto are removed. The procedure:
    verdict as `insufficient_evidence`, reports attribution separately, and lists board regressions with their
    addresses as findings to investigate rather than vetoes.
 
-**Requirements are registered, evidence is not yet.** `release-requirements.v6.json` registers the country and
+**Requirements are registered, evidence isn't yet.** `release-requirements.v6.json` registers the country and
 capability minima, the objective and the confidence settings (`docs/records/evals/2026-10-20-release-requirements-v3.md`).
 A verdict stays `insufficient_evidence` until a frozen dataset with an overlap audit holds admitted rows for every
 required country. Report release eligibility exactly as the verdict states it. Until the first verdict runs on that
@@ -47,7 +47,7 @@ mwdev_arc candidate=<staged candidate root> \
           shape=from-scratch | fine-tune
 ```
 
-`candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/` rather than the package directory itself. A root that is not staged is refused rather than falling through to
+`candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/` rather than the package directory itself. A root that's not staged is refused rather than falling through to
 the installed weights — do not "fix" that refusal by pointing it one level deeper.
 
 The full protocol, and why the controls come first, is the `training-arc` skill. Read it before
@@ -69,12 +69,12 @@ scripts keep concluding that no output changed.
 | What does the corpus contain?                            | `mwdev_coverage`       |
 | Where did this span come from?                           | `mwdev_trace`          |
 
-`mwdev_run` with no arguments grades the full regression board in about a minute. That is the right
+`mwdev_run` with no arguments grades the full regression board in about a minute. That's the right
 first command, and it is cheaper than the script you were about to write.
 
 ## Read the result
 
-An aggregate is a summary of visible rows, never a replacement for them. `net -13` does not
+An aggregate is a summary of visible rows, never a replacement for them. `net -13` doesn't
 distinguish a destroyed venue from a boundary sliding one token, and those have different fixes.
 
 Read the per-span confidence before calling a flip a regression: the shipped model holds
@@ -125,7 +125,7 @@ done
 `grouper-audit` nodes appearing in the XML — the audit injecting where the model should cover is a
 coverage gap rather than a pass.
 
-A result short of total collapse is not a verdict. Six US rows cannot clear or condemn a model.
+A result short of total collapse isn't a verdict. Six US rows cannot clear or condemn a model.
 Take it to the board.
 
 ## Related

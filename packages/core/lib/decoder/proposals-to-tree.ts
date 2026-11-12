@@ -14,7 +14,7 @@ import type { ClassificationProposal, ClassificationProposalSource } from "#type
 /**
  * Builds a flat address tree with one root per proposal, sorted by start offset.
  *
- * The function does not rebuild containment, so every node has no children.
+ * The function doesn't rebuild containment, so every node has no children.
  */
 export function proposalsToTree(raw: string, proposals: readonly ClassificationProposal[]): AddressTree {
 	const roots: AddressNode[] = proposals.map((p) => ({
@@ -36,7 +36,7 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 /**
  * Converts each tree node to a proposal in depth-first order.
  *
- * Each span is a plain object with `start`, `end` and `body`, so the tokenization module is not loaded.
+ * Each span is a plain object with `start`, `end` and `body`, so the tokenization module isn't loaded.
  *
  * @param tree The parsed address tree.
  * @param source The source recorded on each proposal.

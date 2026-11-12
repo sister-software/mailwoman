@@ -69,7 +69,7 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 /**
  * Switch a device whose bridge supports UNMAP but whose kernel mode disables discard.
  *
- * The write does not survive a replug, so a caller that wants it permanent installs a udev rule as well.
+ * The write doesn't survive a replug, so a caller that wants it permanent installs a udev rule as well.
  */
 export async function enableUnmap(support: DiscardSupport): Promise<boolean> {
 	if (!support.provisioningModePath) return false

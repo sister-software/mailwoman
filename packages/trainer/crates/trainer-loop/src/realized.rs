@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 //! The rows a supervised run trained on, written for the realized-draws stage of the exposure report.
 //!
 //! The Python loop counted each consumed row with `exposure/report.py`'s `StageCounter` and wrote

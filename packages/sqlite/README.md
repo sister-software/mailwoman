@@ -44,7 +44,7 @@ const places = await db.selectFrom("places").selectAll().execute()
 
 `openBuiltClient` opens read-only by default. Its `{ write: true }` option checks
 the file's write permissions before opening it and rejects a sealed file with
-`SealedArtifactError`. A read-only open does not require that the file has
+`SealedArtifactError`. A read-only open doesn't require that the file has
 already been sealed.
 
 Use `using` even when the factory is asynchronous. The connection's

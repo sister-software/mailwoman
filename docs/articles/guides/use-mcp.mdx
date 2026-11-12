@@ -1,0 +1,152 @@
+---
+title: Use the Mailwoman MCP server
+description: Install the stdio MCP server, register it with a client, check it with one parse and one geocode call, and see which tools need local data.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Use the Mailwoman MCP server
+
+Use this procedure to give an MCP client, such as a coding assistant or an agent, Mailwoman's parse and geocode operations as tools. `@mailwoman/mcp` runs as a stdio server: the client starts it as a child process and exchanges messages over its standard input and output.
+
+## Prerequisites
+
+- Node.js 24 LTS or later.
+- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+
+Install the server with the parser packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/mcp@11.0.0
+```
+
+The MCP server loads the parser and the place resolver together, so its parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+npx mailwoman data pull candidate
+npx mailwoman data pull us --only us-dc
+```
+
+The output below was captured with local builds of these bundles that are newer than the 11.0.0 registry entries.
+
+## 1. Register the server with your client
+
+The server's command is `mailwoman-mcp`. Clients that read an `mcpServers` JSON configuration take an entry of this shape:
+
+```json
+{
+	"mcpServers": {
+		"mailwoman": {
+			"command": "npx",
+			"args": ["mailwoman-mcp"],
+			"env": { "MAILWOMAN_DATA_ROOT": "/home/you/mailwoman-data" }
+		}
+	}
+}
+```
+
+Set `MAILWOMAN_DATA_ROOT` to your data directory as an absolute path, because a client may start the server without your shell's environment. If the client starts the server outside the project where you installed it, give the full path to `node_modules/.bin/mailwoman-mcp` as `command`. Each client keeps this configuration in its own place, given in its documentation. The server was checked with the MCP TypeScript SDK client in step 2. No assistant's own configuration was tested.
+
+## 2. Check the server with one call
+
+Install the MCP TypeScript SDK and save this script as `mcp-check.ts`. It starts the server the way a client does, lists the tools, and calls the parse and geocode tools:
+
+```bash
+npm install @modelcontextprotocol/sdk@1.32.2
+```
+
+```ts
+import { Client } from "@modelcontextprotocol/sdk/client/index.js"
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js"
+
+// Pass the shell's environment, including MAILWOMAN_DATA_ROOT, to the server.
+const env: Record<string, string> = {}
+for (const [key, value] of Object.entries(process.env)) if (value != null) env[key] = value
+
+const transport = new StdioClientTransport({ command: "npx", args: ["mailwoman-mcp"], env, stderr: "ignore" })
+const client = new Client({ name: "mcp-check", version: "1.0.0" })
+
+await client.connect(transport)
+
+const { tools } = await client.listTools()
+console.log(`tools: ${tools.map((tool) => tool.name).join(", ")}`)
+
+for (const name of ["mailwoman_parse", "mailwoman_geocode"]) {
+	const result = CallToolResultSchema.parse(
+		await client.callTool({
+			name,
+			arguments: { text: "1600 Pennsylvania Avenue NW, Washington, DC 20500" },
+		})
+	)
+	console.log(`\n${name} isError: ${result.isError ?? false}`)
+	for (const part of result.content) if (part.type === "text") console.log(part.text)
+}
+
+await client.close()
+```
+
+The transport's `env` option takes string values only, so the loop copies each variable that has one. `CallToolResultSchema.parse` checks the tool result's shape and gives `result.content` its type.
+
+```bash
+node mcp-check.ts
+```
+
+The first line lists the nine tools:
+
+```text
+tools: mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export, mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_plausibility_check, mailwoman_filer_lookup, mailwoman_filer_family
+```
+
+Both calls return `isError: false`. The geocode call returns the same result object as `mailwoman geocode`. These are its first fields:
+
+```json
+{
+	"input": "1600 Pennsylvania Avenue NW, Washington, DC 20500",
+	"components": {
+		"region": "DC",
+		"locality": "Washington",
+		"postcode": "20500",
+		"street": "Pennsylvania Avenue NW",
+		"house_number": "1600"
+	},
+	"dropped_components": null,
+	"unfollowed_components": null,
+	"lat": 38.89767510742324,
+	"lon": -77.03654697024702,
+	"resolution_tier": "address_point",
+	"epistemic_status": "observed",
+	"uncertainty_m": 1,
+```
+
+The parse call returns the full parse pipeline result: the normalized text, query shape, locale, address kind (`structured_address` here), the tagged `tree` with character offsets, stage timings and `faults`. Both tools take their input as `text`. A call that passes another argument name, such as `address`, fails input validation with `isError: true`.
+
+## 3. Know which tools need local data
+
+If the server finds no gazetteer in the data root, the parse and geocode tools return `isError: true` with this message. The server process itself keeps running:
+
+```text
+✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.
+
+  Fastest path (worldwide resolution, population-first ranking, ~2.88 GB):
+    mailwoman data pull candidate
+```
+
+The full message ends with the server's own list of which tools need the gazetteer:
+
+| Tool                                                                                                             | Data it needs                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`                      | The gazetteer in the data root. `mailwoman_geocode` also uses address points for street addresses. |
+| `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup`, `mailwoman_filer_family` | No gazetteer. Each one takes a path to the layer database it reads.                                |
+
+The server's message leaves `mailwoman_plausibility_check` out of both groups. That tool takes optional `bdc_database_path` and `poi_database_path` arguments and reports no evidence for a layer it can't open. When it receives an `address` without a `point`, it geocodes the address. The documentation link in the published 11.0.0 message points to a page that's moved. The table above lists the same tool groups.
+
+`mailwoman_parse` also accepts `poi: true` to detect a point-of-interest request, such as a category or brand near a place. `mailwoman_overpass_export` builds an OverpassQL query string for such a request and never runs it.
+
+## Related
+
+- [Geocode a file of addresses](../tutorials/geocode-a-file.mdx) explains the fields of a geocode result.
+- [Inspect a parse](../tutorials/inspect-a-parse.mdx) explains the parse tree and its offsets.
+- [Data and locales](../reference/data-and-locales.mdx) lists the data bundles.

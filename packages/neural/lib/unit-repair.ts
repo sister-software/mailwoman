@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Secondary-unit regex repair pass over a decoded token sequence, run after decode and before
- *   `buildAddressTree` with the model untouched.
+ *   Secondary-unit regex repair pass over a decoded token sequence, run after decode
+ *   and before `buildAddressTree` with the model untouched.
  *
- *   The pass fires on explicit designators only, reclaims a span only when it is `O` or a
- *   `locality`/`dependent_locality` tag. It clears the unit tokens immediately flanking a
- *   repaired run.
+ *   The pass fires on explicit designators only, reclaims a span only when it is `O`
+ *   or a `locality`/`dependent_locality` tag.
+ *   It clears the unit tokens immediately flanking a repaired run.
  *
  *   Opt-in through `ParseOpts.unitRepair`.
  */
@@ -28,7 +28,7 @@ import {
 /**
  * A detected secondary-unit substring with its char range.
  *
- * Every pattern requires an explicit designator, so there is no `kind` split as in postcode-repair.
+ * Every pattern requires an explicit designator, so there's no `kind` split as in postcode-repair.
  */
 type UnitMatch = SpanMatch
 

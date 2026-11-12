@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build nz-localities` builds the NZ suburb/locality database from the
- *   linz-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution linz).
- *   Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
- *   `@mailwoman/resolver-wof-sqlite` peer.
+ *   `mailwoman gazetteer build nz-localities` builds the NZ suburb/locality database from
+ *   the linz-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution linz).
+ *
+ *   Sealed 0444.
+ *   The pipeline module is lazy-imported so `--help` never faults without the
+ *   optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -19,7 +21,8 @@ export const spec = {
 	options: {
 		csv: {
 			type: "string",
-			description: "LINZ-derived OA NZ countrywide CSV. Default <data-root>/openaddresses/extracted/nz/countrywide.csv",
+			description:
+				"LINZ-derived OA NZ countrywide CSV. Default <cache-root>/sources/openaddresses/extracted/nz/countrywide.csv",
 		},
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-nz-linz.db" },
 	},

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Cross-source threshold sweep. Resolve the sources once, then compare the Fellegi-Sunter
- *   baseline against the bundled GBT over a fine threshold sweep, scoring each arm on cross-source
- *   links, triple-source entities, total entities and phone corroboration.
+ *   Cross-source threshold sweep.
+ *
+ *   Resolve the sources once, then compare the Fellegi-Sunter baseline against the
+ *   bundled GBT over a fine threshold sweep, scoring each arm on cross-source links,
+ *   triple-source entities, total entities and phone corroboration.
  *
  *   Run: `mailwoman registry scorer-eval threshold-sweep [--cap 2000] [--state TX]
  *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
@@ -85,7 +87,7 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
  * Label-free precision proxy: does this cross-source entity have the same phone
  * in records from two different sources?
  *
- * Phone is not the join key, so a match is independent corroboration of one facility.
+ * Phone isn't the join key, so a match is independent corroboration of one facility.
  * Entities without phone numbers on two cross-source records are unknown.
  * Only checkable entities count.
  */

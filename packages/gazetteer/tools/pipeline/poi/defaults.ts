@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The POI build's tunable defaults, kept import-free so command specifications can interpolate them
- *   without loading DuckDB, the H3 library, or the resolver schema layer.
+ *   The POI build's tunable defaults, kept import-free so command specifications can
+ *   interpolate them without loading DuckDB, the H3 library, or the resolver schema layer.
  */
 
 /**

@@ -2,21 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures the cost of the §4 intent vocabulary. Stage 2.5 runs on every query. `deriveGeocodeRegister` in
- *   `geocode-core.ts` calls `classifyKindSync` on every geocode. `runPipeline` calls it on every parse. The cost
- *   of three new scorers therefore needs measurement.
+ *   Measures the cost of the §4 intent vocabulary.
  *
- *   The test makes two assertions. They measure different failure modes:
+ *   Stage 2.5 runs on every query.
+ *   `deriveGeocodeRegister` in `geocode-core.ts` calls `classifyKindSync` on every geocode.
  *
- *   1. **Growth** — the intent rules must stay linear in input length. All three are
- *       lexicon-lookup-cheap by construction (a bounded regex over the tail, a Set membership test
- *       per word, a length check that rejects anything over 30 characters before any of it runs), and
- *       the ratio is what proves that rather than the docstring saying so. A ratio assertion also
- *       survives a loaded runner in a way a millisecond budget does not.
- *   2. **Absolute overhead vs the pre-§4 scorer set** — the number the reader of ROAD_TO_V9 §4
- *       measures the cost of adding intent per query. The test uses the corpus register mix instead of a synthetic
- *       string. It asserts a ratio against the same replayed baseline as the invariance receipt. An absolute
- *       microsecond budget can flake. A doubling does not.
+ *   `runPipeline` calls it on every parse.
+ *   The cost of three new scorers therefore needs measurement.
+ *
+ *   The test makes two assertions.
+ *   They measure different failure modes:
+ *
+ *   1. **Growth** — the intent rules must stay linear in input length.
+ *      All three are lexicon-lookup-cheap by construction (a bounded regex over the tail, a Set membership
+ *      test per word, a length check that rejects anything over 30 characters before any of it runs),
+ *      and the ratio is what proves that rather than the docstring saying so.
+ *      A ratio assertion also survives a loaded runner in a way a millisecond budget doesn't.
+ *   2. **Absolute overhead vs the pre-§4 scorer set** — the number the reader of
+ *      ROAD_TO_V9 §4 measures the cost of adding intent per query.
+ *      The test uses the corpus register mix instead of a synthetic string.
+ *      It asserts a ratio against the same replayed baseline as the invariance receipt.
+ *      An absolute microsecond budget can flake.
+ *      A doubling doesn't.
  */
 
 import {
@@ -56,7 +63,7 @@ const TIMING_SAMPLES = 5
 const CAPS_RUN_UNIT = "Aa "
 
 function bestOf(run: () => void): number {
-	// Warm once so a cold JIT on the first measurement does not inflate the ratio.
+	// Warm once so a cold JIT on the first measurement doesn't inflate the ratio.
 	run()
 
 	let best = Number.POSITIVE_INFINITY
@@ -163,10 +170,10 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): v
 }
 
 /**
- * A realistic query mix: full addresses (the population that must not pay),
+ * A realistic query mix: full addresses (the population that mustn't pay),
  * bare toponyms, fragments, the intent shapes themselves.
  *
- * Shapes are precomputed — Stage 2.2 is not what is being measured.
+ * Shapes are precomputed — Stage 2.2 isn't what's being measured.
  */
 const QUERY_MIX = [
 	"350 5th Ave, New York, NY 10118",
@@ -240,7 +247,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	//
 	// The replaced 10 us bar was set when the baseline arm measured about 0.5 us.
 	// The arm now measures 3 to 9.5 us on the same code.
-	// That is why CI measured 10.382 and failed on an arm that runs no intent rule:
+	// That's why CI measured 10.382 and failed on an arm that runs no intent rule:
 	// the bar was calibrated against a machine this one no longer resembles.
 	//
 	// 25 us is 1.9x the highest reading and ~7x the quiet-machine cost, so an intent rule that grew an
@@ -251,7 +258,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	// A bar that survives this runner cannot also police microseconds.
 	// A calibration workload timed in the same process would slow alongside the intent cost.
 	// The ratio to that workload would stay steady on a slower machine.
-	// The team has filed that change and has not made it here.
+	// The team has filed that change and hasn't made it here.
 	expect(
 		perQueryIntentUs,
 		`Stage 2.5 cost ${perQueryIntentUs.toFixed(3)} us/query (baseline ${perQueryBaselineUs.toFixed(3)}, ` +

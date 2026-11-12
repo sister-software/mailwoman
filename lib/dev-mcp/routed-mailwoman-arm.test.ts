@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 import type { ResolvedWeights } from "@mailwoman/neural/weights"
 import {
 	type GauntletDeps,
@@ -55,7 +58,7 @@ function resolved(
 }
 
 function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwomanArmDeps {
-	// The arm under test drives `runOne`, so the gauntlet's own geocode/diagnoseParse must not run.
+	// The arm under test drives `runOne`, so the gauntlet's own geocode/diagnoseParse mustn't run.
 	// Typed throwing stubs make the test fail if either method runs.
 	const gauntlet: GauntletDeps = {
 		geocode: vi.fn(async () => {

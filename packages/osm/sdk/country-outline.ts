@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Whether a point lies inside a country's outline, fast enough to test every address point of a
- *   national extract.
+ *   Whether a point lies inside a country's outline, fast enough to test every
+ *   address point of a national extract.
  *
- *   A Geofabrik extract is clipped to a polygon drawn around the country with a margin, so it holds
- *   addresses on the far side of every land border: the China extract holds Zabaykalsk and
- *   Blagoveshchensk in Russia. The extract's own boundary relation can be incomplete in the file, so
- *   the outline comes from a separate source and this module tests points against it.
+ *   A Geofabrik extract is clipped to a polygon drawn around the country with a margin,
+ *   so it holds addresses on the far side of every land border: the China extract
+ *   holds Zabaykalsk and Blagoveshchensk in Russia.
+ *   The extract's own boundary relation can be incomplete in the file, so the outline
+ *   comes from a separate source and this module tests points against it.
  *
- *   A full country outline has tens of thousands of vertices, and a ray cast per point over twelve
- *   million points does not finish. The test grids the outline's bounding box. A cell that no edge of
- *   the outline crosses lies wholly inside or wholly outside, so the first point tested in it decides
- *   every later point. Only points in a cell an edge crosses take the exact ray cast.
+ *   A full country outline has tens of thousands of vertices, and a ray cast per
+ *   point over twelve million points doesn't finish.
+ *   The test grids the outline's bounding box.
+ *
+ *   A cell that no edge of the outline crosses lies wholly inside or wholly outside,
+ *   so the first point tested in it decides every later point.
+ *   Only points in a cell an edge crosses take the exact ray cast.
  */
 
 import type { ParsedGeometry } from "@mailwoman/spatial"
@@ -53,7 +57,7 @@ function markRing(ring: number[][], key: (lon: number, lat: number) => number, c
 /**
  * Returns a containment test for one `Polygon` or `MultiPolygon` outline.
  *
- * @throws when the geometry is not areal.
+ * @throws when the geometry isn't areal.
  */
 export function createOutlineContainment(geometry: ParsedGeometry): (lon: number, lat: number) => boolean {
 	const polygons =

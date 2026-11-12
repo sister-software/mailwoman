@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwdev_support`: what the training corpus held for each row's expected components, read from the
- *   support index written beside the corpus manifest.
+ *   `mwdev_support`: what the training corpus held for each row's expected components,
+ *   read from the support index written beside the corpus manifest.
  *
  *   An absent index is reported as unread with the command that writes it.
  *   A zero here is a count over the indexed train split rather than a guess.

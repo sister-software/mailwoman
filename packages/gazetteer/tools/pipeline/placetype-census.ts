@@ -2,25 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Hierarchy campaign R4c — build the PCN1 placetype census from the shipped WOF admin DB. Two
- *   pieces live here: {@link PLACETYPE_PROJECTION}, the executable form of the projection table in
- *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag. every placetype gets a
- *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children through that
- *   projection.
+ *   Hierarchy campaign R4c — build the PCN1 placetype census from the shipped WOF admin DB.
  *
- *   The census counts what the source can answer. `admin-global-priority.db` contains nine
- *   placetypes (locality, localadmin, neighborhood, borough, county, macrocounty, region,
- *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
- *   those. The projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by build recipe rather than by WOF's contents. This is coverage rather than fact (the
- *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
- *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
+ *   Two pieces live here: {@link PLACETYPE_PROJECTION}, the executable
+ *   form of the projection table in plan/reference/placetype-evidence.mdx
+ *   ("no placetype gets its own tag. every placetype gets a projection"), and
+ *   {@link buildPlacetypeCensus}, which counts each parent's children through that projection.
  *
- *   Inclusion rule: a parent enters the census only if it has at least one child projecting onto a
- *   tag other than `locality`. A node recording "this locality has 300 locality children" is true
- *   and useless. Every locality has those — and including them would inflate the artifact by two
- *   orders of magnitude for zero discriminative mass. The tag whose conditional prior this arc is
- *   about (`dependent_locality`) is exactly the one the rule keeps.
+ *   The census counts what the source can answer.
+ *   `admin-global-priority.db` contains nine placetypes (locality, localadmin,
+ *   neighborhood, borough, county, macrocounty, region, macroregion, country)
+ *   because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly those.
+ *
+ *   The projection table maps all 34 in the WOF vocabulary.
+ *   The other 25 are absent from the artifact by build recipe rather than by WOF's contents.
+ *
+ *   This is coverage rather than fact (the meaning-of-zero rule), and why the artifact
+ *   ships positive counts only and the reader treats a missing node as neutral.
+ *   `mailwoman gazetteer granularity` measures the difference.
+ *
+ *   Inclusion rule: a parent enters the census only if it has at least one child
+ *   projecting onto a tag other than `locality`.
+ *   A node recording "this locality has 300 locality children" is true and useless.
+ *
+ *   Every locality has those — and including them would inflate the artifact by
+ *   two orders of magnitude for zero discriminative mass.
+ *   The tag whose conditional prior this arc is about (`dependent_locality`)
+ *   is exactly the one the rule keeps.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -94,7 +102,7 @@ export const WOF_PLACETYPES = [
  * This applies to context-only placetypes: metroarea, timezone, plus out-of-grammar continent/ocean rows.
  *
  * It differs from a placetype missing from this map entirely.
- * That is an unmapped placetype the builder will refuse to count silently.
+ * That's an unmapped placetype the builder will refuse to count silently.
  *
  * `county`/`macrocounty` project onto `subregion` here, the US reading.
  * Ireland writes county as an address line ("Co. Kerry"), where the same rows project onto
@@ -147,7 +155,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	planet: null,
 	empire: null,
 	// `custom` is WOF's override for a locally-defined placetype.
-	// It names no fixed feature class, so no projection can be right for it —
+	// It identifies no fixed feature class, so no projection can be right for it —
 	// deliberately uncounted rather than guessed at.
 	custom: null,
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto one tag.
@@ -186,7 +194,7 @@ export interface PlacetypeCensusBuildResult {
 	/**
 	 * Placetypes seen in the source but absent from {@link PLACETYPE_PROJECTION}.
 	 *
-	 * A build that reports any of these is reading a source the projection table has not been extended for.
+	 * A build that reports any of these is reading a source the projection table hasn't been extended for.
 	 */
 	unmappedPlacetypes: string[]
 }

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the authority-designation route through `geocodeAddress` with mock dependencies and a fixture flood
- *   layer. The route must add at most one marker and leave the rest of the result unchanged.
+ *   Tests the authority-designation route through `geocodeAddress` with mock
+ *   dependencies and a fixture flood layer.
+ *
+ *   The route must add at most one marker and leave the rest of the result unchanged.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

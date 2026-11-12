@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Test/story mocks — a fake POI runtime, so the POI explorer exercises its full state machine with no
- *   network, db, model, or taxonomy load. The fake geocoder runtime is a public subpath, `map/fake-runtime`. The shapes are cast through
- *   `unknown` because the real runtimes expose far more surface than these hooks touch.
+ *   Test/story mocks — a fake POI runtime, so the POI explorer exercises its full
+ *   state machine with no network, db, model, or taxonomy load.
+ *
+ *   The fake geocoder runtime is a public subpath, `map/fake-runtime`.
+ *   The shapes are cast through `unknown` because the real runtimes expose far
+ *   more surface than these hooks touch.
  */
 
 import type { CategoryRecord, POILiveSearch, POIRuntime, TaxonomyLookup } from "@mailwoman/react"

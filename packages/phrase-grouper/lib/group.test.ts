@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Interface + per-rule unit tests for the rule-based grouper. The kryptonite-catalogue fixture test
- *   (operator's adversarial examples) lives in `kryptonite.test.ts`.
+ *   Interface + per-rule unit tests for the rule-based grouper.
+ *
+ *   The kryptonite-catalogue fixture test (operator's adversarial examples) lives in `kryptonite.test.ts`.
  */
 
 import type { PhraseGrouper, PhraseProposal } from "@mailwoman/core/pipeline"

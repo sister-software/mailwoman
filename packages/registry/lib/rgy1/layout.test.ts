@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Walks the committed fixture artifacts with a reader written from docs/rgy1.md and no other source, against
- *   test/fixtures/layout.json, so the writer and `Artifact.parse` agreeing with each other is never the only check.
+ *   Walks the committed fixture artifacts with a reader written from docs/rgy1.md
+ *   and no other source, against test/fixtures/layout.json, so the writer
+ *   and `Artifact.parse` agreeing with each other is never the only check.
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -14,7 +14,7 @@ export const WSS_SSA_CACHE_URL = "https://websoilsurvey.sc.egov.usda.gov/DSD/Dow
 
 /**
  * Returns the archive URL for one survey area at one version date, with the brackets
- * around the date percent-encoded because they are not valid in a URL path.
+ * around the date percent-encoded because they're not valid in a URL path.
  */
 export function surveyAreaArchiveURL(areaSymbol: string, versionDate: string): string {
 	return `${WSS_SSA_CACHE_URL}/wss_SSA_${areaSymbol}_%5B${versionDate}%5D.zip`

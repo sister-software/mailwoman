@@ -2,17 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The synthetic shared route of #2288's handoff. Every record and every rate here is invented for the
- *   example. The dossier describes two fictional buildings on one fictional parcel, and the scenario
- *   supplies a synthetic USD rate card and operating assumptions.
+ *   The synthetic shared route of #2288's handoff.
  *
- *   The construction figures are the handoff's: a USD 10,000.00 shared segment (400 m at USD 25.00), USD 1,000.00
- *   of mobilization, and branches of USD 2,000.00 for Building A (80 m) and USD 3,000.00 for Building B (120 m).
- *   Example Building A costs USD 13,000.00 on its own and Example Building B USD 14,000.00. The two together
- *   cost USD 16,000.00, and adding B to A costs USD 3,000.00.
+ *   Every record and every rate here is invented for the example.
+ *   The dossier describes two fictional buildings on one fictional parcel, and the
+ *   scenario supplies a synthetic USD rate card and operating assumptions.
  *
- *   The comparison cases, the financing flows and the transaction cases below are the synthetic example's
- *   options, shared by the module tests and the README example.
+ *   The construction figures are the handoff's: a USD 10,000.00 shared segment
+ *   (400 m at USD 25.00), USD 1,000.00 of mobilization, and branches of USD 2,000.00
+ *   for Building A (80 m) and USD 3,000.00 for Building B (120 m).
+ *   Example Building A costs USD 13,000.00 on its own and Example Building B USD 14,000.00.
+ *
+ *   The two together cost USD 16,000.00, and adding B to A costs USD 3,000.00.
+ *
+ *   The comparison cases, the financing flows and the transaction cases below are the
+ *   synthetic example's options, shared by the module tests and the README example.
  */
 
 import {

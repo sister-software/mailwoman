@@ -1,0 +1,59 @@
+---
+title: Packages and runtime
+description: Published 11.0.0 package roles, Node requirements, selected runtime variables, and measured local file sizes.
+role: reference
+source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, packages/neural-weights-en-us/package.json, packages/codex/package.json, packages/mailwoman/lib/env/schema.ts, packages/mailwoman/lib/resolver-backend.ts, packages/core/lib/env/schema.ts
+verified-with: mailwoman v11.0.0
+---
+
+# Packages and runtime
+
+This page describes the published 11.0.0 Node packages used by the first-parse exercise and the selected settings that affect their runtime. The package names and import surfaces below were checked against installed 11.0.0 manifests. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
+
+The [data and locales reference](./data-and-locales.mdx) lists bundle dependencies, model families, and scope classifications.
+The [CLI reference](./cli.mdx) lists the current checkout's generated command and flag tables with selected published 11.0.0 checks.
+
+## Packages to install directly
+
+| Package                                  | Purpose                                       | Public surface used here                                                                                         |
+| ---------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mailwoman@11.0.0`                       | CLI and parse pipeline                        | `mailwoman` and `mw` binaries; `mailwoman` for `createRuntimePipeline`; `mailwoman/geocode` for geocoding calls. |
+| `@mailwoman/neural@11.0.0`               | Neural classifier runtime                     | `@mailwoman/neural` for `NeuralAddressClassifier`.                                                               |
+| `@mailwoman/neural-weights-en-us@11.0.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.                            |
+| `@mailwoman/codex@11.0.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                                          |
+
+The [first-parse tutorial](../start.mdx) installs the first three packages and runs a complete parse. The [record-check guide](../guides/validate-records.mdx) also installs `@mailwoman/codex` for `isZipCode`. `mailwoman` declares `@mailwoman/neural` and `onnxruntime-node` as dependencies. The tutorial installs `@mailwoman/neural` explicitly because its script imports `NeuralAddressClassifier` from that package. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
+
+- Node.js 24 LTS or later. The published `mailwoman@11.0.0` manifest declares the range `^24.22.1 || >=26.12.1`.
+
+The manifest also declares `type: "module"`. The examples on these pages are TypeScript files that Node runs directly, from a project whose `package.json` sets `"type": "module"`. The en-US weights package version is 11.0.0, while its model card identifies the model inside it as version 10.8.0.
+
+## Runtime variables and path precedence
+
+| Variable                 | Published 11.0.0 behavior                                                                                                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAILWOMAN_DATA_ROOT`    | Root for downloaded data and runtime artifacts. The default is the platform data directory.                                                                                                                                                                                              |
+| `MAILWOMAN_CANDIDATE_DB` | Pins a candidate database path. Candidate resolution checks an explicit call option first, then this variable, then the active selection, then the conventional path under the data root. A pinned missing path returns no candidate path. The value `none` selects the WOF FTS backend. |
+| `MAILWOMAN_WOF_DB`       | Supplies WOF admin database paths when an explicit path list is absent. Otherwise the resolver uses its default WOF extract paths under the data root.                                                                                                                                   |
+| `MW_LOCALE`              | Supplies an environment locale hint to the runtime pipeline when a caller doesn't supply a locale.                                                                                                                                                                                       |
+| `MAILWOMAN_MODEL_CARD`   | Supplies a model-card path for the native server's health report.                                                                                                                                                                                                                        |
+
+`MAILWOMAN_DATA_ROOT` selects a directory, while `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` pin database paths. An explicit database path takes precedence over its environment variable where the published resolver accepts one. Check resolved paths with `mailwoman doctor`. The [release status](/product/limits-and-status) records the verification host's installed-data state. Check the data root of each deployment separately.
+
+## Checked file sizes
+
+These are local apparent file and directory sizes from the published 11.0.0 install used for the first-parse exercise. The measurement ran on Linux x86_64 with npm 11.19.1. `du -sb` measured each installed package directory separately, and `stat -c %s` measured the model file. The values describe the listed directory or file in this installation. They exclude the rest of `node_modules` and any downloaded geocoding database.
+
+| Installed path                                            | Method       |      Bytes |
+| --------------------------------------------------------- | ------------ | ---------: |
+| `node_modules/mailwoman`                                  | `du -sb`     | 17,969,301 |
+| `node_modules/@mailwoman/neural`                          | `du -sb`     |  1,649,870 |
+| `node_modules/@mailwoman/neural-weights-en-us`            | `du -sb`     | 65,018,687 |
+| `node_modules/@mailwoman/neural-weights-en-us/model.onnx` | `stat -c %s` | 29,829,842 |
+
+The total size of a clean install containing only the three first-parse packages hasn't been measured for this page. This page doesn't measure runtime memory, browser download size, or server capacity. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) reports one resident-memory measurement from one Linux host, and [Parse an address in a browser](../guides/parse-in-browser.mdx) reports one browser transfer size. The bundle registry's declared data estimates are on [limits and release status](/product/limits-and-status).
+
+## Published sources
+
+- [`mailwoman@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/package.json), [`@mailwoman/neural@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/package.json), [en-US weights manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/package.json), and [codex manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/package.json).
+- [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/resolver-backend.ts).

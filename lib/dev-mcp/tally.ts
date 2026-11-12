@@ -4,13 +4,16 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
- * This module tallies values across every result in a run. Each aggregate stays beside its measurement so the denominator remains visible.
+ * This module tallies values across every result in a run.
  *
- * A missing path tallies under {@link ABSENT_KEY}, so it remains in the denominator. An explicit `null` tallies as the string "null".
+ * Each aggregate stays beside its measurement so the denominator remains visible.
+ *
+ * A missing path tallies under {@link ABSENT_KEY}, so it remains in the denominator.
+ * An explicit `null` tallies as the string "null".
  */
 
 /**
- * The bucket for rows where the dotted path does not exist.
+ * The bucket for rows where the dotted path doesn't exist.
  * A leading tilde keeps it apart from real values.
  */
 export const ABSENT_KEY = "~absent"
@@ -41,7 +44,7 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 
 /**
  * Count distinct values at one dotted path across rows, tallying non-scalar values
- * under their JSON form so a structured field is not silently dropped.
+ * under their JSON form so a structured field isn't silently dropped.
  */
 export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<string, number> {
 	const counts: Record<string, number> = {}

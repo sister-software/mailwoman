@@ -20,7 +20,7 @@ import { type ClockLike, systemClock } from "#api/clock"
  *
  * Why not A token bucket: a token bucket with capacity C admits up to `C + rate * 1s`
  * requests within any sliding one-second window.
- * There is no non-zero capacity that honors a flat rate cap, only an average one.
+ * There's no non-zero capacity that honors a flat rate cap, only an average one.
  *
  * The bucket this replaced started full (a one-time startup burst, by design) but also
  * refilled to full after any idle gap, so a fresh burst recurred every time a crawl paused
@@ -82,7 +82,7 @@ export class RequestPacer {
 	 * the concurrency bug this pacer exists to close.
 	 * N callers invoked in the same synchronous turn would all read the same
 	 * stale `#nextGrantAt` before any of them updates it, compute the same wait,
-	 * They would all be released together instead of one interval apart.
+	 * They'd all be released together instead of one interval apart.
 	 *
 	 * `Math.max(#nextGrantAt, now)` is also required.
 	 * Without it, a long idle gap leaves `#nextGrantAt` stuck in the past, Every call

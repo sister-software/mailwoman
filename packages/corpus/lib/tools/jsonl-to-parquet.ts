@@ -4,13 +4,18 @@
 /**
  * Convert a jsonl of LabeledRow objects to a Parquet file matching the schema the corpus writes.
  *
- * DuckDB reproduces the PyArrow file's logical schema and column order. A PyArrow reader therefore sees an identical table.
- * The trainer reads Parquet by column name, so physical layout does not affect it.
+ * DuckDB reproduces the PyArrow file's logical schema and column order.
+ * A PyArrow reader therefore sees an identical table.
+ *
+ * The trainer reads Parquet by column name, so physical layout doesn't affect it.
  *
  * Schema: `PARQUET_COLUMNS` from `#parquet/schema`, the same list the native writer uses.
  *
- * Every row must contain the span triple. A row without it came from a producer that has not migrated.
- * The writer would silently drop the character-offset labels if it wrote that row. Fail loudly and report the row number.
+ * Every row must contain the span triple.
+ * A row without it came from a producer that's not migrated.
+ *
+ * The writer would silently drop the character-offset labels if it wrote that row.
+ * Fail loudly and report the row number.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"

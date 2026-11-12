@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Chilean designators: casilla, premise and sub-premise words, floors, number marks and Spanish relation
- *   words. The Correos Chile sheet on the UPU site shows `Casilla`, `Depto.`, `Piso`, `Edificio`, `S/N` and
- *   `Km.`. The remaining words take a dictionary entry as their source.
+ *   Chilean designators: casilla, premise and sub-premise words, floors,
+ *   number marks and Spanish relation words.
+ *
+ *   The Correos Chile sheet on the UPU site shows `Casilla`, `Depto.`, `Piso`, `Edificio`, `S/N` and `Km.`.
+ *   The remaining words take a dictionary entry as their source.
  *
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/chlEn.pdf UPU Chile postal address sheet (Correos Chile)}
  * @see {@link https://en.wiktionary.org/wiki/torre Wiktionary, torre}

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The default coarse-placer for the user-facing geocoding surfaces. The soft country prior runs by
- *   default: `geocodeAddress` and `createRuntimePipeline` load this bundled placer unless the caller
- *   passes their own `placeCountry` or opts out with `placeCountry: "none"`.
+ *   The default coarse-placer for the user-facing geocoding surfaces.
  *
- *   Loaded lazily and cached once per process, because the bundled-artifact read is async. Returns
- *   `null` (no prior, graceful) when the bundled model can't be resolved, so a default-on consumer
- *   degrades to plain resolution and does not throw.
+ *   The soft country prior runs by default: `geocodeAddress` and `createRuntimePipeline`
+ *   load this bundled placer unless the caller passes their own `placeCountry`
+ *   or opts out with `placeCountry: "none"`.
+ *
+ *   Loaded lazily and cached once per process, because the bundled-artifact read is async.
+ *   Returns `null` (no prior, graceful) when the bundled model can't be resolved,
+ *   so a default-on consumer degrades to plain resolution and doesn't throw.
  */
 
 import type { CoarsePlacer, CoarsePlacerOpts } from "@mailwoman/core/coarse-placer"
@@ -53,7 +55,7 @@ let cached: Promise<PlaceCountryFn | null> | null = null
 
 /**
  * Lazy-load and cache the shipped coarse-placer as a place-country function, returning `null`
- * when the model could not be loaded so the caller proceeds with no prior.
+ * when the model couldn't be loaded so the caller proceeds with no prior.
  */
 export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 	if (!cached) {

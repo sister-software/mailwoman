@@ -10,7 +10,7 @@ as a decoder-only fix on the v0.6.1 weights and re-ran the 4561-entry golden set
 whether the morphology prior, applied without any other change, suppresses v0.6.1's 1066 `dependent_locality` hallucinations
 without retraining.
 
-**Summary:** It does not. The mechanism is structurally correct (dep_loc hallucinations drop
+**Summary:** It doesn't. The mechanism is structurally correct (dep_loc hallucinations drop
 monotonically as the penalty is strengthened) but the model's overconfidence on
 synth-street-induced predictions is too high for any practical decoder-time bias to flip. The
 right deployment of Layer 1 is **alongside a v0.6.2 retrain** that adds O-tagged street slots

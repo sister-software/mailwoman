@@ -2,43 +2,57 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Typed schema for filer.db, the read-side identity crosswalk. filer.db has no coordinate references until ASR arrives.
- * `@mailwoman/core/layers` keys `layer_coverage` by H3 cell, so `filer_manifest` has its own single-row
- * identity/provenance record. {@link readFilerManifest} follows {@link readLayerManifest}'s requirement for exactly
- * one row. It uses a separate table and skips layer-specific tier, freshness-policy and spine-key validation.
+ * Typed schema for filer.db, the read-side identity crosswalk. filer.db has no
+ * coordinate references until ASR arrives.
  *
- * `filer_node` is the crosswalk's join surface, one row per identifier instance (an FRN, a Form 499 ID, a spin, a BDC
- * `provider_id`, a holding- or management-company name), keyed on the synthetic
- * `node_id = "${identifier_type}:${identifier_value}"`; `filer_edge` asserts a relationship between two nodes as
- * reported by one source at one vintage.
+ * `@mailwoman/core/layers` keys `layer_coverage` by H3 cell, so `filer_manifest` has
+ * its own single-row identity/provenance record. {@link readFilerManifest} follows
+ * {@link readLayerManifest}'s requirement for exactly one row.
+ * It uses a separate table and skips layer-specific tier, freshness-policy and spine-key validation.
  *
- * Every edge requires `valid_from`. The primary key is `(from_node_id, to_node_id, source, valid_from)`. Two sources
- * asserting the same relationship therefore produce separate rows. One source can also revise its assertion at a
- * later vintage. The key preserves both records and their provenance.
- * `FilerEdgeTable` has no `Generated<>`-wrapped columns, so `Insertable<FilerEdgeTable>` requires every field
- * including the nullable ones as an explicit `null`.
+ * `filer_node` is the crosswalk's join surface, one row per identifier instance
+ * (an FRN, a Form 499 ID, a spin, a BDC `provider_id`, a holding- or management-company name),
+ * keyed on the synthetic `node_id = "${identifier_type}:${identifier_value}"`; `filer_edge`
+ * asserts a relationship between two nodes as reported by one source at one vintage.
  *
- * The composite PK is a plain `unique` index rather than `without rowid` because `evidence` is an unbounded JSON
- * blob and the dominant read pattern is a range scan rather than a composite-key point probe. `filer_node`'s
- * single-column text PK stays a rowid table for the same lack of a second column to fold in.
+ * Every edge requires `valid_from`.
+ * The primary key is `(from_node_id, to_node_id, source, valid_from)`.
  *
- * Strength and kind are orthogonal columns: {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
- * and {@link FilerRelationship} defines what it means. `relationship` is not part of either primary key, because one
- * source asserting two relationship kinds for the same pair at the same instant is a contradiction to reject rather
- * than a plurality to store.
+ * Two sources asserting the same relationship therefore produce separate rows.
+ * One source can also revise its assertion at a later vintage.
  *
- * `filer_cluster` and `filer_family` are distinct rollups the spec keeps apart — an entity cluster (same filer under
- * different identifiers) and a corporate family (a holding/parent/subsidiary/management tree spanning several
- * filers) — see {@link FilerFamilyTable}.
+ * The key preserves both records and their provenance.
+ * `FilerEdgeTable` has no `Generated<>`-wrapped columns, so `Insertable<FilerEdgeTable>`
+ * requires every field including the nullable ones as an explicit `null`.
  *
- * `naming_node_id` stores a family fact's naming provenance. `family_id` is a canonicalized slug. Re-running the
- * canonicalizer at read time would make a sealed, versioned artifact depend on designation-list edits in another
- * workspace. The manifest does not pin the canonicalizer's identity, so such an edit could remove every display name.
+ * The composite PK is a plain `unique` index rather than `without rowid` because
+ * `evidence` is an unbounded JSON blob and the dominant read pattern is a range scan
+ * rather than a composite-key point probe.
+ * `filer_node`'s single-column text PK stays a rowid table for the same lack of a second column to fold in.
+ *
+ * Strength and kind are orthogonal columns: {@link FilerEdgeAssertion} grades how strongly
+ * an assertion is evidenced and {@link FilerRelationship} defines what it means.
+ * `relationship` isn't part of either primary key, because one source asserting two relationship kinds
+ * for the same pair at the same instant is a contradiction to reject rather than a plurality to store.
+ *
+ * `filer_cluster` and `filer_family` are distinct rollups the spec keeps apart —
+ * an entity cluster (same filer under different identifiers) and a corporate family
+ * (a holding/parent/subsidiary/management tree spanning several filers) — see {@link FilerFamilyTable}.
+ *
+ * `naming_node_id` stores a family fact's naming provenance.
+ * `family_id` is a canonicalized slug.
+ *
+ * Re-running the canonicalizer at read time would make a sealed, versioned artifact
+ * depend on designation-list edits in another workspace.
+ * The manifest doesn't pin the canonicalizer's identity, so such an edit could remove every display name.
  * See {@link FilerFamilyTable}.
  *
- * `filer_family` also stores `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
- * from authoritative rows. A check on `filer_edge` by itself would miss inferred family memberships written by Edgar.
- * `source` cannot represent the distinction because `edgar-exhibit-21` writes both grades under one source name.
+ * `filer_family` also stores `assertion` and `match_score`.
+ * Criterion 2 requires inferred rows to remain distinct from authoritative rows.
+ *
+ * A check on `filer_edge` by itself would miss inferred family memberships written by Edgar.
+ * `source` cannot represent the distinction because `edgar-exhibit-21` writes
+ * both grades under one source name.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -106,7 +120,7 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   an identity-continuity fact rather than ownership or control.
  *   The edge is directional in time (the source is always the older registration)
  *   and `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins it `false`,
- *   because a supersession chain is not evidence of a corporate family.
+ *   because a supersession chain isn't evidence of a corporate family.
  */
 export const FilerRelationship = {
 	SameEntity: "same_entity",
@@ -310,7 +324,7 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * a contradiction the composite `unique` index makes SQLite reject.
  *
  * A check constraint additionally rejects a blank/whitespace-only `relationship`,
- * which `not NULL` by itself does not.
+ * which `not NULL` by itself doesn't.
  *
  * Call {@link createFilerEdgeToNodeIndex} separately after bulk load for the reverse traversal path.
  */

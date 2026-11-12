@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Address layouts written as tagged templates in print order: interpolations are slots and the literal text
- *   between them is a connector. A node that renders no value drops out together with its connector.
- *   An interior connector renders only when both neighbors rendered. An edge connector binds to the one slot it touches.
+ *   Address layouts written as tagged templates in print order: interpolations are slots
+ *   and the literal text between them is a connector.
+ *
+ *   A node that renders no value drops out together with its connector.
+ *   An interior connector renders only when both neighbors rendered.
+ *   An edge connector binds to the one slot it touches.
  *
  *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
  */
@@ -16,6 +19,20 @@ import { COMPONENT_TAGS, type ComponentTag } from "#component"
  */
 export interface AddressSlot {
 	readonly tag: ComponentTag
+	/**
+	 * The text the slot renders when the value is absent, as Puerto Rico's postal
+	 * form writes `PR` after the town.
+	 *
+	 * The rendered text then counts as that tag, so a corpus row labels it.
+	 */
+	readonly fallback?: string
+}
+
+/**
+ * A slot for `tag` that renders `text` when the address gives no value, such as `fixedSlot("region", "PR")`.
+ */
+export function fixedSlot(tag: ComponentTag, text: string): AddressSlot {
+	return Object.freeze({ tag, fallback: text })
 }
 
 /**

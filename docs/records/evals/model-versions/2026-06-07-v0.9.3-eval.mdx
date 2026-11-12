@@ -17,7 +17,7 @@ vs v0.9.2 (both-order, without the region tail): native 82.1 → **83.6** (+1.5,
 
 The region tail is rendered correctly. A direct look at the synth confirms it: `Davoser Straße, Berlin, Berlin 14199` tokenizes to `Berlin/B-locality Berlin/B-region 14199/B-postcode`, region labeled and aligned. So the "rendering is broken" exception in the pre-registered check doesn't apply here.
 
-And it worked, for region. International region-match rose from 30.8% (anchor off) to 38.3% (anchor on): the model is now learning to segment a `City, Region Postcode` tail it never saw before. But international locality-match sat flat at 44.7% with the anchor on, against 83.6% native. The region tail taught region. It did not teach locality.
+And it worked, for region. International region-match rose from 30.8% (anchor off) to 38.3% (anchor on): the model is now learning to segment a `City, Region Postcode` tail it never saw before. But international locality-match sat flat at 44.7% with the anchor on, against 83.6% native. The region tail taught region. It didn't teach locality.
 
 PIP-containment (gold point inside the resolved polygon) confirms this is a real geographic miss rather than a name-match artifact: 57% on international order against 96% native. The model is placing international-order German localities in the wrong spot, and the anchor isn't rescuing it.
 
@@ -29,4 +29,4 @@ The diagnosis the check was built to reach: the corpus change is spent. Anchor-O
 
 ## Decision
 
-v0.9.3 is not promoted (the target metric, international locality, didn't move, and no other metric regressed). The next experiment is **v0.9.4 dual-injection** — pool the per-token anchor and also inject it at position 0, an order-independent global cue the locality can attend back to regardless of word order. One variable vs v0.9.3 (`model.inject_first_token=true`), same corpus, de-risked by `test_anchor_channel.py`. DeepSeek signed off the direction twice (2026-06-06 and again today). Its call cell: international anchor-ON locality must clear **55%** (a 10-point lift) to call dual-injection a win. If it still trails by more than 10pp, the always-on anchor design itself is the next thing to reconsider.
+v0.9.3 isn't promoted (the target metric, international locality, didn't move, and no other metric regressed). The next experiment is **v0.9.4 dual-injection** — pool the per-token anchor and also inject it at position 0, an order-independent global cue the locality can attend back to regardless of word order. One variable vs v0.9.3 (`model.inject_first_token=true`), same corpus, de-risked by `test_anchor_channel.py`. DeepSeek signed off the direction twice (2026-06-06 and again today). Its call cell: international anchor-ON locality must clear **55%** (a 10-point lift) to call dual-injection a win. If it still trails by more than 10pp, the always-on anchor design itself is the next thing to reconsider.

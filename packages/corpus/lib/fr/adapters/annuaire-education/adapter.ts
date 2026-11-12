@@ -2,87 +2,97 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `fr-annuaire-education-overseas`: the schools, education offices and guidance centers of France's
- * overseas jurisdictions, read from the education ministry's Annuaire de l'éducation.
+ * `fr-annuaire-education-overseas`: the schools, education offices and guidance centers of
+ * France's overseas jurisdictions, read from the education ministry's Annuaire de l'éducation.
  *
- * Input is JSON Lines, one record per line, as the OpenDataSoft export of the dataset
- * `fr-en-annuaire-education` on `data.education.gouv.fr` serves it at
- * `/api/explore/v2.1/catalog/datasets/fr-en-annuaire-education/exports/jsonl`. The export keys each
- * record by the dataset's field names (`nom_etablissement`, `adresse_1`, `adresse_2`, `adresse_3`,
- * `code_postal`, `nom_commune`, `code_departement`, `etat`), and {@linkcode AnnuaireRecord} declares
- * the ones this adapter reads. `fetchAnnuaireEducationOverseas` asks the export for the overseas
- * departments only, and the adapter filters again, so a whole-country export reads the same.
+ * Input is JSON Lines, one record per line, as the OpenDataSoft export of the
+ * dataset `fr-en-annuaire-education` on `data.education.gouv.fr` serves it
+ * at `/api/explore/v2.1/catalog/datasets/fr-en-annuaire-education/exports/jsonl`.
+ * The export keys each record by the dataset's field names (`nom_etablissement`, `adresse_1`,
+ * `adresse_2`, `adresse_3`, `code_postal`, `nom_commune`, `code_departement`, `etat`),
+ * and {@linkcode AnnuaireRecord} declares the ones this adapter reads.
+ *
+ * `fetchAnnuaireEducationOverseas` asks the export for the overseas departments only,
+ * and the adapter filters again, so a whole-country export reads the same.
  *
  * ## Which rows are read
  *
  * `code_departement` is the three-digit INSEE department: `971` to `976`, `977` Saint-Barthélemy,
- * `978` Saint-Martin, `986` Wallis-et-Futuna, `987` French Polynesia and `988` New Caledonia. The
- * jurisdiction is read through `COUNTRY_BY_INSEE_DEPARTMENT`, the table the BAN adapter uses. A
- * metropolitan row is refused under {@linkcode AnnuaireRefusal.NotOverseas}, and a row whose `etat`
- * is not `OUVERT` under {@linkcode AnnuaireRefusal.NotOpen}.
+ * `978` Saint-Martin, `986` Wallis-et-Futuna, `987` French Polynesia and `988` New Caledonia.
+ * The jurisdiction is read through `COUNTRY_BY_INSEE_DEPARTMENT`, the table the BAN adapter uses.
+ *
+ * A metropolitan row is refused under {@linkcode AnnuaireRefusal.NotOverseas},
+ * and a row whose `etat` isn't `OUVERT` under {@linkcode AnnuaireRefusal.NotOpen}.
  *
  * ## Organizations only
  *
- * Every record is an education establishment or office. One private school among the overseas
- * records writes its address care of one person (`Chez …`), which places it at that person's
- * premises, so a line opening with `Chez` refuses the row under {@linkcode AnnuaireRefusal.CareOfPerson}.
+ * Every record is an education establishment or office.
+ * One private school among the overseas records writes its address care of one person
+ * (`Chez …`), which places it at that person's premises, so a line opening with `Chez`
+ * refuses the row under {@linkcode AnnuaireRefusal.CareOfPerson}.
  *
  * ## The three address lines
  *
- * `adresse_1` is the street line, `adresse_2` a complement, and `adresse_3` La Poste's routing line
- * when the publisher filled it. The publisher writes them as people typed them, so each is read by
- * what it holds rather than by its position:
+ * `adresse_1` is the street line, `adresse_2` a complement, and `adresse_3` La
+ * Poste's routing line when the publisher filled it.
+ * The publisher writes them as people typed them, so each is read by what it holds
+ * rather than by its position:
  *
- * - **A street.** `5 rue Maréchal Leclerc` opens with a number and a street-type word, and
- *   `Rue Marcel Bonin` with the word only. The word becomes `street_prefix` through
- *   {@linkcode splitFrenchStreetType}, which reads the BAN reader's dictionary and then TRE-R35's
- *   street types for the words it lacks (`quartier`, `lotissement`, `ZAC`). A number of `0` is the
- *   publisher's placeholder for none. `Bourg` or `Village` written by itself refers to the
- *   settlement's center and is read as a place.
- * - **A district under a street.** A complement after a street line whose type word is not a
- *   thoroughfare (`Quartier d'Orléans`, `BOIS DE NEFLES`, `Plaine Adam`) refers to the district the
- *   street is in, and becomes `dependent_locality`.
+ * - **A street.** `5 rue Maréchal Leclerc` opens with a number and a street-type word,
+ *   and `Rue Marcel Bonin` with the word only.
+ *   The word becomes `street_prefix` through {@linkcode splitFrenchStreetType},
+ *   which reads the BAN reader's dictionary and then TRE-R35's street types for
+ *   the words it lacks (`quartier`, `lotissement`, `ZAC`).
+ *   A number of `0` is the publisher's placeholder for none.
+ *   `Bourg` or `Village` written by itself refers to the settlement's center and is read as a place.
+ * - **A district under a street.** A complement after a street line whose type word
+ *   isn't a thoroughfare (`Quartier d'Orléans`, `BOIS DE NEFLES`, `Plaine Adam`) refers
+ *   to the district the street is in, and becomes `dependent_locality`.
  * - **A place.** `MATA UTU`, `Gustavia`, `ATOLL DE TAKAROA` hold no number and no street-type word.
- *   In these jurisdictions such a line gives the village, quarter or lieu-dit the school stands in,
- *   so it becomes `dependent_locality`. A leading `Lieu-dit` is dropped from it.
- * - **A building or a landmark.** `Lycée de Poindimié`, `ENCEINTE ECOLE DE TIAPA`, `PARKING MEGA`
- *   locate the school by another site and are left out of the row, counted under
- *   {@linkcode AnnuaireTrim.LinePremiseDescriptor}.
- * - **A box.** `BP 4238`, `FAAA / BP 509`, `BP M2` becomes `po_box`, and the rest of the line is
- *   read again as one of the shapes above.
+ *   In these jurisdictions such a line gives the village, quarter or lieu-dit the
+ *   school stands in, so it becomes `dependent_locality`.
+ *   A leading `Lieu-dit` is dropped from it.
+ * - **A building or a landmark.** `Lycée de Poindimié`, `ENCEINTE ECOLE DE TIAPA`,
+ *   `PARKING MEGA` locate the school by another site and are left out of the row,
+ *   counted under {@linkcode AnnuaireTrim.LinePremiseDescriptor}.
+ * - **A box.** `BP 4238`, `FAAA / BP 509`, `BP M2` becomes `po_box`, and the rest
+ *   of the line is read again as one of the shapes above.
  *
- * French Polynesia's complement line opens with the publisher's archipelago code (`IDV TAHITI`,
- * `ISLV RAIATEA`, `TG RANGIROA`, `MARQ UA POU`, `AUSTRALES RIMATARA`), which is an administrative
- * grouping rather than part of the address, so a remainder opening with one is left out and counted
- * under {@linkcode AnnuaireTrim.ArchipelagoCode}.
+ * French Polynesia's complement line opens with the publisher's archipelago code
+ * (`IDV TAHITI`, `ISLV RAIATEA`, `TG RANGIROA`, `MARQ UA POU`, `AUSTRALES RIMATARA`),
+ * which is an administrative grouping rather than part of the address, so a remainder
+ * opening with one is left out and counted under {@linkcode AnnuaireTrim.ArchipelagoCode}.
  *
- * A digit the reading above cannot place refuses the row: `PK 4 APOOITI UTUROA RAIATEA` is a
- * kilometer point, `TSOUNDZOU 2` and `ZUP 1` are numbered quarters this reader cannot tell from a
- * building number. A complement that writes the same place as the street line or the locality is
- * dropped, and a row left with two different place lines is refused under
+ * A digit the reading above cannot place refuses the row: `PK 4 APOOITI UTUROA RAIATEA` is a kilometer
+ * point, `TSOUNDZOU 2` and `ZUP 1` are numbered quarters this reader cannot tell from a building number.
+ * A complement that writes the same place as the street line or the locality
+ * is dropped, and a row left with two different place lines is refused under
  * {@linkcode AnnuaireRefusal.PlaceLinesConflict} rather than guessing which one is the lieu-dit.
  *
- * The postcode, locality and `cedex` come from `adresse_3` where it parses as a routing line, and
- * from `code_postal` and `nom_commune` otherwise. The codex layout of every jurisdiction here except
- * French Polynesia prints `cedex`, so a Polynesian `CEDEX` row is refused as unrenderable.
+ * The postcode, locality and `cedex` come from `adresse_3` where it parses as a
+ * routing line, and from `code_postal` and `nom_commune` otherwise.
+ * The codex layout of every jurisdiction here except French Polynesia prints `cedex`,
+ * so a Polynesian `CEDEX` row is refused as unrenderable.
  *
  * ## Identity and license
  *
- * The row id is content-addressed over the aligned components, and a second record rendering the
- * same row is refused under {@linkcode AnnuaireRefusal.Duplicate}.
+ * The row id is content-addressed over the aligned components, and a second record
+ * rendering the same row is refused under {@linkcode AnnuaireRefusal.Duplicate}.
  *
  * The dataset's catalog record states `license` `Licence Ouverte v2.0 (Etalab)` with `license_url`
- * `http://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`, and gives
- * the publisher as `DNE - Ministère de l'Education Nationale`. That license states « Le « Réutilisateur
- * » est libre de réutiliser l'« Information » : […] de l'adapter, la modifier, l'extraire et la
- * transformer, pour créer des « Informations dérivées », des produits ou des services », « Sous
- * réserve de : mentionner la paternité de l'« Information » : sa source (au moins le nom du «
- * Concédant ») et la date de dernière mise à jour de l'« Information » réutilisée. » Every row
- * records the license, and {@linkcode FR_ANNUAIRE_EDUCATION_ATTRIBUTION} is the credit. The model
- * card completes it with the update date the fetch manifest records.
+ * `http://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`,
+ * and gives the publisher as `DNE - Ministère de l'Education Nationale`.
+ * That license states « Le « Réutilisateur » est libre de réutiliser l'« Information » :
+ * […] de l'adapter, la modifier, l'extraire et la transformer, pour créer des « Informations
+ * dérivées », des produits ou des services », « Sous réserve de : mentionner la paternité
+ * de l'« Information » : sa source (au moins le nom du « Concédant ») et la date de
+ * dernière mise à jour de l'« Information » réutilisée. » Every row records the license,
+ * and {@linkcode FR_ANNUAIRE_EDUCATION_ATTRIBUTION} is the credit.
  *
- * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts every refusal
- * under its reason in `opts.dropped`.
+ * The model card completes it with the update date the fetch manifest records.
+ *
+ * The adapter honors `opts.limit`, `opts.signal` and `opts.country`, and counts
+ * every refusal under its reason in `opts.dropped`.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -165,7 +175,7 @@ export interface AnnuaireRecord {
 }
 
 /**
- * Why a record did not become a row.
+ * Why a record didn't become a row.
  */
 export const AnnuaireRefusal = {
 	/**
@@ -173,7 +183,7 @@ export const AnnuaireRefusal = {
 	 */
 	NotOverseas: "row:not-overseas",
 	/**
-	 * The establishment's `etat` is not `OUVERT`.
+	 * The establishment's `etat` isn't `OUVERT`.
 	 */
 	NotOpen: "row:not-open",
 	/**
@@ -197,7 +207,7 @@ export const AnnuaireRefusal = {
 	 */
 	StreetNameAbsent: "row:street-name-absent",
 	/**
-	 * The two lines give two different places, and the record does not mark either one as the lieu-dit.
+	 * The two lines give two different places, and the record doesn't mark either one as the lieu-dit.
 	 */
 	PlaceLinesConflict: "row:place-lines-conflict",
 	/**
@@ -205,7 +215,7 @@ export const AnnuaireRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row holds.
+	 * The jurisdiction's layout doesn't print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -363,7 +373,7 @@ export function readAnnuaireLine(line: string): LineReading {
 		return { kind: "street", ...split, ...(house ? { house_number: house } : {}) }
 	}
 
-	// A number before a word that is not a street type still opens a street line.
+	// A number before a word that's not a street type still opens a street line.
 	if (numbered) {
 		if (/\d/u.test(body)) return { kind: "refused", reason: AnnuaireRefusal.DigitUnplaced }
 
@@ -439,7 +449,7 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 				if (components.street) {
 					const written = `${reading.street_prefix ?? ""} ${reading.street}`.trim()
 
-					// A complement under a street line that is not itself a thoroughfare gives the district the
+					// A complement under a street line that's not itself a thoroughfare gives the district the
 					// street is in: `Quartier d'Orléans`, `ZAC de Moudong`, `BOIS DE NEFLES`, `Plaine Adam`.
 					if (!reading.house_number && !isThoroughfareWord(reading.street_prefix ?? "")) {
 						places.push(written)

@@ -23,7 +23,7 @@
 #     NaN or dtype mismatch under bf16 on gfx1103.
 #   - Constant-LR schedule (per VERDICT_SMOKES.md): sustained peak LR for the smoke
 #     window so dual-loss divergence has a chance to surface visibly — v0.4.0's
-#     cw-only false-positive (cosine decay masked the destabilization) does not
+#     cw-only false-positive (cosine decay masked the destabilization) doesn't
 #     recur.
 #
 # Expected: ~2 minutes wall, ~50 steps, train_log.csv shows finite + decreasing loss.

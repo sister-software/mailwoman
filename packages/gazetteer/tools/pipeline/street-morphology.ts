@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Street-morphology FST artifact build (`mailwoman gazetteer build street-morphology`), the
- *   sealed `fst-street-morphology.bin` behind the street-context check.
+ *   Street-morphology FST artifact build (`mailwoman gazetteer build street-morphology`),
+ *   the sealed `fst-street-morphology.bin` behind the street-context check.
  *
- *   The street-type affix matcher is serialized once at build time in the existing FST wire format,
- *   so every runtime (node and web) deserializes the same sealed artifact. The per-process builds
- *   become the degrade path (`street-morphology-fst-loader.ts`).
+ *   The street-type affix matcher is serialized once at build time in the existing FST
+ *   wire format, so every runtime (node and web) deserializes the same sealed artifact.
+ *   The per-process builds become the degrade path (`street-morphology-fst-loader.ts`).
  *
  *   The artifact is locale-general: one binary covering every locale that ships a
- *   `street_types.txt`, with entries mapped to the synthetic `street_affix` placetype (see
- *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` for the trie construction and the
- *   `excludedVariants` region-abbreviation guard). Build provenance (locales ingested, counts, source dir)
- *   appears in the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` and
- *   `readFSTProvenanceWeb`.
+ *   `street_types.txt`, with entries mapped to the synthetic `street_affix` placetype
+ *   (see `resolver-wof-sqlite/street-morphology-fst-builder.ts` for the trie construction
+ *   and the `excludedVariants` region-abbreviation guard).
+ *   Build provenance (locales ingested, counts, source dir) appears in the artifact trailer
+ *   via `serializeFST`, readable back with `readFSTProvenance` and `readFSTProvenanceWeb`.
  *
- *   Output defaults to `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`, staged beside the
- *   per-locale FST dir (`fst-per-locale/`) rather than inside it. The artifact is written to a
- *   staging sibling, renamed into place (a previously sealed 0444 file cannot be overwritten in
- *   place), then sealed read-only.
+ *   Output defaults to `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`,
+ *   staged beside the per-locale FST dir (`fst-per-locale/`) rather than inside it.
+ *   The artifact is written to a staging sibling, renamed into place
+ *   (a previously sealed 0444 file cannot be overwritten in place), then sealed read-only.
  */
 
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"

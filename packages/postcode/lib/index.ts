@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Postcode evidence from a postcode's form: the spans in a line that have a postcode's shape, each country's
- *   postcode syntax, the countries a whole postcode's form implies, and the address systems that accept it.
+ *   Postcode evidence from a postcode's form: the spans in a line that have a postcode's shape,
+ *   each country's postcode syntax, the countries a whole postcode's form implies,
+ *   and the address systems that accept it.
  */
 
 export {

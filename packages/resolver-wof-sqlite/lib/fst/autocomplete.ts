@@ -3,17 +3,22 @@
 
 /**
  *   FST-based autocomplete, mailwoman vocabulary over `@mailwoman/ancestrie`'s generic algorithm.
- *   The prefix walk, BFS expansion, partial-last-token completion, per-branch capping and dedupe
- *   live in ancestrie's `autocomplete`. This module contributes only the storage adapter
- *   ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to mailwoman's suggestion
- *   shape (name, placetype, referential and encyclopedic scores, WOF ids).
  *
- *   The bytes do not migrate. The shipped artifacts are `FST\0` v1 to v5 (`fst-serialize.ts`), and
- *   ancestrie's entries are id-keyed with one record per id. An FST place row is per-(surface,
- *   place), because `crossCountryBranches` is a property of the surface, so the same wofID
- *   legitimately has different values under different aliases, so it cannot use IDs as keys.
- *   The matcher, both deserializers and serializer stay here. The algorithm is the
- *   half that migrated.
+ *   The prefix walk, BFS expansion, partial-last-token completion, per-branch capping
+ *   and dedupe live in ancestrie's `autocomplete`.
+ *   This module contributes only the storage adapter ({@link FSTMatcher} → `AncestrieReaderLike`)
+ *   and the mapping back to mailwoman's suggestion shape
+ *   (name, placetype, referential and encyclopedic scores, WOF ids).
+ *
+ *   The bytes do not migrate.
+ *   The shipped artifacts are `FST\0` v1 to v5 (`fst-serialize.ts`), and ancestrie's
+ *   entries are id-keyed with one record per id.
+ *
+ *   An FST place row is per-(surface, place), because `crossCountryBranches` is a
+ *   property of the surface, so the same wofID legitimately has different values
+ *   under different aliases, so it cannot use IDs as keys.
+ *   The matcher, both deserializers and serializer stay here.
+ *   The algorithm is the half that migrated.
  */
 
 import type {
@@ -68,7 +73,7 @@ export interface AutocompleteOpts {
 	 *
 	 * Off by default, because the CLI surfaces distinct same-name places such as
 	 * New York the city and New York the county.
-	 * A typeahead wants it on so the dropdown does not show four "New London"s.
+	 * A typeahead wants it on so the dropdown doesn't show four "New London"s.
 	 */
 	dedupeByName?: boolean
 }

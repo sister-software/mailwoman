@@ -3,9 +3,11 @@
 
 /**
  *   Token/label co-occurrence accounting shared by the corpus-stats builder (`tools/corpus-stats.ts`)
- *   and the recipe-output linter (`tools/lint/recipe-output/index.ts`). The two sides must agree on the bigram key
- *   format: the linter looks its recipe output's bigrams up in the stats file's `bigrams` table. A key built with
- *   a different separator never matches — which silently blanks the bigram-collision check.
+ *   and the recipe-output linter (`tools/lint/recipe-output/index.ts`).
+ *
+ *   The two sides must agree on the bigram key format: the linter looks its recipe
+ *   output's bigrams up in the stats file's `bigrams` table.
+ *   A key built with a different separator never matches — which silently blanks the bigram-collision check.
  */
 
 import { openParquetRowStream } from "#parquet/streams"

@@ -3,7 +3,9 @@
 
 /**
  *   `CopyButton` — a small presentational button that copies a string and shows a transient checkmark.
- *   Wraps {@link useClipboard}. Used by both explorers (OverpassQL copy, parse-JSON copy).
+ *
+ *   Wraps {@link useClipboard}.
+ *   Used by both explorers (OverpassQL copy, parse-JSON copy).
  */
 
 import type { ReactNode } from "react"

@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `capital` table: the capital-status reference included inside `candidate.db`, so an npm
- *   consumer who pulled the artifact can run `capital_tier` without the repo's
- *   `data/gazetteer/capitals-v1.json`, which published packages do not ship. One row per reference
- *   entry. The loader reads the whole table once into a `CapitalIndex` at session construction, so
- *   there is no per-probe query and no index beyond the rowid.
+ *   The `capital` table: the capital-status reference included inside `candidate.db`,
+ *   so an npm consumer who pulled the artifact can run `capital_tier` without the repo's
+ *   `data/gazetteer/capitals-v1.json`, which published packages do not ship.
  *
- *   `keys` holds the entry's folded name set as a JSON array, the name-membership conjunct that keeps
- *   the coordinate radius from promoting a capital's same-name neighbors (`capitals.ts`).
+ *   One row per reference entry.
+ *   The loader reads the whole table once into a `CapitalIndex` at session construction,
+ *   so there's no per-probe query and no index beyond the rowid.
+ *
+ *   `keys` holds the entry's folded name set as a JSON array, the name-membership conjunct that
+ *   keeps the coordinate radius from promoting a capital's same-name neighbors (`capitals.ts`).
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"

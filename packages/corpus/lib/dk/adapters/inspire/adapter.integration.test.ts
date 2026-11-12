@@ -170,7 +170,7 @@ describe("dk-inspire adapter against the fixture GeoPackage", () => {
 				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
-			// The message holds the address's own id and the column that could not be read,
+			// The message holds the address's own id and the column that couldn't be read,
 			// so the failure identifies the row rather than the run.
 		).rejects.toThrow(/address 0a3f5084-5ced-32b8-e044-0003ba298018 carries component_thoroughfarename=/)
 	})

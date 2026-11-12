@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman eval promote` (`promotion-eval.ts`): runs the standard eval battery against a
- *   candidate model, checks every number against an eval spec interface
- *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
- *   floor met and the mask-regression lock held. exit 1 = any miss. exit 2 = usage / lore-guard
- *   refusal. On `pass` it prints the pre-filled `eval ledger-append` command. The module
- *   narrates everything (provenance, battery legs, verdict lines). This wrapper only owns argv +
- *   the exit code.
+ *   `mailwoman eval promote` (`promotion-eval.ts`): runs the standard eval battery
+ *   against a candidate model, checks every number against an eval spec interface
+ *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`.
+ *
+ *   Exit 0 = every floor met and the mask-regression lock held. exit 1 = any
+ *   miss. exit 2 = usage / lore-guard refusal.
+ *   On `pass` it prints the pre-filled `eval ledger-append` command.
+ *
+ *   The module narrates everything (provenance, battery legs, verdict lines).
+ *   This wrapper only owns argv + the exit code.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

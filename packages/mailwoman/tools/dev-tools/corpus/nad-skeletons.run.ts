@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes the National Address Database skeletons the OA-skeleton recipes read: one OpenAddresses-layout
- *   zipped CSV per state in `NAD_SKELETON_STATES`, sampled uniformly and capped so no state dominates, and the
- *   ZIP-to-city tables for the `intersection` recipe's TIGER counties. It prints every state's address-shape
- *   measures. The table determines the state choice.
+ *   Writes the National Address Database skeletons the OA-skeleton recipes read: one
+ *   OpenAddresses-layout zipped CSV per state in `NAD_SKELETON_STATES`, sampled uniformly and capped
+ *   so no state dominates, and the ZIP-to-city tables for the `intersection` recipe's TIGER counties.
+ *
+ *   It prints every state's address-shape measures.
+ *   The table determines the state choice.
  *
  *   Usage:
  *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts \
@@ -44,7 +46,7 @@ if (!Number.isInteger(seed)) throw new Error(`--seed must be an integer, read ${
 const states = values.states ? values.states.split(",").map((s) => s.trim().toUpperCase()) : [...NAD_SKELETON_STATES]
 
 const summary = await buildNADSkeletons({
-	parquetPath: values.input ?? (await nadReleaseParquetPath(dataRootPath("corpus", "sources"))),
+	parquetPath: values.input ?? (await nadReleaseParquetPath()),
 	states,
 	cap,
 	seed,

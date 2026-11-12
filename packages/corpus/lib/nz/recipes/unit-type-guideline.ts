@@ -3,17 +3,18 @@
 
 /**
  *   The New Zealand leg of the `postal-unit-guideline` evaluation recipe, from NZ Post's
- *   {@linkcode NZ_UNIT_TYPE_RULES}: the Unit line (the Unit Type, then the Unit Identifier), the
- *   delivery line (street number and street), then the town and postcode.
+ *   {@linkcode NZ_UNIT_TYPE_RULES}: the Unit line (the Unit Type, then the Unit Identifier),
+ *   the delivery line (street number and street), then the town and postcode.
  *
- *   The leg writes Kiosk, Shop, Villa and Flat, in full or abbreviated. Apartment, Room, Suite and
- *   Unit and their abbreviations Apt, Rm and Ste are Pub 28 designators that `spliced-unit` and
- *   `synthetic-secondary` write, so they are left out. The slash form on the delivery line
- *   (`2/153 Grange Road`) is left out for the reason the Australian leg gives: training writes a
- *   slashed flat number inside `house_number`.
+ *   The leg writes Kiosk, Shop, Villa and Flat, in full or abbreviated.
+ *   Apartment, Room, Suite and Unit and their abbreviations Apt, Rm and Ste are Pub 28
+ *   designators that `spliced-unit` and `synthetic-secondary` write, so they're left out.
  *
- *   The town is the GeoNames place name, and the street name is another held-out place's name with
- *   the cited example's `Road` or `Street`.
+ *   The slash form on the delivery line (`2/153 Grange Road`) is left out for the reason
+ *   the Australian leg gives: training writes a slashed flat number inside `house_number`.
+ *
+ *   The town is the GeoNames place name, and the street name is another held-out
+ *   place's name with the cited example's `Road` or `Street`.
  */
 
 import { NZ_UNIT_TYPE_RULES } from "@mailwoman/codex/nz"

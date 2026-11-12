@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares two groups of trained runs on a battery report that `battery.run.ts` wrote, and writes `<out>.md` and
- *   `<out>.json`.
+ *   Compares two groups of trained runs on a battery report that `battery.run.ts` wrote,
+ *   and writes `<out>.md` and `<out>.json`.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/battery/groups.run.ts --report <report .json> \
  *     --a control=c42-i8,r43-i8,r44-i8 --b candidate=n42-i8,n43-i8 --out <prefix> [--min-country-rows 200]
  *
- *   Each run is an arm of the report. Group `a` is the comparison arm and group `b` the arm under test.
+ *   Each run is an arm of the report.
+ *   Group `a` is the comparison arm and group `b` the arm under test.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

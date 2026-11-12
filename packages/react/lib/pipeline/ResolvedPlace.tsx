@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ResolvedPlace` — the "Resolved place" detail list (name, placetype, WOF id, coords, score). Presentational.
+ *   `ResolvedPlace` — the "Resolved place" detail list (name, placetype, WOF id, coords, score).
+ *   Presentational.
  */
 
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -22,7 +23,7 @@ export function ResolvedPlace({ place }: ResolvedPlaceProps): ReactNode {
 				<dt>placetype</dt>
 				<dd>{place.placetype}</dd>
 				{place.tier ? (
-					// A street-tier answer is not a gazetteer place: it has a precision instead of an id.
+					// A street-tier answer isn't a gazetteer place: it has a precision instead of an id.
 					<>
 						<dt>precision</dt>
 						<dd>

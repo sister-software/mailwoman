@@ -4,9 +4,10 @@
 /**
  *   Order-preserving tuple projection.
  *
- *   Emits `Array<[tag, value]>` in source order (sorted by `start`). Preserves repeated tags (e.g.
- *   two `locality` entries for "Springfield, IL — sent from Springfield, MA"). Hierarchy is lost —
- *   use `decodeAsXML` when containment matters.
+ *   Emits `Array<[tag, value]>` in source order (sorted by `start`).
+ *   Preserves repeated tags (e.g. two `locality` entries for "Springfield, IL — sent from Springfield, MA").
+ *
+ *   Hierarchy is lost — use `decodeAsXML` when containment matters.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

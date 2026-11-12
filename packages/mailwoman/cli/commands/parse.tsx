@@ -8,6 +8,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
+import { allKeyed } from "@mailwoman/core/promises"
 import { RESOLVE_SWITCH_DEFAULTS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
@@ -41,8 +42,8 @@ const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
  * It distinguishes `parse` from `geocode`, because both commands take the same argument.
  */
 export const description =
-	"Label the parts of an address — house number, street, locality, postcode — without looking anything up: the " +
-	"output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then resolves those " +
+	"Label the parts of an address, such as house number, street, locality, and postcode, without looking anything " +
+	"up. The output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then resolves those " +
 	"parts against the gazetteer to produce a coordinate."
 
 const boundedInteger =
@@ -300,8 +301,10 @@ async function resolveWithCandidates(
 }
 
 async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
-	const { createWOFResolver } = await import("@mailwoman/resolver")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
+	const {
+		resolver: { createWOFResolver },
+		resolverBackend: { createResolverBackend, resolveCandidateDBPath },
+	} = await allKeyed({ resolver: import("@mailwoman/resolver"), resolverBackend: import("#resolver-backend") })
 
 	// `@mailwoman/resolver-wof-sqlite` is an optional peer, so it loads only when a resolver is needed.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
@@ -351,7 +354,7 @@ async function serializeTree(
 /**
  * Prints the degraded-mode banner to stderr when the weights guard declines the encoder.
  *
- * A failed encoder load is reported by `tryLoadNeural` instead, so that path does not print this banner.
+ * A failed encoder load is reported by `tryLoadNeural` instead, so that path doesn't print this banner.
  */
 function emitDegradedBanner(options: ParseOptions): void {
 	console.error(
@@ -434,7 +437,7 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
 /**
  * Parses with the runtime pipeline and serializes the tree in the requested format.
  *
- * A plain parse falls back to the structural pipeline when the encoder does not load.
+ * A plain parse falls back to the structural pipeline when the encoder doesn't load.
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
 	// `--resolve` resolves a fast-path tree too, so it keeps the full pipeline with its resolver.
@@ -463,7 +466,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	// The default country keeps a bare region abbreviation such as `NY` from resolving to a foreign homonym.
 	if (options.resolve) {
-		// An input routed to another script family's classifier does not inherit the locale's country.
+		// An input routed to another script family's classifier doesn't inherit the locale's country.
 		// An explicit `--default-country` still applies.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
@@ -538,7 +541,7 @@ function formatMs(ms: number): string {
  * Warmup iterations are excluded from the statistics so that JIT compilation and lazy imports settle first.
  */
 async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
-	// The weights guard does not run for benchmarks, so `--degraded` is handled here.
+	// The weights guard doesn't run for benchmarks, so `--degraded` is handled here.
 	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (
@@ -688,7 +691,7 @@ async function serializeResult(
 	return {
 		input: result.input,
 		normalized: result.normalized,
-		// Token classes are omitted because they are verbose.
+		// Token classes are omitted because they're verbose.
 		queryShape: { ...result.queryShape, tokenClasses: null },
 		locale: result.locale,
 		kind: result.kind,
@@ -711,9 +714,15 @@ async function runNeural(
 	options: ParseOptions,
 	policyOverrides: readonly PolicyOverride[]
 ): Promise<string> {
-	const { collectProposals, filterByPolicy, InMemoryPolicyRegistry } = await import("@mailwoman/core/policy")
-	const { proposalsToTree } = await import("@mailwoman/core/decoder")
-	const { createNeuralProposalClassifier, NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const {
+		policy: { collectProposals, filterByPolicy, InMemoryPolicyRegistry },
+		decoder: { proposalsToTree },
+		neural: { createNeuralProposalClassifier, NeuralAddressClassifier },
+	} = await allKeyed({
+		policy: import("@mailwoman/core/policy"),
+		decoder: import("@mailwoman/core/decoder"),
+		neural: import("@mailwoman/neural"),
+	})
 
 	// Each invocation parses one input, so the script route is chosen once up front.
 	const routedClassifier = await NeuralAddressClassifier.loadRoutedFromWeights({
@@ -723,7 +732,7 @@ async function runNeural(
 	})
 
 	const neural = await routedClassifier.forInput(input)
-	// An input routed to another script family does not inherit the locale's country.
+	// An input routed to another script family doesn't inherit the locale's country.
 	const routedAway = neural !== routedClassifier.primary
 
 	// Without policy overrides or resolution, the classifier's own projections keep containment nesting.

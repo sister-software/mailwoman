@@ -22,7 +22,7 @@ export interface RepoFixPlan {
 
 export interface RepoFix {
 	/**
-	 * The id of the check this repairs, so a diagnostic names its own action.
+	 * The id of the check this repairs, so a diagnostic identifies its own action.
 	 */
 	id: string
 	description: string

@@ -1,16 +1,15 @@
-# Performance: what moves parse throughput
+# Parse throughput
 
-> **In Node, one parse cannot overlap another in the same process. Only worker threads increase
-> throughput.**
-
-The two usual ways to speed up a parser are to batch the work or to run it concurrently. Neither one
-improves throughput in this system, and the reasons are not visible from the call site. This page
-records the measurements, so anyone considering a batch path can read them first.
+The two usual ways to speed up a parser are to batch the work or to run it concurrently. In Node, one
+parse cannot overlap another in the same process, so concurrency leaves throughput at 1.00x. A batched
+graph gives at most 1.12x (1.24x for fp32) and is slower above B=8. Worker threads are the route this
+page recommends. The reasons are not visible from the call site, so this page records the measurements for
+anyone considering a batch path.
 
 The measurements were taken on 2026-07-16 against the v6.3.0 model shipped at the time
-(`v264-country-softguard`, int8) on a 16-core machine. They still apply to the current 6.5.0. Every
-release since then has changed only the weights on the same int8 graph shape, and parse latency
-depends only on the graph shape.
+(`v264-country-softguard`, int8) on a 16-core machine. They also apply to 6.5.0: every release since
+then has changed only the weights on the same int8 graph shape, and parse latency depends on the graph
+shape rather than on the weights.
 
 ## Where the time goes
 
@@ -18,49 +17,47 @@ The ONNX forward pass takes **93.2% of a parse**. Tokenization, anchor/gazetteer
 lookups, Viterbi, and tree construction add up to 0.25 ms, under 7% of the wall clock.
 
 If the forward pass took no time, parsing would be 14.6x faster. Every change below tries to capture
-part of that 14.6x, and every one fails for the same reason: the forward pass never sits idle waiting
-on anything. ONNX Runtime already uses **8.02 cores on a single batch=1 inference**, so no idle
-capacity remains to use.
+part of that 14.6x. Concurrency fails because the JavaScript thread is blocked for the whole
+inference. A batched graph gains little because the cores are already busy: ONNX Runtime uses **8.02 cores on
+a single batch=1 inference**, so little idle capacity remains.
 
-## Concurrency yields no speedup
+## Concurrency
 
-Throughput stays at 1.00x from one worker to sixteen, for both parse and full geocode:
+Throughput stays at 1.00x from one concurrent parse to sixteen in the same process, for both parse and
+full geocode:
 
-| workers | parse addr/s | scaling |
-| ------: | -----------: | ------: |
-|       1 |        274.0 |   1.00x |
-|       2 |        276.1 |   1.01x |
-|       4 |        279.4 |   1.02x |
-|       8 |        274.6 |   1.00x |
-|      16 |        274.5 |   1.00x |
+| concurrent | parse addr/s | scaling |
+| ---------: | -----------: | ------: |
+|          1 |        274.0 |   1.00x |
+|          2 |        276.1 |   1.01x |
+|          4 |        279.4 |   1.02x |
+|          8 |        274.6 |   1.00x |
+|         16 |        274.5 |   1.00x |
 
 Two things block the thread, and either one by itself is enough to prevent overlap:
 
-- **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It does not hand work to the
+- **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It doesn't hand work to the
   libuv pool. `Promise.all` over N inferences runs them one after another, for any N.
 - **`node:sqlite` reads are synchronous** by design, because the resolution ladder is a sync
   interface (see `packages/sqlite/AGENTS.md`). The resolve half of a geocode also blocks.
 
-The measured scale stays between 1.00x and 1.02x at every worker count. Contention would produce a declining
-curve. A flat line
-means that no work overlapped.
+The measured scale stays between 1.00x and 1.02x at every concurrency level. Contention would produce
+a declining curve. A flat line means that no work overlapped.
 
-For this reason, `MAILWOMAN_BATCH_CONCURRENCY` was removed on 2026-07-16. It defaulted to 8 and was
-documented as a tuning knob, but it had never had any effect. Values of 1 and 16 produced the
-same throughput to three digits. `POST /v1/batch` is now an explicit sequential loop. It
-had always behaved that way in practice.
+`POST /v1/batch` therefore processes rows one at a time and has no concurrency setting. The
+`MAILWOMAN_BATCH_CONCURRENCY` setting it used to have (default 8) gave the same throughput to three
+digits at 1 and at 16, and was removed on 2026-07-16.
 
 The same change works in Python, where `intra_op=1` plus 16 threads gives 1.64x, because Python's ORT
-binding releases the GIL during a run. That result does not transfer to Node, because the Node
-binding behaves differently.
+binding releases the GIL during a run.
 
-## Batch requests do not improve throughput
+## Batched inference
 
 The obvious counterexample is [deepparse](https://deepparse.org/). It parses at 3.1 ms/addr
 batched against 32.5 ms sequential, a 10x improvement. That 10x comes from amortizing per-call Python
-and torch overhead. Mailwoman does not have that overhead, so batching has no such overhead to amortize. Our
-sequential path (~300 addr/s) already matches deepparse's batched throughput (320 addr/s) and has
-4.7x lower latency than its sequential path.
+and torch overhead. Mailwoman doesn't have that overhead. Our sequential path (~300 addr/s) already
+matches deepparse's batched throughput (320 addr/s), and its latency is about 9.9x lower than
+deepparse's sequential path (3.29 ms against 32.5 ms).
 
 These results were measured on the shipped int8 graph, re-exported so that it could accept a batch:
 
@@ -73,13 +70,14 @@ These results were measured on the shipped int8 graph, re-exported so that it co
 |    64 |    5.33 |  187.7 |   0.62x |
 
 Throughput peaks at 1.12x and then declines. fp32 behaves the same way (1.24x at B=4). Higher
-arithmetic intensity helps when cores sit idle waiting on memory, and our cores do not.
-Above B=8, the working set no longer fits, and throughput drops.
+arithmetic intensity helps when cores sit idle waiting on memory. Here ONNX Runtime already keeps about
+eight cores busy on one batch=1 inference. Above B=8, the working set no longer fits, and throughput
+drops.
 
 **On CPU, do not build a batching path.** On GPU or WebGPU the arithmetic intensity differs, and
-batching could plausibly help, but it is unmeasured. Treat that as an open question.
+batching could plausibly help, but it is unmeasured.
 
-## A `batch` axis that isn't
+## The ONNX export's batch dimension
 
 `export_onnx.py` requests a dynamic batch dimension on all eight inputs. Until 2026-07-16, the export
 silently ignored that request. The graph advertised `['batch', 'sequence']` on every input while its
@@ -104,19 +102,17 @@ dummy_batch=2  logits_out=['batch', 'sequence', 33]  B=4:OK  B=32:OK
 
 The code therefore calls `export_to_onnx(..., dummy_batch=2)`. The parameter defaults to 1, so the
 shipped artifact is unchanged, and the batch=2 re-export reproduces it byte-for-byte at 39.4 MB. The
-fix is in the tree because an artifact whose metadata advertises a capability it lacks misleads
-anyone who trusts that metadata. No batching feature is planned.
+fix is in the tree so that the artifact's metadata matches the batch sizes the graph accepts. No
+batching feature is planned.
 
 Do not try to reproduce the specialization with a small model. A minimal reshape repro exports
 correctly at batch=1 on torch 2.13. The failure comes from the transformers attention internals, so
 only the real checkpoint shows it.
 
-## What works
+## Worker threads
 
-Only moving work across a thread boundary increases throughput.
-
-[`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts)
-already does this. It is an async iterator over a `spliterator` worker pool. Each worker builds its
+[`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/stream.ts)
+moves work across a thread boundary. It is an async iterator over a `spliterator` worker pool. Each worker builds its
 own classifier and lookups, and results are yielded in completion order.
 
 Expect a modest gain. The geocoding path is memory- and I/O-bound on a shared multi-gigabyte database. A
@@ -127,7 +123,7 @@ database. Measure the worker count on your own data and machine instead of defau
 
 Parse-only threading has no database and no contention, so it should scale further than geocoding.
 That scaling is unmeasured. In Python, `intra_op=2` with 8 threads reached 1.57x. That result suggests
-the likely shape of the curve, but it is not a figure to quote.
+the likely shape of the curve, but it isn't a figure to quote.
 
 ## Before you re-measure
 
@@ -148,7 +144,7 @@ The probes live in `scratchpad/` on the branch that produced this page: `batch-e
 ## CLI cold start versus a warm stream
 
 Measure the installed executable directly when profiling Mailwoman, because `npx` adds package-runner startup time
-that is not part of `mw` itself. `hyperfine` repeats whole-process launches (process-cold, normally
+that's not part of `mw` itself. `hyperfine` repeats whole-process launches (process-cold, normally
 filesystem-cache-warm):
 
 ```bash
@@ -189,4 +185,4 @@ hyperfine --runs 5 \
   './node_modules/.bin/mw geocode --stdin < addresses.txt >/dev/null'
 ```
 
-`xargs -P` measures capacity under concurrency. That is a different quantity from warm sequential throughput.
+`xargs -P` measures capacity under concurrency. That's a different quantity from warm sequential throughput.

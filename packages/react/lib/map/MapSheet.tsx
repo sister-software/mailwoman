@@ -11,7 +11,7 @@ import { cx } from "#common/cx"
 
 export interface SheetCloseProps {
 	/**
-	 * What is being closed, for the accessible name: "Close the result", "Close About".
+	 * What's being closed, for the accessible name: "Close the result", "Close About".
 	 */
 	label: string
 	onClose: () => void

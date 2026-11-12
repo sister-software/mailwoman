@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The half of the search artifact a browser reads: the tokenizer and the payload shape. The build and the app call
- *   the same function over a name and a query, so a builder and a reader that tokenize differently never meet. This
- *   module reaches no filesystem, so an app bundles it without the build behind it.
+ *   The half of the search artifact a browser reads: the tokenizer and the payload shape.
+ *
+ *   The build and the app call the same function over a name and a query, so a builder
+ *   and a reader that tokenize differently never meet.
+ *   This module reaches no filesystem, so an app bundles it without the build behind it.
  */
 
 import type { BuildableBodyID } from "#bodies"
@@ -18,7 +20,7 @@ import type { BuildableBodyID } from "#bodies"
  * Every search result and deep link then frames a 4,000 km canyon as tightly as a 3 km crater.
  * `featureTypeCode` accompanies it for the same reason.
  *
- * A reader that has the feature should not need the tile to describe it.
+ * A reader that has the feature shouldn't need the tile to describe it.
  *
  * Both fields are null where the IAU gazetteer leaves them unset.
  * A null diameter represents missing data, while zero represents a measured value.
@@ -26,7 +28,7 @@ import type { BuildableBodyID } from "#bodies"
  * A type alias rather than an interface: the trie builder takes a `JSONValue`,
  * and only an alias has the implicit index signature that makes it assignable to one.
  */
-// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above. an interface does not assign to `JSONValue`
+// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above. an interface doesn't assign to `JSONValue`
 export type NomenclatureSearchPayload = {
 	id: string
 	body: BuildableBodyID

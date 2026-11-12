@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Selects WOF repositories for a sync before any network or filesystem work. The helpers are pure so
- *   tests can cover selection and rejection directly.
+ *   Selects WOF repositories for a sync before any network or filesystem work.
+ *
+ *   The helpers are pure so tests can cover selection and rejection directly.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -169,7 +170,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		)
 	}
 
-	// The selection keeps discovery order so that plans are stable, then appends clones discovery did not list.
+	// The selection keeps discovery order so that plans are stable, then appends clones discovery didn't list.
 	const named = options.all
 		? [...discovered]
 		: discovered.filter((entry) => wanted.has(entry.name) || cloned.includes(entry.name))

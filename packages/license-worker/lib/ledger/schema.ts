@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The ledger's table types, one interface per table in `migrations/` (0001_ledger.sql plus later renames). The migrations are the DDL by
- *   Wrangler's interface. these are the read/write interfaces Kysely types every query against. A column the migration
- *   defaults is `Generated`, so an insert may omit it and a select always includes it.
+ *   The ledger's table types, one interface per table in `migrations/` (0001_ledger.sql plus later renames).
+ *
+ *   The migrations are the DDL by Wrangler's interface. these are the read/write
+ *   interfaces Kysely types every query against.
+ *   A column the migration defaults is `Generated`, so an insert may omit it
+ *   and a select always includes it.
  */
 
 import type { LicenseIntent } from "@mailwoman/core/license/key"

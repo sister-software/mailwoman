@@ -2,20 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Postcode-centroid fills. They run on the staging db inside `buildPostcodeDatabase`, never against
- *   a shipped artifact (the sealed-artifact invariant).
+ *   Postcode-centroid fills.
  *
- *   Fill priority. Each pass touches only rows still `(0,0)`. A placeholder cannot overwrite a real coordinate.
+ *   They run on the staging db inside `buildPostcodeDatabase`, never against a
+ *   shipped artifact (the sealed-artifact invariant).
+ *
+ *   Fill priority.
+ *   Each pass touches only rows still `(0,0)`.
+ *
+ *   A placeholder cannot overwrite a real coordinate.
  *   Every pass is idempotent:
  *
- *   1. US only: Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for the
- *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
- *   2. GeoNames postal (`<CC>.txt`): the postcode's own centroid, string-matched, with WOF ids staying
- *      the eval keys. This corrects WOF mis-links like the Italian Milan to Liguria case. CC-BY 4.0, so
- *      any DB shipping these rows must attribute "GeoNames (CC-BY 4.0)".
+ *   1. US only: Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for
+ *      the PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
+ *   2. GeoNames postal (`<CC>.txt`): the postcode's own centroid, string-matched,
+ *      with WOF ids staying the eval keys.
+ *      This corrects WOF mis-links like the Italian Milan to Liguria case.
+ *      CC-BY 4.0, so any DB shipping these rows must attribute "GeoNames (CC-BY 4.0)".
  *   3. WOF admin parent-borrow: the parent locality's centroid from the admin gazetteer.
- *   4. GeoJSON-hierarchy ancestor fallback (county, then region) for parents the admin DB lacks
- *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
+ *   4. GeoJSON-hierarchy ancestor fallback (county, then region) for parents the
+ *      admin DB lacks (city-states like Berlin).
+ *      Every coordinate still comes from our own admin DB.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

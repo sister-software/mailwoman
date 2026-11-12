@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Evaluates a release-requirement specification against a held-out report from `heldout/per/country.run.ts`
- *   and writes the verdict JSON, printing a readable table.
+ *   Evaluates a release-requirement specification against a held-out report from
+ *   `heldout/per/country.run.ts` and writes the verdict JSON, printing a readable table.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/release/evaluate.run.ts \
  *     --spec <spec .json> --report <held-out report .json> --published-arm <arm> --candidate-arm <arm> \
  *     --out <verdict .json>
  *
- *   Each arm names one of the report's `arms` entries, a weights cache root. The en-us package's `model.onnx` under
- *   it (`releaseArmModelPath`) is hashed and compared with the specification's registered identity. A missing model
- *   file is refused.
+ *   Each arm identifies one of the report's `arms` entries, a weights cache root.
+ *   The en-us package's `model.onnx` under it (`releaseArmModelPath`) is hashed
+ *   and compared with the specification's registered identity.
+ *   A missing model file is refused.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

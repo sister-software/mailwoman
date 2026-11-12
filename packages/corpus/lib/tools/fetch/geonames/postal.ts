@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch the GeoNames per-country postal-code exports — the only source in this family that includes a
- *   `(postcode, locality, region)` triple with the names inline.
+ *   Fetch the GeoNames per-country postal-code exports — the only source in this family
+ *   that includes a `(postcode, locality, region)` triple with the names inline.
  *
- *   Source : https://download.geonames.org/export/zip/<CC>.zip
- *   License: CC-BY-4.0, attribute "GeoNames". Tier B.
+ *   Source : https://download.geonames.org/export/zip/<CC>.zip License: CC-BY-4.0, attribute "GeoNames".
+ *   Tier B.
  *
- *   GeoNames publishes roughly 80 countries. An absent country fails as one entry, never as the whole run.
+ *   GeoNames publishes roughly 80 countries.
+ *   An absent country fails as one entry, never as the whole run.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
@@ -18,7 +19,7 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
- * The status that means the source does not publish this country rather than that the transfer failed.
+ * The status that means the source doesn't publish this country rather than that the transfer failed.
  */
 const HTTP_NOT_FOUND = 404
 
@@ -35,7 +36,7 @@ const BASE_URL = "https://download.geonames.org/export/zip"
 /**
  * Countries fetched when the caller names none.
  *
- * Venezuela is deliberately absent because GeoNames does not publish it.
+ * Venezuela is deliberately absent because GeoNames doesn't publish it.
  */
 export const GEONAMES_POSTAL_DEFAULT_COUNTRIES = ["PT", "AU", "NZ", "IE", "BR", "ZA", "MX"] as const
 
@@ -79,7 +80,7 @@ interface GeonamesPostalManifest {
 
 /**
  * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/` with
- * a sibling `manifest.json`; a country the source does not cover is counted as failed
+ * a sibling `manifest.json`; a country the source doesn't cover is counted as failed
  * and recorded in `failedCodes` without stopping the rest.
  */
 export async function fetchGeonamesPostal(
@@ -114,7 +115,7 @@ export async function fetchGeonamesPostal(
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 
-			// A 404 means GeoNames does not publish the country at all, a different
+			// A 404 means GeoNames doesn't publish the country at all, a different
 			// finding from a failed transfer.
 			// Branch on the typed status rather than message prose.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {

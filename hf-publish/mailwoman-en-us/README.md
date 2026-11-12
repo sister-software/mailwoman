@@ -92,13 +92,13 @@ The model's training data comes from these sources:
 | Demo presets (6 canonical addresses)    | 6/6 correct |
 | Golden eval exact match (4,535 entries) | 17.0%       |
 
-Exact-match metrics cannot be compared across tokenizer versions. The v0.5.3 baseline (25.3%) used a different tokenizer. Most of the failures are schema mismatches, because the golden set expects Stage 3 tags that this model does not emit.
+Exact-match metrics cannot be compared across tokenizer versions. The v0.5.3 baseline (25.3%) used a different tokenizer. Most of the failures are schema mismatches, because the golden set expects Stage 3 tags that this model doesn't emit.
 
 ## Limitations
 
 - **English only**: the model was trained primarily on US addresses. French and other locales are planned.
-- **Non-Latin scripts**: the tokenizer handles CJK/Korean/Thai (0% byte-fallback), but the training data is mostly Latin. CJK address parsing has not been validated.
-- **Stage 2 schema**: the model does not decompose streets into prefix/suffix or emit unit/po_box/intersection. Stage 3 (v0.6.0) will add these.
+- **Non-Latin scripts**: the tokenizer handles CJK/Korean/Thai (0% byte-fallback), but the training data is mostly Latin. CJK address parsing hasn't been validated.
+- **Stage 2 schema**: the model doesn't decompose streets into prefix/suffix or emit unit/po_box/intersection. Stage 3 (v0.6.0) will add these.
 
 ## Citation
 

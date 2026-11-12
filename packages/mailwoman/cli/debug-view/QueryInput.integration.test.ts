@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests the query field's edits for given keys. `input.pty.test.ts` tests that a terminal delivers
- *   those keys.
+ *   Tests the query field's edits for given keys.
+ *
+ *   `input.pty.test.ts` tests that a terminal delivers those keys.
  */
 
 import type { Key } from "ink"

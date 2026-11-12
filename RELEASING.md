@@ -3,7 +3,7 @@
 Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus its full transitive
 `@mailwoman/*` runtime closure. `.release-it.json` declares that closure, and the list **must stay in sync with
 the dependency graph**. If `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
-dependency, that dependency must join the list. Otherwise the published `mailwoman` will not install, because
+dependency, that dependency must join the list. Otherwise the published `mailwoman` won't install, because
 npm returns 404 for the dependency. As of v7.0.0 the set is 12 workspaces: `mailwoman` + `@mailwoman/{core,
 normalize, query-shape, kind-classifier, locale-hint, phrase-grouper, codex, corpus, neural,
 neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, publish at one synced version
@@ -23,7 +23,7 @@ neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, 
 
 ## One-time setup
 
-1. **npm account with `@mailwoman` org access.** Create the org at <https://www.npmjs.com/org/create> if it does not exist (it is free for public packages). Add yourself as owner.
+1. **npm account with `@mailwoman` org access.** Create the org at <https://www.npmjs.com/org/create> if it doesn't exist (it is free for public packages). Add yourself as owner.
 2. **Local npm auth.** Run `npm login` once per machine. The token is stored in `~/.npmrc`, and release-it picks it up automatically.
 3. **GitHub auth.** Run `gh auth login` once. release-it uses the same token through `gh` for the GitHub release step.
 
@@ -42,7 +42,7 @@ yarn release --dry-run
 
 This will:
 
-1. Compile (`yarn compile`). The pre-flight **does not run tests**, because PR CI already ran them. See the
+1. Compile (`yarn compile`). The pre-flight **doesn't run tests**, because PR CI already ran them. See the
    `before:init` hook in `.release-it.json`.
 2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` through `yarn mwops release copy-weights` (paths from
    `release.config.json`).
@@ -73,9 +73,9 @@ GitHub, npm, R2 or HF, and an interrupted run cannot dirty the checkout.
 Both dry and real `mode=publish` runs must complete this audit before creating a tag, a GitHub
 release or publishing a package. After correcting any failed stage, repeat the complete
 `mode=publish, dry_run=true` run against the corrected commit and artifacts before the real dispatch.
-A successful `mode=prepare` run checks the version change. It does not audit the release tarballs.
+A successful `mode=prepare` run checks the version change. It doesn't audit the release tarballs.
 
-Publication still packs each workspace again and verifies its release plan. The preflight does not
+Publication still packs each workspace again and verifies its release plan. The preflight doesn't
 yet bind publication to its retained tarballs. That remaining work belongs to #1894.
 
 The two sources differ only in where the bytes come from:
@@ -103,8 +103,8 @@ yarn mwops release rights-audit
 The audit reads files and changes no state. It prints the source register's admissions and refusals,
 each published weights package's artifacts, digests, attribution and lineage, and any frozen training
 manifest. It then separates what the pass established from what it left open. Read the `Unresolved`
-section first. An empty `Unresolved` section means "this pass found no source it could not read" and does
-not mean the sources are cleared.
+section first. An empty `Unresolved` section means "this pass found no source it couldn't read" and doesn't
+mean the sources are cleared.
 
 The operation exits non-zero when a graph package's model card records a training corpus and the
 repository holds no frozen training manifest for it under `packages/corpus/data/training-manifests/`.
@@ -132,17 +132,17 @@ mailwoman release merge-admin <pr-number> [--method merge|squash|rebase]
 ```
 
 The command verifies that the local checkout is at the PR's head and runs the sub-second guards
-relevant to the changed paths. Today that is the board-pin check for anything touching the gauntlet
+relevant to the changed paths. Today that's the board-pin check for anything touching the gauntlet
 cases, loader, or pin test. It prints which checks ran and refuses to merge over a failure. A bare
-`gh pr merge --admin` is not a sanctioned route. The `Board Pins` workflow is the backstop. It runs
+`gh pr merge --admin` isn't a sanctioned route. The `Board Pins` workflow is the backstop. It runs
 path-filtered on PRs and main pushes, plus a daily audit that opens one deduplicated issue when a stale
 pin reaches `main`.
 
 ## Before you ship — the Gauntlet
 
 Before shipping a model (or any change that can move a coordinate), run the full-pipeline Gauntlet.
-It grades the assembled output (coordinate + tier) instead of per-tag F1. #566 showed why per-tag F1 is
-not enough.
+It grades the assembled output (coordinate + tier) instead of per-tag F1. #566 showed why per-tag F1 isn't
+enough.
 
 ```bash
 # Self-check on the shipped default (regression + metamorphic):
@@ -161,7 +161,7 @@ A non-zero exit blocks the ship. The Gauntlet has three layers (`mailwoman/eval-
 - **Held-out** draws a fresh BAN/FDIC sample and runs a candidate-vs-prod z-test. It blocks on
   generalization and wins when the layers conflict.
 
-The Gauntlet is not yet a `release-it` hook. Wire it into the release flow once the candidate path is
+The Gauntlet isn't yet a `release-it` hook. Wire it into the release flow once the candidate path is
 standardized.
 
 ## Release ordering for the license routes
@@ -236,7 +236,7 @@ model card's `training.tokenizer_version` is authoritative, and mismatches have 
 
 The resolver's gazetteer is the custom WOF SQLite DB at
 `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`. It is **never** an off-the-shelf geocode.earth dump.
-That dump uses different WOF ids (see `feedback-custom-wof-db-only`). It is not part of the npm/HF release and
+That dump uses different WOF ids (see `feedback-custom-wof-db-only`). It isn't part of the npm/HF release and
 ships separately as the demo's slim derivative, described in the next section. Rebuild it when you add
 locale coverage or fix a source-ingest bug (#1015). The artifact is sealed read-only (0444). Never mutate it
 in place. Rebuild it, verify it, then swap it.
@@ -301,7 +301,7 @@ build log (`data/gazetteer/wof-build-manifest.json`). Commit it with the swap.
 ### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
 
 The swap above updates the **full** local gazetteer, so every Node eval and the Node resolver see the new
-coverage immediately. The **browser demo does not.** It loads these tiers through the range VFS in
+coverage immediately. The **browser demo doesn't.** It loads these tiers through the range VFS in
 `@mailwoman/resolver-wof-wasm` (byte-range SQLite):
 
 - **Admin tier** (locality/region/postcode): the global **candidate table**, through `WofCandidateTableLookup`
@@ -431,7 +431,7 @@ evidence, and list every measured loss against the published model with its coun
 ### Fast-path cheat sheet (lessons from the v4.15.0 promotion)
 
 Read this first. Once you know the steps, a promotion takes about 30 minutes. It involves three independent
-backends, and a promotion is not done until all three agree on one md5:
+backends, and a promotion isn't done until all three agree on one md5:
 
 | backend       | tool                           | what it feeds                                                                 |
 | ------------- | ------------------------------ | ----------------------------------------------------------------------------- |
@@ -441,11 +441,11 @@ backends, and a promotion is not done until all three agree on one md5:
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Each of the following notes records a trap that once cost time:
 
-- **Only two model-card fields can break the pipeline**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance. Get it right, but a typo there will not break the publish. Move quickly on the prose and carefully on those two fields.
-- **The `neural-weights-fr-fr` card drifts silently.** release-it only touches `package.json`, so the card is not bumped automatically and its `version` and `model_lineage` go stale. It was once found stuck at `4.6.0` / "v1.5.0-fr-order" long after it had started shipping the en-us binary. Reconcile both fields in every model promotion.
-- **`release.config.json` drifts silently from the card, and copy-weights trusts the config.** The card decides _which_ model ships, but `release.config.json#weights.model` is the path that copy-weights.ts materializes from. The config must change in the same commit as the card (Step 1 items 2+3). When it does not, copy-weights materializes the superseded model and the Gauntlet grades it without warning. In #1024 the config lagged at v220 `a64ad2e6` while the v5.4.0 promotion shipped v230 `ea785a70`, which cost a bisect. **Guardrail (#1024):** the Gauntlet harness now asserts that the materialized `neural-weights-en-us/model.onnx` md5 equals the card's `files_md5["model.onnx"]` for the shipped default, and fails on a mismatch. The Gauntlet is the release `before:release` step, so a drifted config can no longer ship. #1005 fixed the dev-weights-symlink form of the same problem, and #1024 fixed the release-config form.
+- **Only two model-card fields can break the pipeline**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance. Get it right, but a typo there won't break the publish. Move quickly on the prose and carefully on those two fields.
+- **The `neural-weights-fr-fr` card drifts silently.** release-it only touches `package.json`, so the card isn't bumped automatically and its `version` and `model_lineage` go stale. It was once found stuck at `4.6.0` / "v1.5.0-fr-order" long after it had started shipping the en-us binary. Reconcile both fields in every model promotion.
+- **`release.config.json` drifts silently from the card, and copy-weights trusts the config.** The card decides _which_ model ships, but `release.config.json#weights.model` is the path that copy-weights.ts materializes from. The config must change in the same commit as the card (Step 1 items 2+3). When it doesn't, copy-weights materializes the superseded model and the Gauntlet grades it without warning. In #1024 the config lagged at v220 `a64ad2e6` while the v5.4.0 promotion shipped v230 `ea785a70`, which cost a bisect. **Guardrail (#1024):** the Gauntlet harness now asserts that the materialized `neural-weights-en-us/model.onnx` md5 equals the card's `files_md5["model.onnx"]` for the shipped default, and fails on a mismatch. The Gauntlet is the release `before:release` step, so a drifted config can no longer ship. #1005 fixed the dev-weights-symlink form of the same problem, and #1024 fixed the release-config form.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0), so you do not need to set it lower or re-run to check. A promotion eval that needs a lower floor gets a **new eval file** with a stated `$revision_*` reason, so floors never drift silently. The full promotion eval takes ~12–15 min, so set the floors correctly the first time.
-- **The R2 demo repoint copies the prior files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-public-bucket.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
+- **The R2 demo repoint copies the prior files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-public-bucket.run.ts --src` once. That's ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
 - **The browser release set serves `encoder.onnx` plus `embeddings-hot.bin`.** From 10.1.0 the browser reads the embedding table by range from `embeddings-hot.bin` (`splitEmbeddings: true` in `releases.json`) in place of the table inside `model.onnx`, and the runner imports `onnxruntime-web/wasm`, because the asyncify wasm exceeds the Workers 25 MiB asset cap. The `.bin` objects are stored gzip on R2, and the edge cache holds identity copies until a purge or a `max-age` expiry.
 - **The npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version, but `npm pack` returns 404 and a raw tarball `curl` returns a small error JSON. That behavior comes from CDN propagation, and the publish succeeded. In the meantime, verify through `npm view … dist.unpackedSize` (a code-only package is <1 MB, and a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Run `npm pack` again once the CDN catches up.
 - **Canonical artifact paths:** model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`. Tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`. FST → `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`). Postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`. Gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json`. The promotion eval ran against this repo copy, so use it instead of the prior bucket's copy.
@@ -468,7 +468,7 @@ because it will collide with npm.
 
 ### Step 1 — promotion is a model-card REWRITE rather than a relabel
 
-When the model you are shipping is not the current default, the repo still describes the old model. Make
+When the model you're shipping isn't the current default, the repo still describes the old model. Make
 these updates in `main` before staging anything:
 
 1. Place the int8 in the canonical dir: `cp <staged>/model.onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the promotion eval or the postmortem.
@@ -521,13 +521,13 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.
 set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <src>
 ```
 
-The flag list above does not define what a release must stage, and this prose has gone stale before.
+The flag list above doesn't define what a release must stage, and this prose has gone stale before.
 After staging, run `yarn release:preflight --source hf` (see the preflight section above). It derives the
-required object set from the weights packages' own `files` arrays and lists every object that is not
+required object set from the weights packages' own `files` arrays and lists every object that's not
 readable, so an incomplete staging fails locally instead of wasting a publish dispatch.
 
 Pass `--postcodes` + `--polygons` to the HF script too. Otherwise its `releases.json` gets `hasAnchor:false`
-/`hasPolygons:false`, because it probes R2 for them and R2 is not staged yet. `--pair-indexes`
+/`hasPolygons:false`, because it probes R2 for them and R2 isn't staged yet. `--pair-indexes`
 (placetype-pair-prior arc, Task 8) is country-specific by design. Omit it entirely for a release where no
 locale ships a pair index. Today `en-gb` (`pair-index-gb.bin`) and `en-nz` (`pair-index-nz.bin`) ship one,
 driven by `release.config.json`'s `softFeed.pairIndexByCountry`. (`en-nz` ships no postcode binary, because no
@@ -538,7 +538,7 @@ WOF NZ postcode extract exists yet. See `neural-weights-en-nz/model-card.json`'s
 `@mailwoman/neural-weights-cjk` ships `model.onnx` + `char-vocab.json` and no tokenizer. Its graph has the same
 basename as the Latin base's graph but different bytes, so it is never staged into `en-us/<version>/`.
 `--char-vocab` selects the family layout, the directory is `<locale>/<version>` with the family's card version,
-and no `releases.json` entry is written, because the demo does not serve it.
+and no `releases.json` entry is written, because the demo doesn't serve it.
 
 ```bash
 HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<CJK CARD VERSION> \
@@ -558,7 +558,7 @@ Four FST binaries in `$MAILWOMAN_DATA_ROOT/db/wof/` predate the `FST_LOCALES` re
 **no code in the tree can rebuild them.** `mailwoman gazetteer build fst` throws on any locale missing
 from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output template
 (`fst-<locale>.bin`) cannot express the global file's name. `mailwoman gazetteer verify` reports them as
-`NO BUILDER — … has no FST_LOCALES entry`. That row is the intended signal and should not be silenced.
+`NO BUILDER — … has no FST_LOCALES entry`. That row is the intended signal and shouldn't be silenced.
 
 - **`fst-global-priority.bin` was retired on 2026-08-06. Do not stage it, and do not re-publish it.**
   No code in the tree loads it. The only in-tree reference is the freshness inventory
@@ -570,10 +570,10 @@ from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output t
   bucket. The 317 MB orphan with a 2026-05-28 build stamp is harmless, so this cleanup is a
   cleanup and never a release blocker.
 - **`fst-{ja-jp,zh-cn,ko-kr}.bin` are frozen and stay published.** They have the same no-builder status,
-  but they are the only CJK gazetteer artifacts that exist, and `hf-publish/mailwoman-wof-gazetteer/README.md`
-  documents them (ja-JP 13.0 MB, ko-KR 7.1 MB, zh-CN 92.5 MB). They are **frozen at their 2026-05-28 build**
+  but they're the only CJK gazetteer artifacts that exist, and `hf-publish/mailwoman-wof-gazetteer/README.md`
+  documents them (ja-JP 13.0 MB, ko-KR 7.1 MB, zh-CN 92.5 MB). They're **frozen at their 2026-05-28 build**
   and should be regenerated only when the JP serving arc lands (`ROAD_TO_V9.md` §8). The 0.9928 char model
-  has no serving path yet. Until then, leave them where they are, do not re-stage them, and do not cite
+  has no serving path yet. Until then, leave them where they're, do not re-stage them, and do not cite
   them as current. To regenerate them, first give them `FST_LOCALES` entries with country scopes. The
   existing `gazetteer build fst` command then suffices.
 
@@ -611,7 +611,7 @@ Stage them under a generation segment:
   Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation holds the Great Britain
   index built without HM Land Registry Price Paid Data (#2635). On 2026-10-17 the `2026-08-05` GB object and the
   flat `mailwoman/pair-index/pair-index-gb.bin` key, both built from Price Paid Data, were deleted from the
-  bucket. Cloudflare does not evict a cached copy when an object is deleted. A removal also needs a Cloudflare cache purge of
+  bucket. Cloudflare doesn't evict a cached copy when an object is deleted. A removal also needs a Cloudflare cache purge of
   each URL, and the purge requires an API token with the Cache Purge permission.
 
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
@@ -645,37 +645,36 @@ Every model promotion leaves the same three kinds of stale content behind, such 
 the old card or a CLI capture from the old weights. Do this after Step 4, once the model is live, so that
 captures run against the real shipped weights instead of a staging candidate:
 
-1. **Refresh the model-card-derived numbers** on the known pages. **This list predates the site
-   restructure, and most of it no longer points to a published page (see #2259).** The published tree is
-   `docs/articles/` (`docusaurus.config.ts` sets `path: "articles"`). `docs/records/site-2026-08/` is
-   the archived August site and must not be edited at release. The live pages today are
-   `docs/articles/developers/status.mdx` and the homepage (`docs/src/pages/index.tsx`).
+1. **Refresh the model-card-derived numbers** on the known pages. The public release status lives at
+   `docs/src/pages/product/limits-and-status.mdx`, and the homepage lives at `docs/src/pages/index.tsx`.
+   The published article tree is `docs/articles/` (`docusaurus.config.ts` sets `path: "articles"`).
+   `docs/records/site-2026-08/` is the archived August site and mustn't be edited at release.
    `docs/src/components/AboutDemo/AboutDemo.tsx` is gone from the tracked tree, and only a compiled
    remnant under `docs/out/` survives. The flagship concept pages, the tokenization page,
    and the from-Pelias page survive only under `docs/records/site-2026-08/`, so decide
    whether each returns to the published tree or leaves this list. For params, vocab size, and int8/fp32
    size, byte-verify each value against **the model card** `neural-weights-en-us/model-card.json`
-   (`architecture`, `format`, `files_md5`), and do not trust the prose you are replacing. A fine-tune from
+   (`architecture`, `format`, `files_md5`), and do not trust the prose you're replacing. A fine-tune from
    the same lineage may change none of these values, so confirm through the card instead of assuming drift.
-   These values are a **different measurement** from the npm package download/unpacked size quoted in
-   `getting-started.mdx`. Get those sizes from the registry, never by arithmetic: `npm view
+   These values are a **different measurement** from an npm package's download or unpacked size. The
+   published pages quote no package size today. A page that adds one gets it from the registry, never by arithmetic: `npm view
    @mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
    `curl -r 0-0` range-request (`content-range: bytes 0-0/<total>`) against the tarball URL for the
    compressed download figure.
 2. **Re-run the docs' captured CLI examples** (`mailwoman parse`, `mailwoman geocode`, the
    `/v1/batch` curl captures) against the newly promoted weights. Refresh only the output blocks whose
    real bytes changed, byte-exact, and leave unchanged blocks and surrounding prose untouched.
-   **On a fresh worktree or host, linking `model.onnx`/`tokenizer.model` with `link-dev-weights.ts` is
-   not enough.** A model whose card `requires` an anchor/gazetteer/country channel also needs
+   **On a fresh worktree or host, linking `model.onnx`/`tokenizer.model` with `link-dev-weights.ts` isn't
+   enough.** A model whose card `requires` an anchor/gazetteer/country channel also needs
    `anchor-lexicon-v1.json` + `country-surface-lexicon-v1.json` (copy them from this repo's own
    `data/gazetteer/`) and any `postcode-<cc>.bin` in the weights package dir. Without them the capture
    runs degraded through the legacy rule-only fallback without an error. A stderr banner lists each
    missing channel, so check stderr for it. Re-verify that the md5 check passes with no `#397` error
    before trusting a capture.
-   **If the demo is deliberately held on an older model** (because its runtime does not yet feed a new
+   **If the demo is deliberately held on an older model** (because its runtime doesn't yet feed a new
    required input channel, as in the 6.2.0 precedent below), the demo's own captured screenshots and text
    stay on the old version. Only the library/CLI/server captures move to the new one. State this
-   explicitly in `status.mdx`, so the version mismatch does not look like an oversight.
+   explicitly in `limits-and-status.mdx`, so the version mismatch doesn't look like an oversight.
 3. **Check `evals/scores-by-version.json` for the new version's row.** `mailwoman eval
    ledger-append` writes it, and the promotion eval prints that command in its `PASS` output. The
    operator runs the command from the session that holds the promotion eval's `PASS` output. If your
@@ -683,15 +682,15 @@ captures run against the real shipped weights instead of a staging candidate:
    Verify whether the row is in the ledger and report it. Also flag any missing row for a prior version
    that you notice, because missing rows otherwise accumulate unnoticed.
 
-`status.mdx` and `releases.mdx` change together or not at all, as each page states. A model promotion
-always touches both: it adds a new row to the releases matrix and re-verifies the banner on status.
+`limits-and-status.mdx` and `releases.mdx` change together when a model promotion changes the shipped
+model version. Add a row to the releases matrix and update the public status page's release summary.
 
 ### The metadata check — `verify-release-metadata.ts` backstops Step 5
 
 Step 5 used to depend on people remembering it, and they sometimes forgot. When 6.4.0 shipped, the eval
 ledger, the `releases.mdx` `(current)` row, and the `status.mdx` info box were all left on 6.3.0. The
 mistake was caught only at 6.5.0, and all three were backfilled by hand during that release.
-`yarn mwops release verify-metadata` now fails the publish early if those three pages have not been
+`yarn mwops release verify-metadata` now fails the publish early if the ledger, releases matrix, or public status page hasn't been
 updated. The CI step **Verify release metadata is propagated** runs it after the Hugging Face weight
 preflight and before release-it, on both dry and real runs (it is skipped only on `publish_only`
 recovery). Run it locally at any time:
@@ -702,19 +701,19 @@ yarn mwops release verify-metadata   # exit 0 = propagated; exit 1 = one actiona
 
 It uses the **model** version. That version is the `version` field of `neural-weights-en-us/model-card.json` and not the npm/`package.json` version. It checks three things: (1) `evals/scores-by-version.json` has a run for that
 `model_version`, (2) `releases.mdx` has a matrix row for it with the `(current)` marker on that row, and
-(3) the `status.mdx` `:::info[Verified as of …]` box cites it. Because it reads the model card, a
-**code-only release** (npm bumps and the model card does not) passes without error. The `(current)` marker
+(3) `docs/src/pages/product/limits-and-status.mdx` identifies it as the model version before the first section. Because it reads the model card, a
+**code-only release** (npm bumps and the model card doesn't) passes without error. The `(current)` marker
 may sit on a newer row as long as every release above the model version is a documented "model unchanged"
 row. A dry run is the operator's last look before the real dispatch, and the check is meant to catch a
 forgotten page there. (Out of scope and tracked separately: the isotonic calibration tables still come from
-the v5.3.0 lineage, and the metadata check does not verify them.)
+the v5.3.0 lineage, and the metadata check doesn't verify them.)
 
 ### Pitfall: `.release-it.json` must list every runtime dep of `mailwoman`
 
 `yarn pack` translates `mailwoman`'s `workspace:*` deps to concrete `<NEW>` versions. If a dependency's
-workspace is not in `.release-it.json`'s list, it is never bumped or published, so `<dep>@<NEW>` returns 404
+workspace isn't in `.release-it.json`'s list, it is never bumped or published, so `<dep>@<NEW>` returns 404
 and `npm install mailwoman` breaks. The record-matcher work added `formatter`/`record`/`match`/`address-id`/`registry`
-(and `spatial`), and they are in the list now. **Any future runtime dependency must join it too.** This
+(and `spatial`), and they're in the list now. **Any future runtime dependency must join it too.** This
 repeats the warning at the top of this document, because the mistake recurs.
 
 ### Pitfall: partial release — just re-dispatch `mode=publish`
@@ -778,7 +777,7 @@ Each workspace publish runs `yarn pack -o <tmpfile>` (which translates `workspac
 mailwoman version`), never `0.0.0`. `mwops release prepare-version`'s drift guard refuses to bump an
 unsynced tree. That guard blocked the en-nz addition on the first 7.8.0 prepare (2026-07-24).
 
-npm Trusted Publishing (OIDC) **cannot create a package that does not exist yet.** The registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`). It has no package and therefore no Trusted Publisher to authorize against. A brand-new `@mailwoman/*` workspace therefore needs a **one-time manual first publish with a token** before CI can publish it. This broke the 4.0.0 release: `@mailwoman/codex` and the five new `mailwoman` runtime deps (`kind-classifier`, `locale-hint`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
+npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet.** The registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`). It has no package and therefore no Trusted Publisher to authorize against. A brand-new `@mailwoman/*` workspace therefore needs a **one-time manual first publish with a token** before CI can publish it. This broke the 4.0.0 release: `@mailwoman/codex` and the five new `mailwoman` runtime deps (`kind-classifier`, `locale-hint`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
 
 Run the bootstrap on a machine with `npm login` rights to the `@mailwoman` scope. The **lab host has no npm credentials**, so use the operator's machine:
 
@@ -797,7 +796,7 @@ Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `si
 `yarn mwops release bless-package --dirs <dir>[,<dir>…] --plan release-plan.json` performs both steps (first publish and trust config) from the terminal. It
 runs npm's web-auth flow, so a hardware key on the laptop can sign for a publish from the lab host. **The
 workflow filename it registers must be the workflow that publishes** (`publish.yml`). The operation
-refuses a name that is not in `.github/workflows/`. npm stores the claim verbatim and never checks it, so npm
+refuses a name that's not in `.github/workflows/`. npm stores the claim verbatim and never checks it, so npm
 accepts a wrong name and then denies every CI publish with a bare `E404 Not Found - PUT` that mentions
 neither trust nor the workflow. That error held `neural-weights-{en-in,it-it,es-es}` at 8.6.0 through the
 9.0.0 and 9.1.0 releases. They were blessed on 2026-08-02 with this flag's then-default, `release.yml`, a
@@ -834,7 +833,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
    `…/resolve/en-us/v<version>/` and updates the HF copy of `releases.json`. For a relabel of an existing
    model, `fst-en-US.bin` and `wof-hot.db` are unchanged, so copy them from the previous version's bucket path.
 
-   > **⚠️ The HF `--set-default` by itself does not switch the live demo** (found on night 10, v4.2.0).
+   > **⚠️ The HF `--set-default` by itself doesn't switch the live demo** (found on night 10, v4.2.0).
 
 > `public.mailwoman.post` serves from the **R2** bucket. A second step updates the demo,
 > mandatory step. Stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the
@@ -896,13 +895,13 @@ crate). That step always runs. It is the same local, receipt-verified pipeline a
 handle, fails the job on every dispatch and not only when someone remembers to check. No step in `publish.yml`
 ever reaches a registry.
 
-**A red `clients` job marks the release run as FAILED. That result is a record and does not roll anything
+**A red `clients` job marks the release run as FAILED. That result is a record and doesn't roll anything
 back** (#1892). The job has no `continue-on-error`, so its failure becomes the workflow run's conclusion. The
 npm packages are already published when it runs (`needs: publish`, and published versions are immutable), so
-read that conclusion as "the release shipped, but the generated Python and Rust clients for it did not". Fix
+read that conclusion as "the release shipped, but the generated Python and Rust clients for it didn't". Fix
 the generator and dispatch `publish-clients.yml`. Never unpublish or republish the release. This failure went
 unnoticed for two releases. The job had failed on every run since the workspace regroup, and the workflow
-comment beside it said its failure could not turn a release red.
+comment beside it said its failure couldn't turn a release red.
 
 To publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It builds once from
 `main` (the same composite action the release-run inspection artifacts use) and then runs two jobs:
@@ -911,7 +910,7 @@ To publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Acti
   the job's `pypi` environment and the `publish-clients.yml` filename in the OIDC claims, so no token is
   needed. `uv publish --trusted-publishing always` fails with a clear error on config drift.
 - **`cargo` job:** downloads and extracts the crate tarball and runs `cargo publish` with the
-  `CARGO_REGISTRY_TOKEN` secret from the `cargo` GitHub environment. It is not a repo-level secret. The job's
+  `CARGO_REGISTRY_TOKEN` secret from the `cargo` GitHub environment. It isn't a repo-level secret. The job's
   `environment: cargo` declaration makes it resolvable.
 
 Uncheck `publish_python` / `publish_cargo` at dispatch for a single-registry run (e.g. retrying one
@@ -944,7 +943,7 @@ design. That design versioned the clients against the OpenAPI interface independ
 removes one version scheme in exchange for one real constraint: **a client-only fix (a generator bug, a
 hand-written ergonomics change in `mailwoman_client/__init__.py` or `src/lib.rs`) cannot ship at a patch
 version of its own.** PyPI and crates.io both permanently reject re-publishing an already-used version number,
-exactly like npm, so there is no "5.10.1, republished" override. Instead, ship the fix with the next scheduled
+exactly like npm, so there's no "5.10.1, republished" override. Instead, ship the fix with the next scheduled
 release. Run an ordinary `yarn release` / `publish.yml` dispatch (a code-only release is fine), and the client
 fix goes out at that version alongside everything else. If this constraint becomes a real bottleneck (a
 client-only bug that cannot wait), revisit the sync decision before reaching for a workaround.
@@ -968,23 +967,23 @@ loop, but never use it to validate a real change, because verification is the pu
   on the runner. A future step could have CI fetch them from Hugging Face before publishing, as the demo
   already does at runtime.
 - **`mailwoman release hf` is still run by hand.** The operator stages the model to HF and bumps `releases.json` in a
-  separate manual command after the npm release and is not part of `yarn release`.
+  separate manual command after the npm release and isn't part of `yarn release`.
 - **Client-package first publish.** Setup is complete (see "Client packages" above: `pypi` + `cargo`
   environments, with the Trusted Publisher now bound to `publish-clients.yml`). The first PyPI publish is done
   (`mailwoman-client` 6.0.0 is live through Trusted Publishing). crates.io publishes through
   `publish-clients.yml` (the `cargo` job) once the account email is verified.
-- **Changelog generation.** release-it can emit one through the `@release-it/conventional-changelog` plugin. It is not configured yet, because commit messages have not standardized on Conventional Commits.
+- **Changelog generation.** release-it can emit one through the `@release-it/conventional-changelog` plugin. It isn't configured yet, because commit messages haven't standardized on Conventional Commits.
 
 ## Partial release recovery
 
 Keep the upload receipt for each package. An accepted upload, a retrievable version and a successful
 clean installation are separate observations. npm may accept an upload before the version resolves,
-and an E409 on a retry does not establish that the original upload failed.
+and an E409 on a retry doesn't establish that the original upload failed.
 
 1. Check each affected version with `npm view <package>@<version> dist.tarball` and record the time.
 2. If npm accepted the upload but the version returns 404, repeat the availability check before
    attempting another publication. Preserve the receipts if processing remains unresolved. The
-   10.1.0 incident does not establish a universal processing deadline.
+   10.1.0 incident doesn't establish a universal processing deadline.
 3. If a package failed before upload, fix the reported failure through a PR.
 4. Run `mode=publish, dry_run=true` against the corrected main and staged artifacts, and require success.
 5. Dispatch the real `mode=publish` through CI. The workflow preserves an existing tag and GitHub

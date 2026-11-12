@@ -5,8 +5,8 @@
  *   Shared setup for each layer's `scripts/ingest-chunk.ts`.
  *
  *   Each chunk runs in a new process because JavaScript cannot reset h3's WebAssembly heap.
- *   This helper parses shared flags, opens the database created by the parent, runs the chunk
- *   and prints its result as one JSON line.
+ *   This helper parses shared flags, opens the database created by the parent,
+ *   runs the chunk and prints its result as one JSON line.
  *
  *   Standard output contains only the result.
  *   Progress goes to standard error.

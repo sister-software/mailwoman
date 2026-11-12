@@ -5,11 +5,14 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 /**
- *   Fail-fast guard for the npm-provenance `repository` requirement. Every npm publish is
- *   provenance-signed. Sigstore provenance verification rejects (HTTP 422) any workspace
- *   whose `package.json` lacks a `repository.url` matching the source repo. This asserts every
- *   workspace in the `.release-it.json` publish set includes the canonical `repository` block, so a
- *   drift fails at PR/CI time instead of mid-release.
+ *   Fail-fast guard for the npm-provenance `repository` requirement.
+ *
+ *   Every npm publish is provenance-signed.
+ *   Sigstore provenance verification rejects (HTTP 422) any workspace whose
+ *   `package.json` lacks a `repository.url` matching the source repo.
+ *
+ *   This asserts every workspace in the `.release-it.json` publish set includes the
+ *   canonical `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
 import { describe, expect, it } from "vitest"
 

@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render a {@link toMapHTML} page (MapLibre GL + Protomaps basemap) to a PNG via headless Chromium
- *   — the shared map renderer behind the `registry viz` map figures (an internal helper rather than a
- *   command).
+ *   Render a {@link toMapHTML} page (MapLibre GL + Protomaps basemap) to a PNG
+ *   via headless Chromium — the shared map renderer behind the `registry viz` map
+ *   figures (an internal helper rather than a command).
  *
  *   Two house-stack constraints make this fiddlier than the Plotly/SVG renderers:
  *
- *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`) provides one through
- *       SwiftShader.
+ *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`)
+ *     provides one through SwiftShader.
  *   - The basemap tiles come from `tiles.mailwoman.post`, which cors-restricts to localhost + the docs
  *       domains . Therefore, the page must be served over localhost rather than opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
  *
- *   The map paints asynchronously after the network settles. we wait for networkidle, then a fixed
- *   beat for the basemap tiles + marker layer to finish compositing.
+ *   The map paints asynchronously after the network settles. we wait for networkidle,
+ *   then a fixed beat for the basemap tiles + marker layer to finish compositing.
  */
 
 import { withChromiumPage } from "#tools/viz/browser"

@@ -386,7 +386,7 @@ export class RowSampler<T = SampledRow> {
 	/**
 	 * Writes {@linkcode RowSampler.cellCounts} to the sample's `countsFile` and
 	 * {@linkcode RowSampler.heldOut} to its `heldOutFile`, and {@linkcode RowSampler.comparison}
-	 * to its `comparisonFile`, each when the sample names one.
+	 * to its `comparisonFile`, each when the sample identifies one.
 	 */
 	async writeOutputs(): Promise<void> {
 		const resolve = (file: string) => (file.startsWith("/") ? file : dataRootPath(file))

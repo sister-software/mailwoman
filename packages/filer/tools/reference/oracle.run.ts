@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Run from the repository root:
- *   node packages/filer/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
+ *   Run from the repository root: node
+ *   packages/filer/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
  */
 
 import { prettyJSON } from "@mailwoman/core/json"

@@ -4,13 +4,17 @@
 /**
  *   Emits corpus rows from Who's On First postalcode GeoJSON repositories.
  *
- *   The input directory must hold the `whosonfirst-data-postalcode-<cc>` repositories and the matching
- *   `whosonfirst-data-admin-<cc>` repositories. Postcode records point to their ancestors by `wof:parent_id`, so the
- *   admin records must be in the same walk.
+ *   The input directory must hold the `whosonfirst-data-postalcode-<cc>` repositories
+ *   and the matching `whosonfirst-data-admin-<cc>` repositories.
+ *   Postcode records point to their ancestors by `wof:parent_id`, so the admin
+ *   records must be in the same walk.
  *
- *   Each postcode record produces one row per pair of name slot and hierarchy variant. The name slots are the canonical
- *   `wof:name` (slot `default`) plus any `name:*` variants. The hierarchy variants are the postcode by itself, then with
- *   locality, region and country added in turn. Ancestor names always use the canonical `wof:name`.
+ *   Each postcode record produces one row per pair of name slot and hierarchy variant.
+ *   The name slots are the canonical `wof:name` (slot `default`) plus any `name:*` variants.
+ *
+ *   The hierarchy variants are the postcode by itself, then with locality,
+ *   region and country added in turn.
+ *   Ancestor names always use the canonical `wof:name`.
  *
  *   `source_id` has the form `wof-postalcode-<wof_id>-<name-slot>-<hierarchy-variant>`.
  */

@@ -24,7 +24,7 @@ query. Falsified on both axes at once.
 
 ## The mechanism — shape simplicity is semantic ambiguity
 
-The failure samples say why, and it is not a tunable defect:
+The failure samples say why, and it isn't a tunable defect:
 
 ```
 "Hummingbird Ln VT"        detector: locality_only → front tier: locality "Hummingbird Ln"
@@ -41,7 +41,7 @@ something a shape detector cannot do. On this domain, ease-of-shape
 and ease-of-parse are anti-correlated: long inputs are self-disambiguating (a house number licenses the
 street, a postcode anchors the locality); short inputs are pure ambiguity. **The model warrants its keep
 most on the smallest queries** — the opposite of the cascade's premise. Note the model itself scores only
-0.588 on the absorbed rows. They are hard for everyone, and the front tier makes hard rows 5× worse.
+0.588 on the absorbed rows. They're hard for everyone, and the front tier makes hard rows 5× worse.
 
 This is the third instrument to convict shape-conditioned routing this week: the queryShape locality bias
 (M1: −7.8 locality, venue absorption), the deletion counter-case (`New York, NY` needing the bias), and

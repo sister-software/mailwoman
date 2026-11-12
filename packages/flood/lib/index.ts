@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `flood.db` reader: a designated absence and an unmapped location are the same empty geometry and
- *   opposite answers, so neither is ever a low-hazard reading. The reader is synchronous and uses raw
- *   prepared statements because Kysely's builder is async and would put a promise between the coordinate
- *   and the point test.
+ *   The `flood.db` reader: a designated absence and an unmapped location are the same
+ *   empty geometry and opposite answers, so neither is ever a low-hazard reading.
+ *
+ *   The reader is synchronous and uses raw prepared statements because Kysely's builder
+ *   is async and would put a promise between the coordinate and the point test.
  */
 
 import {
@@ -86,7 +87,7 @@ export interface FloodZoneReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words, included in every reading
+	 * What the product doesn't cover, in the authority's own words, included in every reading
 	 * because a Zone 1 answer is silent about surface water, groundwater and defended-area residual risk.
 	 */
 	limits: ReadonlyArray<string>

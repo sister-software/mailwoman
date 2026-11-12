@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PreToolUse hook that reports where a top-level symbol already exists before a Write or Edit declares it.
+ *   PreToolUse hook that reports where a top-level symbol already exists
+ *   before a Write or Edit declares it.
  *
- *   The hook never blocks an edit: it prints `additionalContext` on a match and no output otherwise, including on
- *   every error.
+ *   The hook never blocks an edit: it prints `additionalContext` on a match
+ *   and no output otherwise, including on every error.
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"

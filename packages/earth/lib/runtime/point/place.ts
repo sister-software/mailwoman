@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A point-shaped query, coordinates, a plus code, an H3 cell, a geohash or a Who's On First id, answers
- *   from its own decoder rather than the classifier. This module turns {@link PointQuery} into the
- *   {@link ParseResult} the result panel and the map already render, so the point path adds no second renderer.
- *   The H3 reader is imported when an H3 cell is typed, because its WebAssembly binary has no place in the entry
- *   chunk.
+ *   A point-shaped query answers from its own decoder rather than the classifier.
+ *
+ *   Point shapes are coordinates, a plus code, an H3 cell, a geohash and a Who's On First id.
+ *
+ *   This module turns {@link PointQuery} into the {@link ParseResult} the result panel
+ *   and the map already render, so the point path adds no second renderer.
+ *   The H3 reader is imported when an H3 cell is typed, because its WebAssembly
+ *   binary has no place in the entry chunk.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

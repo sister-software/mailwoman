@@ -258,7 +258,7 @@ export interface LocaleEvalSpec {
  *
  * FR uses the dedicated street-prefix eval set rather than the broad golden dev set
  * because golden FR has only ~7 `street_prefix` rows against ~1535 without it,
- * so the unfolded `street_prefix` F1 there is dominated by absent-gold rows.
+ * so the unfolded `street_prefix` F1 there's dominated by absent-gold rows.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
 	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
@@ -285,9 +285,8 @@ export interface MaskOffOnOptions {
 	/**
 	 * The parse mode the rows are graded in.
 	 *
-	 * Both callers pass `"formatted"` — the mode production derives on these
-	 * formatted postal addresses — while omitting it grades the bare-library default
-	 * (`fragmented`) that production does not take here.
+	 * Both callers pass `"formatted"` — the mode production derives on these formatted postal addresses —
+	 * while omitting it grades the bare-library default (`fragmented`) that production doesn't take here.
 	 * The option stays so a caller can measure that path on purpose.
 	 */
 	inputMode?: "formatted"

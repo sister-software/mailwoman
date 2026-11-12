@@ -4,14 +4,22 @@
 /**
  *   `computeQueryShape` must stay linear in input size.
  *
- *   Every parse runs this stage before the model. Its token and segment counts both grow with input length.
- *   A routine that pairs them is quadratic. A 1 MB query then takes minutes rather than milliseconds.
+ *   Every parse runs this stage before the model.
+ *   Its token and segment counts both grow with input length.
+ *
+ *   A routine that pairs them is quadratic.
+ *   A 1 MB query then takes minutes rather than milliseconds.
  *   `region-abbreviations.ts` must walk both inputs.
  *
- *   Correctness tests cannot distinguish quadratic and linear implementations because both return the same results.
- *   The growth curve distinguishes them, so this test compares elapsed-time ratios instead of a millisecond budget.
- *   Absolute timing would make the test unstable on CI. An input twice as large gives quadratic code about 4x the work
- *   and linear code about 2x. The 3x threshold tolerates a loaded runner and catches the quadratic behavior.
+ *   Correctness tests cannot distinguish quadratic and linear implementations
+ *   because both return the same results.
+ *   The growth curve distinguishes them, so this test compares elapsed-time ratios
+ *   instead of a millisecond budget.
+ *
+ *   Absolute timing would make the test unstable on CI.
+ *   An input twice as large gives quadratic code about 4x the work and linear code about 2x.
+ *
+ *   The 3x threshold tolerates a loaded runner and catches the quadratic behavior.
  */
 
 import { expect, test } from "vitest"

@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The training launch lifecycle: preflight on the host, one detached sandbox per attempt run, and the status, log,
- *   cancel and restart operations on it.
+ *   The training launch lifecycle: preflight on the host, one detached sandbox per
+ *   attempt run, and the status, log, cancel and restart operations on it.
  *
- *   A launch resolves its config on the host and admits its source rights. It then runs the preflight audits
- *   against the host mirror of the volume. The receipt's key binds the YAML and the corpus MANIFEST, and the sandbox
- *   refuses a volume whose MANIFEST differs from the one the host hashed. The sandbox runs the supervisor
- *   (`supervisor.ts`), which restarts the trainer in the same container after a failed exit. A sandbox that Modal
- *   preempts, or one that times out or spends its retries, is restarted by {@linkcode restartLaunch} in a fresh
- *   sandbox that resumes from the newest complete checkpoint. Every launch writes a {@linkcode LaunchRecord} on the
- *   host, so the operations after it need only the run key.
+ *   A launch resolves its config on the host and admits its source rights.
+ *   It then runs the preflight audits against the host mirror of the volume.
+ *
+ *   The receipt's key binds the YAML and the corpus MANIFEST, and the sandbox refuses
+ *   a volume whose MANIFEST differs from the one the host hashed.
+ *   The sandbox runs the supervisor (`supervisor.ts`), which restarts the trainer
+ *   in the same container after a failed exit.
+ *
+ *   A sandbox that Modal preempts, or one that times out or spends its retries, is restarted by
+ *   {@linkcode restartLaunch} in a fresh sandbox that resumes from the newest complete checkpoint.
+ *   Every launch writes a {@linkcode LaunchRecord} on the host, so the operations
+ *   after it need only the run key.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -339,7 +344,7 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
  *
  * A refused name held by a running sandbox of the run is a duplicate launch.
  *
- * A refused name with no running sandbox is one Modal has not yet released,
+ * A refused name with no running sandbox is one Modal hasn't yet released,
  * so the start waits and tries again.
  */
 async function startNamedSandbox(record: LaunchRecord, deps: LaunchDependencies) {
@@ -436,8 +441,16 @@ export async function restartLaunch(runKey: string, deps: LaunchDependencies): P
 /**
  * Terminates a run's running sandbox.
  * The supervisor committed every finished checkpoint.
+ *
+ * It holds the run's lock, as a start and a restart do.
+ * Without it, a cancel could read the record before a restart recorded a new sandbox,
+ * then terminate the earlier sandbox and leave the new one running.
+ *
+ * @throws When the run isn't running, or when a start or restart holds its lock.
  */
 export async function cancelLaunch(runKey: string, deps: LaunchDependencies): Promise<void> {
+	await using _lock = await deps.lockRun(runKey)
+
 	const { record, state } = await launchStatus(runKey, deps)
 
 	if (state !== LaunchState.Running) throw new Error(`run ${runKey} is ${state}; only a running run cancels`)

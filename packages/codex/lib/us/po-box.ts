@@ -4,7 +4,9 @@
 /**
  * USPS PO Box detection and normalization.
  *
- * Supports common forms like "P.O. Box", "Post Office Box", and "Box".
+ * Supports common forms like "P.O.
+ * Box", "Post Office Box", and "Box".
+ *
  * Exposes helpers to detect ({@link isPOBox}), normalize ({@link normalizePOBox}),
  * and extract ({@link matchPOBox}) PO Box values.
  *
@@ -93,7 +95,7 @@ export interface PoBoxMatch {
 /**
  * If `input` is a PO Box phrase, return the matched phrase and id.
  *
- * Returns null when there is no match.
+ * Returns null when there's no match.
  */
 export function matchPOBox(input: unknown): PoBoxMatch | null {
 	if (typeof input !== "string") return null

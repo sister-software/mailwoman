@@ -2,66 +2,75 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Binary format for the ancestrie — a materialized trie over an ancestry graph, sealed into one
- *   static artifact. This module owns the layout: the header read/write pair and the section math
- *   are here so the builder (writer) and the reader can never disagree about where a table starts —
- *   the shared-function-not-shared-constants rule. All integers are little-endian, read and written
- *   through DataView so the artifact is byte-identical across platforms.
+ *   Binary format for the ancestrie — a materialized trie over an ancestry graph,
+ *   sealed into one static artifact.
  *
- *   header (48 bytes) magic [u8. 4] "anct" version u16 1 flags u16 0 (reserved) stateCount u32
- *   edgeCount u32 total edges across all states entryRefCount u32 total state→entry references
- *   entryCount u32 unique entries parentIDCount u32 total parent ids across all entries stringCount
- *   u32 unique tokens stringBytes u32 total UTF-8 bytes of token data (unpadded) payloadBytes u32
- *   total payload bytes (unpadded) metadataOffset u32 byte offset of the metadata trailer (0 = none)
- *   _reserved u32
+ *   This module owns the layout: the header read/write pair and the section math are here
+ *   so the builder (writer) and the reader can never disagree about where a table starts —
+ *   the shared-function-not-shared-constants rule.
+ *   All integers are little-endian, read and written through DataView
+ *   so the artifact is byte-identical across platforms.
+ *
+ *   header (48 bytes) magic [u8. 4] "anct" version u16 1 flags u16 0 (reserved) stateCount
+ *   u32 edgeCount u32 total edges across all states entryRefCount u32 total state→entry
+ *   references entryCount u32 unique entries parentIDCount u32 total parent ids across
+ *   all entries stringCount u32 unique tokens stringBytes u32 total UTF-8 bytes of token
+ *   data (unpadded) payloadBytes u32 total payload bytes (unpadded) metadataOffset
+ *   u32 byte offset of the metadata trailer (0 = none) _reserved u32
  *
  *   string table offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
  *   stringBytes] concatenated UTF-8, zero-padded to a 4-byte boundary
  *
- *   state table [stateCount × 16 bytes] edgeStart u32 index into edge table edgeCount u32
- *   entryRefStart u32 index into entry-ref table entryRefCount u32
+ *   state table [stateCount × 16 bytes] edgeStart u32 index into edge table edgeCount
+ *   u32 entryRefStart u32 index into entry-ref table entryRefCount u32
  *
- *   edge table [edgeCount × 8 bytes] tokenIdx u32 index into string table targetState u32. Edges
- *   within a state are sorted by token (UTF-16 code-unit order), so a walk step is a binary search
- *   and a prefix scan is a contiguous run.
+ *   edge table [edgeCount × 8 bytes] tokenIdx u32 index into string table targetState u32.
+ *   Edges within a state are sorted by token (UTF-16 code-unit order), so a walk step
+ *   is a binary search and a prefix scan is a contiguous run.
  *
- *   entryref table [entryRefCount × 4 bytes] entry ordinal u32 (index into the entry table). Refs
- *   within a state are sorted rank-descending then id-ascending, so a reader's top-k at a state is
- *   its first k refs — no query-time sort.
+ *   entryref table [entryRefCount × 4 bytes] entry ordinal u32 (index into the entry table).
+ *   Refs within a state are sorted rank-descending then id-ascending, so a reader's
+ *   top-k at a state is its first k refs — no query-time sort.
  *
- *   entry table [entryCount × 32 bytes] id u32 pre u32 post u32 rank f32 parentStart u32 index into
- *   parent table parentCount u16 flags u16 (bit0 = has payload, bit1 = payload is JSON)
- *   payloadStart u32 byte offset into payload blob payloadLen u32. Records are stored in PRE-order
- *   of the interval forest, so the descendants of ordinal i are exactly the ordinals i+1 ..
- *   i+(post−pre−1)/2 — descendant enumeration is a contiguous range scan.
+ *   entry table [entryCount × 32 bytes] id u32 pre u32 post u32 rank f32 parentStart u32 index
+ *   into parent table parentCount u16 flags u16 (bit0 = has payload, bit1 = payload is JSON)
+ *   payloadStart u32 byte offset into payload blob payloadLen u32.
+ *   Records are stored in PRE-order of the interval forest, so the descendants of ordinal i are
+ *   exactly the ordinals i+1 .. i+(post−pre−1)/2 — descendant enumeration is a contiguous range scan.
  *
- *   PRE/post intervals: `pre` and `post` are Dietz-style pre/post-order labels drawn from a single
- *   counter over the primary-parent forest (see below), assigned at seal time. Containment is O(1)
- *   in both directions: x contains y ⟺ pre(x) ≤ pre(y) and post(y) ≤ post(x) (an entry contains
- *   itself). The classic objection to interval labels — relabeling on update — is void here because
- *   the artifact is sealed and rebuilt whole, never patched.
+ *   PRE/post intervals: `pre` and `post` are Dietz-style pre/post-order labels drawn from
+ *   a single counter over the primary-parent forest (see below), assigned at seal time.
+ *   Containment is O(1) in both directions: x contains y ⟺ pre(x) ≤ pre(y)
+ *   and post(y) ≤ post(x) (an entry contains itself).
  *
- *   DAG canonicalization: an entry may declare multiple parents. The interval forest spans the
- *   primary parent only — `parentIDs[0]` — so `contains`/`descendantsOf` answer over that single
- *   tree. the full parent list is stored in the parent table and surfaced verbatim. A primary
- *   parent id that names no entry in the build makes its child a forest root (the declared id is
- *   still stored). A cycle in the primary-parent graph fails the seal.
+ *   The classic objection to interval labels — relabeling on update — is void here
+ *   because the artifact is sealed and rebuilt whole, never patched.
+ *
+ *   DAG canonicalization: an entry may declare multiple parents.
+ *   The interval forest spans the primary parent only — `parentIDs[0]` —
+ *   so `contains`/`descendantsOf` answer over that single tree. the full parent
+ *   list is stored in the parent table and surfaced verbatim.
+ *
+ *   A primary parent id that identifies no entry in the build makes its child a
+ *   forest root (the declared id is still stored).
+ *   A cycle in the primary-parent graph fails the seal.
  *
  *   parent table [parentIDCount × 4 bytes] u32 parent ids, concatenated per entry in entry-table
  *   order, each entry's list in the order given at build time (`parentIDs[0]` first).
  *
  *   ID index [entryCount × 8 bytes] id u32, ordinal u32 — sorted by id ascending for binary search.
  *
- *   payload blob [payloadBytes] concatenated payload bytes in entry-table order, zero-padded to a
- *   4-byte boundary.
+ *   payload blob [payloadBytes] concatenated payload bytes in entry-table order,
+ *   zero-padded to a 4-byte boundary.
  *
  *   metadata (optional trailer, at metadataOffset) jsonLen u32, then jsonLen bytes of UTF-8 JSON.
  *
- *   canonical output: the serializer is deterministic and insertion-order-independent. Strings are
- *   interned in sorted order. trie states are numbered by a pre-order DFS that visits edges in
- *   sorted-token order (root = 0); entry ordinals follow the interval forest's pre-order (roots and
- *   sibling lists sorted by id ascending). The same entry set yields identical bytes after sealing,
- *   regardless of add order.
+ *   canonical output: the serializer is deterministic and insertion-order-independent.
+ *   Strings are interned in sorted order. trie states are numbered by a pre-order DFS that
+ *   visits edges in sorted-token order (root = 0); entry ordinals follow the interval
+ *   forest's pre-order (roots and sibling lists sorted by id ascending).
+ *
+ *   The same entry set yields identical bytes after sealing, regardless of add order.
  */
 
 /**

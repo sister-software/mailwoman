@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests that tracing leaves the parse unchanged and that the trace's decode explanation adds up to
- *   the score the decoder computed, with a stub runner whose logits vary by piece.
+ *   Tests that tracing leaves the parse unchanged and that the trace's decode explanation
+ *   adds up to the score the decoder computed, with a stub runner whose logits vary by piece.
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"

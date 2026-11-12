@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   generated — do not edit by hand. Per-country population, derived from GeoNames countryInfo.txt
- *   (https://download.geonames.org/export/dump/countryInfo.txt, CC-BY-4.0). Estimates are
- *   census-vintage. a prominence race reads the magnitude rather than the currency. Countries GeoNames
- *   declines to estimate are absent, never zero.
+ *   generated — do not edit by hand.
+ *
+ *   Per-country population, derived from GeoNames countryInfo.txt
+ *   (https://download.geonames.org/export/dump/countryInfo.txt, CC-BY-4.0).
+ *   Estimates are census-vintage. a prominence race reads the magnitude rather than the currency.
+ *
+ *   Countries GeoNames declines to estimate are absent, never zero.
  *   Regenerate with: mailwoman dev generate country-population
  */
 

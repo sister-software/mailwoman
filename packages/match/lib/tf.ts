@@ -4,17 +4,21 @@
 /**
  *   Term-frequency adjustment — making a rare-value agreement count more than a common one.
  *
- *   Two people who share the name "Vijayan" are far stronger evidence of a match than two who share the name "Smith",
- *   because "Smith" agreements happen by chance all the time and "Vijayan" agreements don't. The
- *   Fellegi-Sunter `m` (the probability that a true match agrees) is roughly the same either way. what differs
- *   is `u` — the chance a _non_-match agrees — which for an exact agreement on value `v` is
- *   how common `v` is. So we leave `m`, and replace the level's average `u` with `frequency(v)`,
- *   adding `log2(u_level / frequency(v))` to the weight: a big positive bump for rare values, a
- *   penalty for common ones.
+ *   Two people who share the name "Vijayan" are far stronger evidence of a match
+ *   than two who share the name "Smith", because "Smith" agreements happen by
+ *   chance all the time and "Vijayan" agreements don't.
+ *   The Fellegi-Sunter `m` (the probability that a true match agrees) is roughly
+ *   the same either way. what differs is `u` — the chance a _non_-match agrees —
+ *   which for an exact agreement on value `v` is how common `v` is.
  *
- *   Crucially for a label-free matcher: the frequencies are computed on-the-FLY from the input column
- *   (the Splink approach) — no external Census table required. Build a {@link TermFrequencyTable}
- *   from the values you're matching, then attach it to a comparison with {@link withTermFrequency}.
+ *   So we leave `m`, and replace the level's average `u` with `frequency(v)`,
+ *   adding `log2(u_level / frequency(v))` to the weight: a big positive bump for
+ *   rare values, a penalty for common ones.
+ *
+ *   Crucially for a label-free matcher: the frequencies are computed on-the-FLY from the
+ *   input column (the Splink approach) — no external Census table required.
+ *   Build a {@link TermFrequencyTable} from the values you're matching,
+ *   then attach it to a comparison with {@link withTermFrequency}.
  */
 
 import type { Comparison, TermFrequencyAdjustment } from "#fellegi-sunter"

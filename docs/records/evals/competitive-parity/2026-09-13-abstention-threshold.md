@@ -11,7 +11,7 @@ re-grading in the
 
 **Exploratory, and outside that pre-registration.** Every threshold here was read off results that
 were already visible, and the registered rule forbids exactly that. The frozen verdict stands as
-recorded, and no threshold warrants a claim until it is registered ahead of a panel it has not
+recorded, and no threshold warrants a claim until it is registered ahead of a panel it hasn't
 seen.
 
 Four findings, in the order they constrain each other:
@@ -23,7 +23,7 @@ Four findings, in the order they constrain each other:
    28 name the withheld settlement under a different WOF id and are not false at all, so the floor a
    threshold has to clear is 19 rows — see
    [the correction](#correction-nine-of-the-twenty-eight-name-the-right-place).
-3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, could not express abstention at
+3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, couldn't express abstention at
    all: across the populated range of its scale it moved the false-selection rate from 75% to 74% —
    one row.
 4. It was not failing to refuse. It refused, and `spanRescore` answered the refusal by re-issuing the
@@ -34,7 +34,7 @@ Four findings, in the order they constrain each other:
    26% at a cost of 1.5 points of accuracy. Those magnitudes are this panel's own construction and
    are not a recommended setting.
 
-## What is being thresholded
+## What's being thresholded
 
 Every arm reports confidence as the winner's margin over the runner-up within the set that arm
 considered, normalized into [0, 1], and **1 when there was no runner-up**. The sweep re-grades the
@@ -68,7 +68,7 @@ both axes at once, from 0.01 to 0.30. The comparison uses both axes together, be
 threshold 0 maximizes accuracy and threshold 1 minimizes false selection, and each is the other's
 worst case.
 
-The wrong-area rate falls with them, from 19.2% to 9.2% at the first step. That is a second and
+The wrong-area rate falls with them, from 19.2% to 9.2% at the first step. That's a second and
 independent sign that the margin holds information about correctness. The sweep never grades
 distance, so the wrong-area column moving is the withheld rows having been disproportionately wrong.
 
@@ -135,7 +135,7 @@ all. The same value means opposite things on either side of the panel:
 | withheld gold |                     28 | 0 by construction |
 
 A lone candidate is typically the right one when the gold is in the pool, and necessarily the wrong one
-when it is not. The system needs a signal about the winner's **fit to the query** before it can abstain on absent gold —
+when it isn't. The system needs a signal about the winner's **fit to the query** before it can abstain on absent gold —
 how much of the input it explains, whether its hierarchy is consistent with the rest — not its lead
 over rivals it never had.
 
@@ -170,7 +170,7 @@ answerable after the concorded id is removed:
 names agree and the places are 1,421 km apart.
 
 Across the 28 max-margin rows, nine name the gold settlement under another id within 5 km (eleven
-within 25 km), and twelve sit within 5 km of the gold whatever they are called. So the floor the
+within 25 km), and twelve sit within 5 km of the gold whatever they're called. So the floor the
 margin cannot cross is **19 rows rather than 28** — still structural, and still for the reason the next
 paragraph gives, but a fifth smaller than published. The
 [same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) holds
@@ -189,7 +189,7 @@ stratum whatever the outcome:
 On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE rather than a failure: bare-toponym
 rows do select more frequently than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
 stratum fires the check and a quarter of those rows still abstained. The enrichment needs a
-separate measurement. By itself it is not evidence that the race manufactures these selections.
+separate measurement. By itself it isn't evidence that the race manufactures these selections.
 
 What the 28 rows do share is the pool the deciding lookup saw: 17 of them had a single candidate in
 the row's whole pool, and the rest reached a lookup that considered one even though the row's union
@@ -211,7 +211,7 @@ rows decided by `picked:ranked` fell from 56 to 8 while `picked:span_rescore` ro
 
 Span rescore was built to recover a locality the parser fragmented, and its own header calls the
 early return the "#685 brake — never second-guess a working coordinate". The brake reads a resolved
-place, so it could not tell a deliberate refusal from a parse that failed. **A refusal and a failure
+place, so it couldn't tell a deliberate refusal from a parse that failed. **A refusal and a failure
 were the same state, and the recovery pass answered both.** The fix records the refusal on the walk
 state and has the call site decline. The fix is inert at the default, because `minWinningScore` defaults
 to 0 and no shipped backend emits a negative score.
@@ -240,7 +240,7 @@ never reached, rather than rows the floor refused. Span rescore exists to answer
 ### The 8% is this panel's construction, and cannot be read as a setting
 
 A floor of 4.0 on a log-population score is a population floor of 10,000. **Zero of the 453 gold
-entities fall below it**, and it is not close:
+entities fall below it**, and it isn't close:
 
 | stratum                | rows | smallest gold | log10 |
 | ---------------------- | ---: | ------------: | ----: |
@@ -264,13 +264,13 @@ and confirmed by the implementation counts, neither of which depends on the pane
 
 Supported: the ranking already holds a signal that separates supportable selections from
 unsupportable ones well enough to beat the deterministic baseline on selection accuracy and false
-selection simultaneously, and the resolver does not consult it. Supported: `spanRescore` answers a
+selection simultaneously, and the resolver doesn't consult it. Supported: `spanRescore` answers a
 refusal `minWinningScore` made, because the state the refusal leaves is the state the recovery pass
-triggers on — read from the code and confirmed by the implementation counts, so it does not depend on this
+triggers on — read from the code and confirmed by the implementation counts, so it doesn't depend on this
 panel. Refused: any claim that a particular threshold or floor is the right one. The floor that
 produces 8% here is calibrated by accident to a panel whose gold all has population above 15,000.
 
-Three next measurements, in order of what they would settle. The first item this list held — give a
+Three next measurements, in order of what they'd settle. The first item this list held — give a
 refusal a state of its own so the recovery pass can tell it from a parse that resolved no place — is
 done, and the knob table above is the re-run.
 

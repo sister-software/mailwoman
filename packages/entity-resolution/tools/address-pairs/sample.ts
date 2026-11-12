@@ -4,15 +4,23 @@
 /**
  *   Samples cross-source address-point pairs from a built address layer for adjudication.
  *
- *   A pair joins a row from a higher-ranked source with a row from a lower-ranked one: `usgov-nad`, then the
- *   OpenAddresses runs read directly, then Overture's datasets. Pairs come from two kinds of key group. A postcode
- *   key group holds rows that share a postcode, street key and house number. A locality key group holds rows that
- *   share a locality, street key and number but state different postcodes. A wrong postcode on one side shows there.
+ *   A pair joins a row from a higher-ranked source with a row from a lower-ranked one:
+ *   `usgov-nad`, then the OpenAddresses runs read directly, then Overture's datasets.
+ *   Pairs come from two kinds of key group.
  *
- *   Each pair lands in one stratum by its failure shape. Each stratum is capped per region, so every region in the
- *   run contributes pairs and the densest region cannot fill a stratum. Every row stores both records in full, the measured
- *   evidence (the distance, each unit's identifier, each point's stack size) and the verdict of the deterministic rule
- *   the layer build applies. The adjudication fields stay `null` for a human or a flagged LLM judge to fill.
+ *   A postcode key group holds rows that share a postcode, street key and house number.
+ *   A locality key group holds rows that share a locality, street key and number
+ *   but state different postcodes.
+ *   A wrong postcode on one side shows there.
+ *
+ *   Each pair lands in one stratum by its failure shape.
+ *   Each stratum is capped per region, so every region in the run contributes pairs
+ *   and the densest region cannot fill a stratum.
+ *
+ *   Every row stores both records in full, the measured evidence
+ *   (the distance, each unit's identifier, each point's stack size) and the verdict
+ *   of the deterministic rule the layer build applies.
+ *   The adjudication fields stay `null` for a human or a flagged LLM judge to fill.
  *
  *   Run: `mailwoman registry address-pair-sample --layer-version 2026-11-08 [--regions us-ny,us-co] [--per-stratum 60]
  *   [--seed 1] --out-jsonl <path>`

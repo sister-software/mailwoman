@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Checks the corpus sources a typed training config admits against the address-source register, as
- *   `load_training_config` did.
+ *   Checks the corpus sources a typed training config admits against the address-source
+ *   register, as `load_training_config` did.
  */
 
 import {

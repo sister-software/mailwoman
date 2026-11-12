@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The FST artifacts a parse reads, through the active selection: the per-locale gazetteer FST and the
- *   street-morphology FST. A data root whose selection lists neither reads the files beside the weights,
+ *   The FST artifacts a parse reads, through the active selection: the per-locale
+ *   gazetteer FST and the street-morphology FST.
+ *
+ *   A data root whose selection lists neither reads the files beside the weights,
  *   as it did before the selection existed.
  */
 

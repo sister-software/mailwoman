@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Proves how the Kadaster fetcher resolves the ATOM download service to its one file, and what it
- *   does where the feed states less than it needs.
+ *   Proves how the Kadaster fetcher resolves the ATOM download service to its one file,
+ *   and what it does where the feed states less than it needs.
  *
- *   The bodies are the shape PDOK serves, reduced to the elements this fetcher reads. The byte count
- *   and the `<updated>` value are the publisher's real ones, recorded when the reader was written, so
- *   a change in what the fetcher resolves shows up against them.
+ *   The bodies are the shape PDOK serves, reduced to the elements this fetcher reads.
+ *   The byte count and the `<updated>` value are the publisher's real ones, recorded
+ *   when the reader was written, so a change in what the fetcher resolves shows up against them.
  *
- *   `./kadaster.integration.test.ts` reads the live service. This suite stubs the transport and runs
- *   the real `APIClient` over it, so the requests go through the same adapter and error mapping they
- *   do against the publisher.
+ *   `./kadaster.integration.test.ts` reads the live service.
+ *   This suite stubs the transport and runs the real `APIClient` over it, so the requests
+ *   go through the same adapter and error mapping they do against the publisher.
  */
 
 import { APIClient } from "@mailwoman/core/api"

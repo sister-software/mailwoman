@@ -2,23 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Gauntlet regression runner for the conditional curated layer, the executable bug log. It loads
- *   `regression.db`, runs every `status=pass` case through the full pipeline and checks the assembled
- *   output: coordinate within tolerance, resolution tier, resolved place identity and
- *   admin components (case-insensitive). A fixed bug must stay fixed. Any drift fails the run.
- *   This corpus is deliberately small because curated-set capture is the Pelias trap. The
- *   metamorphic and held-out layers provide breadth.
+ *   Gauntlet regression runner for the conditional curated layer, the executable bug log.
  *
- *   The grading itself lives in `check-case.ts` (pure, unit-tested), and the freshness refusal
- *   that runs before any of it lives in `corpus-stamp.ts`.
+ *   It loads `regression.db`, runs every `status=pass` case through the full pipeline
+ *   and checks the assembled output: coordinate within tolerance, resolution tier,
+ *   resolved place identity and admin components (case-insensitive).
+ *   A fixed bug must stay fixed.
  *
- *   After the tracked list, the report lists the coordinate failures whose expected admin component the
- *   candidate table holds only outside the band its tag selects (#2802). Such a row's coordinate cannot
- *   arrive through that component under any parse, so the line states a data condition beside the grade.
- *   The grade itself does not change: the coordinate can still arrive through another component, and
- *   whether a parent point satisfies the row is a question only the grade answers. Reachability is read
- *   from `reachability.ts` against the candidate table the run resolves against, so a gazetteer rebuild
- *   moves a row off the list on its own.
+ *   Any drift fails the run.
+ *   This corpus is deliberately small because curated-set capture is the Pelias trap.
+ *   The metamorphic and held-out layers provide breadth.
+ *
+ *   The grading itself lives in `check-case.ts` (pure, unit-tested), and the freshness
+ *   refusal that runs before any of it lives in `corpus-stamp.ts`.
+ *
+ *   After the tracked list, the report lists the coordinate failures whose expected admin
+ *   component the candidate table holds only outside the band its tag selects (#2802).
+ *   Such a row's coordinate cannot arrive through that component under any parse,
+ *   so the line states a data condition beside the grade.
+ *
+ *   The grade itself doesn't change: the coordinate can still arrive through another component,
+ *   and whether a parent point satisfies the row is a question only the grade answers.
+ *   Reachability is read from `reachability.ts` against the candidate table the run
+ *   resolves against, so a gazetteer rebuild moves a row off the list on its own.
  *
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
@@ -138,7 +144,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Before a single address is graded: does this DB hold the corpus that is committed right now?
+	// Before a single address is graded: does this DB hold the corpus that's committed right now?
 	// A check reading a stale artifact reports a verdict about a corpus absent from its source data.
 	// See corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
@@ -163,8 +169,8 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
 	// Tracked cases that now pass in a locale this run graded base-only.
-	// Held back from `newlyPassing` and printed separately, because the pass is
-	// not attributable to the production path.
+	// Held back from `newlyPassing` and printed separately, because the pass isn't
+	// attributable to the production path.
 	const withheld: string[] = []
 	let counted = 0
 	// The receipts record whether the mechanism fired.
@@ -224,9 +230,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		} else if (issues.length) {
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 		} else if (deps.gradedBaseOnly(overlayCountry)) {
-			// The overlay this row routes to did not load, so the row graded without
-			// its pair index and dependent-locality prior.
-			// That is not the production path, so a pass on it is not evidence the production path passes.
+			// The overlay this row routes to didn't load, so the row graded without its
+			// pair index and dependent-locality prior.
+			// That's not the production path, so a pass on it isn't evidence the production path passes.
 			// Promotion would write a base-only result into the board as a regression guard.
 			// Reported rather than dropped, since an invisible withholding is
 			// indistinguishable from a row that kept failing.

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase-0 legacy excision (spec 2026-07-12): statically extract the `assert(input, ...expected)`
- *   calls from the v1 parity suite (`mailwoman/test/*.test.ts`) so the hand-written inputs +
- *   expectations survive the parser they currently exercise. Literal-only conversion — an expected
- *   arg that isn't a plain JSON literal is recorded as its source text with `nonLiteral: true`.
+ *   Phase-0 legacy excision (spec 2026-07-12): statically extract the
+ *   `assert(input, ...expected)` calls from the v1 parity suite (`mailwoman/test/*.test.ts`)
+ *   so the hand-written inputs + expectations survive the parser they currently exercise.
+ *
+ *   Literal-only conversion — an expected arg that isn't a plain JSON literal is
+ *   recorded as its source text with `nonLiteral: true`.
  */
 
 import ts from "typescript"

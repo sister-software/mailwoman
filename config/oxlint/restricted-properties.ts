@@ -7,7 +7,7 @@
  *   oxlint models the rule as a single list, so an override that writes `"off"` drops every entry —
  *   including the ones it never meant to touch and whatever is added to the list later. Each
  *   entry has its own constant here. {@linkcode restrictedPropertiesExcept} rebuilds the list by
- *   subtraction, so an override names what it is lifting and inherits everything it is not.
+ *   subtraction, so an override states what it is lifting and inherits everything it isn't.
  */
 
 /**

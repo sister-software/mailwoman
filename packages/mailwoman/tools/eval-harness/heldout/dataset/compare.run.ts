@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compares two held-out dataset versions: added and removed countries, changed sources, and changed row
- *   counts per country and kind.
+ *   Compares two held-out dataset versions: added and removed countries, changed sources,
+ *   and changed row counts per country and kind.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/compare.run.ts \

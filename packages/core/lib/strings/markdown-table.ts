@@ -25,7 +25,7 @@ function cellWidth(cell: string): number {
  *
  * A row shorter than the header is padded with empty cells.
  * A report that drops a column prints a gap.
- * The renderer does not fail.
+ * The renderer doesn't fail.
  */
 export function renderMarkdownTable(header: readonly string[], rows: ReadonlyArray<readonly string[]>): string[] {
 	const widths = header.map((cell, column) =>

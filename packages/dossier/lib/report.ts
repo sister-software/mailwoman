@@ -2,28 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The report an operator reads, assembled from line records. `reportLines` returns each line with its
- *   text, the part of the report it belongs to, its kind and the source records behind it. `renderReport`
- *   prints the text of each record in order, one line per record, so the printed report and the records
- *   cannot disagree.
+ *   The report an operator reads, assembled from line records.
+ *
+ *   `reportLines` returns each line with its text, the part of the report it belongs to,
+ *   its kind and the source records behind it.
+ *   `renderReport` prints the text of each record in order, one line per record,
+ *   so the printed report and the records cannot disagree.
  *
  *   A conclusion states a value that admitted records supply, and its text cites each of those records.
- *   The citation follows the value it supports, in parentheses. An identifier without evidence is still a
- *   conclusion, and it prints the words `source unstated` where its citation would be. An absence states
- *   in words that no admitted record supplies a value. The sources part ends the report and gives each
- *   admitted record's publisher, title, URL and three dates.
+ *   The citation follows the value it supports, in parentheses.
  *
- *   Every section states what the admitted records support and lists each unresolved question with the
- *   record that would resolve it. An unresolved total or position is written as unresolved
- *   with its conflicting values. A synthetic position is labeled synthetic. A source-present empty reading
- *   is written as the source having looked, with absence unknown. In the serviceability section every
- *   statement line opens with its kind, so a fact, a deduction, an estimate, a hypothesis and a decision
- *   never read alike. A reading that attaches to no building is listed once, after the building sections.
+ *   An identifier without evidence is still a conclusion, and it prints the words
+ *   `source unstated` where its citation would be.
+ *   An absence states in words that no admitted record supplies a value.
  *
- *   Each claim line gives the claim's status, source record and evidence date beside its value, so an
- *   inferred value never reads as an observed one. The evidence date is the date the fact was observed.
- *   A record's availability and retrieval dates say when the record could be read, so neither dates a
- *   claim, and a claim with no observation date is printed as undated.
+ *   The sources part ends the report and gives each admitted record's publisher,
+ *   title, URL and three dates.
+ *
+ *   Every section states what the admitted records support and lists each unresolved
+ *   question with the record that would resolve it.
+ *   An unresolved total or position is written as unresolved with its conflicting values.
+ *
+ *   A synthetic position is labeled synthetic.
+ *   A source-present empty reading is written as the source having looked, with absence unknown.
+ *
+ *   In the serviceability section every statement line opens with its kind, so a fact,
+ *   a deduction, an estimate, a hypothesis and a decision never read alike.
+ *   A reading that attaches to no building is listed once, after the building sections.
+ *
+ *   Each claim line gives the claim's status, source record and evidence date beside
+ *   its value, so an inferred value never reads as an observed one.
+ *   The evidence date is the date the fact was observed.
+ *
+ *   A record's availability and retrieval dates say when the record could be read,
+ *   so neither dates a claim, and a claim with no observation date is printed as undated.
  */
 
 import type { AvailabilityAnswer } from "#availability"
@@ -522,7 +534,7 @@ function providerRecord(
  * A claim value as the report prints it.
  *
  * A string is quoted, so the value `unknown` never reads as the report's own word.
- * An array or an object prints each member the same way, and an object names each member.
+ * An array or an object prints each member the same way, and an object lists each member.
  */
 function valueText(value: unknown): string {
 	if (typeof value === "string") return `"${value}"`

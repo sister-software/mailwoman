@@ -4,12 +4,13 @@
 /**
  * Extract `(postcode, locality, region, country)` tuples for the `trailing-region` recipe.
  *
- * Each tuple is stamped with its country's {@link PostcodePlacement}, because the same digits change tag with position.
+ * Each tuple is stamped with its country's {@link PostcodePlacement},
+ * because the same digits change tag with position.
  */
 
 import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
 import { foldName } from "@mailwoman/codex/normalize"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -54,7 +55,7 @@ export type GeonamesLocalityColumn = "place" | "admin2"
  * It also records the locale tag in its rows.
  *
  * A country is in this table only when a gauntlet board row attests its surface, because extracting
- * an absent country with the wrong placement teaches a convention that country does not use.
+ * an absent country with the wrong placement teaches a convention that country doesn't use.
  */
 export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	string,
@@ -69,7 +70,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["NL", { placement: "leading", locale: "nl-NL" }],
 	["PT", { placement: "leading", locale: "pt-PT" }],
 	["MX", { placement: "leading", locale: "es-MX" }],
-	// No postcode source on disk and GeoNames does not publish VE, so this entry yields no row.
+	// No postcode source on disk and GeoNames doesn't publish VE, so this entry yields no row.
 	// It is here because the placement makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows,
@@ -234,7 +235,7 @@ export function localityWrittenForm(sprName: string, names: PreferredNames): str
  * Read triples out of `postalcode-intl.db` by following each postcode's `parent_id`
  * into the admin gazetteer and that place's ancestry to a region.
  *
- * A postcode whose parent does not resolve, or whose parent has no region ancestor,
+ * A postcode whose parent doesn't resolve, or whose parent has no region ancestor,
  * is dropped rather than emitted with a blank.
  */
 export async function readTriplesFromParentJoin(
@@ -444,7 +445,7 @@ export async function readPairsFromAdmin(
  * The GeoNames reader requires this correction because treating a colonia as `locality`
  * teaches the wrong locality/dependent_locality boundary.
  *
- * @throws When the gazetteer is not on disk, because a predicate that accepted every
+ * @throws When the gazetteer isn't on disk, because a predicate that accepted every
  * name would emit unfiltered rows as though the filter had run.
  */
 export async function createKnownLocalityCheck(
@@ -548,11 +549,9 @@ export async function readTriplesFromGeonames(
 }
 
 /**
- * Resolve a GeoNames export path under the standard fetch out-root.
+ * Resolve a GeoNames postal export path under a fetch root, by default the current-source
+ * root `mailwoman corpus fetch geonames-postal` writes under.
  */
 export function geonamesPostalPath(country: string, sourcesRoot?: PathBuilderLike): PathBuilder {
-	return PathBuilder.from(sourcesRoot ?? dataRootPath("corpus", "sources"))(
-		"geonames-postal",
-		`${country.toUpperCase()}.txt`
-	)
+	return PathBuilder.from(sourcesRoot ?? currentSourcesRoot())("geonames-postal", `${country.toUpperCase()}.txt`)
 }

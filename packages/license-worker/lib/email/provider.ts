@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker asks an email provider to deliver a license message under the invoice id. The provider uses that id
- *   as the idempotency key. Resend deduplicates a retried send after a failed ledger write. Cloudflare's binding can
- *   deliver that retry twice. The ledger's
- *   `email_state` is what keeps the window to that one crash.
+ *   The worker asks an email provider to deliver a license message under the invoice id.
+ *
+ *   The provider uses that id as the idempotency key.
+ *   Resend deduplicates a retried send after a failed ledger write.
+ *
+ *   Cloudflare's binding can deliver that retry twice.
+ *   The ledger's `email_state` is what keeps the window to that one crash.
  */
 
 import type { LicenseIntent } from "@mailwoman/core/license/key"

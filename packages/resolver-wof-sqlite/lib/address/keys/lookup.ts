@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reads an address layer's `lookup.db` by the levels a parse resolved, for the CLI, the Workers and the browser.
+ *   Reads an address layer's `lookup.db` by the levels a parse resolved,
+ *   for the CLI, the Workers and the browser.
  *
- *   The reader runs its statements through an {@link AddressStatementRunner}. A local `DatabaseClient` and the
- *   browser's range-request database both satisfy it, so the three runtimes share one read order.
+ *   The reader runs its statements through an {@link AddressStatementRunner}.
+ *   A local `DatabaseClient` and the browser's range-request database both satisfy it,
+ *   so the three runtimes share one read order.
  */
 
 import { addressPostcodeKey } from "#address/keys/postcode"

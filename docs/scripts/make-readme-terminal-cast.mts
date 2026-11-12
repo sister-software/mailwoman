@@ -6,7 +6,7 @@
  * @file Synthesize a deterministic asciinema v2 cast of `npx mailwoman parse`.
  *
  *   Content is the real CLI output (verified against mailwoman/out/cli.js); ANSI colors are
- *   presentation only. Typing jitter comes from a seeded PRNG so reruns are byte-identical.
+ *   presentation only. A seeded PRNG drives the typing jitter, so reruns are byte-identical.
  *
  *   Regenerate the README asset (from the repo root):
  *
@@ -80,7 +80,7 @@ for (const [index, [key, value]] of entries.entries()) {
 
 emit(0.045, `${DIM}}${RESET}\r\n`)
 
-// Trailing prompt, then hold the final frame
+// Print a trailing prompt, then hold the final frame
 emit(0.3, `${DIM}$${RESET} `)
 emit(3, "")
 

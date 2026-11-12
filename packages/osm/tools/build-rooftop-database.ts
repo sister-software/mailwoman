@@ -6,18 +6,24 @@
  *   command line. `buildRooftopDatabase` in `rooftop-database.ts` does the build; `mailwoman data build
  *   osm-address-points` runs the same function through the installer.
  *
- *   The output is an OpenStreetMap Derivative Database under ODbL 1.0. This code contains no OpenStreetMap
- *   data, and the license applies to the built `.db`. The builder prints the license notice before it starts
- *   and after it finishes. `README.md` states the licensing boundary.
+ *   The output is an OpenStreetMap Derivative Database under ODbL 1.0.
+ *   This code contains no OpenStreetMap data, and the license applies to the built `.db`.
  *
- *   The extract needs the receipt `tools/fetch/extract.ts` writes beside it, or `--source-url` naming where
- *   it was downloaded from.
+ *   The builder prints the license notice before it starts and after it finishes.
+ *   `README.md` states the licensing boundary.
+ *
+ *   The extract needs the receipt `tools/fetch/extract.ts` writes beside it,
+ *   or `--source-url` naming where it was downloaded from.
+ *   `--region` reads the newest vintage of a Geofabrik region under
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/`, or the one `--vintage` names,
+ *   and `--release` then defaults to that vintage.
+ *   `--pbf` reads any other file.
  *
  *   Usage:
  *     node packages/osm/tools/build-rooftop-database.ts \
- *       --country fr --slug idf --release 260627 \
+ *       --country fr --slug idf \
  *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse head) \
- *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
+ *       --region europe/france/ile-de-france --vintage 2026-06-27
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -28,6 +34,7 @@ import { resolvePath } from "path-ts"
 import { osmLicenseNotice } from "#license"
 import { osmDatabasePath } from "#paths"
 import { readExtractProvenance } from "#sdk/extract/receipt"
+import { resolveExtractOption } from "#sdk/geofabrik/snapshot"
 import { streetLocaleForOSMCountry } from "#street-locale"
 import { buildRooftopDatabase } from "#tools/rooftop-database"
 
@@ -36,6 +43,8 @@ const { values } = parseArguments({
 		country: { type: "string" },
 		slug: { type: "string" },
 		pbf: { type: "string" },
+		region: { type: "string" },
+		vintage: { type: "string" },
 		release: { type: "string" },
 		"created-at": { type: "string" },
 		"build-sha": { type: "string" },
@@ -47,21 +56,24 @@ const { values } = parseArguments({
 })
 
 const country = values.country?.toLowerCase()
-const pbf = values.pbf
+const extract = await resolveExtractOption(values)
 
-if (!country || !pbf) {
+if (!country || !extract) {
 	throw new Error(
-		"required: --country <cc> --pbf <path.osm.pbf> --created-at <ISO-8601> --build-sha <git-sha> " +
+		"required: --country <cc> (--pbf <path.osm.pbf> | --region <geofabrik/path> [--vintage <YYYY-MM-DD>]) " +
+			"--created-at <ISO-8601> --build-sha <git-sha> " +
 			"[--slug <slug>] [--release <tag>] [--out <path>] [--source-url <url, when the extract has no receipt>]"
 	)
 }
+
+const { pbf } = extract
 
 if (!(await pathExists(pbf))) throw new Error(`PBF not found: ${pbf}`)
 // Throws for an unsupported country, so the build fails loud and never keys with the wrong normalizer.
 streetLocaleForOSMCountry(country)
 
 const slug = values.slug?.toLowerCase() || country
-const release = values.release || "unknown"
+const release = values.release || extract.vintage || "unknown"
 const createdAt = values["created-at"]
 const buildSHA = values["build-sha"]
 

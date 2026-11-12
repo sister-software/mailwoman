@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests the reverse geocoder's ray-cast PIP primitives and bbox-to-PIP descent walk over an inline fixture gazetteer.
+ * Tests the reverse geocoder's ray-cast PIP primitives and bbox-to-PIP descent
+ * walk over an inline fixture gazetteer.
+ *
  * It also runs an environment-restricted integration pass against the production databases.
  */
 

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tiles and TileJSON from the PMTiles archives in R2. The tiger and provider routes serve the same archives
- *   under a longer tile set name, so they call the handlers here.
+ *   Tiles and TileJSON from the PMTiles archives in R2.
+ *
+ *   The tiger and provider routes serve the same archives under a longer tile set name,
+ *   so they call the handlers here.
  */
 
 import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"

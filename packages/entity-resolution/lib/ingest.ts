@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Column mapping and normalization are pure. The caller injects geocoding, so this package never imports the neural parser, resolver, or extracts.
+ * Column mapping and normalization are pure.
+ *
+ * The caller injects geocoding, so this package never imports the neural parser, resolver, or extracts.
  */
 
 import { isPresent } from "@mailwoman/core/objects"

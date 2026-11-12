@@ -9,11 +9,11 @@ owner: operations
 
 A training run draws a bounded number of rows from each source per epoch. Which rows those are is
 decided by `_source_iter` in `corpus-python/src/mailwoman_train/data/loader/parquet.py`, and the
-answer is narrower than the recipe implies: a draw reads one row-group, and a row-group is not a
+answer is narrower than the recipe implies: a draw reads one row-group, and a row-group isn't a
 sample of its source.
 
-This page records the measurement, why the obvious repair does not work, and what the candidates
-cost. It exists because a repair was proposed, written and reverted on the strength of what is here.
+This page records the measurement, why the obvious repair doesn't work, and what the candidates
+cost. It exists because a repair was proposed, written and reverted on the strength of what's here.
 
 ## The three numbers
 
@@ -27,7 +27,7 @@ Measured 2026-09-21 on `corpus-v0.5.0` in this machine's data root.
 
 A source's epoch draw was **17,269 rows**, recorded by the epoch-mixture audit in
 `corpus-python/src/mailwoman_train/audits/epoch_mixture/passes.py`. That reading was taken against a
-corpus with an `overture` source. That source is not in this machine's data root: 715 of 718 train
+corpus with an `overture` source. That source isn't in this machine's data root: 715 of 718 train
 files for it are stored on the Modal volume. This page reports it as the audit recorded it rather than
 re-measured.
 
@@ -53,19 +53,19 @@ So a draw inside one row-group sees a median of 6 of that source's 13 countries,
 it sees exactly one. A source admitting 135 countries under `country_weights` is in the same position
 with a worse ratio.
 
-## Why shuffling file order does not repair it
+## Why shuffling file order doesn't repair it
 
 The repair proposed on 2026-09-19 was to interleave a source's files rather than drain them. It was
 written on 2026-09-21 as a shuffle of `(file, row-group)` pairs across the whole source, and reverted
 after this measurement.
 
 It moves which row-group a draw lands in, from the first file the seed happens to order first, to one
-drawn uniformly across the source. It does not widen the draw, because 17,269 rows still fit inside
+drawn uniformly across the source. It doesn't widen the draw, because 17,269 rows still fit inside
 one 50,000-row row-group. Belgium, the case the audit cited, still draws no rows in most runs.
 
 It is also not free. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the exact row
 sequence a seeded run produces, and the change moved it — 124 encoded examples against a committed 127. That test exists so a change that reshuffles what every run trains on is a deliberate act. A
-change that reshuffles the stream has to buy the repair, and this one did not.
+change that reshuffles the stream has to buy the repair, and this one didn't.
 
 ## What the candidates cost
 
