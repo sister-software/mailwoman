@@ -95,6 +95,7 @@ import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
+import { useGazetteerReload } from "#runtime/use/gazetteer-reload"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 import { readWOFPlace } from "#runtime/wof-place"
 
@@ -155,6 +156,16 @@ export interface GeocoderRuntimeHandle {
 	 * The ledger of the current or last release load, `null` before a load reports one.
 	 */
 	loadLedger: LoadLedgerSnapshot | null
+	/**
+	 * Loads the release's classifier and gazetteer again without a page reload,
+	 * or `null` when the runtime loads no release in the page.
+	 */
+	reloadStack: (() => void) | null
+	/**
+	 * Reopens the gazetteer and keeps the loaded classifier, or `null`
+	 * when the runtime has no gazetteer to reopen.
+	 */
+	reloadGazetteer: (() => Promise<void>) | null
 }
 
 export interface GeocoderRuntimeOptions {
@@ -426,6 +437,12 @@ export function useGeocoderRuntime({
 	)
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
+
+	const reloadGazetteer = useGazetteerReload(
+		rt.selectedRelease?.hasWOFDB ?? false,
+		sqliteRuntimeBaseURL,
+		rt.updateAssets
+	)
 
 	// A weights family other than the base loads its own bundle on the first input written in its script.
 	// The bundle reads the base release's gazetteer through the cascade, so it loads no gazetteer of its own.
@@ -1090,5 +1107,7 @@ export function useGeocoderRuntime({
 		supportsTrace: rt.assets?.classifier?.traceParse != null,
 		gazetteerError: rt.assets?.gazetteerError ?? null,
 		loadLedger: rt.loadingLedger,
+		reloadStack: rt.manifestAbsent ? null : rt.retry,
+		reloadGazetteer,
 	}
 }

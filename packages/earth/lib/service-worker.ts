@@ -46,6 +46,7 @@
 
 import { SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
 import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "@mailwoman/service-worker-cache/build-caches"
+import { answerCacheControl, isCacheControlMessage } from "@mailwoman/service-worker-cache/cache-control"
 import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
 import { createRangeChunkHandler, createRangeGuardHandler } from "@mailwoman/service-worker-cache/range-chunks"
@@ -147,9 +148,30 @@ self.addEventListener("activate", (event) => {
 	event.waitUntil(deleteOtherBuildCaches(caches, CACHE_PREFIX, CURRENT_CACHES).then(() => self.clients.claim()))
 })
 
+/**
+ * The cache each role a page may report or clear maps to.
+ *
+ * The page names roles rather than caches, because the app-asset cache's name changes with each build.
+ */
+const CACHES_BY_ROLE: Readonly<Record<string, string>> = {
+	"db-ranges": RANGE_CACHE,
+	"release-assets": ASSET_CACHE,
+	manifests: MANIFEST_CACHE,
+	tiles: TILE_CACHE,
+	"app-assets": APP_ASSET_CACHE,
+}
+
 self.addEventListener("message", (event) => {
 	if (isSkipWaitingMessage(event.data)) {
 		event.waitUntil(self.skipWaiting())
+
+		return
+	}
+
+	if (isCacheControlMessage(event.data)) {
+		const [port] = event.ports
+
+		event.waitUntil(answerCacheControl(event.data, caches, CACHES_BY_ROLE).then((reply) => port?.postMessage(reply)))
 
 		return
 	}

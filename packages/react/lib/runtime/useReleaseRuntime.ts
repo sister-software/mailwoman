@@ -196,6 +196,14 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	 * Artifacts that arrived in the failed attempt are read again from the browser's caches.
 	 */
 	retry: () => void
+
+	/**
+	 * Replaces the loaded bundle with `update`'s result, such as one with a reopened gazetteer.
+	 *
+	 * While no bundle is loaded, the call returns without calling `update`.
+	 * The replacement isn't disposed of separately: the hook disposes it as the live bundle.
+	 */
+	updateAssets: (update: (assets: TAssets) => TAssets) => void
 }
 
 /**
@@ -351,6 +359,17 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		setErrorMessage(null)
 	}, [])
 
+	const updateAssets = useCallback((update: (assets: TAssets) => TAssets) => {
+		const live = liveAssetsRef.current
+
+		if (!live) return
+
+		const next = update(live)
+
+		liveAssetsRef.current = next
+		setAssets(next)
+	}, [])
+
 	const retry = useCallback(() => {
 		setErrorMessage(null)
 		setLoadingProgress(initialProgress)
@@ -378,5 +397,6 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadingLedger,
 		selectVersion,
 		retry,
+		updateAssets,
 	}
 }

@@ -149,6 +149,36 @@ function settleOptional<T>(load: Promise<T>): Promise<T | null> {
 }
 
 /**
+ * Opens the byte-range gazetteer lookup, and starts pulling the pages its first query reads.
+ *
+ * It resolves `null` when `signal` aborted while the database opened, and throws when the open fails.
+ * A host reopens the gazetteer with it and keeps the loaded classifier.
+ */
+export async function openGazetteerLookup(
+	sqliteRuntimeBaseURL: string,
+	signal?: AbortSignal
+): Promise<MailwomanLookupLike | null> {
+	const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
+		import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+		import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+	])
+
+	const database = await openRangeDatabase(adminGazetteerURL(), sqliteRuntimeBaseURL)
+
+	if (signal?.aborted) return null
+
+	const wofLookup = new WOFCandidateTableLookup(database)
+
+	// Fire-and-forget: pull the schema, code-table and upper B-tree pages through the VFS now
+	// so the first interactive query starts warm.
+	// The worker serializes queries, so a user query issued mid-warm-up queues
+	// behind pages it was going to need anyway.
+	void wofLookup.warmUp().catch(() => {})
+
+	return wofLookup
+}
+
+/**
  * Load the classifier, calibration, FST and gazetteer bundle for one release,
  * reporting staged progress through `progress`.
  *
@@ -352,24 +382,8 @@ export async function loadReleaseAssets(
 			ledger.start(gazetteerURL, ArtifactRole.Gazetteer)
 
 			try {
-				const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
-					import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
-					import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
-				])
-
-				const database = await openRangeDatabase(gazetteerURL, gazetteer.sqliteRuntimeBaseURL)
-
+				lookup = await openGazetteerLookup(gazetteer.sqliteRuntimeBaseURL, progress.signal)
 				ledger.settle(gazetteerURL, { state: "done", source: "unknown", error: null })
-
-				if (!progress.signal.aborted) {
-					const wofLookup = new WOFCandidateTableLookup(database)
-					// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
-					// the VFS now so the first interactive query starts warm.
-					// The worker serializes queries, so a user query issued mid-warm-up queues
-					// behind pages it was going to need anyway.
-					void wofLookup.warmUp().catch(() => {})
-					lookup = wofLookup
-				}
 			} catch (error) {
 				// The parse still runs without the gazetteer, so the failure is reported rather than thrown.
 				gazetteerError = error instanceof Error ? error.message : String(error)
