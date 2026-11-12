@@ -45,7 +45,8 @@ function rangeRequest(start: number, end: number, href = FILE): RouteHandlerCall
 /**
  * A 200 carrying the whole file, as an origin that ignored the `Range` header sends it.
  *
- * The stream records whether its reader cancelled it, which is how the handler stops the download.
+ * The stream records whether its reader cancelled it.
+ * Cancelling is how the handler stops the download.
  */
 function wholeFile(): { response: Response; cancelled: () => boolean } {
 	let cancelled = false

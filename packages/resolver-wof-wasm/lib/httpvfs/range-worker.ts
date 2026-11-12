@@ -108,7 +108,7 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
  *
  * A fetched chunk goes in memory, and the least recently read chunks leave
  * until the bytes held fit `maxCachedBytes`.
- * The chunk just read always stays, so one read never fetches the same chunk twice.
+ * The chunk this call fetched always stays, so one read never fetches the same chunk twice.
  */
 function chunkAt(file: RemoteFile, index: number): Uint8Array {
 	const held = file.chunks.get(index)

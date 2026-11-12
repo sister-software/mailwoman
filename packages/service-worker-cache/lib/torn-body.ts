@@ -34,8 +34,7 @@ export interface TornBodyPluginOptions {
 	 * Supplies a length to check a response against when the response's own `Content-Length`
 	 * can't be checked: the header is missing, or it states an encoded length.
 	 *
-	 * An origin that serves a file without `Content-Length` otherwise leaves a
-	 * truncated body nothing to be compared with.
+	 * Without the lookup, a truncated body from an origin that serves no `Content-Length` passes the check.
 	 */
 	expectedLength?: ExpectedLengthLookup
 }

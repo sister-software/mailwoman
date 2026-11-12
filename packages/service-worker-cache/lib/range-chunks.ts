@@ -16,8 +16,9 @@
  *
  *   An origin can also answer a range request with a 200 and the whole file,
  *   as a cache that bypassed the range did for a 2.88 GB gazetteer database.
- *   The reader issues its reads as synchronous XHR, which buffers that body in full
- *   before the reader can see its status.
+ *   The reader issues its reads as synchronous XHR.
+ *
+ *   A synchronous XHR buffers that body in full before the reader can see its status.
  *
  *   The handler therefore cancels such a body, refetches once with `cache: "no-store"`, and answers a
  *   second whole-file response with a bodiless 502 marked by {@linkcode RANGE_REFUSED_HEADER}.
@@ -129,7 +130,8 @@ export function rangeChunkKey(href: string, start: number, end: number): string 
 }
 
 /**
- * Whether a response to a closed range carries the whole file: a success status other than 206.
+ * Whether a response to a closed range has a success status other than 206.
+ * Such a response's body is the whole file.
  */
 function isWholeFileAnswer(response: Response): boolean {
 	return response.ok && response.status !== HTTP_PARTIAL_CONTENT
@@ -140,7 +142,7 @@ function isWholeFileAnswer(response: Response): boolean {
  */
 async function discard(response: Response): Promise<void> {
 	await response.body?.cancel().catch(() => {
-		// A body that already failed has nothing left to release.
+		// A body that already failed holds no unread bytes, and its rejection is ignored.
 	})
 }
 
