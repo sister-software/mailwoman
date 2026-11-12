@@ -119,8 +119,11 @@ export interface LoadReleaseAssetsOptions {
 	 * range worker and sqlite-wasm runtime (for example `/mailwoman/sqlite`).
 	 *
 	 * Omit it and `lookup` is `null` without a gazetteer step.
+	 *
+	 * Given `lookup`, the bundle takes that open gazetteer instead of opening another, as
+	 * when a host reloads the classifier and keeps the gazetteer it already has.
 	 */
-	gazetteer?: { sqliteRuntimeBaseURL: string }
+	gazetteer?: { sqliteRuntimeBaseURL: string; lookup?: MailwomanLookupLike | null }
 
 	/**
 	 * The URL of the onnxruntime-web `.wasm` binary the host's bundle serves.
@@ -193,7 +196,8 @@ export async function loadReleaseAssets(
 	progress: AssetLoadProgress,
 	options: LoadReleaseAssetsOptions = {}
 ): Promise<ReleaseAssets> {
-	const gazetteer = release.hasWOFDB ? options.gazetteer : null
+	const keptLookup = release.hasWOFDB ? (options.gazetteer?.lookup ?? null) : null
+	const gazetteer = release.hasWOFDB && !keptLookup ? options.gazetteer : null
 	const locale = options.locale ?? DEFAULT_LOCALE
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
@@ -371,7 +375,7 @@ export async function loadReleaseAssets(
 			advanceStep()
 		}
 
-		let lookup: MailwomanLookupLike | null = null
+		let lookup: MailwomanLookupLike | null = keptLookup
 		let gazetteerError: string | null = null
 
 		if (gazetteer) {

@@ -40,7 +40,7 @@ import type {
 } from "@mailwoman/core/pipeline/client-result"
 import { allKeyed, startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
-import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
+import type { ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
 import type {
 	MapCanvasStyle,
@@ -95,7 +95,7 @@ import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
-import { useGazetteerReload } from "#runtime/use/gazetteer-reload"
+import { useReleaseAssetLoader, useStackReloads } from "#runtime/use/gazetteer-reload"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 import { readWOFPlace } from "#runtime/wof-place"
 
@@ -166,6 +166,10 @@ export interface GeocoderRuntimeHandle {
 	 * when the runtime has no gazetteer to reopen.
 	 */
 	reloadGazetteer: (() => Promise<void>) | null
+	/**
+	 * Reloads the classifier and keeps the open gazetteer, or `null` when there's no gazetteer to keep.
+	 */
+	reloadModel: (() => void) | null
 }
 
 export interface GeocoderRuntimeOptions {
@@ -430,19 +434,9 @@ export function useGeocoderRuntime({
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
-	const loadAssets = useCallback(
-		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
-			loadReleaseAssets(release, ctx, { gazetteer: { sqliteRuntimeBaseURL }, ortWASMURL }),
-		[sqliteRuntimeBaseURL]
-	)
-
+	const { keptGazetteer, loadAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
-
-	const reloadGazetteer = useGazetteerReload(
-		rt.selectedRelease?.hasWOFDB ?? false,
-		sqliteRuntimeBaseURL,
-		rt.updateAssets
-	)
+	const { reloadGazetteer, reloadModel } = useStackReloads(rt, sqliteRuntimeBaseURL, keptGazetteer)
 
 	// A weights family other than the base loads its own bundle on the first input written in its script.
 	// The bundle reads the base release's gazetteer through the cascade, so it loads no gazetteer of its own.
@@ -1109,5 +1103,6 @@ export function useGeocoderRuntime({
 		loadLedger: rt.loadingLedger,
 		reloadStack: rt.manifestAbsent ? null : rt.retry,
 		reloadGazetteer,
+		reloadModel,
 	}
 }

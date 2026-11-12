@@ -70,6 +70,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 		loadLedger,
 		reloadStack,
 		reloadGazetteer,
+		reloadModel,
 	} = handle
 
 	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
@@ -113,7 +114,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					{calibrator ? <CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} /> : null}
 					{supportsTrace ? <DevModeToggle checked={devMode} onChange={setDevMode} /> : null}
 					{loadLedger ? <LoadLedgerList ledger={loadLedger} /> : null}
-					<CachePanel reloadStack={reloadStack} reloadGazetteer={reloadGazetteer} />
+					<CachePanel reloadStack={reloadStack} reloadGazetteer={reloadGazetteer} reloadModel={reloadModel} />
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
@@ -181,6 +182,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			loadLedger,
 			reloadStack,
 			reloadGazetteer,
+			reloadModel,
 		]
 	)
 	/* oxlint-enable react/no-unstable-nested-components */

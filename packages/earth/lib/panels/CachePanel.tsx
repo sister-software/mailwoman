@@ -63,9 +63,13 @@ export interface CachePanelProps {
 	 * Reopens the gazetteer and keeps the classifier, or `null` when the release has no gazetteer.
 	 */
 	reloadGazetteer: (() => Promise<void>) | null
+	/**
+	 * Reloads the classifier and keeps the open gazetteer, or `null` when there's no gazetteer to keep.
+	 */
+	reloadModel: (() => void) | null
 }
 
-export function CachePanel({ reloadStack, reloadGazetteer }: CachePanelProps) {
+export function CachePanel({ reloadStack, reloadGazetteer, reloadModel }: CachePanelProps) {
 	const [state, setState] = useState<StorageState | null>(null)
 	const [status, setStatus] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
@@ -183,6 +187,11 @@ export function CachePanel({ reloadStack, reloadGazetteer }: CachePanelProps) {
 				{reloadStack ? (
 					<button type="button" className="mw-map-chip" disabled={busy} onClick={reloadStack}>
 						Reload model and gazetteer
+					</button>
+				) : null}
+				{reloadModel ? (
+					<button type="button" className="mw-map-chip" disabled={busy} onClick={reloadModel}>
+						Reload model
 					</button>
 				) : null}
 				{reloadGazetteer ? (

@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "#build-caches"
+import { buildCacheName, deleteOtherBuildCaches, generationCacheName, roleCacheName } from "#build-caches"
 
 import { MemoryCacheStorage } from "../test/memory-cache.ts"
 
@@ -53,6 +53,37 @@ describe("deleteOtherBuildCaches", () => {
 		}
 
 		await expect(deleteOtherBuildCaches(storage, "mailwoman-", current)).resolves.toEqual(legacy)
+		await expect(storage.keys()).resolves.toEqual([...current])
+	})
+})
+
+describe("generationCacheName", () => {
+	test("a bumped tile generation deletes the earlier generation's tiles and keeps every other role", async () => {
+		const storage = new MemoryCacheStorage()
+		const currentTiles = generationCacheName("mailwoman-", "tiles", 2)
+
+		const current = new Set([
+			currentTiles,
+			roleCacheName("mailwoman-", "release-assets"),
+			roleCacheName("mailwoman-", "db-ranges"),
+		])
+
+		for (const name of [
+			...current,
+			generationCacheName("mailwoman-", "tiles", 1),
+			// The tile cache workers kept before generations existed, with no generation suffix.
+			roleCacheName("mailwoman-", "tiles"),
+		]) {
+			await storage.open(name)
+		}
+
+		expect(currentTiles).toBe("mailwoman-tiles-g2")
+
+		await expect(deleteOtherBuildCaches(storage, "mailwoman-", current)).resolves.toEqual([
+			"mailwoman-tiles-g1",
+			"mailwoman-tiles",
+		])
+
 		await expect(storage.keys()).resolves.toEqual([...current])
 	})
 })

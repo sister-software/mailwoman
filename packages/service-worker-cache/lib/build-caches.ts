@@ -31,6 +31,16 @@ export function roleCacheName(prefix: string, role: string): string {
 }
 
 /**
+ * The name of one role's cache at a hand-bumped generation, such as `mailwoman-tiles-g1`.
+ *
+ * Every build shares it until a deploy raises the generation.
+ * Activation then deletes the earlier generation's cache, as it deletes every cache outside the current set.
+ */
+export function generationCacheName(prefix: string, role: string, generation: number): string {
+	return `${prefix}${role}-g${generation}`
+}
+
+/**
  * Deletes every cache whose name starts with `prefix` and isn't in `keep`, and returns the names deleted.
  *
  * A cache outside the prefix is kept.

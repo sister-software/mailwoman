@@ -210,5 +210,6 @@ export function useRemoteGeocoderRuntime(
 		loadLedger: null,
 		reloadStack: null,
 		reloadGazetteer: null,
+		reloadModel: null,
 	}
 }
