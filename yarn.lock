@@ -5029,12 +5029,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hono/node-server@npm:^2.1.6":
-  version: 2.1.6
-  resolution: "@hono/node-server@npm:2.1.6"
+"@hono/node-server@npm:^2.1.7":
+  version: 2.1.7
+  resolution: "@hono/node-server@npm:2.1.7"
   peerDependencies:
     hono: ^4 || ^5.0.0-0
-  checksum: 10/43e5fa3972b20e22a6471874f4858011a80633011df60e312c37f472051f983ae47ea8f76004157c38a6317cea4a152745601a031d2428b7c44bdf7778a9a0b6
+  checksum: 10/04337fd3a936fb35bd7361807b3b407234915a93ac27222d96d574b64a42b544619e503e6fe7805ce92d855cda41b54d0a6e3a2ae1e7e4799c35882756e56b1b
   languageName: node
   linkType: hard
 
@@ -6549,7 +6549,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/api-kit@workspace:packages/api-kit"
   dependencies:
-    "@hono/node-server": "npm:^2.1.6"
+    "@hono/node-server": "npm:^2.1.7"
     "@hono/zod-openapi": "npm:^1.6.3"
     "@mailwoman/core": "workspace:*"
     hono: "npm:^4.13.14"
