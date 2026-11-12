@@ -8,10 +8,16 @@
  */
 
 import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
-import { fitBoundsOptionsFor, ResultCamera } from "@mailwoman/react/map/ResultCamera"
+import {
+	applyCameraTarget,
+	type CameraMap,
+	fitBoundsOptionsFor,
+	LONG_MOVE_OVERVIEW_ZOOM,
+	ResultCamera,
+} from "@mailwoman/react/map/ResultCamera"
 import { act } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
-import { expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 import type { MapCameraTarget } from "#map/place-render"
 
@@ -106,4 +112,66 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 
 	expect(arrived, "the camera never reached the bounds — the ease produced NaN").not.toBeNull()
 	expect(Number.isFinite(getMap()?.getZoom())).toBe(true)
+})
+
+/**
+ * A camera that records each move it's asked for, starting at `center` and `zoom`.
+ */
+function recordingCamera(center: { lng: number; lat: number }, zoom: number) {
+	const calls: Array<[method: string, ...args: unknown[]]> = []
+
+	const camera: CameraMap = {
+		getCenter: () => center,
+		getZoom: () => zoom,
+		jumpTo: (options) => calls.push(["jumpTo", options]),
+		flyTo: (options) => calls.push(["flyTo", options]),
+		fitBounds: (bounds, options) => calls.push(["fitBounds", bounds, options]),
+	}
+
+	return { calls, camera }
+}
+
+const TOKYO = { lng: 139.7671, lat: 35.6812 }
+
+describe("applyCameraTarget", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals()
+	})
+
+	test("a long move jumps over the target at the overview zoom, then animates in", () => {
+		const { calls, camera } = recordingCamera(TOKYO, 12)
+
+		applyCameraTarget(camera, BOUNDS_TARGET)
+
+		expect(calls.map(([method]) => method)).toEqual(["jumpTo", "fitBounds"])
+		expect(calls[0]![1]).toEqual({ center: [-74, 40.7], zoom: LONG_MOVE_OVERVIEW_ZOOM })
+		expect(Object.hasOwn(calls[1]![2] as object, "duration")).toBe(false)
+	})
+
+	test("a long move from a lower zoom keeps that zoom for the jump", () => {
+		const { calls, camera } = recordingCamera(TOKYO, 2)
+
+		applyCameraTarget(camera, { kind: "center", center: [-73.9857, 40.7484], zoom: 17 })
+
+		expect(calls[0]).toEqual(["jumpTo", { center: [-73.9857, 40.7484], zoom: 2 }])
+		expect(calls[1]![0]).toBe("flyTo")
+	})
+
+	test("a short move animates without a jump", () => {
+		const { calls, camera } = recordingCamera({ lng: -73.5, lat: 41 }, 12)
+
+		applyCameraTarget(camera, BOUNDS_TARGET)
+
+		expect(calls.map(([method]) => method)).toEqual(["fitBounds"])
+	})
+
+	test("reduced motion lands without animating, however far the move", () => {
+		vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }))
+
+		const { calls, camera } = recordingCamera(TOKYO, 12)
+
+		applyCameraTarget(camera, { kind: "center", center: [-73.9857, 40.7484], zoom: 17 })
+
+		expect(calls).toEqual([["jumpTo", { center: [-73.9857, 40.7484], zoom: 17 }]])
+	})
 })
