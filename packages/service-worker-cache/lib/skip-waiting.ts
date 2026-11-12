@@ -5,8 +5,8 @@
  *   The page-to-worker message that lets a waiting service worker take over.
  *
  *   A worker that doesn't call `skipWaiting` on install waits until the page asks.
- *   `workbox-window`'s `messageSkipWaiting`, which `vite-plugin-pwa`'s update
- *   function calls, posts this message to the waiting worker.
+ *   The update function of `vite-plugin-pwa` asks `workbox-window` to post this message
+ *   to the waiting worker.
  */
 
 /**
