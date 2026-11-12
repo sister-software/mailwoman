@@ -138,7 +138,11 @@ async function fetchComplete(
 
 	const rearm = (): void => {
 		clearTimeout(timer)
-		timer = setTimeout(() => stall.abort(new FetchStalledError(requestURL(input), STALL_TIMEOUT_MS)), STALL_TIMEOUT_MS)
+
+		timer = setTimeout(
+			() => stall.abort(new FetchStalledError(urlOfFetchInput(input), STALL_TIMEOUT_MS)),
+			STALL_TIMEOUT_MS
+		)
 	}
 
 	rearm()
@@ -301,7 +305,7 @@ export async function fetchWithRetry(
 /**
  * The URL a `fetch` input names, whether it's a string, a `URL` or a `Request`.
  */
-export function requestURL(input: Parameters<typeof fetch>[0]): string {
+export function urlOfFetchInput(input: Parameters<typeof fetch>[0]): string {
 	return typeof input === "string" ? input : input instanceof URL ? input.href : input.url
 }
 
@@ -322,7 +326,7 @@ export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[
 	}
 
 	return (input, init) => {
-		const url = requestURL(input)
+		const url = urlOfFetchInput(input)
 		const response = init ? undefined : started.get(url)
 
 		if (!response) return fetchImpl(input, init)

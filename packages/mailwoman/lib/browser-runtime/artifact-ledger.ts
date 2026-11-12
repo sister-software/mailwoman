@@ -3,7 +3,7 @@
 
 /**
  *   The load ledger: a record of each artifact one release load requests, kept current
- *   while the load runs so a page can show what is downloading and what failed.
+ *   while the load runs so a page can show what's downloading and what failed.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
 	SERVED_FROM_HEADER,
 } from "@mailwoman/core/load-ledger"
 
-import { type BytesReceived, fetchWithRetry, requestURL, subscribeNetworkWaits } from "#browser-runtime/fetch"
+import { type BytesReceived, fetchWithRetry, urlOfFetchInput, subscribeNetworkWaits } from "#browser-runtime/fetch"
 
 /**
  * The shortest interval between two byte-count notifications, so a large download
@@ -186,7 +186,7 @@ export function ledgerFetch(
 	const fetchImpl = options.fetchImpl ?? fetchWithRetry
 
 	return async (input, init) => {
-		const url = requestURL(input)
+		const url = urlOfFetchInput(input)
 
 		ledger.start(url)
 

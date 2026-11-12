@@ -35,7 +35,7 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 const { loadReleaseAssets } = await import("#browser-runtime/load-assets")
-const { ArtifactLoadError } = await import("#browser-runtime/load-ledger")
+const { ArtifactLoadError } = await import("#browser-runtime/artifact-ledger")
 
 const WASM_URL = "https://earth.example/assets/ort-wasm-simd-threaded.wasm"
 

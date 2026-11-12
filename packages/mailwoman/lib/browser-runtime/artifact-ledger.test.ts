@@ -4,7 +4,7 @@
 import { type LoadLedgerSnapshot, SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { artifactSource, LoadLedger, roleOfArtifactURL } from "#browser-runtime/load-ledger"
+import { artifactSource, LoadLedger, roleOfArtifactURL } from "#browser-runtime/artifact-ledger"
 
 const BASE = "https://public.mailwoman.post/mailwoman/en-us/v10.8.0/"
 

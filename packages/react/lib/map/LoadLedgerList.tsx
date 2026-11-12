@@ -74,7 +74,7 @@ export function LoadLedgerList({ ledger, open = false }: LoadLedgerListProps): R
 		failed ? `${failed} failed` : null,
 		ledger.waitingForNetwork ? "waiting for network" : null,
 	]
-		.filter(Boolean)
+		.filter((part): part is string => part != null)
 		.join(" · ")
 
 	return (

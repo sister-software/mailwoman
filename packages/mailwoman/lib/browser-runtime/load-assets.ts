@@ -20,10 +20,10 @@ import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
+import { ArtifactLoadError, followNetworkWaits, LoadLedger, ledgerFetch } from "#browser-runtime/artifact-ledger"
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { prefetchingFetch } from "#browser-runtime/fetch"
-import { ArtifactLoadError, followNetworkWaits, LoadLedger, ledgerFetch } from "#browser-runtime/load-ledger"
 import {
 	fetchPairIndexManifest,
 	postcodeAnchorFilesOf,
