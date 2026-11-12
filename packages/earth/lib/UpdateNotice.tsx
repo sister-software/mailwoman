@@ -16,7 +16,7 @@ export interface UpdateNoticeProps {
 }
 
 /**
- * Renders nothing until the update state needs the reader.
+ * Renders `null` while the update state is `none`.
  *
  * "Update ready · Reload" lets the waiting worker take over, after which every open tab reloads once.
  * "Update needs a connection" stays until the page reloads itself on reconnecting.

@@ -36,7 +36,7 @@ export function reloadOnServiceWorkerTakeover(): void {
 /**
  * What the page should tell the reader about its code.
  *
- * - `none`: nothing.
+ * - `none`: the page shows no notice.
  * - `update-ready`: a new worker is waiting, and {@linkcode ServiceWorkerUpdates.applyUpdate} lets it take over.
  * - `update-needs-connection`: a module of this page's build failed to load while offline.
  *   The page reloads when the connection returns.
@@ -61,8 +61,8 @@ export interface ServiceWorkerUpdates {
 /**
  * The part of `vite-plugin-pwa`'s `registerSW` this module calls.
  *
- * The real function comes from the `virtual:pwa-register` module, which exists
- * only inside a Vite build, so the app passes it in.
+ * The real function comes from the `virtual:pwa-register` module.
+ * That module exists only inside a Vite build, so the app passes the function in.
  */
 export type RegisterServiceWorker = (options: {
 	onNeedRefresh?: () => void
@@ -105,10 +105,10 @@ function recordStaleModuleReload(now: number): void {
  * the server no longer has, as after a deploy replaced the build's hashed files.
  *
  * Online, the page reloads once to run the current build.
- * Offline, a reload would load nothing, so `onOffline` runs and the page reloads when
- * the `online` event fires.
- * A second failure within {@link STALE_MODULE_RELOAD_INTERVAL_MS} of a reload is left to
- * Vite, which raises the import error.
+ * Offline, a reload would fail to fetch the page.
+ * `onOffline` runs instead, and the page reloads when the `online` event fires.
+ * A second failure within {@link STALE_MODULE_RELOAD_INTERVAL_MS} of a reload is left to Vite.
+ * Vite then raises the import error.
  */
 export function reloadOnStaleModule(onOffline: () => void): void {
 	const reload = (): void => {

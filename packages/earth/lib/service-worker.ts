@@ -37,8 +37,9 @@
  * Only the precache and the build's own files follow the build.
  *
  * A new worker installs and then waits.
- * It takes over only when a page posts `SKIP_WAITING`, which Earth's "Update ready"
- * prompt does, and every page an earlier worker served then reloads once.
+ * It takes over only when a page posts `SKIP_WAITING`.
+ *
+ * Earth's "Update ready" prompt posts it, and every page an earlier worker served then reloads once.
  */
 
 /// <reference lib="webworker" />
@@ -77,7 +78,7 @@ declare const __MAILWOMAN_BUILD_COMMIT__: string
  * Every runtime cache's name starts with this.
  *
  * On activation the worker deletes every cache with it outside {@linkcode CURRENT_CACHES}:
- * an earlier build's app-asset cache, and data caches that workers before this one named per build.
+ * an earlier build's app-asset cache, and data caches that an earlier worker keyed by build commit.
  */
 const CACHE_PREFIX = "mailwoman-"
 
@@ -114,7 +115,7 @@ const MAX_TILE_ENTRIES = 6000
 /**
  * How long a stored tile answers before the network is asked again.
  *
- * A tile URL names its tileset without a version, so a rebuilt tileset keeps its URLs.
+ * A tile URL holds its tileset's ID and no version, so a rebuilt tileset keeps its URLs.
  * The tile cache survives deploys, and this age bounds how long a replaced tile is drawn.
  *
  * An offline page past it has no tile, and MapLibre draws the parent tile in its place.
