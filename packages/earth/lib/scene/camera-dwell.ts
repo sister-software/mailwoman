@@ -6,8 +6,14 @@
  *
  *   A 3D layer that fetches on every frame of a fly-over spends memory
  *   and bandwidth on views the reader passes through.
- *   The layers here wait until the camera stops at a zoom and pitch where their models read as 3D, and
- *   until the geocoder runtime has loaded, so the 3D downloads don't compete with the model download.
+ *   The layers here wait until the geocoder runtime has loaded, so the 3D downloads don't
+ *   compete with the model download, and until the camera rests at the layer's zoom.
+ *
+ *   Pitch decides only when a layer first switches on: the camera must tilt to
+ *   at least {@linkcode DWELL_MIN_PITCH} once.
+ *   A reader who never tilts never downloads 3D data.
+ *
+ *   After that, every rest at the layer's zoom loads the new area, flat or tilted.
  */
 
 import { useEffect, useRef, useState } from "react"
@@ -28,7 +34,7 @@ export interface CameraSource {
 export interface DwellCriteria {
 	minZoom: number
 	/**
-	 * The lowest pitch in degrees.
+	 * The lowest pitch in degrees for the first arm.
 	 */
 	minPitch: number
 	/**
@@ -137,8 +143,11 @@ export class CameraDwell {
 		this.#cancel()
 
 		const { minZoom, minPitch, dwellMs } = this.#criteria
+		// Pitch decides only the first arm, when the layer switches on.
+		// Afterwards a flat view loads new areas too, so a pan after flattening still shows buildings.
+		const pitched = this.#state.everArmed || this.#camera.getPitch() >= minPitch
 
-		if (this.#camera.getZoom() < minZoom || this.#camera.getPitch() < minPitch) {
+		if (this.#camera.getZoom() < minZoom || !pitched) {
 			this.#resting = false
 			this.#publish()
 

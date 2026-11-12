@@ -487,7 +487,8 @@ export const Scene3D: React.FC<{ runtimeReady: boolean }> = ({ runtimeReady }) =
 		exposeTransform(map)
 	}
 
-	// A PLATEAU tileset joins only while the camera rests on a pitched street view after the runtime loads.
+	// A PLATEAU tileset joins only while the camera rests at street zoom after the runtime loads.
+	// The first join also needs a tilted camera.
 	const cityDwell = useCameraDwell(GPU_BUILDINGS ? null : map, CITY_MODEL_DWELL, runtimeReady)
 	const joiningRef = useRef(false)
 	const scheduleRef = useRef<(() => void) | null>(null)

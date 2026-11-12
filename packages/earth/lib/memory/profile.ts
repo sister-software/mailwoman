@@ -9,7 +9,7 @@
  *   A tripped crash guard steps the tier down one class and turns 3D off for the rest of the load.
  */
 
-import { CrashGuard, type CrashGuardReading, HeavyPhase, pageSessionStorage } from "#memory/crash-guard"
+import { CrashGuard, type CrashGuardReading, HeavyPhase, pageLocalStorage } from "#memory/crash-guard"
 import {
 	type DeviceSignals,
 	type DeviceTier,
@@ -56,7 +56,7 @@ export function buildMemoryProfile(signals: DeviceSignals, crashGuard: CrashGuar
 	}
 }
 
-const guard = new CrashGuard(pageSessionStorage())
+const guard = new CrashGuard(pageLocalStorage())
 let profile: MemoryProfile | null = null
 
 /**

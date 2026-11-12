@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { type BreadcrumbStorage, CrashGuard, HeavyPhase } from "#memory/crash-guard"
+import { type BreadcrumbStorage, CRASH_WINDOW_MS, CrashGuard, HeavyPhase } from "#memory/crash-guard"
 import { DeviceTier } from "#memory/device-tier"
 import { buildMemoryProfile } from "#memory/profile"
 
@@ -61,6 +61,37 @@ describe("CrashGuard", () => {
 		guard.clear()
 
 		expect(new CrashGuard(storage).takeEarlierReading().tripped).toBe(false)
+	})
+
+	test("counts a breadcrumb up to two minutes old", () => {
+		const storage = new MemoryStorage()
+
+		new CrashGuard(storage, () => 1_000_000).begin(HeavyPhase.Model)
+
+		const reload = new CrashGuard(storage, () => 1_000_000 + CRASH_WINDOW_MS - 1)
+
+		expect(reload.takeEarlierReading()).toEqual({ tripped: true, phases: [HeavyPhase.Model] })
+	})
+
+	test("removes an older breadcrumb without counting it", () => {
+		const storage = new MemoryStorage()
+
+		new CrashGuard(storage, () => 1_000_000).begin(HeavyPhase.ThreeD)
+
+		const later = new CrashGuard(storage, () => 1_000_000 + CRASH_WINDOW_MS)
+
+		expect(later.takeEarlierReading()).toEqual({ tripped: false, phases: [] })
+		expect(storage).toHaveLength(0)
+	})
+
+	test("removes a breadcrumb whose time can't be read, or lies in the future, without counting it", () => {
+		const storage = new MemoryStorage()
+
+		storage.setItem("mailwoman:heavy-phase:model", "not a time")
+		storage.setItem("mailwoman:heavy-phase:3d", String(2_000_000))
+
+		expect(new CrashGuard(storage, () => 1_000_000).takeEarlierReading().tripped).toBe(false)
+		expect(storage).toHaveLength(0)
 	})
 
 	test("ignores keys that aren't breadcrumbs", () => {

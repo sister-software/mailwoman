@@ -122,6 +122,7 @@ const MIB = 1024 * 1024
  *
  * These values are starting points for device measurement.
  * No device has measured them yet.
+ *
  * Reports put the iOS WebContent kill threshold near 2 GiB on recent iPhones.
  *
  * That figure is unconfirmed by Apple and covers the whole page, including the model,

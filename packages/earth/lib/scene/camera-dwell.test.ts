@@ -89,6 +89,33 @@ describe("CameraDwell", () => {
 		expect(dwell.state).toEqual({ armed: true, everArmed: true })
 	})
 
+	test("after the first arm, rearms on a flat view at the layer's zoom", () => {
+		const camera = new FakeCamera(16, 45)
+		const { dwell } = watch(camera)
+
+		vi.advanceTimersByTime(600)
+		camera.moveTo(16, 0)
+		expect(dwell.state.armed).toBe(false)
+
+		vi.advanceTimersByTime(600)
+		expect(dwell.state).toEqual({ armed: true, everArmed: true })
+
+		// Below the layer's zoom it stays disarmed, flat or tilted.
+		camera.moveTo(12, 60)
+		vi.advanceTimersByTime(1000)
+		expect(dwell.state.armed).toBe(false)
+	})
+
+	test("never arms for a camera that never tilts", () => {
+		const camera = new FakeCamera(16, 0)
+		const { dwell } = watch(camera)
+
+		camera.moveTo(17, 10)
+		vi.advanceTimersByTime(5000)
+
+		expect(dwell.state).toEqual({ armed: false, everArmed: false })
+	})
+
 	test("stays disarmed below the minimum pitch or zoom", () => {
 		const camera = new FakeCamera(16, 10)
 		const { dwell } = watch(camera)

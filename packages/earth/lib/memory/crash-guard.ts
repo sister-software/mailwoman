@@ -10,8 +10,12 @@
  *   A breadcrumb written before a heavy phase and removed after it is still
  *   there on the reload that follows a kill.
  *
- *   The breadcrumbs live in `sessionStorage`, which belongs to one tab,
- *   so another tab's load doesn't read as a crash here.
+ *   The breadcrumbs live in `localStorage`, which outlives a killed process.
+ *   Each one holds the time it was written, and a reload counts only a breadcrumb
+ *   younger than {@linkcode CRASH_WINDOW_MS}.
+ *
+ *   An older one is from a visit that ended some other way, and the reload removes it without counting it.
+ *
  *   A normal reload or navigation fires `pagehide`, which removes them,
  *   so only a load that ended without `pagehide` leaves one behind.
  */
@@ -35,6 +39,14 @@ export type HeavyPhase = (typeof HeavyPhase)[keyof typeof HeavyPhase]
 const KEY_PREFIX = "mailwoman:heavy-phase:"
 
 /**
+ * The age, in milliseconds, under which a breadcrumb counts as a crash on the next load.
+ *
+ * Safari reloads a killed tab within seconds.
+ * Two minutes also covers a reader who reopens the page by hand after the crash page.
+ */
+export const CRASH_WINDOW_MS = 2 * 60 * 1000
+
+/**
  * The storage the guard writes, matching the part of `Storage` it uses.
  */
 export interface BreadcrumbStorage {
@@ -50,7 +62,7 @@ export interface BreadcrumbStorage {
  */
 export interface CrashGuardReading {
 	/**
-	 * Whether a breadcrumb from an earlier load was still present.
+	 * Whether a breadcrumb younger than {@linkcode CRASH_WINDOW_MS} was still present.
 	 */
 	tripped: boolean
 	/**
@@ -67,13 +79,18 @@ export interface CrashGuardReading {
  */
 export class CrashGuard {
 	#storage: BreadcrumbStorage | null
+	#now: () => number
 
-	constructor(storage: BreadcrumbStorage | null) {
+	constructor(storage: BreadcrumbStorage | null, now: () => number = Date.now) {
 		this.#storage = storage
+		this.#now = now
 	}
 
 	/**
 	 * Reads the breadcrumbs an earlier load left and removes them, so the next load starts clean.
+	 *
+	 * A breadcrumb older than {@linkcode CRASH_WINDOW_MS}, or one whose time can't
+	 * be read, is removed without counting.
 	 */
 	takeEarlierReading(): CrashGuardReading {
 		const phases: HeavyPhase[] = []
@@ -93,8 +110,15 @@ export class CrashGuard {
 				}
 			}
 
+			const now = this.#now()
+
 			for (const key of keys) {
-				phases.push(key.slice(KEY_PREFIX.length) as HeavyPhase)
+				const written = Number(storage.getItem(key))
+
+				if (Number.isFinite(written) && now - written >= 0 && now - written < CRASH_WINDOW_MS) {
+					phases.push(key.slice(KEY_PREFIX.length) as HeavyPhase)
+				}
+
 				storage.removeItem(key)
 			}
 		} catch {
@@ -109,7 +133,7 @@ export class CrashGuard {
 	 */
 	begin(phase: HeavyPhase): void {
 		try {
-			this.#storage?.setItem(KEY_PREFIX + phase, String(Date.now()))
+			this.#storage?.setItem(KEY_PREFIX + phase, String(this.#now()))
 		} catch {
 			// A full or blocked storage leaves the phase unmarked.
 		}
@@ -137,11 +161,11 @@ export class CrashGuard {
 }
 
 /**
- * The page's `sessionStorage`, or `null` where reading it throws.
+ * The page's `localStorage`, or `null` where reading it throws.
  */
-export function pageSessionStorage(): BreadcrumbStorage | null {
+export function pageLocalStorage(): BreadcrumbStorage | null {
 	try {
-		return globalThis.sessionStorage ?? null
+		return globalThis.localStorage ?? null
 	} catch {
 		return null
 	}
