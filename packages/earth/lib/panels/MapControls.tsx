@@ -44,10 +44,7 @@ export const MapControls: React.FC<{ devMode: boolean; runtimeReady: boolean }> 
 	const scene3D = pageSearchParam("no-3d") === null && memoryProfile().threeD
 
 	// The Developer sheet's memory readout counts this map's tiles.
-	useEffect(
-		() => (map ? registerMemoryMap(map as unknown as Parameters<typeof registerMemoryMap>[0]) : undefined),
-		[map]
-	)
+	useEffect(() => (map ? registerMemoryMap(map) : undefined), [map])
 
 	return (
 		<>
