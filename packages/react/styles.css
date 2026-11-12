@@ -285,6 +285,63 @@
 		white-space: pre-wrap;
 	}
 
+	.mw-load-error {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.mw-load-error__retry {
+		padding: 0.15rem 0.6rem;
+		border: 1px solid var(--ss-color-emphasis-300);
+		border-radius: var(--ss-radius-global);
+		background: var(--ss-color-emphasis-100);
+		color: var(--ss-color-content);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.mw-load-error__retry:focus-visible {
+		outline: 2px solid var(--ss-color-primary);
+		outline-offset: 2px;
+	}
+
+	/* #endregion */
+
+	/* #region LoadLedgerList */
+
+	.mw-load-ledger {
+		font-size: 0.8rem;
+	}
+
+	.mw-load-ledger summary {
+		cursor: pointer;
+		color: var(--ss-color-content-secondary);
+	}
+
+	.mw-load-ledger__list {
+		display: grid;
+		grid-template-columns: minmax(8rem, max-content) minmax(5rem, max-content) 1fr;
+		gap: 0.15rem 0.75rem;
+		margin: 0.4rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.mw-load-ledger__row {
+		display: contents;
+	}
+
+	.mw-load-ledger__bytes {
+		font-variant-numeric: tabular-nums;
+		color: var(--ss-color-content-secondary);
+	}
+
+	.mw-load-ledger__row--failed .mw-load-ledger__state {
+		color: var(--ss-color-danger-contrast-foreground);
+	}
+
 	/* #endregion */
 
 	/* #region KindBadge */

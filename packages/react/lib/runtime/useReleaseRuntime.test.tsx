@@ -70,6 +70,9 @@ function Harness({
 			<button type="button" className="pick-v1" onClick={() => rt.selectVersion("v1")}>
 				v1
 			</button>
+			<button type="button" className="retry" onClick={rt.retry}>
+				retry
+			</button>
 		</div>
 	)
 }
@@ -109,6 +112,33 @@ test("a rejecting loadAssets surfaces errorMessage and stays not-ready", async (
 	expect(text(container, ".ready")).toBe("no")
 	expect(text(container, ".assets-version")).toBe("")
 	expect(text(container, ".progress")).toBe("")
+})
+
+test("a failed load clears its steps, and retry loads the same version again", async () => {
+	let attempts = 0
+
+	const failOnce = async (release: TestRelease, ctx: AssetsLoadContext): Promise<TestAssets> => {
+		attempts++
+		ctx.setStepLabels(["Loading classifier", "Loading gazetteer"])
+		ctx.setStepIndex(0)
+
+		if (attempts === 1) throw new Error("Couldn't load model.onnx (weights): Load failed")
+
+		return { loadedVersion: release.version }
+	}
+
+	const { container } = renderComponent(<Harness assetLoader={failOnce} />)
+
+	await vi.waitFor(() => expect(text(container, ".error")).toContain("model.onnx"), { timeout: 2000 })
+	expect(text(container, ".steplabels")).toBe("")
+	expect(text(container, ".step")).toBe("-1")
+
+	await userEvent.click(container.querySelector(".retry") as HTMLButtonElement)
+
+	await vi.waitFor(() => expect(text(container, ".ready")).toBe("yes"), { timeout: 2000 })
+	expect(attempts).toBe(2)
+	expect(text(container, ".version")).toBe("v2")
+	expect(text(container, ".error")).toBe("")
 })
 
 test("a null manifest settles with no release: nothing selected, never ready, and no loading line", async () => {

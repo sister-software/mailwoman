@@ -31,6 +31,7 @@ import {
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
 import type { AddressNode } from "@mailwoman/core/decoder"
+import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import type {
 	ParseResult,
 	ParsedComponent,
@@ -144,6 +145,16 @@ export interface GeocoderRuntimeHandle {
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	supportsTrace: boolean
+	/**
+	 * Why the gazetteer failed to open for the loaded release, or `null`.
+	 *
+	 * Parses still run without it, so the page shows the failure as a degraded state.
+	 */
+	gazetteerError: string | null
+	/**
+	 * The ledger of the current or last release load, `null` before a load reports one.
+	 */
+	loadLedger: LoadLedgerSnapshot | null
 }
 
 export interface GeocoderRuntimeOptions {
@@ -1027,8 +1038,10 @@ export function useGeocoderRuntime({
 						stepLabels: rt.loadingStepLabels,
 						stepIndex: rt.loadingStepIndex,
 						byteFraction: rt.loadingByteFraction,
+						ledger: rt.loadingLedger,
 					},
 			errorMessage: rt.errorMessage,
+			retryLoad: rt.retry,
 			mapStyle,
 			overlays,
 			initialCenter: [initialCenter[0], initialCenter[1]],
@@ -1050,7 +1063,9 @@ export function useGeocoderRuntime({
 		rt.loadingStepLabels,
 		rt.loadingStepIndex,
 		rt.loadingByteFraction,
+		rt.loadingLedger,
 		rt.errorMessage,
+		rt.retry,
 		rt.selectedVersion,
 		rt.activeBackend,
 		rt.selectVersion,
@@ -1073,5 +1088,7 @@ export function useGeocoderRuntime({
 		calibrator,
 		traceParse,
 		supportsTrace: rt.assets?.classifier?.traceParse != null,
+		gazetteerError: rt.assets?.gazetteerError ?? null,
+		loadLedger: rt.loadingLedger,
 	}
 }

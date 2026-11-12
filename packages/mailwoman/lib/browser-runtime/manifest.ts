@@ -270,9 +270,12 @@ function isPairIndexManifest(raw: unknown): raw is PairIndexManifest {
  * A generation without a readable manifest then loads no pair index, and the pair
  * prior is a soft decode channel, so the classifier still loads.
  */
-export async function fetchPairIndexManifest(version: string): Promise<PairIndexManifest | null> {
+export async function fetchPairIndexManifest(
+	version: string,
+	fetchImpl: typeof fetch = fetchWithRetry
+): Promise<PairIndexManifest | null> {
 	const url = pairIndexManifestURL(pairIndexBaseURL(version))
-	const res = await fetchWithRetry(url)
+	const res = await fetchImpl(url)
 
 	if (!res.ok) {
 		console.warn(

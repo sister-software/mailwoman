@@ -299,19 +299,9 @@ export async function fetchWithRetry(
 }
 
 /**
- * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take
- * for its `fetchImpl`; `shouldReport` picks the request whose bytes the bar reports,
- * since reporting every small artifact would make the bar jump backwards.
+ * The URL a `fetch` input names, whether it's a string, a `URL` or a `Request`.
  */
-export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
-	return (input, init) => {
-		const url = requestURL(input)
-
-		return fetchWithRetry(input, init, shouldReport(url) ? onBytes : undefined)
-	}
-}
-
-function requestURL(input: Parameters<typeof fetch>[0]): string {
+export function requestURL(input: Parameters<typeof fetch>[0]): string {
 	return typeof input === "string" ? input : input instanceof URL ? input.href : input.url
 }
 

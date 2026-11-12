@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
@@ -64,6 +65,11 @@ export interface AssetsLoadContext {
 	 * The step index cannot show it because the model is fetched before the first step begins.
 	 */
 	setByteFraction: (fraction: number | null) => void
+
+	/**
+	 * Reports the load ledger: one entry per artifact, with its bytes, source, state and error.
+	 */
+	setLedger: (snapshot: LoadLedgerSnapshot) => void
 }
 
 /**
@@ -173,9 +179,23 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	activeBackend: string
 
 	/**
+	 * The load ledger of the current or last asset load, `null` before a load reports one.
+	 *
+	 * It stays after a failure so a page can show which artifact failed.
+	 */
+	loadingLedger: LoadLedgerSnapshot | null
+
+	/**
 	 * Switches to another version, clearing any error and reloading the asset bundle.
 	 */
 	selectVersion: (version: string) => void
+
+	/**
+	 * Loads the selected version's asset bundle again, clearing any error.
+	 *
+	 * Artifacts that arrived in the failed attempt are read again from the browser's caches.
+	 */
+	retry: () => void
 }
 
 /**
@@ -199,6 +219,9 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
+	const [loadingLedger, setLoadingLedger] = useState<LoadLedgerSnapshot | null>(null)
+	// Each retry bumps this, so the load effect runs again for the same version.
+	const [loadAttempt, setLoadAttempt] = useState(0)
 
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
@@ -272,6 +295,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				setLoadingStepLabels([])
 				setActiveBackend("")
 				setLoadingByteFraction(null)
+				setLoadingLedger(null)
 
 				const ctx: AssetsLoadContext = {
 					signal,
@@ -280,6 +304,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 					setStepIndex: (index) => guard(() => setLoadingStepIndex(index)),
 					setBackend: (backend) => guard(() => setActiveBackend(backend)),
 					setByteFraction: (fraction) => guard(() => setLoadingByteFraction(fraction)),
+					setLedger: (snapshot) => guard(() => setLoadingLedger(snapshot)),
 				}
 
 				const loaded = await loadAssetsRef.current(release, ctx)
@@ -297,12 +322,17 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 			} catch (error) {
 				if (signal.aborted) return
 				setErrorMessage(error instanceof Error ? error.message : String(error))
+				// The steps and the byte bar describe a load in progress, so a failed load clears them.
+				// The ledger stays, because it records the artifact that failed.
 				setLoadingProgress("")
+				setLoadingStepLabels([])
+				setLoadingStepIndex(-1)
+				setLoadingByteFraction(null)
 			}
 		})()
 
 		return () => controller.abort()
-	}, [selectedVersion])
+	}, [selectedVersion, loadAttempt])
 
 	useEffect(() => {
 		return () => {
@@ -320,6 +350,12 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		setSelectedVersion(version)
 		setErrorMessage(null)
 	}, [])
+
+	const retry = useCallback(() => {
+		setErrorMessage(null)
+		setLoadingProgress(initialProgress)
+		setLoadAttempt((attempt) => attempt + 1)
+	}, [initialProgress])
 
 	const selectedRelease = useMemo(
 		() => manifest?.releases.find((r) => r.version === selectedVersion) ?? null,
@@ -339,6 +375,8 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadingByteFraction,
 		errorMessage,
 		activeBackend,
+		loadingLedger,
 		selectVersion,
+		retry,
 	}
 }

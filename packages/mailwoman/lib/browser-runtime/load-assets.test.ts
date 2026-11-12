@@ -7,6 +7,7 @@
  *   before the loader chunk resolves, and still advances the step labels in order.
  */
 
+import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import { afterAll, afterEach, describe, expect, test, vi } from "vitest"
 
 const { classifierLoad, fstLoad, morphologyLoad } = vi.hoisted(() => ({
@@ -16,6 +17,12 @@ const { classifierLoad, fstLoad, morphologyLoad } = vi.hoisted(() => ({
 }))
 
 vi.mock("@mailwoman/neural/web/loader", () => ({ loadNeuralClassifierFromURLs: classifierLoad }))
+
+vi.mock("@mailwoman/resolver-wof-wasm/httpvfs/database", () => ({
+	openRangeDatabase: async () => {
+		throw new Error("Range 0-65535 of candidate.db returned HTTP 502")
+	},
+}))
 
 vi.mock("#browser-runtime/resources", async (importOriginal) => ({
 	...(await importOriginal<typeof import("#browser-runtime/resources")>()),
@@ -28,6 +35,7 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 const { loadReleaseAssets } = await import("#browser-runtime/load-assets")
+const { ArtifactLoadError } = await import("#browser-runtime/load-ledger")
 
 const WASM_URL = "https://earth.example/assets/ort-wasm-simd-threaded.wasm"
 
@@ -91,12 +99,14 @@ describe("loadReleaseAssets", () => {
 		expect(events).toEqual(expect.arrayContaining(["fst", "morphology"]))
 		expect(requested).toContain(WASM_URL)
 		expect(requested.some((url) => url.endsWith("calibration.json"))).toBe(true)
-		expect(events).not.toContain("step:0")
+		// The step index is the stage in progress, so the classifier step is current while the model loads.
+		expect(events.filter((event) => event.startsWith("step:"))).toEqual(["step:0"])
 
 		resolveClassifier({ classifier: {}, diagnostics: null })
 
 		const assets = await loading
 
+		// Two stages: the FST stage after the classifier, then 2, every stage done.
 		expect(events.filter((event) => event.startsWith("step:"))).toEqual(["step:0", "step:1", "step:2"])
 		expect(assets.fstMatcher).toEqual({ fst: true })
 		expect(assets.streetMorphologyMatcher).toEqual({ morphology: true })
@@ -176,5 +186,60 @@ describe("loadReleaseAssets", () => {
 
 		expect(assets.fstMatcher).toBeNull()
 		expect(assets.streetMorphologyMatcher).toBeNull()
+	})
+
+	test("a failed model fetch rejects with an error naming the file, and the ledger records it", async () => {
+		const snapshots: LoadLedgerSnapshot[] = []
+
+		vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+			if (String(input).endsWith("model.onnx")) throw new SyntaxError("body truncated")
+
+			return new Response("{}", { status: 200 })
+		})
+
+		classifierLoad.mockImplementation(async (opts: { modelURL: string; fetchImpl: typeof fetch }) => {
+			await opts.fetchImpl(opts.modelURL)
+
+			return { classifier: {}, diagnostics: null }
+		})
+
+		const failure = await loadReleaseAssets(
+			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: false } as Parameters<typeof loadReleaseAssets>[0],
+			{ ...makeProgress([]), setLedger: (snapshot) => snapshots.push(snapshot) }
+		).catch((error: unknown) => error)
+
+		expect(failure).toBeInstanceOf(ArtifactLoadError)
+		expect((failure as Error).message).toBe("Couldn't load model.onnx (weights): body truncated")
+
+		const model = snapshots.at(-1)?.entries.find((entry) => entry.url.endsWith("model.onnx"))
+
+		expect(model).toMatchObject({ role: "weights", state: "failed", error: "body truncated" })
+	})
+
+	test("a gazetteer that fails to open is reported as degraded, and the steps still finish", async () => {
+		const events: string[] = []
+		const snapshots: LoadLedgerSnapshot[] = []
+
+		vi.stubGlobal("fetch", async () => new Response(null, { status: 404 }))
+		classifierLoad.mockResolvedValue({ classifier: {}, diagnostics: null })
+
+		const assets = await loadReleaseAssets(
+			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: true } as Parameters<typeof loadReleaseAssets>[0],
+			{ ...makeProgress(events), setLedger: (snapshot) => snapshots.push(snapshot) },
+			{ gazetteer: { sqliteRuntimeBaseURL: "/sqlite" } }
+		)
+
+		expect(assets.lookup).toBeNull()
+		expect(assets.gazetteerError).toBe("Range 0-65535 of candidate.db returned HTTP 502")
+
+		// No FST stage: the classifier, then the gazetteer, then 2, every stage done.
+		expect(events.filter((event) => event.startsWith("step:"))).toEqual(["step:0", "step:1", "step:2"])
+
+		const gazetteer = snapshots.at(-1)?.entries.find((entry) => entry.role === "gazetteer")
+
+		expect(gazetteer).toMatchObject({ state: "failed", error: "Range 0-65535 of candidate.db returned HTTP 502" })
+
+		// A 404 from an optional artifact reads as missing rather than failed.
+		expect(snapshots.at(-1)?.entries.find((entry) => entry.role === "calibration")?.state).toBe("missing")
 	})
 })

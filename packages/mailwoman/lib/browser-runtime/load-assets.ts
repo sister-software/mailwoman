@@ -15,13 +15,15 @@
 
 import type { CalibrationTable, Calibrator } from "@mailwoman/core/decoder/calibration"
 import { createCalibrator } from "@mailwoman/core/decoder/calibration"
+import { ArtifactRole } from "@mailwoman/core/load-ledger"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
-import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
+import { prefetchingFetch } from "#browser-runtime/fetch"
+import { ArtifactLoadError, followNetworkWaits, LoadLedger, ledgerFetch } from "#browser-runtime/load-ledger"
 import {
 	fetchPairIndexManifest,
 	postcodeAnchorFilesOf,
@@ -80,6 +82,13 @@ export interface ReleaseAssets {
 	 * when the host asked for none, or when the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
+	/**
+	 * Why the gazetteer failed to open, or `null` when it opened or wasn't requested.
+	 *
+	 * A failure leaves `lookup` null and the parse runs without resolution,
+	 * so a host shows it as a degraded state.
+	 */
+	gazetteerError: string | null
 	/**
 	 * Give this bundle's native memory back.
 	 *
@@ -171,170 +180,219 @@ export async function loadReleaseAssets(
 
 	progress.setStepLabels(steps)
 
-	// Every fetch below starts now, beside the model, rather than when the stage before it finishes.
-	// The stages are still awaited in order, so the step labels advance in order.
-	const ortWASMURL = options.ortWASMURL
+	// The step index is the stage in progress: it moves to the next stage when one finishes,
+	// and reaches `steps.length` once every stage is done.
+	let step = 0
 
-	const wasmBinary = ortWASMURL
-		? settleOptional(
-				fetchWithRetry(ortWASMURL).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null))
-			)
-		: null
+	progress.setStepIndex(step)
 
-	// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
-	// An entry that declares no table skips the request, so the page logs no 404 for it.
-	const calibrationLoad =
-		release.hasCalibration === false
-			? Promise.resolve(null)
-			: settleOptional(
-					fetchWithRetry(assetURL(locale, release.version, "calibration.json")).then(async (res) =>
-						res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
-					)
-				)
+	const advanceStep = (): void => progress.setStepIndex(++step)
 
-	// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
-	// A release that predates the morphology artifact answers null, and the parse runs with the check off.
-	const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(locale, release.version)) : null
-
-	const streetMorphologyLoad = release.hasFST ? settleOptional(loadStreetMorphologyFST(locale, release.version)) : null
-
-	// The pair-index generation's manifest lists the countries whose binaries the bucket holds.
-	// It is a small fetch that starts here and is awaited only where the URL set is built.
-	const pairIndexManifestLoad = settleOptional(fetchPairIndexManifest(PAIR_INDEX_VERSION))
-
-	// The fallback-only postcode binaries are small and independent of the model, so they load beside it.
-	// After a failed fetch, the fallback reads the classifier's anchors and no other binary.
-	const postcodeCentroidLoad = settleOptional(
-		loadPostcodeCentroids(
-			postcodeCentroidFilesOf(release).map((file) => assetURL(locale, release.version, file)),
-			fetchWithRetry
-		)
-	)
+	const ledger = new LoadLedger((snapshot) => progress.setLedger?.(snapshot))
+	const stopFollowingNetworkWaits = followNetworkWaits(ledger)
 
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
 	// Each smaller asset would move the bar backwards if the loader reported it when loading began.
+	// The ledger records every artifact's bytes.
 	const reportBytes = progress.setByteFraction
 
-	const progressFetch = reportBytes
-		? fetchWithProgress(
-				(received, total) => reportBytes(total ? Math.min(1, received / total) : null),
-				(url) => url.endsWith(".onnx")
+	const recordedFetch = ledgerFetch(ledger, {
+		onBytes: reportBytes
+			? (url, received, total) => {
+					if (url.endsWith(".onnx")) {
+						reportBytes(total ? Math.min(1, received / total) : null)
+					}
+				}
+			: undefined,
+	})
+
+	try {
+		return await loadStages()
+	} finally {
+		stopFollowingNetworkWaits()
+	}
+
+	async function loadStages(): Promise<ReleaseAssets> {
+		// Every fetch below starts now, beside the model, rather than when the stage before it finishes.
+		// The stages are still awaited in order, so the step labels advance in order.
+		const ortWASMURL = options.ortWASMURL
+
+		const wasmBinary = ortWASMURL
+			? settleOptional(
+					recordedFetch(ortWASMURL).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null))
+				)
+			: null
+
+		// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
+		// An entry that declares no table skips the request, so the page logs no 404 for it.
+		const calibrationLoad =
+			release.hasCalibration === false
+				? Promise.resolve(null)
+				: settleOptional(
+						recordedFetch(assetURL(locale, release.version, "calibration.json")).then(async (res) =>
+							res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
+						)
+					)
+
+		// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
+		// A release that predates the morphology artifact answers null, and the parse runs with the check off.
+		const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(locale, release.version, recordedFetch)) : null
+
+		const streetMorphologyLoad = release.hasFST
+			? settleOptional(loadStreetMorphologyFST(locale, release.version, recordedFetch))
+			: null
+
+		// The pair-index generation's manifest lists the countries whose binaries the bucket holds.
+		// It is a small fetch that starts here and is awaited only where the URL set is built.
+		const pairIndexManifestLoad = settleOptional(fetchPairIndexManifest(PAIR_INDEX_VERSION, recordedFetch))
+
+		// The fallback-only postcode binaries are small and independent of the model, so they load beside it.
+		// After a failed fetch, the fallback reads the classifier's anchors and no other binary.
+		const postcodeCentroidLoad = settleOptional(
+			loadPostcodeCentroids(
+				postcodeCentroidFilesOf(release).map((file) => assetURL(locale, release.version, file)),
+				recordedFetch
 			)
-		: fetchWithRetry
+		)
 
-	const pairIndexManifest = await pairIndexManifestLoad
+		const pairIndexManifest = await pairIndexManifestLoad
 
-	// A character-encoder release reads code points through its vocabulary and ships none of
-	// the Latin family's retrieval artifacts, so its URL set is the three files of the graph.
-	const classifierURLs =
-		release.encoder === "char"
-			? charClassifierLoadURLs(locale, release.version)
-			: neuralClassifierLoadURLs(locale, release.version, {
-					postcodeAnchors: postcodeAnchorFilesOf(release),
-					pairIndexCountries: pairIndexManifest?.countries ?? [],
-					postcodePrefixes: postcodePrefixFilesOf(release),
-					splitEmbeddings: release.splitEmbeddings,
+		// A character-encoder release reads code points through its vocabulary and ships none of
+		// the Latin family's retrieval artifacts, so its URL set is the three files of the graph.
+		const classifierURLs =
+			release.encoder === "char"
+				? charClassifierLoadURLs(locale, release.version)
+				: neuralClassifierLoadURLs(locale, release.version, {
+						postcodeAnchors: postcodeAnchorFilesOf(release),
+						pairIndexCountries: pairIndexManifest?.countries ?? [],
+						postcodePrefixes: postcodePrefixFilesOf(release),
+						splitEmbeddings: release.splitEmbeddings,
+					})
+
+		// The card, model, embedding and vocabulary URLs are known now.
+		// Their fetches start before the loader chunk arrives.
+		// The loader reads each through `modelFetch` and reports a failure with its own message.
+		const prefetchURLs = isCharClassifierLoadURLs(classifierURLs)
+			? [classifierURLs.modelCardURL, classifierURLs.modelURL, classifierURLs.charVocabURL]
+			: [
+					classifierURLs.modelCardURL,
+					classifierURLs.modelURL,
+					...(classifierURLs.embeddings ? [classifierURLs.embeddings.hotURL] : []),
+					classifierURLs.tokenizerURL,
+				]
+
+		const modelFetch = prefetchingFetch(recordedFetch, prefetchURLs)
+
+		// Dynamic so the onnxruntime-web chunk loads only when a release does.
+		// The result is narrowed to the structural classifier interface this module exposes,
+		// so the neural package's own classifier type never enters a host bundle.
+		const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
+
+		// A failed classifier load reports the first artifact the ledger recorded as failed,
+		// so the page can show which file to retry rather than a bare `TypeError`.
+		const loadClassifier = async (): Promise<unknown> => {
+			try {
+				return await loadNeuralClassifierFromURLs({
+					...classifierURLs,
+					...(wasmBinary ? { runner: { wasmBinary } } : {}),
+					fetchImpl: modelFetch,
 				})
-
-	// The card, model, embedding and vocabulary URLs are known now.
-	// Their fetches start before the loader chunk arrives.
-	// The loader reads each through `modelFetch` and reports a failure with its own message.
-	const prefetchURLs = isCharClassifierLoadURLs(classifierURLs)
-		? [classifierURLs.modelCardURL, classifierURLs.modelURL, classifierURLs.charVocabURL]
-		: [
-				classifierURLs.modelCardURL,
-				classifierURLs.modelURL,
-				...(classifierURLs.embeddings ? [classifierURLs.embeddings.hotURL] : []),
-				classifierURLs.tokenizerURL,
-			]
-
-	const modelFetch = prefetchingFetch(progressFetch, prefetchURLs)
-
-	// Dynamic so the onnxruntime-web chunk loads only when a release does.
-	// The result is narrowed to the structural classifier interface this module exposes,
-	// so the neural package's own classifier type never enters a host bundle.
-	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web/loader")
-
-	const {
-		classifier,
-		diagnostics,
-		postcodeAnchorLookup,
-		selectPairIndexForText,
-		anchorRegions,
-		// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
-		release: releaseClassifier,
-	} = (await loadNeuralClassifierFromURLs({
-		...classifierURLs,
-		...(wasmBinary ? { runner: { wasmBinary } } : {}),
-		fetchImpl: modelFetch,
-	})) as {
-		classifier: MailwomanClassifierLike
-		diagnostics?: { backend: string; modelBytes: number } | null
-		postcodeAnchorLookup?: PostcodeCentroidLookup | null
-		selectPairIndexForText?: SelectPairIndex | null
-		anchorRegions?: AnchorRegionLookupLike | null
-		release?: () => Promise<void>
-	}
-
-	progress.setBackend(
-		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
-	)
-
-	// The model is in, so the byte channel goes quiet rather than holding its last value at 100%.
-	progress.setByteFraction?.(null)
-	progress.setStepIndex(0)
-
-	// The calibration table is the model's own held-out reliability, so it must match the loaded version.
-	const calibrator: Calibrator | null = await calibrationLoad
-
-	const fstResult = fstLoad ? await fstLoad : null
-	const fstMatcher: FSTMatcherLike | null = fstResult?.matcher ?? null
-	const fstProvenance: FSTProvenance | null = fstResult?.provenance ?? null
-	const streetMorphology = streetMorphologyLoad ? await streetMorphologyLoad : null
-	const streetMorphologyMatcher: FSTMatcherLike | null = fstMatcher ? streetMorphology : null
-
-	progress.setStepIndex(1)
-
-	let lookup: MailwomanLookupLike | null = null
-
-	if (gazetteer) {
-		try {
-			const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
-				import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
-				import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
-			])
-
-			const database = await openRangeDatabase(adminGazetteerURL(), gazetteer.sqliteRuntimeBaseURL)
-
-			if (!progress.signal.aborted) {
-				const wofLookup = new WOFCandidateTableLookup(database)
-				// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
-				// the VFS now so the first interactive query starts warm.
-				// The worker serializes queries, so a user query issued mid-warm-up queues
-				// behind pages it was going to need anyway.
-				void wofLookup.warmUp().catch(() => {})
-				lookup = wofLookup
+			} catch (error) {
+				throw new ArtifactLoadError(ledger.failures()[0] ?? null, error)
 			}
-		} catch {
-			// WOF DB not available for this version.
 		}
-	}
 
-	progress.setStepIndex(2)
+		const {
+			classifier,
+			diagnostics,
+			postcodeAnchorLookup,
+			selectPairIndexForText,
+			anchorRegions,
+			// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
+			release: releaseClassifier,
+		} = (await loadClassifier()) as {
+			classifier: MailwomanClassifierLike
+			diagnostics?: { backend: string; modelBytes: number } | null
+			postcodeAnchorLookup?: PostcodeCentroidLookup | null
+			selectPairIndexForText?: SelectPairIndex | null
+			anchorRegions?: AnchorRegionLookupLike | null
+			release?: () => Promise<void>
+		}
 
-	return {
-		classifier,
-		anchorLookup: mergePostcodeCentroids(postcodeAnchorLookup ?? null, await postcodeCentroidLoad),
-		fstMatcher,
-		fstProvenance,
-		streetMorphologyMatcher,
-		anchorRegions: anchorRegions ?? null,
-		lookup,
-		calibrator,
-		selectPairIndex: selectPairIndexForText ?? null,
-		release: async () => {
-			await releaseClassifier?.()
-		},
+		progress.setBackend(
+			diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
+		)
+
+		// The model is in, so the byte channel goes quiet rather than holding its last value at 100%.
+		progress.setByteFraction?.(null)
+		advanceStep()
+
+		// The calibration table is the model's own held-out reliability, so it must match the loaded version.
+		const calibrator: Calibrator | null = await calibrationLoad
+
+		const fstResult = fstLoad ? await fstLoad : null
+		const fstMatcher: FSTMatcherLike | null = fstResult?.matcher ?? null
+		const fstProvenance: FSTProvenance | null = fstResult?.provenance ?? null
+		const streetMorphology = streetMorphologyLoad ? await streetMorphologyLoad : null
+		const streetMorphologyMatcher: FSTMatcherLike | null = fstMatcher ? streetMorphology : null
+
+		if (release.hasFST) {
+			advanceStep()
+		}
+
+		let lookup: MailwomanLookupLike | null = null
+		let gazetteerError: string | null = null
+
+		if (gazetteer) {
+			const gazetteerURL = adminGazetteerURL()
+
+			// The database is read by range requests from a worker, outside `recordedFetch`,
+			// so its entry records the open as a whole.
+			ledger.start(gazetteerURL, ArtifactRole.Gazetteer)
+
+			try {
+				const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
+					import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+					import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+				])
+
+				const database = await openRangeDatabase(gazetteerURL, gazetteer.sqliteRuntimeBaseURL)
+
+				ledger.settle(gazetteerURL, { state: "done", source: "unknown", error: null })
+
+				if (!progress.signal.aborted) {
+					const wofLookup = new WOFCandidateTableLookup(database)
+					// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
+					// the VFS now so the first interactive query starts warm.
+					// The worker serializes queries, so a user query issued mid-warm-up queues
+					// behind pages it was going to need anyway.
+					void wofLookup.warmUp().catch(() => {})
+					lookup = wofLookup
+				}
+			} catch (error) {
+				// The parse still runs without the gazetteer, so the failure is reported rather than thrown.
+				gazetteerError = error instanceof Error ? error.message : String(error)
+				ledger.settle(gazetteerURL, { state: "failed", source: null, error: gazetteerError })
+			}
+
+			advanceStep()
+		}
+
+		return {
+			classifier,
+			anchorLookup: mergePostcodeCentroids(postcodeAnchorLookup ?? null, await postcodeCentroidLoad),
+			fstMatcher,
+			fstProvenance,
+			streetMorphologyMatcher,
+			anchorRegions: anchorRegions ?? null,
+			lookup,
+			gazetteerError,
+			calibrator,
+			selectPairIndex: selectPairIndexForText ?? null,
+			release: async () => {
+				await releaseClassifier?.()
+			},
+		}
 	}
 }
