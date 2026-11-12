@@ -268,8 +268,9 @@ export function licenseNamedIn(entry: string): string | null {
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 
-		// A parenthetical states a license when it includes a version number or a license family word.
-		if (/\d/u.test(inner) || LICENSE_FAMILY_WORDS.test(inner)) return inner
+		// A parenthetical states a license when it includes a license family word.
+		// Digits without a family word don't qualify, because a row count or a release version has digits too.
+		if (LICENSE_FAMILY_WORDS.test(inner)) return inner
 	}
 
 	return null

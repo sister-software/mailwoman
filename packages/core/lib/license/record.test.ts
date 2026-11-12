@@ -196,6 +196,12 @@ describe("licenseNamedIn", () => {
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
 
+	it("returns null for a parenthetical that holds a row count and a version", () => {
+		// The en-us card's Overture entry.
+		// Its digits count rows and mark a release, so they don't identify a license.
+		expect(licenseNamedIn("Overture Maps Places (456,230 rows, 6.6.0): venue names")).toBeNull()
+	})
+
 	it("returns null for an entry with no parenthetical at all", () => {
 		expect(licenseNamedIn("See THIRD_PARTY_NOTICES.md for the standing attribution.")).toBeNull()
 	})

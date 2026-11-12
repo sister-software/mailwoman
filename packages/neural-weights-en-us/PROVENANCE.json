@@ -120,7 +120,7 @@
 			},
 			{
 				"text": "Overture Maps Foundation — Addresses theme (per-country register license; Overture declares no identifier of its own for this theme, so the terms are the upstream register's): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike. Read 2026-09-25 from https://docs.overturemaps.org/attribution/.",
-				"license_named": "456,230 rows, 6.6.0",
+				"license_named": null,
 				"uses": ["training"]
 			},
 			{
