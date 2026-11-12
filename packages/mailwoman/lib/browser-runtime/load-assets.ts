@@ -409,6 +409,9 @@ export async function loadReleaseAssets(
 			calibrator,
 			selectPairIndex: selectPairIndexForText ?? null,
 			release: async () => {
+				// The gazetteer's range worker holds its own sqlite-wasm heap.
+				// That heap outlives this bundle unless the lookup is closed.
+				lookup?.close?.()
 				await releaseClassifier?.()
 			},
 		}

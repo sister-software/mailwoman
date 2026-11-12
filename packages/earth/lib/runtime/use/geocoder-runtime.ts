@@ -186,16 +186,6 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * Give a superseded bundle's native memory back.
- *
- * This sits at module scope rather than in `useCallback` because it closes over no state,
- * so a stable identity is free and cannot churn the hook's effect.
- */
-function disposeAssets(assets: ReleaseAssets): Promise<void> {
-	return assets.release()
-}
-
-/**
  * The releases-manifest fetch the entry module starts before React mounts,
  * taken by the first manifest load.
  */

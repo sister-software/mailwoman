@@ -83,6 +83,8 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 
 		let cancelled = false
 		const release = releases.find((r) => r.version === compareVersion)
+		// The loaded classifier's wasm heap outlives the JavaScript object, so cleanup releases it explicitly.
+		let releaseLoaded: (() => Promise<void>) | undefined
 
 		void (async () => {
 			try {
@@ -101,6 +103,7 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 					classifier: cls,
 					diagnostics,
 					selectPairIndexForText,
+					release: releaseClassifier,
 				} = (await loadNeuralClassifierFromURLs({
 					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, {
 						postcodeAnchors: postcodeAnchorFilesOf(release ?? null),
@@ -113,9 +116,16 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 					classifier: unknown
 					diagnostics?: { backend: string; modelBytes: number } | null
 					selectPairIndexForText?: SelectPairIndex | null
+					release?: () => Promise<void>
 				}
 
-				if (cancelled) return
+				if (cancelled) {
+					await releaseClassifier?.()
+
+					return
+				}
+
+				releaseLoaded = releaseClassifier
 
 				setBackend(
 					diagnostics
@@ -139,6 +149,7 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 
 		return () => {
 			cancelled = true
+			void releaseLoaded?.()
 		}
 	}, [compareMode, compareVersion, releases])
 

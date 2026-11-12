@@ -124,6 +124,20 @@ export function useModelReload(
 }
 
 /**
+ * Gives a superseded bundle's native memory back, including a gazetteer reopened after the load.
+ *
+ * The bundle's `release` captured the gazetteer the load opened, so the current one is closed here.
+ *
+ * It closes over no state, so it sits at module scope with a stable identity
+ * that cannot churn the release hook's effect.
+ */
+export function disposeAssets(assets: ReleaseAssets): Promise<void> {
+	assets.lookup?.close?.()
+
+	return assets.release()
+}
+
+/**
  * Returns a function that reopens the gazetteer and swaps it into the live bundle through
  * `updateAssets`, or `null` when the selected release ships no gazetteer.
  *
@@ -135,14 +149,23 @@ export function useGazetteerReload(
 	updateAssets: (update: (assets: ReleaseAssets) => ReleaseAssets) => void
 ): (() => Promise<void>) | null {
 	const reload = useCallback(async (): Promise<void> => {
+		// The replaced lookup's range worker is closed, so a reload doesn't leave a second sqlite-wasm heap behind.
 		try {
 			const lookup = await openCandidateTableLookup(sqliteRuntimeBaseURL)
 
-			updateAssets((assets) => ({ ...assets, lookup, gazetteerError: null }))
+			updateAssets((assets) => {
+				assets.lookup?.close?.()
+
+				return { ...assets, lookup, gazetteerError: null }
+			})
 		} catch (error) {
 			const gazetteerError = error instanceof Error ? error.message : String(error)
 
-			updateAssets((assets) => ({ ...assets, lookup: null, gazetteerError }))
+			updateAssets((assets) => {
+				assets.lookup?.close?.()
+
+				return { ...assets, lookup: null, gazetteerError }
+			})
 		}
 	}, [sqliteRuntimeBaseURL, updateAssets])
 
