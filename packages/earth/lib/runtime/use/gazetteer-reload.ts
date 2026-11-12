@@ -9,7 +9,7 @@
 import type { AssetsLoadContext } from "@mailwoman/react"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
-import { loadReleaseAssets, openGazetteerLookup } from "mailwoman/browser-runtime/load-assets"
+import { loadReleaseAssets, openCandidateTableLookup } from "mailwoman/browser-runtime/load-assets"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { useCallback, useMemo, useRef } from "react"
 
@@ -136,7 +136,7 @@ export function useGazetteerReload(
 ): (() => Promise<void>) | null {
 	const reload = useCallback(async (): Promise<void> => {
 		try {
-			const lookup = await openGazetteerLookup(sqliteRuntimeBaseURL)
+			const lookup = await openCandidateTableLookup(sqliteRuntimeBaseURL)
 
 			updateAssets((assets) => ({ ...assets, lookup, gazetteerError: null }))
 		} catch (error) {

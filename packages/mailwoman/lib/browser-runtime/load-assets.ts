@@ -157,7 +157,7 @@ function settleOptional<T>(load: Promise<T>): Promise<T | null> {
  * It resolves `null` when `signal` aborted while the database opened, and throws when the open fails.
  * A host reopens the gazetteer with it and keeps the loaded classifier.
  */
-export async function openGazetteerLookup(
+export async function openCandidateTableLookup(
 	sqliteRuntimeBaseURL: string,
 	signal?: AbortSignal
 ): Promise<MailwomanLookupLike | null> {
@@ -386,7 +386,7 @@ export async function loadReleaseAssets(
 			ledger.start(gazetteerURL, ArtifactRole.Gazetteer)
 
 			try {
-				lookup = await openGazetteerLookup(gazetteer.sqliteRuntimeBaseURL, progress.signal)
+				lookup = await openCandidateTableLookup(gazetteer.sqliteRuntimeBaseURL, progress.signal)
 				ledger.settle(gazetteerURL, { state: "done", source: "unknown", error: null })
 			} catch (error) {
 				// The parse still runs without the gazetteer, so the failure is reported rather than thrown.
