@@ -17,7 +17,7 @@
  *   An older one is from a visit that ended some other way, and the reload removes it without counting it.
  *
  *   `localStorage` is shared by every tab of the site, so a fresh breadcrumb may
- *   belong to a tab that is still running its phase.
+ *   belong to a tab still running its phase.
  *   Where the Web Locks API exists, the writer holds a lock whose name includes
  *   its page-load ID while the phase runs.
  *
@@ -33,11 +33,11 @@
  */
 export const HeavyPhase = {
 	/**
-	 * Downloading the model and creating its ONNX Runtime session.
+	 * The model's download and the creation of its ONNX Runtime session.
 	 */
 	Model: "model",
 	/**
-	 * Mounting a 3D building or city-model layer, until the map next goes idle.
+	 * The mount of a 3D building or city-model layer, until the map next goes idle.
 	 */
 	ThreeD: "3d",
 } as const
