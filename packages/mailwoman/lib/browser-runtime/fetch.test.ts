@@ -3,14 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import {
-	FetchOfflineError,
-	FetchStalledError,
-	fetchWithRetry,
-	OFFLINE_WAIT_MS,
-	STALL_TIMEOUT_MS,
-	subscribeNetworkWaits,
-} from "#browser-runtime/fetch"
+import { FetchStalledError, fetchWithRetry, STALL_TIMEOUT_MS, subscribeNetworkWaits } from "#browser-runtime/fetch"
 
 beforeEach(() => {
 	vi.useFakeTimers()
@@ -302,19 +295,26 @@ describe("fetchWithRetry while offline", () => {
 		expect(impl.mock.calls.slice(1).map(([, init]) => init?.cache)).toEqual(["reload", "reload", "reload"])
 	})
 
-	test("rejects with FetchOfflineError once the wait budget is spent", async () => {
-		stubConnection(false)
-
-		const impl = vi.fn<typeof fetch>()
+	test("waits without a time limit, and fetches once the connection returns", async () => {
+		const connection = stubConnection(false)
+		const impl = vi.fn<typeof fetch>().mockResolvedValue(new Response("ok"))
+		let settled = false
 
 		vi.stubGlobal("fetch", impl)
 
-		const failure = fetchWithRetry("https://example.test/model.onnx").catch((error: unknown) => error)
+		const answer = fetchWithRetry("https://example.test/model.onnx").finally(() => {
+			settled = true
+		})
 
-		await vi.advanceTimersByTimeAsync(OFFLINE_WAIT_MS)
-
-		expect(await failure).toBeInstanceOf(FetchOfflineError)
+		// After two hours offline the call has made zero attempts and is still pending.
+		await vi.advanceTimersByTimeAsync(2 * 60 * 60 * 1000)
+		expect(settled).toBe(false)
 		expect(impl).not.toHaveBeenCalled()
+
+		connection.goOnline()
+
+		await expect((await answer).text()).resolves.toBe("ok")
+		expect(impl).toHaveBeenCalledTimes(1)
 	})
 
 	test("a caller's abort ends the wait", async () => {

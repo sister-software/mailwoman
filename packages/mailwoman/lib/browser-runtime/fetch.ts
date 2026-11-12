@@ -10,7 +10,7 @@
  *   because a connection that goes silent without closing never rejects on its own.
  *
  *   While the browser reports no connection, a call waits for the `online` event
- *   instead of spending its attempts, up to `OFFLINE_WAIT_MS` in total.
+ *   instead of spending its attempts, for as long as the page stays open.
  *   A reader in a tunnel otherwise loses every attempt within seconds.
  */
 
@@ -35,23 +35,6 @@ export class FetchStalledError extends Error {
 	constructor(url: string, timeoutMs: number) {
 		super(`fetch stalled: no bytes from ${url} for ${timeoutMs} ms`)
 		this.name = "FetchStalledError"
-	}
-}
-
-/**
- * The longest one {@linkcode fetchWithRetry} call waits, in total, for the browser to report a connection.
- *
- * A train between stations can lose its connection for minutes at a time.
- */
-export const OFFLINE_WAIT_MS = 300_000
-
-/**
- * A call that spent {@link OFFLINE_WAIT_MS} waiting for the browser to report a connection.
- */
-export class FetchOfflineError extends Error {
-	constructor(url: string, waitedMs: number) {
-		super(`fetch waited ${waitedMs} ms for a network connection to fetch ${url}`)
-		this.name = "FetchOfflineError"
 	}
 }
 
@@ -102,25 +85,22 @@ export function subscribeNetworkWaits(listener: (waiting: number) => void): () =
 }
 
 /**
- * Resolves `true` when the browser reports a connection, or `false` after `budgetMs`.
+ * Resolves when the browser reports a connection, however long that takes.
  *
  * A caller's abort rejects with the abort reason.
  */
-function untilOnline(budgetMs: number, signal: AbortSignal | null): Promise<boolean> {
+function untilOnline(signal: AbortSignal | null): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const finish = (settle: () => void): void => {
-			clearTimeout(timer)
 			connection.removeEventListener?.("online", onOnline)
 			signal?.removeEventListener("abort", onAbort)
 			settle()
 		}
 
-		const onOnline = (): void => finish(() => resolve(true))
+		const onOnline = (): void => finish(resolve)
 
 		const onAbort = (): void =>
 			finish(() => reject(signal?.reason instanceof Error ? signal.reason : new DOMException("aborted", "AbortError")))
-
-		const timer = setTimeout(() => finish(() => resolve(false)), Math.max(0, budgetMs))
 
 		connection.addEventListener?.("online", onOnline)
 		signal?.addEventListener("abort", onAbort, { once: true })
@@ -271,11 +251,9 @@ function retryInit(init?: Parameters<typeof fetch>[1]): RequestInit {
  *
  * Each retry runs in the cache mode {@linkcode retryInit} chooses.
  *
- * While the browser reports no connection, the call waits for one before its next attempt.
+ * While the browser reports no connection, the call waits for one before its next attempt,
+ * with no time limit, and a caller's abort ends the wait.
  * A network failure that happens while offline doesn't count against the attempts.
- *
- * The waits share one {@link OFFLINE_WAIT_MS} budget, and a call that spends
- * it rejects with {@link FetchOfflineError}.
  */
 export async function fetchWithRetry(
 	input: Parameters<typeof fetch>[0],
@@ -285,19 +263,13 @@ export async function fetchWithRetry(
 	const signal = init?.signal ?? null
 	let attempt = 1
 	let failed = false
-	let offlineWaitedMs = 0
 
 	const awaitConnection = async (): Promise<void> => {
-		const started = Date.now()
-
 		changeNetworkWaits(1)
 
 		try {
-			if (!(await untilOnline(OFFLINE_WAIT_MS - offlineWaitedMs, signal))) {
-				throw new FetchOfflineError(requestURL(input), OFFLINE_WAIT_MS)
-			}
+			await untilOnline(signal)
 		} finally {
-			offlineWaitedMs += Date.now() - started
 			changeNetworkWaits(-1)
 		}
 	}
