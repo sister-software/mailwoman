@@ -13,11 +13,26 @@
  *
  *   The handler checks every chunk's length against its `Content-Range`, refetches a torn
  *   chunk once with `cache: "no-store"`, and stores only a chunk that passes.
+ *
+ *   An origin can also answer a range request with a 200 and the whole file,
+ *   as a cache that bypassed the range did for a 2.88 GB gazetteer database.
+ *   The reader issues its reads as synchronous XHR, which buffers that body in full
+ *   before the reader can see its status.
+ *
+ *   The handler therefore cancels such a body, refetches once with `cache: "no-store"`, and answers a
+ *   second whole-file response with a bodiless 502 marked by {@linkcode RANGE_REFUSED_HEADER}.
  */
 
 import type { RouteHandlerCallbackOptions, RouteHandlerObject } from "workbox-core/types.js"
 
 const HTTP_PARTIAL_CONTENT = 206
+const HTTP_BAD_GATEWAY = 502
+
+/**
+ * The header on the 502 the handlers answer with when the network sent the
+ * whole file for a closed range twice.
+ */
+export const RANGE_REFUSED_HEADER = "x-mw-range-refused"
 
 /**
  * The header a stored chunk keeps its original `Content-Range` in.
@@ -88,7 +103,8 @@ async function validatedChunk(response: Response): Promise<ValidatedChunk | null
 
 	if (expected == null || !contentRange) return null
 
-	const body = await response.arrayBuffer()
+	// The clone leaves the response itself readable, so a torn chunk can still pass through.
+	const body = await response.clone().arrayBuffer()
 
 	return body.byteLength === expected ? { body, contentRange } : null
 }
@@ -113,12 +129,133 @@ export function rangeChunkKey(href: string, start: number, end: number): string 
 }
 
 /**
+ * Whether a response to a closed range carries the whole file: a success status other than 206.
+ */
+function isWholeFileAnswer(response: Response): boolean {
+	return response.ok && response.status !== HTTP_PARTIAL_CONTENT
+}
+
+/**
+ * Releases a response's unread body, so a whole-file answer stops downloading.
+ */
+async function discard(response: Response): Promise<void> {
+	await response.body?.cancel().catch(() => {
+		// A body that already failed has nothing left to release.
+	})
+}
+
+function rangeRefusedResponse(): Response {
+	return new Response(null, {
+		status: HTTP_BAD_GATEWAY,
+		statusText: "Range Not Honored",
+		headers: { [RANGE_REFUSED_HEADER]: "1" },
+	})
+}
+
+/**
+ * The network's answer to one closed range: a validated chunk, or a response to pass through.
+ */
+type NetworkRangeAnswer = { chunk: ValidatedChunk } | { response: Response }
+
+/**
+ * Fetches a closed range, refetching once with `cache: "no-store"` when the first
+ * answer is a torn 206 or a whole-file response.
+ *
+ * A second whole-file response is never passed through.
+ * Its body is cancelled and the answer is a 502 marked by {@linkcode RANGE_REFUSED_HEADER}.
+ *
+ * Any other status, such as a 404 or a 416, passes through unchanged.
+ */
+async function fetchRangeFromNetwork(
+	fetchFromNetwork: typeof fetch,
+	request: Request,
+	range: { start: number; end: number }
+): Promise<NetworkRangeAnswer> {
+	let response = await fetchFromNetwork(request.clone())
+	let chunk = await validatedChunk(response)
+
+	if (!chunk && (response.status === HTTP_PARTIAL_CONTENT || isWholeFileAnswer(response))) {
+		await discard(response)
+
+		response = await fetchFromNetwork(request.url, {
+			method: "GET",
+			mode: "cors",
+			credentials: "omit",
+			cache: "no-store",
+			headers: { range: `bytes=${range.start}-${range.end}` },
+		})
+
+		chunk = await validatedChunk(response)
+	}
+
+	if (chunk) {
+		await discard(response)
+
+		return { chunk }
+	}
+
+	if (isWholeFileAnswer(response)) {
+		await discard(response)
+
+		return { response: rangeRefusedResponse() }
+	}
+
+	return { response }
+}
+
+/**
+ * Creates a route handler that applies the whole-file check of
+ * {@linkcode createRangeChunkHandler} without Cache Storage.
+ *
+ * Register it on range requests that must reach the network, such as a reader's
+ * cache-busting `?cb=` retry, so that retry can't download a whole file either.
+ */
+export function createRangeGuardHandler(options: Pick<RangeChunkHandlerOptions, "fetch"> = {}): RouteHandlerObject {
+	const fetchFromNetwork = options.fetch ?? globalThis.fetch.bind(globalThis)
+
+	return {
+		handle: async ({ request }: RouteHandlerCallbackOptions): Promise<Response> => {
+			const range = parseClosedRange(request.headers.get("range"))
+
+			if (!range) return fetchFromNetwork(request)
+
+			const answer = await fetchRangeFromNetwork(fetchFromNetwork, request, range)
+
+			return "chunk" in answer ? partialResponse(answer.chunk.body, answer.chunk.contentRange) : answer.response
+		},
+	}
+}
+
+type ChunkCache = Pick<Cache, "match" | "put" | "delete">
+
+/**
+ * The stored chunk for `key` when its length matches its recorded `Content-Range`.
+ *
+ * An entry that fails the check is deleted.
+ */
+async function storedChunk(cache: ChunkCache, key: string): Promise<ValidatedChunk | null> {
+	const hit = await cache.match(key)
+
+	if (!hit) return null
+
+	const contentRange = hit.headers.get(STORED_CONTENT_RANGE_HEADER)
+	const body = await hit.arrayBuffer()
+
+	if (contentRange && body.byteLength === contentRangeLength(contentRange)) return { body, contentRange }
+
+	await cache.delete(key)
+
+	return null
+}
+
+/**
  * Creates the range-chunk route handler.
  *
  * Register it on a route that matches only GET range requests of immutable files without a query string.
  * A request whose `Range` header isn't a closed range goes to the network unchanged.
  *
- * A failure inside the cache, such as a quota error, also sends the request to the network.
+ * A failure inside the cache, such as a quota error, leaves the chunk unstored,
+ * and the network's answer is returned under the same checks.
  */
 export function createRangeChunkHandler(options: RangeChunkHandlerOptions): RouteHandlerObject {
 	const fetchFromNetwork = options.fetch ?? globalThis.fetch.bind(globalThis)
@@ -129,55 +266,35 @@ export function createRangeChunkHandler(options: RangeChunkHandlerOptions): Rout
 
 			if (!range) return fetchFromNetwork(request)
 
-			try {
-				const cache = await (options.cacheStorage ?? globalThis.caches).open(options.cacheName)
-				const key = rangeChunkKey(request.url, range.start, range.end)
-				const hit = await cache.match(key)
+			const key = rangeChunkKey(request.url, range.start, range.end)
 
-				if (hit) {
-					const contentRange = hit.headers.get(STORED_CONTENT_RANGE_HEADER)
-					const body = await hit.arrayBuffer()
+			const cache = await (options.cacheStorage ?? globalThis.caches).open(options.cacheName).catch(() => null)
+			const hit = cache ? await storedChunk(cache, key).catch(() => null) : null
 
-					if (contentRange && body.byteLength === contentRangeLength(contentRange)) {
-						return partialResponse(body, contentRange)
-					}
+			if (hit) return partialResponse(hit.body, hit.contentRange)
 
-					// An entry that fails the check goes, and the network answers.
-					await cache.delete(key)
-				}
+			const answer = await fetchRangeFromNetwork(fetchFromNetwork, request, range)
 
-				let response = await fetchFromNetwork(request.clone())
-				let chunk = await validatedChunk(response.clone())
+			if (!("chunk" in answer)) return answer.response
 
-				if (!chunk && response.status === HTTP_PARTIAL_CONTENT) {
-					response = await fetchFromNetwork(request.url, {
-						method: "GET",
-						mode: "cors",
-						credentials: "omit",
-						cache: "no-store",
-						headers: { range: `bytes=${range.start}-${range.end}` },
-					})
+			const { body, contentRange } = answer.chunk
 
-					chunk = await validatedChunk(response.clone())
-				}
-
-				if (!chunk) return response
-
-				await cache.put(
+			await cache
+				?.put(
 					key,
-					new Response(chunk.body.slice(0), {
+					new Response(body.slice(0), {
 						status: 200,
 						headers: {
 							"content-type": "application/octet-stream",
-							[STORED_CONTENT_RANGE_HEADER]: chunk.contentRange,
+							[STORED_CONTENT_RANGE_HEADER]: contentRange,
 						},
 					})
 				)
+				.catch(() => {
+					// A chunk the cache can't store, as on a quota error, is still the answer.
+				})
 
-				return partialResponse(chunk.body, chunk.contentRange)
-			} catch {
-				return fetchFromNetwork(request)
-			}
+			return partialResponse(body, contentRange)
 		},
 	}
 }

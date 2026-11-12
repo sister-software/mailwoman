@@ -44,7 +44,23 @@ export interface RangeDatabaseOptions {
 	 * saving round trips and a smaller chunk lowers the bytes fetched.
 	 */
 	chunkSize?: number
+
+	/**
+	 * The most chunk bytes the worker keeps in memory, defaulting to {@link DEFAULT_CHUNK_CACHE_BYTES}.
+	 *
+	 * Past the bound the worker drops the least recently read chunk, and a later read of
+	 * it is fetched again, from the service worker's cache when one stored it.
+	 */
+	chunkCacheBytes?: number
 }
+
+/**
+ * The default bound on the chunk bytes a range worker keeps in memory:
+ * 1,024 chunks of {@link DEFAULT_CHUNK_SIZE}.
+ *
+ * Without a bound each worker keeps every chunk it has read for the life of the page.
+ */
+export const DEFAULT_CHUNK_CACHE_BYTES = 64 * 1024 * 1024
 
 /**
  * The default bytes per range request, eight 8 KiB SQLite pages.
@@ -196,6 +212,7 @@ export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: str
 			databaseURL: new URL(databaseURL, globalThis.location.href).href,
 			runtimeModuleURL: new URL(SQLITE_RUNTIME_MODULE_FILE, base).href,
 			chunkSize: 0,
+			chunkCacheBytes: 0,
 		})
 
 		await client.query("SELECT count(*) FROM sqlite_master")
@@ -208,13 +225,25 @@ export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: str
 }
 
 /**
+ * Whether an open failed in a way a fresh, uncached read can fix.
+ *
+ * - SQLite reports a malformed database: a stale cached response can serve bytes from an older file.
+ * - The first range read returned HTTP 200 or 502: a cache answered with the whole file,
+ *   or the service worker refused such an answer.
+ * - The first range read returned fewer bytes than it asked for: a torn body.
+ */
+function isRetriableOpenFailure(error: unknown): boolean {
+	return /malformed|not a database|disk image|returned HTTP (?:200|502)\b|bytes, expected/i.test(String(error))
+}
+
+/**
  * Opens the SQLite database at `databaseURL` for range-request reads.
  *
  * `runtimeBaseURL` is the same-origin directory where the host staged the worker script
  * and the sqlite-wasm runtime.
  *
- * If the first open reports a malformed database, it retries once with a cache-busting
- * query string, because a stale cached response can serve bytes from an older file.
+ * If the first open fails in a way {@link isRetriableOpenFailure} recognizes,
+ * it retries once with a cache-busting query string.
  */
 export async function openRangeDatabase(
 	databaseURL: string,
@@ -233,6 +262,7 @@ export async function openRangeDatabase(
 				databaseURL: new URL(url, globalThis.location.href).href,
 				runtimeModuleURL: new URL(SQLITE_RUNTIME_MODULE_FILE, base).href,
 				chunkSize: options.chunkSize ?? DEFAULT_CHUNK_SIZE,
+				chunkCacheBytes: options.chunkCacheBytes ?? DEFAULT_CHUNK_CACHE_BYTES,
 			})
 
 			await client.query("SELECT count(*) FROM sqlite_master")
@@ -247,7 +277,7 @@ export async function openRangeDatabase(
 	try {
 		return await open(databaseURL)
 	} catch (error) {
-		if (!/malformed|not a database|disk image/i.test(String(error))) throw error
+		if (!isRetriableOpenFailure(error)) throw error
 
 		const separator = databaseURL.includes("?") ? "&" : "?"
 
