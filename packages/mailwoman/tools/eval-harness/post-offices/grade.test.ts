@@ -1,10 +1,9 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Grades written parses of one post-office suite row, the Caguas, Puerto Rico post office from the
- *   USGS National Map's 2026-11-09 pull, without running a model.
+ *   Grades written parses of one post-office suite row, the Caguas, Puerto Rico post
+ *   office from the USGS National Map's 2026-11-09 pull, without running a model.
  */
 
 import { describe, expect, it } from "vitest"

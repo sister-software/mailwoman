@@ -1,14 +1,15 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   The contract a country's official post-office list satisfies to join the post-office layer.
  *
  *   `mailwoman gazetteer build post-offices` folds every source in `POST_OFFICE_SOURCES`
- *   (`#post-offices/sources`) into one `post-offices.db`. A source's identity, terms and reader live in
- *   its entry, under its country's directory (`lib/<cc>/post-offices/`). The layer builder reads only
- *   the fields below and never branches on a country.
+ *   (`#post-offices/sources`) into one `post-offices.db`.
+ *   A source's identity, terms and reader live in its entry, under its country's
+ *   directory (`lib/<cc>/post-offices/`).
+ *
+ *   The layer builder reads only the fields below and never branches on a country.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

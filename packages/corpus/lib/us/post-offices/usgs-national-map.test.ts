@@ -1,10 +1,9 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Reads the seven-feature fixture from the 2026-11-09 pull of the USGS structures layer through the
- *   post-office source, laid out as `mailwoman corpus fetch usgs-post-offices` writes it.
+ *   Reads the seven-feature fixture from the 2026-11-09 pull of the USGS structures layer through
+ *   the post-office source, laid out as `mailwoman corpus fetch usgs-post-offices` writes it.
  */
 
 import { copyFileTo, writeLocalJSONFile } from "@mailwoman/core/fs/writers"

@@ -1,18 +1,20 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Turns the official post-office lists' records into parse-suite rows.
  *
- *   Each record with an address yields up to two rows. The `address` form is the single-line address
- *   as the record's country formats it (`formatAddressRow` with `singleLine`). The `venue-address`
- *   form prefixes the post office's name as a venue. A row's expected spans are the corpus aligner's
- *   alignment of those components onto the text, the same annotation the OpenStreetMap suites store,
- *   so a row is a held-out row the existing dataset manifest freezes and the existing readers read.
+ *   Each record with an address yields up to two rows.
+ *   The `address` form is the single-line address as the record's country formats
+ *   it (`formatAddressRow` with `singleLine`).
  *
- *   The module holds no rule for any one country. The codex supplies the format and street convention
- *   from the record's country code.
+ *   The `venue-address` form prefixes the post office's name as a venue.
+ *   A row's expected spans are the corpus aligner's alignment of those components onto
+ *   the text, the same annotation the OpenStreetMap suites store, so a row is a held-out
+ *   row the existing dataset manifest freezes and the existing readers read.
+ *
+ *   The module holds no rule for any one country.
+ *   The codex supplies the format and street convention from the record's country code.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

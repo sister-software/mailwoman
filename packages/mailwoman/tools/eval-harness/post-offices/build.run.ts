@@ -1,15 +1,14 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Builds the post-office parse suite from every registered official post-office list.
  *
- *   Usage:
- *   node packages/mailwoman/tools/eval-harness/post-offices/build.run.ts --out <directory> [--sources-root <root>]
+ *   Usage: node packages/mailwoman/tools/eval-harness/post-offices/build.run.ts
+ *   --out <directory> [--sources-root <root>]
  *
- *   Each source reads the input its fetch command wrote under the cache root's `sources/`. The suite's
- *   manifest, rows and lineage are written under `--out`.
+ *   Each source reads the input its fetch command wrote under the cache root's `sources/`.
+ *   The suite's manifest, rows and lineage are written under `--out`.
  */
 
 import { currentSourcesRoot } from "@mailwoman/core/data-root"

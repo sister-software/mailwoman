@@ -1,12 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   The `post_office_source` table of `post-offices.db`: one row per contributing source.
  *
- *   Each POI row's `gers_id` reads `<source_id>:<record id>`, so a row joins to its source's
- *   country, terms and provenance class here.
+ *   Each POI row's `gers_id` reads `<source_id>:<record id>`, so a row joins to
+ *   its source's country, terms and provenance class here.
  */
 
 import type { Kysely } from "kysely"

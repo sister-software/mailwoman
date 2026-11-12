@@ -1,14 +1,13 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+ *   The United States entry of the post-office layer: the post offices (feature code 78006) in
+ *   the USGS National Map structures layer, as `mailwoman corpus fetch usgs-post-offices` writes them.
  *
- *   The United States entry of the post-office layer: the post offices (feature code 78006) in the
- *   USGS National Map structures layer, as `mailwoman corpus fetch usgs-post-offices` writes them.
- *
- *   The list is the USGS's compilation rather than the Postal Service's own facility list, so its
- *   provenance is a mapping agency's. A work of the United States Government, public domain under
- *   17 U.S.C. § 105.
+ *   The list is the USGS's compilation rather than the Postal Service's own facility list,
+ *   so its provenance is a mapping agency's.
+ *   A work of the United States Government, public domain under 17 U.S.C. § 105.
  */
 
 import type { PathBuilder } from "path-ts"

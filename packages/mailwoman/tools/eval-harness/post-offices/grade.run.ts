@@ -1,18 +1,20 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Grades the post-office parse suite through the runtime pipeline, the path `mailwoman parse` parses
- *   through, and exits non-zero when any row fails. The suite is a must-pass floor: its contract is 100%.
+ *   Grades the post-office parse suite through the runtime pipeline, the path
+ *   `mailwoman parse` parses through, and exits non-zero when any row fails.
+ *   The suite is a must-pass floor: its contract is 100%.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/post-offices/grade.run.ts \
  *     --suite <directory build.run.ts wrote> [--out <report prefix>] [--weights-cache <cache>] [--workers <n>]
  *
- *   Rows are parsed per weights locale, as the release configuration maps each row's country, with the
- *   row's country as the locale hint. The report states the rows and each component's failures with their
- *   denominators, then each failing input beside the expected and observed text of each failing component.
+ *   Rows are parsed per weights locale, as the release configuration maps each row's
+ *   country, with the row's country as the locale hint.
+ *   The report states the rows and each component's failures with their denominators,
+ *   then each failing input beside the expected and observed text of each failing component.
+ *
  *   `--out` also writes `<out>.json` (every row's grade) and `<out>.txt` (the report).
  */
 

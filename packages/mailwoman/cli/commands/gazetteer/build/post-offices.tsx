@@ -1,11 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   `mailwoman gazetteer build post-offices` builds `post-offices.db` beside `poi.db` from every
- *   registered country's official post-office list (`@mailwoman/corpus/post-offices/sources`). Each
- *   source reads the input its own fetch command wrote under the cache root's `sources/`.
+ *   registered country's official post-office list (`@mailwoman/corpus/post-offices/sources`).
+ *
+ *   Each source reads the input its own fetch command wrote under the cache root's `sources/`.
  */
 
 import { currentSourcesRoot } from "@mailwoman/core/data-root"

@@ -1,11 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   The official post-office lists `mailwoman gazetteer build post-offices` folds into `post-offices.db`.
  *
- *   One entry per source. A new country's source is written under `lib/<cc>/post-offices/` to the
+ *   One entry per source.
+ *   A new country's source is written under `lib/<cc>/post-offices/` to the
  *   contract in `#post-offices/source` and added here.
  */
 

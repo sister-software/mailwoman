@@ -1,15 +1,14 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Builds the post-office parse suite from every registered official post-office list
  *   (`@mailwoman/corpus/post-offices/sources`) and freezes it as a held-out dataset
  *   (`heldout/dataset/manifest.ts`), the shape the OpenStreetMap suites are frozen in.
  *
  *   The suite holds every row its sources yield rather than a sample, under the `every-row` sampling
- *   method, because its contract is that the parser handles every official post-office address. A
- *   lineage file beside it records each source's terms, provenance class, vintage and tally.
+ *   method, because its contract is that the parser handles every official post-office address.
+ *   A lineage file beside it records each source's terms, provenance class, vintage and tally.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

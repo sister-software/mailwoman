@@ -1,19 +1,20 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Grades parses of the post-office suite, one component at a time.
  *
- *   The suite is a must-pass floor rather than a scored board: an official post-office address is a
- *   simple, well-formed query, so every row has to parse as expected and any failure is a defect.
+ *   The suite is a must-pass floor rather than a scored board: an official post-office address
+ *   is a simple, well-formed query, so every row has to parse as expected and any failure is a defect.
  *
- *   A row's components are compared span by span. For each component tag the row expects or the parse
- *   returns, the parse passes when its spans of that tag sit at exactly the expected boundaries, with
- *   whitespace at the edges trimmed. Before comparing, each side's street-family spans
- *   (`street_prefix`, `street`, `street_suffix`) that touch are joined into one `street` span, so the
- *   expected street `Malabar Road Southwest` is met by a parse that splits its type and directional, in
- *   every country alike. A tag the row doesn't expect and the parse returns is a failure of that tag.
+ *   A row's components are compared span by span.
+ *   For each component tag the row expects or the parse returns, the parse passes when its spans
+ *   of that tag sit at exactly the expected boundaries, with whitespace at the edges trimmed.
+ *
+ *   Before comparing, each side's street-family spans (`street_prefix`, `street`, `street_suffix`)
+ *   that touch are joined into one `street` span, so the expected street `Malabar Road Southwest`
+ *   is met by a parse that splits its type and directional, in every country alike.
+ *   A tag the row doesn't expect and the parse returns is a failure of that tag.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

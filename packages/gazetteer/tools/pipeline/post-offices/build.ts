@@ -1,18 +1,21 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+ *   Builds the country-general post-office layer, `post-offices.db`,
+ *   from every registered official post-office list.
  *
- *   Builds the country-general post-office layer, `post-offices.db`, from every registered
- *   official post-office list.
+ *   The layer is a POI database the geocoder searches beside `poi.db`.
+ *   Every row is in the POI taxonomy's post-office category, stamped with its source's
+ *   country, and keyed `<source id>:<record id>` in `gers_id`.
  *
- *   The layer is a POI database the geocoder searches beside `poi.db`. Every row is in the POI
- *   taxonomy's post-office category, stamped with its source's country, and keyed
- *   `<source id>:<record id>` in `gers_id`. The `post_office_source` table holds each source's
- *   publisher, terms, provenance class, vintage and record counts.
+ *   The `post_office_source` table holds each source's publisher, terms,
+ *   provenance class, vintage and record counts.
  *
- *   The manifest states one license: the conjunction of the contributing sources' licenses, as the
- *   admin gazetteer's manifest does for its folds. `sourceRecords` holds each source's input count.
+ *   The manifest states one license: the conjunction of the contributing sources' licenses,
+ *   as the admin gazetteer's manifest does for its folds.
+ *   `sourceRecords` holds each source's input count.
+ *
  *   The layer is `shipped` unless a contributing license has a share-alike obligation.
  */
 

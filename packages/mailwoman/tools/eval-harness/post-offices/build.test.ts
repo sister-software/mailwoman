@@ -1,11 +1,10 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Builds the post-office suite from the registered USGS National Map source over the seven-feature
- *   fixture from its 2026-11-09 pull, laid out as `mailwoman corpus fetch usgs-post-offices` writes it,
- *   and reads the frozen dataset back through the held-out reader.
+ *   fixture from its 2026-11-09 pull, laid out as `mailwoman corpus fetch usgs-post-offices`
+ *   writes it, and reads the frozen dataset back through the held-out reader.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

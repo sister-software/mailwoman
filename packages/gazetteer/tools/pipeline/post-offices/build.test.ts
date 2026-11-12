@@ -1,11 +1,12 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+ *   Builds the post-office layer from two sources written in this test: a mapping
+ *   agency's list and a postal operator's list under different licenses.
  *
- *   Builds the post-office layer from two sources written in this test: a mapping agency's list and a
- *   postal operator's list under different licenses. The first holds the USGS National Map's Palm Bay
- *   and Caguas post offices as served on 2026-11-09, plus one record with no point.
+ *   The first holds the USGS National Map's Palm Bay and Caguas post offices as
+ *   served on 2026-11-09, plus one record with no point.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

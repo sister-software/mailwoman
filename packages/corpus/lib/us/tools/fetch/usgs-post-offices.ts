@@ -1,16 +1,17 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+ *   Fetches the post offices (feature code 78006) from the USGS National Map structures
+ *   layer, the source of the `usgov-usgs-post-offices` adapter.
+ *   US public domain under 17 U.S.C. § 105.
  *
- *   Fetches the post offices (feature code 78006) from the USGS National Map structures layer, the
- *   source of the `usgov-usgs-post-offices` adapter. US public domain under 17 U.S.C. § 105.
+ *   The layer is an ArcGIS MapServer layer that answers at most 2,000 features per request.
+ *   The fetcher asks for the feature count first, pages the query by `resultOffset` in `OBJECTID`
+ *   order, and refuses a pull whose feature count differs from the count the service stated.
  *
- *   The layer is an ArcGIS MapServer layer that answers at most 2,000 features per request. The
- *   fetcher asks for the feature count first, pages the query by `resultOffset` in `OBJECTID` order,
- *   and refuses a pull whose feature count differs from the count the service stated. Each feature
- *   is written as one GeoJSON line with its ZIP Code as a string, leading zeros intact, normalized
- *   by `normalizeZIPCode` where the feature's state is known.
+ *   Each feature is written as one GeoJSON line with its ZIP Code as a string, leading
+ *   zeros intact, normalized by `normalizeZIPCode` where the feature's state is known.
  *
  *   The service description is saved beside the features as `service.json`, because it holds the
  *   publisher's statement about the data ("public domain structures data") and its refresh date.

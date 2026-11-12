@@ -1,23 +1,24 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   `usgov-usgs-post-offices`: the post offices in the USGS National Map structures layer.
  *
- *   The National Structures Dataset's layer 38 holds the United States Postal Service facilities
- *   (feature code 78006) across the states and the five primary territories. Each feature holds a
- *   permanent identifier, the facility's name, its street address, city, state and ZIP Code, and a
- *   point. `mailwoman corpus fetch usgs-post-offices` writes one GeoJSON feature per line, with the
- *   ZIP Code as a string whose leading zeros are intact.
+ *   The National Structures Dataset's layer 38 holds the United States Postal Service
+ *   facilities (feature code 78006) across the states and the five primary territories.
+ *   Each feature holds a permanent identifier, the facility's name, its street address,
+ *   city, state and ZIP Code, and a point.
  *
- *   Each row is the facility's name as a venue followed by its address, the same venue-plus-address
- *   shape as `usgov-hrsa-fqhc`. `venue` is inserted first so alignment claims its span before
- *   `locality` searches for its own: "Palm Bay West Post Office, …, Palm Bay, FL" holds the
- *   locality's words inside the venue.
+ *   `mailwoman corpus fetch usgs-post-offices` writes one GeoJSON feature per line,
+ *   with the ZIP Code as a string whose leading zeros are intact.
  *
- *   License: a work of the United States Government, public domain under 17 U.S.C. § 105. The
- *   service describes the layer as "public domain structures data".
+ *   Each row is the facility's name as a venue followed by its address,
+ *   the same venue-plus-address shape as `usgov-hrsa-fqhc`.
+ *   `venue` is inserted first so alignment claims its span before `locality` searches for its own:
+ *   "Palm Bay West Post Office, …, Palm Bay, FL" holds the locality's words inside the venue.
+ *
+ *   License: a work of the United States Government, public domain under 17 U.S.C. § 105.
+ *   The service describes the layer as "public domain structures data".
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

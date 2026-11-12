@@ -1,10 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  *   Runs the post-office adapter over seven features the USGS structures layer served on 2026-11-09.
- *   Two are in Puerto Rico, where ZIP Codes begin with 00. One (Pocono Manor) has no street address.
+ *
+ *   Two are in Puerto Rico, where ZIP Codes begin with 00.
+ *   One (Pocono Manor) has no street address.
  */
 
 import { workspacePath } from "@mailwoman/core/paths"

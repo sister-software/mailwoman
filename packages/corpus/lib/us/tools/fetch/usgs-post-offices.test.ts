@@ -1,10 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 /**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
+ *   Drives the post-office fetcher through the real `APIClient` over a stubbed transport.
  *
- *   Drives the post-office fetcher through the real `APIClient` over a stubbed transport. The features
- *   are ones the USGS structures layer served on 2026-11-09, in the service's upper-case field spelling.
+ *   The features are ones the USGS structures layer served on 2026-11-09,
+ *   in the service's upper-case field spelling.
  *   The service text is what its MapServer description stated on 2026-11-11.
  */
 
