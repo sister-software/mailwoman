@@ -17,6 +17,10 @@ import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
  */
 export interface PolygonDB {
 	get(id: number): Promise<PlaceGeometry | null>
+	/**
+	 * Ends the range worker that reads the file.
+	 */
+	close(): void
 }
 
 /**
@@ -34,5 +38,6 @@ export async function loadPolygonDB(url: string, sqliteRuntimeBaseURL: string): 
 
 	return {
 		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
+		close: () => database.close?.(),
 	}
 }
