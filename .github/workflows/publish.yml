@@ -265,6 +265,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --tags origin "v${VERSION}" | grep -q .; then
             echo "tag v${VERSION} already on origin (recovery re-run) — skipping tag push"
+            # A recovery publishes the remaining packages from main. Main can include the fix that let them
+            # publish. The warning records that those packages come from a later commit than the tag.
+            TAGGED=$(git rev-parse "v${VERSION}^{commit}")
+            if [ "${TAGGED}" != "$(git rev-parse HEAD)" ]; then
+              echo "::warning::v${VERSION} tags ${TAGGED}, and this run publishes from $(git rev-parse HEAD). Packages published now come from the later commit."
+            fi
           else
             git tag -a "v${VERSION}" -m "Release v${VERSION}"
             git push origin "v${VERSION}"
