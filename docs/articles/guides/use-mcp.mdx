@@ -17,14 +17,13 @@ Use this procedure to give an MCP client, such as a coding assistant or an agent
 Install the server with the parser packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/mcp@11.0.0
+npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0 @mailwoman/mcp@11.1.0
 ```
 
 The MCP server loads the parser and the place resolver together, so its parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
-mkdir -p "$MAILWOMAN_DATA_ROOT"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
 ```

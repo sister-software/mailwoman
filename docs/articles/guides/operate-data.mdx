@@ -18,14 +18,13 @@ This guide uses the smallest <Country code="US" /> files so each step finishes i
 Install the published packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0
 ```
 
-Choose a data root and create its directory. In 11.0.0, `data pull` stops with `ENOENT ... mkdir '<data root>/.install.lock'` when the directory doesn't exist yet:
+Choose a data root. `data pull` creates the directory when it doesn't exist yet:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
-mkdir -p "$MAILWOMAN_DATA_ROOT"
 ```
 
 Every `data` command reads `$MAILWOMAN_DATA_ROOT`, and each one also accepts `--data-root <path>` for a single run. To practice these steps without touching data you use, point `--data-root` at an empty directory.

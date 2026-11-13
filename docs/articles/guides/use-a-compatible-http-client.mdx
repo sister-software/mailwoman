@@ -16,14 +16,13 @@ Use this procedure when an application already calls Nominatim, Photon or a libp
 Install the compatibility package for your client next to the parser packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/nominatim@11.0.0 @mailwoman/photon@11.0.0 @mailwoman/libpostal@11.0.0
+npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0 @mailwoman/nominatim@11.1.0 @mailwoman/photon@11.1.0 @mailwoman/libpostal@11.1.0
 ```
 
 The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. The examples query Washington, DC:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
-mkdir -p "$MAILWOMAN_DATA_ROOT"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
 ```

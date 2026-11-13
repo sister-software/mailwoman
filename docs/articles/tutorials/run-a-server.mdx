@@ -17,14 +17,13 @@ In this tutorial you start the native Mailwoman HTTP server on your machine and 
 Install the published 11.0.0 packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0
 ```
 
 The server doesn't start without geographic data. It exits with status 1 before listening when it finds neither a candidate database nor Who's On First databases. Download the global place candidates and the address points for Washington, DC:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
-mkdir -p "$MAILWOMAN_DATA_ROOT"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
 ```
