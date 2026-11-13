@@ -8,7 +8,7 @@
  *   The dataset holds public facilities across the states and the five primary territories:
  *   schools, colleges, hospitals, fire, police and ambulance stations, prisons,
  *   courthouses, town halls, post offices, cemeteries, and recreation sites.
- *   `#us/structures/usgs-layers` lists each point layer.
+ *   `#us/structures/usgs/layers` lists each point layer.
  *
  *   Each feature holds a permanent identifier, the facility's name, its street address,
  *   city, state and ZIP Code, and a point.
@@ -35,7 +35,7 @@ import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
-import { usgsStructureLayer } from "#us/structures/usgs-layers"
+import { usgsStructureLayer } from "#us/structures/usgs/layers"
 
 /**
  * Registry id for this adapter, and the source directory its fetcher writes.
@@ -64,7 +64,7 @@ export interface USGSStructureProperties {
 	 */
 	layer_id: number
 	/**
-	 * The layer's slug in `#us/structures/usgs-layers`.
+	 * The layer's slug in `#us/structures/usgs/layers`.
 	 */
 	layer: string
 	/**

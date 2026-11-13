@@ -21,8 +21,8 @@ import {
 	USGS_STRUCTURES_FILENAME,
 	type USGSStructureFeature,
 } from "#us/adapters/usgov/usgs-structures/adapter"
-import { usgsStructureLayer } from "#us/structures/usgs-layers"
-import { usgsNationalMapStructures } from "#us/structures/usgs-national-map"
+import { usgsStructureLayer } from "#us/structures/usgs/layers"
+import { usgsNationalMapStructures } from "#us/structures/usgs/national-map"
 
 const scratch = useScratchDir("usgs-national-map-structures")
 

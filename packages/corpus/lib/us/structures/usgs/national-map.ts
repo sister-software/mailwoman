@@ -3,7 +3,7 @@
 
 /**
  *   The United States entry of the structures layer: every point layer of the
- *   USGS National Map structures MapServer (`#us/structures/usgs-layers`),
+ *   USGS National Map structures MapServer (`#us/structures/usgs/layers`),
  *   as `mailwoman corpus fetch usgs-structures` writes them.
  *
  *   Each record is filed under its layer's POI category, so the post offices of layer
@@ -31,7 +31,7 @@ import {
 	type USGSStructureFeature,
 	usgsStructureAddress,
 } from "#us/adapters/usgov/usgs-structures/adapter"
-import { usgsStructureLayer } from "#us/structures/usgs-layers"
+import { usgsStructureLayer } from "#us/structures/usgs/layers"
 import type { USGSStructuresManifest } from "#us/tools/fetch/usgs-structures"
 
 /**

@@ -19,7 +19,7 @@ import { describe, expect, it } from "vitest"
 
 import { useScratchDir } from "#test-kit"
 import { USGS_STRUCTURES_FILENAME, type USGSStructureFeature } from "#us/adapters/usgov/usgs-structures/adapter"
-import { usgsStructureLayer } from "#us/structures/usgs-layers"
+import { usgsStructureLayer } from "#us/structures/usgs/layers"
 import {
 	downloadUSGSStructures,
 	normalizeStructureFeature,

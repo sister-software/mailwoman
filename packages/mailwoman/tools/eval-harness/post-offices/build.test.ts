@@ -19,7 +19,7 @@ import {
 	USGS_STRUCTURES_FILENAME,
 	type USGSStructureFeature,
 } from "@mailwoman/corpus/us/adapters/usgov/usgs-structures/adapter"
-import { usgsNationalMapStructures } from "@mailwoman/corpus/us/structures/usgs-national-map"
+import { usgsNationalMapStructures } from "@mailwoman/corpus/us/structures/usgs/national-map"
 import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

@@ -10,7 +10,7 @@
  */
 
 import type { StructureSource } from "#structures/source"
-import { usgsNationalMapStructures } from "#us/structures/usgs-national-map"
+import { usgsNationalMapStructures } from "#us/structures/usgs/national-map"
 
 /**
  * Every registered structure source, in the order the layer reads them.

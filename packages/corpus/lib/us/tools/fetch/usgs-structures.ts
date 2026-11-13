@@ -3,7 +3,7 @@
 
 /**
  *   Fetches every point layer of the USGS National Map structures MapServer
- *   (`#us/structures/usgs-layers`), the source of the `usgov-usgs-structures` adapter.
+ *   (`#us/structures/usgs/layers`), the source of the `usgov-usgs-structures` adapter.
  *   US public domain under 17 U.S.C. § 105.
  *
  *   Each layer is an ArcGIS MapServer layer that answers at most 2,000 features per request.
@@ -51,7 +51,7 @@ import {
 	type USGSStructureFeature,
 	type USGSStructureProperties,
 } from "#us/adapters/usgov/usgs-structures/adapter"
-import { USGS_STRUCTURE_LAYERS, type USGSStructureLayer } from "#us/structures/usgs-layers"
+import { USGS_STRUCTURE_LAYERS, type USGSStructureLayer } from "#us/structures/usgs/layers"
 
 /**
  * The structures MapServer.

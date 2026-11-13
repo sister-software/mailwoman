@@ -5,7 +5,7 @@ import { getPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import { describe, expect, it } from "vitest"
 
 import { postOfficeCategoryID } from "#structures/source"
-import { USGS_STRUCTURE_LAYERS, usgsStructureLayer } from "#us/structures/usgs-layers"
+import { USGS_STRUCTURE_LAYERS, usgsStructureLayer } from "#us/structures/usgs/layers"
 
 describe("USGS_STRUCTURE_LAYERS", () => {
 	it("files every layer under a category the POI taxonomy holds", () => {

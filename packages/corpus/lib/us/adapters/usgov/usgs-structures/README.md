@@ -8,7 +8,7 @@ sites, each rendered as its name followed by its street address. Public domain.
 
 The point layers of the National Structures Dataset's MapServer at
 `https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer`, across the states, the
-District of Columbia and the five primary territories. `lib/us/structures/usgs-layers.ts` lists each
+District of Columbia and the five primary territories. `lib/us/structures/usgs/layers.ts` lists each
 layer with its slug, its POI taxonomy category and whether it trains.
 
 The service publishes every layer twice. Layers 0–34 are the `Labels` group and serve the same rows as

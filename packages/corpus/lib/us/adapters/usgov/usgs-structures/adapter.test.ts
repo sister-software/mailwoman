@@ -22,7 +22,7 @@ import {
 	createUSGovUSGSStructuresAdapter,
 	type USGSStructureFeature,
 } from "#us/adapters/usgov/usgs-structures/adapter"
-import { usgsStructureLayer } from "#us/structures/usgs-layers"
+import { usgsStructureLayer } from "#us/structures/usgs/layers"
 import { alignRow } from "#utils"
 
 const scratch = useScratchDir("usgov-usgs-structures")
