@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/registry",
-	"version": "11.0.0",
+	"version": "11.1.0",
 	"description": "A generated, typed registry of standardized identifiers and their relationships: ISO 3166-1 country codes and IATA airport codes in this release, compiled from pinned open sources into RGY1 lookup artifacts with branded types, a synchronous TypeScript reader, a Rust lookup core and a WebAssembly batch adapter.",
 	"keywords": [
 		"airport-codes",
