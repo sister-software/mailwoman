@@ -36,10 +36,9 @@ concurrency:
 
 jobs:
   build-push:
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    # A GitHub-hosted runner, because the build, login and push actions call `docker`, and the self-hosted
+    # runners have Podman only.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
