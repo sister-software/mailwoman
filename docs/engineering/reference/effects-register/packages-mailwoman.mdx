@@ -2332,16 +2332,16 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 - `runs a statement at module scope`, 8 times
 - `awaits at module scope`, 3 times
 
-| Kind        | Interface            | Target                                      | Calls |
-| ----------- | -------------------- | ------------------------------------------- | ----- |
-| read        | `DatabaseClient`     | `data-root:db/interpolation`                | 1     |
-| read        | `DatabaseClient`     | `data-root:db/wof/admin-global-priority.db` | 1     |
-| read        | `DatabaseClient`     | `unresolved (identifier)`                   | 2     |
-| read        | `Globerator.files`   | `data-root:db/interpolation`                | 1     |
-| read        | `pathExists`         | `unresolved (identifier)`                   | 1     |
-| read        | `readLocalJSONFile`  | `unresolved (call)`                         | 1     |
-| write       | `writeLocalJSONFile` | `unresolved (call)`                         | 1     |
-| environment | `$private`           | `environment:US_CENSUS_API_KEY`             | 1     |
+| Kind        | Interface            | Target                          | Calls |
+| ----------- | -------------------- | ------------------------------- | ----- |
+| read        | `DatabaseClient`     | `data-root:db/interpolation`    | 1     |
+| read        | `DatabaseClient`     | `unresolved (identifier)`       | 2     |
+| read        | `DatabaseClient`     | `unresolved (other)`            | 1     |
+| read        | `Globerator.files`   | `data-root:db/interpolation`    | 1     |
+| read        | `pathExists`         | `unresolved (identifier)`       | 1     |
+| read        | `readLocalJSONFile`  | `unresolved (call)`             | 1     |
+| write       | `writeLocalJSONFile` | `unresolved (call)`             | 1     |
+| environment | `$private`           | `environment:US_CENSUS_API_KEY` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/us/address-coverage/census.ts`
 
