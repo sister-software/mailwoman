@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { expect, test } from "vitest"
+import { AsyncSequence } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
+import { expect, test, vi } from "vitest"
 
 import { openDuckDB } from "#parquet/duckdb"
 import { useScratchDir } from "#test-kit"
@@ -18,6 +20,7 @@ import {
 	readRefutedParentIDs,
 	recordFromFeature,
 	stripAttestation,
+	walkFeatures,
 	wofNameSlotSQL,
 } from "#utils/wof-json"
 
@@ -105,7 +108,55 @@ test("extractNameVariants drops a variant that is only an attestation", () => {
 	expect(out.has("name:lat_x_variant")).toBe(false)
 })
 
-// `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope here.
+const localityFeature = (id: number, name: string) => ({
+	type: "Feature",
+	id,
+	properties: {
+		"wof:id": id,
+		"wof:name": name,
+		"wof:placetype": "locality",
+		"wof:country": "US",
+		"wof:parent_id": 85_688_637,
+		"mz:is_current": 1,
+		"geom:latitude": 40.65,
+		"geom:longitude": -73.95,
+		"wof:hierarchy": [{ locality_id: id, region_id: 85_688_543, country_id: 85_633_793 }],
+	},
+	geometry: { type: "Point", coordinates: [-73.95, 40.65] },
+})
+
+test("walkFeatures yields records in the code-point order of their paths, whatever order the listing returns", async () => {
+	const repo = scratch.path("walk-order")
+
+	// The files are written in reverse.
+	// Their code-point order (10, 2, 9) differs from numeric order.
+	const files = [
+		[9, "Queens"],
+		[2, "Brooklyn"],
+		[10, "Manhattan"],
+	] as const
+
+	for (const [id, name] of files) {
+		await writeLocalJSONFile(localityFeature(id, name), repo, `data/${id}.geojson`)
+	}
+
+	const listed = await Globerator.from("**/*.geojson", { cwd: repo, absolute: true }).toArray()
+	const orders = [listed.toReversed(), [listed[1]!, listed[2]!, listed[0]!], listed]
+
+	for (const order of orders) {
+		const spy = vi.spyOn(Globerator, "from").mockReturnValue(AsyncSequence.from<string>(order))
+
+		try {
+			const walked = await Array.fromAsync(walkFeatures(repo))
+
+			expect(walked.map((record) => record.id)).toEqual([10, 2, 9])
+		} finally {
+			spy.mockRestore()
+		}
+	}
+})
+
+// The private `recordFromFeature` that `walkFeatures` drives is out of scope here.
 // These are the pure object→value / map→map helpers.
 
 test("isCurrentFeature: 1 and -1 are current, 0 is superseded", () => {
