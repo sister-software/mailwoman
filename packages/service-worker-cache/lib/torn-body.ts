@@ -41,11 +41,34 @@ export interface TornBodyPluginOptions {
 
 /**
  * Whether a response's decoded body is `expected` bytes long.
+ *
+ * The clone's chunks are counted as they arrive and then dropped, so measuring a
+ * 30 MB model assembles no second contiguous buffer.
+ * Counting stops early once the body is longer than `expected`.
  */
 async function bodyHasLength(response: Response, expected: number): Promise<boolean> {
-	const body = await response.clone().arrayBuffer()
+	const body = response.clone().body
 
-	return body.byteLength === expected
+	if (!body) return expected === 0
+
+	const reader = body.getReader()
+	let length = 0
+
+	for (;;) {
+		const { done, value } = await reader.read()
+
+		if (done) return length === expected
+
+		length += value.byteLength
+
+		if (length > expected) {
+			// The clone is one branch of a tee, and cancelling it settles only once the
+			// original branch is cancelled too, so the cancel isn't awaited.
+			void reader.cancel().catch(() => {})
+
+			return false
+		}
+	}
 }
 
 /**

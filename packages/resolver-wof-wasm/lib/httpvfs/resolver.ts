@@ -69,6 +69,14 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		this.#database = database
 	}
 
+	/**
+	 * Ends the database's worker.
+	 * A host calls it when it replaces or drops this lookup.
+	 */
+	close(): void {
+		this.#database.close?.()
+	}
+
 	readonly #postalCityPresent = memoizeResettable(() => tableExists(this.#database, "postal_city_candidate"))
 
 	readonly #optionalColumns = memoizeResettable(async (): Promise<string> => {

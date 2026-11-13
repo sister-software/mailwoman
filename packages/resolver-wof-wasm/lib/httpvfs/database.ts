@@ -31,6 +31,14 @@ export interface RangeDatabase {
 	 * Returns the total bytes range-fetched from the database so far.
 	 */
 	bytesRead(): Promise<number>
+
+	/**
+	 * Ends the worker that holds the database, freeing its sqlite-wasm heap and its chunk cache.
+	 *
+	 * Every later call rejects.
+	 * A database read without a worker, such as a server's or a test's, omits it.
+	 */
+	close?(): void
 }
 
 /**
@@ -187,6 +195,19 @@ class RangeWorkerClient implements RangeDatabase {
 
 	terminate(): void {
 		this.#worker.terminate()
+	}
+
+	close(): void {
+		const error = new Error("The range database is closed")
+
+		this.#failure ??= error
+		this.#worker.terminate()
+
+		for (const waiter of this.#pending.values()) {
+			waiter.reject(error)
+		}
+
+		this.#pending.clear()
 	}
 }
 

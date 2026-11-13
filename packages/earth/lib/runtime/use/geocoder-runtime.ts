@@ -38,7 +38,7 @@ import type {
 	ResolvedPlaceView,
 	ComponentMatch,
 } from "@mailwoman/core/pipeline/client-result"
-import { allKeyed, startEarly } from "@mailwoman/core/promises"
+import { startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
@@ -53,12 +53,7 @@ import type {
 import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { resolvedSpanResults, runCascade, statedStreetScope } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-import {
-	type HTTPVFSAddressPointLookup,
-	type HTTPVFSInterpolator,
-	resolveStreet,
-	type StreetResolution,
-} from "@mailwoman/resolver-wof-wasm/httpvfs/street"
+import { resolveStreet, type StreetResolution } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import {
 	readStreetFromTable,
@@ -79,7 +74,6 @@ import {
 	HOSTED_STREET_SLUGS,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
-	streetExtractURL,
 	wofPolygonsURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
@@ -93,7 +87,9 @@ import type { EarthConfig } from "#config"
 import { type Gazetteer, openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
+import { ClosingLRU, closeWhenOpen } from "#runtime/closing-lru"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
+import { OPEN_STREET_EXTRACT_LIMIT, openStreetLookups, type StreetLookups } from "#runtime/street-lookups"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useReleaseAssetLoader, useStackReloads } from "#runtime/use/gazetteer-reload"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
@@ -119,15 +115,6 @@ const STREET_MIN_RADIUS_METERS = 25
  * Spans that together make up the street name — assembled in source order for the situs/interp query.
  */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
-
-/**
- * Per-state street lookups loaded together, lazily by region.
- * National (country) extracts have no interpolation.
- */
-interface StreetLookups {
-	situs: HTTPVFSAddressPointLookup
-	interp: HTTPVFSInterpolator | null
-}
 
 interface CandidateExtras {
 	bbox: ResolvedPlaceView["bbox"] | null
@@ -183,16 +170,6 @@ export interface GeocoderRuntimeOptions {
 	 * Defaults to 3.
 	 */
 	initialZoom?: number
-}
-
-/**
- * Give a superseded bundle's native memory back.
- *
- * This sits at module scope rather than in `useCallback` because it closes over no state,
- * so a stable identity is free and cannot churn the hook's effect.
- */
-function disposeAssets(assets: ReleaseAssets): Promise<void> {
-	return assets.release()
 }
 
 /**
@@ -434,7 +411,7 @@ export function useGeocoderRuntime({
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
-	const { keptGazetteer, loadAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
+	const { keptGazetteer, loadAssets, disposeAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 	const { reloadGazetteer, reloadModel } = useStackReloads(rt, sqliteRuntimeBaseURL, keptGazetteer)
 
@@ -444,7 +421,7 @@ export function useGeocoderRuntime({
 		() =>
 			new FamilyBundles<ReleaseAssets>({
 				load: (family, release) => loadReleaseAssets(release, silentAssetProgress(), { ortWASMURL, locale: family }),
-				dispose: disposeAssets,
+				dispose: (assets) => assets.release(),
 			}),
 		[]
 	)
@@ -475,8 +452,8 @@ export function useGeocoderRuntime({
 
 	// Per-candidate map-render extras, keyed by the candidate object `useParsePipeline` hands back verbatim.
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
-	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
-	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
+	// Lazy street-tier situs/interp lookups by parsed state/country slug, the least recently used closed past the limit.
+	const [streetLookups] = useState(() => new ClosingLRU<StreetLookups>(OPEN_STREET_EXTRACT_LIMIT))
 	// The cache is state rather than a ref so a landed polygon rebuilds `resolveMapPlace`
 	// through `useGeocode`'s mapPlace memo.
 	// Value `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
@@ -487,16 +464,25 @@ export function useGeocoderRuntime({
 	const gazetteerRef = useRef<Promise<Gazetteer> | null>(null)
 
 	// URLs are version-scoped, so reset polygon state on version change.
+	// The cleanup also runs on unmount, ending the polygon file's range worker.
 	useEffect(() => {
 		polygonDBRef.current = null
 		polygonInflightRef.current = new Set()
 		// oxlint-disable-next-line react/set-state-in-effect -- Polygon IDs and cached geometry are scoped to the selected release.
 		setPolygonCache(new Map())
+
+		return () => closeWhenOpen(polygonDBRef.current)
 	}, [rt.selectedVersion])
 
+	// Each range-read handle opened from this runtime base is closed when the base changes or the map unmounts.
 	useEffect(() => {
 		gazetteerRef.current = null
-	}, [sqliteRuntimeBaseURL])
+
+		return () => {
+			streetLookups.clear()
+			closeWhenOpen(gazetteerRef.current?.then(({ database }) => ({ close: () => database.close?.() })))
+		}
+	}, [sqliteRuntimeBaseURL, streetLookups])
 
 	/**
 	 * The boundary file, opened once.
@@ -549,40 +535,9 @@ export function useGeocoderRuntime({
 	)
 
 	const ensureStreetLookups = useCallback(
-		async (slug: string): Promise<StreetLookups | null> => {
-			let p = streetLookupsRef.current.get(slug)
-
-			if (!p) {
-				p = (async () => {
-					const {
-						database: { openRangeDatabase },
-						street: { HTTPVFSAddressPointLookup, HTTPVFSInterpolator },
-					} = await allKeyed({
-						database: import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
-						street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
-					})
-
-					if (NATIONAL_STREET_SLUGS.has(slug)) {
-						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
-
-						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: null }
-					}
-
-					const [situsDB, interpDB] = await Promise.all([
-						openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL),
-						openRangeDatabase(streetExtractURL(slug, "interp"), sqliteRuntimeBaseURL),
-					])
-
-					return { situs: new HTTPVFSAddressPointLookup(situsDB), interp: new HTTPVFSInterpolator(interpDB) }
-				})()
-
-				p.catch(() => streetLookupsRef.current.delete(slug))
-				streetLookupsRef.current.set(slug, p)
-			}
-
-			return p
-		},
-		[sqliteRuntimeBaseURL]
+		async (slug: string): Promise<StreetLookups | null> =>
+			streetLookups.get(slug, () => openStreetLookups(slug, sqliteRuntimeBaseURL)),
+		[sqliteRuntimeBaseURL, streetLookups]
 	)
 
 	const runParseWithBias = useCallback(

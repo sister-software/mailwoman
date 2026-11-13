@@ -62,8 +62,25 @@ export function useReleaseAssetLoader(
 ): {
 	keptGazetteer: KeptGazetteer
 	loadAssets: (release: ReleaseInfo, ctx: AssetsLoadContext) => Promise<ReleaseAssets>
+	disposeAssets: (assets: ReleaseAssets) => Promise<void>
 } {
 	const keptGazetteer = useKeptGazetteer()
+
+	// The disposer frees a superseded bundle's native memory, including a gazetteer reopened after the load.
+	// The bundle's own `release` closes only the gazetteer its load opened.
+	// A gazetteer a model-only reload keeps for the next load stays open.
+	const disposeAssets = useCallback(
+		(assets: ReleaseAssets): Promise<void> => {
+			const keepLookup = assets.lookup != null && assets.lookup === keptGazetteer.peek()
+
+			if (!keepLookup) {
+				assets.lookup?.close?.()
+			}
+
+			return assets.release({ keepLookup })
+		},
+		[keptGazetteer]
+	)
 
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
@@ -74,7 +91,7 @@ export function useReleaseAssetLoader(
 		[sqliteRuntimeBaseURL, ortWASMURL, keptGazetteer]
 	)
 
-	return { keptGazetteer, loadAssets }
+	return { keptGazetteer, loadAssets, disposeAssets }
 }
 
 /**
@@ -135,14 +152,23 @@ export function useGazetteerReload(
 	updateAssets: (update: (assets: ReleaseAssets) => ReleaseAssets) => void
 ): (() => Promise<void>) | null {
 	const reload = useCallback(async (): Promise<void> => {
+		// The replaced lookup's range worker is closed, so a reload doesn't leave a second sqlite-wasm heap behind.
 		try {
 			const lookup = await openCandidateTableLookup(sqliteRuntimeBaseURL)
 
-			updateAssets((assets) => ({ ...assets, lookup, gazetteerError: null }))
+			updateAssets((assets) => {
+				assets.lookup?.close?.()
+
+				return { ...assets, lookup, gazetteerError: null }
+			})
 		} catch (error) {
 			const gazetteerError = error instanceof Error ? error.message : String(error)
 
-			updateAssets((assets) => ({ ...assets, lookup: null, gazetteerError }))
+			updateAssets((assets) => {
+				assets.lookup?.close?.()
+
+				return { ...assets, lookup: null, gazetteerError }
+			})
 		}
 	}, [sqliteRuntimeBaseURL, updateAssets])
 

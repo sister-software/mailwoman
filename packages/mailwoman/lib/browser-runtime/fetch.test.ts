@@ -208,6 +208,43 @@ describe("fetchWithRetry", () => {
 		expect(impl).toHaveBeenCalledTimes(3)
 	})
 
+	test("a body matching, short of, or longer than its declared length arrives whole", async () => {
+		const body = (sizes: number[]) =>
+			new ReadableStream<Uint8Array>({
+				start(controller) {
+					const all = Uint8Array.from({ length: sizes.reduce((sum, size) => sum + size, 0) }, (_, i) => i % 256)
+					let offset = 0
+
+					for (const size of sizes) {
+						controller.enqueue(all.slice(offset, offset + size))
+						offset += size
+					}
+
+					controller.close()
+				},
+			})
+
+		const expected = (length: number) => Uint8Array.from({ length }, (_, i) => i % 256)
+
+		const answers = [
+			new Response(body([400, 600]), { headers: { "content-length": "1000" } }),
+			new Response(body([300]), { headers: { "content-length": "1000" } }),
+			new Response(body([700, 700]), { headers: { "content-length": "1000" } }),
+		]
+
+		for (const [answer, length] of [
+			[answers[0], 1000],
+			[answers[1], 300],
+			[answers[2], 1400],
+		] as const) {
+			vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValueOnce(answer!))
+
+			const response = await settle(fetchWithRetry("https://example.test/model.onnx"))
+
+			expect(new Uint8Array(await response.arrayBuffer())).toEqual(expected(length))
+		}
+	})
+
 	test("a failure that is not a network failure is not retried", async () => {
 		const impl = vi.fn<typeof fetch>().mockRejectedValue(new DOMException("aborted", "AbortError"))
 

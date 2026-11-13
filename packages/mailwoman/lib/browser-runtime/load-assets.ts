@@ -97,8 +97,11 @@ export interface ReleaseAssets {
 	 *
 	 * A host that loads a second bundle over a page's life (a version switch,
 	 * a backend-force toggle, compare mode) must call this on the one it is replacing.
+	 *
+	 * It also closes the gazetteer this load opened, unless `keepLookup` is set
+	 * because the host hands that gazetteer to the next bundle.
 	 */
-	release: () => Promise<void>
+	release: (options?: { keepLookup?: boolean }) => Promise<void>
 	calibrator: Calibrator | null
 	/**
 	 * Per-parse placetype-pair prior selection.
@@ -408,7 +411,13 @@ export async function loadReleaseAssets(
 			gazetteerError,
 			calibrator,
 			selectPairIndex: selectPairIndexForText ?? null,
-			release: async () => {
+			release: async ({ keepLookup = false } = {}) => {
+				// The gazetteer's range worker holds its own sqlite-wasm heap.
+				// That heap outlives this bundle unless the lookup is closed.
+				if (!keepLookup) {
+					lookup?.close?.()
+				}
+
 				await releaseClassifier?.()
 			},
 		}

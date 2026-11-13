@@ -187,12 +187,20 @@ export type BytesReceived = (received: number, total: number | null) => void
  * `content-length` describes the wire bytes while the reader yields decoded ones,
  * so a content-encoded response can report a fraction above 1.
  * The consumer clamps rather than this lying about the total.
+ *
+ * With a declared length and no visible encoding, the body is written into one buffer of that
+ * length as it arrives, so the download never holds both a chunk list and its joined copy.
+ * A cross-origin response may hide `content-encoding`, so a body that outgrows the
+ * declared length moves to the chunk list from that point.
  */
 async function drain(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
 	const declared = Number(response.headers.get("content-length"))
 	const total = Number.isFinite(declared) && declared > 0 ? declared : null
+	const encoding = response.headers.get("content-encoding")
 	const reader = response.body!.getReader()
 	const chunks: Uint8Array[] = []
+	const identity = !encoding || encoding === "identity"
+	let buffer: Uint8Array | null = total !== null && identity ? new Uint8Array(total) : null
 	let received = 0
 
 	onBytes(0, total)
@@ -204,10 +212,23 @@ async function drain(response: Response, onBytes: BytesReceived): Promise<Uint8A
 
 		if (!value) continue
 
-		chunks.push(value)
+		if (buffer && received + value.byteLength <= buffer.byteLength) {
+			buffer.set(value, received)
+		} else {
+			if (buffer) {
+				chunks.push(buffer.slice(0, received))
+				buffer = null
+			}
+
+			chunks.push(value)
+		}
+
 		received += value.byteLength
 		onBytes(received, total)
 	}
+
+	// A short body keeps only the bytes that arrived.
+	if (buffer) return received === buffer.byteLength ? buffer : buffer.slice(0, received)
 
 	const bytes = new Uint8Array(received)
 	let offset = 0

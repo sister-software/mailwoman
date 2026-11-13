@@ -58,6 +58,13 @@ export interface MailwomanLookupLike {
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}>
 	>
+
+	/**
+	 * Frees the lookup's database worker, when it has one.
+	 *
+	 * A host calls it when it replaces or drops the lookup.
+	 */
+	close?: () => void
 }
 
 type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
