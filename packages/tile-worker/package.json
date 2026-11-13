@@ -34,7 +34,7 @@
 		"@mailwoman/api-worker": "workspace:*",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"hono": "^4.13.14",
+		"hono": "^4.13.16",
 		"pmtiles": "^4.5.0"
 	},
 	"devDependencies": {

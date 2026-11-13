@@ -36,7 +36,7 @@
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"hono": "^4.13.14"
+		"hono": "^4.13.16"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.20261029.1",
