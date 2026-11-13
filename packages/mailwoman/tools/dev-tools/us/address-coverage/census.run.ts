@@ -4,8 +4,8 @@
 /**
  *   Writes the per-county US address coverage census as JSON, and prints a state summary.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/census.run.ts
- *   --out <file.json> [--layer-root <dir> --layer-version <version>]
+ *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/census.run.ts --out
+ *   <file.json> [--layer-root <dir> --layer-version <version>] [--admin-db <db>] [--polygon-db <db>]
  *
  *   With `--layer-root`, the points are the US address layer's records under that root's `addresses/`
  *   directory, such as `$MAILWOMAN_DATA_ROOT/db`, rather than each state's address-point database.
@@ -47,8 +47,23 @@ import {
 } from "#tools/dev-tools/us/address-coverage/census"
 
 const { values } = parseArguments({
-	options: { out: { type: "string" }, "layer-root": { type: "string" }, "layer-version": { type: "string" } },
+	options: {
+		out: { type: "string" },
+		"layer-root": { type: "string" },
+		"layer-version": { type: "string" },
+		"admin-db": {
+			type: "string",
+			description: "The admin gazetteer (default: the data root's admin-global-priority.db)",
+		},
+		"polygon-db": {
+			type: "string",
+			description: "The US county polygons (default: the data root's wof-polygons-us-full.db)",
+		},
+	},
 })
+
+const adminDBPath = values["admin-db"] ?? wofDatabasePath("admin-global-priority.db").toString()
+const polygonDBPath = values["polygon-db"] ?? wofDatabasePath("wof-polygons-us-full.db").toString()
 
 if (!values.out) throw new Error("--out <file.json> is required")
 
@@ -138,10 +153,7 @@ const states: Array<{
 const reverse =
 	layerRoot != null
 		? {
-				geocoder: new WOFReverseGeocoder({
-					adminDBPath: wofDatabasePath("admin-global-priority.db"),
-					polygonDBPath: wofDatabasePath("wof-polygons-us-full.db"),
-				}),
+				geocoder: new WOFReverseGeocoder({ adminDBPath, polygonDBPath }),
 				geoidByWOFID: readCountyGEOIDs(),
 			}
 		: null
@@ -150,7 +162,7 @@ const reverse =
  * Each current US county's `uscensus:geoid` concordance, the five-digit FIPS code the gazetteer keys by.
  */
 function readCountyGEOIDs(): Map<number, string> {
-	using admin = new DatabaseClient<never>(wofDatabasePath("admin-global-priority.db"), { readOnly: true })
+	using admin = new DatabaseClient<never>(adminDBPath, { readOnly: true })
 
 	const rows = admin
 		.prepare(
