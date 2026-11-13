@@ -136,6 +136,66 @@ async function assertWithinTerrariumEnvelope(rasterPath: string): Promise<void> 
 }
 
 /**
+ * The interpreters tried, in order, for one that can import GDAL's Python bindings.
+ *
+ * A distribution builds its `osgeo` bindings for one Python minor version.
+ * `python3` can resolve to a newer minor version than the bindings were built for.
+ *
+ * An example is a `/usr/local/bin/python3` at 3.13 beside Ubuntu's 3.12 bindings.
+ * The distribution's own interpreter is therefore the fallback.
+ */
+export const OSGEO_INTERPRETERS: readonly string[] = ["python3", "python3.12"]
+
+/**
+ * The module `gdal_calc.py` wraps.
+ *
+ * The build runs it with `-m` through a chosen interpreter.
+ * That invocation bypasses the script's `#!` line.
+ * That line runs whichever `python3` the system links.
+ */
+const GDAL_CALC_MODULE = "osgeo_utils.gdal_calc"
+
+const interpreterByCandidates = new Map<string, Promise<string>>()
+
+/**
+ * The first of `candidates` that imports `osgeo`, probed with `-c 'import osgeo'` once per process.
+ *
+ * @throws When none imports it, listing each candidate with the last line of its error.
+ */
+export function resolveOSGeoInterpreter(candidates: readonly string[] = OSGEO_INTERPRETERS): Promise<string> {
+	const key = candidates.join("\0")
+	let resolved = interpreterByCandidates.get(key)
+
+	if (!resolved) {
+		resolved = probeOSGeoInterpreters(candidates)
+		interpreterByCandidates.set(key, resolved)
+		resolved.catch(() => interpreterByCandidates.delete(key))
+	}
+
+	return resolved
+}
+
+async function probeOSGeoInterpreters(candidates: readonly string[]): Promise<string> {
+	const failures: string[] = []
+
+	for (const candidate of candidates) {
+		try {
+			await runFile(candidate, ["-c", "import osgeo"])
+
+			return candidate
+		} catch (error) {
+			const { stderr, message } = error as { stderr?: string; message?: string }
+			const output = (stderr || message || String(error)).trim()
+
+			// The last line of a Python traceback states the exception, such as `ModuleNotFoundError: …`.
+			failures.push(`${candidate}: ${output.slice(output.lastIndexOf("\n") + 1)}`)
+		}
+	}
+
+	throw new Error(`no interpreter imports GDAL's Python bindings (osgeo); tried ${failures.join("; ")}`)
+}
+
+/**
  * Build a body's hillshade archive, answering the exact tool invocations in order for the manifest.
  */
 export async function buildHillshadePMTiles(
@@ -182,7 +242,7 @@ export async function buildHillshadePMTiles(
 	await assertWithinTerrariumEnvelope(resampled)
 
 	// Encode terrarium: R is the high byte of the offset height, G the low byte, B the fractional meter.
-	// `gdal_calc.py` writes one band per run, so the three are computed separately and stacked.
+	// `gdal_calc` writes one band per run, so the three are computed separately and stacked.
 	const offset = `(A.astype(numpy.float64) + ${TERRARIUM_DATUM_METRES})`
 
 	const red = [
@@ -224,9 +284,12 @@ export async function buildHillshadePMTiles(
 		"--overwrite",
 	]
 
-	await runFile("gdal_calc.py", red)
-	await runFile("gdal_calc.py", green)
-	await runFile("gdal_calc.py", blue)
+	const python = await resolveOSGeoInterpreter()
+	const gdalCalc = [python, "-m", GDAL_CALC_MODULE]
+
+	await runFile(python, [...gdalCalc.slice(1), ...red])
+	await runFile(python, [...gdalCalc.slice(1), ...green])
+	await runFile(python, [...gdalCalc.slice(1), ...blue])
 
 	const stack = ["-separate", "-overwrite", bandsVRT, redBand, greenBand, blueBand]
 
@@ -278,9 +341,9 @@ export async function buildHillshadePMTiles(
 	return {
 		commands: [
 			["gdal_translate", ...declare],
-			["gdal_calc.py", ...red],
-			["gdal_calc.py", ...green],
-			["gdal_calc.py", ...blue],
+			[...gdalCalc, ...red],
+			[...gdalCalc, ...green],
+			[...gdalCalc, ...blue],
 			["gdalbuildvrt", ...stack],
 			["gdal_translate", ...materialize],
 			["gdal_translate", ...tile],

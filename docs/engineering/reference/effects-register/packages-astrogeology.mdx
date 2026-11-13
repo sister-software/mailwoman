@@ -17,14 +17,15 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/astrogeology/lib/build/hillshade.ts`
 
-| Kind    | Interface | Target                   | Calls |
-| ------- | --------- | ------------------------ | ----- |
-| process | `runFile` | `literal:gdal_calc.py`   | 3     |
-| process | `runFile` | `literal:gdal_translate` | 3     |
-| process | `runFile` | `literal:gdaladdo`       | 1     |
-| process | `runFile` | `literal:gdalbuildvrt`   | 1     |
-| process | `runFile` | `literal:gdalinfo`       | 3     |
-| process | `runFile` | `literal:pmtiles`        | 1     |
+| Kind    | Interface | Target                    | Calls |
+| ------- | --------- | ------------------------- | ----- |
+| process | `runFile` | `literal:gdal_translate`  | 3     |
+| process | `runFile` | `literal:gdaladdo`        | 1     |
+| process | `runFile` | `literal:gdalbuildvrt`    | 1     |
+| process | `runFile` | `literal:gdalinfo`        | 3     |
+| process | `runFile` | `literal:pmtiles`         | 1     |
+| process | `runFile` | `unresolved (call)`       | 3     |
+| process | `runFile` | `unresolved (identifier)` | 1     |
 
 ## `packages/astrogeology/lib/build/manifest.ts`
 
