@@ -17,8 +17,10 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { PathBuilderLike } from "path-ts"
+import { AsyncSequence } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -305,24 +307,35 @@ export function isAtOrigin(props: Record<string, unknown>): boolean {
  * The libuv threadpool has four workers by default; `UV_THREADPOOL_SIZE` can change that count.
  * `parallelMap` reads files concurrently up to the threadpool capacity.
  *
- * Records are yielded in glob order.
- * The adapters deduplicate surface strings first-come, so a completion-order walk would change
- * which record claims a shared name from one build to the next.
+ * Records are yielded in the code-point order of their absolute paths.
+ * Code-point order is the byte order of the paths' UTF-8 spellings.
+ *
+ * The adapters deduplicate surface strings first-come.
+ * The yield order therefore decides which record claims a shared name.
+ *
+ * The directory listing's own order comes from `opendir` and varies with the filesystem.
+ * ext4's hashed directory index lists `2.geojson` before `1.geojson`.
+ * The listing is sorted before the ordered parallel read.
+ *
+ * Two hosts that hold the same checkout then yield the same sequence.
  */
 export async function* walkFeatures(
 	repoDir: PathBuilderLike,
 	opts: { signal?: AbortSignal } = {}
 ): AsyncIterable<WOFRecord> {
-	const paths = Globerator.from("**/*.geojson", {
+	const listed: string[] = await Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		absolute: true,
 		exclude: ["**/*-alt-*.geojson"],
 		// Bundle repositories can expose their data through a link.
 		followSymlinks: true,
 		signal: opts.signal,
-	})
+	}).toArray()
 
-	const records = paths.parallelMap(readFeatureRecord, { ordered: true, signal: opts.signal })
+	const records = AsyncSequence.from<string>(listed.toSorted(compareByScalarValue)).parallelMap(readFeatureRecord, {
+		ordered: true,
+		signal: opts.signal,
+	})
 
 	for await (const rec of records) {
 		if (rec) {
