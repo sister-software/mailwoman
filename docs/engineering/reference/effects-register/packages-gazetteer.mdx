@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 61 of the group's 100 library and tool modules.
+This page lists 62 of the group's 102 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -90,10 +90,9 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/gazetteer/tools/pipeline/admin/ingest-wof.ts`
 
-| Kind | Interface           | Target                   | Calls |
-| ---- | ------------------- | ------------------------ | ----- |
-| read | `Globerator.from`   | `unresolved (property)`  | 1     |
-| read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
+| Kind | Interface         | Target                  | Calls |
+| ---- | ----------------- | ----------------------- | ----- |
+| read | `Globerator.from` | `unresolved (property)` | 1     |
 
 ## `packages/gazetteer/tools/pipeline/admin/label-point-adjudicator.ts`
 
@@ -107,6 +106,12 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind | Interface        | Target                  | Calls |
 | ---- | ---------------- | ----------------------- | ----- |
 | read | `DatabaseClient` | `unresolved (property)` | 2     |
+
+## `packages/gazetteer/tools/pipeline/admin/wof/feature/worker.ts`
+
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (property)` | 1     |
 
 ## `packages/gazetteer/tools/pipeline/anchor-lookup.ts`
 

@@ -13,6 +13,7 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import type { GeoCoordinate } from "@mailwoman/spatial/position"
 
 import type { WOFFeature, WOFProperties } from "#whosonfirst"
 
@@ -20,14 +21,6 @@ import type { WOFFeature, WOFProperties } from "#whosonfirst"
  * The number of values in a 2D bounding box: `[west, south, east, north]`.
  */
 const BBOX_2D_LENGTH = 4
-
-/**
- * A latitude and longitude pair.
- */
-export interface WOFPoint {
-	latitude: number
-	longitude: number
-}
 
 /**
  * One name a WOF record holds under a `name:<lang>_x_<preferred|variant>` property.
@@ -51,7 +44,7 @@ export interface ExtractedWOFFeature {
 	/**
 	 * The label point when the record has both label coordinates, the geometry point otherwise, else `0, 0`.
 	 */
-	point: WOFPoint
+	point: GeoCoordinate
 	/**
 	 * `[west, south, east, north]` from `geom:bbox`, or `null` when the record has no usable one.
 	 */
@@ -69,7 +62,7 @@ export interface ExtractedWOFFeature {
 	 * The inputs GeoNames adjudication reads, present for a locality that has
 	 * both a label and a geometry point.
 	 */
-	adjudication: { geom: WOFPoint; lbl: WOFPoint; gnID: string | number | null; country: string | null } | null
+	adjudication: { geom: GeoCoordinate; lbl: GeoCoordinate; gnID: string | number | null; country: string | null } | null
 }
 
 /**
@@ -98,7 +91,7 @@ export function extractWOFFeature(text: string, placetypes: ReadonlySet<string>)
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
 
-	const point: WOFPoint = {
+	const point: GeoCoordinate = {
 		latitude: hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0,
 		longitude: hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0,
 	}

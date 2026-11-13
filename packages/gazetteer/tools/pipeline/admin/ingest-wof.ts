@@ -13,11 +13,11 @@ import { parallelMapWorkers } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
-import type { ExtractedWOFFeature } from "#tools/pipeline/admin/wof-feature"
-import type { WOFFeatureItem, WOFFeatureResult, WOFFeatureWorkerData } from "#tools/pipeline/admin/wof-feature-worker"
+import type { ExtractedWOFFeature } from "#tools/pipeline/admin/wof/feature"
+import type { WOFFeatureItem, WOFFeatureResult, WOFFeatureWorkerData } from "#tools/pipeline/admin/wof/feature/worker"
 
 const WORKER_URL = new URL(
-	import.meta.url.endsWith(".ts") ? "./wof-feature-worker.ts" : "./wof-feature-worker.js",
+	import.meta.url.endsWith(".ts") ? "./wof/feature/worker.ts" : "./wof/feature/worker.js",
 	import.meta.url
 )
 

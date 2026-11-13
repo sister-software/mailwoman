@@ -11,7 +11,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workerUserData } from "@mailwoman/core/workers"
 
-import { type ExtractedWOFFeature, extractWOFFeature } from "#tools/pipeline/admin/wof-feature"
+import { type ExtractedWOFFeature, extractWOFFeature } from "#tools/pipeline/admin/wof/feature"
 
 /**
  * What every worker receives.
