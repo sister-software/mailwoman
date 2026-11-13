@@ -382,24 +382,34 @@ ids stay in lockstep, then publish both with `--polygons`.
 Validate with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
 test/browser/200-demo-resolve.spec.ts` (the Chicago locality and ZIP-only marker cases must pass).
 
-**Guard the byte-ranged `.db` objects from full-file downloads** (the candidate table is ~490 MB) with a
-Cloudflare WAF custom rule. This is configuration only and needs no Worker. In the `sister.software` zone →
-Security → WAF → Custom rules, block a plain `GET` of any `.db` under `/mailwoman/` that arrives without a
-`Range` header:
+**Guard the public bucket's databases from plain downloads** with a Cloudflare WAF custom rule on the
+`mailwoman.post` zone. The rule needs no Worker, so it adds no per-request cost.
+`packages/mailwoman/tools/dev-tools/cloudflare/firewall.ts` builds its expression, and `firewall.run.ts` writes it.
+The rule blocks a request on `public.mailwoman.post` under the covered prefixes that sends neither:
 
-```
-http.request.method eq "GET"
-and starts_with(http.request.uri.path, "/mailwoman/")
-and ends_with(http.request.uri.path, ".db")
-and not any(http.request.headers["range"][*] != "")
+- a browser range read: `Range`, an `Origin` of one of the listed sites, `Sec-Fetch-Mode: cors` and a same-site
+  `Sec-Fetch-Site`;
+- nor the `X-Mailwoman-Client` header that `mailwoman data pull` sends.
+
+Apply it only once the npm release of `mailwoman` sends `X-Mailwoman-Client`. A CLI that sends no client header has
+its `data pull` refused. Run the tool without `--apply` first: it prints the zone's current custom rules beside the
+rule it would write.
+
+```sh
+node --env-file=.env packages/mailwoman/tools/dev-tools/cloudflare/firewall.run.ts \
+  --zone mailwoman.post --host public.mailwoman.post \
+  --path-prefixes /mailwoman/addresses/,/mailwoman/street/,/mailwoman/streets/,/mailwoman/gazetteer/,/mailwoman/poi/,/mailwoman/polygons/,/mailwoman/landmarks/ \
+  --origins https://mailwoman.post,https://www.mailwoman.post,https://earth.mailwoman.post \
+  --apply
 ```
 
-Action: **Block**. (Deployed 2026-06-20 on the `sister.software` zone, `http_request_firewall_custom`
-phase. Verified: scraper GET → 403, demo `Range` GET → 206.) The range VFS sends `Range` on every request and
-reads the file length from the first response's `Content-Range`, so its traffic passes. (The rule covers the candidate, the situs/interpolation street databases, and `wof-polygons.db`. You
-can use Managed Challenge instead of Block, or tighten it to `contains "/mailwoman/gazetteer/"`.) Cloudflare
-custom rules take a few minutes to propagate to all edges, so do not conclude that the rule failed from a
-test in the first ~60 s.
+`CLOUDFLARE_FIREWALL_TOKEN` comes from `mwops release mint-cloudflare-tokens`. Cloudflare custom rules take a few
+minutes to reach every edge, so a test in the first ~60 s doesn't show whether the rule applies.
+
+The rule refuses downloads without those headers. A range read that a cache answers with the whole file is a
+separate case, and the readers handle it themselves. Earth's service worker cancels such a body and answers 502. The
+range worker's first read uses an asynchronous request that cancels a whole-file answer before reading its body.
+`openRangeDatabase` then retries once with a cache-busting query.
 
 ## Release version policy
 

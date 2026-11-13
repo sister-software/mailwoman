@@ -28,12 +28,12 @@ export interface PolygonDB {
  * so the browser fetches that path's chunks of the 19 MB file rather than the whole thing.
  */
 export async function loadPolygonDB(url: string, sqliteRuntimeBaseURL: string): Promise<PolygonDB> {
-	const [{ openRangeDatabase }, { makeRangePolygonLookup }] = await Promise.all([
-		import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+	const [{ openEarthRangeDatabase }, { makeRangePolygonLookup }] = await Promise.all([
+		import("#runtime/range-database"),
 		import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
 	])
 
-	const database = await openRangeDatabase(url, sqliteRuntimeBaseURL)
+	const database = await openEarthRangeDatabase(url, sqliteRuntimeBaseURL)
 	const lookup = makeRangePolygonLookup(database)
 
 	return {

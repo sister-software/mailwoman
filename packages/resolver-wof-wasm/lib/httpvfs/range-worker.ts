@@ -78,13 +78,54 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
 		throw new Error(`Range ${start}-${end} of ${file.url} returned HTTP ${request.status}`)
 	}
 
-	const total = /\/(\d+)$/u.exec(request.getResponseHeader("Content-Range") ?? "")
+	return acceptRange(
+		file,
+		start,
+		end,
+		request.getResponseHeader("Content-Range"),
+		new Uint8Array(request.response as ArrayBuffer)
+	)
+}
+
+/**
+ * Fetches the first range asynchronously, so a whole-file answer is refused before its body is read.
+ *
+ * A page that no service worker controls yet, such as one on its first visit,
+ * sends its range reads to the network directly.
+ * A synchronous request would buffer a whole-file 200 in full, and a 2.88 GB database
+ * exhausts the tab's memory before the status can be read.
+ *
+ * This request cancels such a body after its headers arrive, and its error message
+ * is the one `openRangeDatabase` retries with a cache-busting query.
+ */
+async function fetchFirstRange(file: RemoteFile, end: number): Promise<Uint8Array> {
+	const response = await fetch(file.url, { headers: { Range: `bytes=0-${end}` } })
+
+	if (response.status !== HTTP_PARTIAL_CONTENT) {
+		await response.body?.cancel().catch(() => {})
+
+		throw new Error(`Range 0-${end} of ${file.url} returned HTTP ${response.status}`)
+	}
+
+	return acceptRange(file, 0, end, response.headers.get("Content-Range"), new Uint8Array(await response.arrayBuffer()))
+}
+
+/**
+ * Checks a 206 body against its `Content-Range`, records the file's length, and counts the request.
+ */
+function acceptRange(
+	file: RemoteFile,
+	start: number,
+	end: number,
+	contentRange: string | null,
+	body: Uint8Array
+): Uint8Array {
+	const total = /\/(\d+)$/u.exec(contentRange ?? "")
 
 	if (!total) {
 		throw new Error(`Range ${start}-${end} of ${file.url} returned no Content-Range total`)
 	}
 
-	const body = new Uint8Array(request.response as ArrayBuffer)
 	const expected = Math.min(end, Number(total[1]) - 1) - start + 1
 
 	// A truncated body would reach SQLite as a malformed page, so it is refused here by length.
@@ -340,7 +381,10 @@ async function open(request: Extract<RangeWorkerCall, { type: "open" }>): Promis
 	}
 
 	// The first chunk holds the database header, and its response gives the file's length.
-	chunkAt(file, 0)
+	const first = await fetchFirstRange(file, file.chunkSize - 1)
+
+	file.chunks.set(0, first)
+	file.cachedBytes += first.byteLength
 	installRangeVFS(sqlite3, file)
 
 	remote = file

@@ -34,6 +34,47 @@ export function reloadOnServiceWorkerTakeover(): void {
 }
 
 /**
+ * How the page stood when {@linkcode serviceWorkerControl} resolved.
+ *
+ * - `controlled`: a service worker controls the page, so requests made from now on reach it.
+ * - `unsupported`: the browser has no service workers, as in a private window of some browsers.
+ * - `timed-out`: no worker took control within the wait, and requests go to the network directly.
+ */
+export type ServiceWorkerControl = "controlled" | "unsupported" | "timed-out"
+
+/**
+ * Resolves once a service worker controls the page.
+ *
+ * A dedicated worker takes its controller from the page when it is created and keeps it,
+ * so a worker created before the first visit's service worker claims the page sends
+ * every request to the network for its whole life.
+ * An app awaits this before it starts a worker whose requests the service worker must answer,
+ * such as a range reader whose whole-file answers the service worker refuses.
+ *
+ * The app's worker calls `clients.claim()` on activate, so on a first visit the page
+ * is controlled once the install finishes, without a reload.
+ */
+export function serviceWorkerControl(timeoutMs: number): Promise<ServiceWorkerControl> {
+	if (!("serviceWorker" in navigator)) return Promise.resolve("unsupported")
+
+	if (navigator.serviceWorker.controller) return Promise.resolve("controlled")
+
+	return new Promise((resolve) => {
+		const controlled = (): void => {
+			clearTimeout(timer)
+			resolve("controlled")
+		}
+
+		const timer = setTimeout(() => {
+			navigator.serviceWorker.removeEventListener("controllerchange", controlled)
+			resolve("timed-out")
+		}, timeoutMs)
+
+		navigator.serviceWorker.addEventListener("controllerchange", controlled, { once: true })
+	})
+}
+
+/**
  * What the page should tell the reader about its code.
  *
  * - `none`: the page shows no notice.

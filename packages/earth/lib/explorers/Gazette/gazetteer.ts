@@ -63,8 +63,8 @@ export const NAMED_ROW_LIMIT = 50
  * Opens the browser gazetteer by byte ranges and reads its two code tables and manifest.
  */
 export async function openGazetteer(sqliteRuntimeBaseURL: string): Promise<Gazetteer> {
-	const { openRangeDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
-	const database = await openRangeDatabase(adminGazetteerURL(), sqliteRuntimeBaseURL)
+	const { openEarthRangeDatabase } = await import("#runtime/range-database")
+	const database = await openEarthRangeDatabase(adminGazetteerURL(), sqliteRuntimeBaseURL)
 
 	const [countries, placetypes, manifest] = await Promise.all([
 		database.query<{ id: number; code: string }>("SELECT id, code FROM country_codes"),

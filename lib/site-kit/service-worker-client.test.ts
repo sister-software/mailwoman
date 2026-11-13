@@ -3,7 +3,11 @@
 
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { type RegisterServiceWorker, registerServiceWorkerUpdates } from "#site-kit/service-worker-client"
+import {
+	type RegisterServiceWorker,
+	registerServiceWorkerUpdates,
+	serviceWorkerControl,
+} from "#site-kit/service-worker-client"
 
 /**
  * The browser globals the client reads, on an `EventTarget` standing in for the window.
@@ -114,5 +118,44 @@ describe("registerServiceWorkerUpdates", () => {
 		browser.serviceWorker.dispatchEvent(new Event("controllerchange"))
 
 		expect(browser.reload).not.toHaveBeenCalled()
+	})
+})
+
+describe("serviceWorkerControl", () => {
+	test("resolves when the first visit's worker claims the page", async () => {
+		const browser = stubBrowser({ controlled: false, onLine: true })
+		const control = serviceWorkerControl(10_000)
+
+		browser.serviceWorker.dispatchEvent(new Event("controllerchange"))
+
+		await expect(control).resolves.toBe("controlled")
+	})
+
+	test("resolves at once on a page a worker already controls", async () => {
+		stubBrowser({ controlled: true, onLine: true })
+
+		await expect(serviceWorkerControl(10_000)).resolves.toBe("controlled")
+	})
+
+	test("stops waiting after the timeout when no worker takes control", async () => {
+		vi.useFakeTimers()
+
+		try {
+			stubBrowser({ controlled: false, onLine: true })
+
+			const control = serviceWorkerControl(5000)
+
+			vi.advanceTimersByTime(5000)
+
+			await expect(control).resolves.toBe("timed-out")
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	test("resolves at once in a browser without service workers", async () => {
+		vi.stubGlobal("navigator", {})
+
+		await expect(serviceWorkerControl(10_000)).resolves.toBe("unsupported")
 	})
 })

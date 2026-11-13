@@ -42,10 +42,10 @@ export const OPEN_STREET_EXTRACT_LIMIT = 2
  */
 export async function openStreetLookups(slug: string, sqliteRuntimeBaseURL: string): Promise<StreetLookups> {
 	const {
-		database: { openRangeDatabase },
+		database: { openEarthRangeDatabase: openRangeDatabase },
 		street: { HTTPVFSAddressPointLookup, HTTPVFSInterpolator },
 	} = await allKeyed({
-		database: import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+		database: import("#runtime/range-database"),
 		street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
 	})
 
