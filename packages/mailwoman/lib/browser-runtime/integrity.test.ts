@@ -7,7 +7,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
 	type ArtifactIntegrity,
@@ -27,16 +27,16 @@ const expectedFor = artifactLookup({ "model.onnx": integrity }, (file) => `https
 /**
  * A `fetch` that answers each call with the next body in `bodies` and records each call's init.
  */
-function scriptedFetch(bodies: string[]) {
+function scriptedFetch(bodies: string[], status = 200) {
 	const inits: Array<RequestInit | undefined> = []
 
-	const fetchImpl = vi.fn(async (_input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+	const fetchImpl: typeof fetch = async (_input, init) => {
 		inits.push(init)
 
-		return new Response(bodies.shift() ?? "", { status: 200 })
-	})
+		return new Response(bodies.shift() ?? "", { status })
+	}
 
-	return { fetchImpl: fetchImpl as unknown as typeof fetch, inits }
+	return { fetchImpl, inits }
 }
 
 describe("artifactMismatch", () => {
@@ -89,10 +89,10 @@ describe("verifyingFetch", () => {
 	})
 
 	it("passes an error status and an unlisted URL through with one request each", async () => {
-		const missing = vi.fn(async () => new Response("", { status: 404 })) as unknown as typeof fetch
+		const missing = scriptedFetch([""], 404)
 
-		expect((await verifyingFetch(missing, expectedFor)(MODEL_URL)).status).toBe(404)
-		expect(missing).toHaveBeenCalledTimes(1)
+		expect((await verifyingFetch(missing.fetchImpl, expectedFor)(MODEL_URL)).status).toBe(404)
+		expect(missing.inits).toHaveLength(1)
 
 		const { fetchImpl, inits } = scriptedFetch(["anything"])
 
