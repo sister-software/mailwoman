@@ -7,7 +7,8 @@
  *   `data/gazetteer/wof-build-manifest.json` records the command, execution time, plus its MD5.
  *
  *   The lists map id ranges to sources.
- *   WOF rows (`id < 2e9`) are the priority countries.
+ *   WOF rows (`id < 8e12`: upstream ids below 2e9 and the `mailwoman` fork range from 9,895,000,000)
+ *   are the priority countries.
  *
  *   Overture divisions (`8e12 ≤ id < 9e12`) are the 86.
  *   The GeoNames alias fold (`id ≥ 9e12`) is the 161.

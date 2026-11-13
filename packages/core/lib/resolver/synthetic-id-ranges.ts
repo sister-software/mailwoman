@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The one registry of synthetic place-id ranges.
+ * @file The one registry of synthetic place-id ranges, and of the range `mailwoman` mints WOF records from.
  *
- *   A real WOF id is below 2e9. Every other source a gazetteer artifact folds in mints ids from a higher base.
+ *   An upstream WOF id is below 2e9, and a WOF record minted in a `mailwoman` fork takes an id from
+ *   {@link MAILWOMAN_WOF_ID_BASE}. Every other source a gazetteer artifact folds in mints ids from a higher base.
  *   The bases must be pairwise distinct. The candidate table's `candidate_ancestor` and
  *   `candidate_interval` sidecars are keyed only by `spr_id`, a result's `placeID` is `wof:<spr_id>`, and the
  *   backend's `ancestors(id)` answers whichever row wrote last. Two builders that pick the same base give two places
@@ -15,6 +16,49 @@
  *   Add a range here, never at the builder. Each holds at least 5e10 ids against a largest occupancy of 1.75 M
  *   (Code-Point Open), so spacing isn't the constraint. the registry is.
  */
+
+/**
+ * The first id of the WOF records minted in the `mailwoman` forks, `989 5xx xxxx`.
+ *
+ * 9895 is the integer code point of `⚧`, so a record's id identifies it as one of ours.
+ * The range holds one million ids, above every upstream WOF id and below every synthetic base.
+ */
+export const MAILWOMAN_WOF_ID_BASE = 9_895_000_000
+
+/**
+ * The first id past the `mailwoman` WOF range.
+ */
+export const MAILWOMAN_WOF_ID_END = 9_896_000_000
+
+/**
+ * Reports whether an id was minted in the `mailwoman` WOF range.
+ */
+export function isMailwomanWOFID(id: number): boolean {
+	return Number.isInteger(id) && id >= MAILWOMAN_WOF_ID_BASE && id < MAILWOMAN_WOF_ID_END
+}
+
+/**
+ * The next free id in the `mailwoman` WOF range: one past the largest id already
+ * minted there, or the range's first id when none is.
+ * Ids outside the range are ignored.
+ *
+ * @throws When the range is exhausted.
+ */
+export function nextMailwomanWOFID(minted: Iterable<number>): number {
+	let largest = MAILWOMAN_WOF_ID_BASE - 1
+
+	for (const id of minted) {
+		if (isMailwomanWOFID(id) && id > largest) {
+			largest = id
+		}
+	}
+
+	const next = largest + 1
+
+	if (next >= MAILWOMAN_WOF_ID_END) throw new Error(`the mailwoman WOF id range ends at ${MAILWOMAN_WOF_ID_END - 1}`)
+
+	return next
+}
 
 /**
  * Overture-sourced admin rows (`fold-overture`).

@@ -11,7 +11,13 @@
 
 import { describe, expect, test } from "vitest"
 
-import { SYNTHETIC_ID_RANGE_MIN_WIDTH, SYNTHETIC_ID_RANGES } from "#resolver/synthetic-id-ranges"
+import {
+	MAILWOMAN_WOF_ID_BASE,
+	MAILWOMAN_WOF_ID_END,
+	nextMailwomanWOFID,
+	SYNTHETIC_ID_RANGE_MIN_WIDTH,
+	SYNTHETIC_ID_RANGES,
+} from "#resolver/synthetic-id-ranges"
 
 /**
  * WOF ids are below this.
@@ -42,5 +48,27 @@ describe("SYNTHETIC_ID_RANGES", () => {
 			expect(base, name).toBeGreaterThan(WOF_ID_CEILING)
 			expect(Number.isSafeInteger(base + SYNTHETIC_ID_RANGE_MIN_WIDTH), name).toBe(true)
 		}
+	})
+
+	test("the mailwoman WOF range sits above upstream WOF ids and below every synthetic base", () => {
+		expect(MAILWOMAN_WOF_ID_BASE).toBeGreaterThan(WOF_ID_CEILING)
+
+		for (const { name, base } of SYNTHETIC_ID_RANGES) {
+			expect(MAILWOMAN_WOF_ID_END, name).toBeLessThanOrEqual(base)
+		}
+	})
+})
+
+describe("nextMailwomanWOFID", () => {
+	test("starts the range at its base and continues past the largest minted id, ignoring ids outside it", () => {
+		expect(nextMailwomanWOFID([])).toBe(MAILWOMAN_WOF_ID_BASE)
+
+		expect(nextMailwomanWOFID([85_806_761, MAILWOMAN_WOF_ID_BASE + 4, MAILWOMAN_WOF_ID_BASE + 1])).toBe(
+			MAILWOMAN_WOF_ID_BASE + 5
+		)
+	})
+
+	test("refuses to mint past the range", () => {
+		expect(() => nextMailwomanWOFID([MAILWOMAN_WOF_ID_END - 1])).toThrow("the mailwoman WOF id range ends at")
 	})
 })
