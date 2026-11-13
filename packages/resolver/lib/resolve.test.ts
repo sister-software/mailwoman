@@ -592,6 +592,48 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(on.roots[0]!.placeID).toBe("wof:1")
 	})
 
+	test("Anchor posterior keeps the importance order among candidates in the country it picks (#3057)", async () => {
+		// Two Wisconsin Claytons: the larger town by prominence and the more important locality,
+		// the one `Clayton, WI` resolves to without a posterior.
+		const claytons: ResolvedPlace[] = [
+			{
+				...EMPTY_PLACE_FIELDS,
+				id: 404_495_527,
+				name: "Clayton",
+				placetype: "locality",
+				country: "US",
+				lat: 44.2,
+				lon: -88.58,
+				score: 3.66,
+				prominence: 3.66,
+				importance: 0.18,
+			},
+			{
+				...EMPTY_PLACE_FIELDS,
+				id: 101_732_855,
+				name: "Clayton",
+				placetype: "locality",
+				country: "US",
+				lat: 45.32,
+				lon: -92.17,
+				score: 2.74,
+				prominence: 2.74,
+				importance: 0.29,
+			},
+		]
+
+		const input = tree("Clayton", [node("locality", "Clayton", 0, 7)])
+
+		const without = await createWOFResolver(new FakeResolverBackend(claytons)).resolveTree(input)
+
+		const withPosterior = await createWOFResolver(new FakeResolverBackend(claytons)).resolveTree(input, {
+			anchorPosterior: { US: 1 },
+		})
+
+		expect(without.roots[0]!.placeID).toBe("wof:101732855")
+		expect(withPosterior.roots[0]!.placeID).toBe("wof:101732855")
+	})
+
 	test("Anchor posterior re-ranks REGION candidates by country, off by default", async () => {
 		const regions: ResolvedPlace[] = [
 			{

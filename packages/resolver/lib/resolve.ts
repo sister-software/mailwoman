@@ -629,23 +629,10 @@ class WOFResolver implements Resolver {
 		let ranked = candidates
 
 		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
-			const post = state.anchorPosterior
-			const w = state.anchorWeight
-
-			// Within-tier key uses prominence (fallback score) plus posterior boost.
-			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
-			ranked = [...candidates].sort((a, b) => {
-				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
-
-				if (tier !== 0) return tier
-				// Unknown-country candidates get zero posterior mass.
-				const aKey = (a.prominence ?? a.score) + w * (a.country ? (post[a.country] ?? 0) : 0)
-				const bKey = (b.prominence ?? b.score) + w * (b.country ? (post[b.country] ?? 0) : 0)
-
-				return bKey - aKey || b.score - a.score
-			})
-
+			ranked = rankByAnchorPosterior(candidates, state.anchorPosterior, state.anchorWeight)
 			rec.stage("anchor", ranked)
+			ranked = rankWithinPosteriorCountry(ranked, state.capitalLevel, node)
+			rec.stage("importance", ranked)
 		}
 
 		// Optional locale-country soft prior adds to candidate scores while retaining every candidate.
@@ -655,7 +642,7 @@ class WOFResolver implements Resolver {
 			rec.stage("locale_prior", ranked)
 		}
 
-		// Importance-first rerank (skipped when anchor posterior exists).
+		// Importance-first rerank (the posterior branch above runs its own, within the winning country).
 		if (!state.anchorPosterior) {
 			ranked = rankByImportance(ranked)
 			rec.stage("importance", ranked)
@@ -793,6 +780,54 @@ function containmentStamps(
 		admin_containment: adminContainmentVerdict(ranked),
 		...(parentContainment && top.containedByQualifier === true ? { contained_by_parent: true } : {}),
 	}
+}
+
+/**
+ * Sorts candidates by the postcode country posterior, exact matches first.
+ *
+ * Within a match tier, the key is a candidate's prominence (its score when it has none)
+ * plus `weight` times its country's posterior mass.
+ * A candidate with no country gets no posterior mass.
+ */
+function rankByAnchorPosterior<
+	T extends Pick<ResolvedPlace, "score" | "country"> & Partial<Pick<ResolvedPlace, "exactMatch" | "prominence">>,
+>(candidates: readonly T[], posterior: Readonly<Record<string, number>>, weight: number): T[] {
+	const key = (c: T) => (c.prominence ?? c.score) + weight * (c.country ? (posterior[c.country] ?? 0) : 0)
+
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
+	return [...candidates].sort(
+		(a, b) => Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) || key(b) - key(a) || b.score - a.score
+	)
+}
+
+/**
+ * Reorders the posterior-ranked leader's peers, the candidates in its country and exact-match
+ * tier, by importance and capital promotion, as the path without a posterior ranks them.
+ *
+ * The posterior decides the country.
+ * Within that country this order makes a venue query (`Clayton Post Office, Clayton, WI`)
+ * pick the same locality as its bare form (`Clayton, WI`).
+ */
+function rankWithinPosteriorCountry<
+	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
+		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
+>(
+	ranked: readonly T[],
+	capitalLevel: CapitalLevelFn | null | undefined,
+	node: { metadata?: Record<string, unknown> | null }
+): T[] {
+	const leader = ranked[0]
+
+	if (!leader?.country) return [...ranked]
+
+	const isPeer = (c: T) => c.country === leader.country && (c.exactMatch === true) === (leader.exactMatch === true)
+	let peers = rankByImportance(ranked.filter(isPeer))
+
+	if (capitalLevel) {
+		peers = promoteCapitalsWithReceipt(peers, capitalLevel, node)
+	}
+
+	return [...peers, ...ranked.filter((c) => !isPeer(c))]
 }
 
 /**
