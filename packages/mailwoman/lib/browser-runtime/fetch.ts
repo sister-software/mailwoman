@@ -155,10 +155,23 @@ function pause(ms: number, signal: AbortSignal | null): Promise<void> {
 }
 
 /**
+ * The request options of a retry: the caller's, in `reload` cache mode unless the caller chose `no-store`.
+ *
+ * A failed attempt may have read a short body from the browser's HTTP cache,
+ * and `reload` makes the retry fetch from the network and refresh that entry.
+ * A caching service worker reads the same mode as a request to pass its stored copy.
+ */
+function retryInit(init?: Parameters<typeof fetch>[1]): RequestInit {
+	return { ...init, cache: init?.cache === "no-store" ? "no-store" : "reload" }
+}
+
+/**
  * `fetch` with the body already read, retried on a network failure.
  *
  * The same signature lets a loader take it as its `fetchImpl` and read the response
  * as bytes, text, or JSON exactly as a live one.
+ *
+ * Each retry runs in the cache mode {@linkcode retryInit} chooses.
  */
 export async function fetchWithRetry(
 	input: Parameters<typeof fetch>[0],
@@ -169,7 +182,7 @@ export async function fetchWithRetry(
 
 	for (;;) {
 		try {
-			return await fetchComplete(input, init, onBytes)
+			return await fetchComplete(input, attempt === 1 ? init : retryInit(init), onBytes)
 		} catch (error) {
 			if (attempt >= ATTEMPTS || !isNetworkFailure(error) || init?.signal?.aborted) throw error
 

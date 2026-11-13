@@ -41,7 +41,20 @@ interface RemoteFile {
 	 * The file's length in bytes, read from the first response's `Content-Range`.
 	 */
 	size: number
+
+	/**
+	 * The chunks in memory, least recently read first.
+	 *
+	 * A `Map` iterates in insertion order, so a read moves its chunk to the end
+	 * by deleting and re-inserting it.
+	 */
 	chunks: Map<number, Uint8Array>
+
+	/**
+	 * The bytes held in `chunks`, kept at or below `maxCachedBytes`.
+	 */
+	cachedBytes: number
+	maxCachedBytes: number
 	requests: number
 	bytes: number
 }
@@ -58,6 +71,9 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
 	request.setRequestHeader("Range", `bytes=${start}-${end}`)
 	request.send()
 
+	// A synchronous request can't be aborted once sent, so a 200 carrying the
+	// whole file is already buffered here.
+	// A caching service worker refuses that answer before it reaches this worker.
 	if (request.status !== HTTP_PARTIAL_CONTENT) {
 		throw new Error(`Range ${start}-${end} of ${file.url} returned HTTP ${request.status}`)
 	}
@@ -85,19 +101,36 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
 }
 
 /**
- * Returns chunk `index` of the file, fetching it on first use.
+ * Returns chunk `index` of the file, fetching it when it isn't in memory.
  *
  * Every request covers one whole chunk at an offset that's a multiple of the chunk size, so the same
  * read always produces the same `Range` header and an HTTP or service-worker cache can answer it.
+ *
+ * A fetched chunk goes in memory, and the least recently read chunks leave
+ * until the bytes held fit `maxCachedBytes`.
+ * The chunk this call fetched always stays, so one read never fetches the same chunk twice.
  */
 function chunkAt(file: RemoteFile, index: number): Uint8Array {
-	let chunk = file.chunks.get(index)
+	const held = file.chunks.get(index)
 
-	if (!chunk) {
-		const start = index * file.chunkSize
+	if (held) {
+		file.chunks.delete(index)
+		file.chunks.set(index, held)
 
-		chunk = fetchRange(file, start, start + file.chunkSize - 1)
-		file.chunks.set(index, chunk)
+		return held
+	}
+
+	const start = index * file.chunkSize
+	const chunk = fetchRange(file, start, start + file.chunkSize - 1)
+
+	file.chunks.set(index, chunk)
+	file.cachedBytes += chunk.byteLength
+
+	for (const [oldestIndex, oldest] of file.chunks) {
+		if (file.cachedBytes <= file.maxCachedBytes || oldestIndex === index) break
+
+		file.chunks.delete(oldestIndex)
+		file.cachedBytes -= oldest.byteLength
 	}
 
 	return chunk
@@ -286,6 +319,8 @@ async function open(request: Extract<RangeWorkerCall, { type: "open" }>): Promis
 		chunkSize: request.chunkSize,
 		size: 0,
 		chunks: new Map(),
+		cachedBytes: 0,
+		maxCachedBytes: request.chunkCacheBytes,
 		requests: 0,
 		bytes: 0,
 	}

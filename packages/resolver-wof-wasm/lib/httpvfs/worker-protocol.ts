@@ -30,6 +30,11 @@ export interface OpenRequest {
 	databaseURL: string
 	runtimeModuleURL: string
 	chunkSize: number
+
+	/**
+	 * The most chunk bytes the `range` strategy keeps in memory before it drops the least recently read chunk.
+	 */
+	chunkCacheBytes: number
 }
 
 /**

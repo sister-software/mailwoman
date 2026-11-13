@@ -15,9 +15,13 @@
  * - The staged SQLite runtime is stale-while-revalidate, because its file names have no content hash.
  * - A range read of a `.db` file goes to the range-chunk handler, and the
  *   handler stores each validated chunk.
- *   A `?cb=` retry from the readers asks for fresh bytes, so a URL with a query string bypasses it.
+ *   A `?cb=` retry from the readers asks for fresh bytes, so a URL with a query
+ *   string skips the cache and goes to the range guard instead.
+ *   Both handlers refuse an origin's whole-file answer to a range request.
  * - A whole-file read on the data origin is cache-first.
  *   Every path there's versioned, apart from `releases.json`.
+ *   A request in `reload` or `no-store` mode, as the page's retries are,
+ *   passes the stored copy and replaces it with the network's.
  * - `releases.json` and a tileset's TileJSON are network-first, so an offline page reads the last copy.
  * - A tile is cache-first, with an entry cap.
  *   A tile with no cached copy that the network cannot fetch answers 404.
@@ -35,7 +39,8 @@
 import { buildCacheName, deleteOtherBuildCaches } from "@mailwoman/service-worker-cache/build-caches"
 import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
-import { createRangeChunkHandler } from "@mailwoman/service-worker-cache/range-chunks"
+import { createRangeChunkHandler, createRangeGuardHandler } from "@mailwoman/service-worker-cache/range-chunks"
+import { reloadBypassPlugin } from "@mailwoman/service-worker-cache/reload-bypass"
 import { tornBodyPlugin } from "@mailwoman/service-worker-cache/torn-body"
 import { CacheableResponsePlugin } from "workbox-cacheable-response"
 import { ExpirationPlugin } from "workbox-expiration"
@@ -141,6 +146,7 @@ registerRoute(
 	new CacheFirst({
 		cacheName: APP_ASSET_CACHE,
 		plugins: [
+			reloadBypassPlugin(),
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
 			new ExpirationPlugin({ maxEntries: MAX_APP_ASSET_ENTRIES, purgeOnQuotaError: true }),
@@ -167,6 +173,12 @@ registerRoute(
 )
 
 registerRoute(
+	({ url, request }) =>
+		url.hostname === DATA_HOST && url.pathname.endsWith(".db") && url.search !== "" && request.headers.has("range"),
+	createRangeGuardHandler()
+)
+
+registerRoute(
 	({ url }) => (url.hostname === DATA_HOST || url.hostname === TILE_HOST) && url.pathname.endsWith(".json"),
 	new NetworkFirst({
 		cacheName: MANIFEST_CACHE,
@@ -180,6 +192,7 @@ registerRoute(
 	new CacheFirst({
 		cacheName: ASSET_CACHE,
 		plugins: [
+			reloadBypassPlugin(),
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
 			new ExpirationPlugin({ maxEntries: MAX_ASSET_ENTRIES, purgeOnQuotaError: true }),

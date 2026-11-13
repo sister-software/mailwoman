@@ -10,6 +10,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import {
+	DEFAULT_CHUNK_CACHE_BYTES,
 	DEFAULT_CHUNK_SIZE,
 	isSQLiteReadFailure,
 	openRangeDatabase,
@@ -67,6 +68,34 @@ class FailingReadWorker extends FakeWorker {
 	}
 }
 
+/**
+ * A worker whose first open fails with the error {@linkcode FirstOpenFailsWorker.error}
+ * names, as the range worker reports a bad first range read.
+ */
+class FirstOpenFailsWorker extends FakeWorker {
+	static error = ""
+
+	override postMessage(call: RangeWorkerCall): void {
+		const opens = FakeWorker.posted.filter((posted) => posted.type === "open").length
+
+		if (call.type === "open" && opens === 0) {
+			FakeWorker.posted.push(call)
+
+			queueMicrotask(() =>
+				this.dispatchEvent(
+					new MessageEvent("message", {
+						data: { id: call.id, error: FirstOpenFailsWorker.error, resultCode: null },
+					})
+				)
+			)
+
+			return
+		}
+
+		super.postMessage(call)
+	}
+}
+
 afterEach(() => {
 	FakeWorker.posted = []
 	FakeWorker.created = []
@@ -96,7 +125,12 @@ describe("the open request", () => {
 
 		await openRangeDatabase("/data.db", "/sqlite/")
 
-		expect(FakeWorker.posted[0]).toMatchObject({ type: "open", strategy: "range", chunkSize: DEFAULT_CHUNK_SIZE })
+		expect(FakeWorker.posted[0]).toMatchObject({
+			type: "open",
+			strategy: "range",
+			chunkSize: DEFAULT_CHUNK_SIZE,
+			chunkCacheBytes: DEFAULT_CHUNK_CACHE_BYTES,
+		})
 	})
 
 	test("openWholeDatabase posts the whole strategy with the absolute database url", async () => {
@@ -114,6 +148,37 @@ describe("the open request", () => {
 
 		// The open reads the schema so a corrupt file fails here rather than at the first query.
 		expect(FakeWorker.posted[1]).toMatchObject({ type: "query", sql: "SELECT count(*) FROM sqlite_master" })
+	})
+})
+
+describe("the cache-busting retry", () => {
+	const URL_OF = "https://example.test/gazetteer/2026-08-25b/candidate.db"
+
+	test.each([
+		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned HTTP 200",
+		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned HTTP 502",
+		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned 40 bytes, expected 65536",
+		"SQLITE_CORRUPT: database disk image is malformed",
+	])("reopens with a cb query after %s", async (error) => {
+		FirstOpenFailsWorker.error = error
+		vi.stubGlobal("Worker", FirstOpenFailsWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		await openRangeDatabase(URL_OF, "/sqlite/")
+
+		const opens = FakeWorker.posted.filter((call) => call.type === "open")
+
+		expect(opens).toHaveLength(2)
+		expect(opens[1]).toMatchObject({ databaseURL: expect.stringMatching(/candidate\.db\?cb=\d+$/u) })
+	})
+
+	test("does not reopen after a 404", async () => {
+		FirstOpenFailsWorker.error = `Range 0-65535 of ${URL_OF} returned HTTP 404`
+		vi.stubGlobal("Worker", FirstOpenFailsWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		await expect(openRangeDatabase(URL_OF, "/sqlite/")).rejects.toThrow("returned HTTP 404")
+		expect(FakeWorker.posted.filter((call) => call.type === "open")).toHaveLength(1)
 	})
 })
 
