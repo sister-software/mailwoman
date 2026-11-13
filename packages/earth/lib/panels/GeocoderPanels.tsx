@@ -9,6 +9,7 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { About } from "@mailwoman/react/common/About"
 import type { GeocoderPanels } from "@mailwoman/react/map"
+import { LoadLedgerList } from "@mailwoman/react/map/LoadLedgerList"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
@@ -45,6 +46,8 @@ export interface GeocoderPanelsOptions {
 function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loading"]>): string {
 	const step = loading.stepLabels[loading.stepIndex]
 
+	if (loading.ledger?.waitingForNetwork) return step ? `${step} · waiting for network` : "Waiting for network"
+
 	if (step && loading.progress) return `${step} · ${loading.progress}`
 
 	if (step) return step
@@ -55,7 +58,7 @@ function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loa
 }
 
 export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
-	const { runtime, releases, geoBias, calibrator, traceParse, supportsTrace } = handle
+	const { runtime, releases, geoBias, calibrator, traceParse, supportsTrace, gazetteerError, loadLedger } = handle
 
 	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 	const [devMode, setDevMode] = useState(debugDefault)
@@ -63,10 +66,20 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const selectedVersion = runtime.selectedVersion ?? null
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
 
-	// Set this to null when the runtime is ready.
-	// The footer then removes the status label.
+	// The footer shows the load while it runs and clears its status once the runtime is ready.
+	// A failed load and a release whose gazetteer failed to open each keep a status,
+	// because the page runs with less than its full stack in both.
 	const loading = runtime.loading
-	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
+
+	const loadStatus = runtime.errorMessage
+		? "Model failed to load"
+		: runtime.ready
+			? gazetteerError
+				? "Gazetteer unavailable: parsing without place lookups"
+				: null
+			: loading
+				? describeLoad(loading)
+				: null
 
 	/* oxlint-disable react/no-unstable-nested-components -- render props rather than components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
@@ -87,6 +100,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				<>
 					{calibrator ? <CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} /> : null}
 					{supportsTrace ? <DevModeToggle checked={devMode} onChange={setDevMode} /> : null}
+					{loadLedger ? <LoadLedgerList ledger={loadLedger} /> : null}
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
@@ -151,6 +165,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			supportsTrace,
 			traceParse,
 			loadStatus,
+			loadLedger,
 		]
 	)
 	/* oxlint-enable react/no-unstable-nested-components */

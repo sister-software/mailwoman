@@ -642,6 +642,11 @@
 			"node": "./lib/promises.ts",
 			"default": "./out/promises.js"
 		},
+		"./load-ledger": {
+			"types": "./out/load-ledger.d.ts",
+			"node": "./lib/load-ledger.ts",
+			"default": "./out/load-ledger.js"
+		},
 		"./memoize": {
 			"types": "./out/memoize.d.ts",
 			"node": "./lib/memoize.ts",

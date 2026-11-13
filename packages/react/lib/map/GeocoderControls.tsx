@@ -17,6 +17,7 @@ import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
 import { DebugInfo } from "./DebugInfo.tsx"
+import { LoadLedgerList } from "./LoadLedgerList.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapContextMenu, MapContextMenuAction, useMapContextMenu } from "./MapContextMenu.tsx"
@@ -472,13 +473,15 @@ export function GeocoderControls({
 	const drawerRaised =
 		showSheet && (sheetHeight === null || (globalThis.window && sheetHeight > sheetDetents().collapsedBelow))
 
-	const bundleLoading = Boolean(loading && !runtime.ready)
+	// A failed load is over, so the bar stops and the error takes its place.
+	const bundleLoading = Boolean(loading && !runtime.ready && !runtime.errorMessage)
 	const steps = loading?.stepLabels.length ?? 0
 
+	// The step index is the step in progress, so the steps before it are complete.
 	// The model downloads during the first step.
 	// While bytes arrive, the bar follows the byte fraction scaled into the first step's share,
 	// so it doesn't move backwards when step progress takes over.
-	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
+	const stepFraction = steps ? Math.max(0, loading?.stepIndex ?? 0) / steps : null
 	const byteFraction = loading?.byteFraction
 
 	const fraction =
@@ -596,7 +599,18 @@ export function GeocoderControls({
 
 				{showSheet ? (
 					<div className="mw-map-panel__result">
-						{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
+						{errorMessage ? (
+							<div className="mw-load-error">
+								<p className="mw-error">{errorMessage}</p>
+								{runtime.errorMessage && runtime.retryLoad ? (
+									<button type="button" className="mw-load-error__retry" onClick={runtime.retryLoad}>
+										Retry
+									</button>
+								) : null}
+							</div>
+						) : null}
+
+						{runtime.errorMessage && loading?.ledger ? <LoadLedgerList ledger={loading.ledger} open /> : null}
 
 						{panels.aboveResult ? panels.aboveResult({ result }) : null}
 

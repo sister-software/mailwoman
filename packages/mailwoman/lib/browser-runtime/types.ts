@@ -7,6 +7,7 @@
  *   and the parse trace while those packages stay dynamic imports on the load path.
  */
 
+import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
 import type { SoftFeatureChannel } from "@mailwoman/neural/soft-features"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
@@ -134,4 +135,11 @@ export interface AssetLoadProgress {
 	 * The step index cannot report the model because the runtime fetches it before entering the first step.
 	 */
 	setByteFraction?: (fraction: number | null) => void
+	/**
+	 * Receives the load ledger after each change: one entry per artifact,
+	 * with its bytes, source, state and error.
+	 *
+	 * It is optional so a host that predates it still satisfies this interface.
+	 */
+	setLedger?: (snapshot: LoadLedgerSnapshot) => void
 }

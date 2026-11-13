@@ -205,5 +205,8 @@ export function useRemoteGeocoderRuntime(
 		calibrator: null,
 		traceParse: async () => null,
 		supportsTrace: false,
+		// The hosted geocoder loads no release in the page, so there's no ledger and no gazetteer to fail.
+		gazetteerError: null,
+		loadLedger: null,
 	}
 }

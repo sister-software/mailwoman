@@ -44,11 +44,13 @@
 
 /// <reference lib="webworker" />
 
+import { SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
 import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "@mailwoman/service-worker-cache/build-caches"
 import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
 import { createRangeChunkHandler, createRangeGuardHandler } from "@mailwoman/service-worker-cache/range-chunks"
 import { reloadBypassPlugin } from "@mailwoman/service-worker-cache/reload-bypass"
+import { servedFromCachePlugin } from "@mailwoman/service-worker-cache/served-from"
 import { isSkipWaitingMessage } from "@mailwoman/service-worker-cache/skip-waiting"
 import { tornBodyPlugin } from "@mailwoman/service-worker-cache/torn-body"
 import { CacheableResponsePlugin } from "workbox-cacheable-response"
@@ -174,6 +176,7 @@ registerRoute(
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
 			new ExpirationPlugin({ maxEntries: MAX_APP_ASSET_ENTRIES, purgeOnQuotaError: true }),
+			servedFromCachePlugin(SERVED_FROM_HEADER),
 		],
 	})
 )
@@ -220,6 +223,7 @@ registerRoute(
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
 			new ExpirationPlugin({ maxEntries: MAX_ASSET_ENTRIES, purgeOnQuotaError: true }),
+			servedFromCachePlugin(SERVED_FROM_HEADER),
 		],
 	})
 )

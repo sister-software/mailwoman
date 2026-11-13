@@ -8,6 +8,7 @@
  *   sqlite-wasm and node builtins out of this package's browser graph.
  */
 
+import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 
@@ -25,6 +26,10 @@ export interface PipelineLoadingState {
 	 * The step index cannot report this download because the model is fetched before the first step begins.
 	 */
 	byteFraction?: number | null
+	/**
+	 * One entry per artifact the load requested, with its bytes, source, state and error.
+	 */
+	ledger?: LoadLedgerSnapshot | null
 }
 
 /**
@@ -55,6 +60,12 @@ export interface PipelineRuntime {
 	 * Error surfaced by the bundle load, distinct from a per-parse error.
 	 */
 	errorMessage?: string | null
+	/**
+	 * Loads the bundle again after a failed load.
+	 *
+	 * A page shows a Retry button beside `errorMessage` when the host provides this.
+	 */
+	retryLoad?: () => void
 }
 
 /**

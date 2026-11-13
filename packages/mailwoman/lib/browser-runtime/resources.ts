@@ -494,11 +494,12 @@ export function pairIndexURLs(baseURL: string, countries: readonly string[]): st
  */
 export async function loadFSTGazetteer(
 	locale: string,
-	version: string
+	version: string,
+	fetchImpl: typeof fetch = fetchWithRetry
 ): Promise<{ matcher: FSTMatcherLike; provenance: FSTProvenance | null }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
-		fetchWithRetry(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
+		fetchImpl(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 
 			return r.arrayBuffer()
@@ -522,8 +523,12 @@ export async function loadFSTGazetteer(
  *
  * The function returns `null` when the file is unavailable and throws when the binary is corrupt.
  */
-export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
-	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))
+export async function loadStreetMorphologyFST(
+	locale: string,
+	version: string,
+	fetchImpl: typeof fetch = fetchWithRetry
+): Promise<FSTMatcherLike | null> {
+	const res = await fetchImpl(assetURL(locale, version, "fst-street-morphology.bin"))
 
 	if (!res.ok) return null
 	const fstModule = await import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web")
