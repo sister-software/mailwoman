@@ -50,7 +50,7 @@ import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
-import { applyEntityTiers, nameDroppingRescoreToWithdraw } from "#fork-entity"
+import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
 import { parsePriorOptions } from "#geocode/parse-priors"
@@ -554,18 +554,22 @@ function placerCountrySetting(deps: GeocodeDeps): { use: PlacerCountryUse; safel
 }
 
 /**
- * Extracts the result without a name-dropping span-rescore locality.
+ * Extracts the result after the parsed venue picks between towns that share a name,
+ * and without a name-dropping span-rescore locality.
  *
- * The locality is removed when no venue answers near it, so the input abstains.
+ * {@linkcode repickLocalityByVenue} moves the locality to the namesake the venue stands in.
+ * The name-dropping locality is removed when no venue answers near it, so the input abstains.
  * See {@linkcode nameDroppingRescoreToWithdraw}.
  *
- * It leaves `resolved.roots` in place, so later tiers read the tree without it.
+ * It leaves `resolved.roots` in place, so later tiers read the tree as these steps left it.
  */
 function extractWithoutNameDroppingRescore(
 	input: string,
 	resolved: AddressTree,
 	deps: Parameters<typeof nameDroppingRescoreToWithdraw>[2]
 ): GeocodeResult {
+	repickLocalityByVenue(resolved.roots, deps)
+
 	const result = extractGeocodeResult(input, resolved)
 	const withdrawn = nameDroppingRescoreToWithdraw(result, resolved.roots, deps)
 

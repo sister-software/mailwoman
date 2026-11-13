@@ -19,6 +19,7 @@ import {
 	probeForkEntity,
 	probeVenueNearAnchor,
 	probeVenueNearAnchorFolded,
+	repickLocalityByVenue,
 	venueAnchorRadiusM,
 	type ForkEntityProbeOpts,
 } from "#fork-entity"
@@ -60,6 +61,59 @@ const NO_GENERICS: ForkEntityProbeOpts["isStreetGeneric"] = () => false
  */
 const REAL_GENERICS: ForkEntityProbeOpts["isStreetGeneric"] = (token) =>
 	["row", "straße", "via", "vía", "rue", "street", "parade"].includes(token)
+
+describe("repickLocalityByVenue (two towns of one name in a state, #3057)", () => {
+	// Anderson, Alabama: the resolver's pick (341 people) and the runner-up (255 people)
+	// where the post office stands.
+	const PICKED = { lat: 34.07121, lon: -85.92136 }
+	const RUNNER_UP = { name: "Anderson", placetype: "locality", country: "US", lat: 34.920591, lon: -87.269247 }
+
+	function roots(): AddressNode[] {
+		return [
+			{ tag: "venue", value: "Anderson Post Office", start: 0, end: 20, confidence: 0.9, children: [] },
+			{
+				tag: "locality",
+				value: "Anderson",
+				start: 22,
+				end: 30,
+				confidence: 0.9,
+				children: [],
+				...PICKED,
+				placeID: "wof:1125973425",
+				source: "resolver",
+				metadata: { resolver_name: "Anderson", resolver_country: "US" },
+				alternatives: [{ ...RUNNER_UP, id: 85_914_015, score: 1, exactMatch: true }],
+			},
+		]
+	}
+
+	const postOffice = { name: "Anderson Post Office", lat: 34.925339, lon: -87.268185, country: "US" }
+
+	it("moves the locality to the runner-up that has the venue nearby", () => {
+		const tree = roots()
+		const moved = repickLocalityByVenue(tree, { poiLookup: stubLookup([postOffice]), poiVenueTier: true })
+		const locality = tree[1]!
+
+		expect(moved).toBe(true)
+		expect(locality.placeID).toBe("wof:85914015")
+		expect(locality.lat).toBeCloseTo(RUNNER_UP.lat, 5)
+	})
+
+	it("keeps the pick when the venue is near it", () => {
+		const tree = roots()
+		const nearPick = { ...postOffice, lat: PICKED.lat, lon: PICKED.lon }
+
+		expect(repickLocalityByVenue(tree, { poiLookup: stubLookup([nearPick]), poiVenueTier: true })).toBe(false)
+		expect(tree[1]!.placeID).toBe("wof:1125973425")
+	})
+
+	it("keeps the pick when the venue tier is off", () => {
+		const tree = roots()
+
+		expect(repickLocalityByVenue(tree, { poiLookup: stubLookup([postOffice]), poiVenueTier: false })).toBe(false)
+		expect(tree[1]!.placeID).toBe("wof:1125973425")
+	})
+})
 
 describe("probeForkEntity", () => {
 	it("resolves the worldwide-unique exact-name entity (the COMER case)", () => {

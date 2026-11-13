@@ -7,8 +7,10 @@
 
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
+import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import { isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { decorateNode } from "@mailwoman/resolver/decorate-node"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
@@ -556,6 +558,108 @@ function venueNearAnswer(
 		{ ...anchor, radiusM: venueAnchorRadiusM(anchor, resolvedRoots) },
 		{ lookup: deps.poiLookup, ...(deps.isStreetGeneric ? { isStreetGeneric: deps.isStreetGeneric } : {}) }
 	)
+}
+
+/**
+ * The most runner-up localities sharing the pick's name that {@link repickLocalityByVenue} probes.
+ */
+const VENUE_NAMESAKE_PROBES = 10
+
+/**
+ * Reports whether a node's runner-up is a resolved place with a coordinate.
+ */
+function isLocatedPlace(value: unknown): value is ResolvedPlace {
+	if (typeof value !== "object" || value === null) return false
+	const place = value as Partial<ResolvedPlace>
+
+	return typeof place.name === "string" && typeof place.lat === "number" && typeof place.lon === "number"
+}
+
+/**
+ * Moves a locality node to the runner-up sharing its name that has the parsed
+ * venue within the venue tier's 30 km search radius.
+ *
+ * A state can hold two towns of one name, such as the two Andersons in Alabama.
+ * The resolver ranks them by population, and the venue is the only part of
+ * `Anderson Post Office, Anderson, AL` that identifies which town the query means.
+ *
+ * The node moves only when the venue has no exact-name row near the resolver's pick
+ * and every runner-up that has one finds the same venue.
+ * The first such runner-up in the resolver's order replaces the pick.
+ *
+ * A node with a street, house number or postcode coordinate stays as resolved,
+ * because those components anchor the venue search themselves.
+ *
+ * @returns Whether the node moved.
+ */
+export function repickLocalityByVenue(
+	roots: readonly AddressNode[],
+	deps: {
+		poiLookup?: ForkEntityProbeOpts["lookup"]
+		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
+		poiVenueTier?: boolean
+	}
+): boolean {
+	const lookup = deps.poiLookup
+
+	if (deps.poiVenueTier !== true || !lookup) return false
+
+	const venue = collectNodes(roots, (node) => node.tag === "venue" && !!node.value.trim())[0]?.value
+	const locality = collectNodes(roots, (node) => node.tag === "locality" && node.lat != null && node.lon != null)[0]
+
+	if (!venue || !locality || locality.lat == null || locality.lon == null) return false
+
+	const finerAnchor = collectNodes(
+		roots,
+		(node) => (node.tag === "street" || node.tag === "house_number" || node.tag === "postcode") && node.lat != null
+	)
+
+	if (finerAnchor.length) return false
+
+	const opts = { lookup, ...(deps.isStreetGeneric ? { isStreetGeneric: deps.isStreetGeneric } : {}) }
+	const near = (lat: number, lon: number) => probeVenueNearAnchorFolded(venue, { lat, lon }, opts)
+
+	if (near(locality.lat, locality.lon)) return false
+
+	const pickedName = locality.metadata?.["resolver_name"]
+	const pickedCountry = locality.metadata?.["resolver_country"]
+
+	if (typeof pickedName !== "string") return false
+	const nameKey = normalizeLocalityForKey(pickedName)
+
+	const namesakes = (locality.alternatives ?? [])
+		.filter(isLocatedPlace)
+		.filter(
+			(place) =>
+				place.exactMatch !== false &&
+				(typeof pickedCountry !== "string" || place.country === pickedCountry) &&
+				normalizeLocalityForKey(place.name) === nameKey
+		)
+		.slice(0, VENUE_NAMESAKE_PROBES)
+
+	const found = namesakes.flatMap((place) => {
+		const hit = near(place.lat, place.lon)
+
+		return hit ? [{ place, hit }] : []
+	})
+
+	const [first] = found
+
+	if (
+		!first ||
+		found.some(
+			({ hit }) => distanceM(hit.latitude, hit.longitude, first.hit.latitude, first.hit.longitude) > SAME_ENTITY_M
+		)
+	) {
+		return false
+	}
+
+	const alternatives = (locality.alternatives ?? []).filter(isLocatedPlace).filter((place) => place !== first.place)
+
+	decorateNode(locality, first.place, alternatives)
+	locality.metadata = { ...locality.metadata, venue_namesake_repick: true }
+
+	return true
 }
 
 /**
