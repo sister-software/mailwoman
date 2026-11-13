@@ -1,0 +1,921 @@
+# Runs the test suite on PRs, pushes to main, and release branches.
+#
+# The `test` job aggregates every leg. The ruleset on main requires the check `test`, and
+# publish.yml auto-merges the release PR on it, so do not rename that job.
+#
+# The legs split by what they need.
+# - static, unit-fast, react and earth need no gazetteer data and run on GitHub-hosted runners.
+# - unit-slow, lexicon-full and smoke read databases or weights under $MAILWOMAN_DATA_ROOT.
+#   They run on self-hosted runners with the `mailwoman-data` label.
+# A data-dependent test added to unit-fast therefore fails on the hosted runner instead of
+# skipping its way to green.
+#
+# Each lab runner exports MAILWOMAN_DATA_ROOT from its own `.env`. Do not set it in a job-level
+# `env:` block from a secret. That block overrides the inherited value, and a missing secret expands
+# to an empty string. An empty path then resolves relative to the checkout.
+#
+# publish.yml's prepare phase dispatches this workflow on the release branch because a PR opened
+# with GITHUB_TOKEN doesn't trigger `on: pull_request`.
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # The onnxruntime-node postinstall fetches GPU binaries from a CDN that the lab runners cannot
+  # always reach. CI uses the CPU libraries bundled in the npm tarball, so the download is skipped.
+  ONNXRUNTIME_NODE_INSTALL: skip
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  # Only the newest head's check matters, so superseded runs are cancelled to free lab runners.
+  # A dispatched run comes from a release, and cancelling it would leave the release PR waiting
+  # on a check that never reports.
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  # Scope runs hosted before any conditional leg acquires a runner.
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      full: ${{ steps.select.outputs.full }}
+      fast: ${{ steps.select.outputs.fast }}
+      slow: ${{ steps.select.outputs.slow }}
+      earth: ${{ steps.select.outputs.earth }}
+      react: ${{ steps.select.outputs.react }}
+      planetary: ${{ steps.select.outputs.planetary }}
+      opportunity: ${{ steps.select.outputs.opportunity }}
+      worker: ${{ steps.select.outputs.worker }}
+      smoke: ${{ steps.select.outputs.smoke }}
+      lexicon: ${{ steps.select.outputs.lexicon }}
+      docs: ${{ steps.select.outputs.docs }}
+      rust: ${{ steps.select.outputs.rust }}
+      fast_files: ${{ steps.select.outputs.fast_files }}
+      slow_files: ${{ steps.select.outputs.slow_files }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - run: corepack enable
+      - run: yarn install --immutable
+
+      - name: Select affected workspaces and suites
+        id: select
+        env:
+          # A push passes the branch's previous head as its base, so it runs the suites its commits select.
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: yarn mwops ci-scope
+
+  # This job reports whether a `mailwoman-data` runner is online. A job that targets an offline
+  # runner queues for up to 24 hours, so the data legs skip when the fleet is down. They cannot fall
+  # back to a hosted runner because their databases exceed its disk.
+  #
+  # The first matching rule decides.
+  # 1. The `DATA_FLEET` repo variable, set to `up` or `down`, overrides everything.
+  # 2. The runners API answers when `RUNNER_PROBE_TOKEN` is set. The token must be a PAT with
+  #    `administration: read` because GITHUB_TOKEN cannot list self-hosted runners.
+  # 3. Otherwise the job reports `up`, so a failed probe queues the legs instead of skipping them.
+  data-fleet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      up: ${{ steps.probe.outputs.up }}
+    steps:
+      - name: Probe for an online mailwoman-data runner
+        id: probe
+        env:
+          OVERRIDE: ${{ vars.DATA_FLEET }}
+          PROBE_TOKEN: ${{ secrets.RUNNER_PROBE_TOKEN }}
+        run: |
+          emit() {
+            echo "up=$1" >> "$GITHUB_OUTPUT"
+            echo "data fleet: $1" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          if [ -n "${OVERRIDE:-}" ]; then
+            echo "::notice::vars.DATA_FLEET is set — using it verbatim: ${OVERRIDE}"
+            if [ "$OVERRIDE" = "down" ]; then emit false; else emit true; fi
+            exit 0
+          fi
+
+          if [ -z "${PROBE_TOKEN:-}" ]; then
+            echo "::notice::no RUNNER_PROBE_TOKEN (unset, or a fork PR) — assuming the data fleet is up"
+            emit true
+            exit 0
+          fi
+
+          # The `.runners | type == "array"` test is required rather than defensive noise. Every API
+          # failure — bad credentials, 403, 404 — returns a JSON object with a `message` and no
+          # `runners` key, so a tolerant expression like `.runners // []` counts it as zero online
+          # runners and reports the fleet down. A count of zero cannot tell "zero runners are online" from
+          # "the API refused the request". Only the shape of the response can. Anything that's not
+          # an array yields a non-numeric sentinel. The guard below fails closed on that sentinel.
+          online=$(curl -sS --max-time 30 \
+            -H "Authorization: Bearer ${PROBE_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runners" \
+            | jq -r 'if (.runners | type) == "array"
+                     then ([.runners[]
+                            | select(.status == "online")
+                            | select([.labels[].name] | index("mailwoman-data"))] | length)
+                     else "unanswered: " + ((.message // "unrecognized response") | tostring)
+                     end' 2>/dev/null) || online=""
+
+          # Anything that's not a plain integer — an empty body, `null`, an API error object — is a
+          # probe that didn't answer rather than a fleet that's down. Fail closed.
+          if ! [[ "$online" =~ ^[0-9]+$ ]]; then
+            echo "::warning::couldn't read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full check)"
+            emit true
+          elif [ "$online" -gt 0 ]; then
+            echo "::notice::${online} mailwoman-data runner(s) online"
+            emit true
+          else
+            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED rather than silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not publish a release off this run."
+            emit false
+          fi
+
+  # The typechecks read the compiled .d.ts files, so this job compiles first.
+  static:
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Hosted runners start without a Yarn global cache, so this leg caches the store.
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      # This is the only install that uses Yarn's hardened mode. Hardened mode checks the lockfile against
+      # the registry. `.yarnrc.yml` turns it off elsewhere so lab installs stay on the global cache.
+      - name: Install dependencies
+        run: yarn install --immutable
+        env:
+          YARN_ENABLE_HARDENED_MODE: 1
+
+      - name: Compile
+        run: yarn compile
+
+      # Build projects exclude test files so tests never reach a tarball. Each workspace's
+      # tsconfig.test.json typechecks them without emitting.
+      - name: Typecheck tests
+        run: yarn typecheck:tests
+
+      # docs/ is a Docusaurus app outside the `tsc -b` graph, so it needs its own typecheck.
+      - name: Typecheck docs
+        if: needs.scope.outputs.docs == 'true'
+        run: yarn typecheck:docs
+
+      # The Vale postinstall downloads its binary anonymously from api.github.com and can hit the
+      # rate limit. `.yarnrc.yml` downgrades that failure to a warning, and the prose lint would then
+      # fail on a missing binary. The cache keeps the binary, keyed on the package version.
+      - name: Read the Vale package version
+        id: vale-version
+        run: echo "version=$(node -p "require('./node_modules/@vvago/vale/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Vale binary
+        id: vale-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      # Saving an empty directory would make later runs restore it instead of downloading.
+      - name: Save the Vale binary
+        if: steps.vale-cache.outputs.cache-hit != 'true' && hashFiles('node_modules/@vvago/vale/native/vale') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      # Repository-wide checks inspect relationships across workspaces.
+      - name: Lint
+        run: yarn lint:ci
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  rust:
+    needs: scope
+    if: needs.scope.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - run: corepack enable
+      - run: yarn install --immutable
+
+      # The toolchain matches the root `rust-toolchain.toml`.
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.1"
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+
+      - name: Check the Rust formatting
+        run: |
+          cargo fmt --all --check
+
+      - name: Test the training encoder, sampler and export crates
+        run: |
+          cargo test -p trainer-export --locked
+          cargo test -p mtf-channels --locked
+          cargo test -p mtf-channels --features finders --locked
+          cargo test -p mtf-sampler --locked
+          cargo test -p mtf-core --features edit --test model_edit --locked
+          cargo test -p mtf-tools --locked
+
+      - name: Test the Deflate64 inflater crate
+        run: |
+          cargo test -p deflate64-wasm --locked
+
+      - name: Test the basemap tiler's crates
+        run: |
+          cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --all-targets --locked -- -D warnings
+          cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --locked
+
+      # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
+      - name: Test the mtf-node addon's panic handling
+        run: yarn vitest run --config vitest.slow.config.ts packages/mtf/tools/sampler/native.panic.integration.test.ts
+
+      # The Rust trainer links libtorch through `tch` 0.26.0. That version pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
+      - name: Restore libtorch
+        id: libtorch
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/libtorch
+          key: libtorch-2.13.0-cpu-edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e
+
+      - name: Download libtorch
+        if: steps.libtorch.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/libtorch.zip" \
+            'https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-2.13.0%2Bcpu.zip'
+          echo "edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e  $RUNNER_TEMP/libtorch.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/libtorch.zip" -d "$RUNNER_TEMP"
+
+      # MKL reads `MKL_CBWR` when libtorch loads, before the F1 test can set it, so the step sets it here.
+      - name: Test the Rust trainer crates
+        env:
+          LIBTORCH: ${{ runner.temp }}/libtorch
+          LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+          MKL_CBWR: AVX2
+        run: |
+          cargo test -p trainer-model -p trainer-loop -p trainer-cli --locked
+
+      # `mtf-node` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`. Clippy checks every crate's code,
+      # which links libtorch for the trainer crates, and the `panic-probe` feature's export once more.
+      - name: Lint the Rust crates
+        env:
+          LIBTORCH: ${{ runner.temp }}/libtorch
+          LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+        run: |
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo clippy -p mtf-node --features panic-probe --locked -- -D warnings
+
+  # The root Vitest sweep runs as two concurrent legs. unit-fast runs every test that needs no
+  # model, WOF database or CLI harness. unit-slow runs the rest.
+  unit-fast:
+    needs: scope
+    if: needs.scope.outputs.fast == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Hosted runners start without a Yarn global cache, so this leg caches the store.
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # The dev-mcp symbol index shells out to ripgrep. The hosted image lacks ripgrep.
+      - name: Install ripgrep (dev-mcp symbol index)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+
+      # The dev-mcp Vale tests spawn the binary. Without it they fail with a JSON parse error.
+      # This leg shares the Vale cache key with the static leg.
+      - name: Read the Vale package version
+        id: vale-version
+        run: echo "version=$(node -p "require('./node_modules/@vvago/vale/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Vale binary
+        id: vale-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      - name: Save the Vale binary
+        if: steps.vale-cache.outputs.cache-hit != 'true' && hashFiles('node_modules/@vvago/vale/native/vale') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      # The training audit and exposure tests load the `mtf-node` addon.
+      # `packages/mtf/tools/sampler/native.ts` builds it with Cargo on first use. This step installs
+      # everything the root `rust-toolchain.toml` names before the tests start. Without it,
+      # rustup installs the toolchain while the tests run, and parallel test files race on the
+      # download.
+      - name: Setup Rust (mtf-node addon)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.1"
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Cargo (mtf-node addon)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+
+      - name: Test (fast)
+        env:
+          TEST_FILES: ${{ needs.scope.outputs.fast_files }}
+          FULL_SCOPE: ${{ needs.scope.outputs.full }}
+        run: yarn mwops ci-test fast
+
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-unit-fast
+          path: test-results/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  # unit-slow runs the database-dependent half of the Vitest sweep. Its suites use
+  # `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a hosted runner
+  # they'd skip and pass.
+  unit-slow:
+    needs: [data-fleet, scope]
+    if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.slow == 'true'
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Lab runners install from the Yarn global cache, and setup-node restores can hang there.
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # copy-weights serves the weights from $MAILWOMAN_DATA_ROOT/derived/weights/<key>. It rebuilds
+      # them only when the key changes. See release-kit's lib/weights/derived-weights-key.ts.
+      - name: Materialize weights (derived store. multi-minute build only on a key change)
+        run: yarn mwops release copy-weights
+
+      - name: Symlink base-latn model (en-us already materialized)
+        run: |
+          mkdir -p packages/neural-weights-base-latn
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+            [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
+          done
+
+      - name: Test (slow)
+        env:
+          TEST_FILES: ${{ needs.scope.outputs.slow_files }}
+          FULL_SCOPE: ${{ needs.scope.outputs.full }}
+        run: yarn mwops ci-test slow
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-unit-slow
+          path: test-results/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  # This job runs the full-scale locality-surface build (`evidence-lexicons.full.test.ts`) over the
+  # whole admin database when scope selects mailwoman or codex.
+  # `evidence-lexicons.fixture.test.ts` in unit-fast checks the same laws on every PR against a
+  # fixture database. lexicon-nightly.yml catches gazetteer drift, and publish.yml reruns the build
+  # at release.
+  lexicon-full:
+    needs: [data-fleet, scope]
+    if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.lexicon == 'true'
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      - name: Full-scale locality-surface build
+        run: yarn ci:test:lexicon-full
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+
+  # The root sweep excludes browser-mode suites because vitest/browser fails under the forks pool.
+  # The react and earth legs are the only CI coverage for @mailwoman/react and the map apps. The
+  # Earth smoke runs in its own leg because it is the longest suite here, and in one job the other
+  # suites waited on it.
+  react:
+    needs: scope
+    if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true' || needs.scope.outputs.worker == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Hosted runners start without a Yarn global cache, so this leg caches the store.
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # `--with-deps` installs the Chromium system libraries with sudo. Hosted runners allow sudo.
+      - name: Install Playwright chromium (react browser tests)
+        if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true'
+        run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
+
+      - name: Test react (browser mode)
+        if: needs.scope.outputs.react == 'true'
+        run: yarn workspace @mailwoman/react test:browser
+
+      # The planetary smoke test builds and runs once per body.
+      - name: Moon smoke
+        if: needs.scope.outputs.planetary == 'true'
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: moon
+      - name: Mars smoke
+        if: needs.scope.outputs.planetary == 'true'
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: mars
+
+      # The opportunity application's specs build it without a basemap URL, so every request goes to the preview server.
+      - name: Opportunity application browser tests
+        if: needs.scope.outputs.opportunity == 'true'
+        run: yarn workspace @mailwoman/opportunity-app test:browser
+
+      # The license and gazetteer worker tests need the Workers runtime, so the root sweep excludes them.
+      - name: Test license worker (Workers pool)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn test:license-worker
+
+      - name: Test gazetteer worker (Workers pool)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn test:gazetteer-worker
+
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-react-leg
+          path: |
+            packages/react/test-results/junit.xml
+            packages/planetary/playwright-report/results.json
+            packages/opportunity-app/playwright-report/results.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
+  # configuration runs one worker, so the suite runs serially inside this job.
+  #
+  # The job is disabled: its map-idle waits time out on runs whose change doesn't touch Earth. To enable
+  # it, restore `if: needs.scope.outputs.earth == 'true'` here and the `earth` entry in `summary`'s
+  # `selected` map. Run the suite locally with `yarn workspace @mailwoman/earth test:browser`.
+  earth:
+    needs: scope
+    if: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Hosted runners start without a Yarn global cache, so this leg caches the store.
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # `--with-deps` installs the Chromium system libraries with sudo. Hosted runners allow sudo.
+      - name: Install Playwright chromium (Earth smoke)
+        run: yarn workspace @mailwoman/earth exec playwright install --with-deps chromium
+
+      - name: Earth shell smoke
+        run: yarn workspace @mailwoman/earth test:browser
+
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-earth
+          path: |
+            packages/earth/playwright-report/results.json
+            packages/earth/playwright-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  # The smoke test packs every published workspace, installs the tarballs into a fresh project and
+  # runs the compiled CLI. It catches undeclared dependencies, unshipped files and eager top-level
+  # side effects that the monorepo hides.
+  #
+  # On a PR, scope schedules this job when a published workspace or its dependencies change. The job
+  # needs a `mailwoman-data` runner because `yarn pack` silently packs whatever weight files exist.
+  smoke:
+    needs: [data-fleet, scope]
+    if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.smoke == 'true'
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      # The key includes build sources, manifests, the compiler lock, and the Node version.
+      # Colocated tests are excluded from build projects and do not invalidate compiled output.
+      # The .tsbuildinfo files live inside out/.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # Lab runners install from the Yarn global cache, and setup-node restores can hang there.
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      # Smoke packs the weights workspaces locally because on a release branch npm cannot resolve
+      # the unpublished version. The binaries must exist before `yarn pack` runs.
+      # copy-weights serves them from $MAILWOMAN_DATA_ROOT/derived/weights/<key>.
+      - name: Materialize weights (derived store. multi-minute build only on a key change)
+        run: yarn mwops release copy-weights
+
+      - name: Symlink base-latn model (en-us already materialized)
+        run: |
+          mkdir -p packages/neural-weights-base-latn
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+            [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
+          done
+
+      - name: Clean-install smoke test
+        run: yarn ci:smoke
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+  # The ruleset and release auto-merge require this `test` check. `if: always()` makes it report
+  # after a leg fails, because a skipped required check blocks the merge.
+  test:
+    needs: [data-fleet, scope, static, rust, unit-fast, unit-slow, lexicon-full, react, earth, smoke]
+    if: always()
+    # The aggregator runs hosted so that it still reports when the lab fleet is down.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check selected jobs
+        env:
+          JOBS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module <<'JS'
+          const jobs = JSON.parse(process.env.JOBS);
+          const scope = jobs.scope.outputs;
+          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
+            if (!['true', 'false'].includes(scope[key])) {
+              throw new Error("Scope didn't report a boolean for " + key);
+            }
+          }
+          const fleet = jobs['data-fleet'].outputs.up === 'true';
+          const selected = {
+            scope: true,
+            'data-fleet': true,
+            static: true,
+            rust: scope.rust === 'true',
+            'unit-fast': scope.fast === 'true',
+            'unit-slow': fleet && scope.slow === 'true',
+            'lexicon-full': fleet && scope.lexicon === 'true',
+            react: ['react', 'planetary', 'opportunity', 'worker'].some(key => scope[key] === 'true'),
+            // The earth job is disabled (see its definition), so it is never selected.
+            earth: false,
+            smoke: fleet && scope.smoke === 'true',
+          };
+          const failed = Object.entries(jobs).filter(([name, job]) =>
+            ['failure', 'cancelled'].includes(job.result) ||
+            (selected[name] && job.result !== 'success')
+          );
+          if (failed.length) {
+            console.error("Selected CI jobs didn't succeed:", failed.map(([name, job]) => [name, job.result]));
+            process.exit(1);
+          }
+          console.log("Every selected job succeeded. Unselected jobs didn't run.");
+          JS
+
+      - name: Green, but without the data legs
+        if: ${{ needs.data-fleet.outputs.up != 'true' }}
+        run: |
+          echo "::warning title=PARTIAL CHECK::Selected hosted jobs passed. Data-dependent jobs didn't run. No mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run didn't exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
+          {
+            echo "## test: GREEN (partial — no data fleet)"
+            echo ""
+            echo "| leg | where | result |"
+            echo "| --- | --- | --- |"
+            echo "| static | hosted | ${{ needs.static.result }} |"
+            echo "| unit-fast | hosted | ${{ needs.unit-fast.result }} |"
+            echo "| react | hosted | ${{ needs.react.result }} |"
+            echo "| earth | hosted | ${{ needs.earth.result }} |"
+            echo "| unit-slow | \`mailwoman-data\` | ${{ needs.unit-slow.result }} |"
+            echo "| smoke | \`mailwoman-data\` | ${{ needs.smoke.result }} |"
+            echo "| lexicon-full | \`mailwoman-data\` | ${{ needs.lexicon-full.result }} |"
+            echo ""
+            echo "Bring a \`mailwoman-data\` runner online and re-run before releasing."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Selected jobs passed
+        if: ${{ needs.data-fleet.outputs.up == 'true' }}
+        run: echo "Every selected suite passed. See the scope job summary for suites that didn't run."
