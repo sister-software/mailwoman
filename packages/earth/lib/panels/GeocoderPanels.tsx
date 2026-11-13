@@ -17,6 +17,7 @@ import { useMemo, useState } from "react"
 
 import type { GeocoderRuntimeHandle } from "#runtime/use/geocoder-runtime"
 
+import { CachePanel } from "./CachePanel.tsx"
 import { Compare } from "./Compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./Controls.tsx"
 import { DebugDrawer } from "./DebugDrawer.tsx"
@@ -58,7 +59,19 @@ function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loa
 }
 
 export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
-	const { runtime, releases, geoBias, calibrator, traceParse, supportsTrace, gazetteerError, loadLedger } = handle
+	const {
+		runtime,
+		releases,
+		geoBias,
+		calibrator,
+		traceParse,
+		supportsTrace,
+		gazetteerError,
+		loadLedger,
+		reloadStack,
+		reloadGazetteer,
+		reloadModel,
+	} = handle
 
 	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 	const [devMode, setDevMode] = useState(debugDefault)
@@ -101,6 +114,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					{calibrator ? <CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} /> : null}
 					{supportsTrace ? <DevModeToggle checked={devMode} onChange={setDevMode} /> : null}
 					{loadLedger ? <LoadLedgerList ledger={loadLedger} /> : null}
+					<CachePanel reloadStack={reloadStack} reloadGazetteer={reloadGazetteer} reloadModel={reloadModel} />
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
@@ -166,6 +180,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			traceParse,
 			loadStatus,
 			loadLedger,
+			reloadStack,
+			reloadGazetteer,
+			reloadModel,
 		]
 	)
 	/* oxlint-enable react/no-unstable-nested-components */

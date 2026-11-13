@@ -61,6 +61,10 @@ export class MemoryCacheStorage implements RangeChunkCacheStorage, Pick<CacheSto
 		return this.caches.delete(name)
 	}
 
+	async has(name: string): Promise<boolean> {
+		return this.caches.has(name)
+	}
+
 	async open(name: string): Promise<MemoryCache> {
 		let cache = this.caches.get(name)
 

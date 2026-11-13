@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "#build-caches"
+export * from "#cache-control"
 export * from "#missing-when-unreachable"
 export * from "#prune"
 export * from "#range-chunks"

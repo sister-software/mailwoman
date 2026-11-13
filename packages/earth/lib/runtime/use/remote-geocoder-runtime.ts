@@ -208,5 +208,8 @@ export function useRemoteGeocoderRuntime(
 		// The hosted geocoder loads no release in the page, so there's no ledger and no gazetteer to fail.
 		gazetteerError: null,
 		loadLedger: null,
+		reloadStack: null,
+		reloadGazetteer: null,
+		reloadModel: null,
 	}
 }

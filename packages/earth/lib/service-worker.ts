@@ -45,7 +45,13 @@
 /// <reference lib="webworker" />
 
 import { SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
-import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "@mailwoman/service-worker-cache/build-caches"
+import {
+	buildCacheName,
+	deleteOtherBuildCaches,
+	generationCacheName,
+	roleCacheName,
+} from "@mailwoman/service-worker-cache/build-caches"
+import { answerCacheControl, isCacheControlMessage } from "@mailwoman/service-worker-cache/cache-control"
 import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
 import { createRangeChunkHandler, createRangeGuardHandler } from "@mailwoman/service-worker-cache/range-chunks"
@@ -88,7 +94,19 @@ const CACHE_PREFIX = "mailwoman-"
 const RANGE_CACHE = roleCacheName(CACHE_PREFIX, "db-ranges")
 const ASSET_CACHE = roleCacheName(CACHE_PREFIX, "release-assets")
 const MANIFEST_CACHE = roleCacheName(CACHE_PREFIX, "manifests")
-const TILE_CACHE = roleCacheName(CACHE_PREFIX, "tiles")
+
+/**
+ * The generation of the tile cache, part of its name, such as `mailwoman-tiles-g1`.
+ *
+ * Bump it on a deploy whose tiles changed under the same URLs.
+ * A tile URL holds no version, and a Cloudflare purge never reaches a device's tile cache,
+ * so without a bump a device draws its stored tiles until {@link MAX_TILE_AGE_SECONDS} expires them.
+ *
+ * Activation deletes the earlier generation's cache, and no other cache, on that account.
+ */
+const TILE_CACHE_GENERATION = 1
+
+const TILE_CACHE = generationCacheName(CACHE_PREFIX, "tiles", TILE_CACHE_GENERATION)
 
 // The build's own files, such as the staged SQLite runtime, can change under the same URL.
 const APP_ASSET_CACHE = buildCacheName(CACHE_PREFIX, "app-assets", __MAILWOMAN_BUILD_COMMIT__)
@@ -147,9 +165,30 @@ self.addEventListener("activate", (event) => {
 	event.waitUntil(deleteOtherBuildCaches(caches, CACHE_PREFIX, CURRENT_CACHES).then(() => self.clients.claim()))
 })
 
+/**
+ * The cache each role a page may report or clear maps to.
+ *
+ * The page names roles rather than caches, because the app-asset cache's name changes with each build.
+ */
+const CACHES_BY_ROLE: Readonly<Record<string, string>> = {
+	"db-ranges": RANGE_CACHE,
+	"release-assets": ASSET_CACHE,
+	manifests: MANIFEST_CACHE,
+	tiles: TILE_CACHE,
+	"app-assets": APP_ASSET_CACHE,
+}
+
 self.addEventListener("message", (event) => {
 	if (isSkipWaitingMessage(event.data)) {
 		event.waitUntil(self.skipWaiting())
+
+		return
+	}
+
+	if (isCacheControlMessage(event.data)) {
+		const [port] = event.ports
+
+		event.waitUntil(answerCacheControl(event.data, caches, CACHES_BY_ROLE).then((reply) => port?.postMessage(reply)))
 
 		return
 	}

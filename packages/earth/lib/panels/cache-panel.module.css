@@ -1,0 +1,46 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
+/* The Developer sheet's offline-storage controls. */
+
+.panel {
+	display: grid;
+	gap: 0.4rem;
+	margin-block-start: 0.75rem;
+	font-size: var(--mw-font-size-caption);
+}
+
+.heading {
+	margin: 0;
+	font-size: 0.85rem;
+}
+
+.summary {
+	margin: 0;
+	color: var(--ss-color-content-secondary);
+}
+
+.list {
+	display: grid;
+	grid-template-columns: 1fr max-content max-content;
+	gap: 0.25rem 0.75rem;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.row {
+	display: contents;
+}
+
+.count {
+	font-variant-numeric: tabular-nums;
+	color: var(--ss-color-content-secondary);
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}

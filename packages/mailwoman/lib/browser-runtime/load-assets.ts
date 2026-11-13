@@ -119,8 +119,11 @@ export interface LoadReleaseAssetsOptions {
 	 * range worker and sqlite-wasm runtime (for example `/mailwoman/sqlite`).
 	 *
 	 * Omit it and `lookup` is `null` without a gazetteer step.
+	 *
+	 * Given `lookup`, the bundle takes that open gazetteer instead of opening another, as
+	 * when a host reloads the classifier and keeps the gazetteer it already has.
 	 */
-	gazetteer?: { sqliteRuntimeBaseURL: string }
+	gazetteer?: { sqliteRuntimeBaseURL: string; lookup?: MailwomanLookupLike | null }
 
 	/**
 	 * The URL of the onnxruntime-web `.wasm` binary the host's bundle serves.
@@ -149,6 +152,36 @@ function settleOptional<T>(load: Promise<T>): Promise<T | null> {
 }
 
 /**
+ * Opens the byte-range gazetteer lookup, and starts pulling the pages its first query reads.
+ *
+ * It resolves `null` when `signal` aborted while the database opened, and throws when the open fails.
+ * A host reopens the gazetteer with it and keeps the loaded classifier.
+ */
+export async function openCandidateTableLookup(
+	sqliteRuntimeBaseURL: string,
+	signal?: AbortSignal
+): Promise<MailwomanLookupLike | null> {
+	const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
+		import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+		import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+	])
+
+	const database = await openRangeDatabase(adminGazetteerURL(), sqliteRuntimeBaseURL)
+
+	if (signal?.aborted) return null
+
+	const wofLookup = new WOFCandidateTableLookup(database)
+
+	// Fire-and-forget: pull the schema, code-table and upper B-tree pages through the VFS now
+	// so the first interactive query starts warm.
+	// The worker serializes queries, so a user query issued mid-warm-up queues
+	// behind pages it was going to need anyway.
+	void wofLookup.warmUp().catch(() => {})
+
+	return wofLookup
+}
+
+/**
  * Load the classifier, calibration, FST and gazetteer bundle for one release,
  * reporting staged progress through `progress`.
  *
@@ -163,7 +196,8 @@ export async function loadReleaseAssets(
 	progress: AssetLoadProgress,
 	options: LoadReleaseAssetsOptions = {}
 ): Promise<ReleaseAssets> {
-	const gazetteer = release.hasWOFDB ? options.gazetteer : null
+	const keptLookup = release.hasWOFDB ? (options.gazetteer?.lookup ?? null) : null
+	const gazetteer = release.hasWOFDB && !keptLookup ? options.gazetteer : null
 	const locale = options.locale ?? DEFAULT_LOCALE
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
@@ -341,7 +375,7 @@ export async function loadReleaseAssets(
 			advanceStep()
 		}
 
-		let lookup: MailwomanLookupLike | null = null
+		let lookup: MailwomanLookupLike | null = keptLookup
 		let gazetteerError: string | null = null
 
 		if (gazetteer) {
@@ -352,24 +386,8 @@ export async function loadReleaseAssets(
 			ledger.start(gazetteerURL, ArtifactRole.Gazetteer)
 
 			try {
-				const [{ openRangeDatabase }, { WOFCandidateTableLookup }] = await Promise.all([
-					import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
-					import("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
-				])
-
-				const database = await openRangeDatabase(gazetteerURL, gazetteer.sqliteRuntimeBaseURL)
-
+				lookup = await openCandidateTableLookup(gazetteer.sqliteRuntimeBaseURL, progress.signal)
 				ledger.settle(gazetteerURL, { state: "done", source: "unknown", error: null })
-
-				if (!progress.signal.aborted) {
-					const wofLookup = new WOFCandidateTableLookup(database)
-					// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
-					// the VFS now so the first interactive query starts warm.
-					// The worker serializes queries, so a user query issued mid-warm-up queues
-					// behind pages it was going to need anyway.
-					void wofLookup.warmUp().catch(() => {})
-					lookup = wofLookup
-				}
 			} catch (error) {
 				// The parse still runs without the gazetteer, so the failure is reported rather than thrown.
 				gazetteerError = error instanceof Error ? error.message : String(error)
