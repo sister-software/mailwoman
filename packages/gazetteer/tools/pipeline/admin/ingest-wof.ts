@@ -5,22 +5,26 @@
  *   Ingests WOF GeoJSON files into the admin-gazetteer staging database.
  */
 
-import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
-import { parallelMap } from "spliterator"
+import { parallelMapWorkers } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
-import type { WOFFeature, WOFProperties } from "#whosonfirst"
+import type { ExtractedWOFFeature } from "#tools/pipeline/admin/wof-feature"
+import type { WOFFeatureItem, WOFFeatureResult, WOFFeatureWorkerData } from "#tools/pipeline/admin/wof-feature-worker"
+
+const WORKER_URL = new URL(
+	import.meta.url.endsWith(".ts") ? "./wof-feature-worker.ts" : "./wof-feature-worker.js",
+	import.meta.url
+)
 
 /**
- * The number of values in a 2D bounding box: `[west, south, east, north]`.
+ * The records a worker reads and extracts per dispatched batch.
  */
-const BBOX_2D_LENGTH = 4
+const WORKER_BATCH_SIZE = 64
 
 /**
  * The default admin placetypes to ingest.
@@ -42,135 +46,6 @@ export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"macrocounty",
 ])
 
-interface ParsedFeature {
-	id: number
-	parent_id: number
-	name: string
-	placetype: string
-	country: string
-	latitude: number
-	longitude: number
-	minLatitude: number
-	minLongitude: number
-	maxLatitude: number
-	maxLongitude: number
-	population: number
-	isCurrent: number
-	isDeprecated: number
-	isCeased: number
-	isSuperseded: number
-	isSuperseding: number
-	lastmodified: number
-	concordances: Record<string, string | number>
-	pointChoice: PointChoice | null
-	names: Array<{ name: string; language: string; privateuse: string; official: number }>
-}
-
-async function parseFeature(
-	text: string,
-	placetypes: ReadonlySet<string>,
-	anchorLookup?: GeoNamesAnchorLookup
-): Promise<ParsedFeature | null> {
-	const feature = parseJSONStrict<WOFFeature>(text)
-	const props: WOFProperties | undefined = feature.properties
-
-	if (!props) return null
-
-	const supersededBy = props["wof:superseded_by"]
-
-	if (supersededBy && supersededBy.length) return null
-
-	const placetype = props["wof:placetype"]
-
-	if (!placetypes.has(placetype)) return null
-
-	const mzIsCurrent = props["mz:is_current"]
-
-	// The label point is preferred over the geometry point.
-	// Either point counts only with both coordinates.
-	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
-	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
-
-	let lat = hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0
-	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
-	let pointChoice: PointChoice | null = null
-
-	// Only localities use GeoNames adjudication.
-	// GeoNames anchors for regions and counties are centroids.
-	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
-		const gnID = props["wof:concordances"]?.["gn:id"]
-
-		const anchor = gnID && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : null
-
-		const chosen = choosePoint(
-			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },
-			{ latitude: props["lbl:latitude"]!, longitude: props["lbl:longitude"]! },
-			anchor
-		)
-
-		lat = chosen.latitude
-		lon = chosen.longitude
-		pointChoice = chosen.choice
-	}
-
-	// WOF orders the bbox as west, south, east, north.
-	// Without one, the bbox is the point itself.
-	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
-	const bboxStr = props["geom:bbox"]
-
-	if (typeof bboxStr === "string") {
-		const parts = bboxStr.split(",").map(Number)
-
-		if (parts.length === BBOX_2D_LENGTH && parts.every((n) => Number.isFinite(n))) {
-			;[minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
-		}
-	}
-
-	const names: Array<{ name: string; language: string; privateuse: string; official: number }> = []
-	const country = props["wof:country"] ?? ""
-
-	for (const [key, value] of Object.entries(props)) {
-		const match = key.match(/^name:([a-z]{3})_x_(preferred|variant)$/)
-
-		if (!match || !value) continue
-		const lang = match[1]!
-		const privateuse = match[2]!
-		// A name is official only when it is a preferred form in an official language.
-		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
-		const vals = Array.isArray(value) ? value : [value]
-
-		for (const v of vals) {
-			if (typeof v === "string" && v) {
-				names.push({ name: v, language: lang, privateuse, official })
-			}
-		}
-	}
-
-	return {
-		id: props["wof:id"],
-		parent_id: props["wof:parent_id"] ?? -1,
-		name: props["wof:name"] ?? "",
-		placetype,
-		country: props["wof:country"] ?? "",
-		latitude: lat,
-		longitude: lon,
-		minLatitude: minLat,
-		minLongitude: minLon,
-		maxLatitude: maxLat,
-		maxLongitude: maxLon,
-		population: props["wof:population"] ?? props["gn:population"] ?? 0,
-		isCurrent: mzIsCurrent === 0 || mzIsCurrent === "0" ? 0 : 1,
-		isDeprecated: props["edtf:deprecated"] ? 1 : 0,
-		isCeased: props["edtf:cessation"] ? 1 : 0,
-		isSuperseded: (props["wof:superseded_by"]?.length ?? 0) > 0 ? 1 : 0,
-		isSuperseding: (props["wof:supersedes"]?.length ?? 0) > 0 ? 1 : 0,
-		lastmodified: typeof props["wof:lastmodified"] === "number" ? props["wof:lastmodified"] : 0,
-		concordances: props["wof:concordances"] ?? {},
-		pointChoice,
-		names,
-	}
-}
-
 /**
  * Options for {@link ingestWOF}.
  */
@@ -188,11 +63,13 @@ export interface IngestWOFOptions {
 	 */
 	placetypes?: ReadonlySet<string>
 	/**
-	 * The number of parallel file reads.
+	 * The worker threads that read and parse records.
 	 *
-	 * @defaultValue `64`
+	 * The main thread keeps the SQLite writes, so it keeps one core.
+	 *
+	 * @defaultValue one per core, less one
 	 */
-	concurrency?: number
+	workers?: number
 	/**
 	 * The number of ingested records per write transaction.
 	 *
@@ -225,14 +102,75 @@ export interface IngestWOFResult {
 }
 
 /**
+ * Yields worker results in walk order.
+ *
+ * The pool returns results in completion order.
+ * The ingest writes with `INSERT OR REPLACE`, so the walk order decides which record
+ * a repeated id keeps, and it has to match a single-threaded walk.
+ */
+async function* inWalkOrder(results: AsyncIterable<WOFFeatureResult>): AsyncGenerator<WOFFeatureResult> {
+	const waiting = new Map<number, WOFFeatureResult>()
+	let next = 0
+
+	for await (const result of results) {
+		waiting.set(result.index, result)
+
+		while (waiting.has(next)) {
+			yield waiting.get(next)!
+			waiting.delete(next)
+
+			next++
+		}
+	}
+
+	if (waiting.size) {
+		throw new Error(`ingestWOF: ${waiting.size} records arrived after a gap in the walk order at index ${next}`)
+	}
+}
+
+/**
+ * Chooses a record's stored point and bounding box.
+ *
+ * A locality with both points takes the point GeoNames adjudication chooses when an anchor lookup is given.
+ * A record without a `geom:bbox` takes its final point as its bounding box.
+ */
+async function placeFeature(
+	feature: ExtractedWOFFeature,
+	anchorLookup: GeoNamesAnchorLookup | undefined
+): Promise<{
+	latitude: number
+	longitude: number
+	bbox: [number, number, number, number]
+	pointChoice: PointChoice | null
+}> {
+	let { latitude, longitude } = feature.point
+	let pointChoice: PointChoice | null = null
+
+	if (feature.adjudication && anchorLookup) {
+		const { geom, lbl, gnID, country } = feature.adjudication
+		const anchor = gnID && country ? await anchorLookup(country, gnID) : null
+		const chosen = choosePoint(geom, lbl, anchor)
+
+		latitude = chosen.latitude
+		longitude = chosen.longitude
+		pointChoice = chosen.choice
+	}
+
+	return { latitude, longitude, bbox: feature.bbox ?? [longitude, latitude, longitude, latitude], pointChoice }
+}
+
+/**
  * Ingests WOF GeoJSON into an open staging database.
  *
- * Files are read in parallel and written serially in batched transactions.
+ * Worker threads read and parse the records.
+ * The main thread adjudicates locality points and writes the records serially,
+ * in walk order, in batched transactions.
+ *
  * Postalcode repositories are skipped unless `placetypes` includes `postalcode`.
  */
 export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOFOptions): Promise<IngestWOFResult> {
 	const placetypes = opts.placetypes ?? ADMIN_PLACETYPES
-	const concurrency = opts.concurrency ?? 64
+	const workers = opts.workers ?? Math.max(1, availableParallelism() - 1)
 	const batchCommitSize = opts.batchCommitSize ?? 500
 
 	const exclude = ["**/*-alt-*"]
@@ -243,19 +181,15 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 
 	let filesFound = 0
 
-	// The walk streams into the reader, so the paths of the millions of records are never held at once.
-	const filePaths = Globerator.from("**/data/**/*.geojson", {
+	// The walk streams into the pool, so the paths of the millions of records are never held at once.
+	const items = Globerator.from("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
 		absolute: true,
 		exclude,
 		// A data root can expose one checkout both directly and through a symlink.
 		// The ingester reads each record once when it skips symlinks.
 		followSymlinks: false,
-	}).map((path) => {
-		filesFound++
-
-		return path
-	})
+	}).map((path): WOFFeatureItem => ({ index: filesFound++, path }))
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -290,18 +224,26 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		}
 	}
 
-	const readResults = parallelMap(filePaths, (filePath) => readLocalTextFile(filePath), { concurrency })
+	const workerData: WOFFeatureWorkerData = { placetypes: [...placetypes] }
 
-	for await (const text of readResults) {
-		const feature = await parseFeature(text, placetypes, opts.anchorLookup)
+	const results = parallelMapWorkers<WOFFeatureItem, WOFFeatureResult>(items, {
+		worker: WORKER_URL,
+		concurrency: workers,
+		batchSize: WORKER_BATCH_SIZE,
+		workerData,
+	})
 
+	for await (const { feature } of inWalkOrder(results)) {
 		if (!feature) {
 			skipped++
 
 			continue
 		}
 
-		if (feature.pointChoice === "geom-by-anchor") {
+		const { latitude, longitude, bbox, pointChoice } = await placeFeature(feature, opts.anchorLookup)
+		const [minLongitude, minLatitude, maxLongitude, maxLatitude] = bbox
+
+		if (pointChoice === "geom-by-anchor") {
 			labelPointOverrides++
 		}
 
@@ -313,12 +255,12 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 			feature.name,
 			feature.placetype,
 			feature.country,
-			feature.latitude,
-			feature.longitude,
-			feature.minLatitude,
-			feature.minLongitude,
-			feature.maxLatitude,
-			feature.maxLongitude,
+			latitude,
+			longitude,
+			minLatitude,
+			minLongitude,
+			maxLatitude,
+			maxLongitude,
 			feature.isCurrent,
 			feature.isDeprecated,
 			feature.isCeased,

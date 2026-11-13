@@ -65,9 +65,14 @@ export interface BuildAdminOptions {
 	 */
 	skipVerify?: boolean
 	/**
-	 * Skip the WOF geojson ingest concurrency/batch tuning.
+	 * The worker threads the WOF ingest reads and parses records with.
+	 *
+	 * @defaultValue one per core, less one
 	 */
-	concurrency?: number
+	workers?: number
+	/**
+	 * The number of WOF records per ingest write transaction.
+	 */
 	batchCommitSize?: number
 	/**
 	 * Build-log path.
@@ -153,7 +158,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 		ingest = await ingestWOF(db, {
 			dataDir,
-			concurrency: opts.concurrency,
+			...(opts.workers ? { workers: opts.workers } : {}),
 			batchCommitSize: opts.batchCommitSize,
 			// GeoNames-anchored label-point adjudication.
 			// Reads the same per-country extracts that fold-geonames consumes.
