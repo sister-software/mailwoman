@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "11.0.0",
+	"version": "11.1.0",
 	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
 	"homepage": "https://github.com/sister-software/mailwoman#readme",

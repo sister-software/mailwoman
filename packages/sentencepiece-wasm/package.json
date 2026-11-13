@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/sentencepiece-wasm",
-	"version": "11.0.0",
+	"version": "11.1.0",
 	"description": "google/sentencepiece v0.2.2 compiled to WASM with a native-offsets binding — the rollback tokenizer runtime for @mailwoman/neural, which runs on @mailwoman/mtf. An ESM loader with the wasm beside it, no runtime deps; per-piece byte offsets come from SentencePiece itself instead of TS-side reconstruction.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
