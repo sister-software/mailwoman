@@ -20,6 +20,16 @@ export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank"> &
  */
 export const PRIMARY_PREFERENCE_LOG10 = 1
 
+/**
+ * The alias penalty inside a stated region, larger than any log10 population gap.
+ *
+ * A query that states the region (`Junction, IL`) has already chosen among the world's namesakes,
+ * so a place whose primary name equals the query outranks every place that lists it as an alias.
+ * WOF `und` variant names include former names of absorbed communities, such as `Junction` on West
+ * Chicago, and a population gap between the two places is no evidence of which one the query means.
+ */
+export const REGION_PRIMARY_PREFERENCE_LOG10 = 100
+
 const SEAT_PLACETYPE = "locality"
 
 /**

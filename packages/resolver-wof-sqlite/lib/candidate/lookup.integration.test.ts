@@ -111,6 +111,10 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO spr VALUES (970, 'Yorkia', 'region', 'US', 42.9, -75.6, 40.5, -79.8, 45.0, -71.8, -1, 0);
 		INSERT INTO spr VALUES (971, 'Astorington', 'neighbourhood', 'US', 40.77, -73.92, 40.75, -73.94, 40.79, -73.90, -1, 0);
 		INSERT INTO spr VALUES (972, 'Astorington', 'locality', 'US', 46.19, -123.81, 46.1, -123.9, 46.3, -123.7, -1, 0);
+		-- The Junction, IL shape: inside one region, a town whose own name is 'Jundale' (53 people)
+		-- and a town 470 times larger that carries 'Jundale' as a former name.
+		INSERT INTO spr VALUES (980, 'Jundale', 'locality', 'US', 37.72, -88.24, 37.7, -88.3, 37.8, -88.2, -1, 0);
+		INSERT INTO spr VALUES (981, 'Westcago', 'locality', 'US', 41.89, -88.24, 41.8, -88.3, 42.0, -88.2, -1, 0);
 
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
@@ -141,6 +145,8 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO place_population VALUES (962, 250000);
 		INSERT INTO place_population VALUES (971, 78000);
 		INSERT INTO place_population VALUES (972, 10000);
+		INSERT INTO place_population VALUES (980, 53);
+		INSERT INTO place_population VALUES (981, 25116);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
@@ -158,6 +164,8 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO ancestors VALUES (951, 950, 'country');
 		INSERT INTO ancestors VALUES (961, 960, 'region');
 		INSERT INTO ancestors VALUES (971, 970, 'region');
+		INSERT INTO ancestors VALUES (980, 400, 'region');
+		INSERT INTO ancestors VALUES (981, 400, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEPARATOR}Moscow City');
@@ -172,6 +180,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		-- Thüringen→Thuringia class the fold-equality verdicts declare out of scope, bridged here by
 		-- the artifact's own alias keying.
 		INSERT INTO place_search VALUES (900, 'Thueria');
+		INSERT INTO place_search VALUES (981, 'Jundale');
 	`)
 
 	db.exec(`
@@ -271,6 +280,17 @@ describe("WOFCandidateTableLookup", () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		await expect(lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).resolves.toHaveLength(0)
+	})
+
+	test("inside a stated region, the town named by its own name outranks a larger town that carries it as an alias", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const [scoped] = await lk.findPlace({ text: "Jundale", placetype: "locality", parentID: 400 })
+		expect(scoped?.name).toBe("Jundale")
+
+		// Without a region, the alias still wins on population, as `LA` answers Los Angeles.
+		const [unscoped] = await lk.findPlace({ text: "Jundale", placetype: "locality" })
+		expect(unscoped?.name).toBe("Westcago")
 	})
 
 	test("resolves an alias row to the primary place", async () => {
