@@ -75,17 +75,25 @@ describe("splitTrailingUnit", () => {
 		expect(await split("SUITE B WESTGATE DRIVE", "US")).toBeNull()
 	})
 
-	it("splits a French building only when the street index holds the remaining street", async () => {
+	it("splits a French building off a street its leading type word confirms, and keeps an incomplete name whole", async () => {
 		const ban = index("FR", "Rue du General Charles de Gaulle")
+		const split_ = { street: "Rue du General Charles de Gaulle", unit: "Bat B", admittedBy: "street-word" }
 
-		expect(await split("Rue du General Charles de Gaulle Bat B", "FR", ban)).toEqual({
-			street: "Rue du General Charles de Gaulle",
+		expect(await split("Rue du General Charles de Gaulle Bat B", "FR", ban)).toEqual(split_)
+		expect(await split("Rue du General Charles de Gaulle Bat B", "FR")).toEqual(split_)
+		// `Chemin de la` ends in a function word, so `Tour D` stays in the street.
+		expect(await split("Chemin de la Tour D", "FR", ban)).toBeNull()
+	})
+
+	it("splits a French building off a street with no type word only when the street index holds it", async () => {
+		const ban = index("FR", "Résidence Les Pins")
+
+		expect(await split("Résidence Les Pins Bat B", "FR", ban)).toMatchObject({
+			street: "Résidence Les Pins",
 			unit: "Bat B",
-			admittedBy: "attested",
 		})
 
-		expect(await split("Rue du General Charles de Gaulle Bat B", "FR")).toBeNull()
-		expect(await split("Chemin de la Tour D", "FR", ban)).toBeNull()
+		expect(await split("Les Pins Bat B", "FR")).toBeNull()
 	})
 
 	it("matches a two-letter designator only in capitals", async () => {

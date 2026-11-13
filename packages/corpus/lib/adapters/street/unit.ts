@@ -37,9 +37,16 @@ export interface UnitVocabulary {
 	 */
 	suffix: ReadonlySet<string>
 	/**
-	 * Street-type words in the country's official languages, lower-cased (`street`, `rd`, `路`).
+	 * Street-type words in the country's official and regional languages,
+	 * lower-cased (`street`, `rd`, `avenida`, `路`).
 	 */
 	streetTypes: ReadonlySet<string>
+	/**
+	 * Function words in the country's official and regional languages, lower-cased (`de`, `la`, `of`).
+	 *
+	 * A street name ends in none of them, so `Chemin de la` reads as an incomplete street name.
+	 */
+	stopwords?: ReadonlySet<string>
 	/**
 	 * One-word directionals in the country's official languages, lower-cased (`n`, `sw`, `west`),
 	 * which can follow a street's type word or number (`HIGHWAY 6 N`, `CROWN RD SW`).
@@ -145,13 +152,18 @@ const CAPITALS_ONLY_LENGTH = 2
 const VOCABULARY_BY_COUNTRY = new Map<string, Promise<UnitVocabulary>>()
 
 /**
- * The libpostal languages a country writes: its official languages that have a dictionary directory.
+ * The libpostal languages a country writes that have a dictionary directory:
+ * its official languages, and its regional ones too when `withRegional` is set.
+ *
+ * Street names read in regional languages as well (Spanish `Avenida` in the United States),
+ * while unit words come from the official languages only.
  */
-async function libpostalLanguages(country: string): Promise<string[]> {
-	const official = OFFICIAL_LANGUAGES[country]?.official ?? []
+async function libpostalLanguages(country: string, withRegional = false): Promise<string[]> {
+	const record = OFFICIAL_LANGUAGES[country]
+	const written = [...(record?.official ?? []), ...(withRegional ? (record?.regional ?? []) : [])]
 	const languages: string[] = []
 
-	for (const language of official) {
+	for (const language of new Set(written)) {
 		if (language.length === 2 && (await tryStat(resourceDictionaryPath("libpostal", language, "street_types.txt")))) {
 			languages.push(language)
 		}
@@ -178,7 +190,9 @@ async function libpostalForms(languages: readonly string[], files: readonly stri
 
 async function buildVocabulary(country: string): Promise<UnitVocabulary> {
 	const languages = await libpostalLanguages(country)
-	const streetTypes = await libpostalForms(languages, ["street_types.txt"])
+	const streetLanguages = await libpostalLanguages(country, true)
+	const streetTypes = await libpostalForms(streetLanguages, ["street_types.txt"])
+	const stopwords = await libpostalForms(streetLanguages, ["stopwords.txt"])
 
 	const directionals = new Set(
 		[...(await libpostalForms(languages, ["directionals.txt"]))].filter((form) => !/\s/u.test(form))
@@ -212,7 +226,7 @@ async function buildVocabulary(country: string): Promise<UnitVocabulary> {
 			}
 		}
 
-		return { country, prefix, bare, suffix, streetTypes, directionals, origin: "codex" }
+		return { country, prefix, bare, suffix, streetTypes, stopwords, directionals, origin: "codex" }
 	}
 
 	// libpostal lists some unit words among the street-line words too
@@ -239,6 +253,7 @@ async function buildVocabulary(country: string): Promise<UnitVocabulary> {
 		prefix,
 		suffix,
 		streetTypes,
+		stopwords,
 		directionals,
 		origin: prefix.size + suffix.size > 0 ? "libpostal" : "none",
 	}
@@ -398,6 +413,14 @@ function streetEvidence(remainder: string, context: TrailingUnitContext): Traili
 	}
 
 	if (/\d/u.test(last)) return "number"
+
+	// A street whose type word comes first (`Avenida Ponce de Leon`, `Calle Luna`)
+	// when the name after it is whole.
+	// A remainder that ends in a function word (`Chemin de la`) is an incomplete name,
+	// so the split is refused.
+	if (words.length > 1 && context.vocabulary.streetTypes.has(words[0]!) && !context.vocabulary.stopwords?.has(last)) {
+		return "street-word"
+	}
 
 	const scope = {
 		...(context.locality ? { locality: context.locality } : {}),

@@ -152,6 +152,13 @@ describe("US street lines through the shared splitter", () => {
 		expect(split("OCEAN FRONT")).toBeNull()
 	})
 
+	it("splits a unit off a street whose Spanish type word comes first", () => {
+		expect(split("Avenida Ponce de Leon Suite A")).toEqual({ street: "Avenida Ponce de Leon", unit: "Suite A" })
+		expect(split("Calle Pimentel Suite 1")).toEqual({ street: "Calle Pimentel", unit: "Suite 1" })
+		// A remainder ending in a function word is an incomplete name, so the words stay in the street.
+		expect(split("Camino del Suite 2")).toBeNull()
+	})
+
 	it("ends the street at a word that's both a directional and a street type", () => {
 		expect(split("Cummings Center Suite 108F")).toEqual({ street: "Cummings Center", unit: "Suite 108F" })
 	})
