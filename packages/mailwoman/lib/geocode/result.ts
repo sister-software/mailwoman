@@ -4,6 +4,7 @@
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
+import { isPresent } from "@mailwoman/core/objects"
 import { landmarkPlaceID } from "@mailwoman/core/resolver"
 import { segment } from "@mailwoman/query-shape/segmentation"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
@@ -136,12 +137,12 @@ function adminPriorityFor(allNodes: readonly AddressNode[]): ReadonlyArray<strin
 function venueWordsLast(nodes: readonly AddressNode[], input: string): AddressNode[] {
 	const segments = segment(input)
 		.map(({ body }) => normalizeLocalityForKey(body))
-		.filter(Boolean)
+		.filter(isPresent)
 
 	const venues = nodes
 		.filter((node) => node.tag === "venue")
 		.map((node) => normalizeLocalityForKey(node.value))
-		.filter(Boolean)
+		.filter(isPresent)
 
 	if (!venues.length) return [...nodes]
 
