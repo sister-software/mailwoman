@@ -20,12 +20,12 @@ import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { expect, test } from "vitest"
 
 import { BODIES } from "#bodies"
-import { buildHillshadePMTiles } from "#build/hillshade"
+import { buildHillshadePMTiles, resolveOSGeoInterpreter } from "#build/hillshade"
 import { emitManifest } from "#build/manifest"
 import { applyPMTilesMetadata, hillshadeMetadata, nomenclatureMetadata, readMailwomanMetadata } from "#build/metadata"
 import { buildNomenclaturePMTiles, minZoomForDiameter, writeNomenclatureNDJSON } from "#build/nomenclature"
@@ -145,11 +145,17 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 	// decimate the pyramid, convert.
 	// The archive stores height rather than a shaded picture.
 	// The shading happens at draw time, so each body can be tinted from its style without `gdaldem`.
-	expect(commands.map((command) => command[0])).toEqual([
+	// Each terrarium band runs `gdal_calc` as a module through the interpreter that imports `osgeo`.
+	const python = await resolveOSGeoInterpreter()
+
+	const tool = (command: readonly PathBuilderLike[]) =>
+		command[0] === python ? `${python} -m ${String(command[2])}` : String(command[0])
+
+	expect(commands.map(tool)).toEqual([
 		"gdal_translate",
-		"gdal_calc.py",
-		"gdal_calc.py",
-		"gdal_calc.py",
+		`${python} -m osgeo_utils.gdal_calc`,
+		`${python} -m osgeo_utils.gdal_calc`,
+		`${python} -m osgeo_utils.gdal_calc`,
 		"gdalbuildvrt",
 		"gdal_translate",
 		"gdal_translate",
