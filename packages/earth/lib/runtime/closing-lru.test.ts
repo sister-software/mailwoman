@@ -48,7 +48,7 @@ describe("ClosingLRU", () => {
 		const ca = await cache.get("ca", open("ca"))
 		const ny = await cache.get("ny", open("ny"))
 
-		// Reading `ca` again makes `ny` the least recently used.
+		// A second read of `ca` makes `ny` the least recently used.
 		await cache.get("ca", open("ca"))
 		await cache.get("fr", open("fr"))
 		await Promise.resolve()

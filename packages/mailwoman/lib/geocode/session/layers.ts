@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The optional layers a geocode session opens from the data root: the observation
- *   routes over the sealed flood, soil, coastal and zoning layers, and the fork-to-entity
- *   probe over `poi.db`, the rail-station layer, the post-office layer and the landmark layer.
+ *   The optional layers a geocode session opens from the data root: the observation routes
+ *   over the sealed flood, soil, coastal and zoning layers, and the fork-to-entity probe
+ *   over `poi.db`, the rail-station layer, the post-office layer and the landmark layer.
  *
  *   Each loader answers an absent layer with `null` or an empty dependency set.
  */

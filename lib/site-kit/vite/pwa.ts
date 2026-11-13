@@ -31,8 +31,8 @@ export interface PWAIdentity {
 	/**
 	 * The manifest `description`.
 	 *
-	 * Without it `vite-plugin-pwa` copies the workspace's `package.json` description,
-	 * which is written for developers.
+	 * Without it `vite-plugin-pwa` copies the workspace's `package.json` description.
+	 * That description is written for developers.
 	 */
 	description?: string
 	categories?: string[]

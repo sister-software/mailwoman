@@ -7,7 +7,7 @@
  *   Earth opens a range-read database per street extract.
  *   Each one holds a worker with its own sqlite-wasm heap and chunk cache.
  *
- *   Keeping every extract a session touched would add one worker per region visited.
+ *   A cache that kept every extract a session touched would add one worker per region visited.
  */
 
 /**
@@ -71,7 +71,7 @@ export class ClosingLRU<V extends Closable> {
 		const held = this.#entries.get(key)
 
 		if (held) {
-			// Reinserting moves the key to the most recently used end of the map's insertion order.
+			// A delete and set moves the key to the most recently used end of the map's insertion order.
 			this.#entries.delete(key)
 			this.#entries.set(key, held)
 

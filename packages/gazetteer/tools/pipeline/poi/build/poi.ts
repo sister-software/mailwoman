@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds and seals the `poi.db` layer from Overture Places or OSM rows, and any POI-shaped layer
- *   whose caller states its own manifest terms.
+ *   Builds and seals the `poi.db` layer from Overture Places or OSM rows,
+ *   and any POI-shaped layer whose caller states its own manifest terms.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

@@ -44,7 +44,7 @@ export interface TornBodyPluginOptions {
  *
  * The clone's chunks are counted as they arrive and then dropped, so measuring a
  * 30 MB model assembles no second contiguous buffer.
- * Counting stops early once the body is longer than `expected`.
+ * The count stops early once the body is longer than `expected`.
  */
 async function bodyHasLength(response: Response, expected: number): Promise<boolean> {
 	const body = response.clone().body

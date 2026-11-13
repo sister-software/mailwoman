@@ -738,7 +738,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	/**
 	 * Pauses or resumes fetching tiles the view is missing.
 	 *
-	 * Resuming repaints the map, so the next frame requests what the view needs.
+	 * A resume repaints the map, so the next frame requests what the view needs.
 	 */
 	setFetching(fetching: boolean): void {
 		if (fetching === this.#fetching) return

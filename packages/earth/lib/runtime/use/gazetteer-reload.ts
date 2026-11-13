@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Reloading one half of the local geocoding stack: the gazetteer while the classifier
- *   stays loaded, or the classifier while the gazetteer stays open.
+ *   Hooks that reload one half of the local geocoding stack: the gazetteer while the
+ *   classifier stays loaded, or the classifier while the gazetteer stays open.
  */
 
 import type { AssetsLoadContext } from "@mailwoman/react"
