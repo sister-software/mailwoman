@@ -5,10 +5,12 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import semver from "semver"
 
 import { bumpReleaseConfigVersion } from "#release-kit/release/config-version"
+import { bumpPublicCodeVersion } from "#release-kit/release/publiccode-version"
 import { releaseWorkspaces } from "#release-kit/release/stage"
 
 /**
@@ -22,6 +24,11 @@ export interface PrepareReleaseVersionOptions {
 	version: string
 	checkOnly: boolean
 	log: (line: string) => void
+	/**
+	 * The `YYYY-MM-DD` date written to `publiccode.yml`'s `releaseDate`;
+	 * today's UTC date unless a test passes one.
+	 */
+	releaseDate?: string
 }
 
 /**
@@ -33,8 +40,8 @@ export interface PrepareReleaseVersionReport {
 	resolvedVersion: string
 
 	/**
-	 * The number of versioned files written, counting the root, each release workspace
-	 * and `release.config.json`; zero under `checkOnly`.
+	 * The number of versioned files written, counting the root, each release workspace,
+	 * `release.config.json` and `publiccode.yml`; zero under `checkOnly`.
 	 */
 	filesWritten: number
 }
@@ -44,7 +51,8 @@ function fail(message: string): never {
 }
 
 /**
- * Bumps the root manifest, every release workspace manifest and `release.config.json` to one target version.
+ * Bumps the root manifest, every release workspace manifest, `release.config.json`
+ * and `publiccode.yml` to one target version, and sets `publiccode.yml`'s release date.
  *
  * @throws When the target isn't greater than the current version, or when any of
  * those files already disagree on the current version.
@@ -120,6 +128,16 @@ export async function prepareReleaseVersion(
 		)
 	}
 
+	const publicCodePath = resolvePath(repoRoot, "publiccode.yml")
+
+	// Computed before any write, so a publiccode.yml the bump can't edit refuses the whole bump.
+	const publicCodeText = bumpPublicCodeVersion(
+		await readLocalTextFile(publicCodePath),
+		rootManifest.version,
+		targetVersion,
+		options.releaseDate ?? isoDate()
+	)
+
 	let filesWritten = 0
 
 	if (!options.checkOnly) {
@@ -133,10 +151,12 @@ export async function prepareReleaseVersion(
 			releaseConfigPath
 		)
 
-		filesWritten = parsed.length + 1
+		await writeLocalTextFile(publicCodeText, publicCodePath)
+
+		filesWritten = parsed.length + 2
 
 		log(
-			`bumped ${filesWritten} versioned files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
+			`bumped ${filesWritten} versioned files (root + ${workspaces.length} workspaces + release.config.json + publiccode.yml) to ${targetVersion}`
 		)
 	}
 

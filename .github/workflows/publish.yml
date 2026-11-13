@@ -149,7 +149,7 @@ jobs:
           # The explicit release allowlist (#1891): versioned manifests + the generated
           # surfaces the bump stales. Anything else dirty is a fault to surface, never to ship —
           # a release commit that silently includes an unexpected file is how drift hides.
-          git add package.json '*/package.json' release.config.json \
+          git add package.json '*/package.json' release.config.json publiccode.yml \
             packages/mailwoman/man/mailwoman.1 docs/articles/reference/cli.mdx \
             'packages/neural-weights-*/PROVENANCE.json' 'packages/neural-weights-*/LICENSE.md'
           UNEXPECTED=$(git status --porcelain --untracked-files=no | grep -v '^[AMDR]' || true)
