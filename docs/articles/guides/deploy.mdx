@@ -1,76 +1,64 @@
 ---
 title: Deploy the server in a container
-description: Build a container image from the published 11.0.0 packages, mount pulled data read-only, check readiness, and size the container.
+description: Run the published Mailwoman container image with pulled data mounted read-only, check readiness, and size the container.
 role: guide
-verified-with: mailwoman v11.0.0
+verified-with: mailwoman v11.1.0
 ---
 
 # Deploy the server in a container
 
-Use this procedure to run the native Mailwoman HTTP server in a container. You build an image that installs the published 11.0.0 packages, and you mount the geographic data into it read-only. The model weights install with the packages, so the image needs no other model download.
+Use this procedure to run the native Mailwoman HTTP server from the published container image, `ghcr.io/sister-software/mailwoman`. The image installs the published packages at its tag's version and includes the model weights. You mount the geographic data into it read-only.
 
-The container registry image `ghcr.io/sister-software/mailwoman` has only the tags `7.3.0` and `latest`, both from the 7.3.0 release. This guide builds its own 11.0.0 image instead. The commands were run with Podman. Docker accepts the same `Dockerfile` and the same `build` and `run` arguments.
+Each release publishes an image tagged with its version, such as `11.1.0`, and moves `latest` to it. The commands below were run with Podman. Docker accepts the same `pull` and `run` arguments.
 
 ## Prerequisites
 
-- Podman or Docker on `linux/amd64`. The `onnxruntime-node` dependency installs prebuilt glibc binaries, so the image uses a Debian-based Node.js image rather than Alpine.
-- A data root populated with `mailwoman data pull`. [Install, check, roll back and prune local data](./operate-data.mdx) covers the pull. The example mounts the global place candidates and the Washington, DC address points.
+- Podman or Docker on `linux/amd64`. The image is published for that platform only, because the `onnxruntime-node` dependency ships prebuilt glibc x64 binaries.
+- A data root populated with `mailwoman data pull`. [Install, check, roll back and prune local data](./operate-data.mdx) covers the pull.
 
-## 1. Write the Dockerfile
+## 1. Pull the data
 
-Save this file as `Dockerfile` in an empty directory:
-
-```dockerfile
-FROM node:24.22.1-slim
-
-# onnxruntime-node links the OpenMP runtime for threaded inference.
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends libgomp1 \
-	&& rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-RUN npm init -y > /dev/null \
-	&& npm install --omit=dev --no-audit --no-fund \
-		mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 \
-	&& npm cache clean --force
-
-ENV MAILWOMAN_DATA_ROOT=/data
-USER node
-EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-	CMD ["node", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-
-CMD ["node", "node_modules/mailwoman/out/cli/main.js", "serve", "--port", "3000", "--host", "0.0.0.0", "--cpus", "1"]
-```
-
-The three Mailwoman package versions are pinned. Their dependencies resolve when the image is built, because the Dockerfile installs without a lockfile. The server runs as the image's unprivileged `node` user, with one worker process. `--cpus 1` keeps one container to one worker. Run more containers for more throughput.
-
-## 2. Build the image
+The example installs the global place candidates and the Washington, DC address points into a data root of its own:
 
 ```bash
-podman build -t mailwoman:11.0.0 .
+npx mailwoman@11.1.0 data pull candidate --data-root ./mailwoman-data
+npx mailwoman@11.1.0 data pull us --only dc --data-root ./mailwoman-data
 ```
 
-The build installed 318 packages, and the image measured 1.09 GB. Podman's default OCI image format ignores `HEALTHCHECK` and prints a warning. Build with `--format docker` to keep it, or define the check in your orchestrator, as step 4 shows.
+`--only` filters every bundle in the same command, so the candidate bundle is pulled on its own. On the host used for this page, the candidate pull took 672 s and the DC pull took 23 s.
+
+## 2. Pull the image
+
+```bash
+podman pull ghcr.io/sister-software/mailwoman:11.1.0
+```
+
+The image measured 1.09 GB. It runs as the unprivileged `node` user, reads its data from `/data`, and serves the native `/v1` API on port 3000.
 
 ## 3. Run the container with read-only data
-
-The server exits with status 1 when it finds neither a candidate database nor a Who's On First database, so a container started without data stops immediately. Its log shows the reason:
-
-```text
-✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.
-```
 
 Mount the data root read-only at `/data`:
 
 ```bash
 podman run -d --name mailwoman -p 127.0.0.1:3000:3000 \
-	-v "$MAILWOMAN_DATA_ROOT":/data:ro \
-	mailwoman:11.0.0
+	-v "$PWD/mailwoman-data":/data:ro \
+	ghcr.io/sister-software/mailwoman:11.1.0
 ```
 
-The tested run mounted the DC address points from a pulled data root, and mounted the candidate database from a separate path with `-v <candidate.db>:/candidate/candidate.db:ro -e MAILWOMAN_CANDIDATE_DB=/candidate/candidate.db`. When `candidate` is pulled into the same data root, the server should find it without that variable, but that layout wasn't tested in a container. A symbolic link inside the mounted directory must point to a path that also exists inside the container. A link to a host path appears missing inside the container.
+The server reads the pull's selection from the data root and found the candidate database without any other setting:
+
+```text
+[mailwoman] gazetteer found — /v1/geocode + /v1/batch enabled (data root: /data)
+[mailwoman] native /v1 API listening on http://0.0.0.0:3000
+```
+
+A container started without data keeps running and parses addresses, and its `/v1/geocode` and `/v1/batch` endpoints answer 503. Its log states the cause:
+
+```text
+[mailwoman] no gazetteer at /data — booting parse-only (/v1/geocode + /v1/batch answer 503).
+```
+
+A symbolic link inside the mounted directory must point to a path that also exists inside the container. A link to a host path appears missing inside the container.
 
 `:ro` works with the published data files. The published DC and US Virgin Islands address-point files use SQLite's rollback journal, and the server opened them read-only. A database in write-ahead-log (WAL) mode needs its `-shm` file to be read from a read-only mount. On the host used for this page, a locally built DC file in WAL mode answered at the `admin` tier instead of `address_point`, with no error. If you build your own data, check that each file uses a rollback journal before mounting it read-only.
 
@@ -84,18 +72,24 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/health
 200
 ```
 
-A 200 from `/health` means the server answered. It doesn't prove that geocoding reaches address points, so send one known address after each deployment:
+A 200 from `/health` means the server answered, and a container without data answers it too. Send one known address after each deployment to check that geocoding reaches the address points:
 
 ```bash
 curl -s -X POST http://127.0.0.1:3000/v1/geocode -H "content-type: application/json" -d '{"address":"1600 Pennsylvania Ave NW, Washington, DC 20500"}'
 ```
 
-The container returned `"resolution_tier":"address_point"` with `"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"}`. A result at the `admin` tier for an address your data covers means the server didn't read the address points. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) shows complete responses.
+The container returned `"resolution_tier":"address_point"` with `"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"}`. A 503 means the server found no gazetteer under `/data`. A result at the `admin` tier for an address your data covers means the server didn't read the address points. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) shows complete responses.
+
+The image's `Dockerfile` declares a `HEALTHCHECK` against `/health`. The published image is stored in the OCI format, and that format has no health-check field. Podman reported no health check on the pulled image. Define the check in your orchestrator.
 
 ## 5. Size the container
 
-After one geocode, `podman stats` reported 452.5 MB of memory for the running container. On the same host, a server run outside a container measured about 607 MB across its manager and worker processes. Each is one measurement on one Linux host, so allow headroom and measure under your own load. Data files are read from the mount rather than copied, so disk use inside the container stays at the image size.
+After one geocode, `podman stats` reported 383.9 MB of memory for the running container. It's one measurement on one Linux host, so allow headroom and measure under your own load. Data files are read from the mount rather than copied, so disk use inside the container stays at the image size.
+
+## Run a compatible server or build your own image
+
+The image also installs the Nominatim, Photon and libpostal servers. To run one, override the command, for example with `node node_modules/@mailwoman/nominatim/out/cli/main.js`. The repository's `Dockerfile` lists each server's command and port, and `docker/docker-compose.yml` runs them. To build an image from a checkout, run `podman build --build-arg MAILWOMAN_VERSION=11.1.0 -t mailwoman:11.1.0 .` at the repository root.
 
 ## Not covered
 
-A serverless deployment wasn't tested, and neither were the compatibility servers in a container. To run the Nominatim, Photon or libpostal server, install its package in the Dockerfile and change `CMD`. [Point a Nominatim, Photon or libpostal client at Mailwoman](./use-a-compatible-http-client.mdx) gives each server's command. [Choose a deployment](/product/deployment) compares the library, browser and server options.
+A serverless deployment wasn't tested, and neither were the compatibility servers in a container. [Point a Nominatim, Photon or libpostal client at Mailwoman](./use-a-compatible-http-client.mdx) gives each server's command. [Choose a deployment](/product/deployment) compares the library, browser and server options.
