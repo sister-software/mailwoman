@@ -61,6 +61,29 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 		expect(m.releases[0]).toMatchObject({ hasFST: false, hasWOFDB: false })
 	})
 
+	test("an entry's artifacts table is read, and an entry published before the field has none", () => {
+		const sha256 = "a".repeat(64)
+
+		const m = normalizeReleasesManifest({
+			locale: "en-us",
+			defaultVersion: "vX",
+			releases: [entry({ artifacts: { "model.onnx": { bytes: 12, sha256 } } }), entry({ version: "vOld" })],
+		})
+
+		expect(m.releases[0]!.artifacts).toEqual({ "model.onnx": { bytes: 12, sha256 } })
+		expect(m.releases[1]!.artifacts).toBeUndefined()
+	})
+
+	test("a malformed artifacts table is refused with the release it belongs to", () => {
+		expect(() =>
+			normalizeReleasesManifest({
+				locale: "en-us",
+				defaultVersion: "vX",
+				releases: [entry({ artifacts: { "model.onnx": { bytes: 12 } } })],
+			})
+		).toThrow(/releases\.json entry vX: artifacts\["model\.onnx"\]/)
+	})
+
 	test("absent keys default false, never undefined (the silent-disable failure mode)", () => {
 		const m = normalizeReleasesManifest({ locale: "en-us", defaultVersion: "vX", releases: [entry({})] })
 

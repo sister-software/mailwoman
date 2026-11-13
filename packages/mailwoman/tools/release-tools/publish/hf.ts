@@ -7,12 +7,15 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { runProcess } from "@mailwoman/core/process"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { basename, type PathBuilderLike } from "path-ts"
+
+import type { ArtifactIntegrityTable } from "#browser-runtime/integrity"
 
 type RequiredFileOption = "model" | "tokenizer" | "char-vocab" | "model-card"
 
@@ -217,6 +220,46 @@ async function verifyFlatByBasename(paths: string[], remoteBase: string): Promis
 
 		console.error(`  ✓ ${url}`)
 	}
+}
+
+/**
+ * One file the publisher uploads into a release directory: the name it is served under
+ * and the local file it was copied from.
+ */
+export interface ReleaseUpload {
+	remoteName: string
+	localPath: string
+}
+
+/**
+ * The `artifacts` field of a release entry: the byte length and SHA-256 digest
+ * of each uploaded file, keyed by its served name.
+ *
+ * The browser loader checks each download against these values.
+ * Each value is measured from the exact local file that was uploaded.
+ *
+ * @throws When two uploads with different contents share a served name.
+ * The later upload replaces the earlier one, so a single record cannot describe both.
+ */
+export async function releaseArtifactIntegrity(uploads: readonly ReleaseUpload[]): Promise<ArtifactIntegrityTable> {
+	const table: ArtifactIntegrityTable = {}
+
+	for (const { remoteName, localPath } of uploads) {
+		const measured = { bytes: (await statPath(localPath)).size, sha256: await sha256File(localPath) }
+		const earlier = table[remoteName]
+
+		if (earlier && earlier.sha256 !== measured.sha256) {
+			throw new Error(`two uploads with different contents are served as ${remoteName}, the last from ${localPath}`)
+		}
+
+		table[remoteName] = measured
+	}
+
+	return table
+}
+
+function uploadsByBasename(paths: readonly string[]): ReleaseUpload[] {
+	return paths.map((localPath) => ({ remoteName: localPath.split("/").pop()!, localPath }))
 }
 
 async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
@@ -462,6 +505,29 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await verifyFlatByBasename(splitEmbeddingFiles, remoteBase)
 
+	// Every file uploaded into the release directory above, in upload order.
+	const optionalUploads: Array<[string, string | null]> = [
+		[fstRemoteName, fstPath],
+		["anchor-lexicon-v1.json", gazetteerLexicon],
+		["country-surface-lexicon-v1.json", countryLexicon],
+		["street-type-lexicon-v3.json", streetTypeLexicon],
+		[localitySurfaceLexicon ? basename(localitySurfaceLexicon) : "", localitySurfaceLexicon],
+		["wof-polygons.db", polygonsDB],
+	]
+
+	const uploads: ReleaseUpload[] = [
+		...requiredFilesFor(args).map((f) => ({ remoteName: f.remoteName, localPath: args[OPTION_TO_FIELD[f.option]]! })),
+		...uploadsByBasename([
+			...postcodeBins,
+			...postcodePrefixBins,
+			...postcodeCentroidBins,
+			...pairIndexBins,
+			...fstBins,
+		]),
+		...optionalUploads.flatMap(([remoteName, localPath]) => (localPath ? [{ remoteName, localPath }] : [])),
+		...uploadsByBasename([...fisherArtifacts, ...splitEmbeddingFiles]),
+	]
+
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await hfClient.fetch<ReleaseManifest>({ url: releasesURL, validateStatus: () => true })
 
@@ -501,6 +567,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		postcodeCentroids: postcodeCentroidBins.map((localPath) => localPath.split("/").pop()!),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 		splitEmbeddings: splitEmbeddingFiles.length > 0,
+		artifacts: await releaseArtifactIntegrity(uploads),
 	}
 
 	for (const flag of ["hasAnchor", "hasPolygons"]) {

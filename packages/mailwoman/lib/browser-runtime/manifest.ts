@@ -13,6 +13,7 @@ import type { FamilyEncoder } from "@mailwoman/neural/weights/families"
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithRetry } from "#browser-runtime/fetch"
+import { type ArtifactIntegrityTable, readArtifactIntegrityTable } from "#browser-runtime/integrity"
 import { pairIndexBaseURL, pairIndexManifestURL, releasesManifestURL } from "#browser-runtime/resources"
 
 export interface ReleaseInfo {
@@ -74,6 +75,13 @@ export interface ReleaseInfo {
 	 * A runtime lacking one cannot load the release.
 	 */
 	requiresRuntime?: string[]
+	/**
+	 * The byte length and SHA-256 digest of each file the release directory holds, keyed by file name.
+	 *
+	 * The loader checks each download it makes from the release directory against its record.
+	 * An entry published before the field has none, and its downloads are not checked.
+	 */
+	artifacts?: ArtifactIntegrityTable
 }
 
 /**
@@ -141,7 +149,11 @@ export interface ReleasesManifest {
 /**
  * The raw wire shape of one releases.json entry — either key generation may appear.
  */
-export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB"> {
+export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB" | "artifacts"> {
+	/**
+	 * The integrity records as published, validated by {@linkcode readArtifactIntegrityTable}.
+	 */
+	artifacts?: unknown
 	hasFST?: boolean
 	hasWOFDB?: boolean
 	/**
@@ -206,8 +218,9 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 	return {
 		locale: raw.locale,
 		defaultVersion,
-		releases: raw.releases.map((r) => ({
+		releases: raw.releases.map(({ artifacts, ...r }) => ({
 			...r,
+			artifacts: readArtifactIntegrityTable(artifacts, r.version),
 			hasFST: r.hasFST ?? r.hasFst ?? false,
 			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes
 			// `hasWOFDb` — WOF caps, lowercase b.
