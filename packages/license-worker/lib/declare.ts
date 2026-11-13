@@ -25,6 +25,7 @@ import { daysBetween, expiryForIntent } from "#expiry"
 import { newClaimID, newIssuanceID, newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {
+	claimIssuanceEmail,
 	clearDeclarationPendingSecret,
 	createDeclaration,
 	currentIssuance,
@@ -127,10 +128,18 @@ async function mintIssuance(
 export type IssuanceEmailDependencies = Pick<DeclarationDependencies, "ledger" | "email" | "now">
 
 /**
+ * What one issuance send attempt came to.
+ */
+export type IssuanceSendResult = "sent" | "failed" | "skipped" | "held"
+
+/**
  * Send an issuance to the declaration's address and record the result.
  *
  * An open-source declaration has no address, because its token was answered
  * in the response, so it skips the send.
+ * `held` means another caller wrote `email_claimed_at` first, or the row left the
+ * state this caller read, so this caller sent no message.
+ *
  * A sent message included the declaration's pending refresh secret.
  * The ledger then clears that secret.
  */
@@ -139,8 +148,18 @@ async function emailIssuance(
 	declaration: DeclarationRow,
 	issuance: IssuanceRow,
 	refreshSecret: string | null
-): Promise<"sent" | "failed" | "skipped"> {
+): Promise<IssuanceSendResult> {
 	if (!declaration.email) return "skipped"
+
+	// The email provider binding takes no idempotency key, so the claim decides which of two callers sends.
+	const claim = await claimIssuanceEmail(
+		deps.ledger,
+		issuance.issuance_id,
+		issuance.email_state,
+		(deps.now ?? Date.now)()
+	)
+
+	if (claim === "held") return "held"
 
 	const carrier = issuanceEmailCarrier(deps.ledger, issuance.issuance_id)
 
@@ -190,7 +209,7 @@ export function resendIssuanceEmail(
 	deps: IssuanceEmailDependencies,
 	declaration: DeclarationRow,
 	issuance: IssuanceRow
-): Promise<"sent" | "failed" | "skipped"> {
+): Promise<IssuanceSendResult> {
 	return emailIssuance(deps, declaration, issuance, declaration.refresh_secret_pending)
 }
 

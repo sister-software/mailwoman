@@ -56,6 +56,10 @@ interface LicenseTokensTable {
 	token: string
 	email_state: Generated<EmailState>
 	email_message_id: string | null
+	/**
+	 * The ISO instant a caller claimed this row's email send, cleared when the outcome is recorded.
+	 */
+	email_claimed_at: string | null
 	created_at: Generated<string>
 }
 
@@ -107,6 +111,10 @@ interface IssuancesTable {
 	token: string
 	email_state: Generated<EmailState>
 	email_message_id: string | null
+	/**
+	 * The ISO instant a caller claimed this row's email send, cleared when the outcome is recorded.
+	 */
+	email_claimed_at: string | null
 	created_at: Generated<string>
 }
 
@@ -184,6 +192,7 @@ export const LEDGER_COLUMNS: LedgerColumns = {
 		token: "required",
 		email_state: "generated",
 		email_message_id: "nullable",
+		email_claimed_at: "nullable",
 		created_at: "generated",
 	},
 	stripe_events: {
@@ -221,6 +230,7 @@ export const LEDGER_COLUMNS: LedgerColumns = {
 		token: "required",
 		email_state: "generated",
 		email_message_id: "nullable",
+		email_claimed_at: "nullable",
 		created_at: "generated",
 	},
 	downloads: {

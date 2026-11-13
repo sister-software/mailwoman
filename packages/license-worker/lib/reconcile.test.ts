@@ -10,7 +10,13 @@ import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
 import { currentIssuance, findDeclaration } from "#ledger/declarations"
-import { findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
+import {
+	claimTokenEmail,
+	EMAIL_CLAIM_LEASE_MS,
+	findLicenseBySubscription,
+	findToken,
+	setEmailState,
+} from "#ledger/licenses"
 import { reconcileLedger } from "#reconcile"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
@@ -373,7 +379,7 @@ describe("reconciliation", () => {
 		expect((await findLicenseBySubscription(canceled.ledger, "sub_16"))?.license_state).toBe("active")
 	})
 
-	it("a provider refusal and a send the ledger could not record are reported as different failures", async () => {
+	it("a provider refusal and an unwritable ledger are reported as different failures", async () => {
 		const { worker, stripe, ledger } = await fixture("17", { listInvoices: false })
 		const accepting = recordingEmail()
 
@@ -408,8 +414,59 @@ describe("reconciliation", () => {
 			reason: "D1 refused the write",
 		})
 
-		expect(accepting.sent.filter((key) => key === "in_17")).toHaveLength(2)
+		// The send claim is a ledger write, so a ledger that refuses writes stops the pass before the provider call.
+		expect(accepting.sent.filter((key) => key === "in_17")).toHaveLength(1)
 		expect((await findToken(ledger, "in_17"))?.email_state).toBe("failed")
+	})
+
+	it("sends one message when two passes find the same unsent token", async () => {
+		const { worker, stripe, ledger } = await fixture("31", { listInvoices: false })
+		const first = recordingEmail()
+
+		await fulfilInvoice(worker, { stripe, ledger, email: first.provider }, "in_31")
+		await setEmailState(ledger, "in_31", { from: "sent", to: "failed" }, null)
+
+		const racing = recordingEmail()
+		const deps = { stripe, ledger, email: racing.provider }
+
+		await Promise.all([
+			reconcileLedger(worker, deps, { sinceSeconds: WEEK }),
+			reconcileLedger(worker, deps, { sinceSeconds: WEEK }),
+		])
+
+		expect(racing.sent.filter((key) => key === "in_31")).toHaveLength(1)
+		expect((await findToken(ledger, "in_31"))?.email_state).toBe("sent")
+	})
+
+	it("takes over a send claim older than the lease", async () => {
+		const { worker, stripe, ledger } = await fixture("33", { listInvoices: false })
+		const first = recordingEmail()
+		const start = Date.parse("2026-11-13T12:00:00Z")
+
+		await fulfilInvoice(worker, { stripe, ledger, email: first.provider }, "in_33")
+		await setEmailState(ledger, "in_33", { from: "sent", to: "failed" }, null)
+
+		// A worker that claimed the send and stopped before recording an outcome.
+		await expect(claimTokenEmail(ledger, "in_33", "failed", start)).resolves.toBe("claimed")
+
+		const retry = recordingEmail()
+
+		await reconcileLedger(
+			worker,
+			{ stripe, ledger, email: retry.provider, now: () => start + EMAIL_CLAIM_LEASE_MS - 1 },
+			{ sinceSeconds: WEEK }
+		)
+
+		expect(retry.sent.filter((key) => key === "in_33")).toHaveLength(0)
+
+		await reconcileLedger(
+			worker,
+			{ stripe, ledger, email: retry.provider, now: () => start + EMAIL_CLAIM_LEASE_MS + 1 },
+			{ sinceSeconds: WEEK }
+		)
+
+		expect(retry.sent.filter((key) => key === "in_33")).toHaveLength(1)
+		expect((await findToken(ledger, "in_33"))?.email_state).toBe("sent")
 	})
 
 	it("mints a known subscription's latest paid invoice that the listed window no longer holds", async () => {

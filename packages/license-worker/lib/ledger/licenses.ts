@@ -221,12 +221,59 @@ export async function setEmailState(
 ): Promise<"updated" | "conflict"> {
 	const result = await ledger
 		.updateTable("license_tokens")
-		.set({ email_state: transition.to, ...(messageID ? { email_message_id: messageID } : {}) })
+		.set({
+			email_state: transition.to,
+			email_claimed_at: null,
+			...(messageID ? { email_message_id: messageID } : {}),
+		})
 		.where("invoice_id", "=", invoiceID)
 		.where("email_state", "=", transition.from)
 		.executeTakeFirst()
 
 	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
+}
+
+/**
+ * Claim a token's email send before calling the provider.
+ *
+ * The write updates the row only while it holds `from` and its `email_claimed_at` is empty
+ * or older than {@link EMAIL_CLAIM_LEASE_MS}.
+ * `"held"` means another caller claimed the send, or the row has left `from`,
+ * and this caller sends no message.
+ */
+export async function claimTokenEmail(
+	ledger: Ledger,
+	invoiceID: string,
+	from: EmailState,
+	now: number
+): Promise<"claimed" | "held"> {
+	const { at, staleBefore } = emailClaimWindow(now)
+
+	const result = await ledger
+		.updateTable("license_tokens")
+		.set({ email_claimed_at: at })
+		.where("invoice_id", "=", invoiceID)
+		.where("email_state", "=", from)
+		.where((row) => row.or([row("email_claimed_at", "is", null), row("email_claimed_at", "<", staleBefore)]))
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "claimed" : "held"
+}
+
+/**
+ * How long a send claim excludes other callers.
+ *
+ * A provider call takes seconds, so a claim this old belongs to a worker that stopped
+ * before it recorded an outcome.
+ */
+export const EMAIL_CLAIM_LEASE_MS = 15 * 60_000
+
+/**
+ * The instant a claim records, and the instant before which an earlier claim
+ * has lapsed, both as ISO strings.
+ */
+export function emailClaimWindow(now: number): { at: string; staleBefore: string } {
+	return { at: new Date(now).toISOString(), staleBefore: new Date(now - EMAIL_CLAIM_LEASE_MS).toISOString() }
 }
 
 /**

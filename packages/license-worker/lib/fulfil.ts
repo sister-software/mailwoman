@@ -14,10 +14,10 @@
  *   Two events for one payment produce one token in either order.
  *   Two callers racing for one invoice or subscription receive defined answers, with one row between them.
  *
- *   The keys do not prevent duplicate email.
- *   The losing caller can find the winner's token while its email is pending and send it too.
+ *   The losing caller can find the winner's token while its email is pending.
+ *   Each caller writes `email_claimed_at` on the token row before it calls the provider.
  *
- *   The provider's idempotency key closes that window when the provider honors it.
+ *   That write updates the row for one caller, and only that caller sends.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -34,6 +34,7 @@ import {
 	createLicenseIfAbsent,
 	findLicense,
 	findLicenseBySubscription,
+	claimTokenEmail,
 	findToken,
 	insertTokenIfAbsent,
 	setPlanCode,
@@ -270,12 +271,14 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
  * What one send attempt came to.
  *
  * `failed` is the provider's refusal, recorded as such so the reconciliation pass sends again.
+ * `held` means another caller wrote `email_claimed_at` first, or the row left the
+ * state this caller read, so this caller sent no message.
  * A failure to record either answer throws.
  *
  * The row keeps its earlier state, so reconciliation sends again.
  * After an accepted send, that retry can deliver the message twice.
  */
-export type SendResult = { state: "sent" } | { state: "failed"; reason: string }
+export type SendResult = { state: "sent" } | { state: "failed"; reason: string } | { state: "held" }
 
 /**
  * Send a token to its licensee under the invoice id and record the result.
@@ -284,10 +287,15 @@ export type SendResult = { state: "sent" } | { state: "failed"; reason: string }
  * before the first claim includes what the first would have.
  */
 export async function sendTokenEmail(
-	deps: Pick<FulfilDependencies, "ledger" | "email">,
+	deps: Pick<FulfilDependencies, "ledger" | "email" | "now">,
 	license: LicenseRow,
 	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires" | "email_state">
 ): Promise<SendResult> {
+	// The email provider binding takes no idempotency key, so the claim decides which of two callers sends.
+	const claim = await claimTokenEmail(deps.ledger, token.invoice_id, token.email_state, (deps.now ?? Date.now)())
+
+	if (claim === "held") return { state: "held" }
+
 	const carrier = tokenEmailCarrier(deps.ledger, token.invoice_id)
 
 	let messageID: string

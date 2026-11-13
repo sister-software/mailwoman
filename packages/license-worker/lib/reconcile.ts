@@ -107,7 +107,7 @@ export async function reconcileLedger(
 
 			if (delivery.state === "sent") {
 				report.resent.push(token.invoice_id)
-			} else {
+			} else if (delivery.state === "failed") {
 				report.failed.push({
 					stage: "email",
 					invoiceID: token.invoice_id,

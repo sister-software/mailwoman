@@ -11,6 +11,7 @@
  */
 
 import type { Ledger } from "#ledger/client"
+import { emailClaimWindow } from "#ledger/licenses"
 import type {
 	DeclarationRow,
 	EmailState,
@@ -99,12 +100,34 @@ export async function setIssuanceEmailState(
 ): Promise<"updated" | "conflict"> {
 	const result = await ledger
 		.updateTable("issuances")
-		.set({ email_state: transition.to, email_message_id: messageID })
+		.set({ email_state: transition.to, email_message_id: messageID, email_claimed_at: null })
 		.where("issuance_id", "=", issuanceID)
 		.where("email_state", "=", transition.from)
 		.executeTakeFirst()
 
 	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
+}
+
+/**
+ * Claim an issuance's email send before calling the provider, as `claimTokenEmail` claims a token's.
+ */
+export async function claimIssuanceEmail(
+	ledger: Ledger,
+	issuanceID: string,
+	from: EmailState,
+	now: number
+): Promise<"claimed" | "held"> {
+	const { at, staleBefore } = emailClaimWindow(now)
+
+	const result = await ledger
+		.updateTable("issuances")
+		.set({ email_claimed_at: at })
+		.where("issuance_id", "=", issuanceID)
+		.where("email_state", "=", from)
+		.where((row) => row.or([row("email_claimed_at", "is", null), row("email_claimed_at", "<", staleBefore)]))
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "claimed" : "held"
 }
 
 /**
