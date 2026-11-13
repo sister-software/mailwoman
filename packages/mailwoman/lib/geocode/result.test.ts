@@ -104,6 +104,77 @@ describe("the admin ladder and a contained dependent locality (#2804)", () => {
 	})
 })
 
+describe("two localities in one tree (#3057)", () => {
+	const OXNARD = "Federal Building Oxnard Post Office, Oxnard, CA"
+
+	function twoLocalities(): AddressTree {
+		// The parse tags the venue's first word as a locality beside the town written as its own segment.
+		return {
+			raw: OXNARD,
+			roots: [
+				{ tag: "locality", value: "Federal", start: 0, end: 7, confidence: 0.6, children: [], lat: 36.4, lon: -119.8 },
+				{ tag: "venue", value: "Building Oxnard Post Office", start: 8, end: 35, confidence: 0.8, children: [] },
+				{
+					tag: "locality",
+					value: "Oxnard",
+					start: 37,
+					end: 43,
+					confidence: 0.9,
+					children: [],
+					lat: 34.1975,
+					lon: -119.1771,
+				},
+				{ tag: "region", value: "CA", start: 45, end: 47, confidence: 0.9, children: [], lat: 37.2, lon: -119.4 },
+			],
+		}
+	}
+
+	it("answers the locality written as a whole comma segment", () => {
+		const result = extractGeocodeResult(OXNARD, twoLocalities())
+
+		expect(result.lat).toBeCloseTo(34.1975, 4)
+		expect(result.lon).toBeCloseTo(-119.1771, 4)
+		expect(result.locality).toBe("Oxnard")
+	})
+
+	it("keeps the first locality when no venue shares its segment", () => {
+		// The parse tags the state as a locality.
+		// That locality resolves to a namesake in another state.
+		const input = "Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela"
+
+		const tree: AddressTree = {
+			raw: input,
+			roots: [
+				{
+					tag: "locality",
+					value: "Barcelona",
+					start: 22,
+					end: 31,
+					confidence: 0.9,
+					children: [],
+					lat: 10.133,
+					lon: -64.692,
+				},
+				{
+					tag: "locality",
+					value: "Anzoátegui",
+					start: 38,
+					end: 48,
+					confidence: 0.6,
+					children: [],
+					lat: 9.603,
+					lon: -69.898,
+				},
+			],
+		}
+
+		const result = extractGeocodeResult(input, tree)
+
+		expect(result.lat).toBeCloseTo(10.133, 3)
+		expect(result.locality).toBe("Barcelona")
+	})
+})
+
 describe("candidate scores", () => {
 	const SPRINGFIELD = "Springfield"
 

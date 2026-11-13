@@ -5,7 +5,9 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { landmarkPlaceID } from "@mailwoman/core/resolver"
+import { segment } from "@mailwoman/query-shape/segmentation"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
@@ -119,6 +121,57 @@ function adminPriorityFor(allNodes: readonly AddressNode[]): ReadonlyArray<strin
 }
 
 /**
+ * Moves a resolved node made of words from the venue's name behind the other nodes of its tag.
+ *
+ * A parse can tag a word of a venue's name with the town's tag, as `Federal` in
+ * `Federal Building Oxnard Post Office, Oxnard, CA`, and the result reads the first node of each tag.
+ * A node moves back when the comma-separated segment holding it also holds the venue
+ * and the node's value differs from every whole segment of the input.
+ *
+ * A node in a segment without a venue keeps its place, as `Barcelona` in `Barcelona 6001`
+ * keeps its place ahead of a state that the parse tagged as a locality.
+ *
+ * Each node keeps a position its tag already held, so the order between tags is unchanged.
+ */
+function venueWordsLast(nodes: readonly AddressNode[], input: string): AddressNode[] {
+	const segments = segment(input)
+		.map(({ body }) => normalizeLocalityForKey(body))
+		.filter(Boolean)
+
+	const venues = nodes
+		.filter((node) => node.tag === "venue")
+		.map((node) => normalizeLocalityForKey(node.value))
+		.filter(Boolean)
+
+	if (!venues.length) return [...nodes]
+
+	const isVenueWord = (node: AddressNode): boolean => {
+		const key = normalizeLocalityForKey(node.value)
+
+		if (!key || segments.includes(key)) return false
+
+		return segments.some((body) => body.includes(key) && venues.some((venue) => body.includes(venue)))
+	}
+
+	const reordered = [...nodes]
+
+	for (const tag of new Set(nodes.map((node) => node.tag))) {
+		const positions = nodes.flatMap((node, index) => (node.tag === tag && node.lat != null ? [index] : []))
+
+		if (positions.length < 2) continue
+
+		const members = positions.map((index) => nodes[index]!)
+		const ordered = [...members.filter((node) => !isVenueWord(node)), ...members.filter(isVenueWord)]
+
+		positions.forEach((index, i) => {
+			reordered[index] = ordered[i]!
+		})
+	}
+
+	return reordered
+}
+
+/**
  * A candidate's resolver score, or null when the resolver recorded none.
  */
 function scoreOf(value: unknown): number | null {
@@ -200,7 +253,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const projected = decodeAsJSON(tree, { includeDropped: true })
 	const { dropped, ...components } = projected
 
-	const allNodes = slotNodes(tree.roots)
+	const allNodes = venueWordsLast(slotNodes(tree.roots), input)
 	const unfollowed = unfollowedComponents(allNodes)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
