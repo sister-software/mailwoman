@@ -22,12 +22,7 @@ import { CANDIDATE_FTS_TABLE } from "#candidate/fts"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate/schema"
 import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal/city/candidate-schema"
-import {
-	rankByPrimaryPreference,
-	type RankedRow,
-	REGION_PRIMARY_PREFERENCE_LOG10,
-	RERANK_FETCH,
-} from "#primary-preference"
+import { rankByPrimaryPreference, type RankedRow, regionAliasMargin, RERANK_FETCH } from "#primary-preference"
 import { applyProximityRerank } from "#proximity-rerank"
 import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#region-keys"
 import { hasColumn, hasTable } from "#sqlite-utils"
@@ -540,11 +535,11 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			const fetched = allRows<CandidateRow>(this.database.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
 
-			// Inside a stated region, every alias yields to a place whose primary name equals the query,
-			// including the own-name variants the exemption spares from the worldwide penalty.
+			// Inside a stated region, an alias yields to a different place whose primary name equals
+			// the query, including an own-name variant the exemption spares from the worldwide penalty.
 			return regionID === null
 				? rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
-				: rankByPrimaryPreference(fetched, limit, REGION_PRIMARY_PREFERENCE_LOG10, this.#idToPlacetype)
+				: rankByPrimaryPreference(fetched, limit, regionAliasMargin, this.#idToPlacetype)
 		}
 
 		const cascade = (regionID: number | null): Array<RankedRow<CandidateRow>> => {

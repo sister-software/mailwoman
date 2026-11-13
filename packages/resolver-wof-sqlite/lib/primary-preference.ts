@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { latLonBoundsContain } from "@mailwoman/spatial/bbox"
+
 import type { CandidateTable } from "#candidate/schema"
 
 /**
@@ -24,11 +26,35 @@ export const PRIMARY_PREFERENCE_LOG10 = 1
  * The alias penalty inside a stated region, larger than any log10 population gap.
  *
  * A query that states the region (`Junction, IL`) has already chosen among the world's namesakes,
- * so a place whose primary name equals the query outranks every place that lists it as an alias.
+ * so a place whose primary name equals the query outranks a different place that lists it as an alias.
  * WOF `und` variant names include former names of absorbed communities, such as `Junction` on West
  * Chicago, and a population gap between the two places is no evidence of which one the query means.
  */
 export const REGION_PRIMARY_PREFERENCE_LOG10 = 100
+
+/**
+ * The alias penalty inside a stated region for one alias row against the top primary row.
+ *
+ * A primary row inside the alias row's extent records the same place twice,
+ * as the Setauket hamlet inside the Setauket-East Setauket census place,
+ * so the worldwide margin applies and population decides.
+ * A primary row outside it is a different place, and the region margin applies.
+ */
+export function regionAliasMargin(
+	alias: Partial<Pick<CandidateTable, "min_lat" | "min_lon" | "max_lat" | "max_lon">>,
+	primary: Partial<Pick<CandidateTable, "latitude" | "longitude">>
+): number {
+	const { min_lat: minLat, min_lon: minLon, max_lat: maxLat, max_lon: maxLon } = alias
+	const { latitude, longitude } = primary
+
+	if (minLat == null || minLon == null || maxLat == null || maxLon == null || latitude == null || longitude == null) {
+		return REGION_PRIMARY_PREFERENCE_LOG10
+	}
+
+	return latLonBoundsContain({ minLat, minLon, maxLat, maxLon }, latitude, longitude)
+		? PRIMARY_PREFERENCE_LOG10
+		: REGION_PRIMARY_PREFERENCE_LOG10
+}
 
 const SEAT_PLACETYPE = "locality"
 
@@ -90,6 +116,7 @@ export type RankedRow<R> = R & {
  * Re-ranks population-ordered candidate rows.
  *
  * An alias must beat the top primary by `delta` in log10 population, in any country.
+ * A `delta` function returns the margin for one alias row against the top primary row.
  * The function returns the top `limit` rows.
  *
  * When `placetypes` is given, an exact tie prefers a populated `locality`.
@@ -98,7 +125,7 @@ export type RankedRow<R> = R & {
 export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],
 	limit: number,
-	delta = PRIMARY_PREFERENCE_LOG10,
+	delta: number | ((alias: R, primary: R) => number) = PRIMARY_PREFERENCE_LOG10,
 	placetypes?: ReadonlyMap<number, string>,
 	exemptVariantAliases = false
 ): Array<RankedRow<R>> {
@@ -115,7 +142,8 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	const annotate = (r: R): RankedRow<R> => {
 		const exempted = exemptVariantAliases && r.name_role === "variant" && isAliasOfPrimary(r)
 		const penalized = isAliasOfPrimary(r) && !exempted
-		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
+		const margin = penalized ? (typeof delta === "number" ? delta : delta(r, topPrimary!)) : 0
+		const effectiveNegRank = r.neg_rank + margin
 
 		return {
 			...r,

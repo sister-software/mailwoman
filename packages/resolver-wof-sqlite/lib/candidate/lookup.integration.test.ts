@@ -115,6 +115,10 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		-- and a town 470 times larger that carries 'Jundale' as a former name.
 		INSERT INTO spr VALUES (980, 'Jundale', 'locality', 'US', 37.72, -88.24, 37.7, -88.3, 37.8, -88.2, -1, 0);
 		INSERT INTO spr VALUES (981, 'Westcago', 'locality', 'US', 41.89, -88.24, 41.8, -88.3, 42.0, -88.2, -1, 0);
+		-- The Setauket, NY shape: a populated census place 'Setaukton-East' carries 'Setaukton' as an alias,
+		-- and an unpopulated hamlet row named 'Setaukton' sits inside its extent. Both rows describe one place.
+		INSERT INTO spr VALUES (982, 'Setaukton-East', 'locality', 'US', 40.94, -73.11, 40.90, -73.16, 40.98, -73.06, -1, 0);
+		INSERT INTO spr VALUES (983, 'Setaukton', 'locality', 'US', 40.935, -73.118, 40.935, -73.118, 40.935, -73.118, -1, 0);
 
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
@@ -147,6 +151,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO place_population VALUES (972, 10000);
 		INSERT INTO place_population VALUES (980, 53);
 		INSERT INTO place_population VALUES (981, 25116);
+		INSERT INTO place_population VALUES (982, 8998);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
@@ -166,6 +171,8 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		INSERT INTO ancestors VALUES (971, 970, 'region');
 		INSERT INTO ancestors VALUES (980, 400, 'region');
 		INSERT INTO ancestors VALUES (981, 400, 'region');
+		INSERT INTO ancestors VALUES (982, 400, 'region');
+		INSERT INTO ancestors VALUES (983, 400, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEPARATOR}Moscow City');
@@ -181,6 +188,7 @@ function buildFixtureAdmin(path: PathBuilderLike): void {
 		-- the artifact's own alias keying.
 		INSERT INTO place_search VALUES (900, 'Thueria');
 		INSERT INTO place_search VALUES (981, 'Jundale');
+		INSERT INTO place_search VALUES (982, 'Setaukton');
 	`)
 
 	db.exec(`
@@ -291,6 +299,13 @@ describe("WOFCandidateTableLookup", () => {
 		// Without a region, the alias still wins on population, as `LA` answers Los Angeles.
 		const [unscoped] = await lk.findPlace({ text: "Jundale", placetype: "locality" })
 		expect(unscoped?.name).toBe("Westcago")
+	})
+
+	test("inside a stated region, an alias keeps its population rank over a primary row inside its own extent", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const [scoped] = await lk.findPlace({ text: "Setaukton", placetype: "locality", parentID: 400 })
+		expect(scoped?.name).toBe("Setaukton-East")
 	})
 
 	test("resolves an alias row to the primary place", async () => {
