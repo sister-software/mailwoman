@@ -162,15 +162,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -227,6 +234,15 @@ jobs:
       # Repository-wide checks inspect relationships across workspaces.
       - name: Lint
         run: yarn lint:ci
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
 
   rust:
     needs: scope
@@ -331,15 +347,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -414,6 +437,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
   # unit-slow runs the database-dependent half of the Vitest sweep. Its suites use
   # `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a hosted runner
   # they'd skip and pass.
@@ -430,15 +462,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -482,6 +521,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
   # This job runs the full-scale locality-surface build (`evidence-lexicons.full.test.ts`) over the
   # whole admin database when scope selects mailwoman or codex.
   # `evidence-lexicons.fixture.test.ts` in unit-fast checks the same laws on every PR against a
@@ -500,15 +548,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
@@ -526,6 +581,15 @@ jobs:
       - name: Full-scale locality-surface build
         run: yarn ci:test:lexicon-full
 
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
 
   # The root sweep excludes browser-mode suites because vitest/browser fails under the forks pool.
   # The react and earth legs are the only CI coverage for @mailwoman/react and the map apps. The
@@ -542,15 +606,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -616,6 +687,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
   # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
   # configuration runs one worker, so the suite runs serially inside this job.
   #
@@ -633,15 +713,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -678,6 +765,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
   # The smoke test packs every published workspace, installs the tarballs into a fresh project and
   # runs the compiled CLI. It catches undeclared dependencies, unshipped files and eager top-level
   # side effects that the monorepo hides.
@@ -697,15 +793,22 @@ jobs:
       # The key includes build sources, manifests, the compiler lock, and the Node version.
       # Colocated tests are excluded from build projects and do not invalidate compiled output.
       # The .tsbuildinfo files live inside out/.
-      # The step has no restore-keys because a partial restore could leave stale output that
-      # `tsc -b` accepts as current. It must run before the install, or hashFiles walks node_modules.
+      # The restore has no restore-keys because a partial restore could leave stale output that
+      # `tsc -b` accepts as current.
+      # The key is computed once, before the install, and the "Save compiled tree" step at the end of
+      # the job reuses it. A post-job hashFiles would walk node_modules and can exceed its 120 s limit.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore compiled tree
-        uses: actions/cache@v6
+        id: out-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             */out
             packages/*/out
-          key: out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}
+          key: ${{ steps.out-key.outputs.key }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -737,6 +840,15 @@ jobs:
 
       - name: Clean-install smoke test
         run: yarn ci:smoke
+
+      - name: Save compiled tree
+        if: success() && steps.out-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
 
   # The ruleset and release auto-merge require this `test` check. `if: always()` makes it report
   # after a leg fails, because a skipped required check blocks the merge.
