@@ -4767,12 +4767,12 @@
 				}
 			]
 		},
-		"usgov-usgs-post-offices": {
+		"usgov-usgs-structures": {
 			"inputs": [
 				{
 					"registerSource": "us-public-administration-3",
 					"license": "unchecked-corpus-input-us-u-s-geological-survey",
-					"reads": "The National Map structures layer's post offices (FCODE 78006)"
+					"reads": "The National Map structures MapServer's point layers 37–67 (the National Structures Dataset)"
 				}
 			]
 		},

@@ -280,9 +280,9 @@ export const SourceRegister = {
 	 */
 	IRSBusinessMasterFile: "us-irs-bmf",
 	/**
-	 * The post offices (feature code 78006) in the USGS National Map structures layer.
+	 * The USGS National Structures Dataset, served by the National Map structures MapServer.
 	 */
-	USGSPostOffices: "us-usgs-post-offices",
+	USGSStructures: "us-usgs-structures",
 	/**
 	 * SAMHSA's behavioral health treatment services locator.
 	 */

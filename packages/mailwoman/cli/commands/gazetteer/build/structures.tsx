@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build post-offices` builds `post-offices.db` beside `poi.db` from every
- *   registered country's official post-office list (`@mailwoman/corpus/post-offices/sources`).
+ *   `mailwoman gazetteer build structures` builds `structures.db` beside `poi.db` from every
+ *   registered official list of public structures (`@mailwoman/corpus/structures/sources`).
  *
  *   Each source reads the input its own fetch command wrote under the cache root's `sources/`.
  */
@@ -27,10 +27,10 @@ import {
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "post-offices",
-	description: "Build the post-office layer from every registered country's official post-office list",
+	name: "structures",
+	description: "Build the structures layer from every registered official list of public structures",
 	options: {
-		out: { type: "string", description: "Output database (default: post-offices.db beside poi.db)" },
+		out: { type: "string", description: "Output database (default: structures.db beside poi.db)" },
 		"sources-root": {
 			type: "string",
 			description: "The root each source's fetch wrote under (default: the cache root's sources/)",
@@ -38,20 +38,20 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const GazetteerBuildPostOffices: CommandComponent<typeof spec> = ({ options }) => {
+const GazetteerBuildStructures: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { build, layers, paths, registry } = await allKeyed({
-			build: import("@mailwoman/gazetteer/tools/pipeline/post-offices/build"),
+			build: import("@mailwoman/gazetteer/tools/pipeline/structures/build"),
 			layers: import("#geocode/session/layers"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
-			registry: import("@mailwoman/corpus/post-offices/sources"),
+			registry: import("@mailwoman/corpus/structures/sources"),
 		})
 
-		const out = options.out ?? paths.poiDatabasePath(layers.POST_OFFICES_DATABASE_FILE)
+		const out = options.out ?? paths.poiDatabasePath(layers.STRUCTURES_DATABASE_FILE)
 		const sourcesRoot = options.sourcesRoot ? PathBuilder.from(options.sourcesRoot) : currentSourcesRoot()
 
-		const result = await build.buildPostOfficeLayer({
-			sources: registry.POST_OFFICE_SOURCES,
+		const result = await build.buildStructureLayer({
+			sources: registry.STRUCTURE_SOURCES,
 			sourcesRoot,
 			out,
 			buildSHA: resolveBuildSHA(repoRootPath()),
@@ -59,13 +59,15 @@ const GazetteerBuildPostOffices: CommandComponent<typeof spec> = ({ options }) =
 		})
 
 		return [
-			`post-offices.db: ${result.out} (${await formatFileSize(result.out)})`,
+			`structures.db: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.rows.toLocaleString()} rows · ${result.coverageCells.toLocaleString()} coverage cells`,
-			...[...result.sources].map(
-				([id, counts]) =>
-					`  ${id} @ ${counts.vintage}: ${counts.inputRecords.toLocaleString()} records, ` +
-					`${counts.recordsWithoutPoint.toLocaleString()} without a point`
-			),
+			...[...result.sources].flatMap(([id, counts]) => [
+				`  ${id} @ ${counts.vintage}: ${counts.inputRecords.toLocaleString()} records, ` +
+					`${counts.recordsWithoutPoint.toLocaleString()} without a point`,
+				...Object.entries(counts.categories)
+					.toSorted(([, a], [, b]) => b - a)
+					.map(([category, rows]) => `    ${category}: ${rows.toLocaleString()}`),
+			]),
 		]
 	})
 
@@ -74,4 +76,4 @@ const GazetteerBuildPostOffices: CommandComponent<typeof spec> = ({ options }) =
 	return <CommandSummaryLines lines={state.result} />
 }
 
-export default GazetteerBuildPostOffices
+export default GazetteerBuildStructures

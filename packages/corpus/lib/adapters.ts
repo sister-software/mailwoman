@@ -99,7 +99,7 @@ import { usgovImlsPlsAdapter } from "#us/adapters/usgov/imls-pls/adapter"
 import { USGovIRSBMFAdapter } from "#us/adapters/usgov/irs-bmf/adapter"
 import { usgovNADAdapter } from "#us/adapters/usgov/nad/adapter"
 import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
-import { usgovUSGSPostOfficesAdapter } from "#us/adapters/usgov/usgs-post-offices/adapter"
+import { usgovUSGSStructuresAdapter } from "#us/adapters/usgov/usgs-structures/adapter"
 import { ideUruguayAdapter } from "#uy/adapters/ide/adapter"
 
 /**
@@ -157,7 +157,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovNADAdapter,
 	usgovImlsPlsAdapter,
 	USGovIRSBMFAdapter,
-	usgovUSGSPostOfficesAdapter,
+	usgovUSGSStructuresAdapter,
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
@@ -255,10 +255,10 @@ export {
 } from "#us/adapters/usgov/samhsa-treatment-locator/adapter"
 
 export {
-	USGOV_USGS_POST_OFFICES_ADAPTER_ID,
-	USGOV_USGS_POST_OFFICES_DEFAULT_LICENSE,
-	usgovUSGSPostOfficesAdapter,
-} from "#us/adapters/usgov/usgs-post-offices/adapter"
+	USGOV_USGS_STRUCTURES_ADAPTER_ID,
+	USGOV_USGS_STRUCTURES_DEFAULT_LICENSE,
+	usgovUSGSStructuresAdapter,
+} from "#us/adapters/usgov/usgs-structures/adapter"
 
 export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"

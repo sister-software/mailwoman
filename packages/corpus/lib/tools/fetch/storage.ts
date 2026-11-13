@@ -108,9 +108,9 @@ export const SOURCE_STORAGE_CLASSES = {
 	// The `tl_2024` files of one yearly TIGER release.
 	tiger: StorageClass.snapshot,
 	"usgov-hrsa-fqhc": StorageClass.current,
-	// A query over the live structures layer.
-	// The publisher refreshes the layer in place.
-	"usgov-usgs-post-offices": StorageClass.current,
+	// A query over the live structures MapServer's point layers.
+	// The publisher refreshes them in place.
+	"usgov-usgs-structures": StorageClass.current,
 	// `pls_fy2023_csv.zip`, a pinned survey year.
 	"usgov-imls-pls": StorageClass.snapshot,
 	"usgov-nad": {
@@ -218,7 +218,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 		"state-wa-health-providers",
 	],
 	"tiger-full": ["tiger"],
-	"usgs-post-offices": ["usgov-usgs-post-offices"],
+	"usgs-structures": ["usgov-usgs-structures"],
 	vlaanderen: ["vlaanderen"],
 	wallonie: ["wallonie"],
 	"wikidata-subvenue": ["wikidata-subvenue"],

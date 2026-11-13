@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the post-office parse suite from every registered official post-office list
- *   (`@mailwoman/corpus/post-offices/sources`) and freezes it as a held-out dataset
+ *   Builds the post-office parse suite from the post offices of every registered
+ *   structure source (`@mailwoman/corpus/structures/sources`), the records filed under
+ *   the POI taxonomy's post-office category, and freezes it as a held-out dataset
  *   (`heldout/dataset/manifest.ts`), the shape the OpenStreetMap suites are frozen in.
  *
  *   The suite holds every row its sources yield rather than a sample, under the `every-row` sampling
@@ -14,7 +15,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
-import type { PostOfficeSource } from "@mailwoman/corpus/post-offices/source"
+import { postOfficeCategoryID, type StructureSource } from "@mailwoman/corpus/structures/source"
 import { type PathBuilder, resolvePath } from "path-ts"
 
 import { type HeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -56,20 +57,25 @@ export interface BuiltPostOfficeSuite {
 }
 
 /**
- * Reads every source's records into suite rows, in source order.
+ * Reads every source's post offices into suite rows, in source order.
+ *
+ * A record filed under another category is no post office and yields no row.
  */
 export async function collectPostOfficeSuiteRows(
-	sources: readonly PostOfficeSource[],
+	sources: readonly StructureSource[],
 	sourcesRoot: PathBuilder
 ): Promise<{ rows: PostOfficeSuiteRow[]; sources: PostOfficeSuiteSourceLineage[] }> {
 	const rows: PostOfficeSuiteRow[] = []
 	const lineage: PostOfficeSuiteSourceLineage[] = []
+	const postOffice = postOfficeCategoryID()
 
 	for (const source of sources) {
 		const read = await source.read(sourcesRoot)
 		const tally: PostOfficeSuiteTally = {}
 
 		for await (const record of read.records) {
+			if (record.category !== postOffice) continue
+
 			rows.push(...postOfficeSuiteRows(source, record, tally))
 		}
 
@@ -94,7 +100,7 @@ export async function collectPostOfficeSuiteRows(
  * @throws When no source is given, or when a source's input cannot be read.
  */
 export async function buildPostOfficeSuite(input: {
-	sources: readonly PostOfficeSource[]
+	sources: readonly StructureSource[]
 	sourcesRoot: PathBuilder
 	outDirectory: string
 	createdAt: string

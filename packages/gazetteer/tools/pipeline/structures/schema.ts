@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `post_office_source` table of `post-offices.db`: one row per contributing source.
+ *   The `structure_source` table of `structures.db`: one row per contributing source.
  *
  *   Each POI row's `gers_id` reads `<source_id>:<record id>`, so a row joins to
  *   its source's country, terms and provenance class here.
@@ -13,7 +13,7 @@ import type { Kysely } from "kysely"
 /**
  * One contributing source.
  */
-export interface PostOfficeSourceTable {
+export interface StructureSourceTable {
 	source_id: string
 	country: string
 	publisher: string
@@ -37,18 +37,18 @@ export interface PostOfficeSourceTable {
 }
 
 /**
- * The post-office layer's own table beside the POI tables.
+ * The structures layer's own table beside the POI tables.
  *
  * It's a type alias rather than an interface, so it satisfies `withTables`'s index-signature constraint.
  */
 // oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature `withTables` requires
-export type PostOfficeSourceDatabase = {
-	post_office_source: PostOfficeSourceTable
+export type StructureSourceDatabase = {
+	structure_source: StructureSourceTable
 }
 
-export async function createPostOfficeSourceTable<DB extends PostOfficeSourceDatabase>(db: Kysely<DB>): Promise<void> {
+export async function createStructureSourceTable<DB extends StructureSourceDatabase>(db: Kysely<DB>): Promise<void> {
 	await db.schema
-		.createTable("post_office_source")
+		.createTable("structure_source")
 		.addColumn("source_id", "text", (c) => c.primaryKey())
 		.addColumn("country", "text", (c) => c.notNull())
 		.addColumn("publisher", "text", (c) => c.notNull())

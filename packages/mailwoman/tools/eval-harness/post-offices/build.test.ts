@@ -2,27 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the post-office suite from the registered USGS National Map source over the seven-feature
- *   fixture from its 2026-11-09 pull, laid out as `mailwoman corpus fetch usgs-post-offices`
- *   writes it, and reads the frozen dataset back through the held-out reader.
+ *   Builds the post-office suite from the registered USGS National Map source over the
+ *   structures fixture, laid out as `mailwoman corpus fetch usgs-structures` writes it,
+ *   and reads the frozen dataset back through the held-out reader.
+ *
+ *   The fixture holds post offices from the 2026-11-13 pull, one of them (Pocono Manor)
+ *   with no street address, beside features of the other layers.
+ *   The suite leaves those out.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import {
-	USGOV_USGS_POST_OFFICES_ADAPTER_ID,
-	USGS_POST_OFFICES_FILENAME,
-} from "@mailwoman/corpus/us/adapters/usgov/usgs-post-offices/adapter"
-import { usgsNationalMapPostOffices } from "@mailwoman/corpus/us/post-offices/usgs-national-map"
+	USGOV_USGS_STRUCTURES_ADAPTER_ID,
+	USGS_STRUCTURES_FILENAME,
+	type USGSStructureFeature,
+} from "@mailwoman/corpus/us/adapters/usgov/usgs-structures/adapter"
+import { usgsNationalMapStructures } from "@mailwoman/corpus/us/structures/usgs-national-map"
 import { PathBuilder } from "path-ts"
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { buildPostOfficeSuite } from "#tools/eval-harness/post-offices/build"
 import type { PostOfficeSuiteRow } from "#tools/eval-harness/post-offices/rows"
 
-const fixture = workspacePath("corpus", "fixtures", "usgov-usgs-post-offices", "sample.geojsonl")
+const fixture = workspacePath("corpus", "fixtures", "usgov-usgs-structures", "sample.geojsonl")
 
 let scratch: TemporaryDirectory
 
@@ -35,15 +41,15 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 async function build() {
 	const sourcesRoot = PathBuilder.from(scratch.path("sources"))
 
-	await copyFileTo(fixture, sourcesRoot(USGOV_USGS_POST_OFFICES_ADAPTER_ID, USGS_POST_OFFICES_FILENAME))
+	await copyFileTo(fixture, sourcesRoot(USGOV_USGS_STRUCTURES_ADAPTER_ID, USGS_STRUCTURES_FILENAME))
 
 	await writeLocalJSONFile(
-		{ downloaded_at: "2026-11-09T18:00:00.000Z" },
-		sourcesRoot(USGOV_USGS_POST_OFFICES_ADAPTER_ID, "MANIFEST.json")
+		{ downloaded_at: "2026-11-13T21:00:00.000Z" },
+		sourcesRoot(USGOV_USGS_STRUCTURES_ADAPTER_ID, "MANIFEST.json")
 	)
 
 	return buildPostOfficeSuite({
-		sources: [usgsNationalMapPostOffices],
+		sources: [usgsNationalMapStructures],
 		sourcesRoot,
 		outDirectory: scratch.path("suite").toString(),
 		createdAt: "2026-11-11T00:00:00Z",
@@ -51,18 +57,23 @@ async function build() {
 }
 
 describe("buildPostOfficeSuite", () => {
-	it("writes an address row and a venue-address row for each post office with an address", async () => {
+	it("writes an address row and a venue-address row for each post office with an address, and none for other structures", async () => {
+		const features = await Array.fromAsync(JSONSpliterator.fromAsync<USGSStructureFeature>(fixture))
+		const postOffices = features.filter((feature) => feature.properties.layer === "post-offices")
 		const built = await build()
 
-		// Seven features.
-		// Pocono Manor publishes no street address.
-		expect(built.sources[0]!.tally).toMatchObject({ records: 7, "record:no-address": 1 })
-		expect(built.rows).toHaveLength(12)
+		expect(features.length).toBeGreaterThan(postOffices.length)
+		expect(built.sources[0]!.tally).toMatchObject({ records: postOffices.length, "record:no-address": 1 })
+		expect(built.rows).toHaveLength((postOffices.length - 1) * 2)
 		expect(built.manifest.sampling.method).toBe("every-row")
+
+		const postOfficeIDs = new Set(postOffices.map((feature) => feature.properties.permanent_identifier))
+
+		expect(built.rows.every((row) => postOfficeIDs.has(row.group!))).toBe(true)
 
 		const { rows } = await readHeldoutDatasetRows(built.manifestPath)
 
-		expect(rows).toHaveLength(12)
+		expect(rows).toHaveLength(built.rows.length)
 
 		const caguas = (rows as PostOfficeSuiteRow[]).filter((row) => row.group === "09da8555-c417-407d-8f43-732d68559157")
 

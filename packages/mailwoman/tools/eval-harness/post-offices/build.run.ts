@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the post-office parse suite from every registered official post-office list.
+ *   Builds the post-office parse suite from the post offices of every registered structure source.
  *
  *   Usage: node packages/mailwoman/tools/eval-harness/post-offices/build.run.ts
  *   --out <directory> [--sources-root <root>]
@@ -14,7 +14,7 @@
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { POST_OFFICE_SOURCES } from "@mailwoman/corpus/post-offices/sources"
+import { STRUCTURE_SOURCES } from "@mailwoman/corpus/structures/sources"
 import { PathBuilder } from "path-ts"
 
 import { buildPostOfficeSuite } from "#tools/eval-harness/post-offices/build"
@@ -32,7 +32,7 @@ const { values } = parseArguments({
 if (!values.out) throw new Error("--out <directory> is required")
 
 const built = await buildPostOfficeSuite({
-	sources: POST_OFFICE_SOURCES,
+	sources: STRUCTURE_SOURCES,
 	sourcesRoot: values["sources-root"] ? PathBuilder.from(values["sources-root"]) : currentSourcesRoot(),
 	outDirectory: values.out,
 	createdAt: new Date().toISOString(),

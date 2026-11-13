@@ -99,7 +99,7 @@ export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 	{
 		path: "db/poi",
 		holds:
-			"poi.db, the rail-station stations.db, the official post-office lists' post-offices.db, and the Wikidata landmarks.db.",
+			"poi.db, the rail-station stations.db, the official public-structure lists' structures.db, and the Wikidata landmarks.db.",
 	},
 	{ path: "gauntlet", holds: "regression.db and the gauntlet's other built rows." },
 ]

@@ -2,23 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `usgov-usgs-post-offices`: the post offices in the USGS National Map structures layer.
+ *   `usgov-usgs-structures`: the National Structures Dataset served by the USGS
+ *   National Map structures MapServer.
  *
- *   The National Structures Dataset's layer 38 holds the United States Postal Service
- *   facilities (feature code 78006) across the states and the five primary territories.
+ *   The dataset holds public facilities across the states and the five primary territories:
+ *   schools, colleges, hospitals, fire, police and ambulance stations, prisons,
+ *   courthouses, town halls, post offices, cemeteries, and recreation sites.
+ *   `#us/structures/usgs-layers` lists each point layer.
+ *
  *   Each feature holds a permanent identifier, the facility's name, its street address,
  *   city, state and ZIP Code, and a point.
  *
- *   `mailwoman corpus fetch usgs-post-offices` writes one GeoJSON feature per line,
- *   with the ZIP Code as a string whose leading zeros are intact.
+ *   `mailwoman corpus fetch usgs-structures` writes one GeoJSON feature per line,
+ *   with the ZIP Code as a string whose leading zeros are intact and the layer it came from.
  *
  *   Each row is the facility's name as a venue followed by its address,
  *   the same venue-plus-address shape as `usgov-hrsa-fqhc`.
  *   `venue` is inserted first so alignment claims its span before `locality` searches for its own:
  *   "Palm Bay West Post Office, …, Palm Bay, FL" holds the locality's words inside the venue.
+ *   A layer whose `trains` flag is unset yields no row.
  *
  *   License: a work of the United States Government, public domain under 17 U.S.C. § 105.
- *   The service describes the layer as "public domain structures data".
+ *   The service describes the dataset as "public domain structures data".
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -30,31 +35,47 @@ import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
+import { usgsStructureLayer } from "#us/structures/usgs-layers"
 
 /**
  * Registry id for this adapter, and the source directory its fetcher writes.
  */
-export const USGOV_USGS_POST_OFFICES_ADAPTER_ID = "usgov-usgs-post-offices"
+export const USGOV_USGS_STRUCTURES_ADAPTER_ID = "usgov-usgs-structures"
 
 /**
  * License stamped on each row: a US federal work, public domain under 17 U.S.C. § 105.
  */
-export const USGOV_USGS_POST_OFFICES_DEFAULT_LICENSE = "Public Domain"
+export const USGOV_USGS_STRUCTURES_DEFAULT_LICENSE = "Public Domain"
 
 /**
  * The file the fetcher writes and the adapter reads, one GeoJSON feature per line.
  */
-export const USGS_POST_OFFICES_FILENAME = "post-offices.geojsonl"
+export const USGS_STRUCTURES_FILENAME = "structures.geojsonl"
 
 /**
- * The properties of one post office as the fetcher writes them.
+ * The properties of one structure as the fetcher writes them.
  *
- * Keys are the service's field names in lower case.
+ * Keys are the service's field names in lower case, plus `layer_id` and `layer`.
  * A field the service left empty is `null`.
  */
-export interface USGSPostOfficeProperties {
+export interface USGSStructureProperties {
+	/**
+	 * The id of the MapServer layer the feature was read from.
+	 */
+	layer_id: number
+	/**
+	 * The layer's slug in `#us/structures/usgs-layers`.
+	 */
+	layer: string
+	/**
+	 * The service's `OBJECTID`, unique across the layers.
+	 */
+	objectid: number
 	permanent_identifier: string | null
+	fcode: number | null
+	gnis_id: string | null
 	name: string | null
+	addressbuildingname: string | null
 	address: string | null
 	city: string | null
 	state: string | null
@@ -66,26 +87,31 @@ export interface USGSPostOfficeProperties {
 	 * The value the service published, present only when it differs from `zipcode`.
 	 */
 	zipcode_published?: string
+	/**
+	 * The date the publisher loaded the feature, as an ISO 8601 date, or `null` when unstated.
+	 */
+	loaddate: string | null
+	source_originator: string | null
 }
 
 /**
- * One post office as the fetcher writes it.
+ * One structure as the fetcher writes it.
  */
-export interface USGSPostOfficeFeature {
+export interface USGSStructureFeature {
 	type: "Feature"
 	geometry: { type: "Point"; coordinates: [longitude: number, latitude: number] } | null
-	properties: USGSPostOfficeProperties
+	properties: USGSStructureProperties
 }
 
 /**
- * A post office's address as labeled components, or `null` when it lacks a street
- * address, city, recognized state or ZIP Code.
+ * A structure's address as labeled components, or `null` when it lacks a street address,
+ * city, recognized state or ZIP Code.
  *
  * `splitUSStreetLine` moves a trailing suite into `unit` when the remainder still reads as a street:
  * by a street-type word, a number, or the street index scoped to the row's city and ZIP Code.
  */
-export function usgsPostOfficeAddress(
-	properties: USGSPostOfficeProperties,
+export function usgsStructureAddress(
+	properties: Pick<USGSStructureProperties, "address" | "city" | "state" | "zipcode">,
 	units: UnitSplitter
 ): CanonicalRow["components"] | null {
 	const { address, city, state: stateCode, zipcode } = properties
@@ -99,37 +125,41 @@ export function usgsPostOfficeAddress(
 }
 
 /**
- * Creates the post-office adapter.
+ * Creates the structures adapter.
  *
- * A post office with no name or no full address ({@linkcode usgsPostOfficeAddress})
- * yields no row, because the row's purpose is the venue beside a full address.
+ * A structure in a layer that doesn't train, or with no name or no full address
+ * ({@linkcode usgsStructureAddress}), yields no row, because the row's purpose
+ * is the venue beside a full address.
  */
-export function createUSGovUSGSPostOfficesAdapter(): CorpusAdapter {
+export function createUSGovUSGSStructuresAdapter(): CorpusAdapter {
 	return {
-		id: USGOV_USGS_POST_OFFICES_ADAPTER_ID,
-		defaultLicense: USGOV_USGS_POST_OFFICES_DEFAULT_LICENSE,
+		id: USGOV_USGS_STRUCTURES_ADAPTER_ID,
+		defaultLicense: USGOV_USGS_STRUCTURES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
-		register: SourceRegister.USGSPostOffices,
+		register: SourceRegister.USGSStructures,
 		surface: SurfaceOrigin.Rendered,
 		description:
-			"USGS National Map post offices (public domain). Venue + address co-occurrence for every USPS facility the structures layer holds.",
+			"USGS National Structures Dataset (public domain). Venue + address co-occurrence for the schools, hospitals, emergency stations, government buildings, post offices and cemeteries the National Map holds.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && opts.country !== "US") {
-				throw new Error(`${USGOV_USGS_POST_OFFICES_ADAPTER_ID} adapter: only US supported, got country=${opts.country}`)
+				throw new Error(`${USGOV_USGS_STRUCTURES_ADAPTER_ID} adapter: only US supported, got country=${opts.country}`)
 			}
 
 			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
 
 			let emitted = 0
 
-			for await (const feature of JSONSpliterator.fromAsync<USGSPostOfficeFeature>(opts.inputPath)) {
+			for await (const feature of JSONSpliterator.fromAsync<USGSStructureFeature>(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
-				const { permanent_identifier: id, name } = feature.properties
-				const address = usgsPostOfficeAddress(feature.properties, units)
+				const { permanent_identifier: id, name, layer_id: layerID } = feature.properties
+
+				if (!usgsStructureLayer(layerID).trains) continue
+
+				const address = usgsStructureAddress(feature.properties, units)
 
 				if (!id || !name || !address) continue
 
@@ -145,9 +175,9 @@ export function createUSGovUSGSPostOfficesAdapter(): CorpusAdapter {
 					components: rendered.components,
 					country: "US",
 					locale: "en-US",
-					source: USGOV_USGS_POST_OFFICES_ADAPTER_ID,
-					source_id: `${USGOV_USGS_POST_OFFICES_ADAPTER_ID}-${id}`,
-					license: USGOV_USGS_POST_OFFICES_DEFAULT_LICENSE,
+					source: USGOV_USGS_STRUCTURES_ADAPTER_ID,
+					source_id: `${USGOV_USGS_STRUCTURES_ADAPTER_ID}-${id}`,
+					license: USGOV_USGS_STRUCTURES_DEFAULT_LICENSE,
 				}
 
 				emitted++
@@ -159,4 +189,4 @@ export function createUSGovUSGSPostOfficesAdapter(): CorpusAdapter {
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const usgovUSGSPostOfficesAdapter = createUSGovUSGSPostOfficesAdapter()
+export const usgovUSGSStructuresAdapter = createUSGovUSGSStructuresAdapter()

@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "23e37a852c129a3e01699d59596575cd8e29139d6fc12afaf3d8e7b238cc55ba",
+	"contentDigest": "d8f600100dbf4d3879e51d7b3e2a16b2e51ef585807030e7e76370e3380150cf",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -9538,9 +9538,9 @@
 			"state": "elected",
 			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105, described by the publisher as public domain structures data",
 			"termsVersion": "the structures MapServer description as served on 2026-11-11, copyrightText `USGS TNM – National Structures Dataset. Data Refreshed October, 2026.`",
-			"retrievedCopy": "service.json beside post-offices.geojsonl under $MAILWOMAN_CACHE_ROOT/sources/usgov-usgs-post-offices/, which the usgs-post-offices fetcher writes on every fetch from https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer?f=json",
+			"retrievedCopy": "service.json beside structures.geojsonl under $MAILWOMAN_CACHE_ROOT/sources/usgov-usgs-structures/, which the usgs-structures fetcher writes on every fetch from https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer?f=json",
 			"retrievedAt": "2026-11-11",
-			"electedBecause": "The National Structures Dataset is compiled and published by the U.S. Geological Survey, an agency of the United States, as part of The National Map, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The publisher's own description of the layer agrees: the structures MapServer's `serviceDescription`, read on 2026-11-11, states `The National Map download client allows free downloads of public domain structures data in either Esri File Geodatabase or Shapefile formats.`, and contains none of `license`, `restrict`, `copyright` or `use constraint`. Its `copyrightText` reads `USGS TNM – National Structures Dataset. Data Refreshed October, 2026.`, and layer 38, `Post Offices`, carries an empty `copyrightText` and no license or use-constraint field. USGS's site-wide page `https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits` answered HTTP 202 with an empty body on 2026-11-11, so its text is not part of this reading. The rows are facts about post offices (a name, a street address, a city, a state, a ZIP Code and a point), which the US factual-data reading in `packages/corpus/lib/us/AGENTS.md` also elects. Some structures are edited by The National Map Corps volunteers; the publisher distributes their edits in the same public-domain dataset and states no separate terms for them. The basis below is the statute rather than a grant, as for the IRS Business Master File.",
+			"electedBecause": "The National Structures Dataset is compiled and published by the U.S. Geological Survey, an agency of the United States, as part of The National Map, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The publisher's own description of the layer agrees: the structures MapServer's `serviceDescription`, read on 2026-11-11, states `The National Map download client allows free downloads of public domain structures data in either Esri File Geodatabase or Shapefile formats.`, and contains none of `license`, `restrict`, `copyright` or `use constraint`. Its `copyrightText` reads `USGS TNM – National Structures Dataset. Data Refreshed October, 2026.`, and layer 38, `Post Offices`, carries an empty `copyrightText` and no license or use-constraint field. USGS's site-wide page `https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits` answered HTTP 202 with an empty body on 2026-11-11, so its text is not part of this reading. The rows are facts about post offices (a name, a street address, a city, a state, a ZIP Code and a point), which the US factual-data reading in `packages/corpus/lib/us/AGENTS.md` also elects. Some structures are edited by The National Map Corps volunteers; the publisher distributes their edits in the same public-domain dataset and states no separate terms for them. The basis below is the statute rather than a grant, as for the IRS Business Master File. On 2026-11-13 the reading was extended from layer 38 to every point layer of the MapServer (37–67): each layer's REST description carries either an empty `copyrightText` or the credit `USGS TNM - National Structures Dataset`, and none carries a license or use-constraint field. The dataset's ISO metadata record (`https://thor-f5.er.usgs.gov/ngtoc/metadata/waf/structures/nsd/filegdb101/Structures_National_GDB.xml`) states `accessConstraints` `None` and a `useConstraints` that reads `None.` followed by a caution about temporal change and a request that the USGS be acknowledged, which is a request rather than a condition. The rows are facts about public facilities: a name, a street address, a city, a state, a ZIP Code and a point.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -25014,17 +25014,17 @@
 			"sourceID": "us-public-administration-3",
 			"iso2": "US",
 			"sector": "public-administration",
-			"name": "The National Map structures layer, Post Offices",
+			"name": "The National Map structures layer (National Structures Dataset)",
 			"status": "verified-corpus",
 			"asserts": ["observation"],
 			"authorityBasis": "The USGS National Geospatial Program publishes the National Structures Dataset as part of The National Map",
 			"geometry": "present",
 			"license": "unchecked-corpus-input-us-u-s-geological-survey",
 			"researchPass": "2026-10-17-corpus-input-mapping",
-			"access": "ArcGIS MapServer `structures` layer 38 on carto.nationalmap.gov, queried for FCODE 78006, no key",
+			"access": "ArcGIS MapServer `structures` point layers 37–67 on carto.nationalmap.gov, each queried by layer id and paged by OBJECTID, no key",
 			"publisher": "U.S. Geological Survey",
-			"sourceURL": "https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer/38",
-			"note": "Read by the usgov-usgs-post-offices adapter. 31,033 post offices in the 2026-11-09 pull, each with a name, street address, city, state, ZIP Code and point."
+			"sourceURL": "https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer",
+			"note": "Read by the usgov-usgs-structures adapter and the structures layer. 473,903 features across 25 non-empty point layers in the 2026-11-13 pull (schools, cemeteries, post offices, fire, police and ambulance stations, hospitals, government buildings, recreation sites), each with a name, a point, and on most layers a street address, city, state and ZIP Code."
 		}
 	]
 }

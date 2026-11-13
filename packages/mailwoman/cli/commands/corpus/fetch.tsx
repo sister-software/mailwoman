@@ -66,7 +66,7 @@ const sources = [
 	"state-sources",
 	"state-hi-schools",
 	"tiger-full",
-	"usgs-post-offices",
+	"usgs-structures",
 	"vlaanderen",
 	"wallonie",
 	"wikidata-subvenue",
@@ -315,8 +315,8 @@ const FETCHERS = {
 			},
 			reportToStderr
 		),
-	"usgs-post-offices": async (base) =>
-		(await import("@mailwoman/corpus/us/tools/fetch/usgs-post-offices")).fetchUSGSPostOffices(base, reportToStderr),
+	"usgs-structures": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/usgs-structures")).fetchUSGSStructures(base, reportToStderr),
 	vlaanderen: async (base) =>
 		(await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")).fetchVlaanderenAD(base, reportToStderr),
 	wallonie: async (base) =>

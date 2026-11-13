@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the country-general post-office layer, `post-offices.db`,
- *   from every registered official post-office list.
+ *   Builds the country-general structures layer, `structures.db`,
+ *   from every registered official list of public structures: post-office lists,
+ *   and compilations such as the USGS National Structures Dataset's schools, hospitals,
+ *   emergency stations, government buildings and recreation sites.
  *
  *   The layer is a POI database the geocoder searches beside `poi.db`.
- *   Every row is in the POI taxonomy's post-office category, stamped with its source's
- *   country, and keyed `<source id>:<record id>` in `gers_id`.
+ *   Every row is in the POI taxonomy category its record names, stamped with its
+ *   source's country, and keyed `<source id>:<record id>` in `gers_id`.
  *
- *   The `post_office_source` table holds each source's publisher, terms,
+ *   The `structure_source` table holds each source's publisher, terms,
  *   provenance class, vintage and record counts.
  *
  *   The manifest states one license: the conjunction of the contributing sources' licenses,
@@ -22,48 +24,32 @@
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { LayerTier } from "@mailwoman/core/layers"
 import { carriesShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
-import type { PostOfficeSource } from "@mailwoman/corpus/post-offices/source"
+import type { StructureSource } from "@mailwoman/corpus/structures/source"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
-import { lookupPOICategory } from "@mailwoman/poi-taxonomy/lookup"
+import { getPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { buildPOIDatabase, type BuildPOIResult, type POILayerTerms } from "#tools/pipeline/poi/build/poi"
-import { createPostOfficeSourceTable, type PostOfficeSourceDatabase } from "#tools/pipeline/post-offices/schema"
+import { createStructureSourceTable, type StructureSourceDatabase } from "#tools/pipeline/structures/schema"
 
 /**
- * The manifest name of the post-office layer.
+ * The manifest name of the structures layer.
  */
-export const POST_OFFICE_LAYER_NAME = "post-offices"
-
-/**
- * The phrase the post-office category is looked up by in the POI taxonomy.
- */
-const POST_OFFICE_PHRASE = "post office"
-
-/**
- * The POI taxonomy's category id for a post office, resolved from its phrase.
- *
- * @throws When the taxonomy holds no category for the phrase.
- */
-export function postOfficeCategoryID(): string {
-	const [match] = lookupPOICategory(POST_OFFICE_PHRASE)
-
-	if (!match) {
-		throw new Error(`the POI taxonomy holds no category for the phrase "${POST_OFFICE_PHRASE}"`)
-	}
-
-	return match.category.id
-}
+export const STRUCTURE_LAYER_NAME = "structures"
 
 /**
  * The row counts one source contributed.
  */
-export interface PostOfficeSourceCounts {
+export interface StructureSourceCounts {
 	inputRecords: number
 	recordsWithoutPoint: number
+	/**
+	 * Rows written, keyed by POI category id.
+	 */
+	categories: Record<string, number>
 }
 
 /**
@@ -71,29 +57,29 @@ export interface PostOfficeSourceCounts {
  *
  * `sourceRecords` is the object the build fills as it reads, so it is complete once the rows are consumed.
  */
-export function postOfficeLayerTerms(
-	sources: readonly PostOfficeSource[],
+export function structureLayerTerms(
+	sources: readonly StructureSource[],
 	sourceRecords: Record<string, number>
 ): POILayerTerms {
 	const license = [...new Set(sources.map((source) => source.license))].join(" AND ")
 	const shareAlike = sources.some((source) => carriesShareAlike(readLicenseRecord(source.license)))
 
 	return {
-		name: POST_OFFICE_LAYER_NAME,
+		name: STRUCTURE_LAYER_NAME,
 		source: sources.map((source) => source.id).join("+"),
 		license,
 		attribution: sources.map((source) => source.attribution).join("; "),
 		tier: shareAlike ? LayerTier.BuildLocal : LayerTier.Shipped,
-		buildCmd: "mailwoman gazetteer build post-offices",
+		buildCmd: "mailwoman gazetteer build structures",
 		sourceRecords,
 	}
 }
 
 /**
- * Options for {@link buildPostOfficeLayer}.
+ * Options for {@link buildStructureLayer}.
  */
-export interface BuildPostOfficeLayerOptions {
-	sources: readonly PostOfficeSource[]
+export interface BuildStructureLayerOptions {
+	sources: readonly StructureSource[]
 	/**
 	 * The root `mailwoman corpus fetch` wrote each source's input under.
 	 */
@@ -108,36 +94,35 @@ export interface BuildPostOfficeLayerOptions {
 }
 
 /**
- * What a post-office layer build wrote.
+ * What a structures layer build wrote.
  */
-export interface BuildPostOfficeLayerResult extends BuildPOIResult {
+export interface BuildStructureLayerResult extends BuildPOIResult {
 	/**
 	 * Each source's counts, keyed by source id.
 	 */
-	sources: Map<string, PostOfficeSourceCounts & { vintage: string }>
+	sources: Map<string, StructureSourceCounts & { vintage: string }>
 }
 
 /**
- * Builds and seals `post-offices.db` from every source, replacing any existing file at `out`.
+ * Builds and seals `structures.db` from every source, replacing any existing file at `out`.
  *
- * @throws When no source is given, or when a source's input cannot be read.
+ * @throws When no source is given, when a source's input cannot be read, or
+ * when a record's category is one the POI taxonomy doesn't hold.
  */
-export async function buildPostOfficeLayer(opts: BuildPostOfficeLayerOptions): Promise<BuildPostOfficeLayerResult> {
+export async function buildStructureLayer(opts: BuildStructureLayerOptions): Promise<BuildStructureLayerResult> {
 	if (!opts.sources.length) {
-		throw new Error("buildPostOfficeLayer: no post-office source is registered, so the layer would be empty")
+		throw new Error("buildStructureLayer: no structure source is registered, so the layer would be empty")
 	}
-
-	const categoryID = postOfficeCategoryID()
 
 	const reads = await Promise.all(
 		opts.sources.map(async (source) => ({ source, read: await source.read(opts.sourcesRoot) }))
 	)
 
-	const counts = new Map<string, PostOfficeSourceCounts & { vintage: string }>()
+	const counts = new Map<string, StructureSourceCounts & { vintage: string }>()
 	const sourceRecords: Record<string, number> = {}
 
 	for (const { source, read } of reads) {
-		counts.set(source.id, { inputRecords: 0, recordsWithoutPoint: 0, vintage: read.vintage })
+		counts.set(source.id, { inputRecords: 0, recordsWithoutPoint: 0, categories: {}, vintage: read.vintage })
 	}
 
 	async function* rows(): AsyncIterable<POISourceRow> {
@@ -147,15 +132,23 @@ export async function buildPostOfficeLayer(opts: BuildPostOfficeLayerOptions): P
 			for await (const record of read.records) {
 				sourceCounts.inputRecords++
 
+				if (!getPOICategory(record.category)) {
+					throw new Error(
+						`${source.id}:${record.id} names the category "${record.category}", which the POI taxonomy doesn't hold`
+					)
+				}
+
 				if (!record.point) {
 					sourceCounts.recordsWithoutPoint++
 
 					continue
 				}
 
+				sourceCounts.categories[record.category] = (sourceCounts.categories[record.category] ?? 0) + 1
+
 				yield {
 					name: record.name,
-					category: categoryID,
+					category: record.category,
 					brandWikidata: null,
 					latitude: record.point.latitude,
 					longitude: record.point.longitude,
@@ -190,15 +183,15 @@ export async function buildPostOfficeLayer(opts: BuildPostOfficeLayerOptions): P
 			release: reads.map(({ source, read }) => `${source.id}=${read.vintage}`).join(" "),
 			buildSHA: opts.buildSHA,
 			createdAt: opts.createdAt,
-			terms: postOfficeLayerTerms(opts.sources, sourceRecords),
+			terms: structureLayerTerms(opts.sources, sourceRecords),
 			onProgress: opts.onProgress,
 			writeTables: async (kdb: DatabaseClient<POIDatabase>) => {
-				const db = kdb.withTables<PostOfficeSourceDatabase>()
+				const db = kdb.withTables<StructureSourceDatabase>()
 
-				await createPostOfficeSourceTable(db)
+				await createStructureSourceTable(db)
 
 				await db
-					.insertInto("post_office_source")
+					.insertInto("structure_source")
 					.values(
 						opts.sources.map((source) => {
 							const sourceCounts = counts.get(source.id)!

@@ -19,7 +19,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { PostOfficeProvenance, PostOfficeRecord, PostOfficeSource } from "@mailwoman/corpus/post-offices/source"
+import type { StructureProvenance, StructureRecord, StructureSource } from "@mailwoman/corpus/structures/source"
 import { alignRow } from "@mailwoman/corpus/utils/align"
 
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -46,7 +46,7 @@ export type PostOfficeSuiteForm = (typeof PostOfficeSuiteForm)[keyof typeof Post
  */
 export interface PostOfficeSuiteRow extends HeldoutRow {
 	form: PostOfficeSuiteForm
-	provenance: PostOfficeProvenance
+	provenance: StructureProvenance
 	/**
 	 * The components the parser is expected to return, as the formatter rendered them.
 	 */
@@ -62,8 +62,8 @@ export type PostOfficeSuiteTally = Record<string, number>
  * The suite rows of one record, or none with the reason counted in `tally`.
  */
 export function postOfficeSuiteRows(
-	source: Pick<PostOfficeSource, "id" | "country" | "license" | "provenance">,
-	record: PostOfficeRecord,
+	source: Pick<StructureSource, "id" | "country" | "license" | "provenance">,
+	record: StructureRecord,
 	tally: PostOfficeSuiteTally
 ): PostOfficeSuiteRow[] {
 	const count = (reason: string) => {

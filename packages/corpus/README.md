@@ -111,7 +111,7 @@ registered-office grammar.
 The field is required on `CorpusAdapter` and has no default, because the answer is a property of
 the source that only the adapter's author has read. Eleven of the 24 adapters here emit a non-premise
 role: five facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
-`usgov-samhsa-treatment-locator`, `usgov-usgs-post-offices`), three mailing (`invented-po-box`,
+`usgov-samhsa-treatment-locator`, `usgov-usgs-structures`), three mailing (`invented-po-box`,
 `state-tx-notaries`, `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one
 registered-office (`state-ia-contractors`). A defaulted field would record premise for all eleven.
 
@@ -179,23 +179,28 @@ keep the national publisher's provenance — the register has `publisher` and `s
 exactly that, and the one `verified-corpus-stale` row is what happens when an aggregator's copy
 stops updating and no researcher checked the national portal behind it.
 
-## Official post-office lists
+## Official lists of public structures
 
-`mailwoman gazetteer build post-offices` folds every country's official post-office list into one
-`post-offices.db` beside `poi.db`, and the geocoder searches it with `poi.db`. The same lists feed the
-post-office parse suite in `packages/mailwoman/tools/eval-harness/post-offices/`, a must-pass floor:
-`grade.run.ts` exits non-zero when any official address doesn't parse as expected. `lib/post-offices/sources.ts` registers the lists, and the United States'
-USGS National Map entry is the first.
+`mailwoman gazetteer build structures` folds every country's official list of public structures, such
+as a postal operator's post offices or the USGS National Structures Dataset's schools, hospitals,
+emergency stations and government buildings, into one `structures.db` beside `poi.db`, and the geocoder
+searches it with `poi.db`. The records filed under the post-office category feed the post-office parse
+suite in `packages/mailwoman/tools/eval-harness/post-offices/`, a must-pass floor: `grade.run.ts`
+exits non-zero when any official post-office address doesn't parse as expected.
+`lib/structures/sources.ts` registers the lists, and the United States' USGS National Map entry is the
+first.
 
 A new country's list joins with three pieces of work:
 
 1. **A fetcher and a reader under the country's directory.** The fetcher writes the publisher's file
    under `$MAILWOMAN_CACHE_ROOT/sources/<source>/` with a `MANIFEST.json`. The reader is a
-   `PostOfficeSource` (`lib/post-offices/source.ts`) under `lib/<cc>/post-offices/`. The shared layer
+   `StructureSource` (`lib/structures/source.ts`) under `lib/<cc>/structures/`. The shared layer
    builder reads only the entry's fields and never branches on a country.
-2. **Each record the reader yields** has the publisher's own identifier, the facility's name, its point
-   or `null`, and its address as the components the parser labels (`house_number`, `street`, `unit`,
-   `locality`, `region`, `postcode`), split by the country's own rules, or `null`.
+2. **Each record the reader yields** has the publisher's own identifier, the facility's name, its
+   `@mailwoman/poi-taxonomy` category (a post-office list files every record under
+   `postOfficeCategoryID()`), its point or `null`, and its address as the components the parser labels
+   (`house_number`, `street`, `unit`, `locality`, `region`, `postcode`), split by the country's own
+   rules, or `null`.
 3. **The entry's terms**: the ISO 3166-1 alpha-2 country, the publisher, the attribution the layer
    credits, an SPDX identifier or a `LicenseRef-` this repository defines, the source's
    `address-source-register.json` row, and its provenance class. A postal operator's own facility list is
@@ -203,8 +208,9 @@ A new country's list joins with three pieces of work:
    The register row needs an elected decision before the list is registered, as for any corpus source.
 
 The layer's manifest states the conjunction of the contributing licenses and each source's input
-count. Its `post_office_source` table holds each source's terms, provenance class and counts, and each
-row's `gers_id` reads `<source id>:<record id>`.
+count. Its `structure_source` table holds each source's terms, provenance class and counts, and each
+row's `gers_id` reads `<source id>:<record id>`. The build refuses a record whose category the taxonomy
+doesn't hold.
 
 ## Related
 
