@@ -180,4 +180,13 @@ export const PrivateMailwomanEnvSchema = z.object({
 				"The firewall role's token from `mwops release mint-cloudflare-tokens`: Zone WAF edit and Zone read on " +
 				"mailwoman.post, which the bucket's browser-only access-rule tool needs.",
 		}),
+	CLOUDFLARE_API_TOKEN: z
+		.string()
+		.optional()
+		.meta({
+			title: "Cloudflare API token",
+			description:
+				"A token with Transform Rules edit on the zone the response-header tool writes to, such as sister.software " +
+				"for the public font host's resource policy.",
+		}),
 })

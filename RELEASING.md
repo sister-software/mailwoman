@@ -402,6 +402,10 @@ The rule blocks a request on `public.mailwoman.post` under the covered prefixes 
   `Sec-Fetch-Site`;
 - nor the `X-Mailwoman-Client` header that `mailwoman data pull` sends.
 
+A local preview's origin, `http://localhost:7771` for Earth's preview and its Playwright suite, is cross-site to the
+bucket, so `--local-origins` admits a range read from it with any `Sec-Fetch-Site` value. The bucket's CORS rule admits
+the same origin.
+
 Apply it only once the npm release of `mailwoman` sends `X-Mailwoman-Client`. A CLI that sends no client header has
 its `data pull` refused. Run the tool without `--apply` first: it prints the zone's current custom rules beside the
 rule it would write.
@@ -411,6 +415,7 @@ node --env-file=.env packages/mailwoman/tools/dev-tools/cloudflare/firewall.run.
   --zone mailwoman.post --host public.mailwoman.post \
   --path-prefixes /mailwoman/addresses/,/mailwoman/street/,/mailwoman/streets/,/mailwoman/gazetteer/,/mailwoman/poi/,/mailwoman/polygons/,/mailwoman/landmarks/ \
   --origins https://mailwoman.post,https://www.mailwoman.post,https://earth.mailwoman.post \
+  --local-origins http://localhost:7771 \
   --apply
 ```
 

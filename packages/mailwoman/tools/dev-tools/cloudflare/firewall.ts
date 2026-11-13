@@ -33,6 +33,14 @@ export interface BucketAccess {
 	 * The header a non-browser client the rule admits sends, such as `X-Mailwoman-Client`.
 	 */
 	clientHeader: string
+	/**
+	 * Origins of local previews whose browsers may read the paths, such as `http://localhost:7771`.
+	 *
+	 * A page on `localhost` is cross-site to the bucket, so these origins are
+	 * admitted with any `Sec-Fetch-Site` value.
+	 * The bucket's CORS rule must admit the same origins.
+	 */
+	localOrigins?: readonly string[]
 }
 
 /**
@@ -60,11 +68,19 @@ export function bucketAccessExpression(access: BucketAccess): string {
 
 	const paths = access.pathPrefixes.map((prefix) => `starts_with(http.request.uri.path, ${quote(prefix)})`).join(" or ")
 
+	const siteOrigin = [
+		`any(http.request.headers["origin"][*] in {${origins}})`,
+		`any(http.request.headers["sec-fetch-site"][*] in {"same-site" "same-origin"})`,
+	].join(" and ")
+
+	const localOrigins = access.localOrigins?.length
+		? ` or any(http.request.headers["origin"][*] in {${access.localOrigins.map(quote).join(" ")}})`
+		: ""
+
 	const browser = [
 		`any(http.request.headers.names[*] eq "range")`,
-		`any(http.request.headers["origin"][*] in {${origins}})`,
 		`any(http.request.headers["sec-fetch-mode"][*] eq "cors")`,
-		`any(http.request.headers["sec-fetch-site"][*] in {"same-site" "same-origin"})`,
+		`((${siteOrigin})${localOrigins})`,
 	].join(" and ")
 
 	const client = `any(http.request.headers.names[*] eq ${quote(access.clientHeader.toLowerCase())})`

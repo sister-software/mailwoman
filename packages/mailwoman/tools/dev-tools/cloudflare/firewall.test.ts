@@ -24,10 +24,16 @@ describe("bucketAccessExpression", () => {
 				'starts_with(http.request.uri.path, "/mailwoman/gazetteer/") or ' +
 				'starts_with(http.request.uri.path, "/mailwoman/addresses/")) and not ((' +
 				'any(http.request.headers.names[*] eq "range") and ' +
-				'any(http.request.headers["origin"][*] in {"https://mailwoman.post" "https://earth.mailwoman.post"}) and ' +
 				'any(http.request.headers["sec-fetch-mode"][*] eq "cors") and ' +
-				'any(http.request.headers["sec-fetch-site"][*] in {"same-site" "same-origin"})) or ' +
+				'((any(http.request.headers["origin"][*] in {"https://mailwoman.post" "https://earth.mailwoman.post"}) and ' +
+				'any(http.request.headers["sec-fetch-site"][*] in {"same-site" "same-origin"})))) or ' +
 				'any(http.request.headers.names[*] eq "x-mailwoman-client")))'
+		)
+	})
+
+	it("admits a local preview origin, which is cross-site to the bucket, with any Sec-Fetch-Site value", () => {
+		expect(bucketAccessExpression({ ...access, localOrigins: ["http://localhost:7771"] })).toContain(
+			'or any(http.request.headers["origin"][*] in {"http://localhost:7771"})'
 		)
 	})
 

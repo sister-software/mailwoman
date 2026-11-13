@@ -178,13 +178,16 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  *
  * `.gitignore` excludes the directory, and the development MCP rewrites the link on the next intake.
  *
+ * `.wrangler/` holds Wrangler's local state and the temporary Worker it writes for `wrangler dev`.
+ * `.gitignore` excludes it, and the next `wrangler` run recreates it.
+ *
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
  * The hook can remove these paths safely, but a hand-written file such as
  * `out/<subpath>.d.ts` would stand in for source that doesn't exist.
  */
-const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad|\.claude\/state)(?:\/|$)|\.tsbuildinfo$/u
+const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad|\.claude\/state|\.wrangler)(?:\/|$)|\.tsbuildinfo$/u
 
 const REMOVER = "rm"
 
@@ -212,8 +215,8 @@ const DETACHED_LAUNCH_GUIDANCE =
  * The advice for a {@link REMOVER} refusal.
  */
 const REMOVAL_GUIDANCE =
-	"Removing DERIVED output is admitted: a path under `out/`, `dist/`, `node_modules/`, `scratchpad/` or " +
-	"`.claude/state/`, or a `*.tsbuildinfo`, read " +
+	"Removing DERIVED output is admitted: a path under `out/`, `dist/`, `node_modules/`, `scratchpad/`, " +
+	"`.claude/state/` or `.wrangler/`, or a `*.tsbuildinfo`, read " +
 	"after any `..` is resolved. Anything else inside the repository is tracked or is someone's scratch file — remove a " +
 	"tracked path with `git rm`, so the index and the worktree agree. A target this hook cannot read, such as one behind " +
 	"a variable, is never derived; name the path in full."

@@ -207,6 +207,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a directory inside the tree", `mkdir -p packages/mailwoman/tools/dev-tools/codex`],
 		["the state directory a linked session writes", `mkdir -p .claude/state`],
 		["unlinking the issue at task close-out", `rm -f .claude/state/linked-issue`],
+		["clearing the temporary Worker wrangler dev wrote", `rm -rf packages/earth/.wrangler/tmp`],
 		["clearing the private package's build output", `rm -rf lib/out`],
 		[
 			"removing a declaration map the compiler orphaned",
