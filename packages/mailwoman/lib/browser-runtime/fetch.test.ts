@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { FetchStalledError, fetchWithRetry, STALL_TIMEOUT_MS } from "#browser-runtime/fetch"
+import { FetchStalledError, fetchWithRetry, STALL_TIMEOUT_MS, subscribeNetworkWaits } from "#browser-runtime/fetch"
 
 beforeEach(() => {
 	vi.useFakeTimers()
@@ -215,5 +215,120 @@ describe("fetchWithRetry", () => {
 
 		await expect(settle(fetchWithRetry("https://example.test/model.onnx"))).rejects.toThrow("aborted")
 		expect(impl).toHaveBeenCalledTimes(1)
+	})
+})
+
+describe("fetchWithRetry while offline", () => {
+	/**
+	 * Stubs `navigator.onLine` and the window's `online` event, as a browser that
+	 * lost its connection exposes them.
+	 */
+	function stubConnection(initiallyOnline: boolean) {
+		const window = new EventTarget()
+		const navigator = { onLine: initiallyOnline }
+
+		vi.stubGlobal("navigator", navigator)
+		vi.stubGlobal("addEventListener", window.addEventListener.bind(window))
+		vi.stubGlobal("removeEventListener", window.removeEventListener.bind(window))
+
+		return {
+			goOffline: () => {
+				navigator.onLine = false
+			},
+			goOnline: () => {
+				navigator.onLine = true
+				window.dispatchEvent(new Event("online"))
+			},
+		}
+	}
+
+	test("waits for a connection before its first attempt, and reports the wait", async () => {
+		const connection = stubConnection(false)
+		const impl = vi.fn<typeof fetch>().mockResolvedValue(new Response("ok"))
+		const waits: number[] = []
+		const unsubscribe = subscribeNetworkWaits((waiting) => waits.push(waiting))
+
+		vi.stubGlobal("fetch", impl)
+
+		const answer = fetchWithRetry("https://example.test/model.onnx")
+
+		await vi.advanceTimersByTimeAsync(60_000)
+		expect(impl).not.toHaveBeenCalled()
+
+		connection.goOnline()
+
+		await expect((await answer).text()).resolves.toBe("ok")
+		expect(impl).toHaveBeenCalledTimes(1)
+		expect(waits).toEqual([0, 1, 0])
+
+		unsubscribe()
+	})
+
+	test("a failure while offline costs no attempt", async () => {
+		const connection = stubConnection(true)
+
+		const impl = vi
+			.fn<typeof fetch>()
+			.mockImplementationOnce(async () => {
+				connection.goOffline()
+
+				throw new TypeError("Load failed")
+			})
+			.mockRejectedValueOnce(new TypeError("Load failed"))
+			.mockRejectedValueOnce(new TypeError("Load failed"))
+			.mockResolvedValueOnce(new Response("ok"))
+
+		vi.stubGlobal("fetch", impl)
+
+		const answer = fetchWithRetry("https://example.test/model.onnx")
+
+		await vi.advanceTimersByTimeAsync(10_000)
+		expect(impl).toHaveBeenCalledTimes(1)
+
+		connection.goOnline()
+		await vi.advanceTimersByTimeAsync(5000)
+
+		await expect((await answer).text()).resolves.toBe("ok")
+
+		// One offline failure, two counted failures, and the third counted attempt answers.
+		expect(impl).toHaveBeenCalledTimes(4)
+		expect(impl.mock.calls.slice(1).map(([, init]) => init?.cache)).toEqual(["reload", "reload", "reload"])
+	})
+
+	test("waits without a time limit, and fetches once the connection returns", async () => {
+		const connection = stubConnection(false)
+		const impl = vi.fn<typeof fetch>().mockResolvedValue(new Response("ok"))
+		let settled = false
+
+		vi.stubGlobal("fetch", impl)
+
+		const answer = fetchWithRetry("https://example.test/model.onnx").finally(() => {
+			settled = true
+		})
+
+		// After two hours offline the call has made zero attempts and is still pending.
+		await vi.advanceTimersByTimeAsync(2 * 60 * 60 * 1000)
+		expect(settled).toBe(false)
+		expect(impl).not.toHaveBeenCalled()
+
+		connection.goOnline()
+
+		await expect((await answer).text()).resolves.toBe("ok")
+		expect(impl).toHaveBeenCalledTimes(1)
+	})
+
+	test("a caller's abort ends the wait", async () => {
+		stubConnection(false)
+		vi.stubGlobal("fetch", vi.fn<typeof fetch>())
+
+		const controller = new AbortController()
+
+		const failure = fetchWithRetry("https://example.test/model.onnx", { signal: controller.signal }).catch(
+			(error: unknown) => error
+		)
+
+		controller.abort(new DOMException("left the page", "AbortError"))
+
+		expect(await failure).toMatchObject({ name: "AbortError" })
 	})
 })
