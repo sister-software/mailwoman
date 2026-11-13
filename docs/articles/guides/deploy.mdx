@@ -80,7 +80,7 @@ curl -s -X POST http://127.0.0.1:3000/v1/geocode -H "content-type: application/j
 
 The container returned `"resolution_tier":"address_point"` with `"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"}`. A 503 means the server found no gazetteer under `/data`. A result at the `admin` tier for an address your data covers means the server didn't read the address points. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) shows complete responses.
 
-The image's `Dockerfile` declares a `HEALTHCHECK` against `/health`. The published image is stored in the OCI format, and that format has no health-check field. Podman reported no health check on the pulled image. Define the check in your orchestrator.
+The image declares a `HEALTHCHECK` that requests `/health` every 30 seconds after a 60-second start period, and marks the container unhealthy after 3 failed requests. An orchestrator that ignores image health checks, such as Kubernetes, needs the same check defined as a probe.
 
 ## 5. Size the container
 

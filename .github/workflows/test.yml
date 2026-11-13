@@ -510,6 +510,8 @@ jobs:
         env:
           TEST_FILES: ${{ needs.scope.outputs.slow_files }}
           FULL_SCOPE: ${{ needs.scope.outputs.full }}
+          # Four runners share the lab host's 16 cores, so each slow suite takes a quarter of them.
+          CI_TEST_MAX_WORKERS: "4"
         run: yarn mwops ci-test slow
 
       - name: Upload test results

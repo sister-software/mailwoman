@@ -97,7 +97,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
-          push: true
+          # Docker media types, because Podman ignores the HEALTHCHECK an OCI-typed config records.
+          outputs: type=registry,oci-mediatypes=false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # The image installs the npm packages of the version it is tagged with.

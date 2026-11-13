@@ -14,6 +14,12 @@ const ciEnvironment = liveEnv(
 	z.object({
 		TEST_FILES: z.string(),
 		FULL_SCOPE: z.string().optional(),
+		/**
+		 * The Vitest worker limit for a runner that shares its host's cores with other runners.
+		 *
+		 * Vitest otherwise starts one worker per core less one on each runner.
+		 */
+		CI_TEST_MAX_WORKERS: z.coerce.number().int().positive().optional(),
 	})
 )
 
@@ -43,6 +49,11 @@ export function readCITestArguments(suite: CITestSuite, input: string, fullScope
 
 export async function runCITests(suite: CITestSuite): Promise<void> {
 	const args = readCITestArguments(suite, ciEnvironment.TEST_FILES, ciEnvironment.FULL_SCOPE)
+	const maxWorkers = ciEnvironment.CI_TEST_MAX_WORKERS
 
-	await runProcess("yarn", args, { stdin: "inherit", stdout: "inherit", stderr: "inherit" })
+	await runProcess("yarn", maxWorkers ? [...args, `--maxWorkers=${maxWorkers}`] : args, {
+		stdin: "inherit",
+		stdout: "inherit",
+		stderr: "inherit",
+	})
 }

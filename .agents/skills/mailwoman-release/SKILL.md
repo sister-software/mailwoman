@@ -249,6 +249,17 @@ jq -r .version package/model-card.json           # == <target>
 npm view @mailwoman/neural-weights-en-us@<target> --json | jq '.dist.attestations.url'  # provenance present
 ```
 
+Check the container image the publish job dispatched after the SBOM step:
+
+```bash
+gh run list --workflow docker-publish.yml --limit 1 --json event,status,conclusion,createdAt   # a workflow_dispatch after the publish run
+podman pull ghcr.io/sister-software/mailwoman:<target>
+podman image inspect ghcr.io/sister-software/mailwoman:<target> --format '{{.Config.Healthcheck}}'   # the /health check, not <nil>
+```
+
+The publish job skips the dispatch with a warning when npm held a package past the SBOM step's wait.
+Run `gh workflow run docker-publish.yml --ref main -f tag=<target>` once the registry serves every package.
+
 Then fast-forward local main: `git merge --ff-only origin/main`.
 
 The publish job attaches `mailwoman-<version>.spdx.json`, `mailwoman-<version>.cdx.json` and
