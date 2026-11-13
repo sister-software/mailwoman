@@ -122,10 +122,14 @@ export function buildEmissionPriors(
 }
 
 /**
- * The scoped locality bias fires only on the bare admin doubleton
- * (a region-ambiguous name immediately before its abbreviation) and only
- * when the input holds no digits, the abbreviation is the final token.
- * At most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
+ * The scoped locality bias fires on the name written in the comma segment directly
+ * before a region abbreviation (`Cool, CA`, and `Cool` in `Cool Post Office, Cool, CA`),
+ * and only when the input holds no digits and the abbreviation is the final token.
+ *
+ * At most {@link MAX_PRIOR_CANDIDATES} tokens may sit in that segment.
+ *
+ * Earlier segments, such as a venue's name, are outside it, so the name before the
+ * abbreviation reads as the locality whether or not something precedes it.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],
@@ -146,7 +150,13 @@ function applyScopedLocalityBias(
 	for (const abbrev of abbrevs) {
 		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
 
-		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
+		// The segment opens after the last comma that precedes the separator before the abbreviation.
+		const prefix = inputText.slice(0, abbrev.start).replace(/[\s,]+$/u, "")
+		const segmentStart = prefix.lastIndexOf(",") + 1
+
+		const candidates = tokens
+			.map((tok, t) => ({ tok, t }))
+			.filter(({ tok }) => tok.start >= segmentStart && tok.end <= abbrev.start)
 
 		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 

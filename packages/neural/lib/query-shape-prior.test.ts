@@ -159,6 +159,23 @@ describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", ()
 		}
 	})
 
+	it("fires on the comma segment before the abbreviation when a venue precedes it (#3057)", () => {
+		const text = "Cool Post Office, Cool, CA"
+		const shape = { knownFormats: [], regionAbbreviations: [{ start: 24, span: "CA" }] } as QueryShapeLike
+
+		const m = buildEmissionPriors(shape, tokens([0, 4], [5, 9], [10, 16], [18, 22], [24, 26]), LABELS, {
+			inputText: text,
+		})
+
+		// Only `Cool`, the name in the segment before `CA`, reads as the locality.
+		expect(m[3]![bLoc]).toBeGreaterThan(0)
+
+		for (const row of [m[0]!, m[1]!, m[2]!, m[4]!]) {
+			expect(row[bLoc]).toBe(0)
+			expect(row[iLoc]).toBe(0)
+		}
+	})
+
 	it("does NOT fire when a token follows the abbreviation (not the doubleton shape)", () => {
 		const text = "New York, NY tomorrow"
 		const shape = { knownFormats: [], regionAbbreviations: [{ start: 10, span: "NY" }] } as QueryShapeLike
