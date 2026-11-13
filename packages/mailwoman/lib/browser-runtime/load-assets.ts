@@ -24,6 +24,7 @@ import { ArtifactLoadError, followNetworkWaits, LoadLedger, ledgerFetch } from "
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { prefetchingFetch } from "#browser-runtime/fetch"
+import { artifactLookup, verifyingFetch } from "#browser-runtime/integrity"
 import {
 	fetchPairIndexManifest,
 	postcodeAnchorFilesOf,
@@ -251,6 +252,12 @@ export async function loadReleaseAssets(
 			: undefined,
 	})
 
+	// Every download from the release directory is checked against the manifest's byte length and digest.
+	// Each attempt, the reload included, goes through the ledger.
+	// A release published before the manifest recorded them is fetched unchecked.
+	const expectedFor = artifactLookup(release.artifacts, (file) => assetURL(locale, release.version, file))
+	const releaseFetch = verifyingFetch(recordedFetch, expectedFor)
+
 	try {
 		return await loadStages()
 	} finally {
@@ -274,17 +281,17 @@ export async function loadReleaseAssets(
 			release.hasCalibration === false
 				? Promise.resolve(null)
 				: settleOptional(
-						recordedFetch(assetURL(locale, release.version, "calibration.json")).then(async (res) =>
+						releaseFetch(assetURL(locale, release.version, "calibration.json")).then(async (res) =>
 							res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
 						)
 					)
 
 		// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
 		// A release that predates the morphology artifact answers null, and the parse runs with the check off.
-		const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(locale, release.version, recordedFetch)) : null
+		const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(locale, release.version, releaseFetch)) : null
 
 		const streetMorphologyLoad = release.hasFST
-			? settleOptional(loadStreetMorphologyFST(locale, release.version, recordedFetch))
+			? settleOptional(loadStreetMorphologyFST(locale, release.version, releaseFetch))
 			: null
 
 		// The pair-index generation's manifest lists the countries whose binaries the bucket holds.
@@ -296,7 +303,7 @@ export async function loadReleaseAssets(
 		const postcodeCentroidLoad = settleOptional(
 			loadPostcodeCentroids(
 				postcodeCentroidFilesOf(release).map((file) => assetURL(locale, release.version, file)),
-				recordedFetch
+				releaseFetch
 			)
 		)
 
@@ -326,7 +333,7 @@ export async function loadReleaseAssets(
 					classifierURLs.tokenizerURL,
 				]
 
-		const modelFetch = prefetchingFetch(recordedFetch, prefetchURLs)
+		const modelFetch = prefetchingFetch(releaseFetch, prefetchURLs)
 
 		// Dynamic so the onnxruntime-web chunk loads only when a release does.
 		// The result is narrowed to the structural classifier interface this module exposes,

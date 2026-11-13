@@ -491,6 +491,8 @@ export function pairIndexURLs(baseURL: string, countries: readonly string[]): st
 
 /**
  * Loads the release's FST gazetteer and, when the binary includes it, its provenance.
+ *
+ * `fetchImpl` lets the release loader check the binary against the manifest's integrity record.
  */
 export async function loadFSTGazetteer(
 	locale: string,
@@ -522,6 +524,7 @@ export async function loadFSTGazetteer(
  * Loads the release's street-morphology FST.
  *
  * The function returns `null` when the file is unavailable and throws when the binary is corrupt.
+ * `fetchImpl` lets the release loader check the binary against the manifest's integrity record.
  */
 export async function loadStreetMorphologyFST(
 	locale: string,
