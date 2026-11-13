@@ -570,3 +570,9 @@ extend-words = { theatre = "theatre", centre = "centre", harbour = "harbour", or
 [type.fulfil]
 extend-glob = ["fulfil.ts", "fulfil.test.ts"]
 check-filename = false
+
+[type.publiccode]
+extend-glob = ["publiccode.yml"]
+# The publiccode.yml standard spells its keys `organisation`, `localisation` and `localisationReady`,
+# and a reader of the file matches them verbatim.
+extend-words = { organisation = "organisation", localisation = "localisation" }
