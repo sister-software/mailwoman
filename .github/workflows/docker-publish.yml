@@ -4,8 +4,9 @@
 # monorepo, at the version the image is tagged with, through the MAILWOMAN_VERSION build argument.
 # The image bakes in the model weights. The gazetteer is mounted as a volume at /data.
 #
-# A manual run takes an explicit `tag` input. A published GitHub release tags the image with the
-# release version. The `latest` tag is skipped for prereleases.
+# publish.yml dispatches this workflow with the release version once npm serves the release, and a
+# manual run takes the same explicit `tag` input. A GitHub release created with a personal token also
+# triggers it and tags the image with the release version. The `latest` tag is skipped for prereleases.
 #
 # The image is linux/amd64 only because onnxruntime-node ships glibc x64 prebuilds.
 # The job authenticates with the runtime GITHUB_TOKEN. That token needs packages:write.

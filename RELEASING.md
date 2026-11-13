@@ -214,6 +214,17 @@ Commit the three files in the docs PR that records the release. Validation comma
 in [`docs/records/site-2026-08/licensing/sbom.md`](./docs/records/site-2026-08/licensing/sbom.md),
 and the script header explains the SPDX normalization.
 
+## The container image (post-publish)
+
+Once the SBOM step has seen npm serve every release workspace, the publish job dispatches
+`docker-publish.yml` with the release version. That workflow builds `ghcr.io/sister-software/mailwoman:<version>`
+from the published packages and moves `latest` to it. When npm holds a package past the SBOM step's wait,
+the job skips the dispatch and prints the command to run once the registry serves it:
+
+```bash
+gh workflow run docker-publish.yml --ref main -f tag=<version>
+```
+
 ## Source data for the weights packages
 
 `copy-weights.ts` reads the trained-binary filenames from **`release.config.json`** (`weights.model` /

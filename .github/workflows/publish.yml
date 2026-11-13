@@ -194,6 +194,7 @@ jobs:
     permissions:
       contents: write # push the version tag + create the GitHub release
       id-token: write # npm Trusted Publishing (OIDC)
+      actions: write # dispatch the Docker publish for the released version
     steps:
       - uses: actions/checkout@v7
         with:
@@ -315,6 +316,7 @@ jobs:
       # npm can hold a fresh version in validation for some minutes, so the step waits for the
       # registry to serve it before packing.
       - name: Attach the SBOM and the data bill of materials to the GitHub release
+        id: sbom
         if: ${{ !inputs.dry_run }}
         # Every package is on npm by this step, so a failure here leaves a release without its
         # attached documents rather than an unpublished release.
@@ -348,6 +350,24 @@ jobs:
           yarn mwops release sbom --version "${VERSION}" --out "${BOM}"
           node packages/mailwoman/out/cli/main.js data bom --skip-inventory --out "${BOM}/mailwoman-data-${VERSION}.cdx.json"
           gh release upload "v${VERSION}" "${BOM}"/* --clobber
+
+      # The release this job creates uses GITHUB_TOKEN, and GitHub starts no workflow from an event
+      # that token raises, so docker-publish.yml's release trigger never fires for it. The image installs
+      # the release's packages from npm, so the dispatch runs once the SBOM step has seen npm serve
+      # every release workspace. A dispatch, unlike a release event, does start a workflow under this token.
+      - name: Dispatch the Docker image publish
+        if: ${{ !inputs.dry_run && steps.sbom.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh workflow run docker-publish.yml --ref main -f tag="${VERSION}"
+
+      - name: Report a skipped Docker image publish
+        if: ${{ !inputs.dry_run && steps.sbom.outcome != 'success' }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: | # shell
+          echo "::warning::npm wasn't serving every package, so the Docker image wasn't built. Once it does, run: gh workflow run docker-publish.yml --ref main -f tag=${VERSION}"
 
       - name: Report completed dry run
         if: ${{ inputs.dry_run }}
