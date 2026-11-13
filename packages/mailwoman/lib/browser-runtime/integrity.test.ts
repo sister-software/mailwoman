@@ -9,9 +9,10 @@
 import { sha256Hex } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
+import { ArtifactLoadError } from "#browser-runtime/artifact-ledger"
 import {
 	type ArtifactIntegrity,
-	ArtifactLoadError,
+	ArtifactIntegrityError,
 	artifactLookup,
 	artifactMismatch,
 	expectedArtifactLength,
@@ -80,11 +81,13 @@ describe("verifyingFetch", () => {
 		expect(inits.map((init) => init?.cache)).toEqual(["no-store", "no-store"])
 	})
 
-	it("throws ArtifactLoadError naming the file when the reload also differs", async () => {
+	it("throws an ArtifactIntegrityError, an ArtifactLoadError, naming the file when the reload also differs", async () => {
 		const { fetchImpl } = scriptedFetch(["torn", "still torn"])
 		const load = verifyingFetch(fetchImpl, expectedFor)(MODEL_URL)
 
+		await expect(load).rejects.toBeInstanceOf(ArtifactIntegrityError)
 		await expect(load).rejects.toBeInstanceOf(ArtifactLoadError)
+		await expect(load).rejects.toThrow(/^model\.onnx failed its integrity check after a reload/)
 		await expect(load).rejects.toMatchObject({ file: "model.onnx", url: MODEL_URL })
 	})
 

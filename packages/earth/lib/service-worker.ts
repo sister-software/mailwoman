@@ -66,6 +66,7 @@ import { NavigationRoute, registerRoute } from "workbox-routing"
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { createReleaseArtifactLengthLookup } from "#release-artifact-length"
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -253,6 +254,12 @@ registerRoute(
 	})
 )
 
+const releaseArtifactLength = createReleaseArtifactLengthLookup(async (manifestURL) => {
+	const cached = await caches.match(manifestURL, { cacheName: MANIFEST_CACHE })
+
+	return cached ? ((await cached.json()) as unknown) : null
+})
+
 registerRoute(
 	({ url, request }) => url.hostname === DATA_HOST && url.search === "" && !request.headers.has("range"),
 	new CacheFirst({
@@ -260,7 +267,9 @@ registerRoute(
 		plugins: [
 			reloadBypassPlugin(),
 			new CacheableResponsePlugin({ statuses: [200] }),
-			tornBodyPlugin(),
+			// A release file served without `Content-Length` is checked against the length
+			// its locale's cached `releases.json` records.
+			tornBodyPlugin({ expectedLength: releaseArtifactLength }),
 			new ExpirationPlugin({ maxEntries: MAX_ASSET_ENTRIES, purgeOnQuotaError: true }),
 			servedFromCachePlugin(SERVED_FROM_HEADER),
 		],

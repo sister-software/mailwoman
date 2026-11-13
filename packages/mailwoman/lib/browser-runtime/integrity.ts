@@ -10,6 +10,8 @@
  *   The loader compares each such body against the manifest, because its status is still 200.
  */
 
+import { ArtifactLoadError } from "#browser-runtime/artifact-ledger"
+
 /**
  * What the publisher measured for one file in a release directory.
  */
@@ -33,8 +35,11 @@ export type ArtifactIntegrityTable = Record<string, ArtifactIntegrity>
 /**
  * A downloaded artifact whose body differs from the manifest's record, on the first attempt
  * and on the retry that bypassed the HTTP cache.
+ *
+ * It is an {@linkcode ArtifactLoadError}, so a host that reports failed release loads reports this one.
+ * The ledger records both attempts as completed transfers, so the error's `artifact` is `null`.
  */
-export class ArtifactLoadError extends Error {
+export class ArtifactIntegrityError extends ArtifactLoadError {
 	/**
 	 * The file name in the release directory.
 	 */
@@ -42,8 +47,8 @@ export class ArtifactLoadError extends Error {
 	readonly url: string
 
 	constructor(file: string, url: string, detail: string) {
-		super(`${file} failed its integrity check after a reload (${detail}): ${url}`)
-		this.name = "ArtifactLoadError"
+		super(null, new Error(`${file} failed its integrity check after a reload (${detail}): ${url}`))
+		this.name = "ArtifactIntegrityError"
 		this.file = file
 		this.url = url
 	}
@@ -174,7 +179,8 @@ function requestURL(input: Parameters<typeof fetch>[0]): string {
  * A body that differs is fetched once more with `cache: "reload"`, which bypasses the
  * browser's HTTP cache and tells a service worker to pass over its stored copy.
  * A caller's `no-store` is kept, because it already bypasses both.
- * A second mismatch throws {@linkcode ArtifactLoadError}.
+ *
+ * A second mismatch throws {@linkcode ArtifactIntegrityError}.
  *
  * An error status, and a URL the lookup doesn't know, pass through unchanged.
  * The returned response holds the checked bytes, so a caller reads it as it would read the original.
@@ -204,7 +210,7 @@ export function verifyingFetch(
 		const secondBody = new Uint8Array(await second.arrayBuffer())
 		const mismatch = await artifactMismatch(secondBody, expected.integrity)
 
-		if (mismatch) throw new ArtifactLoadError(expected.file, requestURL(input), mismatch)
+		if (mismatch) throw new ArtifactIntegrityError(expected.file, requestURL(input), mismatch)
 
 		return rebuild(second, secondBody)
 	}
