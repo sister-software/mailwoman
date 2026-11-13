@@ -1,0 +1,83 @@
+publiccodeYmlVersion: "0.4"
+
+name: Mailwoman
+url: https://github.com/sister-software/mailwoman/
+landingURL: https://mailwoman.post
+softwareVersion: "11.0.0"
+releaseDate: "2026-11-07"
+logo: https://mailwoman.post/img/mailwoman-seal-magenta.svg
+
+platforms:
+  - linux
+  - mac
+  - windows
+
+categories:
+  - geographic-information-systems
+  - data-analytics
+  - data-collection
+  - business-intelligence
+
+organisation:
+  name: Sister Software
+  uri: https://sister.software
+
+developmentStatus: stable
+softwareType: standalone/backend
+
+description:
+  en:
+    shortDescription: >-
+      Open-source, self-hosted infrastructure for multilingual
+      postal address parsing, geocoding, and matching.
+
+    longDescription: >-
+      Mailwoman is open-source address intelligence infrastructure for
+      interpreting, geocoding, and matching postal addresses across languages
+      and jurisdictions.
+
+      Postal addresses are essential to public services, logistics,
+      telecommunications, emergency response, and digital government. Yet
+      address conventions differ substantially between countries, languages,
+      and administrative systems. Mailwoman provides reusable software
+      components to help organizations interpret these addresses without
+      depending on a proprietary geocoding service.
+
+      The project combines machine-learning-based address parsing with
+      geographic reference data and address matching capabilities. It is
+      designed for self-hosted deployment, allowing organizations to operate
+      address processing within their own infrastructure.
+
+      Mailwoman is developed as an independently reusable component for
+      applications that require reliable address interpretation. Its
+      open-source licensing option supports public-sector organizations,
+      researchers, and other users seeking transparent and independently
+      deployable digital address infrastructure.
+
+    documentation: https://mailwoman.post/docs/start
+    apiDocumentation: https://mailwoman.post/docs/reference/library
+
+    features:
+      - Multilingual postal address parsing
+      - Self-hosted geocoding
+      - Geographic entity resolution
+      - Address record matching
+      - Geospatial data integration
+      - Offline address processing
+
+legal:
+  license: AGPL-3.0-only
+  mainCopyrightOwner: Teffen Ellis
+  repoOwner: Sister Software
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Teffen Ellis
+      email: teffen@sister.software
+      affiliation: Sister Software
+
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - en
