@@ -82,9 +82,11 @@ batching could plausibly help, but it is unmeasured.
 
 ## The ONNX export's batch dimension
 
-The exporter measured here was `corpus-python/src/mailwoman_train/export_onnx.py`. It moved to
-`export/onnx.py` on 2026-09-12 (`8f1deab77`) and was deleted with the rest of the Python trainer
-(`c0aba3198`). The exporter is now the Rust crate `packages/trainer/crates/trainer-export`. The
+The exporter measured here was the Python trainer's `export_onnx.py` module. It moved to
+`export/onnx.py` on 2026-09-12 (`0879ce6ab`) and was deleted with the rest of the Python trainer on
+2026-11-01 (`f5cb99a5f`). Read the measured version with
+`git show 0879ce6ab^:corpus-python/src/mailwoman_train/export_onnx.py`. The exporter is now the Rust
+crate `packages/trainer/crates/trainer-export`. The
 Python exporter requested a dynamic batch dimension on all eight inputs, and the export silently
 ignored that request. The graph advertised `['batch', 'sequence']` on every input while its
 outputs were fixed at `[1, 'sequence', 33]`, and any batch above 1 failed inside an attention
