@@ -1,0 +1,4 @@
+# Cross-origin isolation enables SharedArrayBuffer, which the range reader uses to read byte ranges asynchronously.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

@@ -126,6 +126,11 @@ export class WebONNXRunner implements NeuralRunner {
 	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
 		configureWASMPaths(opts.wasmPathsRoot ?? null)
+
+		// onnxruntime-web starts its own thread workers on a cross-origin isolated page,
+		// from a bundled script that reads `document`.
+		// One thread is what every page that isn't isolated runs.
+		ort.env.wasm.numThreads = 1
 		const runner = new WebONNXRunner(modelBytes, opts)
 
 		return runner
