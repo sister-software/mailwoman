@@ -24,9 +24,14 @@ export default defineConfig({
 		VitePWA(
 			installablePWA({
 				origin: "https://earth.mailwoman.post/",
-				name: "Mailwoman Earth",
-				shortName: "Earth",
+				name: "Mailwoman",
+				shortName: "Mailwoman",
 				themeColor: "#0b1020",
+				// index.html repeats this text in its description meta.
+				description:
+					"Type a messy address and see where it is. Mailwoman parses and geocodes on your device with a compact neural model and open map data, works offline once loaded, and shows how precise each answer is and where it came from.",
+				categories: ["navigation", "utilities"],
+				maskableIcon: "/icon-maskable-512.png",
 			})
 		),
 		buildInfoPlugin({ app: "mailwoman-earth" }),

@@ -16,6 +16,8 @@ import {
 } from "@mailwoman/service-worker-cache/cache-control"
 import { useCallback, useEffect, useState } from "react"
 
+import { readHomeScreenSignals, wantsHomeScreenHint } from "./home-screen-hint.ts"
+
 import styles from "./cache-panel.module.css"
 
 /**
@@ -73,6 +75,7 @@ export function CachePanel({ reloadStack, reloadGazetteer, reloadModel }: CacheP
 	const [state, setState] = useState<StorageState | null>(null)
 	const [status, setStatus] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
+	const [homeScreenHint] = useState(() => wantsHomeScreenHint(readHomeScreenSignals()))
 
 	const refresh = useCallback(async () => {
 		setState(await readStorageState())
@@ -215,6 +218,10 @@ export function CachePanel({ reloadStack, reloadGazetteer, reloadModel }: CacheP
 					Clear everything
 				</button>
 			</div>
+
+			{homeScreenHint ? (
+				<p className={styles.summary}>On iPhone/iPad: Share → Add to Home Screen keeps offline data longer.</p>
+			) : null}
 
 			{status ? (
 				<p className={styles.summary} role="status">

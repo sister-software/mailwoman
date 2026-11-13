@@ -16,7 +16,7 @@
  *   once every tab of the old one has closed.
  */
 
-import type { VitePWAOptions } from "vite-plugin-pwa"
+import type { ManifestOptions, VitePWAOptions } from "vite-plugin-pwa"
 
 export interface PWAIdentity {
 	/**
@@ -28,9 +28,30 @@ export interface PWAIdentity {
 	name: string
 	shortName: string
 	themeColor: string
+	/**
+	 * The manifest `description`.
+	 *
+	 * Without it `vite-plugin-pwa` copies the workspace's `package.json` description,
+	 * which is written for developers.
+	 */
+	description?: string
+	categories?: string[]
+	/**
+	 * A 512-pixel square icon whose artwork sits inside the central 80%,
+	 * for platforms that crop icons to their own shape.
+	 *
+	 * A site without one declares only `any` icons, because a platform that crops an
+	 * unpadded icon to a circle or squircle removes the edges of its artwork.
+	 */
+	maskableIcon?: string
+	screenshots?: ManifestOptions["screenshots"]
 }
 
 export function installablePWA(identity: PWAIdentity): Partial<VitePWAOptions> {
+	const maskable = identity.maskableIcon
+		? [{ src: identity.maskableIcon, sizes: "512x512", type: "image/png", purpose: "maskable" }]
+		: []
+
 	return {
 		strategies: "injectManifest",
 		srcDir: "lib",
@@ -43,15 +64,20 @@ export function installablePWA(identity: PWAIdentity): Partial<VitePWAOptions> {
 			id: identity.origin,
 			name: identity.name,
 			short_name: identity.shortName,
+			...(identity.description ? { description: identity.description } : {}),
+			...(identity.categories ? { categories: identity.categories } : {}),
 			start_url: "/",
 			scope: "/",
 			display: "standalone",
+			orientation: "any",
 			background_color: identity.themeColor,
 			theme_color: identity.themeColor,
 			icons: [
-				{ src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-				{ src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+				{ src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+				{ src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+				...maskable,
 			],
+			...(identity.screenshots ? { screenshots: identity.screenshots } : {}),
 		},
 	}
 }
