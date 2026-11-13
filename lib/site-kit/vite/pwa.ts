@@ -7,6 +7,13 @@
  *   plus a manifest whose identity is the origin.
  *
  *   A model, a gazetteer database or a tile is never precached. those stay range-fetched on demand.
+ *
+ *   `registerType: "prompt"` means a deploy's worker installs and waits.
+ *   Earth's worker takes over when the page posts `SKIP_WAITING` from its update notice,
+ *   through `registerServiceWorkerUpdates` in `site-kit/service-worker-client.ts`.
+ *
+ *   The planetary worker handles no such message, so its new worker takes over
+ *   once every tab of the old one has closed.
  */
 
 import type { VitePWAOptions } from "vite-plugin-pwa"

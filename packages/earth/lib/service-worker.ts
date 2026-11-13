@@ -23,7 +23,7 @@
  *   A request in `reload` or `no-store` mode, as the page's retries are,
  *   passes the stored copy and replaces it with the network's.
  * - `releases.json` and a tileset's TileJSON are network-first, so an offline page reads the last copy.
- * - A tile is cache-first, with an entry cap.
+ * - A tile is cache-first, with an entry cap and a maximum age.
  *   A tile with no cached copy that the network cannot fetch answers 404.
  *   MapLibre reads a 404 as a missing tile: it logs no error and draws the
  *   nearest loaded parent tile in its place.
@@ -32,15 +32,24 @@
  * still reach this worker because the dedicated worker inherits its creator document's controller.
  * The page posts a prune message after it selects a release, and this worker
  * then drops range chunks and release files of other releases.
+ *
+ * A deploy keeps the data caches: range chunks, release files, manifests and tiles.
+ * Only the precache and the build's own files follow the build.
+ *
+ * A new worker installs and then waits.
+ * It takes over only when a page posts `SKIP_WAITING`.
+ *
+ * Earth's "Update ready" prompt posts it, and every page an earlier worker served then reloads once.
  */
 
 /// <reference lib="webworker" />
 
-import { buildCacheName, deleteOtherBuildCaches } from "@mailwoman/service-worker-cache/build-caches"
+import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "@mailwoman/service-worker-cache/build-caches"
 import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
 import { createRangeChunkHandler, createRangeGuardHandler } from "@mailwoman/service-worker-cache/range-chunks"
 import { reloadBypassPlugin } from "@mailwoman/service-worker-cache/reload-bypass"
+import { isSkipWaitingMessage } from "@mailwoman/service-worker-cache/skip-waiting"
 import { tornBodyPlugin } from "@mailwoman/service-worker-cache/torn-body"
 import { CacheableResponsePlugin } from "workbox-cacheable-response"
 import { ExpirationPlugin } from "workbox-expiration"
@@ -68,15 +77,18 @@ declare const __MAILWOMAN_BUILD_COMMIT__: string
 /**
  * Every runtime cache's name starts with this.
  *
- * On activation the worker deletes the caches with it that belong to another build,
- * so a deploy starts each cache empty.
+ * On activation the worker deletes every cache with it outside {@linkcode CURRENT_CACHES}:
+ * an earlier build's app-asset cache, and data caches that an earlier worker keyed by build commit.
  */
 const CACHE_PREFIX = "mailwoman-"
 
-const RANGE_CACHE = buildCacheName(CACHE_PREFIX, "db-ranges", __MAILWOMAN_BUILD_COMMIT__)
-const ASSET_CACHE = buildCacheName(CACHE_PREFIX, "release-assets", __MAILWOMAN_BUILD_COMMIT__)
-const MANIFEST_CACHE = buildCacheName(CACHE_PREFIX, "manifests", __MAILWOMAN_BUILD_COMMIT__)
-const TILE_CACHE = buildCacheName(CACHE_PREFIX, "tiles", __MAILWOMAN_BUILD_COMMIT__)
+// The data caches hold versioned or dated URLs, so every build shares them.
+const RANGE_CACHE = roleCacheName(CACHE_PREFIX, "db-ranges")
+const ASSET_CACHE = roleCacheName(CACHE_PREFIX, "release-assets")
+const MANIFEST_CACHE = roleCacheName(CACHE_PREFIX, "manifests")
+const TILE_CACHE = roleCacheName(CACHE_PREFIX, "tiles")
+
+// The build's own files, such as the staged SQLite runtime, can change under the same URL.
 const APP_ASSET_CACHE = buildCacheName(CACHE_PREFIX, "app-assets", __MAILWOMAN_BUILD_COMMIT__)
 
 const CURRENT_CACHES: ReadonlySet<string> = new Set([
@@ -101,6 +113,16 @@ const MAX_APP_ASSET_ENTRIES = 40
 const MAX_TILE_ENTRIES = 6000
 
 /**
+ * How long a stored tile answers before the network is asked again.
+ *
+ * A tile URL holds its tileset's ID and no version, so a rebuilt tileset keeps its URLs.
+ * The tile cache survives deploys, and this age bounds how long a replaced tile is drawn.
+ *
+ * An offline page past it has no tile, and MapLibre draws the parent tile in its place.
+ */
+const MAX_TILE_AGE_SECONDS = 7 * 24 * 60 * 60
+
+/**
  * The release files kept on the device: a release's model, tokenizer, FSTs,
  * postcode binaries and pair indexes.
  */
@@ -119,15 +141,17 @@ const TILE_HOST = PRODUCTION_CONFIG.tileWorkerURL.hostname
  */
 const TILE_PATH = /\/\d+\/\d+\/\d+\.[a-z0-9]+$/u
 
-self.addEventListener("install", () => {
-	void self.skipWaiting()
-})
-
 self.addEventListener("activate", (event) => {
 	event.waitUntil(deleteOtherBuildCaches(caches, CACHE_PREFIX, CURRENT_CACHES).then(() => self.clients.claim()))
 })
 
 self.addEventListener("message", (event) => {
+	if (isSkipWaitingMessage(event.data)) {
+		event.waitUntil(self.skipWaiting())
+
+		return
+	}
+
 	if (isPruneMessage(event.data)) {
 		const { keepVersion } = event.data
 
@@ -207,7 +231,11 @@ registerRoute(
 		plugins: [
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
-			new ExpirationPlugin({ maxEntries: MAX_TILE_ENTRIES, purgeOnQuotaError: true }),
+			new ExpirationPlugin({
+				maxEntries: MAX_TILE_ENTRIES,
+				maxAgeSeconds: MAX_TILE_AGE_SECONDS,
+				purgeOnQuotaError: true,
+			}),
 			missingWhenUnreachablePlugin(),
 		],
 	})

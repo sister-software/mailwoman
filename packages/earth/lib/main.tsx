@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { reloadOnServiceWorkerTakeover } from "@mailwoman/universe/site-kit/service-worker-client"
+import { registerServiceWorkerUpdates } from "@mailwoman/universe/site-kit/service-worker-client"
 import { setWorkerUrl } from "maplibre-gl"
 import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { createRoot } from "react-dom/client"
@@ -13,6 +13,7 @@ import { prefetchReleasesManifest } from "#runtime/use/geocoder-runtime"
 import { remoteGeocoderURL } from "#runtime/use/remote-geocoder-runtime"
 
 import { App } from "./App.tsx"
+import { UpdateNotice } from "./UpdateNotice.tsx"
 
 // A reload arrives at the percent-encoded camera path the static-asset server redirects to.
 const readablePath = pathWithReadableCamera(new URL(location.href))
@@ -32,11 +33,16 @@ if (!remoteGeocoderURL(PRODUCTION_CONFIG)) {
 // and hands back the emitted file's URL.
 setWorkerUrl(maplibreWorkerURL)
 
-reloadOnServiceWorkerTakeover()
-registerSW()
+// A deploy's worker waits until the reader picks "Reload" in the update notice.
+const updates = registerServiceWorkerUpdates(registerSW)
 
 const root = document.getElementById("root")
 
 if (!root) throw new Error("index.html has no #root")
 
-createRoot(root).render(<App />)
+createRoot(root).render(
+	<>
+		<App />
+		<UpdateNotice updates={updates} />
+	</>
+)
