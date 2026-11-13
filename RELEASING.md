@@ -409,7 +409,8 @@ minutes to reach every edge, so a test in the first ~60 s doesn't show whether t
 The rule refuses downloads without those headers. A range read that a cache answers with the whole file is a
 separate case, and the readers handle it themselves. Earth's service worker cancels such a body and answers 502. The
 range worker's first read uses an asynchronous request that cancels a whole-file answer before reading its body.
-`openRangeDatabase` then retries once with a cache-busting query.
+`openRangeDatabase` then retries at the same URL, because Cloudflare answers the first range request for an object too
+large to cache, such as the 2.88 GB `candidate.db`, with the whole file and a repeat with the range.
 
 ## Release version policy
 

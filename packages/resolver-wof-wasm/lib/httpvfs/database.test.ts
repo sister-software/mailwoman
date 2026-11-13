@@ -155,9 +155,25 @@ describe("the open request", () => {
 describe("the cache-busting retry", () => {
 	const URL_OF = "https://example.test/gazetteer/2026-08-25b/candidate.db"
 
+	// Cloudflare answers the first range request for an object too large to
+	// cache with the whole file, and a repeat of the same URL with the range,
+	// so a fresh query string would draw the whole file again.
 	test.each([
 		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned HTTP 200",
 		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned HTTP 502",
+	])("reopens at the same URL after %s", async (error) => {
+		FirstOpenFailsWorker.error = error
+		vi.stubGlobal("Worker", FirstOpenFailsWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		await openRangeDatabase(URL_OF, "/sqlite/")
+
+		const opens = FakeWorker.posted.filter((call) => call.type === "open")
+
+		expect(opens.map((call) => call.databaseURL)).toEqual([URL_OF, URL_OF])
+	})
+
+	test.each([
 		"Range 0-65535 of https://example.test/gazetteer/2026-08-25b/candidate.db returned 40 bytes, expected 65536",
 		"SQLITE_CORRUPT: database disk image is malformed",
 	])("reopens with a cb query after %s", async (error) => {

@@ -295,7 +295,8 @@ function isRetriableOpenFailure(error: unknown): boolean {
  * and the sqlite-wasm runtime.
  *
  * If the first open fails in a way {@link isRetriableOpenFailure} recognizes,
- * it retries once with a cache-busting query string.
+ * it retries with a cache-busting query string.
+ * A whole-file answer is first retried once at the same URL.
  */
 export async function openRangeDatabase(
 	databaseURL: string,
@@ -331,11 +332,29 @@ export async function openRangeDatabase(
 	} catch (error) {
 		if (!isRetriableOpenFailure(error)) throw error
 
+		// Cloudflare answers the first range request for a URL whose object is too large for
+		// its cache with the whole file, and later requests for the same URL with the range.
+		// A fresh query string would make a new first request, so a whole-file
+		// answer is retried at the same URL first.
+		if (WHOLE_FILE_ANSWER.test(String(error))) {
+			try {
+				return await open(databaseURL)
+			} catch (error_) {
+				if (!isRetriableOpenFailure(error_)) throw error_
+			}
+		}
+
 		const separator = databaseURL.includes("?") ? "&" : "?"
 
 		return open(`${databaseURL}${separator}cb=${Date.now()}`)
 	}
 }
+
+/**
+ * The error a range read raises when the network, or the service worker refusing it,
+ * answered with the whole file.
+ */
+const WHOLE_FILE_ANSWER = /returned HTTP (?:200|502)\b/
 
 /**
  * Reports whether the database contains the table `name`, in one query.
