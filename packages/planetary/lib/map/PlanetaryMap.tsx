@@ -19,6 +19,7 @@ import {
 	PlanetarySelectionLayerID,
 } from "@mailwoman/cartographer/planetary"
 import { MapCanvas } from "@mailwoman/react/map/MapCanvas"
+import { prefersReducedMotion } from "@mailwoman/react/map/reduced-motion"
 import { ResultCamera } from "@mailwoman/react/map/ResultCamera"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl/maplibre"
@@ -26,7 +27,7 @@ import type { MapLayerMouseEvent, MapRef } from "react-map-gl/maplibre"
 import type { PlanetaryMapConfig } from "#bodies/config"
 import type { SelectedFeature } from "#features/selected"
 import { featureFromTileProperties } from "#features/tile-properties"
-import { prefersReducedMotion, framingZoom } from "#map/camera"
+import { framingZoom } from "#map/camera"
 import { viewportFromSearch } from "#routes"
 
 export interface PlanetaryMapProps {

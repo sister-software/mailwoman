@@ -29,11 +29,14 @@ import { Matrix4, Vector3 } from "@math.gl/core"
 import { Ellipsoid } from "@math.gl/geospatial"
 import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { bytesPerTileset, type ThreeDBudget } from "#memory/device-tier"
+import { beginThreeDPhase } from "#memory/profile"
 import { pageTilesetParam } from "#routes"
+import { DWELL_MIN_PITCH, DWELL_MS, type DwellCriteria, useCameraDwell } from "#scene/camera-dwell"
 
 import { byteRGB } from "./compact-buildings/decode.ts"
 import {
@@ -217,7 +220,10 @@ interface CityModelTilesetOptions {
  */
 const CITY_MODEL_MAX_REQUESTS = 12
 
-const CITY_MODEL_MEMORY_MB = 512
+/**
+ * The camera a PLATEAU tileset waits for before it joins the view.
+ */
+const CITY_MODEL_DWELL: DwellCriteria = { minZoom: CITY_MODEL_MIN_ZOOM, minPitch: DWELL_MIN_PITCH, dwellMs: DWELL_MS }
 
 /**
  * The screen-space error in pixels a tile may show before its children load.
@@ -225,7 +231,16 @@ const CITY_MODEL_MEMORY_MB = 512
  */
 const CITY_MODEL_SCREEN_SPACE_ERROR = 16
 
-function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }: PlateauTileset) {
+/**
+ * The load options for one tileset, with its share of the tier's budget when it first joins.
+ *
+ * Tile3DLayer reads the options once, so a tileset keeps the share it joined with.
+ */
+function loadOptionsFor(
+	{ url, bounds: [west, south, east, north], geoidHeight }: PlateauTileset,
+	drawing: number,
+	budget: ThreeDBudget
+) {
 	let options = cityModelLoadOptions.get(url)
 
 	if (!options) {
@@ -235,7 +250,7 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 		options = {
 			tileset: {
 				modelMatrix: new Matrix4().translate(offset),
-				maximumMemoryUsage: CITY_MODEL_MEMORY_MB,
+				maximumMemoryUsage: bytesPerTileset(budget, drawing) / (1024 * 1024),
 				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
 				maxRequests: CITY_MODEL_MAX_REQUESTS,
 			},
@@ -261,8 +276,9 @@ const CITY_MODEL_KEEP_ZOOM = 14
  * A tileset joins when it enters the view at `CITY_MODEL_MIN_ZOOM`.
  *
  * It leaves only when the view zooms out past `CITY_MODEL_KEEP_ZOOM` or moves a full view away from it.
+ * While `joining` is false, the tilesets kept so far stay and no new one joins.
  */
-function cityModelsToKeep(map: MapInstance, kept: Set<string>): PlateauTileset[] {
+function cityModelsToKeep(map: MapInstance, kept: Set<string>, joining: boolean): PlateauTileset[] {
 	const zoom = map.getZoom()
 
 	if (zoom < CITY_MODEL_KEEP_ZOOM) {
@@ -274,7 +290,7 @@ function cityModelsToKeep(map: MapInstance, kept: Set<string>): PlateauTileset[]
 	const bounds = map.getBounds()
 	const [west, south, east, north] = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
 
-	if (zoom >= CITY_MODEL_MIN_ZOOM) {
+	if (joining && zoom >= CITY_MODEL_MIN_ZOOM) {
 		for (const tileset of plateauTilesetsInView(CITY_MODELS, [west, south, east, north])) {
 			kept.add(tileset.url)
 		}
@@ -467,13 +483,24 @@ function pruneDistant(map: MapInstance, cache: Map<string, { position: [number, 
  * and hides the extruded tree layers.
  * From z16 it also draws a street-furniture mesh at each `infrastructure` point that has a `prop`.
  */
-export const Scene3D: React.FC = () => {
+export const Scene3D: React.FC<{ runtimeReady: boolean; budget: ThreeDBudget }> = ({ runtimeReady, budget }) => {
 	const { current: mapRef } = useMap()
 	const map = mapRef?.getMap() ?? null
 
 	if (map) {
 		exposeTransform(map)
 	}
+
+	// A PLATEAU tileset joins only while the camera rests at street zoom after the runtime loads.
+	// The first join also needs a tilted camera.
+	const cityDwell = useCameraDwell(GPU_BUILDINGS ? null : map, CITY_MODEL_DWELL, runtimeReady)
+	const joiningRef = useRef(false)
+	const scheduleRef = useRef<(() => void) | null>(null)
+
+	useEffect(() => {
+		joiningRef.current = cityDwell.armed
+		scheduleRef.current?.()
+	}, [cityDwell.armed])
 
 	const overlay = useControl(() => new MapboxOverlay({ interleaved: true, layers: [] }))
 
@@ -510,6 +537,7 @@ export const Scene3D: React.FC = () => {
 		let drawnSize = -1
 		let drawnProps = -1
 		let drawnCityModels: string | null = null
+		let drawnTilesets = new Set<string>()
 		let changed = true
 
 		// The entry is set before the download, so each model downloads once per mount.
@@ -557,9 +585,16 @@ export const Scene3D: React.FC = () => {
 			}
 
 			// The GPU building layer draws the converted city models itself.
-			const cityModels = GPU_BUILDINGS ? [] : cityModelsToKeep(map, keptCityModels)
+			const cityModels = GPU_BUILDINGS ? [] : cityModelsToKeep(map, keptCityModels, joiningRef.current)
 			const opacity = cityModelOpacity(map.getZoom())
 			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
+
+			// A tileset that joins starts the 3D phase until the map next goes idle.
+			if (cityModels.some((tileset) => !drawnTilesets.has(tileset.url))) {
+				map.once("idle", beginThreeDPhase())
+			}
+
+			drawnTilesets = new Set(cityModels.map((tileset) => tileset.url))
 
 			const landmarksNear = LANDMARKS.filter((landmark) => nearView(map, landmark.anchor))
 
@@ -696,7 +731,7 @@ export const Scene3D: React.FC = () => {
 								...placement,
 								data: tileset.url,
 								loader: Tiles3DLoader,
-								loadOptions: loadOptionsFor(tileset),
+								loadOptions: loadOptionsFor(tileset, cityModels.length, budget),
 								opacity,
 							})
 					),
@@ -730,17 +765,19 @@ export const Scene3D: React.FC = () => {
 		}
 
 		schedule()
+		scheduleRef.current = schedule
 		map.on("sourcedata", schedule)
 		map.on("moveend", schedule)
 		map.on("zoom", scheduleFade)
 
 		return () => {
 			cancelAnimationFrame(frame)
+			scheduleRef.current = null
 			map.off("sourcedata", schedule)
 			map.off("moveend", schedule)
 			map.off("zoom", scheduleFade)
 		}
-	}, [map, overlay, meshes])
+	}, [map, overlay, meshes, budget])
 
 	return null
 }

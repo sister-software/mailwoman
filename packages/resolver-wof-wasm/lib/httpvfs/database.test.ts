@@ -15,6 +15,7 @@ import {
 	isSQLiteReadFailure,
 	openRangeDatabase,
 	openWholeDatabase,
+	rangeWorkerMemory,
 	RangeWorkerError,
 } from "#httpvfs/database"
 import type { RangeWorkerCall } from "#httpvfs/worker-protocol"
@@ -39,7 +40,7 @@ class FakeWorker extends EventTarget {
 				? { sqliteVersion: "3.53.0" }
 				: call.type === "query"
 					? [{ n: 1 }]
-					: { requests: 1, bytes: 4 }
+					: { requests: 1, bytes: 4, cachedBytes: 4096 }
 
 		queueMicrotask(() => this.dispatchEvent(new MessageEvent("message", { data: { id: call.id, result } })))
 	}
@@ -179,6 +180,27 @@ describe("the cache-busting retry", () => {
 
 		await expect(openRangeDatabase(URL_OF, "/sqlite/")).rejects.toThrow("returned HTTP 404")
 		expect(FakeWorker.posted.filter((call) => call.type === "open")).toHaveLength(1)
+	})
+})
+
+describe("rangeWorkerMemory", () => {
+	test("sums the chunk caches of the open workers and leaves out a closed one", async () => {
+		vi.stubGlobal("Worker", FakeWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		// Workers other tests opened and never closed are still live, so the test compares against a baseline.
+		const before = await rangeWorkerMemory()
+		const kept = await openRangeDatabase("/a.db", "/sqlite/")
+		const closed = await openRangeDatabase("/b.db", "/sqlite/")
+
+		closed.close?.()
+
+		const after = await rangeWorkerMemory()
+
+		expect(after.workers - before.workers).toBe(1)
+		expect(after.cachedBytes - before.cachedBytes).toBe(4096)
+
+		kept.close?.()
 	})
 })
 

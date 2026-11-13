@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client"
 import { registerSW } from "virtual:pwa-register"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { loadMemoryProfile } from "#memory/profile"
 import { pathWithReadableCamera } from "#routes"
 import { prefetchReleasesManifest } from "#runtime/use/geocoder-runtime"
 import { remoteGeocoderURL } from "#runtime/use/remote-geocoder-runtime"
@@ -35,6 +36,10 @@ setWorkerUrl(maplibreWorkerURL)
 
 // A deploy's worker waits until the reader picks "Reload" in the update notice.
 const updates = registerServiceWorkerUpdates(registerSW)
+
+// The crash guard's reading decides whether this load mounts 3D.
+// The page renders without waiting for it, and the 3D layers mount once it settles.
+void loadMemoryProfile()
 
 const root = document.getElementById("root")
 

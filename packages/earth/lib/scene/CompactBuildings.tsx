@@ -7,17 +7,25 @@
  *
  *   It hides the vector-tile building footprints while they draw, and the compact
  *   buildings inside each city model that's drawn.
+ *
+ *   Each layer mounts the first time the camera rests on a view it draws for,
+ *   after the geocoder runtime has loaded.
+ *   From then on it keeps what it loaded, and fetches more only while the camera rests.
  */
 
 import { type CityTileset, cityTilesetPath } from "@mailwoman/structures/city-tilesets"
 import cityTilesets from "@mailwoman/structures/data/city-tilesets.json" with { type: "json" }
 import landmarks from "@mailwoman/structures/data/landmarks.json" with { type: "json" }
 import { type Landmark, landmarkBounds } from "@mailwoman/structures/landmarks"
-import { useEffect } from "react"
+import type { Map as MapLibreMap } from "maplibre-gl"
+import { useEffect, useRef } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { beginThreeDPhase, useMemoryProfile } from "#memory/profile"
 import { pageTilesetParam } from "#routes"
+import { DWELL_MIN_PITCH, DWELL_MS, type DwellCriteria, useCameraDwell } from "#scene/camera-dwell"
+import type { CityModelsLayer } from "#scene/city-models/layer"
 
 import {
 	COMPACT_BUILDINGS_LAYER_ID,
@@ -35,6 +43,29 @@ const MAX_STYLE_ZOOM = 24
  */
 const CITY_MODELS_LAYER_ID = "city-models"
 
+/**
+ * The lowest zoom the city model layer draws at, repeated from its module for the same reason.
+ */
+const CITY_MODELS_MIN_ZOOM = 14
+
+/**
+ * The camera the compact buildings wait for.
+ */
+const COMPACT_BUILDINGS_DWELL: DwellCriteria = {
+	minZoom: COMPACT_BUILDINGS_MIN_ZOOM,
+	minPitch: DWELL_MIN_PITCH,
+	dwellMs: DWELL_MS,
+}
+
+/**
+ * The camera the city models wait for.
+ */
+const CITY_MODELS_DWELL: DwellCriteria = {
+	minZoom: CITY_MODELS_MIN_ZOOM,
+	minPitch: DWELL_MIN_PITCH,
+	dwellMs: DWELL_MS,
+}
+
 const CITY_TILESETS = cityTilesets as CityTileset[]
 
 /**
@@ -48,54 +79,61 @@ const CITY_TILESETS = cityTilesets as CityTileset[]
  */
 const LANDMARK_AREAS = (landmarks as Landmark[]).map(landmarkBounds)
 
+function firstSymbolLayerID(map: MapLibreMap): string | undefined {
+	return map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id
+}
+
+/**
+ * Marks the 3D phase as running until the map next goes idle or the returned function runs.
+ */
+function guardUntilIdle(map: MapLibreMap): () => void {
+	const end = beginThreeDPhase()
+
+	map.once("idle", end)
+
+	return () => {
+		map.off("idle", end)
+		end()
+	}
+}
+
 /**
  * Mounts the GPU building and city model layers under the map's first label layer
  * when the page asks for a compact building tileset.
  */
-export function CompactBuildings(): null {
+export function CompactBuildings({ runtimeReady }: { runtimeReady: boolean }): null {
 	const { current: mapRef } = useMap()
 	const tileset = pageTilesetParam("buildings3d")
+	// The layers wait for the crash guard's reading, and stay off for a load whose guard tripped.
+	const profile = useMemoryProfile()
+	const budget = profile?.threeD ? profile.budget : null
+	const map = tileset && budget ? (mapRef?.getMap() ?? null) : null
+
+	const buildingsDwell = useCameraDwell(map, COMPACT_BUILDINGS_DWELL, runtimeReady)
+	const cityDwell = useCameraDwell(map, CITY_MODELS_DWELL, runtimeReady)
+	const buildingsRef = useRef<CompactBuildingsLayer | null>(null)
+	const cityModelsRef = useRef<CityModelsLayer | null>(null)
+	const cityArmedRef = useRef(false)
 
 	useEffect(() => {
-		const map = mapRef?.getMap()
-
-		if (!map || !tileset) return
+		if (!map || !tileset || !buildingsDwell.everArmed) return
 
 		const buildings = new CompactBuildingsLayer(
 			(x, y) => new URL(`${tileset}/14/${x}/${y}.bin`, PRODUCTION_CONFIG.tileWorkerURL).href
 		)
 
-		let removed = false
 		// Each vector building layer the compact layer takes over from, with the zoom range the style gave it.
 		const handedOff: Array<[id: string, range: [number, number]]> = []
-
-		// three.js and 3DTilesRendererJS load only on a page that draws city models.
-		// The main bundle stays without them.
-		// The import starts once the building layer is on the map, so the city layer lands beside it.
-		const mountCityModels = async () => {
-			const { CityModelsLayer } = await import("#scene/city-models/layer")
-
-			if (removed || map.getLayer(CITY_MODELS_LAYER_ID)) return
-
-			const cityModels = new CityModelsLayer(
-				CITY_TILESETS,
-				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
-				(covered) => buildings.setHiddenAreas([...LANDMARK_AREAS, ...covered.map((city) => city.bounds)])
-			)
-
-			map.addLayer(cityModels, map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
-		}
+		let endPhase: (() => void) | null = null
 
 		const mount = () => {
 			if (map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) return
-
-			const style = map.getStyle()
 
 			// The extruded footprints would draw the same buildings twice where the compact
 			// layer draws, so they stop at its lowest zoom and keep the zooms below it,
 			// as the page without compact buildings shows them.
 			// Address labels stay.
-			for (const styleLayer of style.layers) {
+			for (const styleLayer of map.getStyle().layers) {
 				if (
 					"source-layer" in styleLayer &&
 					styleLayer["source-layer"] === "buildings" &&
@@ -108,8 +146,9 @@ export function CompactBuildings(): null {
 			}
 
 			buildings.setHiddenAreas(LANDMARK_AREAS)
-			map.addLayer(buildings, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
-			void mountCityModels()
+			endPhase = guardUntilIdle(map)
+			map.addLayer(buildings, firstSymbolLayerID(map))
+			buildingsRef.current = buildings
 		}
 
 		if (map.isStyleLoaded()) {
@@ -119,18 +158,66 @@ export function CompactBuildings(): null {
 		}
 
 		return () => {
-			removed = true
 			map.off("load", mount)
+			endPhase?.()
+			buildingsRef.current = null
 
-			for (const id of [CITY_MODELS_LAYER_ID, COMPACT_BUILDINGS_LAYER_ID].filter((layerID) => map.getLayer(layerID))) {
-				map.removeLayer(id)
+			if (map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) {
+				map.removeLayer(COMPACT_BUILDINGS_LAYER_ID)
 			}
 
 			for (const [id, [minzoom, maxzoom]] of handedOff.filter(([layerID]) => map.getLayer(layerID))) {
 				map.setLayerZoomRange(id, minzoom, maxzoom)
 			}
 		}
-	}, [mapRef, tileset])
+	}, [map, tileset, buildingsDwell.everArmed])
+
+	useEffect(() => {
+		if (!map || !budget || !buildingsDwell.everArmed || !cityDwell.everArmed) return
+
+		let removed = false
+		let endPhase: (() => void) | null = null
+
+		// three.js and 3DTilesRendererJS load only on a page that draws city models.
+		// The main bundle stays without them.
+		void (async () => {
+			const { CityModelsLayer } = await import("#scene/city-models/layer")
+
+			if (removed || map.getLayer(CITY_MODELS_LAYER_ID)) return
+
+			const cityModels = new CityModelsLayer(
+				CITY_TILESETS,
+				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
+				(covered) => buildingsRef.current?.setHiddenAreas([...LANDMARK_AREAS, ...covered.map((city) => city.bounds)]),
+				budget
+			)
+
+			cityModels.setActivating(cityArmedRef.current)
+			endPhase = guardUntilIdle(map)
+			map.addLayer(cityModels, firstSymbolLayerID(map))
+			cityModelsRef.current = cityModels
+		})()
+
+		return () => {
+			removed = true
+			endPhase?.()
+			cityModelsRef.current = null
+
+			if (map.getLayer(CITY_MODELS_LAYER_ID)) {
+				map.removeLayer(CITY_MODELS_LAYER_ID)
+			}
+		}
+	}, [map, budget, buildingsDwell.everArmed, cityDwell.everArmed])
+
+	// A layer already mounted keeps drawing what it loaded and fetches more only while the camera rests.
+	useEffect(() => {
+		buildingsRef.current?.setFetching(buildingsDwell.armed)
+	}, [buildingsDwell.armed, buildingsDwell.everArmed])
+
+	useEffect(() => {
+		cityArmedRef.current = cityDwell.armed
+		cityModelsRef.current?.setActivating(cityDwell.armed)
+	}, [cityDwell.armed])
 
 	return null
 }

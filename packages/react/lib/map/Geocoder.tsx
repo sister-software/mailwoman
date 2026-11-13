@@ -5,6 +5,7 @@ import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
+import { createJumpCurtain } from "#map/jump-curtain"
 import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
 import { useCompareState } from "#map/useCompareState"
 import { useGeocode } from "#map/useGeocode"
@@ -18,6 +19,7 @@ import { GraticuleLayer } from "./GraticuleLayer.tsx"
 import { MapCanvas } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
+import { applyCameraTarget } from "./ResultCamera.tsx"
 
 /**
  * Props for {@linkcode Geocoder}.
@@ -134,6 +136,12 @@ function GeocoderInner({
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
 		// Browser tests read the map from this global.
 		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
+
+		// Measurement tools move the camera through the same function a result uses.
+		Reflect.set(globalThis, "__mailwomanApplyCameraTarget", (target: Parameters<typeof applyCameraTarget>[1]) =>
+			applyCameraTarget(event.target, target, true, createJumpCurtain(event.target))
+		)
+
 		setMap(event.target)
 
 		const layers = event.target.getStyle()?.layers ?? []
@@ -146,6 +154,7 @@ function GeocoderInner({
 		() => () => {
 			setMap(null)
 			delete (globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas
+			Reflect.deleteProperty(globalThis, "__mailwomanApplyCameraTarget")
 		},
 		[]
 	)

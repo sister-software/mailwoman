@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/earth`
 
 The manifest at `packages/earth/package.json` has no `sideEffects` field.
-This page lists 12 of the group's 55 library and tool modules.
+This page lists 15 of the group's 66 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -28,7 +28,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 5 times
+- `runs a statement at module scope`, 6 times
 
 ## `packages/earth/lib/panels/MapDebug.tsx`
 
@@ -78,12 +78,42 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 - `runs a statement at module scope`, 11 times
 
+## `packages/earth/tools/capture-screenshots.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`
+- `runs a statement at module scope`
+
+| Kind  | Interface          | Target                                        | Calls |
+| ----- | ------------------ | --------------------------------------------- | ----- |
+| write | `writeLocalBuffer` | `package:@mailwoman/earth/public/screenshots` | 1     |
+
+## `packages/earth/tools/flight-measure.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 6 times
+- `runs a statement at module scope`, 22 times
+
 ## `packages/earth/tools/net-measure.run.ts`
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
 - `awaits at module scope`, 4 times
 - `runs a statement at module scope`, 27 times
+
+## `packages/earth/tools/render-icons.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 2 times
+- `runs a statement at module scope`
+
+| Kind  | Interface           | Target                                     | Calls |
+| ----- | ------------------- | ------------------------------------------ | ----- |
+| read  | `readLocalTextFile` | `package:@mailwoman/earth/public/icon.svg` | 1     |
+| write | `writeLocalBuffer`  | `package:@mailwoman/earth/public`          | 1     |
 
 ## `packages/earth/vite.config.ts`
 
