@@ -15,7 +15,7 @@ import { buildDiskStorage } from "#api/disk-storage"
 import { isTransientResourceError } from "#api/responses"
 import { readLocalJSONFile } from "#fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
-import { changeMode, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
+import { writeLocalTextFile } from "#fs/writers"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
@@ -240,112 +240,81 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 
 describe("buildDiskStorage: a failed cache write is a cache miss, not a request failure", () => {
 	/**
-	 * Make `directory.path` unwritable and report whether it took, because running
-	 * as root defeats mode bits and a test that silently passes without reproducing
-	 * the condition is worse than one that reports it.
+	 * A cache directory no write can land in: the path of a regular file.
+	 *
+	 * The storage's directory creation and entry write both fail with `EEXIST` or `ENOTDIR`.
+	 * Mode bits wouldn't reproduce the failure, because root ignores them.
+	 * A path component that's a file refuses every uid.
+	 *
+	 * The probe write confirms the condition holds before a test relies on it.
 	 */
-	async function makeUnwritable(): Promise<boolean> {
-		await changeMode(directory.path, 0o500)
+	async function unwritableCacheDirectory(): Promise<PathBuilderLike> {
+		const cacheDirectory = directory.path("cache-is-a-file")
 
-		try {
-			await writeLocalTextFile("x", directory.path("probe"))
-			await removePathIfPresent(directory.path("probe"))
+		await writeLocalTextFile("not a directory", cacheDirectory)
+		await expect(writeLocalTextFile("x", directory.path("cache-is-a-file", "probe"))).rejects.toThrow(/ENOTDIR|EEXIST/)
 
-			return false
-		} catch {
-			return true
-		}
-	}
-
-	async function restore(): Promise<void> {
-		await changeMode(directory.path, 0o700)
+		return cacheDirectory
 	}
 
 	it("resolves instead of throwing when the entry cannot be written", async () => {
-		if (!(await makeUnwritable())) {
-			await restore()
-			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
-		}
+		const storage = buildDiskStorage({ directory: await unwritableCacheDirectory() })
 
-		try {
-			const storage = buildDiskStorage({ directory: directory.path })
+		await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
 
-			await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
-
-			expect((await storage.get("k")).state).toBe("empty")
-		} finally {
-			await restore()
-		}
+		expect((await storage.get("k")).state).toBe("empty")
 	})
 
 	it("leaves a SUCCESSFUL response intact through APIClient when the cache write fails", async () => {
 		// `axios-cache-interceptor` awaits `storage.set` inside its response `onFulfilled`,
 		// so a throwing write rejects a request whose HTTP response already succeeded as a
 		// bare `Error` with no `status`, which `isTransientResourceError` reads as permanent.
-		if (!(await makeUnwritable())) {
-			await restore()
-			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
-		}
+		const client = new APIClient({
+			displayName: "unwritable-cache",
+			caching: { storage: buildDiskStorage({ directory: await unwritableCacheDirectory() }) },
+			axios: {
+				adapter: async (config) => ({
+					data: { ok: true },
+					status: 200,
+					statusText: "OK",
+					headers: {},
+					config,
+				}),
+			},
+		})
 
-		try {
-			const client = new APIClient({
-				displayName: "unwritable-cache",
-				caching: { storage: buildDiskStorage({ directory: directory.path }) },
-				axios: {
-					adapter: async (config) => ({
-						data: { ok: true },
-						status: 200,
-						statusText: "OK",
-						headers: {},
-						config,
-					}),
-				},
-			})
+		const response = await client.fetch<{ ok: boolean }>({ url: "/still-works.json" })
 
-			const response = await client.fetch<{ ok: boolean }>({ url: "/still-works.json" })
-
-			expect(response.data).toEqual({ ok: true })
-		} finally {
-			await restore()
-		}
+		expect(response.data).toEqual({ ok: true })
 	})
 
 	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
-		if (!(await makeUnwritable())) {
-			await restore()
-			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
-		}
+		const client = new APIClient({
+			displayName: "unwritable-cache-concurrent",
+			caching: { storage: buildDiskStorage({ directory: await unwritableCacheDirectory() }) },
+			axios: {
+				adapter: async (config) => ({
+					data: { ok: true },
+					status: 200,
+					statusText: "OK",
+					headers: {},
+					config,
+				}),
+			},
+		})
 
-		try {
-			const client = new APIClient({
-				displayName: "unwritable-cache-concurrent",
-				caching: { storage: buildDiskStorage({ directory: directory.path }) },
-				axios: {
-					adapter: async (config) => ({
-						data: { ok: true },
-						status: 200,
-						statusText: "OK",
-						headers: {},
-						config,
-					}),
-				},
-			})
+		const settled = await Promise.allSettled([
+			client.fetch({ url: "/concurrent.json" }),
+			client.fetch({ url: "/concurrent.json" }),
+			client.fetch({ url: "/concurrent.json" }),
+		])
 
-			const settled = await Promise.allSettled([
-				client.fetch({ url: "/concurrent.json" }),
-				client.fetch({ url: "/concurrent.json" }),
-				client.fetch({ url: "/concurrent.json" }),
-			])
+		expect(settled.map((settledResult) => settledResult.status)).toEqual(["fulfilled", "fulfilled", "fulfilled"])
 
-			expect(settled.map((settledResult) => settledResult.status)).toEqual(["fulfilled", "fulfilled", "fulfilled"])
-
-			for (const settledResult of settled) {
-				if (settledResult.status === "rejected") {
-					expect(isTransientResourceError(settledResult.reason)).toBe(true)
-				}
+		for (const settledResult of settled) {
+			if (settledResult.status === "rejected") {
+				expect(isTransientResourceError(settledResult.reason)).toBe(true)
 			}
-		} finally {
-			await restore()
 		}
 	})
 })
