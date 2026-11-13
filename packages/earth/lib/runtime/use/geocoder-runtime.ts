@@ -411,7 +411,7 @@ export function useGeocoderRuntime({
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
-	const { keptGazetteer, loadAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
+	const { keptGazetteer, loadAssets, disposeAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 	const { reloadGazetteer, reloadModel } = useStackReloads(rt, sqliteRuntimeBaseURL, keptGazetteer)
 
@@ -421,7 +421,7 @@ export function useGeocoderRuntime({
 		() =>
 			new FamilyBundles<ReleaseAssets>({
 				load: (family, release) => loadReleaseAssets(release, silentAssetProgress(), { ortWASMURL, locale: family }),
-				dispose: disposeAssets,
+				dispose: (assets) => assets.release(),
 			}),
 		[]
 	)

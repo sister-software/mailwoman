@@ -62,8 +62,25 @@ export function useReleaseAssetLoader(
 ): {
 	keptGazetteer: KeptGazetteer
 	loadAssets: (release: ReleaseInfo, ctx: AssetsLoadContext) => Promise<ReleaseAssets>
+	disposeAssets: (assets: ReleaseAssets) => Promise<void>
 } {
 	const keptGazetteer = useKeptGazetteer()
+
+	// The disposer frees a superseded bundle's native memory, including a gazetteer reopened after the load.
+	// The bundle's own `release` closes only the gazetteer its load opened.
+	// A gazetteer a model-only reload keeps for the next load stays open.
+	const disposeAssets = useCallback(
+		(assets: ReleaseAssets): Promise<void> => {
+			const keepLookup = assets.lookup != null && assets.lookup === keptGazetteer.peek()
+
+			if (!keepLookup) {
+				assets.lookup?.close?.()
+			}
+
+			return assets.release({ keepLookup })
+		},
+		[keptGazetteer]
+	)
 
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
@@ -74,7 +91,7 @@ export function useReleaseAssetLoader(
 		[sqliteRuntimeBaseURL, ortWASMURL, keptGazetteer]
 	)
 
-	return { keptGazetteer, loadAssets }
+	return { keptGazetteer, loadAssets, disposeAssets }
 }
 
 /**
@@ -121,20 +138,6 @@ export function useModelReload(
 	}, [kept, lookup, retry])
 
 	return lookup ? reload : null
-}
-
-/**
- * Gives a superseded bundle's native memory back, including a gazetteer reopened after the load.
- *
- * The bundle's `release` captured the gazetteer the load opened, so the current one is closed here.
- *
- * It closes over no state, so it sits at module scope with a stable identity
- * that cannot churn the release hook's effect.
- */
-export function disposeAssets(assets: ReleaseAssets): Promise<void> {
-	assets.lookup?.close?.()
-
-	return assets.release()
 }
 
 /**
