@@ -50,7 +50,12 @@ import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { STREET_KEY_NORMALIZATION, STREET_LOCALES } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
+import {
+	type BuildSiblingSuffixes,
+	recoverInterruptedBuilds,
+	sealDatabase,
+	swapDatabaseIntoPlace,
+} from "@mailwoman/sqlite/sealed/db"
 import { basename, type PathBuilderLike, relative, resolvePath } from "path-ts"
 
 import {
@@ -158,6 +163,11 @@ export function readerCompatibility(role: ServingRole): ReaderCompatibility {
 }
 
 const SQLITE_HEADER = "SQLite format 3\u0000"
+
+/**
+ * The names {@link placeArtifact} gives an artifact directory's two siblings, each followed by `-<pid>`.
+ */
+const PLACEMENT_SUFFIXES: BuildSiblingSuffixes = { building: "staging", setAside: "replaced" }
 
 /**
  * The manifest of a downloaded SQLite artifact, from its sealed bytes, its own `layer_manifest`
@@ -295,6 +305,14 @@ export async function placeArtifact(
 	const paths = catalogPaths(dataRoot)
 	const destination = paths.artifactDirectory(manifest.role, manifest.id)
 	const finalPath = destination(fileName).toString()
+
+	// A placement killed between its two renames left the installed directory at
+	// `.replaced-<pid>` and the slot empty.
+	// The install lock admits one installer per data root, so every sibling of an
+	// exited process is that kind of leftover.
+	// The set-aside copy moves back before this placement reads the slot, and the rest are removed.
+	await recoverInterruptedBuilds(destination, PLACEMENT_SUFFIXES)
+
 	const existing = await tryStat(destination)
 
 	if (existing && (await holdsIdenticalArtifact(destination, fileName, manifest))) {

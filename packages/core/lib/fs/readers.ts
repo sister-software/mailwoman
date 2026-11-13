@@ -235,9 +235,19 @@ export async function directoryHasEntries(directory: PathBuilderLike): Promise<b
 /**
  * The absolute paths `pattern` matches in `directory`, in code-point order,
  * as Python's `sorted(Path.glob())` lists one directory's files.
+ *
+ * `onlyFiles: false` also matches directories.
  */
-export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
-	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
+export async function sortedGlob(
+	directory: PathBuilderLike,
+	pattern: string,
+	options: { onlyFiles?: boolean } = {}
+): Promise<string[]> {
+	const paths: string[] = await Globerator.from(pattern, {
+		cwd: directory.toString(),
+		absolute: true,
+		onlyFiles: options.onlyFiles ?? true,
+	}).toArray()
 
 	return paths.toSorted(compareByScalarValue)
 }

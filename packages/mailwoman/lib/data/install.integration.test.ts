@@ -15,11 +15,13 @@ import { APIClient } from "@mailwoman/core/api"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { movePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { ServingRole } from "@mailwoman/core/layers"
+import { runProcess } from "@mailwoman/core/process"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
+import { dirname, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { BUNDLES, type DataBundle } from "#data/bundles"
@@ -190,6 +192,29 @@ describe("the published installation path", () => {
 		// The conventional path stays empty.
 		// The file's location is recorded in the selection.
 		await expect(pathExists(scratch.path("db", "wof", "candidate.db"))).resolves.toBe(false)
+	})
+
+	it("restores the copy a killed placement set aside, and removes what that placement left", async () => {
+		await pull(["candidate"])
+
+		const installed = dirname((await resolveCandidateDBPath(undefined, scratch.path))!)
+		const killed = (await runProcess(process.execPath, ["-e", "process.stdout.write(String(process.pid))"])).stdout
+
+		// A placement killed between its two renames: the installed directory set aside, its staged copy unmoved.
+		await movePath(installed, `${installed}.replaced-${killed}`)
+		await writeLocalTextFile("partial", `${installed}.staging-${killed}/candidate.db`)
+
+		const result = await pull(["candidate"])
+
+		expect(result.ok).toBe(true)
+		await expect(pathExists(`${installed}.replaced-${killed}`)).resolves.toBe(false)
+		await expect(pathExists(`${installed}.staging-${killed}`)).resolves.toBe(false)
+
+		using db = new DatabaseClient<FixtureGazetteerDatabase>((await resolveCandidateDBPath(undefined, scratch.path))!, {
+			readOnly: true,
+		})
+
+		expect(db.prepare("SELECT name FROM fixture_candidate").get()).toEqual({ name: "Washington" })
 	})
 
 	it("installs into a data root that doesn't exist yet", async () => {

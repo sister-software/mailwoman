@@ -196,24 +196,41 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 }
 
 /**
- * A sibling an earlier build of an artifact left beside it: the artifact's name, `.tmp-`
- * or `.old-`, the building process's pid, and an optional `-wal` or `-shm` suffix.
+ * The suffixes a writer gives the two siblings of a published path, each followed by `-<pid>`.
  */
-const BUILD_SIBLING = /\.(tmp|old)-(\d+)(-wal|-shm)?$/u
+export interface BuildSiblingSuffixes {
+	/**
+	 * The sibling a writer fills before the swap, such as `tmp` or `staging`.
+	 */
+	building: string
+	/**
+	 * The sibling the swap moves the published version to, such as `old` or `replaced`.
+	 */
+	setAside: string
+}
+
+const SEALED_BUILD_SUFFIXES: BuildSiblingSuffixes = { building: "tmp", setAside: "old" }
 
 /**
- * Restores or removes what an interrupted build of `finalPath` left beside it.
+ * Restores or removes what an interrupted write of `finalPath` left beside it.
  *
- * A build writes `<final>.tmp-<pid>` and, during its swap, moves the published file to `<final>.old-<pid>`.
+ * A sealed build writes `<final>.tmp-<pid>` and, during its swap, moves the
+ * published file to `<final>.old-<pid>`.
  * A process killed in between leaves those files on disk under a pid no later build shares.
  *
- * When the published slot is empty, the newest `.old-` file of an exited process is
- * the last published version, and it moves back into the slot.
+ * Another writer that follows the same pattern under other names passes its `suffixes`.
+ * A sibling may be a file or a directory, and a file's `-wal` and `-shm` sidecars count with it.
+ *
+ * When the published slot is empty, the newest set-aside sibling of an exited process
+ * is the last published version, and it moves back into the slot.
  * Every other sibling of an exited process is removed.
  *
- * A sibling whose process still runs belongs to a build in progress and stays.
+ * A sibling whose process still runs belongs to a write in progress and stays.
  */
-export async function recoverInterruptedBuilds(finalPath: PathBuilderLike): Promise<void> {
+export async function recoverInterruptedBuilds(
+	finalPath: PathBuilderLike,
+	suffixes: BuildSiblingSuffixes = SEALED_BUILD_SUFFIXES
+): Promise<void> {
 	const finalPathString = finalPath.toString()
 	const directory = dirname(finalPathString).toString()
 
@@ -221,17 +238,22 @@ export async function recoverInterruptedBuilds(finalPath: PathBuilderLike): Prom
 
 	const name = basename(finalPathString).toString()
 
+	const siblingPattern = new RegExp(
+		`\\.(${RegExp.escape(suffixes.building)}|${RegExp.escape(suffixes.setAside)})-(\\d+)(-wal|-shm)?$`,
+		"u"
+	)
+
 	const siblings = [
-		...(await sortedGlob(directory, `${name}.tmp-*`)),
-		...(await sortedGlob(directory, `${name}.old-*`)),
+		...(await sortedGlob(directory, `${name}.${suffixes.building}-*`, { onlyFiles: false })),
+		...(await sortedGlob(directory, `${name}.${suffixes.setAside}-*`, { onlyFiles: false })),
 	].flatMap((path) => {
-		const match = BUILD_SIBLING.exec(path)
+		const match = siblingPattern.exec(path)
 
 		return match && !processExists(Number(match[2])) ? [{ path, kind: match[1], sidecar: match[3] ?? null }] : []
 	})
 
 	if (!(await pathExists(finalPathString))) {
-		const stranded = siblings.filter((sibling) => sibling.kind === "old" && !sibling.sidecar)
+		const stranded = siblings.filter((sibling) => sibling.kind === suffixes.setAside && !sibling.sidecar)
 
 		const newest = (
 			await Promise.all(
