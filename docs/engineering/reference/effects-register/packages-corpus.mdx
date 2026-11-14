@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 233 of the group's 400 library and tool modules.
+This page lists 234 of the group's 401 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -105,6 +105,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | --------------------- | ------------------- | ----- |
 | write | `writeLocalJSONFile`  | `unresolved (call)` | 1     |
 | write | `writeLocalJSONLFile` | `unresolved (call)` | 2     |
+
+## `packages/corpus/lib/adapters/wof/stored-records.ts`
+
+| Kind | Interface        | Target              | Calls |
+| ---- | ---------------- | ------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/address-records/openaddresses.ts`
 
@@ -1836,7 +1842,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 | Kind | Interface           | Target                   | Calls |
 | ---- | ------------------- | ------------------------ | ----- |
-| read | `Globerator.from`   | `unresolved (parameter)` | 1     |
 | read | `readLocalJSONFile` | `unresolved (call)`      | 1     |
 | read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
 

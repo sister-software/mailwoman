@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 63 of the group's 101 library and tool modules.
+This page lists 64 of the group's 102 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -35,6 +35,19 @@ The others hold neither an effect edge nor an import-time effect.
 | ---- | ------------------- | ------------------------ | ----- |
 | read | `Globerator.from`   | `unresolved (call)`      | 1     |
 | read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
+
+## `packages/gazetteer/lib/whosonfirst/record-store.ts`
+
+| Kind  | Interface           | Target                   | Calls |
+| ----- | ------------------- | ------------------------ | ----- |
+| read  | `gitHead`           | `unresolved (call)`      | 1     |
+| read  | `Globerator.from`   | `unresolved (parameter)` | 1     |
+| read  | `pathExists`        | `unresolved (call)`      | 5     |
+| read  | `readLocalTextFile` | `unresolved (call)`      | 1     |
+| read  | `sortedGlob`        | `unresolved (call)`      | 1     |
+| read  | `statLink`          | `unresolved (call)`      | 1     |
+| write | `DatabaseClient`    | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`   | `unresolved (call)`      | 1     |
 
 ## `packages/gazetteer/tools/pipeline.ts`
 
