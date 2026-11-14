@@ -15,6 +15,7 @@
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { allKeyed } from "@mailwoman/core/promises"
+import { formatPhaseTimings } from "@mailwoman/core/utils"
 import {
 	foldSourceAdminPath,
 	foldStaleness,
@@ -171,6 +172,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			r.importanceScored === null
 				? "importance: not joined (no score source) — the column is empty"
 				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceFiltered?.toLocaleString() ?? 0} refused as a different same-name place`,
+			`phases: ${formatPhaseTimings(r.phaseSeconds)}`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
 		]
 	})

@@ -17,7 +17,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { isoDate } from "@mailwoman/core/utils"
+import { createPhaseClock, formatPhaseTimings, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -91,6 +91,10 @@ export interface BuildAdminResult {
 	verify: VerifyResult | null
 	sealed: boolean
 	elapsedSeconds: number
+	/**
+	 * Each phase's wall-clock seconds through the seal, in the order the phases first ran.
+	 */
+	phaseSeconds: PhaseTiming[]
 }
 
 /**
@@ -100,7 +104,13 @@ export interface BuildAdminResult {
  */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
-	const phase = opts.onPhase ?? (() => {})
+	const clock = createPhaseClock()
+
+	const phase = (name: string, detail?: string) => {
+		clock.mark(name)
+		opts.onPhase?.(name, detail)
+	}
+
 	const dataDir = PathBuilder.from(opts.dataDir ?? wofReposPath)
 	const out = PathBuilder.from(opts.out ?? wofDatabasePath(`admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`))
 	const overtureCountries = opts.overtureCountries ?? DEFAULT_OVERTURE_COUNTRIES
@@ -308,16 +318,18 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	// so the manifest cannot lag the artifact.
 	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
+	const phaseSeconds = clock.finish()
 
 	if (await pathExists(buildLogPath)) {
 		phase("build-log", buildLogPath)
 		const log = await readLocalJSONFile<{ notes?: string[] }>(buildLogPath)
 		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = isoDate()
+		const timings = formatPhaseTimings(phaseSeconds)
 		log.notes ??= []
 
 		log.notes.push(
-			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}`
+			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}; phases: ${timings}`
 		)
 
 		await writeLocalJSONFile(log, buildLogPath)
@@ -333,5 +345,6 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		verify,
 		sealed: true,
 		elapsedSeconds: Math.round((performance.now() - t0) / 100) / 10,
+		phaseSeconds,
 	}
 }

@@ -12,6 +12,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { formatPhaseTimings } from "@mailwoman/core/utils"
 
 import {
 	type CommandSpec,
@@ -59,6 +60,7 @@ const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 			`admin gazetteer: ${result.out} (${await formatFileSize(result.out)}, ${result.elapsedSeconds}s)`,
 			`${result.placesIngested.toLocaleString()} WOF + ${result.overtureIngested.toLocaleString()} overture + ${result.geonamesIngested.toLocaleString()} geonames`,
 			result.verify ? `verify: PASS (${result.verify.checks.length} checks)` : "verify: SKIPPED (--skip-verify)",
+			`phases: ${formatPhaseTimings(result.phaseSeconds)}`,
 			"sealed 0444",
 			"next: swap per RELEASING.md, then `mailwoman gazetteer build candidate`",
 		]

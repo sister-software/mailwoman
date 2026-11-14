@@ -30,7 +30,7 @@ import { refusalsForPublication } from "@mailwoman/core/layers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { isoDate } from "@mailwoman/core/utils"
+import { createPhaseClock, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
 // resolver-wof-sqlite's runtime modules are imported inside the functions that use them,
 // because `mailwoman --help` imports every command and a module-level value import
 // would evaluate the resolver's module graph on that path.
@@ -398,8 +398,21 @@ function foldRefusalMessage(refusing: readonly FoldTerms[]): string {
  * The FTS5-trigram fuzzy index and the coverage manifest
  * (the artifact's own hard-filter coverage record + guard-B bboxes) are baked in before the seal.
  */
-export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
+export async function buildCandidate(
+	options: BuildOptions
+): Promise<BuildCandidateResult & { phaseSeconds: PhaseTiming[] }> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build/candidate")
+	const clock = createPhaseClock()
+
+	// Every progress line also marks its phase on the clock.
+	// The result reports each phase's time.
+	const opts: BuildOptions = {
+		...options,
+		onProgress: (phase, message) => {
+			clock.mark(phase)
+			options.onProgress?.(phase, message)
+		},
+	}
 
 	// `undefined` means "use the convention"; `false` means "the caller chose an empty column".
 	// Only the second may skip the resolve, so a missing artifact isn't indistinguishable
@@ -495,10 +508,11 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		)
 
 		// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
+		clock.mark("seal")
 		await sealDatabase(tmp)
 		await swapDatabaseIntoPlace(tmp, opts.out)
 
-		return result
+		return { ...result, phaseSeconds: clock.finish() }
 	} catch (error) {
 		await removePathIfPresent(tmp)
 
