@@ -3,16 +3,15 @@
 
 /**
  *   `it-miur-scuole`: the Ministero dell'Istruzione e del Merito's register of state schools
- *   (`Anagrafe scuole statali`, dataset `DS0400SCUANAGRAFESTAT` on dati.istruzione.it),
- *   an evaluation-only source.
+ *   (`Anagrafe scuole statali`, dataset `DS0400SCUANAGRAFESTAT` on dati.istruzione.it), read by the
+ *   evaluation source and by the `it-miur-scuole` corpus adapter through {@linkcode readMIURSchools}.
  *
  *   Each row is one school site with its region, province, street line (`INDIRIZZOSCUOLA`,
  *   `VIA COLLE DEI FRATI 5/5A`), postcode (`CAPSCUOLA`) and comune (`DESCRIZIONECOMUNE`).
  *   The ministry writes every value in capitals, and the rows keep them.
  *
  *   The schools' addresses are the ministry's record of its own sites.
- *   No corpus source reads the register, so the rows are absent from the training corpora
- *   by construction, and the overlap audit checks their text against both corpora.
+ *   A record holds the address and never the school's name.
  *
  *   ## License
  *
@@ -24,12 +23,13 @@
  *   ed ogni altra modifica delle Informazioni » (`data/licenses/it-miur-iodl-2.0.md`).
  */
 
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	type EvaluationAddressRecord,
+	type EvaluationRecordReading,
 	type EvaluationSource,
+	evaluationSourceRead,
 	evaluationStreetLine,
 	fetchEvaluationFile,
 	readEvaluationFetch,
@@ -69,7 +69,7 @@ function value(text: string | undefined): string {
 /**
  * One register row as an address record, or the reason it yields none.
  */
-export function readMIURSchool(row: MIURSchoolRow): EvaluationAddressRecord | { refused: string } {
+export function readMIURSchool(row: MIURSchoolRow): EvaluationRecordReading {
 	const id = value(row.codicescuola)
 	const postcode = value(row.capscuola)
 	const locality = value(row.descrizionecomune)
@@ -93,7 +93,7 @@ export function readMIURSchool(row: MIURSchoolRow): EvaluationAddressRecord | { 
 }
 
 /**
- * Italy's evaluation-only source, the state-school register.
+ * Italy's evaluation source, the state-school register.
  */
 export const itMIURScuoleSource: EvaluationSource = {
 	id: "it-miur-scuole",
@@ -107,24 +107,19 @@ export const itMIURScuoleSource: EvaluationSource = {
 
 	async read(directory: PathBuilder) {
 		const fetched = await readEvaluationFetch(directory)
-		const refused: Record<string, number> = {}
 
-		async function* records(): AsyncGenerator<EvaluationAddressRecord> {
-			for await (const row of CSVSpliterator.fromAsync<MIURSchoolRow>(directory(IT_MIUR_SCUOLE_FILENAME), {
-				normalizeKeys: true,
-			})) {
-				const read = readMIURSchool(row)
-
-				if ("refused" in read) {
-					refused[read.refused] = (refused[read.refused] ?? 0) + 1
-
-					continue
-				}
-
-				yield read
-			}
-		}
-
-		return { vintage: `2026/27 (fetched ${fetched.downloaded_at.slice(0, 10)})`, records: records(), refused }
+		return evaluationSourceRead(
+			`2026/27 (fetched ${fetched.downloaded_at.slice(0, 10)})`,
+			readMIURSchools(directory(IT_MIUR_SCUOLE_FILENAME))
+		)
 	},
+}
+
+/**
+ * Every row of the register CSV at `path`, read by {@linkcode readMIURSchool}.
+ */
+export async function* readMIURSchools(path: PathBuilderLike): AsyncGenerator<EvaluationRecordReading> {
+	for await (const row of CSVSpliterator.fromAsync<MIURSchoolRow>(path, { normalizeKeys: true })) {
+		yield readMIURSchool(row)
+	}
 }

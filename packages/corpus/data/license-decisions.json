@@ -1853,7 +1853,7 @@
 			"electedTerms": "Aviso legal del Ministerio de Sanidad: reutilización autorizada con cita de la fuente y de la fecha de la última actualización",
 			"retrievedCopy": "packages/corpus/data/licenses/es-sanidad-aviso-legal.md",
 			"retrievedAt": "2026-11-14",
-			"electedBecause": "The ministry's legal notice, `https://www.sanidad.gob.es/avisoLegal/home.htm`, linked as `Aviso Legal` from the microdata page that serves the Catálogo de Centros de Atención Primaria, states that the site's information `salvo indicación expresa en contrario, es susceptible de reutilización; quedando autorizada su reproducción total o parcial, modificación, distribución y comunicación, para usos comerciales y no comerciales`, on condition of citing the source and the date of the last update. The catalogue's download page states no contrary indication. The notice names no instrument and no version, so `spdx` is left out and `electedTerms` holds the publisher's words. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Spain that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the notice would permit it.",
+			"electedBecause": "The ministry's legal notice, `https://www.sanidad.gob.es/avisoLegal/home.htm`, linked as `Aviso Legal` from the microdata page that serves the Catálogo de Centros de Atención Primaria, states that the site's information `salvo indicación expresa en contrario, es susceptible de reutilización; quedando autorizada su reproducción total o parcial, modificación, distribución y comunicación, para usos comerciales y no comerciales`, on condition of citing the source and the date of the last update. The catalogue's download page states no contrary indication. The notice names no instrument and no version, so `spdx` is left out and `electedTerms` holds the publisher's words. The notice carries no share-alike term. The `es-sanidad-centros-ap` adapter trains on the rows; each row holds the centre's address and never its name.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -1871,20 +1871,21 @@
 					"because": "The notice authorizes `modificación`, which rendering and labeling each address performs."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The notice itself would permit it."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The notice authorizes `reproducción total o parcial, modificación … para usos comerciales y no comerciales`. Fitting a model reproduces the rows into the training process and modifies them into a labeled corpus. The conditions are citing the source and the date of its last update, which the adapter's attribution and the fetch manifest record."
 				},
 				"redistribute-data": {
 					"permission": "unreviewed",
-					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+					"because": "No corpus built from the source is published; its rows stay on the data root."
 				},
 				"redistribute-model": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "Whether trained weights are a modification of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the notice does not answer it."
 				},
 				"commercial-sublicense": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "The notice grants reuse to every user directly and names no sublicensing right, so there is no clause to read either way."
 				}
 			}
 		},
@@ -1894,7 +1895,7 @@
 			"termsVersion": "2.0",
 			"retrievedCopy": "packages/corpus/data/licenses/it-miur-iodl-2.0.md",
 			"retrievedAt": "2026-11-14",
-			"electedBecause": "The ministry's catalogue page, `https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole`, states `License:` with a link to `http://www.dati.gov.it/iodl/2.0/` on the entry for `DS0400SCUANAGRAFESTAT`, the register of state schools, and the fetched file `SCUANAGRAFESTAT20262720260901.csv` is that entry's 2026/27 distribution. The licence text at `https://www.dati.gov.it/content/italian-open-data-license-v20` grants a worldwide, free, perpetual, irrevocable licence to `estrarre e reimpiegare le Informazioni` and to `creare un Lavoro derivato`, defined as `ogni traduzione, adattamento, trasformazione, diversa disposizione ed ogni altra modifica delle Informazioni`, on condition of naming the source and the provider. IODL 2.0 carries no share-alike term. No SPDX identifier names IODL 2.0, so `spdx` is left out. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Italy that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"electedBecause": "The ministry's catalogue page, `https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole`, states `License:` with a link to `http://www.dati.gov.it/iodl/2.0/` on the entry for `DS0400SCUANAGRAFESTAT`, the register of state schools, and the fetched file `SCUANAGRAFESTAT20262720260901.csv` is that entry's 2026/27 distribution. The licence text at `https://www.dati.gov.it/content/italian-open-data-license-v20` grants a worldwide, free, perpetual, irrevocable licence to `estrarre e reimpiegare le Informazioni` and to `creare un Lavoro derivato`, defined as `ogni traduzione, adattamento, trasformazione, diversa disposizione ed ogni altra modifica delle Informazioni`, on condition of naming the source and the provider. IODL 2.0 carries no share-alike term. No SPDX identifier names IODL 2.0, so `spdx` is left out. The `it-miur-scuole` adapter trains on the rows; each row holds the school's address and never its name.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -1912,20 +1913,21 @@
 					"because": "IODL 2.0 grants `creare un Lavoro derivato`, which it defines to include `adattamento, trasformazione`; rendering and labeling each address performs that."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "IODL 2.0 grants `estrarre e reimpiegare le Informazioni` and `creare un Lavoro derivato`, defined as `ogni traduzione, adattamento, trasformazione, diversa disposizione ed ogni altra modifica delle Informazioni`. Fitting a model extracts and reuses the rows and produces such a transformation. IODL 2.0 carries no share-alike term, and its condition is naming the source and the provider, which the adapter's attribution states."
 				},
 				"redistribute-data": {
 					"permission": "unreviewed",
-					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+					"because": "No corpus built from the source is published; its rows stay on the data root."
 				},
 				"redistribute-model": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "Whether trained weights are a `Lavoro derivato` of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
 				},
 				"commercial-sublicense": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "IODL 2.0 grants its rights to every user directly and names no sublicensing right, so there is no clause to read either way."
 				}
 			}
 		},
@@ -1936,7 +1938,7 @@
 			"termsVersion": "3.0",
 			"retrievedCopy": "packages/corpus/data/licenses/au-acnc-cc-by-3.0-au.md",
 			"retrievedAt": "2026-11-14",
-			"electedBecause": "The dataset record `acnc-register` on data.gov.au, read through `package_show` on 2026-11-14, belongs to the publisher's own organization (`acnc`, `Australian Charities and Not-for-profits Commission (ACNC)`), names the ACNC as author, and states `license_title: Creative Commons Attribution 3.0 Australia` with `license_url: http://creativecommons.org/licenses/by/3.0/au/`. Its CSV resource `datadotgov_main.csv` is the file fetched. Clause 3A of the legal code grants the right to `create and Reproduce one or more Derivative Works`, and clause 4B(c) requires a derivative to identify that changes were made. CC BY 3.0 AU carries no share-alike term. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Australia that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"electedBecause": "The dataset record `acnc-register` on data.gov.au, read through `package_show` on 2026-11-14, belongs to the publisher's own organization (`acnc`, `Australian Charities and Not-for-profits Commission (ACNC)`), names the ACNC as author, and states `license_title: Creative Commons Attribution 3.0 Australia` with `license_url: http://creativecommons.org/licenses/by/3.0/au/`. Its CSV resource `datadotgov_main.csv` is the file fetched. Clause 3A of the legal code grants the right to `create and Reproduce one or more Derivative Works`, and clause 4B(c) requires a derivative to identify that changes were made. CC BY 3.0 AU carries no share-alike term. The `au-acnc-register` adapter trains on the rows; each row holds the charity's address and never its name, because a small charity's name can be a person's.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -1954,20 +1956,21 @@
 					"because": "Clause 3A(d), as above; rendering and labeling each address makes a derivative, which clause 4B(c) requires to identify its changes."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 3A grants reproduction of the Work and creation of Derivative Works, and fitting a model performs both: it reproduces the Work into the training process and produces a derivative of it. §3C reserves only rights not expressly granted. The reading follows the same licence's in AusTender's decision."
 				},
 				"redistribute-data": {
 					"permission": "unreviewed",
-					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+					"because": "No corpus built from the source is published; its rows stay on the data root."
 				},
 				"redistribute-model": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "Whether trained weights are a Derivative Work of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the retrieved terms do not answer it."
 				},
 				"commercial-sublicense": {
-					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"permission": "refused",
+					"because": "CC BY 3.0 AU §4A states `You are not granted the right to sublicense the Work.` A recipient takes their rights from the licensor rather than from this repository."
 				}
 			}
 		},
@@ -1977,7 +1980,7 @@
 			"termsVersion": "3.0",
 			"retrievedCopy": "packages/corpus/data/licenses/nz-charities-cc-by-3.0-nz.md",
 			"retrievedAt": "2026-11-14",
-			"electedBecause": "Charities Services' open-data page, `https://www.charities.govt.nz/charities-in-new-zealand/the-charities-register/open-data`, read in a browser on 2026-11-14 because an automated fetch answered HTTP 403, describes the OData service at `http://www.odata.charities.govt.nz` the fetch reads and states `Use of this data is licensed under a Creative Commons Attribution 3.0 New Zealand License.` The legal code grants the right to `create one or more Adaptations` and requires an adaptation to identify that changes were made. CC BY 3.0 NZ carries no share-alike term. The page also forbids using the register to harvest charities' email addresses for marketing; the fetch reads no email address. The register row was carried from the original memo, whose note already read `CC-BY`; this reading is the publisher's own. **The source is evaluation-only by decision**: its rows give the release check comparative rows for New Zealand that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"electedBecause": "Charities Services' open-data page, `https://www.charities.govt.nz/charities-in-new-zealand/the-charities-register/open-data`, read in a browser on 2026-11-14 because an automated fetch answered HTTP 403, describes the OData service at `http://www.odata.charities.govt.nz` the fetch reads and states `Use of this data is licensed under a Creative Commons Attribution 3.0 New Zealand License.` The legal code grants the right to `create one or more Adaptations` and requires an adaptation to identify that changes were made. CC BY 3.0 NZ carries no share-alike term. The page also forbids using the register to harvest charities' email addresses for marketing; the fetch reads no email address. The register row was carried from the original memo, whose note already read `CC-BY`; this reading is the publisher's own. The `nz-charities-register` adapter trains on the rows; each row holds the charity's street address and never its name, because a small charity's name can be a person's.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -1995,20 +1998,21 @@
 					"because": "The grant to `create one or more Adaptations` covers rendering and labeling each address, which must identify its changes."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 NZ grants reproducing the Work and the right to `create one or more Adaptations`, and fitting a model performs both: it reproduces the Work into the training process and produces an adaptation of it. The licence carries no share-alike term. The page's one restriction, on harvesting charities' email addresses for marketing, does not reach a row that holds no email address."
 				},
 				"redistribute-data": {
 					"permission": "unreviewed",
-					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+					"because": "No corpus built from the source is published; its rows stay on the data root."
 				},
 				"redistribute-model": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "Whether trained weights are an Adaptation of the rows is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the retrieved terms do not answer it."
 				},
 				"commercial-sublicense": {
 					"permission": "unreviewed",
-					"because": "No model trains on the source."
+					"because": "The retrieved quotations do not include the legal code's sublicensing clause, so it is not read here."
 				}
 			}
 		},

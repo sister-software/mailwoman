@@ -173,6 +173,15 @@
 				}
 			]
 		},
+		"au-acnc-register": {
+			"inputs": [
+				{
+					"registerSource": "au-charity-nonprofit-1",
+					"license": "unchecked-access-free-au-australian-charities-and-not-for-profits-comm",
+					"reads": "ACNC Registered Charities `datadotgov_main.csv`: address line 1, town, state and postcode"
+				}
+			]
+		},
 		"bd-adresses": {
 			"inputs": [
 				{
@@ -551,6 +560,15 @@
 					"registerSource": "es-mixed-regulatory-5",
 					"license": "unchecked-access-free-es-gobierno-de-navarra",
 					"reads": "Navarra INSPIRE Addresses"
+				}
+			]
+		},
+		"es-sanidad-centros-ap": {
+			"inputs": [
+				{
+					"registerSource": "es-health-1",
+					"license": "unchecked-access-free-es-ministerio-de-sanidad",
+					"reads": "the Catálogo de Centros de Atención Primaria's `SIAP_CENTROS.txt`: street line, locality and postcode"
 				}
 			]
 		},
@@ -1840,6 +1858,15 @@
 				}
 			]
 		},
+		"it-miur-scuole": {
+			"inputs": [
+				{
+					"registerSource": "it-education-1",
+					"license": "unchecked-access-free-it-ministero-dell-istruzione-e-del-merito",
+					"reads": "the Anagrafe scuole statali 2026/27 CSV: street line, postcode and comune"
+				}
+			]
+		},
 		"juso-kr": {
 			"inputs": [
 				{
@@ -1933,6 +1960,15 @@
 					"registerSource": "nl-property-building-1",
 					"license": "unchecked-access-free-nl-kadaster",
 					"reads": "Kadaster INSPIRE Addresses national GML"
+				}
+			]
+		},
+		"nz-charities-register": {
+			"inputs": [
+				{
+					"registerSource": "nz-charity-nonprofit-1",
+					"license": "unchecked-access-free-nz-nz-charity-nonprofit-1",
+					"reads": "the Charities Register OData `vOrganisations` street address columns"
 				}
 			]
 		},

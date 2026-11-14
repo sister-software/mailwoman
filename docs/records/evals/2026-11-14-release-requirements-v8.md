@@ -9,7 +9,8 @@ owner: evaluation
 
 Status: **registered**. The operator approved version 8 on 2026-11-14, and `release/current-spec.ts` names
 `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v8.json`. Version 8 registers the two
-evaluation collections below and keeps every version 7 threshold. Its published identity is model 10.8.0, the
+evaluation collections below and keeps every version 7 threshold. The fresh-source collection it first also
+registered was withdrawn the same day (section 8). Its published identity is model 10.8.0, the
 `model.onnx` of `@mailwoman/neural-weights-en-us` 11.1.0 as npm `latest` installs it (section 7).
 
 This record answers the pre-launch question of `HOLDOUT_AND_EVALUATION.mdx` P3 for the next run on
@@ -225,8 +226,21 @@ lineage in the audit, and its rows unseen by both models may be fewer.
 
 ## 8. The fresh-source collection
 
-v8 registers `heldout-fresh-sources@b2909f2d18f2b9de` under `evaluations.fresh` for ES, IT, AU and NZ
-(`2026-11-14-fresh-source-evaluation-set.md`). Its audit read v0.8.18-retention-overlay with
+Status: **withdrawn**. v8 first registered `heldout-fresh-sources@b2909f2d18f2b9de` under `evaluations.fresh` for
+ES, IT, AU and NZ (`2026-11-14-fresh-source-evaluation-set.md`). On 2026-11-14, before any release check read it,
+the operator removed the registration and turned the four sources into training sources. Two facts decided it:
+
+- 10.8.0 trained only on v0.8.18, so the development collection already holds unseen address rows for all four
+  countries (ES 959, IT 998, AU 615, NZ 426, section 7), and each country passes its minimum on them. B1 was a
+  blocker against 10.7.0 only.
+- The operator prefers training on available rows over holding them out, and holds out only what grading needs.
+
+`release-requirements.v8.json` no longer holds `evaluations.fresh`, and the requirement reader no longer accepts
+the field. The frozen files stay on disk. Once a corpus holds the four sources' rows, the set's rows are no longer
+`verified_unseen` for a candidate trained on it, so the option table below no longer describes a choice. It is
+kept as the measurement made while the set was registered.
+
+The measurements as made: its audit read v0.8.18-retention-overlay with
 `v8.6.3-base-c6-90k-v0818-wof15-s42.yaml`, the config 10.8.0 trained under, so its 8,000 `verified_unseen` rows are
 unseen by 10.8.0 as well. The evaluator reads one report, and v8 registers no rule for joining these rows to the
 development and confirmation rows, so no check reads them under v8.

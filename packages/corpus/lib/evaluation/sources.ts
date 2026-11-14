@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Every evaluation-only address source, in the order the evaluation-set builder reads them.
+ *   Every evaluation address source, in the order the evaluation-set builder reads them.
  *
- *   Each source's register decision refuses `train`, so no corpus build reads it.
+ *   Each of the four now permits `train` and feeds the corpus adapter of the same id, so the
+ *   evaluation-set builder refuses to freeze a new set from them (`heldout/fresh/build.ts`).
  */
 
 import { auACNCRegisterSource } from "#au/evaluation/acnc-register"

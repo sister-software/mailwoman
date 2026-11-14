@@ -3,8 +3,9 @@
 
 /**
  *   `nz-charities-register`: the Charities Register that Charities Services
- *   (Te Tari Taiwhenua, the Department of Internal Affairs) publishes through
- *   its OData service, an evaluation-only source.
+ *   (Te Tari Taiwhenua, the Department of Internal Affairs) publishes through its
+ *   OData service, read by the evaluation source and by the `nz-charities-register`
+ *   corpus adapter through {@linkcode readNZCharities}.
  *
  *   The fetch asks `vOrganisations` for every registered charity's street address:
  *   two lines, a suburb, a city and a postcode.
@@ -28,12 +29,13 @@
  *   each identifies that changes were made (`data/licenses/nz-charities-cc-by-3.0-nz.md`).
  */
 
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	type EvaluationAddressRecord,
+	type EvaluationRecordReading,
 	type EvaluationSource,
+	evaluationSourceRead,
 	evaluationStreetLine,
 	fetchEvaluationFile,
 	readEvaluationFetch,
@@ -71,7 +73,7 @@ const sameText = (a: string, b: string) => a.localeCompare(b, "en", { sensitivit
 /**
  * One register row as an address record, or the reason it yields none.
  */
-export function readNZCharity(row: CharityRow): EvaluationAddressRecord | { refused: string } {
+export function readNZCharity(row: CharityRow): EvaluationRecordReading {
 	const id = value(row.charity_registration_number)
 	const city = value(row.street_address_city)
 	const suburb = value(row.street_address_suburb)
@@ -114,7 +116,7 @@ export function readNZCharity(row: CharityRow): EvaluationAddressRecord | { refu
 }
 
 /**
- * New Zealand's evaluation-only source, the Charities Register.
+ * New Zealand's evaluation source, the Charities Register.
  */
 export const nzCharitiesRegisterSource: EvaluationSource = {
 	id: "nz-charities-register",
@@ -129,24 +131,19 @@ export const nzCharitiesRegisterSource: EvaluationSource = {
 
 	async read(directory: PathBuilder) {
 		const fetched = await readEvaluationFetch(directory)
-		const refused: Record<string, number> = {}
 
-		async function* records(): AsyncGenerator<EvaluationAddressRecord> {
-			for await (const row of CSVSpliterator.fromAsync<CharityRow>(directory(NZ_CHARITIES_REGISTER_FILENAME), {
-				normalizeKeys: true,
-			})) {
-				const read = readNZCharity(row)
-
-				if ("refused" in read) {
-					refused[read.refused] = (refused[read.refused] ?? 0) + 1
-
-					continue
-				}
-
-				yield read
-			}
-		}
-
-		return { vintage: `fetched ${fetched.downloaded_at.slice(0, 10)}`, records: records(), refused }
+		return evaluationSourceRead(
+			`fetched ${fetched.downloaded_at.slice(0, 10)}`,
+			readNZCharities(directory(NZ_CHARITIES_REGISTER_FILENAME))
+		)
 	},
+}
+
+/**
+ * Every row of the OData CSV answer at `path`, read by {@linkcode readNZCharity}.
+ */
+export async function* readNZCharities(path: PathBuilderLike): AsyncGenerator<EvaluationRecordReading> {
+	for await (const row of CSVSpliterator.fromAsync<CharityRow>(path, { normalizeKeys: true })) {
+		yield readNZCharity(row)
+	}
 }

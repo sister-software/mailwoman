@@ -3,7 +3,8 @@
 
 /**
  *   `au-acnc-register`: the Australian Charities and Not-for-profits Commission's register of charities
- *   (`ACNC Registered Charities`, data.gov.au dataset `acnc-register`), an evaluation-only source.
+ *   (`ACNC Registered Charities`, data.gov.au dataset `acnc-register`), read by the evaluation
+ *   source and by the `au-acnc-register` corpus adapter through {@linkcode readACNCCharities}.
  *
  *   Each row is one registered charity with up to three address lines, a town, a state and a postcode.
  *   Every row's `Address_Type` reads `Business`.
@@ -23,12 +24,13 @@
  *   and Reproduce one or more Derivative Works » (`data/licenses/au-acnc-cc-by-3.0-au.md`).
  */
 
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	type EvaluationAddressRecord,
+	type EvaluationRecordReading,
 	type EvaluationSource,
+	evaluationSourceRead,
 	evaluationStreetLine,
 	fetchEvaluationFile,
 	readEvaluationFetch,
@@ -68,7 +70,7 @@ function value(text: string | undefined): string {
 /**
  * One register row as an address record, or the reason it yields none.
  */
-export function readACNCCharity(row: ACNCRow): EvaluationAddressRecord | { refused: string } {
+export function readACNCCharity(row: ACNCRow): EvaluationRecordReading {
 	const id = value(row.abn)
 	const state = value(row.state)
 	const postcode = value(row.postcode)
@@ -109,7 +111,7 @@ export function readACNCCharity(row: ACNCRow): EvaluationAddressRecord | { refus
 }
 
 /**
- * Australia's evaluation-only source, the ACNC charity register.
+ * Australia's evaluation source, the ACNC charity register.
  */
 export const auACNCRegisterSource: EvaluationSource = {
 	id: "au-acnc-register",
@@ -124,24 +126,19 @@ export const auACNCRegisterSource: EvaluationSource = {
 
 	async read(directory: PathBuilder) {
 		const fetched = await readEvaluationFetch(directory)
-		const refused: Record<string, number> = {}
 
-		async function* records(): AsyncGenerator<EvaluationAddressRecord> {
-			for await (const row of CSVSpliterator.fromAsync<ACNCRow>(directory(AU_ACNC_REGISTER_FILENAME), {
-				normalizeKeys: true,
-			})) {
-				const read = readACNCCharity(row)
-
-				if ("refused" in read) {
-					refused[read.refused] = (refused[read.refused] ?? 0) + 1
-
-					continue
-				}
-
-				yield read
-			}
-		}
-
-		return { vintage: `fetched ${fetched.downloaded_at.slice(0, 10)}`, records: records(), refused }
+		return evaluationSourceRead(
+			`fetched ${fetched.downloaded_at.slice(0, 10)}`,
+			readACNCCharities(directory(AU_ACNC_REGISTER_FILENAME))
+		)
 	},
+}
+
+/**
+ * Every row of the register CSV at `path`, read by {@linkcode readACNCCharity}.
+ */
+export async function* readACNCCharities(path: PathBuilderLike): AsyncGenerator<EvaluationRecordReading> {
+	for await (const row of CSVSpliterator.fromAsync<ACNCRow>(path, { normalizeKeys: true })) {
+		yield readACNCCharity(row)
+	}
 }

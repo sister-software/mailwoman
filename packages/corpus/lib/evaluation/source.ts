@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The contract an evaluation-only address source satisfies.
+ *   The contract an evaluation address source satisfies.
  *
- *   An evaluation-only source is a publication that neither the published model's training
- *   corpus nor the candidate's reads, and that no corpus build may read.
- *   Its register decision refuses `train`, so `ingestEligibilityProblems` keeps it out of every build.
+ *   An evaluation source is a publication whose rows give the release check's comparative objective
+ *   rows a model didn't train on (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4).
+ *   A source stays unseen only while its register decision refuses `train`,
+ *   which keeps it out of every build through `ingestEligibilityProblems`.
  *
- *   Its rows exist to give the release check's comparative objective rows neither model
- *   trained on (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4).
+ *   The four sources `#evaluation/sources` lists now permit `train`, and each feeds a
+ *   corpus adapter built by `#evaluation/corpus-adapter` over the same record reader,
+ *   so a fix to the reader reaches both.
+ *   The fresh set frozen from them on 2026-11-14 is no longer registered by any release
+ *   specification (`docs/records/evals/2026-11-14-fresh-source-evaluation-set.md`).
  *
  *   A source's identity, terms, fetch and reader live under its country's directory
  *   (`lib/<cc>/evaluation/`), and `#evaluation/sources` lists every one.
@@ -44,6 +48,11 @@ export interface EvaluationAddressRecord {
 	 */
 	components: Partial<Record<ComponentTag, string>>
 }
+
+/**
+ * One publisher record as an address record, or the reason it yields none.
+ */
+export type EvaluationRecordReading = EvaluationAddressRecord | { readonly refused: string }
 
 /**
  * What one read of a source yielded: its records and why the others yielded none.
@@ -141,6 +150,30 @@ export async function readEvaluationFetch(directory: PathBuilder): Promise<Sourc
 	if (!manifest) throw new Error(`${directory("MANIFEST.json")} is missing; fetch the source first`)
 
 	return manifest
+}
+
+/**
+ * A source read over `readings`, counting each refusal under `refused` while `records` is consumed.
+ */
+export function evaluationSourceRead(
+	vintage: string,
+	readings: AsyncIterable<EvaluationRecordReading>
+): EvaluationSourceRead {
+	const refused: Record<string, number> = {}
+
+	async function* records(): AsyncGenerator<EvaluationAddressRecord> {
+		for await (const reading of readings) {
+			if ("refused" in reading) {
+				refused[reading.refused] = (refused[reading.refused] ?? 0) + 1
+
+				continue
+			}
+
+			yield reading
+		}
+	}
+
+	return { vintage, records: records(), refused }
 }
 
 /**

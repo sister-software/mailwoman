@@ -2548,7 +2548,7 @@
 			"geometry": "N",
 			"status": "VERIFIED_CORPUS",
 			"source_url": "https://www.sanidad.gob.es/estadEstudios/estadisticas/microdatos/CatCentrosAP/2026_C__Catalogo_de_Centros_AP_txt.zip",
-			"notes": "Evaluation only: read by the es-sanidad-centros-ap evaluation source, never by a corpus build. 13,053 centres in the 2026 catalogue, each with a name, a street line, a locality, an INE municipality code and a postcode; 5,971 street lines carry a house number.",
+			"notes": "Read by the es-sanidad-centros-ap corpus adapter and the evaluation source of the same id, through one reader. 13,053 centres in the 2026 catalogue, each with a name, a street line, a locality, an INE municipality code and a postcode; 5,971 street lines carry a house number.",
 			"origin": "2026-10-17_rights_review"
 		},
 		{
@@ -2563,7 +2563,7 @@
 			"geometry": "N",
 			"status": "VERIFIED_CORPUS",
 			"source_url": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/leaf?area=Scuole&datasetId=DS0400SCUANAGRAFESTAT",
-			"notes": "Evaluation only: read by the it-miur-scuole evaluation source, never by a corpus build. The 2026/27 file holds every state school site with its region, province, street line, postcode and comune, in capitals; 27,399 street lines carry a house number.",
+			"notes": "Read by the it-miur-scuole corpus adapter and the evaluation source of the same id, through one reader. The 2026/27 file holds every state school site with its region, province, street line, postcode and comune, in capitals; 27,399 street lines carry a house number.",
 			"origin": "2026-10-17_rights_review"
 		},
 		{
@@ -2578,7 +2578,7 @@
 			"geometry": "N",
 			"status": "VERIFIED_CORPUS",
 			"source_url": "https://data.gov.au/data/dataset/acnc-register",
-			"notes": "Evaluation only: read by the au-acnc-register evaluation source, never by a corpus build. 66,623 charities in the 2026-11-14 pull, each with up to three address lines, a town, a state and a postcode; 6,340 carry no address because the ACNC withholds it.",
+			"notes": "Read by the au-acnc-register corpus adapter and the evaluation source of the same id, through one reader. 66,623 charities in the 2026-11-14 pull, each with up to three address lines, a town, a state and a postcode; 6,340 carry no address because the ACNC withholds it.",
 			"origin": "2026-10-17_rights_review"
 		}
 	]

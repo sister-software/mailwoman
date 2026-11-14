@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `es-sanidad-centros-ap`: the Ministerio de Sanidad's catalogue of the national health system's
- *   primary-care centers (`Catálogo de Centros de Atención Primaria del SNS`), an evaluation-only source.
+ *   `es-sanidad-centros-ap`: the Ministerio de Sanidad's catalogue of the national health
+ *   system's primary-care centers (`Catálogo de Centros de Atención Primaria del SNS`),
+ *   read by the evaluation source and by the `es-sanidad-centros-ap` corpus
+ *   adapter through {@linkcode readSanidadCentres}.
  *
  *   The ministry's microdata page (`https://www.sanidad.gob.es/estadisticas/microdatos.do`, type CatCentrosAP)
  *   serves the catalogue as one zip of semicolon-separated Windows-1252 text files without a header row.
@@ -27,12 +29,13 @@
  */
 
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	type EvaluationAddressRecord,
+	type EvaluationRecordReading,
 	type EvaluationSource,
+	evaluationSourceRead,
 	evaluationStreetLine,
 	fetchEvaluationFile,
 	readEvaluationFetch,
@@ -88,7 +91,7 @@ export function spanishSettlementName(name: string): string {
 /**
  * One catalogue line as an address record, or the reason it yields none.
  */
-export function readSanidadCentre(columns: readonly string[]): EvaluationAddressRecord | { refused: string } {
+export function readSanidadCentre(columns: readonly string[]): EvaluationRecordReading {
 	const cell = (index: number) => (columns[index] ?? "").replaceAll(/\s+/gu, " ").trim()
 
 	const id = cell(Column.ID)
@@ -116,7 +119,7 @@ export function readSanidadCentre(columns: readonly string[]): EvaluationAddress
 }
 
 /**
- * Spain's evaluation-only source, the primary-care center catalogue.
+ * Spain's evaluation source, the primary-care center catalogue.
  */
 export const esSanidadCentrosAPSource: EvaluationSource = {
 	id: "es-sanidad-centros-ap",
@@ -131,31 +134,31 @@ export const esSanidadCentrosAPSource: EvaluationSource = {
 
 	async read(directory: PathBuilder) {
 		const fetched = await readEvaluationFetch(directory)
-		const refused: Record<string, number> = {}
-		const chunks: Uint8Array[] = []
 
-		for await (const chunk of readZipEntry(directory(ES_SANIDAD_CENTROS_AP_FILENAME), ES_SANIDAD_CENTROS_MEMBER)) {
-			chunks.push(chunk)
-		}
-
-		if (!chunks.length) throw new Error(`${ES_SANIDAD_CENTROS_AP_FILENAME} holds no ${ES_SANIDAD_CENTROS_MEMBER}`)
-
-		const text = new TextDecoder("windows-1252").decode(Buffer.concat(chunks))
-
-		async function* records(): AsyncGenerator<EvaluationAddressRecord> {
-			for (const columns of CSVSpliterator.from<string[]>(text, { columnDelimiter: ";", header: false })) {
-				const read = readSanidadCentre(columns)
-
-				if ("refused" in read) {
-					refused[read.refused] = (refused[read.refused] ?? 0) + 1
-
-					continue
-				}
-
-				yield read
-			}
-		}
-
-		return { vintage: `2026 catalogue (fetched ${fetched.downloaded_at.slice(0, 10)})`, records: records(), refused }
+		return evaluationSourceRead(
+			`2026 catalogue (fetched ${fetched.downloaded_at.slice(0, 10)})`,
+			readSanidadCentres(directory(ES_SANIDAD_CENTROS_AP_FILENAME))
+		)
 	},
+}
+
+/**
+ * Every line of the catalogue zip at `archivePath`, read by {@linkcode readSanidadCentre}.
+ *
+ * @throws When the zip holds no {@linkcode ES_SANIDAD_CENTROS_MEMBER}.
+ */
+export async function* readSanidadCentres(archivePath: PathBuilderLike): AsyncGenerator<EvaluationRecordReading> {
+	const chunks: Uint8Array[] = []
+
+	for await (const chunk of readZipEntry(archivePath, ES_SANIDAD_CENTROS_MEMBER)) {
+		chunks.push(chunk)
+	}
+
+	if (!chunks.length) throw new Error(`${archivePath} holds no ${ES_SANIDAD_CENTROS_MEMBER}`)
+
+	const text = new TextDecoder("windows-1252").decode(Buffer.concat(chunks))
+
+	for (const columns of CSVSpliterator.from<string[]>(text, { columnDelimiter: ";", header: false })) {
+		yield readSanidadCentre(columns)
+	}
 }

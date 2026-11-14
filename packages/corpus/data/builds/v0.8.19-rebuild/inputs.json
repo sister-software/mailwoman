@@ -1,6 +1,6 @@
 {
 	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
-	"$overlay-note": "The sources this build rebuilds replace their v0.8.18-retention-overlay files in an overlay on that corpus, and three sources are new. Each rebuilt source takes the fixes since its files were built (v0.8.10-rebuild on 2026-11-02, the WOF samples of v0.8.6, geonames-features of v0.8.12): the line-break augmentation every synthesized row may take (#2992), the unit splitter's leading-type, grid-number and number-free-unit rules (#3025), the component check's enforced `postcode:repeats-region` rule, NAD read from release 24 with its placeholder spellings absent and its repeated unit parts dropped (#2895), the Texas notary city, suite and repeated-street fixes (#2895), and the 8,285 GNIS populated places in the WOF forks (#3061; whosonfirst-data-admin-us at 3f81e25abc8). `usgov-usgs-structures`, `fr-laposte-poincont` and `nc-opt-agences` are new. Every other v0.8.18 source, the recipe outputs and the osm, overture and country-gap adapter sources, is carried unchanged.",
+	"$overlay-note": "The sources this build rebuilds replace their v0.8.18-retention-overlay files in an overlay on that corpus, and seven sources are new. Each rebuilt source takes the fixes since its files were built (v0.8.10-rebuild on 2026-11-02, the WOF samples of v0.8.6, geonames-features of v0.8.12): the line-break augmentation every synthesized row may take (#2992), the unit splitter's leading-type, grid-number and number-free-unit rules (#3025), the component check's enforced `postcode:repeats-region` rule, NAD read from release 24 with its placeholder spellings absent and its repeated unit parts dropped (#2895), the Texas notary city, suite and repeated-street fixes (#2895), and the 8,285 GNIS populated places in the WOF forks (#3061; whosonfirst-data-admin-us at 3f81e25abc8). `usgov-usgs-structures`, `fr-laposte-poincont` and `nc-opt-agences` are new, and so are four public-body registers first added as evaluation sources: `es-sanidad-centros-ap`, `it-miur-scuole`, `au-acnc-register` and `nz-charities-register`, each written by `heldout/fresh/build.run.ts`'s fetch under the cache root. Every other v0.8.18 source, the recipe outputs and the osm, overture and country-gap adapter sources, is carried unchanged.",
 	"$street-index-note": "Every adapter that splits a trailing unit reads the street index built from v0.8.18-retention-overlay's premise-register rows, so no row attests itself.",
 	"$wof-note": "Both WOF adapters sample as v0.8.6-wof-structure and v0.8.6-wof-postalcode did, with the same seed and the same held-out and comparison cells of #2857, and write their cell counts and held-out rows beside this build. v0.8.18's wof-admin files are v0.8.15's, which a post-pass outside the committed code corrected for `<name>, <country>` (355 region rows dropped, 317 locality rows added). This build does not repeat that correction.",
 	"corpusVersion": "v0.8.19-rebuild",
@@ -135,6 +135,22 @@
 		"nc-opt-agences": {
 			"root": "cache",
 			"inputPath": "sources/nc-opt-agences/agences.geojsonl"
+		},
+		"es-sanidad-centros-ap": {
+			"root": "cache",
+			"inputPath": "sources/es-sanidad-centros-ap/2026_C__Catalogo_de_Centros_AP_txt.zip"
+		},
+		"it-miur-scuole": {
+			"root": "cache",
+			"inputPath": "sources/it-miur-scuole/SCUANAGRAFESTAT20262720260901.csv"
+		},
+		"au-acnc-register": {
+			"root": "cache",
+			"inputPath": "sources/au-acnc-register/datadotgov_main.csv"
+		},
+		"nz-charities-register": {
+			"root": "cache",
+			"inputPath": "sources/nz-charities-register/organisations.csv"
 		},
 		"gleif-lei": {
 			"root": "cache",

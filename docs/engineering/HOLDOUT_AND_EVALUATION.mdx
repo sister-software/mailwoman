@@ -294,8 +294,11 @@ For ES, IT, AU and NZ, an evaluation source can also be a different publication 
 no shared upstream. `heldout/fresh/build.run.ts` freezes rows from the evaluation-only sources in
 `@mailwoman/corpus/evaluation/sources`, whose register decisions refuse `train`. Such a row can't match a training
 row by identity, so `heldout/dataset/overlap.run.ts --match-text` also compares folded text against both lineages.
-`docs/records/evals/2026-11-14-fresh-source-evaluation-set.md` records the first such set, and release
-requirements v8 registers it under `evaluations.fresh`.
+`docs/records/evals/2026-11-14-fresh-source-evaluation-set.md` records the first such set. No release
+specification registers it. The published model 10.8.0 trained on v0.8.18 and no other corpus, so the v0.8.18 development
+collection already holds held-out ES, IT, AU and NZ rows it never saw, and the operator chose to train on the four
+sources' rows rather than hold them out. Their decisions now permit `train`, and `heldout/fresh/build.ts`
+refuses to freeze a new set from them.
 
 ### 6.5 Confirmation access
 

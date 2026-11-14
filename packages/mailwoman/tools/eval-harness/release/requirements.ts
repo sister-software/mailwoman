@@ -196,14 +196,6 @@ export interface ReleaseRequirementSpec {
 	evaluations: {
 		development: { id: string | null; description: string }
 		confirmation: { id: string | null; description: string }
-		/**
-		 * An evaluation-only collection drawn from sources no corpus trains on
-		 * (section 6.4 of HOLDOUT_AND_EVALUATION), registered by identity.
-		 *
-		 * The evaluator reads one report, so how its rows combine with the development
-		 * and confirmation rows is decided apart from its registration.
-		 */
-		fresh?: { id: string | null; description: string; countries: string[] }
 	}
 	/**
 	 * A limit on the candidate vocabulary, read from a reachability census
@@ -503,14 +495,6 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 
 		nullableString(evaluation.id, `$.evaluations.${which}.id`)
 		string(evaluation.description, `$.evaluations.${which}.description`)
-	}
-
-	if (evaluations.fresh !== undefined) {
-		const fresh = object(evaluations.fresh, "$.evaluations.fresh")
-
-		nullableString(fresh.id, "$.evaluations.fresh.id")
-		string(fresh.description, "$.evaluations.fresh.description")
-		stringList(fresh.countries, "$.evaluations.fresh.countries")
 	}
 
 	if (root.vocabulary !== undefined) {

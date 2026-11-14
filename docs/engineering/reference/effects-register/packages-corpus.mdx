@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 246 of the group's 415 library and tool modules.
+This page lists 247 of the group's 421 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -134,9 +134,9 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 ## `packages/corpus/lib/au/evaluation/acnc-register.ts`
 
-| Kind | Interface                  | Target              | Calls |
-| ---- | -------------------------- | ------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
+| Kind | Interface                  | Target                   | Calls |
+| ---- | -------------------------- | ------------------------ | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/az/adapters/opendata/adapter.ts`
 
@@ -269,6 +269,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `tryStat`             | `unresolved (property)`   | 1     |
 | write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
 | write | `removePathIfPresent` | `unresolved (property)`   | 3     |
+
+## `packages/corpus/lib/build/region-names.ts`
+
+| Kind | Interface        | Target                                      | Calls |
+| ---- | ---------------- | ------------------------------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (parameter)`                    | 1     |
+| read | `pathExists`     | `data-root:db/wof/admin-global-priority.db` | 1     |
 
 ## `packages/corpus/lib/build/rows.ts`
 
@@ -668,9 +675,9 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 ## `packages/corpus/lib/it/evaluation/miur-scuole.ts`
 
-| Kind | Interface                  | Target              | Calls |
-| ---- | -------------------------- | ------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
+| Kind | Interface                  | Target                   | Calls |
+| ---- | -------------------------- | ------------------------ | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/it/tools/fetch/anac.ts`
 
@@ -872,9 +879,9 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 ## `packages/corpus/lib/nz/evaluation/charities-register.ts`
 
-| Kind | Interface                  | Target              | Calls |
-| ---- | -------------------------- | ------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
+| Kind | Interface                  | Target                   | Calls |
+| ---- | -------------------------- | ------------------------ | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/parquet/readers.ts`
 
