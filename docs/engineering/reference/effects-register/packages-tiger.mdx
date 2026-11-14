@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/tiger`
 
 The manifest at `packages/tiger/package.json` declares `sideEffects: false`.
-This page lists 6 of the group's 25 library and tool modules.
+This page lists 7 of the group's 26 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -30,8 +30,14 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind    | Interface         | Target                  | Calls |
 | ------- | ----------------- | ----------------------- | ----- |
 | write   | `DatabaseClient`  | `unresolved (call)`     | 1     |
-| write   | `makeDirectories` | `unresolved (call)`     | 2     |
+| write   | `makeDirectories` | `unresolved (call)`     | 3     |
 | network | `APIClient.fetch` | `unresolved (template)` | 1     |
+
+## `packages/tiger/sdk/gazetteer.ts`
+
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/tiger/sdk/redistricting.ts`
 
