@@ -2813,13 +2813,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
 - `runs a statement at module scope`, 5 times
-- `awaits at module scope`, 3 times
+- `awaits at module scope`, 4 times
 
 | Kind  | Interface            | Target                  | Calls |
 | ----- | -------------------- | ----------------------- | ----- |
 | read  | `readLocalJSONFile`  | `unresolved (property)` | 2     |
-| write | `writeLocalJSONFile` | `unresolved (call)`     | 1     |
-| write | `writeLocalTextFile` | `unresolved (call)`     | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`     | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts`
 

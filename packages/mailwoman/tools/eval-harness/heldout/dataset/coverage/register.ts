@@ -17,6 +17,8 @@
  *   An experimental country stays visibly unqualified.
  */
 
+import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
+
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { HeldoutProvenance, ProvenanceRecord } from "#tools/eval-harness/heldout/per/country"
 import type { ReleaseOutcome, ReleaseVerdict } from "#tools/eval-harness/release/evaluate"
@@ -262,15 +264,25 @@ export function renderCoverageRegisterMarkdown(register: CoverageRegister, comma
 		command,
 		"```",
 		"",
-		`Provenance classes come from ${register.provenanceAudit ? `\`${register.provenanceAudit}\`` : "no overlap audit; every provenance cell is insufficient evidence"}. ` +
+		`Provenance classes come from ${register.provenanceAudit ? `\`${register.provenanceAudit}\`` : "no overlap audit, so every provenance cell is insufficient evidence"}. ` +
 			`Evaluation status comes from ${register.verdict ? `a verdict whose outcome is ${EVALUATION_LABEL[register.verdict.outcome]}` : "no verdict"}. ` +
-			"A cell that reads insufficient evidence was not measured; it is not zero.",
+			"A cell that reads insufficient evidence holds no measurement, and it means unmeasured rather than zero.",
 		"",
-		"| Country | Status | Addresses available | Addresses sampled | Groups | Place names sampled | Sources | Unseen / unseen by candidate / overlap / unknown | Evaluation |",
-		"| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
 	]
 
-	for (const row of register.rows) {
+	const header = [
+		"Country",
+		"Status",
+		"Addresses available",
+		"Addresses sampled",
+		"Groups",
+		"Place names sampled",
+		"Sources",
+		"Unseen / unseen by candidate / overlap / unknown",
+		"Evaluation",
+	]
+
+	const cells = register.rows.map((row) => {
 		const status = row.status === "required" && row.objective ? "required, objective" : row.status
 
 		const sources = row.sources
@@ -284,24 +296,20 @@ export function renderCoverageRegisterMarkdown(register: CoverageRegister, comma
 			? `${row.provenance.verified_unseen} / ${row.provenance.unseen_by_candidate} / ${row.provenance.known_overlap} / ${row.provenance.unknown}`
 			: INSUFFICIENT
 
-		const evaluation = `${EVALUATION_LABEL[row.evaluation.status]}${row.evaluation.reasons.length ? `: ${row.evaluation.reasons.join("; ")}` : ""}`
+		const evaluation = `${EVALUATION_LABEL[row.evaluation.status]}${row.evaluation.reasons.length ? `: ${row.evaluation.reasons.join(". ")}` : ""}`
 
-		lines.push(
-			`| ${[
-				row.country,
-				status,
-				String(row.addresses.available),
-				String(row.addresses.sampled),
-				row.groups == null ? INSUFFICIENT : String(row.groups),
-				`${row.places.sampled} of ${row.places.available}`,
-				sources,
-				provenance,
-				evaluation,
-			]
-				.map(cellText)
-				.join(" | ")} |`
-		)
-	}
+		return [
+			row.country,
+			status,
+			String(row.addresses.available),
+			String(row.addresses.sampled),
+			row.groups == null ? INSUFFICIENT : String(row.groups),
+			`${row.places.sampled} of ${row.places.available}`,
+			sources,
+			provenance,
+			evaluation,
+		].map(cellText)
+	})
 
-	return `${lines.join("\n")}\n`
+	return `${[...lines, ...renderMarkdownTable(header, cells)].join("\n")}\n`
 }

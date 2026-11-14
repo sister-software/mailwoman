@@ -14,9 +14,11 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { type FormatConfig, format } from "oxfmt"
 
 import {
 	buildCoverageRegister,
@@ -92,7 +94,28 @@ const command = [
 	...(values.verdict ? [`--verdict ${values.verdict}`] : []),
 ].join(" \\\n  ")
 
-await writeLocalTextFile(renderCoverageRegisterMarkdown(register, command), repoRootPath(values.out))
-await writeLocalJSONFile(register, repoRootPath(values.json))
+// The two pages are committed, so they're written as the repository formatter would leave them.
+
+// effect-loads: oxfmt.config.ts
+const { default: formatConfig } = (await import(repoRootPath("oxfmt.config.ts").toString())) as {
+	default: FormatConfig
+}
+
+const formatted = async (path: string, text: string): Promise<string> => {
+	const result = await format(path, text, formatConfig)
+
+	if (result.errors.length) {
+		throw new Error(`oxfmt could not format ${path}: ${result.errors.map((error) => error.message).join(". ")}`)
+	}
+
+	return result.code
+}
+
+await writeLocalTextFile(
+	await formatted(values.out, renderCoverageRegisterMarkdown(register, command)),
+	repoRootPath(values.out)
+)
+
+await writeLocalTextFile(await formatted(values.json, prettyJSON(register)), repoRootPath(values.json))
 
 console.log(`${register.rows.length} countries written to ${values.out} and ${values.json}`)

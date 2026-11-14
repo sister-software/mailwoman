@@ -263,7 +263,8 @@
 		"@mailwoman/osm": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"modal": "0.11.1",
-		"oxc-parser": "^0.155.0"
+		"oxc-parser": "^0.155.0",
+		"oxfmt": "0.75.0"
 	},
 	"peerDependencies": {
 		"@duckdb/node-api": "^2.0.0-r.1",
