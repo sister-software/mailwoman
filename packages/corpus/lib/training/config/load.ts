@@ -324,6 +324,25 @@ function validateCorpusReceipts(receipts: readonly ConfigInstance[]): void {
 			throw new TrainingConfigError(ConfigErrorKind.Value, `receipt ${named} min_draws must be positive`)
 		}
 
+		const fraction = field(receipt, "min_fraction_of_expected")
+
+		if (fraction != null) {
+			if (typeof fraction !== "number" || !(fraction > 0 && fraction <= 1)) {
+				throw new TrainingConfigError(
+					ConfigErrorKind.Value,
+					`receipt ${named} min_fraction_of_expected must be a number in (0, 1], got ${pythonRepr(fraction)}`
+				)
+			}
+
+			// The expectation is a source's share of the epoch, so a receipt pooled over sources has none.
+			if (field(receipt, "source") == null) {
+				throw new TrainingConfigError(
+					ConfigErrorKind.Value,
+					`receipt ${named} min_fraction_of_expected needs a source: the expected draws are that source's share`
+				)
+			}
+		}
+
 		const invalid = (field(receipt, "component_sequence") as string[]).filter(bareTagProblem)
 
 		if (invalid.length) {

@@ -91,7 +91,11 @@ for (const [source, stats] of Object.entries(report.draw_level.per_source)) {
 console.log(`augmented share of emitted rows: ${fixed(report.emitted_level.augmented_share, 3)}`)
 
 for (const receipt of report.required_corpus_receipts) {
-	console.log(`  ${receipt.name}: ${count(receipt.observed_draws)} observed; minimum ${count(receipt.required_draws)}`)
+	const expected = receipt.expected_draws == null ? "none" : receipt.expected_draws.toFixed(1)
+
+	console.log(
+		`  ${receipt.name}: ${count(receipt.observed_draws)} observed; expected ${expected}; minimum ${count(receipt.required_draws)}`
+	)
 }
 
 const reps = Object.entries(report.draw_level.per_source)

@@ -102,12 +102,18 @@ const sectionList = <Fields extends Record<string, ConfigFieldSpec>>(element: Co
 /**
  * The Python CorpusReceiptConfig dataclass: a floor on the training draws that
  * hold one source, country and component sequence.
+ *
+ * `min_draws` is an absolute floor.
+ * `min_fraction_of_expected` states a floor as a fraction of the draws the receipt's
+ * source share expects, so it follows the source's weight.
+ * The epoch-mixture audit applies the larger of the two.
  */
 export const CORPUS_RECEIPT_SECTION = {
 	className: "CorpusReceiptConfig",
 	fields: {
 		name: str(""),
 		min_draws: int(1n),
+		min_fraction_of_expected: optionalFloat(),
 		source: optionalStr(),
 		country: optionalStr(),
 		component_sequence: strList(),

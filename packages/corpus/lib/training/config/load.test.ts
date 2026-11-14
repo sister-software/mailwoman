@@ -161,6 +161,7 @@ describe("required_corpus_receipts", () => {
 		expect(receipt).toEqual({
 			name: "ve-after-locality",
 			min_draws: 100,
+			min_fraction_of_expected: null,
 			source: "synth-trailing-region-structured",
 			country: "VE",
 			component_sequence: ["locality", "postcode", "region"],
@@ -194,6 +195,25 @@ describe("required_corpus_receipts", () => {
 				"data:\n  required_corpus_receipts:\n    - name: r\n      component_sequence: [locality, B-postcode, O]\n"
 			).message
 		).toBe("receipt 'r' component_sequence must contain bare component tags, got ['B-postcode', 'O']")
+	})
+
+	it("loads a fractional floor beside the absolute one", () => {
+		const [receipt] = typedOf(
+			"data:\n  required_corpus_receipts:\n    - {name: r, source: ban-gp, min_fraction_of_expected: 0.8}\n"
+		).data.required_corpus_receipts
+
+		expect(receipt).toMatchObject({ min_draws: 1, min_fraction_of_expected: 0.8 })
+	})
+
+	it.each([
+		["{name: r, source: s, min_fraction_of_expected: 1.5}", "must be a number in (0, 1], got 1.5"],
+		["{name: r, source: s, min_fraction_of_expected: 0.0}", "must be a number in (0, 1], got 0.0"],
+		["{name: r, country: US, min_fraction_of_expected: 0.8}", "min_fraction_of_expected needs a source"],
+	])("refuses the fractional floor %s", (entry, message) => {
+		const error = refusal(`data:\n  required_corpus_receipts:\n    - ${entry}\n`)
+
+		expect(error.kind).toBe(ConfigErrorKind.Value)
+		expect(error.message).toContain(message)
 	})
 
 	it("skips an unknown receipt key when not strict", () => {

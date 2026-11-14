@@ -18,6 +18,11 @@
  *   a country and a contiguous component sequence, each with a floor of draws per epoch.
  *   The audit refuses an epoch below a floor.
  *
+ *   Each source-scoped receipt's expected draws come from the configured weights and the corpus:
+ *   the source's requested share of the epoch times the fraction of its train rows the receipt matches.
+ *   A floor may be stated as a fraction of that expectation (`min_fraction_of_expected`),
+ *   so it moves with the weight, and an absolute `min_draws` above the expectation is refused (#2391).
+ *
  *   A passing audit is bound to the config's and the manifest's bytes by {@linkcode corpusReceiptBinding}.
  */
 
@@ -155,6 +160,149 @@ export function resolveSourceWeights(mtf: MTFNode, config: TrainingConfig, corpu
 }
 
 /**
+ * A receipt's source rows as the sampler can draw them: each row counted at its country's
+ * admission probability, `weight / max weight`, and the part of that mass the receipt matches.
+ */
+export interface ReceiptPopulation {
+	rows: number
+	matching: number
+}
+
+/**
+ * Whether a receipt narrows its source, so its expectation needs the source's matching fraction.
+ */
+export function receiptNarrowsSource(receipt: ReceiptConfig): boolean {
+	return receipt.country != null || receipt.component_sequence.length > 0
+}
+
+/**
+ * Counts each source-scoped receipt's population over train rows, weighting a row
+ * by the chance the sampler admits its country.
+ *
+ * A row the sampler never draws, with no country or a country weighted at zero, counts nowhere.
+ * The coarse filter isn't applied, so a row it would drop still counts.
+ *
+ * Such a row holds no active component and matches no receipt, so the expectation reads slightly low.
+ */
+export function countReceiptPopulations(
+	rows: Iterable<{ source: string | null; country: string | null; labels: readonly string[] | null }>,
+	receipts: readonly ReceiptConfig[],
+	countryWeights: Readonly<Record<string, number>>
+): Map<string, ReceiptPopulation> {
+	const scoped = receipts.filter((receipt) => receipt.source != null)
+	const populations = new Map(scoped.map((receipt) => [receipt.name, { rows: 0, matching: 0 }]))
+	const maxWeight = Math.max(0, ...Object.values(countryWeights))
+
+	for (const row of rows) {
+		const weight = row.country == null ? 0 : (countryWeights[row.country] ?? 0)
+
+		if (!(weight > 0)) continue
+
+		const admission = weight / maxWeight
+
+		for (const receipt of scoped) {
+			if (row.source !== receipt.source) continue
+
+			const population = populations.get(receipt.name)!
+
+			population.rows += admission
+
+			if (matchesReceipt({ source: row.source, country: row.country, labels: row.labels ?? [] }, receipt)) {
+				population.matching += admission
+			}
+		}
+	}
+
+	return populations
+}
+
+/**
+ * The train rows of `sources`, over the columns a receipt reads.
+ */
+function* sourceRows(mtf: MTFNode, config: TrainingConfig, sources: ReadonlySet<string>) {
+	// The addon compares the uppercased column with these values, and drops every other row before converting it.
+	const reader = new mtf.SplitColumns(samplerConfigJSON(config), "train", ["source", "country", "labels"], {
+		column: "source",
+		values: [...sources].map((source) => source.toUpperCase()),
+	})
+
+	for (let chunk = reader.nextChunk(); chunk; chunk = reader.nextChunk()) {
+		const source = chunk.strings["source"] ?? []
+		const country = chunk.strings["country"] ?? []
+		const labels = chunk.lists["labels"] ?? []
+
+		for (let i = 0; i < chunk.rows; i++) {
+			yield { source: source[i] ?? null, country: country[i] ?? null, labels: labels[i] ?? null }
+		}
+	}
+}
+
+/**
+ * A receipt's expected draws over `draws`, and how it was derived.
+ */
+export interface ReceiptExpectation {
+	expected_draws: number | null
+	/**
+	 * The share of the receipt's source rows it matches, or `null` when the
+	 * receipt states no country or sequence.
+	 */
+	matching_fraction: number | null
+	/**
+	 * Why no expectation was derived, when none was.
+	 */
+	unexpected_reason: string | null
+}
+
+/**
+ * Expected draws for a receipt: `draws × share(source) × matching fraction`.
+ *
+ * The source's share is what its weight requests.
+ * Within a source the sampler draws rows uniformly, so the receipt's matching
+ * rows take their fraction of the source's draws.
+ *
+ * @throws When the receipt narrows its source and no population was counted for it,
+ * so a missing count can't read as a zero expectation.
+ */
+export function expectReceiptDraws(
+	receipt: ReceiptConfig,
+	requested: ReadonlyMap<string, number>,
+	draws: number,
+	population: ReceiptPopulation | undefined
+): ReceiptExpectation {
+	if (receipt.source == null) {
+		return { expected_draws: null, matching_fraction: null, unexpected_reason: "the receipt pools every source" }
+	}
+
+	const share = requested.get(receipt.source) ?? 0
+
+	if (!receiptNarrowsSource(receipt)) {
+		return { expected_draws: draws * share, matching_fraction: null, unexpected_reason: null }
+	}
+
+	if (!population) throw new Error(`receipt '${receipt.name}': its source population was not counted`)
+
+	const fraction = population.rows > 0 ? population.matching / population.rows : 0
+
+	return { expected_draws: draws * share * fraction, matching_fraction: fraction, unexpected_reason: null }
+}
+
+/**
+ * The floor a receipt is held to: `min_draws`, raised to `min_fraction_of_expected`
+ * of its expectation when the receipt states one, rounded down.
+ */
+export function receiptFloor(receipt: ReceiptConfig, expectedDraws: number | null): number {
+	const fraction = receipt.min_fraction_of_expected
+
+	if (fraction == null) return receipt.min_draws
+
+	if (expectedDraws == null) {
+		throw new Error(`receipt '${receipt.name}' states min_fraction_of_expected and has no expected draws`)
+	}
+
+	return Math.max(receipt.min_draws, Math.floor(fraction * expectedDraws))
+}
+
+/**
  * A country as a report key: Python writes a `None` key as `null`.
  */
 function countryKey(country: string | null | undefined): string {
@@ -280,16 +428,35 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 		}
 	}
 
-	const receiptReport = receipts.map((receipt) => ({
-		name: receipt.name,
-		required_draws: receipt.min_draws,
-		observed_draws: receiptCounts.get(receipt.name) ?? 0,
-		source: receipt.source,
-		country: receipt.country,
-		component_sequence: receipt.component_sequence,
-	}))
+	// The expectation: each source-scoped receipt that narrows its source reads that source's train rows once.
+	const narrowing = receipts.filter((receipt) => receipt.source != null && receiptNarrowsSource(receipt))
+	const scannedSources = new Set(narrowing.map((receipt) => receipt.source!))
+
+	const populations = scannedSources.size
+		? countReceiptPopulations(sourceRows(mtf, audited, scannedSources), narrowing, config.data.country_weights)
+		: new Map<string, ReceiptPopulation>()
+
+	const receiptReport = receipts.map((receipt) => {
+		const expectation = expectReceiptDraws(receipt, requested, totalDraws, populations.get(receipt.name))
+
+		return {
+			name: receipt.name,
+			required_draws: receiptFloor(receipt, expectation.expected_draws),
+			min_draws: receipt.min_draws,
+			min_fraction_of_expected: receipt.min_fraction_of_expected,
+			observed_draws: receiptCounts.get(receipt.name) ?? 0,
+			...expectation,
+			source: receipt.source,
+			country: receipt.country,
+			component_sequence: receipt.component_sequence,
+		}
+	})
 
 	const failures = receiptReport.filter((r) => r.observed_draws < r.required_draws)
+
+	// An absolute floor above its own expectation refuses most seeds by construction
+	// (#2391), so it fails whatever this seed drew.
+	const unreachable = receiptReport.filter((r) => r.expected_draws != null && r.min_draws > r.expected_draws)
 	const countryCodes = Object.keys(config.data.country_weights).toSorted()
 
 	const report = {
@@ -318,21 +485,26 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 			window,
 			full_windows: fullWindows.length,
 			corpus_dir: options.corpusDir,
-			corpus_receipt_status: failures.length ? "fail" : "pass",
+			corpus_receipt_status: failures.length || unreachable.length ? "fail" : "pass",
 		} as Record<string, unknown>,
 		required_corpus_receipts: receiptReport,
 	}
 
 	const count = (n: number) => n.toLocaleString("en-US")
 
-	const error = failures.length
-		? new AuditFloorError(
-				"required corpus receipts failed: " +
-					failures
-						.map((r) => `${r.name}: observed ${count(r.observed_draws)} of required ${count(r.required_draws)} draws`)
-						.join("; "),
-				report
-			)
+	const problems = [
+		...failures.map(
+			(r) => `${r.name}: observed ${count(r.observed_draws)} of required ${count(r.required_draws)} draws`
+		),
+		...unreachable.map(
+			(r) =>
+				`${r.name}: min_draws ${count(r.min_draws)} exceeds its expected ${r.expected_draws!.toFixed(1)} draws; ` +
+				"lower it or state min_fraction_of_expected"
+		),
+	]
+
+	const error = problems.length
+		? new AuditFloorError("required corpus receipts failed: " + problems.join("; "), report)
 		: null
 
 	return { report, error, derivation }
