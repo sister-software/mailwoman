@@ -106,6 +106,11 @@ export interface BuildCandidateResult {
 	places: number
 	primaries: number
 	aliases: number
+	/**
+	 * The count of alias rows staged as a name's key with its apostrophe-like marks
+	 * removed (`hawaii` for `Hawaiʻi`), which `aliases` excludes.
+	 */
+	markFreeAliases: number
 
 	/**
 	 * The count of region aliases dropped because another region in the same
@@ -401,7 +406,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	const iso2ByCountryID = new Map([...ccodes].map(([code, id]) => [id, code]))
 
-	const { nAlias, nBare, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
+	const { nAlias, nBare, nMarkFree, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
 		regionPlacetypeID: ptID("region"),
 		ccID,
 		bareName: (countryID, alias) => bareAdminName(iso2ByCountryID.get(countryID) ?? "", alias),
@@ -409,7 +414,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	progress(
 		"aliases",
-		`${nAlias.toLocaleString()} aliases; ${nBare.toLocaleString()} bare admin aliases` +
+		`${nAlias.toLocaleString()} aliases; ${nBare.toLocaleString()} bare admin aliases; ` +
+			`${nMarkFree.toLocaleString()} mark-free aliases` +
 			(regionOfficialRefused
 				? `; ${regionOfficialRefused.toLocaleString()} region aliases refused as another region's official name`
 				: "")
@@ -557,6 +563,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		places: attrs.size,
 		primaries: nPrim,
 		aliases: nAlias,
+		markFreeAliases: nMarkFree,
 		regionOfficialRefused,
 		abbrevs: nAbbr,
 		postcodes: nPostcode,

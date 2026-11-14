@@ -155,4 +155,37 @@ describe("explodeAliasBags", () => {
 		// The detector must treat its count as unmeasured.
 		expect(keyCounts.size).toBe(0)
 	})
+
+	test("stages the mark-free form of a primary and of an alias, outside the key count", () => {
+		const attrs = new Map([
+			[85_688_575, place("Hawaiʻi")],
+			[421_168_643, place("Ajman")],
+		])
+
+		const { nAlias, nMarkFree, keyCounts, staged } = run(
+			[
+				{ id: 85_688_575, alt: null },
+				{ id: 421_168_643, alt: bag("`Ajman", "‘Ajmān") },
+			],
+			attrs
+		)
+
+		expect(staged.filter((s) => s.sid === 85_688_575).map((s) => s.k)).toEqual(["hawaii"])
+		// `Ajman` folds to the primary key, so only the marked spellings are aliases.
+		expect(staged.filter((s) => s.sid === 421_168_643).map((s) => s.k)).toEqual(["`ajman", "‘ajman"])
+		expect(nAlias).toBe(2)
+		expect(nMarkFree).toBe(1)
+		expect(keyCounts.get(421_168_643)).toBe(3)
+		expect(keyCounts.has(85_688_575)).toBe(false)
+	})
+
+	test("counts a mark-free form as an alias once the bag holds that spelling itself", () => {
+		const attrs = new Map([[85_688_575, place("Hawaiʻi")]])
+		const { nAlias, nMarkFree, keyCounts, staged } = run([{ id: 85_688_575, alt: bag("Hawaii") }], attrs)
+
+		expect(staged.map((s) => s.k)).toEqual(["hawaii"])
+		expect(nAlias).toBe(1)
+		expect(nMarkFree).toBe(0)
+		expect(keyCounts.get(85_688_575)).toBe(2)
+	})
 })

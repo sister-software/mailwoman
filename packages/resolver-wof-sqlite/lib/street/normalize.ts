@@ -348,6 +348,28 @@ export function normalizeLocalityForKey(locality: string): NameKey {
 }
 
 /**
+ * Apostrophe-like marks that romanized names contain and {@link normalizeLocalityForKey} keeps.
+ *
+ * The set holds the Hawaiian, Tongan and Uzbek ʻokina (U+02BB), the modifier
+ * apostrophe (U+02BC), the reversed comma above (U+02BD), the prime (U+02B9),
+ * the ʾalif and ʿayn half rings (U+02BE, U+02BF), and the left quotation mark (U+2018)
+ * and backtick (U+0060) that romanized Arabic, Persian and Pashto names write for ʿayn.
+ * A writer typing in ASCII leaves them out or types `'`, which the key drops.
+ */
+const APOSTROPHE_LIKE_MARKS = /[ʹʻ-ʿ‘`]/gu
+
+/**
+ * The key with every apostrophe-like mark removed, so `Hawaiʻi` and `` `Ajman ``
+ * are also found as `hawaii` and `ajman`.
+ *
+ * The candidate build stages it as one more alias of the place.
+ * The query-side key is unchanged, so a query written with the mark still matches the source spelling.
+ */
+export function withoutApostropheLikeMarks(key: NameKey): NameKey {
+	return key.replaceAll(APOSTROPHE_LIKE_MARKS, "").replaceAll(/\s+/g, " ").trim() as NameKey
+}
+
+/**
  * Folds a locality name into a {@link NameKey} with the Han fold for `zh`
  * and {@link normalizeLocalityForKey} otherwise.
  *
