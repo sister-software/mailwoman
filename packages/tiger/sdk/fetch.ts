@@ -171,6 +171,115 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 	}
 }
 
+/**
+ * Downloads one TIGER/Line shapefile archive into `cacheDir` unless a valid copy is there, and extracts it.
+ *
+ * @param directory The product directory under `TIGER<vintage>/`, such as `PLACE`.
+ * @param product The product name in the file name, such as `place`.
+ * @param unit The state FIPS code, a state and county code, or `us` for a national file.
+ */
+async function downloadTIGERLayer(
+	directory: string,
+	product: string,
+	unit: string,
+	vintage: number,
+	cacheDir: PathBuilder
+): Promise<{ layer: string; shpPath: PathBuilder; cached: boolean }> {
+	const layer = `tl_${vintage}_${unit}_${product}`
+	const zipPath = cacheDir(`${layer}.zip`)
+	const cached = await downloadIfNeeded(`${CENSUS_HOST}/geo/tiger/TIGER${vintage}/${directory}/${layer}.zip`, zipPath)
+
+	await extractZipEntries(zipPath, cacheDir)
+
+	return { layer, shpPath: cacheDir(`${layer}.shp`), cached }
+}
+
+/**
+ * A TIGER/Line boundary product that {@link readTIGERBoundaries} reads with its geometry.
+ */
+export const TIGERBoundaryLevel = {
+	County: "county",
+	CountySubdivision: "cousub",
+	Place: "place",
+} as const
+
+export type TIGERBoundaryLevel = (typeof TIGERBoundaryLevel)[keyof typeof TIGERBoundaryLevel]
+
+/**
+ * One boundary {@link readTIGERBoundaries} yields, in EPSG:4326.
+ */
+export interface TIGERBoundary {
+	level: TIGERBoundaryLevel
+	geoid: string
+	/**
+	 * The name with its legal/statistical area description (`NAMELSAD`), such as `Adjuntas Municipio`.
+	 */
+	name: string
+	statefp: string
+	geometry: { type: string; coordinates: unknown }
+}
+
+/**
+ * Options for {@link readTIGERBoundaries}.
+ */
+export interface ReadTIGERBoundariesOptions {
+	level: TIGERBoundaryLevel
+	/**
+	 * The two-digit state or territory FIPS code, such as `"72"`.
+	 */
+	stateFIPS: string
+	/**
+	 * @defaultValue `2024`
+	 */
+	vintage?: number
+	/**
+	 * The root of the download cache.
+	 *
+	 * @defaultValue the Mailwoman data root.
+	 */
+	dataRoot?: string
+}
+
+/**
+ * Downloads one state's or territory's TIGER/Line boundaries at `level` and yields each with its geometry.
+ *
+ * Counties come from the national file, filtered to the state.
+ * County subdivisions and places come from the state's own file.
+ *
+ * @throws When the Census Bureau serves no file for the state at `level`.
+ */
+export async function* readTIGERBoundaries(options: ReadTIGERBoundariesOptions): AsyncGenerator<TIGERBoundary> {
+	const { level, stateFIPS } = options
+	const vintage = options.vintage ?? 2024
+	const unit = level === TIGERBoundaryLevel.County ? "us" : stateFIPS
+	const cacheDir = PathBuilder.from(options.dataRoot ?? DEFAULT_DATA_ROOT)("tiger", String(vintage), unit)
+
+	await makeDirectories(cacheDir)
+
+	const { layer, shpPath } = await downloadTIGERLayer(level.toUpperCase(), level, unit, vintage, cacheDir)
+
+	const sql = `SELECT GEOID AS geoid, NAMELSAD AS name, STATEFP AS statefp FROM "${layer}" WHERE STATEFP = '${stateFIPS}'`
+
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: { geoid?: string; name?: string; statefp?: string }
+		geometry?: TIGERBoundary["geometry"] | null
+	}>(["-f", "GeoJSONSeq", "-t_srs", "EPSG:4326", "-sql", sql, "/vsistdout/", shpPath], layer)) {
+		const { properties, geometry } = feature
+
+		if (!properties?.geoid || !geometry) {
+			throw new Error(`${layer}: a feature has no GEOID or no geometry`)
+		}
+
+		yield {
+			level,
+			geoid: properties.geoid,
+			name: properties.name ?? "",
+			statefp: properties.statefp ?? stateFIPS,
+			geometry,
+		}
+	}
+}
+
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
 	const html = await new APIClient({ displayName: "tiger-listing", retry: true })
 		.fetch<string>({ url: `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, responseType: "text" })
@@ -257,16 +366,9 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 		for (const geo of geoCodes) {
 			const unit = level === "addrfeat" ? state + geo : state
-			const zipName = `tl_${vintage}_${unit}_${level}.zip`
-			const zipPath = cacheDir(zipName)
-			const url = `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/${LEVEL_DIR[level]}/${zipName}`
+			const { layer, shpPath, cached } = await downloadTIGERLayer(LEVEL_DIR[level], level, unit, vintage, cacheDir)
 
-			const cached = await downloadIfNeeded(url, zipPath)
-			yield { phase: "download", file: zipName, cached }
-
-			await extractZipEntries(zipPath, cacheDir)
-			const layer = `tl_${vintage}_${unit}_${level}`
-			const shpPath = cacheDir(layer + ".shp")
+			yield { phase: "download", file: `${layer}.zip`, cached }
 			yield { phase: "extract", file: layer + ".shp" }
 
 			const args = [

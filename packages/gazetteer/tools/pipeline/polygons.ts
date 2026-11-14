@@ -89,7 +89,10 @@ export interface PolygonBuildCounts {
 	inputGeometryBytes: number
 }
 
-const DEFAULT_TOLERANCE_DEGREES = 0.001
+/**
+ * The Douglas-Peucker tolerance a boundary is simplified to, in degrees: about 110 m of latitude.
+ */
+export const DEFAULT_TOLERANCE_DEGREES = 0.001
 
 /**
  * The largest boundary a browser reads and draws for one place.
@@ -121,7 +124,7 @@ function areaOf(feature: WOFFeature): AreaGeometry | null {
  * Serializes a boundary at the build's tolerance, doubling the tolerance
  * while the result exceeds the size limit.
  */
-function fitGeometry(area: AreaGeometry, tolerance: number): { geom: string; coarsened: boolean } {
+export function fitGeometry(area: AreaGeometry, tolerance: number): { geom: string; coarsened: boolean } {
 	let current = tolerance
 	let geom = stringifyJSON(simplifyAreaGeometry(area, current))
 

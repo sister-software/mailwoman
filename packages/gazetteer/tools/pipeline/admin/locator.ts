@@ -14,6 +14,8 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -50,12 +52,14 @@ export interface AdminLocatorOptions {
 	 */
 	adminPath: PathBuilderLike
 	/**
-	 * WOF polygon DB supplying the geometry.
+	 * The polygon DBs supplying the geometry, keyed by WOF id.
 	 *
-	 * A place present in the admin DB with no row here cannot be located.
+	 * A place's geometry comes from the first database holding a row for it.
+	 *
+	 * A place present in the admin DB with no row in any of them cannot be located.
 	 * The locator counts that rather than treating it as a probe-time miss.
 	 */
-	polygonPath: PathBuilderLike
+	polygonPaths: readonly PathBuilderLike[]
 	placetype: string
 	/**
 	 * ISO country code as the admin DB spells it (upper-case).
@@ -80,11 +84,14 @@ export class AdminLocator {
 	readonly withoutGeometry: number
 
 	constructor(options: AdminLocatorOptions) {
+		if (!options.polygonPaths.length) throw new Error("AdminLocator: no polygon database given")
+
 		const admin = new DatabaseClient<WOFDatabase>(options.adminPath, { readOnly: true })
-		const polys = new DatabaseClient<WOFDatabase>(options.polygonPath, { readOnly: true })
+
+		const polys = options.polygonPaths.map((path) => new DatabaseClient<PolygonDatabase>(path, { readOnly: true }))
 
 		try {
-			const geomStmt = polys.prepare(`select geom from polygons where id = ?`)
+			const geomStmts = polys.map((db) => db.prepare(`select geom from polygons where id = ?`))
 
 			const rows = admin
 				.prepare(`select id, name from spr where placetype = ? and country = ? and is_current != 0`)
@@ -94,7 +101,10 @@ export class AdminLocator {
 			let missing = 0
 
 			for (const row of rows) {
-				const geomRow = geomStmt.get(row.id) as { geom: string } | undefined
+				const geomRow = geomStmts
+					.map((statement) => statement.get(row.id) as { geom: string } | undefined)
+					.find(isPresent)
+
 				const geometry = geomRow ? tryParsingJSON<{ type: string; coordinates: unknown }>(geomRow.geom) : null
 
 				const polygons: Ring[][] =
@@ -156,7 +166,10 @@ export class AdminLocator {
 			this.located = located
 			this.withoutGeometry = missing
 		} finally {
-			polys.destroy()
+			for (const db of polys) {
+				db.destroy()
+			}
+
 			admin.destroy()
 		}
 	}

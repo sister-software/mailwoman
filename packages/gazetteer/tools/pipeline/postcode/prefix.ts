@@ -464,7 +464,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 		}
 	}
 
-	const locator = new AdminLocator({ adminPath, polygonPath, placetype: "region", country: "US" })
+	const locator = new AdminLocator({ adminPath, polygonPaths: [polygonPath], placetype: "region", country: "US" })
 	const groups = new Map<string, USPrefixGroup>()
 	const excluded = { notAPostcode: 0, nullIsland: 0, placeholderCoordinate: 0, outsideEveryRegion: 0 }
 	let skippedShort = 0

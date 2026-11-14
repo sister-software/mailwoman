@@ -61,6 +61,8 @@
 		{ "path": "../../soil/sdk" },
 		{ "path": "../../spatial" },
 		{ "path": "../../sqlite" },
+		{ "path": "../../tiger" },
+		{ "path": "../../tiger/sdk" },
 		{ "path": "../../zoning" },
 		{ "path": "../../zoning/sdk" }
 	]

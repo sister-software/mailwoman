@@ -28,6 +28,7 @@
 		{ "path": "../../resolver-wof-sqlite" },
 		{ "path": "../../spatial" },
 		{ "path": "../../sqlite" },
+		{ "path": "../../tiger" },
 		{ "path": "../../tiger/sdk" }
 	]
 }

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Writes a Who's On First record into the `mailwoman` US admin fork for each GNIS populated
- *   place that no WOF record covers.
+ * @file Writes a Who's On First record into the `mailwoman` admin fork for each GNIS populated
+ *   place that no WOF record covers: the US fork for a state, and the territory's own fork for a
+ *   territory. WOF files each territory as its own country.
  *
  *   A GNIS place is covered in either of two ways:
  *
@@ -16,13 +17,16 @@
  *     `Kapaʻau` and `Kapaau` are one name.
  *
  *   A new record's parent is the innermost WOF boundary containing the GNIS point, found by
- *   point-in-polygon against the US polygon database:
+ *   point-in-polygon against the polygon databases, such as the US one and a Census territory one:
  *
  *   - Inside a locality, the place is a `neighbourhood` of that locality. A locality flagged
  *     `wof:statistical_gore` is passed over, because it holds a township's unincorporated area.
  *   - Inside a township (`localadmin`) only, it's a `locality` of the township.
- *   - Inside a county only, it's a `locality` of the county.
- *   - Outside every county boundary, the place is reported and gets a record only when a boundary is added.
+ *   - Inside a county equivalent only, it's a `locality` of it. A county equivalent is a record of a
+ *     placetype that holds a five-digit Census county GEOID in that country, such as a Virgin
+ *     Islands `region`.
+ *   - Outside every county-equivalent boundary, the place is reported and gets a record only when a
+ *     boundary is added.
  *
  *   The record copies its parent's `wof:hierarchy` and adds itself. Its name, point and `gnis:id`
  *   concordance cite GNIS. Its placetype and hierarchy cite the parent boundary that decided them.
@@ -31,6 +35,7 @@
  *   skipped, so a second run writes only the places the first one didn't.
  */
 
+import { hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
 import { isPresent } from "@mailwoman/core/objects"
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs/gnis"
@@ -43,6 +48,7 @@ import {
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { CensusGazetteerEntry } from "@mailwoman/tiger/sdk/gazetteer"
+import { isStateAbbreviation, isStateTerritoryAbbreviation } from "@mailwoman/tiger/state"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -69,15 +75,49 @@ export const SAME_COUNTY_KM = 50
 const COVERING_PLACETYPES = ["locality", "localadmin", "borough", "macrohood", "neighbourhood", "microhood"]
 
 /**
- * The containing boundaries, innermost first, and the placetype a new record takes under each.
+ * The containing boundaries inside a county, innermost first, and the placetype
+ * a new record takes under each.
+ * The county-equivalent rung follows them.
  */
-const PARENT_LADDER = [
+const INNER_PARENT_LADDER = [
 	{ parent: "locality", child: "neighbourhood" },
 	{ parent: "localadmin", child: "locality" },
-	{ parent: "county", child: "locality" },
 ] as const
 
-const REPO = wofRepoName("admin", "US")
+/**
+ * The Who's On First country a GNIS state's places are filed under.
+ *
+ * WOF files each US territory as its own country under its ISO code.
+ * That code is also its USPS code: a Puerto Rico record holds `wof:country` `PR`.
+ *
+ * @throws When `state` is neither a state nor a territory with an ISO 3166 code.
+ */
+export function wofCountryOfState(state: string): string {
+	if (isStateAbbreviation(state)) return "US"
+
+	if (isStateTerritoryAbbreviation(state) && hasCountry(worldCountries(), state)) return state
+
+	throw new Error(`gnis backfill: ${state} is neither a US state nor a territory with an ISO country code`)
+}
+
+/**
+ * The WOF placetypes of `country` that hold a Census county or county-equivalent GEOID, the five-digit
+ * `uscensus:geoid`: `county` in the states and Puerto Rico, `region` in the Virgin Islands.
+ *
+ * A place outside every boundary of these placetypes is reported rather than written.
+ */
+function countyEquivalentPlacetypes(adminPath: PathBuilderLike, country: string): string[] {
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
+
+	const rows = db
+		.prepare(
+			`SELECT DISTINCT s.placetype AS placetype FROM concordances c JOIN spr s ON s.id = c.id
+			 WHERE c.other_source = 'uscensus:geoid' AND length(c.other_id) = 5 AND s.country = ? AND s.is_current != 0`
+		)
+		.all(country) as Array<{ placetype: string }>
+
+	return rows.map((row) => row.placetype).toSorted()
+}
 
 /**
  * The GNIS summary page for one feature.
@@ -143,30 +183,41 @@ class CoverageIndex {
 		return false
 	}
 
-	static read(adminPath: PathBuilderLike): CoverageIndex {
+	/**
+	 * Reads the records of `country`, with the names of their ancestors of the
+	 * county-equivalent placetypes as their counties.
+	 */
+	static read(adminPath: PathBuilderLike, country: string, countyPlacetypes: readonly string[]): CoverageIndex {
 		using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 		const index = new CoverageIndex()
-		const placeholders = COVERING_PLACETYPES.map(() => "?").join(",")
+		const list = (values: readonly string[]) => values.map(() => "?").join(",")
 
 		const rows = db
 			.prepare(
-				`SELECT id, name, latitude, longitude FROM spr WHERE country = 'US' AND is_current != 0 AND is_deprecated = 0 AND placetype IN (${placeholders})`
+				`SELECT id, name, latitude, longitude FROM spr WHERE country = ? AND is_current != 0 AND is_deprecated = 0 AND placetype IN (${list(COVERING_PLACETYPES)})`
 			)
-			.all(...COVERING_PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
+			.all(country, ...COVERING_PLACETYPES) as Array<{
+			id: number
+			name: string
+			latitude: number
+			longitude: number
+		}>
 
 		const byID = new Map(rows.map((row) => [row.id, { ...row, counties: new Set<string>(), names: [row.name] }]))
 
-		const counties = db
-			.prepare(
-				"SELECT a.id AS id, c.name AS name FROM ancestors a JOIN spr c ON c.id = a.ancestor_id WHERE a.ancestor_placetype = 'county'"
-			)
-			.all() as Array<{ id: number; name: string }>
+		const counties = countyPlacetypes.length
+			? (db
+					.prepare(
+						`SELECT a.id AS id, c.name AS name FROM ancestors a JOIN spr c ON c.id = a.ancestor_id WHERE a.ancestor_placetype IN (${list(countyPlacetypes)})`
+					)
+					.all(...countyPlacetypes) as Array<{ id: number; name: string }>)
+			: []
 
 		for (const { id, name } of counties) {
 			byID.get(id)?.counties.add(countyKey(name))
 		}
 
-		for (const { id, name } of db.prepare("SELECT id, name FROM names WHERE country = 'US'").all() as Array<{
+		for (const { id, name } of db.prepare("SELECT id, name FROM names WHERE country = ?").all(country) as Array<{
 			id: number
 			name: string
 		}>) {
@@ -215,14 +266,17 @@ function censusCoveredGNISIDs(
 export interface GNISBackfillOptions {
 	places: Iterable<GNISPopulatedPlace>
 	/**
-	 * The USPS codes of the states to write, such as `["OH"]`.
+	 * The USPS codes of the states or territories to write, such as `["OH"]` or `["PR", "VI"]`.
 	 */
 	states: readonly string[]
 	adminPath: PathBuilderLike
 	/**
-	 * The US polygon database, `wof-polygons-us-full.db`.
+	 * The polygon databases keyed by WOF id, such as `wof-polygons-us-full.db`
+	 * and a Census territory database.
+	 *
+	 * A boundary comes from the first database holding a row for it.
 	 */
-	polygonPath: PathBuilderLike
+	polygonPaths: readonly PathBuilderLike[]
 	reposRoot: PathBuilderLike
 	/**
 	 * The Census places and county subdivisions, from `readCensusGazetteer`, that tie a GNIS id to a GEOID.
@@ -244,6 +298,10 @@ export interface GNISBackfillOptions {
  */
 export interface GNISBackfillRecord {
 	gnisID: number
+	/**
+	 * The GNIS place's USPS state or territory code.
+	 */
+	state: string
 	id: number
 	name: string
 	placetype: string
@@ -273,9 +331,14 @@ export interface GNISBackfillResult {
 	 */
 	alreadyWritten: number
 	/**
-	 * Places outside every county boundary, with their GNIS ids.
+	 * Places outside every county-equivalent boundary, by GNIS id and state.
 	 */
-	unlocated: number[]
+	unlocated: Array<{ gnisID: number; state: string }>
+	/**
+	 * Each boundary placetype the run located against, per WOF country, with the number of its
+	 * places whose boundary loaded and the number the polygon databases hold no boundary for.
+	 */
+	boundaries: Array<{ country: string; placetype: string; located: number; withoutGeometry: number }>
 }
 
 /**
@@ -287,7 +350,8 @@ export function gnisPlaceRecord(
 	placetype: string,
 	parent: LocatedAdmin,
 	parentHierarchy: unknown,
-	lastModified: number
+	lastModified: number,
+	country: string
 ): WOFRecordFeature {
 	const { latitude, longitude } = place
 	const geometry = { type: "Point", coordinates: [longitude, latitude] }
@@ -313,7 +377,7 @@ export function gnisPlaceRecord(
 			"geom:bbox": `${longitude},${latitude},${longitude},${latitude}`,
 			"geom:latitude": latitude,
 			"geom:longitude": longitude,
-			"iso:country": "US",
+			"iso:country": country,
 			"mailwoman:sources": [
 				{ property: "wof:name", citation: `${gnis}: name "${place.name}"`, url: gnisFeatureURL(place.gnisID) },
 				{ property: "geometry", citation: `${gnis}: primary point`, url: gnisFeatureURL(place.gnisID) },
@@ -332,7 +396,7 @@ export function gnisPlaceRecord(
 			"wof:belongsto": belongsTo,
 			"wof:breaches": [],
 			"wof:concordances": { "gnis:id": place.gnisID },
-			"wof:country": "US",
+			"wof:country": country,
 			"wof:geomhash": wofGeometryHash(geometry),
 			"wof:hierarchy": hierarchy,
 			"wof:id": id,
@@ -340,7 +404,7 @@ export function gnisPlaceRecord(
 			"wof:name": place.name,
 			"wof:parent_id": parent.id,
 			"wof:placetype": placetype,
-			"wof:repo": REPO,
+			"wof:repo": wofRepoName("admin", country),
 			"wof:superseded_by": [],
 			"wof:supersedes": [],
 			"wof:tags": [],
@@ -351,8 +415,8 @@ export function gnisPlaceRecord(
 }
 
 /**
- * The innermost boundary on {@link PARENT_LADDER} containing a point, with its record,
- * or `null` when no county boundary contains it.
+ * The innermost boundary on a country's parent ladder containing a point, with its record,
+ * or `null` when no county-equivalent boundary contains it.
  *
  * A locality WOF flags `wof:statistical_gore` is a township's area outside its incorporated
  * places rather than a town, so a point inside one takes the township as its parent.
@@ -385,37 +449,26 @@ async function containingParent(
 }
 
 /**
- * Writes a record for each uncovered GNIS place in `states` into the US admin fork.
+ * What the backfill reads for one WOF country: its admin fork, its coverage index and its parent ladder.
+ */
+interface CountryContext {
+	country: string
+	repoDir: PathBuilder
+	dataDir: PathBuilder
+	coverage: CoverageIndex
+	locators: Array<{ child: string; locator: AdminLocator }>
+}
+
+/**
+ * Writes a record for each uncovered GNIS place in `states` into the admin fork of the WOF country each
+ * state's places are filed under: the US fork for a state, the territory's own fork for a territory.
  *
- * @throws When the US admin repository isn't cloned under `reposRoot`.
+ * @throws When a state's admin repository isn't cloned under `reposRoot`.
  */
 export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<GNISBackfillResult> {
 	const states = new Set(options.states.map((state) => state.toUpperCase()))
-	const repoDir = PathBuilder.from(options.reposRoot)(REPO)
-	const dataDir = repoDir("data")
 	const now = options.now ?? (() => Math.floor(Date.now() / 1000))
-
-	const minted = await readMailwomanWOFRecords([repoDir])
-	const mintedIDs = minted.map((record) => record.id)
-
-	const written = new Set(
-		minted
-			.map((record) => (record.properties["wof:concordances"] as Record<string, unknown> | undefined)?.["gnis:id"])
-			.filter((gnisID): gnisID is number => typeof gnisID === "number")
-	)
-
-	const coverage = CoverageIndex.read(options.adminPath)
-	const censusHeld = censusCoveredGNISIDs(options.adminPath, options.census)
-
-	const locators = PARENT_LADDER.map(({ parent, child }) => ({
-		child,
-		locator: new AdminLocator({
-			adminPath: options.adminPath,
-			polygonPath: options.polygonPath,
-			placetype: parent,
-			country: "US",
-		}),
-	}))
+	const reposRoot = PathBuilder.from(options.reposRoot)
 
 	const result: GNISBackfillResult = {
 		records: [],
@@ -424,7 +477,58 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 		coveredByCensus: 0,
 		alreadyWritten: 0,
 		unlocated: [],
+		boundaries: [],
 	}
+
+	const contexts = new Map<string, CountryContext>()
+
+	for (const country of new Set([...states].map(wofCountryOfState))) {
+		const countyPlacetypes = countyEquivalentPlacetypes(options.adminPath, country)
+		const repoDir = reposRoot(wofRepoName("admin", country))
+
+		const ladder = [
+			...INNER_PARENT_LADDER,
+			...countyPlacetypes.map((placetype) => ({ parent: placetype, child: "locality" })),
+		]
+
+		const locators = ladder.map(({ parent, child }) => ({
+			child,
+			locator: new AdminLocator({
+				adminPath: options.adminPath,
+				polygonPaths: options.polygonPaths,
+				placetype: parent,
+				country,
+			}),
+		}))
+
+		for (const [index, { locator }] of locators.entries()) {
+			const { located, withoutGeometry } = locator
+			result.boundaries.push({ country, placetype: ladder[index]!.parent, located, withoutGeometry })
+		}
+
+		contexts.set(country, {
+			country,
+			repoDir,
+			dataDir: repoDir("data"),
+			coverage: CoverageIndex.read(options.adminPath, country, countyPlacetypes),
+			locators,
+		})
+	}
+
+	// The mailwoman id range is shared by every fork, so a minted id is checked against them all.
+	const minted = await readMailwomanWOFRecords(
+		[...new Set(["US", ...contexts.keys()])].map((country) => reposRoot(wofRepoName("admin", country)))
+	)
+
+	const mintedIDs = minted.map((record) => record.id)
+
+	const written = new Set(
+		minted
+			.map((record) => (record.properties["wof:concordances"] as Record<string, unknown> | undefined)?.["gnis:id"])
+			.filter((gnisID): gnisID is number => typeof gnisID === "number")
+	)
+
+	const censusHeld = censusCoveredGNISIDs(options.adminPath, options.census)
 
 	const seen = new Set<number>()
 
@@ -445,6 +549,8 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 		}
 
 		const located = { ...place, latitude, longitude }
+		const state = place.state!
+		const { country, coverage, locators, repoDir, dataDir } = contexts.get(wofCountryOfState(state))!
 
 		if (written.has(place.gnisID)) {
 			result.alreadyWritten++
@@ -467,7 +573,7 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 		const hit = await containingParent(locators, longitude, latitude, dataDir)
 
 		if (!hit) {
-			result.unlocated.push(place.gnisID)
+			result.unlocated.push({ gnisID: place.gnisID, state })
 
 			continue
 		}
@@ -482,7 +588,8 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 			hit.child,
 			hit.parent,
 			parentFeature.properties?.["wof:hierarchy"],
-			now()
+			now(),
+			country
 		)
 
 		const path = options.dryRun ? dataDir.toString() : (await writeWOFRecord(repoDir, feature)).toString()
@@ -492,7 +599,15 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 		// A later GNIS place with this name key inside the coverage distances is covered by this record.
 		coverage.add(nameKeys(place.name), { id, latitude, longitude, counties: new Set() })
 
-		const record = { gnisID: place.gnisID, id, name: place.name, placetype: hit.child, parent: hit.parent, path }
+		const record = {
+			gnisID: place.gnisID,
+			state,
+			id,
+			name: place.name,
+			placetype: hit.child,
+			parent: hit.parent,
+			path,
+		}
 
 		result.records.push(record)
 		options.onRecord?.(record)

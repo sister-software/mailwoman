@@ -3,7 +3,21 @@
 
 import { describe, expect, it } from "vitest"
 
-import { gnisPlaceRecord } from "#tools/pipeline/us/gnis-backfill"
+import { gnisPlaceRecord, wofCountryOfState } from "#tools/pipeline/us/gnis-backfill"
+
+describe("wofCountryOfState", () => {
+	it("files a territory under its own WOF country and a state under the US", () => {
+		expect(wofCountryOfState("PR")).toBe("PR")
+		expect(wofCountryOfState("VI")).toBe("VI")
+		// Mississippi shares its USPS code with Montserrat's ISO code.
+		expect(wofCountryOfState("MS")).toBe("US")
+		expect(wofCountryOfState("OH")).toBe("US")
+	})
+
+	it("refuses a territory code that is no ISO country", () => {
+		expect(() => wofCountryOfState("JA")).toThrow(/JA/)
+	})
+})
 
 // Cairo, Ohio (GNIS 1038607), inside Plain Township (WOF localadmin 404524271).
 const CAIRO = {
@@ -38,7 +52,8 @@ describe("gnisPlaceRecord", () => {
 		"locality",
 		PLAIN_TOWNSHIP,
 		PLAIN_TOWNSHIP_HIERARCHY,
-		1_800_000_000
+		1_800_000_000,
+		"US"
 	)
 
 	it("copies the parent's hierarchy and adds the new place to it", () => {
