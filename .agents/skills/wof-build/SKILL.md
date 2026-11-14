@@ -121,20 +121,16 @@ live DB, that's what the number means.
 
 ## The candidate database rebuild
 
-The candidate build folds GeoNames aliases into the admin DB and then builds the byte-range
-candidate database from the fold:
+The admin build folds GeoNames into the admin DB. The candidate build reads that admin DB as built
+and adds the postcode databases and the importance column:
 
 ```bash
-NODE_OPTIONS=--max-old-space-size=16384 \
-node packages/mailwoman/out/cli/main.js gazetteer build candidate --fold \
+node packages/mailwoman/out/cli/main.js gazetteer build candidate \
   --admin admin-global-priority.db \
-  --fold-out admin-global-priority-geonames-<date>.db \
   --out <candidate db>
 ```
 
-The `--fold` step exhausts the default heap, so the `NODE_OPTIONS` setting is required. The fold is
-remade from the current admin DB after every admin swap. `admin/fold/staleness.ts` refuses a fold
-older than its admin DB unless `--allow-stale-fold` names the exception.
+Rebuild the candidate after every admin swap, because its rows and ids come from the admin DB.
 
 ## The admin DB augment
 

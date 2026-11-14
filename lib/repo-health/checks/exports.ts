@@ -58,7 +58,6 @@ const SYMBOL_ISSUES: ReadonlyArray<[keyof KnipIssue, string]> = [
  */
 const ALLOWED_DUPLICATE_EXPORTS = new Set([
 	"packages/codex/lib/us/street/suffix.ts:StreetSuffixAbbreviationRecord,US_STREET_SUFFIX_VARIANTS",
-	"packages/gazetteer/tools/pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
 ])
 
 function duplicateKey(file: string, symbols: KnipSymbol[]): string {

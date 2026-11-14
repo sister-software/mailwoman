@@ -18,8 +18,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statLink } from "@mailwoman/core/fs/readers/stat"
 import {
-	changeMode,
-	copyFileTo,
 	createSymbolicLink,
 	makeDirectories,
 	removePath,
@@ -28,23 +26,18 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { refusalsForPublication } from "@mailwoman/core/layers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
-import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { createPhaseClock, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
 // resolver-wof-sqlite's runtime modules are imported inside the functions that use them,
 // because `mailwoman --help` imports every command and a module-level value import
 // would evaluate the resolver's module graph on that path.
-import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { probeManifest } from "mailwoman/data/inventory"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
-import { buildWOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
 import {
 	candidateLayerManifest,
 	censusFolds,
@@ -53,7 +46,7 @@ import {
 	readFoldTerms,
 } from "#tools/pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#tools/pipeline/coverage-manifest"
-import { DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB, geonamesAdminGapCountries } from "#tools/pipeline/defaults"
+import { DEFAULT_IMPORTANCE_DB } from "#tools/pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 import { publishToPublicBucket } from "#tools/publish/public-bucket"
 
@@ -96,20 +89,6 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Overture centroid answers at rooftop grade.
 	"postalcode-sg-overture.db",
 ]
-
-/**
- * `<data-root>/geonames`, the per-country GeoNames dump dir.
- */
-export function geonamesDir(dataRoot: PathBuilderLike = dataRootPath()): string {
-	return resolvePath(dataRoot, "geonames")
-}
-
-/**
- * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir.
- */
-export function geonamesAlternateDir(dataRoot: PathBuilderLike = dataRootPath()): string {
-	return resolvePath(dataRoot, "geonames-alternate")
-}
 
 /**
  * Resolve the canonical postcode-database filenames to absolute paths, keeping only those present.
@@ -180,165 +159,10 @@ export async function resolveImportanceDB(
 	return (await pathExists(path)) ? path.toString() : null
 }
 
-export interface FoldOptions {
-	/**
-	 * Source admin (unified-WOF) DB.
-	 * Read via the copy, never mutated.
-	 */
-	adminIn: PathBuilderLike
-	/**
-	 * Destination admin DB carrying the folded GeoNames names.
-	 *
-	 * Must differ from `adminIn`.
-	 */
-	adminOut: PathBuilderLike
-	/**
-	 * ISO 3166-1 alpha-2 codes whose GeoNames dumps to fold.
-	 *
-	 * @defaultValue {@linkcode DEFAULT_FOLD_COUNTRIES}
-	 */
-	countries?: readonly string[]
-	/**
-	 * Dir holding `<CC>.txt` GeoNames dumps.
-	 *
-	 * @defaultValue {@link geonamesDir}
-	 */
-	geonamesDir?: PathBuilderLike
-	/**
-	 * The countries to also fold A-class admin (pcli + ADM1) for, linking the
-	 * locality→region→country ancestry.
-	 *
-	 * Zero-coverage gap countries only, since a country that already has WOF admin would double up.
-	 */
-	adminForCountries?: ReadonlySet<string>
-	/**
-	 * Dir holding `<CC>.txt` alternateNamesV2 dumps, tagging alias rows with
-	 * language / privateuse / `official`.
-	 * Countries without a file fold untagged.
-	 *
-	 * @defaultValue {@link geonamesAlternateDir}
-	 */
-	alternateDir?: PathBuilderLike
-	/**
-	 * Override to proceed when `adminIn` already contains alias rows for countries this run doesn't list.
-	 *
-	 * The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
-	 */
-	allowCoverageLoss?: boolean
-	onCountry?: (event: GeonamesIngestProgress) => void
-	onPhase?: (phase: string, detail?: string) => void
-}
-
-/**
- * The number of dropped country codes the coverage-loss error names before eliding.
- *
- * A dozen plus the count makes the shape of the mistake obvious on one terminal line.
- */
-const DROPPED_COUNTRIES_SHOWN = 12
-
-export interface FoldResult {
-	ingested: number
-	placeSearchRows: number
-	bboxRows: number
-	/**
-	 * Countries whose alias rows `adminIn` already contained.
-	 * The fold re-derives each country's rows.
-	 */
-	refoldedCountries: string[]
-}
-
-/**
- * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names
- * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox`.
- *
- * Build-on-copy — `adminIn` is never touched.
- * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale.
- *
- * Each synthetic id is a position in the run.
- * A fold over fewer countries than `adminIn` represents drops the remaining countries.
- *
- * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} permits the loss.
- */
-export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
-	if (opts.adminIn.toString() === opts.adminOut.toString()) {
-		throw new Error("fold must write a distinct adminOut (build-on-copy, never in place)")
-	}
-
-	if (!(await pathExists(opts.adminIn))) throw new Error(`admin DB not found: ${opts.adminIn}`)
-
-	const { ingestGeonamesAliases, buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-
-	const countries = [...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)]
-
-	opts.onPhase?.("preflight", "reading the source's existing alias-fold coverage")
-	using source = new DatabaseClient<WOFDatabase>(opts.adminIn, { readOnly: true })
-
-	const refoldedCountries = (
-		source
-			.prepare(`SELECT DISTINCT country FROM spr WHERE id >= ? AND id < ? ORDER BY country`)
-			.all(GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE) as Array<{ country: string }>
-	)
-
-		.map((r) => r.country)
-
-	const requested = new Set(countries)
-	const dropped = refoldedCountries.filter((cc) => !requested.has(cc))
-
-	if (dropped.length && !opts.allowCoverageLoss) {
-		throw new Error(
-			`fold would DROP the GeoNames alias coverage ${opts.adminIn} already carries for ${dropped.length} ` +
-				`countries (${dropped.slice(0, DROPPED_COUNTRIES_SHOWN).join(", ")}` +
-				`${dropped.length > DROPPED_COUNTRIES_SHOWN ? ", …" : ""}). The fold rewrites ` +
-				`its whole id range, so anything not in this run's country list disappears. ` +
-				`\`mailwoman gazetteer build admin\` already folds ${refoldedCountries.length} countries into the admin ` +
-				`artifact — build the candidate from it directly (--no-fold), pass --countries covering them, or set ` +
-				`allowCoverageLoss when shrinking the fold is the point.`
-		)
-	}
-
-	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
-	// The admin source is sealed 0444 and `copyFileTo` stamps the source mode onto a fresh copy,
-	// so remove any stale copy and restore the write bit: the writable copy is fold staging.
-	// The sealed artifact keeps its 0444 mode.
-	await removePathIfPresent(opts.adminOut)
-	await copyFileTo(opts.adminIn, opts.adminOut)
-	await changeMode(opts.adminOut, 0o644)
-
-	using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
-
-	// The purge clears the A-class country/region nodes and the locality ancestry too,
-	// so a fold that omits adminForCountries un-parents the zero-coverage localities.
-	// Default to the gap set scoped to this run.
-	// The caller opts out by passing an explicit set.
-	const adminForCountries =
-		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
-
-	// The re-fold matches GeoNames places against the copy's WOF records, as the admin build does,
-	// so a place WOF holds adds its names to that record rather than coming back as a second row.
-	const index = buildWOFPlaceIndex(db)
-
-	const ingested = await ingestGeonamesAliases(db, countries, opts.geonamesDir ?? geonamesDir(), opts.onCountry, {
-		adminForCountries,
-		alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
-		existing: {
-			match: (place) => index.match(place),
-			claimName: (match, country, name) => index.claimName(match, country, name),
-			onGap: () => {},
-		},
-	})
-
-	index.dispose()
-
-	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
-	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
-	db.exec("ANALYZE")
-
-	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows, refoldedCountries }
-}
-
 export interface BuildOptions {
 	/**
-	 * Admin DB to build the candidate from (the folded one for the durable recipe).
+	 * Admin DB to build the candidate from.
+	 * The admin build already folds GeoNames into it.
 	 */
 	adminDB: PathBuilderLike
 	/**
@@ -714,7 +538,6 @@ export * from "#tools/pipeline/admin"
 export * from "#tools/pipeline/admin/enrich"
 export * from "#tools/pipeline/admin/fold/geonames"
 export * from "#tools/pipeline/admin/fold/overture"
-export * from "#tools/pipeline/admin/fold/staleness"
 export * from "#tools/pipeline/admin/freeze"
 export * from "#tools/pipeline/admin/ingest-wof"
 export * from "#tools/pipeline/postcode"

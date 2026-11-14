@@ -3,23 +3,14 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { allKeyed } from "@mailwoman/core/promises"
-import { DEFAULT_FOLD_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/defaults"
-import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	phaseReporter,
-	splitCountryCodes,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
  * Command specification for `gazetteer release`.
  *
- * It folds GeoNames, builds the candidate database, promotes it and publishes it to R2.
+ * It builds the candidate database from the admin database, promotes it and publishes it to R2.
  *
  * The publish step reads R2 credentials from the `RCLONE_S3_PUBLIC_*` environment variables.
  */
@@ -29,11 +20,6 @@ export const spec = {
 	options: {
 		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
 		out: { type: "string", description: "Candidate-DB output. Default <data-root>/db/wof/candidate-global.db" },
-		countries: {
-			type: "string",
-			description: `Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
-		},
-		fold: { type: "boolean", default: false, description: "Re-run the GeoNames fold (default off)" },
 		promote: { type: "boolean", default: true, description: "Promote the convention path after building" },
 		publish: { type: "boolean", default: true, description: "Publish to R2 and bump the demo after promoting" },
 		"gazetteer-version": { type: "string", description: "Gazetteer version. Default today's date + 'a'" },
@@ -63,7 +49,6 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 				DEFAULT_ADMIN_DB,
 				DEFAULT_CANDIDATE_OUT,
 				defaultGazetteerVersion,
-				foldGeonamesIntoAdmin,
 				promoteCandidate,
 				publishGazetteer,
 				resolvePostcodeDatabases,
@@ -77,31 +62,9 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 		})
 
 		const root = dataRootPath()
-		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const adminDB = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
 		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
-
-		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
-
 		const lines: string[] = []
-
-		let adminDB = adminIn
-
-		if (options.fold) {
-			const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
-
-			console.error(`▸ fold (${countries.join(",")}) → ${foldOut}`)
-
-			const f = await foldGeonamesIntoAdmin({
-				adminIn,
-				adminOut: foldOut,
-				countries,
-				onCountry: (e) => console.error(`  ${formatGeonamesIngestProgress(e)}`),
-				onPhase: phaseReporter(),
-			})
-
-			lines.push(`folded ${f.ingested.toLocaleString()} GeoNames places`)
-			adminDB = foldOut
-		}
 
 		const databases = await resolvePostcodeDatabases(undefined, root)
 

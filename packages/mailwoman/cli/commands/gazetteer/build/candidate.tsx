@@ -2,39 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range
- *   candidate build (FTS5-trigram fuzzy index baked in), in one command.
+ *   `mailwoman gazetteer build candidate` — the byte-range candidate gazetteer
+ *   (FTS5-trigram fuzzy index baked in), built from the admin database the admin
+ *   build already folded GeoNames into.
  *
- *   This command sets every choice required by the 2026-06-27 manual rebuild,
- *   including folded countries, postcode databases and FTS.
  *   Progress streams to stderr.
  *
  *   The final summary goes to stdout.
  *   See releasing.md Step 5.
  */
 
-import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { allKeyed } from "@mailwoman/core/promises"
 import { formatPhaseTimings } from "@mailwoman/core/utils"
-import {
-	foldSourceAdminPath,
-	foldStaleness,
-	foldStalenessMessage,
-} from "@mailwoman/gazetteer/tools/pipeline/admin/fold/staleness"
-import {
-	DEFAULT_CANDIDATE_OUT,
-	DEFAULT_FOLD_COUNTRIES,
-	DEFAULT_IMPORTANCE_DB,
-} from "@mailwoman/gazetteer/tools/pipeline/defaults"
-import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
+import { DEFAULT_CANDIDATE_OUT, DEFAULT_IMPORTANCE_DB } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 
 import {
 	type CommandSpec,
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
-	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -47,17 +33,6 @@ export const spec = {
 	options: {
 		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
 		out: { type: "string", description: "Candidate DB output. Default <data-root>/db/wof/candidate-global.db" },
-		fold: { type: "boolean", default: false, description: "Re-run the GeoNames alias fold before building" },
-		countries: {
-			type: "string",
-			description: `Comma-separated ISO codes. Default: ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
-		},
-		"fold-out": { type: "string", description: "Folded admin DB path. Default <admin>-geonames.db" },
-		"allow-stale-fold": {
-			type: "boolean",
-			default: false,
-			description: "Build from a fold output older than its admin database on purpose",
-		},
 		importance: {
 			type: "string",
 			description: `Importance source. Default <data-root>/db/wof/${DEFAULT_IMPORTANCE_DB}`,
@@ -77,13 +52,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 	const state = useCommandTask(async () => {
 		const {
 			dataRoot: { dataRootPath },
-			pipeline: {
-				buildCandidate,
-				DEFAULT_ADMIN_DB,
-				foldGeonamesIntoAdmin,
-				resolveImportanceDB,
-				resolvePostcodeDatabases,
-			},
+			pipeline: { buildCandidate, DEFAULT_ADMIN_DB, resolveImportanceDB, resolvePostcodeDatabases },
 			paths: { wofDatabasePath },
 		} = await allKeyed({
 			dataRoot: import("@mailwoman/core/data-root"),
@@ -92,49 +61,8 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		})
 
 		const root = dataRootPath()
-		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const adminDB = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
 		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
-
-		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
-
-		let adminDB = adminIn
-
-		// A fold output that predates its admin database uses the admin database's old
-		// coordinates (the Frankfurt read of 2026-09-06): refused unless asked for,
-		// since the action is `--fold` on this same command.
-		if (!options.fold && !options.allowStaleFold) {
-			const source = foldSourceAdminPath(adminIn)
-			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])
-
-			if (source && foldStat) {
-				const staleness = foldStaleness(adminIn, source, foldStat.mtime, adminStat?.mtime ?? null)
-
-				if (staleness) {
-					throw new Error(foldStalenessMessage(staleness))
-				}
-			}
-		}
-
-		if (options.fold) {
-			const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
-
-			console.error(`▸ GeoNames upstream fold (${countries.join(",")}) → ${foldOut}`)
-
-			const f = await foldGeonamesIntoAdmin({
-				adminIn,
-				adminOut: foldOut,
-				countries,
-				onCountry: (e) => console.error(`  ${formatGeonamesIngestProgress(e)}`),
-				onPhase: phaseReporter(),
-			})
-
-			console.error(
-				`  folded ${f.ingested.toLocaleString()} places; place_search ${f.placeSearchRows.toLocaleString()} rows`
-			)
-
-			adminDB = foldOut
-		}
-
 		const databases = await resolvePostcodeDatabases(undefined, root)
 
 		const importanceDB = options.skipImportance

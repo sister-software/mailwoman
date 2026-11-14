@@ -327,17 +327,6 @@ export function geonamesAdminGapCountries(): string[] {
 }
 
 /**
- * The country set a standalone fold re-derives.
- *
- * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}).
- * The fold rewrites its whole id range.
- *
- * A narrower list re-folds the front of that range while other countries' name
- * rows stay attached to the wrong places.
- */
-export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
-
-/**
  * The conventional candidate-build output.
  */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"

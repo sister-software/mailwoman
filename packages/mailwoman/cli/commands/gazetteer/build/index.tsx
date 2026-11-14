@@ -6,9 +6,10 @@
  *   (WOF + Overture + GeoNames → verified, sealed admin gazetteer) then `build candidate`
  *   (the byte-range candidate table) from that fresh admin artifact.
  *
- *   The legacy standalone GeoNames fold is skipped here — the admin build already folds
- *   the full 161-country set upstream (a superset of the old fold list).
- *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
+ *   The admin build folds GeoNames into the admin database, and the candidate build reads it as built.
+ *   Both artifacts land at staging/dated paths.
+ *
+ *   The operator swaps and promotes them as separate steps (releasing.md).
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"

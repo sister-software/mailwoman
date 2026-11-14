@@ -331,11 +331,11 @@ To get new admin coverage into the demo after a gazetteer rebuild:
 **Turnkey:** `mailwoman gazetteer` commands wrap the whole pipeline below, with every decision set as a default (fold countries, postcode set, FTS, the dated version):
 
 ```bash
-# fold + build + promote + publish + demo bump, one shot (source .env for the R2 creds first):
+# build + promote + publish + demo bump, one shot (source .env for the R2 creds first):
 set -a; . ./.env; set +a
 mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
 # …or run the stages independently:
-mailwoman gazetteer build                       # durable fold → candidate build (FTS baked in)
+mailwoman gazetteer build                       # admin build (GeoNames folded in) → candidate build (FTS baked in)
 mailwoman gazetteer promote                      # symlink <data-root>/db/wof/candidate.db → the build
 mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + demo ADMIN_GAZETTEER_VERSION bump
 ```
@@ -343,18 +343,11 @@ mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + de
 The manual recipe below performs the same steps one at a time, for reference and one-off variations:
 
 ```bash
-# 0. DURABLE upstream GeoNames-alias fold (#743/#193). Fold the bilingual / alt-language place-names
-#    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
-#    natively (FI hard-resolve 69.5→85.8%, coverage 74.4→94.0%) — the alt-name attaches to the real
-#    WOF place ("Karjaa" → Karis) rather than a duplicate row. Reuses ingestGeonamesAliases +
-#    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the retired
-#    candidate-side stopgap (build-candidate-geonames-aliases, which patched a built candidate.db to
-#    MEASURE the lift before this became the durable home — the fold now lives in
-#    mailwoman/gazetteer-pipeline/admin/fold-geonames.ts, run by `mailwoman gazetteer build`).
-# (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
-#  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
+# 0. The admin build folds GeoNames places and their alternate names into the admin DB's spr/names
+#    (#743/#193). An alternate name attaches to the WOF place it matches ("Karjaa" → Karis) rather
+#    than adding a second row. Each GeoNames place keeps the id GEONAMES_ID_BASE + geonameid (#3061).
 node packages/mailwoman/out/cli/main.js gazetteer build   # admin (fold included) → candidate, turnkey
-# 1. Build the candidate table from the FOLDED admin DB + the postcode databases. The FTS5-trigram fuzzy
+# 1. Build the candidate table from the admin DB + the postcode databases. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl extract (NL/FR/DE/ES/IT) + the GeoNames intl extract (PT/AU)
 #    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
