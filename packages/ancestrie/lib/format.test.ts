@@ -9,9 +9,61 @@
 import { describe, expect, it } from "vitest"
 
 import { AncestrieBuilder } from "#builder"
-import { ANCESTRIE_FORMAT_VERSION } from "#format"
+import { ANCESTRIE_FORMAT_VERSION, ancestrieLayout, computeSections, readHeader, readID, writeID } from "#format"
 import { Ancestrie } from "#reader"
 import type { AncestrieEntry } from "#types"
+
+/**
+ * Re-encodes a sealed current-version artifact in the version 1 layout (u32 ids), dropping its metadata.
+ *
+ * Every section before the entry table is the same in both versions and copies across.
+ */
+function downgradeToV1(current: Uint8Array): Uint8Array {
+	const source = new DataView(current.buffer, current.byteOffset, current.byteLength)
+	const header = readHeader(source)
+	const from = ancestrieLayout(header.version)
+	const to = ancestrieLayout(1)
+	const fromSections = computeSections(header, from)
+	const toSections = computeSections(header, to)
+	const out = new Uint8Array(toSections.end)
+	const target = new DataView(out.buffer)
+
+	out.set(current.subarray(0, fromSections.entryTable))
+	target.setUint16(4, 1, true)
+	target.setUint32(40, 0, true)
+
+	const fields = ["pre", "post", "rank", "parentStart", "payloadStart", "payloadLength"] as const
+
+	for (let ordinal = 0; ordinal < header.entryCount; ordinal++) {
+		const a = fromSections.entryTable + ordinal * from.recordSize
+		const b = toSections.entryTable + ordinal * to.recordSize
+
+		writeID(target, b, readID(source, a, from), to)
+
+		for (const field of fields) {
+			target.setUint32(b + to[field], source.getUint32(a + from[field], true), true)
+		}
+
+		target.setUint16(b + to.parentCount, source.getUint16(a + from.parentCount, true), true)
+		target.setUint16(b + to.flags, source.getUint16(a + from.flags, true), true)
+
+		const fromIndex = fromSections.idIndex + ordinal * from.idIndexEntrySize
+		const toIndex = toSections.idIndex + ordinal * to.idIndexEntrySize
+
+		writeID(target, toIndex, readID(source, fromIndex, from), to)
+		target.setUint32(toIndex + to.idIndexOrdinal, source.getUint32(fromIndex + from.idIndexOrdinal, true), true)
+	}
+
+	for (let index = 0; index < header.parentIDCount; index++) {
+		const parent = readID(source, fromSections.parentTable + index * from.idBytes, from)
+
+		writeID(target, toSections.parentTable + index * to.idBytes, parent, to)
+	}
+
+	out.set(current.subarray(fromSections.payloadBlob, fromSections.end), toSections.payloadBlob)
+
+	return out
+}
 
 const FIXTURE: AncestrieEntry[] = [
 	{ tokens: ["united", "states"], id: 100, parentIDs: [], rank: 0.75, payload: { name: "United States" } },
@@ -30,6 +82,48 @@ function sealFixture(entries: readonly AncestrieEntry[] = FIXTURE): Uint8Array {
 
 	return builder.seal()
 }
+
+describe("wide ids", () => {
+	const fork: AncestrieEntry[] = [
+		{ tokens: ["akron"], id: 101_713_359, parentIDs: [], rank: 0.5 },
+		{
+			tokens: ["five", "points"],
+			id: 9_895_000_000,
+			parentIDs: [101_713_359],
+			rank: 0.25,
+			payload: { name: "Five Points" },
+		},
+		{ tokens: ["grace"], id: 9_895_000_001, parentIDs: [9_895_000_000], rank: 0.125 },
+	]
+
+	it("keeps an id above the u32 maximum, as an entry, a parent and an index key", () => {
+		const trie = Ancestrie.from(sealFixture(fork))
+
+		expect(trie.getEntry(9_895_000_000)).toMatchObject({ id: 9_895_000_000, parentIDs: [101_713_359] })
+		expect(trie.getEntry(9_895_000_001)!.parentIDs).toEqual([9_895_000_000])
+		expect(trie.ancestorsOf(9_895_000_001)).toEqual([9_895_000_000, 101_713_359])
+		expect(trie.descendantsOf(101_713_359)).toEqual([9_895_000_000, 9_895_000_001])
+	})
+
+	it("still reads a version 1 artifact", () => {
+		const trie = Ancestrie.from(downgradeToV1(sealFixture()))
+
+		expect(trie.getEntry(11)).toMatchObject({
+			id: 11,
+			rank: 0.875,
+			parentIDs: [10],
+			payload: { name: "New York City" },
+		})
+
+		expect(trie.ancestorsOf(11)).toEqual([10, 100])
+	})
+
+	it("refuses an id the version 1 layout cannot hold rather than storing another id", () => {
+		const view = new DataView(new ArrayBuffer(8))
+
+		expect(() => writeID(view, 0, 9_895_000_000, ancestrieLayout(1))).toThrow(/does not fit a 32-bit id field/)
+	})
+})
 
 describe("serialize round-trip", () => {
 	it("round-trips entries, ranks, parents, and payloads", () => {

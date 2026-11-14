@@ -17,25 +17,22 @@
 import type { AncestrieHeader } from "#format"
 import {
 	ANCESTRIE_FORMAT_VERSION,
+	ancestrieLayout,
 	computeSections,
 	EDGE_ENTRY_SIZE,
 	ENTRY_FLAG_HAS_PAYLOAD,
 	ENTRY_FLAG_PAYLOAD_JSON,
-	ENTRY_RECORD_SIZE,
 	ENTRY_REF_SIZE,
-	ID_INDEX_ENTRY_SIZE,
 	STATE_ENTRY_SIZE,
 	writeHeader,
+	writeID,
 } from "#format"
 import type { AncestrieBuilderOptions, AncestrieEntry, JSONValue, SealOptions, TokenNormalizer } from "#types"
 
 /**
- * Upper bound for ids.
- *
- * The same bound applies to parent ids and table indexes.
- * The format stores each value as u32.
+ * The record layout this builder writes.
  */
-const U32_MAX = 0xff_ff_ff_ff
+const LAYOUT = ancestrieLayout(ANCESTRIE_FORMAT_VERSION)
 
 /**
  * Upper bound for an entry's parent count — the format stores it as u16.
@@ -75,9 +72,12 @@ interface IntervalForest {
 	ordinalOf: Map<number, number>
 }
 
-function assertU32(value: number, label: string): void {
-	if (!Number.isInteger(value) || value < 0 || value > U32_MAX) {
-		throw new TypeError(`${label} must be an integer in [0, 2^32), got ${value}`)
+/**
+ * Refuses an id outside what the format's f64 id fields hold exactly: a non-negative safe integer.
+ */
+function assertID(value: number, label: string): void {
+	if (!Number.isSafeInteger(value) || value < 0) {
+		throw new TypeError(`${label} must be an integer in [0, 2^53), got ${value}`)
 	}
 }
 
@@ -257,7 +257,7 @@ export class AncestrieBuilder {
 			}
 		}
 
-		assertU32(entry.id, "entry id")
+		assertID(entry.id, "entry id")
 
 		if (typeof entry.rank !== "number" || !Number.isFinite(entry.rank)) {
 			throw new TypeError(`entry ${entry.id} rank must be a finite number`)
@@ -268,7 +268,7 @@ export class AncestrieBuilder {
 		}
 
 		for (const parentID of entry.parentIDs) {
-			assertU32(parentID, `entry ${entry.id} parent id`)
+			assertID(parentID, `entry ${entry.id} parent id`)
 		}
 
 		this.registerMeta(entry)
@@ -354,7 +354,7 @@ export class AncestrieBuilder {
 			metadataOffset: 0,
 		}
 
-		const sections = computeSections(header)
+		const sections = computeSections(header, LAYOUT)
 
 		const metadataJSON = !options.metadata ? undefined : UTF8_ENCODER.encode(JSON.stringify(options.metadata))
 
@@ -425,7 +425,7 @@ export class AncestrieBuilder {
 		for (let ordinal = 0; ordinal < forest.ordinals.length; ordinal++) {
 			const id = forest.ordinals[ordinal]!
 			const meta = this.entriesByID.get(id)!
-			const recordPos = sections.entryTable + ordinal * ENTRY_RECORD_SIZE
+			const recordPos = sections.entryTable + ordinal * LAYOUT.recordSize
 			const payload = meta.payload
 
 			let flags = 0
@@ -438,18 +438,18 @@ export class AncestrieBuilder {
 				}
 			}
 
-			view.setUint32(recordPos, id, true)
-			view.setUint32(recordPos + 4, forest.preOf.get(id)!, true)
-			view.setUint32(recordPos + 8, forest.postOf.get(id)!, true)
-			view.setFloat32(recordPos + 12, meta.rank, true)
-			view.setUint32(recordPos + 16, parentIdx, true)
-			view.setUint16(recordPos + 20, meta.parentIDs.length, true)
-			view.setUint16(recordPos + 22, flags, true)
-			view.setUint32(recordPos + 24, payloadOffset, true)
-			view.setUint32(recordPos + 28, payload?.bytes.length ?? 0, true)
+			writeID(view, recordPos, id, LAYOUT)
+			view.setUint32(recordPos + LAYOUT.pre, forest.preOf.get(id)!, true)
+			view.setUint32(recordPos + LAYOUT.post, forest.postOf.get(id)!, true)
+			view.setFloat32(recordPos + LAYOUT.rank, meta.rank, true)
+			view.setUint32(recordPos + LAYOUT.parentStart, parentIdx, true)
+			view.setUint16(recordPos + LAYOUT.parentCount, meta.parentIDs.length, true)
+			view.setUint16(recordPos + LAYOUT.flags, flags, true)
+			view.setUint32(recordPos + LAYOUT.payloadStart, payloadOffset, true)
+			view.setUint32(recordPos + LAYOUT.payloadLength, payload?.bytes.length ?? 0, true)
 
 			for (const parentID of meta.parentIDs) {
-				view.setUint32(sections.parentTable + parentIdx * 4, parentID, true)
+				writeID(view, sections.parentTable + parentIdx * LAYOUT.idBytes, parentID, LAYOUT)
 
 				parentIdx++
 			}
@@ -464,9 +464,9 @@ export class AncestrieBuilder {
 		const sortedIDs = forest.ordinals.toSorted((a, b) => a - b)
 
 		for (let i = 0; i < sortedIDs.length; i++) {
-			const indexPos = sections.idIndex + i * ID_INDEX_ENTRY_SIZE
-			view.setUint32(indexPos, sortedIDs[i]!, true)
-			view.setUint32(indexPos + 4, forest.ordinalOf.get(sortedIDs[i]!)!, true)
+			const indexPos = sections.idIndex + i * LAYOUT.idIndexEntrySize
+			writeID(view, indexPos, sortedIDs[i]!, LAYOUT)
+			view.setUint32(indexPos + LAYOUT.idIndexOrdinal, forest.ordinalOf.get(sortedIDs[i]!)!, true)
 		}
 
 		// Append optional metadata after all fixed-format sections.

@@ -20,16 +20,16 @@
  *     See `format.ts` for the interval encoding and the DAG-canonicalization rule.
  */
 
-import type { AncestrieHeader, AncestrieSections } from "#format"
+import type { AncestrieHeader, AncestrieLayout, AncestrieSections } from "#format"
 import {
+	ancestrieLayout,
 	computeSections,
 	EDGE_ENTRY_SIZE,
 	ENTRY_FLAG_HAS_PAYLOAD,
 	ENTRY_FLAG_PAYLOAD_JSON,
-	ENTRY_RECORD_SIZE,
 	ENTRY_REF_SIZE,
-	ID_INDEX_ENTRY_SIZE,
 	readHeader,
+	readID,
 	STATE_ENTRY_SIZE,
 } from "#format"
 import type { AncestrieContinuation, AncestrieMatch, AncestrieReaderLike, AncestrieRecord, JSONValue } from "#types"
@@ -41,6 +41,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	private readonly view: DataView
 	private readonly header: AncestrieHeader
 	private readonly sections: AncestrieSections
+	private readonly layout: AncestrieLayout
 	private readonly strings: string[]
 
 	private constructor(
@@ -48,13 +49,22 @@ export class Ancestrie implements AncestrieReaderLike {
 		view: DataView,
 		header: AncestrieHeader,
 		sections: AncestrieSections,
+		layout: AncestrieLayout,
 		strings: string[]
 	) {
 		this.bytes = bytes
 		this.view = view
 		this.header = header
 		this.sections = sections
+		this.layout = layout
 		this.strings = strings
+	}
+
+	/**
+	 * The byte offset of the entry record at `ordinal`.
+	 */
+	private recordOffset(ordinal: number): number {
+		return this.sections.entryTable + ordinal * this.layout.recordSize
 	}
 
 	/**
@@ -67,7 +77,8 @@ export class Ancestrie implements AncestrieReaderLike {
 	static from(data: Uint8Array): Ancestrie {
 		const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
 		const header = readHeader(view)
-		const sections = computeSections(header)
+		const layout = ancestrieLayout(header.version)
+		const sections = computeSections(header, layout)
 
 		if (data.byteLength < sections.end) {
 			throw new Error(`ancestrie buffer truncated: header declares ${sections.end} bytes, got ${data.byteLength}`)
@@ -81,7 +92,7 @@ export class Ancestrie implements AncestrieReaderLike {
 			strings[i] = UTF8_DECODER.decode(data.subarray(sections.stringData + start, sections.stringData + end))
 		}
 
-		return new Ancestrie(data, view, header, sections, strings)
+		return new Ancestrie(data, view, header, sections, layout, strings)
 	}
 
 	get stateCount(): number {
@@ -206,12 +217,12 @@ export class Ancestrie implements AncestrieReaderLike {
 		const seen = new Set<number>([id])
 
 		while (true) {
-			const recordPos = this.sections.entryTable + ordinal * ENTRY_RECORD_SIZE
-			const parentCount = this.view.getUint16(recordPos + 20, true)
+			const recordPos = this.recordOffset(ordinal)
+			const parentCount = this.view.getUint16(recordPos + this.layout.parentCount, true)
 
 			if (parentCount === 0) break
-			const parentStart = this.view.getUint32(recordPos + 16, true)
-			const primary = this.view.getUint32(this.sections.parentTable + parentStart * 4, true)
+			const parentStart = this.view.getUint32(recordPos + this.layout.parentStart, true)
+			const primary = readID(this.view, this.sections.parentTable + parentStart * this.layout.idBytes, this.layout)
 
 			// A seal rejects primary-parent cycles, so this guard only trips on a corrupt artifact.
 			if (seen.has(primary)) break
@@ -248,12 +259,13 @@ export class Ancestrie implements AncestrieReaderLike {
 		const descendantOrdinal = this.ordinalOf(descendantID)
 
 		if (ancestorOrdinal < 0 || descendantOrdinal < 0) return false
-		const ancestorPos = this.sections.entryTable + ancestorOrdinal * ENTRY_RECORD_SIZE
-		const descendantPos = this.sections.entryTable + descendantOrdinal * ENTRY_RECORD_SIZE
+		const ancestorPos = this.recordOffset(ancestorOrdinal)
+		const descendantPos = this.recordOffset(descendantOrdinal)
+		const { pre, post } = this.layout
 
 		return (
-			this.view.getUint32(ancestorPos + 4, true) <= this.view.getUint32(descendantPos + 4, true) &&
-			this.view.getUint32(descendantPos + 8, true) <= this.view.getUint32(ancestorPos + 8, true)
+			this.view.getUint32(ancestorPos + pre, true) <= this.view.getUint32(descendantPos + pre, true) &&
+			this.view.getUint32(descendantPos + post, true) <= this.view.getUint32(ancestorPos + post, true)
 		)
 	}
 
@@ -268,14 +280,14 @@ export class Ancestrie implements AncestrieReaderLike {
 		const ordinal = this.ordinalOf(id)
 
 		if (ordinal < 0) return []
-		const recordPos = this.sections.entryTable + ordinal * ENTRY_RECORD_SIZE
-		const pre = this.view.getUint32(recordPos + 4, true)
-		const post = this.view.getUint32(recordPos + 8, true)
+		const recordPos = this.recordOffset(ordinal)
+		const pre = this.view.getUint32(recordPos + this.layout.pre, true)
+		const post = this.view.getUint32(recordPos + this.layout.post, true)
 		const count = (post - pre - 1) / 2
 		const ids: number[] = new Array(count)
 
 		for (let i = 0; i < count; i++) {
-			ids[i] = this.view.getUint32(this.sections.entryTable + (ordinal + 1 + i) * ENTRY_RECORD_SIZE, true)
+			ids[i] = readID(this.view, this.recordOffset(ordinal + 1 + i), this.layout)
 		}
 
 		return ids
@@ -322,10 +334,10 @@ export class Ancestrie implements AncestrieReaderLike {
 
 		while (lo <= hi) {
 			const mid = (lo + hi) >>> 1
-			const indexPos = this.sections.idIndex + mid * ID_INDEX_ENTRY_SIZE
-			const candidate = this.view.getUint32(indexPos, true)
+			const indexPos = this.sections.idIndex + mid * this.layout.idIndexEntrySize
+			const candidate = readID(this.view, indexPos, this.layout)
 
-			if (candidate === id) return this.view.getUint32(indexPos + 4, true)
+			if (candidate === id) return this.view.getUint32(indexPos + this.layout.idIndexOrdinal, true)
 
 			if (candidate < id) {
 				lo = mid + 1
@@ -342,25 +354,26 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	private recordAt(ordinal: number): AncestrieRecord {
-		const recordPos = this.sections.entryTable + ordinal * ENTRY_RECORD_SIZE
-		const parentStart = this.view.getUint32(recordPos + 16, true)
-		const parentCount = this.view.getUint16(recordPos + 20, true)
-		const flags = this.view.getUint16(recordPos + 22, true)
+		const layout = this.layout
+		const recordPos = this.recordOffset(ordinal)
+		const parentStart = this.view.getUint32(recordPos + layout.parentStart, true)
+		const parentCount = this.view.getUint16(recordPos + layout.parentCount, true)
+		const flags = this.view.getUint16(recordPos + layout.flags, true)
 		const parentIDs: number[] = new Array(parentCount)
 
 		for (let i = 0; i < parentCount; i++) {
-			parentIDs[i] = this.view.getUint32(this.sections.parentTable + (parentStart + i) * 4, true)
+			parentIDs[i] = readID(this.view, this.sections.parentTable + (parentStart + i) * layout.idBytes, layout)
 		}
 
 		const record: AncestrieRecord = {
-			id: this.view.getUint32(recordPos, true),
-			rank: this.view.getFloat32(recordPos + 12, true),
+			id: readID(this.view, recordPos, layout),
+			rank: this.view.getFloat32(recordPos + layout.rank, true),
 			parentIDs,
 		}
 
 		if ((flags & ENTRY_FLAG_HAS_PAYLOAD) === ENTRY_FLAG_HAS_PAYLOAD) {
-			const payloadStart = this.sections.payloadBlob + this.view.getUint32(recordPos + 24, true)
-			const payloadLen = this.view.getUint32(recordPos + 28, true)
+			const payloadStart = this.sections.payloadBlob + this.view.getUint32(recordPos + layout.payloadStart, true)
+			const payloadLen = this.view.getUint32(recordPos + layout.payloadLength, true)
 			const payloadBytes = this.bytes.subarray(payloadStart, payloadStart + payloadLen)
 
 			record.payload =

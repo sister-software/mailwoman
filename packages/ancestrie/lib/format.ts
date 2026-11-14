@@ -32,9 +32,11 @@
  *   Refs within a state are sorted rank-descending then id-ascending, so a reader's
  *   top-k at a state is its first k refs — no query-time sort.
  *
- *   entry table [entryCount × 32 bytes] id u32 pre u32 post u32 rank f32 parentStart u32 index
+ *   entry table [entryCount × 40 bytes] id f64 pre u32 post u32 rank f32 parentStart u32 index
  *   into parent table parentCount u16 flags u16 (bit0 = has payload, bit1 = payload is JSON)
- *   payloadStart u32 byte offset into payload blob payloadLen u32.
+ *   payloadStart u32 byte offset into payload blob payloadLen u32, then 4 bytes of padding.
+ *   Version 1 stores the id as u32 in a 32-byte record; `ancestrieLayout` holds both layouts.
+ *
  *   Records are stored in PRE-order of the interval forest, so the descendants of ordinal i are
  *   exactly the ordinals i+1 .. i+(post−pre−1)/2 — descendant enumeration is a contiguous range scan.
  *
@@ -55,10 +57,11 @@
  *   forest root (the declared id is still stored).
  *   A cycle in the primary-parent graph fails the seal.
  *
- *   parent table [parentIDCount × 4 bytes] u32 parent ids, concatenated per entry in entry-table
- *   order, each entry's list in the order given at build time (`parentIDs[0]` first).
+ *   parent table [parentIDCount × 8 bytes] f64 parent ids (u32 in version 1), concatenated per entry
+ *   in entry-table order, each entry's list in the order given at build time (`parentIDs[0]` first).
  *
- *   ID index [entryCount × 8 bytes] id u32, ordinal u32 — sorted by id ascending for binary search.
+ *   ID index [entryCount × 16 bytes] id f64, ordinal u32, 4 bytes of padding
+ *   (version 1: id u32, ordinal u32) — sorted by id ascending for binary search.
  *
  *   payload blob [payloadBytes] concatenated payload bytes in entry-table order,
  *   zero-padded to a 4-byte boundary.
@@ -89,7 +92,114 @@ export const ANCESTRIE_MAGIC: readonly number[] = [0x41, 0x4e, 0x43, 0x54]
  *
  * Published so a freshness guard can call an older artifact format-stale without re-typing the number.
  */
-export const ANCESTRIE_FORMAT_VERSION = 1
+export const ANCESTRIE_FORMAT_VERSION = 2
+
+/**
+ * The format version that widened every entry id and parent id from u32 to f64.
+ *
+ * A WOF id from the `mailwoman` fork range starts at 9,895,000,000, above the u32 maximum,
+ * and `DataView.setUint32` stores such a value modulo 2^32 without an error, as a different id.
+ * An f64 holds every integer up to 2^53 exactly.
+ */
+export const VERSION_WIDE_IDS = 2
+
+/**
+ * Where each field of an entry record sits, and how wide ids are, for one format version.
+ */
+export interface AncestrieLayout {
+	/**
+	 * 8 for f64 ids, 4 for u32 ids, in the entry, parent and id-index tables alike.
+	 */
+	idBytes: 4 | 8
+	recordSize: number
+	pre: number
+	post: number
+	rank: number
+	parentStart: number
+	parentCount: number
+	flags: number
+	payloadStart: number
+	payloadLength: number
+	/**
+	 * The size of one id-index entry, and the ordinal's offset inside it.
+	 */
+	idIndexEntrySize: number
+	idIndexOrdinal: number
+}
+
+/**
+ * The record layout of format `version`.
+ */
+export function ancestrieLayout(version: number): AncestrieLayout {
+	if (version >= VERSION_WIDE_IDS) {
+		return {
+			idBytes: 8,
+			// 36 bytes of fields, padded to 40 so each record's f64 id starts on an 8-byte boundary.
+			recordSize: 40,
+			pre: 8,
+			post: 12,
+			rank: 16,
+			parentStart: 20,
+			parentCount: 24,
+			flags: 26,
+			payloadStart: 28,
+			payloadLength: 32,
+			idIndexEntrySize: 16,
+			idIndexOrdinal: 8,
+		}
+	}
+
+	return {
+		idBytes: 4,
+		recordSize: 32,
+		pre: 4,
+		post: 8,
+		rank: 12,
+		parentStart: 16,
+		parentCount: 20,
+		flags: 22,
+		payloadStart: 24,
+		payloadLength: 28,
+		idIndexEntrySize: 8,
+		idIndexOrdinal: 4,
+	}
+}
+
+/**
+ * The width of an f64 id field, the {@link VERSION_WIDE_IDS} layout's.
+ */
+const WIDE_ID_BYTES = 8
+
+/**
+ * The largest id a version 1 u32 id field holds.
+ */
+const NARROW_ID_MAX = 0xff_ff_ff_ff
+
+/**
+ * Reads an id stored at `offset` in `layout`'s width.
+ */
+export function readID(view: DataView, offset: number, layout: AncestrieLayout): number {
+	return layout.idBytes === WIDE_ID_BYTES ? view.getFloat64(offset, true) : view.getUint32(offset, true)
+}
+
+/**
+ * Writes `id` at `offset` in `layout`'s width.
+ *
+ * @throws When `id` isn't a safe integer, or doesn't fit a u32 layout, rather than storing another id.
+ */
+export function writeID(view: DataView, offset: number, id: number, layout: AncestrieLayout): void {
+	const wide = layout.idBytes === WIDE_ID_BYTES
+
+	if (!Number.isSafeInteger(id) || id < 0 || (!wide && id > NARROW_ID_MAX)) {
+		throw new RangeError(`ancestrie: id ${id} does not fit a ${wide ? "64" : "32"}-bit id field`)
+	}
+
+	if (wide) {
+		view.setFloat64(offset, id, true)
+	} else {
+		view.setUint32(offset, id, true)
+	}
+}
 
 /**
  * Fixed header size in bytes: magic, version, flags plus the nine following u32 fields.
@@ -110,16 +220,6 @@ export const EDGE_ENTRY_SIZE = 8
  * Entry-ref-table entry: one u32 ordinal into the entry table.
  */
 export const ENTRY_REF_SIZE = 4
-
-/**
- * Entry-table record: id, pre/post interval labels, rank, parent-list range, flags, payload range.
- */
-export const ENTRY_RECORD_SIZE = 32
-
-/**
- * ID-index entry: (id, ordinal) pair for binary search.
- */
-export const ID_INDEX_ENTRY_SIZE = 8
 
 /**
  * Entry flags bit 0: this entry contains a payload.
@@ -184,21 +284,21 @@ export interface AncestrieSections {
 }
 
 /**
- * Compute every section offset from the header counts.
+ * Compute every section offset from the header counts and the layout of the file's version.
  *
  * The single source of section math.
  * The builder sizes and writes with it, the reader locates with it, so the two ends cannot drift.
  */
-export function computeSections(counts: AncestrieCounts): AncestrieSections {
+export function computeSections(counts: AncestrieCounts, layout: AncestrieLayout): AncestrieSections {
 	const stringOffsets = HEADER_SIZE
 	const stringData = stringOffsets + (counts.stringCount + 1) * 4
 	const stateTable = stringData + align4(counts.stringBytes)
 	const edgeTable = stateTable + counts.stateCount * STATE_ENTRY_SIZE
 	const entryRefTable = edgeTable + counts.edgeCount * EDGE_ENTRY_SIZE
 	const entryTable = entryRefTable + counts.entryRefCount * ENTRY_REF_SIZE
-	const parentTable = entryTable + counts.entryCount * ENTRY_RECORD_SIZE
-	const idIndex = parentTable + counts.parentIDCount * 4
-	const payloadBlob = idIndex + counts.entryCount * ID_INDEX_ENTRY_SIZE
+	const parentTable = entryTable + counts.entryCount * layout.recordSize
+	const idIndex = parentTable + counts.parentIDCount * layout.idBytes
+	const payloadBlob = idIndex + counts.entryCount * layout.idIndexEntrySize
 	const end = payloadBlob + align4(counts.payloadBytes)
 
 	return {

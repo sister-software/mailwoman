@@ -34,6 +34,8 @@ const VOCABULARY = [
 function randomMatcher(seed: number, stateCount: number, withAmbiguity: boolean): FSTMatcher {
 	const random = mulberry32(seed)
 	const pick = <T>(values: readonly T[]): T => values[Math.floor(random() * values.length)]!
+	// A fifth of the ids come from the `mailwoman` fork range, above the u32 maximum.
+	const randomID = () => (random() < 0.2 ? 9_895_000_000 + Math.floor(random() * 1e6) : Math.floor(random() * 2 ** 31))
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	for (let stateID = 1; stateID < stateCount; stateID++) {
@@ -52,10 +54,10 @@ function randomMatcher(seed: number, stateCount: number, withAmbiguity: boolean)
 
 		for (let index = 0; index < placeCount; index++) {
 			places.push({
-				wofID: Math.floor(random() * 2 ** 31),
+				wofID: randomID(),
 				placetype: pick(PLACETYPE_ORDER),
 				name: `${token} ${index}`,
-				parentChain: Array.from({ length: Math.floor(random() * 6) }, () => Math.floor(random() * 2 ** 31)),
+				parentChain: Array.from({ length: Math.floor(random() * 6) }, randomID),
 				referential: Math.fround(random()),
 				encyclopedic: random() < 0.5 ? Math.fround(random()) : null,
 				lat: Math.fround(random() * 180 - 90),
@@ -102,5 +104,30 @@ describe("BinaryFSTMatcher", () => {
 
 		expect(matcher.query("New York")).toEqual(deserializeFST(bytes).query("New York"))
 		expect(matcher.query("new jersey")).toMatchObject({ path: ["new"], stateID: 1 })
+	})
+
+	test("keeps a WOF id above the u32 maximum, and its parent ids, through both readers", () => {
+		const fivePoints: PlaceEntry = {
+			wofID: 9_895_000_000,
+			placetype: "neighbourhood",
+			name: "five points",
+			parentChain: [9_895_000_001, 101_713_359],
+			referential: 0,
+			encyclopedic: null,
+			lat: Math.fround(41.084779),
+			lon: Math.fround(-81.53583),
+			crossCountryBranches: null,
+		}
+
+		const bytes = serializeFST(
+			FSTMatcher.fromNodes([
+				{ edges: new Map([["five", 1]]), places: [] },
+				{ edges: new Map([["points", 2]]), places: [] },
+				{ edges: new Map(), places: [fivePoints] },
+			])
+		)
+
+		expect(deserializeFST(bytes).query("five points").accepting).toEqual([fivePoints])
+		expect(new BinaryFSTMatcher(bytes).query("five points").accepting).toEqual([fivePoints])
 	})
 })

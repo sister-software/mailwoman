@@ -15,7 +15,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, test } from "vitest"
 
-import { deserializeFSTWeb, readFSTProvenanceWeb } from "#fst"
+import { deserializeFSTWeb, FST_FORMAT_VERSION, readFSTProvenanceWeb } from "#fst"
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
@@ -343,13 +343,12 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 0 unsupported/i)
 })
 
-test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
-	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is rejected.
-	// This assertion is why the check stops drifting.
+test("deserializeFSTWeb: a version above the serializer's is rejected", () => {
+	// The reader accepts every version up to FST_FORMAT_VERSION, the serializer's, and rejects the next.
 	// It fails the moment the serializer bumps and the reader's check doesn't.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
-	new DataView(bytes.buffer).setUint16(4, 6, true)
-	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)
+	new DataView(bytes.buffer).setUint16(4, FST_FORMAT_VERSION + 1, true)
+	expect(() => deserializeFSTWeb(bytes)).toThrow(new RegExp(`version ${FST_FORMAT_VERSION + 1} unsupported`, "i"))
 })
 
 // #endregion

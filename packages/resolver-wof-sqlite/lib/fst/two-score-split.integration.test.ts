@@ -11,17 +11,7 @@
 import { describe, expect, it } from "vitest"
 
 import { fstStaleReason, FSTMatcher, type FSTNode, deserializeFST, FST_FORMAT_VERSION, serializeFST } from "#fst"
-
-/**
- * The v4 place-entry stride, hard-coded because {@link downgradeToV4} must write
- * bytes the current serializer no longer can.
- */
-const V4_PLACE_ENTRY_SIZE = 56
-
-/**
- * The v5 place-entry stride.
- */
-const V5_PLACE_ENTRY_SIZE = 60
+import { idTableOffset, placeEntryLayout, readIDTable } from "#fst/format"
 
 /**
  * A one-place matcher carrying `referential` and, optionally, `encyclopedic`,
@@ -52,27 +42,51 @@ function splitMatcher(encyclopedic?: number): FSTMatcher {
 }
 
 /**
- * Rewrite a v5 buffer's place table at the v4 stride (no encyclopedic float) and stamp the header back
- * to 4, the only way to produce a byte-accurate pre-split artifact now that the serializer writes v5.
+ * Rewrite a current-version buffer's place table in the v4 layout
+ * (u32 ids, without the encyclopedic float) and stamp the header back to 4.
+ *
+ * That rewrite is the only way to produce a byte-accurate pre-split artifact now
+ * that the serializer writes a later version.
  */
-function downgradeToV4(v5: Buffer): Buffer {
+function downgradeToV4(current: Buffer): Buffer {
 	const headerSize = 32
 	const stateEntrySize = 16
 	const edgeEntrySize = 8
-	const stateCount = v5.readUInt32LE(8)
-	const edgeCount = v5.readUInt32LE(12)
-	const placeCount = v5.readUInt32LE(16)
-	const stringCount = v5.readUInt32LE(20)
-	const stringBytes = v5.readUInt32LE(24)
+	const from = placeEntryLayout(FST_FORMAT_VERSION)
+	const to = placeEntryLayout(4)
+	const stateCount = current.readUInt32LE(8)
+	const edgeCount = current.readUInt32LE(12)
+	const placeCount = current.readUInt32LE(16)
+	const stringCount = current.readUInt32LE(20)
+	const stringBytes = current.readUInt32LE(24)
 	const stringTableSize = (stringCount + 1) * 4 + stringBytes
 	const placeTableStart = headerSize + stringTableSize + stateCount * stateEntrySize + edgeCount * edgeEntrySize
-	const out = Buffer.alloc(placeTableStart + placeCount * V4_PLACE_ENTRY_SIZE)
-	v5.subarray(0, placeTableStart).copy(out, 0)
+	const out = Buffer.alloc(placeTableStart + placeCount * to.size)
+	current.subarray(0, placeTableStart).copy(out, 0)
+
+	const view = new DataView(current.buffer, current.byteOffset, current.byteLength)
+	const ids = readIDTable(view, idTableOffset(placeTableStart, placeCount, from), from)
+	const id = (offset: number) => (ids ? ids[current.readUInt32LE(offset)]! : current.readUInt32LE(offset))
 
 	for (let i = 0; i < placeCount; i++) {
-		const from = placeTableStart + i * V5_PLACE_ENTRY_SIZE
+		const source = placeTableStart + i * from.size
+		const target = placeTableStart + i * to.size
 
-		v5.subarray(from, from + V4_PLACE_ENTRY_SIZE).copy(out, placeTableStart + i * V4_PLACE_ENTRY_SIZE)
+		out.writeUInt32LE(id(source), target)
+
+		for (const field of ["placetype", "chainLength", "crossCountryBranches", "flags"] as const) {
+			out.writeUInt8(current.readUInt8(source + from[field]), target + to[field])
+		}
+
+		out.writeUInt32LE(current.readUInt32LE(source + from.name), target + to.name)
+
+		for (const field of ["referential", "latitude", "longitude"] as const) {
+			out.writeFloatLE(current.readFloatLE(source + from[field]), target + to[field])
+		}
+
+		for (let slot = 0; slot < 8; slot++) {
+			out.writeUInt32LE(id(source + from.chain + slot * 4), target + to.chain + slot * 4)
+		}
 	}
 
 	out.writeUInt16LE(4, 4)

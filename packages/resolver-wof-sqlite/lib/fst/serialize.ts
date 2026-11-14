@@ -14,9 +14,10 @@
  *     4 the entry is 12 bytes with u16 counts.
  *   - Edge table, 8 bytes per edge: stringIdx u32, targetState u32.
  *   - Place table, 60 bytes per place: wofID u32, placetypeIdx u8, chainLen u8, crossCountryBranches u8,
- *     placeFlags u8 (bit 0 means `encyclopedic` is present), nameIdx u32, referential f32, lat f32, lon f32.
- *     Each entry then stores eight u32 parent ids. Version 5 added encyclopedic f32. Earlier entries contain 56 bytes.
- *     Those entries have no encyclopedic score.
+ *     placeFlags u8 (bit 0 means `encyclopedic` is present), nameIdx u32, referential f32, lat f32, lon f32,
+ *     eight u32 parent ids, encyclopedic f32. From version 6 the wofID and parent-id fields are indices into
+ *     the id table. Before version 5 the entry is 56 bytes with no encyclopedic score.
+ *   - Id table, from version 6: a u32 count, then one f64 WOF id per distinct id, ascending.
  *   - Provenance trailer: a u32 length followed by JSON.
  *
  *   Presence bits keep a missing value distinct from a stored zero.
@@ -25,17 +26,18 @@
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 
 import {
+	decodePlaceEntry,
+	idTableOffset,
+	readIDTable,
 	EDGE_ENTRY_SIZE,
-	ENCYCLOPEDIC_OFFSET,
 	FST_FORMAT_VERSION,
 	FST_MAGIC_BYTES,
 	HEADER_SIZE,
-	LEGACY_PLACE_ENTRY_SIZE,
 	NARROW_STATE_ENTRY_SIZE,
+	PARENT_CHAIN_SLOTS,
 	PLACE_FLAG_HAS_ENCYCLOPEDIC,
 	PLACETYPE_ORDER,
-	SPLIT_PLACE_ENTRY_SIZE,
-	VERSION_TWO_SCORE_SPLIT,
+	placeEntryLayout,
 	VERSION_WIDE_STATE_COUNTERS,
 	VERSION_WITH_METADATA,
 	WIDE_STATE_ENTRY_SIZE,
@@ -47,11 +49,46 @@ import type { FSTProvenance, PlaceEntry } from "#fst/types"
 const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**
- * The longest parent chain stored per place.
- *
- * The writer keeps the first eight valid parent ids and drops the rest.
+ * The place-entry layout this writer emits.
  */
-const MAX_CHAIN_LEN = 8
+const PLACE_LAYOUT = placeEntryLayout(FST_FORMAT_VERSION)
+
+/**
+ * The id table for `nodes`: every place's id and its first {@link PARENT_CHAIN_SLOTS}
+ * valid parent ids, distinct and ascending, with each id's index.
+ *
+ * @throws When an id isn't a safe integer.
+ * An f64 holds only safe integers exactly.
+ */
+function buildIDTable(nodes: readonly FSTNode[]): { ids: number[]; indexOf: Map<number, number> } {
+	const distinct = new Set<number>()
+
+	for (const node of nodes) {
+		for (const place of node.places) {
+			distinct.add(place.wofID)
+
+			for (const id of validParentChain(place.parentChain)) {
+				distinct.add(id)
+			}
+		}
+	}
+
+	const ids = [...distinct].toSorted((a, b) => a - b)
+
+	for (const id of ids) {
+		if (!Number.isSafeInteger(id)) throw new RangeError(`serializeFST: WOF id ${id} is not a safe integer`)
+	}
+
+	return { ids, indexOf: new Map(ids.map((id, index) => [id, index])) }
+}
+
+/**
+ * The parent ids a place entry stores: the first eight positive ids,
+ * since WOF uses negative ids such as -1 as sentinels.
+ */
+function validParentChain(chain: readonly number[]): number[] {
+	return chain.filter((id) => id > 0).slice(0, PARENT_CHAIN_SLOTS)
+}
 
 const placetypeToIdx = new Map<string, number>(PLACETYPE_ORDER.map((placetype, index) => [placetype, index]))
 
@@ -100,10 +137,12 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const stringTableSize = (strings.length + 1) * 4 + stringBytes
 	const stateTableSize = nodes.length * WIDE_STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
-	const placeTableSize = totalPlaces * SPLIT_PLACE_ENTRY_SIZE
+	const placeTableSize = totalPlaces * PLACE_LAYOUT.size
+	const idTable = buildIDTable(nodes)
+	const idTableSize = 4 + idTable.ids.length * 8
 	const provenanceJson = provenance ? Buffer.from(stringifyJSON(provenance), "utf8") : null
 	const provenanceSize = provenanceJson ? 4 + provenanceJson.length : 0
-	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
+	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize + idTableSize
 	const totalSize = binarySize + provenanceSize
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
@@ -172,31 +211,42 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		}
 
 		for (const place of node.places) {
-			const pp = placeTableStart + placeIdx * SPLIT_PLACE_ENTRY_SIZE
-			// WOF uses negative parent ids such as -1 as sentinels.
-			const validChain = place.parentChain.filter((id) => id > 0)
-			const chainLen = Math.min(validChain.length, MAX_CHAIN_LEN)
-			buf.writeUInt32LE(place.wofID, pp)
-			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
-			buf.writeUInt8(chainLen, pp + 5)
-			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
+			const pp = placeTableStart + placeIdx * PLACE_LAYOUT.size
+			const validChain = validParentChain(place.parentChain)
+			const chainLen = validChain.length
+			buf.writeUInt32LE(idTable.indexOf.get(place.wofID)!, pp)
+			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + PLACE_LAYOUT.placetype)
+			buf.writeUInt8(chainLen, pp + PLACE_LAYOUT.chainLength)
+
+			buf.writeUInt8(
+				hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0,
+				pp + PLACE_LAYOUT.crossCountryBranches
+			)
+
 			// An absent encyclopedic score writes flag 0 and a 0.0 float.
 			// Readers skip the float when the flag is 0.
 			const hasEncyclopedic = place.encyclopedic != null
-			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
-			buf.writeUInt32LE(intern(place.name), pp + 8)
-			buf.writeFloatLE(place.referential, pp + 12)
-			buf.writeFloatLE(place.lat, pp + 16)
-			buf.writeFloatLE(place.lon, pp + 20)
+			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + PLACE_LAYOUT.flags)
+			buf.writeUInt32LE(intern(place.name), pp + PLACE_LAYOUT.name)
+			buf.writeFloatLE(place.referential, pp + PLACE_LAYOUT.referential)
+			buf.writeFloatLE(place.lat, pp + PLACE_LAYOUT.latitude)
+			buf.writeFloatLE(place.lon, pp + PLACE_LAYOUT.longitude)
 
-			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
-				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
+			for (let ci = 0; ci < PARENT_CHAIN_SLOTS; ci++) {
+				buf.writeUInt32LE(ci < chainLen ? idTable.indexOf.get(validChain[ci]!)! : 0, pp + PLACE_LAYOUT.chain + ci * 4)
 			}
 
-			buf.writeFloatLE(place.encyclopedic ?? 0, pp + ENCYCLOPEDIC_OFFSET)
+			buf.writeFloatLE(place.encyclopedic ?? 0, pp + PLACE_LAYOUT.encyclopedic!)
 
 			placeIdx++
 		}
+	}
+
+	const idTableStart = idTableOffset(placeTableStart, totalPlaces, PLACE_LAYOUT)
+	buf.writeUInt32LE(idTable.ids.length, idTableStart)
+
+	for (const [index, id] of idTable.ids.entries()) {
+		buf.writeDoubleLE(id, idTableStart + 4 + index * 8)
 	}
 
 	if (provenanceJson) {
@@ -223,13 +273,13 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		throw new Error(`FST version ${version} unsupported (expected 1..${FST_FORMAT_VERSION})`)
 	}
 
-	const isV2 = version >= 2
-	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
 	const hasAmbiguity = (buf.readUInt16LE(6) & 1) === 1
+	const placeLayout = placeEntryLayout(version)
+	const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
 
 	const stateCount = buf.readUInt32LE(8)
 	const edgeCount = buf.readUInt32LE(12)
-	const _placeCount = buf.readUInt32LE(16)
+	const placeCount = buf.readUInt32LE(16)
 	const stringCount = buf.readUInt32LE(20)
 	const stringBytes = buf.readUInt32LE(24)
 
@@ -254,10 +304,10 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 	pos += stringBytes
 
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
-	const placeEntrySize = version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
+	const ids = readIDTable(view, idTableOffset(placeTableStart, placeCount, placeLayout), placeLayout)
 
 	const nodes: FSTNode[] = new Array(stateCount)
 
@@ -284,36 +334,15 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const places: PlaceEntry[] = new Array(placeCountForState)
 
 		for (let pi = 0; pi < placeCountForState; pi++) {
-			const pp = placeTableStart + (placeStart + pi) * placeEntrySize
-			const chainLen = buf.readUInt8(pp + 5)
-			const parentChain: number[] = []
-
-			for (let ci = 0; ci < chainLen; ci++) {
-				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
-			}
-
-			// Version 1 stored a raw population u32 here.
-			// This version maps it through the `referentialFromPopulation` curve.
-			// Later versions store an f32 score.
-			const referential = isV2
-				? buf.readFloatLE(pp + 12)
-				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
-
-			// Files before version 5 have no encyclopedic score, so their reserved byte isn't read as a flag.
-			const hasEncyclopedic =
-				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
-
-			places[pi] = {
-				wofID: buf.readUInt32LE(pp),
-				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",
-				name: strings[buf.readUInt32LE(pp + 8)]!,
-				referential,
-				lat: buf.readFloatLE(pp + 16),
-				lon: buf.readFloatLE(pp + 20),
-				parentChain,
-				crossCountryBranches: hasAmbiguity ? buf.readUInt8(pp + 6) : null,
-				encyclopedic: hasEncyclopedic ? buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) : null,
-			}
+			places[pi] = decodePlaceEntry(
+				view,
+				placeTableStart + (placeStart + pi) * placeLayout.size,
+				version,
+				placeLayout,
+				hasAmbiguity,
+				(index) => strings[index]!,
+				ids
+			)
 		}
 
 		nodes[si] = { edges, places }

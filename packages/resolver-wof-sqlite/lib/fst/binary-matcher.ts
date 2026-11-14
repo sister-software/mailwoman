@@ -16,17 +16,16 @@ import type { AncestrieMatch } from "@mailwoman/ancestrie"
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 
 import {
+	decodePlaceEntry,
+	idTableOffset,
+	readIDTable,
 	EDGE_ENTRY_SIZE,
-	ENCYCLOPEDIC_OFFSET,
 	FST_FORMAT_VERSION,
 	FST_MAGIC_BYTES,
 	HEADER_SIZE,
-	LEGACY_PLACE_ENTRY_SIZE,
 	NARROW_STATE_ENTRY_SIZE,
-	PLACE_FLAG_HAS_ENCYCLOPEDIC,
-	PLACETYPE_ORDER,
-	SPLIT_PLACE_ENTRY_SIZE,
-	VERSION_TWO_SCORE_SPLIT,
+	placeEntryLayout,
+	type PlaceEntryLayout,
 	VERSION_WIDE_STATE_COUNTERS,
 	WIDE_STATE_ENTRY_SIZE,
 } from "#fst/format"
@@ -71,10 +70,13 @@ export class BinaryFSTMatcher {
 	readonly #decoder = new TextDecoder("utf-8")
 	readonly #version: number
 	readonly #isWide: boolean
-	readonly #isSplit: boolean
 	readonly #hasAmbiguity: boolean
 	readonly #stateEntrySize: number
-	readonly #placeEntrySize: number
+	readonly #placeLayout: PlaceEntryLayout
+	/**
+	 * The file's id table, or `null` for a file that stores WOF ids in its place entries.
+	 */
+	readonly #ids: Float64Array | null
 	readonly #stringDataStart: number
 	readonly #stateTableStart: number
 	readonly #edgeTableStart: number
@@ -106,12 +108,10 @@ export class BinaryFSTMatcher {
 		this.#view = view
 		this.#version = version
 		this.#isWide = version >= VERSION_WIDE_STATE_COUNTERS
-		this.#isSplit = version >= VERSION_TWO_SCORE_SPLIT
 		// Flags bit 0, as `serializeFST` writes it: place rows include surface-ambiguity data.
 		this.#hasAmbiguity = (view.getUint16(6, true) & 1) === 1
 		this.#stateEntrySize = this.#isWide ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
-		// Version 5 grew the place entry by the encyclopedic float.
-		this.#placeEntrySize = this.#isSplit ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
+		this.#placeLayout = placeEntryLayout(version)
 
 		const stateCount = view.getUint32(8, true)
 		const edgeCount = view.getUint32(12, true)
@@ -129,6 +129,12 @@ export class BinaryFSTMatcher {
 		this.#stateTableStart = this.#stringDataStart + stringBytes
 		this.#edgeTableStart = this.#stateTableStart + stateCount * this.#stateEntrySize
 		this.#placeTableStart = this.#edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
+
+		this.#ids = readIDTable(
+			view,
+			idTableOffset(this.#placeTableStart, view.getUint32(16, true), this.#placeLayout),
+			this.#placeLayout
+		)
 
 		this.#tokenSlots = new Int32Array(tableCapacity(stringCount)).fill(EMPTY_SLOT)
 
@@ -346,35 +352,14 @@ export class BinaryFSTMatcher {
 	}
 
 	#placeAt(placeIndex: number): PlaceEntry {
-		const view = this.#view
-		const entry = this.#placeTableStart + placeIndex * this.#placeEntrySize
-		const chainLength = view.getUint8(entry + 5)
-		const parentChain: number[] = new Array(chainLength)
-
-		for (let index = 0; index < chainLength; index++) {
-			parentChain[index] = view.getUint32(entry + 24 + index * 4, true)
-		}
-
-		// Version 1 stored a raw population u32 here, and later versions store the referential score.
-		// `deserializeFST` explains why a version 1 value converts to the referential score this way.
-		const referential =
-			this.#version >= 2
-				? view.getFloat32(entry + 12, true)
-				: Math.min(1, Math.log2(1 + view.getUint32(entry + 12, true) / 1000) / 14)
-
-		const hasEncyclopedic =
-			this.#isSplit && (view.getUint8(entry + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
-
-		return {
-			wofID: view.getUint32(entry, true),
-			placetype: PLACETYPE_ORDER[view.getUint8(entry + 4)] ?? "locality",
-			name: this.#string(view.getUint32(entry + 8, true)),
-			referential,
-			lat: view.getFloat32(entry + 16, true),
-			lon: view.getFloat32(entry + 20, true),
-			parentChain,
-			crossCountryBranches: this.#hasAmbiguity ? view.getUint8(entry + 6) : null,
-			encyclopedic: hasEncyclopedic ? view.getFloat32(entry + ENCYCLOPEDIC_OFFSET, true) : null,
-		}
+		return decodePlaceEntry(
+			this.#view,
+			this.#placeTableStart + placeIndex * this.#placeLayout.size,
+			this.#version,
+			this.#placeLayout,
+			this.#hasAmbiguity,
+			(index) => this.#string(index),
+			this.#ids
+		)
 	}
 }

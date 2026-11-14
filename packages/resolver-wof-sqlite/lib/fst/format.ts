@@ -10,7 +10,7 @@
  *   Both runtimes convert {@link FST_MAGIC_BYTES} themselves.
  */
 
-import type { PlacetypeID } from "#fst/types"
+import type { PlaceEntry, PlacetypeID } from "#fst/types"
 
 /**
  * Format version this tree writes and the maximum either deserializer accepts, published
@@ -27,7 +27,7 @@ import type { PlacetypeID } from "#fst/types"
  *
  * A check that's the writer's version cannot drift from it.
  */
-export const FST_FORMAT_VERSION = 5
+export const FST_FORMAT_VERSION = 6
 
 /**
  * Fixed header size in bytes.
@@ -75,18 +75,155 @@ export const VERSION_TWO_SCORE_SPLIT = 5
 /**
  * Place-entry size in bytes at or above {@link VERSION_TWO_SCORE_SPLIT}.
  */
-export const SPLIT_PLACE_ENTRY_SIZE = 60
+const SPLIT_PLACE_ENTRY_SIZE = 60
 
 /**
  * Place-entry size in bytes below {@link VERSION_TWO_SCORE_SPLIT}.
  */
-export const LEGACY_PLACE_ENTRY_SIZE = 56
+const LEGACY_PLACE_ENTRY_SIZE = 56
 
 /**
- * Byte offset of the encyclopedic float inside a v5 place entry — immediately
- * after the 8-slot parent chain.
+ * Format version that moved WOF ids into an id table.
+ *
+ * A place entry's id and its parent ids are u32 indices into the table.
+ * The table follows the place table as a u32 count and one f64 per distinct id in ascending order.
+ *
+ * The `mailwoman` fork's WOF records take ids from 9,895,000,000, above the u32 maximum of 4,294,967,295.
+ *
+ * An f64 holds every integer up to 2^53 exactly.
+ * Each distinct id is stored once, so a file grows by 8 bytes per distinct id
+ * rather than by 36 bytes per place entry.
  */
-export const ENCYCLOPEDIC_OFFSET = 56
+export const VERSION_ID_TABLE = 6
+
+/**
+ * The number of parent-id slots in every place entry.
+ */
+export const PARENT_CHAIN_SLOTS = 8
+
+/**
+ * Where each field of a place entry sits, in bytes from the entry's start, for one format version.
+ */
+export interface PlaceEntryLayout {
+	size: number
+	/**
+	 * Whether the id fields hold indices into the id table ({@link VERSION_ID_TABLE}) rather than WOF ids.
+	 */
+	idTable: boolean
+	placetype: number
+	chainLength: number
+	crossCountryBranches: number
+	flags: number
+	name: number
+	referential: number
+	latitude: number
+	longitude: number
+	chain: number
+	/**
+	 * `null` before {@link VERSION_TWO_SCORE_SPLIT}, which had no encyclopedic score.
+	 */
+	encyclopedic: number | null
+}
+
+/**
+ * The place-entry layout of format `version`.
+ */
+export function placeEntryLayout(version: number): PlaceEntryLayout {
+	return {
+		size: version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE,
+		idTable: version >= VERSION_ID_TABLE,
+		placetype: 4,
+		chainLength: 5,
+		crossCountryBranches: 6,
+		flags: 7,
+		name: 8,
+		referential: 12,
+		latitude: 16,
+		longitude: 20,
+		chain: 24,
+		encyclopedic: version >= VERSION_TWO_SCORE_SPLIT ? 24 + PARENT_CHAIN_SLOTS * 4 : null,
+	}
+}
+
+/**
+ * The byte offset of the id table.
+ * The table starts where the place table ends.
+ */
+export function idTableOffset(placeTableStart: number, placeCount: number, layout: PlaceEntryLayout): number {
+	return placeTableStart + placeCount * layout.size
+}
+
+/**
+ * The WOF ids an id-table file stores, in table order, or `null` for a file
+ * before {@link VERSION_ID_TABLE}.
+ */
+export function readIDTable(view: DataView, offset: number, layout: PlaceEntryLayout): Float64Array | null {
+	if (!layout.idTable) return null
+	const count = view.getUint32(offset, true)
+	const ids = new Float64Array(count)
+
+	for (let index = 0; index < count; index++) {
+		ids[index] = view.getFloat64(offset + 4 + index * 8, true)
+	}
+
+	return ids
+}
+
+/**
+ * Decodes the place entry at byte `entry` of a format-`version` file.
+ *
+ * Both deserializers call this, so a layout change reaches the Node and the browser readers together.
+ * `string` resolves a string-table index.
+ *
+ * `ids` is the file's id table, `null` before {@link VERSION_ID_TABLE}.
+ * `hasAmbiguity` is the header's flag bit 0.
+ */
+export function decodePlaceEntry(
+	view: DataView,
+	entry: number,
+	version: number,
+	layout: PlaceEntryLayout,
+	hasAmbiguity: boolean,
+	string: (index: number) => string,
+	ids: Float64Array | null
+): PlaceEntry {
+	const readID = (offset: number) => {
+		const value = view.getUint32(entry + offset, true)
+
+		return ids ? ids[value]! : value
+	}
+
+	const chainLength = view.getUint8(entry + layout.chainLength)
+	const parentChain: number[] = new Array(chainLength)
+
+	for (let index = 0; index < chainLength; index++) {
+		parentChain[index] = readID(layout.chain + index * 4)
+	}
+
+	// Version 1 stored a raw population u32 where later versions store the referential score.
+	// It maps through the `referentialFromPopulation` curve.
+	const referential =
+		version >= 2
+			? view.getFloat32(entry + layout.referential, true)
+			: Math.min(1, Math.log2(1 + view.getUint32(entry + layout.referential, true) / 1000) / 14)
+
+	// Files before version 5 have no encyclopedic score, so their reserved flag byte isn't read.
+	const hasEncyclopedic =
+		layout.encyclopedic !== null &&
+		(view.getUint8(entry + layout.flags) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
+
+	return {
+		wofID: readID(0),
+		placetype: PLACETYPE_ORDER[view.getUint8(entry + layout.placetype)] ?? "locality",
+		name: string(view.getUint32(entry + layout.name, true)),
+		referential,
+		lat: view.getFloat32(entry + layout.latitude, true),
+		lon: view.getFloat32(entry + layout.longitude, true),
+		parentChain,
+		crossCountryBranches: hasAmbiguity ? view.getUint8(entry + layout.crossCountryBranches) : null,
+		encyclopedic: hasEncyclopedic ? view.getFloat32(entry + layout.encyclopedic!, true) : null,
+	}
+}
 
 /**
  * `placeFlags` bit 0 (byte `pp+7`, v5+): this place has an encyclopedic score.
