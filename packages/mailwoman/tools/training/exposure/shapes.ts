@@ -82,9 +82,15 @@ export interface SourceShapeRows {
  *
  * A row with no country, a zero-weighted country or no span tags is never drawn as a keyed row,
  * so it counts toward its source's total only when its country is admitted.
+ * An entry with `rows` stands for `rows` identical rows.
  */
 export function countSourceShapes(
-	rows: Iterable<{ source: string | null; country: string | null; spanTags: readonly string[] | null }>,
+	rows: Iterable<{
+		source: string | null
+		country: string | null
+		spanTags: readonly string[] | null
+		rows?: number
+	}>,
 	countryWeights: Readonly<Record<string, number>>
 ): Map<string, SourceShapeRows> {
 	const maxWeight = Math.max(0, ...Object.values(countryWeights))
@@ -95,7 +101,7 @@ export function countSourceShapes(
 
 		if (row.source == null || !(weight > 0)) continue
 
-		const admission = weight / maxWeight
+		const admission = (weight / maxWeight) * (row.rows ?? 1)
 		let entry = bySource.get(row.source)
 
 		if (!entry) {
@@ -118,6 +124,12 @@ export function countSourceShapes(
 /**
  * The draws the mixture intends per country–shape key over `draws` rows: each source's
  * requested share of the draws, spread over its keys in proportion to its rows.
+ *
+ * The intention is an expectation over seeds.
+ * One epoch streams a source's files one after another and its row groups in shuffled blocks,
+ * so a key held in a few row groups of a source read for less than one pass can draw far from it.
+ *
+ * A key flagged under-exposed is that variance or a sampler defect, and the report doesn't tell them apart.
  *
  * @throws For a requested source with no counted rows, since the sampler refuses one
  * and a missing count would otherwise read as an intention of zero.

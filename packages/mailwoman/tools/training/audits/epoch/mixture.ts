@@ -257,8 +257,11 @@ export interface ReceiptExpectation {
  * Expected draws for a receipt: `draws × share(source) × matching fraction`.
  *
  * The source's share is what its weight requests.
- * Within a source the sampler draws rows uniformly, so the receipt's matching
- * rows take their fraction of the source's draws.
+ * Over seeds, each of a source's rows is equally likely to be drawn, so the receipt's
+ * matching rows take their fraction of the source's draws in expectation.
+ *
+ * One epoch reads a source's files and row groups in shuffled blocks.
+ * A receipt whose rows sit in a few row groups therefore varies across seeds far more than a Poisson count.
  *
  * @throws When the receipt narrows its source and no population was counted for it,
  * so a missing count can't read as a zero expectation.

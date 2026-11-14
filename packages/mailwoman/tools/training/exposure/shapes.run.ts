@@ -7,7 +7,8 @@
  *   (`train.seed + 1`), the rows a run would consume over those draws. During a run, `--counts` reads the
  *   `exposure-shapes-<step>.json` the Rust trainer writes at each checkpoint.
  *
- *   `--intended` also derives the draws the config's weights intend per key, from one pass over the train split, and
+ *   `--intended` also derives the draws the config's weights intend per key, from one DuckDB count of the train split
+ *   (`train-shapes.ts`, `--memory-gb` caps it), and
  *   compares every key's consumed count with them. With `--counts` it still needs `--config` for the weights. The
  *   intention is at the draw level, while a trainer's counts include the augmented copies the emit step adds, so a key
  *   an augmentation writes reads as unintended and the drawn keys share the consumed rows with those copies.
@@ -18,19 +19,20 @@
  *   Usage:
  *     node packages/mailwoman/tools/training/exposure/shapes.run.ts --retention <SPLIT_RETENTION.json> \
  *       [--config <config>.yaml [--draws <n>] [--corpus-dir <dir>]] \
- *       [--counts <output_dir>/exposure-shapes-<step>.json] [--intended] --json <report.json>
+ *       [--counts <output_dir>/exposure-shapes-<step>.json] [--intended [--memory-gb <n>]] --json <report.json>
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
-import { mtfNode, type MTFNode } from "@mailwoman/mtf/tools/sampler/native"
+import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
+import { resolvePath } from "path-ts"
 
 import { drawnRows } from "../audits/census.ts"
 import { requestedShares, resolveSourceWeights } from "../audits/epoch/mixture.ts"
 import { loadTrainingConfig } from "../config.ts"
-import { samplerConfigJSON } from "../sampler.ts"
+import { hostPath } from "../sampler.ts"
 import {
 	countShapes,
 	countSourceShapes,
@@ -40,6 +42,7 @@ import {
 	UNDER_EXPOSURE_LEVEL,
 	type IntendedExposureReport,
 } from "./shapes.ts"
+import { countTrainShapes } from "./train-shapes.ts"
 
 const { values } = parseArguments({
 	options: {
@@ -49,6 +52,7 @@ const { values } = parseArguments({
 		draws: { type: "string" },
 		counts: { type: "string" },
 		intended: { type: "boolean", default: false },
+		"memory-gb": { type: "string" },
 		json: { type: "string" },
 	},
 })
@@ -95,35 +99,20 @@ if (config) {
 	Object.assign(input, { config: values.config!, corpus_dir: config.data.corpus_dir })
 }
 
-/**
- * Every train row of an admitted country, over the columns a shape key reads.
- */
-function* trainShapeRows(addon: MTFNode, training: TrainingConfig) {
-	const admitted = Object.entries(training.data.country_weights)
-		.filter(([, weight]) => weight > 0)
-		.map(([country]) => country)
-
-	const reader = new addon.SplitColumns(samplerConfigJSON(training), "train", ["source", "country", "span_tags"], {
-		column: "country",
-		values: admitted,
-	})
-
-	for (let chunk = reader.nextChunk(); chunk; chunk = reader.nextChunk()) {
-		const source = chunk.strings["source"] ?? []
-		const country = chunk.strings["country"] ?? []
-		const tags = chunk.lists["span_tags"] ?? []
-
-		for (let i = 0; i < chunk.rows; i++) {
-			yield { source: source[i] ?? null, country: country[i] ?? null, spanTags: tags[i] ?? null }
-		}
-	}
-}
-
 let intended: IntendedExposureReport | null = null
 
 if (values.intended) {
 	const { weights } = resolveSourceWeights(mtf!, config!, config!.data.corpus_dir)
-	const sources = countSourceShapes(trainShapeRows(mtf!, config!), config!.data.country_weights)
+
+	const trainShapes = await countTrainShapes(
+		resolvePath(hostPath(config!.data.corpus_dir), "MANIFEST.json").toString(),
+		{
+			threads: 4,
+			...(values["memory-gb"] ? { memoryLimitBytes: Number(values["memory-gb"]) * 1024 ** 3 } : {}),
+		}
+	)
+
+	const sources = countSourceShapes(trainShapes, config!.data.country_weights)
 	const draws = intendedShapeDraws(requestedShares(weights), consumedRows, sources)
 
 	intended = intendedShapeExposure(draws, counts, consumedRows, retention.protectedShapes)
