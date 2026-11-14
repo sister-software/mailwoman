@@ -1,0 +1,20 @@
+{
+	"$comment": "The support promises: what Mailwoman tells customers it handles. Inside a promise's depth, a wrong parse, a miss or a missing corpus is a bug. Below that depth, the result must be an explicit unresolved component. `country` is the ISO 3166-1 alpha-2 country the address is in, `input` the BCP 47 language and script of the typed text, `embeddedNameScripts` the ISO 15924 scripts allowed in a name span inside an otherwise `input`-script address, and `depth` the deepest component guaranteed (one of `SUPPORT_DEPTHS` in packages/codex/lib/support.ts). A promise's evidence is every gauntlet case (packages/mailwoman/tools/eval-harness/gauntlet/cases/) in its country whose letters are all in its input script. The repository check `support-promises` refuses a row whose codes the registry rejects or whose evidence holds no passing case, and reports each failing case inside a promise as an open bug against it. docs/superpowers/specs/2026-11-14-locale-support-promises-design.md records the design.",
+	"promises": [
+		{ "country": "US", "input": "en-Latn", "embeddedNameScripts": [], "depth": "address-point" },
+		{ "country": "US", "input": "ja-Jpan", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "FR", "input": "fr-Latn", "embeddedNameScripts": [], "depth": "address-point" },
+		{ "country": "DE", "input": "de-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "ES", "input": "es-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "IT", "input": "it-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "AT", "input": "de-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "AU", "input": "en-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "BE", "input": "fr-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "CH", "input": "de-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "NL", "input": "nl-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "PL", "input": "pl-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "PT", "input": "pt-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "SE", "input": "sv-Latn", "embeddedNameScripts": [], "depth": "locality" },
+		{ "country": "JP", "input": "ja-Jpan", "embeddedNameScripts": [], "depth": "postcode" }
+	]
+}

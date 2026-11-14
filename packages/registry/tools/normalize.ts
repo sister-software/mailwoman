@@ -426,7 +426,7 @@ export function declareCoverage(
  *
  * The envelope keys come first, then `records`, each on its own line.
  */
-export function formatNormalized(collection: NormalizedCountries | NormalizedAirports): string {
+export function formatNormalized(collection: { records: readonly unknown[] }): string {
 	const { records, ...envelope } = collection
 	const head = stringifyJSON(envelope).slice(1, -1)
 	const body = records.map((record) => `\t\t${stringifyJSON(record)}`).join(",\n")

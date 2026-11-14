@@ -18,7 +18,9 @@
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
-		"out/us/street-suffix.json"
+		"out/us/street-suffix.json",
+		"lib/support/promises.json",
+		"out/support/promises.json"
 	],
 	"type": "module",
 	"sideEffects": false,

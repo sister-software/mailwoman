@@ -119,6 +119,7 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

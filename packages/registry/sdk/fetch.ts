@@ -95,7 +95,7 @@ export function createRegistrySourceClient(): APIClient {
 		axios: {
 			headers: {
 				"User-Agent": "mailwoman-registry/0.1 (https://github.com/sister-software/mailwoman)",
-				Accept: "text/csv, application/sparql-results+json, application/json",
+				Accept: "text/csv, text/plain, application/sparql-results+json, application/json",
 				"Accept-Encoding": "gzip",
 			},
 			timeout: DOWNLOAD_TIMEOUT_MS,
@@ -106,18 +106,28 @@ export function createRegistrySourceClient(): APIClient {
 }
 
 /**
- * Downloads every elected source.
+ * Downloads every elected source, or the elected sources in `only`.
  *
  * With `repin`, the lock is rewritten from what was downloaded.
  * Without it, a downloaded digest that differs from the lock is an error naming the source,
  * because the build would otherwise read bytes the lock doesn't describe.
+ *
+ * A source the lock doesn't hold yet is added to it.
+ * Sources outside `only` keep their locked entries unchanged.
  */
-export async function retrieveRegistrySources(options: { repin: boolean }): Promise<SourceLock> {
+export async function retrieveRegistrySources(options: {
+	repin: boolean
+	only?: readonly SourceID[]
+}): Promise<SourceLock> {
 	const client = createRegistrySourceClient()
 	const existing = await readSourceLock()
 	const downloaded: DownloadedSource[] = []
+	const wanted = options.only ? new Set<SourceID>(options.only) : null
+	let added = false
 
 	for (const source of SOURCES.filter((candidate) => candidate.terms.elected)) {
+		if (wanted && !wanted.has(source.id)) continue
+
 		const result = await retrieveRegistrySource(source, client)
 		const locked = existing?.sources[source.id]
 
@@ -128,16 +138,27 @@ export async function retrieveRegistrySources(options: { repin: boolean }): Prom
 			)
 		}
 
+		if (!locked) {
+			added = true
+		}
+
 		downloaded.push(result)
 	}
 
+	const sources = {
+		...existing?.sources,
+		...Object.fromEntries(downloaded.map((item) => [item.id, item.entry])),
+	} as SourceLock["sources"]
+
 	const lock: SourceLock = {
 		profile: OPEN_PROFILE,
-		sources: Object.fromEntries(downloaded.map((item) => [item.id, item.entry])) as SourceLock["sources"],
+		sources: Object.fromEntries(
+			Object.entries(sources).toSorted(([left], [right]) => left.localeCompare(right))
+		) as SourceLock["sources"],
 		$notElected: { "unsd-m49": UN_M49_NOT_ELECTED },
 	}
 
-	if (options.repin || !existing) {
+	if (options.repin || !existing || added) {
 		await writeLocalJSONFile(lock, sourceLockPath())
 	}
 

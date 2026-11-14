@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/registry`
 
 The manifest at `packages/registry/package.json` declares a `sideEffects` list of 4.
-This page lists 8 of the group's 34 library and tool modules.
+This page lists 8 of the group's 45 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -75,15 +75,15 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `runs a statement at module scope`, 7 times
-- `awaits at module scope`, 2 times
+- `runs a statement at module scope`, 8 times
+- `awaits at module scope`, 3 times
 
 | Kind    | Interface           | Target                               | Calls |
 | ------- | ------------------- | ------------------------------------ | ----- |
 | read    | `readLocalBuffer`   | `repo:packages/registry`             | 1     |
 | read    | `readLocalBuffer`   | `unresolved (parameter)`             | 1     |
 | read    | `readLocalBuffer`   | `unresolved (template)`              | 2     |
-| read    | `readLocalJSONFile` | `repo:packages/registry`             | 1     |
+| read    | `readLocalJSONFile` | `repo:packages/registry`             | 2     |
 | write   | `writeLocalFile`    | `unresolved (parameter)`             | 1     |
 | process | `runFile`           | `literal:cargo`                      | 1     |
 | process | `runFile`           | `repo:target/release/registry-build` | 1     |
@@ -92,14 +92,16 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `awaits at module scope`, 2 times
-- `runs a statement at module scope`, 7 times
+- `awaits at module scope`, 3 times
+- `runs a statement at module scope`, 10 times
 
-| Kind  | Interface            | Target                                                      | Calls |
-| ----- | -------------------- | ----------------------------------------------------------- | ----- |
-| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iata-airports.json` | 1     |
-| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iso3166-1.json`     | 1     |
-| write | `writeLocalJSONFile` | `repo:packages/registry/data/manifests/coverage.json`       | 1     |
+| Kind  | Interface            | Target                                                         | Calls |
+| ----- | -------------------- | -------------------------------------------------------------- | ----- |
+| read  | `readLocalTextFile`  | `unresolved (call)`                                            | 1     |
+| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iata-airports.json`    | 1     |
+| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iso3166-1.json`        | 1     |
+| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/language-subtags.json` | 1     |
+| write | `writeLocalJSONFile` | `repo:packages/registry/data/manifests/coverage.json`          | 1     |
 
 ## `packages/registry/tools/normalize.ts`
 
