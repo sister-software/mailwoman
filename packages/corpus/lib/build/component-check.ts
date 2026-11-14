@@ -12,6 +12,8 @@
 
 import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
+import type { UnitSplitter } from "#adapters/street/unit"
+import { writtenSubdivisionCode } from "#adapters/wof/admin/json/region-codes"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -35,6 +37,20 @@ export const ComponentRule = {
 	 * the city with the street line.
 	 */
 	LocalityHoldsStreet: "locality:holds-street",
+	/**
+	 * The postcode is the row's own region (`1811 Hayes Avenue, Hull, IA IA`).
+	 */
+	PostcodeRepeatsRegion: "postcode:repeats-region",
+	/**
+	 * The locality is the code the row's country writes for the row's own region
+	 * (`BELLVILLE, TX, TX 77418` read with `TX` as the city).
+	 */
+	LocalityRepeatsRegion: "locality:repeats-region",
+	/**
+	 * The street still ends in a unit designator and identifier of the row's
+	 * country (`Avenue des Armieres Entree 13`).
+	 */
+	StreetTrailingUnit: "street:trailing-unit",
 } as const
 
 export type ComponentRule = (typeof ComponentRule)[keyof typeof ComponentRule]
@@ -46,11 +62,18 @@ export type ComponentRule = (typeof ComponentRule)[keyof typeof ComponentRule]
  * The v0.8.9 dry run (#2898) found 522,089 rows failing it, among them legitimate partial
  * postcodes (WOF's Dutch `3704`) and spaced written forms (`31 261` in Kraków), beside the defects
  * it is meant for (NAD's 425,667 short ZIP Codes and Overture Brazil's dropped leading zeros).
+ *
+ * `locality:repeats-region` is reported but not enforced, because a publisher's own `NY` for
+ * New York City (`150 E 71 ST, NY, NY 10021`) fails it beside the rows whose city was lost.
+ *
+ * `street:trailing-unit` is reported but not enforced, because some streets end in a
+ * word a country also writes as a unit (`Morning Side`, `Skijor Steppe Upper`).
  */
 export const ENFORCED_COMPONENT_RULES: ReadonlySet<ComponentRule> = new Set([
 	ComponentRule.StreetRepeatsPostcode,
 	ComponentRule.StreetHoldsPlace,
 	ComponentRule.LocalityHoldsStreet,
+	ComponentRule.PostcodeRepeatsRegion,
 ])
 
 /**
@@ -59,6 +82,18 @@ export const ENFORCED_COMPONENT_RULES: ReadonlySet<ComponentRule> = new Set([
 export interface ComponentFinding {
 	rule: ComponentRule
 	values: string[]
+}
+
+/**
+ * Rows failing each rule, per `source` then rule.
+ */
+export type ComponentFindingCounts = Map<string, Map<ComponentRule, number>>
+
+/**
+ * {@linkcode ComponentFindingCounts} as a JSON object, in the order each source and rule was first counted.
+ */
+export function componentFindingsRecord(counts: ComponentFindingCounts): Record<string, Record<string, number>> {
+	return Object.fromEntries([...counts].map(([source, rules]) => [source, Object.fromEntries(rules)]))
 }
 
 /**
@@ -74,9 +109,24 @@ const fold = (text: string) =>
 		.trim()
 
 /**
+ * What the rules read beyond the row.
+ */
+export interface ComponentCheckContext {
+	/**
+	 * The unit vocabulary `street:trailing-unit` reads.
+	 * Without it the rule isn't checked.
+	 */
+	units?: UnitSplitter | null
+}
+
+/**
  * The rules `components` fails for a row of `country`, in rule order.
  */
-export function componentFindings(components: CanonicalRow["components"], country: string): ComponentFinding[] {
+export function componentFindings(
+	components: CanonicalRow["components"],
+	country: string,
+	context: ComponentCheckContext = {}
+): ComponentFinding[] {
 	const findings: ComponentFinding[] = []
 	const { postcode, street, locality, region } = components
 
@@ -118,6 +168,33 @@ export function componentFindings(components: CanonicalRow["components"], countr
 
 		if (` ${fold(locality)} `.includes(` ${line} `)) {
 			findings.push({ rule: ComponentRule.LocalityHoldsStreet, values: [locality, houseNumber, street] })
+		}
+	}
+
+	if (postcode && region && fold(postcode) === fold(region)) {
+		findings.push({ rule: ComponentRule.PostcodeRepeatsRegion, values: [postcode, region] })
+	}
+
+	// A city may share its region's name (`Berlin, Berlin`, `أبو ظبي, أبو ظبي`),
+	// but no city is written as its region's code. libaddressinput's keys and ISO ids state
+	// which codes a country's addresses write.
+	if (locality && region) {
+		const regionCode = writtenSubdivisionCode(country, region)
+
+		if (regionCode != null && fold(locality) === fold(regionCode)) {
+			findings.push({ rule: ComponentRule.LocalityRepeatsRegion, values: [locality, region] })
+		}
+	}
+
+	if (street && context.units) {
+		const trailing = context.units.trailingUnit(street, {
+			country,
+			...(locality ? { locality } : {}),
+			...(postcode ? { postcode } : {}),
+		})
+
+		if (trailing) {
+			findings.push({ rule: ComponentRule.StreetTrailingUnit, values: [street, trailing.unit] })
 		}
 	}
 

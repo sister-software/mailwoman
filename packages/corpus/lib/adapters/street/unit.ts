@@ -457,6 +457,13 @@ export interface StreetPlace {
  */
 export interface UnitSplitter {
 	split(street: string, place: StreetPlace): TrailingUnitSplit | null
+	/**
+	 * The unit designator and identifier `street` ends in, in the words of the place's country,
+	 * whether or not the remainder passes the street test {@linkcode UnitSplitter.split} applies.
+	 *
+	 * @returns `null` when the street ends in no unit the country's vocabulary writes.
+	 */
+	trailingUnit(street: string, place: StreetPlace): { street: string; unit: string } | null
 }
 
 export interface CreateUnitSplitterOptions {
@@ -502,6 +509,13 @@ export async function createUnitSplitter(options: CreateUnitSplitterOptions = {}
 				...(place.locality ? { locality: place.locality } : {}),
 				...(place.postcode ? { postcode: place.postcode } : {}),
 			})
+		},
+		trailingUnit(street, place) {
+			const vocabulary = vocabularies.get(place.country.toUpperCase())
+
+			if (!vocabulary || vocabulary.origin === "none") return null
+
+			return splitLastUnit(street, vocabulary, place.postcode)
 		},
 	}
 }

@@ -27,9 +27,28 @@ interface SubdivisionSpec {
 	sub_keys?: string
 	sub_names?: string
 	sub_lnames?: string
+	sub_isoids?: string
 }
 
 const CODES_BY_COUNTRY = new Map<string, ReadonlyMap<string, string>>()
+const SPECS_BY_COUNTRY = new Map<string, SubdivisionSpec | null>()
+const WRITTEN_CODES_BY_COUNTRY = new Map<string, ReadonlyMap<string, string>>()
+
+/**
+ * Reads one country's libaddressinput spec, once per country, or `null` when none is vendored.
+ *
+ * `variantsFor` runs synchronously inside the row generator, so the spec is read synchronously.
+ */
+function specFor(country: string): SubdivisionSpec | null {
+	if (SPECS_BY_COUNTRY.has(country)) return SPECS_BY_COUNTRY.get(country) ?? null
+
+	const path = sslAddressSpecsPath()(`${country}.json`)
+	const spec = isFileSync(path) ? tryParsingJSON<SubdivisionSpec>(readLocalTextFileSync(path)) : null
+
+	SPECS_BY_COUNTRY.set(country, spec)
+
+	return spec
+}
 
 /**
  * Reads one country's name-to-code map, or an empty map when the country writes no codes.
@@ -40,9 +59,7 @@ function codesFor(country: string): ReadonlyMap<string, string> {
 	if (cached) return cached
 
 	const codes = new Map<string, string>()
-	const path = sslAddressSpecsPath()(`${country}.json`)
-	// `variantsFor` runs synchronously inside the row generator, so the spec is read synchronously, once per country.
-	const spec = isFileSync(path) ? tryParsingJSON<SubdivisionSpec>(readLocalTextFileSync(path)) : null
+	const spec = specFor(country)
 	const keys = spec?.sub_keys?.split("~") ?? []
 
 	for (const names of [spec?.sub_names, spec?.sub_lnames]) {
@@ -69,6 +86,49 @@ function codesFor(country: string): ReadonlyMap<string, string> {
  */
 export function regionCodeFor(country: string, regionName: string): string | null {
 	return codesFor(country.toUpperCase()).get(regionName.toLowerCase()) ?? null
+}
+
+/**
+ * The ISO 3166-2 code `region` stands for in `country`, when the country's
+ * addresses write that code: the subdivision's libaddressinput key is its ISO code,
+ * and the region is written as the key or as one of the subdivision's names.
+ *
+ * United States `TX` and `Texas` both return `TX`.
+ * The United Arab Emirates keys Abu Dhabi by its Arabic name, `أبو ظبي`, beside ISO code `AZ`,
+ * so its addresses write the name and the region returns `null`.
+ * The comparison ignores case.
+ */
+export function writtenSubdivisionCode(country: string, region: string): string | null {
+	const code = country.toUpperCase()
+	const written = WRITTEN_CODES_BY_COUNTRY.get(code) ?? writtenCodesFor(code)
+
+	return written.get(region.toLowerCase()) ?? null
+}
+
+/**
+ * Reads one country's map from each lower-cased form of a code-keyed subdivision
+ * to its code, once per country.
+ */
+function writtenCodesFor(country: string): ReadonlyMap<string, string> {
+	const written = new Map<string, string>()
+	const spec = specFor(country)
+	const keys = spec?.sub_keys?.split("~") ?? []
+	const isoIDs = spec?.sub_isoids?.split("~") ?? []
+	const nameLists = [spec?.sub_names, spec?.sub_lnames].map((names) => names?.split("~") ?? [])
+
+	for (const [i, key] of keys.entries()) {
+		if (isoIDs.length !== keys.length || isoIDs[i]!.toLowerCase() !== key.toLowerCase()) continue
+
+		for (const form of [key, ...nameLists.flatMap((list) => (list.length === keys.length ? [list[i]!] : []))]) {
+			if (!written.has(form.toLowerCase())) {
+				written.set(form.toLowerCase(), key)
+			}
+		}
+	}
+
+	WRITTEN_CODES_BY_COUNTRY.set(country, written)
+
+	return written
 }
 
 /**

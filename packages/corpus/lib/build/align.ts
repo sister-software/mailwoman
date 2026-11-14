@@ -15,6 +15,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilder } from "path-ts"
 
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import {
 	ALIGN_OUTPUTS,
 	readAlignCheckpoint,
@@ -23,7 +24,13 @@ import {
 	type AlignOutputName,
 	type AlignSettings,
 } from "#build/checkpoint"
-import { componentFindings, ENFORCED_COMPONENT_RULES } from "#build/component-check"
+import {
+	componentFindings,
+	componentFindingsRecord,
+	ENFORCED_COMPONENT_RULES,
+	type ComponentFindingCounts,
+	type ComponentRule,
+} from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
@@ -108,6 +115,13 @@ export interface AlignPhaseResult {
 	excludedByEligibility: number
 	rowsBySource: Map<string, { rows: number; license: string }>
 	ineligibleSources: Map<string, readonly string[]>
+	/**
+	 * Base rows failing each component rule, per `source` then rule (#2898).
+	 *
+	 * Every rule is counted, whether the build quarantines a row for it
+	 * (`ENFORCED_COMPONENT_RULES`) or only reports it.
+	 */
+	componentFindingsBySource: ComponentFindingCounts
 
 	/**
 	 * The source-id lists this phase wrote, or `null` when it wrote none.
@@ -173,6 +187,19 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 		result.rowsBySource.set(source, contributed)
 	}
 
+	// A checkpoint from before the per-source component counts would leave them short by every aligned adapter.
+	if (!checkpoint.component_findings_by_source) {
+		throw new Error(
+			`resume refused: the align checkpoint after ${checkpoint.completed_adapters.join(", ")} records no ` +
+				`component_findings_by_source, so the manifest's per-source component counts would miss those adapters. ` +
+				`Rebuild with --fresh.`
+		)
+	}
+
+	for (const [source, rules] of Object.entries(checkpoint.component_findings_by_source)) {
+		result.componentFindingsBySource.set(source, new Map(Object.entries(rules) as [ComponentRule, number][]))
+	}
+
 	return {
 		aligned: checkpoint.aligned,
 		quarantined: checkpoint.quarantined,
@@ -225,6 +252,10 @@ export interface RowAlignerOptions {
 	retention?: SplitRetention
 	licenses: LicenseVerdictCache
 	ineligibility: ReturnType<typeof createIneligibilityReader>
+	/**
+	 * The unit vocabulary the component check's `street:trailing-unit` rule reads, from `createUnitSplitter`.
+	 */
+	units: UnitSplitter
 	/**
 	 * The accumulators the aligner adds each row to.
 	 */
@@ -290,9 +321,19 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 
 		// A row whose values fail its country's rules or contradict each other (#2898) is
 		// quarantined before augmentation, so no variant inherits the wrong value.
-		const invalid = componentFindings(row.components, row.country).filter((finding) =>
-			ENFORCED_COMPONENT_RULES.has(finding.rule)
-		)
+		const findings = componentFindings(row.components, row.country, { units: opts.units })
+
+		if (findings.length) {
+			const bySource = result.componentFindingsBySource.get(row.source) ?? new Map<ComponentRule, number>()
+
+			result.componentFindingsBySource.set(row.source, bySource)
+
+			for (const finding of findings) {
+				bySource.set(finding.rule, (bySource.get(finding.rule) ?? 0) + 1)
+			}
+		}
+
+		const invalid = findings.filter((finding) => ENFORCED_COMPONENT_RULES.has(finding.rule))
 
 		if (invalid.length) {
 			quarantine(row, invalid.map((finding) => `component-invalid:${finding.rule}`).join("; "))
@@ -373,6 +414,7 @@ export function emptyAlignResult(
 		refusedBySource: new Map(),
 		rowsBySource: new Map(),
 		ineligibleSources,
+		componentFindingsBySource: new Map(),
 		sourceIDPaths: null,
 		licenses,
 	}
@@ -472,6 +514,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		retention: opts.retention,
 		licenses,
 		ineligibility,
+		units: await createUnitSplitter(),
 		result,
 		tally,
 		sinks: {
@@ -520,6 +563,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			admitted_unresolved_license_rows: tally.admittedUnresolved,
 			excluded_by_eligibility: tally.excludedByEligibility,
 			rows_by_source: Object.fromEntries(result.rowsBySource),
+			component_findings_by_source: componentFindingsRecord(result.componentFindingsBySource),
 			written_at: new Date().toISOString(),
 		})
 	}

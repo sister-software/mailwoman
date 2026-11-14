@@ -248,6 +248,19 @@ export interface BuildCorpusManifest {
 	 */
 	holdout_check: { checked_at: string; countries: string[]; files_read: number }
 	quarantine_count: number
+	/**
+	 * Base rows failing each component rule (`componentFindings`), per `source` then rule.
+	 *
+	 * A row failing a rule in {@linkcode enforced_component_rules} was quarantined
+	 * with reason `component-invalid:<rule>`.
+	 * A row failing only the other rules was aligned, and is counted so a rule can be
+	 * read against the rows it would refuse before it is enforced.
+	 */
+	component_findings_by_source: Record<string, Record<string, number>>
+	/**
+	 * The component rules this build quarantined rows for.
+	 */
+	enforced_component_rules: string[]
 	total_aligned_rows: number
 	/**
 	 * Resolved license set across all included rows (license string → row count).

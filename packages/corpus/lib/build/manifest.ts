@@ -12,6 +12,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { PathBuilder } from "path-ts"
 
 import type { AlignTotals } from "#build/align/totals"
+import { componentFindingsRecord, ENFORCED_COMPONENT_RULES } from "#build/component-check"
 import type { HoldoutCheckRecord } from "#build/holdout-check"
 import { TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildProfile, type BuildStage } from "#build/types"
 import type { ParquetManifest } from "#parquet/writers"
@@ -101,6 +102,8 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 			files_read: inputs.holdoutCheck.files_read,
 		},
 		quarantine_count: totals.quarantined,
+		component_findings_by_source: componentFindingsRecord(totals.componentFindingsBySource),
+		enforced_component_rules: [...ENFORCED_COMPONENT_RULES],
 		total_aligned_rows: totals.aligned,
 		licenses: Object.fromEntries(licenseSummary),
 		licenses_cover:

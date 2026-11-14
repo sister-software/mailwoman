@@ -14,6 +14,7 @@
  */
 
 import type { AlignPhaseResult, AlignTally } from "#build/align"
+import type { ComponentFindingCounts, ComponentRule } from "#build/component-check"
 import type { LicenseRefusalKind } from "#utils/license"
 import type { SplitName } from "#utils/split"
 
@@ -31,6 +32,7 @@ export interface AlignTotals extends AlignTally {
 	 * Every license value the policy refused, with its refusal kind.
 	 */
 	refusedValues: Map<string, LicenseRefusalKind>
+	componentFindingsBySource: ComponentFindingCounts
 }
 
 /**
@@ -49,6 +51,7 @@ export interface AlignTotalsRecord {
 	rows_by_source: [string, { rows: number; license: string }][]
 	ineligible_sources: [string, readonly string[]][]
 	refused_license_values: [string, LicenseRefusalKind][]
+	component_findings_by_source: [string, [ComponentRule, number][]][]
 }
 
 /**
@@ -68,6 +71,7 @@ export function alignTotalsOf(result: AlignPhaseResult): AlignTotals {
 		rowsBySource: result.rowsBySource,
 		ineligibleSources: result.ineligibleSources,
 		refusedValues: result.licenses.refusedValues(),
+		componentFindingsBySource: result.componentFindingsBySource,
 	}
 }
 
@@ -85,6 +89,7 @@ export function serializeAlignTotals(totals: AlignTotals): AlignTotalsRecord {
 		rows_by_source: [...totals.rowsBySource],
 		ineligible_sources: [...totals.ineligibleSources],
 		refused_license_values: [...totals.refusedValues],
+		component_findings_by_source: [...totals.componentFindingsBySource].map(([source, rules]) => [source, [...rules]]),
 	}
 }
 
@@ -125,6 +130,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		rowsBySource: new Map(),
 		ineligibleSources: new Map(),
 		refusedValues: new Map(),
+		componentFindingsBySource: new Map(),
 	}
 
 	for (const record of records) {
@@ -150,6 +156,13 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 
 		keepFirst(totals.ineligibleSources, record.ineligible_sources)
 		keepFirst(totals.refusedValues, record.refused_license_values)
+
+		for (const [source, rules] of record.component_findings_by_source) {
+			const into = totals.componentFindingsBySource.get(source) ?? new Map<ComponentRule, number>()
+
+			totals.componentFindingsBySource.set(source, into)
+			addCounts(into, rules)
+		}
 	}
 
 	return totals

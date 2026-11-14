@@ -91,6 +91,13 @@ export interface AlignCheckpoint {
 	admitted_unresolved_license_rows: number
 	excluded_by_eligibility: number
 	rows_by_source: Record<string, { rows: number; license: string }>
+	/**
+	 * Base rows failing each component rule, per source then rule.
+	 *
+	 * Absent from a checkpoint written before the counts existed.
+	 * A resume refuses such a checkpoint.
+	 */
+	component_findings_by_source?: Record<string, Record<string, number>>
 	written_at: string
 }
 

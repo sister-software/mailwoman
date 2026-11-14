@@ -22,6 +22,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { createUnitSplitter } from "#adapters/street/unit"
 import { alignSettings, createRowAligner, emptyAlignResult, type AlignTally } from "#build/align"
 import { alignTotalsOf, serializeAlignTotals, type AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
@@ -191,6 +192,9 @@ export async function reusableAlignRange(
 
 	if (stringifyJSON(record.settings) !== stringifyJSON(settings)) return null
 
+	// A record from before the per-source component counts can't supply them to the manifest.
+	if (!Array.isArray(record.totals.component_findings_by_source)) return null
+
 	for (const name of ALIGN_RANGE_OUTPUTS) {
 		if ((await tryStat(dir(name)))?.size !== record.outputs[name]) return null
 	}
@@ -237,6 +241,7 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 		holdouts: opts.holdouts,
 		licenses,
 		ineligibility,
+		units: await createUnitSplitter(),
 		result,
 		tally,
 		sinks: {

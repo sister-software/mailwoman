@@ -130,6 +130,10 @@ export async function readReusableSource(
 		return { record: null, problem: `${path.toString()} was written from another input, code or config` }
 	}
 
+	if (!Array.isArray(record.totals.component_findings_by_source)) {
+		return { record: null, problem: `${path.toString()} records no per-source component counts` }
+	}
+
 	const canonical = await tryStat(record.adapter.jsonl_path)
 
 	if (canonical?.size !== record.adapter.bytes) {
