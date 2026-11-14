@@ -26,6 +26,7 @@
  *   skipped, so a second run writes only the places the first one didn't.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs/gnis"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -92,7 +93,7 @@ function countyKey(name: string): NameKey {
 function nameKeys(name: string): NameKey[] {
 	const key = normalizeLocalityForKey(name)
 
-	return [...new Set([key, withoutApostropheLikeMarks(key)])].filter(Boolean)
+	return [...new Set([key, withoutApostropheLikeMarks(key)])].filter(isPresent)
 }
 
 interface BandRecord {

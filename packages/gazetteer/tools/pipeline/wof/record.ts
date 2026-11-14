@@ -20,7 +20,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import { pythonString } from "@mailwoman/core/strings/python-json"
+import { pythonJSONString } from "@mailwoman/core/strings/python-json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { wofGeometryJSON } from "#tools/pipeline/wof/slim"
@@ -87,7 +87,7 @@ function formatPropertyNumber(value: number, float: boolean): string {
 function formatIndented(value: unknown, depth: number, float: boolean): string {
 	if (typeof value === "number") return formatPropertyNumber(value, float)
 
-	if (typeof value === "string") return pythonString(value)
+	if (typeof value === "string") return pythonJSONString(value)
 
 	if (value === null || typeof value !== "object") return stringifyJSON(value)
 
@@ -107,7 +107,7 @@ function formatIndented(value: unknown, depth: number, float: boolean): string {
 	const lines = keys.map((key) => {
 		const item = (value as Record<string, unknown>)[key]
 
-		return `${inner}${pythonString(key)}:${formatIndented(item, depth + 1, float || WOF_FLOAT_PROPERTIES.has(key))}`
+		return `${inner}${pythonJSONString(key)}:${formatIndented(item, depth + 1, float || WOF_FLOAT_PROPERTIES.has(key))}`
 	})
 
 	return `{\n${lines.join(",\n")}\n${outer}}`

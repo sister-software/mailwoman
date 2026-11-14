@@ -13,7 +13,7 @@ import { stringifyJSON } from "#json"
  *   seed ids as the first requested batches did, so a resumed run skips the batches already requested.
  *   New output uses `orderedJSON` from `@mailwoman/core/json`.
  *
- *   {@linkcode pythonString} also prints the strings of a Who's On First
+ *   {@linkcode pythonJSONString} also prints the strings of a Who's On First
  *   record (`@mailwoman/gazetteer/tools/pipeline/wof/record`).
  *   The WOF exporter is a Python `json` writer.
  */
@@ -34,7 +34,7 @@ export interface PythonJSONOptions {
  *
  * The WOF record writer prints every string through it, because the WOF exporter is a Python `json` writer.
  */
-export function pythonString(value: string, ensureASCII = true): string {
+export function pythonJSONString(value: string, ensureASCII = true): string {
 	// JSON.stringify escapes the quote, the backslash and the C0 controls as Python's json does.
 	// Python's `ensure_ascii` also escapes DEL and every code unit above it, one `\uXXXX` per UTF-16 unit.
 	const out = stringifyJSON(value)
@@ -64,7 +64,7 @@ function pythonValue(value: unknown, options: Required<PythonJSONOptions>): stri
 		return Object.is(value, -0) ? "0" : String(value)
 	}
 
-	if (typeof value === "string") return pythonString(value, options.ensureASCII)
+	if (typeof value === "string") return pythonJSONString(value, options.ensureASCII)
 
 	if (Array.isArray(value)) return `[${value.map((item) => pythonValue(item, options)).join(", ")}]`
 
@@ -76,7 +76,7 @@ function pythonValue(value: unknown, options: Required<PythonJSONOptions>): stri
 		}
 
 		const items = entries.map(
-			([key, item]) => `${pythonString(key, options.ensureASCII)}: ${pythonValue(item, options)}`
+			([key, item]) => `${pythonJSONString(key, options.ensureASCII)}: ${pythonValue(item, options)}`
 		)
 
 		return `{${items.join(", ")}}`
