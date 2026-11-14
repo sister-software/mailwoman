@@ -59,6 +59,7 @@
 		"@docusaurus/theme-common": "^3.10.2",
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@mailwoman/cartographer": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/license-worker": "workspace:*",
 		"@mailwoman/neural": "workspace:*",

@@ -54,6 +54,7 @@ const sidebars: SidebarsConfig = {
 				"reference/schema",
 				"reference/packages-and-runtime",
 				"reference/data-and-locales",
+				"reference/support",
 			],
 		},
 		{

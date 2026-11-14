@@ -71,6 +71,67 @@ export declare namespace ICAO {
 }
 
 /**
+ * BCP 47 namespaces, read from the IANA Language Subtag Registry.
+ */
+export declare namespace BCP47 {
+	const $LanguageTag: unique symbol
+	const $ScriptCode: unique symbol
+	const $LanguageSubtag: unique symbol
+
+	/**
+	 * A well-formed, valid BCP 47 tag in canonical form, such as `ja-Jpan-JP` or `en-GB`.
+	 */
+	type LanguageTag = string & { readonly [$LanguageTag]: true }
+
+	/**
+	 * An ISO 15924 script code the registry holds, in its canonical title case, such as `Latn` or `Jpan`.
+	 */
+	type ScriptCode = string & { readonly [$ScriptCode]: true }
+
+	/**
+	 * An ISO 639 language subtag the registry holds, in lowercase, such as `ja` or `yue`.
+	 */
+	type LanguageSubtag = string & { readonly [$LanguageSubtag]: true }
+}
+
+/**
+ * The subtag types the IANA Language Subtag Registry defines.
+ */
+export const SubtagType = {
+	Language: "language",
+	Extlang: "extlang",
+	Script: "script",
+	Region: "region",
+	Variant: "variant",
+	Grandfathered: "grandfathered",
+	Redundant: "redundant",
+} as const
+
+export type SubtagType = (typeof SubtagType)[keyof typeof SubtagType]
+
+/**
+ * One registry record as a table module holds it.
+ *
+ * `subtag` holds the subtag for the five subtag types and the whole tag for `grandfathered` and `redundant`.
+ * A private-use range keeps its range spelling, such as `qaa..qtz`.
+ *
+ * `type` is present only in the whole-tag table, because that table mixes
+ * `grandfathered` and `redundant` rows.
+ * Every other table holds one type, so its rows leave the field out.
+ */
+export interface SubtagRow {
+	type?: SubtagType
+	subtag: string
+	descriptions: string[]
+	deprecated?: string
+	preferredValue?: string
+	suppressScript?: string
+	macrolanguage?: string
+	scope?: string
+	prefixes?: string[]
+}
+
+/**
  * The status a country record holds.
  */
 export const CountryStatus = {

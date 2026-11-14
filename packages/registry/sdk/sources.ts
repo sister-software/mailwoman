@@ -54,7 +54,12 @@ export interface SourceDefinition {
 /**
  * The identifiers of the open profile's sources, as the lock keys them.
  */
-export const SOURCE_IDS = ["ourairports-airports", "ourairports-countries", "wikidata-iso3166-1"] as const
+export const SOURCE_IDS = [
+	"iana-language-subtags",
+	"ourairports-airports",
+	"ourairports-countries",
+	"wikidata-iso3166-1",
+] as const
 
 export type SourceID = (typeof SOURCE_IDS)[number]
 
@@ -93,6 +98,19 @@ export const WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
  * recorded as not elected rather than pinned.
  */
 export const SOURCES: readonly SourceDefinition[] = [
+	{
+		id: "iana-language-subtags",
+		url: "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+		file: "iana-language-subtag-registry.txt",
+		terms: {
+			statement:
+				"IANA and IETF intend that the Protocol Registries may be freely used by any party for any purpose. " +
+				"Any applicable rights that they may have in the Protocol Registries are subject to the Creative Commons CC0 1.0 dedication.",
+			readAt: "https://www.iana.org/help/licensing-terms",
+			elected: true,
+		},
+		feeds: ["bcp47-language", "bcp47-extlang", "iso15924-script", "bcp47-region", "bcp47-variant"],
+	},
 	{
 		id: "ourairports-airports",
 		url: "https://davidmegginson.github.io/ourairports-data/airports.csv",

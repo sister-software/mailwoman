@@ -105,6 +105,20 @@ independent byte walker and against the Rust reader over the same fixture artifa
 
 ## Follow-up
 
-ISO 3166-2 subdivisions, ISO 639 language codes, ISO 15924 scripts, UN M49 regions, BCP 47, Unicode locale
-identifiers, UN/LOCODE, metropolitan IATA codes and Zod adapters are tracked as later milestones of
-sister-software/mailwoman#2945 and are not in this package.
+ISO 3166-2 subdivisions, UN M49 region records, Unicode locale extensions, UN/LOCODE, metropolitan IATA codes
+and Zod adapters are tracked in sister-software/mailwoman#2947 and are not in this package yet.
+
+## Languages, scripts and BCP 47 tags
+
+The IANA Language Subtag Registry (CC0 1.0, pinned as `iana-language-subtags`) supplies every BCP 47 subtag.
+The generator writes one table module per subtag type under `lib/artifacts/bcp47/`, so a bundle that checks
+scripts keeps the script table and leaves out the 8,276 language rows.
+
+| Module                                 | Answers                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `@mailwoman/registry/iso15924/codes`   | `parseScriptCode`, `getScript`, `unicodeScriptsOf` (`Jpan` gives `Hani`, `Hira`, `Kana`), `isWrittenInScript` |
+| `@mailwoman/registry/iso639/languages` | `parseLanguageSubtag`, `getLanguage` with suppressed script, macrolanguage and scope                          |
+| `@mailwoman/registry/bcp47/tag`        | `parseLanguageTag` (RFC 5646 validity and canonical form), `impliedScript`                                    |
+
+`parseLanguageTag("zh-yue")` gives `yue`, `parseLanguageTag("JA-JPAN-JP")` gives `ja-Jpan-JP`, and a tag with an
+unregistered subtag is refused as `not-found-in-snapshot` with that subtag as `part`.

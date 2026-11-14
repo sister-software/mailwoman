@@ -1,0 +1,24 @@
+---
+title: Supported languages and countries
+description: The countries and input languages Mailwoman supports, and how deep each one is guaranteed.
+role: reference
+source-of-truth: packages/codex/lib/support/promises.json
+---
+
+import SupportMatrix from "@site/src/components/SupportMatrix/SupportMatrix"
+
+# Supported languages and countries
+
+Each row below is a support promise. It states the country an address is in, the language and script you type it in, and the deepest component Mailwoman guarantees for it.
+
+Inside that depth, a wrong parse or a missed result is a bug we fix. Below it, Mailwoman returns the deeper components as unresolved and leaves them unguessed. For example, the United States row for Japanese text guarantees cities: `ニューヨーク` resolves to New York City. A street typed in katakana, such as `ブロードウェイ`, can come back unresolved.
+
+<SupportMatrix />
+
+## How a row is kept true
+
+The table is generated from `packages/codex/lib/support/promises.json`, which ships in `@mailwoman/codex` as `@mailwoman/codex/support`. Every code in it is checked against the IANA Language Subtag Registry through `@mailwoman/registry`.
+
+A row stays only while the regression suite holds a passing case in that country, written in that script. The repository check `support-promises` refuses a row without one, and it reports each failing case inside a row as an open bug.
+
+Text in a script the table doesn't list may still parse and resolve, but no row guarantees it.

@@ -1,6 +1,18 @@
 {
 	"profile": "open-2026-11",
 	"sources": {
+		"iana-language-subtags": {
+			"url": "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+			"sha256": "755fad43283be7b41ebe3c89ad054b6eaf928f404f9c0edb74799e0eab74beb1",
+			"bytes": 731819,
+			"publication": "Tue, 13 Oct 2026 20:07:00 GMT",
+			"terms": {
+				"statement": "IANA and IETF intend that the Protocol Registries may be freely used by any party for any purpose. Any applicable rights that they may have in the Protocol Registries are subject to the Creative Commons CC0 1.0 dedication.",
+				"readAt": "https://www.iana.org/help/licensing-terms",
+				"elected": true
+			},
+			"feeds": ["bcp47-language", "bcp47-extlang", "iso15924-script", "bcp47-region", "bcp47-variant"]
+		},
 		"ourairports-airports": {
 			"url": "https://davidmegginson.github.io/ourairports-data/airports.csv",
 			"sha256": "e2e65a3ddaf76170c0e2c373cb8b68597bdf3b59d243c4d6db454d48498ba6d7",

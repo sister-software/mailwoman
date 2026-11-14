@@ -51,6 +51,69 @@
 			"count": 6,
 			"kinds": ["onlyOurAirports: XK,XP,ZZ", "onlyWikidata: AX,BV,SJ"],
 			"missMeans": "a comparison rather than a namespace"
+		},
+		"bcp47-language": {
+			"source": "iana-language-subtags",
+			"count": 8276,
+			"statuses": {
+				"current": 8044,
+				"deprecated": 232
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-extlang": {
+			"source": "iana-language-subtags",
+			"count": 258,
+			"statuses": {
+				"current": 253,
+				"deprecated": 5
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-script": {
+			"source": "iana-language-subtags",
+			"count": 225,
+			"statuses": {
+				"current": 225,
+				"deprecated": 0
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-region": {
+			"source": "iana-language-subtags",
+			"count": 305,
+			"statuses": {
+				"current": 294,
+				"deprecated": 11
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-variant": {
+			"source": "iana-language-subtags",
+			"count": 139,
+			"statuses": {
+				"current": 134,
+				"deprecated": 5
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-grandfathered": {
+			"source": "iana-language-subtags",
+			"count": 26,
+			"statuses": {
+				"current": 2,
+				"deprecated": 24
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"bcp47-redundant": {
+			"source": "iana-language-subtags",
+			"count": 67,
+			"statuses": {
+				"current": 42,
+				"deprecated": 25
+			},
+			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
 		}
 	}
 }

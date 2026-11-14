@@ -29,7 +29,17 @@ export type ParseFailure = (typeof ParseFailure)[keyof typeof ParseFailure]
 /**
  * A structured parse result: the branded value, or why the input was refused.
  */
-export type Parsed<T> = { ok: true; value: T } | { ok: false; reason: ParseFailure; input: string }
+export type Parsed<T> =
+	| { ok: true; value: T }
+	| {
+			ok: false
+			reason: ParseFailure
+			input: string
+			/**
+			 * The part of a compound input that was refused, such as one subtag of a BCP 47 tag.
+			 */
+			part?: string
+	  }
 
 /**
  * Reports which refusal a fixed-length grammar gives an input, or `null` when the shape passes.
