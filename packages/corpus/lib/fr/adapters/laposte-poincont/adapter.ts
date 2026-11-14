@@ -45,6 +45,21 @@
  * No reading tells these apart, so the line is left out of every row
  * and counted under {@linkcode LaPosteTrim.Complement}.
  *
+ * ## People in the labels
+ *
+ * A relais poste or partner point is a shop, and its label can be the shop's trading name.
+ * For a sole trader that name can be the keeper's surname
+ * (`BRENOD GUDIN BURALISTE`, complement `TABAC GUDIN MIREILLE`).
+ *
+ * The label is the name the shop trades under, so it is read as a venue.
+ *
+ * A complement that opens with an honorific (`MME CHAMBARD`) identifies the keeper rather than the
+ * shop. 20 relais rows of the 2026-11-08 file do, and the label `MANZIAT CHAMBARD BURALISTE RP`
+ * holds that surname. {@linkcode laPosteNamesKeeper} finds them, and each is refused under
+ * {@linkcode LaPosteRefusal.KeeperNamed} and filed in the structures layer without its label.
+ * A keeper's surname in a label whose complement holds no honorific passes.
+ * This passing surname is the residual exposure.
+ *
  * ## License
  *
  * The publisher's dataset record states `license` `Licence Ouverte / Open Licence`
@@ -150,6 +165,10 @@ export const LaPosteRefusal = {
 	 */
 	StreetLineUnread: "row:street-line-unread",
 	/**
+	 * The complement identifies the site's keeper by an honorific (`MME CHAMBARD`).
+	 */
+	KeeperNamed: "row:keeper-named",
+	/**
 	 * The jurisdiction's layout doesn't print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
@@ -187,6 +206,18 @@ function text(value: string | number | null | undefined): string {
  */
 export function laPosteSiteName(record: Pick<LaPostePoincontRecord, "libelle_du_site">): string | null {
 	return text(record.libelle_du_site).replace(LABEL_TYPE_CODE, "").trim() || null
+}
+
+/**
+ * A complement opening with an honorific: `MME CHAMBARD`, `M. DUPONT`, `MONSIEUR …`.
+ */
+const HONORIFIC = /^(?:MME|MLLE|MR|M\.?|MONSIEUR|MADAME|MADEMOISELLE)\s+\S/iu
+
+/**
+ * Whether the row's complement identifies the site's keeper by an honorific.
+ */
+export function laPosteNamesKeeper(record: Pick<LaPostePoincontRecord, "complement_d_adresse">): boolean {
+	return HONORIFIC.test(text(record.complement_d_adresse))
 }
 
 /**
@@ -270,6 +301,8 @@ export function readLaPosteRecord(
 	const id = text(record.identifiant_a)
 
 	if (!id) return { refused: LaPosteRefusal.IdentifierAbsent }
+
+	if (laPosteNamesKeeper(record)) return { refused: LaPosteRefusal.KeeperNamed }
 
 	const address = readLaPosteAddress(record)
 

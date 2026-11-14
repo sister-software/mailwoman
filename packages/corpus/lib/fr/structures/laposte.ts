@@ -20,6 +20,7 @@ import {
 	FR_LAPOSTE_POINCONT_ADAPTER_ID,
 	isLaPostePostOffice,
 	LAPOSTE_POINCONT_FILENAME,
+	laPosteNamesKeeper,
 	laPosteSiteName,
 	type LaPostePoincontRecord,
 	readLaPosteAddress,
@@ -51,7 +52,8 @@ export function laPosteStructureRecord(record: LaPostePoincontRecord, category: 
 
 	return {
 		id,
-		name: laPosteSiteName(record),
+		// A label beside a complement identifying the keeper may hold the keeper's surname.
+		name: laPosteNamesKeeper(record) ? null : laPosteSiteName(record),
 		category,
 		point: latitude != null && longitude != null ? { latitude, longitude } : null,
 		address: "components" in address ? address.components : null,

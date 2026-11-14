@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runs the La Poste adapter over ten rows of `laposte-poincont2` as data.laposte.fr
- *   served it on 2026-11-14 (data updated 2026-11-08): a bureau de poste with
- *   and without its type code, a relais poste with a shop name in its complement,
- *   a relais in a merged commune, a Réunion office, a parcel partner, an Andorran office,
- *   a site with no street line, and a street name holding a date.
+ *   Runs the La Poste adapter over eleven rows of `laposte-poincont2` as data.laposte.fr
+ *   served it on 2026-11-14 (data updated 2026-11-08): a bureau de poste with and without its
+ *   type code, a relais poste with a shop name in its complement, a relais whose complement
+ *   identifies its keeper, a relais in a merged commune, a Réunion office, a parcel partner,
+ *   an Andorran office, a site with no street line, and a street name holding a date.
  */
 
 import { workspacePath } from "@mailwoman/core/paths"
@@ -63,8 +63,26 @@ describe("fr-laposte-poincont adapter", () => {
 		const refusals = readings.flatMap((reading) => ("refused" in reading ? [reading.refused] : []))
 
 		expect(refusals.toSorted()).toEqual(
-			[LaPosteRefusal.NotFrance, LaPosteRefusal.StreetLineAbsent, LaPosteRefusal.StreetLineUnread].toSorted()
+			[
+				LaPosteRefusal.KeeperNamed,
+				LaPosteRefusal.NotFrance,
+				LaPosteRefusal.StreetLineAbsent,
+				LaPosteRefusal.StreetLineUnread,
+			].toSorted()
 		)
+	})
+
+	it("emits no row for a relais whose complement names its keeper, and files it without its label", async () => {
+		const { rows } = await runFixture()
+		const records = await readSample()
+		const manziat = records.find((record) => record.identifiant_a === "00093A")!
+
+		expect(rows.some((row) => row.raw.includes("CHAMBARD"))).toBe(false)
+
+		expect(laPosteStructureRecord(manziat, "post-office")).toMatchObject({
+			name: null,
+			address: { street: "GRAND ROUTE" },
+		})
 	})
 
 	it("drops the label's type code from the venue and keeps the rest of the label", async () => {

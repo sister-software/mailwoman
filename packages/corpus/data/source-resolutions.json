@@ -574,6 +574,49 @@
 				"record": "internal/strategy/rights-receipts/decoder-exposure-2026-10-03/fr-finess-annuaire-licences.json"
 			}
 		},
+		"fr-postal-1": {
+			"adapterID": "fr-laposte-poincont",
+			"addressRoles": {
+				"adresse lieu_dit": "facility",
+				"code_postal": "facility",
+				"localite": "facility"
+			},
+			"coverage": "`laposte-poincont2` as data.laposte.fr served it on 2026-11-14 (data updated 2026-11-08): 19,858 sites, of which the adapter emits 19,603: FR 19,311, RE 98, GP 68, MQ 55, GF 40, YT 20, MF 7, BL 2, PM 2. Refusals: a street line the French line reader cannot place 211, a complement naming the keeper by an honorific 20, no street line 17, Andorra 7. `complement_d_adresse` is read by no row. The structures layer files the 18,133 sites that aren't `Point partenaire` as post offices.",
+			"upstreamLineage": ["https://data.laposte.fr/datasets/laposte-poincont2"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The list holds post offices, communal postal agencies, relais poste and partner points, and their addresses are facility addresses. Two fields can name a person. `complement_d_adresse` sometimes names a relais keeper (`MME CHAMBARD`) or a shop trading under the keeper's name (`TABAC GUDIN MIREILLE`); the adapter reads it into no row. The site label of a relais or partner point is the shop's trading name, which for a sole trader can hold the keeper's surname (`BRENOD GUDIN BURALISTE`); the label is the name the shop trades under and is read as a venue. The 20 rows whose complement opens with an honorific are refused, and the structures layer files them without their label. A surname in a label whose complement holds no honorific passes, which is the residual exposure.",
+				"record": "packages/corpus/lib/fr/adapters/laposte-poincont/adapter.ts"
+			}
+		},
+		"nc-postal-1": {
+			"adapterID": "nc-opt-agences",
+			"addressRoles": {
+				"ADRESSE": "facility",
+				"CODE_POSTAL": "facility",
+				"VILLE": "facility"
+			},
+			"coverage": "The `Agences_opendata` FeatureServer layer 0 as served on 2026-11-14 (data.gouv.nc record modified 2026-06-23): 49 features (34 `Agence`, 14 `Annexe`, 1 `Ctc`), of which the adapter emits 21. Refusals: a cadastral-lot street line (`Lot 41`) 25, a place line that only repeats the town 3. The structures layer files the 48 `Agence` and `Annexe` features as post offices, 20 of them with an address.",
+			"upstreamLineage": [
+				"https://services6.arcgis.com/k3ZIRnRpeM4Ht4fG/arcgis/rest/services/Agences_opendata/FeatureServer/0"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every feature is an OPT-NC agency, annex or the mail-processing center, labeled by the agency's place (`Agence de KONE`) with the agency's own street address and phone number. The fields the fetcher keeps hold no person's name or private address."
+			}
+		},
+		"tw-postal-1": {
+			"addressRoles": {
+				"縣市 鄉鎮市區 地址": "facility",
+				"郵遞區號": "facility"
+			},
+			"coverage": "Chunghwa Post's CSV as served on 2026-11-14 (data.gov.tw dataset 5950 modified 2026-04-10): 1,277 post offices, of which 1,265 street lines split into street, house number and floor. No corpus adapter reads the file; the structures layer files all 1,277 as post offices.",
+			"upstreamLineage": ["https://data.gov.tw/dataset/5950"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is a Chunghwa Post office named for its place (`臺北北門郵局`), with the office's street address, its office telephone and fax numbers and its opening hours. No column names a person."
+			}
+		},
 		"lv-property-building-1": {
 			"adapterID": "lv-varis",
 			"addressRoles": {
