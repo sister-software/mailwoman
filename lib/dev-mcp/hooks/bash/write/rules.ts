@@ -292,7 +292,15 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// `git apply` stays admitted.
 		// A patch fails when its context doesn't match, rather than overwriting files.
 		// It can also apply a large mechanical change exactly.
-		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
+		//
+		// `git restore` is admitted when it names files, so an agent can discard a
+		// change its own command wrote to a tracked file.
+		// A pathspec covering the tree (`.`, `:/`, a glob) is refused, because it would
+		// also discard other sessions' uncommitted work.
+		// A quoted or variable argument arrives masked as `QUOTED` or `$VAR`,
+		// so the hook cannot read it and refuses it the same way.
+		pattern:
+			/(?:^|\s)(?:restore\b[^\n]*(?:\s\.(?:\/)?(?=\s|$)|\s:\/|[*?[]|QUOTED|\$)|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },

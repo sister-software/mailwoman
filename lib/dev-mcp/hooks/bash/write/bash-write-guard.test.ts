@@ -53,7 +53,9 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		// one only Whitespace after the brace marks the boundary where the segmenter now splits.
 		["a writer inside a brace group", `{ sed -i 's/a/b/' AGENTS.md; }`],
 		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
-		["git restoring a path", `git restore packages/core/lib/env.ts`],
+		["git restoring the whole tree", `git restore .`],
+		["git restoring the tree from its root", `git -C /tmp/x restore :/`],
+		["git restoring a glob", `git restore 'packages/*/package.json'`],
 		["git checkout over a pathspec", `git checkout -- packages/core`],
 		["popping the stash", `git stash pop`],
 		["applying a stash entry", `git stash apply 0f4c6a668db23aa251b8d462398d8780105ca9f0`],
@@ -184,6 +186,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a subshell group piped into a reader", `(git diff --name-only HEAD; git diff --cached --name-only) | sort -u`],
 		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
 		["reading the stash", `git stash list`],
+		["git restoring a named file", `git restore packages/core/lib/env.ts`],
+		["git restoring a named file in another checkout", `git -C /tmp/x restore data/gazetteer/wof-build-manifest.json`],
 		// This command writes no file.
 		// The standing rule requires clearing an entry after restoration.
 		// The explicit index is the condition: it is what stops a bare `drop` from
