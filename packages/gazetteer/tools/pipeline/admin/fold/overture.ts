@@ -260,6 +260,8 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 
+	// The fold claims names and Wikidata ids in row order, and DuckDB returns rows in an
+	// order that varies with its 4 threads, so the query fixes the order by division id.
 	const result = await con.runAndReadAll(/*sql*/ `
 		WITH area AS (
 			SELECT division_id,
@@ -284,6 +286,7 @@ export async function ingestOvertureDivisions(
 		LEFT JOIN area a ON a.division_id = d.id
 		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
 			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
+		ORDER BY d.id
 	`)
 
 	const rows = result.getRowObjects() as Array<Record<string, unknown>>

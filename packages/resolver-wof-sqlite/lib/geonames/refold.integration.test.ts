@@ -3,7 +3,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { GEONAMES_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { GEONAMES_ID_BASE, geonamesFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
@@ -13,6 +13,12 @@ import type { WOFDatabase } from "#schema"
 type Row = Record<string, string | number | null>
 
 let dir: TemporaryDirectory
+
+/**
+ * The fold ids of the fixture places, from their GeoNames ids.
+ */
+const GABORONE = geonamesFoldID(933_773)
+const WIEN = geonamesFoldID(2_761_369)
 
 function row(over: Record<number, string>): string {
 	const f = new Array(19).fill("")
@@ -78,7 +84,7 @@ test("a re-fold with a different country list leaves no name bound to another co
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 
-	expect((db.prepare(`SELECT name, country FROM spr WHERE id = ?`).get(GEONAMES_ID_BASE) as Row).name).toBe("Gaborone")
+	expect((db.prepare(`SELECT name, country FROM spr WHERE id = ?`).get(GABORONE) as Row).name).toBe("Gaborone")
 
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
@@ -114,17 +120,29 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
 
-	expect(
-		(db.prepare(`SELECT population FROM place_population WHERE id = ?`).get(GEONAMES_ID_BASE) as Row)?.population
-	).toBe(208_411)
+	expect((db.prepare(`SELECT population FROM place_population WHERE id = ?`).get(GABORONE) as Row)?.population).toBe(
+		208_411
+	)
 
 	await ingestGeonamesAliases(db, ["AT"], dir.path, () => {})
 
-	const pop = db.prepare(`SELECT population FROM place_population WHERE id = ?`).get(GEONAMES_ID_BASE) as
-		| Row
-		| undefined
+	const pop = db.prepare(`SELECT population FROM place_population WHERE id = ?`).get(GABORONE) as Row | undefined
 
 	expect(pop).toBeUndefined()
+})
+
+test("a place keeps its GeoNames id whichever other countries a build folds (#3061)", async () => {
+	using both = freshDB()
+	using austriaOnly = freshDB()
+
+	await ingestGeonamesAliases(both, ["BW", "AT"], dir.path, () => {})
+	await ingestGeonamesAliases(austriaOnly, ["AT"], dir.path, () => {})
+
+	const wienIn = (db: DatabaseClient<WOFDatabase>) =>
+		(db.prepare(`SELECT name FROM spr WHERE id = ?`).get(WIEN) as Row | undefined)?.name
+
+	expect(wienIn(both)).toBe("Wien")
+	expect(wienIn(austriaOnly)).toBe("Wien")
 })
 
 test("re-folding the SAME list twice is a no-op, not a doubling", async () => {

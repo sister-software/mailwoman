@@ -30,6 +30,7 @@ import { ingestOvertureDivisions } from "#tools/pipeline/admin/fold/overture"
 import { buildWOFPlaceIndex, type FoldGap } from "#tools/pipeline/admin/fold/wof-match"
 import { freezeAdmin } from "#tools/pipeline/admin/freeze"
 import { ingestWOF, type IngestWOFResult } from "#tools/pipeline/admin/ingest-wof"
+import { fingerprintAdminInputs } from "#tools/pipeline/admin/inputs"
 import { createGeoNamesAnchorLookup } from "#tools/pipeline/admin/label-point-adjudicator"
 import { adminLayerManifest, type IngestCounts } from "#tools/pipeline/admin/manifest"
 import {
@@ -135,6 +136,17 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	if (!releaseCheck.present) throw new Error(releaseCheck.message)
 
+	// Read before the ingest, so the manifest states the inputs this build read.
+	phase("inputs", "fingerprinting the WOF clones and the GeoNames files")
+
+	const inputs = await fingerprintAdminInputs({
+		dataDir,
+		geonamesCountries,
+		geonamesDir: dataRootPath("geonames"),
+		alternateDir: dataRootPath("geonames-alternate"),
+	})
+
+	phase("inputs", `whosonfirst=${inputs.wof} geonames=${inputs.geonames}`)
 	phase("staging", ingestPath)
 
 	let ingest: IngestWOFResult
@@ -303,9 +315,10 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			// that ingested no places doesn't appear as a source — see manifest.ts.
 			counts: contributed,
 			buildSHA: sha,
-			vintages: { overture: overtureRelease },
-			version: isoDate(),
-			createdAt: new Date().toISOString(),
+			vintages: { overture: overtureRelease, wof: inputs.wof, geonames: inputs.geonames },
+			// The newest input's date, so two builds from the same inputs stamp the same manifest.
+			version: inputs.newestInputDate.slice(0, 10),
+			createdAt: inputs.newestInputDate,
 		})
 	)
 

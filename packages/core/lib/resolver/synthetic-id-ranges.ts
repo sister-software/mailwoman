@@ -78,6 +78,24 @@ export const GEONAMES_ID_BASE = 9_000_000_000_000
 export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 
 /**
+ * The id the GeoNames fold gives the place GeoNames numbers `geonameid`:
+ * {@link GEONAMES_ID_BASE} plus that number.
+ *
+ * The id is computed from the GeoNames record's own number.
+ * A place keeps its id whichever other countries a build folds, and every build
+ * of one GeoNames dump numbers its places the same way.
+ *
+ * @throws When `geonameid` isn't a positive integer below the fold's range width.
+ */
+export function geonamesFoldID(geonameid: number): number {
+	if (!Number.isInteger(geonameid) || geonameid <= 0 || geonameid >= GEONAMES_POSTAL_ID_BASE - GEONAMES_ID_BASE) {
+		throw new RangeError(`geonameid ${geonameid} falls outside the GeoNames fold's id range`)
+	}
+
+	return GEONAMES_ID_BASE + geonameid
+}
+
+/**
  * The Dutch PC6 postcode database (`gazetteer build nl-pc6`).
  */
 export const NL_PC6_ID_BASE = 9_600_000_000_000

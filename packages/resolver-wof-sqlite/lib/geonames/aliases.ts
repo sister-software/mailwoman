@@ -4,7 +4,7 @@
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, geonamesFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
@@ -192,11 +192,9 @@ function foldAdminRows(
 		clean: (s: string) => string | null
 		existing: GeonamesFoldMatcher | undefined
 		claim: (match: GeonamesFoldMatch, name: string) => void
-		nextID: number
 	}
-): { countryID: number; adminMap: Map<string, number>; nextID: number } {
+): { countryID: number; adminMap: Map<string, number> } {
 	const { rows, country: cc, clean, existing, claim } = input
-	let id = input.nextID
 	let countryID = -1
 	const adminMap = new Map<string, number>()
 	// The regions this fold wrote, as opposed to existing records a region matched.
@@ -221,7 +219,7 @@ function foldAdminRows(
 			claim(matched, aname)
 		}
 
-		const rid = matched?.id ?? id++
+		const rid = matched?.id ?? geonamesFoldID(place.geonamesID)
 
 		if (!matched) {
 			statements.spr.run(rid, -1, aname, placetype, cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -248,7 +246,7 @@ function foldAdminRows(
 		}
 	}
 
-	return { countryID, adminMap, nextID: id }
+	return { countryID, adminMap }
 }
 
 /**
@@ -320,7 +318,6 @@ export async function ingestGeonamesAliases(
 		}
 	}
 
-	let id = GEONAMES_ID_BASE
 	let total = 0
 	db.exec("BEGIN")
 
@@ -373,16 +370,12 @@ export async function ingestGeonamesAliases(
 			}
 		}
 
-		const admin = addAdmin
+		const { countryID, adminMap } = addAdmin
 			? foldAdminRows(
 					{ db, spr: sprInsert, names: namesInsert, ancestors: ancestorInsert },
-					{ rows: adminRows, country: cc, clean, existing: opts?.existing, claim, nextID: id }
+					{ rows: adminRows, country: cc, clean, existing: opts?.existing, claim }
 				)
-			: { countryID: -1, adminMap: new Map<string, number>(), nextID: id }
-
-		const { countryID, adminMap } = admin
-
-		id = admin.nextID
+			: { countryID: -1, adminMap: new Map<string, number>() }
 
 		for await (const f of readUnquotedTSV(file)) {
 			if (f[6] !== "P") continue
@@ -430,7 +423,7 @@ export async function ingestGeonamesAliases(
 				continue
 			}
 
-			const nid = id++
+			const nid = geonamesFoldID(place.geonamesID)
 
 			opts?.existing?.onGap({ ...place, id: nid })
 
