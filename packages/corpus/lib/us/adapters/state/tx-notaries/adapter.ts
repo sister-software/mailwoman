@@ -16,16 +16,18 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { splitStreetLine } from "#adapters/street/line"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation, type USStateInfo } from "#us/fips-state"
-import { splitUSStreetLine } from "#us/street-unit"
+import { splitUSStreetLine, unitLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -96,6 +98,61 @@ export function parseTxNotaryAddress(rawAddress: string): TxNotaryAddress | null
 	return { street: head.slice(0, comma).replace(/,\s*$/u, "").trim(), city: head.slice(comma + 1).trim(), state, zip }
 }
 
+/**
+ * A notary's street text as its first line and the unit lines typed after it.
+ */
+export interface TxNotaryStreetLines {
+	line: string
+	units: string[]
+}
+
+/**
+ * Splits the street text {@linkcode parseTxNotaryAddress} returns into its first line
+ * and the unit lines typed after it, in their written order.
+ *
+ * Notaries type a suite or department as its own line (`555 N. Carancahua, Suite 620`),
+ * and some type the street line twice (`231 Blanco Dr, 231 Blanco Dr`).
+ * A trailing comma-separated segment that {@linkcode unitLine} reads as a unit joins `units`,
+ * and one that repeats the first line, with or without its house number, is removed.
+ *
+ * The split stops at the first trailing segment that's neither, so the street keeps every segment before it.
+ */
+export function splitTxNotaryStreetLines(street: string): TxNotaryStreetLines {
+	// The unit splitter collapses a line's inner whitespace when it splits one, so a peeled line does too.
+	const collapse = (text: string) => text.trim().replaceAll(/\s+/gu, " ")
+	const comparable = (text: string) => collapse(text).toLowerCase()
+	const first = street.split(",")[0] ?? ""
+	const repeats = new Set([first, splitStreetLine(first)?.street ?? first].map(comparable))
+	const units: string[] = []
+	let line = street
+
+	for (let comma = line.lastIndexOf(","); comma > 0; comma = line.lastIndexOf(",")) {
+		const last = line.slice(comma + 1)
+		const unit = unitLine(last)
+
+		if (unit) {
+			units.unshift(unit)
+		} else if (last.trim() && !repeats.has(comparable(last))) {
+			break
+		}
+
+		line = line.slice(0, comma).trimEnd()
+	}
+
+	if (line === street) return { line, units }
+
+	return { line: collapse(line), units: units.map(collapse) }
+}
+
+/**
+ * The `unit` component for a street line's own trailing unit followed by the unit lines typed after it.
+ */
+function withUnitLines(trailing: string | undefined, typed: readonly string[]): { unit?: string } {
+	const unit = [trailing, ...typed].filter(isPresent).join(" ")
+
+	return unit ? { unit } : {}
+}
+
 interface TxNotaryRow {
 	"Notary ID": string
 	"First Name": string
@@ -147,7 +204,17 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (!streetPortion) continue
 
-				const line = splitUSStreetLine(streetPortion, units)
+				const typed = splitTxNotaryStreetLines(streetPortion)
+				const split = splitUSStreetLine(typed.line, units)
+
+				if (!split) continue
+
+				// A PO box row emits no unit, so a box followed by a unit line keeps its whole street text.
+				const line = !("po_box" in split)
+					? { ...split, ...withUnitLines(split.unit, typed.units) }
+					: typed.units.length
+						? splitUSStreetLine(streetPortion, units)
+						: split
 
 				if (!line) continue
 
