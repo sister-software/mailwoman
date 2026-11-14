@@ -10,8 +10,9 @@
  *
  *   A region qualifies when it holds a same-name locality near its centroid, and that locality is a seat in the
  *   capitals reference for the country or the most populous locality inside the region. The pair test is the one the
- *   gazetteer's coincident-roles relation used: the names match case-insensitively, the locality descends from the
- *   region, and the centroids lie within 15% of the region's bounding-box diagonal, or within 12 km.
+ *   gazetteer's coincident-roles relation used, with the names compared without case or diacritics: the canton
+ *   `Zurich` holds the city `Zürich`. The locality descends from the region, and the centroids lie within 15% of the
+ *   region's bounding-box diagonal, or within 12 km.
  */
 
 import { foldToken } from "@mailwoman/codex/normalize"
@@ -206,7 +207,7 @@ export function findDualRolePairs(
 				largest.set(regionID, locality)
 			}
 
-			if (locality.name.toLowerCase() === region.name.toLowerCase() && isCoincident(region, locality)) {
+			if (dualRoleKey(locality.name) === dualRoleKey(region.name) && isCoincident(region, locality)) {
 				candidates.push({ region, locality })
 			}
 		}

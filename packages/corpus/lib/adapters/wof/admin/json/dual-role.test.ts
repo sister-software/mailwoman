@@ -34,6 +34,24 @@ describe("findDualRolePairs", () => {
 		])
 	})
 
+	it("pairs a canton with the city its name spells without the diacritic", () => {
+		const canton = place({ id: 12, name: "Zurich", placetype: "region", country: "CH", latitude: 47.4, longitude: 8.6 })
+
+		const city = place({
+			id: 23,
+			name: "Zürich",
+			placetype: "locality",
+			country: "CH",
+			ancestors: [12],
+			latitude: 47.37,
+			longitude: 8.54,
+		})
+
+		expect(findDualRolePairs([canton], [city], new Set(["CH|zurich"]))).toEqual([
+			expect.objectContaining({ regionID: 12, localityID: 23, basis: DualRoleBasis.seat }),
+		])
+	})
+
 	it("pairs a non-seat locality only when it is the region's most populous", () => {
 		const region = place({ id: 11, name: "Testmark", placetype: "region" })
 		const same = place({ id: 21, name: "Testmark", placetype: "locality", ancestors: [11], population: 50 })
