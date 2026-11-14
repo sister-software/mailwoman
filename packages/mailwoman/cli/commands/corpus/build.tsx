@@ -11,19 +11,12 @@
  *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest.
  *   This lets the CLI handles partial builds during development.
  *
- *   A build whose `--inputs` names `wof-admin` or `wof-postalcode`
- *   needs `NODE_OPTIONS="--max-old-space-size=20480"`.
- *   Both adapters hold every source record in memory.
- *
- *   Node's default heap makes the process abort with SIGABRT during the adapter phase.
- *   This command refuses such a launch through `assertHeapForAdapters`.
  *   `buildCorpus` prints the heap limit it has.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
 import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
@@ -219,7 +212,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const {
 			json: { parseJSONStrict },
-			corpus: { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry },
+			corpus: { buildCorpus, defaultAdapterRegistry },
 			budget: { defaultBuildJobs },
 			inputs: { readBuildInputs },
 			license: { compileLicenseExcludes },
@@ -244,17 +237,10 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const adapters = defaultAdapterRegistry.list()
-		const jobs = options.jobs ?? defaultBuildJobs({ adapterIDs: Object.keys(adapterInputs) })
+		const jobs = options.jobs ?? defaultBuildJobs()
 
 		if (options.freshSources && !(options.resume && jobs > 1)) {
 			throw new CommandError("--fresh-sources applies to a parallel build resumed with --resume and --jobs above 1.")
-		}
-
-		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
-		// own tests run the WOF adapter against a five-kilobyte fixture under the default heap.
-		// A parallel build runs each adapter in a worker whose heap it sets, so this process needs none of it.
-		if (jobs <= 1) {
-			assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
 		}
 
 		const m = await buildCorpus({

@@ -142,10 +142,12 @@ input path relative to `$MAILWOMAN_DATA_ROOT`, or to `$MAILWOMAN_CACHE_ROOT` whe
 `"root": "cache"`, as a current source under `sources/` does. A record from before the storage classes
 identifies no root and keeps the paths it recorded. Budget a day, run the build in the background with
 `NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
-change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
-`--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and
-peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and isn't hung:
-`rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
+change end to end. `wof-admin` and `wof-postalcode` read the WOF record store
+(`@mailwoman/gazetteer/whosonfirst/record-store`), which the first run builds from the GeoJSON clones and
+later runs refresh one repository at a time. Over the lab's full clone set on 2026-11-14, a full
+`wof-admin` run peaked at 1,862 MiB and a full `wof-postalcode` run at 636 MiB, by kernel `maxRSS`. Both
+fit the standard worker. A first run leaves `canonical.jsonl` empty while the store is built, about
+40 minutes over the 121 GB of clones, and isn't hung.
 
 A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
 adapter `MANIFEST.json`, and lists each file with its size. To continue an interrupted build, rerun

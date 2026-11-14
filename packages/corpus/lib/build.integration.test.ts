@@ -13,14 +13,7 @@ import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
-import {
-	assertHeapForAdapters,
-	buildCorpus,
-	BuildProfile,
-	PriorOutput,
-	RESIDENT_ADAPTER_HEAP_FLOOR_BYTES,
-	type BuildStage,
-} from "#build"
+import { buildCorpus, BuildProfile, PriorOutput, type BuildStage } from "#build"
 import type { AlignCheckpoint } from "#build/checkpoint"
 import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
@@ -50,21 +43,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
 	await scratch[Symbol.asyncDispose]()
-})
-
-describe("assertHeapForAdapters", () => {
-	const floor = RESIDENT_ADAPTER_HEAP_FLOOR_BYTES
-
-	it("refuses a resident-record adapter under the floor and names the setting that raises it", () => {
-		expect(() => assertHeapForAdapters(["ban", "wof-admin"], 4 * 1024 ** 3)).toThrow(
-			/wof-admin.*max-old-space-size=20480/s
-		)
-	})
-
-	it("admits the same adapter at the floor, and admits any other adapter below it", () => {
-		expect(() => assertHeapForAdapters(["wof-admin", "wof-postalcode"], floor)).not.toThrow()
-		expect(() => assertHeapForAdapters(["ban", "tiger", "usgov-nad"], 512 * 1024 ** 2)).not.toThrow()
-	})
 })
 
 // Each test runs a whole buildCorpus over the fixture, some of them twice.

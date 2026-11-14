@@ -16,8 +16,6 @@
 
 import { availableParallelism, totalMemoryBytes } from "@mailwoman/core/utils/system"
 
-import { isResidentRecordAdapter } from "#build/heap"
-
 const GiB = 1024 ** 3
 
 /**
@@ -43,16 +41,15 @@ export interface WorkerResources {
 }
 
 /**
- * The two worker classes.
+ * The worker classes.
  *
- * `standard` runs every task except a resident-record adapter: an adapter,
- * an align range, or a source's sort and parquet write.
- * `resident` runs `wof-admin` or `wof-postalcode`, whose run holds every source record in memory
- * (`#build/heap`), with a 16 GiB heap above the 15 GiB floor `assertHeapForAdapters` enforces.
+ * `standard` runs every task: an adapter, an align range, or a source's sort and parquet write.
+ * The WOF adapters read the WOF record store and peaked at 1,862 MiB
+ * (`wof-admin`, 79,116,868 rows) and 636 MiB (`wof-postalcode`, 5,240,681 rows) by
+ * kernel `maxRSS` over the lab's full clone set, inside the standard heap.
  */
 export const WORKER_CLASSES = {
 	standard: { heapBytes: 6 * GiB, duckdbBytes: 1.5 * GiB, duckdbThreads: 1 },
-	resident: { heapBytes: 16 * GiB, duckdbBytes: 0, duckdbThreads: 1 },
 } as const satisfies Record<string, WorkerResources>
 
 export type WorkerClass = keyof typeof WORKER_CLASSES
@@ -79,13 +76,6 @@ export function workerReservationBytes(workerClass: WorkerClass): number {
 }
 
 /**
- * The class a source's adapter task runs in.
- */
-export function adapterWorkerClass(adapterID: string): WorkerClass {
-	return isResidentRecordAdapter(adapterID) ? "resident" : "standard"
-}
-
-/**
  * A parallel build's memory plan.
  */
 export interface WorkerBudget {
@@ -100,37 +90,23 @@ const gib = (bytes: number): string => `${(bytes / GiB).toFixed(1)} GiB`
  * The `--jobs` a build takes when none is given: the most standard workers the
  * host's budget holds, capped at the host's CPU count.
  *
- * Returns 1 for a serial build when fewer than two workers fit or when a configured resident
- * adapter cannot fit in the budget. {@linkcode planWorkerBudget} refuses that configuration.
+ * Returns 1 for a serial build when fewer than two workers fit.
  */
-export function defaultBuildJobs(opts: { adapterIDs: readonly string[]; hostMemoryBytes?: number }): number {
+export function defaultBuildJobs(opts: { hostMemoryBytes?: number } = {}): number {
 	const hostMemoryBytes = opts.hostMemoryBytes ?? totalMemoryBytes()
 	const budgetBytes = hostMemoryBytes - HOST_RESERVE_BYTES
-
-	const residentFits =
-		!opts.adapterIDs.some(isResidentRecordAdapter) || workerReservationBytes("resident") <= budgetBytes
-
 	const fits = Math.min(availableParallelism(), Math.floor(budgetBytes / workerReservationBytes("standard")))
 
-	return residentFits && fits >= 2 ? fits : 1
+	return fits >= 2 ? fits : 1
 }
 
 /**
- * Check that `jobs` standard workers fit in the host budget and that a resident
- * adapter fits when it runs by itself.
+ * Check that `jobs` standard workers fit in the host budget.
  *
- * A resident adapter runs one at a time and beside the standard workers that fit,
- * so it lowers the build's concurrency while it runs rather than raising its demand.
- *
- * @throws When `jobs` standard workers exceed the budget, or a configured resident
- * adapter exceeds the budget when it runs by itself.
+ * @throws When `jobs` standard workers exceed the budget.
  * The error lists each reservation and the largest `--jobs` that fits.
  */
-export function planWorkerBudget(opts: {
-	jobs: number
-	adapterIDs: readonly string[]
-	hostMemoryBytes?: number
-}): WorkerBudget {
+export function planWorkerBudget(opts: { jobs: number; hostMemoryBytes?: number }): WorkerBudget {
 	const hostMemoryBytes = opts.hostMemoryBytes ?? totalMemoryBytes()
 	const budgetBytes = hostMemoryBytes - HOST_RESERVE_BYTES
 	const standard = workerReservationBytes("standard")
@@ -145,16 +121,6 @@ export function planWorkerBudget(opts: {
 		throw new Error(
 			`corpus build refused: --jobs ${opts.jobs} needs ${gib(opts.jobs * standard)} and ${sizes}. ` +
 				(fits >= 1 ? `--jobs ${fits} fits.` : "No parallel build fits this host; run with --jobs 1.")
-		)
-	}
-
-	const resident = opts.adapterIDs.filter(isResidentRecordAdapter)
-
-	if (resident.length && workerReservationBytes("resident") > budgetBytes) {
-		throw new Error(
-			`corpus build refused: ${resident.join(", ")} ${resident.length === 1 ? "runs" : "run"} in a worker reserving ` +
-				`${gib(workerReservationBytes("resident"))} (heap ${gib(WORKER_CLASSES.resident.heapBytes)}), and ${sizes}. ` +
-				`Run with --jobs 1 on a host that can hold it, or leave ${resident.join(", ")} out of --inputs.`
 		)
 	}
 

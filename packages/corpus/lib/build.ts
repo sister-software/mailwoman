@@ -40,7 +40,6 @@ import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
 import type { LabeledRow } from "#types"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
-export * from "#build/heap"
 export * from "#build/types"
 
 /**
@@ -57,14 +56,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		throw new Error(`buildCorpus: jobs is ${jobs}; it is a positive integer, 1 for a serial build.`)
 	}
 
-	// The build reports heap state when it aborts with SIGABRT.
-	// These aborts arrive twelve minutes into the adapter phase.
+	// The heap limit is reported so an out-of-memory abort can be read against it.
 	const heapLimit = heapLimitBytes()
 	const configured = adapters.filter((adapter) => opts.adapterInputs[adapter.id]).map((adapter) => adapter.id)
 
-	// Refused before any work, since it depends only on the host and the configured adapters.
-	const budget =
-		jobs > 1 ? planWorkerBudget({ jobs, adapterIDs: configured, hostMemoryBytes: opts.hostMemoryBytes }) : null
+	// Refused before any work, since it depends only on the host.
+	const budget = jobs > 1 ? planWorkerBudget({ jobs, hostMemoryBytes: opts.hostMemoryBytes }) : null
 
 	opts.onProgress?.(
 		"adapter-run",

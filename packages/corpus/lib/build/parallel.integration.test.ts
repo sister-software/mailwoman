@@ -442,19 +442,9 @@ describe("parallel build budget", () => {
 	it("refuses a job count whose workers do not fit and names the count that does", () => {
 		const host = 4.5 * GiB + 2.5 * workerReservationBytes("standard")
 
-		expect(() => planWorkerBudget({ jobs: 3, adapterIDs: ["ban"], hostMemoryBytes: host })).toThrow(
-			/--jobs 3 needs .*--jobs 2 fits\./su
-		)
+		expect(() => planWorkerBudget({ jobs: 3, hostMemoryBytes: host })).toThrow(/--jobs 3 needs .*--jobs 2 fits\./su)
 
-		expect(planWorkerBudget({ jobs: 2, adapterIDs: ["ban"], hostMemoryBytes: host }).jobs).toBe(2)
-	})
-
-	it("refuses a resident-record adapter whose worker does not fit the budget alone", () => {
-		const host = 4.5 * GiB + 2 * workerReservationBytes("standard")
-
-		expect(() => planWorkerBudget({ jobs: 2, adapterIDs: ["wof-admin"], hostMemoryBytes: host })).toThrow(
-			/wof-admin runs in a worker reserving/u
-		)
+		expect(planWorkerBudget({ jobs: 2, hostMemoryBytes: host }).jobs).toBe(2)
 	})
 
 	it("refuses through buildCorpus before any work begins", async () => {

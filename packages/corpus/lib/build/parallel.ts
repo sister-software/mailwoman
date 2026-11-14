@@ -39,13 +39,7 @@ import { adapterRunInputs, reusableRun } from "#build/adapters"
 import { alignSettings } from "#build/align"
 import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align/range"
 import { mergeAlignTotals } from "#build/align/totals"
-import {
-	adapterWorkerClass,
-	WORKER_CLASSES,
-	workerReservationBytes,
-	type WorkerBudget,
-	type WorkerClass,
-} from "#build/budget"
+import { WORKER_CLASSES, workerReservationBytes, type WorkerBudget, type WorkerClass } from "#build/budget"
 import { readSourceDecisionTable } from "#build/eligibility"
 import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
@@ -214,40 +208,20 @@ class WorkerPool {
 	#admits(pending: PendingTask): boolean {
 		if (this.#running.size >= this.#jobs) return false
 
-		if (this.#reservedBytes() + workerReservationBytes(pending.workerClass) > this.#budgetBytes) return false
-
-		if (pending.workerClass === "resident") {
-			for (const { workerClass } of this.#running.values()) {
-				if (workerClass === "resident") return false
-			}
-		}
-
-		return true
+		return this.#reservedBytes() + workerReservationBytes(pending.workerClass) <= this.#budgetBytes
 	}
 
 	#dispatch(): void {
 		if (this.#cancelled) return
 
 		// Highest priority first.
-		// A task that doesn't fit waits rather than letting a smaller one pass it, except that
-		// a resident adapter waiting on another resident adapter doesn't hold up standard work.
+		// A task that doesn't fit waits rather than letting a smaller one pass it.
 		const ordered = this.#queue.toSorted((a, b) => b.priority[0] - a.priority[0] || b.priority[1] - a.priority[1])
 
 		for (const pending of ordered) {
-			if (this.#running.size >= this.#jobs) return
-
-			if (this.#admits(pending)) {
-				this.#queue.splice(this.#queue.indexOf(pending), 1)
-				void this.#start(pending)
-
-				continue
-			}
-
-			const blockedOnResident =
-				pending.workerClass === "resident" &&
-				[...this.#running.values()].some((running) => running.workerClass === "resident")
-
-			if (!blockedOnResident) return
+			if (this.#running.size >= this.#jobs || !this.#admits(pending)) return
+			this.#queue.splice(this.#queue.indexOf(pending), 1)
+			void this.#start(pending)
 		}
 	}
 
@@ -491,7 +465,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 					kind: "adapter",
 					id: `${source}/adapter`,
 					source,
-					resources: WORKER_CLASSES[adapterWorkerClass(source)],
+					resources: WORKER_CLASSES.standard,
 					temporaryRoot: temporaryRoot("adapter"),
 					adapterModule: derivationFor.modules.get(source)!,
 					adapterOptions: { ...serializable, inputPath: options.inputPath.toString() },
@@ -499,7 +473,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 					inputs,
 					intermediateDir: intermediateDir.toString(),
 				},
-				adapterWorkerClass(source),
+				"standard",
 				inputWeight
 			)
 
