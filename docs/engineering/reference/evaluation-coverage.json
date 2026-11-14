@@ -1,0 +1,7436 @@
+{
+	"dataset": {
+		"datasetID": "heldout-dev-v0.8.18",
+		"version": "187e8ab06b37351c",
+		"rowsSHA256": "d47011c2f200f3d0f99ae3b017bc1487a9ef8ad869806ecb20ba087323b17a09",
+		"corpusVersion": "0.8.18-retention-overlay"
+	},
+	"specVersion": "7",
+	"verdict": null,
+	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-dev-v0.8.18.provenance.json (audit 5cb0eb5d4bdc7a66)",
+	"rows": [
+		{
+			"country": "AD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 45,
+				"sampled": 45
+			},
+			"places": {
+				"available": 38,
+				"sampled": 38
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 45
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 45,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 70,
+				"sampled": 70
+			},
+			"places": {
+				"available": 80,
+				"sampled": 80
+			},
+			"groups": 41,
+			"sources": {
+				"geonames-features": 53,
+				"osm-ae": 9,
+				"wikidata-vital-places": 8
+			},
+			"provenance": {
+				"verified_unseen": 21,
+				"unseen_by_candidate": 0,
+				"known_overlap": 49,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 86,
+				"sampled": 86
+			},
+			"places": {
+				"available": 143,
+				"sampled": 143
+			},
+			"groups": 45,
+			"sources": {
+				"geonames-features": 83,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 11,
+				"unseen_by_candidate": 0,
+				"known_overlap": 75,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 16,
+				"sampled": 16
+			},
+			"places": {
+				"available": 120,
+				"sampled": 120
+			},
+			"groups": 7,
+			"sources": {
+				"geonames-features": 16
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 16,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
+				"available": 9,
+				"sampled": 9
+			},
+			"groups": 2,
+			"sources": {
+				"geonames-features": 2
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 2,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 129,
+				"sampled": 129
+			},
+			"places": {
+				"available": 142,
+				"sampled": 142
+			},
+			"groups": 54,
+			"sources": {
+				"geonames-features": 123,
+				"osm-al": 3,
+				"cordis": 3
+			},
+			"provenance": {
+				"verified_unseen": 25,
+				"unseen_by_candidate": 0,
+				"known_overlap": 104,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 108,
+				"sampled": 108
+			},
+			"places": {
+				"available": 108,
+				"sampled": 108
+			},
+			"groups": 66,
+			"sources": {
+				"geonames-features": 68,
+				"osm-am": 35,
+				"cordis": 3,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 37,
+				"unseen_by_candidate": 0,
+				"known_overlap": 71,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 108,
+				"sampled": 108
+			},
+			"places": {
+				"available": 142,
+				"sampled": 142
+			},
+			"groups": 50,
+			"sources": {
+				"geonames-features": 107,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 18,
+				"unseen_by_candidate": 0,
+				"known_overlap": 90,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AQ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 41,
+				"sampled": 41
+			},
+			"places": {
+				"available": 54,
+				"sampled": 54
+			},
+			"groups": 17,
+			"sources": {
+				"geonames-features": 41
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 31,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 611,
+				"sampled": 611
+			},
+			"places": {
+				"available": 169,
+				"sampled": 169
+			},
+			"groups": 517,
+			"sources": {
+				"osm-ar": 436,
+				"geonames-features": 133,
+				"wikidata-vital-places": 11,
+				"gleif-lei": 30,
+				"cordis": 1
+			},
+			"provenance": {
+				"verified_unseen": 455,
+				"unseen_by_candidate": 4,
+				"known_overlap": 152,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 33,
+				"sampled": 33
+			},
+			"places": {
+				"available": 1,
+				"sampled": 1
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 33
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 29,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3894,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 182,
+				"sampled": 182
+			},
+			"groups": 903,
+			"sources": {
+				"gleif-lei": 393,
+				"overture": 541,
+				"cordis": 25,
+				"geonames-features": 32,
+				"wikidata-vital-places": 9
+			},
+			"provenance": {
+				"verified_unseen": 9,
+				"unseen_by_candidate": 562,
+				"known_overlap": 429,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AU",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-AU"],
+			"addresses": {
+				"available": 6715,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 950,
+			"sources": {
+				"gnaf": 575,
+				"gleif-lei": 386,
+				"invented-po-box-cedex": 16,
+				"invented-postal-guideline": 9,
+				"invented-postal-unit-guideline": 6,
+				"fragment-assay": 7,
+				"cordis": 1
+			},
+			"provenance": {
+				"verified_unseen": 15,
+				"unseen_by_candidate": 631,
+				"known_overlap": 354,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "AW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 4,
+				"sampled": 4
+			},
+			"places": {
+				"available": 38,
+				"sampled": 38
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 3,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AX",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 113,
+				"sampled": 113
+			},
+			"places": {
+				"available": 79,
+				"sampled": 79
+			},
+			"groups": 82,
+			"sources": {
+				"geonames-features": 59,
+				"ryhti-ax": 54
+			},
+			"provenance": {
+				"verified_unseen": 54,
+				"unseen_by_candidate": 0,
+				"known_overlap": 59,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "AZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 73,
+				"sampled": 73
+			},
+			"places": {
+				"available": 128,
+				"sampled": 128
+			},
+			"groups": 51,
+			"sources": {
+				"geonames-features": 52,
+				"opendata-az": 18,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 24,
+				"unseen_by_candidate": 0,
+				"known_overlap": 49,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 166,
+				"sampled": 166
+			},
+			"places": {
+				"available": 87,
+				"sampled": 87
+			},
+			"groups": 125,
+			"sources": {
+				"osm-ba": 96,
+				"geonames-features": 57,
+				"gleif-lei": 9,
+				"cordis": 4
+			},
+			"provenance": {
+				"verified_unseen": 106,
+				"unseen_by_candidate": 0,
+				"known_overlap": 60,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BB",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 41,
+				"sampled": 41
+			},
+			"places": {
+				"available": 136,
+				"sampled": 136
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 32,
+				"osm-bb": 6,
+				"wikidata-vital-places": 1,
+				"gleif-lei": 2
+			},
+			"provenance": {
+				"verified_unseen": 11,
+				"unseen_by_candidate": 0,
+				"known_overlap": 30,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 322,
+				"sampled": 322
+			},
+			"places": {
+				"available": 15,
+				"sampled": 15
+			},
+			"groups": 200,
+			"sources": {
+				"osm-bd": 123,
+				"rendered-bd-register": 75,
+				"osm": 119,
+				"gleif-lei": 5
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 314,
+				"known_overlap": 5,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2952,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 157,
+				"sampled": 157
+			},
+			"groups": 729,
+			"sources": {
+				"gleif-lei": 940,
+				"cordis": 48,
+				"wikidata-vital-places": 2,
+				"geonames-features": 10
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 55,
+				"known_overlap": 938,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 44,
+				"sampled": 44
+			},
+			"places": {
+				"available": 103,
+				"sampled": 103
+			},
+			"groups": 20,
+			"sources": {
+				"geonames-features": 43,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 38,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 214,
+				"sampled": 214
+			},
+			"places": {
+				"available": 130,
+				"sampled": 130
+			},
+			"groups": 89,
+			"sources": {
+				"gleif-lei": 117,
+				"geonames-features": 82,
+				"cordis": 12,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 14,
+				"unseen_by_candidate": 14,
+				"known_overlap": 186,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 9,
+				"sampled": 9
+			},
+			"places": {
+				"available": 74,
+				"sampled": 74
+			},
+			"groups": 5,
+			"sources": {
+				"geonames-features": 8,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 4,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 16,
+				"sampled": 16
+			},
+			"places": {
+				"available": 88,
+				"sampled": 88
+			},
+			"groups": 8,
+			"sources": {
+				"geonames-features": 16
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 16,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BJ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 12,
+				"sampled": 12
+			},
+			"places": {
+				"available": 107,
+				"sampled": 107
+			},
+			"groups": 6,
+			"sources": {
+				"geonames-features": 12
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 12,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 35,
+				"sampled": 35
+			},
+			"places": {
+				"available": 23,
+				"sampled": 23
+			},
+			"groups": 15,
+			"sources": {
+				"geonames-features": 25,
+				"gleif-lei": 10
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 35,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6,
+				"sampled": 6
+			},
+			"places": {
+				"available": 91,
+				"sampled": 91
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 6
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 6,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 46,
+				"sampled": 46
+			},
+			"places": {
+				"available": 148,
+				"sampled": 148
+			},
+			"groups": 22,
+			"sources": {
+				"geonames-features": 40,
+				"wikidata-vital-places": 6
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 36,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BQ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 5,
+				"sampled": 5
+			},
+			"places": {
+				"available": 11,
+				"sampled": 11
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 5
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 5,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 13594,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 167,
+				"sampled": 167
+			},
+			"groups": 998,
+			"sources": {
+				"overture-latam": 977,
+				"geonames-features": 16,
+				"gleif-lei": 5,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 977,
+				"known_overlap": 21,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 33,
+				"sampled": 33
+			},
+			"places": {
+				"available": 95,
+				"sampled": 95
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 31,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 31,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 59,
+				"sampled": 59
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 21,
+				"sampled": 21
+			},
+			"places": {
+				"available": 79,
+				"sampled": 79
+			},
+			"groups": 8,
+			"sources": {
+				"geonames-features": 21
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 21,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 407,
+				"sampled": 407
+			},
+			"places": {
+				"available": 109,
+				"sampled": 109
+			},
+			"groups": 373,
+			"sources": {
+				"osm-by": 341,
+				"geonames-features": 61,
+				"wikidata-vital-places": 3,
+				"cordis": 2
+			},
+			"provenance": {
+				"verified_unseen": 354,
+				"unseen_by_candidate": 0,
+				"known_overlap": 53,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "BZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 47,
+				"sampled": 47
+			},
+			"places": {
+				"available": 109,
+				"sampled": 109
+			},
+			"groups": 22,
+			"sources": {
+				"geonames-features": 35,
+				"gleif-lei": 10,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 45,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 10445,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 110,
+				"sampled": 110
+			},
+			"groups": 983,
+			"sources": {
+				"overture-latam": 784,
+				"gleif-lei": 171,
+				"geonames-features": 27,
+				"wikidata-vital-places": 1,
+				"spliced-trailing-region-ca-bare": 13,
+				"invented-po-box-cedex": 4
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 806,
+				"known_overlap": 186,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 2,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 45,
+				"sampled": 45
+			},
+			"places": {
+				"available": 119,
+				"sampled": 119
+			},
+			"groups": 25,
+			"sources": {
+				"geonames-features": 35,
+				"osm-cd": 9,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 15,
+				"unseen_by_candidate": 0,
+				"known_overlap": 30,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 35,
+				"sampled": 35
+			},
+			"places": {
+				"available": 120,
+				"sampled": 120
+			},
+			"groups": 16,
+			"sources": {
+				"geonames-features": 35
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 32,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 72,
+				"sampled": 72
+			},
+			"places": {
+				"available": 104,
+				"sampled": 104
+			},
+			"groups": 29,
+			"sources": {
+				"geonames-features": 72
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 64,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 7539,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 70,
+				"sampled": 70
+			},
+			"groups": 981,
+			"sources": {
+				"rendered-ch": 508,
+				"overture": 329,
+				"gleif-lei": 114,
+				"fragment-assay": 31,
+				"cordis": 9,
+				"wikidata-vital-places": 3,
+				"geonames-features": 6
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 868,
+				"known_overlap": 124,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 37,
+				"sampled": 37
+			},
+			"places": {
+				"available": 123,
+				"sampled": 123
+			},
+			"groups": 18,
+			"sources": {
+				"geonames-features": 35,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 32,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6,
+				"sampled": 6
+			},
+			"places": {
+				"available": 23,
+				"sampled": 23
+			},
+			"groups": 4,
+			"sources": {
+				"geonames-features": 6
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 6,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 331,
+				"sampled": 331
+			},
+			"places": {
+				"available": 122,
+				"sampled": 122
+			},
+			"groups": 244,
+			"sources": {
+				"geonames-features": 135,
+				"osm-cl": 170,
+				"gleif-lei": 24,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 180,
+				"unseen_by_candidate": 4,
+				"known_overlap": 147,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 28,
+				"sampled": 28
+			},
+			"places": {
+				"available": 143,
+				"sampled": 143
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 27,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 22,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 304,
+				"sampled": 304
+			},
+			"places": {
+				"available": 144,
+				"sampled": 144
+			},
+			"groups": 207,
+			"sources": {
+				"geonames-features": 168,
+				"wikidata-vital-places": 61,
+				"osm-cn": 64,
+				"fragment-assay": 7,
+				"cordis": 3,
+				"gleif-lei": 1
+			},
+			"provenance": {
+				"verified_unseen": 73,
+				"unseen_by_candidate": 69,
+				"known_overlap": 162,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 186,
+				"sampled": 186
+			},
+			"places": {
+				"available": 132,
+				"sampled": 132
+			},
+			"groups": 93,
+			"sources": {
+				"wikidata-vital-places": 6,
+				"geonames-features": 153,
+				"osm-co": 26,
+				"gleif-lei": 1
+			},
+			"provenance": {
+				"verified_unseen": 41,
+				"unseen_by_candidate": 0,
+				"known_overlap": 145,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 126,
+				"sampled": 126
+			},
+			"places": {
+				"available": 162,
+				"sampled": 162
+			},
+			"groups": 58,
+			"sources": {
+				"geonames-features": 118,
+				"osm-cr": 3,
+				"gleif-lei": 5
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 119,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 139,
+				"sampled": 139
+			},
+			"places": {
+				"available": 143,
+				"sampled": 143
+			},
+			"groups": 76,
+			"sources": {
+				"osm-cu": 29,
+				"geonames-features": 108,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 35,
+				"unseen_by_candidate": 0,
+				"known_overlap": 104,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 58,
+				"sampled": 58
+			},
+			"places": {
+				"available": 67,
+				"sampled": 67
+			},
+			"groups": 29,
+			"sources": {
+				"geonames-features": 52,
+				"wikidata-vital-places": 6
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 48,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 20,
+				"sampled": 20
+			},
+			"places": {
+				"available": 31,
+				"sampled": 31
+			},
+			"groups": 14,
+			"sources": {
+				"osm-cw": 8,
+				"gleif-lei": 5,
+				"geonames-features": 5,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 10,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CX",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 2,
+				"sampled": 2
+			},
+			"groups": 2,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 241,
+				"sampled": 241
+			},
+			"places": {
+				"available": 142,
+				"sampled": 142
+			},
+			"groups": 102,
+			"sources": {
+				"gleif-lei": 172,
+				"geonames-features": 57,
+				"cordis": 10,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 12,
+				"unseen_by_candidate": 9,
+				"known_overlap": 220,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "CZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1521,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 130,
+				"sampled": 130
+			},
+			"groups": 667,
+			"sources": {
+				"gleif-lei": 656,
+				"rendered-cz-pcfirst-preposition-v21": 262,
+				"cordis": 42,
+				"rendered-cz-pcfirst-preposition": 16,
+				"wikidata-vital-places": 6,
+				"codex-bare-postcode": 6,
+				"fragment-assay": 3,
+				"geonames-features": 9
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 348,
+				"known_overlap": 646,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "DE",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-DE"],
+			"addresses": {
+				"available": 12772,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 58,
+				"sampled": 58
+			},
+			"groups": 990,
+			"sources": {
+				"rendered-de": 584,
+				"gleif-lei": 112,
+				"spliced-country": 87,
+				"spliced-affix": 170,
+				"spliced-sub-venue": 46,
+				"invented-postal-guideline": 1
+			},
+			"provenance": {
+				"verified_unseen": 895,
+				"unseen_by_candidate": 0,
+				"known_overlap": 105,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "DJ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 51,
+				"sampled": 51
+			},
+			"places": {
+				"available": 52,
+				"sampled": 52
+			},
+			"groups": 24,
+			"sources": {
+				"geonames-features": 51
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 48,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "DK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 7828,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 149,
+				"sampled": 149
+			},
+			"groups": 942,
+			"sources": {
+				"overture": 568,
+				"gleif-lei": 403,
+				"cordis": 14,
+				"geonames-features": 11,
+				"wikidata-vital-places": 4
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 595,
+				"known_overlap": 399,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "DM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 11,
+				"sampled": 11
+			},
+			"places": {
+				"available": 91,
+				"sampled": 91
+			},
+			"groups": 4,
+			"sources": {
+				"geonames-features": 11
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 7,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "DO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 125,
+				"sampled": 125
+			},
+			"places": {
+				"available": 101,
+				"sampled": 101
+			},
+			"groups": 77,
+			"sources": {
+				"geonames-features": 83,
+				"gleif-lei": 5,
+				"osm-do": 36,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 41,
+				"unseen_by_candidate": 0,
+				"known_overlap": 84,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "DZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 179,
+				"sampled": 179
+			},
+			"places": {
+				"available": 117,
+				"sampled": 117
+			},
+			"groups": 88,
+			"sources": {
+				"geonames-features": 158,
+				"wikidata-vital-places": 2,
+				"osm-dz": 19
+			},
+			"provenance": {
+				"verified_unseen": 21,
+				"unseen_by_candidate": 0,
+				"known_overlap": 158,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "EC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 124,
+				"sampled": 124
+			},
+			"places": {
+				"available": 134,
+				"sampled": 134
+			},
+			"groups": 56,
+			"sources": {
+				"geonames-features": 110,
+				"osm-ec": 11,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 28,
+				"unseen_by_candidate": 0,
+				"known_overlap": 96,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "EE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1422,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 95,
+				"sampled": 95
+			},
+			"groups": 609,
+			"sources": {
+				"ads": 206,
+				"gleif-lei": 746,
+				"cordis": 20,
+				"geonames-features": 26,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 210,
+				"unseen_by_candidate": 55,
+				"known_overlap": 735,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "EG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 183,
+				"sampled": 183
+			},
+			"places": {
+				"available": 130,
+				"sampled": 130
+			},
+			"groups": 95,
+			"sources": {
+				"geonames-features": 142,
+				"wikidata-vital-places": 29,
+				"osm-eg": 1,
+				"gleif-lei": 11
+			},
+			"provenance": {
+				"verified_unseen": 38,
+				"unseen_by_candidate": 0,
+				"known_overlap": 145,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "EH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 20,
+				"sampled": 20
+			},
+			"places": {
+				"available": 37,
+				"sampled": 37
+			},
+			"groups": 8,
+			"sources": {
+				"geonames-features": 20
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 12,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ER",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 75,
+				"sampled": 75
+			},
+			"places": {
+				"available": 142,
+				"sampled": 142
+			},
+			"groups": 32,
+			"sources": {
+				"geonames-features": 74,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 14,
+				"unseen_by_candidate": 0,
+				"known_overlap": 61,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ES",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-ES"],
+			"addresses": {
+				"available": 32033,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 999,
+			"sources": {
+				"overture": 909,
+				"gleif-lei": 42,
+				"fragment-assay": 45,
+				"spliced-trailing-region-es-v28": 2,
+				"spliced-sub-venue": 1,
+				"cordis": 1
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 960,
+				"known_overlap": 40,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "ET",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 97,
+				"sampled": 97
+			},
+			"places": {
+				"available": 170,
+				"sampled": 170
+			},
+			"groups": 44,
+			"sources": {
+				"geonames-features": 91,
+				"wikidata-vital-places": 6
+			},
+			"provenance": {
+				"verified_unseen": 14,
+				"unseen_by_candidate": 0,
+				"known_overlap": 83,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2498,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 143,
+				"sampled": 143
+			},
+			"groups": 793,
+			"sources": {
+				"gleif-lei": 549,
+				"geonames-features": 77,
+				"overture": 308,
+				"cordis": 30,
+				"fragment-assay": 31,
+				"wikidata-vital-places": 5
+			},
+			"provenance": {
+				"verified_unseen": 64,
+				"unseen_by_candidate": 339,
+				"known_overlap": 597,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FJ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 81,
+				"sampled": 81
+			},
+			"places": {
+				"available": 118,
+				"sampled": 118
+			},
+			"groups": 33,
+			"sources": {
+				"geonames-features": 79,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 68,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 32,
+				"sampled": 32
+			},
+			"places": {
+				"available": 4,
+				"sampled": 4
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 32
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 28,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 39,
+				"sampled": 39
+			},
+			"places": {
+				"available": 86,
+				"sampled": 86
+			},
+			"groups": 17,
+			"sources": {
+				"geonames-features": 39
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 148,
+				"sampled": 148
+			},
+			"places": {
+				"available": 30,
+				"sampled": 30
+			},
+			"groups": 86,
+			"sources": {
+				"geonames-features": 59,
+				"gleif-lei": 39,
+				"adressur-fo": 45,
+				"cordis": 5
+			},
+			"provenance": {
+				"verified_unseen": 54,
+				"unseen_by_candidate": 0,
+				"known_overlap": 94,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "FR",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-FR"],
+			"addresses": {
+				"available": 256595,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 46,
+				"sampled": 46
+			},
+			"groups": 997,
+			"sources": {
+				"ban": 996,
+				"invented-house-venue": 1,
+				"gleif-lei": 2,
+				"rendered-fr-admin-split": 1
+			},
+			"provenance": {
+				"verified_unseen": 52,
+				"unseen_by_candidate": 0,
+				"known_overlap": 948,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "GA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 65,
+				"sampled": 65
+			},
+			"places": {
+				"available": 123,
+				"sampled": 123
+			},
+			"groups": 31,
+			"sources": {
+				"geonames-features": 65
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 65,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GB",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-GB"],
+			"addresses": {
+				"available": 4437,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 2289,
+				"sampled": 1000
+			},
+			"groups": 981,
+			"sources": {
+				"gleif-lei": 109,
+				"rendered-gb-os-open": 840,
+				"invented-postal-unit-guideline": 5,
+				"cordis": 11,
+				"spliced-sub-venue": 35
+			},
+			"provenance": {
+				"verified_unseen": 883,
+				"unseen_by_candidate": 10,
+				"known_overlap": 107,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "GD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 17,
+				"sampled": 17
+			},
+			"places": {
+				"available": 120,
+				"sampled": 120
+			},
+			"groups": 10,
+			"sources": {
+				"geonames-features": 15,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 15,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 29,
+				"sampled": 29
+			},
+			"places": {
+				"available": 118,
+				"sampled": 118
+			},
+			"groups": 15,
+			"sources": {
+				"geonames-features": 24,
+				"osm-ge": 4,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 24,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3188,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-gf": 992,
+				"fr-annuaire-education-overseas": 5,
+				"fr-finess-overseas": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 24,
+				"sampled": 24
+			},
+			"places": {
+				"available": 87,
+				"sampled": 87
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 12,
+				"gleif-lei": 10,
+				"wikidata-vital-places": 1,
+				"osm-gg": 1
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 18,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 49,
+				"sampled": 49
+			},
+			"places": {
+				"available": 129,
+				"sampled": 129
+			},
+			"groups": 24,
+			"sources": {
+				"geonames-features": 43,
+				"osm-gh": 4,
+				"cordis": 1,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 41,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 5,
+				"sampled": 5
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 4,
+			"sources": {
+				"gleif-lei": 5
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 5,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 60,
+				"sampled": 60
+			},
+			"places": {
+				"available": 83,
+				"sampled": 83
+			},
+			"groups": 30,
+			"sources": {
+				"geonames-features": 51,
+				"gleif-lei": 9
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 60,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 24,
+				"sampled": 24
+			},
+			"places": {
+				"available": 159,
+				"sampled": 159
+			},
+			"groups": 12,
+			"sources": {
+				"geonames-features": 24
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 19,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 38,
+				"sampled": 38
+			},
+			"places": {
+				"available": 172,
+				"sampled": 172
+			},
+			"groups": 18,
+			"sources": {
+				"geonames-features": 38
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 38,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GP",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6203,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-gp": 997,
+				"fr-finess-overseas": 2,
+				"fr-annuaire-education-overseas": 1
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GQ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 11,
+				"sampled": 11
+			},
+			"places": {
+				"available": 127,
+				"sampled": 127
+			},
+			"groups": 4,
+			"sources": {
+				"geonames-features": 11
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 11,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 411,
+				"sampled": 411
+			},
+			"places": {
+				"available": 166,
+				"sampled": 166
+			},
+			"groups": 211,
+			"sources": {
+				"geonames-features": 121,
+				"gleif-lei": 182,
+				"wikidata-vital-places": 43,
+				"cordis": 65
+			},
+			"provenance": {
+				"verified_unseen": 53,
+				"unseen_by_candidate": 17,
+				"known_overlap": 341,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 20,
+				"sampled": 20
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 9,
+			"sources": {
+				"geonames-features": 20
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 20,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 112,
+				"sampled": 112
+			},
+			"places": {
+				"available": 126,
+				"sampled": 126
+			},
+			"groups": 60,
+			"sources": {
+				"geonames-features": 87,
+				"osm-gt": 25
+			},
+			"provenance": {
+				"verified_unseen": 37,
+				"unseen_by_candidate": 0,
+				"known_overlap": 75,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 23,
+				"sampled": 23
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 12,
+			"sources": {
+				"geonames-features": 23
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 23,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 34,
+				"sampled": 34
+			},
+			"places": {
+				"available": 204,
+				"sampled": 204
+			},
+			"groups": 16,
+			"sources": {
+				"geonames-features": 34
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 34,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "GY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 45,
+				"sampled": 45
+			},
+			"places": {
+				"available": 149,
+				"sampled": 149
+			},
+			"groups": 19,
+			"sources": {
+				"geonames-features": 44,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 44,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 48,
+				"sampled": 48
+			},
+			"places": {
+				"available": 105,
+				"sampled": 105
+			},
+			"groups": 40,
+			"sources": {
+				"osm-hk": 35,
+				"geonames-features": 13
+			},
+			"provenance": {
+				"verified_unseen": 35,
+				"unseen_by_candidate": 0,
+				"known_overlap": 13,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 8,
+				"sampled": 8
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 8
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 8,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 53,
+				"sampled": 53
+			},
+			"places": {
+				"available": 196,
+				"sampled": 196
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 52,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 47,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3849,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 144,
+				"sampled": 144
+			},
+			"groups": 988,
+			"sources": {
+				"rendered-hr": 774,
+				"fragment-assay": 17,
+				"overture": 146,
+				"geonames-features": 28,
+				"gleif-lei": 26,
+				"cordis": 6,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 937,
+				"known_overlap": 55,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 39,
+				"sampled": 39
+			},
+			"places": {
+				"available": 164,
+				"sampled": 164
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 31,
+				"osm-ht": 8
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 31,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "HU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 705,
+				"sampled": 705
+			},
+			"places": {
+				"available": 112,
+				"sampled": 112
+			},
+			"groups": 283,
+			"sources": {
+				"gleif-lei": 598,
+				"geonames-features": 57,
+				"wikidata-vital-places": 11,
+				"cordis": 39
+			},
+			"provenance": {
+				"verified_unseen": 17,
+				"unseen_by_candidate": 50,
+				"known_overlap": 638,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ID",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1691,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 28,
+				"sampled": 28
+			},
+			"groups": 981,
+			"sources": {
+				"osm-id": 960,
+				"gleif-lei": 39,
+				"cordis": 1
+			},
+			"provenance": {
+				"verified_unseen": 24,
+				"unseen_by_candidate": 939,
+				"known_overlap": 37,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 359,
+				"sampled": 359
+			},
+			"places": {
+				"available": 145,
+				"sampled": 145
+			},
+			"groups": 156,
+			"sources": {
+				"gleif-lei": 213,
+				"geonames-features": 101,
+				"wikidata-vital-places": 8,
+				"cordis": 37
+			},
+			"provenance": {
+				"verified_unseen": 16,
+				"unseen_by_candidate": 17,
+				"known_overlap": 326,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 171,
+				"sampled": 171
+			},
+			"places": {
+				"available": 107,
+				"sampled": 107
+			},
+			"groups": 79,
+			"sources": {
+				"gleif-lei": 53,
+				"geonames-features": 104,
+				"wikidata-vital-places": 11,
+				"cordis": 3
+			},
+			"provenance": {
+				"verified_unseen": 33,
+				"unseen_by_candidate": 9,
+				"known_overlap": 129,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 54,
+				"sampled": 54
+			},
+			"places": {
+				"available": 72,
+				"sampled": 72
+			},
+			"groups": 41,
+			"sources": {
+				"geonames-features": 13,
+				"gleif-lei": 13,
+				"landregistry-im": 28
+			},
+			"provenance": {
+				"verified_unseen": 37,
+				"unseen_by_candidate": 0,
+				"known_overlap": 17,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IN",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-IN"],
+			"addresses": {
+				"available": 1760,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 111,
+				"sampled": 111
+			},
+			"groups": 886,
+			"sources": {
+				"geonames-features": 71,
+				"invented-house-venue": 195,
+				"osm-in": 408,
+				"gleif-lei": 287,
+				"wikidata-vital-places": 39
+			},
+			"provenance": {
+				"verified_unseen": 73,
+				"unseen_by_candidate": 435,
+				"known_overlap": 492,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "IO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 2,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IQ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 157,
+				"sampled": 157
+			},
+			"places": {
+				"available": 148,
+				"sampled": 148
+			},
+			"groups": 74,
+			"sources": {
+				"geonames-features": 144,
+				"wikidata-vital-places": 13
+			},
+			"provenance": {
+				"verified_unseen": 27,
+				"unseen_by_candidate": 0,
+				"known_overlap": 130,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 220,
+				"sampled": 220
+			},
+			"places": {
+				"available": 188,
+				"sampled": 188
+			},
+			"groups": 112,
+			"sources": {
+				"geonames-features": 185,
+				"osm-ir": 17,
+				"wikidata-vital-places": 18
+			},
+			"provenance": {
+				"verified_unseen": 42,
+				"unseen_by_candidate": 0,
+				"known_overlap": 178,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 383,
+				"sampled": 383
+			},
+			"places": {
+				"available": 94,
+				"sampled": 94
+			},
+			"groups": 158,
+			"sources": {
+				"gleif-lei": 206,
+				"geonames-features": 164,
+				"cordis": 11,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 22,
+				"unseen_by_candidate": 25,
+				"known_overlap": 336,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "IT",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-IT"],
+			"addresses": {
+				"available": 40618,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 2,
+				"sampled": 2
+			},
+			"groups": 1000,
+			"sources": {
+				"overture": 998,
+				"gleif-lei": 2
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 998,
+				"known_overlap": 2,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "JE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 43,
+				"sampled": 43
+			},
+			"places": {
+				"available": 49,
+				"sampled": 49
+			},
+			"groups": 16,
+			"sources": {
+				"gleif-lei": 30,
+				"geonames-features": 13
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 5,
+				"known_overlap": 38,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "JM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 51,
+				"sampled": 51
+			},
+			"places": {
+				"available": 123,
+				"sampled": 123
+			},
+			"groups": 19,
+			"sources": {
+				"geonames-features": 43,
+				"gleif-lei": 8
+			},
+			"provenance": {
+				"verified_unseen": 12,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "JO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 68,
+				"sampled": 68
+			},
+			"places": {
+				"available": 117,
+				"sampled": 117
+			},
+			"groups": 37,
+			"sources": {
+				"geonames-features": 57,
+				"cordis": 2,
+				"gleif-lei": 4,
+				"wikidata-vital-places": 5
+			},
+			"provenance": {
+				"verified_unseen": 9,
+				"unseen_by_candidate": 0,
+				"known_overlap": 59,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "JP",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 225,
+				"sampled": 225
+			},
+			"places": {
+				"available": 3946,
+				"sampled": 1000
+			},
+			"groups": 173,
+			"sources": {
+				"geonames-features": 87,
+				"wikidata-vital-places": 124,
+				"gleif-lei": 5,
+				"cordis": 5,
+				"fragment-assay": 4
+			},
+			"provenance": {
+				"verified_unseen": 124,
+				"unseen_by_candidate": 8,
+				"known_overlap": 93,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 114,
+				"sampled": 114
+			},
+			"places": {
+				"available": 191,
+				"sampled": 191
+			},
+			"groups": 50,
+			"sources": {
+				"geonames-features": 99,
+				"cordis": 9,
+				"wikidata-vital-places": 3,
+				"osm-ke": 3
+			},
+			"provenance": {
+				"verified_unseen": 36,
+				"unseen_by_candidate": 0,
+				"known_overlap": 78,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 68,
+				"sampled": 68
+			},
+			"places": {
+				"available": 159,
+				"sampled": 159
+			},
+			"groups": 38,
+			"sources": {
+				"geonames-features": 38,
+				"gleif-lei": 6,
+				"osm-kg": 18,
+				"cordis": 6
+			},
+			"provenance": {
+				"verified_unseen": 23,
+				"unseen_by_candidate": 0,
+				"known_overlap": 45,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 52,
+				"sampled": 52
+			},
+			"places": {
+				"available": 122,
+				"sampled": 122
+			},
+			"groups": 25,
+			"sources": {
+				"geonames-features": 49,
+				"osm-kh": 3
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 49,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 27,
+				"sampled": 27
+			},
+			"places": {
+				"available": 61,
+				"sampled": 61
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 25,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 22,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 32,
+				"sampled": 32
+			},
+			"places": {
+				"available": 70,
+				"sampled": 70
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 32
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 32,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 13,
+				"sampled": 13
+			},
+			"places": {
+				"available": 97,
+				"sampled": 97
+			},
+			"groups": 6,
+			"sources": {
+				"geonames-features": 13
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 13,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KP",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 79,
+				"sampled": 79
+			},
+			"places": {
+				"available": 161,
+				"sampled": 161
+			},
+			"groups": 37,
+			"sources": {
+				"geonames-features": 75,
+				"wikidata-vital-places": 4
+			},
+			"provenance": {
+				"verified_unseen": 21,
+				"unseen_by_candidate": 0,
+				"known_overlap": 58,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 132,
+				"sampled": 132
+			},
+			"places": {
+				"available": 84,
+				"sampled": 84
+			},
+			"groups": 72,
+			"sources": {
+				"geonames-features": 100,
+				"gleif-lei": 6,
+				"fragment-assay": 17,
+				"wikidata-vital-places": 9
+			},
+			"provenance": {
+				"verified_unseen": 27,
+				"unseen_by_candidate": 17,
+				"known_overlap": 88,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 121,
+				"sampled": 121
+			},
+			"places": {
+				"available": 89,
+				"sampled": 89
+			},
+			"groups": 106,
+			"sources": {
+				"osm-kw": 94,
+				"geonames-features": 27
+			},
+			"provenance": {
+				"verified_unseen": 102,
+				"unseen_by_candidate": 0,
+				"known_overlap": 19,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 58,
+				"sampled": 58
+			},
+			"places": {
+				"available": 11,
+				"sampled": 11
+			},
+			"groups": 21,
+			"sources": {
+				"gleif-lei": 49,
+				"geonames-features": 9
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 4,
+				"known_overlap": 54,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "KZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 360,
+				"sampled": 360
+			},
+			"places": {
+				"available": 112,
+				"sampled": 112
+			},
+			"groups": 245,
+			"sources": {
+				"geonames-features": 195,
+				"osm-kz": 153,
+				"cordis": 3,
+				"wikidata-vital-places": 9
+			},
+			"provenance": {
+				"verified_unseen": 191,
+				"unseen_by_candidate": 0,
+				"known_overlap": 169,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 87,
+				"sampled": 87
+			},
+			"places": {
+				"available": 129,
+				"sampled": 129
+			},
+			"groups": 42,
+			"sources": {
+				"geonames-features": 84,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 80,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LB",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 116,
+				"sampled": 116
+			},
+			"places": {
+				"available": 91,
+				"sampled": 91
+			},
+			"groups": 49,
+			"sources": {
+				"geonames-features": 108,
+				"osm-lb": 7,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 22,
+				"unseen_by_candidate": 0,
+				"known_overlap": 94,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 17,
+				"sampled": 17
+			},
+			"places": {
+				"available": 73,
+				"sampled": 73
+			},
+			"groups": 8,
+			"sources": {
+				"geonames-features": 17
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 17,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 95,
+				"sampled": 95
+			},
+			"places": {
+				"available": 66,
+				"sampled": 66
+			},
+			"groups": 37,
+			"sources": {
+				"geonames-features": 44,
+				"gleif-lei": 51
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 92,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 90,
+				"sampled": 90
+			},
+			"places": {
+				"available": 101,
+				"sampled": 101
+			},
+			"groups": 48,
+			"sources": {
+				"geonames-features": 65,
+				"gleif-lei": 11,
+				"wikidata-vital-places": 5,
+				"osm-lk": 9
+			},
+			"provenance": {
+				"verified_unseen": 22,
+				"unseen_by_candidate": 0,
+				"known_overlap": 68,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 33,
+				"sampled": 33
+			},
+			"places": {
+				"available": 157,
+				"sampled": 157
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 33
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 33,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 93,
+				"sampled": 93
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 273,
+				"sampled": 273
+			},
+			"places": {
+				"available": 141,
+				"sampled": 141
+			},
+			"groups": 111,
+			"sources": {
+				"gleif-lei": 206,
+				"cordis": 17,
+				"geonames-features": 48,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 15,
+				"unseen_by_candidate": 0,
+				"known_overlap": 258,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 706,
+				"sampled": 706
+			},
+			"places": {
+				"available": 48,
+				"sampled": 48
+			},
+			"groups": 524,
+			"sources": {
+				"rendered-lu": 403,
+				"gleif-lei": 279,
+				"cordis": 12,
+				"geonames-features": 11,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 27,
+				"unseen_by_candidate": 403,
+				"known_overlap": 276,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 27829,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"lv-varis": 982,
+				"gleif-lei": 18
+			},
+			"provenance": {
+				"verified_unseen": 35,
+				"unseen_by_candidate": 950,
+				"known_overlap": 15,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "LY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 120,
+				"sampled": 120
+			},
+			"places": {
+				"available": 106,
+				"sampled": 106
+			},
+			"groups": 50,
+			"sources": {
+				"geonames-features": 118,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 113,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 224,
+				"sampled": 224
+			},
+			"places": {
+				"available": 154,
+				"sampled": 154
+			},
+			"groups": 129,
+			"sources": {
+				"geonames-features": 158,
+				"osm-ma": 57,
+				"gleif-lei": 5,
+				"wikidata-vital-places": 4
+			},
+			"provenance": {
+				"verified_unseen": 77,
+				"unseen_by_candidate": 0,
+				"known_overlap": 147,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 14,
+				"sampled": 14
+			},
+			"places": {
+				"available": 28,
+				"sampled": 28
+			},
+			"groups": 7,
+			"sources": {
+				"wikidata-vital-places": 2,
+				"gleif-lei": 12
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 12,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 348,
+				"sampled": 348
+			},
+			"places": {
+				"available": 102,
+				"sampled": 102
+			},
+			"groups": 336,
+			"sources": {
+				"osm-md": 329,
+				"geonames-features": 18,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 340,
+				"unseen_by_candidate": 0,
+				"known_overlap": 8,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ME",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 56,
+				"sampled": 56
+			},
+			"places": {
+				"available": 148,
+				"sampled": 148
+			},
+			"groups": 29,
+			"sources": {
+				"geonames-features": 45,
+				"osm-me": 5,
+				"wikidata-vital-places": 2,
+				"gleif-lei": 4
+			},
+			"provenance": {
+				"verified_unseen": 17,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 2
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 2,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 61,
+				"sampled": 61
+			},
+			"places": {
+				"available": 152,
+				"sampled": 152
+			},
+			"groups": 27,
+			"sources": {
+				"geonames-features": 61
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 58,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 22,
+				"sampled": 22
+			},
+			"places": {
+				"available": 49,
+				"sampled": 49
+			},
+			"groups": 9,
+			"sources": {
+				"geonames-features": 22
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 18,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 117,
+				"sampled": 117
+			},
+			"places": {
+				"available": 83,
+				"sampled": 83
+			},
+			"groups": 52,
+			"sources": {
+				"geonames-features": 103,
+				"gleif-lei": 5,
+				"cordis": 8,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 18,
+				"unseen_by_candidate": 4,
+				"known_overlap": 95,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ML",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 70,
+				"sampled": 70
+			},
+			"places": {
+				"available": 159,
+				"sampled": 159
+			},
+			"groups": 32,
+			"sources": {
+				"wikidata-vital-places": 2,
+				"geonames-features": 68
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 65,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 66,
+				"sampled": 66
+			},
+			"places": {
+				"available": 163,
+				"sampled": 163
+			},
+			"groups": 30,
+			"sources": {
+				"geonames-features": 61,
+				"osm-mm": 5
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 61,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 50,
+				"sampled": 50
+			},
+			"places": {
+				"available": 128,
+				"sampled": 128
+			},
+			"groups": 28,
+			"sources": {
+				"geonames-features": 41,
+				"wikidata-vital-places": 5,
+				"osm-mn": 4
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 37,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 8,
+				"sampled": 8
+			},
+			"places": {
+				"available": 26,
+				"sampled": 26
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 8
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 4,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MP",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 80,
+				"sampled": 80
+			},
+			"places": {
+				"available": 5,
+				"sampled": 5
+			},
+			"groups": 35,
+			"sources": {
+				"geonames-features": 80
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 72,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MQ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6950,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-mq": 992,
+				"fr-finess-overseas": 3,
+				"fr-annuaire-education-overseas": 5
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 73,
+				"sampled": 73
+			},
+			"places": {
+				"available": 80,
+				"sampled": 80
+			},
+			"groups": 31,
+			"sources": {
+				"geonames-features": 73
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 66,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 11,
+				"sampled": 11
+			},
+			"places": {
+				"available": 38,
+				"sampled": 38
+			},
+			"groups": 4,
+			"sources": {
+				"geonames-features": 11
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 11,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 75,
+				"sampled": 75
+			},
+			"places": {
+				"available": 119,
+				"sampled": 119
+			},
+			"groups": 36,
+			"sources": {
+				"geonames-features": 34,
+				"cordis": 9,
+				"gleif-lei": 29,
+				"osm-mt": 3
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 5,
+				"known_overlap": 67,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 42,
+				"sampled": 42
+			},
+			"places": {
+				"available": 119,
+				"sampled": 119
+			},
+			"groups": 19,
+			"sources": {
+				"geonames-features": 39,
+				"wikidata-vital-places": 2,
+				"gleif-lei": 1
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 40,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6,
+				"sampled": 6
+			},
+			"places": {
+				"available": 56,
+				"sampled": 56
+			},
+			"groups": 6,
+			"sources": {
+				"wikidata-vital-places": 4,
+				"osm-mv": 2
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 30,
+				"sampled": 30
+			},
+			"places": {
+				"available": 76,
+				"sampled": 76
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 30
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 30,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MX",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 4652,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 161,
+				"sampled": 161
+			},
+			"groups": 987,
+			"sources": {
+				"invented-house-venue": 20,
+				"overture-latam": 897,
+				"geonames-features": 38,
+				"gleif-lei": 35,
+				"wikidata-vital-places": 10
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 900,
+				"known_overlap": 87,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 216,
+				"sampled": 216
+			},
+			"places": {
+				"available": 156,
+				"sampled": 156
+			},
+			"groups": 119,
+			"sources": {
+				"geonames-features": 172,
+				"osm-my": 38,
+				"wikidata-vital-places": 6
+			},
+			"provenance": {
+				"verified_unseen": 49,
+				"unseen_by_candidate": 0,
+				"known_overlap": 167,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "MZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 61,
+				"sampled": 61
+			},
+			"places": {
+				"available": 159,
+				"sampled": 159
+			},
+			"groups": 25,
+			"sources": {
+				"geonames-features": 60,
+				"osm-mz": 1
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 48,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 62,
+				"sampled": 62
+			},
+			"places": {
+				"available": 114,
+				"sampled": 114
+			},
+			"groups": 29,
+			"sources": {
+				"geonames-features": 58,
+				"wikidata-vital-places": 2,
+				"cordis": 2
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 57,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1184,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-nc": 990,
+				"fr-annuaire-education-overseas": 10
+			},
+			"provenance": {
+				"verified_unseen": 990,
+				"unseen_by_candidate": 10,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 85,
+				"sampled": 85
+			},
+			"places": {
+				"available": 176,
+				"sampled": 176
+			},
+			"groups": 40,
+			"sources": {
+				"geonames-features": 85
+			},
+			"provenance": {
+				"verified_unseen": 12,
+				"unseen_by_candidate": 0,
+				"known_overlap": 73,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 3
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 3,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 66,
+				"sampled": 66
+			},
+			"places": {
+				"available": 52,
+				"sampled": 52
+			},
+			"groups": 39,
+			"sources": {
+				"osm-ng": 22,
+				"cordis": 25,
+				"gleif-lei": 19
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 27,
+				"known_overlap": 35,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 67,
+				"sampled": 67
+			},
+			"places": {
+				"available": 145,
+				"sampled": 145
+			},
+			"groups": 34,
+			"sources": {
+				"geonames-features": 65,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 61,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 11405,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 2999,
+				"sampled": 1000
+			},
+			"groups": 954,
+			"sources": {
+				"gleif-lei": 691,
+				"overture": 275,
+				"cordis": 10,
+				"geonames-features": 8,
+				"codex-bare-postcode": 5,
+				"rendered-nl-postcode": 9,
+				"fragment-assay": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 328,
+				"known_overlap": 670,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3089,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 125,
+				"sampled": 125
+			},
+			"groups": 782,
+			"sources": {
+				"gleif-lei": 737,
+				"geonames-features": 79,
+				"overture": 82,
+				"fragment-no": 11,
+				"rendered-no-street-led": 36,
+				"fragment-assay": 44,
+				"cordis": 9,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 223,
+				"known_overlap": 770,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NP",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 85,
+				"sampled": 85
+			},
+			"places": {
+				"available": 175,
+				"sampled": 175
+			},
+			"groups": 42,
+			"sources": {
+				"geonames-features": 74,
+				"osm-np": 8,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 20,
+				"unseen_by_candidate": 0,
+				"known_overlap": 65,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 49,
+				"sampled": 49
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 4,
+				"sampled": 4
+			},
+			"places": {
+				"available": 4,
+				"sampled": 4
+			},
+			"groups": 2,
+			"sources": {
+				"geonames-features": 4
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "NZ",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-NZ"],
+			"addresses": {
+				"available": 1178,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 80,
+				"sampled": 80
+			},
+			"groups": 738,
+			"sources": {
+				"gleif-lei": 482,
+				"fragment-assay": 386,
+				"invented-po-box-cedex": 68,
+				"invented-postal-unit-guideline": 50,
+				"cordis": 14
+			},
+			"provenance": {
+				"verified_unseen": 51,
+				"unseen_by_candidate": 493,
+				"known_overlap": 456,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "OM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 71,
+				"sampled": 71
+			},
+			"places": {
+				"available": 119,
+				"sampled": 119
+			},
+			"groups": 32,
+			"sources": {
+				"geonames-features": 65,
+				"gleif-lei": 1,
+				"osm-om": 1,
+				"wikidata-vital-places": 4
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 61,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 87,
+				"sampled": 87
+			},
+			"places": {
+				"available": 107,
+				"sampled": 107
+			},
+			"groups": 40,
+			"sources": {
+				"wikidata-vital-places": 2,
+				"geonames-features": 67,
+				"gleif-lei": 14,
+				"cordis": 4
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 5,
+				"known_overlap": 76,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 186,
+				"sampled": 186
+			},
+			"places": {
+				"available": 146,
+				"sampled": 146
+			},
+			"groups": 111,
+			"sources": {
+				"geonames-features": 101,
+				"gleif-lei": 29,
+				"osm-pe": 48,
+				"wikidata-vital-places": 8
+			},
+			"provenance": {
+				"verified_unseen": 60,
+				"unseen_by_candidate": 0,
+				"known_overlap": 126,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 96,
+				"sampled": 96
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 89,
+			"sources": {
+				"osm-pf": 77,
+				"fr-annuaire-education-overseas": 8,
+				"gleif-lei": 11
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 85,
+				"known_overlap": 11,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 159,
+				"sampled": 159
+			},
+			"places": {
+				"available": 171,
+				"sampled": 171
+			},
+			"groups": 70,
+			"sources": {
+				"geonames-features": 158,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 18,
+				"unseen_by_candidate": 0,
+				"known_overlap": 141,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 173,
+				"sampled": 173
+			},
+			"places": {
+				"available": 154,
+				"sampled": 154
+			},
+			"groups": 103,
+			"sources": {
+				"geonames-features": 117,
+				"osm-ph": 46,
+				"gleif-lei": 7,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 58,
+				"unseen_by_candidate": 0,
+				"known_overlap": 115,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2936,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 1,
+				"sampled": 1
+			},
+			"groups": 845,
+			"sources": {
+				"osm": 342,
+				"rendered-pk-register": 319,
+				"osm-pk": 338,
+				"cordis": 1
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 998,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1770,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 118,
+				"sampled": 118
+			},
+			"groups": 745,
+			"sources": {
+				"gleif-lei": 639,
+				"overture": 258,
+				"wikidata-vital-places": 26,
+				"fragment-assay": 23,
+				"geonames-features": 13,
+				"cordis": 41
+			},
+			"provenance": {
+				"verified_unseen": 27,
+				"unseen_by_candidate": 327,
+				"known_overlap": 646,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 25,
+				"sampled": 25
+			},
+			"places": {
+				"available": 4,
+				"sampled": 4
+			},
+			"groups": 11,
+			"sources": {
+				"geonames-features": 25
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 21,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 4,
+				"sampled": 4
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 103,
+				"sampled": 103
+			},
+			"places": {
+				"available": 221,
+				"sampled": 221
+			},
+			"groups": 75,
+			"sources": {
+				"geonames-features": 49,
+				"osm-pr": 48,
+				"gleif-lei": 6
+			},
+			"provenance": {
+				"verified_unseen": 52,
+				"unseen_by_candidate": 0,
+				"known_overlap": 51,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 25,
+				"sampled": 25
+			},
+			"places": {
+				"available": 71,
+				"sampled": 71
+			},
+			"groups": 12,
+			"sources": {
+				"wikidata-vital-places": 4,
+				"geonames-features": 21
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 17,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 6391,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 129,
+				"sampled": 129
+			},
+			"groups": 994,
+			"sources": {
+				"fragment-assay": 64,
+				"overture": 120,
+				"rendered-pt": 748,
+				"geonames-features": 12,
+				"gleif-lei": 35,
+				"invented-house-venue": 9,
+				"cordis": 12
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 944,
+				"known_overlap": 53,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 21,
+				"sampled": 21
+			},
+			"places": {
+				"available": 77,
+				"sampled": 77
+			},
+			"groups": 10,
+			"sources": {
+				"geonames-features": 21
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 21,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 62,
+				"sampled": 62
+			},
+			"places": {
+				"available": 114,
+				"sampled": 114
+			},
+			"groups": 27,
+			"sources": {
+				"geonames-features": 59,
+				"gleif-lei": 2,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 9,
+				"unseen_by_candidate": 0,
+				"known_overlap": 53,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "QA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 42,
+				"sampled": 42
+			},
+			"places": {
+				"available": 82,
+				"sampled": 82
+			},
+			"groups": 19,
+			"sources": {
+				"geonames-features": 39,
+				"wikidata-vital-places": 2,
+				"osm-qa": 1
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "RE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 20900,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-re": 995,
+				"fr-annuaire-education-overseas": 3,
+				"fr-finess-overseas": 2
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "RO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2219,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 781,
+			"sources": {
+				"gleif-lei": 587,
+				"ro-retea-scolara": 349,
+				"cordis": 64
+			},
+			"provenance": {
+				"verified_unseen": 45,
+				"unseen_by_candidate": 361,
+				"known_overlap": 594,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "RS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 581,
+				"sampled": 581
+			},
+			"places": {
+				"available": 113,
+				"sampled": 113
+			},
+			"groups": 534,
+			"sources": {
+				"osm-rs": 494,
+				"cordis": 18,
+				"geonames-features": 51,
+				"gleif-lei": 11,
+				"wikidata-vital-places": 7
+			},
+			"provenance": {
+				"verified_unseen": 501,
+				"unseen_by_candidate": 4,
+				"known_overlap": 76,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "RU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1934,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"osm-ru": 1000
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "RW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 39,
+				"sampled": 39
+			},
+			"places": {
+				"available": 120,
+				"sampled": 120
+			},
+			"groups": 18,
+			"sources": {
+				"geonames-features": 37,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 37,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 169,
+				"sampled": 169
+			},
+			"places": {
+				"available": 127,
+				"sampled": 127
+			},
+			"groups": 77,
+			"sources": {
+				"geonames-features": 146,
+				"wikidata-vital-places": 12,
+				"gleif-lei": 8,
+				"osm-sa": 3
+			},
+			"provenance": {
+				"verified_unseen": 28,
+				"unseen_by_candidate": 0,
+				"known_overlap": 141,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SB",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 49,
+				"sampled": 49
+			},
+			"places": {
+				"available": 99,
+				"sampled": 99
+			},
+			"groups": 24,
+			"sources": {
+				"geonames-features": 47,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 44,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 22,
+				"sampled": 22
+			},
+			"places": {
+				"available": 46,
+				"sampled": 46
+			},
+			"groups": 10,
+			"sources": {
+				"geonames-features": 15,
+				"wikidata-vital-places": 2,
+				"gleif-lei": 5
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 4,
+				"known_overlap": 12,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 85,
+				"sampled": 85
+			},
+			"places": {
+				"available": 103,
+				"sampled": 103
+			},
+			"groups": 37,
+			"sources": {
+				"geonames-features": 84,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 84,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3298,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 119,
+				"sampled": 119
+			},
+			"groups": 726,
+			"sources": {
+				"gleif-lei": 943,
+				"geonames-features": 26,
+				"cordis": 28,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 95,
+				"unseen_by_candidate": 0,
+				"known_overlap": 905,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 489,
+				"sampled": 489
+			},
+			"places": {
+				"available": 9,
+				"sampled": 9
+			},
+			"groups": 421,
+			"sources": {
+				"rendered-sg-register": 363,
+				"gleif-lei": 104,
+				"wikidata-vital-places": 5,
+				"geonames-features": 17
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 368,
+				"known_overlap": 116,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 33,
+				"sampled": 33
+			},
+			"places": {
+				"available": 13,
+				"sampled": 13
+			},
+			"groups": 14,
+			"sources": {
+				"geonames-features": 33
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 33,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 841,
+				"sampled": 841
+			},
+			"places": {
+				"available": 136,
+				"sampled": 136
+			},
+			"groups": 730,
+			"sources": {
+				"overture": 558,
+				"rendered-si-bare-village": 59,
+				"fragment-assay": 35,
+				"gleif-lei": 145,
+				"geonames-features": 19,
+				"cordis": 22,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 17,
+				"unseen_by_candidate": 652,
+				"known_overlap": 172,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SJ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 89,
+				"sampled": 89
+			},
+			"places": {
+				"available": 35,
+				"sampled": 35
+			},
+			"groups": 45,
+			"sources": {
+				"geonames-features": 89
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 86,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1419,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 108,
+				"sampled": 108
+			},
+			"groups": 888,
+			"sources": {
+				"rendered-sk": 729,
+				"fragment-assay": 50,
+				"cordis": 13,
+				"gleif-lei": 194,
+				"geonames-features": 13,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 782,
+				"known_overlap": 217,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 18,
+				"sampled": 18
+			},
+			"places": {
+				"available": 138,
+				"sampled": 138
+			},
+			"groups": 8,
+			"sources": {
+				"geonames-features": 17,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 13,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 8,
+				"sampled": 8
+			},
+			"places": {
+				"available": 53,
+				"sampled": 53
+			},
+			"groups": 4,
+			"sources": {
+				"gleif-lei": 8
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 8,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 55,
+				"sampled": 55
+			},
+			"places": {
+				"available": 162,
+				"sampled": 162
+			},
+			"groups": 28,
+			"sources": {
+				"geonames-features": 51,
+				"wikidata-vital-places": 2,
+				"osm-sn": 2
+			},
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 48,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 78,
+				"sampled": 78
+			},
+			"places": {
+				"available": 159,
+				"sampled": 159
+			},
+			"groups": 30,
+			"sources": {
+				"geonames-features": 77,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 65,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 29,
+				"sampled": 29
+			},
+			"places": {
+				"available": 104,
+				"sampled": 104
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 29
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 25,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 47,
+				"sampled": 47
+			},
+			"places": {
+				"available": 117,
+				"sampled": 117
+			},
+			"groups": 25,
+			"sources": {
+				"geonames-features": 47
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 44,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ST",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 32,
+				"sampled": 32
+			},
+			"places": {
+				"available": 111,
+				"sampled": 111
+			},
+			"groups": 12,
+			"sources": {
+				"geonames-features": 32
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 32,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 43,
+				"sampled": 43
+			},
+			"places": {
+				"available": 162,
+				"sampled": 162
+			},
+			"groups": 28,
+			"sources": {
+				"osm-sv": 15,
+				"geonames-features": 28
+			},
+			"provenance": {
+				"verified_unseen": 15,
+				"unseen_by_candidate": 0,
+				"known_overlap": 28,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SX",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 66,
+				"sampled": 66
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 170,
+				"sampled": 170
+			},
+			"places": {
+				"available": 131,
+				"sampled": 131
+			},
+			"groups": 70,
+			"sources": {
+				"geonames-features": 165,
+				"wikidata-vital-places": 5
+			},
+			"provenance": {
+				"verified_unseen": 36,
+				"unseen_by_candidate": 0,
+				"known_overlap": 134,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 20,
+				"sampled": 20
+			},
+			"places": {
+				"available": 146,
+				"sampled": 146
+			},
+			"groups": 9,
+			"sources": {
+				"geonames-features": 20
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 17,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 35,
+				"sampled": 35
+			},
+			"places": {
+				"available": 13,
+				"sampled": 13
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 35
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 35,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 102,
+				"sampled": 102
+			},
+			"places": {
+				"available": 178,
+				"sampled": 178
+			},
+			"groups": 42,
+			"sources": {
+				"geonames-features": 100,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 17,
+				"unseen_by_candidate": 0,
+				"known_overlap": 85,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 26,
+				"sampled": 26
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 26
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 26,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 5,
+				"sampled": 5
+			},
+			"places": {
+				"available": 147,
+				"sampled": 147
+			},
+			"groups": 3,
+			"sources": {
+				"geonames-features": 5
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 5,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TH",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 191,
+				"sampled": 191
+			},
+			"places": {
+				"available": 126,
+				"sampled": 126
+			},
+			"groups": 128,
+			"sources": {
+				"geonames-features": 99,
+				"osm-th": 66,
+				"wikidata-vital-places": 20,
+				"gleif-lei": 6
+			},
+			"provenance": {
+				"verified_unseen": 97,
+				"unseen_by_candidate": 3,
+				"known_overlap": 91,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TJ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 51,
+				"sampled": 51
+			},
+			"places": {
+				"available": 127,
+				"sampled": 127
+			},
+			"groups": 22,
+			"sources": {
+				"geonames-features": 49,
+				"wikidata-vital-places": 1,
+				"osm-tj": 1
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 45,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TL",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 14,
+				"sampled": 14
+			},
+			"places": {
+				"available": 97,
+				"sampled": 97
+			},
+			"groups": 7,
+			"sources": {
+				"geonames-features": 14
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 14,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 74,
+				"sampled": 74
+			},
+			"places": {
+				"available": 141,
+				"sampled": 141
+			},
+			"groups": 31,
+			"sources": {
+				"geonames-features": 74
+			},
+			"provenance": {
+				"verified_unseen": 23,
+				"unseen_by_candidate": 0,
+				"known_overlap": 51,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 62,
+				"sampled": 62
+			},
+			"places": {
+				"available": 93,
+				"sampled": 93
+			},
+			"groups": 32,
+			"sources": {
+				"geonames-features": 54,
+				"cordis": 5,
+				"wikidata-vital-places": 1,
+				"osm-tn": 2
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 59,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 17,
+				"sampled": 17
+			},
+			"places": {
+				"available": 28,
+				"sampled": 28
+			},
+			"groups": 10,
+			"sources": {
+				"geonames-features": 17
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 17,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TR",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 196,
+				"sampled": 196
+			},
+			"places": {
+				"available": 161,
+				"sampled": 161
+			},
+			"groups": 125,
+			"sources": {
+				"wikidata-vital-places": 38,
+				"cordis": 7,
+				"gleif-lei": 14,
+				"geonames-features": 137
+			},
+			"provenance": {
+				"verified_unseen": 58,
+				"unseen_by_candidate": 0,
+				"known_overlap": 138,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 199,
+				"sampled": 199
+			},
+			"places": {
+				"available": 100,
+				"sampled": 100
+			},
+			"groups": 175,
+			"sources": {
+				"osm-tt": 154,
+				"geonames-features": 44,
+				"wikidata-vital-places": 1
+			},
+			"provenance": {
+				"verified_unseen": 155,
+				"unseen_by_candidate": 0,
+				"known_overlap": 44,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 10,
+				"sampled": 10
+			},
+			"places": {
+				"available": 33,
+				"sampled": 33
+			},
+			"groups": 6,
+			"sources": {
+				"geonames-features": 10
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 10,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 112,
+				"sampled": 112
+			},
+			"places": {
+				"available": 169,
+				"sampled": 169
+			},
+			"groups": 58,
+			"sources": {
+				"geonames-features": 93,
+				"wikidata-vital-places": 8,
+				"fragment-assay": 11
+			},
+			"provenance": {
+				"verified_unseen": 11,
+				"unseen_by_candidate": 11,
+				"known_overlap": 90,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 82,
+				"sampled": 82
+			},
+			"places": {
+				"available": 139,
+				"sampled": 139
+			},
+			"groups": 41,
+			"sources": {
+				"osm-tz": 6,
+				"geonames-features": 73,
+				"wikidata-vital-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 9,
+				"unseen_by_candidate": 0,
+				"known_overlap": 73,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "UA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 202,
+				"sampled": 202
+			},
+			"places": {
+				"available": 173,
+				"sampled": 173
+			},
+			"groups": 148,
+			"sources": {
+				"geonames-features": 87,
+				"osm-ua": 84,
+				"wikidata-vital-places": 22,
+				"gleif-lei": 4,
+				"cordis": 5
+			},
+			"provenance": {
+				"verified_unseen": 106,
+				"unseen_by_candidate": 0,
+				"known_overlap": 96,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "UG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 62,
+				"sampled": 62
+			},
+			"places": {
+				"available": 116,
+				"sampled": 116
+			},
+			"groups": 29,
+			"sources": {
+				"geonames-features": 60,
+				"cordis": 2
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 59,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "UM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 10,
+				"sampled": 10
+			},
+			"places": {
+				"available": 31,
+				"sampled": 31
+			},
+			"groups": 5,
+			"sources": {
+				"geonames-features": 10
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 10,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "US",
+			"status": "required",
+			"objective": true,
+			"requirementIDs": ["country-US"],
+			"addresses": {
+				"available": 2197514,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 1324,
+				"sampled": 1000
+			},
+			"groups": 1000,
+			"sources": {
+				"usgov-nad": 791,
+				"usgov-nppes": 90,
+				"tiger": 107,
+				"state-tx-notaries": 11,
+				"gleif-lei": 1
+			},
+			"provenance": {
+				"verified_unseen": 24,
+				"unseen_by_candidate": 4,
+				"known_overlap": 972,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "not_evaluated",
+				"reasons": ["no verdict supplied"]
+			}
+		},
+		{
+			"country": "UY",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 225,
+				"sampled": 225
+			},
+			"places": {
+				"available": 120,
+				"sampled": 120
+			},
+			"groups": 180,
+			"sources": {
+				"ide-uy": 150,
+				"geonames-features": 63,
+				"gleif-lei": 10,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 168,
+				"unseen_by_candidate": 0,
+				"known_overlap": 57,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "UZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 60,
+				"sampled": 60
+			},
+			"places": {
+				"available": 170,
+				"sampled": 170
+			},
+			"groups": 30,
+			"sources": {
+				"geonames-features": 51,
+				"wikidata-vital-places": 5,
+				"osm-uz": 4
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 47,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 37,
+				"sampled": 37
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VC",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 15,
+				"sampled": 15
+			},
+			"places": {
+				"available": 40,
+				"sampled": 40
+			},
+			"groups": 7,
+			"sources": {
+				"geonames-features": 15
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 15,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 151,
+				"sampled": 151
+			},
+			"places": {
+				"available": 220,
+				"sampled": 220
+			},
+			"groups": 75,
+			"sources": {
+				"geonames-features": 134,
+				"wikidata-vital-places": 11,
+				"osm-ve": 6
+			},
+			"provenance": {
+				"verified_unseen": 22,
+				"unseen_by_candidate": 0,
+				"known_overlap": 129,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 52,
+				"sampled": 52
+			},
+			"places": {
+				"available": 3,
+				"sampled": 3
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 29,
+				"gleif-lei": 23
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 44,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 35,
+				"sampled": 35
+			},
+			"places": {
+				"available": 94,
+				"sampled": 94
+			},
+			"groups": 13,
+			"sources": {
+				"geonames-features": 35
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 35,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 448,
+				"sampled": 448
+			},
+			"places": {
+				"available": 31,
+				"sampled": 31
+			},
+			"groups": 228,
+			"sources": {
+				"osm": 226,
+				"osm-vn": 222
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 448,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "VU",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 44,
+				"sampled": 44
+			},
+			"places": {
+				"available": 114,
+				"sampled": 114
+			},
+			"groups": 20,
+			"sources": {
+				"geonames-features": 44
+			},
+			"provenance": {
+				"verified_unseen": 13,
+				"unseen_by_candidate": 0,
+				"known_overlap": 31,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "WF",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
+				"available": 3,
+				"sampled": 3
+			},
+			"groups": 1,
+			"sources": {
+				"geonames-features": 1
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "WS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 8,
+				"sampled": 8
+			},
+			"places": {
+				"available": 108,
+				"sampled": 108
+			},
+			"groups": 4,
+			"sources": {
+				"geonames-features": 8
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 4,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "XK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 41,
+				"sampled": 41
+			},
+			"places": {
+				"available": 108,
+				"sampled": 108
+			},
+			"groups": 21,
+			"sources": {
+				"geonames-features": 39,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "XS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 30,
+				"sampled": 30
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "XX",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 74,
+				"sampled": 74
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "XZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 21,
+				"sampled": 21
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "YE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 57,
+				"sampled": 57
+			},
+			"places": {
+				"available": 160,
+				"sampled": 160
+			},
+			"groups": 25,
+			"sources": {
+				"geonames-features": 55,
+				"wikidata-vital-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 51,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "YT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3398,
+				"sampled": 1000
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1000,
+			"sources": {
+				"ban-yt": 987,
+				"fr-annuaire-education-overseas": 8,
+				"fr-finess-overseas": 5
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 1000,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ZA",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 220,
+				"sampled": 220
+			},
+			"places": {
+				"available": 128,
+				"sampled": 128
+			},
+			"groups": 89,
+			"sources": {
+				"geonames-features": 104,
+				"wikidata-vital-places": 6,
+				"gleif-lei": 108,
+				"cordis": 2
+			},
+			"provenance": {
+				"verified_unseen": 24,
+				"unseen_by_candidate": 14,
+				"known_overlap": 182,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ZM",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 56,
+				"sampled": 56
+			},
+			"places": {
+				"available": 138,
+				"sampled": 138
+			},
+			"groups": 24,
+			"sources": {
+				"geonames-features": 55,
+				"osm-zm": 1
+			},
+			"provenance": {
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
+				"known_overlap": 52,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ZW",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 49,
+				"sampled": 49
+			},
+			"places": {
+				"available": 123,
+				"sampled": 123
+			},
+			"groups": 22,
+			"sources": {
+				"geonames-features": 45,
+				"osm-zw": 1,
+				"cordis": 3
+			},
+			"provenance": {
+				"verified_unseen": 10,
+				"unseen_by_candidate": 0,
+				"known_overlap": 39,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "ZZ",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 34,
+				"sampled": 34
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 34,
+			"sources": {
+				"fragment-assay": 34
+			},
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 34,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		}
+	]
+}

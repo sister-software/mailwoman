@@ -128,9 +128,10 @@ registered quality requirements instead (iron rule 5 in `docs/engineering/CONTRI
 - a release verdict from `packages/mailwoman/tools/eval-harness/release/evaluate.run.ts`, computed on paired outcomes
   from `heldout/per/country.run.ts --dataset` over a sample frozen by `heldout/dataset/freeze.run.ts`, for this exact
   `model.onnx` and the current spec, passed to `mwdev_arc` as `release_verdict` (`release_spec` names another
-  version). Only `pass` permits promotion. Spec v1 registers no threshold, so every verdict is
-  `insufficient_evidence` until a later spec registers them, and the report states that release eligibility is
-  insufficient evidence
+  version). Only `pass` permits promotion. Spec v7 registers every threshold, but the frozen collections
+  hold no comparative rows for ES, IT, AU or NZ, so the objective is `insufficient_evidence` for every candidate
+  (`docs/records/evals/2026-11-14-release-requirements-v8-proposal.md`), and the report states that release
+  eligibility is insufficient evidence
 - board regressions are findings to investigate with their addresses, and FR, GB and DE hold no privilege. A
   release report lists each accepted loss
 - the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval

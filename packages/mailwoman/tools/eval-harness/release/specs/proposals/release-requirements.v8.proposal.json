@@ -1,0 +1,205 @@
+{
+	"$registration": "UNREGISTERED PROPOSAL. No tool reads this file as the current specification (release/current-spec.ts names v7). The operator approves or amends it; registration copies it to specs/release-requirements.v8.json and moves CURRENT_RELEASE_SPEC in one change. docs/records/evals/2026-11-14-release-requirements-v8-proposal.md gives the measured basis of every value.",
+	"schemaVersion": 3,
+	"specVersion": "8",
+	"rationale": "Proposed version 8 registers the evaluation collections frozen from corpus v0.8.18-retention-overlay: heldout-dev-v0.8.18 (version 187e8ab06b37351c, seed 1818) for development and heldout-confirm-v0.8.18 (version 35ba77d61aa40921, seed 1819, drawn with every development group excluded) for confirmation, and names the confirmation collection as the dataset identity. Every threshold, selector, statistic, provenance rule and identity other than identities.dataset and evaluations is version 7's. Confirmation reads before registration: none; the published model's baseline scoring on confirmation (6.5) has not been run.",
+	"requirements": [
+		{
+			"id": "country-US",
+			"kind": "country",
+			"country": "US",
+			"reason": "Shipped en-us graph: rooftop geocoding, the demo default, postcode-us.bin and pair-index-us.bin. Exact parse of house number, street with the corpus affix split, locality, region and ZIP on three rows in five.",
+			"minimum": 0.6,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-FR",
+			"kind": "country",
+			"country": "FR",
+			"reason": "Shipped fr-fr overlay: rooftop geocoding over BAN and the lieu-dit pair index. Number, street, postcode and locality exact on nine rows in ten.",
+			"minimum": 0.9,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-GB",
+			"kind": "country",
+			"country": "GB",
+			"reason": "Shipped en-gb overlay: postcode-gb.bin, the GB pair index and county-as-region rows. Number, street, locality and postcode exact on four rows in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-DE",
+			"kind": "country",
+			"country": "DE",
+			"reason": "Shipped de-de overlay with the Ortsteil pair index. Street, number, PLZ and locality exact in either order on seventeen rows in twenty.",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-IN",
+			"kind": "country",
+			"country": "IN",
+			"reason": "Shipped en-in overlay with the area-line pair index. Area line, locality and PIN exact on half the OSM-style rows.",
+			"minimum": 0.5,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-ES",
+			"kind": "country",
+			"country": "ES",
+			"reason": "Shipped es-es overlay with a pair index; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-IT",
+			"kind": "country",
+			"country": "IT",
+			"reason": "Shipped it-it overlay with a pair index; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-AU",
+			"kind": "country",
+			"country": "AU",
+			"reason": "Shipped en-au overlay, GNAF-trained; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-NZ",
+			"kind": "country",
+			"country": "NZ",
+			"reason": "Shipped en-nz overlay with the LINZ pair index. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "po_box_cedex",
+			"kind": "capability",
+			"task": "Reading a PO Box, locked bag or CEDEX designator as one component beside an intact locality line",
+			"metric": "exact_parse",
+			"reason": "Closed-vocabulary slot behind the former us.po_box_real and fr.cedex_real floors.",
+			"minimum": 0.85,
+			"maxLoss": 0.05,
+			"maxLossReason": "A closed-vocabulary slot that moves 5 pp has lost a surface form; the country minima would absorb a loss this size.",
+			"select": {
+				"kinds": ["address"],
+				"sources": ["invented-po-box-cedex", "invented-postal-guideline"]
+			}
+		},
+		{
+			"id": "venue_unit",
+			"kind": "capability",
+			"task": "Recovering a venue name and its unit designator ahead of the street line",
+			"metric": "exact_parse",
+			"reason": "The former us.unit_real floor (n=34) on the one held-out source with a controlled unit span (1,936 rows).",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"],
+				"sources": ["spliced-sub-venue"]
+			}
+		},
+		{
+			"id": "country_token",
+			"kind": "capability",
+			"task": "A trailing country name tagged country rather than absorbed into the locality",
+			"metric": "exact_parse",
+			"reason": "The former us.country_homograph_f1 floor (n=54) protected the country slot; the homograph confound stays a diagnostic.",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"],
+				"sources": ["spliced-country"]
+			}
+		},
+		{
+			"id": "postal_unit",
+			"kind": "capability",
+			"task": "Reading a flat, unit, floor, staircase or building designator with its identifier as one unit component, in the line position the postal operator's guideline gives it",
+			"metric": "exact_parse",
+			"reason": "Issue #2764: cited operator rules for FR (SP 8855 lines 2 and 3), GB (PAF Sub Building Name), IT (scala, piano, interno on line 3), AU (FLAT/UNIT TYPE table) and NZ (ADV358 Unit Type), with only designators no training recipe draws. The minimum mirrors the 0.85 of the other capabilities in the v3 decision record.",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"],
+				"sources": ["invented-postal-unit-guideline"]
+			}
+		}
+	],
+	"objective": {
+		"countries": ["US", "FR", "GB", "DE", "IN", "ES", "IT", "AU", "NZ"],
+		"select": {
+			"kinds": ["address"]
+		},
+		"minimumImprovement": 0
+	},
+	"identities": {
+		"dataset": {
+			"id": "heldout-confirm-v0.8.18@35ba77d61aa40921",
+			"sha256": "b1bf658e5312efa7ce8f7e092b3039bab36bf449a7d47b5990ec0399e71dbfc8"
+		},
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "69fbaf01c"
+		},
+		"inference": {
+			"description": "HELDOUT_INFERENCE_RULE in heldout/per/country.ts (served-locale-package): each row is parsed by the shipped Latin locale package for its country (release.config.json locales), falling back to en-us, with the row's country as localeHint; a package whose loader reports an unfed required channel is refused. The verdict records the rule and the rows each package parsed.",
+			"options": {
+				"postcodeRepair": true,
+				"localeHint": "row.country",
+				"weightsLocale": "served-locale-package"
+			}
+		},
+		"published": {
+			"description": "@mailwoman/neural-weights-en-us 10.7.0 model.onnx (int8, md5 5356ecba83e3774a5d9717277c051ac2)",
+			"sha256": "e90aeab4b07d03a5b599331c1e68aa70d37e96478151795bcdc6dabb82d9aca9"
+		},
+		"candidate": {
+			"description": "The exact release artifact's model.onnx",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": 0.95,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"rowsIndependent": false,
+		"groupingAssumption": "A row's independent unit is its group within its country: base_source_id when derived, else source_id. Rows are not declared independent, so a check that reads an ungrouped row is insufficient evidence. Limitation: structure shared across groups (one source's conventions, one place's many addresses) is not modelled. The dataset quota counts groups, not rows, against 1,000 per country.",
+		"requiredPrecision": 0.08
+	},
+	"provenance": {
+		"admitted": {
+			"minimum": ["verified_unseen", "unseen_by_candidate"],
+			"comparative": ["verified_unseen"]
+		}
+	},
+	"evaluations": {
+		"development": {
+			"id": "heldout-dev-v0.8.18@187e8ab06b37351c",
+			"description": "Frozen 2026-11-14 from /mnt/mw/corpus/versioned/v0.8.18-retention-overlay/corpus-v0.8.18-retention-overlay/MANIFEST.json (sha256 2241efda2892634dc8b4b50ceddef6708680b95adf38055f2ae020a5d236a9d0), 1,000 rows per country and row kind, seed 1818: 84,926 rows, rows sha256 d47011c2f200f3d0f99ae3b017bc1487a9ef8ad869806ecb20ba087323b17a09, manifest /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.json. Used for recipe, checkpoint and seed selection."
+		},
+		"confirmation": {
+			"id": "heldout-confirm-v0.8.18@35ba77d61aa40921",
+			"description": "Frozen 2026-11-14 from the same corpus manifest with seed 1819 and every heldout-dev-v0.8.18 group excluded: 33,846 rows, rows sha256 b1bf658e5312efa7ce8f7e092b3039bab36bf449a7d47b5990ec0399e71dbfc8, manifest /mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.json. Read only for the release decision; every read is recorded in the next spec version's rationale."
+		}
+	}
+}
