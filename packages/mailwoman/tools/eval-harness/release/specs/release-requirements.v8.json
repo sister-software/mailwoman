@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 3,
 	"specVersion": "8",
-	"rationale": "Version 8 (registered 2026-11-14 on the operator's decision) registers the evaluation collections frozen from corpus v0.8.18-retention-overlay: heldout-dev-v0.8.18 (version 00c4698a7fdc6edf, seed 1818) for development and heldout-confirm-v0.8.18 (version 8606834b12100089, seed 1819, drawn with every development group excluded) for confirmation, and names the confirmation collection as the dataset identity. Both were drawn after geonames-features and wikidata-vital-places joined the wof- sources as gazetteer rows (HELDOUT_GAZETTEER_SOURCES), so those place-name rows draw against the gazetteer quota and no country or objective check reads them. Every threshold, selector, statistic, provenance rule and identity other than identities.dataset and evaluations is version 7's. Confirmation reads before registration: the overlap audit read confirmation metadata only; no confirmation row was scored. docs/records/evals/2026-11-14-release-requirements-v8.md gives the measured basis of every value.",
+	"rationale": "Version 8 (registered 2026-11-14 on the operator's decision) registers the evaluation collections frozen from corpus v0.8.18-retention-overlay: heldout-dev-v0.8.18 (version 00c4698a7fdc6edf, seed 1818) for development and heldout-confirm-v0.8.18 (version 8606834b12100089, seed 1819, drawn with every development group excluded) for confirmation, and names the confirmation collection as the dataset identity. Both were drawn after geonames-features and wikidata-vital-places joined the wof- sources as gazetteer rows (HELDOUT_GAZETTEER_SOURCES), so those place-name rows draw against the gazetteer quota and no country or objective check reads them. The published identity moves from 10.7.0 to model 10.8.0, the model.onnx of @mailwoman/neural-weights-en-us 11.1.0 as npm latest installs it, because section 6.2 of HOLDOUT_AND_EVALUATION grades against the package users install. Every threshold, selector, statistic and provenance rule is version 7's, as is every identity other than identities.dataset, identities.published and evaluations. Confirmation reads before registration: the overlap audit read confirmation metadata only; no confirmation row was scored. docs/records/evals/2026-11-14-release-requirements-v8.md gives the measured basis of every value.",
 	"requirements": [
 		{
 			"id": "country-US",
@@ -169,8 +169,8 @@
 			}
 		},
 		"published": {
-			"description": "@mailwoman/neural-weights-en-us 10.7.0 model.onnx (int8, md5 5356ecba83e3774a5d9717277c051ac2)",
-			"sha256": "e90aeab4b07d03a5b599331c1e68aa70d37e96478151795bcdc6dabb82d9aca9"
+			"description": "@mailwoman/neural-weights-en-us 11.1.0 (npm latest, installed 2026-11-14) model.onnx: model 10.8.0, v8.6.3-base-c6-90k-v0818-wof15 seed 42 step 90,000 on corpus v0.8.18-retention-overlay (int8, card md5 e711a725a1b1fd5d959d6f27f17b911a)",
+			"sha256": "0bbb33858f8c55bba2737f4da155daec64a7629a4f8739889af2cd88bbffe4a4"
 		},
 		"candidate": {
 			"description": "The exact release artifact's model.onnx",

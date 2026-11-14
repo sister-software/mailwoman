@@ -59,7 +59,6 @@ describe("validateReleaseSpec", () => {
 		expect(v8.requirements).toEqual(v7.requirements)
 		expect(v8.objective).toEqual(v7.objective)
 		expect(v8.statistics).toEqual(v7.statistics)
-		expect(v8.identities.published).toEqual(v7.identities.published)
 		expect(v8.identities.dataset.id).toBe(v8.evaluations.confirmation.id)
 		expect(v8.evaluations.development.id).not.toBeNull()
 	})

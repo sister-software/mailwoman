@@ -7,7 +7,7 @@
 	},
 	"specVersion": "8",
 	"verdict": null,
-	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.provenance.json (audit c010275f0166afae)",
+	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.provenance-published-10.8.0.json (audit 4d6047b6254b33ee)",
 	"rows": [
 		{
 			"country": "AD",
@@ -241,8 +241,8 @@
 				"cordis": 1
 			},
 			"provenance": {
-				"verified_unseen": 439,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 443,
+				"unseen_by_candidate": 0,
 				"known_overlap": 24,
 				"unknown": 0
 			},
@@ -292,8 +292,8 @@
 				"cordis": 26
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 584,
+				"verified_unseen": 584,
+				"unseen_by_candidate": 0,
 				"known_overlap": 416,
 				"unknown": 0
 			},
@@ -326,8 +326,8 @@
 				"cordis": 1
 			},
 			"provenance": {
-				"verified_unseen": 15,
-				"unseen_by_candidate": 631,
+				"verified_unseen": 646,
+				"unseen_by_candidate": 0,
 				"known_overlap": 354,
 				"unknown": 0
 			},
@@ -493,8 +493,8 @@
 				"gleif-lei": 5
 			},
 			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 314,
+				"verified_unseen": 317,
+				"unseen_by_candidate": 0,
 				"known_overlap": 5,
 				"unknown": 0
 			},
@@ -522,8 +522,8 @@
 				"cordis": 48
 			},
 			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 56,
+				"verified_unseen": 59,
+				"unseen_by_candidate": 0,
 				"known_overlap": 941,
 				"unknown": 0
 			},
@@ -572,8 +572,8 @@
 				"cordis": 12
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 14,
+				"verified_unseen": 14,
+				"unseen_by_candidate": 0,
 				"known_overlap": 115,
 				"unknown": 0
 			},
@@ -776,8 +776,8 @@
 				"gleif-lei": 5
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 995,
+				"verified_unseen": 995,
+				"unseen_by_candidate": 0,
 				"known_overlap": 5,
 				"unknown": 0
 			},
@@ -927,8 +927,8 @@
 				"invented-po-box-cedex": 4
 			},
 			"provenance": {
-				"verified_unseen": 5,
-				"unseen_by_candidate": 831,
+				"verified_unseen": 836,
+				"unseen_by_candidate": 0,
 				"known_overlap": 164,
 				"unknown": 0
 			},
@@ -1050,8 +1050,8 @@
 				"cordis": 9
 			},
 			"provenance": {
-				"verified_unseen": 5,
-				"unseen_by_candidate": 876,
+				"verified_unseen": 881,
+				"unseen_by_candidate": 0,
 				"known_overlap": 119,
 				"unknown": 0
 			},
@@ -1121,8 +1121,8 @@
 				"gleif-lei": 24
 			},
 			"provenance": {
-				"verified_unseen": 170,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 174,
+				"unseen_by_candidate": 0,
 				"known_overlap": 20,
 				"unknown": 0
 			},
@@ -1173,8 +1173,8 @@
 				"gleif-lei": 1
 			},
 			"provenance": {
-				"verified_unseen": 2,
-				"unseen_by_candidate": 69,
+				"verified_unseen": 71,
+				"unseen_by_candidate": 0,
 				"known_overlap": 4,
 				"unknown": 0
 			},
@@ -1359,8 +1359,8 @@
 				"cordis": 10
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 9,
+				"verified_unseen": 9,
+				"unseen_by_candidate": 0,
 				"known_overlap": 173,
 				"unknown": 0
 			},
@@ -1392,8 +1392,8 @@
 				"fragment-assay": 3
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 354,
+				"verified_unseen": 354,
+				"unseen_by_candidate": 0,
 				"known_overlap": 646,
 				"unknown": 0
 			},
@@ -1476,8 +1476,8 @@
 				"cordis": 14
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 606,
+				"verified_unseen": 606,
+				"unseen_by_candidate": 0,
 				"known_overlap": 394,
 				"unknown": 0
 			},
@@ -1612,8 +1612,8 @@
 				"cordis": 22
 			},
 			"provenance": {
-				"verified_unseen": 212,
-				"unseen_by_candidate": 56,
+				"verified_unseen": 268,
+				"unseen_by_candidate": 0,
 				"known_overlap": 732,
 				"unknown": 0
 			},
@@ -1716,8 +1716,8 @@
 				"cordis": 1
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 960,
+				"verified_unseen": 960,
+				"unseen_by_candidate": 0,
 				"known_overlap": 40,
 				"unknown": 0
 			},
@@ -1768,8 +1768,8 @@
 				"fragment-assay": 35
 			},
 			"provenance": {
-				"verified_unseen": 59,
-				"unseen_by_candidate": 367,
+				"verified_unseen": 426,
+				"unseen_by_candidate": 0,
 				"known_overlap": 574,
 				"unknown": 0
 			},
@@ -1945,8 +1945,8 @@
 				"spliced-sub-venue": 35
 			},
 			"provenance": {
-				"verified_unseen": 883,
-				"unseen_by_candidate": 10,
+				"verified_unseen": 893,
+				"unseen_by_candidate": 0,
 				"known_overlap": 107,
 				"unknown": 0
 			},
@@ -2024,8 +2024,8 @@
 				"fr-finess-overseas": 3
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -2210,8 +2210,8 @@
 				"fr-annuaire-education-overseas": 1
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -2260,8 +2260,8 @@
 				"cordis": 65
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 17,
+				"verified_unseen": 17,
+				"unseen_by_candidate": 0,
 				"known_overlap": 230,
 				"unknown": 0
 			},
@@ -2474,8 +2474,8 @@
 				"cordis": 6
 			},
 			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 967,
+				"verified_unseen": 968,
+				"unseen_by_candidate": 0,
 				"known_overlap": 32,
 				"unknown": 0
 			},
@@ -2531,8 +2531,8 @@
 				"cordis": 39
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 50,
+				"verified_unseen": 50,
+				"unseen_by_candidate": 0,
 				"known_overlap": 587,
 				"unknown": 0
 			},
@@ -2561,8 +2561,8 @@
 				"cordis": 1
 			},
 			"provenance": {
-				"verified_unseen": 24,
-				"unseen_by_candidate": 939,
+				"verified_unseen": 963,
+				"unseen_by_candidate": 0,
 				"known_overlap": 37,
 				"unknown": 0
 			},
@@ -2590,8 +2590,8 @@
 				"cordis": 37
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 17,
+				"verified_unseen": 17,
+				"unseen_by_candidate": 0,
 				"known_overlap": 233,
 				"unknown": 0
 			},
@@ -2619,8 +2619,8 @@
 				"cordis": 3
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 9,
+				"verified_unseen": 9,
+				"unseen_by_candidate": 0,
 				"known_overlap": 47,
 				"unknown": 0
 			},
@@ -2678,8 +2678,8 @@
 				"gleif-lei": 321
 			},
 			"provenance": {
-				"verified_unseen": 32,
-				"unseen_by_candidate": 493,
+				"verified_unseen": 525,
+				"unseen_by_candidate": 0,
 				"known_overlap": 475,
 				"unknown": 0
 			},
@@ -2777,8 +2777,8 @@
 				"cordis": 11
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 25,
+				"verified_unseen": 25,
+				"unseen_by_candidate": 0,
 				"known_overlap": 192,
 				"unknown": 0
 			},
@@ -2806,8 +2806,8 @@
 				"gleif-lei": 2
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 998,
+				"verified_unseen": 998,
+				"unseen_by_candidate": 0,
 				"known_overlap": 2,
 				"unknown": 0
 			},
@@ -2834,8 +2834,8 @@
 				"gleif-lei": 30
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 5,
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
 				"known_overlap": 25,
 				"unknown": 0
 			},
@@ -2921,8 +2921,8 @@
 				"fragment-assay": 4
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 8,
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
 				"known_overlap": 6,
 				"unknown": 0
 			},
@@ -3121,8 +3121,8 @@
 				"fragment-assay": 17
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 17,
+				"verified_unseen": 17,
+				"unseen_by_candidate": 0,
 				"known_overlap": 6,
 				"unknown": 0
 			},
@@ -3177,8 +3177,8 @@
 				"gleif-lei": 49
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
 				"known_overlap": 45,
 				"unknown": 0
 			},
@@ -3434,8 +3434,8 @@
 				"cordis": 12
 			},
 			"provenance": {
-				"verified_unseen": 26,
-				"unseen_by_candidate": 403,
+				"verified_unseen": 429,
+				"unseen_by_candidate": 0,
 				"known_overlap": 265,
 				"unknown": 0
 			},
@@ -3463,8 +3463,8 @@
 				"gleif-lei": 18
 			},
 			"provenance": {
-				"verified_unseen": 35,
-				"unseen_by_candidate": 950,
+				"verified_unseen": 985,
+				"unseen_by_candidate": 0,
 				"known_overlap": 15,
 				"unknown": 0
 			},
@@ -3690,8 +3690,8 @@
 				"cordis": 8
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
 				"known_overlap": 9,
 				"unknown": 0
 			},
@@ -3839,8 +3839,8 @@
 				"fr-annuaire-education-overseas": 5
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -3911,8 +3911,8 @@
 				"osm-mt": 3
 			},
 			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 5,
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
 				"known_overlap": 33,
 				"unknown": 0
 			},
@@ -4018,8 +4018,8 @@
 				"gleif-lei": 35
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 946,
+				"verified_unseen": 946,
+				"unseen_by_candidate": 0,
 				"known_overlap": 54,
 				"unknown": 0
 			},
@@ -4131,8 +4131,8 @@
 				"fr-annuaire-education-overseas": 10
 			},
 			"provenance": {
-				"verified_unseen": 990,
-				"unseen_by_candidate": 10,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -4203,8 +4203,8 @@
 				"gleif-lei": 19
 			},
 			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 27,
+				"verified_unseen": 31,
+				"unseen_by_candidate": 0,
 				"known_overlap": 35,
 				"unknown": 0
 			},
@@ -4257,8 +4257,8 @@
 				"fragment-assay": 2
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 331,
+				"verified_unseen": 331,
+				"unseen_by_candidate": 0,
 				"known_overlap": 669,
 				"unknown": 0
 			},
@@ -4290,8 +4290,8 @@
 				"cordis": 10
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 249,
+				"verified_unseen": 249,
+				"unseen_by_candidate": 0,
 				"known_overlap": 751,
 				"unknown": 0
 			},
@@ -4392,8 +4392,8 @@
 				"cordis": 14
 			},
 			"provenance": {
-				"verified_unseen": 51,
-				"unseen_by_candidate": 493,
+				"verified_unseen": 544,
+				"unseen_by_candidate": 0,
 				"known_overlap": 456,
 				"unknown": 0
 			},
@@ -4450,8 +4450,8 @@
 				"cordis": 4
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 5,
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
 				"known_overlap": 13,
 				"unknown": 0
 			},
@@ -4509,8 +4509,8 @@
 				"gleif-lei": 11
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 85,
+				"verified_unseen": 85,
+				"unseen_by_candidate": 0,
 				"known_overlap": 11,
 				"unknown": 0
 			},
@@ -4590,8 +4590,8 @@
 				"cordis": 1
 			},
 			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 998,
+				"verified_unseen": 999,
+				"unseen_by_candidate": 0,
 				"known_overlap": 1,
 				"unknown": 0
 			},
@@ -4621,8 +4621,8 @@
 				"cordis": 44
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 338,
+				"verified_unseen": 338,
+				"unseen_by_candidate": 0,
 				"known_overlap": 662,
 				"unknown": 0
 			},
@@ -4746,8 +4746,8 @@
 				"cordis": 12
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 956,
+				"verified_unseen": 956,
+				"unseen_by_candidate": 0,
 				"known_overlap": 44,
 				"unknown": 0
 			},
@@ -4853,8 +4853,8 @@
 				"fr-finess-overseas": 2
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -4883,8 +4883,8 @@
 				"cordis": 64
 			},
 			"provenance": {
-				"verified_unseen": 45,
-				"unseen_by_candidate": 361,
+				"verified_unseen": 406,
+				"unseen_by_candidate": 0,
 				"known_overlap": 594,
 				"unknown": 0
 			},
@@ -4913,8 +4913,8 @@
 				"gleif-lei": 11
 			},
 			"provenance": {
-				"verified_unseen": 494,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 498,
+				"unseen_by_candidate": 0,
 				"known_overlap": 25,
 				"unknown": 0
 			},
@@ -4941,8 +4941,8 @@
 				"osm-ru": 1000
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -5040,8 +5040,8 @@
 				"gleif-lei": 5
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 4,
+				"unseen_by_candidate": 0,
 				"known_overlap": 1,
 				"unknown": 0
 			},
@@ -5119,8 +5119,8 @@
 				"gleif-lei": 104
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 368,
+				"verified_unseen": 368,
+				"unseen_by_candidate": 0,
 				"known_overlap": 99,
 				"unknown": 0
 			},
@@ -5172,8 +5172,8 @@
 				"cordis": 22
 			},
 			"provenance": {
-				"verified_unseen": 14,
-				"unseen_by_candidate": 652,
+				"verified_unseen": 666,
+				"unseen_by_candidate": 0,
 				"known_overlap": 153,
 				"unknown": 0
 			},
@@ -5224,8 +5224,8 @@
 				"gleif-lei": 198
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 792,
+				"verified_unseen": 792,
+				"unseen_by_candidate": 0,
 				"known_overlap": 208,
 				"unknown": 0
 			},
@@ -5589,8 +5589,8 @@
 				"gleif-lei": 6
 			},
 			"provenance": {
-				"verified_unseen": 63,
-				"unseen_by_candidate": 3,
+				"verified_unseen": 66,
+				"unseen_by_candidate": 0,
 				"known_overlap": 6,
 				"unknown": 0
 			},
@@ -5815,8 +5815,8 @@
 				"fragment-assay": 11
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 11,
+				"verified_unseen": 11,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -5954,8 +5954,8 @@
 				"gleif-lei": 1
 			},
 			"provenance": {
-				"verified_unseen": 24,
-				"unseen_by_candidate": 4,
+				"verified_unseen": 28,
+				"unseen_by_candidate": 0,
 				"known_overlap": 972,
 				"unknown": 0
 			},
@@ -6159,8 +6159,8 @@
 				"osm-vn": 222
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 448,
+				"verified_unseen": 448,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -6357,8 +6357,8 @@
 				"fr-finess-overseas": 5
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 1000,
+				"verified_unseen": 1000,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
@@ -6386,8 +6386,8 @@
 				"cordis": 2
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 14,
+				"verified_unseen": 14,
+				"unseen_by_candidate": 0,
 				"known_overlap": 96,
 				"unknown": 0
 			},
@@ -6471,8 +6471,8 @@
 				"fragment-assay": 34
 			},
 			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 34,
+				"verified_unseen": 34,
+				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
