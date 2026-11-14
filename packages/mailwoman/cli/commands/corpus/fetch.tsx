@@ -317,9 +317,9 @@ const FETCHERS = {
 			reportToStderr
 		),
 	"usgs-gnis": async (base) =>
-		(await import("@mailwoman/corpus/us/tools/fetch/usgs-gnis")).fetchUSGSGNIS(base, reportToStderr),
+		(await import("@mailwoman/corpus/us/tools/fetch/usgs/gnis")).fetchUSGSGNIS(base, reportToStderr),
 	"usgs-structures": async (base) =>
-		(await import("@mailwoman/corpus/us/tools/fetch/usgs-structures")).fetchUSGSStructures(base, reportToStderr),
+		(await import("@mailwoman/corpus/us/tools/fetch/usgs/structures")).fetchUSGSStructures(base, reportToStderr),
 	vlaanderen: async (base) =>
 		(await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")).fetchVlaanderenAD(base, reportToStderr),
 	wallonie: async (base) =>

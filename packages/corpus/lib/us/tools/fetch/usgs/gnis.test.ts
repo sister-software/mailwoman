@@ -15,7 +15,7 @@ import {
 	normalizeGNISFeature,
 	USGS_GNIS_PLACES_FILENAME,
 	type USGSGNISManifest,
-} from "#us/tools/fetch/usgs-gnis"
+} from "#us/tools/fetch/usgs/gnis"
 
 const scratch = useScratchDir("usgs-gnis-fetch")
 

@@ -25,7 +25,7 @@ import {
 	normalizeStructureFeature,
 	structureZIPCode,
 	type USGSStructuresManifest,
-} from "#us/tools/fetch/usgs-structures"
+} from "#us/tools/fetch/usgs/structures"
 
 const scratch = useScratchDir("usgs-structures-fetch")
 

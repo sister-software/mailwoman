@@ -50,8 +50,8 @@ import { fetchNPPES } from "#us/tools/fetch/nppes"
 import { fetchStateHISchools } from "#us/tools/fetch/state/hi-schools"
 import { fetchStateSources } from "#us/tools/fetch/state/sources"
 import { fetchTigerFull } from "#us/tools/fetch/tiger-full"
-import { fetchUSGSGNIS } from "#us/tools/fetch/usgs-gnis"
-import { fetchUSGSStructures } from "#us/tools/fetch/usgs-structures"
+import { fetchUSGSGNIS } from "#us/tools/fetch/usgs/gnis"
+import { fetchUSGSStructures } from "#us/tools/fetch/usgs/structures"
 
 /**
  * The fetcher for each source id that `mailwoman corpus fetch` accepts.

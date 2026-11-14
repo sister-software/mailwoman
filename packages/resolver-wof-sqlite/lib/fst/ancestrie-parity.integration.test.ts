@@ -17,6 +17,7 @@ import { describe, expect, it } from "vitest"
 
 import type { AutocompleteOpts, AutocompleteResult, AutocompleteSuggestion, PlaceEntry, PlacetypeID } from "#fst"
 import { autocomplete, peekFSTStampFields, FSTMatcher, normalizeTokens, deserializeFST, serializeFST } from "#fst"
+import { FST_FORMAT_VERSION } from "#fst/format"
 import { wofDatabasePath } from "#paths"
 
 interface BfsItem {
@@ -297,8 +298,8 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 		it("answers identically across the derived + curated battery", async () => {
 			const stamp = await peekFSTStampFields(artifactPath)
 
-			// v5 is the two-score split, asserted so the leg cannot pin against a stale-format file.
-			expect(stamp?.formatVersion).toBe(5)
+			// The artifact is in the format the writer produces, so the leg cannot pin against a stale-format file.
+			expect(stamp?.formatVersion).toBe(FST_FORMAT_VERSION)
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 

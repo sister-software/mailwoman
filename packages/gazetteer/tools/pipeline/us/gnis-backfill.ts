@@ -27,7 +27,7 @@
  */
 
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs-gnis"
+import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs/gnis"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import {
 	normalizeLocalityForKey,

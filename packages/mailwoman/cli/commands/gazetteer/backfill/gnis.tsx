@@ -52,7 +52,7 @@ const GazetteerBackfillGNIS: ParsedCommandComponent<Options> = ({ options }) => 
 			backfill: import("@mailwoman/gazetteer/tools/pipeline/us/gnis-backfill"),
 			dataRoot: import("@mailwoman/core/data-root"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
-			gnis: import("@mailwoman/corpus/us/tools/fetch/usgs-gnis"),
+			gnis: import("@mailwoman/corpus/us/tools/fetch/usgs/gnis"),
 		})
 
 		const placesPath = options.places ?? currentSourcePath(USGS_GNIS_SLUG, USGS_GNIS_PLACES_FILENAME)

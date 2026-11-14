@@ -32,7 +32,7 @@ import {
 	usgsStructureAddress,
 } from "#us/adapters/usgov/usgs-structures/adapter"
 import { usgsStructureLayer } from "#us/structures/usgs/layers"
-import type { USGSStructuresManifest } from "#us/tools/fetch/usgs-structures"
+import type { USGSStructuresManifest } from "#us/tools/fetch/usgs/structures"
 
 /**
  * One fetched feature as a structure record, or `null` when it has no permanent identifier.
