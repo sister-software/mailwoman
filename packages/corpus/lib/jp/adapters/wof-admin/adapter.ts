@@ -61,11 +61,11 @@ interface PlaceRow {
  *
  * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country);
  * it is a point query, so keeping the common case out of it is the whole point.
- * The GeoJSON adapters' in-memory analogue is `buildAncestorNameIndex` (`#utils`), and the two stay
- * separate because this one's rows come from SQLite and a chain can leave the preloaded country set.
+ * The GeoJSON adapters' analogue is `ancestorRecordsOf` (`#utils/wof-json`),
+ * which keeps the nearest ancestor per tag.
  *
- * That analogue stores the nearest ancestor's name for each tag.
- * This function receives one `PlaceRow` per level and reads the chain directly.
+ * This function receives one `PlaceRow` per level and reads the chain directly,
+ * because its rows come from SQLite and a chain can leave the preloaded country set.
  */
 function chainOf(byID: Map<number, PlaceRow>, resolve: (id: number) => PlaceRow | null, startID: number): PlaceRow[] {
 	const out: PlaceRow[] = []

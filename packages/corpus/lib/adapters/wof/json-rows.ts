@@ -246,15 +246,19 @@ export function nameSlotsFor(rec: WOFRecord, options: NameSlotOptions = {}): Nam
 	return slots
 }
 
+/**
+ * One record and the ancestors its variants read: names for `wof-postalcode`, records for `wof-admin`.
+ */
+export interface WOFRecordEntry<A extends object> {
+	record: WOFRecord
+	ancestors: A
+}
+
 interface EmitWOFJSONRowsOptions<A extends object> {
-	records: ReadonlyMap<number, WOFRecord>
 	/**
-	 * The ancestors each record's variants read: names for `wof-postalcode`, records for `wof-admin`.
-	 *
-	 * A record absent from the map resolves to an empty object.
-	 * Records with no resolvable ancestor produce the same value.
+	 * The records to render, in ascending WOF-id order.
 	 */
-	ancestry: ReadonlyMap<number, A>
+	records: Iterable<WOFRecordEntry<A>>
 	adapterOptions: AdapterOptions
 	adapterID: string
 	localeByCountry: Readonly<Record<string, string>>
@@ -269,14 +273,6 @@ interface EmitWOFJSONRowsOptions<A extends object> {
 	 */
 	sampler?: RowSampler<CanonicalRow>
 }
-
-/**
- * The value a record uses in place of ancestors when they do not resolve.
- *
- * Frozen and shared, because the emitter reaches it once per such record
- * and constructing a fresh object per row would allocate one per name slot.
- */
-const NO_ANCESTORS = Object.freeze({})
 
 /**
  * Emit aligned rows in WOF-id order, enforcing the adapter limit across all name and hierarchy variants.
@@ -325,7 +321,6 @@ function* renderWOFRows<A extends object>(
 ): Generator<{ row: CanonicalRow; slotKey: string }> {
 	const {
 		records,
-		ancestry,
 		adapterOptions,
 		adapterID,
 		localeByCountry,
@@ -334,14 +329,13 @@ function* renderWOFRows<A extends object>(
 		variantsFor,
 	} = options
 
-	for (const id of [...records.keys()].toSorted((a, b) => a - b)) {
+	for (const { record, ancestors } of records) {
 		if (adapterOptions.signal?.aborted) return
-		const record = records.get(id)!
 
 		if (!shouldEmit(record)) continue
 
 		for (const slot of slotsForRecord(record)) {
-			for (const variant of variantsFor(record, ancestry.get(id) ?? (NO_ANCESTORS as A), slot)) {
+			for (const variant of variantsFor(record, ancestors, slot)) {
 				const rendered = variant.hierarchy
 					? renderHierarchy(variant.components, variant.layoutCountry ?? record.country)
 					: formatAddressRow(variant.components, record.country, { singleLine: true })

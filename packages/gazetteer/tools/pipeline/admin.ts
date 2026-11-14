@@ -66,12 +66,6 @@ export interface BuildAdminOptions {
 	 */
 	skipVerify?: boolean
 	/**
-	 * The worker threads the WOF ingest reads and parses records with.
-	 *
-	 * @defaultValue one per core, less one
-	 */
-	workers?: number
-	/**
 	 * The number of WOF records per ingest write transaction.
 	 */
 	batchCommitSize?: number
@@ -180,8 +174,12 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 		ingest = await ingestWOF(db, {
 			dataDir,
-			...(opts.workers ? { workers: opts.workers } : {}),
 			batchCommitSize: opts.batchCommitSize,
+			onRepo: (refresh) => {
+				if (refresh.action === "reduced") {
+					phase("ingest-wof", `record store: reduced ${refresh.repo} (${refresh.records.toLocaleString()} records)`)
+				}
+			},
 			// GeoNames-anchored label-point adjudication.
 			// Reads the same per-country extracts that fold-geonames consumes.
 			// A data root without them degrades to the plain label preference.
@@ -189,7 +187,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			onProgress: (processed, skipped, found) =>
 				phase(
 					"ingest-wof",
-					`${processed.toLocaleString()} ingested, ${skipped.toLocaleString()} skipped, of ${found.toLocaleString()} files found so far`
+					`${processed.toLocaleString()} ingested, ${skipped.toLocaleString()} skipped, of ${found.toLocaleString()} records read so far`
 				),
 		})
 

@@ -71,7 +71,18 @@ export interface ExtractedWOFFeature {
  * @returns `null` for a record with no properties, a superseded record, or a placetype outside `placetypes`.
  */
 export function extractWOFFeature(text: string, placetypes: ReadonlySet<string>): ExtractedWOFFeature | null {
-	const feature = parseJSONStrict<WOFFeature>(text)
+	return extractParsedWOFFeature(parseJSONStrict<WOFFeature>(text), placetypes)
+}
+
+/**
+ * Extracts the stored fields from one parsed WOF record, such as a record store's reduced feature.
+ *
+ * @returns `null` for a record with no properties, a superseded record, or a placetype outside `placetypes`.
+ */
+export function extractParsedWOFFeature(
+	feature: Pick<WOFFeature, "properties">,
+	placetypes: ReadonlySet<string>
+): ExtractedWOFFeature | null {
 	const props: WOFProperties | undefined = feature.properties
 
 	if (!props) return null

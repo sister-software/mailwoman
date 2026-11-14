@@ -66,7 +66,7 @@ describe("ingestWOF centroids (#1726)", () => {
 		using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
-		await ingestWOF(db, { dataDir: ROOT.path })
+		await ingestWOF(db, { dataDir: ROOT.path, recordStore: ROOT.path("records.db") })
 
 		const rows = db.prepare("SELECT id, latitude, longitude FROM spr ORDER BY id").all() as Array<{
 			id: number
@@ -96,7 +96,7 @@ describe("ingestWOF directory symlinks", () => {
 		using db = DatabaseClient.temp<WOFDatabase>()
 		await createUnifiedSchema(db)
 
-		const result = await ingestWOF(db, { dataDir: root })
+		const result = await ingestWOF(db, { dataDir: root, recordStore: root("records.db") })
 
 		expect(result.filesFound).toBe(1)
 		expect(result.placesIngested).toBe(1)
@@ -130,6 +130,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		const result = await ingestWOF(db, {
 			dataDir: root,
+			recordStore: root("records.db"),
 			anchorLookup: async (country, gnID) =>
 				country === "US" && String(gnID) === "4140963" ? { latitude: 38.89511, longitude: -77.03637 } : null,
 		})
@@ -148,7 +149,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		await createUnifiedSchema(db)
 
-		const result = await ingestWOF(db, { dataDir: ROOT.path })
+		const result = await ingestWOF(db, { dataDir: ROOT.path, recordStore: ROOT.path("records.db") })
 
 		expect(result.labelPointOverrides).toBe(0)
 	})
@@ -184,6 +185,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 
 		const result = await ingestWOF(db, {
 			dataDir: root,
+			recordStore: root("records.db"),
 			anchorLookup: async () => ({ latitude: 31.25, longitude: -99.25 }),
 		})
 

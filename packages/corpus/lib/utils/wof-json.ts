@@ -17,11 +17,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
-import type { PathBuilderLike } from "path-ts"
-import { AsyncSequence } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
 
 /**
  * A WOF GeoJSON feature, as published by the per-record bundles.
@@ -294,60 +290,9 @@ export function isAtOrigin(props: Record<string, unknown>): boolean {
 }
 
 /**
- * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s;
- * `repoDir` may be a single cloned `whosonfirst-data-*` repo or a parent holding several
- * (the corpus pipeline clones all four into a shared `wof/repos/` root).
- *
- * `-alt-` siblings are skipped as alternate-geometry exports.
- * They do not represent new records.
- *
- * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
- * so one bad file doesn't poison a multi-gigabyte walk.
- *
- * The libuv threadpool has four workers by default; `UV_THREADPOOL_SIZE` can change that count.
- * `parallelMap` reads files concurrently up to the threadpool capacity.
- *
- * Records are yielded in the code-point order of their absolute paths.
- * Code-point order is the byte order of the paths' UTF-8 spellings.
- *
- * The adapters deduplicate surface strings first-come.
- * The yield order therefore decides which record claims a shared name.
- *
- * The directory listing's own order comes from `opendir` and varies with the filesystem.
- * ext4's hashed directory index lists `2.geojson` before `1.geojson`.
- * The listing is sorted before the ordered parallel read.
- *
- * Two hosts that hold the same checkout then yield the same sequence.
- */
-export async function* walkFeatures(
-	repoDir: PathBuilderLike,
-	opts: { signal?: AbortSignal } = {}
-): AsyncIterable<WOFRecord> {
-	const listed: string[] = await Globerator.from("**/*.geojson", {
-		cwd: repoDir,
-		absolute: true,
-		exclude: ["**/*-alt-*.geojson"],
-		// Bundle repositories can expose their data through a link.
-		followSymlinks: true,
-		signal: opts.signal,
-	}).toArray()
-
-	const records = AsyncSequence.from<string>(listed.toSorted(compareByScalarValue)).parallelMap(readFeatureRecord, {
-		ordered: true,
-		signal: opts.signal,
-	})
-
-	for await (const rec of records) {
-		if (rec) {
-			yield rec
-		}
-	}
-}
-
-/**
  * The record one GeoJSON file holds, or `null` when the file is unreadable, malformed or skipped.
  *
- * {@linkcode walkFeatures} reads every file through this, and so does the single-record explorer.
+ * The single-record explorer reads its record and ancestors through this.
  */
 export async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
 	let text: string
@@ -381,25 +326,6 @@ export const ANCESTOR_NAME_TAGS = ["locality", "subregion", "region", "country"]
 export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>
 
 /**
- * The ancestor names that each record needs, keyed by `wof:id`.
- *
- * The predecessor index held one array of record references per record, so a run over the 13,274,691
- * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
- * This holds at most four strings per record instead.
- *
- * Each string is the same object the ancestor already holds, so the index costs
- * one small object per record without copying a name.
- *
- * The adapter's second pass reads only this.
- * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry resolves.
- * It can release them once this index is built.
- *
- * Nearest wins: the walk goes upward from the record's parent and the first ancestor
- * carrying a tag sets it, matching the `ancestry.find` the builders used.
- */
-export type AncestorNameIndex = Map<number, AncestorNames>
-
-/**
  * The nearest ancestor record per tag in {@linkcode ANCESTOR_NAME_TAGS}.
  *
  * The admin adapter reads an ancestor's localized names from it.
@@ -408,94 +334,76 @@ export type AncestorNameIndex = Map<number, AncestorNames>
 export type AncestorRecords = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], WOFRecord>>
 
 /**
- * Resolves {@linkcode AncestorNameIndex} from a record index, keeping each ancestor's `wof:name`.
+ * Each ancestor record's `wof:name`, per tag.
  *
- * `wof-postalcode` uses it so that it can release every admin record once the index is built.
+ * `wof-postalcode` renders a postcode's hierarchy from these names and reads no other ancestor field.
  */
-export function buildAncestorNameIndex(
-	byID: ReadonlyMap<number, WOFRecord>,
-	tagOf: (placetype: string) => string | null | undefined
-): AncestorNameIndex {
-	const index: AncestorNameIndex = new Map()
+export function ancestorNamesOf(records: AncestorRecords): AncestorNames {
+	const names: AncestorNames = {}
 
-	for (const [id, records] of buildAncestorRecordIndex(byID, tagOf)) {
-		const names: AncestorNames = {}
+	for (const tag of ANCESTOR_NAME_TAGS) {
+		const name = records[tag]?.name
 
-		for (const tag of ANCESTOR_NAME_TAGS) {
-			const name = records[tag]?.name
-
-			if (name) {
-				names[tag] = name
-			}
+		if (name) {
+			names[tag] = name
 		}
-
-		index.set(id, names)
 	}
 
-	return index
+	return names
 }
 
 /**
- * Resolves the nearest ancestor record per tag for every record in `byID`.
+ * The nearest ancestor record per tag in {@linkcode ANCESTOR_NAME_TAGS} for one record.
  *
+ * `lookup` returns a record the reader kept, or `undefined`.
  * `tagOf` maps a WOF placetype to a component tag, or returns a value outside
  * {@linkcode ANCESTOR_NAME_TAGS} for a placetype no builder looks up.
+ *
  * It is a parameter because `placetypeToTag` lives with the adapters and this module doesn't import them.
  *
- * The walk stops at the first `parent_id` absent from `byID`, and a cycle guard halts at any re-visit.
- * WOF data is acyclic by construction.
- * The guard keeps a corrupt fixture from looping the adapter.
+ * The `wof:hierarchy` levels are read first, then the parent chain.
+ * The chain stops at the first id `lookup` cannot return, and at any re-visit.
+ * Only a corrupt fixture holds a cycle.
  *
  * A record whose ancestors are absent resolves the tags it can reach rather than failing.
  */
-export function buildAncestorRecordIndex(
-	byID: ReadonlyMap<number, WOFRecord>,
+export function ancestorRecordsOf(
+	rec: WOFRecord,
+	lookup: (id: number) => WOFRecord | undefined,
 	tagOf: (placetype: string) => string | null | undefined
-): Map<number, AncestorRecords> {
-	const index = new Map<number, AncestorRecords>()
+): AncestorRecords {
+	const names: AncestorRecords = {}
 
-	for (const [id, rec] of byID) {
-		const names: AncestorRecords = {}
+	const claim = (ancestor: WOFRecord): void => {
+		const tag = tagOf(ancestor.placetype)
 
-		// `wof:hierarchy` names every ancestor level directly, including for a record whose parent is -4.
-		for (const ancestorID of rec.ancestors) {
-			const ancestor = byID.get(ancestorID)
-
-			if (!ancestor) continue
-
-			const tag = tagOf(ancestor.placetype)
-
-			for (const wanted of ANCESTOR_NAME_TAGS) {
-				if (tag === wanted && !names[wanted]) {
-					names[wanted] = ancestor
-				}
+		for (const wanted of ANCESTOR_NAME_TAGS) {
+			if (tag === wanted && !names[wanted]) {
+				names[wanted] = ancestor
 			}
 		}
-
-		const guard = new Set<number>([id])
-		let cur: number | null = rec.parent_id
-
-		while (cur !== null && cur > 0) {
-			const parent = byID.get(cur)
-
-			if (!parent) break
-
-			if (guard.has(parent.id)) break
-
-			const tag = tagOf(parent.placetype)
-
-			for (const wanted of ANCESTOR_NAME_TAGS) {
-				if (tag === wanted && !names[wanted]) {
-					names[wanted] = parent
-				}
-			}
-
-			guard.add(parent.id)
-			cur = parent.parent_id
-		}
-
-		index.set(id, names)
 	}
 
-	return index
+	// `wof:hierarchy` names every ancestor level directly, including for a record whose parent is -4.
+	for (const ancestorID of rec.ancestors) {
+		const ancestor = lookup(ancestorID)
+
+		if (ancestor) {
+			claim(ancestor)
+		}
+	}
+
+	const guard = new Set<number>([rec.id])
+	let cur: number | null = rec.parent_id
+
+	while (cur !== null && cur > 0) {
+		const parent = lookup(cur)
+
+		if (!parent || guard.has(parent.id)) break
+		claim(parent)
+		guard.add(parent.id)
+		cur = parent.parent_id
+	}
+
+	return names
 }

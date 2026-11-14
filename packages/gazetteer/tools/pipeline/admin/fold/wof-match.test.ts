@@ -128,4 +128,36 @@ describe("buildWOFPlaceIndex", () => {
 		expect(index.claimName(harare, "ZW", "Harare Kapital")).toBe(true)
 		expect(index.claimName(harare, "ZW", "harare kapital")).toBe(false)
 	})
+
+	it("matches a Wikidata id two records share to the record of the candidate's tier, whatever the insertion order", async () => {
+		for (const order of [
+			[85_678_001, 421_168_573],
+			[421_168_573, 85_678_001],
+		]) {
+			using db = await stagingDatabase()
+
+			const concordance = db.prepare(
+				`INSERT INTO concordances (id, other_id, other_source) VALUES (?, 'Q3921', 'wd:id')`
+			)
+
+			for (const id of order) {
+				concordance.run(id)
+			}
+
+			const index = buildWOFPlaceIndex(db)
+			const at = { name: "Harare", country: "ZW", latitude: -17.83, longitude: 31.05, wikidata: "Q3921" }
+
+			expect(index.match({ ...at, placetype: "locality" }), String(order)).toEqual({
+				id: 421_168_573,
+				placetype: "locality",
+				by: "wikidata",
+			})
+
+			expect(index.match({ ...at, placetype: "region" }), String(order)).toEqual({
+				id: 85_678_001,
+				placetype: "region",
+				by: "wikidata",
+			})
+		}
+	})
 })

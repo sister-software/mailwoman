@@ -160,25 +160,41 @@ export interface WOFPlaceIndex {
 export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceIndex {
 	const placetypes = [...TIER_OF_PLACETYPE.keys()].map((placetype) => `'${placetype}'`).join(",")
 
-	const concordance = (source: string) =>
-		new Map(
-			(
-				db
-					.prepare(
-						`SELECT c.other_id AS other_id, s.id AS id, s.placetype AS placetype FROM concordances c
-						 JOIN spr s ON s.id = c.id
-						 WHERE c.other_source = ? AND s.is_current = 1 AND s.id < ${OVERTURE_ID_BASE} AND s.placetype IN (${placetypes})`
-					)
-					.all(source) as Array<{ other_id: string; id: number; placetype: string }>
-			).map((row) => [String(row.other_id), { id: row.id, placetype: row.placetype }])
-		)
+	// 22,980 Wikidata ids and 9,923 GeoNames ids each sit on more than one current WOF record
+	// (2026-11-14 admin build), so an id maps to every record holding it, in id order.
+	// The match takes the first in the candidate's tier, and no insertion order can change that choice.
+	const concordance = (source: string) => {
+		const index = new Map<string, Array<{ id: number; placetype: string }>>()
+
+		for (const row of db
+			.prepare(
+				`SELECT c.other_id AS other_id, s.id AS id, s.placetype AS placetype FROM concordances c
+				 JOIN spr s ON s.id = c.id
+				 WHERE c.other_source = ? AND s.is_current = 1 AND s.id < ${OVERTURE_ID_BASE} AND s.placetype IN (${placetypes})
+				 ORDER BY c.other_id, s.id`
+			)
+			.iterate(source) as Iterable<{ other_id: string; id: number; placetype: string }>) {
+			const key = String(row.other_id)
+			const records = index.get(key)
+
+			if (records) {
+				if (records.at(-1)!.id !== row.id) {
+					records.push({ id: row.id, placetype: row.placetype })
+				}
+			} else {
+				index.set(key, [{ id: row.id, placetype: row.placetype }])
+			}
+		}
+
+		return index
+	}
 
 	const byWikidata = concordance("wd:id")
 
 	/**
 	 * The WOF records with a Wikidata id, from WOF or claimed from a fold.
 	 */
-	const withWikidata = new Set([...byWikidata.values()].map((record) => record.id))
+	const withWikidata = new Set([...byWikidata.values()].flatMap((records) => records.map((record) => record.id)))
 	const byGeonames = concordance("gn:id")
 
 	const countryRecords = new Map(
@@ -258,13 +274,18 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 				return id != null ? { id, placetype: "country", by: "country" } : null
 			}
 
-			const wikidata = candidate.wikidata ? byWikidata.get(candidate.wikidata) : null
+			const wikidata = candidate.wikidata
+				? byWikidata.get(candidate.wikidata)?.find((record) => sameTier(record.placetype, tier))
+				: undefined
 
-			if (wikidata && sameTier(wikidata.placetype, tier)) return { ...wikidata, by: "wikidata" }
+			if (wikidata) return { ...wikidata, by: "wikidata" }
 
-			const geonames = candidate.geonamesID != null ? byGeonames.get(String(candidate.geonamesID)) : null
+			const geonames =
+				candidate.geonamesID != null
+					? byGeonames.get(String(candidate.geonamesID))?.find((record) => sameTier(record.placetype, tier))
+					: undefined
 
-			if (geonames && sameTier(geonames.placetype, tier)) return { ...geonames, by: "geonames" }
+			if (geonames) return { ...geonames, by: "geonames" }
 
 			const key = normalizeLocalityForKey(candidate.name)
 

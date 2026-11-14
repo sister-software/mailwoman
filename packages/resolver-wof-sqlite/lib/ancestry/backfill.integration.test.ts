@@ -3,42 +3,29 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { backfillAncestorsFromHierarchy, discoverAdminDataRoots } from "#ancestry"
+import { backfillAncestorsFromHierarchy, type WOFFeatureReader } from "#ancestry"
 import type { WOFDatabase } from "#schema"
 
 let root: TemporaryDirectory
 
 beforeAll(async () => {
 	root = await temporaryDirectory("ancestry-backfill-")
-	// Nested lab layout: <root.path>/whosonfirst-data/whosonfirst-data-admin-us/data
 	await makeDirectories(root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data"))
-	// Flat layout: <root.path>/whosonfirst-data-admin-gb/data
-	await makeDirectories(root.path("whosonfirst-data-admin-gb", "data"))
-	// A non-WOF sibling dir that must be ignored
-	await makeDirectories(root.path("some-other-repo", "data"))
-	// A `data` dir buried too deep (depth 3+) that mustn't be discovered
-	await makeDirectories(root.path("whosonfirst-data", "nested", "deeper", "data"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
 
-test("discoverAdminDataRoots: finds nested + flat whosonfirst data roots, skips non-WOF + too-deep", async () => {
-	const roots = (await discoverAdminDataRoots(root.path)).map((dataRoot) => dataRoot.toString())
-
-	expect(roots).toContain(root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data").toString())
-	expect(roots).toContain(root.path("whosonfirst-data-admin-gb", "data").toString())
-	// non-WOF sibling isn't traversed (its name doesn't start with whosonfirst-data)
-	expect(roots).not.toContain(root.path("some-other-repo", "data").toString())
-	// `nested/deeper/data` sits at depth 3 from root.path — beyond the 2-level cap
-	expect(roots).not.toContain(root.path("whosonfirst-data", "nested", "deeper", "data").toString())
-})
-
-test("discoverAdminDataRoots: missing root.path yields empty list, never throws", async () => {
-	await expect(discoverAdminDataRoots(root.path("does-not-exist"))).resolves.toEqual([])
-})
+/**
+ * A reader over GeoJSON files under one `data` directory.
+ */
+function readFrom(dataRoot: PathBuilderLike): WOFFeatureReader {
+	return (id) => readWOFFeature(id, [dataRoot])
+}
 
 test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {
 	using db = DatabaseClient.temp<WOFDatabase>()
@@ -69,7 +56,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		dataRoot("859", "775", "39", `${orphanID}.geojson`)
 	)
 
-	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, readFrom(dataRoot))
 	// region + country + county = 3 distinct ancestors across branches (self/locality excluded).
 	expect(result.placesFixed).toBe(1)
 	expect(result.rowsAdded).toBe(3)
@@ -82,7 +69,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	expect(ancestorIDs).toEqual([85_633_793, 85_688_543, 102_081_863].toSorted((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.
-	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	const again = await backfillAncestorsFromHierarchy(db, readFrom(dataRoot))
 	expect(again.rowsAdded).toBe(0)
 	expect(again.placesFixed).toBe(0)
 })
@@ -142,7 +129,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 		dataRoot("421", "205", "765", `${brooklynID}.geojson`)
 	)
 
-	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, readFrom(dataRoot))
 
 	// continent + country + county + region = 4 new rows.
 	// The query excludes self.
@@ -165,7 +152,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	// It already had a country ancestor.
 	expect(db.prepare("SELECT COUNT(*) AS n FROM ancestors WHERE id = ?").get(nycID)).toEqual({ n: 4 })
 
-	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	const again = await backfillAncestorsFromHierarchy(db, readFrom(dataRoot))
 	expect(again.rowsAdded).toBe(0)
 })
 
@@ -193,7 +180,7 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	db.exec("COMMIT")
 
 	// Empty roots: every geojson probe misses without touching the filesystem 33,000 times.
-	const result = await backfillAncestorsFromHierarchy(db, [])
+	const result = await backfillAncestorsFromHierarchy(db, () => null)
 
 	// No geojson exists for any of them.
 	// Every candidate is skipped, none fixed.
@@ -219,7 +206,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(id, 85_633_793)
 
 	const dataRoot = root.path("whosonfirst-data", "whosonfirst-data-admin-us", "data")
-	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, readFrom(dataRoot))
 
 	expect(result.placesFixed).toBe(0)
 	expect(result.rowsAdded).toBe(0)

@@ -61,11 +61,12 @@ import {
 	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import { walkFeaturesCached } from "#adapters/wof/record-cache"
 import { RowSampler } from "#adapters/wof/sample"
+import { openStoredRecordEntries } from "#adapters/wof/stored-records"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { buildAncestorRecordIndex, nameValues, preferredName, type AncestorRecords, type WOFRecord } from "#utils"
+import { nameValues, preferredName, type AncestorRecords, type WOFRecord } from "#utils"
+import { ancestorRecordsOf } from "#utils/wof-json"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -562,30 +563,18 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// Pass 1: scan every GeoJSON file once, build the in-memory record index.
-			// We keep only records whose placetype maps to a ComponentTag — irrelevant
-			// placetypes (campus, county-region hybrids on which Mailwoman has no opinion)
-			// are dropped here so they don't inflate the ancestry index.
-			// Country-filtered runs prune to the matching country code too.
-			// The ancestors of a same-country record live in the same admin repo.
-			const byID = new Map<number, WOFRecord>()
+			// A record whose placetype maps to no ComponentTag (campus, county-region hybrids on
+			// which Mailwoman has no opinion) is neither rendered nor an ancestor.
+			// A country-filtered run keeps only that country's records, ancestors included.
+			using stored = await openStoredRecordEntries(opts, {
+				keep: (record) => Boolean(placetypeToTag(record.placetype)),
+				resolve: (record, lookup) => ancestorRecordsOf(record, lookup, placetypeToTag),
+			})
 
-			for await (const rec of walkFeaturesCached(opts.inputPath, { signal: opts.signal })) {
-				if (opts.signal?.aborted) return
-
-				if (opts.country && rec.country !== opts.country) continue
-
-				if (!placetypeToTag(rec.placetype)) continue
-				byID.set(rec.id, rec)
-			}
-
-			const ancestry = buildAncestorRecordIndex(byID, placetypeToTag)
 			const sampler = opts.sample ? new RowSampler<CanonicalRow>(opts.sample) : undefined
 
-			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({
-				records: byID,
-				ancestry,
+				records: stored.entries,
 				adapterOptions: opts,
 				adapterID: WOF_ADMIN_ADAPTER_ID,
 				localeByCountry: LOCALE_BY_COUNTRY,

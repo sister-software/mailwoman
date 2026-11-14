@@ -21,19 +21,28 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { allKeyed } from "@mailwoman/core/promises"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed/db"
 import type { PathBuilderLike } from "path-ts"
 
+import type { WOFFeature } from "#whosonfirst"
+import { storedWOFRecord, wofRecordStorePathFor, type WOFRecordStoreDatabase } from "#whosonfirst/record-store"
+
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill.
+	 * Repos root for the `wof:hierarchy` −4 backfill, read through its WOF record store.
 	 * It reaches NYC/London-class multi-parent orphans.
 	 *
 	 * Omit only in fixture tests.
 	 * A real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
 	dataDir?: PathBuilderLike
+	/**
+	 * The WOF record store the ingest refreshed.
+	 *
+	 * @defaultValue {@linkcode wofRecordStorePathFor} of `dataDir`
+	 */
+	recordStore?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -51,7 +60,7 @@ export async function freezeAdmin(
 ): Promise<FreezeAdminResult> {
 	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
-		ancestry: { backfillAncestorsFromHierarchy, discoverAdminDataRoots },
+		ancestry: { backfillAncestorsFromHierarchy },
 		unifiedSchema: { createUnifiedIndexes, populateAncestors },
 	} = await allKeyed({
 		ancestry: import("@mailwoman/resolver-wof-sqlite/ancestry"),
@@ -94,22 +103,27 @@ export async function freezeAdmin(
 
 	if (opts.dataDir) {
 		phase("hierarchy-backfill", "places whose ancestry chain never reaches a country")
-		const geojsonRoots = await discoverAdminDataRoots(opts.dataDir)
 
-		if (!geojsonRoots.length) {
-			phase(
-				"hierarchy-backfill",
-				`WARNING: no */data geojson roots under ${opts.dataDir} — orphans like NYC stay unreachable`
-			)
-		} else {
-			// Only real WOF places have `wof:hierarchy` geojson.
-			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never have GeoJSON.
-			// A probe of millions of them across every repo root stalls the step for ~40 minutes.
-			// Their ancestry comes from the parent_id closure.
-			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
-			backfillPlacesFixed = bf.placesFixed
-			phase("hierarchy-backfill", `+${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} no-geojson)`)
-		}
+		using store = new DatabaseClient<WOFRecordStoreDatabase>(opts.recordStore ?? wofRecordStorePathFor(opts.dataDir), {
+			readOnly: true,
+		})
+
+		// Only real WOF places have a `wof:hierarchy`; synthetic Overture and GeoNames rows
+		// (ids >= OVERTURE_ID_BASE) take their ancestry from the parent_id closure.
+		const bf = await backfillAncestorsFromHierarchy(
+			db,
+			(id) => storedWOFRecord<WOFFeature>(store, id)?.feature ?? null,
+			{
+				maxID: OVERTURE_ID_BASE,
+			}
+		)
+
+		backfillPlacesFixed = bf.placesFixed
+
+		phase(
+			"hierarchy-backfill",
+			`+${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} not in the record store)`
+		)
 	}
 
 	phase("indexes")

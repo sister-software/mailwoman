@@ -27,7 +27,8 @@ import {
 import { emitWOFJSONRows, LOCALE_BY_COUNTRY, type NameSlot } from "#adapters/wof/json-rows"
 import { AUGMENTATIONS } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
-import { buildAncestorRecordIndex, readFeatureRecord, type WOFRecord } from "#utils"
+import { readFeatureRecord, type WOFRecord } from "#utils"
+import { ancestorRecordsOf } from "#utils/wof-json"
 
 /**
  * The deepest `wof:parent_id` chain read, a guard against a corrupt cycle.
@@ -208,7 +209,7 @@ export async function exploreWOFRecord(id: number, options: ExploreOptions = {})
 		parent = next ? next.parent_id : null
 	}
 
-	const ancestry = buildAncestorRecordIndex(byID, adapterTag)
+	const recordAncestors = ancestorRecordsOf(record, (ancestorID) => byID.get(ancestorID), adapterTag)
 
 	const slots = new Map<string, ExploredSlot>()
 
@@ -220,8 +221,7 @@ export async function exploreWOFRecord(id: number, options: ExploreOptions = {})
 	const byLongestKey = [...slots.keys()].toSorted((a, b) => b.length - a.length)
 
 	for (const row of emitWOFJSONRows({
-		records: new Map([[record.id, record]]),
-		ancestry,
+		records: [{ record, ancestors: recordAncestors }],
 		adapterOptions: { inputPath: path },
 		adapterID: WOF_ADMIN_ADAPTER_ID,
 		localeByCountry: LOCALE_BY_COUNTRY,

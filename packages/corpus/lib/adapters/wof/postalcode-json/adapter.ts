@@ -30,12 +30,13 @@ import {
 	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import { walkFeaturesCached } from "#adapters/wof/record-cache"
 import { RowSampler } from "#adapters/wof/sample"
+import { openStoredRecordEntries } from "#adapters/wof/stored-records"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
-import { buildAncestorNameIndex, type AncestorNames, type WOFRecord } from "#utils"
+import type { AncestorNames, WOFRecord } from "#utils"
+import { ancestorNamesOf, ancestorRecordsOf } from "#utils/wof-json"
 
 /**
  * Maps a lowercase US state name to its USPS code.
@@ -162,39 +163,20 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			"Who's On First postalcode GeoJSON bundles (postcode → locality/region pairs). Ancestor names from sibling admin repos.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// The index keeps admin records as well as postcodes so that postcode ancestry resolves.
-			const byID = new Map<number, WOFRecord>()
-
-			for await (const rec of walkFeaturesCached(opts.inputPath, { signal: opts.signal })) {
-				if (opts.signal?.aborted) return
-
-				if (opts.country && rec.country !== opts.country) continue
-
-				if (!postcodePlacetypeToTag(rec.placetype)) continue
-				byID.set(rec.id, rec)
-			}
-
-			const ancestry = buildAncestorNameIndex(byID, postcodePlacetypeToTag)
-
-			// The adapter read admin records so postcode ancestry resolves.
-			// The index above now holds the three ancestor names read by each postcode variant.
-			// Their removal here releases every admin record's `nameVariants` map before the emit pass.
-			// `shouldEmit` skipped those records anyway.
-			for (const [id, record] of byID) {
-				if (postcodePlacetypeToTag(record.placetype) !== "postcode") {
-					byID.delete(id)
-				}
-			}
+			// Admin records are kept so a postcode's ancestry resolves, and only postcodes are rendered.
+			using stored = await openStoredRecordEntries(opts, {
+				keep: (record) => Boolean(postcodePlacetypeToTag(record.placetype)),
+				render: (record) => postcodePlacetypeToTag(record.placetype) === "postcode",
+				resolve: (record, lookup) => ancestorNamesOf(ancestorRecordsOf(record, lookup, postcodePlacetypeToTag)),
+			})
 
 			const sampler = opts.sample ? new RowSampler<CanonicalRow>(opts.sample) : undefined
 
 			yield* emitWOFJSONRows({
-				records: byID,
-				ancestry,
+				records: stored.entries,
 				adapterOptions: opts,
 				adapterID: WOF_POSTALCODE_ADAPTER_ID,
 				localeByCountry: LOCALE_BY_COUNTRY,
-				shouldEmit: (record) => postcodePlacetypeToTag(record.placetype) === "postcode",
 				nameSlotsFor,
 				variantsFor: postcodeVariantsFor,
 				sampler,

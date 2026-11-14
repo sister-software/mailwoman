@@ -2,29 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Ingests WOF GeoJSON files into the admin-gazetteer staging database.
+ *   Ingests WOF records into the admin-gazetteer staging database from the WOF record store.
  */
 
-import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
-import { parallelMapWorkers } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
-import type { ExtractedWOFFeature } from "#tools/pipeline/admin/wof/feature"
-import type { WOFFeatureItem, WOFFeatureResult, WOFFeatureWorkerData } from "#tools/pipeline/admin/wof/feature/worker"
-
-const WORKER_URL = new URL(
-	import.meta.url.endsWith(".ts") ? "./wof/feature/worker.ts" : "./wof/feature/worker.js",
-	import.meta.url
-)
-
-/**
- * The records a worker reads and extracts per dispatched batch.
- */
-const WORKER_BATCH_SIZE = 64
+import { type ExtractedWOFFeature, extractParsedWOFFeature } from "#tools/pipeline/admin/wof/feature"
+import type { WOFFeature } from "#whosonfirst"
+import {
+	refreshWOFRecordStore,
+	storedWOFRecords,
+	wofRecordStorePathFor,
+	wofRepositories,
+	type WOFRecordStoreDatabase,
+	type WOFRepoRefresh,
+} from "#whosonfirst/record-store"
 
 /**
  * The default admin placetypes to ingest.
@@ -63,13 +58,15 @@ export interface IngestWOFOptions {
 	 */
 	placetypes?: ReadonlySet<string>
 	/**
-	 * The worker threads that read and parse records.
+	 * The WOF record store to refresh and read.
 	 *
-	 * The main thread keeps the SQLite writes, so it keeps one core.
-	 *
-	 * @defaultValue one per core, less one
+	 * @defaultValue {@linkcode wofRecordStorePathFor} of `dataDir`
 	 */
-	workers?: number
+	recordStore?: PathBuilderLike
+	/**
+	 * Called once per repository the store refresh reused or reduced again.
+	 */
+	onRepo?: (refresh: WOFRepoRefresh) => void
 	/**
 	 * The number of ingested records per write transaction.
 	 *
@@ -79,7 +76,7 @@ export interface IngestWOFOptions {
 	/**
 	 * Called after every 25,000 ingested records.
 	 *
-	 * `found` counts the files the walk has yielded so far, and it grows until the walk finishes.
+	 * `found` counts the stored records under a `data/` directory read so far.
 	 */
 	onProgress?: (processed: number, skipped: number, found: number) => void
 	/**
@@ -99,33 +96,6 @@ export interface IngestWOFResult {
 	 * The number of records where GeoNames adjudication chose the geometry point over the label point.
 	 */
 	labelPointOverrides: number
-}
-
-/**
- * Yields worker results in walk order.
- *
- * The pool returns results in completion order.
- * The ingest writes with `INSERT OR REPLACE`, so the walk order decides which record
- * a repeated id keeps, and it has to match a single-threaded walk.
- */
-async function* inWalkOrder(results: AsyncIterable<WOFFeatureResult>): AsyncGenerator<WOFFeatureResult> {
-	const waiting = new Map<number, WOFFeatureResult>()
-	let next = 0
-
-	for await (const result of results) {
-		waiting.set(result.index, result)
-
-		while (waiting.has(next)) {
-			yield waiting.get(next)!
-			waiting.delete(next)
-
-			next++
-		}
-	}
-
-	if (waiting.size) {
-		throw new Error(`ingestWOF: ${waiting.size} records arrived after a gap in the walk order at index ${next}`)
-	}
 }
 
 /**
@@ -160,36 +130,33 @@ async function placeFeature(
 }
 
 /**
- * Ingests WOF GeoJSON into an open staging database.
+ * A stored record's path lies under a `data/` directory, the only part of a checkout the ingest reads.
+ */
+const DATA_PATH = /(?:^|\/)data\//u
+
+/**
+ * Ingests the WOF records under `opts.dataDir` into an open staging database,
+ * read from the WOF record store.
  *
- * Worker threads read and parse the records.
- * The main thread adjudicates locality points and writes the records serially,
- * in walk order, in batched transactions.
+ * The store is refreshed first, so a repository whose commit and working tree are
+ * unchanged is read without parsing its GeoJSON.
+ * Records are written in WOF-id order, in batched transactions, with locality points adjudicated on the way.
  *
  * Postalcode repositories are skipped unless `placetypes` includes `postalcode`.
  */
 export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOFOptions): Promise<IngestWOFResult> {
 	const placetypes = opts.placetypes ?? ADMIN_PLACETYPES
-	const workers = opts.workers ?? Math.max(1, availableParallelism() - 1)
 	const batchCommitSize = opts.batchCommitSize ?? 500
+	const storePath = opts.recordStore ?? wofRecordStorePathFor(opts.dataDir)
 
-	const exclude = ["**/*-alt-*"]
+	await refreshWOFRecordStore(storePath, opts.dataDir, { onRepo: opts.onRepo })
 
-	if (!placetypes.has("postalcode")) {
-		exclude.push("**/whosonfirst-data-postalcode-*/**")
-	}
+	const repos = (await wofRepositories(opts.dataDir))
+		.map((repo) => repo.basename())
+		.filter((repo) => placetypes.has("postalcode") || !repo.startsWith("whosonfirst-data-postalcode-"))
 
+	using store = new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true })
 	let filesFound = 0
-
-	// The walk streams into the pool, so the paths of the millions of records are never held at once.
-	const items = Globerator.from("**/data/**/*.geojson", {
-		cwd: opts.dataDir,
-		absolute: true,
-		exclude,
-		// A data root can expose one checkout both directly and through a symlink.
-		// The ingester reads each record once when it skips symlinks.
-		followSymlinks: false,
-	}).map((path): WOFFeatureItem => ({ index: filesFound++, path }))
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -224,16 +191,12 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		}
 	}
 
-	const workerData: WOFFeatureWorkerData = { placetypes: [...placetypes] }
+	for (const stored of storedWOFRecords<WOFFeature>(store, { repos, placetypes })) {
+		if (!DATA_PATH.test(stored.path)) continue
 
-	const results = parallelMapWorkers<WOFFeatureItem, WOFFeatureResult>(items, {
-		worker: WORKER_URL,
-		concurrency: workers,
-		batchSize: WORKER_BATCH_SIZE,
-		workerData,
-	})
+		filesFound++
+		const feature = extractParsedWOFFeature(stored.feature, placetypes)
 
-	for await (const { feature } of inWalkOrder(results)) {
 		if (!feature) {
 			skipped++
 

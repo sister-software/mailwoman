@@ -7,13 +7,18 @@
  *   Must run after `populateAncestors` and before the build freezes.
  */
 
-import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"
+import type { WOFFeature } from "@mailwoman/gazetteer/whosonfirst"
 import { hierarchyAncestorsInAnyBranch } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import type { WOFDatabase } from "#schema"
+
+/**
+ * Reads the WOF record with an id, such as a primary-key read of the WOF record store, or returns `null`.
+ */
+export type WOFFeatureReader = (
+	id: number
+) => Pick<WOFFeature, "properties"> | null | Promise<Pick<WOFFeature, "properties"> | null>
 
 const TOP_PLACETYPES = new Set(["country", "continent", "empire", "ocean", "marinearea", "planet"])
 
@@ -21,57 +26,22 @@ export interface AncestryBackfillResult {
 	placesFixed: number
 	rowsAdded: number
 	/**
-	 * Candidates whose source geojson was not found (non-WOF backfilled places or absent repos),
+	 * Candidates the reader returned no record for (non-WOF backfilled places or absent repos),
 	 * skipped rather than treated as an error.
 	 */
 	noGeojson: number
 }
 
 /**
- * Discover the `data` directories under a WOF repos root that hold attached geojson,
- * accepting both the nested lab layout and a flat layout at most two directory levels deep.
- */
-export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<PathBuilder[]> {
-	const roots: PathBuilder[] = []
-
-	const visit = async (dir: PathBuilder, depth: number): Promise<void> => {
-		if (depth > 2) return
-
-		let names: string[]
-
-		try {
-			names = (await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray())
-				.filter((entry) => entry.isDirectory())
-				.map((entry) => entry.name)
-		} catch {
-			return
-		}
-
-		for (const name of names) {
-			const child = dir(name)
-
-			if (name === "data") {
-				roots.push(child)
-			} else if (name.startsWith("whosonfirst-data")) {
-				await visit(child, depth + 1)
-			}
-		}
-	}
-
-	await visit(PathBuilder.from(reposRoot), 0)
-
-	return roots
-}
-
-/**
  * Insert missing ancestor rows for places whose ancestry chain ended before reaching a country.
  *
- * The function reads `wof:hierarchy` and runs in one transaction under the caller's connection.
+ * The function reads each candidate's `wof:hierarchy` through `readFeature`
+ * and runs in one transaction under the caller's connection.
  * `opts.maxID` bounds the scan to avoid probing synthetic-id Overture and GeoNames rows.
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,
-	geojsonRoots: readonly PathBuilderLike[],
+	readFeature: WOFFeatureReader,
 	opts: { maxID?: number } = {}
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
@@ -124,7 +94,7 @@ export async function backfillAncestorsFromHierarchy(
 
 	for (const { id, placetype } of candidates) {
 		if (placetype && TOP_PLACETYPES.has(placetype)) continue
-		const gj = await readWOFFeature(id, geojsonRoots)
+		const gj = await readFeature(id)
 		const hierarchy = gj?.properties?.["wof:hierarchy"]
 
 		if (!hierarchy || !hierarchy.length) {

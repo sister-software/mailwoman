@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 234 of the group's 401 library and tool modules.
+This page lists 233 of the group's 400 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -98,19 +98,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | ----------------------- | ------------------- | ----- |
 | read | `isFileSync`            | `unresolved (call)` | 1     |
 | read | `readLocalTextFileSync` | `unresolved (call)` | 1     |
-
-## `packages/corpus/lib/adapters/wof/record-cache.ts`
-
-| Kind        | Interface                   | Target                                   | Calls |
-| ----------- | --------------------------- | ---------------------------------------- | ----- |
-| read        | `JSONSpliterator.fromAsync` | `unresolved (call)`                      | 1     |
-| read        | `pathExists`                | `unresolved (call)`                      | 1     |
-| write       | `makeDirectories`           | `unresolved (call)`                      | 1     |
-| write       | `movePath`                  | `unresolved (call)`                      | 1     |
-| write       | `movePath`                  | `unresolved (template)`                  | 1     |
-| write       | `openWriteStream`           | `unresolved (template)`                  | 1     |
-| write       | `removePathIfPresent`       | `unresolved (template)`                  | 1     |
-| environment | `$public`                   | `environment:MAILWOMAN_WOF_RECORD_CACHE` | 1     |
 
 ## `packages/corpus/lib/adapters/wof/sample.ts`
 
