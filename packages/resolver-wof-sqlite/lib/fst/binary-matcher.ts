@@ -18,7 +18,7 @@ import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import {
 	decodePlaceEntry,
 	idTableOffset,
-	readIDTable,
+	loadIDTable,
 	EDGE_ENTRY_SIZE,
 	FST_FORMAT_VERSION,
 	FST_MAGIC_BYTES,
@@ -130,7 +130,7 @@ export class BinaryFSTMatcher {
 		this.#edgeTableStart = this.#stateTableStart + stateCount * this.#stateEntrySize
 		this.#placeTableStart = this.#edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
 
-		this.#ids = readIDTable(
+		this.#ids = loadIDTable(
 			view,
 			idTableOffset(this.#placeTableStart, view.getUint32(16, true), this.#placeLayout),
 			this.#placeLayout

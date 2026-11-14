@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest"
 
 import { fstStaleReason, FSTMatcher, type FSTNode, deserializeFST, FST_FORMAT_VERSION, serializeFST } from "#fst"
-import { idTableOffset, placeEntryLayout, readIDTable } from "#fst/format"
+import { idTableOffset, loadIDTable, placeEntryLayout } from "#fst/format"
 
 /**
  * A one-place matcher carrying `referential` and, optionally, `encyclopedic`,
@@ -65,7 +65,7 @@ function downgradeToV4(current: Buffer): Buffer {
 	current.subarray(0, placeTableStart).copy(out, 0)
 
 	const view = new DataView(current.buffer, current.byteOffset, current.byteLength)
-	const ids = readIDTable(view, idTableOffset(placeTableStart, placeCount, from), from)
+	const ids = loadIDTable(view, idTableOffset(placeTableStart, placeCount, from), from)
 	const id = (offset: number) => (ids ? ids[current.readUInt32LE(offset)]! : current.readUInt32LE(offset))
 
 	for (let i = 0; i < placeCount; i++) {

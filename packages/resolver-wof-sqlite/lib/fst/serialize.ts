@@ -28,7 +28,7 @@ import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	decodePlaceEntry,
 	idTableOffset,
-	readIDTable,
+	loadIDTable,
 	EDGE_ENTRY_SIZE,
 	FST_FORMAT_VERSION,
 	FST_MAGIC_BYTES,
@@ -307,7 +307,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
-	const ids = readIDTable(view, idTableOffset(placeTableStart, placeCount, placeLayout), placeLayout)
+	const ids = loadIDTable(view, idTableOffset(placeTableStart, placeCount, placeLayout), placeLayout)
 
 	const nodes: FSTNode[] = new Array(stateCount)
 

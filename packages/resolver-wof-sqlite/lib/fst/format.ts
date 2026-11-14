@@ -157,7 +157,7 @@ export function idTableOffset(placeTableStart: number, placeCount: number, layou
  * The WOF ids an id-table file stores, in table order, or `null` for a file
  * before {@link VERSION_ID_TABLE}.
  */
-export function readIDTable(view: DataView, offset: number, layout: PlaceEntryLayout): Float64Array | null {
+export function loadIDTable(view: DataView, offset: number, layout: PlaceEntryLayout): Float64Array | null {
 	if (!layout.idTable) return null
 	const count = view.getUint32(offset, true)
 	const ids = new Float64Array(count)

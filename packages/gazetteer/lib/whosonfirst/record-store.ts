@@ -21,6 +21,7 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { git, gitHead } from "@mailwoman/core/git"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { parseJSONStrict, stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
@@ -232,7 +233,7 @@ export async function wofRepoKey(repoDir: PathBuilderLike): Promise<string | nul
 
 	const status = await git(["status", "--porcelain=v1", "-z", "--untracked-files=all"], repo)
 
-	for (const entry of status.split("\0").filter(Boolean).toSorted(compareByScalarValue)) {
+	for (const entry of status.split("\0").filter(isPresent).toSorted(compareByScalarValue)) {
 		const path = entry.slice(3)
 		const file = repo(path)
 
