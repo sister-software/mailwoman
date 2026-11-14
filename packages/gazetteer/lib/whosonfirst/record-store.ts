@@ -300,22 +300,19 @@ export async function refreshWOFRecordStore(
 	await makeDirectories(dirname(storePath.toString()))
 	using db = new DatabaseClient<WOFRecordStoreDatabase>(storePath)
 
+	// Two processes can refresh one store at once: the two WOF adapters of a parallel
+	// corpus build, or the admin build beside one.
+	// A writer waits for the other's repository transaction to finish.
+	db.exec(`PRAGMA busy_timeout = ${REFRESH_BUSY_TIMEOUT_MS}`)
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("PRAGMA synchronous = NORMAL")
 	await createWOFRecordStoreTables(db)
-
-	const stored = new Map(
-		(db.prepare("SELECT repo, key FROM wof_repo_state").all() as Array<{ repo: string; key: string }>).map((row) => [
-			row.repo,
-			row.key,
-		])
-	)
 
 	const repos = await wofRepositories(dataDir)
 	const present = new Set(repos.map((repo) => repo.basename()))
 	const results: WOFRepoRefresh[] = []
 
-	for (const repo of stored.keys()) {
+	for (const { repo } of db.prepare("SELECT repo FROM wof_repo_state").all() as Array<{ repo: string }>) {
 		if (!present.has(repo)) {
 			deleteRepo(db, repo)
 		}
@@ -323,20 +320,7 @@ export async function refreshWOFRecordStore(
 
 	for (const repoDir of repos) {
 		opts.signal?.throwIfAborted()
-		const repo = repoDir.basename()
-		const key = await wofRepoKey(repoDir)
-		let result: WOFRepoRefresh
-
-		if (key && stored.get(repo) === key) {
-			const state = db.prepare("SELECT records, skipped FROM wof_repo_state WHERE repo = ?").get(repo) as {
-				records: number
-				skipped: number
-			}
-
-			result = { repo, action: "reused", records: state.records, skipped: state.skipped }
-		} else {
-			result = await reduceRepo(db, repoDir, repo, key ?? "unversioned", opts.signal)
-		}
+		const result = await refreshRepo(db, repoDir, await wofRepoKey(repoDir), opts.signal)
 
 		results.push(result)
 		opts.onRepo?.(result)
@@ -345,38 +329,46 @@ export async function refreshWOFRecordStore(
 	return results
 }
 
+/**
+ * How long a refresh waits for another process's write lock on the store, in milliseconds.
+ *
+ * One repository's reduction holds the lock while it reads that repository's GeoJSON.
+ * The largest lab clones took up to a few minutes.
+ */
+const REFRESH_BUSY_TIMEOUT_MS = 30 * 60 * 1000
+
 function deleteRepo(db: DatabaseClient<WOFRecordStoreDatabase>, repo: string): void {
-	db.exec("BEGIN")
+	db.exec("BEGIN IMMEDIATE")
 	db.prepare("DELETE FROM wof_record WHERE repo = ?").run(repo)
 	db.prepare("DELETE FROM wof_repo_state WHERE repo = ?").run(repo)
 	db.exec("COMMIT")
 }
 
-async function reduceRepo(
+/**
+ * Reuses or rewrites one repository's rows under the store's write lock.
+ *
+ * The stored key is read after the lock is taken, so a process that waited behind another's
+ * reduction of the same repository reuses those rows rather than reducing it again.
+ */
+async function refreshRepo(
 	db: DatabaseClient<WOFRecordStoreDatabase>,
 	repoDir: PathBuilder,
-	repo: string,
-	key: string,
+	key: string | null,
 	signal: AbortSignal | undefined
 ): Promise<WOFRepoRefresh> {
-	const listed: string[] = await Globerator.from("**/*.geojson", {
-		cwd: repoDir,
-		absolute: false,
-		exclude: ["**/*-alt-*.geojson"],
-		followSymlinks: true,
-		signal,
-	}).toArray()
+	const repo = repoDir.basename()
+	const stateOf = db.prepare("SELECT key, records, skipped FROM wof_repo_state WHERE repo = ?")
 
-	const reduced = AsyncSequence.from<string>(listed.toSorted(compareByScalarValue)).parallelMap(
-		async (path) => {
-			try {
-				return { path, record: reduceWOFFeature(await readLocalTextFile(repoDir(path))) }
-			} catch {
-				return { path, record: null }
-			}
-		},
-		{ ordered: true, signal }
-	)
+	const reusable = (): WOFRepoRefresh | null => {
+		const state = stateOf.get(repo) as { key: string; records: number; skipped: number } | undefined
+
+		return key && state?.key === key ? { repo, action: "reused", records: state.records, skipped: state.skipped } : null
+	}
+
+	// A matching key needs no lock: the rows under it are committed and the repository is unchanged.
+	const unchanged = reusable()
+
+	if (unchanged) return unchanged
 
 	const insert = db.prepare(
 		"INSERT INTO wof_record (id, repo, path, country, placetype, feature) VALUES (?, ?, ?, ?, ?, ?)"
@@ -386,9 +378,36 @@ async function reduceRepo(
 	let records = 0
 	let skipped = 0
 
-	db.exec("BEGIN")
+	db.exec("BEGIN IMMEDIATE")
 
 	try {
+		const reducedMeanwhile = reusable()
+
+		if (reducedMeanwhile) {
+			db.exec("COMMIT")
+
+			return reducedMeanwhile
+		}
+
+		const listed: string[] = await Globerator.from("**/*.geojson", {
+			cwd: repoDir,
+			absolute: false,
+			exclude: ["**/*-alt-*.geojson"],
+			followSymlinks: true,
+			signal,
+		}).toArray()
+
+		const reduced = AsyncSequence.from<string>(listed.toSorted(compareByScalarValue)).parallelMap(
+			async (path) => {
+				try {
+					return { path, record: reduceWOFFeature(await readLocalTextFile(repoDir(path))) }
+				} catch {
+					return { path, record: null }
+				}
+			},
+			{ ordered: true, signal }
+		)
+
 		db.prepare("DELETE FROM wof_record WHERE repo = ?").run(repo)
 
 		for await (const { path, record } of reduced) {
@@ -416,7 +435,7 @@ async function reduceRepo(
 
 		db.prepare("INSERT OR REPLACE INTO wof_repo_state (repo, key, records, skipped) VALUES (?, ?, ?, ?)").run(
 			repo,
-			key,
+			key ?? "unversioned",
 			records,
 			skipped
 		)
