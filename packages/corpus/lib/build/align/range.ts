@@ -27,6 +27,7 @@ import { alignSettings, createRowAligner, emptyAlignResult, type AlignTally } fr
 import { alignTotalsOf, serializeAlignTotals, type AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
 import { createIneligibilityReader } from "#build/eligibility"
+import { tryReadDefaultRegionNames } from "#build/region-names"
 import type { BuildProfile } from "#build/types"
 import { flushStream, once } from "#runner"
 import type { CanonicalRow } from "#types"
@@ -195,6 +196,8 @@ export async function reusableAlignRange(
 	// A record from before the per-source component counts can't supply them to the manifest.
 	if (!Array.isArray(record.totals.component_findings_by_source)) return null
 
+	if (!Array.isArray(record.totals.unchecked_component_rules)) return null
+
 	for (const name of ALIGN_RANGE_OUTPUTS) {
 		if ((await tryStat(dir(name)))?.size !== record.outputs[name]) return null
 	}
@@ -242,6 +245,7 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 		licenses,
 		ineligibility,
 		units: await createUnitSplitter(),
+		regions: await tryReadDefaultRegionNames(),
 		result,
 		tally,
 		sinks: {

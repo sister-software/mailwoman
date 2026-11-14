@@ -104,6 +104,7 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 		quarantine_count: totals.quarantined,
 		component_findings_by_source: componentFindingsRecord(totals.componentFindingsBySource),
 		enforced_component_rules: [...ENFORCED_COMPONENT_RULES],
+		unchecked_component_rules: [...totals.uncheckedComponentRules],
 		total_aligned_rows: totals.aligned,
 		licenses: Object.fromEntries(licenseSummary),
 		licenses_cover:

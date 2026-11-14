@@ -27,11 +27,12 @@ import {
 import {
 	componentFindings,
 	componentFindingsRecord,
+	ComponentRule,
 	ENFORCED_COMPONENT_RULES,
 	type ComponentFindingCounts,
-	type ComponentRule,
 } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
+import { tryReadDefaultRegionNames, type RegionNames } from "#build/region-names"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
 import { flushStream, once, type AdapterRunManifest } from "#runner"
@@ -122,6 +123,12 @@ export interface AlignPhaseResult {
 	 * (`ENFORCED_COMPONENT_RULES`) or only reports it.
 	 */
 	componentFindingsBySource: ComponentFindingCounts
+	/**
+	 * The component rules this phase couldn't check, because the data they read wasn't on the host.
+	 *
+	 * Their counts in {@linkcode AlignPhaseResult.componentFindingsBySource} are absent rather than zero.
+	 */
+	uncheckedComponentRules: Set<ComponentRule>
 
 	/**
 	 * The source-id lists this phase wrote, or `null` when it wrote none.
@@ -200,6 +207,11 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 		result.componentFindingsBySource.set(source, new Map(Object.entries(rules) as [ComponentRule, number][]))
 	}
 
+	// A checkpoint that records no list was written before `region:unknown` existed, so its rows went unchecked.
+	for (const rule of checkpoint.unchecked_component_rules ?? [ComponentRule.RegionUnknown]) {
+		result.uncheckedComponentRules.add(rule as ComponentRule)
+	}
+
 	return {
 		aligned: checkpoint.aligned,
 		quarantined: checkpoint.quarantined,
@@ -257,6 +269,12 @@ export interface RowAlignerOptions {
 	 */
 	units: UnitSplitter
 	/**
+	 * The region forms the `region:unknown` rule reads, or `null` when the WOF database isn't on the host.
+	 *
+	 * A `null` records the rule in `result.uncheckedComponentRules`.
+	 */
+	regions: RegionNames | null
+	/**
 	 * The accumulators the aligner adds each row to.
 	 */
 	result: AlignPhaseResult
@@ -275,6 +293,11 @@ export interface RowAlignerOptions {
  */
 export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) => void {
 	const { result, tally, sinks, licenses, ineligibility } = opts
+	const context = { units: opts.units, regions: opts.regions }
+
+	if (!opts.regions) {
+		result.uncheckedComponentRules.add(ComponentRule.RegionUnknown)
+	}
 
 	const quarantine = (row: CanonicalRow, reason: string): void => {
 		sinks.quarantine(`${stringifyJSON({ row, reason })}\n`)
@@ -321,7 +344,7 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 
 		// A row whose values fail its country's rules or contradict each other (#2898) is
 		// quarantined before augmentation, so no variant inherits the wrong value.
-		const findings = componentFindings(row.components, row.country, { units: opts.units })
+		const findings = componentFindings(row.components, row.country, context)
 
 		if (findings.length) {
 			const bySource = result.componentFindingsBySource.get(row.source) ?? new Map<ComponentRule, number>()
@@ -415,6 +438,7 @@ export function emptyAlignResult(
 		rowsBySource: new Map(),
 		ineligibleSources,
 		componentFindingsBySource: new Map(),
+		uncheckedComponentRules: new Set(),
 		sourceIDPaths: null,
 		licenses,
 	}
@@ -515,6 +539,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		licenses,
 		ineligibility,
 		units: await createUnitSplitter(),
+		regions: await tryReadDefaultRegionNames(),
 		result,
 		tally,
 		sinks: {
@@ -564,6 +589,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			excluded_by_eligibility: tally.excludedByEligibility,
 			rows_by_source: Object.fromEntries(result.rowsBySource),
 			component_findings_by_source: componentFindingsRecord(result.componentFindingsBySource),
+			unchecked_component_rules: [...result.uncheckedComponentRules],
 			written_at: new Date().toISOString(),
 		})
 	}
