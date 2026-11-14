@@ -17,11 +17,10 @@
  *   The codex supplies the format and street convention from the record's country code.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { StructureProvenance, StructureRecord, StructureSource } from "@mailwoman/corpus/structures/source"
-import { alignRow } from "@mailwoman/corpus/utils/align"
 
+import { renderHeldoutRow } from "#tools/eval-harness/heldout/dataset/render"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 
 /**
@@ -92,51 +91,22 @@ export function postOfficeSuiteRows(
 	const rows: PostOfficeSuiteRow[] = []
 
 	for (const [form, components] of forms) {
-		const rendered = formatAddressRow(components, source.country, { singleLine: true })
-
-		if (!rendered) {
-			count(`${form}:render-failed`)
-
-			continue
-		}
-
-		const sourceID = `${record.id}#${form}`
-
-		const aligned = alignRow({
-			raw: rendered.raw,
-			components: rendered.components,
+		const rendered = renderHeldoutRow(components, {
 			country: source.country,
 			source: source.id,
-			source_id: sourceID,
+			sourceID: `${record.id}#${form}`,
+			// The record's forms resample together.
+			group: record.id,
 			license: source.license,
 		})
 
-		if (aligned.kind !== "labeled") {
-			count(`${form}:align-${aligned.row.reason}`)
+		if ("refused" in rendered) {
+			count(`${form}:${rendered.refused}`)
 
 			continue
 		}
 
-		const { span_starts: starts, span_ends: ends, span_tags: tags } = aligned.row
-
-		// A labeled row always holds its span triple.
-		// A row without one is a fault of the aligner.
-		if (!starts || !ends || !tags) throw new Error(`the aligner labeled ${sourceID} without its span triple`)
-
-		rows.push({
-			raw: aligned.row.raw,
-			span_starts: [...starts],
-			span_ends: [...ends],
-			span_tags: [...tags],
-			country: source.country,
-			source: source.id,
-			source_id: sourceID,
-			// The record's forms resample together.
-			group: record.id,
-			form,
-			provenance: source.provenance,
-			expected: rendered.components,
-		})
+		rows.push({ ...rendered.row, form, provenance: source.provenance, expected: rendered.expected })
 
 		count(`${form}:rows`)
 	}

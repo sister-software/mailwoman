@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "3e24a442f9fc5efb8fc010e13559ecf117f9c335ebc5bbbe8cb04079e509101d",
+	"contentDigest": "89c5c30e54813b435dc92c9ffb3fd34c3a8d5f4f5522dc78128f7372dedeead6",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -21,6 +21,49 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to au-mixed-regulatory-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 3.0 Australia",
+			"spdx": "CC-BY-3.0-AU",
+			"termsVersion": "3.0",
+			"retrievedCopy": "packages/corpus/data/licenses/au-acnc-cc-by-3.0-au.md",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "The dataset record `acnc-register` on data.gov.au, read through `package_show` on 2026-11-14, belongs to the publisher's own organization (`acnc`, `Australian Charities and Not-for-profits Commission (ACNC)`), names the ACNC as author, and states `license_title: Creative Commons Attribution 3.0 Australia` with `license_url: http://creativecommons.org/licenses/by/3.0/au/`. Its CSV resource `datadotgov_main.csv` is the file fetched. Clause 3A of the legal code grants the right to `create and Reproduce one or more Derivative Works`, and clause 4B(c) requires a derivative to identify that changes were made. CC BY 3.0 AU carries no share-alike term. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Australia that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 3A(a) grants the right to `Reproduce the Work`, which retrieving the CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 3A(d) grants the right to `create and Reproduce one or more Derivative Works`, which reading the address columns out of the register performs."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause 3A(d), as above; rendering and labeling each address makes a derivative, which clause 4B(c) requires to identify its changes."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				}
+			},
+			"licenseID": "unchecked-access-free-au-australian-charities-and-not-for-profits-comm"
 		},
 		{
 			"state": "elected",
@@ -915,6 +958,47 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. Scoped to Instituto Nacional de Estadística in ES, so electing it grants that publisher's sources in that jurisdiction alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Aviso legal del Ministerio de Sanidad: reutilización autorizada con cita de la fuente y de la fecha de la última actualización",
+			"retrievedCopy": "packages/corpus/data/licenses/es-sanidad-aviso-legal.md",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "The ministry's legal notice, `https://www.sanidad.gob.es/avisoLegal/home.htm`, linked as `Aviso Legal` from the microdata page that serves the Catálogo de Centros de Atención Primaria, states that the site's information `salvo indicación expresa en contrario, es susceptible de reutilización; quedando autorizada su reproducción total o parcial, modificación, distribución y comunicación, para usos comerciales y no comerciales`, on condition of citing the source and the date of the last update. The catalogue's download page states no contrary indication. The notice names no instrument and no version, so `spdx` is left out and `electedTerms` holds the publisher's words. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Spain that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the notice would permit it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The notice authorizes `reproducción total o parcial`, which retrieving the catalogue's zip performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The notice authorizes `reproducción total o parcial`, which reading the street line, locality and postcode out of `SIAP_CENTROS.txt` performs."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The notice authorizes `modificación`, which rendering and labeling each address performs."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The notice itself would permit it."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				}
+			},
+			"licenseID": "unchecked-access-free-es-ministerio-de-sanidad"
 		},
 		{
 			"state": "elected",
@@ -1828,6 +1912,48 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to it-mixed-regulatory-1 alone."
 		},
 		{
+			"state": "elected",
+			"electedTerms": "Italian Open Data License 2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "packages/corpus/data/licenses/it-miur-iodl-2.0.md",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "The ministry's catalogue page, `https://dati.istruzione.it/opendata/opendata/catalogo/elements1/?area=Scuole`, states `License:` with a link to `http://www.dati.gov.it/iodl/2.0/` on the entry for `DS0400SCUANAGRAFESTAT`, the register of state schools, and the fetched file `SCUANAGRAFESTAT20262720260901.csv` is that entry's 2026/27 distribution. The licence text at `https://www.dati.gov.it/content/italian-open-data-license-v20` grants a worldwide, free, perpetual, irrevocable licence to `estrarre e reimpiegare le Informazioni` and to `creare un Lavoro derivato`, defined as `ogni traduzione, adattamento, trasformazione, diversa disposizione ed ogni altra modifica delle Informazioni`, on condition of naming the source and the provider. IODL 2.0 carries no share-alike term. No SPDX identifier names IODL 2.0, so `spdx` is left out. **The source is evaluation-only by decision**: its rows give the release check comparative rows for Italy that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "IODL 2.0 grants `riprodurre` and `estrarre e reimpiegare le Informazioni`, which retrieving the CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "IODL 2.0 grants `estrarre e reimpiegare le Informazioni`, which reading the street line, postcode and comune performs."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "IODL 2.0 grants `creare un Lavoro derivato`, which it defines to include `adattamento, trasformazione`; rendering and labeling each address performs that."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				}
+			},
+			"licenseID": "unchecked-access-free-it-ministero-dell-istruzione-e-del-merito"
+		},
+		{
 			"licenseID": "unchecked-access-free-jp-jp-business-legal-1",
 			"state": "unchecked",
 			"publisherStatement": "Free",
@@ -2257,10 +2383,46 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to nz-business-legal-3 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-nz-nz-charity-nonprofit-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to nz-charity-nonprofit-1 alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 3.0 New Zealand",
+			"termsVersion": "3.0",
+			"retrievedCopy": "packages/corpus/data/licenses/nz-charities-cc-by-3.0-nz.md",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "Charities Services' open-data page, `https://www.charities.govt.nz/charities-in-new-zealand/the-charities-register/open-data`, read in a browser on 2026-11-14 because an automated fetch answered HTTP 403, describes the OData service at `http://www.odata.charities.govt.nz` the fetch reads and states `Use of this data is licensed under a Creative Commons Attribution 3.0 New Zealand License.` The legal code grants the right to `create one or more Adaptations` and requires an adaptation to identify that changes were made. CC BY 3.0 NZ carries no share-alike term. The page also forbids using the register to harvest charities' email addresses for marketing; the fetch reads no email address. The register row was carried from the original memo, whose note already read `CC-BY`; this reading is the publisher's own. **The source is evaluation-only by decision**: its rows give the release check comparative rows for New Zealand that neither the published model's corpus nor the candidate's holds (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4), and a row that reached training would stop being evidence. `train` is therefore refused here although the licence would permit it.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 3.0 NZ grants reproducing the Work, which retrieving the OData service's CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `create one or more Adaptations` covers reading the street address columns out of the register."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `create one or more Adaptations` covers rendering and labeling each address, which must identify its changes."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Withheld by this repository: the rows are an evaluation set that must stay outside every training corpus. The licence itself would permit it."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "No evaluation set built from the source is published; the frozen rows stay on the data root."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No model trains on the source."
+				}
+			},
+			"licenseID": "unchecked-access-free-nz-nz-charity-nonprofit-1"
 		},
 		{
 			"licenseID": "unchecked-access-free-nz-nz-education-1",
@@ -16623,7 +16785,17 @@
 			"license": "unchecked-access-free-nz-nz-charity-nonprofit-1",
 			"researchPass": "original-memo",
 			"access": "CSV bulk",
-			"note": "Full register extract, CC-BY | mess=Med"
+			"note": "Full register extract, CC-BY | mess=Med",
+			"addressRoles": {
+				"StreetAddressLine1 StreetAddressSuburb StreetAddressCity StreetAddressPostcode": "registered-office"
+			},
+			"coverage": "The OData `vOrganisations` view as served on 2026-11-14: 29,315 registered charities, of which 18,607 street addresses with one street line and a house number become evaluation records, across all ten postcode first digits. Evaluation only; no corpus build reads it.",
+			"upstreamLineage": ["http://www.odata.charities.govt.nz/vOrganisations"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The register publishes each registered charity's street address and excludes what Charities Services has withheld from publication. A small charity's street address can be an officer's home. The fetch selects only the charity's registration number and street address columns, never its name, officers or email address, and no row joins the address to a person.",
+				"record": "packages/corpus/lib/nz/evaluation/charities-register.ts"
+			}
 		},
 		{
 			"sourceID": "nz-education-1",
@@ -25369,6 +25541,86 @@
 			"publisher": "Servicios Postales Nacionales S.A.S. (4-72)",
 			"sourceURL": "https://www.datos.gov.co/d/ajs9-6i5i",
 			"note": "No corpus source reads this list. Its grant is CC BY-SA 4.0, whose share-alike term the share-alike-free license policy refuses."
+		},
+		{
+			"sourceID": "es-health-1",
+			"iso2": "ES",
+			"sector": "health",
+			"name": "Catálogo de Centros de Atención Primaria del SNS",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Ministerio de Sanidad publishes the national health system's catalogue of its own primary-care centres, compiled from the autonomous communities' health services",
+			"geometry": "absent",
+			"license": "unchecked-access-free-es-ministerio-de-sanidad",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "zip of semicolon-separated text files from the microdata page `/estadisticas/microdatos.do`, type `CatCentrosAP`, no key",
+			"publisher": "Ministerio de Sanidad",
+			"sourceURL": "https://www.sanidad.gob.es/estadEstudios/estadisticas/microdatos/CatCentrosAP/2026_C__Catalogo_de_Centros_AP_txt.zip",
+			"note": "Evaluation only: read by the es-sanidad-centros-ap evaluation source, never by a corpus build. 13,053 centres in the 2026 catalogue, each with a name, a street line, a locality, an INE municipality code and a postcode; 5,971 street lines carry a house number.",
+			"addressRoles": {
+				"SIAP_CENTROS.txt street, locality, postcode": "facility"
+			},
+			"coverage": "The 2026 catalogue as served on 2026-11-14: 13,053 centres, of which 5,971 street lines carry a house number and become evaluation records, in 51 of Spain's 52 provinces (none in Ceuta); 6,909 lines without a number (`S/N`), 133 the street-line splitter cannot place and 40 without a postcode yield none. Evaluation only; no corpus build reads it.",
+			"upstreamLineage": [
+				"https://www.sanidad.gob.es/estadEstudios/estadisticas/microdatos/CatCentrosAP/2026_C__Catalogo_de_Centros_AP_txt.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is a public health centre or local surgery named for its place (`REQUENA - LOS DUQUES`), with the centre's own street line and phone. The evaluation rows read only the street line, locality and postcode."
+			}
+		},
+		{
+			"sourceID": "it-education-1",
+			"iso2": "IT",
+			"sector": "education",
+			"name": "Anagrafe scuole statali (DS0400SCUANAGRAFESTAT)",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Ministero dell'Istruzione e del Merito publishes the register of its own state school sites on its open-data portal",
+			"geometry": "absent",
+			"license": "unchecked-access-free-it-ministero-dell-istruzione-e-del-merito",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "CSV per school year on dati.istruzione.it, no key",
+			"publisher": "Ministero dell'Istruzione e del Merito",
+			"sourceURL": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/leaf?area=Scuole&datasetId=DS0400SCUANAGRAFESTAT",
+			"note": "Evaluation only: read by the it-miur-scuole evaluation source, never by a corpus build. The 2026/27 file holds every state school site with its region, province, street line, postcode and comune, in capitals; 27,399 street lines carry a house number.",
+			"addressRoles": {
+				"INDIRIZZOSCUOLA CAPSCUOLA DESCRIZIONECOMUNE": "facility"
+			},
+			"coverage": "The 2026/27 file as served on 2026-11-14: state school sites outside the autonomous provinces of Aosta, Trento and Bolzano, which the ministry publishes in separate files this source does not read; 27,399 street lines carry a house number and become evaluation records, in 18 regions, and 16,894 carry none. Evaluation only; no corpus build reads it.",
+			"upstreamLineage": [
+				"https://dati.istruzione.it/opendata/opendata/catalogo/elements1/SCUANAGRAFESTAT20262720260901.csv"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is a state school site with its institutional name, address, institutional email and website. No column names a person. The evaluation rows read only the street line, postcode and comune."
+			}
+		},
+		{
+			"sourceID": "au-charity-nonprofit-1",
+			"iso2": "AU",
+			"sector": "charity-nonprofit",
+			"name": "ACNC Registered Charities",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The ACNC, the national charity regulator, publishes the register of charities it maintains",
+			"geometry": "absent",
+			"license": "unchecked-access-free-au-australian-charities-and-not-for-profits-comm",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "CSV resource of the data.gov.au dataset `acnc-register`, updated weekly, no key",
+			"publisher": "Australian Charities and Not-for-profits Commission",
+			"sourceURL": "https://data.gov.au/data/dataset/acnc-register",
+			"note": "Evaluation only: read by the au-acnc-register evaluation source, never by a corpus build. 66,623 charities in the 2026-11-14 pull, each with up to three address lines, a town, a state and a postcode; 6,340 carry no address because the ACNC withholds it.",
+			"addressRoles": {
+				"Address_Line_1 Town_City State Postcode": "registered-office"
+			},
+			"coverage": "The register as served on 2026-11-14: 66,623 charities; 6,340 carry no address because the ACNC withholds it; 36,118 single street lines with a house number become evaluation records, in all eight states and territories. Evaluation only; no corpus build reads it.",
+			"upstreamLineage": ["https://data.gov.au/data/dataset/acnc-register"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The register holds the address each charity gives the ACNC, published under the ACNC Act with an approved withholding route for a charity that asks. A small charity's address can be a responsible person's home, and its legal name can be a person's name (a family trust or foundation). The evaluation rows read only the address, never the name, and no row joins the address to a person. A charity's later withholding request reaches the dataset at its next weekly update, so a refetch drops it.",
+				"record": "packages/corpus/lib/au/evaluation/acnc-register.ts"
+			}
 		}
 	]
 }

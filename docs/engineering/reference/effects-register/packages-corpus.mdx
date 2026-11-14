@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 242 of the group's 409 library and tool modules.
+This page lists 246 of the group's 415 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -131,6 +131,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | --------------------------- | ------------------------ | ----- |
 | read | `Globerator.from`           | `unresolved (call)`      | 1     |
 | read | `TextSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+
+## `packages/corpus/lib/au/evaluation/acnc-register.ts`
+
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/az/adapters/opendata/adapter.ts`
 
@@ -442,6 +448,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `tryStat`         | `unresolved (parameter)` | 1     |
 | write | `makeDirectories` | `unresolved (call)`      | 1     |
 
+## `packages/corpus/lib/evaluation/source.ts`
+
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `statPath`        | `unresolved (call)`      | 1     |
+| write | `makeDirectories` | `unresolved (parameter)` | 1     |
+
 ## `packages/corpus/lib/fi/adapters/ryhti/adapter.ts`
 
 | Kind | Interface                  | Target                  | Calls |
@@ -653,6 +666,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `Globerator.from`           | `unresolved (call)`       | 1     |
 | read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
 
+## `packages/corpus/lib/it/evaluation/miur-scuole.ts`
+
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
+
 ## `packages/corpus/lib/it/tools/fetch/anac.ts`
 
 | Kind  | Interface             | Target                   | Calls |
@@ -850,6 +869,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | ----------------- | ------------------- | ----- |
 | read  | `tryStat`         | `unresolved (call)` | 2     |
 | write | `makeDirectories` | `unresolved (call)` | 2     |
+
+## `packages/corpus/lib/nz/evaluation/charities-register.ts`
+
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/parquet/readers.ts`
 

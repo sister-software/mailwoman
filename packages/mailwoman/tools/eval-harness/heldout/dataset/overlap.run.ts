@@ -11,7 +11,12 @@
  *     --model-cards <published model-card.json>,<candidate model-card.json> \
  *     [--training-configs <config .yaml>,…] \
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
- *     [--path-root /mnt/mw] [--verify-file-sha256]
+ *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text]
+ *
+ *   `--match-text` also compares every training row's folded text with the
+ *   dataset's row texts, read from its rows file.
+ *   A dataset drawn from a source no corpus reads needs it, because identities
+ *   and groups can't match across sources.
  *
  *   Name a model by `--training-configs` when its card's `training.corpus_version` is stale:
  *   the config's `data.corpus_dir` then identifies its corpus.
@@ -25,8 +30,9 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { readHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
+import { readHeldoutDatasetManifest, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
+import { heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 
 const { values } = parseArguments({
 	options: {
@@ -56,6 +62,10 @@ const { values } = parseArguments({
 			type: "boolean",
 			description: "Recompute every training file's sha256",
 		},
+		"match-text": {
+			type: "boolean",
+			description: "Also compare training rows by folded text, reading the dataset's rows file",
+		},
 		out: { type: "string", description: "Where to write the provenance file" },
 	},
 })
@@ -70,8 +80,14 @@ const split = (value: string | undefined) =>
 		.map((item) => item.trim())
 		.filter((item) => item.length > 0)
 
+const rowTexts =
+	values["match-text"] === true
+		? new Map((await readHeldoutDatasetRows(values.dataset)).rows.map((row) => [heldoutRowID(row), row.raw] as const))
+		: undefined
+
 const result = await auditHeldoutOverlap({
 	dataset: await readHeldoutDatasetManifest(values.dataset),
+	...(rowTexts ? { rowTexts } : {}),
 	corpora: split(values.corpora),
 	modelCards: split(values["model-cards"]),
 	trainingConfigs: split(values["training-configs"]),

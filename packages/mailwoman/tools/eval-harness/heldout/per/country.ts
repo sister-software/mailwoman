@@ -337,9 +337,14 @@ export interface HeldoutSamplingRule {
 	 * `every-row`: no sample is drawn.
 	 * The dataset holds every row its sources yield, in source order, as the post-office suite does.
 	 *
+	 * `per-stratum-hash-order`: each country's quota split across its publisher's regions
+	 * in proportion to their rows, every region given a floor, and each region's rows
+	 * taken in the order of a seeded sha256 of their identity.
+	 * The evaluation-only sources draw this way.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row"
+	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row" | "per-stratum-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */

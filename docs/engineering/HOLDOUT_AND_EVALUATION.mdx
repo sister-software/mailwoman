@@ -290,6 +290,13 @@ by id and by folded text. The operator's constraint of 2026-10-22 is unchanged: 
 needed it is US only. ES and IT therefore remain unresolved requirements under the nine-country objective, and a
 US-only acquisition is reported as leaving them unresolved.
 
+For ES, IT, AU and NZ, an evaluation source can also be a different publication from every training source, with
+no shared upstream. `heldout/fresh/build.run.ts` freezes rows from the evaluation-only sources in
+`@mailwoman/corpus/evaluation/sources`, whose register decisions refuse `train`. Such a row can't match a training
+row by identity, so `heldout/dataset/overlap.run.ts --match-text` also compares folded text against both lineages.
+`docs/records/evals/2026-11-14-fresh-source-evaluation-set.md` records the first such set, and no specification
+registers it yet.
+
 ### 6.5 Confirmation access
 
 The development set guides work. The release decision is read once, on the confirmation set. Preflight may
