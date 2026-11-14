@@ -80,7 +80,10 @@ export function gnisFeatureURL(gnisID: number): string {
 }
 
 /**
- * A county name with its placetype word removed, so GNIS `Harris` and WOF `Harris County` compare equal.
+ * A county name with its placetype word removed.
+ *
+ * WOF stores a US county's name without the word (`Petersburg`), and GNIS
+ * sometimes includes it (`Petersburg Borough`).
  */
 function countyKey(name: string): NameKey {
 	return normalizeLocalityForKey(name.replace(/\s+(County|Parish|Borough|Census Area|Municipality)$/iu, ""))
