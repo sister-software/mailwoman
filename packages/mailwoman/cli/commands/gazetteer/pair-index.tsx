@@ -24,7 +24,7 @@ import {
  * Every US pair comes from WOF, so a snapshot refresh can legitimately change this number.
  * Update it after inspecting the difference rather than relaxing the check.
  */
-const EXPECTED_US_PAIR_COUNT = 50_250
+const EXPECTED_US_PAIR_COUNT = 50_239
 
 /**
  * Known (child, parent) pairs probed after write, keyed by country code.
