@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "93c49f61b3d7b957e8c47d6f05cb048c2b049206f15230514a73c466a21f013c",
+	"contentDigest": "c690c9826f63529a0ead9e5479de96a19f44f215a279bc3e56b07cb7b6b0c4f3",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -16782,14 +16782,15 @@
 			"iso2": "NZ",
 			"sector": "charity-nonprofit",
 			"name": "Charities Services register",
-			"status": "retained-original",
+			"status": "verified-corpus",
 			"asserts": ["identity", "observation"],
 			"authorityBasis": "Regulatory/operational corpus retained from original Functionally Authoritative Address Corpora memo",
 			"geometry": "absent",
 			"license": "unchecked-access-free-nz-nz-charity-nonprofit-1",
 			"researchPass": "original-memo",
 			"access": "CSV bulk",
-			"note": "Full register extract, CC-BY | mess=Med",
+			"sourceURL": "https://www.charities.govt.nz/charities-in-new-zealand/the-charities-register/open-data",
+			"note": "Full register extract, CC BY 3.0 NZ read on the open-data page 2026-11-14 | mess=Med",
 			"adapterID": "nz-charities-register",
 			"addressRoles": {
 				"StreetAddressLine1 StreetAddressSuburb StreetAddressCity StreetAddressPostcode": "registered-office"
