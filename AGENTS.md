@@ -72,10 +72,10 @@ Use repository skills for procedures rather than copying their steps into this f
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` defines model evaluation requirements and the
   release-quality procedure: a default-on model or decoder change ships only on a `pass` verdict
   against the registered release requirements. Those requirements replaced the D-rule on 2026-10-20. The current
-  specification, v7, registers every threshold, but no candidate identity and no evaluation collection, and
-  no frozen collection holds comparative rows for ES, IT, AU or NZ. Every verdict is therefore insufficient
+  specification, v8, registers every threshold and the v0.8.18 development and confirmation collections,
+  but neither collection holds comparative rows for ES, IT, AU or NZ. Every verdict is therefore insufficient
   evidence, and the earlier promotion checks still decide.
-  `docs/records/evals/2026-11-14-release-requirements-v8-proposal.md` measures each threshold and lists the
+  `docs/records/evals/2026-11-14-release-requirements-v8.md` measures each threshold and lists the
   blockers.
 - `docs/engineering/HOLDOUT_AND_EVALUATION.mdx` is the held-out data and evaluation specification: how
   rows are split, the checks that admit a corpus manifest, the comparator, the three-run rule for a corpus

@@ -1,8 +1,7 @@
 {
-	"$registration": "UNREGISTERED PROPOSAL. No tool reads this file as the current specification (release/current-spec.ts names v7). The operator approves or amends it; registration copies it to specs/release-requirements.v8.json and moves CURRENT_RELEASE_SPEC in one change. docs/records/evals/2026-11-14-release-requirements-v8-proposal.md gives the measured basis of every value.",
 	"schemaVersion": 3,
 	"specVersion": "8",
-	"rationale": "Proposed version 8 registers the evaluation collections frozen from corpus v0.8.18-retention-overlay: heldout-dev-v0.8.18 (version 187e8ab06b37351c, seed 1818) for development and heldout-confirm-v0.8.18 (version 35ba77d61aa40921, seed 1819, drawn with every development group excluded) for confirmation, and names the confirmation collection as the dataset identity. Every threshold, selector, statistic, provenance rule and identity other than identities.dataset and evaluations is version 7's. Confirmation reads before registration: none; the published model's baseline scoring on confirmation (6.5) has not been run.",
+	"rationale": "Version 8 (registered 2026-11-14 on the operator's decision) registers the evaluation collections frozen from corpus v0.8.18-retention-overlay: heldout-dev-v0.8.18 (version 00c4698a7fdc6edf, seed 1818) for development and heldout-confirm-v0.8.18 (version 8606834b12100089, seed 1819, drawn with every development group excluded) for confirmation, and names the confirmation collection as the dataset identity. Both were drawn after geonames-features and wikidata-vital-places joined the wof- sources as gazetteer rows (HELDOUT_GAZETTEER_SOURCES), so those place-name rows draw against the gazetteer quota and no country or objective check reads them. Every threshold, selector, statistic, provenance rule and identity other than identities.dataset and evaluations is version 7's. Confirmation reads before registration: the overlap audit read confirmation metadata only; no confirmation row was scored. docs/records/evals/2026-11-14-release-requirements-v8.md gives the measured basis of every value.",
 	"requirements": [
 		{
 			"id": "country-US",
@@ -154,8 +153,8 @@
 	},
 	"identities": {
 		"dataset": {
-			"id": "heldout-confirm-v0.8.18@35ba77d61aa40921",
-			"sha256": "b1bf658e5312efa7ce8f7e092b3039bab36bf449a7d47b5990ec0399e71dbfc8"
+			"id": "heldout-confirm-v0.8.18@8606834b12100089",
+			"sha256": "989c9cd9993b9c34f4f5b28816c00d527caa32dbebd999ee30b840cde75723ce"
 		},
 		"scorer": {
 			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
@@ -194,12 +193,12 @@
 	},
 	"evaluations": {
 		"development": {
-			"id": "heldout-dev-v0.8.18@187e8ab06b37351c",
-			"description": "Frozen 2026-11-14 from /mnt/mw/corpus/versioned/v0.8.18-retention-overlay/corpus-v0.8.18-retention-overlay/MANIFEST.json (sha256 2241efda2892634dc8b4b50ceddef6708680b95adf38055f2ae020a5d236a9d0), 1,000 rows per country and row kind, seed 1818: 84,926 rows, rows sha256 d47011c2f200f3d0f99ae3b017bc1487a9ef8ad869806ecb20ba087323b17a09, manifest /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.json. Used for recipe, checkpoint and seed selection."
+			"id": "heldout-dev-v0.8.18@00c4698a7fdc6edf",
+			"description": "Frozen 2026-11-14 from /mnt/mw/corpus/versioned/v0.8.18-retention-overlay/corpus-v0.8.18-retention-overlay/MANIFEST.json (sha256 2241efda2892634dc8b4b50ceddef6708680b95adf38055f2ae020a5d236a9d0), 1,000 rows per country and row kind, seed 1818: 86,845 rows, rows sha256 bdcaa41f8b35baf1a3d5144b3ae31cde0eb42e151176c55b1fd92974a8486bf6, manifest /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.json (sha256 90afa087d2b9763df7fccb81ec09f26e0cd1bf0442d0834194b863f954c5b929). Used for recipe, checkpoint and seed selection."
 		},
 		"confirmation": {
-			"id": "heldout-confirm-v0.8.18@35ba77d61aa40921",
-			"description": "Frozen 2026-11-14 from the same corpus manifest with seed 1819 and every heldout-dev-v0.8.18 group excluded: 33,846 rows, rows sha256 b1bf658e5312efa7ce8f7e092b3039bab36bf449a7d47b5990ec0399e71dbfc8, manifest /mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.json. Read only for the release decision; every read is recorded in the next spec version's rationale."
+			"id": "heldout-confirm-v0.8.18@8606834b12100089",
+			"description": "Frozen 2026-11-14 from the same corpus manifest with seed 1819 and every heldout-dev-v0.8.18@00c4698a7fdc6edf group excluded: 33,402 rows, rows sha256 989c9cd9993b9c34f4f5b28816c00d527caa32dbebd999ee30b840cde75723ce, manifest /mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.v2.json (sha256 311e70431535fbbb5b8baa5906c31ae6b8dea5577dea5c4c944b4a6194d3fb84). Read only for the release decision; every read is recorded in the next spec version's rationale."
 		}
 	}
 }
