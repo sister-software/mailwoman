@@ -178,14 +178,28 @@ const US_STATES_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
  *
  * A publisher may write one designator into several columns, as New York writes `Apartment 2`
  * into both `Building` and `Unit`, so a part that repeats an earlier one is kept once.
+ *
+ * A publisher may also copy the landmark or the street into a unit column, as Oklahoma writes
+ * `RM ENERGY` as both `LandmkName` and `Unit`, and `DAUBE RANCH` as both `St_Name` and `Unit`.
+ * Such a part isn't a unit designator, so it's left out.
+ *
+ * A part holding a digit or a single character is kept even when it equals the street's name,
+ * because `A` on `Avenue A` and `17` on `Highway 17` read as unit designators too.
  */
 export function nadUnitText(record: NADRecord): string | null {
+	const street = decomposeNADStreet(record)
+
+	const owned = new Set(
+		[record.LandmkName?.trim(), street?.street, street?.full].filter(isPresent).map((v) => v.toLowerCase())
+	)
+
+	const repeatsOwner = (part: string) => part.length > 1 && !/\d/u.test(part) && owned.has(part.toLowerCase())
 	const parts = new Set<string>()
 
 	for (const part of [record.Building, record.Floor, record.Unit, record.Room]) {
 		const trimmed = part?.trim()
 
-		if (trimmed) {
+		if (trimmed && !repeatsOwner(trimmed)) {
 			parts.add(trimmed)
 		}
 	}

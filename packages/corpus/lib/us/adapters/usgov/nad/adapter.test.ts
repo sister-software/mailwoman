@@ -261,6 +261,13 @@ describe("nadUnitText", () => {
 		[{ Floor: " FL 4 ", Room: "RM 410" }, "FL 4 RM 410"],
 		[{ Unit: "#106" }, "#106"],
 		[{ Building: " ", Unit: null }, null],
+		// usgov-nad-2e53da72 and usgov-nad-4ae42d0f (#2895): the landmark or the street copied into `Unit`.
+		[{ LandmkName: "RM ENERGY", Unit: "RM ENERGY" }, null],
+		[{ St_PreDir: "South", St_Name: "DAUBE RANCH", St_PosTyp: "Road", Unit: "Daube Ranch" }, null],
+		[{ StNam_Full: "MAIN STREET", Building: "MAIN STREET", Unit: "STE 4" }, "STE 4"],
+		[{ LandmkName: "CITY HALL", St_Name: "MAIN", Unit: "SUITE 100" }, "SUITE 100"],
+		[{ St_PreTyp: "Avenue", St_Name: "A", Building: "A", Unit: "Apartment 1" }, "A Apartment 1"],
+		[{ St_PreTyp: "Highway", St_Name: "17", Unit: "17" }, "17"],
 	])("composes %j as %j", (record, expected) => {
 		expect(nadUnitText(record)).toBe(expected)
 	})
