@@ -48,17 +48,25 @@ const GazetteerBackfillGNIS: ParsedCommandComponent<Options> = ({ options }) => 
 			dataRoot: { currentSourcePath, wofReposPath },
 			paths: { wofDatabasePath },
 			gnis: { USGS_GNIS_PLACES_FILENAME, USGS_GNIS_SLUG },
+			gazetteer: { CensusGazetteerKind, fetchCensusGazetteer, readCensusGazetteer },
 		} = await allKeyed({
 			backfill: import("@mailwoman/gazetteer/tools/pipeline/us/gnis-backfill"),
 			dataRoot: import("@mailwoman/core/data-root"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 			gnis: import("@mailwoman/corpus/us/tools/fetch/usgs/gnis"),
+			gazetteer: import("@mailwoman/tiger/sdk/gazetteer"),
 		})
 
 		const placesPath = options.places ?? currentSourcePath(USGS_GNIS_SLUG, USGS_GNIS_PLACES_FILENAME)
+		const census = []
+
+		for (const kind of Object.values(CensusGazetteerKind)) {
+			census.push(...(await Array.fromAsync(readCensusGazetteer(await fetchCensusGazetteer(kind), kind))))
+		}
 
 		return backfillGNISPlaces({
 			places: await readGNISPlaces(placesPath),
+			census,
 			states: options.state,
 			adminPath: options.admin ?? wofDatabasePath("admin-global-priority.db"),
 			polygonPath: options.polygons ?? wofDatabasePath("wof-polygons-us-full.db"),
@@ -69,7 +77,7 @@ const GazetteerBackfillGNIS: ParsedCommandComponent<Options> = ({ options }) => 
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	const { records, covered, alreadyWritten, withoutPoint, unlocated } = state.result
+	const { records, covered, coveredByCensus, alreadyWritten, withoutPoint, unlocated } = state.result
 	const byPlacetype = Object.groupBy(records, (record) => record.placetype)
 
 	return (
@@ -82,8 +90,8 @@ const GazetteerBackfillGNIS: ParsedCommandComponent<Options> = ({ options }) => 
 				)
 			</Text>
 			<Text>
-				{covered} covered by a WOF record, {alreadyWritten} already written, {withoutPoint} without a GNIS point,{" "}
-				{unlocated.length} outside every county boundary
+				{coveredByCensus} covered through their Census GEOID, {covered} covered by name, {alreadyWritten} already
+				written, {withoutPoint} without a GNIS point, {unlocated.length} outside every county boundary
 			</Text>
 			{unlocated.length ? <Text>unlocated GNIS ids: {unlocated.join(", ")}</Text> : null}
 		</Box>

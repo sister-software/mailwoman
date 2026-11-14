@@ -5,10 +5,15 @@
  * @file Writes a Who's On First record into the `mailwoman` US admin fork for each GNIS populated
  *   place that no WOF record covers.
  *
- *   A GNIS place is covered when a WOF record in the locality-through-microhood band has the same
- *   name key within {@link SAME_PLACE_KM} of its point, or within {@link SAME_COUNTY_KM} in the
- *   same county. A name key is compared with and without apostrophe-like marks, as the candidate
- *   build stages both, so `Kapaʻau` and `Kapaau` are one name.
+ *   A GNIS place is covered in either of two ways:
+ *
+ *   - Its GNIS id is the `ANSICODE` of a Census place or county subdivision whose GEOID a WOF record
+ *     holds as its `uscensus:geoid` concordance. The Census gazetteer files give the join, and it holds
+ *     whatever each source calls the place, as for `City of Indianapolis (balance)` and Indianapolis.
+ *   - A WOF record in the locality-through-microhood band has the same name key within
+ *     {@link SAME_PLACE_KM} of its point, or within {@link SAME_COUNTY_KM} in the same county. A name
+ *     key is compared with and without apostrophe-like marks, as the candidate build stages both, so
+ *     `Kapaʻau` and `Kapaau` are one name.
  *
  *   A new record's parent is the innermost WOF boundary containing the GNIS point, found by
  *   point-in-polygon against the US polygon database:
@@ -37,6 +42,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { CensusGazetteerEntry } from "@mailwoman/tiger/sdk/gazetteer"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -176,6 +182,34 @@ class CoverageIndex {
 }
 
 /**
+ * The GNIS ids whose Census place or county subdivision a WOF record holds by `uscensus:geoid`.
+ */
+function censusCoveredGNISIDs(
+	adminPath: PathBuilderLike,
+	census: Iterable<Pick<CensusGazetteerEntry, "gnisID" | "geoid">>
+): Set<number> {
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
+
+	const held = new Set(
+		(
+			db.prepare("SELECT other_id FROM concordances WHERE other_source = 'uscensus:geoid'").all() as Array<{
+				other_id: string | number
+			}>
+		).map((row) => String(row.other_id))
+	)
+
+	const covered = new Set<number>()
+
+	for (const { gnisID, geoid } of census) {
+		if (held.has(geoid)) {
+			covered.add(gnisID)
+		}
+	}
+
+	return covered
+}
+
+/**
  * Options for {@link backfillGNISPlaces}.
  */
 export interface GNISBackfillOptions {
@@ -190,6 +224,10 @@ export interface GNISBackfillOptions {
 	 */
 	polygonPath: PathBuilderLike
 	reposRoot: PathBuilderLike
+	/**
+	 * The Census places and county subdivisions, from `readCensusGazetteer`, that tie a GNIS id to a GEOID.
+	 */
+	census: Iterable<Pick<CensusGazetteerEntry, "gnisID" | "geoid">>
 	/**
 	 * Reports what would be written and writes no file.
 	 */
@@ -223,9 +261,13 @@ export interface GNISBackfillResult {
 	 */
 	withoutPoint: number
 	/**
-	 * Places a WOF record already covers.
+	 * Places a WOF record covers by name key.
 	 */
 	covered: number
+	/**
+	 * Places a WOF record covers through the Census GEOID their GNIS id resolves to.
+	 */
+	coveredByCensus: number
 	/**
 	 * Places whose GNIS id is already the `gnis:id` concordance of a record in the mailwoman range.
 	 */
@@ -363,6 +405,7 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 	)
 
 	const coverage = CoverageIndex.read(options.adminPath)
+	const censusHeld = censusCoveredGNISIDs(options.adminPath, options.census)
 
 	const locators = PARENT_LADDER.map(({ parent, child }) => ({
 		child,
@@ -374,7 +417,15 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 		}),
 	}))
 
-	const result: GNISBackfillResult = { records: [], withoutPoint: 0, covered: 0, alreadyWritten: 0, unlocated: [] }
+	const result: GNISBackfillResult = {
+		records: [],
+		withoutPoint: 0,
+		covered: 0,
+		coveredByCensus: 0,
+		alreadyWritten: 0,
+		unlocated: [],
+	}
+
 	const seen = new Set<number>()
 
 	const places = [...options.places]
@@ -397,6 +448,12 @@ export async function backfillGNISPlaces(options: GNISBackfillOptions): Promise<
 
 		if (written.has(place.gnisID)) {
 			result.alreadyWritten++
+
+			continue
+		}
+
+		if (censusHeld.has(place.gnisID)) {
+			result.coveredByCensus++
 
 			continue
 		}
