@@ -1,0 +1,17 @@
+{
+	"type": "Feature",
+	"id": 4020,
+	"properties": {
+		"wof:id": 4020,
+		"wof:name": "Berlin",
+		"wof:placetype": "locality",
+		"wof:country": "DE",
+		"wof:parent_id": 4010,
+		"wof:hierarchy": [{ "country_id": 4001, "region_id": 4010, "locality_id": 4020 }],
+		"mz:is_current": 1,
+		"geom:latitude": 52.52,
+		"geom:longitude": 13.41,
+		"wof:population": 3644826
+	},
+	"geometry": null
+}

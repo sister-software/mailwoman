@@ -178,6 +178,10 @@ interface Candidate<T> {
 	 * The `holdOutCells` or `compareCells` entry the row matched.
 	 */
 	group?: string
+	/**
+	 * Whether the row is kept whatever its hash, because the adapter requires it.
+	 */
+	required?: boolean
 }
 
 /**
@@ -239,7 +243,14 @@ export class RowSampler<T = SampledRow> {
 		}
 	}
 
-	observe(row: SampledRow, payload: T): void {
+	/**
+	 * Counts `row` in its cells and holds `payload` while one of its cells may keep it.
+	 *
+	 * A `required` row is kept whatever its hash, unless its cell is held out.
+	 * It still enters its cells' heaps as any other row does, so requiring it
+	 * moves no other row's keep decision.
+	 */
+	observe(row: SampledRow, payload: T, required = false): void {
 		const keys = this.#keys(row)
 
 		if (!keys) return
@@ -283,8 +294,8 @@ export class RowSampler<T = SampledRow> {
 			lowest(this.#country, row.country, this.#sample.rowsPerCountry),
 		].some(Boolean)
 
-		if (held) {
-			this.#candidates.set(row.sourceID, base)
+		if (held || required) {
+			this.#candidates.set(row.sourceID, required ? { ...base, required } : base)
 		}
 
 		const compareGroup = [structure, order].find((key) => this.#compare.has(key))
@@ -306,6 +317,7 @@ export class RowSampler<T = SampledRow> {
 
 	#isKept(candidate: Candidate<T>): boolean {
 		return (
+			candidate.required === true ||
 			candidate.hash <= (this.#structure.get(candidate.structure)?.threshold ?? -1) ||
 			candidate.hash <= (this.#language.get(candidate.language)?.threshold ?? -1) ||
 			candidate.hash <= (this.#country.get(candidate.country)?.threshold ?? -1)

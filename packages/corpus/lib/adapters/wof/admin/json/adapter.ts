@@ -52,6 +52,12 @@ import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { isPresent } from "@mailwoman/core/objects"
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
+import {
+	dualRolePlaceOf,
+	dualRoleRowRule,
+	findDualRolePairs,
+	readCapitalSeats,
+} from "#adapters/wof/admin/json/dual-role"
 import { regionCodeFor } from "#adapters/wof/admin/json/region-codes"
 import {
 	COUNTRY_DISPLAY_NAME,
@@ -573,6 +579,13 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 
 			const sampler = opts.sample ? new RowSampler<CanonicalRow>(opts.sample) : undefined
 
+			// A region sharing its city's name yields `<name>, <country>` to the city (#2909).
+			// The regions are held and the localities streamed past them.
+			const places = (placetype: string) =>
+				Iterator.from(stored.scan([placetype])).map(({ record, properties }) => dualRolePlaceOf(record, properties))
+
+			const pairs = findDualRolePairs(places("region"), places("locality"), await readCapitalSeats())
+
 			yield* emitWOFJSONRows({
 				records: stored.entries,
 				adapterOptions: opts,
@@ -581,6 +594,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				nameSlotsFor,
 				variantsFor,
 				sampler,
+				rowRule: dualRoleRowRule(WOF_ADMIN_ADAPTER_ID, pairs),
 			})
 
 			await sampler?.writeOutputs()

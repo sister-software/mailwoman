@@ -1,0 +1,17 @@
+{
+	"type": "Feature",
+	"id": 4021,
+	"properties": {
+		"wof:id": 4021,
+		"wof:name": "Testmark",
+		"wof:placetype": "locality",
+		"wof:country": "DE",
+		"wof:parent_id": 4011,
+		"wof:hierarchy": [{ "country_id": 4001, "region_id": 4011, "locality_id": 4021 }],
+		"mz:is_current": 1,
+		"geom:latitude": 50.01,
+		"geom:longitude": 8.01,
+		"wof:population": 50
+	},
+	"geometry": null
+}

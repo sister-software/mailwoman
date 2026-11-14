@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 4001,
+	"properties": {
+		"wof:id": 4001,
+		"wof:name": "Germany",
+		"wof:placetype": "country",
+		"wof:country": "DE",
+		"wof:parent_id": -1,
+		"mz:is_current": 1,
+		"geom:latitude": 51.1,
+		"geom:longitude": 10.4,
+		"geom:bbox": "5.87,47.27,15.04,55.06"
+	},
+	"geometry": null
+}

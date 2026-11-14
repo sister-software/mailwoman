@@ -201,4 +201,24 @@ describe("RowSampler", () => {
 		expect(kept).toEqual(order.filter((id) => kept.includes(id)))
 		expect(kept.length).toBeGreaterThanOrEqual(50)
 	})
+
+	it("keeps a required row beside exactly the rows it would keep without it, but not in a held-out cell", () => {
+		const keptWith = (required: ReadonlySet<string>, holdOutCells: string[] = []) => {
+			const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, seed: 11, holdOutCells })
+
+			for (const r of rows) {
+				sampler.observe(r, r, required.has(r.sourceID))
+			}
+
+			return [...sampler.kept()].map((r) => r.sourceID)
+		}
+
+		const plain = keptWith(new Set())
+		const unkept = rows.map((r) => r.sourceID).find((id) => !plain.includes(id))!
+		const withRequired = keptWith(new Set([unkept]))
+
+		expect(withRequired.filter((id) => id !== unkept)).toEqual(plain)
+		expect(withRequired).toContain(unkept)
+		expect(keptWith(new Set([unkept]), ["US|locality|default"])).not.toContain(unkept)
+	})
 })

@@ -61,6 +61,13 @@ export interface StoredRecordEntriesOptions<A extends object> {
  */
 export interface StoredRecordEntries<A extends object> extends Disposable {
 	entries: Iterable<WOFRecordEntry<A>>
+	/**
+	 * Every kept record of the given placetypes in ascending WOF-id order, with the stored feature's
+	 * properties, read in a pass of its own before or after {@linkcode StoredRecordEntries.entries}.
+	 *
+	 * The properties hold what a record omits, such as the point, bounding box and population.
+	 */
+	scan: (placetypes: readonly string[]) => Iterable<{ record: WOFRecord; properties: Record<string, unknown> }>
 }
 
 /**
@@ -132,8 +139,24 @@ export async function openStoredRecordEntries<A extends object>(
 		}
 	}
 
+	function* scan(placetypes: readonly string[]): Generator<{ record: WOFRecord; properties: Record<string, unknown> }> {
+		for (const stored of storedWOFRecords<WOFFeature>(db, {
+			repos,
+			placetypes: new Set(placetypes),
+			...(opts.country ? { country: opts.country } : {}),
+		})) {
+			if (opts.signal?.aborted) return
+			const record = parseKept(stored.feature)
+
+			if (record) {
+				yield { record, properties: stored.feature.properties ?? {} }
+			}
+		}
+	}
+
 	return {
 		entries: entries(),
+		scan,
 		[Symbol.dispose]: () => db[Symbol.dispose](),
 	}
 }
