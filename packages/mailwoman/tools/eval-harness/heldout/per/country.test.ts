@@ -124,6 +124,32 @@ describe("sampleHeldoutRows grouping", () => {
 		expect(counts).toEqual([{ country: "US", kind: "address", available: 2, sampled: 2 }])
 	})
 
+	it("draws place-name sources against the gazetteer quota in every country", async () => {
+		const manifest = await writeFixtureCorpus(
+			"place-names",
+			[
+				`('Main', ${spans}, 'IN', 'osm-in', 'a1', NULL)`,
+				`('Elms', ${spans}, 'IN', 'osm-in', 'a2', NULL)`,
+				`('Kedarnath', ${spans}, 'IN', 'geonames-features', 'g1', NULL)`,
+				`('Gateway', ${spans}, 'IN', 'wikidata-vital-places', 'w1', NULL)`,
+				`('Wollin', ${spans}, 'DE', 'wof-de', 'p1', NULL)`,
+				`('Brocken', ${spans}, 'DE', 'geonames-features', 'g2', NULL)`,
+			].join(", "),
+			columns
+		)
+
+		const { rows, counts, rule } = await sampleHeldoutRows(manifest, 1, directory.path.toString(), 7)
+
+		expect(counts).toEqual([
+			{ country: "DE", kind: "gazetteer", available: 2, sampled: 1 },
+			{ country: "IN", kind: "address", available: 2, sampled: 1 },
+			{ country: "IN", kind: "gazetteer", available: 2, sampled: 1 },
+		])
+
+		expect(rows.filter((row) => row.source === "osm-in")).toHaveLength(1)
+		expect(rule.gazetteerSources?.sources).toContain("geonames-features")
+	})
+
 	it("reads only an attribute-split file's test ids and never draws an excluded group", async () => {
 		const manifest = await writeFixtureCorpus(
 			"attributed",
