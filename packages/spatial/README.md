@@ -23,6 +23,7 @@ const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 | ---------------------- | ------------------------------------------------------------------------------------ |
 | **Coordinate math**    | Haversine distance, direction, bounding-box containment                              |
 | **H3 indexing**        | Hexagonal grid indexing via `@sister.software/h3` — spatial blocking for the matcher |
+| **DIGIPIN**            | Encode and decode geographic coordinates using the DIGIPIN system                    |
 | **WKB/WKT geometry**   | Parse/format Well-Known Binary geometry via `wkx`                                    |
 | **Coordinate parsing** | Parse decimal, DMS, and UTM coordinate strings via `geo-coordinates-parser`          |
 | **GeoJSON**            | GeoJSON Feature/FeatureCollection types and utilities                                |
