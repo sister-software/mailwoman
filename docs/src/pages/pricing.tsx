@@ -87,8 +87,9 @@ export default function Pricing(): ReactNode {
 						Geocoding without a meter.
 					</Heading>
 					<p className={styles.heroLead}>
-						Mailwoman runs on your machines, so we have nothing to count. Use it free under the AGPL, or pay one flat
-						price to keep your own source closed. Your thousandth lookup and your hundred-millionth cost the same.
+						Run Mailwoman on your own machines under the AGPL, or choose a commercial license for an eligible company
+						that keeps its product source closed. The license has no per-address charge. Hosting and data costs depend
+						on your setup.
 					</p>
 				</div>
 			</header>
@@ -142,7 +143,9 @@ export default function Pricing(): ReactNode {
 						Move the slider. Watch which row moves.
 					</Heading>
 					<p className={styles.sectionLead}>
-						Metered geocoders price each lookup, so the bill follows your address volume. Ours follows nothing.
+						The calculator applies each provider's dated list rate to the same monthly address count. Mailwoman's
+						commercial license stays at {PRICE_MONTHLY} a month for eligible companies; hosting and data costs are
+						separate.
 					</p>
 					<PricingCalculator />
 				</section>

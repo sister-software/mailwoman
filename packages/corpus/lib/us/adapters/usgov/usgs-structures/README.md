@@ -14,7 +14,7 @@ layer with its slug, its POI taxonomy category and whether it trains.
 The service publishes every layer twice. Layers 0–34 are the `Labels` group and serve the same rows as
 the `Features` layers 35 ids above them, so only the `Features` layers 37–67 are read. Layer 69,
 `Alaska Pipeline`, holds polylines with no name, address or identifier and is left out. A feature code
-isn't unique to a layer (Campgrounds and Shelters both carry 82008), so each layer is queried by its id.
+isn't unique to a layer (Campgrounds and Shelters both use feature code 82008), so each layer is queried by its id.
 
 Fetch it with:
 
@@ -61,8 +61,8 @@ words `Palm Bay` in `Palm Bay West Post Office` are venue, and the later `Palm B
 A feature with no street address, city, recognized state or ZIP Code yields no row. Of the 542
 addressed cemeteries in a 600-feature sample drawn on 2026-11-13, 119 addresses began with a digit and
 423 didn't. An address with no house number, such as `Lebanon Road`, trains as a street. The recreation layers
-(campgrounds, trailheads, cabins, shelters, picnic areas) and the historic-site layer carry an address
-on few features, and those describe a remote site's access road, so they yield no row; they serve
+(campgrounds, trailheads, cabins, shelters, picnic areas) and the historic-site layer sometimes have an address
+for a remote site's access road. The adapter produces no training row from those layers. Their records serve
 retrieval through the structures layer only.
 
 ## License

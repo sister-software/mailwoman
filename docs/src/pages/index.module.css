@@ -144,6 +144,12 @@
 	white-space: nowrap;
 }
 
+.heroRecorded {
+	margin: 0.4rem 0 0;
+	color: var(--ifm-color-emphasis-800);
+	font-size: 0.78rem;
+}
+
 .heroControls {
 	display: flex;
 	align-items: center;

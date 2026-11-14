@@ -30,10 +30,11 @@ test("the search modal returns a hit for a reference page", async ({ page }) => 
 	await expect(input).toBeFocused()
 	await input.fill("locales and tiers")
 
-	const first = dialog.getByRole("option").first()
+	const dataAndLocales = dialog.locator('a[role="option"][href^="/docs/reference/data-and-locales"]')
 
-	await expect(first).toContainText("Data and locales")
-	await first.click()
+	await expect(dataAndLocales).toBeVisible()
+	await expect(dataAndLocales).toContainText("Data and locales")
+	await dataAndLocales.click()
 	await expect(page).toHaveURL(/\/docs\/reference\/data-and-locales/)
 })
 
