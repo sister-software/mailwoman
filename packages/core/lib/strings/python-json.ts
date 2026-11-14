@@ -12,6 +12,10 @@ import { stringifyJSON } from "#json"
  *   The DeepSeek transliteration batch id in `packages/corpus/lib/recipes/deepseek/batches.ts` hashes the
  *   seed ids as the first requested batches did, so a resumed run skips the batches already requested.
  *   New output uses `orderedJSON` from `@mailwoman/core/json`.
+ *
+ *   {@linkcode pythonString} also prints the strings of a Who's On First
+ *   record (`@mailwoman/gazetteer/tools/pipeline/wof/record`).
+ *   The WOF exporter is a Python `json` writer.
  */
 
 /**
@@ -25,7 +29,12 @@ export interface PythonJSONOptions {
 	ensureASCII?: boolean
 }
 
-function pythonString(value: string, ensureASCII: boolean): string {
+/**
+ * One string as Python's `json.dumps` writes it, with `ensure_ascii` on unless `ensureASCII` is false.
+ *
+ * The WOF record writer prints every string through it, because the WOF exporter is a Python `json` writer.
+ */
+export function pythonString(value: string, ensureASCII = true): string {
 	// JSON.stringify escapes the quote, the backslash and the C0 controls as Python's json does.
 	// Python's `ensure_ascii` also escapes DEL and every code unit above it, one `\uXXXX` per UTF-16 unit.
 	const out = stringifyJSON(value)

@@ -76,6 +76,37 @@ export function assertNoArcGISError(payload: unknown, context: string): void {
 }
 
 /**
+ * A feature's attributes keyed by the lower-cased field name.
+ *
+ * Services differ in the case of their field names (`OBJECTID`, `objectid`),
+ * so a reader looks names up in lower case.
+ */
+export function arcGISFields(properties: unknown): Record<string, unknown> {
+	if (properties == null || typeof properties !== "object") return {}
+
+	return Object.fromEntries(Object.entries(properties).map(([key, value]) => [key.toLowerCase(), value]))
+}
+
+/**
+ * A text attribute as written: trimmed, or `null` when the service left it empty.
+ */
+export function arcGISText(value: unknown): string | null {
+	if (value == null) return null
+	const text = String(value).trim()
+
+	return text || null
+}
+
+/**
+ * An integer attribute, or `null` when the service left it empty or it isn't an integer.
+ */
+export function arcGISInteger(value: unknown): number | null {
+	const number = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN
+
+	return Number.isInteger(number) ? number : null
+}
+
+/**
  * One MapServer or FeatureServer layer: the service URL and the layer's numeric id.
  */
 export interface ArcGISLayer {
@@ -162,19 +193,7 @@ export interface ArcGISLayerPagingOptions {
  * so the key is matched without regard to case.
  */
 function featureObjectID(feature: unknown): number | null {
-	const properties = (feature as { properties?: unknown } | null)?.properties
-
-	if (properties == null || typeof properties !== "object") return null
-
-	for (const [key, value] of Object.entries(properties)) {
-		if (key.toLowerCase() === "objectid") {
-			const number = typeof value === "number" ? value : Number(value)
-
-			return Number.isInteger(number) ? number : null
-		}
-	}
-
-	return null
+	return arcGISInteger(arcGISFields((feature as { properties?: unknown } | null)?.properties)["objectid"])
 }
 
 /**

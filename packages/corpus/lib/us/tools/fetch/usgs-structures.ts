@@ -26,7 +26,7 @@
 import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import { normalizeZIPCode } from "@mailwoman/codex/us/zipcode"
 import { APIClient } from "@mailwoman/core/api"
-import { pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
+import { arcGISFields, arcGISInteger, arcGISText, pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -120,43 +120,13 @@ interface StructuresService {
 }
 
 /**
- * A text field as written: trimmed, or `null` when the service left it empty.
- */
-function textField(value: unknown): string | null {
-	if (value == null) return null
-	const text = String(value).trim()
-
-	return text || null
-}
-
-/**
- * An integer field, or `null` when the service left it empty or it isn't an integer.
- */
-function integerField(value: unknown): number | null {
-	const number = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN
-
-	return Number.isInteger(number) ? number : null
-}
-
-/**
  * A date field as an ISO 8601 date.
  * The service answers a date as epoch milliseconds.
  */
 function dateField(value: unknown): string | null {
-	const milliseconds = integerField(value)
+	const milliseconds = arcGISInteger(value)
 
 	return milliseconds === null ? null : isoDate(new Date(milliseconds))
-}
-
-/**
- * A feature's properties keyed by the lower-cased field name.
- *
- * The service answers GeoJSON with its own field spelling, so a reader looks names up case-insensitively.
- */
-function lowerCasedProperties(properties: unknown): Record<string, unknown> {
-	if (properties == null || typeof properties !== "object") return {}
-
-	return Object.fromEntries(Object.entries(properties).map(([key, value]) => [key.toLowerCase(), value]))
 }
 
 /**
@@ -172,7 +142,7 @@ export function structureZIPCode(
 	value: unknown,
 	state: string | null
 ): Pick<USGSStructureProperties, "zipcode" | "zipcode_published"> {
-	const published = textField(value)
+	const published = arcGISText(value)
 
 	if (!published) return { zipcode: null }
 
@@ -195,14 +165,14 @@ export function normalizeStructureFeature(
 	}
 
 	const feature = value as { geometry?: unknown; properties?: unknown }
-	const properties = lowerCasedProperties(feature.properties)
-	const objectid = integerField(properties["objectid"])
+	const properties = arcGISFields(feature.properties)
+	const objectid = arcGISInteger(properties["objectid"])
 
 	if (objectid === null) {
 		throw new Error(`${SLUG}: layer ${layer.layerID} answered a feature with no OBJECTID`)
 	}
 
-	const state = textField(properties["state"])?.toUpperCase() ?? null
+	const state = arcGISText(properties["state"])?.toUpperCase() ?? null
 
 	const geometry = (feature.geometry ?? {}) as { type?: unknown; coordinates?: unknown }
 	const coordinates: number[] = Array.isArray(geometry.coordinates) ? geometry.coordinates.map(Number) : []
@@ -221,17 +191,17 @@ export function normalizeStructureFeature(
 			layer_id: layer.layerID,
 			layer: layer.slug,
 			objectid,
-			permanent_identifier: textField(properties["permanent_identifier"]),
-			fcode: integerField(properties["fcode"]),
-			gnis_id: textField(properties["gnis_id"]),
-			name: textField(properties["name"]),
-			addressbuildingname: textField(properties["addressbuildingname"]),
-			address: textField(properties["address"]),
-			city: textField(properties["city"]),
+			permanent_identifier: arcGISText(properties["permanent_identifier"]),
+			fcode: arcGISInteger(properties["fcode"]),
+			gnis_id: arcGISText(properties["gnis_id"]),
+			name: arcGISText(properties["name"]),
+			addressbuildingname: arcGISText(properties["addressbuildingname"]),
+			address: arcGISText(properties["address"]),
+			city: arcGISText(properties["city"]),
 			state,
 			...structureZIPCode(properties["zipcode"], state),
 			loaddate: dateField(properties["loaddate"]),
-			source_originator: textField(properties["source_originator"]),
+			source_originator: arcGISText(properties["source_originator"]),
 		},
 	}
 }

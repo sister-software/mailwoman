@@ -19,7 +19,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
+import { arcGISFields, arcGISInteger, arcGISText, pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -32,6 +32,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { readPointCoordinates } from "@mailwoman/spatial/geometries/point/coordinates"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
@@ -118,33 +119,16 @@ export interface USGSGNISManifest extends SourceManifest {
 	feature_count: number
 }
 
-function textField(value: unknown): string | null {
-	if (value == null) return null
-	const text = String(value).trim()
-
-	return text || null
-}
-
-function integerField(value: unknown): number | null {
-	const number = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN
-
-	return Number.isInteger(number) ? number : null
-}
-
 /**
- * The first point of a GeoJSON Point or MultiPoint geometry, or `null` when it has none.
+ * The point of a GeoJSON Point, or the first point of a MultiPoint, or `null` when it has none.
+ *
+ * `readPointCoordinates` refuses an out-of-range value and the `(0, 0)` placeholder.
  */
 function firstPoint(geometry: unknown): [number, number] | null {
 	const { type, coordinates } = (geometry ?? {}) as { type?: unknown; coordinates?: unknown }
-	const point = type === "MultiPoint" && Array.isArray(coordinates) ? coordinates[0] : coordinates
+	const point = readPointCoordinates(type === "MultiPoint" && Array.isArray(coordinates) ? coordinates[0] : geometry)
 
-	if (type !== "Point" && type !== "MultiPoint") return null
-
-	if (!Array.isArray(point) || point.length < 2) return null
-
-	const [longitude, latitude] = point.map(Number)
-
-	return Number.isFinite(longitude) && Number.isFinite(latitude) ? [longitude!, latitude!] : null
+	return point ? [point[0], point[1]] : null
 }
 
 /**
@@ -159,15 +143,9 @@ export function normalizeGNISFeature(value: unknown): GNISPopulatedPlace {
 
 	const feature = value as { geometry?: unknown; properties?: unknown }
 
-	const properties = Object.fromEntries(
-		Object.entries((feature.properties ?? {}) as Record<string, unknown>).map(([key, field]) => [
-			key.toLowerCase(),
-			field,
-		])
-	)
-
-	const gnisID = integerField(properties["gaz_id"])
-	const name = textField(properties["gaz_name"])
+	const properties = arcGISFields(feature.properties)
+	const gnisID = arcGISInteger(properties["gaz_id"])
+	const name = arcGISText(properties["gaz_name"])
 
 	if (gnisID === null || !name) {
 		throw new Error(`${USGS_GNIS_SLUG}: a feature has no GNIS id or name: ${String(stringifyJSON(properties))}`)
@@ -178,12 +156,12 @@ export function normalizeGNISFeature(value: unknown): GNISPopulatedPlace {
 	return {
 		gnisID,
 		name,
-		featureClass: textField(properties["gaz_featureclass"]),
-		fcode: integerField(properties["fcode"]),
-		state: textField(properties["state_alpha"])?.toUpperCase() ?? null,
-		county: textField(properties["county_name"]),
-		countyGNISID: integerField(properties["incounty_id"]),
-		unknownCoordinates: integerField(properties["isunknowncoords"]) === 1,
+		featureClass: arcGISText(properties["gaz_featureclass"]),
+		fcode: arcGISInteger(properties["fcode"]),
+		state: arcGISText(properties["state_alpha"])?.toUpperCase() ?? null,
+		county: arcGISText(properties["county_name"]),
+		countyGNISID: arcGISInteger(properties["incounty_id"]),
+		unknownCoordinates: arcGISInteger(properties["isunknowncoords"]) === 1,
 		longitude: point?.[0] ?? null,
 		latitude: point?.[1] ?? null,
 	}

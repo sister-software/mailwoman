@@ -11,7 +11,8 @@
  *
  *   The exporter writes a property float with an integral value as `18.0`, and JavaScript keeps no float type.
  *   {@link WOF_FLOAT_PROPERTIES} lists the properties the exporter writes as floats.
- *   An integral bbox coordinate is also written `-81.0`, and an integral geometry coordinate `-81`.
+ *   An integral bbox coordinate is also written `-81.0`. The geometry is `wofGeometryJSON`, the text
+ *   `wof:geomhash` is computed over.
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
@@ -19,8 +20,10 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { pythonString } from "@mailwoman/core/strings/python-json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { wofGeometryJSON } from "#tools/pipeline/wof/slim"
 import { wofIDPathSegments } from "#whosonfirst/extract-repo"
 
 /**
@@ -77,25 +80,6 @@ function formatPropertyNumber(value: number, float: boolean): string {
 }
 
 /**
- * A string as JSON with every UTF-16 code unit above U+007F escaped, as Python's `ensure_ascii` writes it.
- *
- * The escape is per code unit, so a character outside the Basic Multilingual Plane
- * is written as the two escapes of its surrogate pair.
- */
-function formatString(value: string): string {
-	const json: string = stringifyJSON(value)
-	let escaped = ""
-
-	for (let index = 0; index < json.length; index++) {
-		const unit = json.charCodeAt(index)
-
-		escaped += unit > 0x7f ? `\\u${unit.toString(16).padStart(4, "0")}` : json[index]
-	}
-
-	return escaped
-}
-
-/**
  * One value as `json.dumps(indent=4, separators=(",", ":"), sort_keys=True)` prints it at `depth`.
  *
  * `float` marks every number below this value as a float.
@@ -103,7 +87,7 @@ function formatString(value: string): string {
 function formatIndented(value: unknown, depth: number, float: boolean): string {
 	if (typeof value === "number") return formatPropertyNumber(value, float)
 
-	if (typeof value === "string") return formatString(value)
+	if (typeof value === "string") return pythonString(value)
 
 	if (value === null || typeof value !== "object") return stringifyJSON(value)
 
@@ -123,25 +107,10 @@ function formatIndented(value: unknown, depth: number, float: boolean): string {
 	const lines = keys.map((key) => {
 		const item = (value as Record<string, unknown>)[key]
 
-		return `${inner}${formatString(key)}:${formatIndented(item, depth + 1, float || WOF_FLOAT_PROPERTIES.has(key))}`
+		return `${inner}${pythonString(key)}:${formatIndented(item, depth + 1, float || WOF_FLOAT_PROPERTIES.has(key))}`
 	})
 
 	return `{\n${lines.join(",\n")}\n${outer}}`
-}
-
-/**
- * One value as compact, key-sorted JSON, as the exporter prints a geometry.
- *
- * An integral coordinate is written without a decimal point (`54`), unlike a bbox coordinate.
- */
-function formatCompact(value: unknown): string {
-	if (value === null || typeof value !== "object") return stringifyJSON(value)
-
-	if (Array.isArray(value)) return `[${value.map(formatCompact).join(",")}]`
-
-	const keys = Object.keys(value).toSorted()
-
-	return `{${keys.map((key) => `${stringifyJSON(key)}:${formatCompact((value as Record<string, unknown>)[key])}`).join(",")}}`
 }
 
 /**
@@ -156,7 +125,7 @@ export function formatWOFFeature(feature: WOFRecordFeature): string {
 		`  "type": "Feature",`,
 		`  "properties": ${formatIndented(feature.properties, 0, false)},`,
 		`  "bbox": [\n${bbox}\n],`,
-		`  "geometry": ${formatCompact(feature.geometry)}`,
+		`  "geometry": ${wofGeometryJSON(feature.geometry)}`,
 		"}",
 	].join("\n")
 }

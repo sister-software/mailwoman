@@ -90,11 +90,19 @@ export function isDeprecatedWithoutSuccessor(record: WOFRecordShape): boolean {
 }
 
 /**
- * The `wof:geomhash` of a geometry: the MD5 of its compact JSON with `coordinates`
- * before `type`, the form the current WOF exporter writes.
+ * A geometry as the current WOF exporter writes it: compact JSON with `coordinates` before `type`.
+ *
+ * An integral coordinate keeps no decimal point (`54`).
+ */
+export function wofGeometryJSON(geometry: { type?: string; coordinates?: unknown }): string {
+	return stringifyJSON({ coordinates: geometry.coordinates, type: geometry.type })
+}
+
+/**
+ * The `wof:geomhash` of a geometry: the MD5 of {@linkcode wofGeometryJSON}.
  */
 export function wofGeometryHash(geometry: { type?: string; coordinates?: unknown }): string {
-	return md5Hex(stringifyJSON({ coordinates: geometry.coordinates, type: geometry.type }))
+	return md5Hex(wofGeometryJSON(geometry))
 }
 
 /**
