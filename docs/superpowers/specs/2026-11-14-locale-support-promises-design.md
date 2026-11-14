@@ -74,9 +74,10 @@ The operator picked A on 2026-11-14 and asked for the from-scratch form of it, w
 - Normalized data: `data/normalized/language-subtags.json`.
 - Table format: the generator writes TypeScript table modules under `lib/artifacts/bcp47/`, one per subtag type, rather
   than RGY1 binary artifacts. This is the builder's call. The script table holds 225 rows, and no consumer has measured a
-  need for the batch kernel on these codes. RGY1 encoding can follow when one does. Each module holds its JSON rows in
-  base64, as the RGY1 modules hold their bytes, because the repository's vocabulary census reads some ISO 639-3 codes
-  in a plain payload as banned prose.
+  need for the batch kernel on these codes. RGY1 encoding can follow when one does. Each module imports its rows from a
+  sibling `<table>.fixture.json`, one row per line. The operator ruled out a base64 payload on 2026-11-14, because an
+  opaque blob in a published tarball slows npm security review. The vocabulary census in `lib/repo-health/checks/debt.ts`
+  skips `*.fixture.*` files, because a fixture holds source data verbatim.
 - Modules: `lib/iso15924/codes.ts` (script lookup, plus the expansion of combined codes such as `Jpan` to the Unicode
   Script values `Hani`, `Hira` and `Kana`), `lib/iso639/languages.ts` (language subtag lookup), and `lib/bcp47/tag.ts` (parse,
   validate and canonicalize a tag per RFC 5646).

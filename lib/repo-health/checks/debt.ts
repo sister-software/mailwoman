@@ -415,6 +415,14 @@ const BANNED_VOCABULARY =
 	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:[A-Za-z_]*[a-z0-9_](?=Lever|LEVER)|[A-Za-z_]*_(?=lever))?(?:[Ll]ever|LEVER)(?!ag|AG|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b|ounts?\b|OUNTS?\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?<!Golden )(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
+ * The path ending of a fixture file: `<name>.fixture.<ext>`.
+ *
+ * A fixture holds data copied verbatim from a source, such as the IANA registry's language
+ * codes, so the vocabulary census reads its words as identifiers and never as prose.
+ */
+const FIXTURE_FILE = /\.fixture\.[a-z0-9]+$/u
+
+/**
  * Allowed path prefixes for retired-vocabulary matches, with reasons.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
@@ -634,6 +642,8 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 	// Scan all tracked text files for retired vocabulary.
 	for (const trackedPath of await trackedSourcePaths(context, { globs: ["*"], existingOnly: true })) {
 		const relativePath = relative(root, trackedPath)
+
+		if (FIXTURE_FILE.test(relativePath)) continue
 
 		if (BANNED_VOCABULARY_ALLOWED.some(([prefix]) => relativePath.startsWith(prefix))) continue
 

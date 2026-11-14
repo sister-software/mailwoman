@@ -16,21 +16,23 @@
  */
 
 import { extlangSubtagRows } from "#artifacts/bcp47/extlang"
+import { grandfatheredSubtagRows } from "#artifacts/bcp47/grandfathered"
 import { languageSubtagRows } from "#artifacts/bcp47/language"
+import { redundantSubtagRows } from "#artifacts/bcp47/redundant"
 import { regionSubtagRows } from "#artifacts/bcp47/region"
 import { scriptSubtagRows } from "#artifacts/bcp47/script"
-import { tagSubtagRows } from "#artifacts/bcp47/tag"
 import { variantSubtagRows } from "#artifacts/bcp47/variant"
 import { lazySubtagIndex } from "#bcp47/subtag-index"
 import { type Parsed, ParseFailure } from "#errors"
-import { type BCP47, SubtagType } from "#types"
+import type { BCP47 } from "#types"
 
 const languages = lazySubtagIndex(languageSubtagRows)
 const extlangs = lazySubtagIndex(extlangSubtagRows)
 const scripts = lazySubtagIndex(scriptSubtagRows)
 const regions = lazySubtagIndex(regionSubtagRows)
 const variants = lazySubtagIndex(variantSubtagRows)
-const wholeTags = lazySubtagIndex(tagSubtagRows)
+const grandfatheredTags = lazySubtagIndex(grandfatheredSubtagRows)
+const redundantTags = lazySubtagIndex(redundantSubtagRows)
 
 /**
  * A parsed tag in canonical form.
@@ -96,16 +98,16 @@ function compose(parts: Omit<LanguageTag, "tag">): BCP47.LanguageTag {
  */
 export function parseLanguageTag(input: string): Parsed<LanguageTag> {
 	const lower = input.toLowerCase()
-	const whole = wholeTags().get(lower)
+	const grandfathered = grandfatheredTags().get(lower)
 
-	if (whole?.type === SubtagType.Grandfathered) {
-		if (whole.preferredValue) return parseLanguageTag(whole.preferredValue)
+	if (grandfathered) {
+		if (grandfathered.preferredValue) return parseLanguageTag(grandfathered.preferredValue)
 
 		return {
 			ok: true,
 			value: {
-				tag: whole.subtag as BCP47.LanguageTag,
-				language: whole.subtag,
+				tag: grandfathered.subtag as BCP47.LanguageTag,
+				language: grandfathered.subtag,
 				script: null,
 				region: null,
 				variants: [],
@@ -115,7 +117,9 @@ export function parseLanguageTag(input: string): Parsed<LanguageTag> {
 		}
 	}
 
-	if (whole?.type === SubtagType.Redundant && whole.preferredValue) return parseLanguageTag(whole.preferredValue)
+	const redundant = redundantTags().get(lower)
+
+	if (redundant?.preferredValue) return parseLanguageTag(redundant.preferredValue)
 
 	const subtags = lower.split("-")
 

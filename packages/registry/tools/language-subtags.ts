@@ -177,7 +177,8 @@ export const SUBTAG_TABLES = {
 	script: ["script"],
 	region: ["region"],
 	variant: ["variant"],
-	tag: ["grandfathered", "redundant"],
+	grandfathered: ["grandfathered"],
+	redundant: ["redundant"],
 } as const satisfies Record<string, readonly SubtagType[]>
 
 export type SubtagTable = keyof typeof SUBTAG_TABLES
@@ -187,9 +188,8 @@ export type SubtagTable = keyof typeof SUBTAG_TABLES
  */
 export function subtagTableRows(collection: NormalizedSubtags, table: SubtagTable): SubtagRow[] {
 	const types = new Set<SubtagType>(SUBTAG_TABLES[table])
-	const mixed = types.size > 1
 
 	return collection.records
 		.filter((record) => types.has(record.type))
-		.map(({ added: _added, type, ...row }) => (mixed ? { type, ...row } : row))
+		.map(({ added: _added, type: _type, ...row }) => row)
 }

@@ -21,6 +21,11 @@ docs/static/benchmarks/*-results.json
 ## above, so formatting it makes every rebuild fail `yarn lint:oxfmt` on its own output.
 data/gazetteer/capitals-v1.json
 
+## Registry subtag tables written by `packages/registry/tools/generate.run.ts`, one registry row per line
+## so an IANA update diffs by row. `generate.run.ts --check` compares the committed bytes with its output,
+## so a reformatted fixture would fail that check.
+packages/registry/lib/artifacts/**/*.fixture.json
+
 ## Build asset directories
 /build
 docs/build
