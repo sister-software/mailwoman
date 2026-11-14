@@ -13,7 +13,9 @@ import type { CanonicalRow } from "#types"
 import {
 	createUsgovNADAdapter,
 	NAD_RECORD_COLUMNS,
+	nadAddressComponents,
 	nadUnitText,
+	normalizeNADRecord,
 	normalizeNADUUID,
 	USGOV_NAD_ADAPTER_ID,
 	USGOV_NAD_DEFAULT_LICENSE,
@@ -270,5 +272,31 @@ describe("nadUnitText", () => {
 		[{ St_PreTyp: "Highway", St_Name: "17", Unit: "17" }, "17"],
 	])("composes %j as %j", (record, expected) => {
 		expect(nadUnitText(record)).toBe(expected)
+	})
+})
+
+describe("normalizeNADRecord", () => {
+	// Spellings the r24 release writes in place of an empty value (#2895).
+	it.each(["<Null>", "<NULL>", "NULL", "None", "N/A", "NA", "unknown", "--", ".", " <Null> "])(
+		"reads LandmkName %j as absent, so no venue is emitted",
+		(placeholder) => {
+			const record = {
+				LandmkName: placeholder,
+				Add_Number: "12",
+				St_Name: "MAIN",
+				Inc_Muni: "Alma",
+				State: "WI",
+				Zip_Code: "54610",
+			}
+
+			expect(normalizeNADRecord(record).LandmkName).toBeNull()
+			expect(nadAddressComponents(normalizeNADRecord(record))).not.toHaveProperty("venue")
+		}
+	)
+
+	it("keeps a name that only contains a placeholder word, and Placement's own Unknown", () => {
+		const record = { LandmkName: "NA Hospital", Unit: "None Such", Placement: "Unknown", UUID: "{AB-CD}" }
+
+		expect(normalizeNADRecord(record)).toEqual({ ...record, UUID: "ab-cd" })
 	})
 })

@@ -143,7 +143,36 @@ export function normalizeNADUUID(value: string | null | undefined): string | nul
 }
 
 /**
- * Streams the NAD records of one release Parquet file in file order, with each UUID normalized.
+ * The spellings NAD contributors write in a text column to mean the column is empty,
+ * matched case-insensitively after trimming: `<Null>`, `NULL`, `None`, `N/A`,
+ * `NA`, `Unknown`, and runs of `-` or `.`.
+ */
+const NAD_PLACEHOLDER_TEXT = /^(?:<null>|null|none|n\/?a|unknown|-+|\.+)$/iu
+
+/**
+ * A NAD record with each text column that holds a {@link NAD_PLACEHOLDER_TEXT}
+ * spelling read as absent, and its UUID normalized.
+ *
+ * `Placement` is left as published, because there `Unknown` is a value of the
+ * column's own domain that names how the point was placed.
+ */
+export function normalizeNADRecord(record: NADRecord): NADRecord {
+	const normalized: Record<string, unknown> = { ...record }
+
+	for (const column of NAD_RECORD_COLUMNS) {
+		const value = record[column]
+
+		if (column !== "Placement" && typeof value === "string" && NAD_PLACEHOLDER_TEXT.test(value.trim())) {
+			normalized[column] = null
+		}
+	}
+
+	return { ...(normalized as NADRecord), UUID: normalizeNADUUID(record.UUID) }
+}
+
+/**
+ * Streams the NAD records of one release Parquet file in file order,
+ * each passed through {@linkcode normalizeNADRecord}.
  *
  * @param where A DuckDB condition rows must satisfy, built with `escapeSQLString` for every literal.
  * @throws When the file lacks a column of {@link NAD_RECORD_COLUMNS}.
@@ -158,7 +187,7 @@ export async function* readNADRecords(
 	})
 
 	for await (const row of rows) {
-		yield { ...row, UUID: normalizeNADUUID(row.UUID) }
+		yield normalizeNADRecord(row)
 	}
 }
 
@@ -323,6 +352,41 @@ function composePostcode(r: NADRecord): string | null {
 }
 
 /**
+ * The address components the adapter renders for one NAD record, or `null`
+ * when the record lacks a US state code, a locality or a ZIP Code.
+ */
+export function nadAddressComponents(record: NADRecord): CanonicalRow["components"] | null {
+	const state = (record.State ?? "").trim().toUpperCase()
+
+	if (!US_STATES_SET.has(state)) return null
+
+	const locality = composeNADLocality(record)
+
+	if (!locality) return null
+
+	const postcode = composePostcode(record)
+
+	if (!postcode) return null
+
+	const decomposed = decomposeNADStreet(record)
+	const houseNumber = nadHouseNumber(record)
+	const venue = nonEmpty(record.LandmkName)
+	const unit = nadUnitText(record)
+
+	return {
+		...(venue ? { venue } : {}),
+		...(houseNumber ? { house_number: houseNumber } : {}),
+		...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
+		...(decomposed?.street ? { street: decomposed.street } : {}),
+		...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
+		...(unit ? { unit } : {}),
+		locality,
+		region: state,
+		postcode,
+	}
+}
+
+/**
  * Creates the NAD adapter.
  *
  * The adapter skips records without a US state code, locality, or ZIP code.
@@ -351,34 +415,9 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
-				const state = (record.State ?? "").trim().toUpperCase()
+				const components = nadAddressComponents(record)
 
-				if (!US_STATES_SET.has(state)) continue
-
-				const locality = composeNADLocality(record)
-
-				if (!locality) continue
-
-				const postcode = composePostcode(record)
-
-				if (!postcode) continue
-
-				const decomposed = decomposeNADStreet(record)
-				const houseNumber = nadHouseNumber(record)
-				const venue = nonEmpty(record.LandmkName)
-				const unit = nadUnitText(record)
-
-				const components: CanonicalRow["components"] = {
-					...(venue ? { venue } : {}),
-					...(houseNumber ? { house_number: houseNumber } : {}),
-					...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
-					...(decomposed?.street ? { street: decomposed.street } : {}),
-					...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
-					...(unit ? { unit } : {}),
-					locality,
-					region: state,
-					postcode,
-				}
+				if (!components) continue
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
