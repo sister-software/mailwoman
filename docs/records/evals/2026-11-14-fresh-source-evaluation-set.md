@@ -7,10 +7,11 @@ owner: evaluation
 
 # Fresh-source evaluation set for ES, IT, AU and NZ
 
-Status: **frozen, unregistered**. The set exists to clear blocker B1 of
-`2026-11-14-release-requirements-v8-proposal.md`: no frozen collection held a `verified_unseen` row for Spain,
-Italy, Australia or New Zealand, so the comparative objective was `insufficient_evidence` for every candidate.
-No specification registers the set yet. The operator decides whether one does.
+Status: **frozen, registered in v8** under `evaluations.fresh`. The set exists to clear blocker B1 of
+`2026-11-14-release-requirements-v8.md`: no frozen collection held a `verified_unseen` row for Spain,
+Italy, Australia or New Zealand against 10.7.0, so the comparative objective was `insufficient_evidence` for every
+candidate. Section 8 of that record gives the open decision on how its rows combine with the development and
+confirmation rows.
 
 ## 1. Sources
 

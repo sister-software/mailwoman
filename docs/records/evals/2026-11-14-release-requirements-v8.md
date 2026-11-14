@@ -222,3 +222,47 @@ estimates. Q is 0.9345 on verified_unseen address rows.
 
 The audit treats the v0.8.18 test split as unseen by 10.8.0. A candidate trained on another corpus needs its own
 lineage in the audit, and its rows unseen by both models may be fewer.
+
+## 8. The fresh-source collection
+
+v8 registers `heldout-fresh-sources@b2909f2d18f2b9de` under `evaluations.fresh` for ES, IT, AU and NZ
+(`2026-11-14-fresh-source-evaluation-set.md`). Its audit read v0.8.18-retention-overlay with
+`v8.6.3-base-c6-90k-v0818-wof15-s42.yaml`, the config 10.8.0 trained under, so its 8,000 `verified_unseen` rows are
+unseen by 10.8.0 as well. The evaluator reads one report, and v8 registers no rule for joining these rows to the
+development and confirmation rows, so no check reads them under v8.
+
+10.8.0 against itself on the set by itself (report `/mnt/mw/models/arms/heldout-fresh-sources-published-10.8.0.json`,
+every row its own group, 15 checks):
+
+| Country | Rows / groups | Estimate | Bound          |
+| ------- | ------------- | -------: | -------------- |
+| ES      | 2,000 / 2,000 |    0.984 | [0.974, 0.991] |
+| IT      | 2,000 / 2,000 |    0.996 | [0.989, 0.999] |
+| AU      | 2,000 / 2,000 |    0.995 | [0.988, 0.998] |
+| NZ      | 2,000 / 2,000 |    0.938 | [0.921, 0.953] |
+
+Each passes its 0.80 minimum. On the development collection the same four already pass against 10.8.0 (section 7),
+so the set moves no country from insufficient evidence to a verdict. What it adds is evidence that stays unseen
+whatever corpus a candidate trains on, provided the evaluation-only sources stay out of training.
+
+Three ways to combine it, each measured on 10.8.0 against itself with scratch copies of the reports:
+
+| Option                                                                                         | ES / IT / AU / NZ minimum rows | Objective rows / groups | Objective bound | Verdict              |
+| ---------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------- | --------------- | -------------------- |
+| Development rows only (v8 as registered)                                                       | 959 / 998 / 615 / 426          | 5,217 / 5,159           | [−0.034, 0.034] | insufficient         |
+| 1. Pool: fresh rows join each of the four countries' rows                                      | 2,959 / 2,998 / 2,615 / 2,426  | 13,217 / 13,159         | [−0.034, 0.034] | insufficient         |
+| 2. Replace: fresh rows stand in for the four countries' development address rows               | 2,000 each                     | 10,219 / 10,199         | [−0.034, 0.034] | insufficient         |
+| 3. Separate: the objective keeps the development rows, and fresh rows feed checks of their own | 2,000 each, in new checks      | 5,217 / 5,159           | [−0.034, 0.034] | needs new thresholds |
+
+The objective's width doesn't move under any option, because US (28 groups) and FR (52) set it. The four
+countries' strata are already large. The scratch "replace" report also dropped the four countries' capability-probe
+rows, so its probe counts aren't an option's.
+
+Recommendation: option 3. A fresh row is a clean premise address from a facility register, near ceiling for
+10.8.0 (ES 0.984, IT 0.996, AU 0.995), and a development row is a register rendering in the training population's
+forms. Pooled or substituted, the stratum's estimate becomes a mix set by the two quotas rather than by either
+population. Kept apart, the fresh rows answer one question, whether a candidate lost ground on addresses outside
+both lineages, as a per-country `max_loss` check against 10.8.0 on these four countries. That needs a registered
+loss and a split of the set, because §6.5 reads confirmation rows once and the set has no development half yet.
+A half of 1,000 rows per country would still clear the 0.80 minimum at these estimates (inferred). Option 2
+becomes the better choice only for a candidate whose lineage covers the development rows of these countries.

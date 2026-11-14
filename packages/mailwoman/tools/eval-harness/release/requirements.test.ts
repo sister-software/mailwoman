@@ -61,6 +61,7 @@ describe("validateReleaseSpec", () => {
 		expect(v8.statistics).toEqual(v7.statistics)
 		expect(v8.identities.dataset.id).toBe(v8.evaluations.confirmation.id)
 		expect(v8.evaluations.development.id).not.toBeNull()
+		expect(v8.evaluations.fresh?.countries).toEqual(["ES", "IT", "AU", "NZ"])
 	})
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
