@@ -24,7 +24,7 @@ import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { lookupStateAbbreviation } from "#us/fips-state"
+import { lookupStateAbbreviation, type USStateInfo } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
 
 /**
@@ -40,9 +40,61 @@ export const STATE_TX_NOTARIES_ADAPTER_ID = "state-tx-notaries"
 export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Match trailing "city, ST ZIP" or "city, ST" at the end of an address line.
+ * The trailing `, ST ZIP` or `, ST` the registry writes after the city.
  */
-const CITY_STATE_ZIP_SUFFIX = /[,]?\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/i
+const STATE_ZIP_SUFFIX = /,\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/i
+
+/**
+ * An address field split into the street text before its city, the city,
+ * its state abbreviation and its ZIP Code.
+ */
+export interface TxNotaryAddress {
+	street: string
+	city: string
+	state: USStateInfo
+	zip: string
+}
+
+/**
+ * Splits a registry `Address` field, such as `"1215 mcmillan DR\nCEDAR hill, TX 75104"`,
+ * at its trailing city, state and ZIP Code, or returns `null` when the state isn't
+ * a US one or no comma-separated city precedes it.
+ *
+ * The registry appends its own `, ST ZIP` to the city a notary typed, and that city
+ * sometimes already ends in the state, a country or the ZIP Code: `Houston, TX, TX 77043`,
+ * `San Antonio TX, TX 78245`, `Godley, Texas 76044, TX 76044`, `Houston TX 77006, US, TX 77006`.
+ * Those repetitions are removed before the city is read, so the city is `Houston`
+ * and the state isn't taken for the city.
+ */
+export function parseTxNotaryAddress(rawAddress: string): TxNotaryAddress | null {
+	const line = rawAddress.replaceAll("\n", ", ")
+	const suffix = STATE_ZIP_SUFFIX.exec(line)
+	const state = lookupStateAbbreviation(suffix?.[1] ?? null)
+
+	if (!suffix || !state) return null
+
+	const zip = suffix[2] ?? ""
+
+	const repetitions = [
+		`[\\s,]+(?:${state.abbreviation}\\.?|${state.name})`,
+		",\\s*USA?",
+		...(zip ? [`[\\s,]+${zip}`] : []),
+	]
+
+	const repeated = new RegExp(`(?:${repetitions.join("|")})\\s*$`, "iu")
+
+	let head = line.slice(0, suffix.index)
+
+	for (let match = repeated.exec(head); match; match = repeated.exec(head)) {
+		head = head.slice(0, match.index)
+	}
+
+	const comma = head.lastIndexOf(",")
+
+	if (comma === -1) return null
+
+	return { street: head.slice(0, comma).replace(/,\s*$/u, "").trim(), city: head.slice(comma + 1).trim(), state, zip }
+}
 
 interface TxNotaryRow {
 	"Notary ID": string
@@ -87,25 +139,11 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 				const lastName = record["Last Name"] ?? ""
 				const notaryID = record["Notary ID"] ?? ""
 
-				// Parse embedded city/state/zip from the trailing portion of the address.
-				// Addresses look like: "1215 mcmillan DR\nCEDAR hill, TX 75104"
-				const addrSingleLine = rawAddress.replaceAll("\n", ", ")
-				const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
+				const address = parseTxNotaryAddress(rawAddress)
 
-				if (!cszMatch) continue
+				if (!address?.city) continue
 
-				const city = (cszMatch[1] ?? "").trim()
-				const stateAbbr = (cszMatch[2] ?? "").trim()
-				const zip = (cszMatch[3] ?? "").trim()
-
-				if (!city || !stateAbbr) continue
-
-				const state = lookupStateAbbreviation(stateAbbr)
-
-				if (!state) continue
-
-				// Extract the street portion (everything before the city/state/zip)
-				const streetPortion = addrSingleLine.slice(0, cszMatch.index).replace(/,\s*$/, "").trim()
+				const { city, state, zip, street: streetPortion } = address
 
 				if (!streetPortion) continue
 
