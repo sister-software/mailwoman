@@ -34,9 +34,20 @@ export const TW_BOARD_BUCKET_MIN = 90
 
 const DIGITS = "0-9０-９"
 const SUB = `(?:之|[-－─‐−])[${DIGITS}]+`
-const NUMBER = new RegExp(`^(?<number>[${DIGITS}]+(?:${SUB})*(?:附[${DIGITS}]+)?號(?:${SUB})?)(?<rest>.*)$`, "u")
 
-const FLOOR = new RegExp(
+/**
+ * A house number with its sub-numbers and 號 at the head of a string (`120號`, `64之3號`),
+ * with the remainder in `rest`.
+ */
+export const TW_HOUSE_NUMBER = new RegExp(
+	`^(?<number>[${DIGITS}]+(?:${SUB})*(?:附[${DIGITS}]+)?號(?:${SUB})?)(?<rest>.*)$`,
+	"u"
+)
+
+/**
+ * A floor written after a house number: `1樓`, `B1`, `地下室`, optionally in parentheses.
+ */
+export const TW_FLOOR = new RegExp(
 	`^[（(]?(?:(?:地下|B|Ｂ)?[${DIGITS}一二三四五六七八九十]+(?:樓|層|F|Ｆ)(?:之[${DIGITS}]+)?|地下室|頂樓)[）)]?$`,
 	"u"
 )
@@ -227,7 +238,7 @@ export function alignRegisterAddress(text: string, index: TWKeyIndex): TWAligned
 
 	take(street, "street")
 
-	const match = NUMBER.exec(characters.slice(at).join(""))
+	const match = TW_HOUSE_NUMBER.exec(characters.slice(at).join(""))
 
 	if (!match) return null
 
@@ -236,7 +247,7 @@ export function alignRegisterAddress(text: string, index: TWKeyIndex): TWAligned
 	const rest = match.groups!["rest"]!
 
 	if (rest) {
-		if (!FLOOR.test(rest)) return null
+		if (!TW_FLOOR.test(rest)) return null
 
 		take(rest, "unit")
 	}

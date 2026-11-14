@@ -1,5 +1,5 @@
 {
-	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. Every row here reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
+	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. Every row here but two reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. The two exceptions, Poste Maroc's and 4-72's post-office lists, are official post-office lists no corpus source reads, because their share-alike grants are refused by the share-alike-free license policy; they read `Free` and record that outcome in their decisions. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
 	"rows": [
 		{
 			"iso2": "GB",
@@ -2460,6 +2460,81 @@
 			"source_url": "https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer",
 			"notes": "Read by the usgov-usgs-structures adapter and the structures layer. 473,903 features across 25 non-empty point layers in the 2026-11-13 pull (schools, cemeteries, post offices, fire, police and ambulance stations, hospitals, government buildings, recreation sites), each with a name, a point, and on most layers a street address, city, state and ZIP Code.",
 			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "FR",
+			"sector": "postal",
+			"source": "Liste des bureaux de poste, agences postales et relais poste (laposte-poincont2)",
+			"owner": "La Poste",
+			"role": "OBSERVATION",
+			"authority_basis": "La Poste, France's universal postal service provider, publishes the list of its own points of contact (Branche Réseau)",
+			"access": "data-fair dataset `laposte-poincont2` on data.laposte.fr, paged from `/data-fair/api/v1/datasets/laposte-poincont2/lines`, no key",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://data.laposte.fr/datasets/laposte-poincont2",
+			"notes": "Read by the fr-laposte-poincont adapter and the structures layer. 19,858 sites in the 2026-11-14 pull (data updated 2026-11-08): 7,075 agences postales communales, 6,550 bureaux de poste, 4,258 relais poste, 1,725 points partenaires, 236 agences postales intercommunales and 14 others, in metropolitan France, the overseas departments and Andorra, each with a label, a street line, a postcode, a locality, an INSEE commune code and a point.",
+			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "NC",
+			"sector": "postal",
+			"source": "Localisation des agences OPT-NC",
+			"owner": "Office des postes et télécommunications de Nouvelle-Calédonie (OPT-NC)",
+			"role": "OBSERVATION",
+			"authority_basis": "OPT-NC, New Caledonia's postal and telecommunications operator, publishes the locations of its own agencies",
+			"access": "ArcGIS FeatureServer `Agences_opendata` layer 0 on services6.arcgis.com, referenced by the data.gouv.nc dataset `localisation-des-agences-opt-nc`, no key",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://data.gouv.nc/explore/dataset/localisation-des-agences-opt-nc/",
+			"notes": "Read by the nc-opt-agences adapter and the structures layer. 49 features in the 2026-11-14 pull (34 Agence, 14 Annexe, 1 Ctc), each with a label, a street line, a postcode, a town and a point; 25 street lines are cadastral lots (`Lot 41`).",
+			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "TW",
+			"sector": "postal",
+			"source": "中華郵政全國營業據點 (data.gov.tw dataset 5950)",
+			"owner": "Chunghwa Post Co., Ltd.",
+			"role": "OBSERVATION",
+			"authority_basis": "中華郵政股份有限公司, Taiwan's state-owned postal operator, publishes the list of its own post offices on data.gov.tw as 提供機關",
+			"access": "CSV at www.post.gov.tw `getOpenDataFile.jsp?vkey=B484EB27-B3F0-4D02-8F62-047D20C64078`, the distribution data.gov.tw dataset 5950 names, no key",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://data.gov.tw/dataset/5950",
+			"notes": "Read by the structures layer. 1,277 post offices in the 2026-11-14 pull (dataset modified 2026-04-10), each with a name, postcodes, 縣市, 鄉鎮市區, a street line and a point; 1,265 street lines split into street, house number and floor.",
+			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "MA",
+			"sector": "postal",
+			"source": "Liste des agences postales",
+			"owner": "Poste Maroc (Barid Al-Maghrib)",
+			"role": "OBSERVATION",
+			"authority_basis": "Barid Al-Maghrib, Morocco's postal operator, publishes the list of its agencies on data.gov.ma under the organization Poste Maroc",
+			"access": "XLS resources of the data.gov.ma datasets `liste-des-agences-postales` and `code-postal-des-agences-barid-al-maghrib` (2011 and 2018 lists), no key",
+			"license": "Free",
+			"geometry": "N",
+			"status": "VERIFIED_AUTHORITY",
+			"source_url": "https://data.gov.ma/data/fr/dataset/liste-des-agences-postales",
+			"notes": "No corpus source reads this list. Its grant is the ODbL 1.0, whose share-alike term the share-alike-free license policy refuses.",
+			"origin": "2026-10-17_rights_review"
+		},
+		{
+			"iso2": "CO",
+			"sector": "postal",
+			"source": "Ubicaciones Oficinas 4-72 Servicios Postales Nacionales (datos.gov.co ajs9-6i5i)",
+			"owner": "Servicios Postales Nacionales S.A.S. (4-72)",
+			"role": "OBSERVATION",
+			"authority_basis": "Servicios Postales Nacionales (4-72), Colombia's official postal operator, publishes the locations of its offices on datos.gov.co",
+			"access": "Socrata dataset `ajs9-6i5i` on datos.gov.co, no key",
+			"license": "Free",
+			"geometry": "Y",
+			"status": "VERIFIED_AUTHORITY",
+			"source_url": "https://www.datos.gov.co/d/ajs9-6i5i",
+			"notes": "No corpus source reads this list. Its grant is CC BY-SA 4.0, whose share-alike term the share-alike-free license policy refuses.",
+			"origin": "2026-10-17_rights_review"
 		}
 	]
 }

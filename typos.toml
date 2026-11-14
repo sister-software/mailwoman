@@ -72,6 +72,11 @@ extend-ignore-re = [
 	'''\bCENTRE\b''',
 	'''\|centre\|''',
 	'''\(CC BY 4\.0\) licence''',
+	# La Poste's and OPT-NC's own names for their publications, layers and sites, quoted by the post-office readers.
+	'''Branche Réseau''',
+	'''[Ll]ocalisation[- ]des[- ]agences''',
+	'''Agences_et_Centres''',
+	'''Centre de Traitement Postal''',
 	# OpenStreetMap tag keys (`building:colour`, `roof:shape/height/levels/colour/...`, a bare quoted `colour`) and
 	# the quoted tag value `theatre`, the Arnis functions `facade_tone_for_colour`, `roof_family_for_colour` and
 	# `glass_for_colour`, and Sponge's `.schem` file extension, quoted by the Arnis building review and the

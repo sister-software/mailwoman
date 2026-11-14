@@ -77,6 +77,9 @@ export const SOURCE_STORAGE_CLASSES = {
 	"fr-annuaire-education-overseas": StorageClass.current,
 	// `etalab-cs1100502-stock-YYYYMMDD-HHMM.csv`: each extract's file name states its extraction date.
 	"fr-finess-overseas": StorageClass.snapshot,
+	// The data.laposte.fr dataset.
+	// La Poste refreshes it in place.
+	"fr-laposte-poincont": StorageClass.current,
 	"gb-os-open": StorageClass.current,
 	"gcis-tw": StorageClass.current,
 	"geonames-dump": StorageClass.current,
@@ -91,6 +94,8 @@ export const SOURCE_STORAGE_CLASSES = {
 	"localdata-kr": StorageClass.current,
 	"lv-varis": StorageClass.current,
 	matrikkelen: StorageClass.current,
+	// A query over OPT-NC's live agencies FeatureServer.
+	"nc-opt-agences": StorageClass.current,
 	"nl-kadaster": StorageClass.current,
 	openaddresses: StorageClass.current,
 	ourairports: StorageClass.current,
@@ -107,6 +112,8 @@ export const SOURCE_STORAGE_CLASSES = {
 	"state-wa-health-providers": StorageClass.current,
 	// The `tl_2024` files of one yearly TIGER release.
 	tiger: StorageClass.snapshot,
+	// Chunghwa Post's CSV at an undated link, replaced in place.
+	"tw-chunghwa-post-offices": StorageClass.current,
 	"usgov-hrsa-fqhc": StorageClass.current,
 	// A query over the live geonames MapServer's Populated Places layer.
 	// The publisher refreshes it in place.
@@ -189,6 +196,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 	"es-navarra": ["es-navarra"],
 	"fr-annuaire-education-overseas": ["fr-annuaire-education-overseas"],
 	"fr-finess-overseas": ["fr-finess-overseas"],
+	"fr-laposte-poincont": ["fr-laposte-poincont"],
 	"gb-os-open": ["gb-os-open"],
 	"gcis-tw": ["gcis-tw"],
 	"geonames-dump": ["geonames-dump"],
@@ -203,6 +211,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 	"lv-varis": ["lv-varis"],
 	matrikkelen: ["matrikkelen"],
 	nad: ["usgov-nad"],
+	"nc-opt-agences": ["nc-opt-agences"],
 	"nl-kadaster": ["nl-kadaster"],
 	nppes: ["usgov-nppes"],
 	openaddresses: ["openaddresses"],
@@ -221,6 +230,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 		"state-wa-health-providers",
 	],
 	"tiger-full": ["tiger"],
+	"tw-chunghwa-post-offices": ["tw-chunghwa-post-offices"],
 	"usgs-gnis": ["usgov-usgs-gnis"],
 	"usgs-structures": ["usgov-usgs-structures"],
 	vlaanderen: ["vlaanderen"],

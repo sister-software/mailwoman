@@ -591,6 +591,20 @@
 				}
 			]
 		},
+		"fr-laposte-poincont": {
+			"inputs": [
+				{
+					"registerSource": "fr-postal-1",
+					"license": "unchecked-corpus-input-fr-la-poste",
+					"reads": "La Poste's points of contact: site labels and addresses"
+				},
+				{
+					"registerSource": "fr-health-3",
+					"license": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant",
+					"reads": "TRE-R35 street-type words through splitFrenchStreetType"
+				}
+			]
+		},
 		"fragment-assay": {
 			"aliases": ["synth-fragment"],
 			"inputs": [
@@ -1896,6 +1910,20 @@
 					"registerSource": "sj-property-building-1",
 					"license": "unchecked-access-free-sj-kartverket",
 					"reads": "Matrikkelen - Adresse for Svalbard, area 2100, written by `corpus run matrikkelen --country SJ --source-name matrikkelen-sj`"
+				}
+			]
+		},
+		"nc-opt-agences": {
+			"inputs": [
+				{
+					"registerSource": "nc-postal-1",
+					"license": "unchecked-corpus-input-nc-office-des-postes-et-t-l-communications-de-no",
+					"reads": "OPT-NC's agencies FeatureServer: agency labels and addresses"
+				},
+				{
+					"registerSource": "fr-health-3",
+					"license": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant",
+					"reads": "TRE-R35 street-type words through splitFrenchStreetType"
 				}
 			]
 		},

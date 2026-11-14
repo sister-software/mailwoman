@@ -20,6 +20,7 @@ import { fetchRyhti } from "#fi/tools/fetch/ryhti"
 import { fetchAnnuaireEducationOverseas } from "#fr/tools/fetch/annuaire-education"
 import { fetchBan } from "#fr/tools/fetch/ban"
 import { fetchFinessOverseas } from "#fr/tools/fetch/finess"
+import { fetchLaPostePoincont } from "#fr/tools/fetch/laposte-poincont"
 import { fetchGBOSOpen } from "#gb/tools/fetch/os-open"
 import { fetchITANAC } from "#it/tools/fetch/anac"
 import { fetchHoujinJP } from "#jp/tools/fetch/houjin"
@@ -27,6 +28,7 @@ import { fetchJusoKR } from "#kr/tools/fetch/juso"
 import { fetchLocaldataKR } from "#kr/tools/fetch/localdata"
 import { fetchBDAdresses } from "#lu/tools/fetch/bd-adresses"
 import { fetchVaris } from "#lv/tools/fetch/varis"
+import { fetchOPTNCAgences } from "#nc/tools/fetch/opt-nc"
 import { fetchNLKadaster } from "#nl/tools/fetch/kadaster"
 import { fetchMatrikkelen } from "#no/tools/fetch/matrikkelen"
 import { fetchEMUiAPL } from "#pl/tools/fetch/emuia"
@@ -42,6 +44,7 @@ import { fetchOurAirports } from "#tools/fetch/ourairports"
 import { fetchVlaanderenAD } from "#tools/fetch/vlaanderen-ad"
 import { fetchWikidataSubVenue } from "#tools/fetch/wikidata/subvenue"
 import { fetchWikidataVitalPlaces } from "#tools/fetch/wikidata/vital-places"
+import { fetchTWChunghwaPost } from "#tw/tools/fetch/chunghwa-post"
 import { fetchGCISTW } from "#tw/tools/fetch/gcis"
 import { fetchHRSA } from "#us/tools/fetch/hrsa"
 import { fetchIMLSPLS } from "#us/tools/fetch/imls-pls"
@@ -72,6 +75,7 @@ export const FETCH_SOURCES = {
 	"es-navarra": fetchESNavarra,
 	"fr-annuaire-education-overseas": fetchAnnuaireEducationOverseas,
 	"fr-finess-overseas": fetchFinessOverseas,
+	"fr-laposte-poincont": fetchLaPostePoincont,
 	"gb-os-open": fetchGBOSOpen,
 	"gcis-tw": fetchGCISTW,
 	gleif: fetchGLEIF,
@@ -82,6 +86,7 @@ export const FETCH_SOURCES = {
 	"lv-varis": fetchVaris,
 	matrikkelen: fetchMatrikkelen,
 	nad: fetchNAD,
+	"nc-opt-agences": fetchOPTNCAgences,
 	"nl-kadaster": fetchNLKadaster,
 	"ro-retea-scolara": fetchReteaScolara,
 	ryhti: fetchRyhti,
@@ -98,6 +103,7 @@ export const FETCH_SOURCES = {
 	"state-sources": fetchStateSources,
 	"state-hi-schools": fetchStateHISchools,
 	"tiger-full": fetchTigerFull,
+	"tw-chunghwa-post-offices": fetchTWChunghwaPost,
 	"usgs-gnis": fetchUSGSGNIS,
 	"usgs-structures": fetchUSGSStructures,
 	"wikidata-subvenue": fetchWikidataSubVenue,

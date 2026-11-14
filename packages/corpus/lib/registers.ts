@@ -221,6 +221,15 @@ export const SourceRegister = {
 	 */
 	AnnuaireEducation: "fr-annuaire-education",
 	/**
+	 * La Poste's list of its points of contact: post offices, postal agencies,
+	 * relais poste and partner points.
+	 */
+	LaPostePoincont: "fr-laposte-poincont",
+	/**
+	 * OPT-NC's list of its agencies in New Caledonia.
+	 */
+	OPTNCAgences: "nc-opt-agences",
+	/**
 	 * The CORDIS organization files for the participants in the EU's research framework programmes
 	 * (FP7, Horizon 2020, Horizon Europe), published by the Publications Office of the European Union.
 	 *

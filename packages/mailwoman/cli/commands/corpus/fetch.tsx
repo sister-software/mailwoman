@@ -42,6 +42,7 @@ const sources = [
 	"es-navarra",
 	"fr-annuaire-education-overseas",
 	"fr-finess-overseas",
+	"fr-laposte-poincont",
 	"gb-os-open",
 	"gcis-tw",
 	"gleif",
@@ -52,6 +53,7 @@ const sources = [
 	"lv-varis",
 	"matrikkelen",
 	"nad",
+	"nc-opt-agences",
 	"nl-kadaster",
 	"ro-retea-scolara",
 	"ryhti",
@@ -66,6 +68,7 @@ const sources = [
 	"state-sources",
 	"state-hi-schools",
 	"tiger-full",
+	"tw-chunghwa-post-offices",
 	"usgs-gnis",
 	"usgs-structures",
 	"vlaanderen",
@@ -214,6 +217,8 @@ const FETCHERS = {
 		),
 	"fr-finess-overseas": async (base) =>
 		(await import("@mailwoman/corpus/fr/tools/fetch/finess")).fetchFinessOverseas(base, reportToStderr),
+	"fr-laposte-poincont": async (base) =>
+		(await import("@mailwoman/corpus/fr/tools/fetch/laposte-poincont")).fetchLaPostePoincont(base, reportToStderr),
 	"gb-os-open": async (base) =>
 		(await import("@mailwoman/corpus/gb/tools/fetch/os-open")).fetchGBOSOpen(base, reportToStderr),
 	"gcis-tw": async (base) => (await import("@mailwoman/corpus/tw/tools/fetch/gcis")).fetchGCISTW(base, reportToStderr),
@@ -243,6 +248,8 @@ const FETCHERS = {
 			{ ...base, nadURL: options.nadUrl },
 			reportToStderr
 		),
+	"nc-opt-agences": async (base) =>
+		(await import("@mailwoman/corpus/nc/tools/fetch/opt-nc")).fetchOPTNCAgences(base, reportToStderr),
 	"nl-kadaster": async (base) =>
 		(await import("@mailwoman/corpus/nl/tools/fetch/kadaster")).fetchNLKadaster(base, reportToStderr),
 	"ro-retea-scolara": async (base) =>
@@ -316,6 +323,8 @@ const FETCHERS = {
 			},
 			reportToStderr
 		),
+	"tw-chunghwa-post-offices": async (base) =>
+		(await import("@mailwoman/corpus/tw/tools/fetch/chunghwa-post")).fetchTWChunghwaPost(base, reportToStderr),
 	"usgs-gnis": async (base) =>
 		(await import("@mailwoman/corpus/us/tools/fetch/usgs/gnis")).fetchUSGSGNIS(base, reportToStderr),
 	"usgs-structures": async (base) =>

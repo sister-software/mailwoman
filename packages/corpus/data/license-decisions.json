@@ -3670,6 +3670,228 @@
 				}
 			}
 		},
+		"unchecked-corpus-input-fr-la-poste": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte / Open Licence version 2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "dataset.json beside laposte-poincont2.jsonl under $MAILWOMAN_CACHE_ROOT/sources/fr-laposte-poincont/, which the fr-laposte-poincont fetcher writes on every fetch from https://data.laposte.fr/data-fair/api/v1/datasets/laposte-poincont2",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "The publisher's own dataset record is the grant. `https://data.laposte.fr/data-fair/api/v1/datasets/laposte-poincont2`, read on 2026-11-14, gives `title` `Liste des bureaux de poste, agences postales et relais poste`, owner `La poste`, `origin` `La Poste - Branche Réseau`, `count` 19858, `dataUpdatedAt` `2026-11-08T03:06:10.463Z`, and `license` `{\"title\": \"Licence Ouverte / Open Licence\", \"href\": \"https://www.etalab.gouv.fr/licence-ouverte-open-licence\"}`. data.gouv.fr's entry for the same dataset (`61c2f189a6d223763c8b8e9f`, organization La Poste) answers `license: lov2` and points at the data.laposte.fr page, so the two records describe one artifact. The record states no version; `href` is Etalab's page for the current licence, version 2.0, so `termsVersion` reads 2.0. Licence Ouverte 2.0 grants the reuser freedom `de l'adapter, la modifier, l'extraire et la transformer, pour créer des « Informations dérivées », des produits ou des services`, subject to naming the source and the date of its last update, and carries no share-alike term; the operations below follow the reading of the same licence in `insee-sirene-lov2`. La Poste's sibling datasets on data.laposte.fr are under other terms (`laposte-poincont`, the list of services per site, and `laposte-ouvertur`, the opening calendar, read `odc-odbl` on data.gouv.fr), so this decision reaches `laposte-poincont2` alone. The rows describe public counters; `complement_d_adresse` sometimes names a relais poste's keeper (`MME CHAMBARD`), which the adapter leaves out of every row.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants the reuser freedom `de la communiquer, la reproduire, la copier`, which is what paging the dataset's rows performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer`. Reading the address fields out of the rows is the `extraire` in that clause."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation and transformation `pour créer des « Informations dérivées », des produits ou des services`."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term, so fitting a model on the rows is reuse `librement, pour tout usage`, subject to the attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre, de l'exploiter à titre commercial`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a derivative of the Information under Licence Ouverte 2.0 is the same question recorded for the Base Adresse Nationale, and this licence's text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "Licence Ouverte 2.0 grants a non-exclusive, free, worldwide and perpetual right to the reuser and states no sublicensing right."
+				}
+			}
+		},
+		"unchecked-corpus-input-nc-office-des-postes-et-t-l-communications-de-no": {
+			"state": "elected",
+			"electedTerms": "Licence Ouverte v2.0",
+			"spdx": "etalab-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "dataset.json beside agences.geojsonl under $MAILWOMAN_CACHE_ROOT/sources/nc-opt-agences/, which the nc-opt-agences fetcher writes on every fetch from https://data.gouv.nc/api/explore/v2.1/catalog/datasets/localisation-des-agences-opt-nc",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "The grant is the publisher's dataset record on New Caledonia's open-data portal, because the service that serves the rows states none. `https://data.gouv.nc/api/explore/v2.1/catalog/datasets/localisation-des-agences-opt-nc`, read on 2026-11-14, gives `title` `Localisation des agences OPT-NC`, `publisher` `Office des postes et télécommunications de Nouvelle-Calédonie (OPT-NC)`, `attributions` the same body, `license` `Licence Ouverte v2.0` and `license_url` `https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`, `modified` `2026-06-23T04:43:22+00:00`, `federated` false, and `references` `https://maps.opendata.opt.nc/datasets/agences`. That page is OPT-NC's own open-data hub, whose item `0f4fc20ce0c84a6da9e078456eec5cf1`, owner `OPT_NC`, is the FeatureServer `https://services6.arcgis.com/k3ZIRnRpeM4Ht4fG/arcgis/rest/services/Agences_opendata/FeatureServer`. The record's own export holds no records (`records_count` 0), so the reference ties the record to the service, and the record's tooltip fields (address, postal code, town, phone, hours, ATM) are the layer's fields. The hub item's `licenseInfo` is null and the service's `copyrightText` and `serviceDescription` are empty, which is an absent statement rather than a reservation. Licence Ouverte 2.0 grants the reuser freedom `de l'adapter, la modifier, l'extraire et la transformer`, subject to naming the source and the date of its last update, with no share-alike term; the operations follow the reading of the same licence in `insee-sirene-lov2`. `packages/corpus/lib/nc/AGENTS.md` records that New Caledonia's rows are elected only on the publisher's grant.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la communiquer, la reproduire, la copier`, which is what querying the layer performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'extraire`, which covers reading the address fields out of the features."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de l'adapter, la modifier, l'extraire et la transformer`."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 names no restriction on the purpose of reuse and attaches no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Licence Ouverte 2.0 grants freedom `de la diffuser, la redistribuer, la publier et la transmettre`, subject to the attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a derivative of the Information under Licence Ouverte 2.0 is the question recorded for the Base Adresse Nationale, and this licence's text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "Licence Ouverte 2.0 states no sublicensing right."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-chunghwa-post-co-ltd": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "dataset.json beside post-offices.csv under $MAILWOMAN_CACHE_ROOT/sources/tw-chunghwa-post-offices/, which the tw-chunghwa-post-offices fetcher writes on every fetch from https://data.gov.tw/api/v2/rest/dataset/5950",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "Chunghwa Post publishes the list on data.gov.tw as the providing agency. `https://data.gov.tw/dataset/5950`, read on 2026-11-14, reads `中華郵政全國營業據點`, `提供機關 中華郵政股份有限公司`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`, and names one CSV distribution, `https://www.post.gov.tw/post/internet/Templates/getOpenDataFile.jsp?vkey=B484EB27-B3F0-4D02-8F62-047D20C64078`, which is the file the fetcher downloads; the API record `https://data.gov.tw/api/v2/rest/dataset/5950` gives licence code `1`, cost `free`, identifier `A15210000M-000003` and `modifiedDate` `2026-04-10 16:54:00`. The licence text at `https://data.gov.tw/license` grants at 二(一) use `不限目的、時間及地域、非專屬、不可撤回、免授權金`, including `重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) is named. 三(二) voids the grant from the start for a user who omits the attribution statement the annex prescribes, so the structures layer and any release that uses the rows carry `中華郵政股份有限公司` and the dataset title. The operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it. No corpus adapter reads the rows: Taiwanese training rows are built by the CJK corpus builder, and the structures layer is the only reader.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the rows."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 中華郵政股份有限公司."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-access-free-ma-poste-maroc-barid-al-maghrib": {
+			"state": "elected",
+			"electedTerms": "Open Data Commons Open Database License (ODbL)",
+			"spdx": "ODbL-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "not retained; the CKAN record is reproducible from https://data.gov.ma/data/api/3/action/package_search?q=barid%20agences",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "data.gov.ma's CKAN API, queried on 2026-11-14, lists two datasets under the organization `Poste Maroc`: `liste-des-agences-postales` (`Liste des agences postales`, one XLS, `liste-des-agences-de-poste-fev-2011-barid-al-maghrib-1.xls`) and `code-postal-des-agences-barid-al-maghrib` (an XLS of February 2011 and `codes-postaux-agences-2018.xlsx`), both with `license_id` `odc-odbl` and `license_title` the ODbL. The organization is the publisher, so this is its grant rather than a third party's label. ODbL 1.0 permits extraction, re-utilisation and derivative databases, and §4.4 requires a derivative database that is publicly used to be offered under the ODbL. **No corpus adapter is built for this source**, by decision: the corpus's `LicensePolicy.ShareAlikeFree` refuses a row whose licence resolves to an expression carrying share-alike (`licenseVerdict(\"ODbL-1.0\", \"share-alike-free\")` answers `share-alike-carried`), so its rows could only enter a build run under `LicensePolicy.All`. The election records the grant so that the share-alike filter sees this source through `electedTermsLabel`; `redistribute-model` and `commercial-sublicense` stay unreviewed for the reason recorded under Gipuzkoa. The lists are also from 2011 and 2018.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 1.0 §3.1 grants extraction and re-utilisation of the whole of the database."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 1.0 §3.1 names extraction."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 1.0 §3.1 grants creating derivative databases, which §4.4 then binds to the ODbL when publicly used."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model extracts and re-utilises the contents, which §3.1 grants; whether the weights are a derivative database or a produced work is the question left unreviewed under `redistribute-model`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 1.0 §4.2 and §4.4 permit public use conditioned on the notice and on share-alike. The corpus filter reads that condition off `electedTermsLabel`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are a derivative database or a produced work under ODbL 1.0 is the question `internal/strategy/counsel-briefing-2026-09-27-part-2.md` records, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "ODbL 1.0 grants each recipient a licence from the licensor directly and binds derivative databases to the ODbL, so a commercial sublicense needs a reading this decision does not make."
+				}
+			}
+		},
+		"unchecked-access-free-co-servicios-postales-nacionales-s-a-s-4-72": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution-ShareAlike 4.0 International",
+			"spdx": "CC-BY-SA-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "not retained; the Socrata catalog record is reproducible from https://www.datos.gov.co/api/catalog/v1?q=4-72%20puntos%20de%20atencion",
+			"retrievedAt": "2026-11-14",
+			"electedBecause": "datos.gov.co's Socrata catalog, queried on 2026-11-14, gives `ajs9-6i5i`, `Ubicaciones Oficinas 4-72 Servicios Postales Nacionales`, attribution `Servicios Postales Nacionales - 472`, licence `Creative Commons Attribution | Share Alike 4.0 International`, updated `2026-05-18`, with columns `direccion`, `municipio`, `departamentopais`, `codigo_postal`, `latitud`, `longitud`, `horario`, `telefono`, `email`; two Bogotá views (`jdp7-vg9p`, `9cfg-by9g`) carry the same attribution and licence. The attribution is the publisher, so this is its grant. CC BY-SA 4.0 §2(a)(1)(B) grants producing Adapted Material, and §3(b) binds shared Adapted Material to BY-SA or a compatible licence. **No corpus adapter is built for this source**, by decision: `LicensePolicy.ShareAlikeFree` refuses a row whose licence resolves to an expression carrying share-alike (`licenseVerdict(\"CC-BY-SA-4.0\", \"share-alike-free\")` answers `share-alike-carried`). The election records the grant so that the share-alike filter sees this source through `electedTermsLabel`; `redistribute-model` and `commercial-sublicense` stay unreviewed for the reason recorded under Gipuzkoa.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY-SA 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material in whole."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing and reproducing Adapted Material, which covers reading the address fields out of the rows."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same clause grants adaptation for any purpose. §3(b) then binds the adaptation to this licence or a compatible one."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) and §2(a)(1)(B) grant reproduction and adaptation, which fitting a model performs; §3(b) attaches when Adapted Material is shared."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing, conditioned by §3(a) on attribution and by §3(b) on share-alike. The corpus filter reads that condition off `electedTermsLabel`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are Adapted Material, and therefore whether §3(b) binds a released model to BY-SA, is the question recorded for Gipuzkoa, and the licence text does not answer it."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "§2(a)(5)(A) offers every downstream recipient a licence from the Licensor directly and grants no sublicensing right."
+				}
+			}
+		},
 		"unchecked-access-free-us-us-charity-nonprofit-1": {
 			"state": "elected",
 			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105 (the IRS states no terms for the EO BMF extract)",

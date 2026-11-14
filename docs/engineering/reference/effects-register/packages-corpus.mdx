@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 235 of the group's 401 library and tool modules.
+This page lists 242 of the group's 409 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -487,6 +487,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `CSVSpliterator.fromAsync` | `unresolved (other)` | 1     |
 | read | `Globerator.from`          | `unresolved (call)`  | 1     |
 
+## `packages/corpus/lib/fr/adapters/laposte-poincont/adapter.ts`
+
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (property)` | 1     |
+
 ## `packages/corpus/lib/fr/recipes/admin-split.ts`
 
 | Kind | Interface                  | Target                   | Calls |
@@ -518,6 +524,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 - `awaits at module scope`
 
+## `packages/corpus/lib/fr/structures/laposte.ts`
+
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
+
 ## `packages/corpus/lib/fr/tools/fetch/annuaire-education.ts`
 
 | Kind  | Interface                   | Target                   | Calls |
@@ -547,6 +559,17 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `tryStat`             | `unresolved (call)`      | 1     |
 | write | `makeDirectories`     | `unresolved (call)`      | 1     |
 | write | `removePathIfPresent` | `unresolved (call)`      | 1     |
+
+## `packages/corpus/lib/fr/tools/fetch/laposte-poincont.ts`
+
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `appendLocalTextFile` | `unresolved (call)` | 2     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `movePath`            | `unresolved (call)` | 2     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/gauntlet-inputs.ts`
 
@@ -765,6 +788,29 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | ----------------- | ------------------- | ----- |
 | read  | `tryStat`         | `unresolved (call)` | 1     |
 | write | `makeDirectories` | `unresolved (call)` | 1     |
+
+## `packages/corpus/lib/nc/adapters/opt-nc/adapter.ts`
+
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (property)` | 1     |
+
+## `packages/corpus/lib/nc/structures/opt-nc.ts`
+
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
+
+## `packages/corpus/lib/nc/tools/fetch/opt-nc.ts`
+
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `appendLocalTextFile` | `unresolved (call)` | 2     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `movePath`            | `unresolved (call)` | 2     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/nl/adapters/kadaster/adapter.ts`
 
@@ -1602,6 +1648,16 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `CSVSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
 | read | `isDirectory`              | `unresolved (parameter)`  | 1     |
 | read | `sortedGlob`               | `unresolved (parameter)`  | 1     |
+
+## `packages/corpus/lib/tw/tools/fetch/chunghwa-post.ts`
+
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `movePath`            | `unresolved (call)` | 2     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tw/tools/fetch/gcis.ts`
 

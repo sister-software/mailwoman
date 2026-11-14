@@ -75,6 +75,7 @@ import { adressurFaroeAdapter } from "#fo/adapters/adressur/adapter"
 import { annuaireEducationAdapter } from "#fr/adapters/annuaire-education/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
 import { finessAdapter } from "#fr/adapters/finess/adapter"
+import { laPostePoincontAdapter } from "#fr/adapters/laposte-poincont/adapter"
 import { gbOSOpenAdapter } from "#gb/adapters/os-open/adapter"
 import { guamAddressPointsAdapter } from "#gu/adapters/bsp/adapter"
 import { isleOfManLandRegistryAdapter } from "#im/adapters/land-registry/adapter"
@@ -82,6 +83,7 @@ import { itANACAdapter } from "#it/adapters/anac/adapter"
 import { llvLiechtensteinAdapter } from "#li/adapters/llv/adapter"
 import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
 import { varisAdapter } from "#lv/adapters/varis/adapter"
+import { optNCAgencesAdapter } from "#nc/adapters/opt-nc/adapter"
 import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
 import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
@@ -168,6 +170,8 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	varisAdapter,
 	finessAdapter,
 	annuaireEducationAdapter,
+	laPostePoincontAdapter,
+	optNCAgencesAdapter,
 	gleifAdapter,
 ]
 
