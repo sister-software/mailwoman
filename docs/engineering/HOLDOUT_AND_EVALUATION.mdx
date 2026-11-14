@@ -175,7 +175,11 @@ when the check ran, the countries it read and the files it counted.
 5. **Label-support floors and exposure receipts** are re-derived from each new corpus, never copied forward. A
    label's validation floor is half its measured support rounded down, with no floor under 20 rows. An exposure
    receipt is re-derived from the corpus's own epoch-mixture audit. A receipt copied from an older corpus fails
-   on supply the new split moved, as `fr-annuaire-education-overseas` did at 1,278 of a stale 1,300.
+   on supply the new split moved, as `fr-annuaire-education-overseas` did at 1,278 of a stale 1,300. A receipt
+   scoped to one source can state its floor as `min_fraction_of_expected`. The audit computes the expected draws
+   from the configured weights and the corpus it reads, so that floor is re-derived on every run, and it refuses
+   an absolute `min_draws` above its own expectation
+   ([#2391](https://github.com/sister-software/mailwoman/issues/2391)).
 
 ### 4.5 The allocation report
 
@@ -459,7 +463,7 @@ step rates the preflight reads. The Python trainer's fp32-master pair (#2871) co
 | Concentration check and record-ancestry audit    | Specified. Measured by script so far, and a build step remains to write  |
 | Policy identity and loader rejections (4.4.4)    | Specified. Implementation open                                           |
 | Allocation report (4.5)                          | Specified. Implementation open                                           |
-| Floors and receipts re-derived per corpus        | Done by hand for v0.8.1. Automation open                                 |
+| Floors and receipts re-derived per corpus        | Receipts: `min_fraction_of_expected` (2026-11-14). Label floors by hand  |
 | Evaluation rows from unsampled source rows (6.3) | Specified. The first draw waits on the support index for the corpus      |
 | Fresh US evaluation source (6.4)                 | Deferred by the operator                                                 |
 | Three-run rule (7.2)                             | Adopted 2026-10-31, replacing the two-seed rule. Applied first in #2869  |
