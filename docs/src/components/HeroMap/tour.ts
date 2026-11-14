@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The home page tour: six queries and the answers Earth gave them.
+ * The home page tour holds six queries and the answers Earth gave them.
  *
- *   Each answer was recorded from `earth.mailwoman.post/?q=<query>` on the stop's `recordedOn` date.
- *   The tier is the one Earth reported, coarse ones included, so the tour shows what a lookup returns today.
+ * Earth supplied each answer at `https://earth.mailwoman.post/?q=<query>`.
+ * The `recordedOn` field gives the date of that response.
  *
- *   Re-record an entry when the gazetteer or the model changes what it returns, and update its date.
+ * The tier includes coarse results as Earth reported them.
+ * The tour displays the recorded result for each lookup.
+ *
+ * Re-record an entry after a model or gazetteer change affects its result.
+ * Update the date to match the new response.
  */
 
 export interface TourStop {

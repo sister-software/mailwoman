@@ -96,6 +96,7 @@ function HomepageHeader(): ReactNode {
 							{stop.landmark}
 							<span className={styles.heroTier}>{stop.tier}</span>
 						</figcaption>
+						<p className={styles.heroRecorded}>Recorded {stop.recordedOn}. Current Earth results may differ.</p>
 						<p className={styles.heroTransform}>
 							<span className={styles.heroIn} lang={stop.lang}>
 								{stop.query}
@@ -151,7 +152,7 @@ function Benefits(): ReactNode {
 				</div>
 				<div>
 					<h2>More lookups. Same price.</h2>
-					<p>A flat commercial license covers your company at any volume. No per-address fees.</p>
+					<p>The commercial license has no per-address fee. Hosting and data costs depend on your setup.</p>
 				</div>
 				<div>
 					<h2>Build it into your app</h2>
@@ -272,8 +273,7 @@ function PricingTeaser(): ReactNode {
 						Free under the AGPL. Commercial licensing is {PRICE_MONTHLY} a month.
 					</Heading>
 					<p>
-						No seats, no per-address fees, and no meter. Your thousandth lookup and your hundred-millionth cost the
-						same.
+						The license has no seat or per-address charge for eligible companies. Hosting and data costs are separate.
 					</p>
 				</div>
 				<Link className="button button--primary button--lg" to="/pricing">
@@ -321,15 +321,15 @@ function FeaturedWork(): ReactNode {
 					<div className="col col--6">
 						<p className={styles.cardJob}>Data provenance</p>
 						<Heading as="h3" className={styles.featuredTitle}>
-							We keep the receipt on every coordinate
+							Inspect the source behind a matched point
 						</Heading>
 						<p className={styles.featuredBody}>
-							Every point Mailwoman resolves to remembers which open dataset it came from. Here's New York: the federal
-							National Address Database statewide, OpenAddresses (the city's own data) in New York City. Most geocoders
-							sand that provenance off. We keep it on the point.
+							The New York address-point map colors each plotted point by its recorded dataset: the federal National
+							Address Database statewide and OpenAddresses in New York City. A geocode result can include the matched
+							row's source and release. Coarser place results may have no source stamp for their selected coordinate.
 						</p>
 						<p className={styles.cardLinks}>
-							<Link to="/research/keep-the-receipt">See how it's done →</Link>
+							<Link to="/research/keep-the-receipt">Explore the New York source map →</Link>
 						</p>
 					</div>
 					<div className="col col--6">
