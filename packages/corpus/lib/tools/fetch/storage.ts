@@ -108,6 +108,9 @@ export const SOURCE_STORAGE_CLASSES = {
 	// The `tl_2024` files of one yearly TIGER release.
 	tiger: StorageClass.snapshot,
 	"usgov-hrsa-fqhc": StorageClass.current,
+	// A query over the live geonames MapServer's Populated Places layer.
+	// The publisher refreshes it in place.
+	"usgov-usgs-gnis": StorageClass.current,
 	// A query over the live structures MapServer's point layers.
 	// The publisher refreshes them in place.
 	"usgov-usgs-structures": StorageClass.current,
@@ -218,6 +221,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 		"state-wa-health-providers",
 	],
 	"tiger-full": ["tiger"],
+	"usgs-gnis": ["usgov-usgs-gnis"],
 	"usgs-structures": ["usgov-usgs-structures"],
 	vlaanderen: ["vlaanderen"],
 	wallonie: ["wallonie"],

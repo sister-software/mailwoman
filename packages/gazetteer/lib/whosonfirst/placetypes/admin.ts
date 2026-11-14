@@ -39,6 +39,10 @@ export interface WOFBaseProperties {
 	 */
 	"wof:hierarchy"?: Array<Record<string, number>>
 	"wof:population"?: number
+	/**
+	 * `1` on a US locality that holds a township's area outside its incorporated places, rather than a town.
+	 */
+	"wof:statistical_gore"?: number
 	"wof:lastmodified"?: number
 	"geom:latitude"?: number
 	"geom:longitude"?: number

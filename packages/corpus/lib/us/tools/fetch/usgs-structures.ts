@@ -7,8 +7,7 @@
  *   US public domain under 17 U.S.C. § 105.
  *
  *   Each layer is an ArcGIS MapServer layer that answers at most 2,000 features per request.
- *   The fetcher asks each layer for its feature count first, then pages it by `OBJECTID`:
- *   each page asks for the features whose `OBJECTID` exceeds the last one read, in `OBJECTID` order.
+ *   `pageArcGISLayer` asks each layer for its feature count, then pages it by `OBJECTID`.
  *
  *   A `resultOffset` query slows as the offset grows (1.7 s for the first page of Cemeteries
  *   and 8.7 s at offset 184,000, against 0.8 s for the same page by `OBJECTID`).
@@ -27,7 +26,7 @@
 import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import { normalizeZIPCode } from "@mailwoman/codex/us/zipcode"
 import { APIClient } from "@mailwoman/core/api"
-import { assertNoArcGISError } from "@mailwoman/core/api/arcgis"
+import { pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -118,45 +117,6 @@ export interface USGSStructuresManifest extends SourceManifest {
 interface StructuresService {
 	copyrightText?: string
 	serviceDescription?: string
-}
-
-/**
- * Reads JSON from the service and throws on an ArcGIS error body.
- */
-async function readServiceJSON<T>(client: Pick<APIClient, "fetch">, url: string, signal?: AbortSignal): Promise<T> {
-	const { data } = await client.fetch<T>({ url, timeout: 120_000, signal })
-	const body: unknown = data
-
-	if (body == null || typeof body !== "object") {
-		throw new Error(`${SLUG}: ${url} answered a body that is not JSON: ${String(body).slice(0, 200)}`)
-	}
-
-	assertNoArcGISError(body, `${SLUG}: ${url}`)
-
-	return data
-}
-
-/**
- * The query URL for one request to `layerID`: a count, or one page of the features
- * whose `OBJECTID` exceeds `afterObjectID`.
- */
-export function structuresQueryURL(layerID: number, request: { countOnly: true } | { afterObjectID: number }): string {
-	const params = new URLSearchParams()
-
-	if ("countOnly" in request) {
-		params.set("where", "1=1")
-		params.set("returnCountOnly", "true")
-		params.set("f", "json")
-	} else {
-		params.set("where", `OBJECTID>${request.afterObjectID}`)
-		params.set("outFields", USGS_STRUCTURE_FIELDS.join(","))
-		params.set("orderByFields", "OBJECTID")
-		params.set("outSR", "4326")
-		params.set("resultRecordCount", String(USGS_STRUCTURES_PAGE_SIZE))
-		params.set("f", "geojson")
-	}
-
-	return `${USGS_STRUCTURES_SERVICE_URL}/${layerID}/query?${params}`
 }
 
 /**
@@ -294,8 +254,7 @@ export interface DownloadUSGSStructuresOptions {
 /**
  * Pages every feature of one layer into `staging`, and returns the number written.
  *
- * @throws When the service answers an error, a page that isn't a FeatureCollection,
- * a page whose `OBJECTID`s don't advance, or a pull whose size differs from its count.
+ * @throws When {@link pageArcGISLayer} refuses the pull, or a feature isn't one the adapter can read.
  */
 async function pullLayer(
 	client: Pick<APIClient, "fetch">,
@@ -304,49 +263,26 @@ async function pullLayer(
 	options: Pick<DownloadUSGSStructuresOptions, "signal" | "report">
 ): Promise<number> {
 	const { signal, report } = options
-	const countURL = structuresQueryURL(layer.layerID, { countOnly: true })
-	const { count } = await readServiceJSON<{ count?: unknown }>(client, countURL, signal)
-
-	if (typeof count !== "number" || !Number.isInteger(count) || count < 0) {
-		throw new Error(
-			`${SLUG}: the count query of layer ${layer.layerID} answered no feature count: ${stringifyJSON(count)}`
-		)
-	}
-
-	report?.(`  ${layer.layerID} ${layer.name}: ${count.toLocaleString()} features`)
-
 	let written = 0
-	let afterObjectID = 0
 
-	while (written < count) {
-		const url = structuresQueryURL(layer.layerID, { afterObjectID })
-		const page = await readServiceJSON<{ type?: unknown; features?: unknown }>(client, url, signal)
-
-		if (page.type !== "FeatureCollection" || !Array.isArray(page.features)) {
-			throw new Error(`${SLUG}: ${url} answered something other than a FeatureCollection`)
+	const pages = pageArcGISLayer(
+		client,
+		{ serviceURL: USGS_STRUCTURES_SERVICE_URL, layerID: layer.layerID },
+		{
+			outFields: USGS_STRUCTURE_FIELDS,
+			pageSize: USGS_STRUCTURES_PAGE_SIZE,
+			context: SLUG,
+			signal,
+			onCount: (count) => report?.(`  ${layer.layerID} ${layer.name}: ${count.toLocaleString()} features`),
+			onPage: (done, count) => report?.(`    ${done.toLocaleString()} / ${count.toLocaleString()}`),
 		}
+	)
 
-		if (!page.features.length) break
-
-		const features = page.features.map((feature) => normalizeStructureFeature(feature, layer))
-		const lastObjectID = features.at(-1)!.properties.objectid
-
-		if (lastObjectID <= afterObjectID) {
-			throw new Error(`${SLUG}: ${url} answered a page whose OBJECTIDs don't advance past ${afterObjectID}`)
-		}
+	for await (const page of pages) {
+		const features = page.map((feature) => normalizeStructureFeature(feature, layer))
 
 		await appendLocalTextFile(`${features.map((feature) => stringifyJSON(feature)).join("\n")}\n`, staging)
-
 		written += features.length
-		afterObjectID = lastObjectID
-
-		report?.(`    ${written.toLocaleString()} / ${count.toLocaleString()}`)
-	}
-
-	if (written !== count) {
-		throw new Error(
-			`${SLUG}: the service counted ${count} features in layer ${layer.layerID} and the pull returned ${written}`
-		)
 	}
 
 	return written
@@ -373,7 +309,7 @@ export async function downloadUSGSStructures(
 
 	report?.(`=== ${SLUG} / ${USGS_STRUCTURES_FILENAME}`)
 
-	const service = await readServiceJSON<StructuresService>(client, `${USGS_STRUCTURES_SERVICE_URL}?f=json`, signal)
+	const service = await readArcGISJSON<StructuresService>(client, `${USGS_STRUCTURES_SERVICE_URL}?f=json`, SLUG, signal)
 
 	report?.(`  ${service.copyrightText ?? "no copyrightText"}; ${layers.length} layers`)
 

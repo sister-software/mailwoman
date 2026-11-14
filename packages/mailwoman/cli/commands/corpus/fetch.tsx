@@ -66,6 +66,7 @@ const sources = [
 	"state-sources",
 	"state-hi-schools",
 	"tiger-full",
+	"usgs-gnis",
 	"usgs-structures",
 	"vlaanderen",
 	"wallonie",
@@ -315,6 +316,8 @@ const FETCHERS = {
 			},
 			reportToStderr
 		),
+	"usgs-gnis": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/usgs-gnis")).fetchUSGSGNIS(base, reportToStderr),
 	"usgs-structures": async (base) =>
 		(await import("@mailwoman/corpus/us/tools/fetch/usgs-structures")).fetchUSGSStructures(base, reportToStderr),
 	vlaanderen: async (base) =>
