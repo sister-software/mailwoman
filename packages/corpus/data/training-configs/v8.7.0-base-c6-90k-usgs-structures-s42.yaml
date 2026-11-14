@@ -16,8 +16,11 @@
 # 3. `train.output_dir` and `train.trackio_run_name` name the run.
 #
 # The corpus. `data.corpus_dir` is still v0.8.18. That corpus holds no `usgov-usgs-structures` rows. The epoch-mixture
-# audit and the sampler refuse this config until `corpus_dir` points at a corpus built with the source. Replace it with
-# that build and record its MANIFEST.json sha256 here before launch.
+# audit and the sampler refuse this config until `corpus_dir` points at a corpus built with the source. The planned
+# corpus is /data/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay: an overlay on v0.8.18
+# that replaces the sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds and adds this source,
+# fr-laposte-poincont and nc-opt-agences. Replace `corpus_dir` with it once it exists, and record its MANIFEST.json
+# sha256 here before launch.
 #
 # Run shape: from scratch, with no `train.init_from`. Why: a fine-tune can't introduce a source the base never saw.
 #

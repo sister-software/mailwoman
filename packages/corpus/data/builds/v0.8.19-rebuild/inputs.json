@@ -1,0 +1,145 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
+	"$overlay-note": "The sources this build rebuilds replace their v0.8.18-retention-overlay files in an overlay on that corpus, and three sources are new. Each rebuilt source takes the fixes since its files were built (v0.8.10-rebuild on 2026-11-02, the WOF samples of v0.8.6, geonames-features of v0.8.12): the line-break augmentation every synthesized row may take (#2992), the unit splitter's leading-type, grid-number and number-free-unit rules (#3025), the component check's enforced `postcode:repeats-region` rule, NAD read from release 24 with its placeholder spellings absent and its repeated unit parts dropped (#2895), the Texas notary city, suite and repeated-street fixes (#2895), and the 8,285 GNIS populated places in the WOF forks (#3061; whosonfirst-data-admin-us at 3f81e25abc8). `usgov-usgs-structures`, `fr-laposte-poincont` and `nc-opt-agences` are new. Every other v0.8.18 source, the recipe outputs and the osm, overture and country-gap adapter sources, is carried unchanged.",
+	"$street-index-note": "Every adapter that splits a trailing unit reads the street index built from v0.8.18-retention-overlay's premise-register rows, so no row attests itself.",
+	"$wof-note": "Both WOF adapters sample as v0.8.6-wof-structure and v0.8.6-wof-postalcode did, with the same seed and the same held-out and comparison cells of #2857, and write their cell counts and held-out rows beside this build. v0.8.18's wof-admin files are v0.8.15's, which a post-pass outside the committed code corrected for `<name>, <country>` (355 region rows dropped, 317 locality rows added). This build does not repeat that correction.",
+	"corpusVersion": "v0.8.19-rebuild",
+	"adapters": {
+		"wof-admin": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 2500,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-cell-counts.json",
+				"holdOutCells": [
+					"AM|region locality",
+					"AT|country locality",
+					"BA|country region locality",
+					"BA|subregion locality",
+					"BJ|region locality",
+					"BR|country locality",
+					"CA|region dependent_locality",
+					"CD|country subregion locality",
+					"CH|country region subregion dependent_locality",
+					"CI|country region locality",
+					"CL|region locality",
+					"DO|region subregion locality",
+					"FI|region subregion locality",
+					"GB|country locality dependent_locality",
+					"GH|country region locality",
+					"GN|region subregion locality",
+					"IQ|country locality",
+					"IQ|country region locality",
+					"MD|country region locality",
+					"MD|region locality",
+					"ML|region locality",
+					"NE|country region locality",
+					"PT|country region subregion",
+					"RS|country region locality",
+					"RS|country subregion locality",
+					"RW|region locality",
+					"SA|region locality",
+					"TR|country region",
+					"UG|country region locality",
+					"ZM|region locality"
+				],
+				"compareCells": [
+					"FR|country region subregion",
+					"FR|country region subregion dependent_locality",
+					"GB|country region",
+					"IR|country locality",
+					"IR|country region locality",
+					"IR|country subregion locality",
+					"IR|region locality",
+					"IR|region subregion locality",
+					"KR|country region locality",
+					"KR|region locality",
+					"KR|region subregion locality",
+					"KR|subregion locality",
+					"KZ|country locality",
+					"US|region dependent_locality"
+				],
+				"heldOutFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-held-out-cells.jsonl",
+				"comparisonFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-comparison-cells.jsonl",
+				"heldOutPerCell": 60
+			}
+		},
+		"wof-postalcode": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 90000,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.19-rebuild/wof-postalcode-cell-counts.json"
+			}
+		},
+		"geonames-features": {
+			"inputPath": "geonames"
+		},
+		"ban": {
+			"inputPath": "corpus/staging/ban-france.csv",
+			"country": "FR",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"tiger": {
+			"inputPath": "db/tiger/tiger.db",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"usgov-hrsa-fqhc": {
+			"root": "cache",
+			"inputPath": "sources/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"usgov-nppes": {
+			"inputPath": "snapshots/usgov-nppes/2026-05/npidata_pfile_20050523-20260510.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"usgov-nad": {
+			"inputPath": "snapshots/usgov-nad/r24/TXT_NAD_r24.parquet",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"usgov-imls-pls": {
+			"inputPath": "snapshots/usgov-imls-pls/fy23/pls_fy23_outlet_pud23i.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"usgov-usgs-structures": {
+			"root": "cache",
+			"inputPath": "sources/usgov-usgs-structures/structures.geojsonl",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"state-ia-contractors": {
+			"root": "cache",
+			"inputPath": "sources/state-ia-contractors/IA_Active_Construction_Contractor_Registrations.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"state-tx-notaries": {
+			"root": "cache",
+			"inputPath": "sources/state-tx-notaries/TX_Notary_Public_Commissions.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"state-ny-notaries": {
+			"root": "cache",
+			"inputPath": "sources/state-ny-notaries/NY_Commissioned_Notaries.csv",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"cordis": {
+			"root": "cache",
+			"inputPath": "sources/cordis",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		},
+		"fr-laposte-poincont": {
+			"root": "cache",
+			"inputPath": "sources/fr-laposte-poincont/laposte-poincont2.jsonl"
+		},
+		"nc-opt-agences": {
+			"root": "cache",
+			"inputPath": "sources/nc-opt-agences/agences.geojsonl"
+		},
+		"gleif-lei": {
+			"root": "cache",
+			"inputPath": "sources/gleif/20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		}
+	}
+}
