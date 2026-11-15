@@ -1,0 +1,6142 @@
+{
+	"$generatedBy": "packages/mailwoman/tools/dev-tools/query-shape/golden.run.ts",
+	"$note": "The output of computeQueryShape(input) from @mailwoman/query-shape, one case per input. Offsets are UTF-16 code units. Do not edit by hand: rerun the generator.",
+	"cases": [
+		{
+			"category": "empty",
+			"input": "",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 0,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "empty",
+			"input": " ",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "empty",
+			"input": "   ",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "double"
+			}
+		},
+		{
+			"category": "empty",
+			"input": "\n",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "empty",
+			"input": "\t",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "tab"
+			}
+		},
+		{
+			"category": "short",
+			"input": "a",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"body": "a",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "short",
+			"input": "NY",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "NY"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "NY"
+						},
+						"body": "NY",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 2,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "short",
+			"input": "75",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "75"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "75"
+						},
+						"body": "75",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 2,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "short",
+			"input": "5th",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "5th"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "5th"
+						},
+						"body": "5th",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "short",
+			"input": "x1",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "x1"
+						},
+						"class": "mixed",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "x1"
+						},
+						"body": "x1",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 2,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "350 5th Ave, New York, NY 10118",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "350"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 7,
+							"body": "5th"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 11,
+							"body": "Ave"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 13,
+							"end": 16,
+							"body": "New"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 21,
+							"body": "York"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 25,
+							"body": "NY"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 26,
+							"end": 31,
+							"body": "10118"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 11,
+							"body": "350 5th Ave"
+						},
+						"body": "350 5th Ave",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 13,
+							"end": 21,
+							"body": "New York"
+						},
+						"body": "New York",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 31,
+							"body": "NY 10118"
+						},
+						"body": "NY 10118",
+						"index": 2,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 26,
+							"end": 31,
+							"body": "10118"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 26,
+							"end": 31,
+							"body": "10118"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 26,
+							"end": 31,
+							"body": "10118"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [
+					{
+						"start": 23,
+						"span": "NY"
+					}
+				],
+				"totalLength": 31,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "Springfield, IL 62701",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 11,
+							"body": "Springfield"
+						},
+						"class": "alpha",
+						"length": 11,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 13,
+							"end": 15,
+							"body": "IL"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 16,
+							"end": 21,
+							"body": "62701"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 11,
+							"body": "Springfield"
+						},
+						"body": "Springfield",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 13,
+							"end": 21,
+							"body": "IL 62701"
+						},
+						"body": "IL 62701",
+						"index": 1,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 16,
+							"end": 21,
+							"body": "62701"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 16,
+							"end": 21,
+							"body": "62701"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 16,
+							"end": 21,
+							"body": "62701"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [
+					{
+						"start": 13,
+						"span": "IL"
+					}
+				],
+				"totalLength": 21,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "Cool, CA",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "Cool"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 8,
+							"body": "CA"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "Cool"
+						},
+						"body": "Cool",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 8,
+							"body": "CA"
+						},
+						"body": "CA",
+						"index": 1,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [
+					{
+						"start": 6,
+						"span": "CA"
+					}
+				],
+				"totalLength": 8,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "Flat 2, 14 Baker Street; London\nNW1 6XE",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "Flat"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 6,
+							"body": "2"
+						},
+						"class": "digit",
+						"length": 1,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 10,
+							"body": "14"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 11,
+							"end": 16,
+							"body": "Baker"
+						},
+						"class": "alpha",
+						"length": 5,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 23,
+							"body": "Street"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 31,
+							"body": "London"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 32,
+							"end": 35,
+							"body": "NW1"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 36,
+							"end": 39,
+							"body": "6XE"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "Flat 2"
+						},
+						"body": "Flat 2",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 23,
+							"body": "14 Baker Street"
+						},
+						"body": "14 Baker Street",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 31,
+							"body": "London"
+						},
+						"body": "London",
+						"index": 2,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 32,
+							"end": 39,
+							"body": "NW1 6XE"
+						},
+						"body": "NW1 6XE",
+						"index": 3,
+						"separator": "newline"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 32,
+							"end": 39,
+							"body": "NW1 6XE"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 39,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "10  Downing   Street",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "10"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 11,
+							"body": "Downing"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 14,
+							"end": 20,
+							"body": "Street"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 20,
+							"body": "10  Downing   Street"
+						},
+						"body": "10  Downing   Street",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 20,
+				"whitespacePattern": "double"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "a\tb\tc",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 3,
+							"body": "b"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 5,
+							"body": "c"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"body": "a",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 3,
+							"body": "b"
+						},
+						"body": "b",
+						"index": 1,
+						"separator": "tab"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 5,
+							"body": "c"
+						},
+						"body": "c",
+						"index": 2,
+						"separator": "tab"
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "tab"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "a\tb c",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 3,
+							"body": "b"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 5,
+							"body": "c"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"body": "a",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 5,
+							"body": "b c"
+						},
+						"body": "b c",
+						"index": 1,
+						"separator": "tab"
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "mixed"
+			}
+		},
+		{
+			"category": "ascii",
+			"input": "O'Brien St-Louis",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "O'Brien"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 16,
+							"body": "St-Louis"
+						},
+						"class": "alpha",
+						"length": 8,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 16,
+							"body": "O'Brien St-Louis"
+						},
+						"body": "O'Brien St-Louis",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 16,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "long",
+			"input": "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 17,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 18,
+							"end": 24,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 27,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 43,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 57,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 58,
+							"end": 64,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 65,
+							"end": 67,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 68,
+							"end": 75,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 27,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 49,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 2,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 75,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 3,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [
+					{
+						"start": 41,
+						"span": "DC"
+					}
+				],
+				"totalLength": 75,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "long",
+			"input": "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 17,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 18,
+							"end": 24,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 27,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 43,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 57,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 58,
+							"end": 64,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 65,
+							"end": 67,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 68,
+							"end": 79,
+							"body": "America1600"
+						},
+						"class": "mixed",
+						"length": 11,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 80,
+							"end": 92,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 93,
+							"end": 99,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 100,
+							"end": 102,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 104,
+							"end": 114,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 116,
+							"end": 118,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 119,
+							"end": 124,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 126,
+							"end": 132,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 133,
+							"end": 139,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 140,
+							"end": 142,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 143,
+							"end": 154,
+							"body": "America1600"
+						},
+						"class": "mixed",
+						"length": 11,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 155,
+							"end": 167,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 168,
+							"end": 174,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 175,
+							"end": 177,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 179,
+							"end": 189,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 191,
+							"end": 193,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 194,
+							"end": 199,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 201,
+							"end": 207,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 208,
+							"end": 214,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 215,
+							"end": 217,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 218,
+							"end": 229,
+							"body": "America1600"
+						},
+						"class": "mixed",
+						"length": 11,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 230,
+							"end": 242,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 243,
+							"end": 249,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 250,
+							"end": 252,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 254,
+							"end": 264,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 266,
+							"end": 268,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 269,
+							"end": 274,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 276,
+							"end": 282,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 283,
+							"end": 289,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 290,
+							"end": 292,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 293,
+							"end": 300,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 27,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 49,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 2,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 102,
+							"body": "United States of America1600 Pennsylvania Avenue NW"
+						},
+						"body": "United States of America1600 Pennsylvania Avenue NW",
+						"index": 3,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 104,
+							"end": 114,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 4,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 116,
+							"end": 124,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 5,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 126,
+							"end": 177,
+							"body": "United States of America1600 Pennsylvania Avenue NW"
+						},
+						"body": "United States of America1600 Pennsylvania Avenue NW",
+						"index": 6,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 179,
+							"end": 189,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 7,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 191,
+							"end": 199,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 8,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 201,
+							"end": 252,
+							"body": "United States of America1600 Pennsylvania Avenue NW"
+						},
+						"body": "United States of America1600 Pennsylvania Avenue NW",
+						"index": 9,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 254,
+							"end": 264,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 10,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 266,
+							"end": 274,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 11,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 276,
+							"end": 300,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 12,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 119,
+							"end": 124,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 119,
+							"end": 124,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 119,
+							"end": 124,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 194,
+							"end": 199,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 194,
+							"end": 199,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 194,
+							"end": 199,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 269,
+							"end": 274,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 269,
+							"end": 274,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 269,
+							"end": 274,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [
+					{
+						"start": 41,
+						"span": "DC"
+					},
+					{
+						"start": 100,
+						"span": "NW"
+					},
+					{
+						"start": 116,
+						"span": "DC"
+					},
+					{
+						"start": 175,
+						"span": "NW"
+					},
+					{
+						"start": 191,
+						"span": "DC"
+					},
+					{
+						"start": 250,
+						"span": "NW"
+					},
+					{
+						"start": 266,
+						"span": "DC"
+					}
+				],
+				"totalLength": 300,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "long",
+			"input": "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America, 1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America, 1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America, 1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 17,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 18,
+							"end": 24,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 27,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 43,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 57,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 58,
+							"end": 64,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 65,
+							"end": 67,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 68,
+							"end": 75,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 77,
+							"end": 81,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 82,
+							"end": 94,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 95,
+							"end": 101,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 102,
+							"end": 104,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 106,
+							"end": 116,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 118,
+							"end": 120,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 121,
+							"end": 126,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 128,
+							"end": 134,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 135,
+							"end": 141,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 142,
+							"end": 144,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 145,
+							"end": 152,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 154,
+							"end": 158,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 159,
+							"end": 171,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 172,
+							"end": 178,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 179,
+							"end": 181,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 183,
+							"end": 193,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 195,
+							"end": 197,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 198,
+							"end": 203,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 205,
+							"end": 211,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 212,
+							"end": 218,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 219,
+							"end": 221,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 222,
+							"end": 229,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 231,
+							"end": 235,
+							"body": "1600"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 236,
+							"end": 248,
+							"body": "Pennsylvania"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 249,
+							"end": 255,
+							"body": "Avenue"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 256,
+							"end": 258,
+							"body": "NW"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 260,
+							"end": 270,
+							"body": "Washington"
+						},
+						"class": "alpha",
+						"length": 10,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 272,
+							"end": 274,
+							"body": "DC"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 275,
+							"end": 280,
+							"body": "20500"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 282,
+							"end": 288,
+							"body": "United"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 289,
+							"end": 295,
+							"body": "States"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 296,
+							"end": 298,
+							"body": "of"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 299,
+							"end": 306,
+							"body": "America"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 27,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 29,
+							"end": 39,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 41,
+							"end": 49,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 2,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 51,
+							"end": 75,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 3,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 77,
+							"end": 104,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 4,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 106,
+							"end": 116,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 5,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 118,
+							"end": 126,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 6,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 128,
+							"end": 152,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 7,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 154,
+							"end": 181,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 8,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 183,
+							"end": 193,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 9,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 195,
+							"end": 203,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 10,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 205,
+							"end": 229,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 11,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 231,
+							"end": 258,
+							"body": "1600 Pennsylvania Avenue NW"
+						},
+						"body": "1600 Pennsylvania Avenue NW",
+						"index": 12,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 260,
+							"end": 270,
+							"body": "Washington"
+						},
+						"body": "Washington",
+						"index": 13,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 272,
+							"end": 280,
+							"body": "DC 20500"
+						},
+						"body": "DC 20500",
+						"index": 14,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 282,
+							"end": 306,
+							"body": "United States of America"
+						},
+						"body": "United States of America",
+						"index": 15,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 44,
+							"end": 49,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 121,
+							"end": 126,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 121,
+							"end": 126,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 121,
+							"end": 126,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 198,
+							"end": 203,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 198,
+							"end": 203,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 198,
+							"end": 203,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 275,
+							"end": 280,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 275,
+							"end": 280,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 275,
+							"end": 280,
+							"body": "20500"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [
+					{
+						"start": 41,
+						"span": "DC"
+					},
+					{
+						"start": 102,
+						"span": "NW"
+					},
+					{
+						"start": 118,
+						"span": "DC"
+					},
+					{
+						"start": 179,
+						"span": "NW"
+					},
+					{
+						"start": 195,
+						"span": "DC"
+					},
+					{
+						"start": 256,
+						"span": "NW"
+					},
+					{
+						"start": 272,
+						"span": "DC"
+					}
+				],
+				"totalLength": 306,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "long",
+			"input": "1111111111111111111111111111111111111111111111111111111111111111",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 64,
+							"body": "1111111111111111111111111111111111111111111111111111111111111111"
+						},
+						"class": "digit",
+						"length": 64,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 64,
+							"body": "1111111111111111111111111111111111111111111111111111111111111111"
+						},
+						"body": "1111111111111111111111111111111111111111111111111111111111111111",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 64,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "〒100-0001 東京都千代田区千代田1-1",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Hani",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "〒100-0001"
+						},
+						"class": "digit",
+						"length": 9,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 10,
+							"end": 20,
+							"body": "東京都千代田区千代田"
+						},
+						"class": "cjk",
+						"length": 10,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 20,
+							"end": 23,
+							"body": "1-1"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 23,
+							"body": "〒100-0001 東京都千代田区千代田1-1"
+						},
+						"body": "〒100-0001 東京都千代田区千代田1-1",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "jp_postcode",
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "〒100-0001"
+						},
+						"confidence": 0.95
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 23,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "東京都千代田区千代田1-1",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Hani",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "東京都千代田区千代田"
+						},
+						"class": "cjk",
+						"length": 10,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 10,
+							"end": 13,
+							"body": "1-1"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 13,
+							"body": "東京都千代田区千代田1-1"
+						},
+						"body": "東京都千代田区千代田1-1",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 13,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "서울특별시 중구 세종대로 110",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Hang",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "서울특별시"
+						},
+						"class": "cjk",
+						"length": 5,
+						"script": "Hang"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 8,
+							"body": "중구"
+						},
+						"class": "cjk",
+						"length": 2,
+						"script": "Hang"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 13,
+							"body": "세종대로"
+						},
+						"class": "cjk",
+						"length": 4,
+						"script": "Hang"
+					},
+					{
+						"span": {
+							"start": 14,
+							"end": 17,
+							"body": "110"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 17,
+							"body": "서울특별시 중구 세종대로 110"
+						},
+						"body": "서울특별시 중구 세종대로 110",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 17,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "北京市朝阳区建国路88号",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Hani",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "北京市朝阳区建国路"
+						},
+						"class": "cjk",
+						"length": 9,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 11,
+							"body": "88"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 11,
+							"end": 12,
+							"body": "号"
+						},
+						"class": "cjk",
+						"length": 1,
+						"script": "Hani"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 12,
+							"body": "北京市朝阳区建国路88号"
+						},
+						"body": "北京市朝阳区建国路88号",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 12,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "ニューヨーク州 10001",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Kana",
+						"share": 0.8
+					},
+					{
+						"script": "Hani",
+						"share": 0.2
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "ニューヨーク州"
+						},
+						"class": "cjk",
+						"length": 7,
+						"script": "Kana"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 13,
+							"body": "10001"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 13,
+							"body": "ニューヨーク州 10001"
+						},
+						"body": "ニューヨーク州 10001",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 8,
+							"end": 13,
+							"body": "10001"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 8,
+							"end": 13,
+							"body": "10001"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 8,
+							"end": 13,
+							"body": "10001"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 13,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "ブロードウェイ",
+			"shape": {
+				"characterClass": "cjk",
+				"scripts": [
+					{
+						"script": "Kana",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "ブロードウェイ"
+						},
+						"class": "cjk",
+						"length": 7,
+						"script": "Kana"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "ブロードウェイ"
+						},
+						"body": "ブロードウェイ",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "cjk",
+			"input": "ｱｲｳ ABC",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Kana",
+						"share": 0.5
+					},
+					{
+						"script": "Latn",
+						"share": 0.5
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "ｱｲｳ"
+						},
+						"class": "cjk",
+						"length": 3,
+						"script": "Kana"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 7,
+							"body": "ABC"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "ｱｲｳ ABC"
+						},
+						"body": "ｱｲｳ ABC",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "arabic",
+			"input": "شارع الملك فهد، الرياض 12211",
+			"shape": {
+				"characterClass": "arabic",
+				"scripts": [
+					{
+						"script": "Arab",
+						"share": 0.9473684210526315
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.05263157894736842
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "شارع"
+						},
+						"class": "arabic",
+						"length": 4,
+						"script": "Arab"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 10,
+							"body": "الملك"
+						},
+						"class": "arabic",
+						"length": 5,
+						"script": "Arab"
+					},
+					{
+						"span": {
+							"start": 11,
+							"end": 15,
+							"body": "فهد،"
+						},
+						"class": "arabic",
+						"length": 4,
+						"script": "Arab"
+					},
+					{
+						"span": {
+							"start": 16,
+							"end": 22,
+							"body": "الرياض"
+						},
+						"class": "arabic",
+						"length": 6,
+						"script": "Arab"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "12211"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 28,
+							"body": "شارع الملك فهد، الرياض 12211"
+						},
+						"body": "شارع الملك فهد، الرياض 12211",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "12211"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "12211"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "12211"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 28,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "arabic",
+			"input": "١٢٣٤٥",
+			"shape": {
+				"characterClass": "arabic",
+				"scripts": [
+					{
+						"script": "Arab",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "١٢٣٤٥"
+						},
+						"class": "arabic",
+						"length": 5,
+						"script": "Arab"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "١٢٣٤٥"
+						},
+						"body": "١٢٣٤٥",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "arabic",
+			"input": "القاهرة",
+			"shape": {
+				"characterClass": "arabic",
+				"scripts": [
+					{
+						"script": "Arab",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "القاهرة"
+						},
+						"class": "arabic",
+						"length": 7,
+						"script": "Arab"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "القاهرة"
+						},
+						"body": "القاهرة",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "cyrillic",
+			"input": "ул. Тверская, 7, Москва, 125009",
+			"shape": {
+				"characterClass": "cyrillic",
+				"scripts": [
+					{
+						"script": "Cyrl",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "ул"
+						},
+						"class": "cyrillic",
+						"length": 2,
+						"script": "Cyrl"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 12,
+							"body": "Тверская"
+						},
+						"class": "cyrillic",
+						"length": 8,
+						"script": "Cyrl"
+					},
+					{
+						"span": {
+							"start": 14,
+							"end": 15,
+							"body": "7"
+						},
+						"class": "digit",
+						"length": 1,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 23,
+							"body": "Москва"
+						},
+						"class": "cyrillic",
+						"length": 6,
+						"script": "Cyrl"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 31,
+							"body": "125009"
+						},
+						"class": "digit",
+						"length": 6,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 12,
+							"body": "ул. Тверская"
+						},
+						"body": "ул. Тверская",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 14,
+							"end": 15,
+							"body": "7"
+						},
+						"body": "7",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 23,
+							"body": "Москва"
+						},
+						"body": "Москва",
+						"index": 2,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 31,
+							"body": "125009"
+						},
+						"body": "125009",
+						"index": 3,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 31,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "cyrillic",
+			"input": "Москва",
+			"shape": {
+				"characterClass": "cyrillic",
+				"scripts": [
+					{
+						"script": "Cyrl",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "Москва"
+						},
+						"class": "cyrillic",
+						"length": 6,
+						"script": "Cyrl"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "Москва"
+						},
+						"body": "Москва",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "greek",
+			"input": "Ερμού 15, Αθήνα 105 63",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Zzzz",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "Ερμού"
+						},
+						"class": "mixed",
+						"length": 5,
+						"script": "Zzzz"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 8,
+							"body": "15"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 10,
+							"end": 15,
+							"body": "Αθήνα"
+						},
+						"class": "mixed",
+						"length": 5,
+						"script": "Zzzz"
+					},
+					{
+						"span": {
+							"start": 16,
+							"end": 19,
+							"body": "105"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 20,
+							"end": 22,
+							"body": "63"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 8,
+							"body": "Ερμού 15"
+						},
+						"body": "Ερμού 15",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 10,
+							"end": 22,
+							"body": "Αθήνα 105 63"
+						},
+						"body": "Αθήνα 105 63",
+						"index": 1,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "cz_postcode",
+						"span": {
+							"start": 16,
+							"end": 22,
+							"body": "105 63"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "sk_postcode",
+						"span": {
+							"start": 16,
+							"end": 22,
+							"body": "105 63"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "se_postcode",
+						"span": {
+							"start": 16,
+							"end": 22,
+							"body": "105 63"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "gr_postcode",
+						"span": {
+							"start": 16,
+							"end": 22,
+							"body": "105 63"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 22,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "greek",
+			"input": "Αθήνα",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Zzzz",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "Αθήνα"
+						},
+						"class": "mixed",
+						"length": 5,
+						"script": "Zzzz"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "Αθήνα"
+						},
+						"body": "Αθήνα",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "mixed-script",
+			"input": "金龍酒家, 12 Gerrard Street, London WC2H 7JS",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.8571428571428571
+					},
+					{
+						"script": "Hani",
+						"share": 0.14285714285714285
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "金龍酒家"
+						},
+						"class": "cjk",
+						"length": 4,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 8,
+							"body": "12"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 16,
+							"body": "Gerrard"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 23,
+							"body": "Street"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 31,
+							"body": "London"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 32,
+							"end": 36,
+							"body": "WC2H"
+						},
+						"class": "mixed",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 37,
+							"end": 40,
+							"body": "7JS"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "金龍酒家"
+						},
+						"body": "金龍酒家",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 23,
+							"body": "12 Gerrard Street"
+						},
+						"body": "12 Gerrard Street",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 25,
+							"end": 40,
+							"body": "London WC2H 7JS"
+						},
+						"body": "London WC2H 7JS",
+						"index": 2,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 32,
+							"end": 40,
+							"body": "WC2H 7JS"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 40,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "mixed-script",
+			"input": "逊克二分场四队, heilongjiang, china",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.7083333333333334
+					},
+					{
+						"script": "Hani",
+						"share": 0.2916666666666667
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "逊克二分场四队"
+						},
+						"class": "cjk",
+						"length": 7,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 21,
+							"body": "heilongjiang"
+						},
+						"class": "alpha",
+						"length": 12,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "china"
+						},
+						"class": "alpha",
+						"length": 5,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "逊克二分场四队"
+						},
+						"body": "逊克二分场四队",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 21,
+							"body": "heilongjiang"
+						},
+						"body": "heilongjiang",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 28,
+							"body": "china"
+						},
+						"body": "china",
+						"index": 2,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 28,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "mixed-script",
+			"input": "ニューヨーク-NY",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Kana",
+						"share": 0.6666666666666666
+					},
+					{
+						"script": "Latn",
+						"share": 0.3333333333333333
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "ニューヨーク-"
+						},
+						"class": "cjk",
+						"length": 7,
+						"script": "Kana"
+					},
+					{
+						"span": {
+							"start": 7,
+							"end": 9,
+							"body": "NY"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "ニューヨーク-NY"
+						},
+						"body": "ニューヨーク-NY",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 9,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "mixed-script",
+			"input": "Москва Moscow 北京",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Cyrl",
+						"share": 0.42857142857142855
+					},
+					{
+						"script": "Latn",
+						"share": 0.42857142857142855
+					},
+					{
+						"script": "Hani",
+						"share": 0.14285714285714285
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "Москва"
+						},
+						"class": "cyrillic",
+						"length": 6,
+						"script": "Cyrl"
+					},
+					{
+						"span": {
+							"start": 7,
+							"end": 13,
+							"body": "Moscow"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 14,
+							"end": 16,
+							"body": "北京"
+						},
+						"class": "cjk",
+						"length": 2,
+						"script": "Hani"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 16,
+							"body": "Москва Moscow 北京"
+						},
+						"body": "Москва Moscow 北京",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 16,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "mixed-script",
+			"input": "Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.8918918918918919
+					},
+					{
+						"script": "Hani",
+						"share": 0.10810810810810811
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "Far"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 8,
+							"body": "East"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 16,
+							"body": "Chinese"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 17,
+							"end": 21,
+							"body": "口福羊汤"
+						},
+						"class": "cjk",
+						"length": 4,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 25,
+							"body": "13"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 26,
+							"end": 33,
+							"body": "Gerrard"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 34,
+							"end": 36,
+							"body": "St"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 38,
+							"end": 44,
+							"body": "London"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 45,
+							"end": 48,
+							"body": "W1D"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 49,
+							"end": 52,
+							"body": "5PS"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 21,
+							"body": "Far East Chinese 口福羊汤"
+						},
+						"body": "Far East Chinese 口福羊汤",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 23,
+							"end": 36,
+							"body": "13 Gerrard St"
+						},
+						"body": "13 Gerrard St",
+						"index": 1,
+						"separator": "comma"
+					},
+					{
+						"span": {
+							"start": 38,
+							"end": 52,
+							"body": "London W1D 5PS"
+						},
+						"body": "London W1D 5PS",
+						"index": 2,
+						"separator": "comma"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 45,
+							"end": 52,
+							"body": "W1D 5PS"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 52,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "68161",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "68161"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "68161"
+						},
+						"body": "68161",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "68161"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "68161"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "68161"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "SW1A 1AA",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "SW1A"
+						},
+						"class": "mixed",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 8,
+							"body": "1AA"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 8,
+							"body": "SW1A 1AA"
+						},
+						"body": "SW1A 1AA",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 0,
+							"end": 8,
+							"body": "SW1A 1AA"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 8,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "SW1A1AA",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "SW1A1AA"
+						},
+						"class": "mixed",
+						"length": 7,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "SW1A1AA"
+						},
+						"body": "SW1A1AA",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "SW1A1AA"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "M1 1AE",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "M1"
+						},
+						"class": "mixed",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 6,
+							"body": "1AE"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "M1 1AE"
+						},
+						"body": "M1 1AE",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "uk_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "M1 1AE"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "K1A 0B1",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "K1A"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 7,
+							"body": "0B1"
+						},
+						"class": "mixed",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "K1A 0B1"
+						},
+						"body": "K1A 0B1",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "ca_postcode",
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "K1A 0B1"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "K1A0B1",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "K1A0B1"
+						},
+						"class": "mixed",
+						"length": 6,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "K1A0B1"
+						},
+						"body": "K1A0B1",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "ca_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "K1A0B1"
+						},
+						"confidence": 0.95
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "10118-1234",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "10118-1234"
+						},
+						"class": "digit",
+						"length": 10,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "10118-1234"
+						},
+						"body": "10118-1234",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip4",
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "10118-1234"
+						},
+						"confidence": 0.95
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 10,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "1012 LG",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "1012"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 7,
+							"body": "LG"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "1012 LG"
+						},
+						"body": "1012 LG",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "nl_postcode",
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "1012 LG"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "1012LG",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "1012LG"
+						},
+						"class": "mixed",
+						"length": 6,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "1012LG"
+						},
+						"body": "1012LG",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "nl_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "1012LG"
+						},
+						"confidence": 0.9
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "75004",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "75004"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "75004"
+						},
+						"body": "75004",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "75004"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "75004"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "75004"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "123 45",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "123"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 4,
+							"end": 6,
+							"body": "45"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "123 45"
+						},
+						"body": "123 45",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "cz_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "123 45"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "sk_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "123 45"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "se_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "123 45"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "gr_postcode",
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "123 45"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "〒100-0001",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "〒100-0001"
+						},
+						"class": "digit",
+						"length": 9,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "〒100-0001"
+						},
+						"body": "〒100-0001",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "jp_postcode",
+						"span": {
+							"start": 0,
+							"end": 9,
+							"body": "〒100-0001"
+						},
+						"confidence": 0.95
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 9,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "postcode",
+			"input": "12345 Main Street",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 10,
+							"body": "Main"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 11,
+							"end": 17,
+							"body": "Street"
+						},
+						"class": "alpha",
+						"length": 6,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 17,
+							"body": "12345 Main Street"
+						},
+						"body": "12345 Main Street",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 17,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "PO Box 123",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "PO"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 6,
+							"body": "Box"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 7,
+							"end": 10,
+							"body": "123"
+						},
+						"class": "digit",
+						"length": 3,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "PO Box 123"
+						},
+						"body": "PO Box 123",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "po_box",
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "PO Box 123"
+						},
+						"confidence": 0.85
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 10,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "P.O. Box 4B",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "P"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 3,
+							"body": "O"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 5,
+							"end": 8,
+							"body": "Box"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 11,
+							"body": "4B"
+						},
+						"class": "mixed",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 11,
+							"body": "P.O. Box 4B"
+						},
+						"body": "P.O. Box 4B",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "po_box",
+						"span": {
+							"start": 5,
+							"end": 11,
+							"body": "Box 4B"
+						},
+						"confidence": 0.85
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 11,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "BP 12",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "BP"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 5,
+							"body": "12"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "BP 12"
+						},
+						"body": "BP 12",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "po_box",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "BP 12"
+						},
+						"confidence": 0.85
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "Apartado 5000",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 8,
+							"body": "Apartado"
+						},
+						"class": "alpha",
+						"length": 8,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 9,
+							"end": 13,
+							"body": "5000"
+						},
+						"class": "digit",
+						"length": 4,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 13,
+							"body": "Apartado 5000"
+						},
+						"body": "Apartado 5000",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "po_box",
+						"span": {
+							"start": 0,
+							"end": 13,
+							"body": "Apartado 5000"
+						},
+						"confidence": 0.85
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 13,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "Casilla 99",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "Casilla"
+						},
+						"class": "alpha",
+						"length": 7,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 10,
+							"body": "99"
+						},
+						"class": "digit",
+						"length": 2,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "Casilla 99"
+						},
+						"body": "Casilla 99",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "po_box",
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "Casilla 99"
+						},
+						"confidence": 0.85
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 10,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "po-box",
+			"input": "box",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "box"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "box"
+						},
+						"body": "box",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "???",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "???"
+						},
+						"body": "???",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": ",,,",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "---",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "---"
+						},
+						"body": "---",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "...",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "..."
+						},
+						"body": "...",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "、。",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "、。"
+						},
+						"body": "、。",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 2,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "'''",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "'''"
+						},
+						"body": "'''",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": "-",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "-"
+						},
+						"body": "-",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "punctuation-only",
+			"input": ", , ,",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [],
+				"tokenClasses": [],
+				"segments": [],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "\ud800",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Zzzz",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "\ud800"
+						},
+						"class": "mixed",
+						"length": 1,
+						"script": "Zzzz"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "\ud800"
+						},
+						"body": "\ud800",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 1,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "\udc00 abc",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.75
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.25
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "\udc00"
+						},
+						"class": "mixed",
+						"length": 1,
+						"script": "Zzzz"
+					},
+					{
+						"span": {
+							"start": 2,
+							"end": 5,
+							"body": "abc"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "\udc00 abc"
+						},
+						"body": "\udc00 abc",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 5,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "abc\ud83d",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.75
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.25
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "abc"
+						},
+						"class": "alpha",
+						"length": 3,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 4,
+							"body": "\ud83d"
+						},
+						"class": "mixed",
+						"length": 1,
+						"script": "Zzzz"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 4,
+							"body": "abc\ud83d"
+						},
+						"body": "abc\ud83d",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 4,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "a\u0000b",
+			"shape": {
+				"characterClass": "alpha",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.6666666666666666
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.3333333333333333
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "a"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 1,
+							"end": 3,
+							"body": "\u0000b"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Zzzz"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 3,
+							"body": "a\u0000b"
+						},
+						"body": "a\u0000b",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 3,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "𠀀 test",
+			"shape": {
+				"characterClass": "mixed",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.8
+					},
+					{
+						"script": "Hani",
+						"share": 0.2
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "𠀀"
+						},
+						"class": "cjk",
+						"length": 2,
+						"script": "Hani"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 7,
+							"body": "test"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 7,
+							"body": "𠀀 test"
+						},
+						"body": "𠀀 test",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 7,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "📍 Main St",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.8571428571428571
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.14285714285714285
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 2,
+							"body": "📍"
+						},
+						"class": "mixed",
+						"length": 2,
+						"script": "Zzzz"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 7,
+							"body": "Main"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 8,
+							"end": 10,
+							"body": "St"
+						},
+						"class": "alpha",
+						"length": 2,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "📍 Main St"
+						},
+						"body": "📍 Main St",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 10,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "é 12345",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 0.5
+					},
+					{
+						"script": "Zzzz",
+						"share": 0.5
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 1,
+							"body": "e"
+						},
+						"class": "alpha",
+						"length": 1,
+						"script": "Latn"
+					},
+					{
+						"span": {
+							"start": 1,
+							"end": 2,
+							"body": "́"
+						},
+						"class": "mixed",
+						"length": 1,
+						"script": "Zzzz"
+					},
+					{
+						"span": {
+							"start": 3,
+							"end": 8,
+							"body": "12345"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 8,
+							"body": "é 12345"
+						},
+						"body": "é 12345",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 3,
+							"end": 8,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 3,
+							"end": 8,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 3,
+							"end": 8,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 8,
+				"whitespacePattern": "single"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "12345 Main",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 6,
+							"end": 10,
+							"body": "Main"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 10,
+							"body": "12345 Main"
+						},
+						"body": "12345 Main",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 10,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "​12345",
+			"shape": {
+				"characterClass": "numeric",
+				"scripts": [
+					{
+						"script": "Zzzz",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "​12345"
+						},
+						"class": "digit",
+						"length": 6,
+						"script": "Zzzz"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 6,
+							"body": "​12345"
+						},
+						"body": "​12345",
+						"index": 0,
+						"separator": null
+					}
+				],
+				"knownFormats": [],
+				"regionAbbreviations": [],
+				"totalLength": 6,
+				"whitespacePattern": "none"
+			}
+		},
+		{
+			"category": "malformed",
+			"input": "12345\r\nMain",
+			"shape": {
+				"characterClass": "alphanumeric",
+				"scripts": [
+					{
+						"script": "Latn",
+						"share": 1
+					}
+				],
+				"tokenClasses": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"class": "digit",
+						"length": 5,
+						"script": "Zyyy"
+					},
+					{
+						"span": {
+							"start": 7,
+							"end": 11,
+							"body": "Main"
+						},
+						"class": "alpha",
+						"length": 4,
+						"script": "Latn"
+					}
+				],
+				"segments": [
+					{
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"body": "12345",
+						"index": 0,
+						"separator": null
+					},
+					{
+						"span": {
+							"start": 7,
+							"end": 11,
+							"body": "Main"
+						},
+						"body": "Main",
+						"index": 1,
+						"separator": "newline"
+					}
+				],
+				"knownFormats": [
+					{
+						"format": "us_zip",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "fr_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					},
+					{
+						"format": "de_postcode",
+						"span": {
+							"start": 0,
+							"end": 5,
+							"body": "12345"
+						},
+						"confidence": 0.6
+					}
+				],
+				"regionAbbreviations": [],
+				"totalLength": 11,
+				"whitespacePattern": "none"
+			}
+		}
+	]
+}
