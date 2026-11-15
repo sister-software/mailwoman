@@ -193,7 +193,7 @@ describe("the loader", () => {
 		state.setDefaultSource(() => WRONG_ABI)
 
 		expect(() => entry.createRecognizer([coordinates]).recognize("1, 2")).toThrow(
-			/ABI version 2 does not match the loader's ABI version 3/u
+			/ABI version 2 does not match the loader's ABI version 4/u
 		)
 	})
 

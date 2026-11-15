@@ -40,15 +40,41 @@
 //! `rcg_shapes` writes a family's shape table, the shape IDs in byte order joined by newlines, at `rcg_json_ptr`. The
 //! caller reads it once when it loads the family and keeps the strings.
 //!
-//! The result has no per-family fields yet.
+//! `rcg_structure` computes the `structure` family's fields for a text, in one call, and writes them as `u32` words at
+//! `rcg_result_ptr` in place of the recognition records. It returns the number of words. The layout, with every offset a
+//! UTF-8 byte offset the TypeScript side converts:
+//!
+//! ```text
+//! word 0        the number of tokens, n
+//! word 1        the number of segments, m
+//! word 2        the number of region abbreviations, r
+//! words 3..13   the codepoint count of each script, in the order of recognize_core::charset::Script, Zyyy always 0
+//! then n tokens of TOKEN_WORDS words: start, end, class | script << 8
+//! then m segments of SEGMENT_WORDS words: start, end, separator
+//! then r words: the position among the tokens of each region abbreviation
+//! ```
+//!
+//! The class codes are those of `recognize_core::structure::TokenClass` and the separator codes those of
+//! `recognize_core::structure::Separator`.
 
 use std::cell::RefCell;
 
+use recognize_core::charset::SCRIPTS;
+use recognize_core::structure::Structure;
 use recognize_core::{ArtifactError, Engine, Expected, SearchError, ValidationResult};
 
 /// The ABI version the TypeScript loader checks. Bump it on any change to an export's signature or to the result
-/// records' layout.
-pub const ABI_VERSION: u32 = 3;
+/// records' layout. Version 4 added `rcg_structure`.
+pub const ABI_VERSION: u32 = 4;
+
+/// The words before the first token of a structure result: three counts and one count for each script.
+pub const STRUCTURE_HEADER_WORDS: usize = 3 + SCRIPTS;
+
+/// The words of one token in a structure result.
+pub const TOKEN_WORDS: usize = 3;
+
+/// The words of one segment in a structure result.
+pub const SEGMENT_WORDS: usize = 3;
 
 /// The families one instance loads, bounded by the bits of the mask `rcg_recognize` takes.
 pub const MAX_FAMILIES: usize = 32;
@@ -83,6 +109,7 @@ pub mod code {
 struct State {
 	engine: Engine,
 	records: Vec<u32>,
+	structure: Structure,
 	json: Vec<u8>,
 	error_code: i32,
 	error_message: String,
@@ -226,6 +253,7 @@ fn search_code(error: &SearchError) -> i32 {
 		SearchError::InputTooLong { .. } => code::INPUT_TOO_LONG,
 		SearchError::NotUTF8 { .. } => code::NOT_UTF8,
 		SearchError::Automaton(_) => code::SEARCH,
+		SearchError::NoPartition { .. } => code::ARGUMENT,
 	}
 }
 
@@ -299,6 +327,59 @@ pub unsafe extern "C" fn rcg_recognize(ptr: *const u8, len: usize, mask: u32) ->
 		}
 
 		i32::try_from(located.len()).unwrap_or(-1)
+	})
+}
+
+/// Computes the structural fields of the UTF-8 text at `ptr` with the family whose handle is `family`, and returns the
+/// number of `u32` words it wrote at `rcg_result_ptr`, or -1. The layout is in the module documentation. The call
+/// overwrites the records `rcg_recognize` wrote, so a caller reads those first.
+///
+/// # Safety
+/// `ptr` must address `len` readable bytes.
+#[no_mangle]
+pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32) -> i32 {
+	let bytes = std::slice::from_raw_parts(ptr, len);
+
+	STATE.with(|state| {
+		let mut state = state.borrow_mut();
+		let state = &mut *state;
+
+		if family as usize >= state.engine.family_ids().len() {
+			return fail(state, code::ARGUMENT, "no family has that handle");
+		}
+
+		let Ok(text) = std::str::from_utf8(bytes) else {
+			return fail(state, code::NOT_UTF8, "the text is not UTF-8");
+		};
+
+		if let Err(error) = state.engine.structure(family as usize, text, &mut state.structure) {
+			return fail(state, search_code(&error), error.to_string());
+		}
+
+		let structure = &state.structure;
+		let records = &mut state.records;
+
+		records.clear();
+		records.push(structure.tokens.len() as u32);
+		records.push(structure.segments.len() as u32);
+		records.push(structure.regions.len() as u32);
+		records.extend_from_slice(&structure.scripts);
+
+		for token in &structure.tokens {
+			records.extend_from_slice(&[
+				token.start,
+				token.end,
+				u32::from(token.class as u8) | u32::from(token.script as u8) << 8,
+			]);
+		}
+
+		for segment in &structure.segments {
+			records.extend_from_slice(&[segment.start, segment.end, u32::from(segment.separator as u8)]);
+		}
+
+		records.extend_from_slice(&structure.regions);
+
+		i32::try_from(records.len()).unwrap_or(-1)
 	})
 }
 

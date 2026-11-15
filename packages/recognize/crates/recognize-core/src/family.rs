@@ -35,6 +35,7 @@ pub fn shape(id: &str) -> ShapeBuilder {
 		handler: None,
 		ambiguity: AmbiguityPolicy::Exclusive,
 		unreachable: None,
+		partition: None,
 		source: Source::here(),
 	}
 }
@@ -51,6 +52,7 @@ pub struct ShapeBuilder {
 	handler: Option<String>,
 	ambiguity: AmbiguityPolicy,
 	unreachable: Option<String>,
+	partition: Option<String>,
 	source: Source,
 }
 
@@ -78,6 +80,13 @@ impl ShapeBuilder {
 	/// Sets where the shape may match.
 	pub fn scope(mut self, scope: Scope) -> Self {
 		self.scope = scope;
+		self
+	}
+
+	/// Makes the shape a piece of the partition `name`: sets the scope to [`Scope::Partition`] and names the partition.
+	pub fn partition(mut self, name: &str) -> Self {
+		self.scope = Scope::Partition;
+		self.partition = Some(name.to_string());
 		self
 	}
 
@@ -181,6 +190,7 @@ impl Family {
 				handler,
 				ambiguity,
 				unreachable,
+				partition,
 				source,
 			} = builder;
 
@@ -206,6 +216,7 @@ impl Family {
 				handler,
 				ambiguity,
 				unreachable,
+				partition,
 				source,
 			});
 		}

@@ -9,7 +9,25 @@
  * The ABI version this loader implements.
  * It equals `ABI_VERSION` in `crates/recognize-wasm`.
  */
-export const ABI_VERSION = 3
+export const ABI_VERSION = 4
+
+/**
+ * The words before the first token of a structure result, equal to `STRUCTURE_HEADER_WORDS`
+ * in `crates/recognize-wasm`: the token, segment and region counts, then the
+ * codepoint count of each of the ten scripts.
+ */
+export const STRUCTURE_HEADER_WORDS = 13
+
+/**
+ * The words of one token in a structure result: start, end, and the class code
+ * with the script code in the next byte.
+ */
+export const TOKEN_WORDS = 3
+
+/**
+ * The words of one segment in a structure result: start, end and the separator code.
+ */
+export const SEGMENT_WORDS = 3
 
 /**
  * The words of one result record, equal to `RECORD_WORDS` in `crates/recognize-wasm`.
@@ -53,6 +71,13 @@ export interface Exports {
 	 * It overwrites the JSON `rcg_recognize` wrote.
 	 */
 	rcg_trace(pointer: number, length: number, mask: number, explainPointer: number, explainLength: number): number
+	/**
+	 * Computes the structural fields of the text with the family whose handle is `family`.
+	 *
+	 * Returns the number of words written at `rcg_result_ptr`, or -1.
+	 * It overwrites the recognition records.
+	 */
+	rcg_structure(pointer: number, length: number, family: number): number
 	rcg_result_ptr(): number
 	rcg_json_ptr(): number
 }

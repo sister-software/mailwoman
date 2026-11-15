@@ -24,6 +24,10 @@ pub struct ShapeDeclaration {
 	pub id: String,
 	/// The PascalCase name of the shape's recognition kind.
 	pub kind: String,
+	/// The partition the shape is a piece of. A partition piece is never a recognition, so the generated TypeScript lists
+	/// no kind for it. Absent from the declarations of every other shape.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub partition: Option<String>,
 	/// The fields of the validator's payload, from the validator's own declaration. Empty without a validator.
 	pub payload: Vec<PayloadField>,
 	/// Every rejection code a recognition of the shape can carry: the validator's and the engine's.
@@ -92,6 +96,7 @@ impl Declarations {
 					handler: shape.handler.as_ref().map(|handler| handler.as_str().to_string()),
 					id: shape.id.clone(),
 					kind: kind_name(&shape.id),
+					partition: shape.partition.clone(),
 					payload: schema.map(|schema| schema.payload.to_vec()).unwrap_or_default(),
 					rejections,
 					validator: shape.validator.as_ref().map(|validator| validator.as_str().to_string()),

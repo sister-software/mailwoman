@@ -9,7 +9,7 @@
 //!
 //! ```text
 //! 0   4 bytes  ASCII `RCA1`
-//! 4   u16      artifact schema version, 4
+//! 4   u16      artifact schema version, 5
 //! 6   u16      flags, 0
 //! 8   u32      header byte length
 //! 12  u32      directory entry count, twice the automaton count plus one
@@ -25,13 +25,14 @@
 //!
 //! Every integer is little-endian. Each automaton has two payloads, in this order: a `regex-automata` DFA serialization
 //! with its leading alignment padding removed, then its viability table ([`crate::viability`]). Role is 1 for the
-//! whole-input automaton and 2 for the embedded-span automaton. Kind is 1 for a dense DFA, 2 for a sparse DFA and 3 for
+//! whole-input automaton, 2 for the embedded-span automaton and 3 for a partition automaton, of which a family holds
+//! one for each partition it declares, each named in the header. Kind is 1 for a dense DFA, 2 for a sparse DFA and 3 for
 //! a viability table. The last entry belongs to the family and not to an automaton: role 0, kind 4, the capture
 //! program ([`crate::captures`]) as canonical JSON. The program holds the grammar of every shape, its validator and its
 //! declaration site, and where each term is declared, because the diagnostic replay of a trace reads it.
 //!
 //! Version 1 had no viability table. Version 2 had no capture program and a placeholder declarations hash. Version 3's
-//! program held only the shapes that declare captures and no declaration site. A reader refuses an earlier version with
+//! program held only the shapes that declare captures and no declaration site. Version 4 had no partition automaton. A reader refuses an earlier version with
 //! [`ArtifactError::Version`].
 //!
 //! The header records the SHA-256 of each payload, of each table and of the capture program, and the parser refuses
@@ -59,7 +60,7 @@ pub const MAGIC: &[u8; 4] = b"RCA1";
 pub const ARTIFACT_FORMAT: &str = "mailwoman.recognize.artifact";
 
 /// The envelope version this crate writes and reads.
-pub const ARTIFACT_SCHEMA_VERSION: u32 = 4;
+pub const ARTIFACT_SCHEMA_VERSION: u32 = 5;
 
 /// The directory `kind` of a viability table. A DFA's kind is its backend's code.
 const KIND_VIABILITY: u16 = 3;
@@ -93,6 +94,8 @@ pub enum Role {
 	Whole,
 	/// Anchored at a start the search chooses: the shapes that match a span inside the input.
 	Embedded,
+	/// Anchored at each start of a left-to-right scan: the shapes of one partition, named in the header.
+	Partition,
 }
 
 impl Role {
@@ -100,6 +103,7 @@ impl Role {
 		match self {
 			Role::Whole => 1,
 			Role::Embedded => 2,
+			Role::Partition => 3,
 		}
 	}
 
@@ -108,6 +112,7 @@ impl Role {
 		match self {
 			Role::Whole => "whole",
 			Role::Embedded => "embedded",
+			Role::Partition => "partition",
 		}
 	}
 }
@@ -152,6 +157,9 @@ pub struct PatternMeta {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AutomatonMeta {
 	pub backend: Backend,
+	/// The partition a `Partition` automaton scans, and absent from every other role.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub partition: Option<String>,
 	pub patterns: Vec<PatternMeta>,
 	pub role: Role,
 	/// The SHA-256 of the payload bytes. The loader refuses a payload that differs, because a flipped byte inside a
@@ -514,14 +522,31 @@ fn check_header(header: &Header) -> Result<(), ArtifactError> {
 		return Err(field("inputLimitBytes", "zero"));
 	}
 
-	let mut roles = Vec::new();
+	let mut roles: Vec<(Role, Option<&str>)> = Vec::new();
 
 	for meta in &header.automata {
-		if roles.contains(&meta.role) {
+		let key = (meta.role, meta.partition.as_deref());
+
+		if roles.contains(&key) {
 			return Err(ArtifactError::DuplicateRole(meta.role));
 		}
 
-		roles.push(meta.role);
+		roles.push(key);
+
+		if (meta.role == Role::Partition) != meta.partition.is_some() {
+			return Err(field(
+				"automata",
+				format!(
+					"the {} automaton {} a partition name",
+					meta.role.as_str(),
+					if meta.role == Role::Partition { "has no" } else { "has" }
+				),
+			));
+		}
+
+		if meta.partition.as_deref().is_some_and(|name| !is_dotted_name(name)) {
+			return Err(field("automata", "a partition name is not a dotted lowercase name"));
+		}
 
 		if meta.patterns.is_empty() {
 			return Err(field(
@@ -550,6 +575,7 @@ fn check_header(header: &Header) -> Result<(), ArtifactError> {
 			let admitted = match meta.role {
 				Role::Whole => matches!(pattern.scope, Scope::Whole | Scope::WholeOrEmbedded),
 				Role::Embedded => matches!(pattern.scope, Scope::Embedded | Scope::WholeOrEmbedded),
+				Role::Partition => pattern.scope == Scope::Partition,
 			};
 
 			if !admitted {
@@ -806,6 +832,7 @@ mod tests {
 				.enumerate()
 				.map(|(index, role)| AutomatonMeta {
 					backend: Backend::Dense,
+					partition: None,
 					patterns: vec![PatternMeta {
 						scope: Scope::WholeOrEmbedded,
 						shape: "word.ascii".to_string(),
@@ -889,13 +916,13 @@ mod tests {
 		let mut bad = good.clone();
 
 		// The previous schema version is refused with its own number, so a stale committed file names itself.
-		bad[4] = 3;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(3));
+		bad[4] = 4;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(4));
 
 		let mut bad = good.clone();
 
-		bad[4] = 5;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(5));
+		bad[4] = 6;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(6));
 
 		let mut bad = good.clone();
 

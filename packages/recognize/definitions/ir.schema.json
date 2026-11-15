@@ -56,7 +56,11 @@
 				"id": { "$ref": "#/$defs/dottedName" },
 				"grammar": { "$ref": "#/$defs/node" },
 				"captures": { "type": "array", "items": { "$ref": "#/$defs/capture" } },
-				"scope": { "enum": ["whole", "embedded", "whole_or_embedded"] },
+				"scope": { "enum": ["whole", "embedded", "whole_or_embedded", "partition"] },
+				"partition": {
+					"description": "The partition a shape with the partition scope belongs to. Absent from every other shape.",
+					"$ref": "#/$defs/dottedName"
+				},
 				"validator": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"handler": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"ambiguity": { "$ref": "#/$defs/ambiguity" },

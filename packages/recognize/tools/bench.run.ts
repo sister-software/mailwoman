@@ -10,14 +10,17 @@
  *   in one Node process, the legacy tool's method.
  *   Every result feeds a running sum so the engine cannot drop the work.
  *
- *   The recognizer is composed from the `primitives` and `coordinates` families.
+ *   The recognizer is composed from the `structure`, `primitives` and `coordinates` families.
  *
  *   The two do not do the same work.
- *   `computeQueryShape` computes character class, scripts, segments and known formats,
- *   and the two families recognize digit runs, decimals, whitespace, words and decimal pairs.
+ *   `computeQueryShape` computes character class, scripts, tokens, segments and region
+ *   abbreviations, and known formats, and the recognizer computes the same structural fields
+ *   and also recognizes digit runs, decimals, whitespace, words and decimal pairs.
  *
- *   The comparison therefore measures the cost of crossing the boundary
- *   (encode, call, decode, convert offsets) and gives no estimate of the speed of a `structure` family.
+ *   It doesn't compute known formats, and the postal family will add them.
+ *   The recognizer therefore does more work than the legacy call on every input, except the known formats.
+ *
+ *   Two more inputs stress the search: a 300-digit run and a 300-character run of one CJK character.
  *   The tool makes no assertion on the numbers.
  *
  *   The tool lives here and not beside the legacy benchmark because it imports `@mailwoman/query-shape`,
@@ -35,6 +38,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { coordinates } from "#coordinates"
 import { createRecognizer } from "#index"
 import { primitives } from "#primitives"
+import { structure } from "#structure"
 
 const WARM_UP_CALLS = 20_000
 const TIMED_CALLS = 200_000
@@ -52,9 +56,11 @@ const INPUTS: readonly string[] = [
 	"〒100-0001 東京都千代田区千代田1-1",
 	"金龍酒家, 12 Gerrard Street, London WC2H 7JS",
 	WHITE_HOUSE.repeat(4),
+	"1".repeat(300),
+	"漢".repeat(300),
 ]
 
-const recognizer = createRecognizer([primitives, coordinates])
+const recognizer = createRecognizer([structure, primitives, coordinates])
 
 function microsecondsPerCall(input: string, run: (input: string) => number): { microseconds: number; sink: number } {
 	let sink = 0
@@ -109,8 +115,7 @@ if (values.json) {
 	console.log("| --- | --- | --- | --- | --- |")
 
 	for (const row of rows) {
-		const label =
-			row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (×4, ${row.utf16Units} units)` : row.input
+		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (${row.utf16Units} units)` : row.input
 
 		console.log(
 			`| \`${label}\` | ${row.utf16Units} | ${row.candidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} |`

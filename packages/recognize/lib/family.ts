@@ -125,6 +125,11 @@ export interface FamilyDeclaration<
 	 */
 	readonly artifact: () => Uint8Array
 	/**
+	 * Names the engine's field reader that fills this family's result fields, when the family adds any.
+	 * `structure` is the only reader.
+	 */
+	readonly fields?: "structure"
+	/**
 	 * Type-only slot for the payloads, the fields and the rejection codes.
 	 */
 	readonly [$types]?: { payloads: Payloads; fields: Fields; rejections: Rejections }
@@ -170,7 +175,7 @@ type FieldsOfFamily<D> = D extends { readonly [$types]?: { fields: infer Fields 
 /**
  * The result fields of a recognizer over `F`: the intersection of its families' fields.
  *
- * No family declares fields yet, so the type is an empty object type.
+ * A recognizer over families that add no fields has an empty object type.
  */
 export type FieldsOf<F extends readonly AnyFamily[]> = UnionToIntersection<FieldsOfFamily<F[number]>>
 
@@ -204,6 +209,7 @@ export function defineFamily<
 	kinds: Readonly<Record<string, Kind>>
 	declarationsHash: string
 	artifact: () => Uint8Array
+	fields?: "structure"
 }): FamilyDeclaration<Kind, Payloads, Fields, Rejections> {
 	if (!/^[0-9a-f]{64}$/u.test(spec.declarationsHash)) {
 		throw new TypeError(`family ${spec.id}: the declarations hash is not 64 lowercase hexadecimal digits`)

@@ -48,8 +48,11 @@ export interface Instance {
 	readonly tables: FamilyTable[]
 	/**
 	 * The staging buffer the text is encoded into, reused while it is large enough.
+	 *
+	 * It remembers the text it holds and the bytes written, so a second call over
+	 * the same text reuses the encoded bytes.
 	 */
-	staging: { pointer: number; length: number }
+	staging: { pointer: number; length: number; text: string | null; written: number }
 }
 
 /**
@@ -123,7 +126,7 @@ function activate(module: CompiledModule, source: object): Instance {
 		throw new Error(`WebAssembly ABI version ${version} does not match the loader's ABI version ${ABI_VERSION}`)
 	}
 
-	live = { exports, families: new Map(), tables: [], staging: { pointer: 0, length: 0 } }
+	live = { exports, families: new Map(), tables: [], staging: { pointer: 0, length: 0, text: null, written: 0 } }
 	state = { kind: "ready", source }
 
 	return live

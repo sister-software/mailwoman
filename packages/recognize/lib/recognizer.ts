@@ -14,6 +14,7 @@
 import type { AnyFamily, FieldsOf, RecognitionsOf } from "#family"
 import { loadFamily, recognizeText, traceText } from "#runtime/engine"
 import { type Instance, ready } from "#runtime/state"
+import { structureFields } from "#runtime/structure"
 import type { Trace, TraceOptions } from "#trace"
 
 /**
@@ -38,8 +39,7 @@ export interface RecognizeResult<F extends readonly AnyFamily[]> {
 	 */
 	readonly recognitions: ReadonlyArray<RecognitionsOf<F>>
 	/**
-	 * The fields the composed families add.
-	 * No family declares fields yet.
+	 * The fields the composed families add: the `structure` family's structural fields.
 	 */
 	readonly fields: FieldsOf<F>
 }
@@ -103,7 +103,7 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 		seen.add(family.id)
 	}
 
-	let bound: { instance: Instance; mask: number } | null = null
+	let bound: { instance: Instance; mask: number; structure: number } | null = null
 
 	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
 	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
@@ -114,17 +114,27 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 
 		if (bound?.instance !== instance) {
 			let mask = 0
+			let structure = -1
 
 			for (const family of families) {
-				mask |= 1 << loadFamily(instance, family)
+				const handle = loadFamily(instance, family)
+
+				mask |= 1 << handle
+
+				if (family.fields === "structure") {
+					structure = handle
+				}
 			}
 
-			bound = { instance, mask: mask >>> 0 }
+			bound = { instance, mask: mask >>> 0, structure }
 		}
 
+		// The recognitions are read out of linear memory before the structure call overwrites the records.
+		const recognitions = recognizeText(instance, text, bound.mask)
+
 		const result: RecognizeResult<F> = {
-			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognizeText(instance, text, bound.mask)),
-			fields: trusted<FieldsOf<F>>({}),
+			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognitions),
+			fields: trusted<FieldsOf<F>>(bound.structure < 0 ? {} : structureFields(instance, text, bound.structure)),
 		}
 
 		const trace = options?.trace

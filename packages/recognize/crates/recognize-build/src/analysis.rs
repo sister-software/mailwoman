@@ -477,10 +477,47 @@ pub fn analyze(documents: &[IrDocument], limits: &Limits) -> Result<Analysis, Ve
 	}
 
 	let mut overlaps = Vec::new();
+	let mut refused = Vec::new();
 
 	for (left, first) in languages.iter().enumerate() {
 		for (right, second) in languages.iter().enumerate().skip(left + 1) {
 			if dead.contains(&left) || dead.contains(&right) {
+				continue;
+			}
+
+			// A partition piece is never searched beside other shapes, so it overlaps only the pieces of its own
+			// partition, and those may not share a string: the scan's longest match must belong to one shape.
+			let pieces = (
+				first.shape.scope == Scope::Partition,
+				second.shape.scope == Scope::Partition,
+			);
+
+			if pieces != (false, false) {
+				if pieces != (true, true)
+					|| first.key.family != second.key.family
+					|| first.shape.partition != second.shape.partition
+				{
+					continue;
+				}
+
+				let found = walk(&first.dfa, first.start, &second.dfa, second.start, limits)
+					.map_err(|reached| vec![over_limit(first, Some(second), reached, limits)])?;
+
+				if let Some(bytes) = found.both {
+					refused.push(Diagnostic::new(
+						DiagnosticKind::Partition,
+						&first.shape.source,
+						format!(
+							"family `{}`: shapes `{}` and `{}` of partition `{}` share the string {:?}, so a longest match would belong to neither",
+							first.key.family,
+							first.shape.id,
+							second.shape.id,
+							first.shape.partition.as_deref().unwrap_or_default(),
+							String::from_utf8_lossy(&bytes)
+						),
+					));
+				}
+
 				continue;
 			}
 
@@ -504,6 +541,13 @@ pub fn analyze(documents: &[IrDocument], limits: &Limits) -> Result<Analysis, Ve
 				});
 			}
 		}
+	}
+
+	if !refused.is_empty() {
+		refused.sort();
+		refused.dedup();
+
+		return Err(refused);
 	}
 
 	overlaps.sort_by(|x, y| (&x.a, &x.b).cmp(&(&y.a, &y.b)));

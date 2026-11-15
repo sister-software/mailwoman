@@ -17,14 +17,34 @@ use recognize_core::{IrDocument, Scope};
 use serde_json::{json, Map, Value};
 
 use crate::analysis::{Analysis, Overlap, ShapeKey};
-use crate::BuiltFamily;
+use crate::{AutomatonReport, BuiltFamily};
 
 fn scope_name(scope: Scope) -> &'static str {
 	match scope {
 		Scope::Whole => "whole",
 		Scope::Embedded => "embedded",
 		Scope::WholeOrEmbedded => "whole_or_embedded",
+		Scope::Partition => "partition",
 	}
+}
+
+/// One automaton as the manifest and the report state it. A partition automaton adds the partition's name, and the
+/// others add nothing, so a family without partitions reads as it did before they existed.
+pub fn automaton_json(automaton: &AutomatonReport) -> Value {
+	let mut entry = Map::new();
+
+	entry.insert("backend".to_string(), json!(automaton.backend.as_str()));
+	entry.insert("bytes".to_string(), json!(automaton.bytes));
+
+	if let Some(partition) = &automaton.partition {
+		entry.insert("partition".to_string(), json!(partition));
+	}
+
+	entry.insert("patterns".to_string(), json!(automaton.patterns));
+	entry.insert("role".to_string(), json!(automaton.role.as_str()));
+	entry.insert("states".to_string(), json!(automaton.states));
+
+	Value::Object(entry)
 }
 
 fn key_json(key: &ShapeKey) -> Value {
@@ -58,13 +78,7 @@ pub fn report_json(built: &[BuiltFamily], documents: &[IrDocument], analysis: &A
 		families.insert(
 			document.family.clone(),
 			json!({
-				"automata": compiled.map_or(Vec::new(), |compiled| compiled.automata.iter().map(|automaton| json!({
-					"backend": automaton.backend.as_str(),
-					"bytes": automaton.bytes,
-					"patterns": automaton.patterns,
-					"role": automaton.role.as_str(),
-					"states": automaton.states,
-				})).collect()),
+				"automata": compiled.map_or(Vec::new(), |compiled| compiled.automata.iter().map(automaton_json).collect()),
 				"equivalent": analysis.overlaps.iter().filter(within).filter(|overlap| overlap.equivalent).map(|overlap| json!({
 					"a": overlap.a.shape,
 					"b": overlap.b.shape,

@@ -24,6 +24,7 @@
  *     and writes the result records.
  *   - `read`: the records read from linear memory into the returned objects,
  *     with the byte-to-UTF-16 conversion.
+ *   - `structure`: the `rcg_structure` call and the objects built from its binary result.
  *
  *   The native split of `call` is `crates/recognize-wasm/examples/stages.rs`.
  *   The first version of this tool timed a serialized JSON document, and so also had stages `read`
@@ -42,6 +43,8 @@ import { createRecognizer } from "#index"
 import { primitives } from "#primitives"
 import { loadFamily, readRecognitions } from "#runtime/engine"
 import { ready } from "#runtime/state"
+import { structureFields } from "#runtime/structure"
+import { structure } from "#structure"
 
 const WARM_UP_CALLS = 20_000
 const TIMED_CALLS = 200_000
@@ -60,15 +63,18 @@ const INPUTS: readonly string[] = [
 	"〒100-0001 東京都千代田区千代田1-1",
 	"金龍酒家, 12 Gerrard Street, London WC2H 7JS",
 	WHITE_HOUSE.repeat(4),
+	"1".repeat(300),
+	"漢".repeat(300),
 ]
 
-const recognizer = createRecognizer([primitives, coordinates])
+const recognizer = createRecognizer([structure, primitives, coordinates])
 
 // The first call instantiates the engine and loads both families.
 recognizer.recognize("1")
 
 const instance = ready()
-const mask = (1 << loadFamily(instance, primitives)) | (1 << loadFamily(instance, coordinates))
+const structureHandle = loadFamily(instance, structure)
+const mask = (1 << loadFamily(instance, primitives)) | (1 << loadFamily(instance, coordinates)) | (1 << structureHandle)
 const encoder = new TextEncoder()
 
 function microsecondsPerCall(run: () => number): { microseconds: number; sink: number } {
@@ -108,11 +114,19 @@ const rows = INPUTS.map((input) => {
 	})
 
 	const read = microsecondsPerCall(() => readRecognitions(instance, input, written, count).length)
+	// The structure call's staged text is already encoded, so this stage is the engine call and the object building.
+	const fields = microsecondsPerCall(() => structureFields(instance, input, structureHandle).tokenClasses.length)
 	const whole = microsecondsPerCall(() => recognizer.recognize(input).recognitions.length)
 
 	exports.rcg_dealloc(pointer, wanted)
 
-	const stages = { encode: encode.microseconds, call: call.microseconds, read: read.microseconds }
+	const stages = {
+		encode: encode.microseconds,
+		call: call.microseconds,
+		read: read.microseconds,
+		structure: fields.microseconds,
+	}
+
 	const sum = Object.values(stages).reduce((total, value) => total + value, 0)
 
 	return {
@@ -124,7 +138,7 @@ const rows = INPUTS.map((input) => {
 		sum,
 		whole: whole.microseconds,
 		residue: whole.microseconds - sum,
-		sink: encode.sink + call.sink + read.sink + whole.sink,
+		sink: encode.sink + call.sink + read.sink + fields.sink + whole.sink,
 	}
 })
 
@@ -144,14 +158,14 @@ if (values.json) {
 } else {
 	console.log(`commit ${report.commit}, node ${report.node}, ${report.cpu}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per stage and input (µs/call)\n`)
-	console.log("| Input | Recognitions | encode | call | read | sum | whole | residue |")
-	console.log("| --- | --- | --- | --- | --- | --- | --- | --- |")
+	console.log("| Input | Recognitions | encode | call | read | structure | sum | whole | residue |")
+	console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
 
 	for (const row of rows) {
 		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 30)}… (×4)` : row.input
 
 		console.log(
-			`| \`${label}\` | ${row.recognitions} | ${row.encode.toFixed(2)} | ${row.call.toFixed(2)} | ${row.read.toFixed(2)} | ${row.sum.toFixed(2)} | ${row.whole.toFixed(2)} | ${row.residue.toFixed(2)} |`
+			`| \`${label}\` | ${row.recognitions} | ${row.encode.toFixed(2)} | ${row.call.toFixed(2)} | ${row.read.toFixed(2)} | ${row.structure.toFixed(2)} | ${row.sum.toFixed(2)} | ${row.whole.toFixed(2)} | ${row.residue.toFixed(2)} |`
 		)
 	}
 }
