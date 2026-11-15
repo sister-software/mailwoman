@@ -5,10 +5,11 @@
 
 pub mod coordinates;
 pub mod primitives;
+pub mod structure;
 
 use crate::family::Family;
 
 /// Every family this crate owns, in the order the build tool writes them.
 pub fn families() -> Vec<Family> {
-	vec![primitives::family(), coordinates::family()]
+	vec![primitives::family(), coordinates::family(), structure::family()]
 }

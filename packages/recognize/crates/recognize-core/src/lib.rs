@@ -37,8 +37,32 @@
 //! * [`Scope::WholeOrEmbedded`] reports both: the whole text when it matches, and every embedded candidate, with
 //!   `0..len` reported once.
 //!
+//! * [`Scope::Partition`] is not searched at all. It belongs to the scan below.
+//!
 //! A candidate is `(start, end, family, shape)`, and a search returns them sorted by that tuple. The empty text has no
 //! candidate, and a grammar that can match the empty string is refused at build time, so no candidate is empty.
+//!
+//! # Partition span policy
+//!
+//! A family may declare partitions: shapes with [`Scope::Partition`] that name one partition. A partition splits the text
+//! into consecutive pieces in one pass from left to right ([`Engine::scan`]). The pass starts at byte 0, runs the
+//! partition's automaton anchored there, takes the longest match over all the partition's shapes as a piece, and
+//! continues at the piece's end. The policy differs from the search above on every point:
+//!
+//! * One start per piece, and no restart inside a piece. The cost is linear in the length of the text, where the search
+//!   above costs the number of starts times the length each scans. A tokenizer needs the linear cost, because its input
+//!   can be one unbroken run.
+//! * Only the longest match from a start is a piece. A shorter match of the same shape, or of another shape, is not
+//!   reported.
+//! * Pieces never overlap and never nest. A piece starts where the previous one ended.
+//! * A position where no shape matches is skipped one character at a time and reports nothing. A partition whose shapes
+//!   together accept every character skips nothing, and the `structure` partitions do.
+//! * Shapes of one partition may not share a string: the build refuses the family. A longest match therefore belongs to
+//!   one shape.
+//!
+//! The scan reports each piece's kind and byte range and builds no payload. It is the one place a family reads text
+//! with a rule that is not a set of independent spans, and a test holds it equal to a reference scan over the reference
+//! interpreter.
 //!
 //! The search is complete under this policy: the engine tries every character boundary as a start, and
 //! `MatchKind::All` keeps every pattern that accepts at each end position. Its cost is the number of starts times the
@@ -47,6 +71,7 @@
 pub mod artifact;
 pub mod ast;
 pub mod captures;
+pub mod charset;
 pub mod declarations;
 pub mod declare;
 pub mod declared;
@@ -58,6 +83,7 @@ pub mod ids;
 pub mod ir;
 pub mod prefix;
 pub mod recognition;
+pub mod structure;
 pub mod trace;
 pub mod validate;
 pub mod validators;

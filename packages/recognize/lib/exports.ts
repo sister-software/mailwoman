@@ -42,7 +42,18 @@ export {
 	type TraceStep,
 } from "#trace"
 
-export type { AxisOrder } from "#types"
+export type {
+	AxisOrder,
+	CharacterClass,
+	RegionAbbreviation,
+	ScriptShare,
+	Segment,
+	SegmentSeparator,
+	StructureFields,
+	TextSpan,
+	TokenCharacterClass,
+	TokenClass,
+} from "#types"
 
 export {
 	RecognizeArtifactError,

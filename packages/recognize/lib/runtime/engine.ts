@@ -66,9 +66,32 @@ function reserve(instance: Instance, length: number): number {
 
 		staging.pointer = exports.rcg_alloc(wanted)
 		staging.length = wanted
+		staging.text = null
 	}
 
 	return staging.pointer
+}
+
+/**
+ * Encodes `text` into the staging buffer and returns the pointer and the bytes written,
+ * unless the buffer already holds the text.
+ *
+ * @internal
+ */
+export function stageText(instance: Instance, text: string): { pointer: number; written: number } {
+	const { staging } = instance
+
+	if (staging.text === text) return { pointer: staging.pointer, written: staging.written }
+
+	// A code unit encodes to at most three bytes.
+	const capacity = text.length * 3
+	const pointer = reserve(instance, capacity)
+	const { written } = encoder.encodeInto(text, memoryBytes(instance, pointer, capacity))
+
+	staging.text = text
+	staging.written = written
+
+	return { pointer, written }
 }
 
 /**
@@ -154,10 +177,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 export function recognizeText(instance: Instance, text: string, mask: number): LooseRecognition[] {
 	try {
 		const { exports } = instance
-		// A code unit encodes to at most three bytes.
-		const capacity = text.length * 3
-		const pointer = reserve(instance, capacity)
-		const { written } = encoder.encodeInto(text, memoryBytes(instance, pointer, capacity))
+		const { pointer, written } = stageText(instance, text)
 		const count = exports.rcg_recognize(pointer, written, mask)
 
 		if (count < 0) {
@@ -185,9 +205,7 @@ export function recognizeText(instance: Instance, text: string, mask: number): L
 export function traceText(instance: Instance, text: string, mask: number, explain: readonly string[]): Trace[] {
 	try {
 		const { exports } = instance
-		const capacity = text.length * 3
-		const pointer = reserve(instance, capacity)
-		const { written } = encoder.encodeInto(text, memoryBytes(instance, pointer, capacity))
+		const { pointer, written } = stageText(instance, text)
 		const names = encoder.encode(explain.join("\n"))
 		const namesPointer = exports.rcg_alloc(names.byteLength)
 

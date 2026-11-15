@@ -225,6 +225,9 @@ pub fn typescript_family(declarations: &Declarations) -> Result<String, String> 
 	let family = pascal(&declarations.family);
 	let upper = upper_snake(&declarations.family);
 	let fields = || declarations.shapes.iter().flat_map(|shape| shape.payload.iter());
+	// A family with partition pieces returns structural fields, and `lib/types.ts` declares their type. A piece is
+	// never a recognition, so it is no kind.
+	let returns_fields = declarations.shapes.iter().any(|shape| shape.partition.is_some());
 	let mut type_imports = Vec::new();
 
 	if fields().any(|field| field.kind == FieldType::AxisOrder) {
@@ -234,6 +237,13 @@ pub fn typescript_family(declarations: &Declarations) -> Result<String, String> 
 	if fields().any(|field| is_brand(field.kind)) {
 		type_imports.push("Validated");
 	}
+
+	let fields_type = format!("{family}Fields");
+
+	if returns_fields {
+		type_imports.push(&fields_type);
+	}
+
 	let mut out = String::new();
 
 	writeln!(
@@ -283,7 +293,7 @@ pub fn typescript_family(declarations: &Declarations) -> Result<String, String> 
 
 	writeln!(out, "/**\n * Every kind of recognition the family reports, by name.\n * Each value is the shape's ID.\n */\nexport const {family}Kind = {{").unwrap();
 
-	for shape in &declarations.shapes {
+	for shape in declarations.shapes.iter().filter(|shape| shape.partition.is_none()) {
 		writeln!(out, "\t{}: \"{}\",", shape.kind, shape.id).unwrap();
 	}
 
@@ -363,9 +373,18 @@ pub fn typescript_family(declarations: &Declarations) -> Result<String, String> 
 		writeln!(out, "}}").unwrap();
 	}
 
+	let (fields_param, fields_spec) = if returns_fields {
+		(
+			fields_type.as_str(),
+			format!("\n\tfields: \"{}\",", declarations.family),
+		)
+	} else {
+		("Record<never, never>", String::new())
+	};
+
 	writeln!(
 		out,
-		"\n/**\n * The `{id}` family.\n *\n * Pass it to `createRecognizer`.\n * A bundle that imports this module holds this family's artifact and no other,\n * and no engine until a recognizer is created.\n */\nexport const {name} = defineFamily<{family}Kind, {family}Payloads, Record<never, never>, {family}Rejections>({{\n\tid: {upper}_FAMILY_ID,\n\tkinds: {family}Kind,\n\tdeclarationsHash: {upper}_DECLARATIONS_HASH,\n\tartifact: {name}Artifact,\n}})",
+		"\n/**\n * The `{id}` family.\n *\n * Pass it to `createRecognizer`.\n * A bundle that imports this module holds this family's artifact and no other,\n * and no engine until a recognizer is created.\n */\nexport const {name} = defineFamily<{family}Kind, {family}Payloads, {fields_param}, {family}Rejections>({{\n\tid: {upper}_FAMILY_ID,\n\tkinds: {family}Kind,\n\tdeclarationsHash: {upper}_DECLARATIONS_HASH,\n\tartifact: {name}Artifact,{fields_spec}\n}})",
 		id = declarations.family,
 		name = camel(&declarations.family),
 	)

@@ -12,6 +12,8 @@
  *   Script codes keep the registry's `BCP47.ScriptCode`, and no second script-code type is declared here.
  */
 
+import type { BCP47 } from "@mailwoman/registry/types"
+
 /**
  * Value types a validator produces.
  */
@@ -51,6 +53,104 @@ export declare namespace Validated {
 	 * A value past `Number.MAX_SAFE_INTEGER` loses precision in a JavaScript number.
 	 */
 	type Integer = number & { readonly [$Integer]: true }
+}
+
+/**
+ * A half-open range of UTF-16 code units and the text it covers.
+ */
+export interface TextSpan {
+	readonly start: number
+	readonly end: number
+	readonly body: string
+}
+
+/**
+ * The character class of one token.
+ */
+export const TokenCharacterClass = {
+	Digit: "digit",
+	Alpha: "alpha",
+	Mixed: "mixed",
+	Punct: "punct",
+	Cjk: "cjk",
+	Cyrillic: "cyrillic",
+	Arabic: "arabic",
+} as const
+
+export type TokenCharacterClass = (typeof TokenCharacterClass)[keyof typeof TokenCharacterClass]
+
+/**
+ * The character class of a whole text, folded from its token classes.
+ */
+export const CharacterClass = {
+	Numeric: "numeric",
+	Alpha: "alpha",
+	Alphanumeric: "alphanumeric",
+	Cjk: "cjk",
+	Cyrillic: "cyrillic",
+	Arabic: "arabic",
+	Mixed: "mixed",
+} as const
+
+export type CharacterClass = (typeof CharacterClass)[keyof typeof CharacterClass]
+
+/**
+ * The separator before a segment: `null` before the first one, and `comma` for a comma or a semicolon.
+ */
+export type SegmentSeparator = "comma" | "newline" | "tab" | null
+
+/**
+ * One script of a text and its share of the codepoints that have a script.
+ */
+export interface ScriptShare {
+	readonly script: BCP47.ScriptCode
+	readonly share: number
+}
+
+/**
+ * One token with its class and script.
+ */
+export interface TokenClass {
+	readonly span: TextSpan
+	readonly class: TokenCharacterClass
+	readonly script: BCP47.ScriptCode
+}
+
+/**
+ * One segment between separators, trimmed of white space.
+ */
+export interface Segment {
+	readonly span: TextSpan
+	readonly body: string
+	/**
+	 * The position in the segment list.
+	 *
+	 * `query-shape` tests read it, so it stays until the swap decides.
+	 */
+	readonly index: number
+	readonly separator: SegmentSeparator
+}
+
+/**
+ * A region abbreviation such as `NY`: its offset and its text.
+ */
+export interface RegionAbbreviation {
+	readonly start: number
+	readonly span: string
+}
+
+/**
+ * The fields the `structure` family returns, equal to those of `computeQueryShape`
+ * in `@mailwoman/query-shape`.
+ * Offsets are UTF-16 code units, half-open.
+ */
+export interface StructureFields {
+	readonly characterClass: CharacterClass
+	readonly scripts: readonly ScriptShare[]
+	readonly tokenClasses: readonly TokenClass[]
+	readonly segments: readonly Segment[]
+	readonly regionAbbreviations: readonly RegionAbbreviation[]
+	readonly totalLength: number
 }
 
 /**

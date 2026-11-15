@@ -148,6 +148,8 @@ pub fn reference_candidates(
 	match scope {
 		Scope::Whole => matches.iter().copied().filter(|span| *span == (0, length)).collect(),
 		Scope::Embedded => candidates.into_iter().filter(|span| *span != (0, length)).collect(),
+		// A partition piece is reported by a scan and never by a search.
+		Scope::Partition => BTreeSet::new(),
 		Scope::WholeOrEmbedded => candidates
 			.into_iter()
 			.chain(matches.iter().copied().filter(|span| *span == (0, length)))

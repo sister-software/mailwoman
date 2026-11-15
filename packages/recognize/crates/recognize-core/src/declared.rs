@@ -2,18 +2,20 @@
 
 pub mod coordinates;
 pub mod primitives;
+pub mod structure;
 
 use crate::captures::Captures;
 use crate::recognition::Rejection;
 
 /// The families this crate holds declarations for, in ID order.
-pub const FAMILIES: [&str; 2] = [coordinates::FAMILY, primitives::FAMILY];
+pub const FAMILIES: [&str; 3] = [coordinates::FAMILY, primitives::FAMILY, structure::FAMILY];
 
 /// The closed kind of a shape of any family this crate declares.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Kind {
 	Coordinates(coordinates::RecognitionKind),
 	Primitives(primitives::RecognitionKind),
+	Structure(structure::RecognitionKind),
 }
 
 impl Kind {
@@ -22,6 +24,7 @@ impl Kind {
 		match self {
 			Kind::Coordinates(_) => coordinates::FAMILY,
 			Kind::Primitives(_) => primitives::FAMILY,
+			Kind::Structure(_) => structure::FAMILY,
 		}
 	}
 
@@ -30,6 +33,7 @@ impl Kind {
 		match self {
 			Kind::Coordinates(kind) => kind.shape(),
 			Kind::Primitives(kind) => kind.shape(),
+			Kind::Structure(kind) => kind.shape(),
 		}
 	}
 
@@ -38,6 +42,7 @@ impl Kind {
 		match self {
 			Kind::Coordinates(kind) => kind.validated(),
 			Kind::Primitives(kind) => kind.validated(),
+			Kind::Structure(kind) => kind.validated(),
 		}
 	}
 }
@@ -47,6 +52,7 @@ impl Kind {
 pub enum Payload {
 	Coordinates(coordinates::Payload),
 	Primitives(primitives::Payload),
+	Structure(structure::Payload),
 }
 
 impl serde::Serialize for Payload {
@@ -54,6 +60,7 @@ impl serde::Serialize for Payload {
 		match self {
 			Payload::Coordinates(payload) => payload.serialize(serializer),
 			Payload::Primitives(payload) => payload.serialize(serializer),
+			Payload::Structure(payload) => payload.serialize(serializer),
 		}
 	}
 }
@@ -64,6 +71,7 @@ pub fn kind(family: &str, shape: &str) -> Option<Kind> {
 	match family {
 		coordinates::FAMILY => coordinates::RecognitionKind::from_shape(shape).map(Kind::Coordinates),
 		primitives::FAMILY => primitives::RecognitionKind::from_shape(shape).map(Kind::Primitives),
+		structure::FAMILY => structure::RecognitionKind::from_shape(shape).map(Kind::Structure),
 		_ => None,
 	}
 }
@@ -73,6 +81,7 @@ pub fn declarations_hash(family: &str) -> Option<&'static str> {
 	match family {
 		coordinates::FAMILY => Some(coordinates::DECLARATIONS_HASH),
 		primitives::FAMILY => Some(primitives::DECLARATIONS_HASH),
+		structure::FAMILY => Some(structure::DECLARATIONS_HASH),
 		_ => None,
 	}
 }
@@ -82,5 +91,6 @@ pub fn bind(kind: Kind, captures: &Captures<'_>) -> Option<Result<Payload, Rejec
 	match kind {
 		Kind::Coordinates(kind) => coordinates::bind(kind, captures).map(|result| result.map(Payload::Coordinates)),
 		Kind::Primitives(kind) => primitives::bind(kind, captures).map(|result| result.map(Payload::Primitives)),
+		Kind::Structure(kind) => structure::bind(kind, captures).map(|result| result.map(Payload::Structure)),
 	}
 }

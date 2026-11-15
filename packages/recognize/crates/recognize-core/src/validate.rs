@@ -14,7 +14,7 @@ use std::collections::{BTreeSet, HashMap};
 use crate::ast::Node;
 use crate::diagnostic::{Diagnostic, DiagnosticKind, Source};
 use crate::ids::is_dotted_name;
-use crate::ir::{AmbiguityPolicy, Shape, Term};
+use crate::ir::{AmbiguityPolicy, Scope, Shape, Term};
 
 /// Validates one family. The result is sorted and empty when the family is valid.
 pub fn validate(family: &str, anchor: &Source, terms: &[Term], shapes: &[Shape]) -> Vec<Diagnostic> {
@@ -86,6 +86,7 @@ pub fn validate(family: &str, anchor: &Source, terms: &[Term], shapes: &[Shape])
 		out.extend(found);
 		check_captures(shape, &captures, has_pattern, &mut out);
 		check_ambiguity(shape, &mut out);
+		check_partition(shape, &mut out);
 
 		if !cyclic && nullable(&shape.grammar, &by_id, &mut memo) {
 			out.push(Diagnostic::new(
@@ -416,6 +417,39 @@ fn check_captures(shape: &Shape, captured: &[String], has_pattern: bool, out: &m
 				format!("capture `{path}` is declared and the grammar never makes it"),
 			));
 		}
+	}
+}
+
+/// A partition shape names its partition, and nothing else does. The engine reports a partition's pieces as spans and
+/// never validates or hands them to a handler, so such a shape has no captures, validator or handler.
+fn check_partition(shape: &Shape, out: &mut Vec<Diagnostic>) {
+	let refuse = |message: String| Diagnostic::new(DiagnosticKind::Partition, &shape.source, message);
+
+	match (&shape.scope, &shape.partition) {
+		(Scope::Partition, None) => out.push(refuse(format!(
+			"shape `{}` has the partition scope and names no partition",
+			shape.id
+		))),
+		(Scope::Partition, Some(name)) => {
+			if !is_dotted_name(name) {
+				out.push(refuse(format!(
+					"the partition `{name}` of shape `{}` is not a dotted lowercase name",
+					shape.id
+				)));
+			}
+
+			if !shape.captures.is_empty() || shape.validator.is_some() || shape.handler.is_some() {
+				out.push(refuse(format!(
+					"shape `{}` is a partition piece, which has no captures, validator or handler",
+					shape.id
+				)));
+			}
+		}
+		(_, Some(name)) => out.push(refuse(format!(
+			"shape `{}` names the partition `{name}` and its scope is not partition",
+			shape.id
+		))),
+		(_, None) => {}
 	}
 }
 

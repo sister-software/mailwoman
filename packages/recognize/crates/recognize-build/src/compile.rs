@@ -63,6 +63,9 @@ pub struct Limits {
 	pub max_captures: usize,
 	/// The longest input, in UTF-8 bytes, the artifact's search accepts.
 	pub max_input_bytes: u32,
+	/// The longest input a family accepts when every shape of it is a partition piece. A partition scan is linear in the
+	/// length of the text, so it admits a longer input than a search, which restarts at every character.
+	pub max_partition_input_bytes: u32,
 	/// The most states the overlap analysis visits in the product of two shapes' automata. A pair that passes it fails
 	/// the build, so no overlap is skipped silently.
 	pub max_product_states: usize,
@@ -80,6 +83,7 @@ impl Default for Limits {
 			max_lowered_nodes: 100_000,
 			max_captures: 64,
 			max_input_bytes: 4096,
+			max_partition_input_bytes: 1 << 20,
 			max_product_states: 1_000_000,
 		}
 	}
@@ -89,6 +93,8 @@ impl Default for Limits {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AutomatonReport {
 	pub role: Role,
+	/// The partition a `Partition` automaton scans.
+	pub partition: Option<String>,
 	pub backend: Backend,
 	pub states: usize,
 	/// The serialized DFA's byte length.
@@ -239,21 +245,23 @@ fn compile_hirs(hirs: &[Hir], limits: &Limits) -> Result<Built, Failure> {
 	)))
 }
 
-/// The shapes a role searches, with the HIR the role compiles for each.
-fn role_hirs(role: Role, shapes: &[(&Shape, Hir)]) -> Vec<(usize, Hir)> {
+/// The shapes a role searches, with the HIR the role compiles for each. A partition role takes the shapes of the
+/// partition `partition` names.
+fn role_hirs(role: Role, partition: Option<&str>, shapes: &[(&Shape, Hir)]) -> Vec<(usize, Hir)> {
 	shapes
 		.iter()
 		.enumerate()
 		.filter(|(_, (shape, _))| match role {
 			Role::Whole => matches!(shape.scope, Scope::Whole | Scope::WholeOrEmbedded),
 			Role::Embedded => matches!(shape.scope, Scope::Embedded | Scope::WholeOrEmbedded),
+			Role::Partition => shape.scope == Scope::Partition && shape.partition.as_deref() == partition,
 		})
 		.map(|(index, (_, hir))| {
 			let hir = match role {
 				// The whole-input automaton accepts a match only at the end of the text, and its search starts at the
 				// beginning of it, so a match it reports is the whole text.
 				Role::Whole => Hir::concat(vec![hir.clone(), Hir::look(Look::End)]),
-				Role::Embedded => hir.clone(),
+				Role::Embedded | Role::Partition => hir.clone(),
 			};
 
 			(index, hir)
@@ -296,8 +304,22 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 	let mut metas = Vec::new();
 	let mut built = Vec::new();
 
-	for role in [Role::Whole, Role::Embedded] {
-		let hirs = role_hirs(role, &lowered);
+	// The whole-input and embedded automata, then one automaton for each partition in name order.
+	let mut partitions: Vec<&str> = document
+		.shapes
+		.iter()
+		.filter_map(|shape| shape.partition.as_deref())
+		.collect();
+
+	partitions.sort_unstable();
+	partitions.dedup();
+
+	let mut jobs: Vec<(Role, Option<&str>)> = vec![(Role::Whole, None), (Role::Embedded, None)];
+
+	jobs.extend(partitions.into_iter().map(|name| (Role::Partition, Some(name))));
+
+	for (role, partition) in jobs {
+		let hirs = role_hirs(role, partition, &lowered);
 
 		if hirs.is_empty() {
 			continue;
@@ -309,6 +331,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 			Ok(result) => {
 				metas.push(AutomatonMeta {
 					backend: result.backend,
+					partition: partition.map(str::to_string),
 					patterns: hirs
 						.iter()
 						.map(|(index, _)| PatternMeta {
@@ -343,7 +366,11 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 		declarations_hash: Declarations::from_ir(document).hash(),
 		family: document.family.clone(),
 		format: ARTIFACT_FORMAT.to_string(),
-		input_limit_bytes: limits.max_input_bytes,
+		input_limit_bytes: if document.shapes.iter().all(|shape| shape.scope == Scope::Partition) {
+			limits.max_partition_input_bytes
+		} else {
+			limits.max_input_bytes
+		},
 		ir_hash: document.hash.clone(),
 		schema_version: ARTIFACT_SCHEMA_VERSION,
 		unicode_version: UNICODE_VERSION.to_string(),
@@ -371,6 +398,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 		.zip(&built)
 		.map(|(meta, (_, result))| AutomatonReport {
 			role: meta.role,
+			partition: meta.partition.clone(),
 			backend: meta.backend,
 			states: result.states,
 			bytes: result.bytes.len(),

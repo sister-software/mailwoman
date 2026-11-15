@@ -42,6 +42,8 @@ pub enum SearchError {
 	NotUTF8 { valid_up_to: usize },
 	/// The automaton stopped the search.
 	Automaton(String),
+	/// A scan named a partition the family does not declare.
+	NoPartition { family: String, partition: String },
 }
 
 impl fmt::Display for SearchError {
@@ -55,6 +57,9 @@ impl fmt::Display for SearchError {
 				write!(formatter, "the bytes are not UTF-8 after byte {valid_up_to}")
 			}
 			SearchError::Automaton(message) => write!(formatter, "the automaton stopped the search: {message}"),
+			SearchError::NoPartition { family, partition } => {
+				write!(formatter, "family `{family}` declares no partition `{partition}`")
+			}
 		}
 	}
 }
@@ -81,6 +86,8 @@ pub(crate) struct LoadedFamily {
 	pub(crate) header: Header,
 	pub(crate) whole: Option<Loaded>,
 	pub(crate) embedded: Option<Loaded>,
+	/// One automaton for each partition the family declares, by name.
+	pub(crate) partitions: Vec<(String, Loaded)>,
 	pub(crate) program: CaptureProgram,
 	/// The family's shape IDs in byte order, without repeats. A shape's position is its index in a [`Located`].
 	pub(crate) shapes: Vec<String>,
@@ -224,6 +231,7 @@ impl Engine {
 
 		let mut whole = None;
 		let mut embedded = None;
+		let mut partitions = Vec::new();
 
 		for (meta, payload) in header.automata.iter().zip(&artifact.payloads) {
 			let dfa = match meta.backend {
@@ -271,6 +279,7 @@ impl Engine {
 			match meta.role {
 				Role::Whole => whole = Some(loaded),
 				Role::Embedded => embedded = Some(loaded),
+				Role::Partition => partitions.push((meta.partition.clone().unwrap_or_default(), loaded)),
 			}
 		}
 
@@ -278,6 +287,7 @@ impl Engine {
 			header,
 			whole,
 			embedded,
+			partitions,
 			program,
 			shapes,
 			kinds,
@@ -411,6 +421,74 @@ impl Engine {
 		found.dedup();
 
 		Ok(found)
+	}
+}
+
+impl Engine {
+	/// Splits `text` into the pieces of the family's partition `partition`, in one pass from left to right, and calls
+	/// `on_piece` with the piece's shape position in [`Engine::shapes`], its kind and its UTF-8 byte range for each one.
+	///
+	/// The scan starts at byte 0. At each position it runs the partition's automaton anchored there and takes the longest
+	/// match over all the partition's shapes, which is the piece. It continues where the piece ends. A position where no
+	/// shape matches is skipped by one character and reports no piece, and a partition whose shapes together accept every
+	/// character has none. Pieces are consecutive, never overlap, and each is non-empty. The cost is linear in the length
+	/// of the text: a byte is read once by the piece that contains it and at most once more by the match that ends the
+	/// piece.
+	///
+	/// The build refuses a partition whose shapes share a string, so the longest match belongs to one shape. When the
+	/// automaton reports several, the shape that sorts first by ID wins.
+	pub fn scan(
+		&self,
+		family: usize,
+		partition: &str,
+		text: &str,
+		mut on_piece: impl FnMut(usize, Option<Kind>, usize, usize),
+	) -> Result<(), SearchError> {
+		let loaded = &self.families[family];
+		let limit = loaded.header.input_limit_bytes as usize;
+
+		if text.len() > limit {
+			return Err(SearchError::InputTooLong {
+				family: loaded.header.family.clone(),
+				length: text.len(),
+				limit,
+			});
+		}
+
+		let Some((_, automaton)) = loaded.partitions.iter().find(|(name, _)| name == partition) else {
+			return Err(SearchError::NoPartition {
+				family: loaded.header.family.clone(),
+				partition: partition.to_string(),
+			});
+		};
+		let bytes = text.as_bytes();
+		let mut at = 0;
+
+		while at < bytes.len() {
+			let found = match &automaton.dfa {
+				Dfa::Dense(dfa) => longest(dfa, automaton.start, bytes, at)?,
+				Dfa::Sparse(dfa) => longest(dfa, automaton.start, bytes, at)?,
+			};
+
+			match found {
+				Some((end, pattern)) => {
+					let shape = automaton.shape_indexes[pattern];
+
+					on_piece(shape, loaded.kinds[shape], at, end);
+					at = end;
+				}
+				None => {
+					// A position no shape matches: skip the character, which is one lead byte and its continuation bytes.
+					at += 1;
+
+					while at < bytes.len() && bytes[at] & 0xC0 == 0x80 {
+						at += 1;
+					}
+				}
+			}
+		}
+
+		Ok(())
 	}
 }
 
@@ -586,6 +664,49 @@ fn walk<A: Automaton>(
 	}
 
 	Ok(())
+}
+
+/// The longest match of an anchored search that begins at `from`: its end and the first pattern that matches there.
+///
+/// A match state is reported one byte after the match ends, so the end is the position of the byte that led into it. The
+/// walk stops at the dead state, so it reads the piece and the one byte that ends it.
+fn longest<A: Automaton>(
+	dfa: &A,
+	start: StateID,
+	bytes: &[u8],
+	from: usize,
+) -> Result<Option<(usize, usize)>, SearchError> {
+	let mut state = start;
+	let mut best = None;
+	let mut offset = from;
+
+	while offset < bytes.len() {
+		state = dfa.next_state(state, bytes[offset]);
+
+		if dfa.is_special_state(state) {
+			if dfa.is_dead_state(state) {
+				return Ok(best);
+			}
+
+			if dfa.is_quit_state(state) {
+				return Err(SearchError::Automaton(format!("the automaton quit at byte {offset}")));
+			}
+
+			if dfa.is_match_state(state) {
+				best = Some((offset, dfa.match_pattern(state, 0).as_usize()));
+			}
+		}
+
+		offset += 1;
+	}
+
+	state = dfa.next_eoi_state(state);
+
+	if dfa.is_match_state(state) {
+		best = Some((bytes.len(), dfa.match_pattern(state, 0).as_usize()));
+	}
+
+	Ok(best)
 }
 
 /// Calls `found` with the pattern of every pattern that accepts exactly `text`.

@@ -38,6 +38,10 @@ pub enum Scope {
 	Embedded,
 	/// Either the whole input or a span inside it.
 	WholeOrEmbedded,
+	/// One of the pieces a partition splits the input into. The shape names its partition, and the engine scans the input
+	/// once from left to right, takes the longest match of the partition's shapes at each position, and continues where
+	/// that match ends. The crate documentation states the span policy.
+	Partition,
 }
 
 /// What a shape declares about overlapping other shapes on the same span.
@@ -90,6 +94,10 @@ pub struct Shape {
 	/// text of a shape that declares nothing.
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub unreachable: Option<String>,
+	/// The partition a `Partition` shape belongs to, a dotted lowercase name. Present exactly when the scope is
+	/// `Partition`, and absent from the IR text of every other shape.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub partition: Option<String>,
 	pub source: Source,
 }
 

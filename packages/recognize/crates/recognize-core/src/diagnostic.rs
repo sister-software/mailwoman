@@ -71,6 +71,9 @@ pub enum DiagnosticKind {
 	/// A shape whose language is empty, or none of whose matches a search can report under its scope, and that does not
 	/// declare it. Also a declaration of unreachability on a shape the compiler finds reachable.
 	Unreachable,
+	/// A partition shape that breaks the partition rules: no partition name, a name on a shape of another scope, a
+	/// validator, handler or captures, or two shapes of one partition that share a string.
+	Partition,
 }
 
 impl DiagnosticKind {
@@ -89,6 +92,7 @@ impl DiagnosticKind {
 			DiagnosticKind::MalformedIR => "malformed-ir",
 			DiagnosticKind::LimitExceeded => "limit-exceeded",
 			DiagnosticKind::Unreachable => "unreachable",
+			DiagnosticKind::Partition => "partition",
 		}
 	}
 }

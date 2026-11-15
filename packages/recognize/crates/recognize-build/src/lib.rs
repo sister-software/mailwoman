@@ -212,13 +212,7 @@ pub fn manifest_json(built: &[BuiltFamily], limits: &Limits) -> String {
 			compiled.family.clone(),
 			json!({
 				"artifact": compiled.file_name(),
-				"automata": compiled.automata.iter().map(|automaton| json!({
-					"backend": automaton.backend.as_str(),
-					"bytes": automaton.bytes,
-					"patterns": automaton.patterns,
-					"role": automaton.role.as_str(),
-					"states": automaton.states,
-				})).collect::<Vec<Value>>(),
+				"automata": compiled.automata.iter().map(report::automaton_json).collect::<Vec<Value>>(),
 				"bytes": compiled.artifact.len(),
 				"compilerVersion": recognize_core::artifact::COMPILER_VERSION,
 				"declarationsHash": compiled.declarations_hash,
@@ -241,6 +235,7 @@ pub fn manifest_json(built: &[BuiltFamily], limits: &Limits) -> String {
 			"maxProductStates": limits.max_product_states,
 			"maxStates": limits.max_states,
 			"nfaBytes": limits.nfa_bytes,
+			"partitionInputBytes": limits.max_partition_input_bytes,
 			"sparseBytes": limits.sparse_bytes,
 		},
 	});

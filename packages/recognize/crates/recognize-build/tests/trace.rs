@@ -264,7 +264,11 @@ fn a_trace_always_matches_the_engines_outcome() {
 				.find(|document| &document.family == family)
 				.unwrap();
 
-			for shape in document.shapes.iter().filter(|shape| shape.scope != Scope::Embedded) {
+			for shape in document
+				.shapes
+				.iter()
+				.filter(|shape| !matches!(shape.scope, Scope::Embedded | Scope::Partition))
+			{
 				let searched = recognitions.iter().any(|recognition| {
 					recognition.candidate.shape == shape.id
 						&& recognition.candidate.family == family
