@@ -119,6 +119,7 @@
 		"packages/gazetteer-worker": "private gazetteer lookup Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
 		"packages/geocoder-service": "private choice between Earth's hosted and in-browser geocoders — no published consumer yet",
 		"packages/engine-worker": "private parse and geocode Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
-		"packages/service-worker-cache": "private Workbox handlers and plugins for Earth's service worker — no published consumer yet"
+		"packages/service-worker-cache": "private Workbox handlers and plugins for Earth's service worker — no published consumer yet",
+		"packages/recognize": "private grammar library and IR for the recognition engine — no engine or published consumer until a later phase of #3064"
 	}
 }

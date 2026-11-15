@@ -9,6 +9,7 @@ members = ["packages/*/crates/*"]
 default-members = [
 	"packages/core/crates/*",
 	"packages/mtf/crates/*",
+	"packages/recognize/crates/*",
 	"packages/registry/crates/*",
 	"packages/trainer/crates/trainer-export",
 	"packages/hrt/crates/*",

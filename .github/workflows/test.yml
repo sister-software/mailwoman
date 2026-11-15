@@ -290,6 +290,10 @@ jobs:
         run: |
           cargo test -p deflate64-wasm --locked
 
+      - name: Test the recognize grammar and IR crates
+        run: |
+          cargo test -p recognize-core -p recognize-build --locked
+
       - name: Test the basemap tiler's crates
         run: |
           cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --all-targets --locked -- -D warnings
