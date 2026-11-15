@@ -472,6 +472,12 @@ extend-words = { decod = "decod", grammer = "grammer", axe = "axe" }
 extend-glob = ["nfc.test.ts", "text.test.ts"]
 extend-words = { caf = "caf" }
 
+[type.postal-family-kinds]
+extend-glob = ["postal.generated.ts"]
+# The generated kinds of the postal family spell each shape from the ISO 3166-1 code that leads its group of countries:
+# `Ba` is Bosnia and Herzegovina and `Pn` is the Pitcairn Islands.
+extend-identifiers = { PostalBa = "PostalBa", PostalPn = "PostalPn" }
+
 [type.coastal-fields]
 extend-glob = [
 	"build-coastal.ts",

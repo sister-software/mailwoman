@@ -1,0 +1,1554 @@
+{
+	"format": "mailwoman.recognize.family-definition",
+	"version": 1,
+	"family": "postal",
+	"generator": "node packages/postcode/tools/generate.run.ts",
+	"metadata": {},
+	"shapes": [
+		{
+			"id": "postal.ac",
+			"pattern": "(?i:(?:ASCN[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie", "postal.sh"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AC"]
+			}
+		},
+		{
+			"id": "postal.ad",
+			"pattern": "(?i:(?:AD[1-7]0[0-9]))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["AD"]
+			}
+		},
+		{
+			"id": "postal.af",
+			"pattern": "(?i:(?:[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.ai",
+				"postal.am",
+				"postal.ar",
+				"postal.bh",
+				"postal.cc",
+				"postal.cr",
+				"postal.cx",
+				"postal.gl",
+				"postal.lb",
+				"postal.li",
+				"postal.nf",
+				"postal.tz"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": [
+					"AF",
+					"AL",
+					"AT",
+					"AU",
+					"AZ",
+					"BD",
+					"BE",
+					"BG",
+					"CH",
+					"CV",
+					"CY",
+					"DK",
+					"ET",
+					"GE",
+					"GW",
+					"HM",
+					"HT",
+					"HU",
+					"LR",
+					"LU",
+					"MD",
+					"MK",
+					"MZ",
+					"NE",
+					"NO",
+					"NZ",
+					"PH",
+					"PY",
+					"SI",
+					"SJ",
+					"TN",
+					"VE",
+					"ZA"
+				]
+			}
+		},
+		{
+			"id": "postal.ai",
+			"pattern": "(?i:(?:(?:AI-)?2640))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.am",
+				"postal.ar",
+				"postal.cr",
+				"postal.lb",
+				"postal.tz"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AI"]
+			}
+		},
+		{
+			"id": "postal.am",
+			"pattern": "(?i:(?:(?:37)?[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.ar",
+				"postal.bh",
+				"postal.by",
+				"postal.cc",
+				"postal.cr",
+				"postal.cx",
+				"postal.gl",
+				"postal.kh",
+				"postal.lb",
+				"postal.li",
+				"postal.nf",
+				"postal.tw",
+				"postal.tz"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AM"]
+			}
+		},
+		{
+			"id": "postal.ar",
+			"pattern": "(?i:(?:((?:[A-HJ-NP-Z])?[0-9]{4})([A-Z]{3})?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.bh",
+				"postal.cc",
+				"postal.cr",
+				"postal.cx",
+				"postal.gl",
+				"postal.ie",
+				"postal.lb",
+				"postal.li",
+				"postal.nf",
+				"postal.tz"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AR"]
+			}
+		},
+		{
+			"id": "postal.as",
+			"pattern": "(?i:(?:(96799)(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.ba",
+				"postal.cr",
+				"postal.cz",
+				"postal.fr",
+				"postal.il",
+				"postal.kh",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AS"]
+			}
+		},
+		{
+			"id": "postal.ax",
+			"pattern": "(?i:(?:22[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.ba",
+				"postal.cr",
+				"postal.cz",
+				"postal.fr",
+				"postal.il",
+				"postal.kh",
+				"postal.mu",
+				"postal.pe",
+				"postal.tw",
+				"postal.tz",
+				"postal.us",
+				"postal.xk"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["AX"]
+			}
+		},
+		{
+			"id": "postal.ba",
+			"pattern": "(?i:(?:[0-9]{5}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.bl",
+				"postal.cr",
+				"postal.cz",
+				"postal.fm",
+				"postal.fr",
+				"postal.gf",
+				"postal.gu",
+				"postal.il",
+				"postal.kh",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": [
+					"BA",
+					"BT",
+					"CU",
+					"DE",
+					"DO",
+					"DZ",
+					"EE",
+					"EG",
+					"EH",
+					"ES",
+					"FI",
+					"GT",
+					"HN",
+					"HR",
+					"ID",
+					"IQ",
+					"IT",
+					"JO",
+					"KE",
+					"KR",
+					"KW",
+					"LA",
+					"LK",
+					"LT",
+					"MA",
+					"MM",
+					"MN",
+					"MV",
+					"MX",
+					"MY",
+					"NA",
+					"NI",
+					"NP",
+					"PK",
+					"SA",
+					"SD",
+					"SN",
+					"TH",
+					"TR",
+					"UA",
+					"UY",
+					"ZM"
+				]
+			}
+		},
+		{
+			"id": "postal.bb",
+			"pattern": "(?i:(?:BB[0-9]{5}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie", "postal.so"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BB"]
+			}
+		},
+		{
+			"id": "postal.bh",
+			"pattern": "(?i:(?:(?:1[0-2]|[1-9])[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.cr",
+				"postal.fo",
+				"postal.lb",
+				"postal.om",
+				"postal.tw",
+				"postal.tz"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BH"]
+			}
+		},
+		{
+			"id": "postal.bl",
+			"pattern": "(?i:(?:9[78][01][0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.cr",
+				"postal.cz",
+				"postal.fr",
+				"postal.il",
+				"postal.kh",
+				"postal.mc",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BL", "GP", "MF"]
+			}
+		},
+		{
+			"id": "postal.bm",
+			"pattern": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[A-Z0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["word.ascii"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BM"]
+			}
+		},
+		{
+			"id": "postal.bn",
+			"pattern": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.sv", "postal.vc", "postal.vg", "printed.az", "printed.ht"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BN"]
+			}
+		},
+		{
+			"id": "postal.br",
+			"pattern": "(?i:(?:[0-9]{5}-?[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.lb"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BR"]
+			}
+		},
+		{
+			"id": "postal.by",
+			"pattern": "(?i:(?:[0-9]{6}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.kh", "postal.tw"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["BY", "CN", "CO", "EC", "IN", "KG", "KZ", "NG", "RO", "RU", "SG", "TJ", "TM", "UZ"]
+			}
+		},
+		{
+			"id": "postal.ca",
+			"pattern": "(?i:(?:[ABCEGHJKLMNPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABCEGHJ-NPRSTV-Z][0-9]))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["CA"]
+			}
+		},
+		{
+			"id": "postal.cc",
+			"pattern": "(?i:(?:6799))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.cr", "postal.lb", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["CC"]
+			}
+		},
+		{
+			"id": "postal.cl",
+			"pattern": "(?i:(?:[0-9]{7}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.ie", "postal.il", "postal.jp"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["CL"]
+			}
+		},
+		{
+			"id": "postal.cr",
+			"pattern": "(?i:(?:[0-9]{4,5}|[0-9]{3}-[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.cx",
+				"postal.cz",
+				"postal.fm",
+				"postal.fr",
+				"postal.gf",
+				"postal.gl",
+				"postal.gu",
+				"postal.il",
+				"postal.jp",
+				"postal.kh",
+				"postal.lb",
+				"postal.li",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.nf",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["CR"]
+			}
+		},
+		{
+			"id": "postal.cx",
+			"pattern": "(?i:(?:6798))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["CX"]
+			}
+		},
+		{
+			"id": "postal.cz",
+			"pattern": "(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.fm",
+				"postal.fr",
+				"postal.gf",
+				"postal.gu",
+				"postal.il",
+				"postal.kh",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["CZ", "GR", "SE", "SK"]
+			}
+		},
+		{
+			"id": "postal.fk",
+			"pattern": "(?i:(?:FIQQ[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["FK"]
+			}
+		},
+		{
+			"id": "postal.fm",
+			"pattern": "(?i:(?:(9694[1-4])(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.fr",
+				"postal.il",
+				"postal.kh",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["FM"]
+			}
+		},
+		{
+			"id": "postal.fo",
+			"pattern": "(?i:(?:[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.om", "postal.tw"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["FO", "GN", "IS", "LS", "MG", "PG"]
+			}
+		},
+		{
+			"id": "postal.fr",
+			"pattern": "(?i:(?:[0-9]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.gf",
+				"postal.gu",
+				"postal.il",
+				"postal.kh",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["FR"]
+			}
+		},
+		{
+			"id": "postal.gb",
+			"pattern": "(?i:(?:GIR[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*0AA|(?:(?:AB|AL|B|BA|BB|BD|BF|BH|BL|BN|BR|BS|BT|BX|CA|CB|CF|CH|CM|CO|CR|CT|CV|CW|DA|DD|DE|DG|DH|DL|DN|DT|DY|E|EC|EH|EN|EX|FK|FY|G|GL|GY|GU|HA|HD|HG|HP|HR|HS|HU|HX|IG|IM|IP|IV|JE|KA|KT|KW|KY|L|LA|LD|LE|LL|LN|LS|LU|M|ME|MK|ML|N|NE|NG|NN|NP|NR|NW|OL|OX|PA|PE|PH|PL|PO|PR|RG|RH|RM|S|SA|SE|SG|SK|SL|SM|SN|SO|SP|SR|SS|ST|SW|SY|TA|TD|TF|TN|TQ|TR|TS|TW|UB|W|WA|WC|WD|WF|WN|WR|WS|WV|YO|ZE)(?:[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))|BFPO[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{1,4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.gg", "postal.ie", "postal.im", "postal.je"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GB"]
+			}
+		},
+		{
+			"id": "postal.gf",
+			"pattern": "(?i:(?:9[78]3[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.il",
+				"postal.kh",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GF"]
+			}
+		},
+		{
+			"id": "postal.gg",
+			"pattern": "(?i:(?:GY[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GG"]
+			}
+		},
+		{
+			"id": "postal.gi",
+			"pattern": "(?i:(?:GX11[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1AA))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GI"]
+			}
+		},
+		{
+			"id": "postal.gl",
+			"pattern": "(?i:(?:39[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GL"]
+			}
+		},
+		{
+			"id": "postal.gs",
+			"pattern": "(?i:(?:SIQQ[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["postal.ie"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GS"]
+			}
+		},
+		{
+			"id": "postal.gu",
+			"pattern": "(?i:(?:(969(?:[12][0-9]|3[12]))(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.il",
+				"postal.kh",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["GU"]
+			}
+		},
+		{
+			"id": "postal.ie",
+			"pattern": "(?i:(?:[0-9A-Z]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9A-Z]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.il",
+				"postal.im",
+				"postal.io",
+				"postal.je",
+				"postal.jp",
+				"postal.mt",
+				"postal.pe",
+				"postal.pn",
+				"postal.sh",
+				"postal.so",
+				"postal.ta",
+				"postal.tc",
+				"word.ascii"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["IE"]
+			}
+		},
+		{
+			"id": "postal.il",
+			"pattern": "(?i:(?:[0-9]{5}(?:[0-9]{2})?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.jp",
+				"postal.kh",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["IL"]
+			}
+		},
+		{
+			"id": "postal.im",
+			"pattern": "(?i:(?:IM[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["IM"]
+			}
+		},
+		{
+			"id": "postal.io",
+			"pattern": "(?i:(?:BBND[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["IO"]
+			}
+		},
+		{
+			"id": "postal.ir",
+			"pattern": "(?i:(?:[0-9]{5}-?[0-9]{5}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["IR"]
+			}
+		},
+		{
+			"id": "postal.je",
+			"pattern": "(?i:(?:JE[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["JE"]
+			}
+		},
+		{
+			"id": "postal.jp",
+			"pattern": "(?i:(?:[0-9]{3}-?[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["JP"]
+			}
+		},
+		{
+			"id": "postal.kh",
+			"pattern": "(?i:(?:[0-9]{5,6}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mc",
+				"postal.me",
+				"postal.mh",
+				"postal.mp",
+				"postal.mq",
+				"postal.mu",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["KH", "RS", "VN"]
+			}
+		},
+		{
+			"id": "postal.ky",
+			"pattern": "(?i:(?:KY[0-9]-[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["KY"]
+			}
+		},
+		{
+			"id": "postal.lb",
+			"pattern": "(?i:(?:(?:[0-9]{4})(?:[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:[0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.li", "postal.nf", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["LB"]
+			}
+		},
+		{
+			"id": "postal.li",
+			"pattern": "(?i:(?:948[5-9]|949[0-8]))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["LI"]
+			}
+		},
+		{
+			"id": "postal.lv",
+			"pattern": "(?i:(?:LV-[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["LV"]
+			}
+		},
+		{
+			"id": "postal.mc",
+			"pattern": "(?i:(?:980[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["MC"]
+			}
+		},
+		{
+			"id": "postal.me",
+			"pattern": "(?i:(?:8[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["ME"]
+			}
+		},
+		{
+			"id": "postal.mh",
+			"pattern": "(?i:(?:(969[67][0-9])(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["MH"]
+			}
+		},
+		{
+			"id": "postal.mp",
+			"pattern": "(?i:(?:(9695[012])(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["MP"]
+			}
+		},
+		{
+			"id": "postal.mq",
+			"pattern": "(?i:(?:9[78]2[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["MQ"]
+			}
+		},
+		{
+			"id": "postal.mt",
+			"pattern": "(?i:(?:[A-Z]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2,4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["MT"]
+			}
+		},
+		{
+			"id": "postal.mu",
+			"pattern": "(?i:(?:[0-9]{3}(?:[0-9]{2}|[A-Z]{2}[0-9]{3})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.nc",
+				"postal.pe",
+				"postal.pf",
+				"postal.pm",
+				"postal.pr",
+				"postal.pw",
+				"postal.re",
+				"postal.sm",
+				"postal.tw",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["MU"]
+			}
+		},
+		{
+			"id": "postal.nc",
+			"pattern": "(?i:(?:988[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["NC"]
+			}
+		},
+		{
+			"id": "postal.nf",
+			"pattern": "(?i:(?:2899))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tz"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["NF"]
+			}
+		},
+		{
+			"id": "postal.nl",
+			"pattern": "(?i:(?:[1-9][0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:[A-RT-Z][A-Z]|S[BCE-RT-Z])))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["NL"]
+			}
+		},
+		{
+			"id": "postal.om",
+			"pattern": "(?i:(?:(?:PC[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*)?[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["OM"]
+			}
+		},
+		{
+			"id": "postal.pe",
+			"pattern": "(?i:(?:(?:LIMA[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{1,2}|CALLAO[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*0?[0-9])|[0-2][0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.pr",
+				"postal.tw",
+				"postal.tz",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.xk"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["PE"]
+			}
+		},
+		{
+			"id": "postal.pf",
+			"pattern": "(?i:(?:987[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["PF"]
+			}
+		},
+		{
+			"id": "postal.pl",
+			"pattern": "(?i:(?:[0-9]{2}-[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["PL"]
+			}
+		},
+		{
+			"id": "postal.pm",
+			"pattern": "(?i:(?:9[78]5[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["PM"]
+			}
+		},
+		{
+			"id": "postal.pn",
+			"pattern": "(?i:(?:PCRN[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["PN"]
+			}
+		},
+		{
+			"id": "postal.pr",
+			"pattern": "(?i:(?:(00[679][0-9]{2})(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["PR"]
+			}
+		},
+		{
+			"id": "postal.pt",
+			"pattern": "(?i:(?:[0-9]{4}-[0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["PT"]
+			}
+		},
+		{
+			"id": "postal.pw",
+			"pattern": "(?i:(?:(969(?:39|40))(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["PW"]
+			}
+		},
+		{
+			"id": "postal.re",
+			"pattern": "(?i:(?:9[78]4[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["RE"]
+			}
+		},
+		{
+			"id": "postal.sh",
+			"pattern": "(?i:(?:(?:ASCN|STHL)[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["SH"]
+			}
+		},
+		{
+			"id": "postal.sm",
+			"pattern": "(?i:(?:4789[0-9]))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us", "postal.xk"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["SM"]
+			}
+		},
+		{
+			"id": "postal.so",
+			"pattern": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{5}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["SO"]
+			}
+		},
+		{
+			"id": "postal.sv",
+			"pattern": "(?i:(?:CP[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[1-3][1-7][0-2][0-9]))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["SV"]
+			}
+		},
+		{
+			"id": "postal.sz",
+			"pattern": "(?i:(?:[HLMS][0-9]{3}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["SZ"]
+			}
+		},
+		{
+			"id": "postal.ta",
+			"pattern": "(?i:(?:TDCU[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["TA"]
+			}
+		},
+		{
+			"id": "postal.tc",
+			"pattern": "(?i:(?:TKCA[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["TC"]
+			}
+		},
+		{
+			"id": "postal.tw",
+			"pattern": "(?i:(?:[0-9]{3}(?:[0-9]{2,3})?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tz",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["TW"]
+			}
+		},
+		{
+			"id": "postal.tz",
+			"pattern": "(?i:(?:[0-9]{4,5}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.um",
+				"postal.us",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["TZ"]
+			}
+		},
+		{
+			"id": "postal.um",
+			"pattern": "(?i:(?:96898))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.us"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["UM"]
+			}
+		},
+		{
+			"id": "postal.us",
+			"pattern": "(?i:(?:([0-9]{5})(?:[ \\-]([0-9]{4}))?)|(?:[0-9]{5}[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": [
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.va",
+				"postal.vi",
+				"postal.wf",
+				"postal.xk",
+				"postal.yt"
+			],
+			"metadata": {
+				"kind": "code",
+				"countries": ["US"]
+			}
+		},
+		{
+			"id": "postal.va",
+			"pattern": "(?i:(?:00120))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["VA"]
+			}
+		},
+		{
+			"id": "postal.vc",
+			"pattern": "(?i:(?:VC[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["VC"]
+			}
+		},
+		{
+			"id": "postal.vg",
+			"pattern": "(?i:(?:VG[0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "code",
+				"countries": ["VG"]
+			}
+		},
+		{
+			"id": "postal.vi",
+			"pattern": "(?i:(?:(008(?:(?:[0-4][0-9])|(?:5[01])))(?:[ \\-]([0-9]{4}))?))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["VI"]
+			}
+		},
+		{
+			"id": "postal.wf",
+			"pattern": "(?i:(?:986[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["WF"]
+			}
+		},
+		{
+			"id": "postal.xk",
+			"pattern": "(?i:(?:[1-7][0-9]{4}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["XK"]
+			}
+		},
+		{
+			"id": "postal.yt",
+			"pattern": "(?i:(?:976[0-9]{2}))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"metadata": {
+				"kind": "code",
+				"countries": ["YT"]
+			}
+		},
+		{
+			"id": "printed.ax",
+			"pattern": "[\\x{41}\\x{61}][\\x{58}\\x{78}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:22[0-9]{3})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["AX"],
+				"prefix": "AX-",
+				"bare": "postal.ax"
+			}
+		},
+		{
+			"id": "printed.az",
+			"pattern": "[\\x{41}\\x{61}][\\x{5a}\\x{7a}][\\x{20}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["AZ"],
+				"prefix": "AZ ",
+				"bare": "postal.af"
+			}
+		},
+		{
+			"id": "printed.ch",
+			"pattern": "[\\x{43}\\x{63}][\\x{48}\\x{68}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["CH"],
+				"prefix": "CH-",
+				"bare": "postal.af"
+			}
+		},
+		{
+			"id": "printed.fi",
+			"pattern": "[\\x{46}\\x{66}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["FI"],
+				"prefix": "FI-",
+				"bare": "postal.ba"
+			}
+		},
+		{
+			"id": "printed.fo",
+			"pattern": "[\\x{46}\\x{66}][\\x{4f}\\x{6f}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["FO"],
+				"prefix": "FO",
+				"bare": "postal.fo"
+			}
+		},
+		{
+			"id": "printed.hr",
+			"pattern": "[\\x{48}\\x{68}][\\x{52}\\x{72}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["HR"],
+				"prefix": "HR-",
+				"bare": "postal.ba"
+			}
+		},
+		{
+			"id": "printed.ht",
+			"pattern": "[\\x{48}\\x{68}][\\x{54}\\x{74}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["HT"],
+				"prefix": "HT",
+				"bare": "postal.af"
+			}
+		},
+		{
+			"id": "printed.jp",
+			"pattern": "[\\x{3012}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}-?[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["JP"],
+				"prefix": "〒",
+				"bare": "postal.jp"
+			}
+		},
+		{
+			"id": "printed.li",
+			"pattern": "[\\x{46}\\x{66}][\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:948[5-9]|949[0-8])))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["LI"],
+				"prefix": "FL-",
+				"bare": "postal.li"
+			}
+		},
+		{
+			"id": "printed.lt",
+			"pattern": "[\\x{4c}\\x{6c}][\\x{54}\\x{74}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["LT"],
+				"prefix": "LT-",
+				"bare": "postal.ba"
+			}
+		},
+		{
+			"id": "printed.lu",
+			"pattern": "[\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["LU"],
+				"prefix": "L-",
+				"bare": "postal.af"
+			}
+		},
+		{
+			"id": "printed.mc",
+			"pattern": "[\\x{4d}\\x{6d}][\\x{43}\\x{63}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:980[0-9]{2})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["MC"],
+				"prefix": "MC-",
+				"bare": "postal.mc"
+			}
+		},
+		{
+			"id": "printed.md",
+			"pattern": "[\\x{4d}\\x{6d}][\\x{44}\\x{64}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["MD"],
+				"prefix": "MD-",
+				"bare": "postal.af"
+			}
+		},
+		{
+			"id": "printed.se",
+			"pattern": "[\\x{53}\\x{73}\\x{17f}][\\x{45}\\x{65}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["SE"],
+				"prefix": "SE-",
+				"bare": "postal.cz"
+			}
+		},
+		{
+			"id": "printed.si",
+			"pattern": "[\\x{53}\\x{73}\\x{17f}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "token",
+			"metadata": {
+				"kind": "printed",
+				"countries": ["SI"],
+				"prefix": "SI-",
+				"bare": "postal.af"
+			}
+		}
+	]
+}

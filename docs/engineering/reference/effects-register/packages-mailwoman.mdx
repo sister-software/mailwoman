@@ -2133,11 +2133,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `awaits at module scope`, 2 times
+- `awaits at module scope`, 3 times
 - `runs a statement at module scope`, 2 times
 
 | Kind  | Interface           | Target                                                              | Calls |
 | ----- | ------------------- | ------------------------------------------------------------------- | ----- |
+| read  | `readLocalJSONFile` | `package:@mailwoman/dictionaries/data/chromium-i18n/ssl-address`    | 1     |
 | read  | `readLocalTextFile` | `repo:packages/recognize/data/fixtures/postcode-prefix-parity.json` | 1     |
 | write | `writeLocalFile`    | `repo:packages/recognize/data/fixtures/postcode-prefix-parity.json` | 1     |
 

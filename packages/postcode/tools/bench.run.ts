@@ -32,7 +32,7 @@ import { coordinates } from "@mailwoman/recognize/coordinates"
 import { primitives } from "@mailwoman/recognize/primitives"
 import { structure } from "@mailwoman/recognize/structure"
 
-import { postcodeLegacy } from "#recognize"
+import { postal, postcodeLegacy } from "#recognize"
 
 const WARM_UP_CALLS = 20_000
 const TIMED_CALLS = 200_000
@@ -55,6 +55,7 @@ const INPUTS: readonly string[] = [
 ]
 
 const recognizer = createRecognizer([structure, postcodeLegacy, primitives, coordinates])
+const withPostal = createRecognizer([structure, postcodeLegacy, postal, primitives, coordinates])
 
 function microsecondsPerCall(input: string, run: (input: string) => number): { microseconds: number; sink: number } {
 	let sink = 0
@@ -78,14 +79,23 @@ const rows = INPUTS.map((input) => {
 	const legacy = microsecondsPerCall(input, (text) => computeQueryShape(text).knownFormats.length)
 	const adapter = microsecondsPerCall(input, (text) => recognizer.recognize(text).fields.knownFormats.length)
 
+	const postalCall = microsecondsPerCall(input, (text) => {
+		const result = withPostal.recognize(text)
+
+		return result.fields.knownFormats.length + result.recognitions.length
+	})
+
 	return {
+		postalRecognizeMicroseconds: postalCall.microseconds,
+		postalCandidates: withPostal.recognize(input).recognitions.filter(({ kind }) => /^(postal|printed)\./u.test(kind))
+			.length,
 		input,
 		utf16Units: input.length,
 		utf8Bytes: encoder.encode(input).length,
 		knownFormats: recognizer.recognize(input).fields.knownFormats.length,
 		computeQueryShapeMicroseconds: legacy.microseconds,
 		recognizeMicroseconds: adapter.microseconds,
-		sink: legacy.sink + adapter.sink,
+		sink: legacy.sink + adapter.sink + postalCall.sink,
 	}
 })
 
@@ -105,14 +115,16 @@ if (values.json) {
 } else {
 	console.log(`commit ${report.commit}, node ${report.node}, ${report.cpu}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per input\n`)
-	console.log("| Input | UTF-16 units | Known formats | computeQueryShape (µs/call) | recognize (µs/call) |")
-	console.log("| --- | --- | --- | --- | --- |")
+	console.log(
+		"| Input | UTF-16 units | Known formats | Postal candidates | computeQueryShape (µs/call) | recognize without postal (µs/call) | recognize with postal (µs/call) |"
+	)
+	console.log("| --- | --- | --- | --- | --- | --- | --- |")
 
 	for (const row of rows) {
 		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (${row.utf16Units} units)` : row.input
 
 		console.log(
-			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} |`
+			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.postalCandidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} | ${row.postalRecognizeMicroseconds.toFixed(2)} |`
 		)
 	}
 }

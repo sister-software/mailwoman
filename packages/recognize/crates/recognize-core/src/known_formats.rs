@@ -14,22 +14,20 @@
 //! 3. The first PO box is a hit of kind [`HitKind::POBox`]: a leader token, optional further leaders, and then a digit or
 //!    mixed token within the next three tokens.
 //!
-//! The hits come out in that order, and within one text in the order of the shapes' IDs. A family that wants a hit order
-//! names its shapes so that their IDs sort in that order.
+//! The hits come out in that order, and the hits of one text on one span in the order of the shapes' `order` values, lowest
+//! first. A shape with no `order` follows every shape that has one, in the byte order of its ID.
 //!
 //! # The family's contract
 //!
-//! The pass reads one convention. A shape whose ID begins with [`LEADER_PREFIX`] marks a token as a PO box leader, and is
-//! no format. Every other shape is a format. The family decides which of a token hit and a pair hit applies to a shape,
-//! because the engine reports the kind of each hit and the shape's position and the caller keeps the pair it expects.
+//! The pass reads two pieces of data the family's definition states for each shape, and no naming convention. A shape
+//! with the role `po_box_leader` marks a token as a PO box leader and is no format. Every other shape is a format. The
+//! family decides which of a token hit and a pair hit applies to a shape, because the engine reports the kind of each hit
+//! and the shape's position and the caller keeps the pair it expects.
 //!
 //! The family has no captures and no validator, and the pass does not look at either.
 
 use crate::engine::{search_whole, Engine, SearchError};
 use crate::structure::{Structure, Token, TokenClass};
-
-/// The prefix of the shape IDs that mark a PO box leader.
-pub const LEADER_PREFIX: &str = "leader.";
 
 /// The shape word of a PO box hit, which no shape of the family has.
 pub const NO_SHAPE: u32 = u32::MAX;
@@ -105,7 +103,7 @@ impl Engine {
 		let collect = |piece: &[u8], matched: &mut Vec<usize>| -> Result<(), SearchError> {
 			matched.clear();
 			search_whole(whole, piece, |pattern| matched.push(whole.shape_indexes[pattern]))?;
-			matched.sort_unstable();
+			matched.sort_unstable_by_key(|shape| (loaded.orders[*shape], *shape));
 			matched.dedup();
 
 			Ok(())

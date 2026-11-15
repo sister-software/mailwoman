@@ -44,6 +44,19 @@
 			"required": ["id", "pattern"],
 			"properties": {
 				"id": { "$ref": "#/$defs/dottedName" },
+				"boundary": {
+					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector, so the engine reports no match inside a longer run of those characters. The artifact carries the boundary.",
+					"enum": ["token"]
+				},
+				"role": {
+					"description": "What the shape is for when it is no plain format. A po_box_leader marks a token that leads a PO box to the known-formats pass. The artifact carries the role.",
+					"enum": ["po_box_leader"]
+				},
+				"order": {
+					"description": "The shape's place in the order the known-formats pass reports hits, lowest first. A shape with no order follows every shape that has one, in byte order of its ID. The artifact carries the order.",
+					"type": "integer",
+					"minimum": 0
+				},
 				"pattern": {
 					"description": "A regular-expression string. A case-insensitive pattern carries an inline flag such as (?i-u:...), which folds ASCII case only.",
 					"type": "string",

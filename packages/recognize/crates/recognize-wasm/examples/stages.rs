@@ -43,7 +43,9 @@ fn microseconds(mut run: impl FnMut()) -> f64 {
 
 fn main() {
 	let white_house_four = WHITE_HOUSE.repeat(4);
+	let ones = "1".repeat(300);
 	let inputs: Vec<&str> = vec![
+		&ones,
 		"68161",
 		"SW1A 1AA",
 		"350 5th Ave, New York, NY 10118",
@@ -65,6 +67,20 @@ fn main() {
 		assert!(handle >= 0);
 	}
 
+	// The `postal` family belongs to `@mailwoman/postcode`, and its declarations hash is the one its artifact embeds.
+	let postal = std::fs::read(format!(
+		"{}/../../../postcode/data/artifacts/postal.rca1",
+		env!("CARGO_MANIFEST_DIR")
+	))
+	.expect("the committed postal artifact exists");
+
+	engine.load(&postal).expect("the postal artifact loads");
+
+	let hash = engine.header("postal").unwrap().declarations_hash.clone();
+	let handle = unsafe { rcg_load(postal.as_ptr(), postal.len(), hash.as_ptr(), hash.len()) };
+
+	assert!(handle >= 0);
+
 	println!("| Input | UTF-8 bytes | Candidates | search | search + extract + validate | rcg_recognize (all) |");
 	println!("| --- | --- | --- | --- | --- | --- |");
 
@@ -77,7 +93,7 @@ fn main() {
 			black_box(engine.recognize(black_box(input)).unwrap().len());
 		});
 		let export = microseconds(|| {
-			black_box(unsafe { rcg_recognize(black_box(input).as_ptr(), input.len(), 0b11) });
+			black_box(unsafe { rcg_recognize(black_box(input).as_ptr(), input.len(), 0b111) });
 		});
 		let label: String = input.chars().take(40).collect();
 

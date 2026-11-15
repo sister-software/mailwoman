@@ -337,6 +337,9 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 					patterns: hirs
 						.iter()
 						.map(|(index, _)| PatternMeta {
+							boundary: lowered[*index].0.boundary,
+							order: lowered[*index].0.order,
+							role: lowered[*index].0.role,
 							scope: lowered[*index].0.scope,
 							shape: lowered[*index].0.id.clone(),
 						})

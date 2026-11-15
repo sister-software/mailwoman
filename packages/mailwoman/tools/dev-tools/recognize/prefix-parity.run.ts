@@ -5,72 +5,106 @@
  * Writes the postcode prefix reference answers `@mailwoman/recognize` is held to
  * to `packages/recognize/data/fixtures/postcode-prefix-parity.json`.
  *
- * For each country below, the tool reads the syntax pattern through `@mailwoman/postcode`'s
- * own readers, asks `PrefixAutomaton` whether each probe can still complete to a whole
- * postcode, and asks the country's `RegExp` whether the probe is a whole postcode.
- * It records the probes each answers yes to.
+ * For every country the `postal` family holds, the tool reads the syntax through
+ * `@mailwoman/postcode`'s own readers and records four sets of answers over the country's probes:
+ *
+ * - `completable`: the probes `PrefixAutomaton.canComplete` answers yes to, for the bare code.
+ * - `accepted`: the probes the country's `RegExp` matches whole.
+ * - `printedCompletable`: for a country whose layout prints a prefix, the probes the printed
+ *   branch of `canComplete` in `completion.ts` answers yes to: the prefix typed in part,
+ *   or typed whole and followed by a prefix of the code.
+ * - `printedAccepted`: the probes that start with the prefix, in `toUpperCase`'s reading,
+ *   and whose remainder matches the country's `RegExp` after its leading white space.
  *
  * The probes are every string of up to `maxLength` characters over the country's alphabet,
- * plus the prefixes of the country's example postcodes, each prefix with its last character
- * replaced by every alphabet character, and each prefix with every alphabet character appended.
+ * the prefixes of the country's example postcodes with each alphabet character appended
+ * or substituted for the last character, and the prefixes of inputs built to probe
+ * non-ASCII text: fullwidth and Arabic-Indic digits, the Kelvin sign, the long s,
+ * the dotless i, non-breaking and ideographic spaces and combining marks.
  * The enumerated strings are not stored, because the Rust test enumerates them
  * again from `alphabet` and `maxLength`.
  *
- * The tool lives under `mailwoman` because `@mailwoman/postcode` is meant to depend
- * on `@mailwoman/recognize` in a later phase, and a tool inside `recognize` that
- * imports `@mailwoman/postcode` would close that cycle.
+ * The tool lives under `mailwoman` because it imports `@mailwoman/postcode`
+ * and a tool inside `recognize` that does so would close a dependency cycle.
  *
  * Usage: `node packages/mailwoman/tools/dev-tools/recognize/prefix-parity.run.ts [--check]`
  *
  * `--check` writes no file and exits non-zero when the committed file differs from what the code produces.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { postcodeSyntax } from "@mailwoman/postcode/country-formats"
+import { postcodeSyntax, postcodeSyntaxCountries } from "@mailwoman/postcode/country-formats"
 import { PrefixAutomaton } from "@mailwoman/postcode/prefix/automaton"
+import { PostalMetadata } from "@mailwoman/postcode/recognize/postal.generated"
+import { probeInputs } from "@mailwoman/postcode/tools/postal/differential"
 import { type FormatConfig, format } from "oxfmt"
 
 /**
- * One country's probe plan.
+ * The most characters an alphabet holds, so the enumeration stays small.
  */
-interface CountryPlan {
-	country: string
-	/**
-	 * The characters of the enumeration.
-	 *
-	 * It holds one character for each distinct behavior of the pattern and one the pattern never admits.
-	 */
-	alphabet: string
-	maxLength: number
-	/**
-	 * Whole postcodes in the country's forms, as written and without a space.
-	 */
-	examples: readonly string[]
+const ALPHABET_LIMIT = 6
+
+/**
+ * The longest enumerated string.
+ */
+const MAX_LENGTH = 4
+
+/**
+ * The libaddressinput examples of each country, as `completion.test.ts` reads them.
+ */
+async function readExamples(): Promise<Map<string, string[]>> {
+	const dir = resolvePackageDirectory("@mailwoman/dictionaries")("data", "chromium-i18n", "ssl-address")
+	const examples = new Map<string, string[]>()
+
+	for (const country of postcodeSyntaxCountries()) {
+		const metadata = await readLocalJSONFile<{ readonly zipex?: string }>(dir(`${country}.json`))
+
+		examples.set(country, metadata.zipex ? metadata.zipex.split(",") : [])
+	}
+
+	return examples
 }
 
-const PLANS: readonly CountryPlan[] = [
-	{ country: "US", alphabet: "09- A", maxLength: 5, examples: ["10118-1234", "20500", "10118 1234", "101181234"] },
-	{
-		country: "GB",
-		alphabet: "SW1A ",
-		maxLength: 5,
-		examples: ["SW1A 1AA", "M1 1AE", "GIR 0AA", "BFPO 1234", "sw1a1aa"],
-	},
-	{ country: "CA", alphabet: "K1A0 ", maxLength: 5, examples: ["K1A 0B1", "K1A0B1", "k1a 0b1"] },
-	{ country: "NL", alphabet: "10SB ", maxLength: 5, examples: ["1012 LG", "1012LG", "2511 SB"] },
-	{ country: "JP", alphabet: "01-A", maxLength: 5, examples: ["100-0001", "1000001"] },
-	{ country: "DE", alphabet: "01A ", maxLength: 5, examples: ["68161", "01067"] },
-	{ country: "BR", alphabet: "01-A", maxLength: 5, examples: ["01310-100", "01310100"] },
-	{ country: "IE", alphabet: "A1 Z", maxLength: 5, examples: ["D02 X285", "A65 F4E2", "D02X285"] },
-	{ country: "PL", alphabet: "01-A", maxLength: 5, examples: ["00-950", "00950"] },
-	{ country: "SE", alphabet: "01 A", maxLength: 5, examples: ["114 55", "11455"] },
-	{ country: "AR", alphabet: "C1A0", maxLength: 5, examples: ["C1425ABC", "1425", "B1636", "C1425"] },
-	{ country: "PT", alphabet: "01-A", maxLength: 5, examples: ["1000-001", "1000001"] },
-]
+/**
+ * The characters of a country's enumeration: a digit or two, the first letters its examples
+ * use in both cases, the separators its pattern admits, and one character no pattern admits.
+ */
+function alphabetFor(examples: readonly string[], source: string): string {
+	const characters = new Set<string>()
+	const text = examples.join("")
+	const digits = [...new Set([...text].filter((character) => /[0-9]/u.test(character)))].toSorted()
+	const letters = [...new Set([...text.toUpperCase()].filter((character) => /[A-Z]/u.test(character)))]
+
+	if (digits.length) {
+		characters.add(digits[0]!)
+		characters.add(digits.at(-1)!)
+	}
+
+	if (/\\s/u.test(source)) {
+		characters.add(" ")
+	}
+
+	if (/-/u.test(source) || /-/u.test(text)) {
+		characters.add("-")
+	}
+
+	for (const letter of letters.slice(0, 2)) {
+		characters.add(letter)
+	}
+
+	if (letters[0]) {
+		characters.add(letters[0].toLowerCase())
+	}
+
+	characters.add("#")
+
+	return [...characters].slice(0, ALPHABET_LIMIT).join("")
+}
 
 /**
  * Every string of up to `maxLength` characters over `alphabet`, the empty string included.
@@ -89,24 +123,31 @@ function enumerate(alphabet: string, maxLength: number): string[] {
 
 /**
  * The probes beyond the enumeration: each prefix of each example, with its last character
- * replaced by each alphabet character, and with each alphabet character appended.
+ * replaced by each alphabet character, and with each alphabet character appended,
+ * and each prefix of each non-ASCII probe.
  */
-function probesFor(plan: CountryPlan): string[] {
+function probesFor(alphabet: string, examples: readonly string[]): string[] {
 	const probes = new Set<string>()
 
-	for (const example of plan.examples) {
+	for (const example of examples) {
 		for (let length = 0; length <= example.length; length++) {
 			const prefix = example.slice(0, length)
 
 			probes.add(prefix)
 
-			for (const character of plan.alphabet) {
+			for (const character of alphabet) {
 				probes.add(prefix + character)
 
 				if (length > 0) {
 					probes.add(prefix.slice(0, -1) + character)
 				}
 			}
+		}
+	}
+
+	for (const probe of probeInputs(examples)) {
+		for (let length = 0; length <= probe.length; length++) {
+			probes.add(probe.slice(0, length))
 		}
 	}
 
@@ -119,9 +160,17 @@ function probesFor(plan: CountryPlan): string[] {
 interface CountryFixture {
 	country: string
 	/**
-	 * The pattern as `postcodeSyntax` compiles it, between its anchors, matched case-insensitively.
+	 * The ID of the country's bare shape in the `postal` family.
 	 */
-	pattern: string
+	shape: string
+	/**
+	 * The ID of the country's printed shape, for a country whose layout prints a prefix.
+	 */
+	printedShape?: string
+	/**
+	 * The literal the layout prints before the code.
+	 */
+	prefix?: string
 	alphabet: string
 	maxLength: number
 	/**
@@ -136,43 +185,79 @@ interface CountryFixture {
 	 * The enumerated and probed strings the country's `RegExp` matches whole, sorted.
 	 */
 	accepted: string[]
+	/**
+	 * The strings the printed branch of `canComplete` answers true for, sorted.
+	 */
+	printedCompletable?: string[]
+	/**
+	 * The strings that start with the prefix and whose remainder the `RegExp` matches, sorted.
+	 */
+	printedAccepted?: string[]
 }
 
-/**
- * Strips the whole-pattern anchors `postcodeSyntax` puts around its alternatives.
- */
-function unanchored(source: string): string {
-	if (!source.startsWith("^") || !source.endsWith("$")) {
-		throw new Error(`the pattern is not anchored at both ends: /${source}/`)
-	}
+const SHAPES = Object.entries(PostalMetadata.shapes) as Array<
+	[string, { kind: string; countries: readonly string[]; bare?: string }]
+>
 
-	return source.slice(1, -1)
+function shapeOf(country: string, kind: "code" | "printed"): string | undefined {
+	return SHAPES.find(([, shape]) => shape.kind === kind && shape.countries.includes(country))?.[0]
 }
 
-const countries = PLANS.map((plan): CountryFixture => {
-	const syntax = postcodeSyntax(plan.country)
+const examples = await readExamples()
 
-	if (!syntax) throw new Error(`${plan.country} has no postcode syntax`)
-
+const countries = postcodeSyntaxCountries().map((country): CountryFixture => {
+	const syntax = postcodeSyntax(country)!
+	const sample = examples.get(country)!
+	const alphabet = alphabetFor(sample, syntax.pattern.source)
 	const automaton = new PrefixAutomaton(syntax.pattern.source)
-	const probes = probesFor(plan)
-	const strings = [...new Set([...enumerate(plan.alphabet, plan.maxLength), ...probes])].toSorted()
+	const probes = probesFor(alphabet, sample)
+	const strings = [...new Set([...enumerate(alphabet, MAX_LENGTH), ...probes])].toSorted()
+	const { prefix } = syntax
 
-	return {
-		country: plan.country,
-		pattern: unanchored(syntax.pattern.source),
-		alphabet: plan.alphabet,
-		maxLength: plan.maxLength,
+	const entry: CountryFixture = {
+		country,
+		shape: shapeOf(country, "code")!,
+		alphabet,
+		maxLength: MAX_LENGTH,
 		probes,
 		completable: strings.filter((text) => automaton.canComplete(text)),
 		accepted: strings.filter((text) => syntax.pattern.test(text)),
 	}
+
+	if (prefix) {
+		// The printed branch of `syntaxCanComplete` in completion.ts, on a value with no leading white space trimmed away.
+		entry.printedShape = shapeOf(country, "printed")!
+		entry.prefix = prefix
+
+		const printedCanComplete = (text: string): boolean => {
+			const upper = text.toUpperCase()
+
+			if (prefix.startsWith(upper)) {
+				return true
+			}
+
+			const rest = text.slice(prefix.length).trimStart()
+
+			return upper.startsWith(prefix) && automaton.canComplete(rest)
+		}
+
+		const printedIsWhole = (text: string): boolean => {
+			const rest = text.slice(prefix.length).trimStart()
+
+			return text.toUpperCase().startsWith(prefix) && syntax.pattern.test(rest)
+		}
+
+		entry.printedCompletable = strings.filter(printedCanComplete)
+		entry.printedAccepted = strings.filter(printedIsWhole)
+	}
+
+	return entry
 })
 
 const fixture = {
 	$generatedBy: "packages/mailwoman/tools/dev-tools/recognize/prefix-parity.run.ts",
 	$note:
-		"Answers of PrefixAutomaton.canComplete and of each country's RegExp from @mailwoman/postcode, for the enumerated and probed strings. Do not edit by hand: rerun the generator.",
+		"Answers of PrefixAutomaton.canComplete, of each country's RegExp and of the printed branch of canComplete from @mailwoman/postcode, for the enumerated and probed strings. Do not edit by hand: rerun the generator.",
 	countries,
 }
 

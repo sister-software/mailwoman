@@ -98,7 +98,73 @@ pub struct Shape {
 	/// `Partition`, and absent from the IR text of every other shape.
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub partition: Option<String>,
+	/// What the shape is for, when it is not a plain format. Absent from the IR text of a plain shape.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub role: Option<ShapeRole>,
+	/// The shape's place in the order a known-formats pass reports its hits, lowest first. A shape without one reports
+	/// after every shape that has one, in byte order of its ID. Absent from the IR text of an unordered shape.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub order: Option<u32>,
+	/// What may touch an embedded match of the shape. Absent from the IR text of a shape any neighbor may touch.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub boundary: Option<Boundary>,
 	pub source: Source,
+}
+
+/// What the characters just outside an embedded match may be, so that the engine reports no match that sits inside a
+/// longer run of the characters the shape is written in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Boundary {
+	/// Neither neighbor may continue a structure token: an ASCII letter, an ASCII digit or a connector (see
+	/// [`crate::charset::CONNECTOR`]). The start and the end of the text bound a match. A match of the whole text is
+	/// always reported, and a character of another class, such as white space, other punctuation or a CJK character,
+	/// bounds a match.
+	Token,
+}
+
+impl Boundary {
+	/// The boundary as the definition and the artifact header spell it.
+	pub fn as_str(self) -> &'static str {
+		match self {
+			Boundary::Token => "token",
+		}
+	}
+
+	/// Whether the match `start..end` of `text` satisfies the boundary. Both offsets lie on character boundaries.
+	pub fn admits(self, text: &str, start: usize, end: usize) -> bool {
+		match self {
+			Boundary::Token => {
+				let continues = |character: char| {
+					character.is_ascii_alphanumeric()
+						|| matches!(
+							crate::charset::class_of(character),
+							crate::charset::CharClass::Connector
+						)
+				};
+
+				!text[..start].chars().next_back().is_some_and(continues)
+					&& !text[end..].chars().next().is_some_and(continues)
+			}
+		}
+	}
+}
+
+/// What a shape means to a pass that reads the family's shapes as data.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ShapeRole {
+	/// A token that leads a PO box. The known-formats pass reads it as a leader and reports no hit of it.
+	PoBoxLeader,
+}
+
+impl ShapeRole {
+	/// The role as the definition and the artifact header spell it.
+	pub fn as_str(self) -> &'static str {
+		match self {
+			ShapeRole::PoBoxLeader => "po_box_leader",
+		}
+	}
 }
 
 /// One family's IR.

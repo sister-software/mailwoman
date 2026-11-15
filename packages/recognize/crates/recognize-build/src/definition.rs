@@ -22,6 +22,21 @@
 //! }
 //! ```
 //!
+//! A shape's `boundary` is `token` when an embedded match may not touch an ASCII letter, an ASCII digit or a connector:
+//! the engine then reports no match that sits inside a longer run of those characters.
+//!
+//! A shape may carry two more pieces of data the known-formats pass reads, and the pass reads no naming convention. `role` is
+//! `po_box_leader` for a token that leads a PO box, and `order` is the shape's place, lowest first, in the order the pass
+//! reports hits of one text. Both go into the artifact, and a shape ID is only an identifier.
+//!
+//! # The overlap policy
+//!
+//! Two shapes that recognize the same string fail the build unless one names the other in `overlaps`, so a new grammar
+//! cannot silently collide with an existing one. A definition is analyzed beside the repository's own families, which it
+//! may name by shape ID: a package that owns a definition declares its overlaps with `recognize`'s shapes, and
+//! `recognize` names nothing of any package. A family with a `fields` reader reports no recognitions, and its shapes take
+//! no part in the policy.
+//!
 //! A shape's `scope` is `whole` unless the definition says otherwise, and a pattern holds no assertion: the scope
 //! anchors it. Case-insensitivity is an inline flag, as `(?i-u)` for ASCII case folding. `metadata` is copied into the
 //! generated TypeScript and is not part of the artifact or its hash. Every diagnostic carries the definition's file and
@@ -30,7 +45,8 @@
 use recognize_core::ast::pattern;
 use recognize_core::validate::validate;
 use recognize_core::{
-	AmbiguityPolicy, Diagnostic, DiagnosticKind, IrDocument, Scope, Shape, Source, IR_FORMAT, IR_VERSION,
+	AmbiguityPolicy, Boundary, Diagnostic, DiagnosticKind, IrDocument, Scope, Shape, ShapeRole, Source, IR_FORMAT,
+	IR_VERSION,
 };
 use serde_json::{Map, Value};
 
@@ -65,7 +81,9 @@ pub struct Definition {
 	pub shape_metadata: Map<String, Value>,
 }
 
-const SHAPE_KEYS: [&str; 5] = ["id", "pattern", "scope", "overlaps", "metadata"];
+const SHAPE_KEYS: [&str; 8] = [
+	"id", "pattern", "scope", "overlaps", "metadata", "role", "order", "boundary",
+];
 const REFUSED_KEYS: [&str; 3] = ["captures", "validator", "handler"];
 
 /// The line of the first occurrence of `needle` in `text`, or 1.
@@ -172,6 +190,47 @@ pub fn read(file: &str, text: &str) -> Result<Definition, Vec<Diagnostic>> {
 				continue;
 			}
 		};
+		let role = match object.get("role").and_then(Value::as_str) {
+			None => None,
+			Some("po_box_leader") => Some(ShapeRole::PoBoxLeader),
+			Some(other) => {
+				diagnostics.push(Diagnostic::new(
+					DiagnosticKind::MalformedIR,
+					&source,
+					format!("shape `{id}` has the role `{other}`; the roles are `po_box_leader`"),
+				));
+
+				continue;
+			}
+		};
+		let boundary = match object.get("boundary").and_then(Value::as_str) {
+			None => None,
+			Some("token") => Some(Boundary::Token),
+			Some(other) => {
+				diagnostics.push(Diagnostic::new(
+					DiagnosticKind::MalformedIR,
+					&source,
+					format!("shape `{id}` has the boundary `{other}`; the boundaries are `token`"),
+				));
+
+				continue;
+			}
+		};
+		let order = match object.get("order") {
+			None => None,
+			Some(value) => match value.as_u64().and_then(|order| u32::try_from(order).ok()) {
+				Some(order) => Some(order),
+				None => {
+					diagnostics.push(Diagnostic::new(
+						DiagnosticKind::MalformedIR,
+						&source,
+						format!("shape `{id}` has an `order` that is not a whole number below 2^32"),
+					));
+
+					continue;
+				}
+			},
+		};
 		let overlaps: Vec<String> = object
 			.get("overlaps")
 			.and_then(Value::as_array)
@@ -201,6 +260,9 @@ pub fn read(file: &str, text: &str) -> Result<Definition, Vec<Diagnostic>> {
 			},
 			unreachable: None,
 			partition: None,
+			role,
+			order,
+			boundary,
 			source,
 		});
 	}

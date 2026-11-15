@@ -130,10 +130,16 @@ pub fn report_json(built: &[BuiltFamily], documents: &[IrDocument], analysis: &A
 
 /// The witness fixture: each declared overlapping pair and its shortest shared string.
 pub fn witnesses_json(analysis: &Analysis) -> String {
+	witnesses_json_of(analysis, None)
+}
+
+/// The witness fixture of one family's pairs: each declared pair with a shape in `family`, within it or across.
+pub fn witnesses_json_of(analysis: &Analysis, family: Option<&str>) -> String {
 	let pairs: BTreeMap<(&ShapeKey, &ShapeKey), &Overlap> = analysis
 		.overlaps
 		.iter()
 		.filter(|overlap| overlap.declared)
+		.filter(|overlap| family.is_none_or(|family| overlap.a.family == family || overlap.b.family == family))
 		.map(|overlap| ((&overlap.a, &overlap.b), overlap))
 		.collect();
 

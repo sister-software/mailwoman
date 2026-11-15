@@ -116,7 +116,10 @@ pub use diagnostic::{render, Diagnostic, DiagnosticKind, Source};
 pub use engine::{Candidate, Engine, Expected, Located, SearchError};
 pub use family::{shape, term, Family, ShapeBuilder};
 pub use ids::{HandlerID, ValidatorID};
-pub use ir::{AmbiguityPolicy, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION};
+pub use ir::{
+	AmbiguityPolicy, Boundary, CaptureSpec, CaptureType, IrDocument, Scope, Shape, ShapeRole, Term, IR_FORMAT,
+	IR_VERSION,
+};
 pub use prefix::{PrefixCursor, PrefixStatus, ShapePrefix};
 pub use recognition::{Recognition, Rejection, ValidationResult};
 pub use trace::{Outcome, Trace, TraceResult};

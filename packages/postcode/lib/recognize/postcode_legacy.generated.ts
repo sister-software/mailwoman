@@ -24,31 +24,31 @@ export const POSTCODE_LEGACY_FAMILY_ID = "postcode_legacy"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const POSTCODE_LEGACY_DECLARATIONS_HASH = "b5e5bb0f0e70da123a7bf73ca4ccc3785f660a560aea66d99ec8024006e2c451"
+export const POSTCODE_LEGACY_DECLARATIONS_HASH = "bd0105f33d191ab128ce74ef6bfc32bf3f9c250926b56a97518f6e19fe632e56"
 
 /**
  * Every shape of the family by name.
  * Each value is the shape's ID.
  */
 export const PostcodeLegacyKind = {
-	FormatOne00UsZip4: "format.one_00_us_zip4",
-	FormatOne01CaPostcode: "format.one_01_ca_postcode",
-	FormatOne02JpPostcode: "format.one_02_jp_postcode",
-	FormatOne03UkPostcode: "format.one_03_uk_postcode",
-	FormatOne04NlPostcode: "format.one_04_nl_postcode",
-	FormatOne05UsZip: "format.one_05_us_zip",
-	FormatOne06FrPostcode: "format.one_06_fr_postcode",
-	FormatOne07DePostcode: "format.one_07_de_postcode",
-	FormatTwo08UkPostcode: "format.two_08_uk_postcode",
-	FormatTwo09CaPostcode: "format.two_09_ca_postcode",
-	FormatTwo10NlPostcode: "format.two_10_nl_postcode",
-	FormatTwo11CzPostcode: "format.two_11_cz_postcode",
-	FormatTwo12SkPostcode: "format.two_12_sk_postcode",
-	FormatTwo13SePostcode: "format.two_13_se_postcode",
-	FormatTwo14GrPostcode: "format.two_14_gr_postcode",
-	LeaderEn: "leader.en",
-	LeaderEs: "leader.es",
-	LeaderFr: "leader.fr",
+	FormatCaPostcodeOne: "format.ca_postcode_one",
+	FormatCaPostcodeTwo: "format.ca_postcode_two",
+	FormatCzPostcodeTwo: "format.cz_postcode_two",
+	FormatDePostcodeOne: "format.de_postcode_one",
+	FormatFrPostcodeOne: "format.fr_postcode_one",
+	FormatGrPostcodeTwo: "format.gr_postcode_two",
+	FormatJpPostcodeOne: "format.jp_postcode_one",
+	FormatNlPostcodeOne: "format.nl_postcode_one",
+	FormatNlPostcodeTwo: "format.nl_postcode_two",
+	FormatSePostcodeTwo: "format.se_postcode_two",
+	FormatSkPostcodeTwo: "format.sk_postcode_two",
+	FormatUkPostcodeOne: "format.uk_postcode_one",
+	FormatUkPostcodeTwo: "format.uk_postcode_two",
+	FormatUsZip4One: "format.us_zip4_one",
+	FormatUsZipOne: "format.us_zip_one",
+	PoBoxEn: "po_box.en",
+	PoBoxEs: "po_box.es",
+	PoBoxFr: "po_box.fr",
 } as const
 
 export type PostcodeLegacyKind = (typeof PostcodeLegacyKind)[keyof typeof PostcodeLegacyKind]
@@ -65,105 +65,105 @@ export const PostcodeLegacyMetadata = {
 		},
 	},
 	shapes: {
-		"format.one_00_us_zip4": {
-			confidence: 0.95,
-			country: "US",
-			format: "us_zip4",
-			tokens: 1,
-		},
-		"format.one_01_ca_postcode": {
+		"format.ca_postcode_one": {
 			confidence: 0.95,
 			country: "CA",
 			format: "ca_postcode",
 			tokens: 1,
 		},
-		"format.one_02_jp_postcode": {
-			confidence: 0.95,
-			country: "JP",
-			format: "jp_postcode",
-			tokens: 1,
-		},
-		"format.one_03_uk_postcode": {
-			confidence: 0.9,
-			country: "GB",
-			format: "uk_postcode",
-			tokens: 1,
-		},
-		"format.one_04_nl_postcode": {
-			confidence: 0.9,
-			country: "NL",
-			format: "nl_postcode",
-			tokens: 1,
-		},
-		"format.one_05_us_zip": {
-			confidence: 0.6,
-			country: "US",
-			format: "us_zip",
-			tokens: 1,
-		},
-		"format.one_06_fr_postcode": {
-			confidence: 0.6,
-			country: "FR",
-			format: "fr_postcode",
-			tokens: 1,
-		},
-		"format.one_07_de_postcode": {
-			confidence: 0.6,
-			country: "DE",
-			format: "de_postcode",
-			tokens: 1,
-		},
-		"format.two_08_uk_postcode": {
-			confidence: 0.9,
-			country: "GB",
-			format: "uk_postcode",
-			tokens: 2,
-		},
-		"format.two_09_ca_postcode": {
+		"format.ca_postcode_two": {
 			confidence: 0.9,
 			country: "CA",
 			format: "ca_postcode",
 			tokens: 2,
 		},
-		"format.two_10_nl_postcode": {
-			confidence: 0.9,
-			country: "NL",
-			format: "nl_postcode",
-			tokens: 2,
-		},
-		"format.two_11_cz_postcode": {
+		"format.cz_postcode_two": {
 			confidence: 0.6,
 			country: "CZ",
 			format: "cz_postcode",
 			tokens: 2,
 		},
-		"format.two_12_sk_postcode": {
+		"format.de_postcode_one": {
 			confidence: 0.6,
-			country: "SK",
-			format: "sk_postcode",
-			tokens: 2,
+			country: "DE",
+			format: "de_postcode",
+			tokens: 1,
 		},
-		"format.two_13_se_postcode": {
+		"format.fr_postcode_one": {
 			confidence: 0.6,
-			country: "SE",
-			format: "se_postcode",
-			tokens: 2,
+			country: "FR",
+			format: "fr_postcode",
+			tokens: 1,
 		},
-		"format.two_14_gr_postcode": {
+		"format.gr_postcode_two": {
 			confidence: 0.6,
 			country: "GR",
 			format: "gr_postcode",
 			tokens: 2,
 		},
-		"leader.en": {
+		"format.jp_postcode_one": {
+			confidence: 0.95,
+			country: "JP",
+			format: "jp_postcode",
+			tokens: 1,
+		},
+		"format.nl_postcode_one": {
+			confidence: 0.9,
+			country: "NL",
+			format: "nl_postcode",
+			tokens: 1,
+		},
+		"format.nl_postcode_two": {
+			confidence: 0.9,
+			country: "NL",
+			format: "nl_postcode",
+			tokens: 2,
+		},
+		"format.se_postcode_two": {
+			confidence: 0.6,
+			country: "SE",
+			format: "se_postcode",
+			tokens: 2,
+		},
+		"format.sk_postcode_two": {
+			confidence: 0.6,
+			country: "SK",
+			format: "sk_postcode",
+			tokens: 2,
+		},
+		"format.uk_postcode_one": {
+			confidence: 0.9,
+			country: "GB",
+			format: "uk_postcode",
+			tokens: 1,
+		},
+		"format.uk_postcode_two": {
+			confidence: 0.9,
+			country: "GB",
+			format: "uk_postcode",
+			tokens: 2,
+		},
+		"format.us_zip4_one": {
+			confidence: 0.95,
+			country: "US",
+			format: "us_zip4",
+			tokens: 1,
+		},
+		"format.us_zip_one": {
+			confidence: 0.6,
+			country: "US",
+			format: "us_zip",
+			tokens: 1,
+		},
+		"po_box.en": {
 			language: "en",
 			leaders: ["po", "p.o.", "p.o", "box"],
 		},
-		"leader.es": {
+		"po_box.es": {
 			language: "es",
 			leaders: ["casilla", "apartado"],
 		},
-		"leader.fr": {
+		"po_box.fr": {
 			language: "fr",
 			leaders: ["bp", "b.p.", "b.p"],
 		},

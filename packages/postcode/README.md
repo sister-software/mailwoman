@@ -55,6 +55,26 @@ export:
   thirteen legacy patterns, so wider recognition from every country's syntax is a separate change.
   `isKnownPostcodeFormat` is the `isPostcodeFormat` predicate for these names.
 
+  The same subpath holds `postal`, a second family generated from the syntax of every country that
+  `postcodeSyntaxCountries` lists. A recognition of `postal` says that a string has the form of a postcode in some
+  countries. The recognition leaves open whether the code is allocated, and PCB1 and PFX1 membership stay with the
+  dictionary readers. There's one shape for each distinct language, so every country that writes four digits shares
+  one shape, and the shape's metadata lists the countries. A country whose layout prints a prefix, such as `〒` for
+  Japan, `L-` for Luxembourg and `AZ ` for Azerbaijan, has a second `printed.` shape for the prefix, any white space
+  and the code, and `splitPrintedPostcode` separates the two.
+
+  ```ts
+  const text = "12345 Main Street"
+  const candidates = postalCandidates(createRecognizer([postal]).recognize(text).recognitions)
+  candidates[0].countries // every country that writes five digits, as a CountrySet
+  ```
+
+  `acceptingCountries(recognizer, text)` equals `countriesAcceptingPostcode(text)`, and the engine reports an
+  embedded match only when no ASCII letter, ASCII digit or connector touches it, which every shape declares with
+  `boundary: "token"`. `lib/recognize/postal.ts` states the rule. `postalCountries` returns a `CountrySet`, which cannot hold Ascension Island, Tristan da Cunha or Kosovo, so
+  `postalCountryCodes` returns every code. The generator asks the compiler which countries share a language and which
+  shapes overlap, and the build fails on an overlap that no shape declares.
+
 ## Three kinds of evidence
 
 The package answers three different questions about a postcode, and each answer rests on its own kind of evidence:

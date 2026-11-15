@@ -217,6 +217,9 @@ impl Family {
 				ambiguity,
 				unreachable,
 				partition,
+				role: None,
+				order: None,
+				boundary: None,
 				source,
 			});
 		}
