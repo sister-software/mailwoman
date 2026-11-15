@@ -6,7 +6,7 @@ mod validator;
 use std::path::PathBuf;
 
 use recognize_build::{emit, emit_repository_families};
-use recognize_core::{capture, class, one_or_more, shape, term, CaptureType, Family, IrDocument, Scope};
+use recognize_core::{capture, class, one_or_more, render, shape, term, CaptureType, Family, IrDocument, Scope};
 use serde_json::Value;
 
 fn package_path(segments: &[&str]) -> PathBuf {
@@ -95,11 +95,16 @@ fn the_committed_ir_matches_the_generator() {
 		let committed = std::fs::read_to_string(package_path(&["data", "ir", &ir.file_name()]))
 			.unwrap_or_else(|error| panic!("data/ir/{} is not committed: {error}", ir.file_name()));
 
+		// The committed file is the writer's text after the repository formatter, so compare what it means.
+		let read = IrDocument::from_json(&committed)
+			.unwrap_or_else(|diagnostics| panic!("data/ir/{} is invalid:\n{}", ir.file_name(), render(&diagnostics)));
+
 		assert_eq!(
-			committed,
-			ir.json,
+			read,
+			IrDocument::from_json(&ir.json).unwrap(),
 			"run tools/generate.run.ts to regenerate data/ir/{}",
 			ir.file_name()
 		);
+		assert_eq!(read.hash, ir.hash);
 	}
 }

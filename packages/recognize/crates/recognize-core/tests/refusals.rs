@@ -298,25 +298,37 @@ fn impossible_operands_are_refused() {
 }
 
 #[test]
-fn ir_text_with_a_wrong_hash_or_a_non_canonical_layout_is_refused() {
-	let document = Family::new("ir").shape(shape("ir.x").grammar(digit())).build().unwrap();
-	let text = document.to_json();
+fn ir_text_is_read_by_hash_and_refused_when_edited_or_reordered() {
+	let document = Family::new("ir")
+		.shape(shape("ir.a").grammar(digit()))
+		.shape(shape("ir.b").grammar(literal("b")))
+		.build()
+		.unwrap();
 
-	assert_eq!(IrDocument::from_json(&text).unwrap(), document);
-
-	let tampered = text.replace(&document.hash, &"0".repeat(64));
-
+	// The layout carries no meaning: pretty and compact text both read back.
+	assert_eq!(IrDocument::from_json(&document.to_json()).unwrap(), document);
 	assert_eq!(
-		IrDocument::from_json(&tampered).unwrap_err()[0].kind,
-		DiagnosticKind::MalformedIR
+		IrDocument::from_json(&serde_json::to_string(&document).unwrap()).unwrap(),
+		document
 	);
 
-	let compact = serde_json::to_string(&document).unwrap();
+	let value: Value = serde_json::to_value(&document).unwrap();
+	let refused = |edited: &Value| IrDocument::from_json(&edited.to_string()).unwrap_err();
 
-	assert_eq!(
-		IrDocument::from_json(&compact).unwrap_err()[0].kind,
-		DiagnosticKind::MalformedIR
-	);
+	let mut wrong_hash = value.clone();
+
+	wrong_hash["hash"] = Value::String("0".repeat(64));
+	assert_eq!(refused(&wrong_hash)[0].kind, DiagnosticKind::MalformedIR);
+
+	let mut edited = value.clone();
+
+	edited["shapes"][1]["grammar"]["value"] = Value::String("c".into());
+	assert_eq!(refused(&edited)[0].kind, DiagnosticKind::MalformedIR);
+
+	let mut reordered = value.clone();
+
+	reordered["shapes"].as_array_mut().unwrap().reverse();
+	assert_eq!(refused(&reordered)[0].kind, DiagnosticKind::MalformedIR);
 }
 
 #[test]

@@ -11,8 +11,6 @@ pub mod family;
 pub mod grammars;
 pub mod ids;
 pub mod ir;
-pub mod render;
-pub mod sha256;
 pub mod validate;
 
 pub use ast::{

@@ -11,7 +11,10 @@
  *
  *   Usage: `node packages/recognize/tools/generate.run.ts [--check]`
  *
- *   `--check` generates into a scratch directory and exits non-zero when a committed file differs.
+ *   The binary writes the IR with serde_json's pretty printer, and this tool
+ *   formats each file with the repository's oxfmt.
+ *   `--check` generates into a scratch directory, formats the same way,
+ *   and exits non-zero when a committed file differs.
  */
 
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -21,6 +24,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { type FormatConfig, format } from "oxfmt"
 
 import { IR_FORMAT, IR_VERSION } from "#index"
 
@@ -42,6 +46,11 @@ const printed = await runFile(binary, [built]).catch((error: { stderr?: string }
 
 let stale = 0
 
+// effect-loads: oxfmt.config.ts
+const { default: formatConfig } = (await import(repoRootPath("oxfmt.config.ts").toString())) as {
+	default: FormatConfig
+}
+
 // The binary prints a JSON array of `{ family, hash }` for each family it wrote.
 const written = parseJSONStrict<Array<{ family: string; hash: string }>>(printed.stdout)
 
@@ -61,16 +70,23 @@ for (const { family, hash } of written) {
 		)
 	}
 
+	// The committed text is the binary's text as the repository's formatter writes it, so `yarn lint:oxfmt` accepts it.
+	const formatted = await format(target, generated, formatConfig)
+
+	if (formatted.errors.length) {
+		throw new Error(`oxfmt could not format ${target}: ${formatted.errors.map((error) => error.message).join("; ")}`)
+	}
+
 	if (values.check) {
 		const committed = await readLocalBuffer(target).catch(() => null)
 
-		if (!committed || !committed.equals(Buffer.from(generated))) {
+		if (!committed || !committed.equals(Buffer.from(formatted.code))) {
 			console.error(`${target} differs from the generator's output`)
 
 			stale++
 		}
 	} else {
-		await writeLocalFile(generated, target)
+		await writeLocalFile(formatted.code, target)
 
 		console.log(`wrote ${target} ${hash}`)
 	}

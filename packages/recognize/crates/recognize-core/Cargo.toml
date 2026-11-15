@@ -8,5 +8,5 @@ repository.workspace = true
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-# `preserve_order` keeps the IR's keys in the order the types declare them when the text is laid out.
-serde_json = { version = "1", features = ["preserve_order"] }
+serde_json = "1"
+sha2 = { version = "0.11", default-features = false }

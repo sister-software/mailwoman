@@ -3,8 +3,10 @@
 
 //! The versioned JSON intermediate representation of one grammar family.
 //!
-//! The text is deterministic: terms and shapes sort by ID, class ranges are merged, keys follow struct order, and the
-//! writer is fixed. The content hash is the SHA-256 of the compact serialization with `hash` set to the empty string.
+//! The content is deterministic: terms and shapes sort by ID, class ranges are merged, and keys follow struct order.
+//! The content hash is the SHA-256 of the compact serialization with `hash` set to the empty string. The pretty
+//! text [`IrDocument::to_json`] writes is a convenience layout. The committed file is that text passed through the
+//! repository's formatter, and reading it back checks the hash rather than the layout.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -12,9 +14,8 @@ use serde_json::Value;
 use crate::ast::{canonical_ranges, Node, OPERATORS};
 use crate::diagnostic::{Diagnostic, DiagnosticKind, Source};
 use crate::ids::{HandlerID, ValidatorID};
-use crate::render::render;
-use crate::sha256::sha256_hex;
 use crate::validate::validate;
+use sha2::{Digest, Sha256};
 
 /// The `format` field of every IR document.
 pub const IR_FORMAT: &str = "mailwoman.recognize.ir";
@@ -126,7 +127,9 @@ impl IrDocument {
 
 		blank.hash = String::new();
 
-		sha256_hex(&serde_json::to_vec(&blank).expect("an IR document always serializes"))
+		let digest = Sha256::digest(serde_json::to_vec(&blank).expect("an IR document always serializes"));
+
+		digest.iter().map(|byte| format!("{byte:02x}")).collect()
 	}
 
 	/// Canonicalizes the document and fills `hash`.
@@ -139,11 +142,17 @@ impl IrDocument {
 
 	/// The committed text: tab-indented JSON with a trailing newline, laid out as [`crate::render`] describes.
 	pub fn to_json(&self) -> String {
-		render(&serde_json::to_value(self).expect("an IR document always serializes"))
+		let mut text = serde_json::to_string_pretty(self).expect("an IR document always serializes");
+
+		text.push('\n');
+
+		text
 	}
 
-	/// Reads IR text and refuses what is not valid, canonical IR: an unsupported operator, a wrong format, version or
-	/// hash, a grammar that fails validation, or text that differs from the canonical rendering of what it holds.
+	/// Reads IR text and refuses what is not valid IR: an unsupported operator, a wrong format or version, a grammar
+	/// that fails validation, or a stored `hash` that differs from the hash of the content as read. The layout of the
+	/// text is not checked, so a formatter may rewrite the committed file. A reordered or edited document no longer
+	/// matches its hash.
 	pub fn from_json(text: &str) -> Result<IrDocument, Vec<Diagnostic>> {
 		let unreadable = |message: String, line: usize| {
 			vec![Diagnostic::new(
@@ -206,18 +215,6 @@ impl IrDocument {
 					document.hash,
 					document.content_hash()
 				),
-			)]);
-		}
-
-		let mut canonical = document.clone();
-
-		canonical.canonicalize();
-
-		if canonical.to_json() != text {
-			return Err(vec![Diagnostic::new(
-				DiagnosticKind::MalformedIR,
-				&anchor,
-				"the text is not the canonical rendering of its content",
 			)]);
 		}
 

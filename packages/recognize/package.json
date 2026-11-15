@@ -70,6 +70,7 @@
 		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "^26.6.6"
+		"@types/node": "^26.6.6",
+		"oxfmt": "0.75.0"
 	}
 }
