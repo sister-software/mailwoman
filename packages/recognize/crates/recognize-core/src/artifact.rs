@@ -9,7 +9,7 @@
 //!
 //! ```text
 //! 0   4 bytes  ASCII `RCA1`
-//! 4   u16      artifact schema version, 3
+//! 4   u16      artifact schema version, 4
 //! 6   u16      flags, 0
 //! 8   u32      header byte length
 //! 12  u32      directory entry count, twice the automaton count plus one
@@ -27,10 +27,12 @@
 //! with its leading alignment padding removed, then its viability table ([`crate::viability`]). Role is 1 for the
 //! whole-input automaton and 2 for the embedded-span automaton. Kind is 1 for a dense DFA, 2 for a sparse DFA and 3 for
 //! a viability table. The last entry belongs to the family and not to an automaton: role 0, kind 4, the capture
-//! program ([`crate::captures`]) as canonical JSON.
+//! program ([`crate::captures`]) as canonical JSON. The program holds the grammar of every shape, its validator and its
+//! declaration site, and where each term is declared, because the diagnostic replay of a trace reads it.
 //!
-//! Version 1 had no viability table. Version 2 had no capture program and a placeholder declarations hash. A reader
-//! refuses an earlier version with [`ArtifactError::Version`].
+//! Version 1 had no viability table. Version 2 had no capture program and a placeholder declarations hash. Version 3's
+//! program held only the shapes that declare captures and no declaration site. A reader refuses an earlier version with
+//! [`ArtifactError::Version`].
 //!
 //! The header records the SHA-256 of each payload, of each table and of the capture program, and the parser refuses
 //! one that differs. The hash of the whole file lives in the build manifest, as the registry's does. The header stores
@@ -57,7 +59,7 @@ pub const MAGIC: &[u8; 4] = b"RCA1";
 pub const ARTIFACT_FORMAT: &str = "mailwoman.recognize.artifact";
 
 /// The envelope version this crate writes and reads.
-pub const ARTIFACT_SCHEMA_VERSION: u32 = 3;
+pub const ARTIFACT_SCHEMA_VERSION: u32 = 4;
 
 /// The directory `kind` of a viability table. A DFA's kind is its backend's code.
 const KIND_VIABILITY: u16 = 3;
@@ -887,13 +889,13 @@ mod tests {
 		let mut bad = good.clone();
 
 		// The previous schema version is refused with its own number, so a stale committed file names itself.
-		bad[4] = 2;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(2));
+		bad[4] = 3;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(3));
 
 		let mut bad = good.clone();
 
-		bad[4] = 4;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(4));
+		bad[4] = 5;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(5));
 
 		let mut bad = good.clone();
 

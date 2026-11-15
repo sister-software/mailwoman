@@ -9,7 +9,7 @@
  * The ABI version this loader implements.
  * It equals `ABI_VERSION` in `crates/recognize-wasm`.
  */
-export const ABI_VERSION = 2
+export const ABI_VERSION = 3
 
 /**
  * The words of one result record, equal to `RECORD_WORDS` in `crates/recognize-wasm`.
@@ -45,6 +45,14 @@ export interface Exports {
 	 * Returns the number of result records, or -1.
 	 */
 	rcg_recognize(pointer: number, length: number, mask: number): number
+	/**
+	 * Traces the text over the families in `mask`, and the shapes in the
+	 * newline-joined list at `explainPointer`.
+	 *
+	 * Returns the byte length of the JSON text of the traces at `rcg_json_ptr`, or -1.
+	 * It overwrites the JSON `rcg_recognize` wrote.
+	 */
+	rcg_trace(pointer: number, length: number, mask: number, explainPointer: number, explainLength: number): number
 	rcg_result_ptr(): number
 	rcg_json_ptr(): number
 }

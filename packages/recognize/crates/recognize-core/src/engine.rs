@@ -16,6 +16,7 @@ use crate::declared::{self, Kind};
 use crate::ir::Scope;
 use crate::prefix::start_state;
 use crate::recognition::{Recognition, Rejection, ValidationResult};
+use crate::trace::{self, Trace};
 use crate::viability::Viability;
 
 /// One recognized span: the shape, and the UTF-8 byte range `start..end` of the text that matches it.
@@ -476,6 +477,71 @@ impl Engine {
 		};
 
 		(kind, validation)
+	}
+}
+
+impl Engine {
+	/// The trace of one located span: the replay of its shape's grammar, and the validator's outcome.
+	pub fn trace_located(&self, located: Located, text: &str) -> Trace {
+		let family = &self.families[located.family];
+		let (_, validation) = self.validate(located, text);
+
+		trace::accepted(
+			&family.header.family,
+			&family.program,
+			&family.shapes[located.shape],
+			text,
+			located.start,
+			located.end,
+			&validation,
+		)
+	}
+
+	/// The traces of a call that asked for them: one per recognition, in the order of [`Engine::recognize_in`], then one
+	/// per shape named in `explain` and found in an included family.
+	///
+	/// A shape in `explain` is replayed against the whole text. When the shape matches it, its trace is the trace of
+	/// an accepted span. When it does not, the trace is the first failing step. A name no included family declares has
+	/// no trace.
+	pub fn trace(
+		&self,
+		text: &str,
+		include: impl Fn(usize) -> bool,
+		explain: &[&str],
+	) -> Result<Vec<Trace>, SearchError> {
+		let located = self.locate(text, &include)?;
+		let mut traces: Vec<Trace> = located.iter().map(|span| self.trace_located(*span, text)).collect();
+
+		if text.is_empty() {
+			return Ok(traces);
+		}
+
+		for (family_index, family) in self.families.iter().enumerate().filter(|(index, _)| include(*index)) {
+			for shape in explain {
+				match trace::explain(&family.header.family, &family.program, shape, text) {
+					trace::Explained::Unknown => {}
+					trace::Explained::Trace(trace) => traces.push(trace),
+					trace::Explained::Accepts => {
+						if let Ok(position) = family
+							.shapes
+							.binary_search_by(|candidate| candidate.as_str().cmp(shape))
+						{
+							traces.push(self.trace_located(
+								Located {
+									start: 0,
+									end: text.len(),
+									family: family_index,
+									shape: position,
+								},
+								text,
+							));
+						}
+					}
+				}
+			}
+		}
+
+		Ok(traces)
 	}
 }
 

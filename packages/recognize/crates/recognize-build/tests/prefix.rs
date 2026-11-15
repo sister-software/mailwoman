@@ -256,7 +256,23 @@ fn multibyte() -> Family {
 fn the_repository_families_agree_with_the_reference_interpreter() {
 	let mut tally = verify(vec![grammars::primitives::family()], &['0', '.', '-', ' ', 'a'], 4, 7);
 
-	for (status, count) in verify(vec![grammars::coordinates::family()], &['0', '.', '-', ',', ' '], 3, 7) {
+	// The `geo:` URI needs the letters of its scheme, so the first alphabet leaves it out and the second holds them.
+	for (status, count) in verify_except(
+		vec![grammars::coordinates::family()],
+		&['0', '.', '-', ',', ' '],
+		3,
+		7,
+		&["coordinate.geo_uri"],
+	) {
+		*tally.entry(status).or_default() += count;
+	}
+
+	for (status, count) in verify(
+		vec![grammars::coordinates::family()],
+		&['g', 'E', 'o', ':', '0', ','],
+		3,
+		7,
+	) {
 		*tally.entry(status).or_default() += count;
 	}
 

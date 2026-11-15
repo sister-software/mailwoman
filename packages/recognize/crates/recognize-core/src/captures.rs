@@ -32,6 +32,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::Node;
+use crate::diagnostic::Source;
 use crate::ir::CaptureSpec;
 
 /// The most node visits one extraction makes.
@@ -41,15 +42,23 @@ pub const MAX_STEPS: usize = 1_000_000;
 /// a visit, so this bounds the stack the walk uses.
 pub const MAX_DEPTH: usize = 1_024;
 
-/// One shape's grammar and capture schema inside a capture program.
+/// One shape's grammar, capture schema, validator and declaration site inside a capture program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ProgramShape {
 	pub captures: Vec<CaptureSpec>,
 	pub node: Node,
+	/// The shape's declared validator, which a trace reports as its last step.
+	pub validator: Option<String>,
+	/// Where the shape's grammar is declared. The IR records no finer location, so a trace reports this for every
+	/// node of the shape's own grammar.
+	pub source: Source,
 }
 
-/// The capture programs of one family: the shapes that declare captures, and the terms those shapes reach.
+/// The programs of one family: every shape, and the terms those shapes reach.
+///
+/// Capture extraction reads the shapes that declare captures. The diagnostic replay of a trace reads every shape,
+/// because a shape without captures can still be asked why it did and did not match.
 ///
 /// The serialized form is compact JSON with map keys in byte order, so equal programs have equal bytes.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -57,6 +66,8 @@ pub struct ProgramShape {
 pub struct CaptureProgram {
 	pub shapes: BTreeMap<String, ProgramShape>,
 	pub terms: BTreeMap<String, Node>,
+	/// Where each term is declared, keyed like `terms`.
+	pub term_sources: BTreeMap<String, Source>,
 }
 
 impl CaptureProgram {
@@ -69,6 +80,10 @@ impl CaptureProgram {
 	/// regular-expression string, and every capture a grammar makes is declared.
 	pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
 		let program: CaptureProgram = serde_json::from_slice(bytes).map_err(|error| error.to_string())?;
+
+		if !program.terms.keys().eq(program.term_sources.keys()) {
+			return Err("the program's terms and term sources differ".to_string());
+		}
 
 		if serde_json::to_vec(&program).map_err(|error| error.to_string())? != bytes {
 			return Err("the program is not in canonical form".to_string());
@@ -173,15 +188,7 @@ pub fn extract<'a>(
 		return Ok(Captures::of_span(span));
 	};
 
-	let mut walker = Walker {
-		terms: &program.terms,
-		text: &text[..end],
-		slots: vec![None; entry.captures.len()],
-		paths: &entry.captures,
-		steps: 0,
-		depth: 0,
-		limited: false,
-	};
+	let mut walker = Walker::new(program, entry, &text[..end]);
 
 	let found = walker.run(&entry.node, start, &mut |_, position| position == end);
 
@@ -204,9 +211,9 @@ pub fn extract<'a>(
 	})
 }
 
-type Continuation<'k, 'a> = &'k mut dyn FnMut(&mut Walker<'a>, usize) -> bool;
+pub(crate) type Continuation<'k, 'a> = &'k mut dyn FnMut(&mut Walker<'a>, usize) -> bool;
 
-struct Walker<'a> {
+pub(crate) struct Walker<'a> {
 	terms: &'a BTreeMap<String, Node>,
 	/// The text up to the end of the span, so no node reads past the span.
 	text: &'a str,
@@ -214,7 +221,7 @@ struct Walker<'a> {
 	paths: &'a [CaptureSpec],
 	steps: usize,
 	depth: usize,
-	limited: bool,
+	pub(crate) limited: bool,
 }
 
 fn inside(ranges: &[crate::ast::ClassRange], character: char) -> bool {
@@ -245,7 +252,20 @@ impl<'a> Walker<'a> {
 		}
 	}
 
-	fn run(&mut self, node: &'a Node, position: usize, next: Continuation<'_, 'a>) -> bool {
+	/// A walker for `entry` over `text`, which ends where the walk must stop reading.
+	pub(crate) fn new(program: &'a CaptureProgram, entry: &'a ProgramShape, text: &'a str) -> Self {
+		Walker {
+			terms: &program.terms,
+			text,
+			slots: vec![None; entry.captures.len()],
+			paths: &entry.captures,
+			steps: 0,
+			depth: 0,
+			limited: false,
+		}
+	}
+
+	pub(crate) fn run(&mut self, node: &'a Node, position: usize, next: Continuation<'_, 'a>) -> bool {
 		if self.limited {
 			return false;
 		}
@@ -323,6 +343,47 @@ impl<'a> Walker<'a> {
 			// A loaded program holds no pattern; `CaptureProgram::from_bytes` refuses one.
 			Node::Pattern { .. } => false,
 		}
+	}
+
+	/// Matches `items` in order from `position` and finishes exactly at `end`, recording the span each item took on the
+	/// parse the walk chooses. On success `spans` holds one span per item.
+	pub(crate) fn trace_items(
+		&mut self,
+		items: &'a [Node],
+		index: usize,
+		position: usize,
+		end: usize,
+		spans: &mut Vec<(usize, usize)>,
+	) -> bool {
+		if index == items.len() {
+			return position == end;
+		}
+
+		self.run(&items[index], position, &mut |walker, after| {
+			spans.push((position, after));
+
+			if walker.trace_items(items, index + 1, after, end, spans) {
+				return true;
+			}
+
+			spans.pop();
+
+			false
+		})
+	}
+
+	/// Every offset `node` can finish at when it starts at `position`. The walk is exhaustive, so a limit stops it and
+	/// leaves [`Walker::limited`] set.
+	pub(crate) fn ends_of(&mut self, node: &'a Node, position: usize) -> std::collections::BTreeSet<usize> {
+		let mut ends = std::collections::BTreeSet::new();
+
+		self.run(node, position, &mut |_, after| {
+			ends.insert(after);
+
+			false
+		});
+
+		ends
 	}
 
 	fn sequence(&mut self, items: &'a [Node], position: usize, next: Continuation<'_, 'a>) -> bool {
@@ -431,11 +492,16 @@ mod tests {
 		let mut program = CaptureProgram::default();
 
 		program.terms.insert("digit".to_string(), class(&[('0', '9')]));
+		program
+			.term_sources
+			.insert("digit".to_string(), Source::new("test.rs", 1));
 		program.shapes.insert(
 			"s".to_string(),
 			ProgramShape {
 				captures: captures.iter().map(|path| spec(path)).collect(),
 				node,
+				validator: None,
+				source: Source::new("test.rs", 2),
 			},
 		);
 		program

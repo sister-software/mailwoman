@@ -34,6 +34,9 @@
 //! `{"code":…,"capture":…,"message":…}`, one document per such record. A call whose recognitions are all unvalidated
 //! writes no JSON, so no text is built or parsed. The TypeScript side converts the byte offsets to UTF-16 code units.
 //!
+//! `rcg_trace` is the opt-in path to traces. It searches again, replays each recognition against its family's program
+//! and writes the traces as JSON. `rcg_recognize` never calls it, and nothing in the default path builds a trace.
+//!
 //! `rcg_shapes` writes a family's shape table, the shape IDs in byte order joined by newlines, at `rcg_json_ptr`. The
 //! caller reads it once when it loads the family and keeps the strings.
 //!
@@ -45,7 +48,7 @@ use recognize_core::{ArtifactError, Engine, Expected, SearchError, ValidationRes
 
 /// The ABI version the TypeScript loader checks. Bump it on any change to an export's signature or to the result
 /// records' layout.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 /// The families one instance loads, bounded by the bits of the mask `rcg_recognize` takes.
 pub const MAX_FAMILIES: usize = 32;
@@ -299,6 +302,63 @@ pub unsafe extern "C" fn rcg_recognize(ptr: *const u8, len: usize, mask: u32) ->
 	})
 }
 
+/// Traces the UTF-8 text at `ptr` over the families whose handle bit is set in `mask`, and returns the byte length of
+/// the JSON text it wrote at `rcg_json_ptr`, or -1.
+///
+/// The text is a JSON array of traces: one per recognition, in the order `rcg_recognize` returns them, then one per
+/// shape named in the `explain_len` bytes at `explain_ptr`, which are shape IDs joined by newlines. Every span is a
+/// UTF-8 byte offset. The call overwrites the JSON `rcg_recognize` wrote, so a caller reads that first. A call that
+/// never reaches this export builds no trace.
+///
+/// # Safety
+/// `ptr` must address `len` readable bytes and `explain_ptr` must address `explain_len` readable bytes.
+#[no_mangle]
+pub unsafe extern "C" fn rcg_trace(
+	ptr: *const u8,
+	len: usize,
+	mask: u32,
+	explain_ptr: *const u8,
+	explain_len: usize,
+) -> i32 {
+	let bytes = std::slice::from_raw_parts(ptr, len);
+	let explain = if explain_len == 0 {
+		&[][..]
+	} else {
+		std::slice::from_raw_parts(explain_ptr, explain_len)
+	};
+
+	STATE.with(|state| {
+		let mut state = state.borrow_mut();
+		let state = &mut *state;
+		let loaded = state.engine.family_ids().len();
+
+		if loaded < MAX_FAMILIES && mask >> loaded != 0 {
+			return fail(state, code::ARGUMENT, "the mask names a family that is not loaded");
+		}
+
+		let (Ok(text), Ok(explain)) = (std::str::from_utf8(bytes), std::str::from_utf8(explain)) else {
+			return fail(state, code::NOT_UTF8, "the text or the shape list is not UTF-8");
+		};
+
+		let shapes: Vec<&str> = explain.split('\n').filter(|shape| !shape.is_empty()).collect();
+		let traces = match state.engine.trace(text, |index| mask & (1 << index) != 0, &shapes) {
+			Ok(traces) => traces,
+			Err(error) => return fail(state, search_code(&error), error.to_string()),
+		};
+
+		state.json.clear();
+
+		if let Err(error) = serde_json::to_writer(&mut state.json, &traces) {
+			return fail(state, code::SEARCH, error.to_string());
+		}
+
+		match i32::try_from(state.json.len()) {
+			Ok(length) => length,
+			Err(_) => fail(state, code::SEARCH, "the trace is too large"),
+		}
+	})
+}
+
 /// The address of the last call's result records, valid until the next `rcg_recognize`.
 #[no_mangle]
 pub extern "C" fn rcg_result_ptr() -> *const u32 {
@@ -415,6 +475,43 @@ mod tests {
 		assert!(primitives_only.iter().all(|recognition| recognition.family == 0));
 		assert!(primitives_only[0].status == status::UNVALIDATED);
 		assert!(primitives_only[0].json.is_none());
+	}
+
+	#[test]
+	fn a_trace_call_writes_one_trace_per_recognition_and_the_explained_shapes() {
+		assert_eq!(load("primitives", hash("primitives")), 0);
+		assert_eq!(load("coordinates", hash("coordinates")), 1);
+
+		let text = "100, 200";
+		let explain = "coordinate.geo_uri";
+		let length = unsafe { rcg_trace(text.as_ptr(), text.len(), 0b10, explain.as_ptr(), explain.len()) };
+
+		assert!(length > 0, "{}", message());
+
+		let traces: serde_json::Value = STATE.with(|state| {
+			let state = state.borrow();
+
+			serde_json::from_slice(&state.json[..length as usize]).unwrap()
+		});
+		let traces = traces.as_array().unwrap();
+
+		assert_eq!(traces.len(), 2);
+		assert_eq!(traces[0]["shape"], "coordinate.decimal_pair");
+		assert_eq!(traces[0]["result"], "rejected");
+		assert_eq!(
+			traces[0]["steps"].as_array().unwrap().last().unwrap()["rejection"]["code"],
+			"latitude_out_of_range"
+		);
+		assert_eq!(traces[1]["shape"], "coordinate.geo_uri");
+		assert_eq!(traces[1]["result"], "no_match");
+		assert_eq!(traces[1]["steps"][0]["outcome"], "fail");
+
+		// A mask naming a family that is not loaded is an error and not a trap.
+		assert_eq!(
+			unsafe { rcg_trace(text.as_ptr(), text.len(), 0b100, explain.as_ptr(), 0) },
+			-1
+		);
+		assert_eq!(rcg_error_code(), code::ARGUMENT);
 	}
 
 	#[test]

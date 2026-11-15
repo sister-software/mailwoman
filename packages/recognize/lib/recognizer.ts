@@ -12,8 +12,9 @@
  */
 
 import type { AnyFamily, FieldsOf, RecognitionsOf } from "#family"
-import { loadFamily, recognizeText } from "#runtime/engine"
+import { loadFamily, recognizeText, traceText } from "#runtime/engine"
 import { type Instance, ready } from "#runtime/state"
+import type { Trace, TraceOptions } from "#trace"
 
 /**
  * Gives the engine's JSON the types the composed families' generated declarations promise.
@@ -44,6 +45,30 @@ export interface RecognizeResult<F extends readonly AnyFamily[]> {
 }
 
 /**
+ * The result of a call that asked for traces: the same recognitions and fields, and the traces.
+ */
+export interface TracedRecognizeResult<F extends readonly AnyFamily[]> extends RecognizeResult<F> {
+	/**
+	 * One trace per recognition, in the order of `recognitions`, then one per shape
+	 * listed in `trace.explain` that a composed family declares.
+	 */
+	readonly traces: readonly Trace[]
+}
+
+/**
+ * The options of a call.
+ */
+export interface RecognizeOptions {
+	/**
+	 * Asks for traces.
+	 *
+	 * `true` traces each recognition, and an object also names shapes to explain.
+	 * Absent or `false`, the call builds no trace and its result has no `traces` property.
+	 */
+	readonly trace?: boolean | TraceOptions
+}
+
+/**
  * A recognizer over the families it was created with.
  */
 export interface Recognizer<F extends readonly AnyFamily[]> {
@@ -52,8 +77,13 @@ export interface Recognizer<F extends readonly AnyFamily[]> {
 	 * Recognizes `text`.
 	 *
 	 * The first call instantiates the engine synchronously, and every call is synchronous.
+	 *
+	 * The result type of a call without the `trace` option is the same as it was before traces existed.
+	 * A call with `trace: true` or a `TraceOptions` object returns the traces as well.
 	 */
-	recognize(text: string): RecognizeResult<F>
+	recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
+	recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
+	recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
 }
 
 /**
@@ -75,25 +105,37 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 
 	let bound: { instance: Instance; mask: number } | null = null
 
-	return {
-		families,
-		recognize(text) {
-			const instance = ready()
+	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
+	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
+	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
 
-			if (bound?.instance !== instance) {
-				let mask = 0
+	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F> {
+		const instance = ready()
 
-				for (const family of families) {
-					mask |= 1 << loadFamily(instance, family)
-				}
+		if (bound?.instance !== instance) {
+			let mask = 0
 
-				bound = { instance, mask: mask >>> 0 }
+			for (const family of families) {
+				mask |= 1 << loadFamily(instance, family)
 			}
 
-			return {
-				recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognizeText(instance, text, bound.mask)),
-				fields: trusted<FieldsOf<F>>({}),
-			}
-		},
+			bound = { instance, mask: mask >>> 0 }
+		}
+
+		const result: RecognizeResult<F> = {
+			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognizeText(instance, text, bound.mask)),
+			fields: trusted<FieldsOf<F>>({}),
+		}
+
+		const trace = options?.trace
+
+		// The default call returns here, and no code below this line runs for it.
+		if (!trace) return result
+
+		const explain = trace === true ? [] : (trace.explain ?? [])
+
+		return { ...result, traces: traceText(instance, text, bound.mask, explain) }
 	}
+
+	return { families, recognize }
 }

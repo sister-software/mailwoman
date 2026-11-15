@@ -23,7 +23,26 @@ export type {
 } from "#family"
 
 export { defineFamily } from "#family"
-export { createRecognizer, type RecognizeResult, type Recognizer } from "#recognizer"
+
+export {
+	createRecognizer,
+	type RecognizeOptions,
+	type RecognizeResult,
+	type Recognizer,
+	type TracedRecognizeResult,
+} from "#recognizer"
+
+export {
+	Outcome,
+	type Trace,
+	type TraceOptions,
+	TraceResult,
+	type TraceSource,
+	type TraceSpan,
+	type TraceStep,
+} from "#trace"
+
+export type { AxisOrder } from "#types"
 
 export {
 	RecognizeArtifactError,

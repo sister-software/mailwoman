@@ -2,11 +2,15 @@
 
 crate::declare_family! {
 	family: "coordinates",
-	declarations_hash: "cd2e1d708451c0f59780fd5e7bd4d39bb7a778c2f6286d261b5213358f0661cb",
+	declarations_hash: "4eb9289261c751ca41e650f7a5d78af99f4971591d15821bbe3d2475eb6cbe00",
 	shapes: {
 		CoordinateDecimalPair = "coordinate.decimal_pair" => {
-			captures: [latitude: Decimal, longitude: Decimal],
-			validator: FiniteDecimalPair,
+			captures: [first: Decimal, second: Decimal],
+			validator: WGS84Pair,
+		},
+		CoordinateGeoURI = "coordinate.geo_uri" => {
+			captures: [altitude: Decimal, crs: Text, latitude: Decimal, longitude: Decimal, parameters: Text, uncertainty: Decimal],
+			validator: GeoURI,
 		},
 	}
 }

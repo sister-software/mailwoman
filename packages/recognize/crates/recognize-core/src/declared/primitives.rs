@@ -2,7 +2,7 @@
 
 crate::declare_family! {
 	family: "primitives",
-	declarations_hash: "bfabfbf450eaa8a203c939e38e9dcde3fd40f2f41f5dd634c782e7c054ba1ae4",
+	declarations_hash: "d33b792cde245ced43db7d0a88552c8a6686a1836ab570d69eadbff8cfef0976",
 	shapes: {
 		NumberDigitRun = "number.digit_run" => none,
 		NumberSignedDecimal = "number.signed_decimal" => none,
