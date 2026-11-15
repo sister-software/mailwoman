@@ -111,8 +111,9 @@ and Zod adapters are tracked in sister-software/mailwoman#2947 and are not in th
 ## Languages, scripts and BCP 47 tags
 
 The IANA Language Subtag Registry (CC0 1.0, pinned as `iana-language-subtags`) supplies every BCP 47 subtag.
-The generator writes one table module per subtag type under `lib/artifacts/bcp47/`, so a bundle that checks
-scripts keeps the script table and leaves out the 8,276 language rows.
+The generator writes one table per subtag type under `lib/artifacts/bcp47/`: a `<type>.fixture.json` holding one
+registry row per line, and a module that imports it. A bundle that checks scripts keeps the script table and leaves
+out the 8,276 language rows.
 
 | Module                                 | Answers                                                                                                       |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |

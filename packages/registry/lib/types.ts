@@ -115,12 +115,9 @@ export type SubtagType = (typeof SubtagType)[keyof typeof SubtagType]
  * `subtag` holds the subtag for the five subtag types and the whole tag for `grandfathered` and `redundant`.
  * A private-use range keeps its range spelling, such as `qaa..qtz`.
  *
- * `type` is present only in the whole-tag table, because that table mixes
- * `grandfathered` and `redundant` rows.
- * Every other table holds one type, so its rows leave the field out.
+ * Each table holds one subtag type, so a row leaves its type out.
  */
 export interface SubtagRow {
-	type?: SubtagType
 	subtag: string
 	descriptions: string[]
 	deprecated?: string

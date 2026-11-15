@@ -30,33 +30,38 @@
 		"profile": "open-2026-11"
 	},
 	"bcp47-language-subtags": {
-		"sha256": "aaa15e3948ebbaa964cd69c7b90507dd032700029a885ee48855b7b82733af7e",
-		"bytes": 413940,
+		"sha256": "76bb110dddfaa14152ec56d22f17a217786e178aab27be4be941fa5352ab0b77",
+		"bytes": 430494,
 		"profile": "open-2026-11"
 	},
 	"bcp47-extlang-subtags": {
-		"sha256": "65a0f6d71d487debfebe2df886fe1764f091bd87c60e7734522ffeb742819549",
-		"bytes": 28040,
+		"sha256": "afd04073183f12bd2d441296a9a096b536089bc69d678796f4fca91dab8b0cf8",
+		"bytes": 28558,
 		"profile": "open-2026-11"
 	},
 	"bcp47-script-subtags": {
-		"sha256": "84548d48f0e2bf53a4df149342132bb7afb01f24440c7b907e50aa128c5a857e",
-		"bytes": 11949,
+		"sha256": "cc1df22ac33578051db30a82995730a78886561d69c28f397cc4c62f2ba88a9e",
+		"bytes": 12401,
 		"profile": "open-2026-11"
 	},
 	"bcp47-region-subtags": {
-		"sha256": "47b221e6aa6e81f3d6bd0c163eff683d7d03636da96696104cc75471425295c2",
-		"bytes": 14990,
+		"sha256": "90c64d8a94501748af5e970d83c312304791d8fde5b257f6468edcbc7a366c48",
+		"bytes": 15602,
 		"profile": "open-2026-11"
 	},
 	"bcp47-variant-subtags": {
-		"sha256": "894ef2969c70f7280765723f530852098b0621825ee692dc00a8b812d3a0ffc0",
-		"bytes": 13722,
+		"sha256": "c700051c492f068b317280a7f1a396728500fe250d1e74b0706051112b8c0761",
+		"bytes": 14002,
 		"profile": "open-2026-11"
 	},
-	"bcp47-tag-subtags": {
-		"sha256": "ef95ea2f14802d1ac5913d39a160db50855a66803db550cbb2be90f4cbde805c",
-		"bytes": 10337,
+	"bcp47-grandfathered-subtags": {
+		"sha256": "391ad938a27deb57ea3eac5e2329123e524b1e9416c159127701b796b7eb88e9",
+		"bytes": 2688,
+		"profile": "open-2026-11"
+	},
+	"bcp47-redundant-subtags": {
+		"sha256": "2126f847feae97610986ad3902871600165717858f061ee61699acae144dc2b6",
+		"bytes": 5969,
 		"profile": "open-2026-11"
 	}
 }

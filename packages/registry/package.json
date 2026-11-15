@@ -28,6 +28,8 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
+		"lib/artifacts/**/*.fixture.json",
+		"out/artifacts/**/*.fixture.json",
 		"sdk/**/*.ts",
 		"tools/**/*.ts",
 		"data/manifests/*.json",

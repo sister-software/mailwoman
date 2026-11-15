@@ -5,9 +5,10 @@
 		"allowSyntheticDefaultImports": true,
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
 	},
-	"include": ["./lib/**/*"],
+	"include": ["./lib/**/*", "./lib/artifacts/**/*.fixture.json"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": []
 }
