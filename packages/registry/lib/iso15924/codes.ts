@@ -133,24 +133,37 @@ export function unicodeScriptsOf(code: BCP47.ScriptCode): readonly string[] {
  *
  * Common and Inherited letters, such as the prolonged sound mark `ー` in `ニューヨーク`,
  * are accepted beside any script and don't count as evidence of one.
+ *
+ * Letters of an `alsoAccepted` script pass without counting, so `金龍酒家, 12 Gerrard Street`
+ * is written in `Latn` when `Hani` is also accepted: the Latin letters make up
+ * the address, and the Han name sits inside it.
  */
-export function isWrittenInScript(text: string, code: BCP47.ScriptCode): boolean {
+export function isWrittenInScript(
+	text: string,
+	code: BCP47.ScriptCode,
+	alsoAccepted: readonly BCP47.ScriptCode[] = []
+): boolean {
 	const scripts = unicodeScriptsOf(code)
 
 	if (!scripts.length) return false
 
-	const allowed = new RegExp(`^[${[...scripts, "Zyyy", "Zinh"].map((sc) => `\\p{Script=${sc}}`).join("")}]$`, "u")
+	const own = scriptClass(scripts)
+	const accepted = scriptClass([...alsoAccepted.flatMap(unicodeScriptsOf), "Zyyy", "Zinh"])
 	let letters = 0
 
 	for (const character of text) {
 		if (!/\p{L}|\p{M}/u.test(character)) continue
 
-		if (!allowed.test(character)) return false
-
-		if (!/\p{Script=Zyyy}|\p{Script=Zinh}/u.test(character)) {
+		if (own.test(character)) {
 			letters++
+		} else if (!accepted.test(character)) {
+			return false
 		}
 	}
 
 	return letters > 0
+}
+
+function scriptClass(scripts: readonly string[]): RegExp {
+	return new RegExp(`^[${scripts.map((script) => `\\p{Script=${script}}`).join("")}]$`, "u")
 }

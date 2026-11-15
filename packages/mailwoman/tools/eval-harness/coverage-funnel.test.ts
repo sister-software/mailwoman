@@ -126,7 +126,7 @@ async function funnel(overrides: Partial<Parameters<typeof readCoverageFunnel>[0
 	return readCoverageFunnel({
 		coverage: [US_COVERAGE, KE_COVERAGE],
 		register: testRegister(),
-		tieredCountries: ["US", "KE"],
+		promisedCountries: ["US", "KE"],
 		requiredCountries: ["US"],
 		releaseSpecVersion: "test",
 		...overrides,

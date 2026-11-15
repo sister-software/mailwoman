@@ -109,9 +109,9 @@ export interface CoverageFunnelInput {
 	coverage: readonly CountryCoverage[]
 	register?: AddressSourceRegister
 	/**
-	 * Countries that any `scope.config.json` tier lists.
+	 * Countries that hold a support promise in `@mailwoman/codex/support`.
 	 */
-	tieredCountries: readonly string[]
+	promisedCountries: readonly string[]
 	/**
 	 * Countries a country requirement in the release-requirement specification names.
 	 */
@@ -147,7 +147,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 		sourcesByJurisdiction.set(source.iso2, [...(sourcesByJurisdiction.get(source.iso2) ?? []), source])
 	}
 
-	const tiered = new Set(input.tieredCountries)
+	const promised = new Set(input.promisedCountries)
 	const required = new Set(input.requiredCountries)
 
 	const rows: JurisdictionFunnelRow[] = register.jurisdictions.map((jurisdiction) => {
@@ -257,9 +257,9 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: country.weightsPackage }
 			: { state: StageState.Absent, detail: "no published weights overlay scopes this country" }
 
-		const claimed: StageReading = tiered.has(iso2)
-			? { state: StageState.Reached, detail: "named in scope.config.json tiers" }
-			: { state: StageState.Absent, detail: "no tier claims this country" }
+		const claimed: StageReading = promised.has(iso2)
+			? { state: StageState.Reached, detail: "holds a support promise" }
+			: { state: StageState.Absent, detail: "no support promise names this country" }
 
 		const isRequired: StageReading = required.has(iso2)
 			? { state: StageState.Reached, detail: `a country requirement in release spec ${input.releaseSpecVersion}` }

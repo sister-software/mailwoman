@@ -10,6 +10,7 @@ import { z } from "zod"
 import { MAX_ADDRESS_LENGTH } from "#input-limits"
 import { GeocoderUnavailableErrorSchema } from "#operations/errors"
 import { GeocodingTag } from "#operations/tags"
+import { SupportPromiseSchema } from "#support"
 
 /**
  * The request body of {@link GeocodeBatchOperation}.
@@ -41,9 +42,19 @@ export const BatchRowErrorSchema = z
 export type BatchRowError = z.infer<typeof BatchRowErrorSchema>
 
 /**
+ * One geocoded batch row, with the support promise its query falls inside.
+ */
+export const BatchGeocodeResultSchema = GeocodeResultSchema.extend({
+	/**
+	 * The support promise the row's query falls inside, or null when no promise covers it.
+	 */
+	support: Ref(SupportPromiseSchema).nullable(),
+}).meta({ id: "BatchGeocodeResult", description: "One geocoded batch row, with the support promise it falls inside." })
+
+/**
  * One batch row: a geocode result or the row's error.
  */
-export const BatchRowSchema = z.union([Ref(GeocodeResultSchema), Ref(BatchRowErrorSchema)])
+export const BatchRowSchema = z.union([Ref(BatchGeocodeResultSchema), Ref(BatchRowErrorSchema)])
 
 export type BatchRow = z.infer<typeof BatchRowSchema>
 
@@ -55,6 +66,19 @@ export const BatchResponseSchema = z
 	.meta({ id: "BatchResponse", description: "One result per input address, in input order." })
 
 export type BatchResponse = z.infer<typeof BatchResponseSchema>
+
+/**
+ * The batch an engine returns: each geocoded row before the route matches its support promise.
+ */
+export interface EngineBatchResponse {
+	results: EngineBatchRow[]
+}
+
+/**
+ * One row an engine returns: a geocode result before the route matches its
+ * support promise, or the row's error.
+ */
+export type EngineBatchRow = Omit<z.infer<typeof BatchGeocodeResultSchema>, "support"> | BatchRowError
 
 /**
  * {@link BatchResponseSchema} with the engine stamp a route attaches.

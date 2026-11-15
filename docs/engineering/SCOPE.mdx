@@ -2,7 +2,7 @@
 sidebar_position: 1
 title: Current scope and roadmap
 sidebar_label: Current scope & roadmap
-description: The current scope declaration, covering locale tiers, the three workstreams, the standing invariants, and where the live roadmap lives.
+description: The current scope declaration, covering support promises and locale evidence, the three workstreams, the standing invariants, and where the live roadmap lives.
 ---
 
 # Current scope and roadmap
@@ -39,25 +39,25 @@ the rules that hold each claim to evidence.
    [runtime-flag register](./reference/runtime-flags.mdx). Human-readable status lives in the
    [exotic-POI series](../records/site-2026-08/understanding/exotic-poi/exotic-point-of-interest-queries.mdx).
 
-## Locale tiers
+## Support promises and locale evidence
 
-"Trained exposure" means rows in the shipped recipe's
-`country_weights`; a locale is only _claimed_ when a coordinate-graded eval exists for it.
+The customer-facing claim is the support promise list in `packages/codex/lib/support/promises.json`,
+published as `@mailwoman/codex/support` and rendered on the [support reference page](../articles/reference/support.mdx).
+Each promise states a country, the language and script of the typed text, any scripts allowed in an embedded
+name, and the deepest component guaranteed. Inside that depth, a poor read, parse or retrieval is a bug.
+Below it, the result must be an explicit unresolved component.
+[The design record](../superpowers/specs/2026-11-14-locale-support-promises-design.md) explains the shape.
 
-The membership below is also data. `scope.config.json` at the repository root holds the same
-countries per tier, read through `@mailwoman/core/scope-config`, and `repo-health`'s `locale-scope`
-check fails when the two disagree in either direction. Edit both, or the check reports the one you
-missed. The evidence column stays here, because it is prose with citations and a parser has
-no use for it.
+The promise list replaced the five locale tiers on 2026-11-15. The `repo-health` check `support-promises`
+refuses a promise with no passing gauntlet case in its country and script, reports each failing case inside
+a promise as an open bug, and reports each promised country that the current release specification
+doesn't guard with a country requirement. The `locale-scope` check refuses a shipping locale whose country
+holds no promise unless `scope.config.json` states why.
 
-Tier membership is multi-valued. Tiers 1 through 3 grade the strength of a claim. Tiers 4 and 5 identify
-a delivery mechanism (the diacritic tokenizer splice and the character path). CZ and PL therefore hold a
-tier-2 and a tier-4 membership at once and neither supersedes the other. A faceted replacement for
-this axis is [#2276](https://github.com/sister-software/mailwoman/issues/2276).
-
-A tier describes a claim and grants no release veto. Since 2026-10-20 (#2763), release eligibility
-comes from the countries and capabilities a release-requirement specification names, independently of
-this table, as iron rule 5 of [the model work runbook](./CONTRIBUTING_MODEL_WORK.mdx) describes. Tier 1's
+The table below keeps the evidence each former tier recorded, as prose with citations. Its group numbers
+are labels for that evidence, and the promise list makes the claim. Release eligibility
+comes from the countries and capabilities a release-requirement specification names (#2763), as iron
+rule 5 of [the model work runbook](./CONTRIBUTING_MODEL_WORK.mdx) describes. Group 1's
 "floor-enforced" refers to the promotion battery's golden-dev floors. Those floors remain in force as
 retained-pending checks until a specification version registers their replacements.
 
@@ -70,15 +70,10 @@ retained-pending checks until a specification version registers their replacemen
 | **5 — char path, published**              | JP, KR, TW                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | One 49-label character-path head for all three (`@mailwoman/neural-weights-cjk`, published at 9.3.0, with the `ja-jp` / `zh-cn` data-only overlays blessed at the same version and in the release list ([#2186](https://github.com/sister-software/mailwoman/pull/2186)); [#2164](https://github.com/sister-software/mailwoman/issues/2164)). JP: 20,000-row coordinate board, 0.9653 @15 km through the served ONNX path against the 0.9928 JP-only PyTorch record, and 96.3% @15 km (1,925 of 2,000) through the resolver on 2,000 of those rows (`mailwoman geocode`) with the JP postcode fold in the candidate table ([#2176](https://github.com/sister-software/mailwoman/issues/2176)); [#2165](https://github.com/sister-software/mailwoman/issues/2165) is the per-municipality reading. KR: 20,000-row board over 27 held-out 시군구, spans region 1.000 / subregion 0.967 / street 0.990 / house_number 1.000 / postcode 1.000, subregion 1.000 and street 1.000 through the served parse once the 시군구 register closes the one held-out city (`해운대구`). KR is routed to the CJK weights by script without a `--locale`, and resolved to the 시군구 through the candidate table's Korean names. No finer unit exists for KR ([#2184](https://github.com/sister-software/mailwoman/issues/2184)). TW has the largest corpus of any locale in this tier, 9,712,174 eligible rows from Overture `addresses-tw`, and a 20,000-row coordinate board reading **19,819 / 20,000 @15 km = 99.1%** through the served resolver, with 157 of the 181 failures the one `no_region` shape ([#2294](https://github.com/sister-software/mailwoman/issues/2294)); the parse board's 0.8944 @15 km is the separate question and both are reported. Like KR, it is reached by script routing rather than by `--locale`: no `zh-TW` sits in `release.config.json`, so a caller selects it by writing Han rather than by naming it. CN isn't in this tier. It ships `zh-cn` and holds 126 labeled rows, 14 of them on a board that has no coordinate by design. That count is a measurement, and it doesn't support a tier claim ([#2034](https://github.com/sister-software/mailwoman/issues/2034)); `scope.config.json`'s `untieredShippingLocales` records the reason, and Blocked / queued below records the source blocker. HK and SG are also untiered, for a different reason. Their Overture files hold 177,020 and 142,210 rows and are unread, so the gap is work rather than data. Both sets are entirely romanized (0 Han-script streets in either), so a corpus built from them would support a coordinate board but would leave the Chinese-script gap open. The JP postcode route (Geographic Rule Engine) stands beside the parse |
 | **Blocked / queued**                      | SE as locale 17 ([#202](https://github.com/sister-software/mailwoman/issues/202), license), the GB/IE/SE/HU/RO OSM corpus rows (built behind `--exclude-share-alike`, ODbL share-alike, with the training extract offer in [#2607](https://github.com/sister-software/mailwoman/issues/2607)), KR (data on disk under KOGL Type 1, the corpus built per `docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md`, the coarse-resolution probe shipped in 9.4.0, and the 시군구 resolver route open as [#2184](https://github.com/sister-software/mailwoman/issues/2184)), CN corpus ([#2294](https://github.com/sister-software/mailwoman/issues/2294), blocked on a missing source) | These are external constraints, each with a check-back owner. CN is blocked on source data: `overture/2026-06-17.0/addresses-cn.parquet` is 532 bytes and holds 0 rows, the 2026-07-22.0 release has no Chinese file at all, and no open national address register for China is acquirable on the terms JP, KR and TW used. CN therefore cannot follow TW's path (assemble a national parquet, hold out districts, read a coordinate board), and its 126 labeled rows don't support the parity with JP and KR that its former tier-5 row implied. A national register on terms this project can publish under, or a licensed commercial one, would unblock it. A Chinese-script training corpus is a separate requirement, since Overture has none even for HK and SG                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-Four shipping locales sit in no tier: CN, for the reason given under tier 5, and GB, IN and NZ. GB,
-IN and NZ each publish a weights package and none appears in the table above, because the table was
-declared on 2026-07-02 and the three overlays shipped after it. The table lists GB only under Blocked / queued. That entry concerns the OpenStreetMap
-corpus license and makes no statement about the claim. GB holds the largest checking board of any country
-(106 of its 152 rows), NZ holds 13 of 14, and IN holds 2 of 3 against the largest gazetteer of any
-country. `scope.config.json` records each one with the reason it is still untiered, and
-`repo-health`'s `locale-scope` check fails on a shipping locale that arrives in neither the table nor that list. Their tier assignment needs
-the evidence column written, tracked in [#2278](https://github.com/sister-software/mailwoman/issues/2278)
-and [#2277](https://github.com/sister-software/mailwoman/issues/2277).
+GB, IN and NZ appear in no group above, because the table was declared on 2026-07-02 and their three
+overlays shipped after it. Each now holds a promise at locality depth, backed by passing gauntlet cases
+and by its country requirement in the release specification. CN ships a weights package and holds no
+promise; `scope.config.json` records the reason under `unpromisedShippingLocales`.
 
 New corpus recipes train against the spliced vocab that shipped in v5.1.0 (the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign). Any

@@ -12,14 +12,22 @@
  *
  *   A failing case inside a promise is a bug the promise makes visible,
  *   so the check reports each one as a warning against that promise.
+ *
+ *   A promise whose country has no country requirement in the current release specification
+ *   could regress without failing a release, so the check reports it as a warning too.
+ *   A release threshold is a measured decision registered in a new specification version,
+ *   so the check reports the gap rather than writing a threshold.
  */
 
+import { textFitsPromise } from "@mailwoman/api/support"
 import { type SupportPromise, SUPPORT_DEPTHS, SUPPORT_PROMISES } from "@mailwoman/codex/support"
 import { impliedScript, parseLanguageTag } from "@mailwoman/registry/bcp47/tag"
 import { parseCountryCodeAlpha2 } from "@mailwoman/registry/iso3166/alpha2"
-import { isWrittenInScript, parseScriptCode } from "@mailwoman/registry/iso15924/codes"
+import { parseScriptCode } from "@mailwoman/registry/iso15924/codes"
 import type { BCP47 } from "@mailwoman/registry/types"
 import { loadRegressionCases } from "mailwoman/tools/eval-harness/gauntlet/cases/load"
+import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
+import { readReleaseSpec } from "mailwoman/tools/eval-harness/release/requirements"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 
@@ -67,6 +75,13 @@ export const supportPromisesCheck: RepoCheck = {
 	async run() {
 		const diagnostics: Diagnostic[] = []
 		const cases = await loadRegressionCases()
+		const spec = await readReleaseSpec(CURRENT_RELEASE_SPEC)
+
+		const required = new Set(
+			spec.requirements.flatMap((requirement) => (requirement.kind === "country" ? [requirement.country] : []))
+		)
+
+		const unguarded = new Set<string>()
 		const seen = new Set<string>()
 
 		const error = (message: string): void => {
@@ -108,8 +123,12 @@ export const supportPromisesCheck: RepoCheck = {
 				continue
 			}
 
+			if (!required.has(promise.country)) {
+				unguarded.add(promise.country)
+			}
+
 			const evidence = cases.filter(
-				(row) => row.country.toUpperCase() === promise.country && isWrittenInScript(row.input, resolved.script)
+				(row) => row.country.toUpperCase() === promise.country && textFitsPromise(row.input, promise)
 			)
 
 			const passing = evidence.filter((row) => row.status === "pass")
@@ -135,6 +154,19 @@ export const supportPromisesCheck: RepoCheck = {
 					details: null,
 				})
 			}
+		}
+
+		if (unguarded.size) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Warning,
+				message:
+					`${unguarded.size} promised countries have no country requirement in release specification ${spec.specVersion}, ` +
+					`so a release can regress them without failing: ${[...unguarded].toSorted().join(", ")}. ` +
+					"Register a measured minimum for each in the next specification version.",
+				file: DECLARATION,
+				line: null,
+				details: null,
+			})
 		}
 
 		return diagnostics
