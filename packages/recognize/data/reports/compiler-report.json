@@ -8,17 +8,17 @@
 			"automata": [
 				{
 					"backend": "dense",
-					"bytes": 1880,
-					"patterns": 1,
+					"bytes": 14820,
+					"patterns": 2,
 					"role": "whole",
-					"states": 17
+					"states": 54
 				},
 				{
 					"backend": "dense",
-					"bytes": 2120,
-					"patterns": 1,
+					"bytes": 18204,
+					"patterns": 2,
 					"role": "embedded",
-					"states": 20
+					"states": 66
 				}
 			],
 			"equivalent": [],
@@ -29,7 +29,14 @@
 					"id": "coordinate.decimal_pair",
 					"scope": "whole_or_embedded",
 					"unreachable": null,
-					"validator": "FiniteDecimalPair"
+					"validator": "WGS84Pair"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.geo_uri",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "GeoURI"
 				}
 			],
 			"unreachable": []

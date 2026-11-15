@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! The capture program of a family: the grammar of each shape that declares captures, ready for the runtime's walk.
+//! The program of a family: the grammar of each shape, ready for the runtime's walk. Capture extraction reads the shapes
+//! that declare captures, and the diagnostic replay of a trace reads all of them.
 //!
 //! A grammar written as AST nodes passes through unchanged. A regular-expression string is parsed here, at build time,
 //! and its HIR becomes AST nodes, so the runtime crate carries no regex parser. A named group `(?P<name>…)` becomes a
@@ -28,7 +29,7 @@ pub fn build(document: &IrDocument) -> Result<CaptureProgram, Vec<Diagnostic>> {
 		.map(|term| (term.id.as_str(), &term.grammar))
 		.collect();
 
-	for shape in document.shapes.iter().filter(|shape| !shape.captures.is_empty()) {
+	for shape in &document.shapes {
 		match shape_node(shape, &mut diagnostics) {
 			Some(node) => {
 				collect_terms(&node, &by_id, &mut reached, &mut program, &mut diagnostics, shape);
@@ -42,10 +43,18 @@ pub fn build(document: &IrDocument) -> Result<CaptureProgram, Vec<Diagnostic>> {
 							captures
 						},
 						node,
+						validator: shape.validator.as_ref().map(|validator| validator.as_str().to_string()),
+						source: shape.source.clone(),
 					},
 				);
 			}
 			None => continue,
+		}
+	}
+
+	for id in program.terms.keys().cloned().collect::<Vec<_>>() {
+		if let Some(term) = document.terms.iter().find(|term| term.id == id) {
+			program.term_sources.insert(id, term.source.clone());
 		}
 	}
 

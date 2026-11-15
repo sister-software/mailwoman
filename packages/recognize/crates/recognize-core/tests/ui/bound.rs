@@ -6,8 +6,8 @@ mod family {
 		declarations_hash: "0000000000000000000000000000000000000000000000000000000000000000",
 		shapes: {
 			Pair = "bound.pair" => {
-				captures: [latitude: Decimal, longitude: Decimal],
-				validator: FiniteDecimalPair,
+				captures: [first: Decimal, second: Decimal],
+				validator: WGS84Pair,
 			},
 			Word = "bound.word" => none,
 		}
@@ -18,5 +18,5 @@ fn main() {
 	assert_eq!(family::RecognitionKind::ALL.len(), 2);
 	assert!(family::RecognitionKind::Pair.validated());
 	assert!(!family::RecognitionKind::Word.validated());
-	assert_eq!(family::RecognitionKind::Pair.captures(), &[("latitude", "Decimal"), ("longitude", "Decimal")]);
+	assert_eq!(family::RecognitionKind::Pair.captures(), &[("first", "Decimal"), ("second", "Decimal")]);
 }

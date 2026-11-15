@@ -19,8 +19,8 @@ import { type CompiledModule, type ModuleBytes, wasm } from "#runtime/webassembl
 const wasmPath = workspacePath("recognize", "wasm", "recognize.wasm")
 
 /**
- * A module whose `rcg_abi_version` returns 3, the smallest module the loader
- * would accept before its version check.
+ * A module whose `rcg_abi_version` returns 2, the previous ABI and the smallest
+ * module the loader would accept before its version check.
  */
 const WRONG_ABI = new Uint8Array([
 	0,
@@ -55,8 +55,8 @@ const WRONG_ABI = new Uint8Array([
 	4,
 	0,
 	0x41,
-	3,
-	0x0b, // body: i32.const 3
+	2,
+	0x0b, // body: i32.const 2
 ])
 
 let constructed = 0
@@ -125,7 +125,12 @@ describe("the loader", () => {
 		const pair = result.recognitions.find((recognition) => recognition.kind === "coordinate.decimal_pair")
 
 		expect(pair).toMatchObject({ start: 3, end: 20, text: "40.7128, -74.0060" })
-		expect(pair?.validation).toEqual({ status: "validated", payload: { latitude: 40.7128, longitude: -74.006 } })
+
+		expect(pair?.validation).toEqual({
+			status: "validated",
+			payload: { latitude: 40.7128, longitude: -74.006, order: "lat_lon" },
+		})
+
 		expect(result.fields).toEqual({})
 	})
 
@@ -188,7 +193,7 @@ describe("the loader", () => {
 		state.setDefaultSource(() => WRONG_ABI)
 
 		expect(() => entry.createRecognizer([coordinates]).recognize("1, 2")).toThrow(
-			/ABI version 3 does not match the loader's ABI version 2/u
+			/ABI version 2 does not match the loader's ABI version 3/u
 		)
 	})
 

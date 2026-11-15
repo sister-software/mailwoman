@@ -36,9 +36,12 @@ declare const $types: unique symbol
 
 /**
  * Why a span's captured values failed validation.
+ *
+ * `Code` is the union of the rejection codes the kind's validator and the engine return.
+ * A generated family module declares it for each kind, so a `switch` over `code` can be exhaustive.
  */
-export interface Rejection {
-	readonly code: string
+export interface Rejection<Code extends string = string> {
+	readonly code: Code
 	readonly capture: string | null
 	readonly message: string
 }
@@ -61,9 +64,9 @@ export interface Validated<Payload> {
 /**
  * The span matched the shape's grammar and its values failed validation.
  */
-export interface Rejected {
+export interface Rejected<Code extends string = string> {
 	readonly status: "rejected"
-	readonly rejection: Rejection
+	readonly rejection: Rejection<Code>
 }
 
 /**
@@ -74,7 +77,7 @@ export interface Rejected {
  *
  * Offsets are UTF-16 code units, half-open, as `String.prototype.slice` reads them.
  */
-export interface Recognition<Kind extends string = string, Payload = never> {
+export interface Recognition<Kind extends string = string, Payload = never, Code extends string = string> {
 	readonly kind: Kind
 	readonly family: string
 	readonly start: number
@@ -83,7 +86,7 @@ export interface Recognition<Kind extends string = string, Payload = never> {
 	 * The raw text of the span, `text.slice(start, end)`.
 	 */
 	readonly text: string
-	readonly validation: [Payload] extends [never] ? Unvalidated : Validated<Payload> | Rejected
+	readonly validation: [Payload] extends [never] ? Unvalidated : Validated<Payload> | Rejected<Code>
 }
 
 /**
@@ -104,6 +107,7 @@ export interface FamilyDeclaration<
 	Kind extends string = string,
 	Payloads extends object = object,
 	Fields extends object = Record<never, never>,
+	Rejections extends object = Record<never, never>,
 > {
 	readonly id: string
 	/**
@@ -121,15 +125,15 @@ export interface FamilyDeclaration<
 	 */
 	readonly artifact: () => Uint8Array
 	/**
-	 * Type-only slot for the payloads and fields.
+	 * Type-only slot for the payloads, the fields and the rejection codes.
 	 */
-	readonly [$types]?: { payloads: Payloads; fields: Fields }
+	readonly [$types]?: { payloads: Payloads; fields: Fields; rejections: Rejections }
 }
 
 /**
  * Any family declaration.
  */
-export type AnyFamily = FamilyDeclaration<string, object, object>
+export type AnyFamily = FamilyDeclaration<string, object, object, object>
 
 type KindOf<D> = D extends { readonly kinds: Readonly<Record<string, infer Kind extends string>> } ? Kind : never
 
@@ -138,9 +142,17 @@ type KindOf<D> = D extends { readonly kinds: Readonly<Record<string, infer Kind 
  */
 export type KindsOf<F extends readonly AnyFamily[]> = KindOf<F[number]>
 
-type RecognitionOfFamily<D> = D extends { readonly [$types]?: { payloads: infer Payloads } }
+type CodeOf<Rejections, K> = K extends keyof Rejections
+	? Rejections[K] extends infer Code extends string
+		? Code
+		: string
+	: string
+
+type RecognitionOfFamily<D> = D extends {
+	readonly [$types]?: { payloads: infer Payloads; rejections: infer Rejections }
+}
 	? {
-			[K in KindOf<D>]: Recognition<K, K extends keyof Payloads ? Payloads[K] : never>
+			[K in KindOf<D>]: Recognition<K, K extends keyof Payloads ? Payloads[K] : never, CodeOf<Rejections, K>>
 		}[KindOf<D>]
 	: never
 
@@ -186,12 +198,13 @@ export function defineFamily<
 	Kind extends string,
 	Payloads extends object = object,
 	Fields extends object = Record<never, never>,
+	Rejections extends object = Record<never, never>,
 >(spec: {
 	id: string
 	kinds: Readonly<Record<string, Kind>>
 	declarationsHash: string
 	artifact: () => Uint8Array
-}): FamilyDeclaration<Kind, Payloads, Fields> {
+}): FamilyDeclaration<Kind, Payloads, Fields, Rejections> {
 	if (!/^[0-9a-f]{64}$/u.test(spec.declarationsHash)) {
 		throw new TypeError(`family ${spec.id}: the declarations hash is not 64 lowercase hexadecimal digits`)
 	}

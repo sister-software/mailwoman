@@ -252,9 +252,9 @@ fn a_file_from_another_compiler_or_another_declarations_hash_is_refused() {
 fn an_artifact_of_the_previous_schema_version_is_refused_with_its_version() {
 	let mut bytes = artifact_of("primitives");
 
-	bytes[4] = 2;
+	bytes[4] = 3;
 
-	assert_eq!(Engine::new().load(&bytes).unwrap_err(), ArtifactError::Version(2));
+	assert_eq!(Engine::new().load(&bytes).unwrap_err(), ArtifactError::Version(3));
 }
 
 #[test]

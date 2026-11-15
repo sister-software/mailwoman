@@ -22,7 +22,7 @@ export const PRIMITIVES_FAMILY_ID = "primitives"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const PRIMITIVES_DECLARATIONS_HASH = "bfabfbf450eaa8a203c939e38e9dcde3fd40f2f41f5dd634c782e7c054ba1ae4"
+export const PRIMITIVES_DECLARATIONS_HASH = "d33b792cde245ced43db7d0a88552c8a6686a1836ab570d69eadbff8cfef0976"
 
 /**
  * Every kind of recognition the family reports, by name.
@@ -44,13 +44,18 @@ export type PrimitivesKind = (typeof PrimitivesKind)[keyof typeof PrimitivesKind
 export type PrimitivesPayloads = Record<never, never>
 
 /**
+ * The rejection codes of each kind that declares a validator.
+ */
+export type PrimitivesRejections = Record<never, never>
+
+/**
  * The `primitives` family.
  *
  * Pass it to `createRecognizer`.
  * A bundle that imports this module holds this family's artifact and no other,
  * and no engine until a recognizer is created.
  */
-export const primitives = defineFamily<PrimitivesKind, PrimitivesPayloads>({
+export const primitives = defineFamily<PrimitivesKind, PrimitivesPayloads, Record<never, never>, PrimitivesRejections>({
 	id: PRIMITIVES_FAMILY_ID,
 	kinds: PrimitivesKind,
 	declarationsHash: PRIMITIVES_DECLARATIONS_HASH,

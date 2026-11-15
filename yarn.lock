@@ -7651,7 +7651,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/recognize@workspace:packages/recognize":
+"@mailwoman/recognize@workspace:*, @mailwoman/recognize@workspace:packages/recognize":
   version: 0.0.0-use.local
   resolution: "@mailwoman/recognize@workspace:packages/recognize"
   dependencies:
@@ -22091,6 +22091,7 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/recognize": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"

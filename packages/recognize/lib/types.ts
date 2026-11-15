@@ -18,6 +18,27 @@
 export declare namespace Validated {
 	const $Decimal: unique symbol
 	const $Integer: unique symbol
+	const $Latitude: unique symbol
+	const $Longitude: unique symbol
+	const $Uncertainty: unique symbol
+
+	/**
+	 * A latitude in WGS84 degrees, finite and from -90 to 90 inclusive.
+	 * The engine's validator built it, so the range was checked.
+	 */
+	type Latitude = number & { readonly [$Latitude]: true }
+
+	/**
+	 * A longitude in WGS84 degrees, finite and from -180 to 180 inclusive.
+	 */
+	type Longitude = number & { readonly [$Longitude]: true }
+
+	/**
+	 * An uncertainty in meters, finite and not negative.
+	 *
+	 * Zero is a specific point and is distinct from an absent uncertainty.
+	 */
+	type Uncertainty = number & { readonly [$Uncertainty]: true }
 
 	/**
 	 * A finite number the engine parsed from a capture.
@@ -31,3 +52,16 @@ export declare namespace Validated {
 	 */
 	type Integer = number & { readonly [$Integer]: true }
 }
+
+/**
+ * The order a decimal pair was read in.
+ *
+ * `lat_lon` is the order as written.
+ * `lon_lat` is reported only when the written order is out of range and the other order is in range.
+ */
+export const AxisOrder = {
+	LatLon: "lat_lon",
+	LonLat: "lon_lat",
+} as const
+
+export type AxisOrder = (typeof AxisOrder)[keyof typeof AxisOrder]

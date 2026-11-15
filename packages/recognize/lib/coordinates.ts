@@ -9,6 +9,8 @@
  *   and no engine until a recognizer is created.
  *
  *   The declarations are generated, and this module is their public path.
+ *   `@mailwoman/recognize/deterministic` exports the predicate that decides
+ *   when to trust a coordinate recognition.
  */
 
 export * from "#coordinates.generated"

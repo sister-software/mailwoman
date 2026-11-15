@@ -13,6 +13,7 @@
 use serde::Serialize;
 
 use crate::ir::{sha256_hex, CaptureSpec, IrDocument};
+use crate::validators::{self, PayloadField};
 
 /// One shape's declaration.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -23,6 +24,10 @@ pub struct ShapeDeclaration {
 	pub id: String,
 	/// The PascalCase name of the shape's recognition kind.
 	pub kind: String,
+	/// The fields of the validator's payload, from the validator's own declaration. Empty without a validator.
+	pub payload: Vec<PayloadField>,
+	/// Every rejection code a recognition of the shape can carry: the validator's and the engine's.
+	pub rejections: Vec<String>,
 	pub validator: Option<String>,
 }
 
@@ -34,12 +39,20 @@ pub struct Declarations {
 	pub shapes: Vec<ShapeDeclaration>,
 }
 
+/// The parts of a shape ID the repository spells as a whole acronym in a name: `coordinate.geo_uri` is
+/// `CoordinateGeoURI`, as its lint rule for acronyms requires.
+const ACRONYMS: [&str; 3] = ["id", "uri", "url"];
+
 /// The kind name of a shape ID: `coordinate.decimal_pair` is `CoordinateDecimalPair`.
 pub fn kind_name(shape: &str) -> String {
 	shape
 		.split(['.', '_'])
 		.filter(|part| !part.is_empty())
 		.map(|part| {
+			if ACRONYMS.contains(&part) {
+				return part.to_ascii_uppercase();
+			}
+
 			let mut characters = part.chars();
 
 			match characters.next() {
@@ -56,12 +69,33 @@ impl Declarations {
 		let mut shapes: Vec<ShapeDeclaration> = document
 			.shapes
 			.iter()
-			.map(|shape| ShapeDeclaration {
-				captures: shape.captures.clone(),
-				handler: shape.handler.as_ref().map(|handler| handler.as_str().to_string()),
-				id: shape.id.clone(),
-				kind: kind_name(&shape.id),
-				validator: shape.validator.as_ref().map(|validator| validator.as_str().to_string()),
+			.map(|shape| {
+				let schema = shape
+					.validator
+					.as_ref()
+					.and_then(|validator| validators::schema(validator.as_str()));
+				let mut rejections: Vec<String> = schema
+					.map(|schema| {
+						schema
+							.rejections
+							.iter()
+							.chain(validators::ENGINE_REJECTIONS)
+							.map(|code| code.to_string())
+							.collect()
+					})
+					.unwrap_or_default();
+
+				rejections.sort();
+
+				ShapeDeclaration {
+					captures: shape.captures.clone(),
+					handler: shape.handler.as_ref().map(|handler| handler.as_str().to_string()),
+					id: shape.id.clone(),
+					kind: kind_name(&shape.id),
+					payload: schema.map(|schema| schema.payload.to_vec()).unwrap_or_default(),
+					rejections,
+					validator: shape.validator.as_ref().map(|validator| validator.as_str().to_string()),
+				}
 			})
 			.collect();
 
@@ -92,6 +126,7 @@ mod tests {
 	fn kind_names_follow_the_shape_id() {
 		assert_eq!(kind_name("coordinate.decimal_pair"), "CoordinateDecimalPair");
 		assert_eq!(kind_name("word.ascii"), "WordAscii");
+		assert_eq!(kind_name("coordinate.geo_uri"), "CoordinateGeoURI");
 		assert_eq!(kind_name("postcode.generic_5digit"), "PostcodeGeneric5digit");
 	}
 

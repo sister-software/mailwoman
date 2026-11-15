@@ -35,7 +35,7 @@ fn a_decimal_pair_is_validated_into_a_typed_payload() {
 	match &pair.validation {
 		ValidationResult::Validated(payload) => assert_eq!(
 			serde_json::to_string(payload).unwrap(),
-			r#"{"latitude":40.7128,"longitude":-74.006}"#
+			r#"{"latitude":40.7128,"longitude":-74.006,"order":"lat_lon"}"#
 		),
 		other => panic!("expected a validated payload, got {other:?}"),
 	}
@@ -67,7 +67,7 @@ fn a_span_whose_values_fail_validation_is_rejected_with_its_reason() {
 	match &pair.validation {
 		ValidationResult::Rejected(rejection) => {
 			assert_eq!(rejection.code, "not_finite");
-			assert_eq!(rejection.capture.as_deref(), Some("latitude"));
+			assert_eq!(rejection.capture.as_deref(), Some("first"));
 		}
 		other => panic!("expected a rejection, got {other:?}"),
 	}
@@ -138,7 +138,11 @@ fn a_payload_serializes_the_fields_the_declarations_list() {
 		let declarations = Declarations::from_ir(&document);
 
 		for shape in declarations.shapes.iter().filter(|shape| shape.validator.is_some()) {
-			let text = "1.5, 2.5";
+			// A text that fills every field, optional ones included.
+			let text = match shape.id.as_str() {
+				"coordinate.decimal_pair" => "1.5, 2.5",
+				_ => "geo:1.5,2.5,3;u=4",
+			};
 			let recognition = engine
 				.recognize(text)
 				.unwrap()
@@ -150,7 +154,7 @@ fn a_payload_serializes_the_fields_the_declarations_list() {
 			};
 			let value = serde_json::to_value(payload).unwrap();
 			let mut keys: Vec<&str> = value.as_object().unwrap().keys().map(String::as_str).collect();
-			let mut declared_keys: Vec<&str> = shape.captures.iter().map(|capture| capture.path.as_str()).collect();
+			let mut declared_keys: Vec<&str> = shape.payload.iter().map(|field| field.name).collect();
 
 			keys.sort();
 			declared_keys.sort();
@@ -236,12 +240,18 @@ fn a_regular_expression_shape_makes_its_named_groups_captures() {
 
 #[test]
 fn a_regular_expression_capture_the_schema_does_not_declare_is_refused() {
-	// A shape with no declared captures has no program, so the group is plain grouping and the build succeeds.
-	compile_family(
+	// Every shape has a program since traces replay it, so a group a shape never declared is refused even when the
+	// shape declares no captures at all.
+	let undeclared = compile_family(
 		&pattern_family(r"(?P<unit>[a-z]+)\d", &[]).build().unwrap(),
 		&Limits::default(),
 	)
-	.expect("a shape with no declared captures builds");
+	.unwrap_err();
+
+	assert!(undeclared
+		.iter()
+		.any(|diagnostic| diagnostic.message.contains("`unit`")
+			&& diagnostic.message.contains("not in the capture schema")));
 
 	let refused = compile_family(
 		&pattern_family(r"(?P<unit>[a-z]+)\d", &["other"]).build().unwrap(),

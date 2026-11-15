@@ -16,6 +16,7 @@ import { offsetMap } from "#offsets"
 import { ErrorCode, MAX_FAMILIES, RECORD_WORDS, Status } from "#runtime/abi"
 import { RecognizeArtifactError, RecognizeError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
+import type { Trace, TraceSpan } from "#trace"
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder("utf-8", { fatal: true })
@@ -169,6 +170,60 @@ export function recognizeText(instance: Instance, text: string, mask: number): L
 		}
 
 		return readRecognitions(instance, text, written, count)
+	} catch (error) {
+		throw trapped(error)
+	}
+}
+
+/**
+ * Traces `text` over the families whose handle bit is set in `mask`, and explains the shapes in `explain`.
+ *
+ * This is the only call that reaches `rcg_trace`, so a call that didn't ask for a trace builds none.
+ * It searches again, so a caller reads the recognitions first: the call overwrites their JSON.
+ * Every span comes back in UTF-16 code units.
+ */
+export function traceText(instance: Instance, text: string, mask: number, explain: readonly string[]): Trace[] {
+	try {
+		const { exports } = instance
+		const capacity = text.length * 3
+		const pointer = reserve(instance, capacity)
+		const { written } = encoder.encodeInto(text, memoryBytes(instance, pointer, capacity))
+		const names = encoder.encode(explain.join("\n"))
+		const namesPointer = exports.rcg_alloc(names.byteLength)
+
+		let length: number
+
+		try {
+			memoryBytes(instance, namesPointer, names.byteLength).set(names)
+			length = exports.rcg_trace(pointer, written, mask, namesPointer, names.byteLength)
+		} finally {
+			exports.rcg_dealloc(namesPointer, names.byteLength)
+		}
+
+		if (length < 0) {
+			const message = lastErrorMessage(instance)
+
+			if (exports.rcg_error_code() === ErrorCode.InputTooLong) throw new RangeError(message)
+
+			throw new RecognizeError(message)
+		}
+
+		// The engine writes the document in the shape of `Trace` with UTF-8 byte spans.
+		// oxlint-disable-next-line no-restricted-properties -- the engine writes the document, and a parse failure is a bug to throw
+		const traces = JSON.parse(decoder.decode(memoryBytes(instance, exports.rcg_json_ptr(), length))) as Trace[]
+
+		if (written === text.length) {
+			return traces
+		}
+
+		const map = offsetMap(text, written)
+		const convert = (span: TraceSpan): TraceSpan => ({ start: map.toUTF16(span.start), end: map.toUTF16(span.end) })
+
+		return traces.map((trace) => ({
+			...trace,
+			...(trace.span && { span: convert(trace.span) }),
+			steps: trace.steps.map((step) => ({ ...step, ...(step.span && { span: convert(step.span) }) })),
+		}))
 	} catch (error) {
 		throw trapped(error)
 	}

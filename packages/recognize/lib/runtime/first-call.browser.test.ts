@@ -24,5 +24,9 @@ it("instantiates synchronously on the first call in Chromium", () => {
 	const pair = recognitions.find((recognition) => recognition.kind === "coordinate.decimal_pair")
 
 	expect(pair).toMatchObject({ start: 3, end: 20, text: "40.7128, -74.0060" })
-	expect(pair?.validation).toEqual({ status: "validated", payload: { latitude: 40.7128, longitude: -74.006 } })
+
+	expect(pair?.validation).toEqual({
+		status: "validated",
+		payload: { latitude: 40.7128, longitude: -74.006, order: "lat_lon" },
+	})
 })

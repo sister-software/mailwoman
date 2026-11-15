@@ -11,7 +11,7 @@
 
 import { coordinatesArtifact } from "#artifacts/coordinates.generated"
 import { defineFamily } from "#family"
-import type { Validated } from "#types"
+import type { AxisOrder, Validated } from "#types"
 
 /**
  * The family's ID.
@@ -23,7 +23,7 @@ export const COORDINATES_FAMILY_ID = "coordinates"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const COORDINATES_DECLARATIONS_HASH = "cd2e1d708451c0f59780fd5e7bd4d39bb7a778c2f6286d261b5213358f0661cb"
+export const COORDINATES_DECLARATIONS_HASH = "4eb9289261c751ca41e650f7a5d78af99f4971591d15821bbe3d2475eb6cbe00"
 
 /**
  * Every kind of recognition the family reports, by name.
@@ -31,6 +31,7 @@ export const COORDINATES_DECLARATIONS_HASH = "cd2e1d708451c0f59780fd5e7bd4d39bb7
  */
 export const CoordinatesKind = {
 	CoordinateDecimalPair: "coordinate.decimal_pair",
+	CoordinateGeoURI: "coordinate.geo_uri",
 } as const
 
 export type CoordinatesKind = (typeof CoordinatesKind)[keyof typeof CoordinatesKind]
@@ -39,9 +40,47 @@ export type CoordinatesKind = (typeof CoordinatesKind)[keyof typeof CoordinatesK
  * The validated payload of `coordinate.decimal_pair`.
  */
 export interface CoordinateDecimalPairPayload {
-	readonly latitude: Validated.Decimal
-	readonly longitude: Validated.Decimal
+	readonly latitude: Validated.Latitude
+	readonly longitude: Validated.Longitude
+	readonly order: AxisOrder
 }
+
+/**
+ * The code of every rejection a recognition of `coordinate.decimal_pair` can return.
+ */
+export type CoordinateDecimalPairRejection =
+	| "capture_limit"
+	| "capture_mismatch"
+	| "latitude_out_of_range"
+	| "longitude_out_of_range"
+	| "missing_capture"
+	| "not_a_decimal"
+	| "not_finite"
+
+/**
+ * The validated payload of `coordinate.geo_uri`.
+ */
+export interface CoordinateGeoURIPayload {
+	readonly latitude: Validated.Latitude
+	readonly longitude: Validated.Longitude
+	readonly altitude?: Validated.Decimal
+	readonly uncertainty?: Validated.Uncertainty
+}
+
+/**
+ * The code of every rejection a recognition of `coordinate.geo_uri` can return.
+ */
+export type CoordinateGeoURIRejection =
+	| "capture_limit"
+	| "capture_mismatch"
+	| "latitude_out_of_range"
+	| "longitude_out_of_range"
+	| "misplaced_parameter"
+	| "missing_capture"
+	| "negative_uncertainty"
+	| "not_a_decimal"
+	| "not_finite"
+	| "unsupported_crs"
 
 /**
  * The payload of each kind that declares a validator.
@@ -49,6 +88,15 @@ export interface CoordinateDecimalPairPayload {
  */
 export interface CoordinatesPayloads {
 	readonly "coordinate.decimal_pair": CoordinateDecimalPairPayload
+	readonly "coordinate.geo_uri": CoordinateGeoURIPayload
+}
+
+/**
+ * The rejection codes of each kind that declares a validator.
+ */
+export interface CoordinatesRejections {
+	readonly "coordinate.decimal_pair": CoordinateDecimalPairRejection
+	readonly "coordinate.geo_uri": CoordinateGeoURIRejection
 }
 
 /**
@@ -58,7 +106,12 @@ export interface CoordinatesPayloads {
  * A bundle that imports this module holds this family's artifact and no other,
  * and no engine until a recognizer is created.
  */
-export const coordinates = defineFamily<CoordinatesKind, CoordinatesPayloads>({
+export const coordinates = defineFamily<
+	CoordinatesKind,
+	CoordinatesPayloads,
+	Record<never, never>,
+	CoordinatesRejections
+>({
 	id: COORDINATES_FAMILY_ID,
 	kinds: CoordinatesKind,
 	declarationsHash: COORDINATES_DECLARATIONS_HASH,
