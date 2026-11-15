@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import type { PathBuilderLike } from "path-ts"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { dirname, type PathBuilderLike } from "path-ts"
 
 import { DatabaseClient } from "#client"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
@@ -43,6 +43,9 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 	options: BuildSealedArtifactOptions<DB, Streamed, Result>
 ): Promise<Result> {
 	const tmpPath = `${options.out}.tmp-${process.pid}`
+
+	// SQLite creates the temp file but not its directory, and a new artifact's directory may not exist yet.
+	await makeDirectories(dirname(options.out.toString()))
 
 	// A killed earlier build's temp file is removed before this one writes its own, and a version
 	// it set aside moves back into an empty slot so readers keep a database while this build runs.
