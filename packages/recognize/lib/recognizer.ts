@@ -12,14 +12,13 @@
  */
 
 import type { AnyFamily, FieldsOf, RecognitionsOf } from "#family"
-import { offsetMap } from "#offsets"
-import { loadFamily, recognizeRaw } from "#runtime/engine"
+import { loadFamily, recognizeText } from "#runtime/engine"
 import { type Instance, ready } from "#runtime/state"
 
 /**
  * Gives the engine's JSON the types the composed families' generated declarations promise.
  *
- * The engine's result document holds the shapes the declarations list.
+ * The engine's result records name the shapes the declarations list.
  * The loader has already checked that the artifact was built from those declarations.
  *
  * This is the one place the result takes its static type on trust.
@@ -91,26 +90,9 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 				bound = { instance, mask: mask >>> 0 }
 			}
 
-			const { result, byteLength } = recognizeRaw(instance, text, bound.mask)
-			const map = offsetMap(text, byteLength)
-
 			return {
-				recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(
-					result.recognitions.map((raw) => {
-						const start = map.toUTF16(raw.start)
-						const end = map.toUTF16(raw.end)
-
-						return {
-							kind: raw.shape,
-							family: raw.family,
-							start,
-							end,
-							text: text.slice(start, end),
-							validation: raw.validation,
-						}
-					})
-				),
-				fields: trusted<FieldsOf<F>>(result.fields),
+				recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognizeText(instance, text, bound.mask)),
+				fields: trusted<FieldsOf<F>>({}),
 			}
 		},
 	}

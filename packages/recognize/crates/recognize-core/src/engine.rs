@@ -5,15 +5,14 @@
 //!
 //! The span policy is stated in the crate documentation. This module links the search half of `regex-automata` only.
 
-use std::collections::BTreeSet;
 use std::fmt;
 
-use regex_automata::dfa::{dense, sparse, Automaton, OverlappingState};
-use regex_automata::{Anchored, Input};
+use regex_automata::dfa::{dense, sparse, Automaton};
+use regex_automata::util::primitives::StateID;
 
 use crate::artifact::{parse, ArtifactError, Backend, Header, PatternMeta, Role};
 use crate::captures::{extract, CaptureProgram, ExtractError};
-use crate::declared;
+use crate::declared::{self, Kind};
 use crate::ir::Scope;
 use crate::prefix::start_state;
 use crate::recognition::{Recognition, Rejection, ValidationResult};
@@ -68,7 +67,12 @@ pub(crate) enum Dfa {
 
 pub(crate) struct Loaded {
 	pub(crate) patterns: Vec<PatternMeta>,
+	/// The position of each pattern's shape in the family's shape table, parallel to `patterns`.
+	pub(crate) shape_indexes: Vec<usize>,
 	pub(crate) dfa: Dfa,
+	/// The state an anchored search begins in. The grammar has no look-around, so the state does not depend on the byte
+	/// before the start and one state serves every start of a text.
+	pub(crate) start: StateID,
 	pub(crate) viability: Viability,
 }
 
@@ -77,6 +81,23 @@ pub(crate) struct LoadedFamily {
 	pub(crate) whole: Option<Loaded>,
 	pub(crate) embedded: Option<Loaded>,
 	pub(crate) program: CaptureProgram,
+	/// The family's shape IDs in byte order, without repeats. A shape's position is its index in a [`Located`].
+	pub(crate) shapes: Vec<String>,
+	/// The closed kind of each shape, parallel to `shapes`.
+	pub(crate) kinds: Vec<Option<Kind>>,
+}
+
+/// One located span of a search, with the family and shape as positions.
+///
+/// The derived order is the order a search returns: start, end, family in load order, then shape in byte order of its ID.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Located {
+	pub start: usize,
+	pub end: usize,
+	/// The family's position in load order.
+	pub family: usize,
+	/// The shape's position in [`Engine::shapes`] of the family.
+	pub shape: usize,
 }
 
 /// Several families' automata, searched in one call.
@@ -186,6 +207,20 @@ impl Engine {
 
 		let program = CaptureProgram::from_bytes(artifact.captures).map_err(ArtifactError::CaptureProgram)?;
 
+		let mut shapes: Vec<String> = header
+			.automata
+			.iter()
+			.flat_map(|meta| meta.patterns.iter().map(|pattern| pattern.shape.clone()))
+			.collect();
+
+		shapes.sort_unstable();
+		shapes.dedup();
+
+		let kinds = shapes
+			.iter()
+			.map(|shape| declared::kind(&header.family, shape))
+			.collect();
+
 		let mut whole = None;
 		let mut embedded = None;
 
@@ -222,7 +257,13 @@ impl Engine {
 
 			let loaded = Loaded {
 				patterns: meta.patterns.clone(),
+				shape_indexes: meta
+					.patterns
+					.iter()
+					.map(|pattern| shapes.binary_search(&pattern.shape).unwrap_or_else(|index| index))
+					.collect(),
 				dfa,
+				start,
 				viability,
 			};
 
@@ -237,6 +278,8 @@ impl Engine {
 			whole,
 			embedded,
 			program,
+			shapes,
+			kinds,
 		});
 
 		Ok(())
@@ -279,6 +322,34 @@ impl Engine {
 	/// Like [`Engine::search`], over the families `include` accepts. The argument is a family's position in load order.
 	/// One engine can serve callers that compose different families, because each caller names its own.
 	pub fn search_in(&self, text: &str, include: impl Fn(usize) -> bool) -> Result<Vec<Candidate<'_>>, SearchError> {
+		Ok(self
+			.locate(text, include)?
+			.into_iter()
+			.map(|located| self.candidate(located))
+			.collect())
+	}
+
+	/// The shape IDs of a loaded family in byte order, which is the order of [`Located::shape`]. A family position
+	/// outside the load order has none.
+	pub fn shapes(&self, family: usize) -> &[String] {
+		self.families.get(family).map_or(&[], |loaded| loaded.shapes.as_slice())
+	}
+
+	/// The names behind a located span.
+	pub fn candidate(&self, located: Located) -> Candidate<'_> {
+		let family = &self.families[located.family];
+
+		Candidate {
+			start: located.start,
+			end: located.end,
+			family: family.header.family.as_str(),
+			shape: family.shapes[located.shape].as_str(),
+		}
+	}
+
+	/// Like [`Engine::search_in`], with the family and shape as positions, so a caller that decodes by position builds
+	/// no string.
+	pub fn locate(&self, text: &str, include: impl Fn(usize) -> bool) -> Result<Vec<Located>, SearchError> {
 		for family in self
 			.families
 			.iter()
@@ -297,43 +368,48 @@ impl Engine {
 			}
 		}
 
-		let mut found: BTreeSet<(usize, usize, usize, &str)> = BTreeSet::new();
+		let mut found: Vec<Located> = Vec::new();
 
 		if text.is_empty() {
-			return Ok(Vec::new());
+			return Ok(found);
 		}
 
 		for (family_index, family) in self.families.iter().enumerate().filter(|(index, _)| include(*index)) {
 			if let Some(whole) = &family.whole {
-				for pattern in whole_matches(whole, text)? {
-					found.insert((0, text.len(), family_index, whole.patterns[pattern].shape.as_str()));
-				}
+				let (start, end) = (0, text.len());
+
+				search_whole(whole, text, |pattern| {
+					found.push(Located {
+						start,
+						end,
+						family: family_index,
+						shape: whole.shape_indexes[pattern],
+					})
+				})?;
 			}
 
 			if let Some(embedded) = &family.embedded {
-				for (pattern, start, end) in embedded_candidates(embedded, text)? {
-					let meta = &embedded.patterns[pattern];
-
+				search_embedded(embedded, text, |pattern, start, end| {
 					// An `Embedded` shape reports spans inside the text. The whole text is for `Whole` and
 					// `WholeOrEmbedded`.
-					if meta.scope == Scope::Embedded && start == 0 && end == text.len() {
-						continue;
+					if embedded.patterns[pattern].scope == Scope::Embedded && start == 0 && end == text.len() {
+						return;
 					}
 
-					found.insert((start, end, family_index, meta.shape.as_str()));
-				}
+					found.push(Located {
+						start,
+						end,
+						family: family_index,
+						shape: embedded.shape_indexes[pattern],
+					})
+				})?;
 			}
 		}
 
-		Ok(found
-			.into_iter()
-			.map(|(start, end, family_index, shape)| Candidate {
-				start,
-				end,
-				family: self.families[family_index].header.family.as_str(),
-				shape,
-			})
-			.collect())
+		found.sort_unstable();
+		found.dedup();
+
+		Ok(found)
 	}
 }
 
@@ -353,43 +429,15 @@ impl Engine {
 		text: &'text str,
 		include: impl Fn(usize) -> bool,
 	) -> Result<Vec<Recognition<'engine, 'text>>, SearchError> {
-		let candidates = self.search_in(text, include)?;
-		let mut recognitions = Vec::with_capacity(candidates.len());
+		let located = self.locate(text, include)?;
+		let mut recognitions = Vec::with_capacity(located.len());
 
-		for candidate in candidates {
-			let kind = declared::kind(candidate.family, candidate.shape);
-			let validation = match kind.filter(|kind| kind.validated()) {
-				None => ValidationResult::Unvalidated,
-				Some(kind) => {
-					let family = self
-						.families
-						.iter()
-						.find(|family| family.header.family == candidate.family)
-						.expect("a candidate's family is loaded");
-
-					match extract(&family.program, candidate.shape, text, candidate.start, candidate.end) {
-						Ok(captures) => match declared::bind(kind, &captures) {
-							Some(Ok(payload)) => ValidationResult::Validated(payload),
-							Some(Err(rejection)) => ValidationResult::Rejected(rejection),
-							None => ValidationResult::Unvalidated,
-						},
-						Err(ExtractError::Limit) => ValidationResult::Rejected(Rejection::new(
-							"capture_limit",
-							None,
-							"the capture walk passed its step or depth limit",
-						)),
-						Err(ExtractError::NoParse) => ValidationResult::Rejected(Rejection::new(
-							"capture_mismatch",
-							None,
-							"no parse of the capture program consumes the span its automaton accepted",
-						)),
-					}
-				}
-			};
+		for span in located {
+			let (kind, validation) = self.validate(span, text);
 
 			recognitions.push(Recognition {
-				text: &text[candidate.start..candidate.end],
-				candidate,
+				text: &text[span.start..span.end],
+				candidate: self.candidate(span),
 				kind,
 				validation,
 			});
@@ -397,92 +445,160 @@ impl Engine {
 
 		Ok(recognitions)
 	}
-}
 
-fn automaton_error(error: regex_automata::MatchError) -> SearchError {
-	SearchError::Automaton(error.to_string())
-}
+	/// The kind of a located span and the outcome of validating its captures. A shape without a validator is
+	/// `Unvalidated` and runs no capture walk.
+	pub fn validate(&self, located: Located, text: &str) -> (Option<Kind>, ValidationResult) {
+		let family = &self.families[located.family];
+		let kind = family.kinds[located.shape];
 
-/// Every `(pattern, end)` the automaton reports for matches that begin at `start`.
-fn ends_from<A: Automaton>(
-	dfa: &A,
-	text: &str,
-	start: usize,
-	out: &mut Vec<(usize, usize)>,
-) -> Result<(), SearchError> {
-	let input = Input::new(text).span(start..text.len()).anchored(Anchored::Yes);
-	let mut state = OverlappingState::start();
+		let Some(validated) = kind.filter(|kind| kind.validated()) else {
+			return (kind, ValidationResult::Unvalidated);
+		};
 
-	loop {
-		dfa.try_search_overlapping_fwd(&input, &mut state)
-			.map_err(automaton_error)?;
+		let shape = family.shapes[located.shape].as_str();
+		let validation = match extract(&family.program, shape, text, located.start, located.end) {
+			Ok(captures) => match declared::bind(validated, &captures) {
+				Some(Ok(payload)) => ValidationResult::Validated(payload),
+				Some(Err(rejection)) => ValidationResult::Rejected(rejection),
+				None => ValidationResult::Unvalidated,
+			},
+			Err(ExtractError::Limit) => ValidationResult::Rejected(Rejection::new(
+				"capture_limit",
+				None,
+				"the capture walk passed its step or depth limit",
+			)),
+			Err(ExtractError::NoParse) => ValidationResult::Rejected(Rejection::new(
+				"capture_mismatch",
+				None,
+				"no parse of the capture program consumes the span its automaton accepted",
+			)),
+		};
 
-		match state.get_match() {
-			Some(found) => out.push((found.pattern().as_usize(), found.offset())),
-			None => return Ok(()),
-		}
+		(kind, validation)
 	}
 }
 
-fn whole_matches(loaded: &Loaded, text: &str) -> Result<Vec<usize>, SearchError> {
-	let mut ends = Vec::new();
+/// Walks `dfa` over `bytes` from `from` with an anchored search that begins in `start`, and calls `on_match` with the
+/// automaton, the match state and the end of the match for every match state it passes, the one at the end of the
+/// text included. A match state is reported one byte after the match ends, so the end is the position of the byte
+/// that led into it. The walk stops at the dead state.
+///
+/// This is the loop `try_search_overlapping_fwd` runs, without the per-call input and state it builds: the search is
+/// repeated at every start, and those costs dominate a short text.
+fn walk<A: Automaton>(
+	dfa: &A,
+	start: StateID,
+	bytes: &[u8],
+	from: usize,
+	mut on_match: impl FnMut(&A, StateID, usize),
+) -> Result<(), SearchError> {
+	let mut state = start;
+
+	for (offset, byte) in bytes.iter().enumerate().skip(from) {
+		state = dfa.next_state(state, *byte);
+
+		if dfa.is_special_state(state) {
+			if dfa.is_dead_state(state) {
+				return Ok(());
+			}
+
+			if dfa.is_quit_state(state) {
+				return Err(SearchError::Automaton(format!("the automaton quit at byte {offset}")));
+			}
+
+			if dfa.is_match_state(state) {
+				on_match(dfa, state, offset);
+			}
+		}
+	}
+
+	state = dfa.next_eoi_state(state);
+
+	if dfa.is_match_state(state) {
+		on_match(dfa, state, bytes.len());
+	}
+
+	Ok(())
+}
+
+/// Calls `found` with the pattern of every pattern that accepts exactly `text`.
+fn search_whole(loaded: &Loaded, text: &str, mut found: impl FnMut(usize)) -> Result<(), SearchError> {
+	let bytes = text.as_bytes();
+
+	fn run<A: Automaton>(
+		dfa: &A,
+		loaded: &Loaded,
+		bytes: &[u8],
+		found: &mut impl FnMut(usize),
+	) -> Result<(), SearchError> {
+		walk(dfa, loaded.start, bytes, 0, |dfa, state, end| {
+			if end == bytes.len() {
+				for index in 0..dfa.match_len(state) {
+					found(dfa.match_pattern(state, index).as_usize());
+				}
+			}
+		})
+	}
 
 	match &loaded.dfa {
-		Dfa::Dense(dfa) => ends_from(dfa, text, 0, &mut ends)?,
-		Dfa::Sparse(dfa) => ends_from(dfa, text, 0, &mut ends)?,
+		Dfa::Dense(dfa) => run(dfa, loaded, bytes, &mut found),
+		Dfa::Sparse(dfa) => run(dfa, loaded, bytes, &mut found),
 	}
-
-	Ok(ends
-		.into_iter()
-		.filter(|(_, end)| *end == text.len())
-		.map(|(pattern, _)| pattern)
-		.collect())
 }
 
-/// The candidate spans of an embedded automaton under the crate's span policy: for each pattern, the match that is
-/// not inside another match of the same pattern.
-fn embedded_candidates(loaded: &Loaded, text: &str) -> Result<Vec<(usize, usize, usize)>, SearchError> {
-	let mut candidates = Vec::new();
-	// The furthest end any earlier start reached, per pattern. Zero means none: a match ends after it starts.
-	let mut reach = vec![0usize; loaded.patterns.len()];
-	let mut ends = Vec::new();
-	let mut longest = vec![0usize; loaded.patterns.len()];
+/// Calls `found` with `(pattern, start, end)` for the candidate spans of an embedded automaton under the crate's span
+/// policy: for each pattern, the match that is not inside another match of the same pattern.
+fn search_embedded(loaded: &Loaded, text: &str, mut found: impl FnMut(usize, usize, usize)) -> Result<(), SearchError> {
+	fn run<A: Automaton>(
+		dfa: &A,
+		loaded: &Loaded,
+		bytes: &[u8],
+		found: &mut impl FnMut(usize, usize, usize),
+	) -> Result<(), SearchError> {
+		// The furthest end any earlier start reached, per pattern. Zero means none: a match ends after it starts.
+		let mut reach = vec![0usize; loaded.patterns.len()];
+		// The longest end of the current start, per pattern, and the patterns that have one.
+		let mut longest = vec![0usize; loaded.patterns.len()];
+		let mut touched: Vec<usize> = Vec::new();
 
-	for (start, _) in text.char_indices() {
-		ends.clear();
-
-		match &loaded.dfa {
-			Dfa::Dense(dfa) => ends_from(dfa, text, start, &mut ends)?,
-			Dfa::Sparse(dfa) => ends_from(dfa, text, start, &mut ends)?,
-		}
-
-		for (pattern, end) in &ends {
-			longest[*pattern] = longest[*pattern].max(*end);
-		}
-
-		for (pattern, end) in ends.drain(..) {
-			let longest_end = longest[pattern];
-
-			if longest_end == 0 {
+		for start in 0..bytes.len() {
+			// A start inside a codepoint is not a boundary.
+			if bytes[start] & 0xC0 == 0x80 {
 				continue;
 			}
 
+			// One walk sees the ends in increasing order, so the last one a pattern reports is its longest.
+			walk(dfa, loaded.start, bytes, start, |dfa, state, end| {
+				for index in 0..dfa.match_len(state) {
+					let pattern = dfa.match_pattern(state, index).as_usize();
+
+					if longest[pattern] == 0 {
+						touched.push(pattern);
+					}
+
+					longest[pattern] = end;
+				}
+			})?;
+
 			// Report the longest match at this start once, and only when it reaches past every earlier start's.
-			if end == longest_end && longest_end > reach[pattern] {
-				candidates.push((pattern, start, longest_end));
+			for pattern in touched.drain(..) {
+				let end = std::mem::take(&mut longest[pattern]);
+
+				if end > reach[pattern] {
+					found(pattern, start, end);
+					reach[pattern] = end;
+				}
 			}
 		}
 
-		for (pattern, end) in longest.iter_mut().enumerate() {
-			reach[pattern] = reach[pattern].max(*end);
-			*end = 0;
-		}
+		Ok(())
 	}
 
-	candidates.sort_unstable();
-	candidates.dedup();
-
-	Ok(candidates)
+	match &loaded.dfa {
+		Dfa::Dense(dfa) => run(dfa, loaded, text.as_bytes(), &mut found),
+		Dfa::Sparse(dfa) => run(dfa, loaded, text.as_bytes(), &mut found),
+	}
 }
 
 #[cfg(test)]

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct ClassRange(pub char, pub char);
 
 /// One operator of the grammar. The `op` tag names the operator in the IR.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Node {
 	/// The exact text.
@@ -36,6 +36,73 @@ pub enum Node {
 	Reference { id: String },
 	/// A grammar supplied as a regular-expression string. The IR stores the text; the compiler parses it.
 	Pattern { regex: String },
+}
+
+/// Every field any operator carries, read in one pass.
+///
+/// The derived reader of an internally tagged enum buffers each node in a generic tree and then reads it again once per
+/// operator. That buffering is a large share of the WebAssembly module, so `Node` reads its fields flat and picks the
+/// operator afterwards. The accepted documents are the ones the derive accepted: a field another operator owns is
+/// ignored, and a field the operator needs is required.
+#[derive(Deserialize)]
+struct FlatNode {
+	op: String,
+	value: Option<String>,
+	ranges: Option<Vec<ClassRange>>,
+	negated: Option<bool>,
+	items: Option<Vec<Node>>,
+	alternatives: Option<Vec<Node>>,
+	node: Option<Box<Node>>,
+	min: Option<u32>,
+	max: Option<u32>,
+	path: Option<String>,
+	id: Option<String>,
+	regex: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for Node {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		use serde::de::Error;
+
+		let flat = FlatNode::deserialize(deserializer)?;
+
+		Ok(match flat.op.as_str() {
+			"literal" => Node::Literal {
+				value: flat.value.ok_or_else(|| D::Error::missing_field("value"))?,
+			},
+			"class" => Node::Class {
+				ranges: flat.ranges.ok_or_else(|| D::Error::missing_field("ranges"))?,
+				negated: flat.negated.ok_or_else(|| D::Error::missing_field("negated"))?,
+			},
+			"sequence" => Node::Sequence {
+				items: flat.items.ok_or_else(|| D::Error::missing_field("items"))?,
+			},
+			"choice" => Node::Choice {
+				alternatives: flat
+					.alternatives
+					.ok_or_else(|| D::Error::missing_field("alternatives"))?,
+			},
+			"optional" => Node::Optional {
+				node: flat.node.ok_or_else(|| D::Error::missing_field("node"))?,
+			},
+			"repeat" => Node::Repeat {
+				node: flat.node.ok_or_else(|| D::Error::missing_field("node"))?,
+				min: flat.min.ok_or_else(|| D::Error::missing_field("min"))?,
+				max: flat.max,
+			},
+			"capture" => Node::Capture {
+				path: flat.path.ok_or_else(|| D::Error::missing_field("path"))?,
+				node: flat.node.ok_or_else(|| D::Error::missing_field("node"))?,
+			},
+			"reference" => Node::Reference {
+				id: flat.id.ok_or_else(|| D::Error::missing_field("id"))?,
+			},
+			"pattern" => Node::Pattern {
+				regex: flat.regex.ok_or_else(|| D::Error::missing_field("regex"))?,
+			},
+			other => return Err(D::Error::unknown_variant(other, &OPERATORS)),
+		})
+	}
 }
 
 /// The operator names the IR admits, in the order the schema lists them.

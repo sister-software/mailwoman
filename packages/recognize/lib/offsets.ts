@@ -46,16 +46,32 @@ function isHighSurrogate(unit: number): boolean {
 }
 
 /**
+ * The table every non-ASCII map reads, grown when a longer text needs it.
+ *
+ * A map built for one text is valid until the next call of {@link offsetMap}, because the next
+ * map reuses the table, and allocating a typed array per call costs more than the pass that fills it.
+ */
+let scratch = new Int32Array(256)
+
+/**
  * Builds the map for `text`, whose UTF-8 encoding is `byteLength` bytes.
  *
  * Text whose encoding is as long as the text itself is ASCII, because every other
  * codepoint takes more bytes than code units, and its offsets are equal.
  * The map for other text costs one pass over the text.
+ *
+ * The map is valid until the next call of this function.
  */
 export function offsetMap(text: string, byteLength: number): OffsetMap {
 	if (byteLength === text.length) return identity(byteLength)
 
-	const units = new Int32Array(byteLength + 1).fill(-1)
+	if (scratch.length < byteLength + 1) {
+		scratch = new Int32Array(Math.max(byteLength + 1, scratch.length * 2))
+	}
+
+	const units = scratch
+
+	units.fill(-1, 0, byteLength + 1)
 	let byte = 0
 	let unit = 0
 

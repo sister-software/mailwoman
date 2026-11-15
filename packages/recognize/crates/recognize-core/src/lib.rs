@@ -74,7 +74,7 @@ pub use ast::{
 pub use captures::{Captures, ExtractError};
 pub use declarations::Declarations;
 pub use diagnostic::{render, Diagnostic, DiagnosticKind, Source};
-pub use engine::{Candidate, Engine, Expected, SearchError};
+pub use engine::{Candidate, Engine, Expected, Located, SearchError};
 pub use family::{shape, term, Family, ShapeBuilder};
 pub use ids::{HandlerID, ValidatorID};
 pub use ir::{AmbiguityPolicy, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION};

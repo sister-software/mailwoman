@@ -667,7 +667,9 @@ pub fn parse(bytes: &[u8]) -> Result<Artifact<'_>, ArtifactError> {
 
 	let text = std::str::from_utf8(&bytes[ENVELOPE_BYTES..header_end])
 		.map_err(|error| ArtifactError::HeaderJSON(error.to_string()))?;
-	let header: Header = serde_json::from_str(text).map_err(|error| ArtifactError::HeaderJSON(error.to_string()))?;
+	// Read as bytes like the capture program, so the module holds one JSON reader and not two.
+	let header: Header =
+		serde_json::from_slice(text.as_bytes()).map_err(|error| ArtifactError::HeaderJSON(error.to_string()))?;
 
 	if header_text(&header) != text {
 		return Err(ArtifactError::HeaderNotCanonical);
