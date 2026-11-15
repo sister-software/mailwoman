@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Writes each grammar family's intermediate representation to `data/ir/<family>.json`,
- *   its compiled artifact to `data/artifacts/<family>.rca1`, and the build manifest to
- *   `data/manifests/artifacts.json`, all with `crates/recognize-build`.
+ *   Writes each grammar family's intermediate representation to `data/ir/<family>.json`, its compiled
+ *   artifact to `data/artifacts/<family>.rca1`, the build manifest to `data/manifests/artifacts.json`,
+ *   the compiler report to `data/reports/compiler-report.json` and the overlap witnesses
+ *   to `data/fixtures/overlap-witnesses.json`, all with `crates/recognize-build`.
  *
  *   The build binary validates and compiles every family first.
  *   A grammar that fails validation or exceeds a compiler limit prints each diagnostic
@@ -16,7 +17,7 @@
  *
  *   Usage: `node packages/recognize/tools/generate.run.ts [--check]`
  *
- *   The binary writes the IR and the manifest with serde_json's pretty printer.
+ *   The binary writes the IR, the manifest, the report and the witnesses with serde_json's pretty printer.
  *   This tool formats each of those files with the repository's oxfmt.
  *
  *   `--check` generates into a scratch directory and formats the same way.
@@ -121,16 +122,23 @@ for (const { family, hash, sha256 } of written) {
 }
 
 // The manifest records each artifact's byte size, backend, state count and hashes, as the registry's does.
-const manifestTarget = recognize("data", "manifests", "artifacts.json")
-const manifest = await format(manifestTarget, await readLocalTextFile(`${built}/artifacts.json`), formatConfig)
+// The compiler report states each family's shapes, unreachable shapes and overlapping pairs.
+// The witness fixture holds the shortest string each declared overlapping pair shares.
+const documents = [
+	{ from: "artifacts.json", to: recognize("data", "manifests", "artifacts.json"), label: "manifest" },
+	{ from: "compiler-report.json", to: recognize("data", "reports", "compiler-report.json"), label: "report" },
+	{ from: "overlap-witnesses.json", to: recognize("data", "fixtures", "overlap-witnesses.json"), label: "witnesses" },
+]
 
-if (manifest.errors.length) {
-	throw new Error(
-		`oxfmt could not format ${manifestTarget}: ${manifest.errors.map((error) => error.message).join("; ")}`
-	)
+for (const { from, to, label } of documents) {
+	const formatted = await format(to, await readLocalTextFile(`${built}/${from}`), formatConfig)
+
+	if (formatted.errors.length) {
+		throw new Error(`oxfmt could not format ${to}: ${formatted.errors.map((error) => error.message).join("; ")}`)
+	}
+
+	await settle(to, formatted.code, label)
 }
-
-await settle(manifestTarget, manifest.code, "manifest")
 
 if (stale) {
 	process.exitCode = 1

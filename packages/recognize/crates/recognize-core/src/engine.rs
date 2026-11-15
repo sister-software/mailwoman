@@ -13,6 +13,8 @@ use regex_automata::{Anchored, Input};
 
 use crate::artifact::{parse, ArtifactError, Backend, Header, PatternMeta, Role, DECLARATIONS_HASH_UNSET};
 use crate::ir::Scope;
+use crate::prefix::start_state;
+use crate::viability::Viability;
 
 /// One recognized span: the shape, and the UTF-8 byte range `start..end` of the text that matches it.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -56,26 +58,27 @@ impl fmt::Display for SearchError {
 
 impl std::error::Error for SearchError {}
 
-enum Dfa {
+pub(crate) enum Dfa {
 	Dense(dense::DFA<Vec<u32>>),
 	Sparse(sparse::DFA<Vec<u8>>),
 }
 
-struct Loaded {
-	patterns: Vec<PatternMeta>,
-	dfa: Dfa,
+pub(crate) struct Loaded {
+	pub(crate) patterns: Vec<PatternMeta>,
+	pub(crate) dfa: Dfa,
+	pub(crate) viability: Viability,
 }
 
-struct LoadedFamily {
-	header: Header,
-	whole: Option<Loaded>,
-	embedded: Option<Loaded>,
+pub(crate) struct LoadedFamily {
+	pub(crate) header: Header,
+	pub(crate) whole: Option<Loaded>,
+	pub(crate) embedded: Option<Loaded>,
 }
 
 /// Several families' automata, searched in one call.
 #[derive(Default)]
 pub struct Engine {
-	families: Vec<LoadedFamily>,
+	pub(crate) families: Vec<LoadedFamily>,
 }
 
 /// What a caller already knows about the artifact it loads.
@@ -187,9 +190,23 @@ impl Engine {
 				});
 			}
 
+			let viability = Viability::parse(payload.viability, meta.patterns.len(), meta.states as usize)?;
+			let start = start_state(&dfa).map_err(|error| ArtifactError::Automaton {
+				role: meta.role,
+				message: error.to_string(),
+			})?;
+
+			if !viability.contains(start.as_u32()) {
+				return Err(ArtifactError::Viability(format!(
+					"the {} automaton's start state has no row",
+					meta.role.as_str()
+				)));
+			}
+
 			let loaded = Loaded {
 				patterns: meta.patterns.clone(),
 				dfa,
+				viability,
 			};
 
 			match meta.role {

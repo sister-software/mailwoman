@@ -85,6 +85,11 @@ pub struct Shape {
 	pub validator: Option<ValidatorID>,
 	pub handler: Option<HandlerID>,
 	pub ambiguity: AmbiguityPolicy,
+	/// The reason the shape is declared unreachable: its language is empty, or none of its matches is reportable under
+	/// its scope. The build fails on an unreachable shape that carries no declaration. The field is absent from the IR
+	/// text of a shape that declares nothing.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub unreachable: Option<String>,
 	pub source: Source,
 }
 

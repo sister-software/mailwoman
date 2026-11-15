@@ -107,6 +107,11 @@ impl<'a> Interpreter<'a> {
 		frontier.iter().flat_map(|start| self.ends(node, *start)).collect()
 	}
 
+	/// Whether the shape's grammar accepts the whole text.
+	pub fn accepts(&self, shape: &Shape) -> bool {
+		self.ends(&shape.grammar, 0).contains(&self.text.len())
+	}
+
 	/// Every non-empty `start..end` the shape's grammar accepts exactly.
 	pub fn matches(&self, shape: &Shape) -> BTreeSet<(usize, usize)> {
 		let mut out = BTreeSet::new();
@@ -165,6 +170,29 @@ pub fn expected(documents: &[IrDocument], text: &str) -> BTreeSet<(usize, usize,
 	}
 
 	out
+}
+
+/// Every string of at most `max` characters over `alphabet`, the empty string first, in length order.
+pub fn strings_up_to(alphabet: &[char], max: usize) -> Vec<String> {
+	let mut all = vec![String::new()];
+	let mut layer = vec![String::new()];
+
+	for _ in 0..max {
+		layer = layer
+			.iter()
+			.flat_map(|prefix| {
+				alphabet.iter().map(move |character| {
+					let mut next = prefix.clone();
+
+					next.push(*character);
+					next
+				})
+			})
+			.collect();
+		all.extend(layer.iter().cloned());
+	}
+
+	all
 }
 
 /// A family that exercises every operator, every scope, nested and same-end shapes, and non-ASCII classes.

@@ -60,6 +60,11 @@
 				"validator": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"handler": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"ambiguity": { "$ref": "#/$defs/ambiguity" },
+				"unreachable": {
+					"description": "The reason the shape is declared unreachable. Absent when the shape declares nothing.",
+					"type": "string",
+					"minLength": 1
+				},
 				"source": { "$ref": "#/$defs/source" }
 			}
 		},

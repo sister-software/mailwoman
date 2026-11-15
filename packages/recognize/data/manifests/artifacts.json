@@ -18,11 +18,11 @@
 					"states": 20
 				}
 			],
-			"bytes": 4824,
+			"bytes": 5264,
 			"compilerVersion": "0.1.0",
 			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
 			"irHash": "003b36d9ea437ce7c049651057644c2a44c6025f346183e47ef16fd3c5f8a1db",
-			"sha256": "471d6b4e28379ff62e92e1b6782b7638973ec816f3bb1858212969e485ab99cd",
+			"sha256": "6208dc98fc59606e999d06c980329a1fbdb646d6636c513df9b6aa8835ce72a6",
 			"unicodeVersion": "16.0.0"
 		},
 		"primitives": {
@@ -43,11 +43,11 @@
 					"states": 22
 				}
 			],
-			"bytes": 7784,
+			"bytes": 8232,
 			"compilerVersion": "0.1.0",
 			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
 			"irHash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
-			"sha256": "6927e8b21d4997619fa2443e8a93ea06279a6a3ac5a5007b5777d19e33b19a00",
+			"sha256": "fb6889e551a1419c1b9f493c418abf7cdb9413b3d7e8146692593788511fc1ec",
 			"unicodeVersion": "16.0.0"
 		}
 	},
@@ -58,6 +58,7 @@
 		"maxCaptures": 64,
 		"maxDepth": 64,
 		"maxLoweredNodes": 100000,
+		"maxProductStates": 1000000,
 		"maxStates": 50000,
 		"nfaBytes": 8388608,
 		"sparseBytes": 2097152

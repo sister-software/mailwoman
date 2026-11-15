@@ -68,6 +68,9 @@ pub enum DiagnosticKind {
 	MalformedIR,
 	/// A grammar that grows past a configured compiler limit on every backend.
 	LimitExceeded,
+	/// A shape whose language is empty, or none of whose matches a search can report under its scope, and that does not
+	/// declare it. Also a declaration of unreachability on a shape the compiler finds reachable.
+	Unreachable,
 }
 
 impl DiagnosticKind {
@@ -85,6 +88,7 @@ impl DiagnosticKind {
 			DiagnosticKind::MissingGrammar => "missing-grammar",
 			DiagnosticKind::MalformedIR => "malformed-ir",
 			DiagnosticKind::LimitExceeded => "limit-exceeded",
+			DiagnosticKind::Unreachable => "unreachable",
 		}
 	}
 }

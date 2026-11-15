@@ -34,6 +34,7 @@ pub fn shape(id: &str) -> ShapeBuilder {
 		validator: None,
 		handler: None,
 		ambiguity: AmbiguityPolicy::Exclusive,
+		unreachable: None,
 		source: Source::here(),
 	}
 }
@@ -49,6 +50,7 @@ pub struct ShapeBuilder {
 	validator: Option<String>,
 	handler: Option<String>,
 	ambiguity: AmbiguityPolicy,
+	unreachable: Option<String>,
 	source: Source,
 }
 
@@ -96,6 +98,13 @@ impl ShapeBuilder {
 		self.ambiguity = AmbiguityPolicy::MayOverlap {
 			with: with.iter().map(|id| id.to_string()).collect(),
 		};
+		self
+	}
+
+	/// Declares the shape unreachable, with the reason. The compiler then reports the shape as unreachable without
+	/// failing the build. A declaration on a shape the compiler finds reachable is itself refused.
+	pub fn declare_unreachable(mut self, reason: &str) -> Self {
+		self.unreachable = Some(reason.to_string());
 		self
 	}
 }
@@ -171,6 +180,7 @@ impl Family {
 				validator,
 				handler,
 				ambiguity,
+				unreachable,
 				source,
 			} = builder;
 
@@ -195,6 +205,7 @@ impl Family {
 				validator,
 				handler,
 				ambiguity,
+				unreachable,
 				source,
 			});
 		}

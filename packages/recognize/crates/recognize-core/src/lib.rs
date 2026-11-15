@@ -52,7 +52,9 @@ pub mod family;
 pub mod grammars;
 pub mod ids;
 pub mod ir;
+pub mod prefix;
 pub mod validate;
+pub mod viability;
 
 pub use artifact::{ArtifactError, Backend, Role};
 pub use ast::{
@@ -64,3 +66,4 @@ pub use engine::{Candidate, Engine, Expected, SearchError};
 pub use family::{shape, term, Family, ShapeBuilder};
 pub use ids::{HandlerID, ValidatorID};
 pub use ir::{AmbiguityPolicy, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION};
+pub use prefix::{PrefixCursor, PrefixStatus, ShapePrefix};

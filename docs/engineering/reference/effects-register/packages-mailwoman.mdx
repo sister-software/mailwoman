@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 385 of the group's 759 library and tool modules.
+This page lists 386 of the group's 760 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -2115,6 +2115,18 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | -------------------- | ------------------------------------------------------------------------- | ----- |
 | read  | `readLocalTextFile`  | `repo:packages/query-shape/test/fixtures/compute-query-shape.golden.json` | 1     |
 | write | `writeLocalJSONFile` | `repo:packages/query-shape/test/fixtures/compute-query-shape.golden.json` | 1     |
+
+## `packages/mailwoman/tools/dev-tools/recognize/prefix-parity.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 2 times
+- `runs a statement at module scope`, 2 times
+
+| Kind  | Interface           | Target                                                              | Calls |
+| ----- | ------------------- | ------------------------------------------------------------------- | ----- |
+| read  | `readLocalTextFile` | `repo:packages/recognize/data/fixtures/postcode-prefix-parity.json` | 1     |
+| write | `writeLocalFile`    | `repo:packages/recognize/data/fixtures/postcode-prefix-parity.json` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/relay-interpolation-extracts.run.ts`
 
