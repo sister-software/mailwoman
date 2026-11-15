@@ -44,6 +44,8 @@ pub enum SearchError {
 	Automaton(String),
 	/// A scan named a partition the family does not declare.
 	NoPartition { family: String, partition: String },
+	/// The known-formats pass named a family that has no whole-input automaton.
+	NoWhole { family: String },
 }
 
 impl fmt::Display for SearchError {
@@ -59,6 +61,9 @@ impl fmt::Display for SearchError {
 			SearchError::Automaton(message) => write!(formatter, "the automaton stopped the search: {message}"),
 			SearchError::NoPartition { family, partition } => {
 				write!(formatter, "family `{family}` declares no partition `{partition}`")
+			}
+			SearchError::NoWhole { family } => {
+				write!(formatter, "family `{family}` has no whole-input shape")
 			}
 		}
 	}
@@ -93,6 +98,8 @@ pub(crate) struct LoadedFamily {
 	pub(crate) shapes: Vec<String>,
 	/// The closed kind of each shape, parallel to `shapes`.
 	pub(crate) kinds: Vec<Option<Kind>>,
+	/// Whether each shape marks a PO box leader, parallel to `shapes`. See [`crate::known_formats`].
+	pub(crate) leaders: Vec<bool>,
 }
 
 /// One located span of a search, with the family and shape as positions.
@@ -283,6 +290,11 @@ impl Engine {
 			}
 		}
 
+		let leaders = shapes
+			.iter()
+			.map(|shape| shape.starts_with(crate::known_formats::LEADER_PREFIX))
+			.collect();
+
 		self.families.push(LoadedFamily {
 			header,
 			whole,
@@ -291,6 +303,7 @@ impl Engine {
 			program,
 			shapes,
 			kinds,
+			leaders,
 		});
 
 		Ok(())
@@ -409,7 +422,7 @@ impl Engine {
 			if let Some(whole) = &family.whole {
 				let (start, end) = (0, text.len());
 
-				search_whole(whole, text, |pattern| {
+				search_whole(whole, text.as_bytes(), |pattern| {
 					found.push(Located {
 						start,
 						end,
@@ -730,9 +743,7 @@ fn longest<A: Automaton>(
 }
 
 /// Calls `found` with the pattern of every pattern that accepts exactly `text`.
-fn search_whole(loaded: &Loaded, text: &str, mut found: impl FnMut(usize)) -> Result<(), SearchError> {
-	let bytes = text.as_bytes();
-
+pub(crate) fn search_whole(loaded: &Loaded, bytes: &[u8], mut found: impl FnMut(usize)) -> Result<(), SearchError> {
 	fn run<A: Automaton>(
 		dfa: &A,
 		loaded: &Loaded,

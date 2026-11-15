@@ -30,13 +30,30 @@ subregionsForPostcode("35203", "US") // [{ key: "AL", isoid: "AL" }]
 
 ## Subpath exports
 
-Every module under `lib/` is importable as `@mailwoman/postcode/<module>`. Two of them are not in the root
+Every module under `lib/` is importable as `@mailwoman/postcode/<module>`. Three of them are not in the root
 export:
 
 - `@mailwoman/postcode/binary-resolver` holds `PostcodeBinaryResolver`, which reads a PCB1 postcode binary
   from bytes and looks up the places recorded for a postcode, and `serializePostcodeBinary`, which writes one.
 - `@mailwoman/postcode/prefix-index` holds `PostcodePrefixIndexResolver`, which reads a PFX1 prefix index from
   bytes and probes a prefix for its weighted ancestry, and `serializePostcodePrefixIndex`, which writes one.
+
+- `@mailwoman/postcode/recognize` holds `postcodeLegacy`, a family of `@mailwoman/recognize` that fills the
+  `knownFormats` field with the postcode and PO box formats `@mailwoman/query-shape` reports today: the same
+  names, confidences, spans and order. Compose it with the `structure` family, whose tokens it reads. A
+  composition without `structure` throws a `RecognizeCompositionError` at construction. The family reports no
+  recognitions of its own.
+
+  ```ts
+  const { fields } = createRecognizer([structure, postcodeLegacy]).recognize("SW1A 1AA")
+  fields.knownFormats // [{ format: "uk_postcode", span: { start: 0, end: 8, body: "SW1A 1AA" }, confidence: 0.9 }]
+  ```
+
+  The table is `lib/legacy-formats/table.ts`: each legacy format with its country, pattern, token count and
+  confidence, and the PO box leaders of each language. `node packages/postcode/tools/generate.run.ts` compiles it
+  with `recognize-build --definition`, and `--check` fails when a committed file differs. The patterns are the
+  thirteen legacy patterns, so wider recognition from every country's syntax is a separate change.
+  `isKnownPostcodeFormat` is the `isPostcodeFormat` predicate for these names.
 
 ## Three kinds of evidence
 

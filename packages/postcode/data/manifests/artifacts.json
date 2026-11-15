@@ -1,0 +1,35 @@
+{
+	"families": {
+		"postcode_legacy": {
+			"artifact": "postcode_legacy.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 24188,
+					"patterns": 18,
+					"role": "whole",
+					"states": 90
+				}
+			],
+			"bytes": 35296,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "b5e5bb0f0e70da123a7bf73ca4ccc3785f660a560aea66d99ec8024006e2c451",
+			"irHash": "73d61b1812023178808a7fa590e7b7e924d0d7bb37dbe533f344ac27f8727424",
+			"sha256": "02258a1aa0423d202d4b20ba59009009f0dfba45c53f8b4a278be961c76fb491",
+			"unicodeVersion": "16.0.0"
+		}
+	},
+	"limits": {
+		"buildBytes": 33554432,
+		"denseBytes": 2097152,
+		"inputBytes": 65536,
+		"maxCaptures": 64,
+		"maxDepth": 64,
+		"maxLoweredNodes": 100000,
+		"maxProductStates": 1000000,
+		"maxStates": 50000,
+		"nfaBytes": 8388608,
+		"partitionInputBytes": 1048576,
+		"sparseBytes": 2097152
+	}
+}

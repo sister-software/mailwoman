@@ -1,7 +1,6 @@
 {
 	"name": "@mailwoman/recognize",
 	"version": "11.1.0",
-	"private": true,
 	"description": "A declarative grammar library and recognition engine for the formal languages in geographic queries: a deterministic JSON intermediate representation, compiled automata, captures and validators, and a WebAssembly adapter with a synchronous first-call loader.",
 	"keywords": [
 		"grammar",
@@ -74,6 +73,9 @@
 			"node": "./lib/*.ts",
 			"default": "./out/*.js"
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"test:browser": "vitest run --config vitest.browser.config.ts",

@@ -52,7 +52,12 @@
 //! then n tokens of TOKEN_WORDS words: start, end, class | script << 8
 //! then m segments of SEGMENT_WORDS words: start, end, separator
 //! then r words: the position among the tokens of each region abbreviation
+//! then, when the call names a known-formats family, one word k, the number of hits,
+//! and k hits of KNOWN_FORMAT_WORDS words: kind, shape, start, end
 //! ```
+//!
+//! A hit's kind is that of `recognize_core::known_formats::HitKind`, its shape is the position in the known-formats
+//! family's shape table, or `u32::MAX` for a PO box, and its offsets are UTF-8 byte offsets.
 //!
 //! The class codes are those of `recognize_core::structure::TokenClass` and the separator codes those of
 //! `recognize_core::structure::Separator`.
@@ -60,12 +65,19 @@
 use std::cell::RefCell;
 
 use recognize_core::charset::SCRIPTS;
+use recognize_core::known_formats::KnownFormats;
 use recognize_core::structure::Structure;
 use recognize_core::{ArtifactError, Engine, Expected, SearchError, ValidationResult};
 
 /// The ABI version the TypeScript loader checks. Bump it on any change to an export's signature or to the result
-/// records' layout. Version 4 added `rcg_structure`.
-pub const ABI_VERSION: u32 = 4;
+/// records' layout. Version 4 added `rcg_structure`. Version 5 gave it a known-formats family argument.
+pub const ABI_VERSION: u32 = 5;
+
+/// The words of one known-format hit in a structure result.
+pub const KNOWN_FORMAT_WORDS: usize = 4;
+
+/// The `rcg_structure` argument that asks for no known formats.
+pub const NO_FAMILY: u32 = u32::MAX;
 
 /// The words before the first token of a structure result: three counts and one count for each script.
 pub const STRUCTURE_HEADER_WORDS: usize = 3 + SCRIPTS;
@@ -110,6 +122,7 @@ struct State {
 	engine: Engine,
 	records: Vec<u32>,
 	structure: Structure,
+	known: KnownFormats,
 	json: Vec<u8>,
 	error_code: i32,
 	error_message: String,
@@ -253,7 +266,7 @@ fn search_code(error: &SearchError) -> i32 {
 		SearchError::InputTooLong { .. } => code::INPUT_TOO_LONG,
 		SearchError::NotUTF8 { .. } => code::NOT_UTF8,
 		SearchError::Automaton(_) => code::SEARCH,
-		SearchError::NoPartition { .. } => code::ARGUMENT,
+		SearchError::NoPartition { .. } | SearchError::NoWhole { .. } => code::ARGUMENT,
 	}
 }
 
@@ -334,17 +347,22 @@ pub unsafe extern "C" fn rcg_recognize(ptr: *const u8, len: usize, mask: u32) ->
 /// number of `u32` words it wrote at `rcg_result_ptr`, or -1. The layout is in the module documentation. The call
 /// overwrites the records `rcg_recognize` wrote, so a caller reads those first.
 ///
+/// When `formats` is a family handle and not [`NO_FAMILY`], the call also computes the known formats of the text's tokens
+/// with that family and appends them to the words.
+///
 /// # Safety
 /// `ptr` must address `len` readable bytes.
 #[no_mangle]
-pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32) -> i32 {
+pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32, formats: u32) -> i32 {
 	let bytes = std::slice::from_raw_parts(ptr, len);
 
 	STATE.with(|state| {
 		let mut state = state.borrow_mut();
 		let state = &mut *state;
 
-		if family as usize >= state.engine.family_ids().len() {
+		let loaded = state.engine.family_ids().len();
+
+		if family as usize >= loaded || (formats != NO_FAMILY && formats as usize >= loaded) {
 			return fail(state, code::ARGUMENT, "no family has that handle");
 		}
 
@@ -354,6 +372,15 @@ pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32) 
 
 		if let Err(error) = state.engine.structure(family as usize, text, &mut state.structure) {
 			return fail(state, search_code(&error), error.to_string());
+		}
+
+		if formats != NO_FAMILY {
+			if let Err(error) = state
+				.engine
+				.known_formats(formats as usize, text, &state.structure, &mut state.known)
+			{
+				return fail(state, search_code(&error), error.to_string());
+			}
 		}
 
 		let structure = &state.structure;
@@ -378,6 +405,14 @@ pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32) 
 		}
 
 		records.extend_from_slice(&structure.regions);
+
+		if formats != NO_FAMILY {
+			records.push(state.known.hits.len() as u32);
+
+			for hit in &state.known.hits {
+				records.extend_from_slice(&[u32::from(hit.kind as u8), hit.shape, hit.start, hit.end]);
+			}
+		}
 
 		i32::try_from(records.len()).unwrap_or(-1)
 	})

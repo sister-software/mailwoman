@@ -92,6 +92,7 @@ pub mod family;
 pub mod grammars;
 pub mod ids;
 pub mod ir;
+pub mod known_formats;
 pub mod prefix;
 pub mod recognition;
 pub mod structure;

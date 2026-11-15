@@ -45,6 +45,8 @@ export {
 export type {
 	AxisOrder,
 	CharacterClass,
+	KnownFormatHit,
+	KnownFormatsFields,
 	RegionAbbreviation,
 	ScriptShare,
 	Segment,
@@ -57,6 +59,7 @@ export type {
 
 export {
 	RecognizeArtifactError,
+	RecognizeCompositionError,
 	RecognizeError,
 	RecognizeInitializationError,
 	RecognizeRuntimeError,

@@ -9,7 +9,28 @@
  * The ABI version this loader implements.
  * It equals `ABI_VERSION` in `crates/recognize-wasm`.
  */
-export const ABI_VERSION = 4
+export const ABI_VERSION = 5
+
+/**
+ * The `rcg_structure` argument that asks for no known formats, equal to
+ * `NO_FAMILY` in `crates/recognize-wasm`.
+ */
+export const NO_FAMILY = 0xff_ff_ff_ff
+
+/**
+ * The words of one known-format hit in a structure result, equal to `KNOWN_FORMAT_WORDS`
+ * in `crates/recognize-wasm`: the kind, the shape's position, the start and the end.
+ */
+export const KNOWN_FORMAT_WORDS = 4
+
+/**
+ * The kind of a known-format hit, equal to `HitKind` in `crates/recognize-core/src/known_formats.rs`.
+ */
+export const HitKind = {
+	Token: 0,
+	Pair: 1,
+	POBox: 2,
+} as const
 
 /**
  * The words before the first token of a structure result, equal to `STRUCTURE_HEADER_WORDS`
@@ -74,10 +95,12 @@ export interface Exports {
 	/**
 	 * Computes the structural fields of the text with the family whose handle is `family`.
 	 *
+	 * With `formats` a handle and not `NO_FAMILY`, it also computes the known formats of the tokens.
+	 *
 	 * Returns the number of words written at `rcg_result_ptr`, or -1.
 	 * It overwrites the recognition records.
 	 */
-	rcg_structure(pointer: number, length: number, family: number): number
+	rcg_structure(pointer: number, length: number, family: number, formats: number): number
 	rcg_result_ptr(): number
 	rcg_json_ptr(): number
 }

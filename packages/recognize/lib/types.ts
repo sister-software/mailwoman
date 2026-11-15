@@ -154,6 +154,27 @@ export interface StructureFields {
 }
 
 /**
+ * One known format a text holds: a postcode format or a PO box, the span it covers and its confidence.
+ *
+ * `Format` is the closed union of the names of the family that returns the hit.
+ * Offsets are UTF-16 code units, half-open.
+ */
+export interface KnownFormatHit<Format extends string = string> {
+	readonly format: Format
+	readonly span: TextSpan
+	readonly confidence: number
+}
+
+/**
+ * The fields a family that fills `knownFormats` returns, with the format names loosely typed.
+ *
+ * A family declares the same shape with its own union of names.
+ */
+export interface KnownFormatsFields {
+	readonly knownFormats: ReadonlyArray<KnownFormatHit>
+}
+
+/**
  * The order a decimal pair was read in.
  *
  * `lat_lon` is the order as written.
