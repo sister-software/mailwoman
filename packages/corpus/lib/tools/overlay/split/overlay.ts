@@ -24,9 +24,9 @@ import {
 	splitPolicyHash,
 } from "#tools/overlay/split/attribute"
 import type { CanonicalRow } from "#types"
-import { type EvaluationGroups, evaluationGroupsIdentity } from "#utils/evaluation-groups"
 import type { SplitRetention } from "#utils/retention"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
+import { type EvaluationGroupPolicy, evaluationGroupPolicyIdentity } from "#utils/validation-groups"
 
 /**
  * The fields {@linkcode holdoutComponents} reads, with the span triple optional
@@ -94,14 +94,14 @@ export interface SplitSliceOptions {
 	 */
 	retention?: SplitRetention
 	/**
-	 * The frozen evaluation groups.
+	 * The frozen and validation group lists.
 	 *
 	 * A caller that passes them selects the evaluation-group policy
-	 * (HOLDOUT_AND_EVALUATION section 4.6): those groups' rows go to test, a sample of
-	 * the held-out places goes to val, and every other row trains.
-	 * The list's identity joins the policy hash.
+	 * (HOLDOUT_AND_EVALUATION section 4.6): the frozen groups' rows go to test,
+	 * the validation groups' rows go to val, and every other row trains.
+	 * Both lists' identities and the quota join the policy hash.
 	 */
-	evaluationGroups?: EvaluationGroups
+	evaluationGroups?: EvaluationGroupPolicy
 	/**
 	 * The DuckDB instance's threads and memory, for a caller that splits several files at once.
 	 * @defaultValue the shares `openDuckDB` gives an instance whose caller names none.
@@ -242,7 +242,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		index++
 	}
 
-	const groupsIdentity = evaluationGroups ? evaluationGroupsIdentity(evaluationGroups) : undefined
+	const groupsIdentity = evaluationGroups ? evaluationGroupPolicyIdentity(evaluationGroups) : undefined
 	const { policyHash, codeHash } = await splitPolicyHash(holdouts, options.retention, groupsIdentity)
 
 	const name = basename(input)

@@ -14,7 +14,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { workerUserData } from "@mailwoman/core/workers"
 import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
-import { readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
+import { readEvaluationGroupPolicy } from "@mailwoman/corpus/utils/validation-groups"
 
 /**
  * What the coordinator passes every worker.
@@ -22,9 +22,10 @@ import { readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
 export interface ResplitWorkerData {
 	retentionPath: string | null
 	/**
-	 * The evaluation-group list that selects the evaluation-group policy, or null for the holdout policy.
+	 * The frozen and validation group lists that select the evaluation-group policy,
+	 * or null for the holdout policy.
 	 */
-	evaluationGroupsPath: string | null
+	evaluationGroupPolicyPaths: { evaluationGroups: string; validationGroups: string } | null
 	duckdbThreads: number
 	duckdbMemoryBytes: number
 }
@@ -57,9 +58,14 @@ export interface ResplitResult {
 	seconds: number
 }
 
-const { retentionPath, evaluationGroupsPath, duckdbThreads, duckdbMemoryBytes } = workerUserData<ResplitWorkerData>()
+const { retentionPath, evaluationGroupPolicyPaths, duckdbThreads, duckdbMemoryBytes } =
+	workerUserData<ResplitWorkerData>()
+
 const retention = retentionPath ? await readSplitRetention(retentionPath) : undefined
-const evaluationGroups = evaluationGroupsPath ? await readEvaluationGroups(evaluationGroupsPath) : undefined
+
+const evaluationGroups = evaluationGroupPolicyPaths
+	? await readEvaluationGroupPolicy(evaluationGroupPolicyPaths)
+	: undefined
 
 /**
  * Splits one file and returns its decision.

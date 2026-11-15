@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The evaluation-group policy: a frozen group never trains, and everything else outside a small
- *   validation sample does.
+ * @file The evaluation-group policy: a frozen group never trains, and every row outside the frozen and
+ *   validation groups does.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -16,7 +16,7 @@ import {
 	evaluationGroupsV0818Path,
 	readEvaluationGroups,
 } from "#utils/evaluation-groups"
-import { defaultHoldouts, hashBucket, splitForRow, VALIDATION_SAMPLE_DIVISOR } from "#utils/split"
+import { defaultHoldouts, splitForRow } from "#utils/split"
 
 const directory = await temporaryDirectory("mw-evaluation-groups-")
 
@@ -27,7 +27,7 @@ const heldOutPlace = { postcode: "08401" }
 const trainedPlace = { postcode: "10001" }
 const tags = ["house_number", "street", "locality", "region", "postcode"]
 
-const frozen = { groups: new Set(["nad-1", "rend-7"]) }
+const policy = { frozen: { groups: new Set(["nad-1", "rend-7"]) }, validation: { groups: new Set(["oa-us-v"]) } }
 
 describe("evaluationGroupOf", () => {
 	it("reads the group the freeze and the overlap audit key on", () => {
@@ -40,7 +40,7 @@ describe("evaluationGroupOf", () => {
 
 describe("splitForRow under the evaluation-group policy", () => {
 	const split = (row: { source_id: string; base_source_id?: string | null; components: Record<string, string> }) =>
-		splitForRow({ country: "US", span_tags: tags, ...row }, defaultHoldouts(), undefined, undefined, frozen)
+		splitForRow({ country: "US", span_tags: tags, ...row }, defaultHoldouts(), undefined, undefined, policy)
 
 	it("sends every row of a frozen group to test, its variants and rendered rows included", () => {
 		expect(split({ source_id: "nad-1", components: heldOutPlace })).toBe("test")
@@ -63,33 +63,14 @@ describe("splitForRow under the evaluation-group policy", () => {
 		}
 
 		expect(splitForRow(row, defaultHoldouts(), undefined, retention)).toBe("train")
-		expect(splitForRow(row, defaultHoldouts(), undefined, retention, frozen)).toBe("test")
+		expect(splitForRow(row, defaultHoldouts(), undefined, retention, policy)).toBe("test")
 	})
 
-	it("trains the held-out places' rows outside the frozen groups, except a fixed validation sample", () => {
-		const outcomes = new Map<string, string>()
-
-		for (let index = 0; index < 400; index++) {
-			const id = `oa-us-${index}`
-			const base = split({ source_id: id, components: heldOutPlace })
-			const variant = split({ source_id: `${id}+case-lower`, base_source_id: id, components: heldOutPlace })
-
-			expect(variant, id).toBe(base)
-			expect(base, id).toBe(hashBucket(id, VALIDATION_SAMPLE_DIVISOR) === 0 ? "val" : "train")
-			outcomes.set(id, base)
-		}
-
-		const values = [...outcomes.values()]
-
-		expect(values).toContain("val")
-		expect(values).toContain("train")
-		expect(values).not.toContain("test")
-	})
-
-	it("trains every row outside the held-out places, whatever its group's bucket", () => {
-		for (let index = 0; index < 200; index++) {
-			expect(split({ source_id: `oa-us-${index}`, components: trainedPlace })).toBe("train")
-		}
+	it("sends a validation group's rows to val, its variants included, and trains every other row", () => {
+		expect(split({ source_id: "oa-us-v", components: heldOutPlace })).toBe("val")
+		expect(split({ source_id: "oa-us-v+case-lower", base_source_id: "oa-us-v", components: trainedPlace })).toBe("val")
+		expect(split({ source_id: "oa-us-1", components: heldOutPlace })).toBe("train")
+		expect(split({ source_id: "oa-us-2", components: trainedPlace })).toBe("train")
 	})
 })
 

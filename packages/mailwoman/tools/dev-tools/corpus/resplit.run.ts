@@ -11,10 +11,12 @@
  *
  *   With `--retention`, every row of a covered country–shape combination stays in training (section 5.1).
  *
- *   With `--evaluation-groups <list>`, the split is the evaluation-group policy (section 4.6):
- *   the rows of the groups the frozen evaluation sets drew from go to test, a fixed
- *   sample of the holdout policy's places goes to val, and every other row trains.
- *   The committed list for the v0.8.18 sets is `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`.
+ *   With `--evaluation-groups <list> --validation-groups <list>`, the split is
+ *   the evaluation-group policy (section 4.6): the rows of the groups the frozen
+ *   evaluation sets drew from go to test, the groups `validation-quota.run.ts` chose
+ *   from this manifest go to val, and every other row trains.
+ *   The committed frozen list for the v0.8.18 sets
+ *   is `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`.
  *
  *   The manifest is the base corpus's own, with its paths under the training volume's `/data`.
  *   Each file is read from the same path under the local data root.
@@ -32,7 +34,8 @@
  *     node packages/mailwoman/tools/dev-tools/corpus/resplit.run.ts \
  *       --manifest <base corpus>/MANIFEST.json --retention <SPLIT_RETENTION.json> \
  *       --out <new corpus directory> --corpus-version <version> [--jobs 8]
- *       [--evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.18.json]
+ *       [--evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.18.json \
+ *        --validation-groups <VALIDATION_GROUPS.json>]  (in place of --retention)
  *     # --limit-files 2 for a smoke run
  */
 
@@ -43,7 +46,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { localManifestFilePath, rerootBaseFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitRetention, SPLIT_ATTRIBUTE } from "@mailwoman/corpus/tools/overlay/split/attribute"
-import { evaluationGroupsIdentity, readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
+import { evaluationGroupPolicyIdentity, readEvaluationGroupPolicy } from "@mailwoman/corpus/utils/validation-groups"
 import { resolvePathBuilder } from "path-ts"
 import { parallelMapWorkers } from "spliterator"
 
@@ -83,7 +86,11 @@ const { values: args } = parseArguments({
 		retention: { type: "string" },
 		"evaluation-groups": {
 			type: "string",
-			description: "An evaluation-group list: hold out only the frozen sets' groups and train on every other row",
+			description: "The frozen evaluation-group list: its groups go to test, and every row outside both lists trains",
+		},
+		"validation-groups": {
+			type: "string",
+			description: "The validation-group list validation-quota.run.ts wrote: its groups go to val",
 		},
 		out: { type: "string" },
 		"corpus-version": { type: "string" },
@@ -122,13 +129,30 @@ if (limitFiles !== undefined && !(Number.isInteger(limitFiles) && limitFiles > 0
 
 const retention = args.retention ? await readSplitRetention(args.retention) : undefined
 
-const evaluationGroupsPath = args["evaluation-groups"] ?? null
-const evaluationGroups = evaluationGroupsPath ? await readEvaluationGroups(evaluationGroupsPath) : undefined
+if (Boolean(args["evaluation-groups"]) !== Boolean(args["validation-groups"])) {
+	throw new Error("--evaluation-groups and --validation-groups are given together or not at all")
+}
+
+const evaluationGroupPolicyPaths =
+	args["evaluation-groups"] && args["validation-groups"]
+		? { evaluationGroups: args["evaluation-groups"], validationGroups: args["validation-groups"] }
+		: null
+
+// The evaluation-group policy decides every row by its group and reads no retention table.
+// A manifest recording one would tell a later check that the table kept rows in train.
+if (evaluationGroupPolicyPaths && retention) {
+	throw new Error("--evaluation-groups decides every row by its group; drop --retention")
+}
+
+const evaluationGroups = evaluationGroupPolicyPaths
+	? await readEvaluationGroupPolicy(evaluationGroupPolicyPaths)
+	: undefined
 
 if (evaluationGroups) {
 	console.error(
-		`resplit: evaluation-group policy, ${evaluationGroups.groups.size} frozen groups ` +
-			`from ${evaluationGroups.datasets.map((set) => `${set.datasetID}@${set.version}`).join(", ")}`
+		`resplit: evaluation-group policy, ${evaluationGroups.frozen.groups.size} frozen groups from ` +
+			`${evaluationGroups.frozen.datasets.map((set) => `${set.datasetID}@${set.version}`).join(", ")}, ` +
+			`${evaluationGroups.validation.groups.size} validation groups`
 	)
 }
 
@@ -158,7 +182,7 @@ items.sort((a, b) => files[b.index]!.rows - files[a.index]!.rows)
 
 const workerData: ResplitWorkerData = {
 	retentionPath: args.retention ?? null,
-	evaluationGroupsPath,
+	evaluationGroupPolicyPaths,
 	duckdbThreads,
 	duckdbMemoryBytes: Math.floor((duckdbMemoryGB * GIB) / jobs),
 }
@@ -224,10 +248,10 @@ const outManifest: CorpusManifest = {
 		: {}),
 	...(evaluationGroups
 		? {
-				// The policy flag: the list's path and sha256, and the frozen sets it holds out.
+				// The policy flag: both lists' paths and sha256, the frozen sets and the validation quota.
 				evaluation_groups: {
-					path: evaluationGroupsPath!,
-					...evaluationGroupsIdentity(evaluationGroups),
+					paths: evaluationGroupPolicyPaths!,
+					...evaluationGroupPolicyIdentity(evaluationGroups),
 				},
 			}
 		: {}),
@@ -256,7 +280,7 @@ console.log(
 		manifest: resolvePathBuilder(outDir, "MANIFEST.json").toString(),
 		files: files.length,
 		retention: retention ? { floor: retention.floor, protectedShapes: retention.protectedShapes.size } : null,
-		evaluationGroups: evaluationGroups ? evaluationGroupsIdentity(evaluationGroups) : null,
+		evaluationGroups: evaluationGroups ? evaluationGroupPolicyIdentity(evaluationGroups) : null,
 		seconds: Math.round((Date.now() - started) / 1000),
 	})
 )

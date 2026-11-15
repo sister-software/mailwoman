@@ -202,31 +202,42 @@ the default split from corpus v0.8.19 on. The release requirements of specificat
 claim, and P1 gives it to training. No controlled memorization comparison was run for this change.
 
 Measured on v0.8.18-retention-overlay's split attributes (623,020,227 rows, read 2026-11-15), the policy moves
-4,269,723 of the 5,558,733 held-out rows to training and keeps the other 1,289,010 out. 1,497 rows of frozen
-groups sat in that corpus's train split, and the policy moves them to `test`, so 1,290,507 rows stay out of
-training: 224,839 rows of frozen groups in `test` and 1,065,668 in the `val` sample.
+5,312,608 of the 5,558,733 held-out rows to training and keeps the other 246,125 out. 1,819 rows that sat in that
+corpus's train split belong to a frozen or validation group and leave training with it, so 247,944 rows stay out:
+224,839 rows of frozen groups in `test` and 23,105 in `val`.
 
 A row's group is `recordIDOf(base_source_id ?? source_id)`, the key the freeze writes on each dataset entry and the
 overlap audit compares against training rows, so a base row, its case, comma and spacing variants and the other
-rendered rows of its record take one split. Under the policy `splitForRow` decides each row in this order:
+rendered rows of its record take one split. Under the policy `splitForRow` decides each row by its group
+and the two lists:
 
-1. A row whose group a frozen set drew from goes to `test`. This rule runs before retention, so a shape the
-   retention table keeps in training can't return a frozen group's variant to training. Development and confirmation groups both go to `test`, because
-   the overlap audit reads `val` as training data, and a frozen row in `val` would read as `known_overlap`.
-2. A row of a shape the retention table of section 5.1 covers trains.
-3. A row of a place the holdout policy of sections 4.1 and 4.2 holds out goes to `val` when its group falls in
-   bucket 0 of `VALIDATION_SAMPLE_DIVISOR` (5). The trainer's validation loss, the validation-coverage audit and the
-   label-support audit read this split, and the trainer reads no other held-out split. The sample keeps the
-   place-holdout's property that validation rows name places training never saw. One group in twenty would leave
-   GB 425 validation rows on v0.8.18, under the 1,000 the v8.7.0 config requires. One in five leaves it 1,280
-   (1,176 with a street), and leaves NG 5 and PF 19 against their floors of 20.
-4. Every other row trains.
+1. A frozen group goes to `test`. Neither the holdout table nor the retention table is read, so a shape the
+   retention table keeps in training can't return a frozen group's variant to training. Development and
+   confirmation groups both go to `test`, because the overlap audit reads `val` as training data, and a frozen row
+   in `val` would read as `known_overlap`.
+2. A validation group goes to `val`. The trainer's validation loss, the validation-coverage audit and the
+   label-support audit read this split, and the trainer reads no other held-out split.
+3. Every other row trains.
 
-The group list is committed as `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`, written by
-`heldout/dataset/evaluation-groups.run.ts` from the two frozen manifests, and `resplit.run.ts --evaluation-groups`
-applies it to every file of an overlay manifest, rebuilt and inherited alike. The list's sha256 and the sets it
-names join the split policy hash and the corpus manifest's `evaluation_groups` record. A new frozen set needs a
-new list and a new re-split before any corpus trains on rows outside it.
+**The validation quota.** `validation-quota.run.ts` chooses the validation groups from the corpus manifest the
+re-split reads. A country's pool is every group with a row the manifest's current split holds out, the places of
+sections 4.1 and 4.2, less the frozen groups, so validation rows name places training never saw. The quota walks
+each country's pool lowest `hashUint32(group)` first and takes groups until the country holds
+`min(cap, max(margin × floor, minimum))` rows and `min(cap, margin × street floor)` street rows, the floors being
+the `val` entries of the training config's `required_validation_coverage`, expanded as the preflight expands
+them. The registered quota is margin 2, minimum 200 rows and cap 20,000 rows (`DEFAULT_VALIDATION_QUOTA`). A
+country whose pool is under its target keeps the whole pool, and the run lists it. On v0.8.18 with the v8.7.0
+config, GB, FR, DE and US each take about 2,000 rows, every other country with a pool of at least 200 rows takes
+200, and 197 of 245 countries keep a smaller pool, NG 27 rows and PF 69 among them. Every floor of that config is met,
+and so is every label-support floor over the 23,105 rows (`country` 2,670 against 41, `unit` 447 against 69).
+
+The frozen list is committed as `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`, written by
+`heldout/dataset/evaluation-groups.run.ts` from the two frozen manifests. The validation list is written beside
+the corpus it was drawn from, because it depends on that corpus's rows. `resplit.run.ts --evaluation-groups
+--validation-groups` applies both to every file of an overlay manifest, rebuilt and inherited alike, and refuses
+`--retention` beside them. Both lists' sha256, the frozen sets and the quota join the split policy hash and the
+corpus manifest's `evaluation_groups` record. A new frozen set needs a new list, a new quota pass and a new
+re-split before any corpus trains on rows outside it.
 
 The no-leak guarantee is the overlap audit's: no frozen group may appear in a corpus's train or val split.
 `overlap.integration.test.ts` splits a fixture under the policy and audits it, and a list missing one group is

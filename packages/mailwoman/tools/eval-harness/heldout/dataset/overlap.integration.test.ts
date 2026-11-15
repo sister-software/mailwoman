@@ -8,9 +8,21 @@ import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
 import { gbOverlayRow } from "@mailwoman/corpus/test-kit"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
-import { buildEvaluationGroupsFile, readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
+import {
+	buildEvaluationGroupsFile,
+	evaluationGroupsIdentity,
+	readEvaluationGroups,
+} from "@mailwoman/corpus/utils/evaluation-groups"
+import {
+	evaluationGroupPolicy,
+	readValidationGroups,
+	selectValidationGroups,
+	VALIDATION_GROUPS_ATTRIBUTE,
+	validationTarget,
+} from "@mailwoman/corpus/utils/validation-groups"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { readValidationPool } from "#tools/dev-tools/corpus/validation-quota"
 import { buildHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -464,8 +476,8 @@ describe("auditHeldoutOverlap", () => {
 			groupsFile
 		)
 
-		const audit = async (name: string, groups: Awaited<ReturnType<typeof readEvaluationGroups>>) => {
-			const split = await splitOverlaySlice({ input: parquet, outputDir: `${root}/${name}`, evaluationGroups: groups })
+		// Writes a one-file corpus manifest for a split of the fixture, with absolute paths.
+		const writeManifest = async (name: string, split: { attribute: string }) => {
 			const manifest = `${root}/${name}/MANIFEST.json`
 
 			await writeLocalJSONFile(
@@ -473,19 +485,53 @@ describe("auditHeldoutOverlap", () => {
 					corpus_version: `v-${name}`,
 					files: [
 						{
-							path: "/data/policy/part-gb.parquet",
+							path: parquet,
 							rows: rows.length,
 							sha256: await sha256File(parquet),
-							split_attribute: {
-								path: `/data/${name}/${split.attribute.slice(`${root}/${name}/`.length)}`,
-								sha256: await sha256File(split.attribute),
-							},
+							split_attribute: { path: split.attribute, sha256: await sha256File(split.attribute) },
 						},
 					],
 				},
 				manifest
 			)
 
+			return manifest
+		}
+
+		// The holdout policy's split is the pool the quota draws its validation groups from.
+		const base = await writeManifest(
+			"policy-base",
+			await splitOverlaySlice({ input: parquet, outputDir: `${root}/policy-base` })
+		)
+
+		const frozenGroups = await readEvaluationGroups(groupsFile)
+		const quota = { margin: 2, minimumRows: 5, capRows: 20 }
+		const pool = await readValidationPool({ manifest: base, frozen: frozenGroups, capRows: quota.capRows })
+		const chosen = selectValidationGroups(pool.candidates, () => validationTarget(undefined, quota), quota)
+		const validationFile = `${root}/policy/validation.json`
+
+		await writeLocalJSONFile(
+			{
+				attribute: VALIDATION_GROUPS_ATTRIBUTE,
+				drawnFrom: { manifest: base, sha256: await sha256File(base), corpusVersion: "v-policy-base" },
+				config: { path: "fixture.yaml", sha256: "c".repeat(64) },
+				evaluationGroups: evaluationGroupsIdentity(frozenGroups),
+				quota,
+				countries: chosen.countries,
+				groups: chosen.groups,
+			},
+			validationFile
+		)
+
+		// The quota takes the lowest-hash held-out groups outside the frozen list, and no frozen group.
+		expect(chosen.countries.GB).toMatchObject({ rows: 5, exhausted: false })
+		expect(chosen.groups.some((group) => frozenGroups.groups.has(group))).toBe(false)
+
+		const policy = evaluationGroupPolicy(frozenGroups, await readValidationGroups(validationFile))
+
+		const audit = async (name: string, evaluationGroups: typeof policy) => {
+			const split = await splitOverlaySlice({ input: parquet, outputDir: `${root}/${name}`, evaluationGroups })
+			const manifest = await writeManifest(name, split)
 			const card = await writeCard(name, `v-${name}`)
 
 			return {
@@ -494,11 +540,9 @@ describe("auditHeldoutOverlap", () => {
 			}
 		}
 
-		const groups = await readEvaluationGroups(groupsFile)
-		const held = await audit("policy-held", groups)
+		const held = await audit("policy-held", policy)
 
-		expect(held.split.counts.test).toBe(4)
-		expect(held.split.counts.train).toBeGreaterThan(0)
+		expect(held.split.counts).toEqual({ train: rows.length - 9, val: 5, test: 4 })
 
 		expect(held.result.audit.counts).toEqual({
 			verified_unseen: 2,
@@ -507,9 +551,12 @@ describe("auditHeldoutOverlap", () => {
 			unknown: 0,
 		})
 
-		// The negative control: a list missing one frozen group lets that group's
+		// The negative control: a frozen list missing one group lets that group's
 		// rows reach training, and the audit finds them.
-		const leaked = await audit("policy-leaked", { ...groups, groups: new Set(["gb-f1"]) })
+		const leaked = await audit("policy-leaked", {
+			...policy,
+			frozen: { ...frozenGroups, groups: new Set(["gb-f1"]) },
+		})
 
 		expect(leaked.result.audit.counts.known_overlap).toBe(1)
 		expect(leaked.result.rows["rendered-gb-os-open:gb-r#a"]).toMatchObject({ provenance: "known_overlap" })

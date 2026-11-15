@@ -42,10 +42,12 @@
 # planned corpus is /data/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay: an overlay on
 # v0.8.18 that replaces the sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds and adds this
 # source, fr-laposte-poincont, nc-opt-agences and the four registers. Its split is the evaluation-group policy
-# (HOLDOUT_AND_EVALUATION section 4.6): `resplit.run.ts --evaluation-groups
-# packages/corpus/data/holdout/evaluation-groups.v0.8.18.json --retention <table>` over the overlay manifest sends the
-# rows of the groups heldout-dev-v0.8.18 and heldout-confirm-v0.8.18 drew from to test, one held-out-place group in
-# five to val, and every other row to train, the v0.8.18 files' rows included. The validation floors below were
+# (HOLDOUT_AND_EVALUATION section 4.6). `validation-quota.run.ts --config <this file>` over the overlay manifest
+# chooses each country's validation groups from its held-out places, lowest group hash first, up to twice the country's
+# floor below (at least 200 rows, at most 20,000). `resplit.run.ts --evaluation-groups
+# packages/corpus/data/holdout/evaluation-groups.v0.8.18.json --validation-groups <that list>` then sends the rows of
+# the groups heldout-dev-v0.8.18 and heldout-confirm-v0.8.18 drew from to test, the chosen groups to val, and every
+# other row to train, the v0.8.18 files' rows included. The validation floors below were
 # measured on place-holdout val splits. Re-derive them from the re-split before launch. Replace `corpus_dir` with the
 # corpus once it exists, and record its MANIFEST.json sha256 here before launch.
 #

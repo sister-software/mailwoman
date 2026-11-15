@@ -17,9 +17,9 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 
 import { moduleGraphHash } from "#build/code-hash"
-import type { EvaluationGroupsIdentity } from "#utils/evaluation-groups"
 import type { ShapeSupplyEntry, SplitRetention } from "#utils/retention"
 import type { CountryHoldout, SplitName } from "#utils/split"
+import type { EvaluationGroupPolicyIdentity } from "#utils/validation-groups"
 
 /**
  * The module whose `splitForRow` the policy hash covers, repository-relative.
@@ -41,9 +41,9 @@ export interface SplitAttributeFile {
 		holdouts: Record<string, CountryHoldout>
 		codeHash: string
 		/**
-		 * The evaluation-group list the split applied, when it ran under that policy.
+		 * The frozen and validation group lists the split applied, when it ran under that policy.
 		 */
-		evaluationGroups?: EvaluationGroupsIdentity
+		evaluationGroups?: EvaluationGroupPolicyIdentity
 	}
 	/**
 	 * The parquet file the attribute describes, by name and sha256.
@@ -67,12 +67,12 @@ export interface SplitAttributeFile {
  *
  * A registered retention table joins the hashed payload, so a table change writes
  * a new attribute file rather than relabeling the old one.
- * An evaluation-group list joins it the same way.
+ * The evaluation-group policy's two lists and its validation quota join it the same way.
  */
 export async function splitPolicyHash(
 	holdouts: Record<string, CountryHoldout>,
 	retention?: SplitRetention,
-	evaluationGroups?: EvaluationGroupsIdentity
+	evaluationGroups?: EvaluationGroupPolicyIdentity
 ): Promise<{ policyHash: string; codeHash: string }> {
 	const codeHash = await moduleGraphHash([SPLIT_POLICY_MODULE])
 
@@ -82,7 +82,7 @@ export async function splitPolicyHash(
 		...(retention
 			? { retention: { floor: retention.floor, protectedShapes: [...retention.protectedShapes].toSorted() } }
 			: {}),
-		// The evaluation-group policy flag: the group list's sha256 and the frozen sets it was derived from.
+		// The evaluation-group policy flag: both lists' sha256, the frozen sets and the validation quota.
 		...(evaluationGroups ? { evaluationGroups } : {}),
 	}
 
