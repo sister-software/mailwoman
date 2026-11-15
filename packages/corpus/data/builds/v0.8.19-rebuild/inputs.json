@@ -2,7 +2,7 @@
 	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
 	"$overlay-note": "The sources this build rebuilds replace their v0.8.18-retention-overlay files in an overlay on that corpus, and seven sources are new. Each rebuilt source takes the fixes since its files were built (v0.8.10-rebuild on 2026-11-02, the WOF samples of v0.8.6, geonames-features of v0.8.12): the line-break augmentation every synthesized row may take (#2992), the unit splitter's leading-type, grid-number and number-free-unit rules (#3025), the component check's enforced `postcode:repeats-region` rule, NAD read from release 24 with its placeholder spellings absent and its repeated unit parts dropped (#2895), the Texas notary city, suite and repeated-street fixes (#2895), and the 8,285 GNIS populated places in the WOF forks (#3061; whosonfirst-data-admin-us at 3f81e25abc8). `usgov-usgs-structures`, `fr-laposte-poincont` and `nc-opt-agences` are new, and so are four public-body registers first added as evaluation sources: `es-sanidad-centros-ap`, `it-miur-scuole`, `au-acnc-register` and `nz-charities-register`, each written by `heldout/fresh/build.run.ts`'s fetch under the cache root. Every other v0.8.18 source, the recipe outputs and the osm, overture and country-gap adapter sources, is carried unchanged.",
 	"$street-index-note": "Every adapter that splits a trailing unit reads the street index built from v0.8.18-retention-overlay's premise-register rows, so no row attests itself.",
-	"$wof-note": "Both WOF adapters sample as v0.8.6-wof-structure and v0.8.6-wof-postalcode did, with the same seed and the same held-out and comparison cells of #2857, and write their cell counts and held-out rows beside this build. v0.8.18's wof-admin files are v0.8.15's, which a post-pass outside the committed code corrected for `<name>, <country>` (355 region rows dropped, 317 locality rows added, #2909). The adapter now applies that correction as its own rule (`#adapters/wof/admin/json/dual-role`), deciding each region and city pair from the WOF records it reads.",
+	"$wof-note": "Both WOF adapters sample as v0.8.6-wof-structure and v0.8.6-wof-postalcode did, with the same seed and the comparison cells of #2857, and write their cell counts and comparison rows beside this build. wof-admin no longer sets aside #2857's 30 held-out cells of 60 rows each: under the evaluation-group policy (HOLDOUT_AND_EVALUATION section 4.6) training gets every row outside the frozen evaluation groups, so those cells' rows are sampled like any other cell's. v0.8.18's wof-admin files are v0.8.15's, which a post-pass outside the committed code corrected for `<name>, <country>` (355 region rows dropped, 317 locality rows added, #2909). The adapter now applies that correction as its own rule (`#adapters/wof/admin/json/dual-role`), deciding each region and city pair from the WOF records it reads.",
 	"corpusVersion": "v0.8.19-rebuild",
 	"adapters": {
 		"wof-admin": {
@@ -12,38 +12,6 @@
 				"rowsPerCountry": 2500,
 				"seed": 20260922,
 				"countsFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-cell-counts.json",
-				"holdOutCells": [
-					"AM|region locality",
-					"AT|country locality",
-					"BA|country region locality",
-					"BA|subregion locality",
-					"BJ|region locality",
-					"BR|country locality",
-					"CA|region dependent_locality",
-					"CD|country subregion locality",
-					"CH|country region subregion dependent_locality",
-					"CI|country region locality",
-					"CL|region locality",
-					"DO|region subregion locality",
-					"FI|region subregion locality",
-					"GB|country locality dependent_locality",
-					"GH|country region locality",
-					"GN|region subregion locality",
-					"IQ|country locality",
-					"IQ|country region locality",
-					"MD|country region locality",
-					"MD|region locality",
-					"ML|region locality",
-					"NE|country region locality",
-					"PT|country region subregion",
-					"RS|country region locality",
-					"RS|country subregion locality",
-					"RW|region locality",
-					"SA|region locality",
-					"TR|country region",
-					"UG|country region locality",
-					"ZM|region locality"
-				],
 				"compareCells": [
 					"FR|country region subregion",
 					"FR|country region subregion dependent_locality",
@@ -60,7 +28,6 @@
 					"KZ|country locality",
 					"US|region dependent_locality"
 				],
-				"heldOutFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-held-out-cells.jsonl",
 				"comparisonFile": "corpus/versioned/v0.8.19-rebuild/wof-admin-comparison-cells.jsonl",
 				"heldOutPerCell": 60
 			}
