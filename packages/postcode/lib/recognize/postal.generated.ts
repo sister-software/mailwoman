@@ -140,7 +140,7 @@ export const PostalMetadata = {
 		build: {
 			denseBudget: "2 MiB",
 			reason:
-				"the default dense budget: the family's dense automata fit it, and a sparse build of the artifact is 5.7 times smaller but is not yet benchmarked on a quiet host",
+				"the default dense budget: a sparse build of the artifact is 5.7 times smaller, short of the ten times that would justify it, and 1.3 to 2.5 times slower in a benchmark taken under load",
 		},
 	},
 	shapes: {

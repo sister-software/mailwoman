@@ -82,7 +82,7 @@ export const POSTAL_DENSE_BYTES = 2_097_152
  * Why the postal family has the dense budget above.
  */
 export const POSTAL_BACKEND_REASON =
-	"the default dense budget: the family's dense automata fit it, and a sparse build of the artifact is 5.7 times smaller but is not yet benchmarked on a quiet host"
+	"the default dense budget: a sparse build of the artifact is 5.7 times smaller, short of the ten times that would justify it, and 1.3 to 2.5 times slower in a benchmark taken under load"
 
 /**
  * The file name the definition is written under.
