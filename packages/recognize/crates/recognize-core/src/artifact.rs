@@ -9,7 +9,7 @@
 //!
 //! ```text
 //! 0   4 bytes  ASCII `RCA1`
-//! 4   u16      artifact schema version, 5
+//! 4   u16      artifact schema version, 6
 //! 6   u16      flags, 0
 //! 8   u32      header byte length
 //! 12  u32      directory entry count, twice the automaton count plus one
@@ -32,7 +32,9 @@
 //! declaration site, and where each term is declared, because the diagnostic replay of a trace reads it.
 //!
 //! Version 1 had no viability table. Version 2 had no capture program and a placeholder declarations hash. Version 3's
-//! program held only the shapes that declare captures and no declaration site. Version 4 had no partition automaton. A reader refuses an earlier version with
+//! program held only the shapes that declare captures and no declaration site. Version 4 had no partition automaton.
+//! Version 5 carried no shape role, hit order or boundary, so the known-formats pass read a PO box leader from the prefix
+//! of the shape's ID and the order of hits from the order of the IDs. A reader refuses an earlier version with
 //! [`ArtifactError::Version`].
 //!
 //! The header records the SHA-256 of each payload, of each table and of the capture program, and the parser refuses
@@ -51,7 +53,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 use crate::ids::is_dotted_name;
-use crate::ir::{sha256_hex, Scope};
+use crate::ir::{sha256_hex, Boundary, Scope, ShapeRole};
 
 /// The first four bytes of every artifact.
 pub const MAGIC: &[u8; 4] = b"RCA1";
@@ -60,7 +62,7 @@ pub const MAGIC: &[u8; 4] = b"RCA1";
 pub const ARTIFACT_FORMAT: &str = "mailwoman.recognize.artifact";
 
 /// The envelope version this crate writes and reads.
-pub const ARTIFACT_SCHEMA_VERSION: u32 = 5;
+pub const ARTIFACT_SCHEMA_VERSION: u32 = 6;
 
 /// The directory `kind` of a viability table. A DFA's kind is its backend's code.
 const KIND_VIABILITY: u16 = 3;
@@ -148,6 +150,15 @@ impl Backend {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PatternMeta {
+	/// What may touch an embedded match of the shape.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub boundary: Option<Boundary>,
+	/// The order the shape's hits come out in, when the family states one.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub order: Option<u32>,
+	/// What the shape is for, when it is not a plain format.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub role: Option<ShapeRole>,
 	pub scope: Scope,
 	pub shape: String,
 }
@@ -834,6 +845,9 @@ mod tests {
 					backend: Backend::Dense,
 					partition: None,
 					patterns: vec![PatternMeta {
+						boundary: None,
+						order: None,
+						role: None,
 						scope: Scope::WholeOrEmbedded,
 						shape: "word.ascii".to_string(),
 					}],
@@ -916,13 +930,13 @@ mod tests {
 		let mut bad = good.clone();
 
 		// The previous schema version is refused with its own number, so a stale committed file names itself.
-		bad[4] = 4;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(4));
+		bad[4] = 5;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(5));
 
 		let mut bad = good.clone();
 
-		bad[4] = 6;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(6));
+		bad[4] = 7;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(7));
 
 		let mut bad = good.clone();
 

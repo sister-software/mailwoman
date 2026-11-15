@@ -16,8 +16,9 @@
 	},
 	"shapes": [
 		{
-			"id": "format.one_00_us_zip4",
+			"id": "format.us_zip4_one",
 			"pattern": "[0-9]{5}-[0-9]{4}",
+			"order": 0,
 			"metadata": {
 				"format": "us_zip4",
 				"country": "US",
@@ -26,8 +27,9 @@
 			}
 		},
 		{
-			"id": "format.one_01_ca_postcode",
+			"id": "format.ca_postcode_one",
 			"pattern": "(?i-u:[A-Z][0-9][A-Z][0-9][A-Z][0-9])",
+			"order": 1,
 			"metadata": {
 				"format": "ca_postcode",
 				"country": "CA",
@@ -36,8 +38,9 @@
 			}
 		},
 		{
-			"id": "format.one_02_jp_postcode",
+			"id": "format.jp_postcode_one",
 			"pattern": "〒?[0-9]{3}-[0-9]{4}",
+			"order": 2,
 			"metadata": {
 				"format": "jp_postcode",
 				"country": "JP",
@@ -46,8 +49,9 @@
 			}
 		},
 		{
-			"id": "format.one_03_uk_postcode",
+			"id": "format.uk_postcode_one",
 			"pattern": "(?i-u:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2})",
+			"order": 3,
 			"metadata": {
 				"format": "uk_postcode",
 				"country": "GB",
@@ -56,8 +60,9 @@
 			}
 		},
 		{
-			"id": "format.one_04_nl_postcode",
+			"id": "format.nl_postcode_one",
 			"pattern": "(?i-u:[0-9]{4}[A-Z]{2})",
+			"order": 4,
 			"metadata": {
 				"format": "nl_postcode",
 				"country": "NL",
@@ -66,9 +71,10 @@
 			}
 		},
 		{
-			"id": "format.one_05_us_zip",
+			"id": "format.us_zip_one",
 			"pattern": "[0-9]{5}",
-			"overlaps": ["format.one_06_fr_postcode", "format.one_07_de_postcode"],
+			"order": 5,
+			"overlaps": ["format.fr_postcode_one", "format.de_postcode_one"],
 			"metadata": {
 				"format": "us_zip",
 				"country": "US",
@@ -77,9 +83,10 @@
 			}
 		},
 		{
-			"id": "format.one_06_fr_postcode",
+			"id": "format.fr_postcode_one",
 			"pattern": "[0-9]{5}",
-			"overlaps": ["format.one_05_us_zip", "format.one_07_de_postcode"],
+			"order": 6,
+			"overlaps": ["format.us_zip_one", "format.de_postcode_one"],
 			"metadata": {
 				"format": "fr_postcode",
 				"country": "FR",
@@ -88,9 +95,10 @@
 			}
 		},
 		{
-			"id": "format.one_07_de_postcode",
+			"id": "format.de_postcode_one",
 			"pattern": "[0-9]{5}",
-			"overlaps": ["format.one_05_us_zip", "format.one_06_fr_postcode"],
+			"order": 7,
+			"overlaps": ["format.us_zip_one", "format.fr_postcode_one"],
 			"metadata": {
 				"format": "de_postcode",
 				"country": "DE",
@@ -99,8 +107,9 @@
 			}
 		},
 		{
-			"id": "format.two_08_uk_postcode",
+			"id": "format.uk_postcode_two",
 			"pattern": "(?i-u:[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2})",
+			"order": 8,
 			"metadata": {
 				"format": "uk_postcode",
 				"country": "GB",
@@ -109,8 +118,9 @@
 			}
 		},
 		{
-			"id": "format.two_09_ca_postcode",
+			"id": "format.ca_postcode_two",
 			"pattern": "(?i-u:[A-Z][0-9][A-Z] [0-9][A-Z][0-9])",
+			"order": 9,
 			"metadata": {
 				"format": "ca_postcode",
 				"country": "CA",
@@ -119,8 +129,9 @@
 			}
 		},
 		{
-			"id": "format.two_10_nl_postcode",
+			"id": "format.nl_postcode_two",
 			"pattern": "(?i-u:[0-9]{4} [A-Z]{2})",
+			"order": 10,
 			"metadata": {
 				"format": "nl_postcode",
 				"country": "NL",
@@ -129,9 +140,10 @@
 			}
 		},
 		{
-			"id": "format.two_11_cz_postcode",
+			"id": "format.cz_postcode_two",
 			"pattern": "[0-9]{3} [0-9]{2}",
-			"overlaps": ["format.two_12_sk_postcode", "format.two_13_se_postcode", "format.two_14_gr_postcode"],
+			"order": 11,
+			"overlaps": ["format.sk_postcode_two", "format.se_postcode_two", "format.gr_postcode_two"],
 			"metadata": {
 				"format": "cz_postcode",
 				"country": "CZ",
@@ -140,9 +152,10 @@
 			}
 		},
 		{
-			"id": "format.two_12_sk_postcode",
+			"id": "format.sk_postcode_two",
 			"pattern": "[0-9]{3} [0-9]{2}",
-			"overlaps": ["format.two_11_cz_postcode", "format.two_13_se_postcode", "format.two_14_gr_postcode"],
+			"order": 12,
+			"overlaps": ["format.cz_postcode_two", "format.se_postcode_two", "format.gr_postcode_two"],
 			"metadata": {
 				"format": "sk_postcode",
 				"country": "SK",
@@ -151,9 +164,10 @@
 			}
 		},
 		{
-			"id": "format.two_13_se_postcode",
+			"id": "format.se_postcode_two",
 			"pattern": "[0-9]{3} [0-9]{2}",
-			"overlaps": ["format.two_11_cz_postcode", "format.two_12_sk_postcode", "format.two_14_gr_postcode"],
+			"order": 13,
+			"overlaps": ["format.cz_postcode_two", "format.sk_postcode_two", "format.gr_postcode_two"],
 			"metadata": {
 				"format": "se_postcode",
 				"country": "SE",
@@ -162,9 +176,10 @@
 			}
 		},
 		{
-			"id": "format.two_14_gr_postcode",
+			"id": "format.gr_postcode_two",
 			"pattern": "[0-9]{3} [0-9]{2}",
-			"overlaps": ["format.two_11_cz_postcode", "format.two_12_sk_postcode", "format.two_13_se_postcode"],
+			"order": 14,
+			"overlaps": ["format.cz_postcode_two", "format.sk_postcode_two", "format.se_postcode_two"],
 			"metadata": {
 				"format": "gr_postcode",
 				"country": "GR",
@@ -173,7 +188,8 @@
 			}
 		},
 		{
-			"id": "leader.en",
+			"id": "po_box.en",
+			"role": "po_box_leader",
 			"pattern": "(?i-u:po|p\\.o\\.|p\\.o|box)",
 			"metadata": {
 				"language": "en",
@@ -181,7 +197,8 @@
 			}
 		},
 		{
-			"id": "leader.fr",
+			"id": "po_box.fr",
+			"role": "po_box_leader",
 			"pattern": "(?i-u:bp|b\\.p\\.|b\\.p)",
 			"metadata": {
 				"language": "fr",
@@ -189,7 +206,8 @@
 			}
 		},
 		{
-			"id": "leader.es",
+			"id": "po_box.es",
+			"role": "po_box_leader",
 			"pattern": "(?i-u:casilla|apartado)",
 			"metadata": {
 				"language": "es",

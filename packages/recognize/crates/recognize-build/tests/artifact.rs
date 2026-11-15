@@ -303,6 +303,9 @@ fn a_header_that_declares_more_patterns_than_the_dfa_holds_is_refused() {
 	let mut header = artifact.header.clone();
 
 	header.automata[0].patterns.push(PatternMeta {
+		boundary: None,
+		order: None,
+		role: None,
 		scope: Scope::WholeOrEmbedded,
 		shape: "extra.shape".to_string(),
 	});

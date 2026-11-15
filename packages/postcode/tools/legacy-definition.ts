@@ -8,10 +8,10 @@
  *   See `packages/recognize/crates/recognize-build/src/definition.rs`
  *   and `packages/recognize/definitions/family-definition.schema.json`.
  *
- *   Shape IDs spell the order of the table: the known-formats pass reports the hits of
- *   one text in the byte order of the shape IDs, so `format.one_00_us_zip4` sorts before
- *   `format.one_01_ca_postcode`, and every one-token shape sorts before every two-token shape.
- *   A PO box leader shape begins `leader.`, which marks it for the engine.
+ *   Shape IDs are plain identifiers.
+ *   The known-formats pass reads two pieces of data from each shape and no naming convention:
+ *   `order`, the row's position in the table, decides the order of the hits of one text,
+ *   and `role: "po_box_leader"` marks a PO box leader.
  */
 
 import { LEGACY_FORMATS, PO_BOX, PO_BOX_LEADERS } from "#legacy-formats/table"
@@ -40,7 +40,7 @@ const WORDS = { 1: "one", 2: "two" } as const
 function shapeID(index: number): string {
 	const row = LEGACY_FORMATS[index]!
 
-	return `format.${WORDS[row.tokens]}_${String(index).padStart(2, "0")}_${row.format}`
+	return `format.${row.format}_${WORDS[row.tokens]}`
 }
 
 /**
@@ -56,6 +56,8 @@ function escapeLiteral(text: string): string {
 export interface LegacyDefinitionShape {
 	id: string
 	pattern: string
+	role?: "po_box_leader"
+	order?: number
 	overlaps?: string[]
 	metadata: Record<string, unknown>
 }
@@ -89,13 +91,15 @@ export function legacyDefinition(): LegacyDefinition {
 		return {
 			id: shapeID(index),
 			pattern: row.pattern,
+			order: index,
 			...(partners.length && { overlaps: partners }),
 			metadata: { format: row.format, country: row.country, tokens: row.tokens, confidence: row.confidence },
 		}
 	})
 
 	const leaders = PO_BOX_LEADERS.map(({ language, leaders: words }) => ({
-		id: `leader.${language}`,
+		id: `po_box.${language}`,
+		role: "po_box_leader" as const,
 		pattern: `(?i-u:${words.map(escapeLiteral).join("|")})`,
 		metadata: { language, leaders: words },
 	}))

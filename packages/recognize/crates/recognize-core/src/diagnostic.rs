@@ -74,6 +74,8 @@ pub enum DiagnosticKind {
 	/// A partition shape that breaks the partition rules: no partition name, a name on a shape of another scope, a
 	/// validator, handler or captures, or two shapes of one partition that share a string.
 	Partition,
+	/// Two recognition shapes share a string and neither names the other in `may_overlap`.
+	UndeclaredOverlap,
 }
 
 impl DiagnosticKind {
@@ -93,6 +95,7 @@ impl DiagnosticKind {
 			DiagnosticKind::LimitExceeded => "limit-exceeded",
 			DiagnosticKind::Unreachable => "unreachable",
 			DiagnosticKind::Partition => "partition",
+			DiagnosticKind::UndeclaredOverlap => "undeclared-overlap",
 		}
 	}
 }

@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/postcode`
 
 The manifest at `packages/postcode/package.json` declares a `sideEffects` list of 2.
-This page lists 3 of the group's 23 library and tool modules.
+This page lists 4 of the group's 30 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -19,8 +19,12 @@ The others hold neither an effect edge nor an import-time effect.
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `awaits at module scope`
+- `awaits at module scope`, 2 times
 - `runs a statement at module scope`
+
+| Kind | Interface         | Target                  | Calls |
+| ---- | ----------------- | ----------------------- | ----- |
+| read | `readLocalBuffer` | `unresolved (property)` | 1     |
 
 ## `packages/postcode/tools/differential.run.ts`
 
@@ -38,17 +42,28 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `runs a statement at module scope`, 12 times
+- `runs a statement at module scope`, 6 times
 - `awaits at module scope`, 4 times
 
 | Kind    | Interface            | Target                                | Calls |
 | ------- | -------------------- | ------------------------------------- | ----- |
 | read    | `readLocalBuffer`    | `unresolved (parameter)`              | 1     |
 | read    | `readLocalBuffer`    | `unresolved (template)`               | 1     |
-| read    | `readLocalTextFile`  | `scratch:out/artifacts.json`          | 1     |
-| read    | `readLocalTextFile`  | `scratch:out/compiler-report.json`    | 1     |
-| read    | `readLocalTextFile`  | `unresolved (template)`               | 4     |
+| read    | `readLocalTextFile`  | `unresolved (call)`                   | 1     |
+| read    | `readLocalTextFile`  | `unresolved (template)`               | 6     |
 | write   | `writeLocalFile`     | `unresolved (parameter)`              | 1     |
 | write   | `writeLocalTextFile` | `unresolved (template)`               | 1     |
 | process | `runFile`            | `literal:cargo`                       | 1     |
 | process | `runFile`            | `repo:target/release/recognize-build` | 1     |
+
+## `packages/postcode/tools/postal/differential.run.ts`
+
+The workspace's `sideEffects` declaration lists this module. Its import-time effects:
+
+- `runs a statement at module scope`, 8 times
+
+| Kind  | Interface            | Target                                                      | Calls |
+| ----- | -------------------- | ----------------------------------------------------------- | ----- |
+| read  | `readLocalTextFile`  | `unresolved (parameter)`                                    | 1     |
+| read  | `sortedGlob`         | `repo:packages/mailwoman/tools/eval-harness/gauntlet/cases` | 1     |
+| write | `writeLocalTextFile` | `unresolved (property)`                                     | 1     |

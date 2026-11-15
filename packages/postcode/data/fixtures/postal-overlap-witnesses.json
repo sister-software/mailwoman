@@ -1,0 +1,5680 @@
+{
+	"pairs": [
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ac"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "ASCN1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ac"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sh"
+			},
+			"witness": "ASCN1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.af"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ai"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "2640"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.by"
+			},
+			"witness": "370000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "370000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "370000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.am"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "0000AAA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ar"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "BB00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.so"
+			},
+			"witness": "BB00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fo"
+			},
+			"witness": "100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.om"
+			},
+			"witness": "100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "1000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "word.ascii"
+			},
+			"witness": "AAAA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bn"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sv"
+			},
+			"witness": "CP1100"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bn"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vc"
+			},
+			"witness": "VC0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bn"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vg"
+			},
+			"witness": "VG0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bn"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "printed.az"
+			},
+			"witness": "AZ 0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.bn"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "printed.ht"
+			},
+			"witness": "HT0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.br"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "00000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.br"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.br"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.by"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.by"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.by"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.by"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "6799"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"witness": "000-0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cx"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "6798"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fk"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "FIQQ1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fo"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.om"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fo"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fo"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fo"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gg"
+			},
+			"witness": "GY00AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "AB000AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.im"
+			},
+			"witness": "IM00AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.je"
+			},
+			"witness": "JE00AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gg"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "GY000AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gi"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "GX111AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gl"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "3900"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gs"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "SIQQ1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.im"
+			},
+			"witness": "IM000AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.io"
+			},
+			"witness": "BBND1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.je"
+			},
+			"witness": "JE000AA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mt"
+			},
+			"witness": "AAA0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "CALLAO0"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pn"
+			},
+			"witness": "PCRN1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sh"
+			},
+			"witness": "ASCN1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.so"
+			},
+			"witness": "AA00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ta"
+			},
+			"witness": "TDCU1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tc"
+			},
+			"witness": "TKCA1ZZ"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "word.ascii"
+			},
+			"witness": "AAAAAAA"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ir"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ir"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.jp"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.lb"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.li"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "9485"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.nf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "2899"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.om"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.om"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.om"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "97600"
+		}
+	]
+}

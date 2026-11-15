@@ -455,10 +455,63 @@ pub fn unreachable_diagnostics(document: &IrDocument, limits: &Limits) -> Result
 	Ok(unreachable_among(&languages, limits)?.diagnostics)
 }
 
+/// The diagnostics for the overlapping pairs `analysis` finds that no shape declares, one for each pair.
+///
+/// The policy: two shapes that recognize the same string and that neither names in `may_overlap` fail the build, so a
+/// new grammar cannot silently collide with an existing one. A pair is declared by either shape's `may_overlap`, which
+/// names the other by shape ID, and a family may name a shape of another family. A package that cannot depend on the
+/// other declares from its side only: `@mailwoman/postcode` names shapes of `recognize`, and `recognize` names nothing
+/// of postcode.
+///
+/// A family in `silent` reports no recognitions, because its shapes only feed a field reader, so a string two of its
+/// shapes share, or one it shares with a recognition shape, produces no ambiguous recognition. Its pairs are left out.
+/// A partition piece is also left out: the analysis never pairs one with a shape outside its partition.
+pub fn undeclared_overlap_diagnostics(
+	documents: &[IrDocument],
+	analysis: &Analysis,
+	silent: &BTreeSet<String>,
+) -> Vec<Diagnostic> {
+	let source_of = |key: &ShapeKey| {
+		documents
+			.iter()
+			.filter(|document| document.family == key.family)
+			.flat_map(|document| document.shapes.iter())
+			.find(|shape| shape.id == key.shape)
+			.map(|shape| shape.source.clone())
+	};
+	let mut out: Vec<Diagnostic> = analysis
+		.overlaps
+		.iter()
+		.filter(|overlap| !overlap.declared)
+		.filter(|overlap| !silent.contains(&overlap.a.family) && !silent.contains(&overlap.b.family))
+		.filter_map(|overlap| {
+			Some(Diagnostic::new(
+				DiagnosticKind::UndeclaredOverlap,
+				&source_of(&overlap.a)?,
+				format!(
+					"family `{}` shape `{}` and family `{}` shape `{}` both recognize {:?}{}; declare the overlap with `may_overlap` on one of them",
+					overlap.a.family,
+					overlap.a.shape,
+					overlap.b.family,
+					overlap.b.shape,
+					overlap.witness,
+					if overlap.equivalent { " and have equal languages" } else { "" }
+				),
+			))
+		})
+		.collect();
+
+	out.sort();
+	out.dedup();
+
+	out
+}
+
 /// Analyzes every shape of `documents`: the unreachable ones, and every overlapping pair, within and across families.
 ///
 /// Fails with a diagnostic for an undeclared unreachable shape, for a declaration on a reachable shape, and for a
-/// search that passes `max_product_states`. An overlap never fails the build, declared or not.
+/// search that passes `max_product_states`. An overlap never fails here, declared or not:
+/// [`undeclared_overlap_diagnostics`] applies the overlap policy to the result.
 pub fn analyze(documents: &[IrDocument], limits: &Limits) -> Result<Analysis, Vec<Diagnostic>> {
 	let languages = lower_all(documents, limits)?;
 	let Reachability {

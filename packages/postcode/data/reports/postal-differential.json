@@ -1,0 +1,47 @@
+{
+	"comparison": "acceptingCountries of the postal family against countriesAcceptingPostcode",
+	"sampling": "every input of every source, in file order; no sampling and no deduplication",
+	"inputs": 196295,
+	"differing": 0,
+	"differencesListed": 0,
+	"differencesCap": 200,
+	"sources": [
+		{
+			"source": "corpus/heldout/heldout-dev-v0.8.18.v2.rows.jsonl: postcode spans",
+			"inputs": 43890,
+			"differing": 0,
+			"acceptedByAnyCountry": 43021
+		},
+		{
+			"source": "corpus/heldout/heldout-dev-v0.8.18.v2.rows.jsonl: raw",
+			"inputs": 86845,
+			"differing": 0,
+			"acceptedByAnyCountry": 2034
+		},
+		{
+			"source": "corpus/heldout/heldout-confirm-v0.8.18.v2.rows.jsonl: postcode spans",
+			"inputs": 29921,
+			"differing": 0,
+			"acceptedByAnyCountry": 29636
+		},
+		{
+			"source": "corpus/heldout/heldout-confirm-v0.8.18.v2.rows.jsonl: raw",
+			"inputs": 33402,
+			"differing": 0,
+			"acceptedByAnyCountry": 1264
+		},
+		{
+			"source": "gauntlet cases: expectComponents.postcode",
+			"inputs": 606,
+			"differing": 0,
+			"acceptedByAnyCountry": 605
+		},
+		{
+			"source": "gauntlet cases: input",
+			"inputs": 1631,
+			"differing": 0,
+			"acceptedByAnyCountry": 80
+		}
+	],
+	"differences": []
+}

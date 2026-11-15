@@ -29,10 +29,15 @@ fn any_character() -> recognize_core::Node {
 	class(&[('\0', '\u{10FFFF}')])
 }
 
+/// The analysis alone, which reports an undeclared overlap and does not refuse it. A build applies the policy, and the
+/// tests below that build hold it.
 fn analysis_of(families: Vec<Family>) -> Analysis {
-	build_families(families, &Limits::default())
-		.unwrap_or_else(|diagnostics| panic!("the families do not build:\n{}", recognize_core::render(&diagnostics)))
-		.analysis
+	let mut documents = documents(families);
+
+	documents.sort_by(|a, b| a.family.cmp(&b.family));
+
+	recognize_build::analysis::analyze(&documents, &Limits::default())
+		.unwrap_or_else(|diagnostics| panic!("the families do not analyze:\n{}", recognize_core::render(&diagnostics)))
 }
 
 fn overlap<'a>(analysis: &'a Analysis, a: &str, b: &str) -> Option<&'a Overlap> {
@@ -290,8 +295,81 @@ fn an_overlap_across_families_is_found_and_a_declaration_in_either_direction_cou
 	]);
 	let found = overlap(&undeclared, "left.digits", "right.number").unwrap();
 
-	// An undeclared overlap is reported and the build still succeeds.
+	// The analysis reports an undeclared overlap, and a build refuses it.
 	assert!(!found.declared && found.equivalent);
+}
+
+#[test]
+fn an_undeclared_overlap_fails_the_build_with_both_shapes_and_the_witness() {
+	let digits = || one_or_more(class(&[('0', '9')]));
+	let families = |declare: bool| {
+		let left = shape("left.digits").grammar(digits()).scope(Scope::WholeOrEmbedded);
+		let left = if declare {
+			left.may_overlap(&["right.number"])
+		} else {
+			left
+		};
+
+		vec![
+			Family::new("left").shape(left),
+			Family::new("right").shape(
+				shape("right.number")
+					.grammar(repeat(class(&[('0', '9')]), 5, 5))
+					.scope(Scope::WholeOrEmbedded),
+			),
+		]
+	};
+	let refused = build_families(families(false), &Limits::default()).unwrap_err();
+
+	assert_eq!(refused.len(), 1, "{refused:#?}");
+	assert_eq!(refused[0].kind, DiagnosticKind::UndeclaredOverlap);
+	assert!(refused[0].source.file.ends_with("tests/analysis.rs"), "{}", refused[0]);
+
+	for part in ["left.digits", "right.number", "\"00000\""] {
+		assert!(refused[0].message.contains(part), "{} lacks {part}", refused[0]);
+	}
+
+	assert!(build_families(families(true), &Limits::default()).is_ok());
+}
+
+#[test]
+fn a_family_that_feeds_a_field_reader_takes_no_part_in_the_overlap_policy() {
+	let digits = || one_or_more(class(&[('0', '9')]));
+	let documents = documents(vec![
+		Family::new("feeder").shape(shape("feeder.digits").grammar(digits()).scope(Scope::Whole)),
+		Family::new("reporter").shape(shape("reporter.digits").grammar(digits()).scope(Scope::Whole)),
+	]);
+	let silent = std::collections::BTreeSet::from(["feeder".to_string()]);
+
+	assert!(recognize_build::build_documents_in(documents.clone(), &[], &silent, &Limits::default()).is_ok());
+	assert!(recognize_build::build_documents(documents, &Limits::default()).is_err());
+}
+
+#[test]
+fn a_context_family_is_checked_but_not_built() {
+	let digits = || one_or_more(class(&[('0', '9')]));
+	let mine = documents(vec![
+		Family::new("mine").shape(shape("mine.digits").grammar(digits()).scope(Scope::Whole))
+	]);
+	let theirs = documents(vec![
+		Family::new("theirs").shape(shape("theirs.digits").grammar(digits()).scope(Scope::Whole))
+	]);
+	let none = std::collections::BTreeSet::new();
+	let refused = recognize_build::build_documents_in(mine.clone(), &theirs, &none, &Limits::default()).unwrap_err();
+
+	assert_eq!(refused[0].kind, DiagnosticKind::UndeclaredOverlap);
+
+	// One side names the other by ID, which a package that cannot depend on the other does.
+	let mut declared = mine;
+
+	declared[0].shapes[0].ambiguity = recognize_core::AmbiguityPolicy::MayOverlap {
+		with: vec!["theirs.digits".to_string()],
+	};
+
+	let built = recognize_build::build_documents_in(declared, &theirs, &none, &Limits::default()).unwrap();
+
+	assert_eq!(built.families.len(), 1);
+	assert_eq!(built.documents.len(), 1);
 }
 
 #[test]

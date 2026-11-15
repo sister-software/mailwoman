@@ -16,7 +16,7 @@ import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recogniz
 import { structure } from "@mailwoman/recognize/structure"
 import { describe, expect, it } from "vitest"
 
-import { postcodeLegacy } from "#recognize"
+import { postcodeLegacy } from "#recognize/legacy"
 import { compareKnownFormats, generatedKnownFormatInputs, recognizedHits } from "#tools/differential"
 
 interface GoldenFixture {

@@ -15,13 +15,18 @@
  *   ```ts
  *   import { createRecognizer } from "@mailwoman/recognize"
  *   import { structure } from "@mailwoman/recognize/structure"
- *   import { postcodeLegacy } from "@mailwoman/postcode/recognize"
+ *   import { postcodeLegacy } from "@mailwoman/postcode/recognize/legacy"
  *
  *   const { fields } = createRecognizer([structure, postcodeLegacy]).recognize("SW1A 1AA")
  *   ```
  *
  *   The patterns are the thirteen legacy patterns, so the hit set equals the legacy one.
  *   The table is `legacy-formats/table.ts`, and `tools/generate.run.ts` compiles it.
+ *
+ *   This module imports its own artifact only.
+ *   A bundle that imports it holds no byte of the `postal` family.
+ *
+ *   That family has its own module, `@mailwoman/postcode/recognize/postal`.
  */
 
 export { postcodeLegacy, POSTCODE_LEGACY_FAMILY_ID } from "#recognize/postcode_legacy.generated"

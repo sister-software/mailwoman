@@ -2,15 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compiles the `postcode_legacy` family from the legacy-formats table with
- *   `recognize-build --definition` and writes its files into this package:
+ *   Compiles this package's two families with `recognize-build --definition` and writes their files:
  *
- *   - `data/definitions/postcode_legacy.definition.json`, the family definition built from the table.
- *   - `data/ir/postcode_legacy.json`, the compiled family's IR.
- *   - `data/artifacts/postcode_legacy.rca1`, the artifact.
- *   - `data/manifests/artifacts.json` and `data/reports/compiler-report.json`.
- *   - `lib/recognize/postcode_legacy.generated.ts` and `lib/recognize/artifacts/postcode_legacy.generated.ts`,
+ *   - `postcode_legacy`, from the legacy-formats table.
+ *   - `postal`, from every country's postcode syntax.
+ *
+ *   For each family `<id>`:
+ *
+ *   - `data/definitions/<id>.definition.json`, the family definition.
+ *   - `data/ir/<id>.json`, the compiled family's IR.
+ *   - `data/artifacts/<id>.rca1`, the artifact.
+ *   - `data/manifests/<id>.json` and `data/reports/<id>.compiler-report.json`.
+ *   - `lib/recognize/<id>.generated.ts` and `lib/recognize/artifacts/<id>.generated.ts`,
  *     the family's declarations and its artifact as hexadecimal text.
+ *
+ *   The `postal` family also writes `data/fixtures/postal-overlap-witnesses.json`, the shortest string
+ *   each declared overlapping pair shares, and the shared-language groups it was generated from.
+ *
+ *   The `postal` definition is built in three compiler runs, because the compiler
+ *   owns two answers a generator mustn't guess.
+ *   The first run compiles one shape for each country's bare form and each prefixed country's
+ *   printed form, and its equivalence analysis decides which countries share a shape.
+ *
+ *   The second compiles the grouped definition with no overlap declared and lists every
+ *   pair that shares a string, and the generator declares each pair on one side.
+ *   The third compiles the final definition, where an undeclared overlap is a build error.
  *
  *   A refused definition prints each diagnostic with the definition's file and line,
  *   and the tool exits non-zero without writing.
@@ -30,10 +46,26 @@ import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { type FormatConfig, format } from "oxfmt"
 
-import { DEFINITION_FILE, FAMILY_ID, legacyDefinition } from "#tools/legacy-definition"
+import {
+	DEFINITION_FILE as LEGACY_DEFINITION_FILE,
+	FAMILY_ID as LEGACY_ID,
+	legacyDefinition,
+} from "#tools/legacy-definition"
+import {
+	DEFINITION_FILE as POSTAL_DEFINITION_FILE,
+	FAMILY_ID as POSTAL_ID,
+	POSTAL_DENSE_BYTES,
+	type DefinitionDocument,
+	type ReportedOverlap,
+	equivalenceGroups,
+	postalDefinition,
+	postalProbeDefinition,
+	postalShapeID,
+} from "#tools/postal/definition"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 const postcode = (...segments: string[]): string => workspacePath("postcode", ...segments).toString()
+const BINARY = repoRootPath("target", "release", "recognize-build").toString()
 
 await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build"], {
 	cwd: workspacePath("recognize"),
@@ -41,30 +73,10 @@ await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build
 
 await using scratch = await temporaryDirectory("postcode-generate-")
 const built = scratch.path.toString()
-const definitionPath = `${built}/${DEFINITION_FILE}`
-
-await writeLocalTextFile(prettyJSON(legacyDefinition()), definitionPath)
-
-// A refused definition exits 1 and prints `file:line: kind: message` diagnostics on stderr.
-const printed = await runFile(repoRootPath("target", "release", "recognize-build").toString(), [
-	"--definition",
-	definitionPath,
-	`${built}/out`,
-]).catch((error: { stderr?: string }) => {
-	console.error(error.stderr ?? String(error))
-
-	throw new Error("recognize-build refused the family definition", { cause: error })
-})
 
 // effect-loads: oxfmt.config.ts
 const { default: formatConfig } = (await import(repoRootPath("oxfmt.config.ts").toString())) as {
 	default: FormatConfig
-}
-
-const [written] = parseJSONStrict<Array<{ family: string; hash: string; sha256: string }>>(printed.stdout)
-
-if (written?.family !== FAMILY_ID) {
-	throw new Error(`recognize-build wrote ${written?.family ?? "no family"} and not ${FAMILY_ID}`)
 }
 
 let stale = 0
@@ -105,38 +117,138 @@ async function settleFormatted(target: string, text: string): Promise<void> {
 	await settle(target, formatted.code)
 }
 
-const artifact = await readLocalBuffer(`${built}/out/${FAMILY_ID}.rca1`)
+/**
+ * Runs `recognize-build` and rethrows a refusal with the diagnostics it printed.
+ */
+async function build(args: string[]): Promise<string> {
+	const printed = await runFile(BINARY, args).catch((error: { stderr?: string }) => {
+		console.error(error.stderr ?? String(error))
 
-if (sha256Hex(artifact) !== written.sha256) {
-	throw new Error(`${FAMILY_ID}: the artifact's SHA-256 is not the ${written.sha256} the binary printed`)
+		throw new Error("recognize-build refused the family definition", { cause: error })
+	})
+
+	return printed.stdout
 }
 
-await settle(postcode("data", "artifacts", `${FAMILY_ID}.rca1`), artifact)
-await settleFormatted(postcode("data", "definitions", DEFINITION_FILE), await readLocalTextFile(definitionPath))
+/**
+ * Writes one definition to the scratch directory and returns its path.
+ */
+async function stageDefinition(document: DefinitionDocument, file: string): Promise<string> {
+	const path = `${built}/${file}`
 
-await settleFormatted(
-	postcode("data", "ir", `${FAMILY_ID}.json`),
-	await readLocalTextFile(`${built}/out/${FAMILY_ID}.json`)
-)
+	await writeLocalTextFile(prettyJSON(document), path)
 
-await settleFormatted(
-	postcode("data", "manifests", "artifacts.json"),
-	await readLocalTextFile(`${built}/out/artifacts.json`)
-)
+	return path
+}
 
-await settleFormatted(
-	postcode("data", "reports", "compiler-report.json"),
-	await readLocalTextFile(`${built}/out/compiler-report.json`)
-)
+/**
+ * The overlapping pairs the compiler finds for a definition, none declared.
+ */
+async function listOverlaps(document: DefinitionDocument, file: string): Promise<ReportedOverlap[]> {
+	const path = await stageDefinition(document, file)
 
-await settleFormatted(
-	postcode("lib", "recognize", `${FAMILY_ID}.generated.ts`),
-	await readLocalTextFile(`${built}/out/ts/${FAMILY_ID}.generated.ts`)
-)
+	return parseJSONStrict<ReportedOverlap[]>(await build(["--definition", path, "--list-overlaps", `${built}/listing`]))
+}
 
-await settleFormatted(
-	postcode("lib", "recognize", "artifacts", `${FAMILY_ID}.generated.ts`),
-	await readLocalTextFile(`${built}/out/ts/artifacts/${FAMILY_ID}.generated.ts`)
+/**
+ * Compiles a definition and settles its files.
+ */
+async function generate(
+	family: string,
+	definitionFile: string,
+	document: DefinitionDocument,
+	extra: (out: string) => Promise<void> = async () => {},
+	limits: string[] = []
+): Promise<void> {
+	const definitionPath = await stageDefinition(document, definitionFile)
+	const out = `${built}/out-${family}`
+
+	const [written] = parseJSONStrict<Array<{ family: string; hash: string; sha256: string }>>(
+		await build([...limits, "--definition", definitionPath, out])
+	)
+
+	if (written?.family !== family) {
+		throw new Error(`recognize-build wrote ${written?.family ?? "no family"} and not ${family}`)
+	}
+
+	const artifact = await readLocalBuffer(`${out}/${family}.rca1`)
+
+	if (sha256Hex(artifact) !== written.sha256) {
+		throw new Error(`${family}: the artifact's SHA-256 is not the ${written.sha256} the binary printed`)
+	}
+
+	await settle(postcode("data", "artifacts", `${family}.rca1`), artifact)
+	await settleFormatted(postcode("data", "definitions", definitionFile), await readLocalTextFile(definitionPath))
+	await settleFormatted(postcode("data", "ir", `${family}.json`), await readLocalTextFile(`${out}/${family}.json`))
+
+	await settleFormatted(
+		postcode("data", "manifests", `${family}.json`),
+		await readLocalTextFile(`${out}/artifacts.json`)
+	)
+
+	await settleFormatted(
+		postcode("data", "reports", `${family}.compiler-report.json`),
+		await readLocalTextFile(`${out}/compiler-report.json`)
+	)
+
+	await settleFormatted(
+		postcode("lib", "recognize", `${family}.generated.ts`),
+		await readLocalTextFile(`${out}/ts/${family}.generated.ts`)
+	)
+
+	await settleFormatted(
+		postcode("lib", "recognize", "artifacts", `${family}.generated.ts`),
+		await readLocalTextFile(`${out}/ts/artifacts/${family}.generated.ts`)
+	)
+
+	await extra(out)
+}
+
+await generate(LEGACY_ID, LEGACY_DEFINITION_FILE, legacyDefinition())
+
+// The groups come from the compiler's equivalence analysis of one probe shape for each form.
+const probe = await listOverlaps(postalProbeDefinition(), "postal_probe.definition.json")
+const bare = equivalenceGroups("bare", probe)
+const printed = equivalenceGroups("printed", probe)
+
+// Every pair of the grouped definition that shares a string, declared on the side that sorts first.
+// A pair with a shape of another family is declared on the postal side,
+// because `recognize` cannot name a shape of this package.
+const ungrouped = await listOverlaps(postalDefinition(bare, printed), POSTAL_DEFINITION_FILE)
+const declared = new Map<string, string[]>()
+
+for (const pair of ungrouped) {
+	if (pair.declared) continue
+
+	const own = [pair.a, pair.b].filter((side) => side.family === POSTAL_ID)
+	const [owner, partner] = own.length === 2 ? [pair.a, pair.b] : [own[0]!, own[0] === pair.a ? pair.b : pair.a]
+
+	declared.set(owner.shape, [...(declared.get(owner.shape) ?? []), partner.shape])
+}
+
+for (const [shape, partners] of declared) {
+	declared.set(shape, partners.toSorted())
+}
+
+await generate(
+	POSTAL_ID,
+	POSTAL_DEFINITION_FILE,
+	postalDefinition(bare, printed, declared),
+	async (out) => {
+		await settleFormatted(
+			postcode("data", "fixtures", "postal-overlap-witnesses.json"),
+			await readLocalTextFile(`${out}/overlap-witnesses.json`)
+		)
+
+		await settleFormatted(
+			postcode("data", "fixtures", "postal-groups.json"),
+			prettyJSON({
+				bare: bare.map((group) => ({ shape: postalShapeID("bare", group[0]!), countries: group })),
+				printed: printed.map((group) => ({ shape: postalShapeID("printed", group[0]!), countries: group })),
+			})
+		)
+	},
+	["--dense-bytes", String(POSTAL_DENSE_BYTES)]
 )
 
 if (stale) {

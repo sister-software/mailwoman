@@ -13,7 +13,7 @@ use regex_automata::util::primitives::StateID;
 use crate::artifact::{parse, ArtifactError, Backend, Header, PatternMeta, Role};
 use crate::captures::{extract, CaptureProgram, ExtractError};
 use crate::declared::{self, Kind};
-use crate::ir::Scope;
+use crate::ir::{Scope, ShapeRole};
 use crate::prefix::start_state;
 use crate::recognition::{Recognition, Rejection, ValidationResult};
 use crate::trace::{self, Trace};
@@ -98,8 +98,11 @@ pub(crate) struct LoadedFamily {
 	pub(crate) shapes: Vec<String>,
 	/// The closed kind of each shape, parallel to `shapes`.
 	pub(crate) kinds: Vec<Option<Kind>>,
-	/// Whether each shape marks a PO box leader, parallel to `shapes`. See [`crate::known_formats`].
+	/// Whether each shape has the `po_box_leader` role, parallel to `shapes`. See [`crate::known_formats`].
 	pub(crate) leaders: Vec<bool>,
+	/// The place of each shape in the order hits come out, parallel to `shapes`. A shape with no stated order holds
+	/// `u32::MAX` and sorts after every ordered shape, in byte order of its ID.
+	pub(crate) orders: Vec<u32>,
 }
 
 /// One located span of a search, with the family and shape as positions.
@@ -290,10 +293,20 @@ impl Engine {
 			}
 		}
 
-		let leaders = shapes
-			.iter()
-			.map(|shape| shape.starts_with(crate::known_formats::LEADER_PREFIX))
-			.collect();
+		let mut leaders = vec![false; shapes.len()];
+		let mut orders = vec![u32::MAX; shapes.len()];
+
+		for pattern in header.automata.iter().flat_map(|meta| meta.patterns.iter()) {
+			let Ok(index) = shapes.binary_search(&pattern.shape) else {
+				continue;
+			};
+
+			leaders[index] = pattern.role == Some(ShapeRole::PoBoxLeader);
+
+			if let Some(order) = pattern.order {
+				orders[index] = order;
+			}
+		}
 
 		self.families.push(LoadedFamily {
 			header,
@@ -304,6 +317,7 @@ impl Engine {
 			shapes,
 			kinds,
 			leaders,
+			orders,
 		});
 
 		Ok(())
@@ -438,6 +452,14 @@ impl Engine {
 					// `WholeOrEmbedded`.
 					if embedded.patterns[pattern].scope == Scope::Embedded && start == 0 && end == text.len() {
 						return;
+					}
+
+					// A shape with a boundary reports no match that touches a character it forbids. The whole text has
+					// no neighbor, so a match of it always passes.
+					if let Some(boundary) = embedded.patterns[pattern].boundary {
+						if !boundary.admits(text, start, end) {
+							return;
+						}
 					}
 
 					found.push(Located {

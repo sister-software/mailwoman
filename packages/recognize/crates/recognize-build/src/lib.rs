@@ -17,6 +17,8 @@ pub mod program;
 pub mod reach;
 pub mod report;
 
+use std::collections::BTreeSet;
+
 use recognize_core::family::Family;
 use recognize_core::{render, Diagnostic, IrDocument};
 use serde_json::{json, Map, Value};
@@ -159,7 +161,34 @@ pub fn build_families(families: Vec<Family>, limits: &Limits) -> Result<Build, V
 }
 
 /// Compiles and analyzes sealed IR documents together, as [`build_families`] does for families built in Rust.
-pub fn build_documents(mut documents: Vec<IrDocument>, limits: &Limits) -> Result<Build, Vec<Diagnostic>> {
+pub fn build_documents(documents: Vec<IrDocument>, limits: &Limits) -> Result<Build, Vec<Diagnostic>> {
+	build_documents_in(documents, &[], &BTreeSet::new(), limits)
+}
+
+/// Like [`build_documents`], with the overlap policy of [`analysis::undeclared_overlap_diagnostics`] applied.
+///
+/// `context` holds the sealed IR of families this build does not compile: the analysis pairs their shapes with the
+/// shapes of `documents`, so a family that another package owns is checked against the repository's own families. The
+/// context families are not in the result's documents or artifacts. `silent` names the families, among both sets, that
+/// report no recognitions and take no part in the overlap policy.
+pub fn build_documents_in(
+	documents: Vec<IrDocument>,
+	context: &[IrDocument],
+	silent: &BTreeSet<String>,
+	limits: &Limits,
+) -> Result<Build, Vec<Diagnostic>> {
+	build_documents_with(documents, context, silent, limits, true)
+}
+
+/// Like [`build_documents_in`], and with `enforce` false the overlap policy produces no error, so a caller that lists
+/// the overlaps to declare can read them from [`Build::analysis`].
+pub fn build_documents_with(
+	mut documents: Vec<IrDocument>,
+	context: &[IrDocument],
+	silent: &BTreeSet<String>,
+	limits: &Limits,
+	enforce: bool,
+) -> Result<Build, Vec<Diagnostic>> {
 	let mut diagnostics = Vec::new();
 	let mut built = Vec::new();
 
@@ -181,13 +210,23 @@ pub fn build_documents(mut documents: Vec<IrDocument>, limits: &Limits) -> Resul
 		documents.sort_by(|a, b| a.family.cmp(&b.family));
 		built.sort_by(|a, b| a.ir.family.cmp(&b.ir.family));
 
-		match analysis::analyze(&documents, limits) {
+		let everything: Vec<IrDocument> = documents.iter().chain(context).cloned().collect();
+
+		match analysis::analyze(&everything, limits) {
 			Ok(analysis) => {
+				if enforce {
+					let refused = analysis::undeclared_overlap_diagnostics(&everything, &analysis, silent);
+
+					if !refused.is_empty() {
+						return Err(refused);
+					}
+				}
+
 				return Ok(Build {
 					families: built,
 					documents,
 					analysis,
-				})
+				});
 			}
 			Err(found) => diagnostics.extend(found),
 		}
