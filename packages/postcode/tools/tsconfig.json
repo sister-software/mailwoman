@@ -16,6 +16,7 @@
 		{ "path": ".." },
 		{ "path": "../../core" },
 		{ "path": "../../query-shape" },
-		{ "path": "../../recognize" }
+		{ "path": "../../recognize" },
+		{ "path": "../../registry" }
 	]
 }
