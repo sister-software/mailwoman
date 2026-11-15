@@ -280,7 +280,7 @@ describe("the loader", () => {
 		const { entry, coordinates } = await load()
 		const recognizer = entry.createRecognizer([coordinates])
 
-		expect(() => recognizer.recognize("1".repeat(5000))).toThrow(RangeError)
+		expect(() => recognizer.recognize("1".repeat(70_000))).toThrow(RangeError)
 		expect(recognizer.recognize("1, 2").recognitions).toHaveLength(1)
 	})
 

@@ -61,10 +61,12 @@ pub struct Limits {
 	pub max_lowered_nodes: usize,
 	/// The most captures one shape makes.
 	pub max_captures: usize,
-	/// The longest input, in UTF-8 bytes, the artifact's search accepts.
+	/// The longest input, in UTF-8 bytes, the artifact's search accepts. The search takes time linear in the length, so
+	/// the limit bounds the candidates a call can return: a text of one-character matches reports about one candidate
+	/// for each byte, and 64 KiB of the repository's worst measured text reports about 100,000.
 	pub max_input_bytes: u32,
-	/// The longest input a family accepts when every shape of it is a partition piece. A partition scan is linear in the
-	/// length of the text, so it admits a longer input than a search, which restarts at every character.
+	/// The longest input a family accepts when every shape of it is a partition piece. A partition piece is never
+	/// reported twice, so the limit is not bound by the candidates a search can return.
 	pub max_partition_input_bytes: u32,
 	/// The most states the overlap analysis visits in the product of two shapes' automata. A pair that passes it fails
 	/// the build, so no overlap is skipped silently.
@@ -82,7 +84,7 @@ impl Default for Limits {
 			max_depth: 64,
 			max_lowered_nodes: 100_000,
 			max_captures: 64,
-			max_input_bytes: 4096,
+			max_input_bytes: 64 << 10,
 			max_partition_input_bytes: 1 << 20,
 			max_product_states: 1_000_000,
 		}

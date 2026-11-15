@@ -65,8 +65,19 @@
 //! interpreter.
 //!
 //! The search is complete under this policy: the engine tries every character boundary as a start, and
-//! `MatchKind::All` keeps every pattern that accepts at each end position. Its cost is the number of starts times the
-//! length each start scans before the automaton dies, so a family's `inputLimitBytes` bounds the input.
+//! `MatchKind::All` keeps every pattern that accepts at each end position.
+//!
+//! # Cost of the search
+//!
+//! The embedded search is one forward pass. It keeps one walk of the automaton for each start that has not died, and
+//! two walks in the same state read the same suffix to the same states, so the pass drops the later start's walk. A
+//! pattern's match at an end then has the earliest start of the walks in a matching state, which is the longest match
+//! ending there, and a stack for each pattern removes the matches another match of the pattern contains. The walks that
+//! remain stand in distinct states, so at most `states` of them are alive at a byte, and the pass takes at most
+//! `bytes * states` transitions. For one artifact `states` is a constant, so the cost is linear in the length of the
+//! text. It is not `states` in practice: unbounded patterns such as a digit run converge to one state, and a bounded
+//! pattern keeps one walk for each length it can still extend, so the live walks number about the longest bounded
+//! match. A family's `inputLimitBytes` bounds the memory of the candidates, and no longer the time.
 
 pub mod artifact;
 pub mod ast;
