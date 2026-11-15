@@ -51,7 +51,7 @@ rather than a guess.
 
 | Approach                                                                                            | Tradeoff                                                                                 |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides; the release verdict, already the deciding check, carries the promise   |
+| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides. The release verdict, already the deciding check, carries the promise   |
 | B. Declaration ships in codex, enforced by a separate test suite                                    | Two systems would decide whether a release may ship                                      |
 | C. Declaration in `scope.config.json` with generated copies                                         | Repository-only file, so the shipped copy is generated and every edit needs regeneration |
 
