@@ -118,7 +118,7 @@ function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIW
  * Identifies tests excluded by the root Vitest configuration.
  */
 function excludedFromRootTests(file: string): boolean {
-	return /(?:^|\/)(?:react|license-worker|gazetteer-worker)\/|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
+	return /(?:^|\/)(?:react|license-worker|gazetteer-worker)\/|\.(?:browser|workers)\.test\.ts$|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
 		file
 	)
 }
@@ -355,7 +355,8 @@ export function selectCIScope(
 		react: has("@mailwoman/react"),
 		planetary: has("@mailwoman/planetary"),
 		opportunity: has("@mailwoman/opportunity-app"),
-		worker: has("@mailwoman/license-worker") || has("@mailwoman/gazetteer-worker"),
+		// The recognize engine's first-call tests run under the Workers pool and in Chromium beside the workers' tests.
+		worker: has("@mailwoman/license-worker") || has("@mailwoman/gazetteer-worker") || has("@mailwoman/recognize"),
 		smoke:
 			full ||
 			affectedDirectories.some((directory) => published.includes(directory)) ||

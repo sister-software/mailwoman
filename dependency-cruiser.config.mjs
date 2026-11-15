@@ -39,7 +39,7 @@ const LOADED_WITHOUT_AN_IMPORT = [
 	// The preset exempts babel and webpack by name; these are the ones this repository runs.
 	// `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
 	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted file.
-	"(^|/)(?:vitest|vitest[.]node|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
+	"(^|/)(?:vitest|vitest[.]node|vitest[.]browser|vitest[.]workers|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
 	"(^|/)[.]storybook/",
 	// Playwright specs: the runner collects them from disk by glob.
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",

@@ -13,3 +13,7 @@ sha2 = { version = "0.11", default-features = false }
 # Only the search half: `dfa-search` reads a serialized DFA and runs it. The regex parser, the NFA compiler and the DFA
 # builder (`syntax`, `nfa-thompson`, `dfa-build`) belong to `recognize-build`.
 regex-automata = { version = "0.4.18", default-features = false, features = ["std", "dfa-search"] }
+
+[dev-dependencies]
+# Compile-fail tests for the generated declarations: a validator with no binding, and captures with no payload variant.
+trybuild = "=1.0.123"

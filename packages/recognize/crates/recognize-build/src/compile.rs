@@ -23,10 +23,11 @@
 
 use recognize_core::artifact::{
 	assemble, AutomatonMeta, Backend, Header, PatternMeta, Payload, Role, ARTIFACT_FORMAT, ARTIFACT_SCHEMA_VERSION,
-	COMPILER_VERSION, DECLARATIONS_HASH_UNSET,
+	COMPILER_VERSION,
 };
 use recognize_core::ir::sha256_hex;
 use recognize_core::viability::Viability;
+use recognize_core::Declarations;
 use recognize_core::{Diagnostic, DiagnosticKind, IrDocument, Scope, Shape};
 use regex_automata::dfa::{dense, Automaton, StartKind};
 use regex_automata::nfa::thompson::{self, WhichCaptures};
@@ -100,6 +101,8 @@ pub struct AutomatonReport {
 pub struct CompiledFamily {
 	pub family: String,
 	pub ir_hash: String,
+	/// The hash of the family's generated declarations, which the artifact embeds.
+	pub declarations_hash: String,
 	pub artifact: Vec<u8>,
 	pub sha256: String,
 	pub automata: Vec<AutomatonReport>,
@@ -331,11 +334,13 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 		return Err(diagnostics);
 	}
 
+	let captures = crate::program::build(document)?.to_bytes();
 	let header = Header {
 		automata: metas,
 		byte_order: "little".to_string(),
+		captures_sha256: sha256_hex(&captures),
 		compiler_version: COMPILER_VERSION.to_string(),
-		declarations_hash: DECLARATIONS_HASH_UNSET.to_string(),
+		declarations_hash: Declarations::from_ir(document).hash(),
 		family: document.family.clone(),
 		format: ARTIFACT_FORMAT.to_string(),
 		input_limit_bytes: limits.max_input_bytes,
@@ -353,7 +358,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 		})
 		.collect();
 	let anchor = document.shapes.first().map(|shape| shape.source.clone());
-	let artifact = assemble(&header, &payloads).map_err(|error| {
+	let artifact = assemble(&header, &payloads, &captures).map_err(|error| {
 		vec![Diagnostic::new(
 			DiagnosticKind::MalformedIR,
 			&anchor.unwrap_or_else(|| recognize_core::Source::new("<artifact>", 0)),
@@ -376,6 +381,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 	Ok(CompiledFamily {
 		family: document.family.clone(),
 		ir_hash: document.hash.clone(),
+		declarations_hash: header.declarations_hash.clone(),
 		sha256: sha256_hex(&artifact),
 		artifact,
 		automata,

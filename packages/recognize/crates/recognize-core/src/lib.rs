@@ -46,6 +46,10 @@
 
 pub mod artifact;
 pub mod ast;
+pub mod captures;
+pub mod declarations;
+pub mod declare;
+pub mod declared;
 pub mod diagnostic;
 pub mod engine;
 pub mod family;
@@ -53,17 +57,27 @@ pub mod grammars;
 pub mod ids;
 pub mod ir;
 pub mod prefix;
+pub mod recognition;
 pub mod validate;
+pub mod validators;
 pub mod viability;
+
+// The generated declarations of a family serialize their payloads through this path.
+#[doc(hidden)]
+pub use serde as __serde;
 
 pub use artifact::{ArtifactError, Backend, Role};
 pub use ast::{
 	capture, choice, class, literal, negated_class, one_or_more, optional, pattern, reference, repeat, repeat_from,
 	sequence, zero_or_more, ClassRange, Node, OPERATORS,
 };
+pub use captures::{Captures, ExtractError};
+pub use declarations::Declarations;
 pub use diagnostic::{render, Diagnostic, DiagnosticKind, Source};
 pub use engine::{Candidate, Engine, Expected, SearchError};
 pub use family::{shape, term, Family, ShapeBuilder};
 pub use ids::{HandlerID, ValidatorID};
 pub use ir::{AmbiguityPolicy, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION};
 pub use prefix::{PrefixCursor, PrefixStatus, ShapePrefix};
+pub use recognition::{Recognition, Rejection, ValidationResult};
+pub use validators::Validator;

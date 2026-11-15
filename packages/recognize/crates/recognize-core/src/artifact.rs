@@ -9,10 +9,10 @@
 //!
 //! ```text
 //! 0   4 bytes  ASCII `RCA1`
-//! 4   u16      artifact schema version, 2
+//! 4   u16      artifact schema version, 3
 //! 6   u16      flags, 0
 //! 8   u32      header byte length
-//! 12  u32      directory entry count, twice the automaton count
+//! 12  u32      directory entry count, twice the automaton count plus one
 //! 16  u32      directory byte offset, align8(32 + header length)
 //! 20  u32      total byte length
 //! 24  u32      first payload offset, align8(directory offset + count * 16)
@@ -26,16 +26,18 @@
 //! Every integer is little-endian. Each automaton has two payloads, in this order: a `regex-automata` DFA serialization
 //! with its leading alignment padding removed, then its viability table ([`crate::viability`]). Role is 1 for the
 //! whole-input automaton and 2 for the embedded-span automaton. Kind is 1 for a dense DFA, 2 for a sparse DFA and 3 for
-//! a viability table.
+//! a viability table. The last entry belongs to the family and not to an automaton: role 0, kind 4, the capture
+//! program ([`crate::captures`]) as canonical JSON.
 //!
-//! Version 1 had no viability table and one directory entry per automaton. A reader refuses a version-1 file with
-//! [`ArtifactError::Version`].
+//! Version 1 had no viability table. Version 2 had no capture program and a placeholder declarations hash. A reader
+//! refuses an earlier version with [`ArtifactError::Version`].
 //!
-//! The header records the SHA-256 of each payload and of each table, and the parser refuses one that differs. The hash of the whole
-//! file lives in the build manifest, as the registry's does. The header stores no wall-clock time and no path. Its `declarationsHash` is a placeholder in this phase:
-//! [`DECLARATIONS_HASH_UNSET`] (64 zeros) until the phase that generates per-family declarations hashes the generated
-//! output and writes the hash here. A caller that holds declarations passes the hash it expects to
-//! [`crate::Engine::load_checked`], which refuses an artifact whose hash differs.
+//! The header records the SHA-256 of each payload, of each table and of the capture program, and the parser refuses
+//! one that differs. The hash of the whole file lives in the build manifest, as the registry's does. The header stores
+//! no wall-clock time and no path. Its `declarationsHash` is the hash of the family's generated declarations
+//! ([`crate::declarations`]). A caller that holds declarations passes the hash it expects to
+//! [`crate::Engine::load_checked`], which refuses an artifact whose hash differs, and the engine refuses an artifact
+//! whose hash differs from the declarations this crate was built with.
 //!
 //! A DFA serialization is not stable across `regex-automata` versions, and the crate validates its own label and
 //! version on read. The header's `compilerVersion` must also equal [`COMPILER_VERSION`], so one build of the runtime
@@ -55,17 +57,20 @@ pub const MAGIC: &[u8; 4] = b"RCA1";
 pub const ARTIFACT_FORMAT: &str = "mailwoman.recognize.artifact";
 
 /// The envelope version this crate writes and reads.
-pub const ARTIFACT_SCHEMA_VERSION: u32 = 2;
+pub const ARTIFACT_SCHEMA_VERSION: u32 = 3;
 
 /// The directory `kind` of a viability table. A DFA's kind is its backend's code.
 const KIND_VIABILITY: u16 = 3;
 
+/// The directory `kind` of the family's capture program.
+const KIND_CAPTURES: u16 = 4;
+
+/// The directory `role` of an entry that belongs to the family.
+const ROLE_FAMILY: u16 = 0;
+
 /// The compiler version an artifact must carry: the version of this crate, which `recognize-build` shares through the
 /// workspace.
 pub const COMPILER_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// The `declarationsHash` an artifact carries until declarations are generated.
-pub const DECLARATIONS_HASH_UNSET: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
 /// The byte length of the fixed envelope.
 pub const ENVELOPE_BYTES: usize = 32;
@@ -163,6 +168,8 @@ pub struct AutomatonMeta {
 pub struct Header {
 	pub automata: Vec<AutomatonMeta>,
 	pub byte_order: String,
+	/// The SHA-256 of the capture program that follows the automata.
+	pub captures_sha256: String,
 	pub compiler_version: String,
 	pub declarations_hash: String,
 	pub family: String,
@@ -223,6 +230,10 @@ pub enum ArtifactError {
 	ViabilityHash(usize),
 	/// A viability table is not a table of the shape the header describes.
 	Viability(String),
+	/// The capture program's SHA-256 differs from the one the header records.
+	CapturesHash,
+	/// The capture program is not a valid program.
+	CaptureProgram(String),
 	/// Two automata of one family have the same role.
 	DuplicateRole(Role),
 	/// An automaton's DFA bytes fail `regex-automata`'s checked deserialization.
@@ -282,6 +293,10 @@ impl fmt::Display for ArtifactError {
 				)
 			}
 			ArtifactError::Viability(message) => write!(formatter, "viability table: {message}"),
+			ArtifactError::CapturesHash => {
+				write!(formatter, "the capture program does not match its recorded SHA-256")
+			}
+			ArtifactError::CaptureProgram(message) => write!(formatter, "capture program: {message}"),
 			ArtifactError::DuplicateRole(role) => write!(formatter, "two automata have the role {}", role.as_str()),
 			ArtifactError::Automaton { role, message } => {
 				write!(
@@ -347,11 +362,15 @@ pub fn header_text(header: &Header) -> String {
 
 /// Lays out an artifact. The result is deterministic: the same header and payloads give the same bytes.
 ///
-/// The header's automata and the payloads correspond by position. The writer refuses a header that [`parse`] would
-/// refuse, so a file it returns always loads.
-pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, ArtifactError> {
+/// The header's automata and the payloads correspond by position. `captures` is the family's capture program. The
+/// writer refuses a header that [`parse`] would refuse, so a file it returns always loads.
+pub fn assemble(header: &Header, payloads: &[Payload<'_>], captures: &[u8]) -> Result<Vec<u8>, ArtifactError> {
 	if header.automata.len() != payloads.len() {
 		return Err(ArtifactError::Layout("the header and the payloads differ in count"));
+	}
+
+	if header.captures_sha256 != sha256_hex(captures) {
+		return Err(ArtifactError::CapturesHash);
 	}
 
 	for (index, (meta, payload)) in header.automata.iter().zip(payloads).enumerate() {
@@ -370,16 +389,18 @@ pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, Ar
 
 	check_header(header)?;
 
-	// Each automaton contributes its DFA and then its table.
-	let sections: Vec<(Role, u16, &[u8])> = payloads
+	// Each automaton contributes its DFA and then its table. The capture program closes the list.
+	let mut sections: Vec<(u16, u16, &[u8])> = payloads
 		.iter()
 		.flat_map(|payload| {
 			[
-				(payload.role, payload.backend.code(), payload.bytes),
-				(payload.role, KIND_VIABILITY, payload.viability),
+				(payload.role.code(), payload.backend.code(), payload.bytes),
+				(payload.role.code(), KIND_VIABILITY, payload.viability),
 			]
 		})
 		.collect();
+
+	sections.push((ROLE_FAMILY, KIND_CAPTURES, captures));
 	let text = header_text(header);
 	let directory_offset = align(ENVELOPE_BYTES + text.len());
 	let first_payload = align(directory_offset + sections.len() * DIRECTORY_ENTRY_BYTES);
@@ -408,7 +429,7 @@ pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, Ar
 	out.resize(directory_offset, 0);
 
 	for ((role, kind, bytes), offset) in sections.iter().zip(&offsets) {
-		out.extend_from_slice(&role.code().to_le_bytes());
+		out.extend_from_slice(&role.to_le_bytes());
 		out.extend_from_slice(&kind.to_le_bytes());
 		out.extend_from_slice(&u32::try_from(*offset).map_err(|_| too_long())?.to_le_bytes());
 		out.extend_from_slice(&u32::try_from(bytes.len()).map_err(|_| too_long())?.to_le_bytes());
@@ -483,6 +504,10 @@ fn check_header(header: &Header) -> Result<(), ArtifactError> {
 		return Err(field("declarationsHash", "not 64 lowercase hexadecimal digits"));
 	}
 
+	if !is_sha256_hex(&header.captures_sha256) {
+		return Err(field("capturesSha256", "not 64 lowercase hexadecimal digits"));
+	}
+
 	if header.input_limit_bytes == 0 {
 		return Err(field("inputLimitBytes", "zero"));
 	}
@@ -555,6 +580,8 @@ fn check_header(header: &Header) -> Result<(), ArtifactError> {
 pub struct Artifact<'a> {
 	pub header: Header,
 	pub payloads: Vec<Payload<'a>>,
+	/// The family's capture program, as canonical JSON.
+	pub captures: &'a [u8],
 }
 
 /// Parses and validates the envelope, the header, the directory and each payload's framing. It does not read a DFA:
@@ -648,9 +675,9 @@ pub fn parse(bytes: &[u8]) -> Result<Artifact<'_>, ArtifactError> {
 
 	check_header(&header)?;
 
-	if header.automata.len() * 2 != count {
+	if header.automata.len() * 2 + 1 != count {
 		return Err(ArtifactError::Layout(
-			"the directory does not hold a DFA and a table for each automaton",
+			"the directory does not hold a DFA and a table for each automaton and the capture program",
 		));
 	}
 
@@ -714,11 +741,48 @@ pub fn parse(bytes: &[u8]) -> Result<Artifact<'_>, ArtifactError> {
 		});
 	}
 
+	let entry = &bytes[directory_offset + header.automata.len() * 2 * DIRECTORY_ENTRY_BYTES..][..DIRECTORY_ENTRY_BYTES];
+	let entry_index = header.automata.len() * 2;
+
+	if u32_at(entry, 12) != 0 {
+		return Err(ArtifactError::Reserved);
+	}
+
+	if u16_at(entry, 0) != ROLE_FAMILY || u16_at(entry, 2) != KIND_CAPTURES {
+		return Err(ArtifactError::DirectoryMismatch(header.automata.len()));
+	}
+
+	let offset = u32_at(entry, 4) as usize;
+	let end = offset
+		.checked_add(u32_at(entry, 8) as usize)
+		.filter(|end| *end <= bytes.len())
+		.ok_or(ArtifactError::SectionBounds(entry_index))?;
+
+	if offset != cursor || end == offset {
+		return Err(ArtifactError::SectionBounds(entry_index));
+	}
+
+	cursor = align(end);
+
+	if bytes[end..cursor.min(bytes.len())].iter().any(|byte| *byte != 0) {
+		return Err(ArtifactError::SectionBounds(entry_index));
+	}
+
+	let captures = &bytes[offset..end];
+
+	if sha256_hex(captures) != header.captures_sha256 {
+		return Err(ArtifactError::CapturesHash);
+	}
+
 	if cursor != bytes.len() {
 		return Err(ArtifactError::Layout("the artifact has bytes after its last payload"));
 	}
 
-	Ok(Artifact { header, payloads })
+	Ok(Artifact {
+		header,
+		payloads,
+		captures,
+	})
 }
 
 #[cfg(test)]
@@ -727,6 +791,9 @@ mod tests {
 
 	/// A stand-in viability table: the envelope checks bytes and hashes, and the engine checks the table's content.
 	const VIABILITY: [u8; 6] = [9; 6];
+
+	/// A stand-in capture program: the envelope checks its bytes and hash, and the engine checks its content.
+	const CAPTURES: &[u8] = br#"{"shapes":{},"terms":{}}"#;
 
 	fn header(roles: &[Role]) -> Header {
 		Header {
@@ -747,8 +814,9 @@ mod tests {
 				})
 				.collect(),
 			byte_order: "little".to_string(),
+			captures_sha256: sha256_hex(CAPTURES),
 			compiler_version: COMPILER_VERSION.to_string(),
-			declarations_hash: DECLARATIONS_HASH_UNSET.to_string(),
+			declarations_hash: "cd".repeat(32),
 			family: "sample".to_string(),
 			format: ARTIFACT_FORMAT.to_string(),
 			input_limit_bytes: 4096,
@@ -775,7 +843,7 @@ mod tests {
 			},
 		];
 
-		assemble(&header(&[Role::Whole, Role::Embedded]), &payloads).unwrap()
+		assemble(&header(&[Role::Whole, Role::Embedded]), &payloads, CAPTURES).unwrap()
 	}
 
 	#[test]
@@ -788,6 +856,7 @@ mod tests {
 		assert_eq!(parsed.payloads[0].bytes, &[7u8; 13]);
 		assert_eq!(parsed.payloads[1].bytes, &[7u8; 5]);
 		assert_eq!(parsed.payloads[0].viability, &VIABILITY);
+		assert_eq!(parsed.captures, CAPTURES);
 		assert_eq!(parsed.header, header(&[Role::Whole, Role::Embedded]));
 	}
 
@@ -816,13 +885,13 @@ mod tests {
 		let mut bad = good.clone();
 
 		// The previous schema version is refused with its own number, so a stale committed file names itself.
-		bad[4] = 1;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(1));
+		bad[4] = 2;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(2));
 
 		let mut bad = good.clone();
 
-		bad[4] = 3;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(3));
+		bad[4] = 4;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(4));
 
 		let mut bad = good.clone();
 
@@ -860,7 +929,7 @@ mod tests {
 		}];
 
 		assert!(matches!(
-			assemble(&wrong_compiler, &payloads).unwrap_err(),
+			assemble(&wrong_compiler, &payloads, CAPTURES).unwrap_err(),
 			ArtifactError::CompilerVersion { .. }
 		));
 
@@ -868,9 +937,24 @@ mod tests {
 
 		bad_hash.ir_hash = "XYZ".to_string();
 		assert!(matches!(
-			assemble(&bad_hash, &payloads).unwrap_err(),
+			assemble(&bad_hash, &payloads, CAPTURES).unwrap_err(),
 			ArtifactError::Field { field: "irHash", .. }
 		));
+
+		assert_eq!(
+			assemble(&header(&[Role::Whole]), &payloads, b"{}").unwrap_err(),
+			ArtifactError::CapturesHash
+		);
+	}
+
+	#[test]
+	fn a_capture_program_whose_bytes_changed_is_refused() {
+		let mut bytes = sample();
+		let parsed = parse(&bytes).unwrap();
+		let at = parsed.captures.as_ptr() as usize - bytes.as_ptr() as usize + 2;
+
+		bytes[at] = b'X';
+		assert_eq!(parse(&bytes).unwrap_err(), ArtifactError::CapturesHash);
 	}
 
 	#[test]

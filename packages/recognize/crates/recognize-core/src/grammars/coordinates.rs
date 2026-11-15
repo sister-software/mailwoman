@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! The `coordinates` family, as far as the compiler needs it: one unvalidated decimal pair, built from the same signed
-//! decimal grammar as `primitives`. The range validator, the `geo:` URI and the whole-input scope rules belong to the
-//! coordinate work in a later phase.
+//! The `coordinates` family, as far as the engine needs it: one decimal pair, built from the same signed decimal grammar
+//! as `primitives`, with a parse-level validator. The WGS84 range validator, the `geo:` URI and the whole-input scope
+//! rules belong to the coordinate work in a later phase.
 //!
-//! - `coordinate.decimal_pair`: a signed decimal, a comma with optional whitespace around it, a signed decimal.
+//! - `coordinate.decimal_pair`: a signed decimal, a comma with optional whitespace around it, a signed decimal. The
+//!   `FiniteDecimalPair` validator proves both captures parse as finite numbers.
 
 use crate::ast::{capture, class, literal, reference, sequence, zero_or_more};
 use crate::family::{shape, term, Family};
@@ -31,6 +32,7 @@ pub fn family() -> Family {
 				]))
 				.capture("latitude", CaptureType::Decimal)
 				.capture("longitude", CaptureType::Decimal)
+				.validator("FiniteDecimalPair")
 				.scope(Scope::WholeOrEmbedded),
 		)
 }

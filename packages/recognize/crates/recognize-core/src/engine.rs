@@ -11,9 +11,12 @@ use std::fmt;
 use regex_automata::dfa::{dense, sparse, Automaton, OverlappingState};
 use regex_automata::{Anchored, Input};
 
-use crate::artifact::{parse, ArtifactError, Backend, Header, PatternMeta, Role, DECLARATIONS_HASH_UNSET};
+use crate::artifact::{parse, ArtifactError, Backend, Header, PatternMeta, Role};
+use crate::captures::{extract, CaptureProgram, ExtractError};
+use crate::declared;
 use crate::ir::Scope;
 use crate::prefix::start_state;
+use crate::recognition::{Recognition, Rejection, ValidationResult};
 use crate::viability::Viability;
 
 /// One recognized span: the shape, and the UTF-8 byte range `start..end` of the text that matches it.
@@ -73,6 +76,7 @@ pub(crate) struct LoadedFamily {
 	pub(crate) header: Header,
 	pub(crate) whole: Option<Loaded>,
 	pub(crate) embedded: Option<Loaded>,
+	pub(crate) program: CaptureProgram,
 }
 
 /// Several families' automata, searched in one call.
@@ -165,9 +169,22 @@ impl Engine {
 			}
 		}
 
+		// An artifact built from other declarations than the ones this crate holds would dispatch a shape to the wrong
+		// validator, so it is refused whatever the caller expects.
+		if let Some(declared) = declared::declarations_hash(&header.family) {
+			if declared != header.declarations_hash {
+				return Err(ArtifactError::DeclarationsHash {
+					expected: declared.to_string(),
+					found: header.declarations_hash,
+				});
+			}
+		}
+
 		if self.families.iter().any(|family| family.header.family == header.family) {
 			return Err(ArtifactError::DuplicateFamily(header.family));
 		}
+
+		let program = CaptureProgram::from_bytes(artifact.captures).map_err(ArtifactError::CaptureProgram)?;
 
 		let mut whole = None;
 		let mut embedded = None;
@@ -219,6 +236,7 @@ impl Engine {
 			header,
 			whole,
 			embedded,
+			program,
 		});
 
 		Ok(())
@@ -240,12 +258,6 @@ impl Engine {
 			.find(|header| header.family == family)
 	}
 
-	/// Whether the artifact carries the placeholder declarations hash.
-	pub fn has_declarations_hash(&self, family: &str) -> bool {
-		self.header(family)
-			.is_some_and(|header| header.declarations_hash != DECLARATIONS_HASH_UNSET)
-	}
-
 	/// Searches bytes that may not be UTF-8. Non-UTF-8 input is refused, because a span over it has no codepoint
 	/// boundaries to respect.
 	pub fn search_bytes(&self, bytes: &[u8]) -> Result<Vec<Candidate<'_>>, SearchError> {
@@ -261,7 +273,19 @@ impl Engine {
 	/// Offsets are UTF-8 byte offsets and each lies on a codepoint boundary. The crate documentation states which
 	/// spans a shape reports.
 	pub fn search(&self, text: &str) -> Result<Vec<Candidate<'_>>, SearchError> {
-		for family in &self.families {
+		self.search_in(text, |_| true)
+	}
+
+	/// Like [`Engine::search`], over the families `include` accepts. The argument is a family's position in load order.
+	/// One engine can serve callers that compose different families, because each caller names its own.
+	pub fn search_in(&self, text: &str, include: impl Fn(usize) -> bool) -> Result<Vec<Candidate<'_>>, SearchError> {
+		for family in self
+			.families
+			.iter()
+			.enumerate()
+			.filter(|(index, _)| include(*index))
+			.map(|(_, family)| family)
+		{
 			let limit = family.header.input_limit_bytes as usize;
 
 			if text.len() > limit {
@@ -279,7 +303,7 @@ impl Engine {
 			return Ok(Vec::new());
 		}
 
-		for (family_index, family) in self.families.iter().enumerate() {
+		for (family_index, family) in self.families.iter().enumerate().filter(|(index, _)| include(*index)) {
 			if let Some(whole) = &family.whole {
 				for pattern in whole_matches(whole, text)? {
 					found.insert((0, text.len(), family_index, whole.patterns[pattern].shape.as_str()));
@@ -310,6 +334,68 @@ impl Engine {
 				shape,
 			})
 			.collect())
+	}
+}
+
+impl Engine {
+	/// Every candidate of every loaded family with its validation: the span's captures are extracted and validated
+	/// before a payload exists, and a shape without a validator carries its span and raw text only.
+	pub fn recognize<'engine, 'text>(
+		&'engine self,
+		text: &'text str,
+	) -> Result<Vec<Recognition<'engine, 'text>>, SearchError> {
+		self.recognize_in(text, |_| true)
+	}
+
+	/// Like [`Engine::recognize`], over the families `include` accepts. See [`Engine::search_in`].
+	pub fn recognize_in<'engine, 'text>(
+		&'engine self,
+		text: &'text str,
+		include: impl Fn(usize) -> bool,
+	) -> Result<Vec<Recognition<'engine, 'text>>, SearchError> {
+		let candidates = self.search_in(text, include)?;
+		let mut recognitions = Vec::with_capacity(candidates.len());
+
+		for candidate in candidates {
+			let kind = declared::kind(candidate.family, candidate.shape);
+			let validation = match kind.filter(|kind| kind.validated()) {
+				None => ValidationResult::Unvalidated,
+				Some(kind) => {
+					let family = self
+						.families
+						.iter()
+						.find(|family| family.header.family == candidate.family)
+						.expect("a candidate's family is loaded");
+
+					match extract(&family.program, candidate.shape, text, candidate.start, candidate.end) {
+						Ok(captures) => match declared::bind(kind, &captures) {
+							Some(Ok(payload)) => ValidationResult::Validated(payload),
+							Some(Err(rejection)) => ValidationResult::Rejected(rejection),
+							None => ValidationResult::Unvalidated,
+						},
+						Err(ExtractError::Limit) => ValidationResult::Rejected(Rejection::new(
+							"capture_limit",
+							None,
+							"the capture walk passed its step or depth limit",
+						)),
+						Err(ExtractError::NoParse) => ValidationResult::Rejected(Rejection::new(
+							"capture_mismatch",
+							None,
+							"no parse of the capture program consumes the span its automaton accepted",
+						)),
+					}
+				}
+			};
+
+			recognitions.push(Recognition {
+				text: &text[candidate.start..candidate.end],
+				candidate,
+				kind,
+				validation,
+			});
+		}
+
+		Ok(recognitions)
 	}
 }
 

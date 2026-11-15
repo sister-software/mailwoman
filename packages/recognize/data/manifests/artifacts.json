@@ -18,11 +18,11 @@
 					"states": 20
 				}
 			],
-			"bytes": 5264,
+			"bytes": 7056,
 			"compilerVersion": "0.1.0",
-			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
-			"irHash": "003b36d9ea437ce7c049651057644c2a44c6025f346183e47ef16fd3c5f8a1db",
-			"sha256": "6208dc98fc59606e999d06c980329a1fbdb646d6636c513df9b6aa8835ce72a6",
+			"declarationsHash": "cd2e1d708451c0f59780fd5e7bd4d39bb7a778c2f6286d261b5213358f0661cb",
+			"irHash": "99844071ca9259fee6463e715e229a566839e8d0e107d1d7aed7ef7306ab60c2",
+			"sha256": "c5a115acf1256aee8405ef32787bff0edbed8a1c80a1a44b71384d3927670426",
 			"unicodeVersion": "16.0.0"
 		},
 		"primitives": {
@@ -43,11 +43,11 @@
 					"states": 22
 				}
 			],
-			"bytes": 8232,
+			"bytes": 8352,
 			"compilerVersion": "0.1.0",
-			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+			"declarationsHash": "bfabfbf450eaa8a203c939e38e9dcde3fd40f2f41f5dd634c782e7c054ba1ae4",
 			"irHash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
-			"sha256": "fb6889e551a1419c1b9f493c418abf7cdb9413b3d7e8146692593788511fc1ec",
+			"sha256": "5a62cad1bc8e7fe76d32d665d573ce2f526d773344eb1a31df1d258c45a81393",
 			"unicodeVersion": "16.0.0"
 		}
 	},
