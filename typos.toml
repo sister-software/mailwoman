@@ -388,7 +388,24 @@ extend-glob = [
 	"register.test.ts",
 	"locale.test.ts",
 ]
-extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine" }
+extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine", centre = "centre", centres = "centres", organisations = "organisations" }
+
+[type.es-sanidad-centros]
+# The reader of Spain's primary-care catalogue, `Centros de Atención Primaria`: its functions are spelled after
+# the source's `centros` (`readSanidadCentre`), and its records hold codes of the statistics institute INE.
+extend-glob = ["sanidad-centros-ap.ts", "sanidad-centros-ap.test.ts"]
+extend-words = { centre = "centre", centres = "centres", ine = "ine" }
+
+[type.nz-charities-register]
+# New Zealand's Charities Register OData service spells its entity set `vOrganisations`, its key
+# `OrganisationId` and its download `organisations.csv`.
+extend-glob = ["charities-register.ts"]
+extend-words = { organisation = "organisation", organisations = "organisations" }
+
+[type.heldout-country-rows]
+# The Brocken, the mountain in Germany's Harz range, as a GeoNames feature in a held-out test row.
+extend-glob = ["country.test.ts"]
+extend-words = { brocken = "brocken" }
 
 [type.french-street-types]
 # FINESS's street-type and postal-line tables, which hold the French words a code stands for.
@@ -528,7 +545,7 @@ extend-glob = [
 ]
 extend-identifiers = { neighbourhood = "neighbourhood" }
 # The adapter type also reads multilingual publisher fields.
-extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", CONSOLATO = "CONSOLATO", CONSTITUCION = "CONSTITUCION", IZ = "IZ", ine = "ine" }
+extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", CONSOLATO = "CONSOLATO", CONSTITUCION = "CONSTITUCION", IZ = "IZ", ine = "ine", centre = "centre", centres = "centres", organisations = "organisations" }
 
 [type.zoning-source-fields]
 extend-glob = ["vocabulary.ts"]
