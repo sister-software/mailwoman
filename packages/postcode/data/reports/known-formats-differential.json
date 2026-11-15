@@ -1,0 +1,77 @@
+{
+	"comparison": "recognize with the structure and postcode_legacy families against computeQueryShape, knownFormats",
+	"fields": ["knownFormats"],
+	"sampling": "every row of every source, in file order; no sampling and no deduplication",
+	"rows": 121878,
+	"differingRows": 0,
+	"differencesListed": 0,
+	"differencesCap": 200,
+	"sources": [
+		{
+			"source": "corpus/heldout/heldout-dev-v0.8.18.v2.rows.jsonl",
+			"field": "raw",
+			"rows": 86845,
+			"differingRows": 0,
+			"rowsWithKnownFormats": 24608,
+			"rowsContainingFormat": {
+				"nl_postcode": 2063,
+				"cz_postcode": 1079,
+				"sk_postcode": 1079,
+				"se_postcode": 1079,
+				"gr_postcode": 1079,
+				"po_box": 193,
+				"us_zip": 17301,
+				"fr_postcode": 17301,
+				"de_postcode": 17301,
+				"ca_postcode": 986,
+				"jp_postcode": 953,
+				"uk_postcode": 2082,
+				"us_zip4": 113
+			}
+		},
+		{
+			"source": "corpus/heldout/heldout-confirm-v0.8.18.v2.rows.jsonl",
+			"field": "raw",
+			"rows": 33402,
+			"differingRows": 0,
+			"rowsWithKnownFormats": 18446,
+			"rowsContainingFormat": {
+				"nl_postcode": 2036,
+				"po_box": 40,
+				"us_zip": 12530,
+				"fr_postcode": 12530,
+				"de_postcode": 12530,
+				"cz_postcode": 197,
+				"sk_postcode": 197,
+				"se_postcode": 197,
+				"gr_postcode": 197,
+				"ca_postcode": 984,
+				"jp_postcode": 915,
+				"uk_postcode": 1666,
+				"us_zip4": 143
+			}
+		},
+		{
+			"source": "packages/mailwoman/tools/eval-harness/gauntlet/cases/*/*.jsonl",
+			"field": "input",
+			"rows": 1631,
+			"differingRows": 0,
+			"rowsWithKnownFormats": 367,
+			"rowsContainingFormat": {
+				"po_box": 13,
+				"us_zip": 220,
+				"fr_postcode": 220,
+				"de_postcode": 220,
+				"ca_postcode": 5,
+				"cz_postcode": 4,
+				"sk_postcode": 4,
+				"se_postcode": 4,
+				"gr_postcode": 4,
+				"nl_postcode": 6,
+				"uk_postcode": 125,
+				"jp_postcode": 4
+			}
+		}
+	],
+	"differences": []
+}

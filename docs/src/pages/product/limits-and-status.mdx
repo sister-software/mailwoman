@@ -3,6 +3,8 @@ title: Limits and release status
 description: What Mailwoman 11.0.0 publishes, what a user can build or install, and what the current evidence establishes.
 ---
 
+import SupportMatrix from "@site/src/components/SupportMatrix/SupportMatrix"
+
 # Limits and release status
 
 This page records the evidence checked on 9 November 2026 for published `mailwoman@11.0.0`. A package declaration, a downloadable data bundle, an installed database, and a coordinate-graded evaluation answer different availability questions. Check your own installation before relying on a coordinate result.
@@ -40,18 +42,11 @@ To inspect your own installation, run `mailwoman data status` and `mailwoman doc
 
 ## Locale claims and evaluation
 
-The maintained [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json) assign these locale tiers. The tiers describe project claims and delivery mechanisms. Which data bundles a reader's machine holds is a separate question, answered by `mailwoman data status`.
+The [support reference](/docs/reference/support) lists each support promise: the country, the language and script of the typed text, and the deepest component Mailwoman guarantees. A promise holds only while the regression suite has a passing case in that country and script. Which data bundles a reader's machine holds is a separate question, answered by `mailwoman data status`.
 
-| Scope classification      | Countries in the maintained register                                         | What the classification records                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Tier 1                    | <Countries join="plain" codes="US FR" />                                     | First-class claim with project evaluation records.                                                    |
-| Tier 2                    | <Countries join="plain" codes="AT AU BE CH CZ DE DK ES FI HR IT NL PL PT" /> | Trained locales with dated coordinate panels.                                                         |
-| Tier 3                    | <Countries join="plain" codes="NO SE" />                                     | Trained exposure with thinner dated coordinate evidence.                                              |
-| Tier 4                    | <Countries join="plain" codes="CZ PL SI SK" />                               | Shipped diacritic-tokenizer mechanism. <Countries codes="CZ PL" /> also belong to tier 2.             |
-| Tier 5                    | <Countries join="plain" codes="JP KR TW" />                                  | Published character-path mechanism with country-specific evidence described in the scope declaration. |
-| Untiered shipping locales | <Countries join="plain" codes="CN GB IN NZ" />                               | The scope register records why each of these shipping locales sits outside the tiers.                 |
+<SupportMatrix />
 
-The scope declaration cites coordinate evaluations for its graded tiers and describes separate <Countries codes="JP KR TW" /> evidence. Those records come from earlier artifacts and dated panels. The [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json) has a model 10.8.0 entry with label and arena metric groups. A coordinate-graded result for the exact 11.0.0 published package and current data bundles is unknown from that ledger. The `candidate` bundle's declared 244-country coverage describes place data. The scope declaration supplies the separate evidence for evaluated accuracy.
+The [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) keeps the coordinate evaluations and the separate <Countries codes="JP KR TW" /> evidence each country group recorded. Those records come from earlier artifacts and dated panels. The [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json) has a model 10.8.0 entry with label and arena metric groups. A coordinate-graded result for the exact 11.0.0 published package and current data bundles is unknown from that ledger. The `candidate` bundle's declared 244-country coverage describes place data. The scope declaration supplies the separate evidence for evaluated accuracy.
 
 For the current API fields and their evidence scopes, read the [result schema](/docs/reference/schema). [Start with one parse](/docs/start) before installing geographic data, or return to the [product overview](/product) for the parser and geocoder split.
 

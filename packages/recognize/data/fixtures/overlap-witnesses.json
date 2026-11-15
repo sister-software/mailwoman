@@ -1,0 +1,15 @@
+{
+	"pairs": [
+		{
+			"a": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "0"
+		}
+	]
+}

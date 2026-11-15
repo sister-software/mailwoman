@@ -1,107 +1,79 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { SUPPORT_PROMISES } from "@mailwoman/codex/support"
 import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
-import { readScopeConfig, SCOPE_TIER_KEYS, tieredCountries } from "@mailwoman/core/scope-config"
-import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { resolvePath } from "path-ts"
+import { readScopeConfig } from "@mailwoman/core/scope-config"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 
-const DECLARATION = "docs/engineering/SCOPE.mdx"
 const REGISTER = "scope.config.json"
 
-const TIER_ROW = /^\|\s*\*\*(\d)\s/
-
-const COUNTRY_CODE = /^[A-Z]{2}$/
+/**
+ * The inputs the scope comparison reads.
+ */
+export interface ShippingScope {
+	/**
+	 * Countries whose weights package ships, from `release.config.json`'s locales.
+	 */
+	shipping: ReadonlySet<string>
+	/**
+	 * Countries that hold a support promise.
+	 */
+	promised: ReadonlySet<string>
+	/**
+	 * `scope.config.json`'s `unpromisedShippingLocales`: country to reason.
+	 */
+	unpromised: Readonly<Record<string, string>>
+}
 
 /**
- * Parses the tier table in `SCOPE.mdx` into a map from tier number to the country codes listed in that tier.
+ * Compares the shipping countries with the promises and the stated reasons.
  *
- * A country can appear in more than one tier, so the map mustn't be inverted to look up a country's tier.
+ * Every shipping country holds a promise or a non-empty reason, and no reason outlives its cause.
  */
-export function declaredTiers(markdown: string): Map<string, string[]> {
-	const tiers = new Map<string, string[]>()
+export function compareShippingScope(scope: ShippingScope): Diagnostic[] {
+	const diagnostics: Diagnostic[] = []
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one declaration page, read whole and bounded
-	for (const line of markdown.split("\n")) {
-		const match = TIER_ROW.exec(line)
+	const error = (message: string): void => {
+		diagnostics.push({ severity: DiagnosticSeverity.Error, message, file: REGISTER, line: null, details: null })
+	}
 
-		if (!match?.[1]) continue
+	for (const country of [...scope.shipping].toSorted()) {
+		if (scope.promised.has(country) || scope.unpromised[country]) continue
 
-		const cells = line.split("|")
-		const locales = cells[2]
-
-		if (!locales) continue
-
-		tiers.set(
-			match[1],
-			extractDelimited(locales).filter((entry) => COUNTRY_CODE.test(entry))
+		error(
+			`${country} ships a weights package, holds no support promise, and has no entry in unpromisedShippingLocales saying why`
 		)
 	}
 
-	return tiers
-}
+	for (const [country, reason] of Object.entries(scope.unpromised)) {
+		if (country.startsWith("$")) continue
 
-function difference(left: readonly string[], right: readonly string[]): string[] {
-	const held = new Set(right)
+		if (!reason) {
+			error(
+				`unpromisedShippingLocales lists ${country} with an empty reason; an entry is a debt with a reason someone can read, not an exemption`
+			)
+		} else if (scope.promised.has(country)) {
+			error(`unpromisedShippingLocales still lists ${country}, which now holds a support promise; remove the entry`)
+		} else if (!scope.shipping.has(country)) {
+			error(`unpromisedShippingLocales lists ${country}, which no longer ships a weights package; remove the entry`)
+		}
+	}
 
-	return left.filter((entry) => !held.has(entry)).toSorted()
+	return diagnostics
 }
 
 /**
- * Checks that `scope.config.json` matches the `SCOPE.mdx` tier table, that every
- * shipping locale is tiered or has a stated reason.
- * The reason lists must contain no empty or stale entries.
+ * Checks that every shipping locale's country holds a support promise
+ * or a stated reason in `scope.config.json`.
  */
 export const localeScopeCheck: RepoCheck = {
 	id: "locale-scope",
-	description: "scope.config.json agrees with SCOPE.mdx's tier table, and every shipping locale is placed in it.",
+	description:
+		"Every shipping locale's country holds a support promise or a stated reason in scope.config.json, and no reason is stale.",
 	async run(context) {
 		const scope = await readScopeConfig(context.repoRoot)
-		const declared = declaredTiers(await readLocalTextFile(resolvePath(context.repoRoot, DECLARATION)))
-		const diagnostics: Diagnostic[] = []
-
-		if (declared.size < SCOPE_TIER_KEYS.length) {
-			diagnostics.push({
-				severity: DiagnosticSeverity.Error,
-				message: `parsed ${declared.size} tier rows out of the declaration; ${SCOPE_TIER_KEYS.length} are expected, so the parser matched nothing and every comparison below is vacuous`,
-				file: DECLARATION,
-				line: null,
-				details: null,
-			})
-
-			return diagnostics
-		}
-
-		for (const tier of SCOPE_TIER_KEYS) {
-			const inDoc = declared.get(tier) ?? []
-			const inRegister = scope.tiers[tier] ?? []
-
-			for (const country of difference(inDoc, inRegister)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `tier ${tier} holds ${country} in the declaration and not in the register`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-
-			for (const country of difference(inRegister, inDoc)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `tier ${tier} holds ${country} in the register and not in the declaration`,
-					file: DECLARATION,
-					line: null,
-					details: null,
-				})
-			}
-		}
-
-		const tiered = tieredCountries(scope)
-		const untiered = scope.untieredShippingLocales ?? {}
 
 		const shipping = new Set(
 			[...shippingLocales(await readReleaseConfig(context.repoRoot))]
@@ -109,54 +81,10 @@ export const localeScopeCheck: RepoCheck = {
 				.filter((country): country is string => typeof country === "string")
 		)
 
-		for (const country of [...shipping].toSorted()) {
-			if (tiered.has(country)) continue
-
-			if (!untiered[country]) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `${country} ships a weights package, sits in no tier, and has no entry in untieredShippingLocales saying why`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-		}
-
-		for (const [country, reason] of Object.entries(untiered)) {
-			if (country.startsWith("$")) continue
-
-			if (!reason) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `untieredShippingLocales names ${country} with an empty reason; an entry is a debt with a reason someone can read, not an exemption`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-
-				continue
-			}
-
-			if (tiered.has(country)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `untieredShippingLocales still names ${country}, which the declaration now places in a tier — remove the entry`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			} else if (!shipping.has(country)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `untieredShippingLocales names ${country}, which no longer ships a weights package — remove the entry`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-		}
-
-		return diagnostics
+		return compareShippingScope({
+			shipping,
+			promised: new Set(SUPPORT_PROMISES.map((promise) => promise.country)),
+			unpromised: scope.unpromisedShippingLocales ?? {},
+		})
 	},
 }

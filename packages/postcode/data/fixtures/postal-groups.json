@@ -1,0 +1,475 @@
+{
+	"bare": [
+		{
+			"shape": "postal.ac",
+			"countries": ["AC"]
+		},
+		{
+			"shape": "postal.ad",
+			"countries": ["AD"]
+		},
+		{
+			"shape": "postal.af",
+			"countries": [
+				"AF",
+				"AL",
+				"AT",
+				"AU",
+				"AZ",
+				"BD",
+				"BE",
+				"BG",
+				"CH",
+				"CV",
+				"CY",
+				"DK",
+				"ET",
+				"GE",
+				"GW",
+				"HM",
+				"HT",
+				"HU",
+				"LR",
+				"LU",
+				"MD",
+				"MK",
+				"MZ",
+				"NE",
+				"NO",
+				"NZ",
+				"PH",
+				"PY",
+				"SI",
+				"SJ",
+				"TN",
+				"VE",
+				"ZA"
+			]
+		},
+		{
+			"shape": "postal.ai",
+			"countries": ["AI"]
+		},
+		{
+			"shape": "postal.am",
+			"countries": ["AM"]
+		},
+		{
+			"shape": "postal.ar",
+			"countries": ["AR"]
+		},
+		{
+			"shape": "postal.as",
+			"countries": ["AS"]
+		},
+		{
+			"shape": "postal.ax",
+			"countries": ["AX"]
+		},
+		{
+			"shape": "postal.ba",
+			"countries": [
+				"BA",
+				"BT",
+				"CU",
+				"DE",
+				"DO",
+				"DZ",
+				"EE",
+				"EG",
+				"EH",
+				"ES",
+				"FI",
+				"GT",
+				"HN",
+				"HR",
+				"ID",
+				"IQ",
+				"IT",
+				"JO",
+				"KE",
+				"KR",
+				"KW",
+				"LA",
+				"LK",
+				"LT",
+				"MA",
+				"MM",
+				"MN",
+				"MV",
+				"MX",
+				"MY",
+				"NA",
+				"NI",
+				"NP",
+				"PK",
+				"SA",
+				"SD",
+				"SN",
+				"TH",
+				"TR",
+				"UA",
+				"UY",
+				"ZM"
+			]
+		},
+		{
+			"shape": "postal.bb",
+			"countries": ["BB"]
+		},
+		{
+			"shape": "postal.bh",
+			"countries": ["BH"]
+		},
+		{
+			"shape": "postal.bl",
+			"countries": ["BL", "GP", "MF"]
+		},
+		{
+			"shape": "postal.bm",
+			"countries": ["BM"]
+		},
+		{
+			"shape": "postal.bn",
+			"countries": ["BN"]
+		},
+		{
+			"shape": "postal.br",
+			"countries": ["BR"]
+		},
+		{
+			"shape": "postal.by",
+			"countries": ["BY", "CN", "CO", "EC", "IN", "KG", "KZ", "NG", "RO", "RU", "SG", "TJ", "TM", "UZ"]
+		},
+		{
+			"shape": "postal.ca",
+			"countries": ["CA"]
+		},
+		{
+			"shape": "postal.cc",
+			"countries": ["CC"]
+		},
+		{
+			"shape": "postal.cl",
+			"countries": ["CL"]
+		},
+		{
+			"shape": "postal.cr",
+			"countries": ["CR"]
+		},
+		{
+			"shape": "postal.cx",
+			"countries": ["CX"]
+		},
+		{
+			"shape": "postal.cz",
+			"countries": ["CZ", "GR", "SE", "SK"]
+		},
+		{
+			"shape": "postal.fk",
+			"countries": ["FK"]
+		},
+		{
+			"shape": "postal.fm",
+			"countries": ["FM"]
+		},
+		{
+			"shape": "postal.fo",
+			"countries": ["FO", "GN", "IS", "LS", "MG", "PG"]
+		},
+		{
+			"shape": "postal.fr",
+			"countries": ["FR"]
+		},
+		{
+			"shape": "postal.gb",
+			"countries": ["GB"]
+		},
+		{
+			"shape": "postal.gf",
+			"countries": ["GF"]
+		},
+		{
+			"shape": "postal.gg",
+			"countries": ["GG"]
+		},
+		{
+			"shape": "postal.gi",
+			"countries": ["GI"]
+		},
+		{
+			"shape": "postal.gl",
+			"countries": ["GL"]
+		},
+		{
+			"shape": "postal.gs",
+			"countries": ["GS"]
+		},
+		{
+			"shape": "postal.gu",
+			"countries": ["GU"]
+		},
+		{
+			"shape": "postal.ie",
+			"countries": ["IE"]
+		},
+		{
+			"shape": "postal.il",
+			"countries": ["IL"]
+		},
+		{
+			"shape": "postal.im",
+			"countries": ["IM"]
+		},
+		{
+			"shape": "postal.io",
+			"countries": ["IO"]
+		},
+		{
+			"shape": "postal.ir",
+			"countries": ["IR"]
+		},
+		{
+			"shape": "postal.je",
+			"countries": ["JE"]
+		},
+		{
+			"shape": "postal.jp",
+			"countries": ["JP"]
+		},
+		{
+			"shape": "postal.kh",
+			"countries": ["KH", "RS", "VN"]
+		},
+		{
+			"shape": "postal.ky",
+			"countries": ["KY"]
+		},
+		{
+			"shape": "postal.lb",
+			"countries": ["LB"]
+		},
+		{
+			"shape": "postal.li",
+			"countries": ["LI"]
+		},
+		{
+			"shape": "postal.lv",
+			"countries": ["LV"]
+		},
+		{
+			"shape": "postal.mc",
+			"countries": ["MC"]
+		},
+		{
+			"shape": "postal.me",
+			"countries": ["ME"]
+		},
+		{
+			"shape": "postal.mh",
+			"countries": ["MH"]
+		},
+		{
+			"shape": "postal.mp",
+			"countries": ["MP"]
+		},
+		{
+			"shape": "postal.mq",
+			"countries": ["MQ"]
+		},
+		{
+			"shape": "postal.mt",
+			"countries": ["MT"]
+		},
+		{
+			"shape": "postal.mu",
+			"countries": ["MU"]
+		},
+		{
+			"shape": "postal.nc",
+			"countries": ["NC"]
+		},
+		{
+			"shape": "postal.nf",
+			"countries": ["NF"]
+		},
+		{
+			"shape": "postal.nl",
+			"countries": ["NL"]
+		},
+		{
+			"shape": "postal.om",
+			"countries": ["OM"]
+		},
+		{
+			"shape": "postal.pe",
+			"countries": ["PE"]
+		},
+		{
+			"shape": "postal.pf",
+			"countries": ["PF"]
+		},
+		{
+			"shape": "postal.pl",
+			"countries": ["PL"]
+		},
+		{
+			"shape": "postal.pm",
+			"countries": ["PM"]
+		},
+		{
+			"shape": "postal.pn",
+			"countries": ["PN"]
+		},
+		{
+			"shape": "postal.pr",
+			"countries": ["PR"]
+		},
+		{
+			"shape": "postal.pt",
+			"countries": ["PT"]
+		},
+		{
+			"shape": "postal.pw",
+			"countries": ["PW"]
+		},
+		{
+			"shape": "postal.re",
+			"countries": ["RE"]
+		},
+		{
+			"shape": "postal.sh",
+			"countries": ["SH"]
+		},
+		{
+			"shape": "postal.sm",
+			"countries": ["SM"]
+		},
+		{
+			"shape": "postal.so",
+			"countries": ["SO"]
+		},
+		{
+			"shape": "postal.sv",
+			"countries": ["SV"]
+		},
+		{
+			"shape": "postal.sz",
+			"countries": ["SZ"]
+		},
+		{
+			"shape": "postal.ta",
+			"countries": ["TA"]
+		},
+		{
+			"shape": "postal.tc",
+			"countries": ["TC"]
+		},
+		{
+			"shape": "postal.tw",
+			"countries": ["TW"]
+		},
+		{
+			"shape": "postal.tz",
+			"countries": ["TZ"]
+		},
+		{
+			"shape": "postal.um",
+			"countries": ["UM"]
+		},
+		{
+			"shape": "postal.us",
+			"countries": ["US"]
+		},
+		{
+			"shape": "postal.va",
+			"countries": ["VA"]
+		},
+		{
+			"shape": "postal.vc",
+			"countries": ["VC"]
+		},
+		{
+			"shape": "postal.vg",
+			"countries": ["VG"]
+		},
+		{
+			"shape": "postal.vi",
+			"countries": ["VI"]
+		},
+		{
+			"shape": "postal.wf",
+			"countries": ["WF"]
+		},
+		{
+			"shape": "postal.xk",
+			"countries": ["XK"]
+		},
+		{
+			"shape": "postal.yt",
+			"countries": ["YT"]
+		}
+	],
+	"printed": [
+		{
+			"shape": "printed.ax",
+			"countries": ["AX"]
+		},
+		{
+			"shape": "printed.az",
+			"countries": ["AZ"]
+		},
+		{
+			"shape": "printed.ch",
+			"countries": ["CH"]
+		},
+		{
+			"shape": "printed.fi",
+			"countries": ["FI"]
+		},
+		{
+			"shape": "printed.fo",
+			"countries": ["FO"]
+		},
+		{
+			"shape": "printed.hr",
+			"countries": ["HR"]
+		},
+		{
+			"shape": "printed.ht",
+			"countries": ["HT"]
+		},
+		{
+			"shape": "printed.jp",
+			"countries": ["JP"]
+		},
+		{
+			"shape": "printed.li",
+			"countries": ["LI"]
+		},
+		{
+			"shape": "printed.lt",
+			"countries": ["LT"]
+		},
+		{
+			"shape": "printed.lu",
+			"countries": ["LU"]
+		},
+		{
+			"shape": "printed.mc",
+			"countries": ["MC"]
+		},
+		{
+			"shape": "printed.md",
+			"countries": ["MD"]
+		},
+		{
+			"shape": "printed.se",
+			"countries": ["SE"]
+		},
+		{
+			"shape": "printed.si",
+			"countries": ["SI"]
+		}
+	]
+}

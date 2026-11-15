@@ -27,6 +27,7 @@ import { ReloadDataOperation } from "#operations/reload-data"
 import { ResolveTreeOperation } from "#operations/resolve-tree"
 import { RetrieveHealthOperation } from "#operations/retrieve/health"
 import { RetrieveMetricsOperation } from "#operations/retrieve/metrics"
+import { reportSupport } from "#support"
 
 /**
  * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted.
@@ -135,7 +136,9 @@ export function registerMailwomanAPIRoutes(
 				.then((result) => {
 					recordTimed(performance.now() - t0, result.resolution_tier)
 
-					return c.json(withEngineStamp(result, stamp), 200)
+					const response = { ...result, support: reportSupport(trimmed, result.countryCode) }
+
+					return c.json(withEngineStamp(response, stamp), 200)
 				})
 				.catch((error) => {
 					recordTimed(performance.now() - t0, "error")
@@ -170,8 +173,14 @@ export function registerMailwomanAPIRoutes(
 			const t0 = performance.now()
 
 			try {
-				const response = await engine.batch(addresses, { inputMode: input_mode })
+				const batch = await engine.batch(addresses, { inputMode: input_mode })
 				recordTimed(performance.now() - t0, "batch")
+
+				const response = {
+					results: batch.results.map((row) =>
+						"error" in row ? row : { ...row, support: reportSupport(row.input, row.countryCode) }
+					),
+				}
 
 				return c.json(withEngineStamp(response, stamp), 200)
 			} catch (error) {

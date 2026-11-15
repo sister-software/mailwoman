@@ -1,0 +1,205 @@
+{
+	"crossFamily": {
+		"equivalent": [],
+		"overlaps": []
+	},
+	"families": {
+		"coordinates": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 14820,
+					"patterns": 2,
+					"role": "whole",
+					"states": 54
+				},
+				{
+					"backend": "dense",
+					"bytes": 18204,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 66
+				}
+			],
+			"equivalent": [],
+			"overlaps": [],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "coordinate.decimal_pair",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "WGS84Pair"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.geo_uri",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "GeoURI"
+				}
+			],
+			"unreachable": []
+		},
+		"primitives": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 2816,
+					"patterns": 4,
+					"role": "whole",
+					"states": 15
+				},
+				{
+					"backend": "dense",
+					"bytes": 3816,
+					"patterns": 4,
+					"role": "embedded",
+					"states": 22
+				}
+			],
+			"equivalent": [],
+			"overlaps": [
+				{
+					"a": "number.digit_run",
+					"b": "number.signed_decimal",
+					"declared": true,
+					"witness": "0"
+				}
+			],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "number.digit_run",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "number.signed_decimal",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "space.whitespace",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "word.ascii",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				}
+			],
+			"unreachable": []
+		},
+		"structure": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 19192,
+					"partition": "segment",
+					"patterns": 5,
+					"role": "partition",
+					"states": 70
+				},
+				{
+					"backend": "dense",
+					"bytes": 65840,
+					"partition": "token",
+					"patterns": 6,
+					"role": "partition",
+					"states": 125
+				}
+			],
+			"equivalent": [],
+			"overlaps": [],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "segment.comma",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "segment.newline",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "segment.space",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "segment.tab",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "segment.text",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.arabic",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.cjk",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.cyrillic",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.latin",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.other",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "token.skip",
+					"scope": "partition",
+					"unreachable": null,
+					"validator": null
+				}
+			],
+			"unreachable": []
+		}
+	}
+}

@@ -1,0 +1,222 @@
+{
+	"format": "mailwoman.recognize.ir",
+	"version": 1,
+	"hash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
+	"family": "primitives",
+	"terms": [
+		{
+			"id": "ascii_letter",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["A", "Z"],
+					["a", "z"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 37
+			}
+		},
+		{
+			"id": "ascii_whitespace",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["\t", "\r"],
+					[" ", " "]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 38
+			}
+		},
+		{
+			"id": "digit",
+			"grammar": {
+				"op": "class",
+				"ranges": [["0", "9"]],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 39
+			}
+		},
+		{
+			"id": "sign",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["+", "+"],
+					["-", "-"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 40
+			}
+		}
+	],
+	"shapes": [
+		{
+			"id": "number.digit_run",
+			"grammar": {
+				"op": "repeat",
+				"node": {
+					"op": "reference",
+					"id": "digit"
+				},
+				"min": 1,
+				"max": null
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 48
+			}
+		},
+		{
+			"id": "number.signed_decimal",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "optional",
+						"node": {
+							"op": "reference",
+							"id": "sign"
+						}
+					},
+					{
+						"op": "choice",
+						"alternatives": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "repeat",
+										"node": {
+											"op": "reference",
+											"id": "digit"
+										},
+										"min": 1,
+										"max": null
+									},
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "literal",
+													"value": "."
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												}
+											]
+										}
+									}
+								]
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "literal",
+										"value": "."
+									},
+									{
+										"op": "repeat",
+										"node": {
+											"op": "reference",
+											"id": "digit"
+										},
+										"min": 1,
+										"max": null
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 42
+			}
+		},
+		{
+			"id": "space.whitespace",
+			"grammar": {
+				"op": "repeat",
+				"node": {
+					"op": "reference",
+					"id": "ascii_whitespace"
+				},
+				"min": 1,
+				"max": null
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 54
+			}
+		},
+		{
+			"id": "word.ascii",
+			"grammar": {
+				"op": "repeat",
+				"node": {
+					"op": "reference",
+					"id": "ascii_letter"
+				},
+				"min": 1,
+				"max": null
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
+				"line": 59
+			}
+		}
+	]
+}

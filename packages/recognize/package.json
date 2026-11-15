@@ -1,0 +1,100 @@
+{
+	"name": "@mailwoman/recognize",
+	"version": "11.1.0",
+	"description": "A declarative grammar library and recognition engine for the formal languages in geographic queries: a deterministic JSON intermediate representation, compiled automata, captures and validators, and a WebAssembly adapter with a synchronous first-call loader.",
+	"keywords": [
+		"grammar",
+		"recognition"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/recognize"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"lib/**/*.ts",
+		"tools/**/*.ts",
+		"data/ir/*.json",
+		"data/artifacts/*.rca1",
+		"data/manifests/*.json",
+		"definitions/*.json",
+		"wasm/*.wasm",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"sideEffects": [
+		"./lib/index.ts",
+		"./lib/workerd.ts",
+		"./out/index.js",
+		"./out/workerd.js",
+		"./tools/**/*.run.ts",
+		"./out/tools/**/*.run.js"
+	],
+	"imports": {
+		"#tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./wasm/recognize.wasm": "./wasm/recognize.wasm",
+		".": {
+			"types": "./out/index.d.ts",
+			"workerd": "./out/workerd.js",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test:browser": "vitest run --config vitest.browser.config.ts",
+		"test:workers": "vitest run --config vitest.workers.config.ts"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/registry": "workspace:*"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-plugin": "^1.4.11",
+		"@mailwoman/query-shape": "workspace:*",
+		"@types/node": "^26.6.6",
+		"@vitest/browser-playwright": "5.0.5",
+		"esbuild": "0.28.2",
+		"oxfmt": "0.75.0",
+		"playwright": "^1.64.1",
+		"vite": "^8.3.5",
+		"vitest": "^5.0.5",
+		"wrangler": "^4.156.0"
+	}
+}

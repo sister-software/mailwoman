@@ -65,16 +65,17 @@ export interface CIScope {
 }
 
 /**
- * The mtf crates, core's Deflate64 crate and the root cargo workspace files.
- * The `rust` job tests them.
+ * The crates the `rust` job tests: the mtf crates, core's Deflate64 crate,
+ * the recognize crates, and the root cargo workspace files.
  *
- * `@mailwoman/mtf` and `@mailwoman/core` also build their WebAssembly from them.
+ * `@mailwoman/mtf`, `@mailwoman/core` and `@mailwoman/recognize` also build their WebAssembly from them.
  * A change to a crate therefore still selects the owning workspace's suites.
  * A change to a root workspace file selects every suite.
  */
-const MTF_CRATE_INPUTS = [
+const RUST_CRATE_INPUTS = [
 	"packages/core/crates/",
 	"packages/mtf/crates/",
+	"packages/recognize/crates/",
 	"packages/mtf/rustfmt.toml",
 	"Cargo.toml",
 	"Cargo.lock",
@@ -118,7 +119,7 @@ function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIW
  * Identifies tests excluded by the root Vitest configuration.
  */
 function excludedFromRootTests(file: string): boolean {
-	return /(?:^|\/)(?:react|license-worker|gazetteer-worker)\/|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
+	return /(?:^|\/)(?:react|license-worker|gazetteer-worker)\/|\.(?:browser|workers)\.test\.ts$|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
 		file
 	)
 }
@@ -272,7 +273,7 @@ export function selectCIScope(
 
 		const owner = workspaceForFile(file, workspaces)
 
-		if (MTF_CRATE_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))) {
+		if (RUST_CRATE_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))) {
 			rust = true
 		}
 
@@ -355,7 +356,8 @@ export function selectCIScope(
 		react: has("@mailwoman/react"),
 		planetary: has("@mailwoman/planetary"),
 		opportunity: has("@mailwoman/opportunity-app"),
-		worker: has("@mailwoman/license-worker") || has("@mailwoman/gazetteer-worker"),
+		// The recognize engine's first-call tests run under the Workers pool and in Chromium beside the workers' tests.
+		worker: has("@mailwoman/license-worker") || has("@mailwoman/gazetteer-worker") || has("@mailwoman/recognize"),
 		smoke:
 			full ||
 			affectedDirectories.some((directory) => published.includes(directory)) ||

@@ -1,0 +1,94 @@
+{
+	"families": {
+		"coordinates": {
+			"artifact": "coordinates.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 14820,
+					"patterns": 2,
+					"role": "whole",
+					"states": 54
+				},
+				{
+					"backend": "dense",
+					"bytes": 18204,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 66
+				}
+			],
+			"bytes": 41304,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "4eb9289261c751ca41e650f7a5d78af99f4971591d15821bbe3d2475eb6cbe00",
+			"irHash": "53d071450b7d667df1e99c37853721e7d2912bae3c2490ad7039e7347f4829a0",
+			"sha256": "a2a9c380d43831f84e674b27ebbf632719a4a86c8e200d24c7ad61782b5d379f",
+			"unicodeVersion": "16.0.0"
+		},
+		"primitives": {
+			"artifact": "primitives.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 2816,
+					"patterns": 4,
+					"role": "whole",
+					"states": 15
+				},
+				{
+					"backend": "dense",
+					"bytes": 3816,
+					"patterns": 4,
+					"role": "embedded",
+					"states": 22
+				}
+			],
+			"bytes": 10440,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "d33b792cde245ced43db7d0a88552c8a6686a1836ab570d69eadbff8cfef0976",
+			"irHash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
+			"sha256": "dbd1f909dcbda819341f42df832461623e985f1bf715704cf9a91d091d21990e",
+			"unicodeVersion": "16.0.0"
+		},
+		"structure": {
+			"artifact": "structure.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 19192,
+					"partition": "segment",
+					"patterns": 5,
+					"role": "partition",
+					"states": 70
+				},
+				{
+					"backend": "dense",
+					"bytes": 65840,
+					"partition": "token",
+					"patterns": 6,
+					"role": "partition",
+					"states": 125
+				}
+			],
+			"bytes": 94512,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "204df148bcd9ed73d2e22c033161957189ffd97a2bc58b95c240dc143f3c7233",
+			"irHash": "88be66cbedacc5ec789d163c8328e63ad667728053d30d93b6e739531b1777a4",
+			"sha256": "8d4754ac818e2f1c352aba14dff5b90214d8d71db3ed0545fd3d32978a785c1a",
+			"unicodeVersion": "16.0.0"
+		}
+	},
+	"limits": {
+		"buildBytes": 33554432,
+		"denseBytes": 2097152,
+		"inputBytes": 65536,
+		"maxCaptures": 64,
+		"maxDepth": 64,
+		"maxLoweredNodes": 100000,
+		"maxProductStates": 1000000,
+		"maxStates": 50000,
+		"nfaBytes": 8388608,
+		"partitionInputBytes": 1048576,
+		"sparseBytes": 2097152
+	}
+}

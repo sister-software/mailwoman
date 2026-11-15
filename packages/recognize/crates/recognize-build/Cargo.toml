@@ -1,0 +1,29 @@
+[package]
+name = "recognize-build"
+description = "The recognize build tool: validates each grammar family, lowers it to automata, and writes its IR, its compiled artifact and the build manifest."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[[bin]]
+name = "recognize-build"
+path = "src/main.rs"
+
+[dependencies]
+recognize-core = { path = "../recognize-core" }
+# The compiler half: the regex parser (`regex-syntax`, which `syntax` brings in), the Thompson NFA compiler and the DFA
+# builder. The runtime crate links none of these.
+regex-automata = { version = "0.4.18", default-features = false, features = [
+	"std",
+	"syntax",
+	"unicode",
+	"nfa-thompson",
+	"dfa-build",
+	"dfa-search",
+] }
+regex-syntax = "0.8.11"
+serde_json = "1"
+
+[dev-dependencies]
+proptest = "=1.7.0"

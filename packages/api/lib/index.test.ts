@@ -201,7 +201,36 @@ test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", a
 	})
 
 	expect(res.status).toBe(200)
-	await expect(res.json()).resolves.toEqual({ ...fixtureGeocodeResult("1600 Pennsylvania Ave NW"), tree: null })
+
+	await expect(res.json()).resolves.toEqual({
+		...fixtureGeocodeResult("1600 Pennsylvania Ave NW"),
+		tree: null,
+		support: null,
+	})
+})
+
+test("POST /v1/geocode: support reports the promise the resolved country and the query's script fall inside", async () => {
+	const app = createMailwomanAPI({
+		geocode: async (address) => ({
+			...fixtureGeocodeResult(address),
+			countryCode: address === "Nairobi" ? "KE" : "US",
+			tree: null,
+		}),
+	})
+
+	const support = async (address: string): Promise<unknown> => {
+		const res = await app.request("/v1/geocode", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: stringifyJSON({ address }),
+		})
+
+		return ((await res.json()) as { support: unknown }).support
+	}
+
+	await expect(support("1600 Pennsylvania Ave NW")).resolves.toMatchObject({ input: "en-Latn", depth: "address-point" })
+	await expect(support("ニューヨーク州ブルックリン区")).resolves.toMatchObject({ input: "ja-Jpan", depth: "locality" })
+	await expect(support("Nairobi")).resolves.toBeNull()
 })
 
 test("POST /v1/geocode: the bias points and the tree option reach the engine, and the tree comes back", async () => {
@@ -342,7 +371,11 @@ test("POST /v1/batch: happy path returns one row per address, in order, per-row 
 
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as { results: unknown[] }
-	expect(body.results).toEqual([fixtureGeocodeResult("1600 Pennsylvania Ave NW"), { input: "bad", error: "boom" }])
+
+	expect(body.results).toEqual([
+		{ ...fixtureGeocodeResult("1600 Pennsylvania Ave NW"), support: null },
+		{ input: "bad", error: "boom" },
+	])
 })
 
 test("POST /v1/batch: empty addresses array -> 200 { results: [] }, even with no engine", async () => {

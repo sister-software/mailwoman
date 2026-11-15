@@ -1,0 +1,198 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://mailwoman.dev/schemas/recognize/ir-1.json",
+	"title": "Mailwoman recognize intermediate representation, version 1",
+	"description": "One grammar family: named terms, shapes, their captures, scope, validator and handler IDs, ambiguity policy and source locations. Written by crates/recognize-build; every file under data/ir/ validates against this schema.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["format", "version", "hash", "family", "terms", "shapes"],
+	"properties": {
+		"format": { "const": "mailwoman.recognize.ir" },
+		"version": { "const": 1 },
+		"hash": {
+			"description": "SHA-256 of the compact serialization of this document with `hash` set to the empty string.",
+			"type": "string",
+			"pattern": "^[0-9a-f]{64}$"
+		},
+		"family": { "$ref": "#/$defs/dottedName" },
+		"terms": { "type": "array", "items": { "$ref": "#/$defs/term" } },
+		"shapes": { "type": "array", "items": { "$ref": "#/$defs/shape" } }
+	},
+	"$defs": {
+		"dottedName": {
+			"type": "string",
+			"pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+		},
+		"pascalName": {
+			"type": "string",
+			"pattern": "^[A-Z][A-Za-z0-9]*$"
+		},
+		"source": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["file", "line"],
+			"properties": {
+				"file": { "type": "string", "minLength": 1 },
+				"line": { "type": "integer", "minimum": 1 }
+			}
+		},
+		"term": {
+			"description": "A named, reusable grammar. A term holds no captures and can match the empty string.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "grammar", "source"],
+			"properties": {
+				"id": { "$ref": "#/$defs/dottedName" },
+				"grammar": { "$ref": "#/$defs/node" },
+				"source": { "$ref": "#/$defs/source" }
+			}
+		},
+		"shape": {
+			"description": "A terminal: a named language that recognition reports.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "grammar", "captures", "scope", "validator", "handler", "ambiguity", "source"],
+			"properties": {
+				"id": { "$ref": "#/$defs/dottedName" },
+				"grammar": { "$ref": "#/$defs/node" },
+				"captures": { "type": "array", "items": { "$ref": "#/$defs/capture" } },
+				"scope": { "enum": ["whole", "embedded", "whole_or_embedded", "partition"] },
+				"partition": {
+					"description": "The partition a shape with the partition scope belongs to. Absent from every other shape.",
+					"$ref": "#/$defs/dottedName"
+				},
+				"validator": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
+				"handler": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
+				"ambiguity": { "$ref": "#/$defs/ambiguity" },
+				"unreachable": {
+					"description": "The reason the shape is declared unreachable. Absent when the shape declares nothing.",
+					"type": "string",
+					"minLength": 1
+				},
+				"source": { "$ref": "#/$defs/source" }
+			}
+		},
+		"capture": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "type"],
+			"properties": {
+				"path": { "$ref": "#/$defs/dottedName" },
+				"type": { "enum": ["text", "integer", "decimal"] }
+			}
+		},
+		"ambiguity": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["policy"],
+					"properties": { "policy": { "const": "exclusive" } }
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["policy", "with"],
+					"properties": {
+						"policy": { "const": "may_overlap" },
+						"with": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/dottedName" } }
+					}
+				}
+			]
+		},
+		"scalar": { "type": "string", "minLength": 1, "maxLength": 1 },
+		"node": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "value"],
+					"properties": { "op": { "const": "literal" }, "value": { "type": "string" } }
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "ranges", "negated"],
+					"properties": {
+						"op": { "const": "class" },
+						"ranges": {
+							"type": "array",
+							"minItems": 1,
+							"items": {
+								"type": "array",
+								"minItems": 2,
+								"maxItems": 2,
+								"items": { "$ref": "#/$defs/scalar" }
+							}
+						},
+						"negated": { "type": "boolean" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "items"],
+					"properties": {
+						"op": { "const": "sequence" },
+						"items": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "alternatives"],
+					"properties": {
+						"op": { "const": "choice" },
+						"alternatives": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "node"],
+					"properties": { "op": { "const": "optional" }, "node": { "$ref": "#/$defs/node" } }
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "node", "min", "max"],
+					"properties": {
+						"op": { "const": "repeat" },
+						"node": { "$ref": "#/$defs/node" },
+						"min": { "type": "integer", "minimum": 0 },
+						"max": { "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 1 }] }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "path", "node"],
+					"properties": {
+						"op": { "const": "capture" },
+						"path": { "$ref": "#/$defs/dottedName" },
+						"node": { "$ref": "#/$defs/node" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "id"],
+					"properties": { "op": { "const": "reference" }, "id": { "$ref": "#/$defs/dottedName" } }
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["op", "regex"],
+					"properties": {
+						"op": { "const": "pattern" },
+						"regex": {
+							"description": "A regular-expression string, parsed by a later phase.",
+							"type": "string",
+							"minLength": 1
+						}
+					}
+				}
+			]
+		}
+	}
+}

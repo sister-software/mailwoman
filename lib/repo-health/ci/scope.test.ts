@@ -175,6 +175,21 @@ describe("selectCIScope", () => {
 		expect(scope.affected).toContain("packages/core")
 	})
 
+	it.each([
+		"packages/recognize/crates/recognize-core/src/engine.rs",
+		"packages/recognize/crates/recognize-build/src/main.rs",
+	])("selects the rust job for %s, a recognize crate input", (file) => {
+		const withRecognize = [
+			...workspaces,
+			{ name: "@mailwoman/recognize", directory: "packages/recognize", dependencies: [] },
+		]
+
+		const scope = selectCIScope(withRecognize, files, [file], [])
+
+		expect(scope).toMatchObject({ full: false, rust: true })
+		expect(scope.affected).toContain("packages/recognize")
+	})
+
 	it.each(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"])(
 		"selects the rust job and every suite for %s, a root cargo workspace file",
 		(file) => {

@@ -34,4 +34,11 @@ describe("script codes", () => {
 	])("%s written in %s is %s", (text, script, expected) => {
 		expect(isWrittenInScript(text, code(script))).toBe(expected)
 	})
+
+	test("an accepted embedded script passes without counting as the text's own script", () => {
+		const london = "金龍酒家, 12 Gerrard Street, London WC2H 7JS"
+
+		expect(isWrittenInScript(london, code("Latn"), [code("Hani")])).toBe(true)
+		expect(isWrittenInScript("金龍酒家", code("Latn"), [code("Hani")])).toBe(false)
+	})
 })

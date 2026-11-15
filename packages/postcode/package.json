@@ -15,6 +15,7 @@
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
+		"tools/**/*.ts",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"lib/shapes.json",
@@ -23,8 +24,16 @@
 		"out/subregions.json"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./tools/**/*.run.ts",
+		"./out/tools/**/*.run.js"
+	],
 	"imports": {
+		"#tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -38,6 +47,11 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
+		"./tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
 		"./*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -49,9 +63,12 @@
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/recognize": "workspace:*"
 	},
 	"devDependencies": {
+		"@mailwoman/query-shape": "workspace:*",
+		"oxfmt": "0.75.0",
 		"spliterator": "^10.1.1"
 	}
 }

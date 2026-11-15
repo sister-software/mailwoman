@@ -290,6 +290,11 @@ jobs:
         run: |
           cargo test -p deflate64-wasm --locked
 
+      - name: Test the recognize grammar, compiler and WebAssembly adapter crates
+        run: |
+          cargo clippy -p recognize-core -p recognize-build -p recognize-wasm --all-targets --locked -- -D warnings
+          cargo test -p recognize-core -p recognize-build -p recognize-wasm --locked
+
       - name: Test the basemap tiler's crates
         run: |
           cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --all-targets --locked -- -D warnings
@@ -643,7 +648,7 @@ jobs:
 
       # `--with-deps` installs the Chromium system libraries with sudo. Hosted runners allow sudo.
       - name: Install Playwright chromium (react browser tests)
-        if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true'
+        if: needs.scope.outputs.react == 'true' || needs.scope.outputs.planetary == 'true' || needs.scope.outputs.opportunity == 'true' || needs.scope.outputs.worker == 'true'
         run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
 
       - name: Test react (browser mode)
@@ -675,6 +680,16 @@ jobs:
       - name: Test gazetteer worker (Workers pool)
         if: needs.scope.outputs.worker == 'true'
         run: yarn test:gazetteer-worker
+
+      # The recognize engine instantiates synchronously on its first call. Two suites hold that: one on a Chromium
+      # page's main thread and one under the Workers runtime. That runtime refuses to compile WebAssembly from bytes.
+      - name: Test recognize first-call instantiation (Chromium)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn workspace @mailwoman/recognize test:browser
+
+      - name: Test recognize first-call instantiation (Workers pool)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn workspace @mailwoman/recognize test:workers
 
       # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
       - name: Upload test results

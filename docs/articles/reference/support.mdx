@@ -15,6 +15,10 @@ Inside that depth, a wrong parse or a missed result is a bug we fix. Below it, M
 
 <SupportMatrix />
 
+## The support field in a response
+
+Every result from `POST /v1/geocode` and every geocoded row from `POST /v1/batch` includes a `support` field. It holds the row above that the query falls inside, matched on the resolved country and the script the query is written in, or `null` when no row covers it. A `null` value means the result sits outside every guarantee. The result may still be right. `POST /v1/parse` returns no `support` field, because a parse resolves no country to match on.
+
 ## How a row is kept true
 
 The table is generated from `packages/codex/lib/support/promises.json`, which ships in `@mailwoman/codex` as `@mailwoman/codex/support`. Every code in it is checked against the IANA Language Subtag Registry through `@mailwoman/registry`.

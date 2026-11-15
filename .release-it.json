@@ -55,6 +55,7 @@
 				"packages/query-shape",
 				"packages/react",
 				"packages/record",
+				"packages/recognize",
 				"packages/registry",
 				"packages/entity-resolution",
 				"packages/resolver",

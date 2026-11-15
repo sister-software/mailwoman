@@ -1,0 +1,351 @@
+{
+	"crossFamily": {
+		"equivalent": [],
+		"overlaps": [
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.de_postcode_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.de_postcode_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.fr_postcode_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.fr_postcode_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.us_zip_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "format.us_zip_one"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "po_box.en"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"declared": false,
+				"witness": "PO"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "po_box.es"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"declared": false,
+				"witness": "CASILLA"
+			},
+			{
+				"a": {
+					"family": "postcode_legacy",
+					"shape": "po_box.fr"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"declared": false,
+				"witness": "BP"
+			}
+		]
+	},
+	"families": {
+		"postcode_legacy": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 24188,
+					"patterns": 18,
+					"role": "whole",
+					"states": 90
+				}
+			],
+			"equivalent": [
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.gr_postcode_two"
+				},
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.se_postcode_two"
+				},
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.sk_postcode_two"
+				},
+				{
+					"a": "format.de_postcode_one",
+					"b": "format.fr_postcode_one"
+				},
+				{
+					"a": "format.de_postcode_one",
+					"b": "format.us_zip_one"
+				},
+				{
+					"a": "format.fr_postcode_one",
+					"b": "format.us_zip_one"
+				},
+				{
+					"a": "format.gr_postcode_two",
+					"b": "format.se_postcode_two"
+				},
+				{
+					"a": "format.gr_postcode_two",
+					"b": "format.sk_postcode_two"
+				},
+				{
+					"a": "format.se_postcode_two",
+					"b": "format.sk_postcode_two"
+				}
+			],
+			"overlaps": [
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.gr_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				},
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.se_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				},
+				{
+					"a": "format.cz_postcode_two",
+					"b": "format.sk_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				},
+				{
+					"a": "format.de_postcode_one",
+					"b": "format.fr_postcode_one",
+					"declared": true,
+					"witness": "00000"
+				},
+				{
+					"a": "format.de_postcode_one",
+					"b": "format.us_zip_one",
+					"declared": true,
+					"witness": "00000"
+				},
+				{
+					"a": "format.fr_postcode_one",
+					"b": "format.us_zip_one",
+					"declared": true,
+					"witness": "00000"
+				},
+				{
+					"a": "format.gr_postcode_two",
+					"b": "format.se_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				},
+				{
+					"a": "format.gr_postcode_two",
+					"b": "format.sk_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				},
+				{
+					"a": "format.se_postcode_two",
+					"b": "format.sk_postcode_two",
+					"declared": true,
+					"witness": "000 00"
+				}
+			],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "format.ca_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.ca_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.cz_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.de_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.fr_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.gr_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.jp_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.nl_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.nl_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.se_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.sk_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.uk_postcode_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.uk_postcode_two",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.us_zip4_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "format.us_zip_one",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "po_box.en",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "po_box.es",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "po_box.fr",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": null
+				}
+			],
+			"unreachable": []
+		}
+	}
+}

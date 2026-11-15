@@ -11,6 +11,7 @@ import { z } from "zod"
 import { MAX_ADDRESS_LENGTH, MAX_BIAS_POINTS } from "#input-limits"
 import { GeocoderUnavailableErrorSchema } from "#operations/errors"
 import { GeocodingTag } from "#operations/tags"
+import { SupportPromiseSchema } from "#support"
 
 /**
  * A point the resolver prefers candidates near, such as the center of the map a person is looking at.
@@ -66,12 +67,25 @@ export const GeocodeResponseSchema = GeocodeResultSchema.extend({
 	 * It is null unless the request set `include_tree`.
 	 */
 	tree: Ref(AddressTreeSchema).nullable(),
+	/**
+	 * The support promise the query falls inside, matched on the resolved country and the query's script.
+	 *
+	 * It is null when no promise covers the query, such as a country Mailwoman makes
+	 * no promise for or text in a script no promise names.
+	 * A null value places the result outside every guarantee, and the result may still be right.
+	 */
+	support: Ref(SupportPromiseSchema).nullable(),
 }).meta({
 	id: "GeocodeResponse",
 	description: "One geocoded address, with its decoded tree when the request asked for it.",
 })
 
 export type GeocodeResponse = z.infer<typeof GeocodeResponseSchema>
+
+/**
+ * The geocode an engine returns: the response before the route matches its support promise.
+ */
+export type EngineGeocodeResponse = Omit<GeocodeResponse, "support">
 
 /**
  * {@link GeocodeResponseSchema} with the engine stamp a route attaches.

@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The `packages/` directory also contains 86 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-88 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The `packages/` directory also contains 87 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+89 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-seven workspaces publish to npm. `.release-it.json` defines that set, and the twenty-one others are
+Sixty-eight workspaces publish to npm. `.release-it.json` defines that set, and the twenty-one others are
 private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
 audit refuse a tarball that ships a data file. Run the workspace check described in
 `lib/release-kit/AGENTS.md` after adding or moving a workspace.
@@ -53,7 +53,10 @@ Use repository skills for procedures rather than copying their steps into this f
 
 - `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` explains the calibrated,
   retrieval-augmented sequence labeler and the grammar/atlas division of labor.
-- `docs/engineering/SCOPE.mdx` defines current locale tiers, workstreams, runtime flags, and the live
+- `packages/codex/lib/support/promises.json` declares the support promises: each country and input language
+  and script Mailwoman guarantees, and to what depth. The `support-promises` repository check refuses a promise
+  without a passing gauntlet case. `docs/superpowers/specs/2026-11-14-locale-support-promises-design.md` records the design.
+- `docs/engineering/SCOPE.mdx` keeps the per-country locale evidence, workstreams, runtime flags, and the live
   roadmap. `docs/records/plan/` holds the v1 plan, its phase documents and its reference pages as historical records.
 - `docs/engineering/reference/jurisdiction-coverage.mdx` answers what this repository has for each of
   255 jurisdictions, one row each, with corpus rows, admission, gazetteer places and board rows in

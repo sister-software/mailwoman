@@ -1,0 +1,2329 @@
+{
+	"format": "mailwoman.recognize.ir",
+	"version": 1,
+	"hash": "42e39316445702bc407be90df7a0a4b3a37b889b1938d688d1403a2e214149de",
+	"family": "postal",
+	"terms": [],
+	"shapes": [
+		{
+			"id": "postal.ac",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:ASCN[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie", "postal.sh"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 14
+			}
+		},
+		{
+			"id": "postal.ad",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:AD[1-7]0[0-9]))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 30
+			}
+		},
+		{
+			"id": "postal.af",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.ai",
+					"postal.am",
+					"postal.ar",
+					"postal.bh",
+					"postal.cc",
+					"postal.cr",
+					"postal.cx",
+					"postal.gl",
+					"postal.lb",
+					"postal.li",
+					"postal.nf",
+					"postal.tz"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 42
+			}
+		},
+		{
+			"id": "postal.ai",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:AI-)?2640))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.am",
+					"postal.ar",
+					"postal.cr",
+					"postal.lb",
+					"postal.tz"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 102
+			}
+		},
+		{
+			"id": "postal.am",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:37)?[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.ar",
+					"postal.bh",
+					"postal.by",
+					"postal.cc",
+					"postal.cr",
+					"postal.cx",
+					"postal.gl",
+					"postal.kh",
+					"postal.lb",
+					"postal.li",
+					"postal.nf",
+					"postal.tw",
+					"postal.tz"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 123
+			}
+		},
+		{
+			"id": "postal.ar",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:((?:[A-HJ-NP-Z])?[0-9]{4})([A-Z]{3})?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.bh",
+					"postal.cc",
+					"postal.cr",
+					"postal.cx",
+					"postal.gl",
+					"postal.ie",
+					"postal.lb",
+					"postal.li",
+					"postal.nf",
+					"postal.tz"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 152
+			}
+		},
+		{
+			"id": "postal.as",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(96799)(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.ba",
+					"postal.cr",
+					"postal.cz",
+					"postal.fr",
+					"postal.il",
+					"postal.kh",
+					"postal.mu",
+					"postal.tw",
+					"postal.tz",
+					"postal.us"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 178
+			}
+		},
+		{
+			"id": "postal.ax",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:22[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.ba",
+					"postal.cr",
+					"postal.cz",
+					"postal.fr",
+					"postal.il",
+					"postal.kh",
+					"postal.mu",
+					"postal.pe",
+					"postal.tw",
+					"postal.tz",
+					"postal.us",
+					"postal.xk"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 204
+			}
+		},
+		{
+			"id": "postal.ba",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{5}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.bl",
+					"postal.cr",
+					"postal.cz",
+					"postal.fm",
+					"postal.fr",
+					"postal.gf",
+					"postal.gu",
+					"postal.il",
+					"postal.kh",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 232
+			}
+		},
+		{
+			"id": "postal.bb",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:BB[0-9]{5}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie", "postal.so"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 321
+			}
+		},
+		{
+			"id": "postal.bh",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:1[0-2]|[1-9])[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.cr",
+					"postal.fo",
+					"postal.lb",
+					"postal.om",
+					"postal.tw",
+					"postal.tz"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 337
+			}
+		},
+		{
+			"id": "postal.bl",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:9[78][01][0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.cr",
+					"postal.cz",
+					"postal.fr",
+					"postal.il",
+					"postal.kh",
+					"postal.mc",
+					"postal.mu",
+					"postal.tw",
+					"postal.tz",
+					"postal.us"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 359
+			}
+		},
+		{
+			"id": "postal.bm",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[A-Z0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["word.ascii"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 387
+			}
+		},
+		{
+			"id": "postal.bn",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.sv", "postal.vc", "postal.vg", "printed.az", "printed.ht"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 402
+			}
+		},
+		{
+			"id": "postal.br",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{5}-?[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.lb"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 421
+			}
+		},
+		{
+			"id": "postal.by",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{6}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.kh", "postal.tw"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 438
+			}
+		},
+		{
+			"id": "postal.ca",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[ABCEGHJKLMNPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABCEGHJ-NPRSTV-Z][0-9]))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 469
+			}
+		},
+		{
+			"id": "postal.cc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:6799))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.cr", "postal.lb", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 481
+			}
+		},
+		{
+			"id": "postal.cl",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{7}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.ie", "postal.il", "postal.jp"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 500
+			}
+		},
+		{
+			"id": "postal.cr",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{4,5}|[0-9]{3}-[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.cx",
+					"postal.cz",
+					"postal.fm",
+					"postal.fr",
+					"postal.gf",
+					"postal.gl",
+					"postal.gu",
+					"postal.il",
+					"postal.jp",
+					"postal.kh",
+					"postal.lb",
+					"postal.li",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.nf",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 519
+			}
+		},
+		{
+			"id": "postal.cx",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:6798))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 571
+			}
+		},
+		{
+			"id": "postal.cz",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.fm",
+					"postal.fr",
+					"postal.gf",
+					"postal.gu",
+					"postal.il",
+					"postal.kh",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 589
+			}
+		},
+		{
+			"id": "postal.fk",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:FIQQ[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 637
+			}
+		},
+		{
+			"id": "postal.fm",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(9694[1-4])(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.fr",
+					"postal.il",
+					"postal.kh",
+					"postal.mu",
+					"postal.tw",
+					"postal.tz",
+					"postal.us"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 652
+			}
+		},
+		{
+			"id": "postal.fo",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.om", "postal.tw"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 675
+			}
+		},
+		{
+			"id": "postal.fr",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.gf",
+					"postal.gu",
+					"postal.il",
+					"postal.kh",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 698
+			}
+		},
+		{
+			"id": "postal.gb",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:GIR[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*0AA|(?:(?:AB|AL|B|BA|BB|BD|BF|BH|BL|BN|BR|BS|BT|BX|CA|CB|CF|CH|CM|CO|CR|CT|CV|CW|DA|DD|DE|DG|DH|DL|DN|DT|DY|E|EC|EH|EN|EX|FK|FY|G|GL|GY|GU|HA|HD|HG|HP|HR|HS|HU|HX|IG|IM|IP|IV|JE|KA|KT|KW|KY|L|LA|LD|LE|LL|LN|LS|LU|M|ME|MK|ML|N|NE|NG|NN|NP|NR|NW|OL|OX|PA|PE|PH|PL|PO|PR|RG|RH|RM|S|SA|SE|SG|SK|SL|SM|SN|SO|SP|SR|SS|ST|SW|SY|TA|TD|TF|TN|TQ|TR|TS|TW|UB|W|WA|WC|WD|WF|WN|WR|WS|WV|YO|ZE)(?:[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))|BFPO[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{1,4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.gg", "postal.ie", "postal.im", "postal.je"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 741
+			}
+		},
+		{
+			"id": "postal.gf",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:9[78]3[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.il",
+					"postal.kh",
+					"postal.mu",
+					"postal.tw",
+					"postal.tz",
+					"postal.us"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 759
+			}
+		},
+		{
+			"id": "postal.gg",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:GY[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 781
+			}
+		},
+		{
+			"id": "postal.gi",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:GX11[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1AA))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 796
+			}
+		},
+		{
+			"id": "postal.gl",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:39[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 811
+			}
+		},
+		{
+			"id": "postal.gs",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:SIQQ[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["postal.ie"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 829
+			}
+		},
+		{
+			"id": "postal.gu",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(969(?:[12][0-9]|3[12]))(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.il",
+					"postal.kh",
+					"postal.mu",
+					"postal.tw",
+					"postal.tz",
+					"postal.us"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 844
+			}
+		},
+		{
+			"id": "postal.ie",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9A-Z]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9A-Z]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.il",
+					"postal.im",
+					"postal.io",
+					"postal.je",
+					"postal.jp",
+					"postal.mt",
+					"postal.pe",
+					"postal.pn",
+					"postal.sh",
+					"postal.so",
+					"postal.ta",
+					"postal.tc",
+					"word.ascii"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 866
+			}
+		},
+		{
+			"id": "postal.il",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{5}(?:[0-9]{2})?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.jp",
+					"postal.kh",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 895
+			}
+		},
+		{
+			"id": "postal.im",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:IM[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 936
+			}
+		},
+		{
+			"id": "postal.io",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:BBND[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 948
+			}
+		},
+		{
+			"id": "postal.ir",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{5}-?[0-9]{5}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 960
+			}
+		},
+		{
+			"id": "postal.je",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:JE[0-9][0-9A-Z]?[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9][ABD-HJLN-UW-Z]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 976
+			}
+		},
+		{
+			"id": "postal.jp",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{3}-?[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 988
+			}
+		},
+		{
+			"id": "postal.kh",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{5,6}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.mc",
+					"postal.me",
+					"postal.mh",
+					"postal.mp",
+					"postal.mq",
+					"postal.mu",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1004
+			}
+		},
+		{
+			"id": "postal.ky",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:KY[0-9]-[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1045
+			}
+		},
+		{
+			"id": "postal.lb",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:[0-9]{4})(?:[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:[0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.li", "postal.nf", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1057
+			}
+		},
+		{
+			"id": "postal.li",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:948[5-9]|949[0-8]))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1076
+			}
+		},
+		{
+			"id": "postal.lv",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:LV-[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1093
+			}
+		},
+		{
+			"id": "postal.mc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:980[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1105
+			}
+		},
+		{
+			"id": "postal.me",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:8[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1125
+			}
+		},
+		{
+			"id": "postal.mh",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(969[67][0-9])(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1145
+			}
+		},
+		{
+			"id": "postal.mp",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(9695[012])(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1165
+			}
+		},
+		{
+			"id": "postal.mq",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:9[78]2[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1185
+			}
+		},
+		{
+			"id": "postal.mt",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[A-Z]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2,4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1205
+			}
+		},
+		{
+			"id": "postal.mu",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{3}(?:[0-9]{2}|[A-Z]{2}[0-9]{3})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.nc",
+					"postal.pe",
+					"postal.pf",
+					"postal.pm",
+					"postal.pr",
+					"postal.pw",
+					"postal.re",
+					"postal.sm",
+					"postal.tw",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1217
+			}
+		},
+		{
+			"id": "postal.nc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:988[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1250
+			}
+		},
+		{
+			"id": "postal.nf",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:2899))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tz"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1269
+			}
+		},
+		{
+			"id": "postal.nl",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[1-9][0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:[A-RT-Z][A-Z]|S[BCE-RT-Z])))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1286
+			}
+		},
+		{
+			"id": "postal.om",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:PC[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*)?[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1298
+			}
+		},
+		{
+			"id": "postal.pe",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:LIMA[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{1,2}|CALLAO[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*0?[0-9])|[0-2][0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.pr",
+					"postal.tw",
+					"postal.tz",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.xk"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1315
+			}
+		},
+		{
+			"id": "postal.pf",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:987[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1338
+			}
+		},
+		{
+			"id": "postal.pl",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{2}-[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1357
+			}
+		},
+		{
+			"id": "postal.pm",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:9[78]5[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1369
+			}
+		},
+		{
+			"id": "postal.pn",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:PCRN[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1388
+			}
+		},
+		{
+			"id": "postal.pr",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(00[679][0-9]{2})(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1400
+			}
+		},
+		{
+			"id": "postal.pt",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{4}-[0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1419
+			}
+		},
+		{
+			"id": "postal.pw",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(969(?:39|40))(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1431
+			}
+		},
+		{
+			"id": "postal.re",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:9[78]4[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1450
+			}
+		},
+		{
+			"id": "postal.sh",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(?:ASCN|STHL)[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1469
+			}
+		},
+		{
+			"id": "postal.sm",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:4789[0-9]))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us", "postal.xk"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1481
+			}
+		},
+		{
+			"id": "postal.so",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[A-Z]{2}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{5}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1501
+			}
+		},
+		{
+			"id": "postal.sv",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:CP[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[1-3][1-7][0-2][0-9]))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1513
+			}
+		},
+		{
+			"id": "postal.sz",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[HLMS][0-9]{3}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1525
+			}
+		},
+		{
+			"id": "postal.ta",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:TDCU[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1537
+			}
+		},
+		{
+			"id": "postal.tc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:TKCA[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*1ZZ))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1549
+			}
+		},
+		{
+			"id": "postal.tw",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{3}(?:[0-9]{2,3})?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.tz",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1561
+			}
+		},
+		{
+			"id": "postal.tz",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[0-9]{4,5}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.um",
+					"postal.us",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1585
+			}
+		},
+		{
+			"id": "postal.um",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:96898))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal", "postal.us"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1608
+			}
+		},
+		{
+			"id": "postal.us",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:([0-9]{5})(?:[ \\-]([0-9]{4}))?)|(?:[0-9]{5}[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": [
+					"number.digit_run",
+					"number.signed_decimal",
+					"postal.va",
+					"postal.vi",
+					"postal.wf",
+					"postal.xk",
+					"postal.yt"
+				]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1625
+			}
+		},
+		{
+			"id": "postal.va",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:00120))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1646
+			}
+		},
+		{
+			"id": "postal.vc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:VC[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1662
+			}
+		},
+		{
+			"id": "postal.vg",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:VG[0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1674
+			}
+		},
+		{
+			"id": "postal.vi",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:(008(?:(?:[0-4][0-9])|(?:5[01])))(?:[ \\-]([0-9]{4}))?))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1686
+			}
+		},
+		{
+			"id": "postal.wf",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:986[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1702
+			}
+		},
+		{
+			"id": "postal.xk",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:[1-7][0-9]{4}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1718
+			}
+		},
+		{
+			"id": "postal.yt",
+			"grammar": {
+				"op": "pattern",
+				"regex": "(?i:(?:976[0-9]{2}))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1734
+			}
+		},
+		{
+			"id": "printed.ax",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{41}\\x{61}][\\x{58}\\x{78}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:22[0-9]{3})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1750
+			}
+		},
+		{
+			"id": "printed.az",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{41}\\x{61}][\\x{5a}\\x{7a}][\\x{20}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1764
+			}
+		},
+		{
+			"id": "printed.ch",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{43}\\x{63}][\\x{48}\\x{68}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1778
+			}
+		},
+		{
+			"id": "printed.fi",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{46}\\x{66}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1792
+			}
+		},
+		{
+			"id": "printed.fo",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{46}\\x{66}][\\x{4f}\\x{6f}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1806
+			}
+		},
+		{
+			"id": "printed.hr",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{48}\\x{68}][\\x{52}\\x{72}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1820
+			}
+		},
+		{
+			"id": "printed.ht",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{48}\\x{68}][\\x{54}\\x{74}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1834
+			}
+		},
+		{
+			"id": "printed.jp",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{3012}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}-?[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1848
+			}
+		},
+		{
+			"id": "printed.li",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{46}\\x{66}][\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:948[5-9]|949[0-8])))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1862
+			}
+		},
+		{
+			"id": "printed.lt",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{4c}\\x{6c}][\\x{54}\\x{74}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1876
+			}
+		},
+		{
+			"id": "printed.lu",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1890
+			}
+		},
+		{
+			"id": "printed.mc",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{4d}\\x{6d}][\\x{43}\\x{63}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:980[0-9]{2})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1904
+			}
+		},
+		{
+			"id": "printed.md",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{4d}\\x{6d}][\\x{44}\\x{64}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1918
+			}
+		},
+		{
+			"id": "printed.se",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{45}\\x{65}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1932
+			}
+		},
+		{
+			"id": "printed.si",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1946
+			}
+		}
+	]
+}

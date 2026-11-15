@@ -1,0 +1,42 @@
+{
+	"families": {
+		"postal": {
+			"artifact": "postal.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 725116,
+					"patterns": 98,
+					"role": "whole",
+					"states": 1408
+				},
+				{
+					"backend": "dense",
+					"bytes": 966952,
+					"patterns": 98,
+					"role": "embedded",
+					"states": 1846
+				}
+			],
+			"bytes": 1873640,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "0d69452b0205fd7cd7115a132d1eb73d7b96e76c34e622ed35c785e071dfb8ac",
+			"irHash": "42e39316445702bc407be90df7a0a4b3a37b889b1938d688d1403a2e214149de",
+			"sha256": "1cf5d2ebfc5921c1058e603b60992e5e15c99133686b0d022e599d8bfb299c7c",
+			"unicodeVersion": "16.0.0"
+		}
+	},
+	"limits": {
+		"buildBytes": 33554432,
+		"denseBytes": 2097152,
+		"inputBytes": 65536,
+		"maxCaptures": 64,
+		"maxDepth": 64,
+		"maxLoweredNodes": 100000,
+		"maxProductStates": 1000000,
+		"maxStates": 50000,
+		"nfaBytes": 8388608,
+		"partitionInputBytes": 1048576,
+		"sparseBytes": 2097152
+	}
+}
