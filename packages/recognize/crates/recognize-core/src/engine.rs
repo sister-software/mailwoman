@@ -361,6 +361,26 @@ impl Engine {
 	/// Like [`Engine::search_in`], with the family and shape as positions, so a caller that decodes by position builds
 	/// no string.
 	pub fn locate(&self, text: &str, include: impl Fn(usize) -> bool) -> Result<Vec<Located>, SearchError> {
+		self.locate_counting(text, include, &mut 0)
+	}
+
+	/// The automaton transitions the embedded searches of every loaded family take on `text`. A test reads it to hold
+	/// the cost of a search to its stated bound, which no clock can do without noise.
+	#[doc(hidden)]
+	pub fn embedded_steps(&self, text: &str) -> Result<usize, SearchError> {
+		let mut steps = 0;
+
+		self.locate_counting(text, |_| true, &mut steps)?;
+
+		Ok(steps)
+	}
+
+	fn locate_counting(
+		&self,
+		text: &str,
+		include: impl Fn(usize) -> bool,
+		steps: &mut usize,
+	) -> Result<Vec<Located>, SearchError> {
 		for family in self
 			.families
 			.iter()
@@ -400,7 +420,7 @@ impl Engine {
 			}
 
 			if let Some(embedded) = &family.embedded {
-				search_embedded(embedded, text, |pattern, start, end| {
+				*steps += search_embedded(embedded, text, |pattern, start, end| {
 					// An `Embedded` shape reports spans inside the text. The whole text is for `Whole` and
 					// `WholeOrEmbedded`.
 					if embedded.patterns[pattern].scope == Scope::Embedded && start == 0 && end == text.len() {
@@ -734,52 +754,216 @@ fn search_whole(loaded: &Loaded, text: &str, mut found: impl FnMut(usize)) -> Re
 	}
 }
 
+/// The index of no record in a [`Maximal`] arena.
+const NO_RECORD: usize = usize::MAX;
+
+/// One match the search has kept for a pattern. Records of one pattern form a stack through `prev`, and a popped
+/// record's `pattern` is [`NO_RECORD`].
+struct Record {
+	pattern: usize,
+	start: usize,
+	end: usize,
+	prev: usize,
+}
+
+/// The maximal matches of each pattern, built as the ends arrive in increasing order.
+///
+/// A pattern's records are a stack whose starts and ends both increase from bottom to top. A match that ends later than
+/// everything on the stack removes every record that starts at or after its own start, because the new match contains
+/// each of them, and the records that remain start earlier and are contained in nothing seen so far. A match with the
+/// end of the top record has a start no earlier than the top's, because the caller offers starts in increasing order,
+/// so it adds nothing.
+#[derive(Default)]
+struct Maximal {
+	/// The top record of each pattern's stack.
+	tops: Vec<usize>,
+	records: Vec<Record>,
+}
+
+/// The buffers one embedded search fills. A thread keeps one set between searches, so a call that finds a short text
+/// allocates nothing in the search once the first call has sized them.
+#[derive(Default)]
+struct Scratch {
+	maximal: Maximal,
+	/// The live walks as (state, start), in increasing order of start.
+	walks: Vec<(StateID, usize)>,
+}
+
+/// The most records a thread's buffers keep between searches.
+const KEPT_RECORDS: usize = 4096;
+
+thread_local! {
+	static SCRATCH: std::cell::RefCell<Option<Scratch>> = const { std::cell::RefCell::new(None) };
+}
+
+impl Maximal {
+	/// Empties the stacks for an automaton of `patterns` patterns and keeps the allocations.
+	fn reset(&mut self, patterns: usize) {
+		self.tops.clear();
+		self.tops.resize(patterns, NO_RECORD);
+		self.records.clear();
+	}
+
+	/// Offers the match `start..end` of `pattern`. The ends of the offers to one pattern never decrease, and offers with
+	/// one end come in increasing order of start.
+	fn offer(&mut self, pattern: usize, start: usize, end: usize) {
+		let mut top = self.tops[pattern];
+
+		if top != NO_RECORD && self.records[top].end == end {
+			return;
+		}
+
+		// A popped record's slot is reused for the new one, so a run that keeps extending one match holds one record.
+		let mut slot = NO_RECORD;
+
+		while top != NO_RECORD && self.records[top].start >= start {
+			let below = self.records[top].prev;
+
+			self.records[top].pattern = NO_RECORD;
+
+			if slot == NO_RECORD {
+				slot = top;
+			}
+
+			top = below;
+		}
+
+		let record = Record {
+			pattern,
+			start,
+			end,
+			prev: top,
+		};
+
+		if slot == NO_RECORD {
+			slot = self.records.len();
+			self.records.push(record);
+		} else {
+			self.records[slot] = record;
+		}
+
+		self.tops[pattern] = slot;
+	}
+}
+
 /// Calls `found` with `(pattern, start, end)` for the candidate spans of an embedded automaton under the crate's span
-/// policy: for each pattern, the match that is not inside another match of the same pattern.
-fn search_embedded(loaded: &Loaded, text: &str, mut found: impl FnMut(usize, usize, usize)) -> Result<(), SearchError> {
+/// policy: for each pattern, the match that is not inside another match of the same pattern. Returns the number of
+/// automaton transitions the search took.
+///
+/// One forward pass reads each byte once for every walk that is still alive. A walk is an anchored run of the automaton
+/// from one start, and the pass keeps its current state and its start. Two walks in one state read the same suffix to
+/// the same states from then on, so the later start's future matches are the earlier start's, and the pass drops the
+/// later walk. What it reports for a pattern and an end is therefore the match with the earliest start, which is the
+/// longest one, and [`Maximal`] removes the matches that another match of the pattern contains. The walks that remain
+/// stand in distinct states, so at most one for each state of the automaton, and the pass takes at most
+/// `bytes * states` transitions, a bound that does not depend on the text.
+fn search_embedded(
+	loaded: &Loaded,
+	text: &str,
+	mut found: impl FnMut(usize, usize, usize),
+) -> Result<usize, SearchError> {
 	fn run<A: Automaton>(
 		dfa: &A,
 		loaded: &Loaded,
 		bytes: &[u8],
 		found: &mut impl FnMut(usize, usize, usize),
-	) -> Result<(), SearchError> {
-		// The furthest end any earlier start reached, per pattern. Zero means none: a match ends after it starts.
-		let mut reach = vec![0usize; loaded.patterns.len()];
-		// The longest end of the current start, per pattern, and the patterns that have one.
-		let mut longest = vec![0usize; loaded.patterns.len()];
-		let mut touched: Vec<usize> = Vec::new();
+	) -> Result<usize, SearchError> {
+		// A search that began inside this one finds the slot empty and takes fresh buffers.
+		let mut scratch = SCRATCH.with(|slot| slot.borrow_mut().take()).unwrap_or_default();
+		let result = pass(dfa, loaded, bytes, &mut scratch, found);
 
-		for start in 0..bytes.len() {
-			// A start inside a codepoint is not a boundary.
-			if bytes[start] & 0xC0 == 0x80 {
-				continue;
-			}
+		// A long text leaves large buffers behind, and a thread should not hold them for the short texts that follow.
+		if scratch.maximal.records.capacity() <= KEPT_RECORDS {
+			SCRATCH.with(|slot| *slot.borrow_mut() = Some(scratch));
+		}
 
-			// One walk sees the ends in increasing order, so the last one a pattern reports is its longest.
-			walk(dfa, loaded.start, bytes, start, |dfa, state, end| {
-				for index in 0..dfa.match_len(state) {
-					let pattern = dfa.match_pattern(state, index).as_usize();
+		result
+	}
 
-					if longest[pattern] == 0 {
-						touched.push(pattern);
+	fn pass<A: Automaton>(
+		dfa: &A,
+		loaded: &Loaded,
+		bytes: &[u8],
+		scratch: &mut Scratch,
+		found: &mut impl FnMut(usize, usize, usize),
+	) -> Result<usize, SearchError> {
+		let Scratch { maximal, walks } = scratch;
+		let mut steps = 0;
+
+		maximal.reset(loaded.patterns.len());
+		walks.clear();
+
+		for (offset, byte) in bytes.iter().enumerate() {
+			let live = walks.len();
+			// A start inside a codepoint is not a boundary. A walk that begins here comes after every live one, because it
+			// has the latest start, and a start the byte kills at once is never stored.
+			let candidates = live + usize::from(byte & 0xC0 != 0x80);
+
+			// Keep the walks that survive in place. A walk that reaches a state an earlier walk holds is dropped, and the
+			// earlier walk has the earlier start.
+			let mut kept = 0;
+
+			for index in 0..candidates {
+				let (state, start) = if index < live {
+					walks[index]
+				} else {
+					(loaded.start, offset)
+				};
+				let next = dfa.next_state(state, *byte);
+
+				steps += 1;
+
+				if dfa.is_special_state(next) {
+					if dfa.is_dead_state(next) {
+						continue;
 					}
 
-					longest[pattern] = end;
+					if dfa.is_quit_state(next) {
+						return Err(SearchError::Automaton(format!("the automaton quit at byte {offset}")));
+					}
 				}
-			})?;
 
-			// Report the longest match at this start once, and only when it reaches past every earlier start's.
-			for pattern in touched.drain(..) {
-				let end = std::mem::take(&mut longest[pattern]);
+				if walks[..kept].iter().any(|(held, _)| *held == next) {
+					continue;
+				}
 
-				if end > reach[pattern] {
-					found(pattern, start, end);
-					reach[pattern] = end;
+				if kept < live {
+					walks[kept] = (next, start);
+				} else {
+					walks.push((next, start));
+				}
+
+				kept += 1;
+
+				// A match state is reported one byte after the match ends, so the end is this byte's position.
+				if dfa.is_special_state(next) && dfa.is_match_state(next) {
+					for pattern in 0..dfa.match_len(next) {
+						maximal.offer(dfa.match_pattern(next, pattern).as_usize(), start, offset);
+					}
+				}
+			}
+
+			walks.truncate(kept);
+		}
+
+		// The end-of-text transition reports the matches that end at the end of the text.
+		for (state, start) in walks.iter().copied() {
+			let next = dfa.next_eoi_state(state);
+
+			if dfa.is_match_state(next) {
+				for pattern in 0..dfa.match_len(next) {
+					maximal.offer(dfa.match_pattern(next, pattern).as_usize(), start, bytes.len());
 				}
 			}
 		}
 
-		Ok(())
+		for record in &maximal.records {
+			if record.pattern != NO_RECORD {
+				found(record.pattern, record.start, record.end);
+			}
+		}
+
+		Ok(steps)
 	}
 
 	match &loaded.dfa {

@@ -615,11 +615,11 @@ mod tests {
 		assert_eq!(unsafe { rcg_recognize(bytes.as_ptr(), 1, 1) }, -1);
 		assert_eq!(rcg_error_code(), code::NOT_UTF8);
 
-		let long = "1".repeat(5000);
+		let long = "1".repeat(70_000);
 
 		assert_eq!(unsafe { rcg_recognize(long.as_ptr(), long.len(), 1) }, -1);
 		assert_eq!(rcg_error_code(), code::INPUT_TOO_LONG);
-		assert!(message().contains("5000"), "{}", message());
+		assert!(message().contains("70000"), "{}", message());
 
 		assert_eq!(rcg_shapes(7), -1);
 		assert_eq!(rcg_error_code(), code::ARGUMENT);
