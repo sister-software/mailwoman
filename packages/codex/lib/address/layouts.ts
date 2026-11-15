@@ -29,6 +29,7 @@ import {
 	addr,
 	type AddressAtom,
 	type AddressLayout,
+	hanStreet,
 	isAlternation,
 	isLayout,
 	isSlot,
@@ -344,6 +345,25 @@ ${region}${locality}${dependent_locality}
 ${chineseStreet}
 ${venue}
 ${attention}`,
+
+	// %Z%n%S%C%n%A%n%O%n%N, with the whole address unseparated and largest first (`10044臺北市中正區忠孝西路一段120號1樓`).
+	// Chunghwa Post's list and the GCIS register file the 鄉鎮市區 under its own column,
+	// labeled `subregion`, where libaddressinput's `%C` reads `locality`.
+	// A row labels one of the two.
+	// The venue and recipient follow the address as JP and KR print them, set off by a
+	// space on one line (`… 1樓 臺北北門郵局`) rather than glued to the 樓.
+	TW: withSoftBreakBefore(
+		withSoftBreakBefore(
+			addr`${country}
+${postcode}
+${region}${subregion}${locality}${dependent_locality}
+${hanStreet}
+${venue}
+${attention}`,
+			"venue"
+		),
+		"attention"
+	),
 
 	// %S%n%C%n%A%n%O%n%N — this table holds one layout per country and Hong Kong writes
 	// both orders, so it holds the Latin one (`21 Jordan Road, Yau Tsim Mong, Kowloon`),

@@ -33,7 +33,7 @@ import {
 	type AddressLayout,
 } from "#address/layout"
 
-const { attention, cedex, country, dependent_locality, locality, postcode, region, venue } = SLOTS
+const { attention, cedex, country, dependent_locality, locality, postcode, region, subregion, venue } = SLOTS
 
 /**
  * Generated layouts, keyed by ISO 3166-1 alpha-2.
@@ -1427,15 +1427,6 @@ ${locality}
 ${region}
 ${country}`,
 
-	// %Z%n%S%C%n%A%n%O%n%N
-	TW: addr`${country}
-${postcode}
-${region}${locality}
-${dependent_locality}
-${numberLastStreet}
-${venue}
-${attention}`,
-
 	// %N%n%O%n%A%n%Z %C
 	TZ: addr`${attention}
 ${venue}
@@ -1642,7 +1633,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${locality}, ${region} ${postcode}
+${subregion}, ${locality}, ${region} ${postcode}
 ${country}`,
 }
 
@@ -1823,6 +1814,15 @@ ${numberFirstStreet}
 ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
+
+	// %Z%n%S%C%n%A%n%O%n%N
+	TW: addr`${country}
+${postcode}
+${region}${locality}
+${dependent_locality}
+${numberLastStreet}
+${venue}
+${attention}`,
 
 	// %N%n%O%n%A%n%C, %S %Z
 	US: addr`${attention}

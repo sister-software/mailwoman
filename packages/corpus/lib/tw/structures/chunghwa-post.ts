@@ -18,9 +18,10 @@
  *
  *   No corpus adapter reads this file.
  *   Taiwanese training rows are built by the CJK corpus builder (`#tw/corpus/assemble`),
- *   whose records are spanned by hand, and the codex's Taiwanese layout places no `subregion`
- *   and prints the venue after the address, so a rendered row would lose the district
- *   and the venue's tokens would align to `O`.
+ *   whose records are spanned by hand.
+ *
+ *   The codex's Taiwanese layout prints every component this module returns,
+ *   with the office name set off by a space after the address.
  *
  *   License: 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), whose 第2條
  *   grants «重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作» for any purpose, and whose 第3條 voids
