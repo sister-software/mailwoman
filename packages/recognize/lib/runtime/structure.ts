@@ -18,7 +18,7 @@ import type { BCP47 } from "@mailwoman/registry/types"
 
 import { offsetMap } from "#offsets"
 import { ErrorCode, SEGMENT_WORDS, STRUCTURE_HEADER_WORDS, TOKEN_WORDS } from "#runtime/abi"
-import { stage } from "#runtime/engine"
+import { stageText } from "#runtime/engine"
 import { RecognizeError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
 import type {
@@ -126,7 +126,7 @@ function rankScripts(words: Uint32Array): ScriptShare[] {
 export function structureFields(instance: Instance, text: string, handle: number): StructureFields {
 	try {
 		const { exports } = instance
-		const { pointer, written } = stage(instance, text)
+		const { pointer, written } = stageText(instance, text)
 		const count = exports.rcg_structure(pointer, written, handle)
 
 		if (count < 0) {

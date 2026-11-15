@@ -78,7 +78,7 @@ function reserve(instance: Instance, length: number): number {
  *
  * @internal
  */
-export function stage(instance: Instance, text: string): { pointer: number; written: number } {
+export function stageText(instance: Instance, text: string): { pointer: number; written: number } {
 	const { staging } = instance
 
 	if (staging.text === text) return { pointer: staging.pointer, written: staging.written }
@@ -177,7 +177,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 export function recognizeText(instance: Instance, text: string, mask: number): LooseRecognition[] {
 	try {
 		const { exports } = instance
-		const { pointer, written } = stage(instance, text)
+		const { pointer, written } = stageText(instance, text)
 		const count = exports.rcg_recognize(pointer, written, mask)
 
 		if (count < 0) {
@@ -205,7 +205,7 @@ export function recognizeText(instance: Instance, text: string, mask: number): L
 export function traceText(instance: Instance, text: string, mask: number, explain: readonly string[]): Trace[] {
 	try {
 		const { exports } = instance
-		const { pointer, written } = stage(instance, text)
+		const { pointer, written } = stageText(instance, text)
 		const names = encoder.encode(explain.join("\n"))
 		const namesPointer = exports.rcg_alloc(names.byteLength)
 
