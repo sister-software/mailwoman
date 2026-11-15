@@ -2022,6 +2022,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "recognize-build"
+version = "0.1.0"
+dependencies = [
+ "recognize-core",
+ "serde_json",
+]
+
+[[package]]
+name = "recognize-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "regex"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

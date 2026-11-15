@@ -7650,6 +7650,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/recognize@workspace:packages/recognize":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/recognize@workspace:packages/recognize"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@types/node": "npm:^26.6.6"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/record@workspace:*, @mailwoman/record@workspace:packages/record":
   version: 0.0.0-use.local
   resolution: "@mailwoman/record@workspace:packages/record"
