@@ -34,7 +34,7 @@ pub enum Node {
 	Capture { path: String, node: Box<Node> },
 	/// The grammar of a named term.
 	Reference { id: String },
-	/// A grammar supplied as a regular-expression string. The IR stores the text; a later phase parses it.
+	/// A grammar supplied as a regular-expression string. The IR stores the text; the compiler parses it.
 	Pattern { regex: String },
 }
 
@@ -134,7 +134,7 @@ pub fn reference(id: &str) -> Node {
 	Node::Reference { id: id.to_string() }
 }
 
-/// A grammar supplied as a regular-expression string. Nothing parses it in this phase.
+/// A grammar supplied as a regular-expression string. The compiler's lowering step parses it.
 pub fn pattern(regex: &str) -> Node {
 	Node::Pattern {
 		regex: regex.to_string(),

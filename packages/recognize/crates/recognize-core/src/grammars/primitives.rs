@@ -11,11 +11,25 @@
 //!
 //! A digit run is also a signed decimal, so the two declare that overlap.
 
-use crate::ast::{choice, class, literal, one_or_more, optional, reference, sequence};
+use crate::ast::{choice, class, literal, one_or_more, optional, reference, sequence, Node};
 use crate::family::{shape, term, Family};
 use crate::ir::Scope;
 
 pub const FAMILY: &str = "primitives";
+
+/// The signed decimal grammar, which refers to the terms `sign` and `digit`. Families that share it declare both terms.
+pub fn signed_decimal() -> Node {
+	sequence([
+		optional(reference("sign")),
+		choice([
+			sequence([
+				one_or_more(reference("digit")),
+				optional(sequence([literal("."), one_or_more(reference("digit"))])),
+			]),
+			sequence([literal("."), one_or_more(reference("digit"))]),
+		]),
+	])
+}
 
 /// Builds the family. The grammars are valid by construction, and the module's tests hold that.
 pub fn family() -> Family {
@@ -26,16 +40,7 @@ pub fn family() -> Family {
 		.term(term("sign", class(&[('+', '+'), ('-', '-')])))
 		.shape(
 			shape("number.signed_decimal")
-				.grammar(sequence([
-					optional(reference("sign")),
-					choice([
-						sequence([
-							one_or_more(reference("digit")),
-							optional(sequence([literal("."), one_or_more(reference("digit"))])),
-						]),
-						sequence([literal("."), one_or_more(reference("digit"))]),
-					]),
-				]))
+				.grammar(signed_decimal())
 				.scope(Scope::WholeOrEmbedded)
 				.may_overlap(&["number.digit_run"]),
 		)

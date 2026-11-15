@@ -27,6 +27,8 @@
 		"lib/**/*.ts",
 		"tools/**/*.ts",
 		"data/ir/*.json",
+		"data/artifacts/*.rca1",
+		"data/manifests/*.json",
 		"definitions/*.json",
 		"!**/*.test.ts",
 		"!**/*.test.tsx"

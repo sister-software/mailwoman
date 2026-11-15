@@ -4,9 +4,10 @@
 //! Validation of a family's terms and shapes. Every refusal carries the source file and line of the declaration that
 //! holds the fault.
 //!
-//! A regular-expression string is not parsed here. Validation scans it for the constructs no automaton can run
-//! (lookaround and backreferences) and refuses the empty pattern. Whether a non-empty pattern can match the empty
-//! string waits for the phase that parses it.
+//! A regular-expression string is not parsed here, because the runtime crate links no regex parser. Validation scans
+//! it for the constructs no automaton can run (lookaround and backreferences) and refuses the empty pattern. The
+//! compiler's lowering step in `recognize-build` parses the string, and there it refuses a pattern that can match the
+//! empty string and any syntax the parser or the automata do not support, against the same source file and line.
 
 use std::collections::{BTreeSet, HashMap};
 

@@ -66,6 +66,8 @@ pub enum DiagnosticKind {
 	MissingGrammar,
 	/// IR text that is not valid, canonical IR.
 	MalformedIR,
+	/// A grammar that grows past a configured compiler limit on every backend.
+	LimitExceeded,
 }
 
 impl DiagnosticKind {
@@ -82,6 +84,7 @@ impl DiagnosticKind {
 			DiagnosticKind::MalformedID => "malformed-id",
 			DiagnosticKind::MissingGrammar => "missing-grammar",
 			DiagnosticKind::MalformedIR => "malformed-ir",
+			DiagnosticKind::LimitExceeded => "limit-exceeded",
 		}
 	}
 }

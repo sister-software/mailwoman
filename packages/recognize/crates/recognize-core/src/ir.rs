@@ -17,6 +17,11 @@ use crate::ids::{HandlerID, ValidatorID};
 use crate::validate::validate;
 use sha2::{Digest, Sha256};
 
+/// The SHA-256 of `bytes` as 64 lowercase hexadecimal digits. The IR hash, the artifact hash and the manifest share it.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+	Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 /// The `format` field of every IR document.
 pub const IR_FORMAT: &str = "mailwoman.recognize.ir";
 
@@ -127,9 +132,7 @@ impl IrDocument {
 
 		blank.hash = String::new();
 
-		let digest = Sha256::digest(serde_json::to_vec(&blank).expect("an IR document always serializes"));
-
-		digest.iter().map(|byte| format!("{byte:02x}")).collect()
+		sha256_hex(&serde_json::to_vec(&blank).expect("an IR document always serializes"))
 	}
 
 	/// Canonicalizes the document and fills `hash`.

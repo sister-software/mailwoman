@@ -1,0 +1,250 @@
+{
+	"format": "mailwoman.recognize.ir",
+	"version": 1,
+	"hash": "003b36d9ea437ce7c049651057644c2a44c6025f346183e47ef16fd3c5f8a1db",
+	"family": "coordinates",
+	"terms": [
+		{
+			"id": "ascii_whitespace",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["\t", "\r"],
+					[" ", " "]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 20
+			}
+		},
+		{
+			"id": "digit",
+			"grammar": {
+				"op": "class",
+				"ranges": [["0", "9"]],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 21
+			}
+		},
+		{
+			"id": "sign",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["+", "+"],
+					["-", "-"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 22
+			}
+		}
+	],
+	"shapes": [
+		{
+			"id": "coordinate.decimal_pair",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "latitude",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "optional",
+									"node": {
+										"op": "reference",
+										"id": "sign"
+									}
+								},
+								{
+									"op": "choice",
+									"alternatives": [
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "literal",
+																"value": "."
+															},
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "digit"
+																},
+																"min": 1,
+																"max": null
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "literal",
+													"value": "."
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "reference",
+							"id": "ascii_whitespace"
+						},
+						"min": 0,
+						"max": null
+					},
+					{
+						"op": "literal",
+						"value": ","
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "reference",
+							"id": "ascii_whitespace"
+						},
+						"min": 0,
+						"max": null
+					},
+					{
+						"op": "capture",
+						"path": "longitude",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "optional",
+									"node": {
+										"op": "reference",
+										"id": "sign"
+									}
+								},
+								{
+									"op": "choice",
+									"alternatives": [
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "literal",
+																"value": "."
+															},
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "digit"
+																},
+																"min": 1,
+																"max": null
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "literal",
+													"value": "."
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "latitude",
+					"type": "decimal"
+				},
+				{
+					"path": "longitude",
+					"type": "decimal"
+				}
+			],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 24
+			}
+		}
+	]
+}
