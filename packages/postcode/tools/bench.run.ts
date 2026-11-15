@@ -34,7 +34,8 @@ import { defineFamily } from "@mailwoman/recognize/family"
 import { primitives } from "@mailwoman/recognize/primitives"
 import { structure } from "@mailwoman/recognize/structure"
 
-import { postal, postcodeLegacy } from "#recognize"
+import { postcodeLegacy } from "#recognize/legacy"
+import { postal } from "#recognize/postal"
 
 const WARM_UP_CALLS = 20_000
 const TIMED_CALLS = 200_000

@@ -21,7 +21,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createRecognizer } from "@mailwoman/recognize"
 import { structure } from "@mailwoman/recognize/structure"
 
-import { postcodeLegacy } from "#recognize"
+import { postcodeLegacy } from "#recognize/legacy"
 
 /**
  * The composed recognizer the comparison runs.

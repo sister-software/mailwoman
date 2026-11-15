@@ -6,7 +6,7 @@ import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
 import { countriesAcceptingPostcode, postcodeSyntaxCountries } from "#country-formats"
-import { acceptingCountries } from "#recognize"
+import { acceptingCountries } from "#recognize/postal"
 import {
 	DENSE_ALPHABET,
 	compareAccepting,

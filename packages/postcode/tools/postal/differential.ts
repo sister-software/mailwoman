@@ -15,7 +15,7 @@ import { mulberry32 } from "@mailwoman/core/random"
 import { createRecognizer } from "@mailwoman/recognize"
 
 import { countriesAcceptingPostcode } from "#country-formats"
-import { acceptingCountries, postal } from "#recognize"
+import { acceptingCountries, postal } from "#recognize/postal"
 
 /**
  * The recognizer the comparison runs: the `postal` family, with no other family composed.

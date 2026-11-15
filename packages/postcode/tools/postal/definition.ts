@@ -47,7 +47,7 @@
  *
  *   Every shape has `boundary: "token"`: the engine reports an embedded match only when the character
  *   before it and the one after it are not an ASCII letter, an ASCII digit or a connector.
- *   See `lib/recognize/postal.ts`.
+ *   See `lib/recognize/postal/readers.ts`.
  *
  *   # What the compiler refuses
  *

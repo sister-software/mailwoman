@@ -14,7 +14,7 @@ import {
 	postalCountries,
 	postalCountryCodes,
 	splitPrintedPostcode,
-} from "#recognize"
+} from "#recognize/postal"
 import { PostalMetadata } from "#recognize/postal.generated"
 import { translateBody } from "#tools/postal/definition"
 
