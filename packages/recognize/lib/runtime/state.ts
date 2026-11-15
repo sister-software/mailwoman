@@ -26,11 +26,26 @@ export interface LoadedFamily {
 }
 
 /**
+ * What a result record's family handle and shape position stand for, read once when the family loads.
+ */
+export interface FamilyTable {
+	readonly id: string
+	/**
+	 * The shape IDs in the engine's table order.
+	 */
+	readonly shapes: readonly string[]
+}
+
+/**
  * One live engine instance and the families loaded into it.
  */
 export interface Instance {
 	readonly exports: Exports
 	readonly families: Map<string, LoadedFamily>
+	/**
+	 * Each loaded family's table, indexed by its handle.
+	 */
+	readonly tables: FamilyTable[]
 	/**
 	 * The staging buffer the text is encoded into, reused while it is large enough.
 	 */
@@ -108,7 +123,7 @@ function activate(module: CompiledModule, source: object): Instance {
 		throw new Error(`WebAssembly ABI version ${version} does not match the loader's ABI version ${ABI_VERSION}`)
 	}
 
-	live = { exports, families: new Map(), staging: { pointer: 0, length: 0 } }
+	live = { exports, families: new Map(), tables: [], staging: { pointer: 0, length: 0 } }
 	state = { kind: "ready", source }
 
 	return live

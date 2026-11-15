@@ -6,8 +6,8 @@
 //! The exports form a C ABI that `packages/recognize/lib/runtime/abi.ts` calls directly, as the registry's adapter does.
 //! The caller stages bytes in linear memory with `rcg_alloc`, loads each family's artifact with `rcg_load` and receives
 //! a family handle, and then recognizes text with `rcg_recognize`, naming the families to search as a bit mask of
-//! handles. The result is one JSON document in a buffer the module owns: `rcg_result_ptr` and the returned length
-//! locate it, and it stays valid until the next call.
+//! handles. One call returns the whole result, in two buffers the module owns and reuses: `rcg_result_ptr` addresses
+//! the records and `rcg_json_ptr` addresses the text the records point into. Both stay valid until the next call.
 //!
 //! The engine is the search runtime and the validators. Family artifacts are data the caller passes after
 //! instantiation, so the module's size does not grow with the grammars.
@@ -15,32 +15,50 @@
 //! Every fallible export returns -1 and records an error code and message that `rcg_error_code`, `rcg_error_ptr` and
 //! `rcg_error_len` read. A panic aborts, which a host sees as a WebAssembly trap.
 //!
-//! # Result document
+//! # Result records
+//!
+//! `rcg_recognize` returns the number of recognitions. The records are that many runs of [`RECORD_WORDS`] little-endian
+//! `u32` words at `rcg_result_ptr`, in the order of a search, which is by start, end, family and shape:
 //!
 //! ```text
-//! { "recognitions": [ { "family": "coordinates", "shape": "coordinate.decimal_pair",
-//!                       "start": 3, "end": 20,
-//!                       "validation": { "status": "validated", "payload": { … } } } ],
-//!   "fields": {} }
+//! word 0  the family's handle
+//! word 1  the shape's position in the family's shape table (see `rcg_shapes`)
+//! word 2  start, a UTF-8 byte offset
+//! word 3  end, a UTF-8 byte offset
+//! word 4  status: 0 unvalidated, 1 validated, 2 rejected
+//! word 5  byte offset into the JSON text of the validated payload or the rejection
+//! word 6  byte length of that JSON, 0 when the status is 0
 //! ```
 //!
-//! `start` and `end` are UTF-8 byte offsets, and the TypeScript side converts them to UTF-16 code units. `validation`
-//! is `{"status":"unvalidated"}`, `{"status":"validated","payload":…}` or
-//! `{"status":"rejected","rejection":{"code":…,"capture":…,"message":…}}`. `fields` holds each family's own result
-//! fields, which no family declares yet, so it is always an empty object.
+//! The JSON text at `rcg_json_ptr` holds a validated recognition's payload and a rejected recognition's
+//! `{"code":…,"capture":…,"message":…}`, one document per such record. A call whose recognitions are all unvalidated
+//! writes no JSON, so no text is built or parsed. The TypeScript side converts the byte offsets to UTF-16 code units.
+//!
+//! `rcg_shapes` writes a family's shape table, the shape IDs in byte order joined by newlines, at `rcg_json_ptr`. The
+//! caller reads it once when it loads the family and keeps the strings.
+//!
+//! The result has no per-family fields yet.
 
 use std::cell::RefCell;
 
-use recognize_core::declared::Payload;
-use recognize_core::{ArtifactError, Engine, Expected, Rejection, SearchError, ValidationResult};
-use serde::Serialize;
+use recognize_core::{ArtifactError, Engine, Expected, SearchError, ValidationResult};
 
 /// The ABI version the TypeScript loader checks. Bump it on any change to an export's signature or to the result
-/// document's shape.
-pub const ABI_VERSION: u32 = 1;
+/// records' layout.
+pub const ABI_VERSION: u32 = 2;
 
 /// The families one instance loads, bounded by the bits of the mask `rcg_recognize` takes.
 pub const MAX_FAMILIES: usize = 32;
+
+/// The words of one result record.
+pub const RECORD_WORDS: usize = 7;
+
+/// Status words of a result record.
+pub mod status {
+	pub const UNVALIDATED: u32 = 0;
+	pub const VALIDATED: u32 = 1;
+	pub const REJECTED: u32 = 2;
+}
 
 /// Error codes `rcg_error_code` answers.
 pub mod code {
@@ -61,7 +79,8 @@ pub mod code {
 #[derive(Default)]
 struct State {
 	engine: Engine,
-	result: Vec<u8>,
+	records: Vec<u32>,
+	json: Vec<u8>,
 	error_code: i32,
 	error_message: String,
 }
@@ -169,35 +188,66 @@ pub unsafe extern "C" fn rcg_load(ptr: *const u8, len: usize, hash_ptr: *const u
 	})
 }
 
-#[derive(Serialize)]
-#[serde(tag = "status", rename_all = "snake_case")]
-enum Validation<'a> {
-	Unvalidated,
-	Validated { payload: &'a Payload },
-	Rejected { rejection: &'a Rejection },
+/// Writes the shape table of the family with handle `family` at `rcg_json_ptr` and returns its byte length, or -1 when
+/// no family has that handle. The table is the shape IDs in byte order, joined by newlines.
+#[no_mangle]
+pub extern "C" fn rcg_shapes(family: u32) -> i32 {
+	STATE.with(|state| {
+		let mut state = state.borrow_mut();
+		let state = &mut *state;
+		let shapes = state.engine.shapes(family as usize);
+
+		if shapes.is_empty() {
+			state.error_code = code::ARGUMENT;
+			state.error_message = "no family has that handle".to_string();
+
+			return -1;
+		}
+
+		state.json.clear();
+
+		for (index, shape) in shapes.iter().enumerate() {
+			if index > 0 {
+				state.json.push(b'\n');
+			}
+
+			state.json.extend_from_slice(shape.as_bytes());
+		}
+
+		i32::try_from(state.json.len()).unwrap_or(-1)
+	})
 }
 
-#[derive(Serialize)]
-struct Recognized<'a> {
-	family: &'a str,
-	shape: &'a str,
-	start: usize,
-	end: usize,
-	validation: Validation<'a>,
+fn search_code(error: &SearchError) -> i32 {
+	match error {
+		SearchError::InputTooLong { .. } => code::INPUT_TOO_LONG,
+		SearchError::NotUTF8 { .. } => code::NOT_UTF8,
+		SearchError::Automaton(_) => code::SEARCH,
+	}
 }
 
-#[derive(Serialize)]
-struct Document<'a> {
-	recognitions: Vec<Recognized<'a>>,
-	fields: Empty,
+/// Appends a validation's JSON to `json` and returns the record's status, offset and length words.
+fn write_validation(json: &mut Vec<u8>, validation: &ValidationResult) -> Result<[u32; 3], String> {
+	let start = json.len();
+	let word = match validation {
+		ValidationResult::Unvalidated => return Ok([status::UNVALIDATED, 0, 0]),
+		ValidationResult::Validated(payload) => {
+			serde_json::to_writer(&mut *json, payload).map_err(|error| error.to_string())?;
+			status::VALIDATED
+		}
+		ValidationResult::Rejected(rejection) => {
+			serde_json::to_writer(&mut *json, rejection).map_err(|error| error.to_string())?;
+			status::REJECTED
+		}
+	};
+	let offset = u32::try_from(start).map_err(|_| "the result is too large".to_string())?;
+	let length = u32::try_from(json.len() - start).map_err(|_| "the result is too large".to_string())?;
+
+	Ok([word, offset, length])
 }
 
-/// The per-family result fields: none yet. A family that declares fields adds them here without a change to the ABI.
-#[derive(Serialize)]
-struct Empty {}
-
-/// Recognizes the UTF-8 text at `ptr` over the families whose handle bit is set in `mask`, and returns the byte length
-/// of the result document, or -1. The document is at `rcg_result_ptr`.
+/// Recognizes the UTF-8 text at `ptr` over the families whose handle bit is set in `mask`, and returns the number of
+/// result records, or -1. The records are at `rcg_result_ptr` and their JSON at `rcg_json_ptr`.
 ///
 /// # Safety
 /// `ptr` must address `len` readable bytes.
@@ -207,71 +257,59 @@ pub unsafe extern "C" fn rcg_recognize(ptr: *const u8, len: usize, mask: u32) ->
 
 	STATE.with(|state| {
 		let mut state = state.borrow_mut();
+		let state = &mut *state;
 		let loaded = state.engine.family_ids().len();
 
 		if loaded < MAX_FAMILIES && mask >> loaded != 0 {
-			return fail(&mut state, code::ARGUMENT, "the mask names a family that is not loaded");
+			return fail(state, code::ARGUMENT, "the mask names a family that is not loaded");
 		}
 
 		let Ok(text) = std::str::from_utf8(bytes) else {
-			return fail(&mut state, code::NOT_UTF8, "the text is not UTF-8");
+			return fail(state, code::NOT_UTF8, "the text is not UTF-8");
 		};
 
-		// The buffer is taken first so the recognitions can borrow the engine while the document is written.
-		let mut buffer = std::mem::take(&mut state.result);
-		let outcome = state.engine.recognize_in(text, |index| mask & (1 << index) != 0);
-		let recognitions = match outcome {
-			Ok(recognitions) => recognitions,
-			Err(error) => {
-				let code = match error {
-					SearchError::InputTooLong { .. } => code::INPUT_TOO_LONG,
-					SearchError::NotUTF8 { .. } => code::NOT_UTF8,
-					SearchError::Automaton(_) => code::SEARCH,
-				};
-
-				return fail(&mut state, code, error.to_string());
-			}
+		let located = match state.engine.locate(text, |index| mask & (1 << index) != 0) {
+			Ok(located) => located,
+			Err(error) => return fail(state, search_code(&error), error.to_string()),
 		};
 
-		let document = Document {
-			recognitions: recognitions
-				.iter()
-				.map(|recognition| Recognized {
-					family: recognition.candidate.family,
-					shape: recognition.candidate.shape,
-					start: recognition.candidate.start,
-					end: recognition.candidate.end,
-					validation: match &recognition.validation {
-						ValidationResult::Unvalidated => Validation::Unvalidated,
-						ValidationResult::Validated(payload) => Validation::Validated { payload },
-						ValidationResult::Rejected(rejection) => Validation::Rejected { rejection },
-					},
-				})
-				.collect(),
-			fields: Empty {},
-		};
-		buffer.clear();
+		state.records.clear();
+		state.json.clear();
 
-		let written = serde_json::to_writer(&mut buffer, &document).is_ok();
+		for span in &located {
+			let (_, validation) = state.engine.validate(*span, text);
+			let words = match write_validation(&mut state.json, &validation) {
+				Ok(words) => words,
+				Err(message) => return fail(state, code::SEARCH, message),
+			};
 
-		drop(recognitions);
-		state.result = buffer;
-
-		if !written {
-			return fail(&mut state, code::SEARCH, "the result did not serialize");
+			// A text this engine searches is at most a family's limit of bytes, which fits a word.
+			state.records.extend_from_slice(&[
+				span.family as u32,
+				span.shape as u32,
+				span.start as u32,
+				span.end as u32,
+				words[0],
+				words[1],
+				words[2],
+			]);
 		}
 
-		match i32::try_from(state.result.len()) {
-			Ok(length) => length,
-			Err(_) => fail(&mut state, code::SEARCH, "the result is too large"),
-		}
+		i32::try_from(located.len()).unwrap_or(-1)
 	})
 }
 
-/// The address of the last result document, valid until the next `rcg_recognize`.
+/// The address of the last call's result records, valid until the next `rcg_recognize`.
 #[no_mangle]
-pub extern "C" fn rcg_result_ptr() -> *const u8 {
-	STATE.with(|state| state.borrow().result.as_ptr())
+pub extern "C" fn rcg_result_ptr() -> *const u32 {
+	STATE.with(|state| state.borrow().records.as_ptr())
+}
+
+/// The address of the last call's JSON text, or of the shape table `rcg_shapes` wrote, valid until the next call of
+/// either.
+#[no_mangle]
+pub extern "C" fn rcg_json_ptr() -> *const u8 {
+	STATE.with(|state| state.borrow().json.as_ptr())
 }
 
 #[cfg(test)]
@@ -298,15 +336,59 @@ mod tests {
 		STATE.with(|state| state.borrow().error_message.clone())
 	}
 
-	fn recognize(text: &str, mask: u32) -> serde_json::Value {
-		let length = unsafe { rcg_recognize(text.as_ptr(), text.len(), mask) };
+	/// One decoded result record: family handle, shape ID, span, status, and the JSON it points to.
+	struct Decoded {
+		family: u32,
+		shape: String,
+		start: u32,
+		end: u32,
+		status: u32,
+		json: Option<serde_json::Value>,
+	}
+
+	fn shape_table(family: u32) -> Vec<String> {
+		let length = rcg_shapes(family);
 
 		assert!(length >= 0, "{}", message());
 
-		let bytes = STATE.with(|state| state.borrow().result.clone());
+		STATE.with(|state| {
+			String::from_utf8(state.borrow().json.clone())
+				.unwrap()
+				.split('\n')
+				.map(str::to_string)
+				.collect()
+		})
+	}
 
-		assert_eq!(bytes.len(), length as usize);
-		serde_json::from_slice(&bytes).unwrap()
+	fn recognize(text: &str, mask: u32) -> Vec<Decoded> {
+		let count = unsafe { rcg_recognize(text.as_ptr(), text.len(), mask) };
+
+		assert!(count >= 0, "{}", message());
+
+		let (records, json) = STATE.with(|state| {
+			let state = state.borrow();
+
+			(state.records.clone(), state.json.clone())
+		});
+
+		assert_eq!(records.len(), count as usize * RECORD_WORDS);
+
+		let tables: Vec<Vec<String>> = (0..2).map(shape_table).collect();
+
+		// `shape_table` overwrote the JSON, so the records' JSON is read from the copy taken first.
+		records
+			.chunks(RECORD_WORDS)
+			.map(|record| Decoded {
+				family: record[0],
+				shape: tables[record[0] as usize][record[1] as usize].clone(),
+				start: record[2],
+				end: record[3],
+				status: record[4],
+				json: (record[6] > 0).then(|| {
+					serde_json::from_slice(&json[record[5] as usize..(record[5] + record[6]) as usize]).unwrap()
+				}),
+			})
+			.collect()
 	}
 
 	// One instance per test thread: `cargo test` runs each test on its own thread, and the state is thread-local.
@@ -317,26 +399,22 @@ mod tests {
 		assert_eq!(load("coordinates", hash("coordinates")), 1);
 
 		let all = recognize("40.5, -74", 0b11);
-		let pair = all["recognitions"]
-			.as_array()
-			.unwrap()
+		let pair = all
 			.iter()
-			.find(|recognition| recognition["shape"] == "coordinate.decimal_pair")
+			.find(|recognition| recognition.shape == "coordinate.decimal_pair")
 			.unwrap();
 
-		assert_eq!(pair["validation"]["status"], "validated");
-		assert_eq!(pair["validation"]["payload"]["latitude"], 40.5);
-		assert_eq!(all["fields"], serde_json::json!({}));
+		assert_eq!(pair.family, 1);
+		assert_eq!(pair.status, status::VALIDATED);
+		assert_eq!(pair.json.as_ref().unwrap()["latitude"], 40.5);
+		assert_eq!((pair.start, pair.end), (0, 9));
 
 		// A mask that leaves the coordinates family out leaves its shapes out.
 		let primitives_only = recognize("40.5, -74", 0b01);
 
-		assert!(primitives_only["recognitions"]
-			.as_array()
-			.unwrap()
-			.iter()
-			.all(|recognition| recognition["family"] == "primitives"));
-		assert!(primitives_only["recognitions"][0]["validation"]["status"] == "unvalidated");
+		assert!(primitives_only.iter().all(|recognition| recognition.family == 0));
+		assert!(primitives_only[0].status == status::UNVALIDATED);
+		assert!(primitives_only[0].json.is_none());
 	}
 
 	#[test]
@@ -364,6 +442,9 @@ mod tests {
 		assert_eq!(unsafe { rcg_recognize(long.as_ptr(), long.len(), 1) }, -1);
 		assert_eq!(rcg_error_code(), code::INPUT_TOO_LONG);
 		assert!(message().contains("5000"), "{}", message());
+
+		assert_eq!(rcg_shapes(7), -1);
+		assert_eq!(rcg_error_code(), code::ARGUMENT);
 	}
 
 	#[test]

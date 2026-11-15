@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds `crates/recognize-wasm` for `wasm32-unknown-unknown` with the size-optimized release profile
- *   the root `Cargo.toml` documents, and writes `wasm/recognize.wasm` and `lib/embedded.generated.ts`.
+ *   Builds `crates/recognize-wasm` for `wasm32-unknown-unknown` with the release profile the root
+ *   `Cargo.toml` documents, and writes `wasm/recognize.wasm` and `lib/embedded.generated.ts`.
+ *
+ *   Two flags change that profile for this module.
+ *   `-Copt-level=3` replaces the profile's `s`: the search loop is the cost of a call,
+ *   and the speed measured 2.5 to 3.6 times faster for 1 KB more binary.
+ *
+ *   `-Cstrip=symbols` drops the `name` section, 176 KB of the first build, that only a debugger reads.
  *
  *   The module is a C-ABI adapter, so the build needs no tool beyond `cargo`
  *   and the toolchain `rust-toolchain.toml` pins.
@@ -53,6 +59,10 @@ const rustflags = [
 	`--remap-path-prefix=${repoRootPath()}=/mailwoman`,
 	`--remap-path-prefix=${cargoHome}=/cargo`,
 	"-Cdebuginfo=0",
+	// The `name` section lists every function for a debugger.
+	// The module needs none of it at run time.
+	"-Cstrip=symbols",
+	"-Copt-level=3",
 ]
 
 await runFile(
