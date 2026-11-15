@@ -68,6 +68,23 @@ import { postcodeSyntax, postcodeSyntaxCountries } from "#country-formats"
 export const FAMILY_ID = "postal"
 
 /**
+ * The largest dense serialization the compiler accepts for the postal family's automata.
+ *
+ * The generator passes it to `recognize-build --dense-bytes`, so the family chooses
+ * its own backend and no global limit changes.
+ * An automaton over the budget is stored sparse.
+ *
+ * The manifest records the backend of each automaton and the budget under `limits.denseBytes`.
+ */
+export const POSTAL_DENSE_BYTES = 2_097_152
+
+/**
+ * Why the postal family has the dense budget above.
+ */
+export const POSTAL_BACKEND_REASON =
+	"the default dense budget: the family's dense automata fit it, and a sparse build of the artifact is 5.7 times smaller but is not yet benchmarked on a quiet host"
+
+/**
  * The file name the definition is written under.
  */
 export const DEFINITION_FILE = `${FAMILY_ID}.definition.json`
@@ -460,7 +477,7 @@ export function postalDefinition(
 		version: 1,
 		family: FAMILY_ID,
 		generator: GENERATOR,
-		metadata: {},
+		metadata: { build: { denseBudget: `${POSTAL_DENSE_BYTES / (1 << 20)} MiB`, reason: POSTAL_BACKEND_REASON } },
 		shapes,
 	}
 }

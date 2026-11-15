@@ -22,6 +22,7 @@
  *   Usage: `node packages/postcode/tools/bench.run.ts [--json]`
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { gitHead } from "@mailwoman/core/git"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -29,6 +30,7 @@ import { cpuModel } from "@mailwoman/core/utils/system"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createRecognizer } from "@mailwoman/recognize"
 import { coordinates } from "@mailwoman/recognize/coordinates"
+import { defineFamily } from "@mailwoman/recognize/family"
 import { primitives } from "@mailwoman/recognize/primitives"
 import { structure } from "@mailwoman/recognize/structure"
 
@@ -54,8 +56,18 @@ const INPUTS: readonly string[] = [
 	"漢".repeat(300),
 ]
 
+const { values } = parseArguments({
+	options: { json: { type: "boolean", default: false }, "postal-artifact": { type: "string" } },
+})
+
+// `--postal-artifact <file>` times the postal family from another build of its artifact,
+// such as one compiled to the other backend.
+// The declarations hash is the same, so the engine loads it as the same family.
+const otherArtifact = values["postal-artifact"] ? await readLocalBuffer(values["postal-artifact"]) : null
+const postalFamily = otherArtifact ? defineFamily({ ...postal, artifact: () => otherArtifact }) : postal
+
 const recognizer = createRecognizer([structure, postcodeLegacy, primitives, coordinates])
-const withPostal = createRecognizer([structure, postcodeLegacy, postal, primitives, coordinates])
+const withPostal = createRecognizer([structure, postcodeLegacy, postalFamily, primitives, coordinates])
 
 function microsecondsPerCall(input: string, run: (input: string) => number): { microseconds: number; sink: number } {
 	let sink = 0
@@ -103,17 +115,17 @@ const report = {
 	commit: await gitHead(),
 	node: process.version,
 	cpu: cpuModel(),
+	postalArtifact: values["postal-artifact"] ?? "committed",
 	warmUpCalls: WARM_UP_CALLS,
 	timedCalls: TIMED_CALLS,
 	rows,
 }
 
-const { values } = parseArguments({ options: { json: { type: "boolean", default: false } } })
-
 if (values.json) {
 	console.log(prettyJSON(report))
 } else {
 	console.log(`commit ${report.commit}, node ${report.node}, ${report.cpu}`)
+	console.log(`postal artifact: ${report.postalArtifact}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per input\n`)
 	console.log(
 		"| Input | UTF-16 units | Known formats | Postal candidates | computeQueryShape (µs/call) | recognize without postal (µs/call) | recognize with postal (µs/call) |"

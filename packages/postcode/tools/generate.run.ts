@@ -54,6 +54,7 @@ import {
 import {
 	DEFINITION_FILE as POSTAL_DEFINITION_FILE,
 	FAMILY_ID as POSTAL_ID,
+	POSTAL_DENSE_BYTES,
 	type DefinitionDocument,
 	type ReportedOverlap,
 	equivalenceGroups,
@@ -156,13 +157,14 @@ async function generate(
 	family: string,
 	definitionFile: string,
 	document: DefinitionDocument,
-	extra: (out: string) => Promise<void> = async () => {}
+	extra: (out: string) => Promise<void> = async () => {},
+	limits: string[] = []
 ): Promise<void> {
 	const definitionPath = await stageDefinition(document, definitionFile)
 	const out = `${built}/out-${family}`
 
 	const [written] = parseJSONStrict<Array<{ family: string; hash: string; sha256: string }>>(
-		await build(["--definition", definitionPath, out])
+		await build([...limits, "--definition", definitionPath, out])
 	)
 
 	if (written?.family !== family) {
@@ -228,20 +230,26 @@ for (const [shape, partners] of declared) {
 	declared.set(shape, partners.toSorted())
 }
 
-await generate(POSTAL_ID, POSTAL_DEFINITION_FILE, postalDefinition(bare, printed, declared), async (out) => {
-	await settleFormatted(
-		postcode("data", "fixtures", "postal-overlap-witnesses.json"),
-		await readLocalTextFile(`${out}/overlap-witnesses.json`)
-	)
+await generate(
+	POSTAL_ID,
+	POSTAL_DEFINITION_FILE,
+	postalDefinition(bare, printed, declared),
+	async (out) => {
+		await settleFormatted(
+			postcode("data", "fixtures", "postal-overlap-witnesses.json"),
+			await readLocalTextFile(`${out}/overlap-witnesses.json`)
+		)
 
-	await settleFormatted(
-		postcode("data", "fixtures", "postal-groups.json"),
-		prettyJSON({
-			bare: bare.map((group) => ({ shape: postalShapeID("bare", group[0]!), countries: group })),
-			printed: printed.map((group) => ({ shape: postalShapeID("printed", group[0]!), countries: group })),
-		})
-	)
-})
+		await settleFormatted(
+			postcode("data", "fixtures", "postal-groups.json"),
+			prettyJSON({
+				bare: bare.map((group) => ({ shape: postalShapeID("bare", group[0]!), countries: group })),
+				printed: printed.map((group) => ({ shape: postalShapeID("printed", group[0]!), countries: group })),
+			})
+		)
+	},
+	["--dense-bytes", String(POSTAL_DENSE_BYTES)]
+)
 
 if (stale) {
 	process.exitCode = 1

@@ -136,7 +136,13 @@ export type PostalKind = (typeof PostalKind)[keyof typeof PostalKind]
  * The artifact holds no copy of it.
  */
 export const PostalMetadata = {
-	family: {},
+	family: {
+		build: {
+			denseBudget: "2 MiB",
+			reason:
+				"the default dense budget: the family's dense automata fit it, and a sparse build of the artifact is 5.7 times smaller but is not yet benchmarked on a quiet host",
+		},
+	},
 	shapes: {
 		"postal.ac": {
 			countries: ["AC"],

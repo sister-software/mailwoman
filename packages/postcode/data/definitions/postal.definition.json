@@ -3,7 +3,12 @@
 	"version": 1,
 	"family": "postal",
 	"generator": "node packages/postcode/tools/generate.run.ts",
-	"metadata": {},
+	"metadata": {
+		"build": {
+			"denseBudget": "2 MiB",
+			"reason": "the default dense budget: the family's dense automata fit it, and a sparse build of the artifact is 5.7 times smaller but is not yet benchmarked on a quiet host"
+		}
+	},
 	"shapes": [
 		{
 			"id": "postal.ac",

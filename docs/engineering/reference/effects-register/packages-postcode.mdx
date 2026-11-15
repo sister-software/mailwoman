@@ -19,8 +19,12 @@ The others hold neither an effect edge nor an import-time effect.
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `awaits at module scope`
+- `awaits at module scope`, 2 times
 - `runs a statement at module scope`
+
+| Kind | Interface         | Target                  | Calls |
+| ---- | ----------------- | ----------------------- | ----- |
+| read | `readLocalBuffer` | `unresolved (property)` | 1     |
 
 ## `packages/postcode/tools/differential.run.ts`
 
