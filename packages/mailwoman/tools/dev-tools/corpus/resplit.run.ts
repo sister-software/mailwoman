@@ -70,6 +70,7 @@ interface ManifestFile {
 	last_source_id: string
 	source: string
 	derivation_hash?: string
+	split?: string
 	split_attribute?: { path: string; sha256?: string; policy_hash?: string; counts?: Record<string, number> }
 }
 
@@ -260,8 +261,14 @@ const outManifest: CorpusManifest = {
 
 		if (!decision) throw new Error(`no split decision written for ${file.path}`)
 
+		// The attribute decides every row, so a base entry's own `split` is dropped.
+		//
+		// The overlap audit reads `split` before `split_attribute`.
+		// It would count the attribute's test rows as training rows.
+		const { split: _baseSplit, ...entry } = file
+
 		return {
-			...file,
+			...entry,
 			split_attribute: {
 				// In the form the base manifest writes paths, so the manifest reads the same on the volume.
 				path: rerootBaseFilePath(decision.attribute, args.manifest!),
