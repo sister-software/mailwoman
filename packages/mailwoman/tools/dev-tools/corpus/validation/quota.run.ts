@@ -12,7 +12,7 @@
  *   and the run lists it.
  *
  *   Usage:
- *     node packages/mailwoman/tools/dev-tools/corpus/validation-quota.run.ts \
+ *     node packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts \
  *       --manifest <overlay>/MANIFEST.json --config <training config .yaml> \
  *       --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.18.json \
  *       --out <VALIDATION_GROUPS.json> [--margin 2] [--minimum-rows 200] [--cap-rows 20000]
@@ -34,7 +34,7 @@ import {
 	validationTarget,
 } from "@mailwoman/corpus/utils/validation-groups"
 
-import { readValidationPool, validationFloorsFromConfig } from "#tools/dev-tools/corpus/validation-quota"
+import { readValidationPool, validationFloorsFromConfig } from "#tools/dev-tools/corpus/validation/quota"
 import { loadTrainingConfig } from "#tools/training/config"
 
 const { values } = parseArguments({
@@ -76,7 +76,7 @@ const { candidates, totals, files } = await readValidationPool({
 	capRows: quota.capRows,
 	onProgress: (read, all) => {
 		if (read % 100 === 0 || read === all) {
-			console.error(`validation-quota: ${read}/${all} files`)
+			console.error(`validation quota: ${read}/${all} files`)
 		}
 	},
 })

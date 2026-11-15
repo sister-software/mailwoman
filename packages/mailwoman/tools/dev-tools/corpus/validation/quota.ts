@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The census behind `validation-quota.run.ts`: each country's pool of held-out groups
+ *   The census behind `validation/quota.run.ts`: each country's pool of held-out groups
  *   in a corpus manifest, and the validation floors the training config declares.
  *
  *   The pool is every group with a row the manifest's current split holds out

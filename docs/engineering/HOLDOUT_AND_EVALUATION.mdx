@@ -219,7 +219,7 @@ and the two lists:
    label-support audit read this split, and the trainer reads no other held-out split.
 3. Every other row trains.
 
-**The validation quota.** `validation-quota.run.ts` chooses the validation groups from the corpus manifest the
+**The validation quota.** `packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts` chooses the validation groups from the corpus manifest the
 re-split reads. A country's pool is every group with a row the manifest's current split holds out, the places of
 sections 4.1 and 4.2, less the frozen groups, so validation rows name places training never saw. The quota walks
 each country's pool lowest `hashUint32(group)` first and takes groups until the country holds

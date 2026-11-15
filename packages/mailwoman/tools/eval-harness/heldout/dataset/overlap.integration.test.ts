@@ -22,7 +22,7 @@ import {
 } from "@mailwoman/corpus/utils/validation-groups"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { readValidationPool } from "#tools/dev-tools/corpus/validation-quota"
+import { readValidationPool } from "#tools/dev-tools/corpus/validation/quota"
 import { buildHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"

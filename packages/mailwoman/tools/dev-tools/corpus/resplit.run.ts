@@ -13,7 +13,7 @@
  *
  *   With `--evaluation-groups <list> --validation-groups <list>`, the split is
  *   the evaluation-group policy (section 4.6): the rows of the groups the frozen
- *   evaluation sets drew from go to test, the groups `validation-quota.run.ts` chose
+ *   evaluation sets drew from go to test, the groups `validation/quota.run.ts` chose
  *   from this manifest go to val, and every other row trains.
  *   The committed frozen list for the v0.8.18 sets
  *   is `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`.
@@ -91,7 +91,7 @@ const { values: args } = parseArguments({
 		},
 		"validation-groups": {
 			type: "string",
-			description: "The validation-group list validation-quota.run.ts wrote: its groups go to val",
+			description: "The validation-group list validation/quota.run.ts wrote: its groups go to val",
 		},
 		out: { type: "string" },
 		"corpus-version": { type: "string" },

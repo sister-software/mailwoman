@@ -42,7 +42,7 @@
 # v0.8.19-overlay (packages/corpus/data/builds/v0.8.19-overlay/OVERLAY_PLAN.json) on v0.8.18-retention-overlay: the
 # 14 v0.8.18 sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds are replaced by the rebuild's
 # files, and this source, fr-laposte-poincont, nc-opt-agences and the four registers are added. Its split is the
-# evaluation-group policy (HOLDOUT_AND_EVALUATION section 4.6). `validation-quota.run.ts --config <this file>` over the
+# evaluation-group policy (HOLDOUT_AND_EVALUATION section 4.6). `validation/quota.run.ts --config <this file>` over the
 # overlay manifest chose 15,365 validation groups (24,012 rows in 247 countries), and `resplit.run.ts --evaluation-groups
 # packages/corpus/data/holdout/evaluation-groups.v0.8.18.json --validation-groups <that list>` sent the frozen groups'
 # rows to test, the chosen groups to val, and every other row to train: 886,877,786 train, 24,245 val and 221,680 test
