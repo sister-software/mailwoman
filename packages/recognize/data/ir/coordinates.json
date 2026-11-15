@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognize.ir",
 	"version": 1,
-	"hash": "003b36d9ea437ce7c049651057644c2a44c6025f346183e47ef16fd3c5f8a1db",
+	"hash": "99844071ca9259fee6463e715e229a566839e8d0e107d1d7aed7ef7306ab60c2",
 	"family": "coordinates",
 	"terms": [
 		{
@@ -16,7 +16,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 20
+				"line": 21
 			}
 		},
 		{
@@ -28,7 +28,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 21
+				"line": 22
 			}
 		},
 		{
@@ -43,7 +43,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 22
+				"line": 23
 			}
 		}
 	],
@@ -236,14 +236,14 @@
 				}
 			],
 			"scope": "whole_or_embedded",
-			"validator": null,
+			"validator": "FiniteDecimalPair",
 			"handler": null,
 			"ambiguity": {
 				"policy": "exclusive"
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 24
+				"line": 25
 			}
 		}
 	]

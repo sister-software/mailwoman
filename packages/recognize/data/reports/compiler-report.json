@@ -29,7 +29,7 @@
 					"id": "coordinate.decimal_pair",
 					"scope": "whole_or_embedded",
 					"unreachable": null,
-					"validator": null
+					"validator": "FiniteDecimalPair"
 				}
 			],
 			"unreachable": []

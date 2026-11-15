@@ -194,7 +194,7 @@ fn a_file_from_another_compiler_or_another_declarations_hash_is_refused() {
 	let payloads: Vec<Payload<'_>> = artifact.payloads.clone();
 
 	// The writer refuses a header the reader would refuse, so build the bytes by editing the committed text.
-	assert!(assemble(&other_compiler, &payloads).is_err());
+	assert!(assemble(&other_compiler, &payloads, artifact.captures).is_err());
 
 	let mut edited = bytes.clone();
 	let version = recognize_core::artifact::COMPILER_VERSION.as_bytes();
@@ -242,7 +242,7 @@ fn a_file_from_another_compiler_or_another_declarations_hash_is_refused() {
 			&bytes,
 			&Expected {
 				ir_hash: Some(&artifact.header.ir_hash),
-				declarations_hash: Some(recognize_core::artifact::DECLARATIONS_HASH_UNSET),
+				declarations_hash: Some(&artifact.header.declarations_hash),
 			}
 		)
 		.is_ok());
@@ -252,9 +252,9 @@ fn a_file_from_another_compiler_or_another_declarations_hash_is_refused() {
 fn an_artifact_of_the_previous_schema_version_is_refused_with_its_version() {
 	let mut bytes = artifact_of("primitives");
 
-	bytes[4] = 1;
+	bytes[4] = 2;
 
-	assert_eq!(Engine::new().load(&bytes).unwrap_err(), ArtifactError::Version(1));
+	assert_eq!(Engine::new().load(&bytes).unwrap_err(), ArtifactError::Version(2));
 }
 
 #[test]
@@ -274,7 +274,7 @@ fn a_viability_table_with_the_wrong_rows_is_refused_even_when_its_hash_is_update
 
 	payloads[0].viability = &table;
 
-	let rebuilt = assemble(&header, &payloads).expect("the layout is valid");
+	let rebuilt = assemble(&header, &payloads, artifact.captures).expect("the layout is valid");
 
 	assert!(matches!(
 		Engine::new().load(&rebuilt).unwrap_err(),
@@ -290,7 +290,7 @@ fn a_viability_table_with_the_wrong_rows_is_refused_even_when_its_hash_is_update
 
 	assert!(matches!(
 		Engine::new()
-			.load(&assemble(&header, &payloads).expect("the layout is valid"))
+			.load(&assemble(&header, &payloads, artifact.captures).expect("the layout is valid"))
 			.unwrap_err(),
 		ArtifactError::Viability(_)
 	));
@@ -307,7 +307,7 @@ fn a_header_that_declares_more_patterns_than_the_dfa_holds_is_refused() {
 		shape: "extra.shape".to_string(),
 	});
 
-	let rebuilt = assemble(&header, &artifact.payloads).expect("the layout is valid");
+	let rebuilt = assemble(&header, &artifact.payloads, artifact.captures).expect("the layout is valid");
 
 	assert!(matches!(
 		Engine::new().load(&rebuilt).unwrap_err(),

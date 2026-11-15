@@ -4,7 +4,8 @@
 //! `recognize-build [--max-states N] [--build-bytes N] [--dense-bytes N] [--sparse-bytes N] [--max-product-states N] <out-dir>`
 //!
 //! Validates, compiles and analyzes every family this repository owns and writes these files into `out-dir`: one
-//! `<family>.json` IR file and one `<family>.rca1` artifact per family, `artifacts.json`, the build manifest,
+//! `<family>.json` IR file and one `<family>.rca1` artifact per family, the generated declarations (`rust/declared.rs`,
+//! `rust/declared/<family>.rs`, `ts/<family>.generated.ts` and `ts/artifacts/<family>.generated.ts`), `artifacts.json`, the build manifest,
 //! `compiler-report.json`, the overlap and reachability report, and `overlap-witnesses.json`, the witness for each
 //! declared overlapping pair. It prints a JSON array of `{family, hash, sha256}` objects, where `hash` is the IR hash and `sha256` is the artifact's.
 //! The flags lower a compiler limit from its default. A grammar that fails validation or exceeds a limit prints its
@@ -62,6 +63,13 @@ fn main() {
 	let write = |name: String, bytes: &[u8]| {
 		let path = out.join(name);
 
+		if let Some(parent) = path.parent() {
+			std::fs::create_dir_all(parent).unwrap_or_else(|error| {
+				eprintln!("{}: {error}", parent.display());
+				std::process::exit(1);
+			});
+		}
+
 		std::fs::write(&path, bytes).unwrap_or_else(|error| {
 			eprintln!("{}: {error}", path.display());
 			std::process::exit(1);
@@ -79,6 +87,49 @@ fn main() {
 			family.ir.family, family.ir.hash, family.compiled.sha256
 		));
 	}
+
+	// Generated declarations: the Rust modules recognize-core compiles and the TypeScript the package ships.
+	let declarations: Vec<recognize_core::Declarations> = build
+		.documents
+		.iter()
+		.map(recognize_core::Declarations::from_ir)
+		.collect();
+
+	for family in &declarations {
+		let artifact = built
+			.iter()
+			.find(|candidate| candidate.ir.family == family.family)
+			.expect("every family was built");
+		let generated = recognize_build::codegen::rust_family(family)
+			.and_then(|rust| recognize_build::codegen::typescript_family(family).map(|typescript| (rust, typescript)))
+			.unwrap_or_else(|message| {
+				eprintln!("{}: {message}", family.family);
+				std::process::exit(1);
+			});
+
+		write(
+			format!(
+				"rust/declared/{}.rs",
+				recognize_build::codegen::module_name(&family.family)
+			),
+			generated.0.as_bytes(),
+		);
+		write(format!("ts/{}.generated.ts", family.family), generated.1.as_bytes());
+		write(
+			format!("ts/artifacts/{}.generated.ts", family.family),
+			recognize_build::codegen::typescript_artifact(
+				&family.family,
+				&artifact.compiled.artifact,
+				&artifact.compiled.sha256,
+			)
+			.as_bytes(),
+		);
+	}
+
+	write(
+		"rust/declared.rs".to_string(),
+		recognize_build::codegen::rust_declared(&declarations).as_bytes(),
+	);
 
 	write(
 		"artifacts.json".to_string(),

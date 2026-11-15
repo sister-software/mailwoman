@@ -2,21 +2,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The package entry.
+ *   The package entry: a declarative recognition engine for the formal languages in geographic queries.
  *
- *   Phase 1 ships the grammar AST and its intermediate representation as Rust crates
- *   under `crates/`, and the committed IR under `data/ir/`.
- *   The TypeScript recognition API arrives with the engine in a later phase.
+ *   No setup is required.
+ *   An import does no WebAssembly work.
  *
- *   Until then this module declares the IR identity the generator checks the Rust writer against.
+ *   The first recognition instantiates the embedded engine binary synchronously.
+ *
+ *   Call `init` only to preload the engine or to supply a binary where synchronous compilation is refused.
+ *   Compose the families an application needs with `createRecognizer`; each family is its own module,
+ *   such as `@mailwoman/recognize/coordinates`, so a bundle holds only the artifacts it imports.
+ *
+ *   The `workerd` export condition resolves to `workerd.ts`, which imports the
+ *   `.wasm` file instead of embedding it.
  */
 
-/**
- * The `format` field of every IR document, as `recognize-core` writes it.
- */
-export const IR_FORMAT = "mailwoman.recognize.ir"
+import { embeddedWasmBytes } from "#embedded.generated"
+import { setDefaultSource } from "#runtime/state"
+
+setDefaultSource(embeddedWasmBytes)
+
+export * from "#exports"
 
 /**
- * The IR version, as `recognize-core` writes it.
+ * The IR format identity the generator checks the Rust writer against.
  */
-export const IR_VERSION = 1
+export { IR_FORMAT, IR_VERSION } from "#ir"

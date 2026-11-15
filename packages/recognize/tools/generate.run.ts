@@ -17,6 +17,11 @@
  *
  *   Usage: `node packages/recognize/tools/generate.run.ts [--check]`
  *
+ *   It also writes each family's generated declarations: `crates/recognize-core/src/declared.rs`
+ *   and `declared/<family>.rs` (formatted with rustfmt), and `lib/<family>.generated.ts`
+ *   and `lib/artifacts/<family>.generated.ts` (formatted with oxfmt).
+ *   Edit the grammar or the generator and not these files.
+ *
  *   The binary writes the IR, the manifest, the report and the witnesses with serde_json's pretty printer.
  *   This tool formats each of those files with the repository's oxfmt.
  *
@@ -34,7 +39,7 @@ import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { type FormatConfig, format } from "oxfmt"
 
-import { IR_FORMAT, IR_VERSION } from "#index"
+import { IR_FORMAT, IR_VERSION } from "#ir"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 const recognize = (...segments: string[]): string => workspacePath("recognize", ...segments)
@@ -119,6 +124,44 @@ for (const { family, hash, sha256 } of written) {
 	}
 
 	await settle(target, formatted.code, hash)
+}
+
+// The generated declarations: the Rust modules `recognize-core` compiles
+// and the TypeScript the package ships.
+// The binary writes them in a layout close to the formatters', and each formatter then has the last word.
+const rustFiles = ["declared.rs", ...written.map(({ family }) => `declared/${family.replaceAll(".", "_")}.rs`)]
+
+for (const file of rustFiles) {
+	await runFile("rustfmt", [
+		"--edition",
+		"2021",
+		"--config-path",
+		recognize("rustfmt.toml").toString(),
+		`${built}/rust/${file}`,
+	])
+}
+
+for (const file of rustFiles) {
+	await settle(
+		recognize("crates", "recognize-core", "src", file),
+		await readLocalTextFile(`${built}/rust/${file}`),
+		"declarations"
+	)
+}
+
+for (const { family } of written) {
+	for (const [from, to] of [
+		[`${built}/ts/${family}.generated.ts`, recognize("lib", `${family}.generated.ts`)],
+		[`${built}/ts/artifacts/${family}.generated.ts`, recognize("lib", "artifacts", `${family}.generated.ts`)],
+	] as const) {
+		const formatted = await format(to, await readLocalTextFile(from), formatConfig)
+
+		if (formatted.errors.length) {
+			throw new Error(`oxfmt could not format ${to}: ${formatted.errors.map((error) => error.message).join("; ")}`)
+		}
+
+		await settle(to, formatted.code, "declarations")
+	}
 }
 
 // The manifest records each artifact's byte size, backend, state count and hashes, as the registry's does.

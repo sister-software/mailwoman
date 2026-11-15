@@ -1,0 +1,5 @@
+error[E0425]: cannot find type `NoSuchValidator` in module `$crate::validators`
+  --> tests/ui/unbound_validator.rs:10:16
+   |
+10 |                 validator: NoSuchValidator,
+   |                            ^^^^^^^^^^^^^^^ not found in `$crate::validators`

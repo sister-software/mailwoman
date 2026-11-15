@@ -9,8 +9,10 @@
 //! it finds.
 
 pub mod analysis;
+pub mod codegen;
 pub mod compile;
 pub mod lower;
+pub mod program;
 pub mod reach;
 pub mod report;
 
@@ -219,7 +221,7 @@ pub fn manifest_json(built: &[BuiltFamily], limits: &Limits) -> String {
 				})).collect::<Vec<Value>>(),
 				"bytes": compiled.artifact.len(),
 				"compilerVersion": recognize_core::artifact::COMPILER_VERSION,
-				"declarationsHash": recognize_core::artifact::DECLARATIONS_HASH_UNSET,
+				"declarationsHash": compiled.declarations_hash,
 				"irHash": compiled.ir_hash,
 				"sha256": compiled.sha256,
 				"unicodeVersion": UNICODE_VERSION,
