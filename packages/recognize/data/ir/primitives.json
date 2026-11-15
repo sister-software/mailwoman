@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognize.ir",
 	"version": 1,
-	"hash": "928a045aec12aae429c0610c3fcab8f1a6b07753061ead4253aeb522ce5a323c",
+	"hash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
 	"family": "primitives",
 	"terms": [
 		{
@@ -16,7 +16,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 23
+				"line": 37
 			}
 		},
 		{
@@ -31,7 +31,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 24
+				"line": 38
 			}
 		},
 		{
@@ -43,7 +43,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 25
+				"line": 39
 			}
 		},
 		{
@@ -58,7 +58,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 26
+				"line": 40
 			}
 		}
 	],
@@ -84,7 +84,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 43
+				"line": 48
 			}
 		},
 		{
@@ -169,7 +169,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 28
+				"line": 42
 			}
 		},
 		{
@@ -192,7 +192,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 49
+				"line": 54
 			}
 		},
 		{
@@ -215,7 +215,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/primitives.rs",
-				"line": 54
+				"line": 59
 			}
 		}
 	]

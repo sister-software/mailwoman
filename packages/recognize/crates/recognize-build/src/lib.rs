@@ -1,11 +1,20 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! The build half of `@mailwoman/recognize`. Phase 1 validates each family and renders its IR. The compiler,
-//! analysis and artifact writer arrive in later phases.
+//! The build half of `@mailwoman/recognize`. It validates each family, renders its IR, lowers the grammar to
+//! automata under configured limits ([`compile`]), writes one artifact per family, and records each artifact's size,
+//! backend, state count and hashes in a manifest.
+//!
+//! The analysis that finds overlap between families arrives in a later phase.
+
+pub mod compile;
+pub mod lower;
 
 use recognize_core::family::Family;
 use recognize_core::{render, Diagnostic};
+use serde_json::{json, Map, Value};
+
+pub use compile::{compile_family, AutomatonReport, CompiledFamily, Limits, UNICODE_VERSION};
 
 /// One family's rendered IR.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,6 +32,13 @@ impl EmittedIr {
 	pub fn file_name(&self) -> String {
 		format!("{}.json", self.family)
 	}
+}
+
+/// One family's IR and its compiled artifact.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BuiltFamily {
+	pub ir: EmittedIr,
+	pub compiled: CompiledFamily,
 }
 
 /// Validates and renders every family, or returns every family's diagnostics.
@@ -50,9 +66,104 @@ pub fn emit(families: Vec<Family>) -> Result<Vec<EmittedIr>, Vec<Diagnostic>> {
 	Ok(emitted)
 }
 
+/// Validates every family, renders its IR, and compiles it under `limits`, or returns every diagnostic.
+pub fn compile_families(families: Vec<Family>, limits: &Limits) -> Result<Vec<BuiltFamily>, Vec<Diagnostic>> {
+	let mut built = Vec::new();
+	let mut diagnostics = Vec::new();
+
+	for family in families {
+		let document = match family.build() {
+			Ok(document) => document,
+			Err(found) => {
+				diagnostics.extend(found);
+
+				continue;
+			}
+		};
+
+		match compile_family(&document, limits) {
+			Ok(compiled) => built.push(BuiltFamily {
+				ir: EmittedIr {
+					family: document.family.clone(),
+					hash: document.hash.clone(),
+					json: document.to_json(),
+				},
+				compiled,
+			}),
+			Err(found) => diagnostics.extend(found),
+		}
+	}
+
+	if !diagnostics.is_empty() {
+		diagnostics.sort();
+		diagnostics.dedup();
+
+		return Err(diagnostics);
+	}
+
+	built.sort_by(|a, b| a.ir.family.cmp(&b.ir.family));
+
+	Ok(built)
+}
+
 /// Renders the families this repository owns.
 pub fn emit_repository_families() -> Result<Vec<EmittedIr>, Vec<Diagnostic>> {
 	emit(recognize_core::grammars::families())
+}
+
+/// Compiles the families this repository owns.
+pub fn compile_repository_families(limits: &Limits) -> Result<Vec<BuiltFamily>, Vec<Diagnostic>> {
+	compile_families(recognize_core::grammars::families(), limits)
+}
+
+/// The build manifest: each artifact's byte size, backend, state count and hashes, and the limits they were built
+/// under. Keys are in byte order and the text ends with a newline.
+pub fn manifest_json(built: &[BuiltFamily], limits: &Limits) -> String {
+	let mut families = Map::new();
+
+	for family in built {
+		let compiled = &family.compiled;
+
+		families.insert(
+			compiled.family.clone(),
+			json!({
+				"artifact": compiled.file_name(),
+				"automata": compiled.automata.iter().map(|automaton| json!({
+					"backend": automaton.backend.as_str(),
+					"bytes": automaton.bytes,
+					"patterns": automaton.patterns,
+					"role": automaton.role.as_str(),
+					"states": automaton.states,
+				})).collect::<Vec<Value>>(),
+				"bytes": compiled.artifact.len(),
+				"compilerVersion": recognize_core::artifact::COMPILER_VERSION,
+				"declarationsHash": recognize_core::artifact::DECLARATIONS_HASH_UNSET,
+				"irHash": compiled.ir_hash,
+				"sha256": compiled.sha256,
+				"unicodeVersion": UNICODE_VERSION,
+			}),
+		);
+	}
+
+	let manifest = json!({
+		"families": Value::Object(families),
+		"limits": {
+			"buildBytes": limits.build_bytes,
+			"denseBytes": limits.dense_bytes,
+			"inputBytes": limits.max_input_bytes,
+			"maxCaptures": limits.max_captures,
+			"maxDepth": limits.max_depth,
+			"maxLoweredNodes": limits.max_lowered_nodes,
+			"maxStates": limits.max_states,
+			"nfaBytes": limits.nfa_bytes,
+			"sparseBytes": limits.sparse_bytes,
+		},
+	});
+	let mut text = serde_json::to_string_pretty(&manifest).expect("a manifest always serializes");
+
+	text.push('\n');
+
+	text
 }
 
 /// Renders diagnostics for a terminal.

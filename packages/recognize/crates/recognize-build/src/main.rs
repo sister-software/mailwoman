@@ -1,25 +1,52 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! `recognize-build <out-dir>`
+//! `recognize-build [--max-states N] [--build-bytes N] [--dense-bytes N] [--sparse-bytes N] <out-dir>`
 //!
-//! Validates every family this repository owns and writes one `<family>.json` IR file per family into `out-dir`,
-//! printing a JSON array of `{family, hash}` objects. A grammar that fails validation prints its diagnostics, each with
-//! the grammar's source file and line, and exits 1.
+//! Validates and compiles every family this repository owns and writes three kinds of file into `out-dir`: one
+//! `<family>.json` IR file and one `<family>.rca1` artifact per family, and `artifacts.json`, the build manifest. It
+//! prints a JSON array of `{family, hash, sha256}` objects, where `hash` is the IR hash and `sha256` is the artifact's.
+//! The flags lower a compiler limit from its default. A grammar that fails validation or exceeds a limit prints its
+//! diagnostics, each with the grammar's source file and line, and exits 1.
 
 use std::path::PathBuf;
 
-fn main() {
-	let args: Vec<String> = std::env::args().skip(1).collect();
+use recognize_build::Limits;
 
-	if args.len() != 1 {
-		eprintln!("usage: recognize-build <out-dir>");
-		std::process::exit(2);
+fn usage() -> ! {
+	eprintln!(
+		"usage: recognize-build [--max-states N] [--build-bytes N] [--dense-bytes N] [--sparse-bytes N] <out-dir>"
+	);
+	std::process::exit(2);
+}
+
+fn main() {
+	let mut limits = Limits::default();
+	let mut out = None;
+	let mut args = std::env::args().skip(1);
+
+	while let Some(arg) = args.next() {
+		let mut number = |name: &str| -> usize {
+			args.next().and_then(|value| value.parse().ok()).unwrap_or_else(|| {
+				eprintln!("{name} takes a whole number");
+				usage()
+			})
+		};
+
+		match arg.as_str() {
+			"--max-states" => limits.max_states = number("--max-states"),
+			"--build-bytes" => limits.build_bytes = number("--build-bytes"),
+			"--dense-bytes" => limits.dense_bytes = number("--dense-bytes"),
+			"--sparse-bytes" => limits.sparse_bytes = number("--sparse-bytes"),
+			flag if flag.starts_with("--") => usage(),
+			path if out.is_none() => out = Some(PathBuf::from(path)),
+			_ => usage(),
+		}
 	}
 
-	let out = PathBuf::from(&args[0]);
+	let Some(out) = out else { usage() };
 
-	let emitted = recognize_build::emit_repository_families().unwrap_or_else(|diagnostics| {
+	let built = recognize_build::compile_repository_families(&limits).unwrap_or_else(|diagnostics| {
 		eprint!("{}", recognize_build::render_diagnostics(&diagnostics));
 		std::process::exit(1);
 	});
@@ -29,19 +56,31 @@ fn main() {
 		std::process::exit(1);
 	});
 
-	let mut written = Vec::new();
+	let write = |name: String, bytes: &[u8]| {
+		let path = out.join(name);
 
-	for ir in emitted {
-		let path = out.join(ir.file_name());
-
-		std::fs::write(&path, &ir.json).unwrap_or_else(|error| {
+		std::fs::write(&path, bytes).unwrap_or_else(|error| {
 			eprintln!("{}: {error}", path.display());
 			std::process::exit(1);
 		});
+	};
+	let mut written = Vec::new();
+
+	for family in &built {
+		write(family.ir.file_name(), family.ir.json.as_bytes());
+		write(family.compiled.file_name(), &family.compiled.artifact);
 
 		// A family ID is a dotted lowercase name and a hash is hexadecimal, so neither needs escaping.
-		written.push(format!(r#"{{"family":"{}","hash":"{}"}}"#, ir.family, ir.hash));
+		written.push(format!(
+			r#"{{"family":"{}","hash":"{}","sha256":"{}"}}"#,
+			family.ir.family, family.ir.hash, family.compiled.sha256
+		));
 	}
+
+	write(
+		"artifacts.json".to_string(),
+		recognize_build::manifest_json(&built, &limits).as_bytes(),
+	);
 
 	println!("[{}]", written.join(","));
 }

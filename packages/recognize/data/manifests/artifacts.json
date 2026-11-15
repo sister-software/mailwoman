@@ -1,0 +1,65 @@
+{
+	"families": {
+		"coordinates": {
+			"artifact": "coordinates.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 1880,
+					"patterns": 1,
+					"role": "whole",
+					"states": 17
+				},
+				{
+					"backend": "dense",
+					"bytes": 2120,
+					"patterns": 1,
+					"role": "embedded",
+					"states": 20
+				}
+			],
+			"bytes": 4824,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+			"irHash": "003b36d9ea437ce7c049651057644c2a44c6025f346183e47ef16fd3c5f8a1db",
+			"sha256": "471d6b4e28379ff62e92e1b6782b7638973ec816f3bb1858212969e485ab99cd",
+			"unicodeVersion": "16.0.0"
+		},
+		"primitives": {
+			"artifact": "primitives.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 2816,
+					"patterns": 4,
+					"role": "whole",
+					"states": 15
+				},
+				{
+					"backend": "dense",
+					"bytes": 3816,
+					"patterns": 4,
+					"role": "embedded",
+					"states": 22
+				}
+			],
+			"bytes": 7784,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+			"irHash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
+			"sha256": "6927e8b21d4997619fa2443e8a93ea06279a6a3ac5a5007b5777d19e33b19a00",
+			"unicodeVersion": "16.0.0"
+		}
+	},
+	"limits": {
+		"buildBytes": 33554432,
+		"denseBytes": 2097152,
+		"inputBytes": 4096,
+		"maxCaptures": 64,
+		"maxDepth": 64,
+		"maxLoweredNodes": 100000,
+		"maxStates": 50000,
+		"nfaBytes": 8388608,
+		"sparseBytes": 2097152
+	}
+}

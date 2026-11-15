@@ -19,13 +19,15 @@ The others hold neither an effect edge nor an import-time effect.
 
 The workspace's `sideEffects` declaration lists this module. Its import-time effects:
 
-- `runs a statement at module scope`, 4 times
-- `awaits at module scope`, 3 times
+- `runs a statement at module scope`, 6 times
+- `awaits at module scope`, 4 times
 
 | Kind    | Interface           | Target                                | Calls |
 | ------- | ------------------- | ------------------------------------- | ----- |
-| read    | `readLocalBuffer`   | `repo:packages/recognize`             | 1     |
+| read    | `readLocalBuffer`   | `unresolved (parameter)`              | 1     |
+| read    | `readLocalBuffer`   | `unresolved (template)`               | 1     |
+| read    | `readLocalTextFile` | `scratch:artifacts.json`              | 1     |
 | read    | `readLocalTextFile` | `unresolved (template)`               | 1     |
-| write   | `writeLocalFile`    | `repo:packages/recognize`             | 1     |
+| write   | `writeLocalFile`    | `unresolved (parameter)`              | 1     |
 | process | `runFile`           | `literal:cargo`                       | 1     |
 | process | `runFile`           | `repo:target/release/recognize-build` | 1     |
