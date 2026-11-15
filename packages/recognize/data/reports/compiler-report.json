@@ -1,0 +1,96 @@
+{
+	"crossFamily": {
+		"equivalent": [],
+		"overlaps": []
+	},
+	"families": {
+		"coordinates": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 1880,
+					"patterns": 1,
+					"role": "whole",
+					"states": 17
+				},
+				{
+					"backend": "dense",
+					"bytes": 2120,
+					"patterns": 1,
+					"role": "embedded",
+					"states": 20
+				}
+			],
+			"equivalent": [],
+			"overlaps": [],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "coordinate.decimal_pair",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				}
+			],
+			"unreachable": []
+		},
+		"primitives": {
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 2816,
+					"patterns": 4,
+					"role": "whole",
+					"states": 15
+				},
+				{
+					"backend": "dense",
+					"bytes": 3816,
+					"patterns": 4,
+					"role": "embedded",
+					"states": 22
+				}
+			],
+			"equivalent": [],
+			"overlaps": [
+				{
+					"a": "number.digit_run",
+					"b": "number.signed_decimal",
+					"declared": true,
+					"witness": "0"
+				}
+			],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "number.digit_run",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "number.signed_decimal",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "space.whitespace",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "word.ascii",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				}
+			],
+			"unreachable": []
+		}
+	}
+}

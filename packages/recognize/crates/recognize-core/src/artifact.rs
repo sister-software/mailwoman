@@ -9,25 +9,29 @@
 //!
 //! ```text
 //! 0   4 bytes  ASCII `RCA1`
-//! 4   u16      artifact schema version, 1
+//! 4   u16      artifact schema version, 2
 //! 6   u16      flags, 0
 //! 8   u32      header byte length
-//! 12  u32      automaton count
+//! 12  u32      directory entry count, twice the automaton count
 //! 16  u32      directory byte offset, align8(32 + header length)
 //! 20  u32      total byte length
 //! 24  u32      first payload offset, align8(directory offset + count * 16)
 //! 28  u16      byte order, 1 for little-endian
 //! 30  u16      reserved, 0
 //! 32  header   canonical JSON, keys in byte order, no whitespace
-//! ... directory: count entries of { u16 role, u16 backend, u32 offset, u32 length, u32 reserved }
+//! ... directory: count entries of { u16 role, u16 kind, u32 offset, u32 length, u32 reserved }
 //! ... payloads: each at a multiple of 8, zero fill between
 //! ```
 //!
-//! Every integer is little-endian. A payload is one `regex-automata` DFA serialization with its leading alignment
-//! padding removed. Role is 1 for the whole-input automaton and 2 for the embedded-span automaton. Backend is 1 for a
-//! dense DFA and 2 for a sparse DFA.
+//! Every integer is little-endian. Each automaton has two payloads, in this order: a `regex-automata` DFA serialization
+//! with its leading alignment padding removed, then its viability table ([`crate::viability`]). Role is 1 for the
+//! whole-input automaton and 2 for the embedded-span automaton. Kind is 1 for a dense DFA, 2 for a sparse DFA and 3 for
+//! a viability table.
 //!
-//! The header records the SHA-256 of each payload, and the parser refuses a payload that differs. The hash of the whole
+//! Version 1 had no viability table and one directory entry per automaton. A reader refuses a version-1 file with
+//! [`ArtifactError::Version`].
+//!
+//! The header records the SHA-256 of each payload and of each table, and the parser refuses one that differs. The hash of the whole
 //! file lives in the build manifest, as the registry's does. The header stores no wall-clock time and no path. Its `declarationsHash` is a placeholder in this phase:
 //! [`DECLARATIONS_HASH_UNSET`] (64 zeros) until the phase that generates per-family declarations hashes the generated
 //! output and writes the hash here. A caller that holds declarations passes the hash it expects to
@@ -51,7 +55,10 @@ pub const MAGIC: &[u8; 4] = b"RCA1";
 pub const ARTIFACT_FORMAT: &str = "mailwoman.recognize.artifact";
 
 /// The envelope version this crate writes and reads.
-pub const ARTIFACT_SCHEMA_VERSION: u32 = 1;
+pub const ARTIFACT_SCHEMA_VERSION: u32 = 2;
+
+/// The directory `kind` of a viability table. A DFA's kind is its backend's code.
+const KIND_VIABILITY: u16 = 3;
 
 /// The compiler version an artifact must carry: the version of this crate, which `recognize-build` shares through the
 /// workspace.
@@ -145,6 +152,8 @@ pub struct AutomatonMeta {
 	pub sha256: String,
 	/// The states reachable from the start state, which includes the dead state when a path reaches it.
 	pub states: u32,
+	/// The SHA-256 of the viability table that follows the DFA.
+	pub viability_sha256: String,
 }
 
 /// The canonical JSON header. Fields are declared in byte order of their serialized names, which is the order the
@@ -171,6 +180,8 @@ pub struct Payload<'a> {
 	pub role: Role,
 	pub backend: Backend,
 	pub bytes: &'a [u8],
+	/// The automaton's viability table.
+	pub viability: &'a [u8],
 }
 
 /// Why bytes are not an artifact this reader accepts.
@@ -208,6 +219,10 @@ pub enum ArtifactError {
 	DirectoryMismatch(usize),
 	/// A payload's SHA-256 differs from the one the header records.
 	PayloadHash(usize),
+	/// A viability table's SHA-256 differs from the one the header records.
+	ViabilityHash(usize),
+	/// A viability table is not a table of the shape the header describes.
+	Viability(String),
 	/// Two automata of one family have the same role.
 	DuplicateRole(Role),
 	/// An automaton's DFA bytes fail `regex-automata`'s checked deserialization.
@@ -260,6 +275,13 @@ impl fmt::Display for ArtifactError {
 			ArtifactError::PayloadHash(index) => {
 				write!(formatter, "payload {index} does not match its recorded SHA-256")
 			}
+			ArtifactError::ViabilityHash(index) => {
+				write!(
+					formatter,
+					"the viability table of automaton {index} does not match its recorded SHA-256"
+				)
+			}
+			ArtifactError::Viability(message) => write!(formatter, "viability table: {message}"),
 			ArtifactError::DuplicateRole(role) => write!(formatter, "two automata have the role {}", role.as_str()),
 			ArtifactError::Automaton { role, message } => {
 				write!(
@@ -340,19 +362,33 @@ pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, Ar
 		if meta.sha256 != sha256_hex(payload.bytes) {
 			return Err(ArtifactError::PayloadHash(index));
 		}
+
+		if meta.viability_sha256 != sha256_hex(payload.viability) {
+			return Err(ArtifactError::ViabilityHash(index));
+		}
 	}
 
 	check_header(header)?;
 
+	// Each automaton contributes its DFA and then its table.
+	let sections: Vec<(Role, u16, &[u8])> = payloads
+		.iter()
+		.flat_map(|payload| {
+			[
+				(payload.role, payload.backend.code(), payload.bytes),
+				(payload.role, KIND_VIABILITY, payload.viability),
+			]
+		})
+		.collect();
 	let text = header_text(header);
 	let directory_offset = align(ENVELOPE_BYTES + text.len());
-	let first_payload = align(directory_offset + payloads.len() * DIRECTORY_ENTRY_BYTES);
+	let first_payload = align(directory_offset + sections.len() * DIRECTORY_ENTRY_BYTES);
 	let mut cursor = first_payload;
-	let mut offsets = Vec::with_capacity(payloads.len());
+	let mut offsets = Vec::with_capacity(sections.len());
 
-	for payload in payloads {
+	for (_, _, bytes) in &sections {
 		offsets.push(cursor);
-		cursor = align(cursor + payload.bytes.len());
+		cursor = align(cursor + bytes.len());
 	}
 
 	let too_long = || ArtifactError::Layout("the artifact is larger than a u32 can address");
@@ -362,7 +398,7 @@ pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, Ar
 	out.extend_from_slice(&(ARTIFACT_SCHEMA_VERSION as u16).to_le_bytes());
 	out.extend_from_slice(&0u16.to_le_bytes());
 	out.extend_from_slice(&u32::try_from(text.len()).map_err(|_| too_long())?.to_le_bytes());
-	out.extend_from_slice(&u32::try_from(payloads.len()).map_err(|_| too_long())?.to_le_bytes());
+	out.extend_from_slice(&u32::try_from(sections.len()).map_err(|_| too_long())?.to_le_bytes());
 	out.extend_from_slice(&u32::try_from(directory_offset).map_err(|_| too_long())?.to_le_bytes());
 	out.extend_from_slice(&u32::try_from(cursor).map_err(|_| too_long())?.to_le_bytes());
 	out.extend_from_slice(&u32::try_from(first_payload).map_err(|_| too_long())?.to_le_bytes());
@@ -371,23 +407,19 @@ pub fn assemble(header: &Header, payloads: &[Payload<'_>]) -> Result<Vec<u8>, Ar
 	out.extend_from_slice(text.as_bytes());
 	out.resize(directory_offset, 0);
 
-	for (payload, offset) in payloads.iter().zip(&offsets) {
-		out.extend_from_slice(&payload.role.code().to_le_bytes());
-		out.extend_from_slice(&payload.backend.code().to_le_bytes());
+	for ((role, kind, bytes), offset) in sections.iter().zip(&offsets) {
+		out.extend_from_slice(&role.code().to_le_bytes());
+		out.extend_from_slice(&kind.to_le_bytes());
 		out.extend_from_slice(&u32::try_from(*offset).map_err(|_| too_long())?.to_le_bytes());
-		out.extend_from_slice(
-			&u32::try_from(payload.bytes.len())
-				.map_err(|_| too_long())?
-				.to_le_bytes(),
-		);
+		out.extend_from_slice(&u32::try_from(bytes.len()).map_err(|_| too_long())?.to_le_bytes());
 		out.extend_from_slice(&0u32.to_le_bytes());
 	}
 
 	out.resize(first_payload, 0);
 
-	for (payload, offset) in payloads.iter().zip(&offsets) {
+	for ((_, _, bytes), offset) in sections.iter().zip(&offsets) {
 		out.resize(*offset, 0);
-		out.extend_from_slice(payload.bytes);
+		out.extend_from_slice(bytes);
 	}
 
 	out.resize(cursor, 0);
@@ -471,7 +503,7 @@ fn check_header(header: &Header) -> Result<(), ArtifactError> {
 			));
 		}
 
-		if !is_sha256_hex(&meta.sha256) {
+		if !is_sha256_hex(&meta.sha256) || !is_sha256_hex(&meta.viability_sha256) {
 			return Err(field(
 				"automata",
 				"a payload hash is not 64 lowercase hexadecimal digits",
@@ -616,49 +648,69 @@ pub fn parse(bytes: &[u8]) -> Result<Artifact<'_>, ArtifactError> {
 
 	check_header(&header)?;
 
-	if header.automata.len() != count {
-		return Err(ArtifactError::Layout("the header and the directory differ in count"));
+	if header.automata.len() * 2 != count {
+		return Err(ArtifactError::Layout(
+			"the directory does not hold a DFA and a table for each automaton",
+		));
 	}
 
-	let mut payloads = Vec::with_capacity(count);
+	let mut payloads = Vec::with_capacity(header.automata.len());
 	let mut cursor = first_payload;
 
 	for (index, meta) in header.automata.iter().enumerate() {
-		let entry = &bytes[directory_offset + index * DIRECTORY_ENTRY_BYTES..][..DIRECTORY_ENTRY_BYTES];
+		let mut sections: [&[u8]; 2] = [&[], &[]];
 
-		if u32_at(entry, 12) != 0 {
-			return Err(ArtifactError::Reserved);
+		for (which, section) in sections.iter_mut().enumerate() {
+			let entry_index = index * 2 + which;
+			let entry = &bytes[directory_offset + entry_index * DIRECTORY_ENTRY_BYTES..][..DIRECTORY_ENTRY_BYTES];
+
+			if u32_at(entry, 12) != 0 {
+				return Err(ArtifactError::Reserved);
+			}
+
+			let kind = if which == 0 {
+				meta.backend.code()
+			} else {
+				KIND_VIABILITY
+			};
+
+			if u16_at(entry, 0) != meta.role.code() || u16_at(entry, 2) != kind {
+				return Err(ArtifactError::DirectoryMismatch(index));
+			}
+
+			let offset = u32_at(entry, 4) as usize;
+			let length = u32_at(entry, 8) as usize;
+			let end = offset
+				.checked_add(length)
+				.filter(|end| *end <= bytes.len())
+				.ok_or(ArtifactError::SectionBounds(entry_index))?;
+
+			if offset != cursor || length == 0 {
+				return Err(ArtifactError::SectionBounds(entry_index));
+			}
+
+			cursor = align(end);
+
+			if bytes[end..cursor.min(bytes.len())].iter().any(|byte| *byte != 0) {
+				return Err(ArtifactError::SectionBounds(entry_index));
+			}
+
+			*section = &bytes[offset..end];
 		}
 
-		if u16_at(entry, 0) != meta.role.code() || u16_at(entry, 2) != meta.backend.code() {
-			return Err(ArtifactError::DirectoryMismatch(index));
-		}
-
-		let offset = u32_at(entry, 4) as usize;
-		let length = u32_at(entry, 8) as usize;
-		let end = offset
-			.checked_add(length)
-			.filter(|end| *end <= bytes.len())
-			.ok_or(ArtifactError::SectionBounds(index))?;
-
-		if offset != cursor || length == 0 {
-			return Err(ArtifactError::SectionBounds(index));
-		}
-
-		cursor = align(end);
-
-		if bytes[end..cursor.min(bytes.len())].iter().any(|byte| *byte != 0) {
-			return Err(ArtifactError::SectionBounds(index));
-		}
-
-		if sha256_hex(&bytes[offset..end]) != meta.sha256 {
+		if sha256_hex(sections[0]) != meta.sha256 {
 			return Err(ArtifactError::PayloadHash(index));
+		}
+
+		if sha256_hex(sections[1]) != meta.viability_sha256 {
+			return Err(ArtifactError::ViabilityHash(index));
 		}
 
 		payloads.push(Payload {
 			role: meta.role,
 			backend: meta.backend,
-			bytes: &bytes[offset..end],
+			bytes: sections[0],
+			viability: sections[1],
 		});
 	}
 
@@ -672,6 +724,9 @@ pub fn parse(bytes: &[u8]) -> Result<Artifact<'_>, ArtifactError> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	/// A stand-in viability table: the envelope checks bytes and hashes, and the engine checks the table's content.
+	const VIABILITY: [u8; 6] = [9; 6];
 
 	fn header(roles: &[Role]) -> Header {
 		Header {
@@ -688,6 +743,7 @@ mod tests {
 					// The sample payloads are 13 bytes of 7 and then 5 bytes of 7.
 					sha256: sha256_hex(&[7u8; 13][..if index == 0 { 13 } else { 5 }]),
 					states: 3,
+					viability_sha256: sha256_hex(&VIABILITY),
 				})
 				.collect(),
 			byte_order: "little".to_string(),
@@ -709,11 +765,13 @@ mod tests {
 				role: Role::Whole,
 				backend: Backend::Dense,
 				bytes: &payload,
+				viability: &VIABILITY,
 			},
 			Payload {
 				role: Role::Embedded,
 				backend: Backend::Dense,
 				bytes: &payload[..5],
+				viability: &VIABILITY,
 			},
 		];
 
@@ -729,6 +787,7 @@ mod tests {
 		assert_eq!(parsed.payloads.len(), 2);
 		assert_eq!(parsed.payloads[0].bytes, &[7u8; 13]);
 		assert_eq!(parsed.payloads[1].bytes, &[7u8; 5]);
+		assert_eq!(parsed.payloads[0].viability, &VIABILITY);
 		assert_eq!(parsed.header, header(&[Role::Whole, Role::Embedded]));
 	}
 
@@ -756,8 +815,14 @@ mod tests {
 
 		let mut bad = good.clone();
 
-		bad[4] = 2;
-		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(2));
+		// The previous schema version is refused with its own number, so a stale committed file names itself.
+		bad[4] = 1;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(1));
+
+		let mut bad = good.clone();
+
+		bad[4] = 3;
+		assert_eq!(parse(&bad).unwrap_err(), ArtifactError::Version(3));
 
 		let mut bad = good.clone();
 
@@ -791,6 +856,7 @@ mod tests {
 			role: Role::Whole,
 			backend: Backend::Dense,
 			bytes: &payload,
+			viability: &VIABILITY,
 		}];
 
 		assert!(matches!(

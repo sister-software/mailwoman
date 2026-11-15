@@ -80,20 +80,13 @@ impl<'a> Lowerer<'a> {
 		let hir = self.node(&shape.grammar, 0, &shape.source).map_err(refuse)?;
 		let properties = hir.properties();
 
-		match properties.minimum_len() {
-			Some(0) => {
-				return Err(refuse(Refusal::new(
-					DiagnosticKind::EmptyMatch,
-					format!("shape `{}` can match the empty string", shape.id),
-				)))
-			}
-			None => {
-				return Err(refuse(Refusal::new(
-					DiagnosticKind::InvalidOperand,
-					format!("shape `{}` can never match any text", shape.id),
-				)))
-			}
-			Some(_) => {}
+		// A shape with no minimum length has an empty language. It lowers to a pattern that never matches, and the
+		// analysis then reports the shape as unreachable and fails the build unless the shape declares it.
+		if properties.minimum_len() == Some(0) {
+			return Err(refuse(Refusal::new(
+				DiagnosticKind::EmptyMatch,
+				format!("shape `{}` can match the empty string", shape.id),
+			)));
 		}
 
 		Ok(hir)

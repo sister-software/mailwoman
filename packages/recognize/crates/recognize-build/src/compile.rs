@@ -26,14 +26,16 @@ use recognize_core::artifact::{
 	COMPILER_VERSION, DECLARATIONS_HASH_UNSET,
 };
 use recognize_core::ir::sha256_hex;
+use recognize_core::viability::Viability;
 use recognize_core::{Diagnostic, DiagnosticKind, IrDocument, Scope, Shape};
 use regex_automata::dfa::{dense, Automaton, StartKind};
 use regex_automata::nfa::thompson::{self, WhichCaptures};
-use regex_automata::util::start;
-use regex_automata::{Anchored, MatchKind};
+use regex_automata::MatchKind;
 use regex_syntax::hir::{Hir, Look};
 
+use crate::analysis;
 use crate::lower::Lowerer;
+use crate::reach;
 
 /// The Unicode version of the tables the pinned `regex-syntax` ships. A test parses `\p{Age=V16_0}` and `\p{Age=V17_0}`
 /// to hold this constant equal to the library's tables.
@@ -60,6 +62,9 @@ pub struct Limits {
 	pub max_captures: usize,
 	/// The longest input, in UTF-8 bytes, the artifact's search accepts.
 	pub max_input_bytes: u32,
+	/// The most states the overlap analysis visits in the product of two shapes' automata. A pair that passes it fails
+	/// the build, so no overlap is skipped silently.
+	pub max_product_states: usize,
 }
 
 impl Default for Limits {
@@ -74,6 +79,7 @@ impl Default for Limits {
 			max_lowered_nodes: 100_000,
 			max_captures: 64,
 			max_input_bytes: 4096,
+			max_product_states: 1_000_000,
 		}
 	}
 }
@@ -110,6 +116,7 @@ struct Built {
 	backend: Backend,
 	states: usize,
 	bytes: Vec<u8>,
+	viability: Vec<u8>,
 }
 
 /// Why one set of patterns did not compile.
@@ -127,43 +134,14 @@ impl Failure {
 	}
 }
 
-/// Counts the states reachable from every kind of anchored start state, which includes the dead state when a path
-/// reaches it. `regex-automata` exposes no state count, so the compiler walks the transition function.
-fn count_states(dfa: &dense::DFA<Vec<u32>>) -> Result<usize, Failure> {
-	use std::collections::BTreeSet;
+/// The viability table of the DFA the artifact stores, or a failure when the walk cannot start.
+fn viability_of<A: Automaton>(dfa: &A, bytes: &[u8], patterns: usize) -> Result<Vec<u8>, Failure> {
+	let rows = reach::viability_rows(dfa, bytes, patterns).map_err(|message| Failure {
+		kind: DiagnosticKind::UnsupportedOperator,
+		message,
+	})?;
 
-	let mut seen = BTreeSet::new();
-	let mut stack = Vec::new();
-
-	// One look-behind byte per start kind: none, line feed, carriage return, word and non-word.
-	for look_behind in [None, Some(b'\n'), Some(b'\r'), Some(b'a'), Some(b' ')] {
-		let config = start::Config::new().anchored(Anchored::Yes).look_behind(look_behind);
-		let id = dfa.start_state(&config).map_err(|error| Failure {
-			kind: DiagnosticKind::UnsupportedOperator,
-			message: format!("the DFA has no anchored start state: {error}"),
-		})?;
-
-		if seen.insert(id) {
-			stack.push(id);
-		}
-	}
-
-	let units: Vec<_> = dfa.byte_classes().representatives(..).collect();
-
-	while let Some(id) = stack.pop() {
-		for unit in &units {
-			let next = match unit.as_u8() {
-				Some(byte) => dfa.next_state(id, byte),
-				None => dfa.next_eoi_state(id),
-			};
-
-			if seen.insert(next) {
-				stack.push(next);
-			}
-		}
-	}
-
-	Ok(seen.len())
+	Ok(Viability::encode(&rows, patterns))
 }
 
 fn compile_hirs(hirs: &[Hir], limits: &Limits) -> Result<Built, Failure> {
@@ -206,7 +184,13 @@ fn compile_hirs(hirs: &[Hir], limits: &Limits) -> Result<Built, Failure> {
 			}
 		})?;
 
-	let states = count_states(&dense)?;
+	let bytes = reach::representatives(dense.byte_classes());
+	let states = reach::reachable_states(&dense, &bytes)
+		.map_err(|message| Failure {
+			kind: DiagnosticKind::UnsupportedOperator,
+			message,
+		})?
+		.len();
 
 	if states > limits.max_states {
 		return Err(Failure::limit(format!(
@@ -223,6 +207,7 @@ fn compile_hirs(hirs: &[Hir], limits: &Limits) -> Result<Built, Failure> {
 			backend: Backend::Dense,
 			states,
 			bytes: dense_bytes,
+			viability: viability_of(&dense, &bytes, hirs.len())?,
 		});
 	}
 
@@ -237,6 +222,8 @@ fn compile_hirs(hirs: &[Hir], limits: &Limits) -> Result<Built, Failure> {
 			backend: Backend::Sparse,
 			states,
 			bytes: sparse_bytes,
+			// The table is keyed by the sparse DFA's own state IDs, which are not the dense DFA's.
+			viability: viability_of(&sparse, &bytes, hirs.len())?,
 		});
 	}
 
@@ -292,6 +279,17 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 		return Err(diagnostics);
 	}
 
+	// A shape no search can report fails the build here, so the check holds for a family compiled alone as well as for
+	// a build of every family.
+	diagnostics.extend(analysis::unreachable_diagnostics(document, limits).unwrap_or_else(|found| found));
+
+	if !diagnostics.is_empty() {
+		diagnostics.sort();
+		diagnostics.dedup();
+
+		return Err(diagnostics);
+	}
+
 	let mut metas = Vec::new();
 	let mut built = Vec::new();
 
@@ -318,6 +316,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 					role,
 					sha256: sha256_hex(&result.bytes),
 					states: u32::try_from(result.states).expect("a state count within the limit fits u32"),
+					viability_sha256: sha256_hex(&result.viability),
 				});
 				built.push((role, result));
 			}
@@ -350,6 +349,7 @@ pub fn compile_family(document: &IrDocument, limits: &Limits) -> Result<Compiled
 			role: *role,
 			backend: result.backend,
 			bytes: &result.bytes,
+			viability: &result.viability,
 		})
 		.collect();
 	let anchor = document.shapes.first().map(|shape| shape.source.clone());

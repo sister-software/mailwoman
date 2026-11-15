@@ -249,6 +249,54 @@ fn a_file_from_another_compiler_or_another_declarations_hash_is_refused() {
 }
 
 #[test]
+fn an_artifact_of_the_previous_schema_version_is_refused_with_its_version() {
+	let mut bytes = artifact_of("primitives");
+
+	bytes[4] = 1;
+
+	assert_eq!(Engine::new().load(&bytes).unwrap_err(), ArtifactError::Version(1));
+}
+
+#[test]
+fn a_viability_table_with_the_wrong_rows_is_refused_even_when_its_hash_is_updated() {
+	let bytes = artifact_of("primitives");
+	let artifact = parse(&bytes).unwrap();
+	let mut header = artifact.header.clone();
+	let mut table = artifact.payloads[0].viability.to_vec();
+	let last = table.len() - 1;
+
+	// A change the hash covers is refused by the hash. Recomputing the hash gets past it, and the table's own checks
+	// refuse what does not fit the automaton: here, a row count that disagrees with the header.
+	table[0] ^= 0x01;
+	header.automata[0].viability_sha256 = recognize_core::ir::sha256_hex(&table);
+
+	let mut payloads = artifact.payloads.clone();
+
+	payloads[0].viability = &table;
+
+	let rebuilt = assemble(&header, &payloads).expect("the layout is valid");
+
+	assert!(matches!(
+		Engine::new().load(&rebuilt).unwrap_err(),
+		ArtifactError::Viability(_)
+	));
+
+	// A padding bit set in the last row is refused too.
+	let mut padded = artifact.payloads[0].viability.to_vec();
+
+	padded[last] |= 0x80;
+	header.automata[0].viability_sha256 = recognize_core::ir::sha256_hex(&padded);
+	payloads[0].viability = &padded;
+
+	assert!(matches!(
+		Engine::new()
+			.load(&assemble(&header, &payloads).expect("the layout is valid"))
+			.unwrap_err(),
+		ArtifactError::Viability(_)
+	));
+}
+
+#[test]
 fn a_header_that_declares_more_patterns_than_the_dfa_holds_is_refused() {
 	let bytes = artifact_of("primitives");
 	let artifact = parse(&bytes).unwrap();
