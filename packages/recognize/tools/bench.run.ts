@@ -17,8 +17,12 @@
  *   abbreviations, and known formats, and the recognizer computes the same structural fields
  *   and also recognizes digit runs, decimals, whitespace, words and decimal pairs.
  *
- *   It doesn't compute known formats, and the postal family will add them.
- *   The recognizer therefore does more work than the legacy call on every input, except the known formats.
+ *   It doesn't compute known formats, because the `postcode_legacy` family belongs
+ *   to `@mailwoman/postcode`, and this package mustn't import it.
+ *   `packages/postcode/tools/bench.run.ts` times the same inputs with that family composed.
+ *
+ *   The recognizer here therefore does more work than the legacy call on every input,
+ *   except the known formats.
  *
  *   Two more inputs stress the search: a 300-digit run and a 300-character run of one CJK character.
  *   The tool makes no assertion on the numbers.

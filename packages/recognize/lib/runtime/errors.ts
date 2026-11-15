@@ -32,6 +32,17 @@ export class RecognizeRuntimeError extends RecognizeError {
 }
 
 /**
+ * `createRecognizer` refused a composition of families.
+ *
+ * A family that fills `knownFormats` reads the tokens of the `structure` family,
+ * so a composition that holds the first and not the second is refused.
+ * The error is thrown at construction, before any call.
+ */
+export class RecognizeCompositionError extends RecognizeError {
+	override name = "RecognizeCompositionError"
+}
+
+/**
  * The engine refused a family's artifact, such as one whose declarations hash
  * differs from the declarations it is loaded beside.
  */

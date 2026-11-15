@@ -13,9 +13,49 @@
 
 import type { AnyFamily, FieldsOf, RecognitionsOf } from "#family"
 import { loadFamily, recognizeText, traceText } from "#runtime/engine"
+import { RecognizeCompositionError } from "#runtime/errors"
 import { type Instance, ready } from "#runtime/state"
-import { structureFields } from "#runtime/structure"
+import { type KnownFormatsBinding, structureFields } from "#runtime/structure"
 import type { Trace, TraceOptions } from "#trace"
+
+/**
+ * Reads what a known-formats family's metadata holds for each of its shapes.
+ *
+ * The metadata holds, for each shape ID, a `format`, a `tokens` count of 1 or 2 and a `confidence`,
+ * or no entry for a shape that's no format, and the family's `poBox` name and confidence.
+ */
+function knownFormatsBinding(family: AnyFamily, handle: number, shapeIDs: readonly string[]): KnownFormatsBinding {
+	const metadata = family.metadata as
+		| {
+				shapes?: Record<string, { format?: unknown; tokens?: unknown; confidence?: unknown }>
+				family?: { poBox?: { format?: unknown; confidence?: unknown } }
+		  }
+		| undefined
+
+	const poBox = metadata?.family?.poBox
+
+	if (typeof poBox?.format !== "string" || typeof poBox.confidence !== "number") {
+		throw new RecognizeCompositionError(
+			`family ${family.id} fills knownFormats and declares no poBox name and confidence`
+		)
+	}
+
+	const shapes = shapeIDs.map((id): KnownFormatsBinding["shapes"][number] => {
+		const entry = metadata?.shapes?.[id]
+
+		if (!entry || typeof entry.format !== "string") return null
+
+		const tokens = entry.tokens === 1 ? 1 : entry.tokens === 2 ? 2 : null
+
+		if (tokens === null || typeof entry.confidence !== "number") {
+			throw new RecognizeCompositionError(`family ${family.id}: shape ${id} declares no token count and confidence`)
+		}
+
+		return { format: entry.format, tokens, confidence: entry.confidence }
+	})
+
+	return { handle, shapes, poBox: { format: poBox.format, confidence: poBox.confidence } }
+}
 
 /**
  * Gives the engine's JSON the types the composed families' generated declarations promise.
@@ -103,7 +143,24 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 		seen.add(family.id)
 	}
 
-	let bound: { instance: Instance; mask: number; structure: number } | null = null
+	const readers = families.filter((family) => family.fields)
+	const known = readers.filter((family) => family.fields === "knownFormats")
+
+	if (known.length > 1) {
+		throw new RecognizeCompositionError(
+			`createRecognizer: ${known.map((family) => family.id).join(" and ")} both fill knownFormats; compose one`
+		)
+	}
+
+	if (known.length && !readers.some((family) => family.fields === "structure")) {
+		throw new RecognizeCompositionError(
+			`createRecognizer: family ${known[0]!.id} fills knownFormats from the tokens of the structure family, ` +
+				"and the composition has no structure family"
+		)
+	}
+
+	let bound: { instance: Instance; mask: number; structure: number; formats: KnownFormatsBinding | undefined } | null =
+		null
 
 	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
 	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
@@ -115,18 +172,26 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 		if (bound?.instance !== instance) {
 			let mask = 0
 			let structure = -1
+			let formats: KnownFormatsBinding | undefined
 
 			for (const family of families) {
 				const handle = loadFamily(instance, family)
 
-				mask |= 1 << handle
+				// A family with a field reader reports no recognitions, so a search leaves the knownFormats family out.
+				if (family.fields !== "knownFormats") {
+					mask |= 1 << handle
+				}
 
 				if (family.fields === "structure") {
 					structure = handle
 				}
+
+				if (family.fields === "knownFormats") {
+					formats = knownFormatsBinding(family, handle, instance.tables[handle]!.shapes)
+				}
 			}
 
-			bound = { instance, mask: mask >>> 0, structure }
+			bound = { instance, mask: mask >>> 0, structure, formats }
 		}
 
 		// The recognitions are read out of linear memory before the structure call overwrites the records.
@@ -134,7 +199,9 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 
 		const result: RecognizeResult<F> = {
 			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognitions),
-			fields: trusted<FieldsOf<F>>(bound.structure < 0 ? {} : structureFields(instance, text, bound.structure)),
+			fields: trusted<FieldsOf<F>>(
+				bound.structure < 0 ? {} : structureFields(instance, text, bound.structure, bound.formats)
+			),
 		}
 
 		const trace = options?.trace

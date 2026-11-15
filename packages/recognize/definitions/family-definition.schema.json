@@ -1,0 +1,68 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://mailwoman.dev/schemas/recognize/family-definition-1.json",
+	"title": "Mailwoman recognize family definition, version 1",
+	"description": "A shape-only grammar family defined as data by a package other than recognize-core: regular-expression shapes, their scopes and overlap declarations, and metadata the generated TypeScript carries. recognize-build --definition compiles it into the IR, an artifact and generated TypeScript. A shape that declares captures, a validator or a handler is refused with a diagnostic.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["format", "version", "family", "shapes"],
+	"properties": {
+		"format": { "const": "mailwoman.recognize.family-definition" },
+		"version": { "const": 1 },
+		"family": { "$ref": "#/$defs/dottedName" },
+		"generator": {
+			"description": "The command the generated files name as their generator.",
+			"type": "string",
+			"minLength": 1
+		},
+		"fields": {
+			"description": "The field reader that fills the family's result fields, the TypeScript type of those fields, and the module the generated code imports the type from.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["reader", "type", "from"],
+			"properties": {
+				"reader": { "enum": ["knownFormats"] },
+				"type": { "type": "string", "minLength": 1 },
+				"from": { "type": "string", "minLength": 1 }
+			}
+		},
+		"metadata": {
+			"description": "Family-level data copied into the generated TypeScript. The artifact does not carry it.",
+			"type": "object"
+		},
+		"shapes": { "type": "array", "items": { "$ref": "#/$defs/shape" } }
+	},
+	"$defs": {
+		"dottedName": {
+			"type": "string",
+			"pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+		},
+		"shape": {
+			"description": "One shape. The pattern holds no assertion, because the scope anchors it, and it can match no empty string.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "pattern"],
+			"properties": {
+				"id": { "$ref": "#/$defs/dottedName" },
+				"pattern": {
+					"description": "A regular-expression string. A case-insensitive pattern carries an inline flag such as (?i-u:...), which folds ASCII case only.",
+					"type": "string",
+					"minLength": 1
+				},
+				"scope": {
+					"description": "Where the shape may match. The default is whole.",
+					"enum": ["whole", "embedded", "whole_or_embedded"]
+				},
+				"overlaps": {
+					"description": "The IDs of the shapes this one overlaps by design. One side of a pair declares it.",
+					"type": "array",
+					"items": { "$ref": "#/$defs/dottedName" }
+				},
+				"metadata": {
+					"description": "Data copied into the generated TypeScript beside the shape's ID.",
+					"type": "object"
+				}
+			}
+		}
+	}
+}

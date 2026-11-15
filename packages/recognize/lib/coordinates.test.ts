@@ -18,23 +18,6 @@ import { createRecognizer, type RecognizeResult, type TracedRecognizeResult } fr
 import { primitives } from "#primitives"
 import { Outcome, type Trace, TraceResult } from "#trace"
 
-// The module is real.
-// The spy only counts the calls that reach the engine's trace export.
-const traced = vi.hoisted(() => ({ calls: 0 }))
-
-vi.mock("#runtime/engine", async (importOriginal) => {
-	const original = await importOriginal<typeof import("#runtime/engine")>()
-
-	return {
-		...original,
-		traceText: (...parameters: Parameters<typeof original.traceText>) => {
-			traced.calls++
-
-			return original.traceText(...parameters)
-		},
-	}
-})
-
 const families = [primitives, coordinates] as const
 const recognizer = createRecognizer(families)
 
@@ -183,25 +166,56 @@ describe("a coordinate from text to a validated typed recognition with a trace",
 })
 
 describe("traces are opt-in", () => {
-	it("builds no trace and calls no trace export without the option", () => {
-		const before = traced.calls
+	it("builds no trace and calls no trace export without the option", async () => {
+		// The root Vitest configuration shares one module registry between test files (`isolate: false`),
+		// so a hoisted mock is skipped whenever another file loaded the engine first.
+		// This test loads its own copy of the modules behind a counting wrapper, and removes both afterwards.
+		const traced = { calls: 0 }
 
-		for (const text of ["40.7128, -74.0060", "geo:1,2", "68161", ""]) {
-			const result = recognizer.recognize(text)
+		vi.resetModules()
 
-			expect("traces" in result).toBe(false)
-			expect(Object.keys(result).toSorted()).toEqual(["fields", "recognitions"])
+		vi.doMock("#runtime/engine", async (importOriginal) => {
+			const original = await importOriginal<typeof import("#runtime/engine")>()
 
-			const off = recognizer.recognize(text, { trace: false })
+			return {
+				...original,
+				traceText: (...parameters: Parameters<typeof original.traceText>) => {
+					traced.calls++
 
-			expect("traces" in off).toBe(false)
+					return original.traceText(...parameters)
+				},
+			}
+		})
+
+		try {
+			const [fresh, freshPrimitives, freshCoordinates] = await Promise.all([
+				import("#index"),
+				import("#primitives"),
+				import("#coordinates"),
+			])
+
+			const counted = fresh.createRecognizer([freshPrimitives.primitives, freshCoordinates.coordinates])
+
+			for (const text of ["40.7128, -74.0060", "geo:1,2", "68161", ""]) {
+				const result = counted.recognize(text)
+
+				expect("traces" in result).toBe(false)
+				expect(Object.keys(result).toSorted()).toEqual(["fields", "recognitions"])
+
+				const off = counted.recognize(text, { trace: false })
+
+				expect("traces" in off).toBe(false)
+			}
+
+			expect(traced.calls).toBe(0)
+
+			counted.recognize("1, 2", { trace: true })
+
+			expect(traced.calls).toBe(1)
+		} finally {
+			vi.doUnmock("#runtime/engine")
+			vi.resetModules()
 		}
-
-		expect(traced.calls).toBe(before)
-
-		recognizer.recognize("1, 2", { trace: true })
-
-		expect(traced.calls).toBe(before + 1)
 	})
 
 	it("keeps the type of a call without the option", () => {

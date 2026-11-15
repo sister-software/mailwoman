@@ -11,6 +11,7 @@
 pub mod analysis;
 pub mod codegen;
 pub mod compile;
+pub mod definition;
 pub mod lower;
 pub mod program;
 pub mod reach;
@@ -147,6 +148,19 @@ pub fn build_families(families: Vec<Family>, limits: &Limits) -> Result<Build, V
 		}
 	}
 
+	if !diagnostics.is_empty() {
+		diagnostics.sort();
+		diagnostics.dedup();
+
+		return Err(diagnostics);
+	}
+
+	build_documents(documents, limits)
+}
+
+/// Compiles and analyzes sealed IR documents together, as [`build_families`] does for families built in Rust.
+pub fn build_documents(mut documents: Vec<IrDocument>, limits: &Limits) -> Result<Build, Vec<Diagnostic>> {
+	let mut diagnostics = Vec::new();
 	let mut built = Vec::new();
 
 	for document in &documents {

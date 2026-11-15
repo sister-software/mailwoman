@@ -17,12 +17,22 @@
 import type { BCP47 } from "@mailwoman/registry/types"
 
 import { offsetMap } from "#offsets"
-import { ErrorCode, SEGMENT_WORDS, STRUCTURE_HEADER_WORDS, TOKEN_WORDS } from "#runtime/abi"
+import {
+	ErrorCode,
+	HitKind,
+	KNOWN_FORMAT_WORDS,
+	NO_FAMILY,
+	SEGMENT_WORDS,
+	STRUCTURE_HEADER_WORDS,
+	TOKEN_WORDS,
+} from "#runtime/abi"
 import { stageText } from "#runtime/engine"
 import { RecognizeError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
 import type {
 	CharacterClass,
+	KnownFormatHit,
+	KnownFormatsFields,
 	RegionAbbreviation,
 	ScriptShare,
 	Segment,
@@ -118,16 +128,87 @@ function rankScripts(words: Uint32Array): ScriptShare[] {
 }
 
 /**
+ * What the reader needs of a known-formats family: its handle, what each of its
+ * shapes means, and the PO box's name and confidence.
+ *
+ * `createRecognizer` builds it from the family's metadata when it binds the engine.
+ */
+export interface KnownFormatsBinding {
+	readonly handle: number
+	/**
+	 * By the shape's position in the family's shape table: its format name, the number of tokens it
+	 * covers and its confidence, or `null` for a shape that's no format, such as a PO box leader.
+	 */
+	readonly shapes: ReadonlyArray<{
+		readonly format: string
+		readonly tokens: 1 | 2
+		readonly confidence: number
+	} | null>
+	readonly poBox: { readonly format: string; readonly confidence: number }
+}
+
+/**
+ * Reads the known-format hits the engine appended after the region abbreviations.
+ *
+ * A token hit counts for a shape that covers one token and a pair hit for a shape
+ * that covers two, and a hit of the other kind is dropped.
+ */
+function readKnownFormats(
+	words: Uint32Array,
+	start: number,
+	text: string,
+	convert: (byte: number) => number,
+	binding: KnownFormatsBinding
+): KnownFormatHit[] {
+	const count = words[start]!
+	const hits: KnownFormatHit[] = []
+	let cursor = start + 1
+
+	for (let index = 0; index < count; index++, cursor += KNOWN_FORMAT_WORDS) {
+		const kind = words[cursor]!
+		const from = convert(words[cursor + 2]!)
+		const to = convert(words[cursor + 3]!)
+
+		if (kind === HitKind.POBox) {
+			hits.push({
+				format: binding.poBox.format,
+				span: { start: from, end: to, body: text.slice(from, to) },
+				confidence: binding.poBox.confidence,
+			})
+
+			continue
+		}
+
+		const shape = binding.shapes[words[cursor + 1]!]
+
+		if (!shape || shape.tokens !== (kind === HitKind.Token ? 1 : 2)) continue
+
+		hits.push({
+			format: shape.format,
+			span: { start: from, end: to, body: text.slice(from, to) },
+			confidence: shape.confidence,
+		})
+	}
+
+	return hits
+}
+
+/**
  * Computes the structural fields of `text` with the family loaded under `handle`.
  *
  * It reuses the bytes a preceding call staged for the same text, and it overwrites
  * the recognition records, so the caller reads those first.
  */
-export function structureFields(instance: Instance, text: string, handle: number): StructureFields {
+export function structureFields(
+	instance: Instance,
+	text: string,
+	handle: number,
+	formats?: KnownFormatsBinding
+): StructureFields & Partial<KnownFormatsFields> {
 	try {
 		const { exports } = instance
 		const { pointer, written } = stageText(instance, text)
-		const count = exports.rcg_structure(pointer, written, handle)
+		const count = exports.rcg_structure(pointer, written, handle, formats ? formats.handle : NO_FAMILY)
 
 		if (count < 0) {
 			const length = exports.rcg_error_len()
@@ -181,7 +262,7 @@ export function structureFields(instance: Instance, text: string, handle: number
 			regionAbbreviations[index] = { start: span.start, span: span.body }
 		}
 
-		return {
+		const fields: StructureFields = {
 			characterClass: tokenCount ? foldClass(classCounts) : "alpha",
 			scripts: rankScripts(words),
 			tokenClasses,
@@ -189,6 +270,10 @@ export function structureFields(instance: Instance, text: string, handle: number
 			regionAbbreviations,
 			totalLength: text.length,
 		}
+
+		if (!formats) return fields
+
+		return { ...fields, knownFormats: readKnownFormats(words, cursor, text, convert, formats) }
 	} catch (error) {
 		throw trapped(error)
 	}

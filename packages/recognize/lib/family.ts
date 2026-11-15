@@ -101,6 +101,11 @@ export type Handler<K extends string, R extends { readonly kind: K } = Recogniti
 ) => unknown
 
 /**
+ * The engine's field readers.
+ */
+export type FieldReader = "structure" | "knownFormats"
+
+/**
  * One family's declaration.
  */
 export interface FamilyDeclaration<
@@ -126,9 +131,19 @@ export interface FamilyDeclaration<
 	readonly artifact: () => Uint8Array
 	/**
 	 * Names the engine's field reader that fills this family's result fields, when the family adds any.
-	 * `structure` is the only reader.
+	 *
+	 * `structure` reads the tokens and the segments.
+	 * `knownFormats` reads each token and each adjacent pair of tokens against the family's
+	 * shapes, so a recognizer that composes it holds the `structure` family too, and
+	 * `createRecognizer` throws a `RecognizeCompositionError` at construction when it has none.
+	 * A family with a reader reports no recognitions of its own.
 	 */
-	readonly fields?: "structure"
+	readonly fields?: FieldReader
+	/**
+	 * Data the family's definition holds beside its shapes, such as each known format's name and confidence.
+	 * The artifact holds no copy of it.
+	 */
+	readonly metadata?: Readonly<Record<string, unknown>>
 	/**
 	 * Type-only slot for the payloads, the fields and the rejection codes.
 	 */
@@ -209,7 +224,8 @@ export function defineFamily<
 	kinds: Readonly<Record<string, Kind>>
 	declarationsHash: string
 	artifact: () => Uint8Array
-	fields?: "structure"
+	fields?: FieldReader
+	metadata?: Readonly<Record<string, unknown>>
 }): FamilyDeclaration<Kind, Payloads, Fields, Rejections> {
 	if (!/^[0-9a-f]{64}$/u.test(spec.declarationsHash)) {
 		throw new TypeError(`family ${spec.id}: the declarations hash is not 64 lowercase hexadecimal digits`)

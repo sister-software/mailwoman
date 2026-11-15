@@ -14,6 +14,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { ABI_VERSION } from "#runtime/abi"
 import { type CompiledModule, type ModuleBytes, wasm } from "#runtime/webassembly"
 
 const wasmPath = workspacePath("recognize", "wasm", "recognize.wasm")
@@ -193,7 +194,7 @@ describe("the loader", () => {
 		state.setDefaultSource(() => WRONG_ABI)
 
 		expect(() => entry.createRecognizer([coordinates]).recognize("1, 2")).toThrow(
-			/ABI version 2 does not match the loader's ABI version 4/u
+			new RegExp(`ABI version 2 does not match the loader's ABI version ${ABI_VERSION}`, "u")
 		)
 	})
 
