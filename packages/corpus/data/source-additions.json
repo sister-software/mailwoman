@@ -2535,6 +2535,51 @@
 			"source_url": "https://www.datos.gov.co/d/ajs9-6i5i",
 			"notes": "No corpus source reads this list. Its grant is CC BY-SA 4.0, whose share-alike term the share-alike-free license policy refuses.",
 			"origin": "2026-10-17_rights_review"
+		},
+		{
+			"iso2": "ES",
+			"sector": "health",
+			"source": "Catálogo de Centros de Atención Primaria del SNS",
+			"owner": "Ministerio de Sanidad",
+			"role": "OBSERVATION",
+			"authority_basis": "The Ministerio de Sanidad publishes the national health system's catalogue of its own primary-care centres, compiled from the autonomous communities' health services",
+			"access": "zip of semicolon-separated text files from the microdata page `/estadisticas/microdatos.do`, type `CatCentrosAP`, no key",
+			"license": "Free",
+			"geometry": "N",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://www.sanidad.gob.es/estadEstudios/estadisticas/microdatos/CatCentrosAP/2026_C__Catalogo_de_Centros_AP_txt.zip",
+			"notes": "Read by the es-sanidad-centros-ap corpus adapter and the evaluation source of the same id, through one reader. 13,053 centres in the 2026 catalogue, each with a name, a street line, a locality, an INE municipality code and a postcode; 5,971 street lines carry a house number.",
+			"origin": "2026-10-17_rights_review"
+		},
+		{
+			"iso2": "IT",
+			"sector": "education",
+			"source": "Anagrafe scuole statali (DS0400SCUANAGRAFESTAT)",
+			"owner": "Ministero dell'Istruzione e del Merito",
+			"role": "OBSERVATION",
+			"authority_basis": "The Ministero dell'Istruzione e del Merito publishes the register of its own state school sites on its open-data portal",
+			"access": "CSV per school year on dati.istruzione.it, no key",
+			"license": "Free",
+			"geometry": "N",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/leaf?area=Scuole&datasetId=DS0400SCUANAGRAFESTAT",
+			"notes": "Read by the it-miur-scuole corpus adapter and the evaluation source of the same id, through one reader. The 2026/27 file holds every state school site with its region, province, street line, postcode and comune, in capitals; 27,399 street lines carry a house number.",
+			"origin": "2026-10-17_rights_review"
+		},
+		{
+			"iso2": "AU",
+			"sector": "charity_nonprofit",
+			"source": "ACNC Registered Charities",
+			"owner": "Australian Charities and Not-for-profits Commission",
+			"role": "OBSERVATION",
+			"authority_basis": "The ACNC, the national charity regulator, publishes the register of charities it maintains",
+			"access": "CSV resource of the data.gov.au dataset `acnc-register`, updated weekly, no key",
+			"license": "Free",
+			"geometry": "N",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://data.gov.au/data/dataset/acnc-register",
+			"notes": "Read by the au-acnc-register corpus adapter and the evaluation source of the same id, through one reader. 66,623 charities in the 2026-11-14 pull, each with up to three address lines, a town, a state and a postcode; 6,340 carry no address because the ACNC withholds it.",
+			"origin": "2026-10-17_rights_review"
 		}
 	]
 }

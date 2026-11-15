@@ -14,6 +14,7 @@ import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-form
 
 import type { UnitSplitter } from "#adapters/street/unit"
 import { writtenSubdivisionCode } from "#adapters/wof/admin/json/region-codes"
+import type { RegionNames } from "#build/region-names"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -51,6 +52,11 @@ export const ComponentRule = {
 	 * country (`Avenue des Armieres Entree 13`).
 	 */
 	StreetTrailingUnit: "street:trailing-unit",
+	/**
+	 * The region is no name or abbreviation of a region or macroregion of the row's country
+	 * in the WOF admin database, in a country where that database holds regions.
+	 */
+	RegionUnknown: "region:unknown",
 } as const
 
 export type ComponentRule = (typeof ComponentRule)[keyof typeof ComponentRule]
@@ -68,6 +74,10 @@ export type ComponentRule = (typeof ComponentRule)[keyof typeof ComponentRule]
  *
  * `street:trailing-unit` is reported but not enforced, because some streets end in a
  * word a country also writes as a unit (`Morning Side`, `Skijor Steppe Upper`).
+ *
+ * `region:unknown` is reported but not enforced, because neither source holds every
+ * form addresses write: Swiss canton codes (`TG`), Latvia's post-2021 municipalities
+ * (`Valmieras nov.`), Bangkok's short `กรุงเทพ`.
  */
 export const ENFORCED_COMPONENT_RULES: ReadonlySet<ComponentRule> = new Set([
 	ComponentRule.StreetRepeatsPostcode,
@@ -117,6 +127,11 @@ export interface ComponentCheckContext {
 	 * Without it the rule isn't checked.
 	 */
 	units?: UnitSplitter | null
+	/**
+	 * The WOF region names `region:unknown` reads.
+	 * Without them the rule isn't checked.
+	 */
+	regions?: RegionNames | null
 }
 
 /**
@@ -196,6 +211,10 @@ export function componentFindings(
 		if (trailing) {
 			findings.push({ rule: ComponentRule.StreetTrailingUnit, values: [street, trailing.unit] })
 		}
+	}
+
+	if (region && context.regions?.holds(country, region) === false) {
+		findings.push({ rule: ComponentRule.RegionUnknown, values: [region] })
 	}
 
 	return findings

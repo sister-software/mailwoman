@@ -98,6 +98,10 @@ export interface AlignCheckpoint {
 	 * A resume refuses such a checkpoint.
 	 */
 	component_findings_by_source?: Record<string, Record<string, number>>
+	/**
+	 * The component rules the aligned adapters' rows weren't checked against.
+	 */
+	unchecked_component_rules?: string[]
 	written_at: string
 }
 

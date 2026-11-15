@@ -130,7 +130,10 @@ export async function readReusableSource(
 		return { record: null, problem: `${path.toString()} was written from another input, code or config` }
 	}
 
-	if (!Array.isArray(record.totals.component_findings_by_source)) {
+	if (
+		!Array.isArray(record.totals.component_findings_by_source) ||
+		!Array.isArray(record.totals.unchecked_component_rules)
+	) {
 		return { record: null, problem: `${path.toString()} records no per-source component counts` }
 	}
 

@@ -53,7 +53,10 @@ Use repository skills for procedures rather than copying their steps into this f
 
 - `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` explains the calibrated,
   retrieval-augmented sequence labeler and the grammar/atlas division of labor.
-- `docs/engineering/SCOPE.mdx` defines current locale tiers, workstreams, runtime flags, and the live
+- `packages/codex/lib/support/promises.json` declares the support promises: each country and input language
+  and script Mailwoman guarantees, and to what depth. The `support-promises` repository check refuses a promise
+  without a passing gauntlet case. `docs/superpowers/specs/2026-11-14-locale-support-promises-design.md` records the design.
+- `docs/engineering/SCOPE.mdx` keeps the per-country locale evidence, workstreams, runtime flags, and the live
   roadmap. `docs/records/plan/` holds the v1 plan, its phase documents and its reference pages as historical records.
 - `docs/engineering/reference/jurisdiction-coverage.mdx` answers what this repository has for each of
   255 jurisdictions, one row each, with corpus rows, admission, gazetteer places and board rows in
@@ -72,10 +75,10 @@ Use repository skills for procedures rather than copying their steps into this f
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` defines model evaluation requirements and the
   release-quality procedure: a default-on model or decoder change ships only on a `pass` verdict
   against the registered release requirements. Those requirements replaced the D-rule on 2026-10-20. The current
-  specification, v7, registers every threshold, but no candidate identity and no evaluation collection, and
-  no frozen collection holds comparative rows for ES, IT, AU or NZ. Every verdict is therefore insufficient
-  evidence, and the earlier promotion checks still decide.
-  `docs/records/evals/2026-11-14-release-requirements-v8-proposal.md` measures each threshold and lists the
+  specification, v8, registers every threshold, the v0.8.18 development and confirmation collections, and
+  model 10.8.0 as the published identity. No verdict has returned `pass` yet, so the earlier promotion checks
+  still decide.
+  `docs/records/evals/2026-11-14-release-requirements-v8.md` measures each threshold and lists the
   blockers.
 - `docs/engineering/HOLDOUT_AND_EVALUATION.mdx` is the held-out data and evaluation specification: how
   rows are split, the checks that admit a corpus manifest, the comparator, the three-run rule for a corpus

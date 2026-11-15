@@ -352,6 +352,7 @@ export async function freezeOSMSuites(input: {
 		corpora: [],
 		modelCards: [],
 		verifiedUnseenAdmitted: false,
+		textCompared: false,
 		reasons: ["the sample holds no row, so no audit ran"],
 		counts: { verified_unseen: 0, unseen_by_candidate: 0, known_overlap: 0, unknown: 0 },
 	}

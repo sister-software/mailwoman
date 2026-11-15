@@ -11,12 +11,12 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v7.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v8.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v7 specification with every requirement registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v7\.json$/u)
+	it("accepts the current v8 specification with every requirement registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v8\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -50,6 +50,17 @@ describe("validateReleaseSpec", () => {
 
 		expect(probes.has("invented-postal-guideline")).toBe(true)
 		expect(probes.has("invented-postal-unit-guideline")).toBe(true)
+	})
+
+	it("carries every v7 threshold into v8 and registers both evaluation collections", async () => {
+		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(7))
+		const v8 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(8))
+
+		expect(v8.requirements).toEqual(v7.requirements)
+		expect(v8.objective).toEqual(v7.objective)
+		expect(v8.statistics).toEqual(v7.statistics)
+		expect(v8.identities.dataset.id).toBe(v8.evaluations.confirmation.id)
+		expect(v8.evaluations.development.id).not.toBeNull()
 	})
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
@@ -118,7 +129,7 @@ describe("validateReleaseSpec", () => {
 
 	it("differs from v6 only in the scorer revision, the rationale and the version", async () => {
 		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(6))
-		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(7))
 
 		expect(v7.specVersion).toBe("7")
 		expect(v7.rationale).not.toBe(v6.rationale)

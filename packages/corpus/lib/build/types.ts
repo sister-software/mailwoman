@@ -261,6 +261,13 @@ export interface BuildCorpusManifest {
 	 * The component rules this build quarantined rows for.
 	 */
 	enforced_component_rules: string[]
+	/**
+	 * The component rules this build couldn't check, because the data a rule reads wasn't
+	 * on the host (`region:unknown` reads the WOF admin database).
+	 *
+	 * Their counts in {@linkcode component_findings_by_source} are absent rather than zero.
+	 */
+	unchecked_component_rules: string[]
 	total_aligned_rows: number
 	/**
 	 * Resolved license set across all included rows (license string → row count).

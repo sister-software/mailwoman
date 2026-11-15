@@ -323,6 +323,65 @@ describe("auditHeldoutOverlap", () => {
 		expect(refused.audit.counts.verified_unseen).toBe(0)
 	})
 
+	it("classes a row whose folded text a training row holds under another source as known_overlap", async () => {
+		const file = `${root}/texts/train/part-0.parquet`
+
+		await makeDirectories(`${root}/texts/train`)
+
+		{
+			using db = await openDuckDB()
+
+			// Case, accents and punctuation differ from the held-out text `fresh Main St`; a longer text doesn't match.
+			await db.run(
+				`COPY (SELECT * FROM (VALUES ('other-source', 'x1', NULL::VARCHAR, 'FRÉSH, main st.'), ` +
+					`('other-source', 'x2', NULL::VARCHAR, 'held-only Main St, United States')) ` +
+					`t(source, source_id, base_source_id, raw)) TO '${file}' (FORMAT parquet)`
+			)
+		}
+
+		const manifest = `${root}/texts/MANIFEST.json`
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "v-texts",
+				files: [{ path: "/data/texts/train/part-0.parquet", split: "train", rows: 2, sha256: "t" }],
+			},
+			manifest
+		)
+
+		const card = await writeCard("texts", "v-texts")
+
+		const rowTexts = new Map(
+			dataset.rows.map((entry) => [entry.rowID, `${entry.rowID.slice("oa-us:".length)} Main St`])
+		)
+
+		const withText = await auditHeldoutOverlap({
+			dataset,
+			corpora: [manifest],
+			modelCards: [card],
+			pathRoot: root,
+			rowTexts,
+		})
+
+		expect(withText.audit.textCompared).toBe(true)
+		expect(withText.rows["oa-us:fresh"]).toMatchObject({ provenance: "known_overlap" })
+
+		expect(withText.rows["oa-us:fresh"]!.evidence).toMatch(
+			/folded text "fresh main st" \(training row other-source:x1\)/u
+		)
+
+		expect(withText.rows["oa-us:held-only"]).toMatchObject({ provenance: "verified_unseen" })
+
+		const withoutText = await auditHeldoutOverlap({ dataset, corpora: [manifest], modelCards: [card], pathRoot: root })
+
+		expect(withoutText.audit.textCompared).toBe(false)
+		expect(withoutText.rows["oa-us:fresh"]).toMatchObject({ provenance: "verified_unseen" })
+
+		await expect(
+			auditHeldoutOverlap({ dataset, corpora: [manifest], modelCards: [card], pathRoot: root, rowTexts: new Map() })
+		).rejects.toThrow(/has no text for the folded-text comparison/u)
+	})
+
 	it("refuses verified_unseen when no model card is named", async () => {
 		const corpus = await writeCorpus("no-card", "v-no-card")
 

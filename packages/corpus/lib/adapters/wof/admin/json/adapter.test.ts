@@ -545,3 +545,36 @@ describe("wof-admin-json adapter against fixture", () => {
 		expect(colloquialRaws.length).toBeGreaterThan(0)
 	})
 })
+
+describe("wof-admin-json adapter on a region that shares its city's name", () => {
+	const dualRoleRoot = workspacePath("corpus", "fixtures", "wof-admin-dual-role")
+
+	const run = async (sample?: { cellFloor: number; rowsPerCountry: number }) => {
+		await removePathIfPresent(scratch.path(WOF_ADMIN_ADAPTER_ID))
+
+		await runAdapter({
+			adapter: createWOFAdminAdapter(),
+			adapterOptions: { inputPath: dualRoleRoot, country: "DE", ...(sample ? { sample } : {}) },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		return loadRows()
+	}
+
+	it("writes `Berlin, Germany` as the city and never as the region, and leaves an unpaired region's row", async () => {
+		const rows = await run()
+		const twoPart = rows.filter((r) => Object.keys(r.components).length === 2 && r.components.country === "Germany")
+
+		expect(twoPart.filter((r) => r.components.region === "Berlin")).toEqual([])
+		expect(twoPart.some((r) => r.components.locality === "Berlin")).toBe(true)
+		expect(twoPart.some((r) => r.components.region === "Testmark")).toBe(true)
+	})
+
+	it("keeps the city's `<locality>, <country>` row in a sample that would keep nothing else", async () => {
+		const rows = await run({ cellFloor: 0, rowsPerCountry: 0 })
+
+		expect(rows.map((r) => r.source_id)).toEqual(["wof-admin-4020-default-with-country"])
+		expect(rows[0]!.components).toEqual({ locality: "Berlin", country: "Germany" })
+	})
+})

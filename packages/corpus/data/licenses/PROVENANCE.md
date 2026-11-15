@@ -12,15 +12,21 @@ These files elect no license. They are the texts a license reading would use, an
 
 ## What is here
 
-| file                           | publisher                                      | retrieved  | how                                     |
-| ------------------------------ | ---------------------------------------------- | ---------- | --------------------------------------- |
-| `licence-ouverte-2.0.md`       | Etalab, for the French government              | 2026-09-21 | `etalab/licence-ouverte`, `LO.md`       |
-| `sirene-publication.md`        | INSEE, via data.gouv.fr                        | 2026-09-21 | the dataset page                        |
-| `whosonfirst-licenses.md`      | Who's On First, originally Mapzen              | 2026-09-21 | the docs page and the repo `LICENSE.md` |
-| `geonames-publication.md`      | GeoNames                                       | 2026-09-21 | the export readme and the about page    |
-| `cdla-permissive-2.0.md`       | The Linux Foundation, stewarding the agreement | 2026-09-21 | the SPDX license list, plain text       |
-| `nlod-2.0.md`                  | the responsible Norwegian ministry             | 2026-09-21 | the SPDX license list, plain text       |
-| `national-address-database.md` | United States Department of Transportation     | 2026-09-21 | the database's own disclaimer page      |
+| file                           | publisher                                           | retrieved  | how                                                  |
+| ------------------------------ | --------------------------------------------------- | ---------- | ---------------------------------------------------- |
+| `licence-ouverte-2.0.md`       | Etalab, for the French government                   | 2026-09-21 | `etalab/licence-ouverte`, `LO.md`                    |
+| `sirene-publication.md`        | INSEE, via data.gouv.fr                             | 2026-09-21 | the dataset page                                     |
+| `whosonfirst-licenses.md`      | Who's On First, originally Mapzen                   | 2026-09-21 | the docs page and the repo `LICENSE.md`              |
+| `geonames-publication.md`      | GeoNames                                            | 2026-09-21 | the export readme and the about page                 |
+| `cdla-permissive-2.0.md`       | The Linux Foundation, stewarding the agreement      | 2026-09-21 | the SPDX license list, plain text                    |
+| `nlod-2.0.md`                  | the responsible Norwegian ministry                  | 2026-09-21 | the SPDX license list, plain text                    |
+| `national-address-database.md` | United States Department of Transportation          | 2026-09-21 | the database's own disclaimer page                   |
+| `es-sanidad-aviso-legal.md`    | Ministerio de Sanidad                               | 2026-11-14 | the ministry's legal notice page                     |
+| `it-miur-iodl-2.0.md`          | Ministero dell'Istruzione e del Merito              | 2026-11-14 | the catalogue page and the IODL text                 |
+| `au-acnc-cc-by-3.0-au.md`      | Australian Charities and Not-for-profits Commission | 2026-11-14 | the data.gov.au record and the legal code            |
+| `nz-charities-cc-by-3.0-nz.md` | Charities Services, Department of Internal Affairs  | 2026-11-14 | the open-data page, in a browser, and the legal code |
+
+The last four are the terms of the evaluation-only sources (`lib/evaluation/sources.ts`), whose decisions refuse `train`.
 
 The first filename keeps the publisher's own spelling, because it is the name of the grant.
 

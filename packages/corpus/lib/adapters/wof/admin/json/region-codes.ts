@@ -18,6 +18,7 @@
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"
 import { isFileSync } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 
 /**
@@ -129,6 +130,16 @@ function writtenCodesFor(country: string): ReadonlyMap<string, string> {
 	WRITTEN_CODES_BY_COUNTRY.set(country, written)
 
 	return written
+}
+
+/**
+ * Every key and name libaddressinput lists for `country`'s subdivisions
+ * (`TX`, `Texas`; `AE`, `Armed Forces (AE)`; `TO`, `Torino`), or none when it lists no subdivisions.
+ */
+export function subdivisionWrittenForms(country: string): string[] {
+	const spec = specFor(country.toUpperCase())
+
+	return [spec?.sub_keys, spec?.sub_names, spec?.sub_lnames].flatMap((list) => list?.split("~") ?? []).filter(isPresent)
 }
 
 /**

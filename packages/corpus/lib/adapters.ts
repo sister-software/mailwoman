@@ -57,6 +57,7 @@ import { overtureAdapter } from "#adapters/overture/adapter"
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
+import { auACNCRegisterAdapter } from "#au/adapters/acnc-register/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
 import { azerbaijanPlacesAdapter } from "#az/adapters/opendata/adapter"
 import { brusselsAdapter } from "#be/adapters/brussels/adapter"
@@ -70,6 +71,7 @@ import { esBizkaiaAdapter } from "#es/adapters/bizkaia/adapter"
 import { esCatastroAdapter } from "#es/adapters/catastro/adapter"
 import { esGipuzkoaAdapter } from "#es/adapters/gipuzkoa/adapter"
 import { esNavarraAdapter } from "#es/adapters/navarra/adapter"
+import { esSanidadCentrosAPAdapter } from "#es/adapters/sanidad-centros-ap/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { adressurFaroeAdapter } from "#fo/adapters/adressur/adapter"
 import { annuaireEducationAdapter } from "#fr/adapters/annuaire-education/adapter"
@@ -80,12 +82,14 @@ import { gbOSOpenAdapter } from "#gb/adapters/os-open/adapter"
 import { guamAddressPointsAdapter } from "#gu/adapters/bsp/adapter"
 import { isleOfManLandRegistryAdapter } from "#im/adapters/land-registry/adapter"
 import { itANACAdapter } from "#it/adapters/anac/adapter"
+import { itMIURScuoleAdapter } from "#it/adapters/miur-scuole/adapter"
 import { llvLiechtensteinAdapter } from "#li/adapters/llv/adapter"
 import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
 import { varisAdapter } from "#lv/adapters/varis/adapter"
 import { optNCAgencesAdapter } from "#nc/adapters/opt-nc/adapter"
 import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
 import { matrikkelenAdapter } from "#no/adapters/matrikkelen/adapter"
+import { nzCharitiesRegisterAdapter } from "#nz/adapters/charities-register/adapter"
 import { emuiaAdapter } from "#pl/adapters/emuia/adapter"
 import { reteaScolaraAdapter } from "#ro/adapters/retea-scolara/adapter"
 import { skInspireAdapter } from "#sk/adapters/inspire/adapter"
@@ -172,6 +176,10 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	annuaireEducationAdapter,
 	laPostePoincontAdapter,
 	optNCAgencesAdapter,
+	esSanidadCentrosAPAdapter,
+	itMIURScuoleAdapter,
+	auACNCRegisterAdapter,
+	nzCharitiesRegisterAdapter,
 	gleifAdapter,
 ]
 

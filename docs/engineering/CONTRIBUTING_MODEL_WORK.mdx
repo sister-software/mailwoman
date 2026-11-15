@@ -63,14 +63,16 @@ before comparing two training arms. A comparison uses three instruments from it:
      reported under `attribution`. Board regressions are findings with their addresses and do not
      block.
 
-   **The registered requirements.** `release-requirements.v7.json` registers nine country minima,
-   four capabilities, the equal-weight objective and the confidence settings. Version 7 keeps the
+   **The registered requirements.** `release-requirements.v8.json` registers nine country minima,
+   four capabilities, the equal-weight objective, the confidence settings, and the development and
+   confirmation collections frozen from corpus v0.8.18-retention-overlay. Version 8 keeps the
    values decided for version 3, and their reasons are in
    [the v3 decision record](../records/evals/2026-10-20-release-requirements-v3.md). Each later
    version's `rationale` field records what it changed, including the fourth capability,
    `postal_unit`, added in version 6. A verdict stays
    `insufficient_evidence` until a frozen dataset with an overlap audit holds admitted rows for every
-   required country. Until then the earlier promotion checks keep deciding `mwdev_promotion_eval`.
+   required country. Against the published model 10.8.0, the v8 development collection holds such rows for
+   every required country ([the v8 record](../records/evals/2026-11-14-release-requirements-v8.md)). Until then the earlier promotion checks keep deciding `mwdev_promotion_eval`.
    [The migration record](../records/evals/2026-10-20-promotion-check-migration.md) lists every
    earlier check as retained, replaced, retired or retained-pending.
 

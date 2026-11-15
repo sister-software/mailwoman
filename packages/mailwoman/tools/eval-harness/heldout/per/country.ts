@@ -194,15 +194,47 @@ export interface HeldoutArmResult {
 }
 
 /**
- * Whether a row is a gazetteer surface or an address, read from its source.
+ * The sources whose rows are place names rather than addresses.
  *
- * Who's On First sources render place names with their admin parents, such as
- * `Wollin, Mecklenburg-Vorpommern`, and make up most of a small country's test rows.
+ * A row's kind is read from its source through this table, and its country never enters.
+ *
+ * Who's On First sources (every `wof-` source) render place names with their admin
+ * parents, such as `Wollin, Mecklenburg-Vorpommern`.
+ * `geonames-features` writes `<feature>, <admin1>` rows, and `wikidata-vital-places`
+ * writes landmarks, natural features, parks and sites.
+ *
  * Scored together with addresses they set a country's score by the source mix
  * rather than by how the model reads addresses.
  */
+export const HELDOUT_GAZETTEER_SOURCES = {
+	prefixes: ["wof-"],
+	sources: ["geonames-features", "wikidata-vital-places"],
+} as const satisfies { prefixes: readonly string[]; sources: readonly string[] }
+
+/**
+ * Whether a row is a gazetteer surface or an address, read from its source
+ * through {@linkcode HELDOUT_GAZETTEER_SOURCES}.
+ */
 export function heldoutRowKind(source: string): HeldoutRowKind {
-	return source.startsWith("wof-") ? "gazetteer" : "address"
+	const { prefixes, sources } = HELDOUT_GAZETTEER_SOURCES
+
+	return (sources as readonly string[]).includes(source) || prefixes.some((prefix) => source.startsWith(prefix))
+		? "gazetteer"
+		: "address"
+}
+
+/**
+ * A DuckDB boolean expression, true when `column` names a gazetteer source.
+ * It classifies as {@linkcode heldoutRowKind} does.
+ */
+function gazetteerSourceSQL(column: string): string {
+	const { prefixes, sources } = HELDOUT_GAZETTEER_SOURCES
+	const literal = (value: string) => `'${escapeSQLString(value)}'`
+
+	return `(${[
+		...prefixes.map((prefix) => `starts_with(${column}, ${literal(prefix)})`),
+		`${column} IN (${sources.map(literal).join(", ")})`,
+	].join(" OR ")})`
 }
 
 /**
@@ -305,9 +337,14 @@ export interface HeldoutSamplingRule {
 	 * `every-row`: no sample is drawn.
 	 * The dataset holds every row its sources yield, in source order, as the post-office suite does.
 	 *
+	 * `per-stratum-hash-order`: each country's quota split across its publisher's regions
+	 * in proportion to their rows, every region given a floor, and each region's rows
+	 * taken in the order of a seeded sha256 of their identity.
+	 * The evaluation-only sources draw this way.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row"
+	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row" | "per-stratum-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
@@ -328,6 +365,13 @@ export interface HeldoutSamplingRule {
 	 * Manifest file paths the sample didn't read, such as a file that lacks a grouping column.
 	 */
 	skippedFiles?: string[]
+	/**
+	 * The gazetteer source table the per-kind quota read ({@linkcode HELDOUT_GAZETTEER_SOURCES}).
+	 *
+	 * It enters the dataset version, so a change to which sources count as place names yields a new version.
+	 * A manifest without it was drawn when only `wof-` sources were gazetteer rows.
+	 */
+	gazetteerSources?: { prefixes: readonly string[]; sources: readonly string[] }
 }
 
 /**
@@ -473,19 +517,21 @@ export async function sampleHeldoutRows(
 		`AND ${recordIDSQL("coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR))")} NOT IN (SELECT k FROM excluded_groups) ` +
 		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, ${recordIDSQL("source_id")} ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
 
+	const gazetteer = gazetteerSourceSQL("source")
+
 	const reader = await db.runAndReadAll(
 		`SELECT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id FROM ${source} ` +
 			// Each country draws its quota of address rows and of gazetteer rows separately (`heldoutRowKind`).
-			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), starts_with(source, 'wof-') ORDER BY ${heldoutSampleOrder(seed)}) <= ` +
+			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), ${gazetteer} ORDER BY ${heldoutSampleOrder(seed)}) <= ` +
 			Math.trunc(perCountry).toString() +
 			// Without an ORDER BY, DuckDB returns the window's rows in a run-dependent order,
 			// The dataset manifest records the rows file's sha256. Unordered results would make that hash
 			// differ between two freezes of one sample.
-			` ORDER BY coalesce(country, 'ZZ'), starts_with(source, 'wof-'), ${heldoutSampleOrder(seed)}`
+			` ORDER BY coalesce(country, 'ZZ'), ${gazetteer}, ${heldoutSampleOrder(seed)}`
 	)
 
 	const availableReader = await db.runAndReadAll(
-		`SELECT coalesce(country, 'ZZ') AS country, starts_with(source, 'wof-') AS gazetteer, count(*) AS n FROM ${source} GROUP BY ALL`
+		`SELECT coalesce(country, 'ZZ') AS country, ${gazetteer} AS gazetteer, count(*) AS n FROM ${source} GROUP BY ALL`
 	)
 
 	const spanList = (value: unknown): unknown[] => {
@@ -525,6 +571,7 @@ export async function sampleHeldoutRows(
 		order: heldoutSampleOrder(seed),
 		...(exclude ? { excludes: { datasetID: exclude.datasetID, version: exclude.version } } : {}),
 		...(skipFiles.length ? { skippedFiles: [...skipFiles].toSorted() } : {}),
+		gazetteerSources: HELDOUT_GAZETTEER_SOURCES,
 	}
 
 	return { rows, counts: countHeldoutCells(available, rows), files, rule }

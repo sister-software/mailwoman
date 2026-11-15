@@ -16,7 +16,7 @@
 
 import type { HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
-import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
+import type { EngineBatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
@@ -261,7 +261,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// The whole batch reads one data generation.
 	const batch: MailwomanAPIEngine["batch"] = (addresses, opts) =>
 		slot.run(async (session) => {
-			const results: BatchRow[] = []
+			const results: EngineBatchRow[] = []
 
 			for (const address of addresses) {
 				const input = address.trim()

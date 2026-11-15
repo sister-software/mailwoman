@@ -374,8 +374,7 @@ describe("resolveTrainingConfig", () => {
 	 * reading the repository's own file.
 	 */
 	const scope = {
-		tiers: {},
-		untieredShippingLocales: {},
+		unpromisedShippingLocales: {},
 		trainingConfigs: {
 			"en-us": {
 				config: "packages/corpus/data/training-configs/fixture-latin.yaml",

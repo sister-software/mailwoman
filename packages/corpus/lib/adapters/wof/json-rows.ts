@@ -272,6 +272,26 @@ interface EmitWOFJSONRowsOptions<A extends object> {
 	 * The caller reads its cell counts afterwards.
 	 */
 	sampler?: RowSampler<CanonicalRow>
+	/**
+	 * Rows the adapter refuses or requires whatever the sample keeps.
+	 */
+	rowRule?: WOFRowRule
+}
+
+/**
+ * An adapter's decision about single rendered rows, applied on top of the sample.
+ */
+export interface WOFRowRule {
+	/**
+	 * Whether the row is left out of the output.
+	 *
+	 * A sampled run still observes the row, so leaving it out moves no other row's keep decision.
+	 */
+	drops: (row: CanonicalRow) => boolean
+	/**
+	 * Whether a sampled run keeps the row whatever its hash.
+	 */
+	requires: (row: CanonicalRow) => boolean
 }
 
 /**
@@ -282,13 +302,13 @@ interface EmitWOFJSONRowsOptions<A extends object> {
  * while the row keeps the record's own country.
  */
 export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptions<A>): Generator<CanonicalRow> {
-	const { adapterOptions, sampler } = options
+	const { adapterOptions, sampler, rowRule } = options
 	const limit = adapterOptions.limit
 	let emitted = 0
 
 	if (sampler) {
 		for (const { row, slotKey } of renderWOFRows(options)) {
-			sampler.observe(sampledRow(row, slotKey), row)
+			sampler.observe(sampledRow(row, slotKey), row, rowRule?.requires(row) ?? false)
 		}
 	}
 
@@ -302,6 +322,8 @@ export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptio
 
 	for (const row of rows) {
 		if (typeof limit === "number" && emitted >= limit) return
+
+		if (rowRule?.drops(row)) continue
 
 		yield row
 

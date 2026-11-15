@@ -35,10 +35,16 @@
  *
  *   Otherwise a row without overlap is `unknown`, and the audit records why.
  *
- *   Limits: overlap is decided by identity and group.
- *   The audit never compares text.
+ *   Given the dataset's row texts (`rowTexts`), the audit also compares text: a training row whose
+ *   folded text ({@linkcode overlapTextFoldSQL}: case, accents and every run of characters that
+ *   are neither letters nor digits folded away) equals a held-out row's folded text overlaps it.
+ *   A row drawn from a source no corpus reads can only overlap this way.
  *
- *   A training row holding the same address text under another source or id goes undetected.
+ *   Limits: without `rowTexts`, overlap is decided by identity and group only, and a
+ *   training row holding the same address text under another source or id goes undetected.
+ *   With them, a training row that holds the held-out text inside a longer text,
+ *   such as the address followed by a country name, still goes undetected.
+ *
  *   A model card records the corpus of its final training run only.
  *
  *   A card that records an `init_from`, or a config that sets `train.init_from`,
@@ -63,6 +69,16 @@ import type { HeldoutProvenance, ProvenanceRecord } from "#tools/eval-harness/he
  * The columns the audit reads from every training file.
  */
 export const OVERLAP_ID_COLUMNS = ["source", "source_id", "base_source_id"] as const
+
+/**
+ * The DuckDB expression that folds a text column for the text comparison: lower case, accents stripped,
+ * each run of characters other than letters and digits replaced by one space, then trimmed.
+ *
+ * Both sides of the comparison are folded by this one expression.
+ */
+export function overlapTextFoldSQL(column: string): string {
+	return `trim(regexp_replace(lower(strip_accents(${column})), '[^\\p{L}\\p{N}]+', ' ', 'g'))`
+}
 
 export interface OverlapFileRecord {
 	path: string
@@ -129,6 +145,10 @@ export interface OverlapAudit {
 	corpora: OverlapCorpusRecord[]
 	modelCards: OverlapModelCardRecord[]
 	verifiedUnseenAdmitted: boolean
+	/**
+	 * Whether training rows were also compared by folded text, beside identity and group.
+	 */
+	textCompared: boolean
 	reasons: string[]
 	counts: Record<HeldoutProvenance, number>
 }
@@ -171,6 +191,48 @@ async function loadKeys(db: Awaited<ReturnType<typeof openDuckDB>>, table: strin
 
 		await db.run(`INSERT INTO ${table} VALUES ${values}`)
 	}
+}
+
+/**
+ * Loads each row's folded text into the `eval_texts` table and returns the row
+ * identities under each folded text.
+ *
+ * DuckDB folds the held-out side too, so both sides of the comparison share one fold.
+ *
+ * @throws When a dataset row has no text in `rowTexts`.
+ */
+async function loadTextKeys(
+	db: Awaited<ReturnType<typeof openDuckDB>>,
+	dataset: HeldoutDatasetManifest,
+	rowTexts: ReadonlyMap<string, string>
+): Promise<Map<string, string[]>> {
+	await db.run(`CREATE TEMP TABLE eval_raw (row_id VARCHAR, raw VARCHAR)`)
+
+	const pairs = dataset.rows.map((entry) => {
+		const raw = rowTexts.get(entry.rowID)
+
+		if (raw == null) throw new Error(`row ${entry.rowID} has no text for the folded-text comparison`)
+
+		return `('${escapeSQLString(entry.rowID)}', '${escapeSQLString(raw)}')`
+	})
+
+	for (let i = 0; i < pairs.length; i += INSERT_CHUNK) {
+		await db.run(`INSERT INTO eval_raw VALUES ${pairs.slice(i, i + INSERT_CHUNK).join(", ")}`)
+	}
+
+	await db.run(`CREATE TEMP TABLE eval_texts AS SELECT DISTINCT ${overlapTextFoldSQL("raw")} AS k FROM eval_raw`)
+
+	const byText = new Map<string, string[]>()
+	const folded = await db.runAndReadAll(`SELECT row_id, ${overlapTextFoldSQL("raw")} AS k FROM eval_raw`)
+
+	for (const row of folded.getRowObjects()) {
+		const members = byText.get(String(row.k)) ?? []
+
+		members.push(String(row.row_id))
+		byText.set(String(row.k), members)
+	}
+
+	return byText
 }
 
 /**
@@ -330,6 +392,13 @@ export async function auditHeldoutOverlap(input: {
 	candidateModelCard?: string
 	pathRoot: string
 	verifyFileSHA256?: boolean
+	/**
+	 * Each row's text, keyed by row identity, for the folded-text comparison.
+	 * Without it the audit compares identities and groups only.
+	 *
+	 * @throws When a dataset row has no text here.
+	 */
+	rowTexts?: ReadonlyMap<string, string>
 }): Promise<OverlapProvenanceFile> {
 	const { dataset } = input
 
@@ -379,6 +448,9 @@ export async function auditHeldoutOverlap(input: {
 
 	await loadKeys(db, "eval_ids", byID)
 	await loadKeys(db, "eval_groups", byGroup.keys())
+
+	const matchText = input.rowTexts != null
+	const byText = input.rowTexts ? await loadTextKeys(db, dataset, input.rowTexts) : new Map<string, string[]>()
 
 	for (const manifestPath of input.corpora) {
 		const manifest = await readLocalJSONFile<{
@@ -437,7 +509,11 @@ export async function auditHeldoutOverlap(input: {
 			// The identity columns stay required.
 			const baseSourceIDAbsent = !columns.includes("base_source_id")
 
-			const missing = OVERLAP_ID_COLUMNS.filter((column) => column !== "base_source_id" && !columns.includes(column))
+			const missing: string[] = [
+				...OVERLAP_ID_COLUMNS.filter((column) => column !== "base_source_id" && !columns.includes(column)),
+				// The folded-text comparison reads the text column.
+				...(matchText && !columns.includes("raw") ? ["raw"] : []),
+			]
 
 			const baseColumn = baseSourceIDAbsent ? "CAST(NULL AS VARCHAR)" : "t.base_source_id"
 
@@ -482,10 +558,14 @@ export async function auditHeldoutOverlap(input: {
 				testIDs = new Set((await readSplitAttribute(attributePath)).test)
 			}
 
+			const textColumn = matchText ? overlapTextFoldSQL("t.raw") : "CAST(NULL AS VARCHAR)"
+
 			const reader = await db.runAndReadAll(
-				`SELECT t.source AS source, t.source_id AS source_id, ${baseColumn} AS base_source_id FROM ${quoted} t ` +
+				`SELECT t.source AS source, t.source_id AS source_id, ${baseColumn} AS base_source_id, ` +
+					`${textColumn} AS folded FROM ${quoted} t ` +
 					`WHERE (t.source || ':' || t.source_id) IN (SELECT k FROM eval_ids) ` +
-					`OR ${recordIDSQL(`coalesce(${baseColumn}, t.source_id)`)} IN (SELECT k FROM eval_groups)`
+					`OR ${recordIDSQL(`coalesce(${baseColumn}, t.source_id)`)} IN (SELECT k FROM eval_groups)` +
+					(matchText ? ` OR ${textColumn} IN (SELECT k FROM eval_texts)` : "")
 			)
 
 			let matches = 0
@@ -514,6 +594,12 @@ export async function auditHeldoutOverlap(input: {
 
 				for (const member of (group != null && byGroup.get(group)) || []) {
 					recordOverlap(member, label, `group ${group} (training row ${trainingID}) ${where}`)
+				}
+
+				const folded = row.folded == null ? null : String(row.folded)
+
+				for (const member of (folded != null && byText.get(folded)) || []) {
+					recordOverlap(member, label, `folded text "${folded}" (training row ${trainingID}) ${where}`)
 				}
 			}
 
@@ -585,13 +671,15 @@ export async function auditHeldoutOverlap(input: {
 		corpora,
 		modelCards,
 		verifiedUnseenAdmitted,
+		textCompared: matchText,
 		reasons,
 		counts,
 	}
 
 	const auditSHA256 = sha256Hex(canonicalJSON(audit))
 	const cite = `overlap audit ${auditSHA256.slice(0, 16)} of ${dataset.datasetID}@${dataset.version}`
-	const unseenEvidence = `${cite}: absent from ${[...corporaRead].toSorted().join(", ")}, every train and val file read`
+	const compared = matchText ? "by identity, group and folded text" : "by identity and group"
+	const unseenEvidence = `${cite}: absent ${compared} from ${[...corporaRead].toSorted().join(", ")}, every train and val file read`
 	const rows: Record<string, ProvenanceRecord> = {}
 	const unknown: string[] = []
 

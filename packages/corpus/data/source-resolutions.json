@@ -617,6 +617,60 @@
 				"because": "Every row is a Chunghwa Post office named for its place (`臺北北門郵局`), with the office's street address, its office telephone and fax numbers and its opening hours. No column names a person."
 			}
 		},
+		"es-health-1": {
+			"adapterID": "es-sanidad-centros-ap",
+			"addressRoles": {
+				"SIAP_CENTROS.txt street, locality, postcode": "facility"
+			},
+			"coverage": "The 2026 catalogue as served on 2026-11-14: 13,053 centres, of which 5,971 street lines carry a house number and become address records, in 51 of Spain's 52 provinces (none in Ceuta); 6,909 lines without a number (`S/N`), 133 the street-line splitter cannot place and 40 without a postcode yield none. The `es-sanidad-centros-ap` adapter emits 5,964 rows; 7 records repeat another's address.",
+			"upstreamLineage": [
+				"https://www.sanidad.gob.es/estadEstudios/estadisticas/microdatos/CatCentrosAP/2026_C__Catalogo_de_Centros_AP_txt.zip"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is a public health centre or local surgery named for its place (`REQUENA - LOS DUQUES`), with the centre's own street line and phone. The rows read only the street line, locality and postcode, never the centre's name."
+			}
+		},
+		"it-education-1": {
+			"adapterID": "it-miur-scuole",
+			"addressRoles": {
+				"INDIRIZZOSCUOLA CAPSCUOLA DESCRIZIONECOMUNE": "facility"
+			},
+			"coverage": "The 2026/27 file as served on 2026-11-14: 50,273 state school sites outside the autonomous provinces of Aosta, Trento and Bolzano, which the ministry publishes in separate files this source does not read; 27,399 street lines carry a house number and become address records, in 18 regions, and 16,894 carry none. The `it-miur-scuole` adapter emits 21,373 rows; 6,026 records repeat another site's address, as schools sharing one building do.",
+			"upstreamLineage": [
+				"https://dati.istruzione.it/opendata/opendata/catalogo/elements1/SCUANAGRAFESTAT20262720260901.csv"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Every row is a state school site with its institutional name, address, institutional email and website. No column names a person. The rows read only the street line, postcode and comune, never the school's name."
+			}
+		},
+		"au-charity-nonprofit-1": {
+			"adapterID": "au-acnc-register",
+			"addressRoles": {
+				"Address_Line_1 Town_City State Postcode": "registered-office"
+			},
+			"coverage": "The register as served on 2026-11-14: 66,623 charities; 6,340 carry no address because the ACNC withholds it; 36,118 single street lines with a house number become address records, in all eight states and territories. The `au-acnc-register` adapter emits 30,843 rows; 5,275 records repeat another charity's address. Refusals besides the withheld: a street line whose number the splitter cannot place 7,288, a post-office box 6,566, several address lines 5,992, no house number 3,372, no ABN 613, no state 184.",
+			"upstreamLineage": ["https://data.gov.au/data/dataset/acnc-register"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The register holds the address each charity gives the ACNC, published under the ACNC Act with an approved withholding route for a charity that asks. A small charity's address can be a responsible person's home, and its legal name can be a person's name (a family trust or foundation). The training rows read only the address, never the name, and no row joins the address to a person, so an address that is a home stands without its occupant. NPPES keeps a sole practitioner's name beside the practice address on HHS's FOIA determination; no such determination covers the ACNC's names, so these rows go further and drop the name on every row. A charity's later withholding request reaches the dataset at its next weekly update, so a refetch drops it.",
+				"record": "packages/corpus/lib/au/evaluation/acnc-register.ts"
+			}
+		},
+		"nz-charity-nonprofit-1": {
+			"adapterID": "nz-charities-register",
+			"addressRoles": {
+				"StreetAddressLine1 StreetAddressSuburb StreetAddressCity StreetAddressPostcode": "registered-office"
+			},
+			"coverage": "The OData `vOrganisations` view as served on 2026-11-14: 29,315 registered charities, of which 18,607 street addresses with one street line and a house number become address records, across all ten postcode first digits. The `nz-charities-register` adapter emits 15,584 rows; 3,023 records repeat another charity's address. Refusals: a second line that isn't the city 8,378, no four-digit postcode 957, a post-office box 524, a street line whose number the splitter cannot place 346, no house number 303, no address 117.",
+			"upstreamLineage": ["http://www.odata.charities.govt.nz/vOrganisations"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The register publishes each registered charity's street address and excludes what Charities Services has withheld from publication. A small charity's street address can be an officer's home. The fetch selects only the charity's registration number and street address columns, never its name, officers or email address, and no training row joins the address to a person, so an address that is a home stands without its occupant. NPPES keeps a sole practitioner's name beside the practice address on HHS's FOIA determination; no such determination covers the register's names, so these rows go further and never read the name.",
+				"record": "packages/corpus/lib/nz/evaluation/charities-register.ts"
+			}
+		},
 		"lv-property-building-1": {
 			"adapterID": "lv-varis",
 			"addressRoles": {

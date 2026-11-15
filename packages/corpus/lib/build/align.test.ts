@@ -9,10 +9,19 @@ import { createRowAligner, emptyAlignResult, type AlignTally } from "#build/alig
 import { alignTotalsOf, mergeAlignTotals, serializeAlignTotals } from "#build/align/totals"
 import { componentFindingsRecord, ComponentRule } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
+import type { RegionNames } from "#build/region-names"
 import type { CanonicalRow } from "#types"
 import { createLicenseVerdictCache, LicensePolicy } from "#utils/license"
 
 const units = await createUnitSplitter()
+
+/**
+ * The regions the rows below name, standing in for the WOF admin database.
+ */
+const US_REGIONS: RegionNames = {
+	path: "fixture",
+	holds: (country, region) => (country === "US" ? ["TX", "FL"].includes(region) : null),
+}
 
 const row = (source: string, sourceID: string, components: CanonicalRow["components"]): CanonicalRow => ({
 	raw: Object.values(components).join(", "),
@@ -26,7 +35,7 @@ const row = (source: string, sourceID: string, components: CanonicalRow["compone
 /**
  * Aligns `rows` through one aligner and returns its totals and the reasons it quarantined.
  */
-function alignAll(rows: readonly CanonicalRow[]) {
+function alignAll(rows: readonly CanonicalRow[], regions: RegionNames | null = US_REGIONS) {
 	const ineligibility = createIneligibilityReader(null)
 	const licenses = createLicenseVerdictCache(LicensePolicy.All)
 	const result = emptyAlignResult(licenses, ineligibility.refused)
@@ -46,6 +55,7 @@ function alignAll(rows: readonly CanonicalRow[]) {
 		licenses,
 		ineligibility,
 		units,
+		regions,
 		result,
 		tally,
 		sinks: {
@@ -121,5 +131,29 @@ describe("createRowAligner's component check", () => {
 		expect(componentFindingsRecord(serial.componentFindingsBySource)).toEqual({
 			"state-tx-notaries": { [ComponentRule.StreetTrailingUnit]: 2, [ComponentRule.LocalityRepeatsRegion]: 1 },
 		})
+	})
+
+	it("reports a region its country doesn't hold, and records the rule as unchecked without the database", () => {
+		const rows = [
+			row("usgov-nad", "a", { house_number: "1811", street: "Hayes Avenue", locality: "Hull", region: "IA IA" }),
+		]
+
+		const checked = alignAll(rows)
+
+		expect(componentFindingsRecord(checked.totals.componentFindingsBySource)).toEqual({
+			"usgov-nad": { [ComponentRule.RegionUnknown]: 1 },
+		})
+
+		expect(checked.reasons).toEqual([])
+		expect([...checked.totals.uncheckedComponentRules]).toEqual([])
+
+		const unchecked = alignAll(rows, null)
+
+		expect(componentFindingsRecord(unchecked.totals.componentFindingsBySource)).toEqual({})
+
+		// One range without the database leaves the whole build's count short, so the merge keeps the rule unchecked.
+		const merged = mergeAlignTotals([serializeAlignTotals(checked.totals), serializeAlignTotals(unchecked.totals)])
+
+		expect([...merged.uncheckedComponentRules]).toEqual([ComponentRule.RegionUnknown])
 	})
 })

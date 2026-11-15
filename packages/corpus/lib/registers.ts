@@ -230,6 +230,23 @@ export const SourceRegister = {
 	 */
 	OPTNCAgences: "nc-opt-agences",
 	/**
+	 * The Ministerio de Sanidad's catalogue of the national health system's primary-care centers.
+	 */
+	SanidadCentrosAP: "es-sanidad-centros-ap",
+	/**
+	 * The Ministero dell'Istruzione e del Merito's register of state schools (`Anagrafe scuole statali`).
+	 */
+	MIURScuole: "it-miur-scuole",
+	/**
+	 * The Australian Charities and Not-for-profits Commission's register of charities.
+	 */
+	ACNCRegister: "au-acnc-register",
+	/**
+	 * The Charities Register that Charities Services, Department of Internal Affairs,
+	 * publishes for New Zealand.
+	 */
+	NZCharitiesRegister: "nz-charities-register",
+	/**
 	 * The CORDIS organization files for the participants in the EU's research framework programmes
 	 * (FP7, Horizon 2020, Horizon Europe), published by the Publications Office of the European Union.
 	 *

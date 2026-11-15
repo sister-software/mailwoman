@@ -33,6 +33,7 @@ export interface AlignTotals extends AlignTally {
 	 */
 	refusedValues: Map<string, LicenseRefusalKind>
 	componentFindingsBySource: ComponentFindingCounts
+	uncheckedComponentRules: Set<ComponentRule>
 }
 
 /**
@@ -52,6 +53,7 @@ export interface AlignTotalsRecord {
 	ineligible_sources: [string, readonly string[]][]
 	refused_license_values: [string, LicenseRefusalKind][]
 	component_findings_by_source: [string, [ComponentRule, number][]][]
+	unchecked_component_rules: ComponentRule[]
 }
 
 /**
@@ -72,6 +74,7 @@ export function alignTotalsOf(result: AlignPhaseResult): AlignTotals {
 		ineligibleSources: result.ineligibleSources,
 		refusedValues: result.licenses.refusedValues(),
 		componentFindingsBySource: result.componentFindingsBySource,
+		uncheckedComponentRules: result.uncheckedComponentRules,
 	}
 }
 
@@ -90,6 +93,7 @@ export function serializeAlignTotals(totals: AlignTotals): AlignTotalsRecord {
 		ineligible_sources: [...totals.ineligibleSources],
 		refused_license_values: [...totals.refusedValues],
 		component_findings_by_source: [...totals.componentFindingsBySource].map(([source, rules]) => [source, [...rules]]),
+		unchecked_component_rules: [...totals.uncheckedComponentRules],
 	}
 }
 
@@ -131,6 +135,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		ineligibleSources: new Map(),
 		refusedValues: new Map(),
 		componentFindingsBySource: new Map(),
+		uncheckedComponentRules: new Set(),
 	}
 
 	for (const record of records) {
@@ -162,6 +167,11 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 
 			totals.componentFindingsBySource.set(source, into)
 			addCounts(into, rules)
+		}
+
+		// A rule one record couldn't check leaves the merged counts short, so it stays unchecked for the whole.
+		for (const rule of record.unchecked_component_rules) {
+			totals.uncheckedComponentRules.add(rule)
 		}
 	}
 

@@ -12,8 +12,8 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 
-import type { GeocodeBiasPoint, GeocodeResponse } from "#operations/geocode/address"
-import type { BatchResponse } from "#operations/geocode/batch"
+import type { EngineGeocodeResponse, GeocodeBiasPoint } from "#operations/geocode/address"
+import type { EngineBatchResponse } from "#operations/geocode/batch"
 import type { ParseResponse } from "#operations/parse/address"
 import type { ReloadResponse } from "#operations/reload-data"
 import type { ResolveResponse } from "#operations/resolve-tree"
@@ -57,7 +57,7 @@ export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
 /**
  * Geocode one address.
  */
-export type GeocodeCallback = (address: string, opts: GeocodeInit) => Promise<GeocodeResponse>
+export type GeocodeCallback = (address: string, opts: GeocodeInit) => Promise<EngineGeocodeResponse>
 
 /**
  * The engine the native routes call.
@@ -68,7 +68,7 @@ export type GeocodeCallback = (address: string, opts: GeocodeInit) => Promise<Ge
 export interface MailwomanAPIEngine {
 	parse?(address: string, opts: ParseInit): Promise<ParseResponse>
 	geocode?: GeocodeCallback
-	batch?(addresses: string[], opts: Pick<ParseInit, "inputMode">): Promise<BatchResponse>
+	batch?(addresses: string[], opts: Pick<ParseInit, "inputMode">): Promise<EngineBatchResponse>
 	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveResponse>
 	reload?(): Promise<ReloadResponse>
 	health?(): Promise<HealthData>

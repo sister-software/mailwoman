@@ -13,11 +13,36 @@
 # 2. Two receipts floor the source, stated as 90% of their expected draws (`min_fraction_of_expected`, #2391) rather
 #    than as a count read from an audit, so a later change to the reps target or the row count moves them.
 #    `us-structures-venue-street` floors the shape with no house number.
-# 3. `train.output_dir` and `train.trackio_run_name` name the run.
+# 3. `source_reps` gains the two other venue sources the planned corpus adds. `fr-laposte-poincont` takes the same
+#    0.12: La Poste's 2026-11-08 list holds 19,858 counters (bureaux de poste, agences postales, relais poste), each its
+#    label as `venue` before its address, a national venue source of the kind `geonames-features` and
+#    `usgov-usgs-structures` are. If it holds about five rows per base record, as a rebuilt source does (point 1), it
+#    draws about 12,000 rows over the run, near 1,000 a 1,000,000-row epoch. These estimates wait on the built corpus.
+#    `nc-opt-agences` takes 4.0, the weight of `fr-finess-overseas` and
+#    `fr-annuaire-education-overseas` (v8.3.2's header, point 4), the venue sources of the overseas territories.
+#    OPT-NC lists 49 agencies, so at 0.12 the run would draw a few dozen of their rows, under three per epoch, and the
+#    source wouldn't train. Each source takes a receipt in the shape of point 2. La Poste's is at 90% of its expected
+#    draws. OPT-NC's is at 50%, because at about 85 expected draws an epoch a 90% floor sits one standard deviation
+#    under the expectation and refuses about one seed in six.
+# 4. `source_reps` gains four public-body registers first added as evaluation sources, each at 0.2:
+#    `es-sanidad-centros-ap` (5,964 base rows from the 2026 primary-care catalogue), `it-miur-scuole` (21,373 from the
+#    2026/27 state-school register), `au-acnc-register` (30,843 from the 2026-11-14 ACNC register) and
+#    `nz-charities-register` (15,584 from the 2026-11-14 Charities Register). Each row is a street, house number,
+#    postcode and locality (AU adds the state, NZ the suburb) with no venue. The corpus already covers the four
+#    countries through their national address registers: Catastro, ANNCSU through OpenAddresses and Overture, G-NAF,
+#    and LINZ through OpenAddresses. The comparable source is cordis, another register of organizations' addresses in
+#    covered countries. It takes 0.2 over a rebuild holding about five times its base rows (v8.3.2's header,
+#    point 4). At 0.2 the run draws each source about once per base record: some 74,000 rows together, near 0.6% of
+#    the 11.52 M. A floor per source at 90% of its expected draws (`min_fraction_of_expected`)
+#    stops the run if a rebuild drops one.
+# 5. `train.output_dir` and `train.trackio_run_name` name the run.
 #
-# The corpus. `data.corpus_dir` is still v0.8.18. That corpus holds no `usgov-usgs-structures` rows. The epoch-mixture
-# audit and the sampler refuse this config until `corpus_dir` points at a corpus built with the source. Replace it with
-# that build and record its MANIFEST.json sha256 here before launch.
+# The corpus. `data.corpus_dir` is still v0.8.18. That corpus holds none of the sources points 1, 3 and 4 add. The
+# epoch-mixture audit and the sampler refuse this config until `corpus_dir` points at a corpus built with them. The
+# planned corpus is /data/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay: an overlay on
+# v0.8.18 that replaces the sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds and adds this
+# source, fr-laposte-poincont, nc-opt-agences and the four registers. Replace `corpus_dir` with it once it exists, and
+# record its MANIFEST.json sha256 here before launch.
 #
 # Run shape: from scratch, with no `train.init_from`. Why: a fine-tune can't introduce a source the base never saw.
 #
@@ -148,6 +173,14 @@ data:
     wikidata-vital-places: 0.4
     # This config's header, point 1.
     usgov-usgs-structures: 0.12
+    # This config's header, point 3.
+    fr-laposte-poincont: 0.12
+    nc-opt-agences: 4.0
+    # This config's header, point 4.
+    es-sanidad-centros-ap: 0.2
+    it-miur-scuole: 0.2
+    au-acnc-register: 0.2
+    nz-charities-register: 0.2
     # The country-gap sources each take one pass over their rows.
     adressur-fo: 1.0
     ads: 1.0
@@ -446,6 +479,31 @@ data:
       component_sequence:
         - venue
         - street
+    # This config's header, point 3.
+    - name: fr-laposte-counters-exposure
+      min_fraction_of_expected: 0.9
+      source: fr-laposte-poincont
+    - name: nc-opt-agencies-exposure
+      min_fraction_of_expected: 0.5
+      source: nc-opt-agences
+      country: NC
+    # This config's header, point 4.
+    - name: es-sanidad-centros-ap-exposure
+      min_fraction_of_expected: 0.9
+      source: es-sanidad-centros-ap
+      country: ES
+    - name: it-miur-scuole-exposure
+      min_fraction_of_expected: 0.9
+      source: it-miur-scuole
+      country: IT
+    - name: au-acnc-register-exposure
+      min_fraction_of_expected: 0.9
+      source: au-acnc-register
+      country: AU
+    - name: nz-charities-register-exposure
+      min_fraction_of_expected: 0.9
+      source: nz-charities-register
+      country: NZ
     # #2750. The move copies a train row whose postcode sits on its layout's native side of the locality-and-region
     # block, so these four receipts floor that native population in the D-rule locales. They match the drawn row
     # before augmentation, so they read the same in all three arms. Each floor is a presence floor, set well under the

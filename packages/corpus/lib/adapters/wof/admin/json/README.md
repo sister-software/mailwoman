@@ -87,6 +87,19 @@ sees both abbreviated and unabbreviated localities in supervised data.
 `source_id` is `wof-admin-<wof_id>-<name-slot>-<hierarchy-variant>`. Each
 combination survives canonical dedup independently.
 
+## A region that shares its city's name
+
+When a region and the city inside it share a name, the two-part form
+`<name>, <country>` reads as the city: `Berlin, Germany` is the city (#2909).
+`dual-role.ts` pairs a region with a same-name locality inside it. The
+locality's centroid must lie within 15% of the region's bounding-box diagonal,
+or within 12 km. The locality must also be a seat in
+`data/gazetteer/capitals-v1.json` or the region's most populous locality.
+For each pair, the adapter leaves out every
+`<region>, <country>` row that writes the region's name, and a sampled run
+keeps the city's `<locality>, <country>` row whatever its hash. The region's
+rows still enter the sampler's cells, so no other row's sampling changes.
+
 ## `is_current` semantics
 
 WOF tags each record's `mz:is_current` as one of:
