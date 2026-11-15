@@ -2,156 +2,42 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The scope-register guard over a planted tree: a drifted tier, an unplaced shipping locale, a stale reason.
- *
- * Every membership assertion here is vacuously true against a table that parsed as empty, so the check refuses a
- * declaration it read fewer tier rows out of than the register declares.
+ * @file The shipping-scope comparison: an unplaced shipping country, an admitted reason, and two kinds of stale reason.
  */
 
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { afterAll, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
-import { declaredTiers, localeScopeCheck } from "#repo-health/checks/locale/scope"
+import { compareShippingScope } from "#repo-health/checks/locale/scope"
 
-const fixtures = new AsyncDisposableStack()
+const messages = (scope: Parameters<typeof compareShippingScope>[0]): string[] =>
+	compareShippingScope(scope).map((diagnostic) => diagnostic.message)
 
-afterAll(() => fixtures.disposeAsync())
-
-const DECLARATION = "docs/engineering/SCOPE.mdx"
-
-/**
- * The five tier rows as `scope.mdx` writes them, minus the evidence column's prose.
- */
-const TIER_ROWS: Record<string, string[]> = {
-	"1": ["US", "FR"],
-	"2": ["DE", "ES"],
-	"3": ["NO", "SE"],
-	"4": ["CZ", "PL"],
-	"5": ["JP", "CN"],
-}
-
-function declaration(tiers: Record<string, string[]> = TIER_ROWS): string {
-	const rows = Object.entries(tiers).map(
-		([tier, countries]) => `| **${tier} — a label the check never reads** | ${countries.join(", ")} | evidence prose |`
-	)
-
-	return ["# Scope", "", "| Tier | Locales | What backs the claim |", "| --- | --- | --- |", ...rows, ""].join("\n")
-}
-
-async function plant(options: { scope: Record<string, unknown>; locales?: string[]; markdown?: string }) {
-	const root = fixtures.use(await temporaryDirectory("locale-scope-")).path
-
-	const files: Record<string, string> = {
-		"release.config.json": stringifyJSON({ locales: options.locales ?? ["en-us", "fr-fr"] }),
-		"scope.config.json": stringifyJSON(options.scope),
-		[DECLARATION]: options.markdown ?? declaration(),
-	}
-
-	for (const [file, text] of Object.entries(files)) {
-		await writeLocalTextFile(text, root(file))
-	}
-
-	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
-}
-
-const REGISTER_MATCHING_THE_ROWS = {
-	tiers: TIER_ROWS,
-	untieredShippingLocales: {},
-}
-
-describe("declaredTiers", () => {
-	it("reads membership out of the table and leaves the evidence column alone", () => {
-		const tiers = declaredTiers(declaration())
-
-		expect(tiers.get("1")).toEqual(["US", "FR"])
-		expect(tiers.get("5")).toEqual(["JP", "CN"])
+describe("compareShippingScope", () => {
+	it("passes when every shipping country holds a promise", () => {
+		expect(messages({ shipping: new Set(["US", "FR"]), promised: new Set(["US", "FR"]), unpromised: {} })).toEqual([])
 	})
 
-	it("ignores a row whose tier is not a number, because the Blocked row is prose with issue links", () => {
-		const markdown = [
-			declaration(),
-			"| **Blocked / queued** | SE as locale 17 ([#202](https://example.test)), GB/IE/SE via OSM | external |",
-		].join("\n")
-
-		expect([...declaredTiers(markdown).keys()].toSorted()).toEqual(["1", "2", "3", "4", "5"])
-	})
-})
-
-describe("localeScopeCheck", () => {
-	it("passes when the register and the declaration name the same countries", async () => {
-		const context = await plant({ scope: REGISTER_MATCHING_THE_ROWS })
-
-		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
+	it("reports a shipping country with neither a promise nor a reason", () => {
+		expect(messages({ shipping: new Set(["US", "CN"]), promised: new Set(["US"]), unpromised: {} })).toEqual([
+			"CN ships a weights package, holds no support promise, and has no entry in unpromisedShippingLocales saying why",
+		])
 	})
 
-	it("reports a country the declaration tiers and the register does not", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, tiers: { ...TIER_ROWS, "1": ["FR"] } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages).toContain("tier 1 holds US in the declaration and not in the register")
+	it("admits a shipping country without a promise when a reason is stated", () => {
+		expect(
+			messages({ shipping: new Set(["US", "CN"]), promised: new Set(["US"]), unpromised: { CN: "no open source" } })
+		).toEqual([])
 	})
 
-	it("reports the drift in the other direction too", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, tiers: { ...TIER_ROWS, "3": ["NO", "SE", "IS"] } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages).toContain("tier 3 holds IS in the register and not in the declaration")
+	it("reports a reason whose country now holds a promise", () => {
+		expect(messages({ shipping: new Set(["GB"]), promised: new Set(["GB"]), unpromised: { GB: "stale" } })).toEqual([
+			"unpromisedShippingLocales still lists GB, which now holds a support promise; remove the entry",
+		])
 	})
 
-	it("refuses a declaration it parsed too few rows out of, rather than passing vacuously", async () => {
-		const context = await plant({
-			scope: REGISTER_MATCHING_THE_ROWS,
-			markdown: "# Scope\n\nThe table moved to a component and this page renders it.\n",
-		})
-
-		const diagnostics = await localeScopeCheck.run(context)
-
-		expect(diagnostics).toHaveLength(1)
-		expect(diagnostics[0]?.message).toContain("the parser matched nothing")
-	})
-
-	it("reports a shipping locale placed in no tier and given no reason", async () => {
-		const context = await plant({
-			scope: REGISTER_MATCHING_THE_ROWS,
-			locales: ["en-us", "fr-fr", "en-gb"],
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages).toContain(
-			"GB ships a weights package, sits in no tier, and has no entry in untieredShippingLocales saying why"
-		)
-	})
-
-	it("admits a shipping locale placed in no tier WITH a reason", async () => {
-		const context = await plant({
-			scope: {
-				...REGISTER_MATCHING_THE_ROWS,
-				untieredShippingLocales: { GB: "the tier table predates the overlay; tiering it needs the evidence written" },
-			},
-			locales: ["en-us", "fr-fr", "en-gb"],
-		})
-
-		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
-	})
-
-	it("reports a reason that has gone stale because the country was tiered", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, untieredShippingLocales: { DE: "a reason nobody removed" } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages).toContain(
-			"untieredShippingLocales still names DE, which the declaration now places in a tier — remove the entry"
-		)
+	it("reports a reason whose country stopped shipping", () => {
+		expect(messages({ shipping: new Set(), promised: new Set(), unpromised: { NZ: "stale" } })).toEqual([
+			"unpromisedShippingLocales lists NZ, which no longer ships a weights package; remove the entry",
+		])
 	})
 })

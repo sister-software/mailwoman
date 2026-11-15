@@ -2,7 +2,7 @@
 title: Data and locales
 description: Published 11.0.0 data bundles, weight families, locale classifications, and installation checks.
 role: reference
-source-of-truth: packages/mailwoman/lib/data/bundles.ts, packages/neural/lib/weights/families.ts, scope.config.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
+source-of-truth: packages/mailwoman/lib/data/bundles.ts, packages/neural/lib/weights/families.ts, packages/codex/lib/support/promises.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
 verified-with: mailwoman v11.0.0
 ---
 
@@ -38,18 +38,9 @@ The published 11.0.0 family declaration lists two model graphs. A locale overlay
 
 Each listed locale id maps to an `@mailwoman/neural-weights-<id>` package. The `cjk` id identifies its family graph package. The family declaration lists no `ko-kr` or `zh-tw` overlay. <Countries codes="KR TW" /> use the shared character graph through its script route. The [first parse](/docs/start) shows the installed en-US graph. [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the parser's locale and kind trace.
 
-## Maintained scope classification
+## Support promises
 
-The current [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json) records membership. Tiers 1–3 grade the strength of a project claim. Tiers 4–5 describe delivery mechanisms and can overlap the first three tiers. The [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) provides the dated evidence behind those claims.
-
-| Classification            | Countries                                                                    | Meaning in the register                                                                            |
-| ------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Tier 1                    | <Countries join="plain" codes="FR US" />                                     | First-class project claim.                                                                         |
-| Tier 2                    | <Countries join="plain" codes="AT AU BE CH CZ DE DK ES FI HR IT NL PL PT" /> | Trained locales with dated coordinate panels.                                                      |
-| Tier 3                    | <Countries join="plain" codes="NO SE" />                                     | Trained exposure with thinner dated coordinate evidence.                                           |
-| Tier 4                    | <Countries join="plain" codes="CZ PL SI SK" />                               | Diacritic-tokenizer delivery mechanism. <Countries codes="CZ PL" /> also appear in tier 2.         |
-| Tier 5                    | <Countries join="plain" codes="JP KR TW" />                                  | Character-path delivery mechanism.                                                                 |
-| Untiered shipping locales | <Countries join="plain" codes="CN GB IN NZ" />                               | The register records a published weights package and a reason for each country, outside the tiers. |
+The [support reference](./support.mdx) lists what Mailwoman guarantees: each country, the language and script of the typed text, and the deepest component inside the guarantee. The list ships in `@mailwoman/codex/support`. The [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) keeps the dated evidence each country group recorded.
 
 The generated [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx) separately reports corpus rows, training admission, gazetteer entries, weight packages, and checking-board rows. Its corpus count is for version `0.7.6-venue-gb-region`, cached 17 October 2026. Its header notes that the training config it reads, `v7.2.0-address-systems-60k.yaml`, declares corpus `v0.7.2-address-systems`, so those counts describe the counted corpus rather than the one that config trains on. The register reports no coordinate-grade measurements for the published 11.0.0 package with model 10.8.0 and its data bundles. The available evaluation ledger also contains no coordinate panel for that exact release. Its coordinate accuracy remains unknown.
 

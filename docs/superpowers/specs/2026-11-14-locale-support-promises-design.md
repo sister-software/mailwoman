@@ -51,7 +51,7 @@ rather than a guess.
 
 | Approach                                                                                            | Tradeoff                                                                                 |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides; the release verdict, already the deciding check, carries the promise   |
+| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides. The release verdict, already the deciding check, carries the promise   |
 | B. Declaration ships in codex, enforced by a separate test suite                                    | Two systems would decide whether a release may ship                                      |
 | C. Declaration in `scope.config.json` with generated copies                                         | Repository-only file, so the shipped copy is generated and every edit needs regeneration |
 
@@ -98,8 +98,17 @@ The operator picked A on 2026-11-14 and asked for the from-scratch form of it, w
   - its evidence holds no `pass` case.
 - The same check reports each `improvement_target` or `known_fail` case inside a promise as a warning, one open bug
   against that promise.
-- Three changes follow in this order, as separate commits: the promise rows replace the tiers, release requirements are
-  generated from the rows, and responses report the matched promise.
+- The promise rows replaced the tiers on 2026-11-15. `scope.config.json` keeps the training configs and a
+  `unpromisedShippingLocales` reason for each shipping country without a promise, and `locale-scope` compares the
+  shipping countries with the promises.
+- Release requirements read the promises as coverage rather than as thresholds. The `support-promises` check
+  warns for each promised country without a country requirement in the current specification. A minimum is a
+  measured decision registered in a new specification version, and generating one from a promise row would
+  register a threshold nobody measured (the AGENTS.md rule on data-derived thresholds), so the builder left
+  thresholds to that process. This is the builder's call.
+- `POST /v1/geocode` and `POST /v1/batch` report the matched promise in a `support` field, matched on the resolved
+  `countryCode` and the query's script by `@mailwoman/api/support`. The repository check selects evidence with the
+  same function. `POST /v1/parse` resolves no country, so it reports none.
 
 ## Seed rows
 

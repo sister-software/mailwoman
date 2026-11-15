@@ -14,12 +14,13 @@
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal/regimes"
+import { SUPPORT_PROMISES } from "@mailwoman/codex/support"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readScopeConfig, tieredCountries } from "@mailwoman/core/scope-config"
+import { readScopeConfig } from "@mailwoman/core/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
@@ -129,7 +130,7 @@ const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, c
 
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
-	tieredCountries: [...tieredCountries(scope)],
+	promisedCountries: [...new Set(SUPPORT_PROMISES.map((promise) => promise.country))],
 	requiredCountries: releaseSpec.requirements.flatMap((requirement) =>
 		requirement.kind === "country" ? [requirement.country] : []
 	),

@@ -109,6 +109,7 @@
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^2.0.0-r.1",
+		"@mailwoman/api": "workspace:*",
 		"@mailwoman/browser": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",

@@ -4,32 +4,20 @@
 /**
  *   Reads `scope.config.json`.
  *
- *   It lists the countries in each locale tier, the shipping locales outside any tier,
- *   and the training config behind each shipped model.
- *   Tier membership grants no release privilege: release requirements are registered
- *   in `packages/mailwoman/tools/eval-harness/release/specs/`.
+ *   It lists the training config behind each shipped model and each shipping
+ *   country that holds no support promise.
+ *   The customer-facing claim is the promise list in `@mailwoman/codex/support`.
  *
- *   The config holds membership only.
- *   `docs/engineering/scope.mdx` contains the evidence for each tier.
+ *   Release requirements are registered in `packages/mailwoman/tools/eval-harness/release/specs/`.
  *
- *   The `repo-health` `locale-scope` check fails when the two disagree.
+ *   The `repo-health` `locale-scope` check fails when a shipping country is
+ *   neither promised nor listed here.
  */
 
 import type { PathBuilderLike } from "path-ts"
 
 import { readLocalJSONFile } from "#fs/readers"
 import { repoRootPathBuilder } from "#paths"
-
-/**
- * The tier keys, numbered as in `scope.mdx`.
- * They're strings because JSON object keys are strings.
- */
-export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const
-
-/**
- * One of the {@link SCOPE_TIER_KEYS}.
- */
-export type ScopeTierKey = (typeof SCOPE_TIER_KEYS)[number]
 
 /**
  * The parsed `scope.config.json`.
@@ -40,11 +28,10 @@ export type ScopeTierKey = (typeof SCOPE_TIER_KEYS)[number]
  * The `locale-scope` check validates those reasons, so this reader accepts empty ones.
  */
 export interface ScopeConfig {
-	tiers: Record<string, string[]>
 	/**
-	 * Maps each shipping locale's country that belongs to no tier to the reason.
+	 * Maps each shipping locale's country that holds no support promise to the reason.
 	 */
-	untieredShippingLocales: Record<string, string>
+	unpromisedShippingLocales: Record<string, string>
 	/**
 	 * Maps each weights-family ID to the training config that produced its shipped model.
 	 */
@@ -80,21 +67,6 @@ export interface ShippedTrainingConfig {
  */
 export async function readScopeConfig(repoRoot: PathBuilderLike = repoRootPathBuilder()): Promise<ScopeConfig> {
 	return readLocalJSONFile<ScopeConfig>(repoRoot, "scope.config.json")
-}
-
-/**
- * Returns every country in any tier.
- */
-export function tieredCountries(scope: ScopeConfig): Set<string> {
-	const countries = new Set<string>()
-
-	for (const key of SCOPE_TIER_KEYS) {
-		for (const country of scope.tiers[key] ?? []) {
-			countries.add(country)
-		}
-	}
-
-	return countries
 }
 
 /**

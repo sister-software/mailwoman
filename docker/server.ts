@@ -12,7 +12,7 @@
 import { createMailwomanAPI } from "@mailwoman/api"
 import type { GeocodeInit, MailwomanAPIEngine } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
-import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
+import type { EngineBatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -121,7 +121,7 @@ async function buildEngine() {
 
 				engine.batch = async (addresses, opts) => {
 					const inputs = addresses.map((a) => a.trim())
-					const results: BatchRow[] = Array.from({ length: inputs.length })
+					const results: EngineBatchRow[] = Array.from({ length: inputs.length })
 
 					for (let i = 0; i < inputs.length; i++) {
 						const input = inputs[i]!

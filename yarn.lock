@@ -6580,6 +6580,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/registry": "workspace:*"
     hono: "npm:^4.13.14"
     zod: "npm:^4.6.7"
   languageName: unknown
@@ -7895,6 +7896,7 @@ __metadata:
   resolution: "@mailwoman/universe@workspace:."
   dependencies:
     "@duckdb/node-api": "npm:^2.0.0-r.1"
+    "@mailwoman/api": "workspace:*"
     "@mailwoman/browser": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"

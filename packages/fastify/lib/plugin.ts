@@ -23,6 +23,7 @@ import { ParseAddressOperation } from "@mailwoman/api/operations/parse/address"
 import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse/address/query"
 import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/health"
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
+import { reportSupport } from "@mailwoman/api/support"
 import type { PipelineOpts } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import { memoizeResettable } from "@mailwoman/core/memoize"
@@ -250,7 +251,13 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 						)
 					)
 
-					return { ...extractGeocodeResult(address, result.tree), tree: include_tree ? result.tree : null }
+					const geocoded = extractGeocodeResult(address, result.tree)
+
+					return {
+						...geocoded,
+						tree: include_tree ? result.tree : null,
+						support: reportSupport(address, geocoded.countryCode),
+					}
 				},
 			})
 
