@@ -17,6 +17,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 
 import { moduleGraphHash } from "#build/code-hash"
+import type { EvaluationGroupsIdentity } from "#utils/evaluation-groups"
 import type { ShapeSupplyEntry, SplitRetention } from "#utils/retention"
 import type { CountryHoldout, SplitName } from "#utils/split"
 
@@ -36,7 +37,14 @@ export const SPLIT_ATTRIBUTE = "split"
 export interface SplitAttributeFile {
 	attribute: typeof SPLIT_ATTRIBUTE
 	policyHash: string
-	policy: { holdouts: Record<string, CountryHoldout>; codeHash: string }
+	policy: {
+		holdouts: Record<string, CountryHoldout>
+		codeHash: string
+		/**
+		 * The evaluation-group list the split applied, when it ran under that policy.
+		 */
+		evaluationGroups?: EvaluationGroupsIdentity
+	}
 	/**
 	 * The parquet file the attribute describes, by name and sha256.
 	 */
@@ -59,10 +67,12 @@ export interface SplitAttributeFile {
  *
  * A registered retention table joins the hashed payload, so a table change writes
  * a new attribute file rather than relabeling the old one.
+ * An evaluation-group list joins it the same way.
  */
 export async function splitPolicyHash(
 	holdouts: Record<string, CountryHoldout>,
-	retention?: SplitRetention
+	retention?: SplitRetention,
+	evaluationGroups?: EvaluationGroupsIdentity
 ): Promise<{ policyHash: string; codeHash: string }> {
 	const codeHash = await moduleGraphHash([SPLIT_POLICY_MODULE])
 
@@ -72,6 +82,8 @@ export async function splitPolicyHash(
 		...(retention
 			? { retention: { floor: retention.floor, protectedShapes: [...retention.protectedShapes].toSorted() } }
 			: {}),
+		// The evaluation-group policy flag: the group list's sha256 and the frozen sets it was derived from.
+		...(evaluationGroups ? { evaluationGroups } : {}),
 	}
 
 	return { policyHash: sha256Hex(canonicalJSON(payload)), codeHash }

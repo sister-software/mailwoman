@@ -15,6 +15,7 @@ import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { openCorpusRowStream } from "#parquet/corpus-rows"
 import type { DuckDBLimits } from "#parquet/duckdb"
+import { parquetColumnNames } from "#parquet/readers"
 import type { ParquetRow } from "#parquet/schema"
 import {
 	SPLIT_ATTRIBUTE,
@@ -23,6 +24,7 @@ import {
 	splitPolicyHash,
 } from "#tools/overlay/split/attribute"
 import type { CanonicalRow } from "#types"
+import { type EvaluationGroups, evaluationGroupsIdentity } from "#utils/evaluation-groups"
 import type { SplitRetention } from "#utils/retention"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
 
@@ -92,6 +94,15 @@ export interface SplitSliceOptions {
 	 */
 	retention?: SplitRetention
 	/**
+	 * The frozen evaluation groups.
+	 *
+	 * A caller that passes them selects the evaluation-group policy
+	 * (HOLDOUT_AND_EVALUATION section 4.6): those groups' rows go to test, a sample of
+	 * the held-out places goes to val, and every other row trains.
+	 * The list's identity joins the policy hash.
+	 */
+	evaluationGroups?: EvaluationGroups
+	/**
 	 * The DuckDB instance's threads and memory, for a caller that splits several files at once.
 	 * @defaultValue the shares `openDuckDB` gives an instance whose caller names none.
 	 */
@@ -108,9 +119,13 @@ export interface SplitSliceOptions {
 const SPLIT_COLUMNS = ["raw", "source_id", "country", "span_starts", "span_ends", "span_tags"] as const
 
 /**
- * A corpus row read through {@linkcode SPLIT_COLUMNS}.
+ * A corpus row read through {@linkcode SPLIT_COLUMNS}, with `base_source_id` when the file has the column.
+ *
+ * The evaluation-group policy keys on it.
+ * A file without the column records no derivation, so each row is its own group,
+ * as the overlap audit reads it.
  */
-type SplitColumnRow = Pick<ParquetRow, (typeof SPLIT_COLUMNS)[number]>
+type SplitColumnRow = Pick<ParquetRow, (typeof SPLIT_COLUMNS)[number]> & { base_source_id?: string | null }
 
 export interface SplitSliceResult {
 	input: string
@@ -183,18 +198,31 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	const decided = new SplitDecisions()
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let index = 0
+	const { evaluationGroups } = options
+
+	const columns =
+		evaluationGroups && (await parquetColumnNames(input)).includes("base_source_id")
+			? [...SPLIT_COLUMNS, "base_source_id"]
+			: SPLIT_COLUMNS
 
 	for await (const row of openCorpusRowStream<SplitColumnRow>(input, {
-		columns: SPLIT_COLUMNS,
+		columns,
 		...(options.limits ? { limits: options.limits } : {}),
 	})) {
 		const components = holdoutComponents(row, index, input)
 
 		const split = splitForRow(
-			{ source_id: row.source_id, country: row.country, components, span_tags: row.span_tags },
+			{
+				source_id: row.source_id,
+				base_source_id: row.base_source_id ?? null,
+				country: row.country,
+				components,
+				span_tags: row.span_tags,
+			},
 			holdouts,
 			undefined,
-			options.retention
+			options.retention,
+			evaluationGroups
 		)
 
 		const earlier = decided.get(row.source_id)
@@ -214,14 +242,15 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		index++
 	}
 
-	const { policyHash, codeHash } = await splitPolicyHash(holdouts, options.retention)
+	const groupsIdentity = evaluationGroups ? evaluationGroupsIdentity(evaluationGroups) : undefined
+	const { policyHash, codeHash } = await splitPolicyHash(holdouts, options.retention, groupsIdentity)
 
 	const name = basename(input)
 
 	const attribute: SplitAttributeFile = {
 		attribute: SPLIT_ATTRIBUTE,
 		policyHash,
-		policy: { holdouts, codeHash },
+		policy: { holdouts, codeHash, ...(groupsIdentity ? { evaluationGroups: groupsIdentity } : {}) },
 		file: { name, sha256: await sha256File(input), rows: index },
 		counts,
 		val: decided.idsIn("val"),

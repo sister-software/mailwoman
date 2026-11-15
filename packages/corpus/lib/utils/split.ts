@@ -7,6 +7,9 @@
  *
  * Rows inside a held-out place go to val or test 50/50 by a hash of `source_id`;
  * every other row goes to train.
+ * Under the evaluation-group policy only the groups the frozen evaluation sets
+ * drew from go to test, a fixed sample of the held-out places goes to val,
+ * and the rest of those places trains (`#utils/evaluation-groups`).
  *
  * A holdout change takes effect at the next corpus rebuild.
  * Each versioned corpus keeps the `SPLIT_MANIFEST.json` it was built with, because adding
@@ -25,6 +28,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
+import { type EvaluationGroups, evaluationGroupOf } from "#utils/evaluation-groups"
 import { shapeKeyOf, type SplitRetention } from "#utils/retention"
 
 /**
@@ -835,6 +839,12 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
 	 * A caller without them gets no retention lookup.
 	 */
 	span_tags?: readonly string[] | null
+	/**
+	 * The id of the base row an augmented row was derived from.
+	 *
+	 * The evaluation-group policy keys on it, as the overlap audit does.
+	 */
+	base_source_id?: string | null
 }
 
 /**
@@ -846,17 +856,58 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
  * A row of a combination the retention table covers below the floor returns `train`
  * before the holdout is consulted (HOLDOUT_AND_EVALUATION section 5.1: training
  * retention takes precedence over geographic integrity).
+ *
+ * With `evaluationGroups`, the policy is the evaluation-group policy (HOLDOUT_AND_EVALUATION section 4.6):
+ *
+ * 1. A row whose group a frozen evaluation set drew from returns `test`, before retention
+ *    is consulted, so no retained shape returns a frozen group's variant to train.
+ * 2. A row of a place the holdout policy holds out returns `val` when its group
+ *    falls in bucket 0 of {@link VALIDATION_SAMPLE_DIVISOR}, so the trainer's
+ *    validation split is a fixed sample of unseen places.
+ * 3. Every other row returns `train`.
+ *
+ * Neither held-out split holds a row the frozen sets didn't draw from beyond that sample.
+ * The overlap audit reads `val` as training data, so a frozen group must never reach `val` either.
  */
 export function splitForRow(
-	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags">,
+	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags" | "base_source_id">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
 	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces(),
-	retention?: SplitRetention
+	retention?: SplitRetention,
+	evaluationGroups?: Pick<EvaluationGroups, "groups">
 ): SplitName {
+	const group = evaluationGroups ? evaluationGroupOf(row) : null
+
+	if (group !== null && evaluationGroups!.groups.has(group)) return "test"
+
 	if (retention && row.span_tags && retention.protectedShapes.has(shapeKeyOf(row.country, row.span_tags))) {
 		return "train"
 	}
 
+	if (!isHeldOutPlace(row, holdouts, trainedPlaces)) return "train"
+
+	// The sample is drawn by group, so a record's variants stay together in val or train.
+	if (group !== null) return hashBucket(group, VALIDATION_SAMPLE_DIVISOR) === 0 ? "val" : "train"
+
+	// The bucket is the record's, so the rendered rows of one record stay together in val or test.
+	return hashBucket(recordIDOf(row.source_id), 2) === 0 ? "val" : "test"
+}
+
+/**
+ * Under the evaluation-group policy, one group in this number of the holdout
+ * policy's held-out places forms the validation split.
+ */
+export const VALIDATION_SAMPLE_DIVISOR = 5
+
+/**
+ * Whether the holdout policy holds out the place a row names: a declared place of its country,
+ * or a hash-selected place that {@link hashedHoldoutTrainedPlaces} doesn't return to training.
+ */
+function isHeldOutPlace(
+	row: Pick<SplitInputRow, "country" | "components">,
+	holdouts: Record<string, CountryHoldout>,
+	trainedPlaces: Record<string, readonly string[]>
+): boolean {
 	const declared = holdouts[row.country]
 	const { region, postcode, locality } = row.components
 	let isHeldOut: boolean
@@ -882,10 +933,7 @@ export function splitForRow(
 		isHeldOut = place !== null && !trainedPlaceSet(trainedPlaces, row.country)?.has(place)
 	}
 
-	if (!isHeldOut) return "train"
-
-	// The bucket is the record's, so the rendered rows of one record stay together in val or test.
-	return hashBucket(recordIDOf(row.source_id), 2) === 0 ? "val" : "test"
+	return isHeldOut
 }
 
 /**

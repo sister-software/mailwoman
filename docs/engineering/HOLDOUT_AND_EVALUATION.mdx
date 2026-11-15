@@ -101,7 +101,9 @@ checks every record's rows across train, validation and test.
 Every row receives exactly one of `train`, `val` or `test`. The assignment is deterministic and depends only on
 the row's content and the split policy in `packages/corpus/lib/utils/split.ts`. The policy identity is a hash
 over the implementation, the resolved holdout tables, the normalization rules and every population-dependent
-choice, and every split record states the hash it was made under.
+choice, and every split record states the hash it was made under. From v0.8.19 the default is the
+evaluation-group policy of section 4.6: training gets every row except the frozen evaluation groups and a small
+validation sample, and sections 4.1 to 4.3 choose the places that sample is drawn from.
 
 ### 4.1 The declared holdout path
 
@@ -191,6 +193,50 @@ recovered in training, the evaluation coverage lost, the keys found to merge hom
 keys of section 4.3. A corpus-consistency assertion (a floor re-derived from the new corpus passes) is reported
 apart from a product-quality requirement (a required capability's supply fell against the previous corpus), so a
 reduced supply stays visible when a derived floor passes.
+
+### 4.6 The evaluation-group policy: the default from v0.8.19
+
+**Training gets every row except the frozen evaluation groups.** The operator decided this on 2026-11-15, and it is
+the default split from corpus v0.8.19 on. The release requirements of specification v8 read only two frozen sets,
+`heldout-dev-v0.8.18` and `heldout-confirm-v0.8.18`, so a held-out row outside their groups served no registered
+claim, and P1 gives it to training. No controlled memorization comparison was run for this change.
+
+Measured on v0.8.18-retention-overlay's split attributes (623,020,227 rows, read 2026-11-15), the policy moves
+4,269,723 of the 5,558,733 held-out rows to training and keeps the other 1,289,010 out. 1,497 rows of frozen
+groups sat in that corpus's train split, and the policy moves them to `test`, so 1,290,507 rows stay out of
+training: 224,839 rows of frozen groups in `test` and 1,065,668 in the `val` sample.
+
+A row's group is `recordIDOf(base_source_id ?? source_id)`, the key the freeze writes on each dataset entry and the
+overlap audit compares against training rows, so a base row, its case, comma and spacing variants and the other
+rendered rows of its record take one split. Under the policy `splitForRow` decides each row in this order:
+
+1. A row whose group a frozen set drew from goes to `test`. This rule runs before retention, so a shape the
+   retention table keeps in training can't return a frozen group's variant to training. Development and confirmation groups both go to `test`, because
+   the overlap audit reads `val` as training data, and a frozen row in `val` would read as `known_overlap`.
+2. A row of a shape the retention table of section 5.1 covers trains.
+3. A row of a place the holdout policy of sections 4.1 and 4.2 holds out goes to `val` when its group falls in
+   bucket 0 of `VALIDATION_SAMPLE_DIVISOR` (5). The trainer's validation loss, the validation-coverage audit and the
+   label-support audit read this split, and the trainer reads no other held-out split. The sample keeps the
+   place-holdout's property that validation rows name places training never saw. One group in twenty would leave
+   GB 425 validation rows on v0.8.18, under the 1,000 the v8.7.0 config requires. One in five leaves it 1,280
+   (1,176 with a street), and leaves NG 5 and PF 19 against their floors of 20.
+4. Every other row trains.
+
+The group list is committed as `packages/corpus/data/holdout/evaluation-groups.v0.8.18.json`, written by
+`heldout/dataset/evaluation-groups.run.ts` from the two frozen manifests, and `resplit.run.ts --evaluation-groups`
+applies it to every file of an overlay manifest, rebuilt and inherited alike. The list's sha256 and the sets it
+names join the split policy hash and the corpus manifest's `evaluation_groups` record. A new frozen set needs a
+new list and a new re-split before any corpus trains on rows outside it.
+
+The no-leak guarantee is the overlap audit's: no frozen group may appear in a corpus's train or val split.
+`overlap.integration.test.ts` splits a fixture under the policy and audits it, and a list missing one group is
+its negative control. The guarantee compares groups and identities. A frozen address that another source writes
+under another id isn't a group match, and only `overlap.run.ts --match-text` detects it. The v0.8.18 audits ran
+without `--match-text`.
+
+The held-out span check of section 4.4 still admits each rebuilt source's build. That build splits under the
+holdout policy. The check's train side no longer describes a corpus re-split under this policy, and
+`held-out-spans.full.test.ts` skips a manifest that records `evaluation_groups`.
 
 ## 5. Building a new split
 
@@ -481,6 +527,7 @@ step rates the preflight reads. The Python trainer's fp32-master pair (#2871) co
 | Automatic resume by default                      | Open                                                                     |
 | Shape definitions and closure supply (5.1)       | Specified. Census measured on v0.8.8-nppes-overlay 2026-11-01 (#2893)    |
 | Retention floor and launch check (5.1)           | Floor registered at 10 groups (2026-11-01). First split under it is open |
+| Evaluation-group policy (4.6)                    | Default from v0.8.19 (2026-11-15). Its first re-split is open            |
 
 ## 11. What the nine acceptance criteria changed
 

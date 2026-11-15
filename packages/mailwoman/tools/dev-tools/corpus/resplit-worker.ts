@@ -4,7 +4,8 @@
 /**
  *   The `parallelMapWorkers` handler behind `resplit.run.ts`.
  *
- *   Each worker thread reads the retention table at the path in its `userData` once.
+ *   Each worker thread reads the retention table and the evaluation-group list
+ *   at the paths in its `userData` once.
  *   It then splits every file dispatched to it with `splitOverlaySlice`, its DuckDB
  *   instance held to the threads and memory the coordinator gave each worker.
  */
@@ -13,12 +14,17 @@ import { sha256File } from "@mailwoman/core/hash"
 import { workerUserData } from "@mailwoman/core/workers"
 import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
+import { readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
 
 /**
  * What the coordinator passes every worker.
  */
 export interface ResplitWorkerData {
 	retentionPath: string | null
+	/**
+	 * The evaluation-group list that selects the evaluation-group policy, or null for the holdout policy.
+	 */
+	evaluationGroupsPath: string | null
 	duckdbThreads: number
 	duckdbMemoryBytes: number
 }
@@ -51,8 +57,9 @@ export interface ResplitResult {
 	seconds: number
 }
 
-const { retentionPath, duckdbThreads, duckdbMemoryBytes } = workerUserData<ResplitWorkerData>()
+const { retentionPath, evaluationGroupsPath, duckdbThreads, duckdbMemoryBytes } = workerUserData<ResplitWorkerData>()
 const retention = retentionPath ? await readSplitRetention(retentionPath) : undefined
+const evaluationGroups = evaluationGroupsPath ? await readEvaluationGroups(evaluationGroupsPath) : undefined
 
 /**
  * Splits one file and returns its decision.
@@ -65,6 +72,7 @@ export async function handleItem(item: ResplitItem): Promise<ResplitResult> {
 		outputDir: item.outputDir,
 		limits: { threads: duckdbThreads, memoryLimitBytes: duckdbMemoryBytes },
 		...(retention ? { retention } : {}),
+		...(evaluationGroups ? { evaluationGroups } : {}),
 	})
 
 	return {
