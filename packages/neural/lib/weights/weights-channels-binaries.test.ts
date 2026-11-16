@@ -42,6 +42,22 @@ describe("readRequiredChannels", () => {
 			/"alnum-run", "shaped" or "postal"/
 		)
 	})
+
+	it("reads the query-shape generation a card declares, and leaves it absent otherwise", async () => {
+		await using postal = await weightsPackage({}, { requires: { query_shape: "postal" } })
+		await using bare = await weightsPackage({}, { requires: { anchor: { required: false } } })
+
+		expect((await readRequiredChannels(resolvePath(postal.directory, "model-card.json")))?.query_shape).toBe("postal")
+		expect((await readRequiredChannels(resolvePath(bare.directory, "model-card.json")))?.query_shape).toBeUndefined()
+	})
+
+	it("refuses a query-shape generation it doesn't know", async () => {
+		await using pkg = await weightsPackage({}, { requires: { query_shape: "v2" } })
+
+		await expect(readRequiredChannels(resolvePath(pkg.directory, "model-card.json"))).rejects.toThrow(
+			/"legacy" or "postal"/
+		)
+	})
 })
 
 describe("packageHasBinaries", () => {

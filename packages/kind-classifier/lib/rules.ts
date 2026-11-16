@@ -309,7 +309,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 	if (shape.characterClass !== "alpha") {
 		if (!carriesPostcode) return 0
 
-		if (computeQueryShape(withoutPostcode).characterClass !== "alpha") return 0
+		if (computeQueryShape(withoutPostcode, shape.generation).characterClass !== "alpha") return 0
 	}
 
 	// A locality and an administrative tail use at most two segments.

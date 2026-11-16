@@ -9,6 +9,7 @@ import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoma
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
@@ -75,6 +76,16 @@ export interface RequiredChannels {
 	 * The code-unit channel (#2845), computed from the raw surface with no lexicon.
 	 */
 	code_unit?: { required: boolean }
+	/**
+	 * The generation of the query-shape rules the model trained beside.
+	 *
+	 * Absent or `legacy` selects the original thirteen postcode patterns,
+	 * ten scripts and accidental behaviors.
+	 * Model 10.8.0 trained with them.
+	 *
+	 * `postal` selects postcode hits from the postal family, every Unicode script and the specified behavior.
+	 */
+	query_shape?: QueryShapeGeneration
 }
 
 /**
@@ -337,6 +348,20 @@ export async function readRequiredChannels(
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
 				`expected "alnum-run", "shaped" or "postal", got ${stringifyJSON(anchorSpanMode)}.`
+		)
+	}
+
+	// An unknown generation would run the wrong rules without any error, so it throws.
+	const queryShape = obj.query_shape
+
+	if (
+		queryShape !== undefined &&
+		queryShape !== QueryShapeGeneration.Legacy &&
+		queryShape !== QueryShapeGeneration.Postal
+	) {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires.query_shape\` — ` +
+				`expected "legacy" or "postal", got ${stringifyJSON(queryShape)}.`
 		)
 	}
 

@@ -30,6 +30,7 @@ describe("the empty and degenerate inputs of computeQueryShape", () => {
 			regionAbbreviations: [],
 			totalLength: 0,
 			knownFormats: [],
+			generation: "legacy",
 		})
 	})
 })

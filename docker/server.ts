@@ -60,7 +60,10 @@ async function buildEngine() {
 				c
 					.parse(address, {
 						postcodeRepair: true,
-						inputMode: opts.inputMode === "auto" ? deriveGeocodeRegister(address) : opts.inputMode,
+						inputMode:
+							opts.inputMode === "auto"
+								? deriveGeocodeRegister(address, undefined, c.queryShapeGeneration)
+								: opts.inputMode,
 					})
 					.then((tree) => {
 						return {

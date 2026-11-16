@@ -47,6 +47,7 @@ import { RESOLVE_SWITCH_DEFAULTS } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognize/query-shape-generation"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
@@ -330,8 +331,14 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 /**
  * Kind-derived register for geocode input.
  */
-export function deriveGeocodeRegister(parseInput: string, queryShape = computeQueryShape(parseInput)): InputMode {
-	return deriveInputMode("auto", classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
+export function deriveGeocodeRegister(
+	parseInput: string,
+	queryShape?: QueryShape,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): InputMode {
+	const shape = queryShape ?? computeQueryShape(parseInput, generation)
+
+	return deriveInputMode("auto", classifyKindSync({ raw: parseInput, normalized: parseInput }, shape).kind)
 }
 
 /**
@@ -373,8 +380,8 @@ export function geocodeParseInputs(
 		? normalizeGeocodeInput(input, deps.classifier).normalized
 		: input
 
-	// Query shape used as a parse prior.
-	const queryShape = computeQueryShape(parseInput)
+	// Query shape used as a parse prior, in the generation the model card declares.
+	const queryShape = computeQueryShape(parseInput, queryShapeGenerationOf(deps.classifier))
 
 	// An explicit register wins.
 	// Otherwise the mode derives from the kind.
@@ -468,7 +475,11 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			? normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
 			: input
 
-		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
+		const refusal = await thingQueryRefusalMarkers(
+			deps.classifyKind,
+			parseInput,
+			queryShapeGenerationOf(deps.classifier)
+		)
 
 		if (refusal) {
 			// Return abstain with parsed components but no resolved coordinates.
@@ -589,7 +600,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		: input
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
-	const queryShape = computeQueryShape(parseInput)
+	const queryShape = computeQueryShape(parseInput, queryShapeGenerationOf(deps.classifier))
 	const stateSlug = regionSlugFromTree(tree)
 	const usDatabases = deps.databases?.(stateSlug) ?? {}
 	let addressPoints = usDatabases.addressPoints

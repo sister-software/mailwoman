@@ -250,6 +250,11 @@ export interface QueryShapeFormatsView {
 	knownFormats: ReadonlyArray<KnownFormatHitView>
 	characterClass: string | null
 	/**
+	 * The generation of the query-shape rules that computed the shape, `legacy` when absent.
+	 * A consumer that recomputes a shape passes it on.
+	 */
+	generation?: "legacy" | "postal"
+	/**
 	 * The ranked scripts, or null for a hand-built shape that has none.
 	 */
 	scripts: ReadonlyArray<{ script: string; share: number }> | null
@@ -897,7 +902,7 @@ export type LocaleDetector = (
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
-	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
+	computeQueryShape?: (input: NormalizedInputLite | string) => QueryShapeLite
 	detectLocale?: LocaleDetector
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
