@@ -9,7 +9,7 @@ import {
 	type ResolveOpts,
 	RESOLVE_SWITCH_DEFAULTS,
 } from "@mailwoman/core/resolver"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 

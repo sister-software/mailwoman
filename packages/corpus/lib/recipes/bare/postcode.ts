@@ -11,10 +11,10 @@
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { isPostcodeFormat } from "@mailwoman/core/pipeline/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"

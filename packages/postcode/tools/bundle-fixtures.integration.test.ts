@@ -65,7 +65,7 @@ async function payload(family: string): Promise<string> {
 describe("bundle fixtures of the postcode families", () => {
 	it("a consumer of the legacy family retains its artifact and no byte of the postal artifact", async () => {
 		const { text, inputs } = await bundle(
-			`import { postcodeLegacy, isKnownPostcodeFormat } from "./out/recognize/legacy.js"; console.log(postcodeLegacy.id, isKnownPostcodeFormat("us_zip"))`
+			`import { postcodeLegacy } from "./out/recognize/legacy.js"; console.log(postcodeLegacy.id)`
 		)
 
 		const legacy = await payload("postcode_legacy")

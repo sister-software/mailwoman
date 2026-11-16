@@ -26,14 +26,3 @@ export type KnownFormat = (typeof LEGACY_FORMATS)[number]["format"] | (typeof PO
 export interface PostcodeLegacyFields {
 	readonly knownFormats: ReadonlyArray<KnownFormatHit<KnownFormat>>
 }
-
-/**
- * Whether a known-format name is a postcode format.
- *
- * The check uses the naming convention `us_zip`, `us_zip4` or `<cc>_postcode` instead of a set,
- * so a row added to the table becomes a postcode once it follows the convention.
- * A test checks every row of the table against this function.
- */
-export function isKnownPostcodeFormat(format: string): boolean {
-	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
-}

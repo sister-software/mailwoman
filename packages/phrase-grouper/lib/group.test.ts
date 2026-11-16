@@ -8,8 +8,11 @@
  */
 
 import type { PhraseGrouper, PhraseProposal } from "@mailwoman/core/pipeline"
-import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import {
+	EMPTY_QUERY_SHAPE_VIEW,
+	type NormalizedInputLite,
+	type QueryShapeTokensView as QueryShapeLike,
+} from "@mailwoman/core/pipeline/types"
 import { describe, expect, it } from "vitest"
 
 import { groupPhrases, groupPhrasesSync } from "#group"

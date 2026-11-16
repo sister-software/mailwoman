@@ -9,13 +9,13 @@
  * The interface is deliberately minimal — only what alignment needs.
  */
 
-import type { TextSpan } from "@mailwoman/query-shape"
+import type { TextFragment } from "@mailwoman/core/tokenization/Span"
 
 /**
- * A tokenizer that maps a string to a sequence of `TextSpan`s.
+ * A tokenizer that maps a string to a sequence of `TextFragment`s.
  */
 export interface Tokenizer {
-	tokenize(text: string): readonly TextSpan[]
+	tokenize(text: string): readonly TextFragment[]
 }
 
 /**
@@ -29,8 +29,8 @@ export function whitespaceTokenizer(): Tokenizer {
 	const tokenRe = /[\p{L}\p{N}\p{M}'_-]+/gu
 
 	return {
-		tokenize(text: string): readonly TextSpan[] {
-			const out: TextSpan[] = []
+		tokenize(text: string): readonly TextFragment[] {
+			const out: TextFragment[] = []
 			tokenRe.lastIndex = 0
 			let m: RegExpExecArray | null
 
@@ -63,8 +63,8 @@ export function cjkAwareTokenizer(): Tokenizer {
 	const base = whitespaceTokenizer()
 
 	return {
-		tokenize(text: string): readonly TextSpan[] {
-			const out: TextSpan[] = []
+		tokenize(text: string): readonly TextFragment[] {
+			const out: TextFragment[] = []
 
 			for (const token of base.tokenize(text)) {
 				if (!HAN.test(token.text)) {

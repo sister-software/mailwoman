@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
-import type { KnownFormat, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW, type QueryShapeTokensView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import { expect, test } from "vitest"
 
 import {
@@ -21,7 +20,7 @@ import {
 
 const tokens = (segmentBody: string, segmentStart = 0): SegmentToken[] => tokenizeSegment(segmentBody, segmentStart)
 
-const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) => ({
+const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
 	format,
 	span: { start, end },
 	confidence,

@@ -28,7 +28,7 @@ import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 

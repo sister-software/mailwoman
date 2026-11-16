@@ -690,7 +690,6 @@
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.1",
 		"async-init": "^1.1.0",

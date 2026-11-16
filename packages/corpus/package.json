@@ -82,7 +82,7 @@
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/recognize": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",

@@ -12,7 +12,7 @@
  *   A family without routing scripts is reachable only through the caller's locale.
  */
 
-import type { QueryShape } from "@mailwoman/query-shape"
+import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 /**
  * How a family's graph reads its input.

@@ -6,7 +6,7 @@
  * script class and known postcode formats — never place-name dictionaries.
  */
 
-import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
+import type { QueryShapeFormatsView } from "@mailwoman/core/pipeline/types"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous.

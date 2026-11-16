@@ -39,7 +39,7 @@
 		{ "path": "../../osm/sdk" },
 		{ "path": "../../phrase-grouper" },
 		{ "path": "../../poi-taxonomy" },
-		{ "path": "../../query-shape" },
+		{ "path": "../../recognize" },
 		{ "path": "../../resolver" },
 		{ "path": "../../resolver-wof-sqlite" },
 		{ "path": "../../resolver-wof-wasm" },

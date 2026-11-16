@@ -25,7 +25,7 @@ import { decodeAsJSON, type AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { carriesFamilySegment, FAMILY_SCRIPTS, NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
-import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 

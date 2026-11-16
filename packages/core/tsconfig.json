@@ -11,8 +11,7 @@
 		{ "path": "../sqlite" },
 		{ "path": "../annotations" },
 		{ "path": "../codex" },
-		{ "path": "../evidence" },
-		{ "path": "../query-shape" }
+		{ "path": "../evidence" }
 	],
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]

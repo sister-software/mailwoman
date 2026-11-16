@@ -10,7 +10,7 @@
  */
 
 import type { LocaleHint } from "@mailwoman/core/pipeline"
-import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
+import type { QueryShapeFormatsView } from "@mailwoman/core/pipeline/types"
 
 import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } from "#rules"
 import type { DetectLocaleOpts } from "#types"

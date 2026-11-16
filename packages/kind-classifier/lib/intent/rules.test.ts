@@ -3,11 +3,8 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import {
-	computeQueryShape,
-	type NormalizedInputLite,
-	type QueryShapeSegmentsView as QueryShapeLike,
-} from "@mailwoman/query-shape"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { describe, expect, test } from "vitest"
 
 import { classifyKindSync } from "#classify"

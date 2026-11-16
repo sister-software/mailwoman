@@ -18,7 +18,7 @@
  */
 
 import type { QueryIntentMarker, QueryKind } from "@mailwoman/core/pipeline"
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
 
 import { nearMeSubject } from "#intent/rules"
 import { poiCategoryOf, type POISubjectMatch } from "#poi"

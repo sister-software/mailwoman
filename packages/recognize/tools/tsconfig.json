@@ -12,10 +12,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [
-		{ "path": ".." },
-		{ "path": "../../core" },
-		{ "path": "../../query-shape" },
-		{ "path": "../../registry" }
-	]
+	"references": [{ "path": ".." }, { "path": "../../core" }, { "path": "../../registry" }]
 }

@@ -6,8 +6,8 @@
  *
  *   One call into the engine returns the tokens, the segments, the region abbreviations
  *   and the script counts as `u32` words in linear memory.
- *   This module reads them in place and builds the objects `computeQueryShape` of
- *   `@mailwoman/query-shape` returns, with offsets converted from UTF-8 bytes to UTF-16 code units.
+ *   This module reads them in place and builds the structural objects of the parse pipeline,
+ *   with offsets converted from UTF-8 bytes to UTF-16 code units.
  *
  *   The two orderings the legacy code fixes are kept: scripts rank by share and
  *   then by `localeCompare` on the code, and a token's script is the one the

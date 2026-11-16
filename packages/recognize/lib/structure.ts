@@ -6,8 +6,11 @@
  *
  *   Import `structure` and pass it to `createRecognizer`.
  *   The result's `fields` then hold `characterClass`, `scripts`, `tokenClasses`,
- *   `segments`, `regionAbbreviations` and `totalLength`, equal to what
- *   `computeQueryShape` of `@mailwoman/query-shape` returns.
+ *   `segments`, `regionAbbreviations` and `totalLength`.
+ *
+ *   The fields equal the output of the legacy classifier that the parse pipeline read
+ *   before this package replaced it.
+ *   `data/fixtures/query-shape-frozen.json` records that output.
  *   The family reports no recognitions.
  *
  *   The declarations are generated, and this module is their public path.

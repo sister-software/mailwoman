@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The structural postcode formats that `@mailwoman/query-shape` reports as `knownFormats`,
+ *   The structural postcode formats that the pipeline reports as `knownFormats`,
  *   and the PO box leaders it recognizes, as data.
  *
  *   The `legacy-formats` family compiles from this table.

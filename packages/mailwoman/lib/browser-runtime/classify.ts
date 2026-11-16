@@ -18,7 +18,7 @@ import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
+import type { KnownFormatHitView } from "@mailwoman/core/pipeline/types"
 
 import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 

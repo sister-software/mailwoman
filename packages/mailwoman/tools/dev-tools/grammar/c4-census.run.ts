@@ -12,7 +12,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"

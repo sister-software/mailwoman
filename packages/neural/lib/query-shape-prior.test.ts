@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "#query-shape-prior"

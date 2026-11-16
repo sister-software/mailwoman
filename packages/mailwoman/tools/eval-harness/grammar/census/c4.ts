@@ -18,7 +18,8 @@
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
-import type { CharRange, QueryShape } from "@mailwoman/query-shape"
+import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import type { CharRange } from "@mailwoman/recognize/types"
 
 import { adjacentSpanPairs, type CensusSpan } from "#tools/eval-harness/grammar/census"
 

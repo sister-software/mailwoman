@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { KnownFormat, QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW, type QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import { expect, test } from "vitest"
 
 import { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
 
-const fmt = (format: KnownFormat, confidence = 0.9, start = 0, end = 5) => ({
+const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 	format,
 	span: { start, end },
 	confidence,

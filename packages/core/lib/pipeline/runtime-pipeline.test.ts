@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -14,10 +12,11 @@ import {
 	runPipeline,
 	ZEROED_MORPHOLOGY_OPTS,
 } from "#pipeline/runtime-pipeline"
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
+import { EMPTY_QUERY_SHAPE_VIEW, WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 import type {
 	AddressClassifier,
 	LocaleHint,
+	NormalizedInputLite,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,

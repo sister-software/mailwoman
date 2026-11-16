@@ -18,6 +18,18 @@ import { type Classification, type ClassificationMatch, ClassificationsMatchMap 
 
 const MAX_SPAN_LENGTH = 140
 
+/**
+ * A piece of text with half-open UTF-16 offsets into the string it was read from.
+ *
+ * It is the plain shape that tokenizers hand to alignment code, and unlike a
+ * {@link Span} it holds no classifications or children.
+ */
+export interface TextFragment {
+	text: string
+	start: number
+	end: number
+}
+
 export interface SpanCreationOptions {
 	start?: number
 	classifications?: Iterable<Classification>

@@ -9,7 +9,7 @@
  */
 import { classifyKind } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { JSONSpliterator } from "spliterator"
 
 import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#tools/eval-harness/parity-corpus"

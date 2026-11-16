@@ -88,7 +88,6 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-plugin": "^1.4.11",
-		"@mailwoman/query-shape": "workspace:*",
 		"@types/node": "^26.6.6",
 		"@vitest/browser-playwright": "5.0.5",
 		"esbuild": "0.28.2",

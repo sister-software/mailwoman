@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { QueryIntentMarker, QueryKindResult } from "@mailwoman/core/pipeline"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category", "near_me"])
 

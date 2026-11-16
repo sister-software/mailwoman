@@ -67,7 +67,6 @@
 		"@mailwoman/recognize": "workspace:*"
 	},
 	"devDependencies": {
-		"@mailwoman/query-shape": "workspace:*",
 		"oxfmt": "0.75.0",
 		"spliterator": "^10.1.1"
 	}

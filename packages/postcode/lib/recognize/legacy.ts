@@ -30,4 +30,4 @@
  */
 
 export { postcodeLegacy, POSTCODE_LEGACY_FAMILY_ID } from "#recognize/postcode_legacy.generated"
-export { isKnownPostcodeFormat, type KnownFormat, type PostcodeLegacyFields } from "#recognize/fields"
+export { type KnownFormat, type PostcodeLegacyFields } from "#recognize/fields"

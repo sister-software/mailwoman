@@ -12,10 +12,9 @@
  *   The map merges the classifier's anchors with the binaries a release lists for the fallback only.
  */
 
+import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
 import { BinaryAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
-import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
 
 /**
  * A centroid per postcode key, the map the postcode-only fallback reads.

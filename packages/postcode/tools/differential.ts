@@ -2,22 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The comparison of the `postcode_legacy` family's `knownFormats` with
- *   `computeQueryShape` of `@mailwoman/query-shape`.
+ *   The generator behind the frozen comparison of the `postcode_legacy` family,
+ *   and the recognizer the comparison runs.
  *
- *   The two return the same list for the same text, on every input: the same formats,
- *   spans, bodies and confidences, in the same order.
- *   The comparison lives here, and not in `@mailwoman/recognize`,
- *   because it imports both `@mailwoman/postcode` and `@mailwoman/query-shape`,
- *   and `recognize` mustn't import the postcode package.
- *
- *   `@mailwoman/postcode` depends on `recognize` and takes `query-shape` as a development dependency.
- *
- *   The test, the real-row tool and the benchmark share this module.
+ *   `@mailwoman/recognize/tools/frozen` holds the output of the legacy `computeQueryShape`
+ *   for 500 inputs this generator drew (seed 20261116) and for other draws.
+ *   The comparison lives here, and not in `@mailwoman/recognize`, because it needs the
+ *   `postcode_legacy` family, and `recognize` mustn't import this package.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
-import { computeQueryShape } from "@mailwoman/query-shape"
 import { createRecognizer } from "@mailwoman/recognize"
 import { structure } from "@mailwoman/recognize/structure"
 
@@ -38,17 +32,6 @@ export interface PlainHit {
 }
 
 /**
- * The hits `computeQueryShape` returns.
- */
-export function legacyHits(text: string): PlainHit[] {
-	return computeQueryShape(text).knownFormats.map(({ format, span, confidence }) => ({
-		format,
-		span: { start: span.start, end: span.end, body: span.body },
-		confidence,
-	}))
-}
-
-/**
  * The hits `recognize` returns with `structure` and `postcode_legacy` composed.
  */
 export function recognizedHits(text: string): PlainHit[] {
@@ -57,26 +40,6 @@ export function recognizedHits(text: string): PlainHit[] {
 		span: { start: span.start, end: span.end, body: span.body },
 		confidence,
 	}))
-}
-
-/**
- * One input on which the two disagree.
- */
-export interface KnownFormatsDifference {
-	input: string
-	legacy: PlainHit[]
-	recognized: PlainHit[]
-}
-
-/**
- * Compares the two on `text`, and returns the difference or `null`.
- */
-export function compareKnownFormats(text: string): KnownFormatsDifference | null {
-	const legacy = legacyHits(text)
-	const recognized = recognizedHits(text)
-
-	// oxlint-disable-next-line no-restricted-properties -- the comparison needs a canonical text of plain data, and the values are not external input
-	return JSON.stringify(legacy) === JSON.stringify(recognized) ? null : { input: text, legacy, recognized }
 }
 
 const DIGITS = "0123456789"

@@ -12,8 +12,8 @@
  *   owner rather than restated, because a restated convention drops the formats added after it.
  */
 
-import type { CharRange } from "@mailwoman/query-shape"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import { isPostcodeFormat } from "@mailwoman/core/pipeline/types"
+import type { CharRange } from "@mailwoman/recognize/types"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"

@@ -9,9 +9,13 @@
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
-import { classifyTokens, foldInputClass } from "@mailwoman/query-shape/character-class"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import {
+	isPostcodeFormat,
+	type NormalizedInputLite,
+	type QueryShapeSegmentsView as QueryShapeLike,
+} from "@mailwoman/core/pipeline/types"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+
 /**
  * Maximum length for a bare venue or landmark query.
  */
@@ -305,7 +309,7 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 	if (shape.characterClass !== "alpha") {
 		if (!carriesPostcode) return 0
 
-		if (foldInputClass(classifyTokens(withoutPostcode)) !== "alpha") return 0
+		if (computeQueryShape(withoutPostcode).characterClass !== "alpha") return 0
 	}
 
 	// A locality and an administrative tail use at most two segments.
