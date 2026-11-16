@@ -198,7 +198,8 @@ impl Sampler {
 	/// Opens `split` of the configured corpus with a generator seeded as `random.Random(seed)`.
 	///
 	/// `row_limit` caps the rows the stream emits, counted before the astral skip, as the Python stream counted them.
-	/// A held-out split also uses it to draw rows from every file in proportion to its size.
+	/// A held-out split also uses it to draw rows from every file in proportion to its size, and the train split to
+	/// spread each source the epoch reads in part over that source's row groups.
 	pub fn open(config: &SamplerConfig, split: &str, seed: i128, row_limit: Option<u64>) -> Result<Self> {
 		Self::open_with(config, split, seed, row_limit, CancelToken::default(), None)
 	}
@@ -307,7 +308,7 @@ impl StreamParts {
 		};
 		let files = corpus_split_files(config, split)?;
 		let upstream = if train {
-			Upstream::Train(Mixture::open(files, &shared)?)
+			Upstream::Train(Mixture::open(files, &shared, row_limit)?)
 		} else {
 			Upstream::HeldOut(Box::new(HeldOut::new(files, split, row_limit.map(|n| n as usize))))
 		};

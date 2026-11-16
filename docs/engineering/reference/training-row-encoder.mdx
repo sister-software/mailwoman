@@ -17,11 +17,11 @@ street type, locality surface and code unit. The encoder is `packages/mtf/crates
 sampler `packages/mtf/crates/mtf-sampler` (#2874 Phase 3). The Rust trainer (`packages/trainer/crates/trainer-loop`)
 links both crates, and the TypeScript tools reach them through the `mtf-node` addon. Every sampling stage draws from
 one generator, `mtf-sampler/src/pyrandom.rs`, which reproduces CPython 3.12's `random.Random`, and each stage draws
-where the stage of the deleted Python loader drew, so a seed selects the rows that loader selected.
+where the stage of the deleted Python loader drew, so a seed selects the rows that loader selected, with one
+departure: the spread read of a row-limited train epoch (below), which the Python loader never had.
 
-The Rust encoder and the Rust sampler each reproduce the tensors of the deleted Python loader byte for byte (see
-Parity procedure). The encoded tensors are the model's inputs, so the Rust path moves no model behavior and needs no
-release verdict.
+The Rust encoder and the Rust sampler each reproduced the tensors of the deleted Python loader byte for byte (see
+Parity procedure) until the spread read changed which rows a row-limited train epoch draws. The encoder still does.
 
 ## What runs where
 
@@ -79,6 +79,26 @@ and the text. `open_with` adds a `CancelToken` and an `Observer` that receives `
 reopens the train split with `seed + epoch` for epochs 1, 2, … and skips the batches a resumed run already took. The
 character path encodes `char_ids` int64 `[B, S, W]`, and `attention_mask`, `labels` and an all-zero `input_ids` int64
 `[B, S]`.
+
+### The spread read of a source an epoch reads in part
+
+On the train split, `row_limit` is also the epoch length that sets each source's expected draws,
+`row_limit × weight / total weight`. A source expected to draw at least its row count, and every source of a stream
+with no limit, reads its pass file by file and row group by row group, as the Python loader did. A source expected
+to draw fewer, `fraction = expected / rows`, spreads its pass: its row groups across all its files are shuffled into
+one order, and each visit reads one group, takes `max(⌈fraction × group rows⌉, 256)` accepted rows from it, and moves
+to the next group. A sweep over every group covers the epoch's expected draws, so every group contributes about its
+share. Each group's row order comes from a generator seeded by the pass seed and the group's index, so a later
+sweep rebuilds the order, continues from the recorded position, and the pass still reads each row once.
+
+The spread read costs decode work and keeps the memory bound: a visit decodes a whole row group, as before, to take a few hundred
+rows from it, and one decoded group is held at a time. The 256-row floor caps the decoded rows per drawn row at
+about 195 for 50,000-row groups. Over the 1,000,000-row epoch of `v8.7.0-base-c6-90k-usgs-structures-s42` the
+estimate from the epoch's realized draws is 850 row-group visits per epoch against 180 file-by-file. At the 23 to 27 ms per row
+group `examples/read_profile.rs` measured, the 670 extra visits add about 17 s of decoding to an epoch of 7,813 steps. The plan
+draws from the epoch's generator (the group order, then one 64-bit pass seed) at the source's first row, so a seed
+still fixes every row, and a resumed run, which re-draws the batches it skips, reads the same rows. The audits'
+`RawRows` plans with the same limit, which `openRawRows` defaults to the config's `train_rows_per_epoch`.
 
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows

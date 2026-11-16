@@ -5,64 +5,218 @@
 //!
 //! The train mixture is stationary for the whole epoch: each row draws its source from a multinomial over the
 //! weights, and an exhausted source restarts with a fresh shuffled pass rather than leaving the mixture. The epoch
-//! ends once every source has completed at least one full pass. A held-out split has no mixture to steer, so its
+//! ends once every source has completed at least one full pass.
+//!
+//! A row-limited epoch reads most sources only in part, and a pass read file by file would draw that part from one
+//! row group. A source expected to draw fewer rows than it holds therefore spreads its pass: its row groups are
+//! shuffled across all its files, and each visit takes `max(fraction × group rows, MIN_VISIT_ROWS)` rows from one
+//! group before the next group is visited. One sweep over the groups covers the epoch's expected draws, so each group
+//! contributes about its share. A pass still reads each row once, so the source's restart and its zero-row refusal
+//! keep their meaning. A held-out split has no mixture to steer, so its
 //! files stream one after another in shuffled order, or, with a row limit, each contributes rows in proportion to
 //! its size.
 
 use crate::corpus_files::{file_source_counts, files_source_counts, CorpusFile};
 use crate::error::{Error, Result};
-use crate::file_rows::{FileRows, StartState};
+use crate::file_rows::{FileRows, RowGroupVisit, StartState};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
 use crate::row::Row;
 use crate::sampler::{Event, Shared};
 use std::sync::Arc;
 
-/// One source's files, read in a shuffled order, each through its own `FileRows`.
+/// The fewest accepted rows a spread pass takes from a row group per visit, unless the group holds fewer.
+///
+/// Each visit decodes a whole row group, so this floor caps a spread source's decoded rows per drawn row at the
+/// group size over it: about 195 for 50,000-row groups. A source whose proportional quota per group is larger
+/// visits every group once per epoch.
+pub const MIN_VISIT_ROWS: usize = 256;
+
+/// One row group of a spread pass: where it is, how many rows a visit takes, and how far the pass has read it.
+struct Unit {
+	file: usize,
+	group: usize,
+	take: usize,
+	position: usize,
+	exhausted: bool,
+}
+
+/// How a source's pass reads its rows.
+enum Plan {
+	/// File by file and, within a file, row group by row group, each in shuffled order: the read of a source the
+	/// epoch reads in full, or of an epoch with no row limit.
+	Sequential {
+		order: Vec<usize>,
+		position: usize,
+		current: Option<FileRows>,
+	},
+	/// Every row group of every file in one shuffled order, visited in sweeps that take a few rows from each, so an
+	/// epoch that reads part of the source draws from its row groups in proportion to their size.
+	Spread {
+		units: Vec<Unit>,
+		next: usize,
+		live: usize,
+		seed: i128,
+		current: Option<(usize, RowGroupVisit)>,
+	},
+}
+
+/// One source's files, read in a shuffled order.
 struct SourceRows {
 	source: Arc<str>,
 	files: Arc<Vec<CorpusFile>>,
-	order: Vec<usize>,
-	started: bool,
-	position: usize,
-	current: Option<FileRows>,
+	/// The share of the source's rows one epoch is expected to draw, when below 1.
+	fraction: Option<f64>,
+	plan: Option<Plan>,
 }
 
 impl SourceRows {
-	fn new(source: Arc<str>, files: Arc<Vec<CorpusFile>>) -> Self {
+	fn new(source: Arc<str>, files: Arc<Vec<CorpusFile>>, fraction: Option<f64>) -> Self {
 		Self {
 			source,
 			files,
-			order: Vec::new(),
-			started: false,
-			position: 0,
-			current: None,
+			fraction,
+			plan: None,
 		}
 	}
 
-	fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
-		if !self.started {
-			self.started = true;
-			self.order = (0..self.files.len()).collect();
-			rng.shuffle(&mut self.order);
+	/// The pass's plan, drawn on the source's first row: the file order, or the row-group order and the pass seed.
+	fn start(&self, rng: &mut PyRandom) -> Result<Plan> {
+		let Some(fraction) = self.fraction else {
+			let mut order: Vec<usize> = (0..self.files.len()).collect();
+			rng.shuffle(&mut order);
+			return Ok(Plan::Sequential {
+				order,
+				position: 0,
+				current: None,
+			});
+		};
+		let mut units = Vec::new();
+		for (index, file) in self.files.iter().enumerate() {
+			let parquet = ParquetFile::open(&file.path)?;
+			for group in 0..parquet.num_row_groups() {
+				let rows = parquet.row_group_rows(group);
+				let proportional = (fraction * rows as f64).ceil() as usize;
+				units.push(Unit {
+					file: index,
+					group,
+					take: proportional.max(MIN_VISIT_ROWS.min(rows)).max(1),
+					position: 0,
+					exhausted: false,
+				});
+			}
 		}
+		rng.shuffle(&mut units);
+		let seed = rng.getrandbits(64) as i128;
+		Ok(Plan::Spread {
+			live: units.len(),
+			units,
+			next: 0,
+			seed,
+			current: None,
+		})
+	}
+
+	fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
+		if self.plan.is_none() {
+			self.plan = Some(self.start(rng)?);
+		}
+		match self.plan.as_mut().expect("started above") {
+			Plan::Sequential {
+				order,
+				position,
+				current,
+			} => Self::next_sequential(&self.source, &self.files, order, position, current, rng, shared),
+			Plan::Spread {
+				units,
+				next,
+				live,
+				seed,
+				current,
+			} => Self::next_spread(&self.source, &self.files, units, next, live, *seed, current, rng, shared),
+		}
+	}
+
+	#[allow(clippy::too_many_arguments)]
+	fn next_spread(
+		source: &Arc<str>,
+		files: &[CorpusFile],
+		units: &mut [Unit],
+		next: &mut usize,
+		live: &mut usize,
+		seed: i128,
+		current: &mut Option<(usize, RowGroupVisit)>,
+		rng: &mut PyRandom,
+		shared: &Shared,
+	) -> Result<Option<Row>> {
 		loop {
-			if self.current.is_none() {
-				if self.position >= self.order.len() {
+			if current.is_none() {
+				if *live == 0 {
 					return Ok(None);
 				}
-				let file = &self.files[self.order[self.position]];
-				self.position += 1;
-				self.current = Some(FileRows::new(
+				shared.check_cancelled()?;
+				let at = *next;
+				*next = (at + 1) % units.len();
+				let unit = &units[at];
+				if unit.exhausted {
+					continue;
+				}
+				let file = &files[unit.file];
+				// Distinct units of one pass seed distinct generators, so each group's order is its own.
+				let order_seed = (seed << 32) | at as i128;
+				*current = Some((
+					at,
+					RowGroupVisit::open(
+						file.path.clone(),
+						source.clone(),
+						file.filter.as_deref(),
+						unit.group,
+						order_seed,
+						unit.position,
+						unit.take,
+					)?,
+				));
+			}
+			let (at, visit) = current.as_mut().expect("set above");
+			if let Some(row) = visit.next(rng, shared)? {
+				return Ok(Some(row));
+			}
+			let unit = &mut units[*at];
+			unit.position = visit.position();
+			if visit.exhausted() {
+				unit.exhausted = true;
+				*live -= 1;
+			}
+			*current = None;
+		}
+	}
+
+	fn next_sequential(
+		source: &Arc<str>,
+		files: &[CorpusFile],
+		order: &[usize],
+		position: &mut usize,
+		current: &mut Option<FileRows>,
+		rng: &mut PyRandom,
+		shared: &Shared,
+	) -> Result<Option<Row>> {
+		loop {
+			if current.is_none() {
+				if *position >= order.len() {
+					return Ok(None);
+				}
+				let file = &files[order[*position]];
+				*position += 1;
+				*current = Some(FileRows::new(
 					file.path.clone(),
-					Some(self.source.clone()),
+					Some(source.clone()),
 					file.filter.clone(),
 					None,
 				));
 			}
-			match self.current.as_mut().expect("set above").next(rng, shared)? {
+			match current.as_mut().expect("set above").next(rng, shared)? {
 				Some(row) => return Ok(Some(row)),
-				None => self.current = None,
+				None => *current = None,
 			}
 		}
 	}
@@ -81,12 +235,21 @@ pub struct Mixture {
 
 impl Mixture {
 	/// Indexes the split's files by source and applies the configured weights.
-	pub fn open(files: Vec<CorpusFile>, shared: &Shared) -> Result<Self> {
+	///
+	/// `epoch_rows`, the epoch's row limit, sets each source's expected draws: `epoch_rows × weight / total`. A source
+	/// expected to draw fewer rows than it holds reads its pass spread over its row groups; every other source, and
+	/// every source of an epoch with no limit, reads its pass file by file.
+	pub fn open(files: Vec<CorpusFile>, shared: &Shared, epoch_rows: Option<u64>) -> Result<Self> {
 		let mut by_source: Vec<(String, Vec<CorpusFile>)> = Vec::new();
+		let mut source_rows: Vec<(String, u64)> = Vec::new();
 		for (file, counted) in files.iter().zip(files_source_counts(&files)) {
 			let counted =
 				counted.map_err(|e| Error::Input(format!("cannot index {} by source: {e}", file.path.display())))?;
-			for (source, _) in counted {
+			for (source, rows) in counted {
+				match source_rows.iter_mut().find(|(s, _)| *s == source) {
+					Some((_, total)) => *total += rows,
+					None => source_rows.push((source.clone(), rows)),
+				}
 				match by_source.iter_mut().find(|(s, _)| *s == source) {
 					Some((_, listed)) => listed.push(file.clone()),
 					None => by_source.push((source, vec![file.clone()])),
@@ -147,10 +310,20 @@ impl Mixture {
 			cumulative.push(total);
 		}
 		let n = by_source.len();
+		let fraction = |source: &str, weight: f64| -> Option<f64> {
+			let limit = epoch_rows? as f64;
+			let rows = source_rows.iter().find(|(s, _)| s == source).map(|&(_, n)| n)?;
+			let share = limit * weight / total / rows as f64;
+			(rows > 0 && share < 1.0).then_some(share)
+		};
 		Ok(Self {
 			sources: by_source
 				.into_iter()
-				.map(|(s, f)| SourceRows::new(Arc::from(s.as_str()), Arc::new(f)))
+				.zip(&weights)
+				.map(|((s, f), &w)| {
+					let share = fraction(&s, w);
+					SourceRows::new(Arc::from(s.as_str()), Arc::new(f), share)
+				})
 				.collect(),
 			cumulative,
 			total,
@@ -204,8 +377,8 @@ impl Mixture {
 					passes: self.passes[chosen],
 				});
 				self.pass_rows[chosen] = 0;
-				let files = self.sources[chosen].files.clone();
-				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files);
+				let (files, fraction) = (self.sources[chosen].files.clone(), self.sources[chosen].fraction);
+				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files, fraction);
 				self.sources[chosen].next(rng, shared)?.ok_or_else(|| {
 					Error::Input(format!(
 						"source {source:?} yielded rows in an earlier pass and none in its restarted pass"

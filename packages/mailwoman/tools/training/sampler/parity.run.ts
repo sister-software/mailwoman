@@ -12,6 +12,10 @@
  *   the tensor set with its dtypes and shapes, and the SHA-256 of every row of every
  *   tensor with the record's, and prints the first difference it finds.
  *
+ *   `capture --name <record> --as <new record>` runs the same comparison and writes the draw as a new
+ *   record beside the original, with the original's config, overrides, split, seed and row counts.
+ *   It refuses a name that exists, so an original record is never replaced.
+ *
  *   `stream --config <yaml> --rows <n>` reads `n` rows of a split a chunk at a time,
  *   counting rows only, and prints the resident set every `--every` rows and the peak,
  *   so a reader can see whether memory grows with the rows read.
@@ -22,6 +26,7 @@
  *
  *   Usage:
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k [--report <json>]
+ *     node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name c6-train-2k --as c6-train-2k-spread
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts stream --config <yaml> --rows 100000 \
  *       [--split train] [--seed 43] [--set data.key=value]
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts profile --config <yaml> [--batches 40] \
@@ -30,12 +35,16 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { gitHead } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { countInto } from "@mailwoman/core/stats"
 import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
+import { sortedByKey } from "../audits/receipt.ts"
 import { applyOverrides, loadTrainingConfig, recordedConfigPath, rerootToHost } from "../config.ts"
 import {
 	createConfigCharEncoder,
@@ -69,6 +78,7 @@ const { values, positionals } = parseArguments({
 	allowPositionals: true,
 	options: {
 		name: { type: "string" },
+		as: { type: "string" },
 		report: { type: "string" },
 		config: { type: "string" },
 		split: { type: "string", default: "train" },
@@ -143,9 +153,17 @@ function rowDigests(data: BigInt64Array | Float32Array, rows: number): string[] 
 	)
 }
 
-async function verify(name: string, reportPath: string | undefined): Promise<boolean> {
+/**
+ * Re-draws a record and compares it with the record.
+ *
+ * With `captureAs`, it also writes the draw as a new record under that name, beside the original.
+ */
+async function verify(name: string, reportPath: string | undefined, captureAs?: string): Promise<boolean> {
 	const directory = dataRootPath("audits", "encoder-parity", name)
-	const record = await readLocalJSONFile<ParityRecord>(directory("record.json"))
+	const record = await readLocalJSONFile<ParityRecord & Record<string, unknown>>(directory("record.json"))
+	const captured = captureAs ? dataRootPath("audits", "encoder-parity", captureAs, "record.json") : null
+
+	if (captured && (await pathExists(captured))) throw new Error(`${captured} exists; a capture never replaces a record`)
 
 	if (record.format !== 1) throw new Error(`record format ${record.format} is not 1`)
 
@@ -178,12 +196,22 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 	const identities: string[] = []
 	const digests: Record<string, string[]> = {}
 	const shapes: Record<string, { dtype: string; row_shape: number[] }> = {}
+	const countries = new Map<string, number>()
+	let withSpans = 0
 
 	for (const rows of sampledBatches(sampler, record.batch_size)) {
 		const batch = encode(rows)
 
 		sizes.push(rows.length)
 		identities.push(...rows.map(rowIdentity))
+
+		for (const row of rows) {
+			countInto(countries, row.country ?? "null")
+
+			if (row.spanStarts != null) {
+				withSpans++
+			}
+		}
 
 		for (const tensor of batchTensors(batch)) {
 			shapes[tensor.name] ??= { dtype: tensor.dtype, row_shape: tensor.rowShape }
@@ -255,6 +283,32 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 	}
 
 	console.log(prettyJSON(report, false, 1))
+
+	if (captured) {
+		// The draw replaces every field verify compares.
+		// The per-channel nonzero counts are left out, since verify reads none of them
+		// and this tool doesn't compute them.
+		const { channels: _channels, ...kept } = record
+
+		await writeLocalJSONFile(
+			{
+				...kept,
+				source_revision: (await gitHead()).trim(),
+				recaptured_from: name,
+				runtime: { node: process.version, sampler: "mtf-sampler through mtf-node" },
+				emitted_rows: emitted,
+				batch_sizes: sizes,
+				tensors: shapes,
+				rows_by_country: Object.fromEntries(sortedByKey(countries)),
+				rows_with_spans: withSpans,
+				row_identity: identities,
+				digests,
+			},
+			captured
+		)
+
+		console.log(`captured ${captured}`)
+	}
 
 	return report.equal
 }
@@ -385,8 +439,13 @@ if (command === "profile") {
 	if (!(await verify(values.name, values.report))) {
 		process.exitCode = 1
 	}
+} else if (command === "capture") {
+	if (!values.name || !values.as) throw new Error("capture needs --name <record> --as <new record>")
+
+	// A capture records what the current sampler draws, so it succeeds whether or not the original still verifies.
+	await verify(values.name, values.report, values.as)
 } else if (command === "stream") {
 	await stream()
 } else {
-	throw new Error("expected the command verify, stream or profile")
+	throw new Error("expected the command verify, capture, stream or profile")
 }

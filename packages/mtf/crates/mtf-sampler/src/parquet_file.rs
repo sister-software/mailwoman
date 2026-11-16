@@ -37,6 +37,11 @@ impl ParquetFile {
 		self.meta.metadata().num_row_groups()
 	}
 
+	/// The row count the footer records for one row group.
+	pub fn row_group_rows(&self, row_group: usize) -> usize {
+		self.meta.metadata().row_group(row_group).num_rows() as usize
+	}
+
 	/// The row count the footer records.
 	pub fn num_rows(&self) -> usize {
 		self.meta.metadata().file_metadata().num_rows() as usize

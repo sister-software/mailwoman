@@ -329,6 +329,11 @@ export function openSampler(
 
 /**
  * Opens a split's raw stream for a training config.
+ *
+ * A train stream draws without end and reads its row limit only as the epoch length that
+ * plans how each source the epoch reads in part spreads over its row groups.
+ * It defaults to the config's `train_rows_per_epoch`, the limit the trainer opens
+ * each epoch with, so an audit draws as the trainer does.
  */
 export function openRawRows(
 	mtf: MTFNode,
@@ -338,8 +343,12 @@ export function openRawRows(
 	options: SamplerConfigOptions & NativeStreamOptions = {}
 ): NativeRawRows {
 	const { rowLimit, events, ...document } = options
+	const epochRows = split === "train" ? config.data.train_rows_per_epoch : null
 
-	return new mtf.RawRows(samplerConfigJSON(config, document), split, seed, { rowLimit, events })
+	return new mtf.RawRows(samplerConfigJSON(config, document), split, seed, {
+		rowLimit: rowLimit ?? epochRows ?? undefined,
+		events,
+	})
 }
 
 /**

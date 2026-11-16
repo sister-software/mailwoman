@@ -9,6 +9,9 @@
 //! on, one of its labels names an active tag. Every draw is made in the order the Python loader made it: the row
 //! group order when the file is first read, the row order after each row group is read, and one acceptance draw per
 //! row whose country weighs less than the heaviest country.
+//!
+//! [`RowGroupVisit`] reads one row group for a source the epoch reads in part: a few rows per visit, in an order
+//! the group's own seed fixes, so the pass that visits it again continues where the last visit stopped.
 
 use crate::columns::{column, IntListColumn, StrColumn, StrListColumn};
 use crate::corpus_files::RowFilter;
@@ -88,6 +91,136 @@ impl StartState {
 	}
 }
 
+/// Whether a file stores the span triple, refusing a file that stores part of it.
+fn span_schema(file: &ParquetFile, path: &std::path::Path) -> Result<bool> {
+	let present: Vec<&str> = SPAN_COLUMNS.iter().copied().filter(|c| file.has_column(c)).collect();
+	if !present.is_empty() && present.len() != SPAN_COLUMNS.len() {
+		let missing: Vec<&str> = SPAN_COLUMNS.iter().copied().filter(|c| !file.has_column(c)).collect();
+		return Err(Error::Row(format!(
+			"corrupt parquet file {}: carries span columns {present:?} but is missing {missing:?} — the #519 \
+			 triple is all-or-none per file",
+			path.display()
+		)));
+	}
+	Ok(!present.is_empty())
+}
+
+/// Reads one row group, with its row order shuffled by `shuffle` once the group is read.
+fn read_row_group(
+	file: &ParquetFile,
+	path: &std::path::Path,
+	has_spans: bool,
+	row_filter: Option<&RowFilter>,
+	index: usize,
+	shuffle: impl FnOnce(&mut [usize]),
+) -> Result<RowGroup> {
+	let mut columns: Vec<&str> = REQUIRED_COLUMNS.to_vec();
+	if has_spans {
+		columns.extend(SPAN_COLUMNS);
+	}
+	let has_source_id = row_filter.is_some() || file.has_column("source_id");
+	if has_source_id {
+		columns.push("source_id");
+	}
+	let batch = file.read_row_group(index, &columns)?;
+	let get = |name: &str| column(&batch, name, path);
+	let source_id = if has_source_id {
+		Some(StrColumn::new(get("source_id")?, "source_id")?)
+	} else {
+		None
+	};
+	let admitted = match (row_filter, &source_id) {
+		(Some(filter), Some(ids)) => Some((0..ids.len()).map(|i| filter.admits(ids.get(i))).collect()),
+		_ => None,
+	};
+	let spans = if has_spans {
+		Some((
+			IntListColumn::new(get("span_starts")?, "span_starts")?,
+			IntListColumn::new(get("span_ends")?, "span_ends")?,
+			StrListColumn::new(get("span_tags")?, "span_tags")?,
+		))
+	} else {
+		None
+	};
+	let mut order: Vec<usize> = (0..batch.num_rows()).collect();
+	shuffle(&mut order);
+	Ok(RowGroup {
+		index,
+		raw: StrColumn::new(get("raw")?, "raw")?,
+		tokens: StrListColumn::new(get("tokens")?, "tokens")?,
+		labels: StrListColumn::new(get("labels")?, "labels")?,
+		country: StrColumn::new(get("country")?, "country")?,
+		source: StrColumn::new(get("source")?, "source")?,
+		source_id,
+		spans,
+		admitted,
+		order,
+		position: 0,
+		taken: 0,
+	})
+}
+
+/// One visit to a row group that a spread pass reads a few rows at a time.
+///
+/// The group's row order comes from its own generator, seeded by the pass, so every visit to the group rebuilds the
+/// same order and continues from where the previous visit stopped. A pass therefore reads each row once while holding
+/// no more than one decoded row group.
+pub struct RowGroupVisit {
+	path: PathBuf,
+	expected_source: Arc<str>,
+	group: RowGroup,
+	limit: usize,
+}
+
+impl RowGroupVisit {
+	/// Reads row group `index` of `path`, positioned at `position` of the order `order_seed` shuffles, to yield at
+	/// most `limit` accepted rows.
+	pub fn open(
+		path: PathBuf,
+		expected_source: Arc<str>,
+		row_filter: Option<&RowFilter>,
+		index: usize,
+		order_seed: i128,
+		position: usize,
+		limit: usize,
+	) -> Result<Self> {
+		let file = ParquetFile::open(&path)?;
+		let has_spans = span_schema(&file, &path)?;
+		let mut group = read_row_group(&file, &path, has_spans, row_filter, index, |order| {
+			PyRandom::new(crate::pyrandom::Seed::Int(order_seed)).shuffle(order)
+		})?;
+		group.position = position.min(group.order.len());
+		Ok(Self {
+			path,
+			expected_source,
+			group,
+			limit,
+		})
+	}
+
+	/// The next accepted row, or `None` once the visit took its limit or the group is exhausted.
+	pub fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
+		FileRows::next_in_group(
+			&mut self.group,
+			&self.path,
+			Some(&*self.expected_source),
+			Some(self.limit),
+			rng,
+			shared,
+		)
+	}
+
+	/// How far into the group's order the visit has read.
+	pub fn position(&self) -> usize {
+		self.group.position
+	}
+
+	/// Whether the visit has read every row of the group.
+	pub fn exhausted(&self) -> bool {
+		self.group.position >= self.group.order.len()
+	}
+}
+
 impl FileRows {
 	pub fn new(
 		path: PathBuf,
@@ -111,16 +244,7 @@ impl FileRows {
 
 	fn open(&mut self, rng: &mut PyRandom) -> Result<()> {
 		let file = ParquetFile::open(&self.path)?;
-		let present: Vec<&str> = SPAN_COLUMNS.iter().copied().filter(|c| file.has_column(c)).collect();
-		if !present.is_empty() && present.len() != SPAN_COLUMNS.len() {
-			let missing: Vec<&str> = SPAN_COLUMNS.iter().copied().filter(|c| !file.has_column(c)).collect();
-			return Err(Error::Row(format!(
-				"corrupt parquet file {}: carries span columns {present:?} but is missing {missing:?} — the #519 \
-				 triple is all-or-none per file",
-				self.path.display()
-			)));
-		}
-		self.has_spans = !present.is_empty();
+		self.has_spans = span_schema(&file, &self.path)?;
 		self.row_groups = (0..file.num_row_groups()).collect();
 		rng.shuffle(&mut self.row_groups);
 		self.file = Some(file);
@@ -129,50 +253,8 @@ impl FileRows {
 
 	fn read_group(&mut self, index: usize, rng: &mut PyRandom) -> Result<RowGroup> {
 		let file = self.file.as_ref().expect("started");
-		let mut columns: Vec<&str> = REQUIRED_COLUMNS.to_vec();
-		if self.has_spans {
-			columns.extend(SPAN_COLUMNS);
-		}
-		let has_source_id = self.row_filter.is_some() || file.has_column("source_id");
-		if has_source_id {
-			columns.push("source_id");
-		}
-		let batch = file.read_row_group(index, &columns)?;
-		let path = &self.path;
-		let get = |name: &str| column(&batch, name, path);
-		let source_id = if has_source_id {
-			Some(StrColumn::new(get("source_id")?, "source_id")?)
-		} else {
-			None
-		};
-		let admitted = match (&self.row_filter, &source_id) {
-			(Some(filter), Some(ids)) => Some((0..ids.len()).map(|i| filter.admits(ids.get(i))).collect()),
-			_ => None,
-		};
-		let spans = if self.has_spans {
-			Some((
-				IntListColumn::new(get("span_starts")?, "span_starts")?,
-				IntListColumn::new(get("span_ends")?, "span_ends")?,
-				StrListColumn::new(get("span_tags")?, "span_tags")?,
-			))
-		} else {
-			None
-		};
-		let mut order: Vec<usize> = (0..batch.num_rows()).collect();
-		rng.shuffle(&mut order);
-		Ok(RowGroup {
-			index,
-			raw: StrColumn::new(get("raw")?, "raw")?,
-			tokens: StrListColumn::new(get("tokens")?, "tokens")?,
-			labels: StrListColumn::new(get("labels")?, "labels")?,
-			country: StrColumn::new(get("country")?, "country")?,
-			source: StrColumn::new(get("source")?, "source")?,
-			source_id,
-			spans,
-			admitted,
-			order,
-			position: 0,
-			taken: 0,
+		read_row_group(file, &self.path, self.has_spans, self.row_filter.as_deref(), index, |order| {
+			rng.shuffle(order)
 		})
 	}
 
