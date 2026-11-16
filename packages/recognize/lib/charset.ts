@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   LEGACY-QUERY-SHAPE: the hand-written ranges of this module, and the `charset.rs`
+ *   tables that compile into the engine, belong to the `legacy` generation.
+ *
+ *   Delete them when the first model that declares `requires.query_shape: "postal"` ships,
+ *   keeping the class ranges the `structure` grammar needs.
+ *   The `postal` generation reads `script-run.ts` instead.
+ *
  *   Codepoint, token and script classifiers in plain TypeScript.
  *
  *   The `structure` family classifies a whole text in one engine call.

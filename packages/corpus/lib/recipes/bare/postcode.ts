@@ -16,6 +16,7 @@ import { isPostcodeFormat } from "@mailwoman/core/pipeline/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
@@ -79,7 +80,7 @@ const SOURCES: PostcodeSource[] = [
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
 	// `NNN NN`, written with the space.
-	// The four countries share the shape, so `computeQueryShape` labels all four the same.
+	// The four countries share the shape, so the postal family reports all four on one hit.
 	["CZ", { locale: "cs-CZ", render: spacedThree }],
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
@@ -148,13 +149,14 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 }
 
 /**
- * Whether the legacy-formats table reads this surface as a postcode across its whole span.
+ * Whether the `postal` family reads this surface as a postcode across its whole span.
  *
  * A surface the detector doesn't recognize would train the model on a string
  * the query-shape prior cannot then support.
+ * The recipe holds no model card, so it reads the `postal` generation.
  */
 export function detectedAsPostcode(surface: string): boolean {
-	return computeQueryShape(surface).knownFormats.some(
+	return computeQueryShape(surface, QueryShapeGeneration.Postal).knownFormats.some(
 		(hit) => isPostcodeFormat(hit.format) && hit.span.start === 0 && hit.span.end === surface.length
 	)
 }
@@ -292,12 +294,12 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			}
 		}
 
-		// A rendered surface the detector refuses is an interface failure: every form here is one
-		// the legacy-formats table declares a pattern for, so the count is expected to be zero.
+		// A rendered surface the detector refuses is an interface failure: every form here is
+		// one the postal family declares a syntax for, so the count is expected to be zero.
 		if (unrecognized > 0) {
 			throw new Error(
 				`${unrecognized} rendered surfaces were not read as a postcode by computeQueryShape — the ` +
-					"WRITTEN_FORMS table and the legacy-formats table of @mailwoman/postcode disagree. Reconcile them before building."
+					"WRITTEN_FORMS table and the postal family of @mailwoman/postcode disagree. Reconcile them before building."
 			)
 		}
 

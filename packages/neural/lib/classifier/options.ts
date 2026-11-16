@@ -15,6 +15,7 @@ import type {
 	VenueHeadPriorOpts,
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
+import type { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import { SYSTEM_CODES } from "@mailwoman/postcode/systems"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"
@@ -135,6 +136,12 @@ export interface NeuralAddressClassifierConfig {
 	 * `requires.anchor.span_mode` and defaulting to `alnum-run`.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
+
+	/**
+	 * The generation of the query-shape rules, read from the model card's
+	 * `requires.query_shape` and defaulting to `legacy`.
+	 */
+	queryShapeGeneration?: QueryShapeGeneration
 
 	/**
 	 * The gazetteer lexicon for a model trained with the `gazetteer_features` and

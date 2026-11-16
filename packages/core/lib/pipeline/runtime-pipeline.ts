@@ -321,7 +321,7 @@ export async function runPipeline(
 
 	throwIfAborted(opts)
 	const tQs = performance.now()
-	const queryShape = computeQueryShape(normalized, { locale: opts?.locale })
+	const queryShape = computeQueryShape(normalized)
 	timing["query-shape"] = performance.now() - tQs
 
 	throwIfAborted(opts)

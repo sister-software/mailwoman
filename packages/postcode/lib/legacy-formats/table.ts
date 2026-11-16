@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   LEGACY-QUERY-SHAPE: delete this table with the `postcode_legacy` family
+ *   when the first model that declares `requires.query_shape: "postal"` ships.
+ *
  *   The structural postcode formats that the pipeline reports as `knownFormats`,
  *   and the PO box leaders it recognizes, as data.
  *
@@ -22,6 +25,8 @@
  *   The order of the rows is behavior.
  *   A token's hits come out in this order, and `locale-hint` takes the first unambiguous hit.
  */
+
+import type { POBoxLeaders } from "@mailwoman/recognize/po-box"
 
 /**
  * One structural postcode format.
@@ -142,17 +147,6 @@ export const LEGACY_FORMATS = [
 export const PO_BOX = { format: "po_box", confidence: 0.85 } as const
 
 /**
- * The tokens that lead a PO box in one language, compared without regard to ASCII case.
- */
-export interface PoBoxLeaders {
-	/**
-	 * The language the leaders belong to, as a BCP 47 language subtag.
-	 */
-	readonly language: string
-	readonly leaders: readonly string[]
-}
-
-/**
  * The PO box leaders of each language.
  * `bp` is French, and `casilla` and `apartado` are Spanish.
  */
@@ -160,4 +154,4 @@ export const PO_BOX_LEADERS = [
 	{ language: "en", leaders: ["po", "p.o.", "p.o", "box"] },
 	{ language: "fr", leaders: ["bp", "b.p.", "b.p"] },
 	{ language: "es", leaders: ["casilla", "apartado"] },
-] as const satisfies readonly PoBoxLeaders[]
+] as const satisfies readonly POBoxLeaders[]

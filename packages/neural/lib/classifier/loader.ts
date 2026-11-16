@@ -299,6 +299,7 @@ export async function loadClassifierFromWeights(
 		endTransitions: crf?.endTransitions,
 		...(semiCRFGrammar ? { semiCRFGrammar } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup, postcodeAnchorSpanMode: declared?.anchor?.span_mode } : {}),
+		...(declared?.query_shape ? { queryShapeGeneration: declared.query_shape } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),

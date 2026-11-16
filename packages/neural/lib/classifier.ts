@@ -29,6 +29,7 @@ import {
 	type WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
@@ -182,6 +183,15 @@ export class NeuralAddressClassifier {
 	 */
 	get encoder(): "sentencepiece" | "char" {
 		return this.cfg.charEncoder ? "char" : "sentencepiece"
+	}
+
+	/**
+	 * The generation of the query-shape rules the model's card declares, `legacy` when it declares none.
+	 *
+	 * Callers pass it to `computeQueryShape`.
+	 */
+	get queryShapeGeneration(): QueryShapeGeneration {
+		return this.cfg.queryShapeGeneration ?? QueryShapeGeneration.Legacy
 	}
 
 	constructor(cfg: NeuralAddressClassifierConfig) {

@@ -13,6 +13,8 @@
  *   which graph reads a Han line while every existing router test still passed.
  */
 
+import { isScriptCode } from "@mailwoman/registry/iso15924/codes"
+import type { BCP47 } from "@mailwoman/registry/types"
 import { describe, expect, it } from "vitest"
 
 import { scriptFamilyBase } from "#char-encoder"
@@ -28,6 +30,15 @@ import {
 	routeFamilyForText,
 	RouteSource,
 } from "#index"
+
+/**
+ * A registry script code, or a thrown error for a string the registry lacks.
+ */
+function scriptCode(code: string): BCP47.ScriptCode {
+	if (!isScriptCode(code)) throw new TypeError(`${code} is not a script code`)
+
+	return code
+}
 
 describe("the family registry", () => {
 	it("gives every locale exactly one family", () => {
@@ -99,14 +110,14 @@ describe("the family registry", () => {
 		expect(familyForLocale("ja-jp")?.family).toBe("cjk")
 		expect(familyByID("cjk")?.encoder).toBe(FamilyEncoder.Char)
 		expect(familyByID("en-us")?.encoder).toBe(FamilyEncoder.SentencePiece)
-		expect(familyForScript("Hang")?.family).toBe("cjk")
+		expect(familyForScript(scriptCode("Hang"))?.family).toBe("cjk")
 	})
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
 		// A Latin-family interpretation of an undeclared locale would decode its rows
 		// on a graph no family declares for them.
 		expect(familyForLocale("pt-br")).toBeNull()
-		expect(familyForScript("Cyrl")).toBeNull()
+		expect(familyForScript(scriptCode("Cyrl"))).toBeNull()
 	})
 
 	it("serves a language's unpackaged locales, so ko-KR and zh-TW reach the character family", () => {
@@ -142,8 +153,13 @@ describe("familyFallbackFor", () => {
 	})
 
 	it("routes no Latin script, because the Latin family declares no predicate", () => {
-		expect(FAMILY_SCRIPTS.has("Latn")).toBe(false)
+		expect(FAMILY_SCRIPTS.has(scriptCode("Latn"))).toBe(false)
 		expect([...FAMILY_SCRIPTS].toSorted()).toEqual(["Hang", "Hani", "Hira", "Kana"])
+
+		// The declaration holds the codes unchecked, because the registry table stays out of the bundle.
+		for (const script of FAMILY_SCRIPTS) {
+			expect(isScriptCode(script)).toBe(true)
+		}
 	})
 })
 

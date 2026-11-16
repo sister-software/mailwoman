@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   LEGACY-QUERY-SHAPE: delete this module, its generated artifact and `legacy-formats/table.ts`
+ *   when the first model that declares `requires.query_shape: "postal"` ships.
+ *
  *   The `postcode_legacy` family: the postcode and PO box formats `@mailwoman/query-shape`
  *   reports as `knownFormats`, as a family of `@mailwoman/recognize`.
  *

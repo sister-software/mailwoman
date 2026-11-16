@@ -3,6 +3,7 @@
 
 import type { QueryIntentMarker, QueryKindResult } from "@mailwoman/core/pipeline"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 
 const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category", "near_me"])
 
@@ -14,9 +15,13 @@ export async function thingQueryRefusalMarkers(
 		input: { raw: string; normalized: string },
 		shape: ReturnType<typeof computeQueryShape>
 	) => Promise<QueryKindResult>,
-	parseInput: string
+	parseInput: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
 ): Promise<QueryIntentMarker[] | null> {
-	const verdict = await classifyKind({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
+	const verdict = await classifyKind(
+		{ raw: parseInput, normalized: parseInput },
+		computeQueryShape(parseInput, generation)
+	)
 
 	if (!REFUSAL_KINDS.has(verdict.kind)) return null
 

@@ -18,6 +18,7 @@
 		{ "path": "../locale-hint" },
 		{ "path": "../mtf" },
 		{ "path": "../normalize" },
-		{ "path": "../recognize" }
+		{ "path": "../recognize" },
+		{ "path": "../registry" }
 	]
 }

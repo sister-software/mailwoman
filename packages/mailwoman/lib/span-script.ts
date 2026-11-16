@@ -14,7 +14,9 @@
 
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import { scriptForRange } from "@mailwoman/recognize/charset"
+import { rangeScript } from "@mailwoman/recognize/script-run"
 
 /**
  * Write `script` onto every node of `tree`, in place.
@@ -29,10 +31,16 @@ import { scriptForRange } from "@mailwoman/recognize/charset"
  * to the registry's script code would be a cast asserting what this call can compute.
  * It is one engine call over an address-length string, next to a model inference.
  */
-export function stampSpanScripts(tree: AddressTree, text: string): void {
-	const { tokenClasses } = computeQueryShape(text)
+export function stampSpanScripts(
+	tree: AddressTree,
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): void {
+	const { tokenClasses } = computeQueryShape(text, generation)
+
+	const scriptOfSpan = generation === QueryShapeGeneration.Postal ? rangeScript : scriptForRange
 
 	for (const node of walkNodes(tree.roots)) {
-		node.script = scriptForRange(tokenClasses, node.start, node.end)
+		node.script = scriptOfSpan(tokenClasses, node.start, node.end)
 	}
 }

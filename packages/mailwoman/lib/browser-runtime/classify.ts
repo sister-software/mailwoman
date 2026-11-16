@@ -203,15 +203,18 @@ export async function runClassifyStage(
 	deps: ClassifyStageDeps,
 	hooks: ClassifyStageHooks = {}
 ): Promise<ClassifyStageResult> {
-	const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
-		import("@mailwoman/postcode/recognize/query-shape"),
-		import("@mailwoman/kind-classifier"),
-		import("@mailwoman/core/pipeline"),
-		import("@mailwoman/phrase-grouper"),
-	])
+	const [{ computeQueryShape }, { queryShapeGenerationOf }, { classifyKindSync }, { runPipeline }, { groupPhrases }] =
+		await Promise.all([
+			import("@mailwoman/postcode/recognize/query-shape"),
+			import("@mailwoman/postcode/recognize/rule-generation"),
+			import("@mailwoman/kind-classifier"),
+			import("@mailwoman/core/pipeline"),
+			import("@mailwoman/phrase-grouper"),
+		])
 
+	const generation = queryShapeGenerationOf(deps.classifier)
 	const tStart = performance.now()
-	const queryShape = computeQueryShape(input)
+	const queryShape = computeQueryShape(input, generation)
 	const kindResult = classifyKindSync({ raw: input, normalized: input }, queryShape)
 	const tShape = performance.now()
 
@@ -228,7 +231,7 @@ export async function runClassifyStage(
 	const { tree } = await runPipeline(
 		input,
 		{
-			computeQueryShape,
+			computeQueryShape: (text) => computeQueryShape(text, generation),
 			groupPhrases,
 			classifier: deps.classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],

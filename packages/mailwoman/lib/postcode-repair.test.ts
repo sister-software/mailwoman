@@ -35,6 +35,19 @@ describe("repairPostcodeContradiction (#1735)", () => {
 		expect(t.roots[0]!.metadata).toMatchObject({ repaired: "postcode_shape_contradiction" })
 	})
 
+	it("repairs the same misread under the postal generation, from the form of the hit", () => {
+		const t = tree("KT2 6AB", [node("street", "KT2", 0, 3), node("house_number", "6AB", 4, 7)])
+
+		expect(repairPostcodeContradiction(t, computeQueryShape("KT2 6AB", "postal"))).toBe(true)
+		expect(tags(t)).toEqual(["postcode:KT2 6AB"])
+	})
+
+	it("leaves a digit-led form alone under the postal generation, because it can be a house number and a direction", () => {
+		const t = tree("1012 AB", [node("house_number", "1012", 0, 4), node("street", "AB", 5, 7)])
+
+		expect(repairPostcodeContradiction(t, computeQueryShape("1012 AB", "postal"))).toBe(false)
+	})
+
 	it("repairs the suffixed form and leaves the country node alone", () => {
 		const t = tree("RM10 8AB, UK", [
 			node("street", "RM10", 0, 4),

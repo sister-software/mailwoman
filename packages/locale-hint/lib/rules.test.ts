@@ -112,6 +112,27 @@ test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit"
 	})
 })
 
+test("scoreByPostcode: the postal generation reads the locale and the confidence of the best postcode hit", () => {
+	const hit = (confidence: number, locale: string | null, form: "alnum" | "numeric" | "designated") => ({
+		...fmt("postcode", confidence),
+		locale,
+		form,
+	})
+
+	const postal = (knownFormats: QueryShapeLike["knownFormats"]) =>
+		scoreByPostcode(shape({ generation: "postal", knownFormats }))
+
+	expect(postal([hit(0.55, "en-US", "numeric"), hit(0.95, "en-GB", "alnum")])).toEqual({
+		locale: "en-GB",
+		confidence: 0.95,
+		reason: "postcode form=alnum",
+	})
+
+	expect(postal([hit(0.55, "en-US", "numeric")])).toMatchObject({ locale: "en-US", confidence: 0.55 })
+	expect(postal([{ ...fmt("po_box", 0.85), locale: null }])).toBeNull()
+	expect(postal([])).toBeNull()
+})
+
 test("scoreFallback: always en-US at low confidence (check is never null)", () => {
 	expect(scoreFallback(shape())).toEqual({ locale: "en-US", confidence: 0.3, reason: "fallback" })
 

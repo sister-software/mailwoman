@@ -13,6 +13,7 @@
  */
 
 import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import type { BCP47 } from "@mailwoman/registry/types"
 
 /**
  * How a family's graph reads its input.
@@ -129,7 +130,7 @@ export interface WeightsFamily {
 	 *
 	 * A family without routing scripts is reachable only through the caller's locale.
 	 */
-	routingScripts?: ReadonlySet<string>
+	routingScripts?: ReadonlySet<BCP47.ScriptCode>
 	/**
 	 * Locales that would route to this family under a locale-based rule.
 	 *
@@ -165,7 +166,9 @@ const CJK_FAMILY: WeightsFamily = {
 	encoder: FamilyEncoder.Char,
 	locales: ["cjk", "ja-jp", "zh-cn"],
 	languages: ["ja", "zh", "ko"],
-	routingScripts: new Set(["Hani", "Kana", "Hira", "Hang"]),
+	// `families.test.ts` checks each of these is a registry script code,
+	// because the registry table stays out of this bundle.
+	routingScripts: new Set(["Hani", "Kana", "Hira", "Hang"] as BCP47.ScriptCode[]),
 }
 
 /**
@@ -222,14 +225,14 @@ export function familyFallbackFor(locale: string): string | null {
 /**
  * Every script that routes to some family, across all families.
  */
-export const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(
+export const FAMILY_SCRIPTS: ReadonlySet<BCP47.ScriptCode> = new Set(
 	FAMILIES.flatMap((entry) => [...(entry.routingScripts ?? [])])
 )
 
 /**
  * Returns the family a script routes to, or `null`.
  */
-export function familyForScript(script: string): WeightsFamily | null {
+export function familyForScript(script: BCP47.ScriptCode): WeightsFamily | null {
 	for (const entry of FAMILIES) {
 		if (entry.routingScripts?.has(script)) return entry
 	}
@@ -249,7 +252,7 @@ export function familyForScript(script: string): WeightsFamily | null {
  */
 export function leadsWithFamilyScriptFor(
 	shape: Pick<QueryShape, "tokenClasses">,
-	scripts: ReadonlySet<string>
+	scripts: ReadonlySet<BCP47.ScriptCode>
 ): boolean {
 	for (const token of shape.tokenClasses) {
 		if (token.script === "Zyyy") continue
@@ -272,7 +275,7 @@ export function leadsWithFamilyScriptFor(
  */
 export function carriesFamilySegmentFor(
 	shape: Pick<QueryShape, "tokenClasses" | "segments">,
-	scripts: ReadonlySet<string>
+	scripts: ReadonlySet<BCP47.ScriptCode>
 ): boolean {
 	for (const segment of shape.segments) {
 		let scripted = 0
