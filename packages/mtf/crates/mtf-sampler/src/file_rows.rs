@@ -253,9 +253,14 @@ impl FileRows {
 
 	fn read_group(&mut self, index: usize, rng: &mut PyRandom) -> Result<RowGroup> {
 		let file = self.file.as_ref().expect("started");
-		read_row_group(file, &self.path, self.has_spans, self.row_filter.as_deref(), index, |order| {
-			rng.shuffle(order)
-		})
+		read_row_group(
+			file,
+			&self.path,
+			self.has_spans,
+			self.row_filter.as_deref(),
+			index,
+			|order| rng.shuffle(order),
+		)
 	}
 
 	/// The next accepted row, or `None` once the file is exhausted.

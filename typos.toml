@@ -390,8 +390,11 @@ extend-glob = [
 	"street-type.ts",
 	"register.test.ts",
 	"locale.test.ts",
+	"house-number-repetition.ts",
+	"repetition.ts",
+	"repetition.test.ts",
 ]
-extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine", centre = "centre", centres = "centres", organisations = "organisations" }
+extend-words = { numer = "numer", registre = "registre", individuels = "individuels", titre = "titre", modificacion = "modificacion", fre = "fre", ue = "ue", thi = "thi", Decies = "Decies", Projektion = "Projektion", Territoires = "Territoires", Somme = "Somme", Gard = "Gard", som = "som", LEVL = "LEVL", CONSOLATO = "CONSOLATO", ASSOCIATO = "ASSOCIATO", MEDA = "MEDA", TRE = "TRE", CONSTITUCION = "CONSTITUCION", Mitre = "Mitre", limite = "limite", LIK = "LIK", IZ = "IZ", ine = "ine", centre = "centre", centres = "centres", organisations = "organisations" }
 
 [type.es-sanidad-centros]
 # The reader of Spain's primary-care catalogue, `Centros de Atención Primaria`: its functions are spelled after

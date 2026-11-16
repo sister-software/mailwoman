@@ -51,7 +51,11 @@ fn grouped_corpus(root: &Path) -> PathBuf {
 		let rows: Vec<Row> = (0..GROUPS_PER_FILE * GROUP_ROWS)
 			.map(|i| {
 				let unit = file * GROUPS_PER_FILE + i / GROUP_ROWS;
-				let shape = if unit < FILES * GROUPS_PER_FILE / 2 { "Shape" } else { "Plain" };
+				let shape = if unit < FILES * GROUPS_PER_FILE / 2 {
+					"Shape"
+				} else {
+					"Plain"
+				};
 				row(format!("{file}-{i} {shape} St"), "grouped")
 			})
 			.collect();
@@ -124,7 +128,11 @@ fn a_short_last_row_group_is_drawn_in_proportion_when_the_visit_floor_binds() {
 	for file in 0..FILES {
 		let rows: Vec<Row> = (0..GROUPS_PER_FILE * GROUP_ROWS + 200)
 			.map(|i| {
-				let shape = if i >= GROUPS_PER_FILE * GROUP_ROWS { "Shape" } else { "Plain" };
+				let shape = if i >= GROUPS_PER_FILE * GROUP_ROWS {
+					"Shape"
+				} else {
+					"Plain"
+				};
 				row(format!("{file}-{i} {shape} St"), "grouped")
 			})
 			.collect();
@@ -157,7 +165,12 @@ fn a_short_last_row_group_is_drawn_in_proportion_when_the_visit_floor_binds() {
 fn equal_seeds_draw_equal_spread_epochs() {
 	let dir = tempfile::tempdir().unwrap();
 	let config = sampler_config(&grouped_corpus(dir.path()));
-	let raws = |seed| epoch(&config, seed, 4_000).into_iter().map(|r| r.raw).collect::<Vec<_>>();
+	let raws = |seed| {
+		epoch(&config, seed, 4_000)
+			.into_iter()
+			.map(|r| r.raw)
+			.collect::<Vec<_>>()
+	};
 	assert_eq!(raws(5), raws(5));
 	assert_ne!(raws(5), raws(6));
 }
@@ -175,7 +188,11 @@ fn a_spread_pass_reads_every_row_once() {
 			grouped.push(row.raw);
 		}
 	}
-	assert_eq!(grouped.len(), GROUPED_ROWS, "the pass read some row twice or left one out");
+	assert_eq!(
+		grouped.len(),
+		GROUPED_ROWS,
+		"the pass read some row twice or left one out"
+	);
 	assert_eq!(grouped.iter().collect::<BTreeSet<_>>().len(), GROUPED_ROWS);
 }
 

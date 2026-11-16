@@ -141,7 +141,17 @@ impl SourceRows {
 				live,
 				seed,
 				current,
-			} => Self::next_spread(&self.source, &self.files, units, next, live, *seed, current, rng, shared),
+			} => Self::next_spread(
+				&self.source,
+				&self.files,
+				units,
+				next,
+				live,
+				*seed,
+				current,
+				rng,
+				shared,
+			),
 		}
 	}
 
