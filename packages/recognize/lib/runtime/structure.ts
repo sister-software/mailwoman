@@ -72,7 +72,7 @@ const SCRIPT_CODES: readonly BCP47.ScriptCode[] = [
 const SEPARATORS: readonly SegmentSeparator[] = [null, "comma", "newline", "tab"]
 
 /**
- * Folds the token classes into the class of the whole text, as `foldInputClass` does.
+ * Folds the token classes into the class of the whole text, in the order the legacy fold tested them.
  */
 function foldClass(counts: Uint32Array | number[]): CharacterClass {
 	const [digit, alpha, mixed, , cjk, cyrillic, arabic] = counts as [
@@ -103,7 +103,7 @@ function foldClass(counts: Uint32Array | number[]): CharacterClass {
 }
 
 /**
- * Ranks the scripts by share, then by code, as `foldInputScripts` does.
+ * Ranks the scripts by share, then by code, as the legacy ranking did.
  */
 function rankScripts(words: Uint32Array): ScriptShare[] {
 	let total = 0

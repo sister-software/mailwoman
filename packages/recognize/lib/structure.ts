@@ -10,7 +10,7 @@
  *
  *   The fields equal the output of the legacy classifier that the parse pipeline read
  *   before this package replaced it.
- *   `data/fixtures/query-shape-frozen.json` records that output.
+ *   `data/fixtures/query-shape-frozen.fixture.json` records that output.
  *   The family reports no recognitions.
  *
  *   The declarations are generated, and this module is their public path.

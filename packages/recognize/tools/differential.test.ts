@@ -6,7 +6,7 @@
  *   the quirks, the generated inputs and the gauntlet inputs of the fixture, then invariants
  *   on fresh generated inputs, and the promise that every promised input script has ranges.
  *
- *   The fixture is `data/fixtures/query-shape-frozen.json`.
+ *   The fixture is `data/fixtures/query-shape-frozen.fixture.json`.
  *   The class and script of every Unicode codepoint are in `differential.integration.test.ts`.
  *
  *   The real-row comparison ran once against the legacy package before it was deleted,

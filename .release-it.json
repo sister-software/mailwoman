@@ -52,7 +52,6 @@
 				"packages/photon",
 				"packages/phrase-grouper",
 				"packages/poi-taxonomy",
-				"packages/query-shape",
 				"packages/react",
 				"packages/record",
 				"packages/recognize",

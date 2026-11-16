@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/recognize`
 
 The manifest at `packages/recognize/package.json` declares a `sideEffects` list of 6.
-This page lists 8 of the group's 44 library and tool modules.
+This page lists 8 of the group's 46 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -53,18 +53,11 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 | environment | `process.env`           | `environment:CARGO_HOME`                                                        | 1     |
 | environment | `process.env`           | `environment:HOME`                                                              | 1     |
 
-## `packages/recognize/tools/differential.run.ts`
+## `packages/recognize/tools/frozen.ts`
 
-The workspace's `sideEffects` declaration lists this module. Its import-time effects:
-
-- `runs a statement at module scope`, 7 times
-- `awaits at module scope`
-
-| Kind  | Interface            | Target                                                      | Calls |
-| ----- | -------------------- | ----------------------------------------------------------- | ----- |
-| read  | `readLocalTextFile`  | `unresolved (parameter)`                                    | 1     |
-| read  | `sortedGlob`         | `repo:packages/mailwoman/tools/eval-harness/gauntlet/cases` | 1     |
-| write | `writeLocalTextFile` | `unresolved (property)`                                     | 1     |
+| Kind | Interface           | Target                                                                  | Calls |
+| ---- | ------------------- | ----------------------------------------------------------------------- | ----- |
+| read | `readLocalJSONFile` | `repo:packages/recognize/data/fixtures/query-shape-frozen.fixture.json` | 1     |
 
 ## `packages/recognize/tools/generate.run.ts`
 

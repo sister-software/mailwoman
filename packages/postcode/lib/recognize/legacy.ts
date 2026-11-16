@@ -6,8 +6,8 @@
  *   reports as `knownFormats`, as a family of `@mailwoman/recognize`.
  *
  *   Compose it with the `structure` family.
- *   The result's `fields.knownFormats` is a list of `{ format, span, confidence }`
- *   in the order `detectKnownFormats` returns, with UTF-16 offsets.
+ *   The result's `fields.knownFormats` is a list of `{ format, span, confidence }` in
+ *   the order of the pipeline's legacy detector, with UTF-16 offsets.
  *
  *   The family reports no recognitions of its own, and a recognizer that composes it
  *   without `structure` throws a `RecognizeCompositionError` at construction.

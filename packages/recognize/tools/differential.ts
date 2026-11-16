@@ -4,7 +4,7 @@
 /**
  *   The generator behind the frozen comparison of the `structure` family.
  *
- *   `data/fixtures/query-shape-frozen.json` holds the output of the legacy `computeQueryShape`
+ *   `data/fixtures/query-shape-frozen.fixture.json` holds the output of the legacy `computeQueryShape`
  *   for inputs this generator drew (seed 20261116, 500 inputs) and for other draws.
  *   See `tools/frozen.ts`.
  *

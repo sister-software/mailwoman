@@ -4,13 +4,13 @@
 /**
  *   The frozen output of the legacy structural classifier, and the comparison with it.
  *
- *   `data/fixtures/query-shape-frozen.json` holds the output of `computeQueryShape` from the
- *   `@mailwoman/query-shape` package, taken before that package was deleted: the 78 golden inputs,
- *   29 inputs for the legacy behaviors that look accidental, 500 generated inputs over every
- *   character class the generator lists, 500 generated inputs dense in postcode shapes
- *   and PO box leaders, 670 inputs drawn from the gauntlet cases (every second input,
- *   in sorted order, of the 1,339 distinct inputs under the two-letter country directories),
- *   and the class and script of every Unicode codepoint as runs.
+ *   `data/fixtures/query-shape-frozen.fixture.json` holds the output of `computeQueryShape`
+ *   from the `@mailwoman/query-shape` package, taken before that package was deleted:
+ *   the 78 golden inputs, 29 inputs for the legacy behaviors that look accidental,
+ *   500 generated inputs over every character class the generator lists, 500 generated inputs
+ *   dense in postcode shapes and PO box leaders, 670 inputs drawn from the gauntlet cases
+ *   (every second input, in sorted order, of the 1,339 distinct inputs under the two-letter
+ *   country directories), and the class and script of every Unicode codepoint as runs.
  *   The gauntlet inputs are committed in this repository, so the fixture holds no row from the data root.
  *
  *   A case records the six structural fields and `knownFormats`.
@@ -61,7 +61,7 @@ export interface FrozenFixture {
  */
 export async function readFrozenFixture(): Promise<FrozenFixture> {
 	return readLocalJSONFile<FrozenFixture>(
-		workspacePath("recognize", "data", "fixtures", "query-shape-frozen.json").toString()
+		workspacePath("recognize", "data", "fixtures", "query-shape-frozen.fixture.json").toString()
 	)
 }
 

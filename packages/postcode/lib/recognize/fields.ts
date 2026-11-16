@@ -20,8 +20,8 @@ export type KnownFormat = (typeof LEGACY_FORMATS)[number]["format"] | (typeof PO
 /**
  * The fields the `postcode_legacy` family adds to a recognition result.
  *
- * Offsets are UTF-16 code units, and the order is the order of `detectKnownFormats`
- * of `@mailwoman/query-shape`.
+ * Offsets are UTF-16 code units, and the order is the order of the pipeline's legacy detector:
+ * every one-token pattern in table order, then every two-token pattern, then the PO box.
  */
 export interface PostcodeLegacyFields {
 	readonly knownFormats: ReadonlyArray<KnownFormatHit<KnownFormat>>

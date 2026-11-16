@@ -210,7 +210,7 @@ package is the umbrella that wires them together as a single `npm install`.
 | `@mailwoman/neural-weights-en-us` | Trained model bundle (en-US)                       |
 | `@mailwoman/neural-weights-fr-fr` | Trained model bundle (fr-FR)                       |
 | `@mailwoman/normalize`            | Stage 1: input preprocessing                       |
-| `@mailwoman/query-shape`          | Stage 1.5: structural priors                       |
+| `@mailwoman/recognize`            | Stage 1.5: structural evidence engine              |
 | `@mailwoman/locale-hint`          | Stage 2: locale detection                          |
 | `@mailwoman/kind-classifier`      | Stage 2.5: query kind classification               |
 | `@mailwoman/phrase-grouper`       | Stage 2.7: phrase boundary discovery               |

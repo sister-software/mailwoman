@@ -8,7 +8,6 @@ import { resolvePackageEntry, resolvePackageFile } from "./resolution.ts"
 const ROOT_PACKAGES = [
 	"@mailwoman/resolver-wof-wasm",
 	"@mailwoman/core",
-	"@mailwoman/query-shape",
 	"@mailwoman/kind-classifier",
 	"@mailwoman/react",
 ] as const

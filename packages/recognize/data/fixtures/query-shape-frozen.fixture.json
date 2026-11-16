@@ -5,7 +5,7 @@
 		"golden": 78,
 		"generatedStructure": { "count": 500, "seed": 20261116 },
 		"generatedKnownFormats": { "count": 500, "seed": 20261116 },
-		"gauntlet": { "uniqueInputs": 1339, "files": 243, "stride": 2, "sampled": 670 }
+		"gauntlet": { "uniqueInputs": 1339, "excludedForBannedWord": 0, "files": 243, "stride": 2, "sampled": 670 }
 	},
 	"codepointKey": "characterClass|tokenClass|tokenScript|firstScript|segmentCount|knownFormatCount, for the one-codepoint text; none where there is no token or script",
 	"codepointRuns": [

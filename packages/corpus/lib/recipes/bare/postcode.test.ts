@@ -3,7 +3,7 @@
 
 /**
  * @file `bare-postcode` — a postcode without another address component. These tests pin that every surface
- *   the recipe renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface
+ *   the recipe renders is one the legacy-formats table reads as a postcode over its whole span, because a surface
  *   the detector refuses would train the model on a string the query-shape prior cannot then support.
  */
 

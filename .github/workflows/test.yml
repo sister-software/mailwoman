@@ -691,6 +691,16 @@ jobs:
         if: needs.scope.outputs.worker == 'true'
         run: yarn workspace @mailwoman/recognize test:workers
 
+      # The parse pipeline reads its structural evidence from `computeQueryShape` of `@mailwoman/postcode`, which
+      # composes the recognize engine. The same two runtimes hold that composition.
+      - name: Test the pipeline's structural recognizer (Chromium)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn workspace @mailwoman/postcode test:browser
+
+      - name: Test the pipeline's structural recognizer (Workers pool)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn workspace @mailwoman/postcode test:workers
+
       # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
       - name: Upload test results
         if: always()
