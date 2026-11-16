@@ -163,6 +163,8 @@ The corpus `v0.8.19-retention-overlay` stays as built, and the measurement wrote
 - `detectedAsPostcode` over the rendered surfaces of the bare-postcode recipe's source rows: CZ 5,338, SK 2,118 and NL 100,000 surfaces, from the OpenAddresses `countrywide.csv` files that `currentSourcePath("openaddresses", "extracted")` names. 0 answers change. The Czech and Slovak files hold fewer distinct postcodes than 100,000.
 - `hierarchyScript` over 150,000 localities with their region and country names from `admin-global-priority.db`, a random draw by id. 0 answers change. 60 locality names change from `Zzzz` to `Grek`, and neither script is a CJK script.
 
+One reserved evaluation input changes. `detectedAsPostcode("3511 SA")` is true under the legacy table and false under the postal family. The family states that the Netherlands issues no code that ends in `SA`, `SD` or `SS`. The recipe renders source postcodes, and none of the 100,000 Dutch surfaces ends in one of the three. The recipe's test pins the exception.
+
 The next corpus build's delta from these two functions is zero on these samples (inferred for the build, since the samples are draws).
 
 ## Speed and size (observed)

@@ -29,7 +29,7 @@ import {
 	type WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"

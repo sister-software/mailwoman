@@ -31,11 +31,11 @@ import { structure } from "@mailwoman/recognize/structure"
 import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognize/types"
 
 import type { PostcodeLegacyFields } from "#recognize/fields"
-import { type PostalFormatHit, postalFormatHits } from "#recognize/postal-formats"
 import { postal } from "#recognize/postal.generated"
+import { type PostalFormatHit, postalFormatHits } from "#recognize/postal/formats"
 import { postcodeLegacy } from "#recognize/postcode_legacy.generated"
-import { QueryShapeGeneration } from "#recognize/query-shape-generation"
 import { regionAbbreviationsOf } from "#recognize/region-abbreviations"
+import { QueryShapeGeneration } from "#recognize/rule-generation"
 
 /**
  * One known-format hit of either generation.

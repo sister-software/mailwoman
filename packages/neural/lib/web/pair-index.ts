@@ -7,7 +7,7 @@
 
 import { detectLocale } from "@mailwoman/locale-hint"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 
 import { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"

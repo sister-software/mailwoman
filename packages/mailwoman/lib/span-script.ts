@@ -14,7 +14,7 @@
 
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import { scriptForRange } from "@mailwoman/recognize/charset"
 import { rangeScript } from "@mailwoman/recognize/script-run"
 

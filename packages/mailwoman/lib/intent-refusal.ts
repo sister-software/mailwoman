@@ -3,7 +3,7 @@
 
 import type { QueryIntentMarker, QueryKindResult } from "@mailwoman/core/pipeline"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 
 const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category", "near_me"])
 

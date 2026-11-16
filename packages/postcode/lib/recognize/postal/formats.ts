@@ -20,7 +20,7 @@ import { poBoxSpans } from "@mailwoman/recognize/po-box"
 import type { KnownFormatHit, TokenClass } from "@mailwoman/recognize/types"
 
 import { postcodeSyntaxCountries } from "#country-formats"
-import { postalConfidence } from "#recognize/postal-confidence"
+import { postalConfidence } from "#recognize/postal/confidence"
 import {
 	isPostalRecognition,
 	type PostalForm,

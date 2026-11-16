@@ -15,7 +15,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognize/rule-generation"
 
 import { scriptFamilyBase } from "#char-encoder"
 import type { NeuralAddressClassifier } from "#classifier"

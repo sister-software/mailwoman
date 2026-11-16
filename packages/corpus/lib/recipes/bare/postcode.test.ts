@@ -100,9 +100,12 @@ describe("bare-postcode capability reservation", () => {
 		expect(isReservedBarePostcode("999 99")).toBe(false)
 	})
 
-	it("keeps every reserved input recognizable as a postcode", () => {
+	// The Netherlands issues no code that ends in SA, SD or SS, and the `postal` family states that rule.
+	const UNISSUED_NL_ENDINGS = /(SA|SD|SS)$/u
+
+	it("keeps every reserved input recognizable as a postcode, except the endings the Netherlands never issues", () => {
 		for (const { input } of BARE_POSTCODE_EVAL_CASES) {
-			expect(detectedAsPostcode(input)).toBe(true)
+			expect(detectedAsPostcode(input), input).toBe(!UNISSUED_NL_ENDINGS.test(input))
 		}
 	})
 })

@@ -6,7 +6,7 @@
  * script class and known postcode formats — never place-name dictionaries.
  */
 
-import { isPostcodeFormat, type QueryShapeFormatsView } from "@mailwoman/core/pipeline/types"
+import type { QueryShapeFormatsView } from "@mailwoman/core/pipeline/types"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous.
@@ -90,7 +90,7 @@ function scoreByPostalForm(shape: QueryShapeFormatsView): LocaleCandidate | null
 	let best: QueryShapeFormatsView["knownFormats"][number] | null = null
 
 	for (const hit of shape.knownFormats) {
-		if (!isPostcodeFormat(hit.format) || !hit.locale) continue
+		if (hit.format !== "postcode" || !hit.locale) continue
 
 		if (!best || hit.confidence > best.confidence) {
 			best = hit

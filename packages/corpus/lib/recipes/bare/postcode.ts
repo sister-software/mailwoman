@@ -16,7 +16,7 @@ import { isPostcodeFormat } from "@mailwoman/core/pipeline/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
