@@ -24,7 +24,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
-import type { GeocodeTrace } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import {
 	candidateBandProbe,
@@ -156,13 +155,15 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 }
 
 /**
- * The format union, pulled off the trace's own type so a format added to the legacy-formats
- * table of `@mailwoman/postcode` without an entry in {@link COMPONENT_FOR_KNOWN_FORMAT}
- * is a compile error rather than a silently unchecked detector.
+ * The component each known format stands for.
+ *
+ * The `postal` generation reports every postcode as `postcode`.
+ * The other postcode formats belong to the `legacy` generation.
+ *
+ * The detector reads the table by the hit's format string, and a format without an entry is left unchecked.
  */
-type KnownFormat = GeocodeTrace["queryShape"]["knownFormats"][number]["format"]
-
 const COMPONENT_FOR_KNOWN_FORMAT = {
+	postcode: "postcode",
 	us_zip: "postcode",
 	us_zip4: "postcode",
 	uk_postcode: "postcode",
@@ -176,7 +177,7 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 	se_postcode: "postcode",
 	gr_postcode: "postcode",
 	po_box: "po_box",
-} as const satisfies Record<KnownFormat, string>
+} as const
 
 /**
  * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.

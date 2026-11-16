@@ -4,28 +4,56 @@
 /**
  *   The recognizer the parse pipeline reads its structural evidence from.
  *
- *   It composes the `structure` family of `@mailwoman/recognize` with the `postcode_legacy`
- *   family once, and returns the structural fields together with `knownFormats`.
- *   This module lives in `@mailwoman/postcode` because the legacy family does:
- *   `@mailwoman/recognize` may not import this package, and this package already imports it.
+ *   Two generations answer, selected by the model card's `requires.query_shape`.
+ *   The `legacy` generation composes the `structure` family of `@mailwoman/recognize` with
+ *   the `postcode_legacy` family, and reports the thirteen hand-written postcode patterns.
+ *
+ *   The `postal` generation composes `structure` with the `postal` family and reports a
+ *   hit for each postcode candidate of the 181 countries' syntax and each PO box.
+ *
+ *   This module lives in `@mailwoman/postcode` because both families do: `@mailwoman/recognize`
+ *   may not import this package, and this package already imports it.
  *
  *   The first call instantiates the WebAssembly engine, as every recognizer does.
  *   Call `init` from `@mailwoman/recognize` first where synchronous compilation is refused.
  *
- *   A model card selects the generation with `requires.query_shape`.
  *   Every consumer that holds a model passes the model's generation.
  *
  *   A shape records the generation that computed it, so a consumer that receives a shape follows it.
  */
 
+import type { CountrySet } from "@mailwoman/codex/country/sets"
 import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
 import { createRecognizer, type Recognizer } from "@mailwoman/recognize"
+import { specifyStructure } from "@mailwoman/recognize/script-run"
 import { structure } from "@mailwoman/recognize/structure"
-import type { StructureFields } from "@mailwoman/recognize/types"
+import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognize/types"
 
 import type { PostcodeLegacyFields } from "#recognize/fields"
+import { type PostalFormatHit, postalFormatHits } from "#recognize/postal-formats"
+import { postal } from "#recognize/postal.generated"
 import { postcodeLegacy } from "#recognize/postcode_legacy.generated"
 import { QueryShapeGeneration } from "#recognize/query-shape-generation"
+import { regionAbbreviationsOf } from "#recognize/region-abbreviations"
+
+/**
+ * One known-format hit of either generation.
+ *
+ * A `legacy` hit holds no countries, form or locale.
+ */
+export type QueryShapeFormatHit = KnownFormatHit & Partial<Omit<PostalFormatHit, keyof KnownFormatHit>>
+
+/**
+ * A region abbreviation of either generation.
+ *
+ * The `legacy` generation reports the text as `span`, and the `postal` generation reports
+ * the span's offsets and the countries that hold the abbreviation as a subdivision code.
+ */
+export interface QueryShapeRegionAbbreviation {
+	readonly start: number
+	readonly span: string | TextSpan
+	readonly countries?: CountrySet
+}
 
 /**
  * The structural evidence of one text: character class, scripts, tokens, segments,
@@ -33,15 +61,17 @@ import { QueryShapeGeneration } from "#recognize/query-shape-generation"
  *
  * Offsets are UTF-16 code units, half-open.
  */
-export type QueryShape = StructureFields &
-	PostcodeLegacyFields & {
-		/**
-		 * The generation that computed the shape, `legacy` when a hand-built shape omits it.
-		 */
-		readonly generation?: QueryShapeGeneration
-	}
+export type QueryShape = Omit<StructureFields, "regionAbbreviations"> & {
+	readonly regionAbbreviations: ReadonlyArray<QueryShapeRegionAbbreviation>
+	readonly knownFormats: ReadonlyArray<QueryShapeFormatHit>
+	/**
+	 * The generation that computed the shape, `legacy` when a hand-built shape omits it.
+	 */
+	readonly generation?: QueryShapeGeneration
+}
 
-let recognizer: Recognizer<[typeof structure, typeof postcodeLegacy]> | null = null
+let legacyRecognizer: Recognizer<[typeof structure, typeof postcodeLegacy]> | null = null
+let postalRecognizer: Recognizer<[typeof structure, typeof postal]> | null = null
 
 /**
  * Computes the {@link QueryShape} of a string or normalized input.
@@ -57,9 +87,25 @@ export function computeQueryShape(
 	input: string | NormalizedInputLite,
 	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
 ): QueryShape {
-	recognizer ??= createRecognizer([structure, postcodeLegacy])
+	const text = typeof input === "string" ? input : input.normalized
 
-	const fields = recognizer.recognize(typeof input === "string" ? input : input.normalized).fields
+	if (generation === QueryShapeGeneration.Postal) {
+		postalRecognizer ??= createRecognizer([structure, postal])
+
+		const { fields, recognitions } = postalRecognizer.recognize(text)
+		const specified = specifyStructure(fields, text)
+
+		return {
+			...specified,
+			regionAbbreviations: regionAbbreviationsOf(specified.tokenClasses),
+			knownFormats: postalFormatHits(recognitions, specified.tokenClasses, text),
+			generation,
+		}
+	}
+
+	legacyRecognizer ??= createRecognizer([structure, postcodeLegacy])
+
+	const fields: StructureFields & PostcodeLegacyFields = legacyRecognizer.recognize(text).fields
 
 	return { ...fields, generation }
 }

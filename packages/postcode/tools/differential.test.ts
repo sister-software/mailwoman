@@ -15,6 +15,7 @@
 import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recognize"
 import { structure } from "@mailwoman/recognize/structure"
 import { plainFields, readFrozenFixture } from "@mailwoman/recognize/tools/frozen"
+import type { StructureFields } from "@mailwoman/recognize/types"
 import { describe, expect, it } from "vitest"
 
 import { postcodeLegacy } from "#recognize/legacy"
@@ -27,7 +28,8 @@ describe("computeQueryShape equals the frozen legacy output", () => {
 
 		const differences = fixture.cases
 			.map(({ category, input, fields: frozen }) => {
-				const recognized = plainFields(computeQueryShape(input))
+				// The legacy generation reports each region abbreviation's text as `span`, as `StructureFields` types it.
+				const recognized = plainFields(computeQueryShape(input) as StructureFields)
 
 				// oxlint-disable-next-line no-restricted-properties -- the comparison needs a canonical text of plain data
 				return JSON.stringify(recognized) === JSON.stringify(frozen) ? null : { category, input, recognized, frozen }

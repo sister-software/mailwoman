@@ -30,7 +30,17 @@ export interface QueryShapeLike {
 
 interface RegionAbbreviationHitLike {
 	start: number
-	span: string
+	/**
+	 * The abbreviation's text under the `legacy` generation, and its span under the `postal` generation.
+	 */
+	span: string | { end: number }
+}
+
+/**
+ * The offset one past the abbreviation, in UTF-16 code units.
+ */
+function regionAbbreviationEnd(abbreviation: RegionAbbreviationHitLike): number {
+	return typeof abbreviation.span === "string" ? abbreviation.start + abbreviation.span.length : abbreviation.span.end
 }
 
 /**
@@ -138,7 +148,7 @@ function applyScopedLocalityBias(
 	if (!bLocCol) return
 
 	for (const abbrev of abbrevs) {
-		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
+		if (tokens.some((tok) => tok.start > regionAbbreviationEnd(abbrev))) continue
 
 		// The segment opens after the last comma that precedes the separator before the abbreviation.
 		const prefix = inputText.slice(0, abbrev.start).replace(/[\s,]+$/u, "")

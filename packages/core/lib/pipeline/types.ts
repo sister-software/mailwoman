@@ -5,6 +5,7 @@
  *   Declares the types for the runtime pipeline and its injected stages.
  */
 
+import type { BCP47 } from "@mailwoman/registry/types"
 import { z } from "zod"
 
 import { type AddressTree, AddressTreeSchema } from "#decoder/types"
@@ -205,18 +206,34 @@ export interface NormalizedInputLite {
 /**
  * Whether a known-format name is a postcode format.
  *
- * The check uses the naming convention `us_zip`, `us_zip4` or `<cc>_postcode`
- * instead of a set, so a format added to the recognizer's known-format table becomes
- * a postcode everywhere once it follows the convention.
+ * The check uses the naming convention instead of a set, so a format added to the recognizer's
+ * known-format table becomes a postcode everywhere once it follows the convention.
+ * The `legacy` generation reports `us_zip`, `us_zip4` and `<cc>_postcode`,
+ * and the `postal` generation reports every postcode as `postcode`.
  */
 export function isPostcodeFormat(format: string): boolean {
-	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
+	return format === "postcode" || format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
+}
+
+/**
+ * The hit a locale or a country can be read from: the countries a postal-generation
+ * hit's syntax accepts, and the locale of the most populous of them.
+ */
+export interface KnownFormatCountryView {
+	/**
+	 * The BCP 47 locale of the most populous accepting country, or null when the hit names none.
+	 */
+	locale?: string | null
+	/**
+	 * What the form is made of: `designated` (a printed prefix), `alnum` (a letter) or `numeric` (digits).
+	 */
+	form?: "alnum" | "numeric" | "designated" | null
 }
 
 /**
  * A read-only view of the known-format hit fields that later stages read.
  */
-export interface KnownFormatHitView {
+export interface KnownFormatHitView extends KnownFormatCountryView {
 	format: string
 	span: { start: number; end: number }
 	confidence: number
@@ -239,7 +256,7 @@ export interface SegmentView {
 export interface TokenClassView {
 	span: { start: number; end: number; body: string }
 	class: string
-	script: string | null
+	script: BCP47.ScriptCode | null
 }
 
 /**
@@ -257,7 +274,7 @@ export interface QueryShapeFormatsView {
 	/**
 	 * The ranked scripts, or null for a hand-built shape that has none.
 	 */
-	scripts: ReadonlyArray<{ script: string; share: number }> | null
+	scripts: ReadonlyArray<{ script: BCP47.ScriptCode; share: number }> | null
 	totalLength: number | null
 }
 
@@ -305,14 +322,14 @@ export interface QueryShapeLite {
 	/**
 	 * ISO 15924 scripts ranked by share of characters that belong to a script.
 	 */
-	scripts: ReadonlyArray<{ script: string; share: number }> | null
+	scripts: ReadonlyArray<{ script: BCP47.ScriptCode; share: number }> | null
 	/**
 	 * The class and script of each token.
 	 */
 	tokenClasses: ReadonlyArray<{
 		span: { start: number; end: number; body: string }
 		class: string
-		script: string | null
+		script: BCP47.ScriptCode | null
 	}> | null
 	totalLength: number | null
 }
@@ -331,7 +348,7 @@ export interface LocaleHint {
 	 * The array is empty when no character of the input belongs to a script.
 	 * `locale` stays a BCP-47 language tag.
 	 */
-	script: ReadonlyArray<{ script: string; confidence: number }>
+	script: ReadonlyArray<{ script: BCP47.ScriptCode; confidence: number }>
 	/**
 	 * Diagnostic values that fed the inferred preferences, or null when none did.
 	 * Locale and time zone are independent signals.

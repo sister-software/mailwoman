@@ -120,6 +120,7 @@
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/recognize": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1",
 		"zod": "^4.6.7"
