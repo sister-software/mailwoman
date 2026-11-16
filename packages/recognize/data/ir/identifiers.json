@@ -1,0 +1,1822 @@
+{
+	"format": "mailwoman.recognize.ir",
+	"version": 1,
+	"hash": "71f0f88f6ef1b12a2932a042d8261ecea17292f9f4858dd392afa3c1f4ed3fa9",
+	"family": "identifiers",
+	"terms": [
+		{
+			"id": "digit",
+			"grammar": {
+				"op": "class",
+				"ranges": [["0", "9"]],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 93
+			}
+		},
+		{
+			"id": "geohash_character",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["0", "9"],
+					["B", "H"],
+					["J", "K"],
+					["M", "N"],
+					["P", "Z"],
+					["b", "h"],
+					["j", "k"],
+					["m", "n"],
+					["p", "z"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 95
+			}
+		},
+		{
+			"id": "hex_digit",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["0", "9"],
+					["A", "F"],
+					["a", "f"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 109
+			}
+		},
+		{
+			"id": "whitespace",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["\t", "\r"],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					["　", "　"],
+					["﻿", "﻿"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 110
+			}
+		}
+	],
+	"shapes": [
+		{
+			"id": "census.geoid_block",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "state",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 2,
+							"max": 2
+						}
+					},
+					{
+						"op": "capture",
+						"path": "county",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 3,
+							"max": 3
+						}
+					},
+					{
+						"op": "capture",
+						"path": "tract",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 6,
+							"max": 6
+						}
+					},
+					{
+						"op": "capture",
+						"path": "block",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 4,
+							"max": 4
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "block",
+					"type": "text"
+				},
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "CensusGEOID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["h3.cell", "number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 75
+			}
+		},
+		{
+			"id": "census.geoid_block_group",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "state",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 2,
+							"max": 2
+						}
+					},
+					{
+						"op": "capture",
+						"path": "county",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 3,
+							"max": 3
+						}
+					},
+					{
+						"op": "capture",
+						"path": "tract",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 6,
+							"max": 6
+						}
+					},
+					{
+						"op": "capture",
+						"path": "block_group",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 1,
+							"max": 1
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "block_group",
+					"type": "text"
+				},
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "CensusGEOID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 75
+			}
+		},
+		{
+			"id": "census.geoid_county",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "state",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 2,
+							"max": 2
+						}
+					},
+					{
+						"op": "capture",
+						"path": "county",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 3,
+							"max": 3
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "CensusGEOID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 75
+			}
+		},
+		{
+			"id": "census.geoid_state",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "state",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 2,
+							"max": 2
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "state",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "CensusGEOID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 75
+			}
+		},
+		{
+			"id": "census.geoid_tract",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "capture",
+						"path": "state",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 2,
+							"max": 2
+						}
+					},
+					{
+						"op": "capture",
+						"path": "county",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 3,
+							"max": 3
+						}
+					},
+					{
+						"op": "capture",
+						"path": "tract",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 6,
+							"max": 6
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "CensusGEOID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 75
+			}
+		},
+		{
+			"id": "geohash.prefixed",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "choice",
+						"alternatives": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["G", "G"],
+											["g", "g"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["E", "E"],
+											["e", "e"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									}
+								]
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["G", "G"],
+											["g", "g"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "literal",
+						"value": ":"
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "reference",
+							"id": "whitespace"
+						},
+						"min": 0,
+						"max": null
+					},
+					{
+						"op": "capture",
+						"path": "hash",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "geohash_character"
+							},
+							"min": 1,
+							"max": 12
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "hash",
+					"type": "text"
+				}
+			],
+			"scope": "whole_or_embedded",
+			"validator": "Geohash",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 126
+			}
+		},
+		{
+			"id": "gnis.reference",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "class",
+								"ranges": [
+									["G", "G"],
+									["g", "g"]
+								],
+								"negated": false
+							},
+							{
+								"op": "class",
+								"ranges": [
+									["N", "N"],
+									["n", "n"]
+								],
+								"negated": false
+							},
+							{
+								"op": "class",
+								"ranges": [
+									["I", "I"],
+									["i", "i"]
+								],
+								"negated": false
+							},
+							{
+								"op": "class",
+								"ranges": [
+									["S", "S"],
+									["s", "s"]
+								],
+								"negated": false
+							}
+						]
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "choice",
+							"alternatives": [
+								{
+									"op": "reference",
+									"id": "whitespace"
+								},
+								{
+									"op": "literal",
+									"value": ":"
+								}
+							]
+						},
+						"min": 1,
+						"max": null
+					},
+					{
+						"op": "capture",
+						"path": "id",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 1,
+							"max": 10
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"scope": "whole",
+			"validator": "GNISFeatureID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 139
+			}
+		},
+		{
+			"id": "gnis.summary_url",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									}
+								]
+							},
+							{
+								"op": "optional",
+								"node": {
+									"op": "class",
+									"ranges": [
+										["S", "S"],
+										["s", "s"]
+									],
+									"negated": false
+								}
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [[":", ":"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["E", "E"],
+											["e", "e"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["D", "D"],
+											["d", "d"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [[".", "."]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["N", "N"],
+											["n", "n"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["N", "N"],
+											["n", "n"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["L", "L"],
+											["l", "l"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["M", "M"],
+											["m", "m"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [[".", "."]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["G", "G"],
+											["g", "g"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["V", "V"],
+											["v", "v"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["G", "G"],
+											["g", "g"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["Z", "Z"],
+											["z", "z"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["-", "-"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["D", "D"],
+											["d", "d"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["M", "M"],
+											["m", "m"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["E", "E"],
+											["e", "e"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["C", "C"],
+											["c", "c"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["U", "U"],
+											["u", "u"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["B", "B"],
+											["b", "b"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["L", "L"],
+											["l", "l"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["C", "C"],
+											["c", "c"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["U", "U"],
+											["u", "u"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["M", "M"],
+											["m", "m"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["M", "M"],
+											["m", "m"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["A", "A"],
+											["a", "a"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["R", "R"],
+											["r", "r"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["Y", "Y"],
+											["y", "y"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "capture",
+						"path": "id",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 1,
+							"max": 10
+						}
+					},
+					{
+						"op": "optional",
+						"node": {
+							"op": "literal",
+							"value": "/"
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"scope": "whole",
+			"validator": "GNISFeatureID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 150
+			}
+		},
+		{
+			"id": "h3.cell",
+			"grammar": {
+				"op": "capture",
+				"path": "cell",
+				"node": {
+					"op": "sequence",
+					"items": [
+						{
+							"op": "class",
+							"ranges": [["8", "8"]],
+							"negated": false
+						},
+						{
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "hex_digit"
+							},
+							"min": 14,
+							"max": 14
+						}
+					]
+				}
+			},
+			"captures": [
+				{
+					"path": "cell",
+					"type": "text"
+				}
+			],
+			"scope": "whole",
+			"validator": "H3Cell",
+			"handler": null,
+			"ambiguity": {
+				"policy": "may_overlap",
+				"with": ["census.geoid_block", "number.digit_run", "number.signed_decimal"]
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 161
+			}
+		},
+		{
+			"id": "h3.prefixed_cell",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "class",
+								"ranges": [
+									["H", "H"],
+									["h", "h"]
+								],
+								"negated": false
+							},
+							{
+								"op": "class",
+								"ranges": [["3", "3"]],
+								"negated": false
+							},
+							{
+								"op": "class",
+								"ranges": [[":", ":"]],
+								"negated": false
+							}
+						]
+					},
+					{
+						"op": "capture",
+						"path": "cell",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "class",
+									"ranges": [["8", "8"]],
+									"negated": false
+								},
+								{
+									"op": "repeat",
+									"node": {
+										"op": "reference",
+										"id": "hex_digit"
+									},
+									"min": 14,
+									"max": 14
+								}
+							]
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "cell",
+					"type": "text"
+				}
+			],
+			"scope": "whole_or_embedded",
+			"validator": "H3Cell",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 170
+			}
+		},
+		{
+			"id": "wof.reference",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "choice",
+						"alternatives": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["W", "W"],
+											["w", "w"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["N", "N"],
+											["n", "n"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["F", "F"],
+											["f", "f"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["R", "R"],
+											["r", "r"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									}
+								]
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["W", "W"],
+											["w", "w"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["F", "F"],
+											["f", "f"]
+										],
+										"negated": false
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "choice",
+							"alternatives": [
+								{
+									"op": "reference",
+									"id": "whitespace"
+								},
+								{
+									"op": "literal",
+									"value": ":"
+								}
+							]
+						},
+						"min": 1,
+						"max": null
+					},
+					{
+						"op": "capture",
+						"path": "id",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 1,
+							"max": 16
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"scope": "whole",
+			"validator": "WhosOnFirstID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 178
+			}
+		},
+		{
+			"id": "wof.spelunker_url",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									}
+								]
+							},
+							{
+								"op": "optional",
+								"node": {
+									"op": "class",
+									"ranges": [
+										["S", "S"],
+										["s", "s"]
+									],
+									"negated": false
+								}
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "class",
+										"ranges": [[":", ":"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["P", "P"],
+											["p", "p"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["E", "E"],
+											["e", "e"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["L", "L"],
+											["l", "l"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["U", "U"],
+											["u", "u"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["N", "N"],
+											["n", "n"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["K", "K"],
+											["k", "k"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["E", "E"],
+											["e", "e"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["R", "R"],
+											["r", "r"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [[".", "."]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["W", "W"],
+											["w", "w"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["H", "H"],
+											["h", "h"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["N", "N"],
+											["n", "n"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["F", "F"],
+											["f", "f"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["R", "R"],
+											["r", "r"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["S", "S"],
+											["s", "s"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["T", "T"],
+											["t", "t"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [[".", "."]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["O", "O"],
+											["o", "o"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["R", "R"],
+											["r", "r"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["G", "G"],
+											["g", "g"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["I", "I"],
+											["i", "i"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [
+											["D", "D"],
+											["d", "d"]
+										],
+										"negated": false
+									},
+									{
+										"op": "class",
+										"ranges": [["/", "/"]],
+										"negated": false
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "capture",
+						"path": "id",
+						"node": {
+							"op": "repeat",
+							"node": {
+								"op": "reference",
+								"id": "digit"
+							},
+							"min": 1,
+							"max": 16
+						}
+					},
+					{
+						"op": "optional",
+						"node": {
+							"op": "literal",
+							"value": "/"
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"scope": "whole",
+			"validator": "WhosOnFirstID",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/identifiers.rs",
+				"line": 189
+			}
+		}
+	]
+}

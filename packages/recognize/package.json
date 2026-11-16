@@ -25,6 +25,7 @@
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
 		"tools/**/*.ts",
+		"data/declarations/*.json",
 		"data/ir/*.json",
 		"data/artifacts/*.rca1",
 		"data/manifests/*.json",

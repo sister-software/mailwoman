@@ -64,6 +64,19 @@
 				"validator": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"handler": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pascalName" }] },
 				"ambiguity": { "$ref": "#/$defs/ambiguity" },
+				"role": {
+					"description": "What the shape is for when it is no plain format. Absent from a plain shape.",
+					"enum": ["po_box_leader"]
+				},
+				"order": {
+					"description": "The shape's place in the order a known-formats pass reports its hits, lowest first. Absent from an unordered shape.",
+					"type": "integer",
+					"minimum": 0
+				},
+				"boundary": {
+					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector. Absent from a shape any neighbor may touch.",
+					"enum": ["token"]
+				},
 				"unreachable": {
 					"description": "The reason the shape is declared unreachable. Absent when the shape declares nothing.",
 					"type": "string",

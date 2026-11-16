@@ -145,6 +145,15 @@ impl<'a> Captures<'a> {
 		}
 	}
 
+	/// A capture set holding `entries`, for a validator's unit test.
+	#[cfg(test)]
+	pub(crate) fn from_entries(span: &'a str, entries: &[(&'a str, &'a str)]) -> Self {
+		Captures {
+			span,
+			entries: entries.iter().map(|&(path, text)| (path, Some(text))).collect(),
+		}
+	}
+
 	/// The text of the whole accepted span.
 	pub fn span(&self) -> &'a str {
 		self.span

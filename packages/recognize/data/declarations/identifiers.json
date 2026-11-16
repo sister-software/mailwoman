@@ -1,0 +1,412 @@
+{
+	"family": "identifiers",
+	"shapes": [
+		{
+			"captures": [
+				{
+					"path": "block",
+					"type": "text"
+				},
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "census.geoid_block",
+			"kind": "CensusGeoIDBlock",
+			"payload": [
+				{
+					"name": "level",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "state",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "county",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "tract",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block_group",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block",
+					"type": "text",
+					"optional": true
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "missing_capture", "unknown_state_fips"],
+			"validator": "CensusGEOID"
+		},
+		{
+			"captures": [
+				{
+					"path": "block_group",
+					"type": "text"
+				},
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "census.geoid_block_group",
+			"kind": "CensusGeoIDBlockGroup",
+			"payload": [
+				{
+					"name": "level",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "state",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "county",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "tract",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block_group",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block",
+					"type": "text",
+					"optional": true
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "missing_capture", "unknown_state_fips"],
+			"validator": "CensusGEOID"
+		},
+		{
+			"captures": [
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "census.geoid_county",
+			"kind": "CensusGeoIDCounty",
+			"payload": [
+				{
+					"name": "level",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "state",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "county",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "tract",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block_group",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block",
+					"type": "text",
+					"optional": true
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "missing_capture", "unknown_state_fips"],
+			"validator": "CensusGEOID"
+		},
+		{
+			"captures": [
+				{
+					"path": "state",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "census.geoid_state",
+			"kind": "CensusGeoIDState",
+			"payload": [
+				{
+					"name": "level",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "state",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "county",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "tract",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block_group",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block",
+					"type": "text",
+					"optional": true
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "missing_capture", "unknown_state_fips"],
+			"validator": "CensusGEOID"
+		},
+		{
+			"captures": [
+				{
+					"path": "county",
+					"type": "text"
+				},
+				{
+					"path": "state",
+					"type": "text"
+				},
+				{
+					"path": "tract",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "census.geoid_tract",
+			"kind": "CensusGeoIDTract",
+			"payload": [
+				{
+					"name": "level",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "state",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "county",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "tract",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block_group",
+					"type": "text",
+					"optional": true
+				},
+				{
+					"name": "block",
+					"type": "text",
+					"optional": true
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "missing_capture", "unknown_state_fips"],
+			"validator": "CensusGEOID"
+		},
+		{
+			"captures": [
+				{
+					"path": "hash",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "geohash.prefixed",
+			"kind": "GeohashPrefixed",
+			"payload": [
+				{
+					"name": "hash",
+					"type": "text",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"invalid_geohash_character",
+				"invalid_geohash_length",
+				"missing_capture"
+			],
+			"validator": "Geohash"
+		},
+		{
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"handler": null,
+			"id": "gnis.reference",
+			"kind": "GNISReference",
+			"payload": [
+				{
+					"name": "id",
+					"type": "integer",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "id_out_of_range", "missing_capture", "not_an_integer"],
+			"validator": "GNISFeatureID"
+		},
+		{
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"handler": null,
+			"id": "gnis.summary_url",
+			"kind": "GNISSummaryURL",
+			"payload": [
+				{
+					"name": "id",
+					"type": "integer",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "id_out_of_range", "missing_capture", "not_an_integer"],
+			"validator": "GNISFeatureID"
+		},
+		{
+			"captures": [
+				{
+					"path": "cell",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "h3.cell",
+			"kind": "H3Cell",
+			"payload": [
+				{
+					"name": "cell",
+					"type": "text",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "invalid_h3_index", "missing_capture"],
+			"validator": "H3Cell"
+		},
+		{
+			"captures": [
+				{
+					"path": "cell",
+					"type": "text"
+				}
+			],
+			"handler": null,
+			"id": "h3.prefixed_cell",
+			"kind": "H3PrefixedCell",
+			"payload": [
+				{
+					"name": "cell",
+					"type": "text",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "invalid_h3_index", "missing_capture"],
+			"validator": "H3Cell"
+		},
+		{
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"handler": null,
+			"id": "wof.reference",
+			"kind": "WOFReference",
+			"payload": [
+				{
+					"name": "id",
+					"type": "integer",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "id_out_of_range", "missing_capture", "not_an_integer"],
+			"validator": "WhosOnFirstID"
+		},
+		{
+			"captures": [
+				{
+					"path": "id",
+					"type": "integer"
+				}
+			],
+			"handler": null,
+			"id": "wof.spelunker_url",
+			"kind": "WOFSpelunkerURL",
+			"payload": [
+				{
+					"name": "id",
+					"type": "integer",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "id_out_of_range", "missing_capture", "not_an_integer"],
+			"validator": "WhosOnFirstID"
+		}
+	]
+}

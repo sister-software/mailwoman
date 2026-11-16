@@ -3,13 +3,22 @@
 
 //! The grammar modules `recognize` owns. Each module builds one family.
 
+pub mod angles;
 pub mod coordinates;
+pub mod identifiers;
 pub mod primitives;
+pub mod spatial;
 pub mod structure;
 
 use crate::family::Family;
 
 /// Every family this crate owns, in the order the build tool writes them.
 pub fn families() -> Vec<Family> {
-	vec![primitives::family(), coordinates::family(), structure::family()]
+	vec![
+		primitives::family(),
+		coordinates::family(),
+		spatial::family(),
+		identifiers::family(),
+		structure::family(),
+	]
 }

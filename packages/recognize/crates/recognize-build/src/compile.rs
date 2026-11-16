@@ -79,7 +79,12 @@ impl Default for Limits {
 			max_states: 50_000,
 			nfa_bytes: 8 << 20,
 			build_bytes: 32 << 20,
-			dense_bytes: 2 << 20,
+			// A dense state holds a transition for every byte class, and a family of many letters and marks has more
+			// than 64 classes, so each state costs 512 bytes. The `coordinates` family's whole-input automaton, with 780
+			// states, is 44,215 bytes sparse, and the `spatial` family's is 117,500 bytes dense and 20,302 sparse. The
+			// `structure` partitions, which the speed requirement measures, are 65,840 bytes and stay dense. The postal
+			// family passes its own budget with `--dense-bytes`.
+			dense_bytes: 100_000,
 			sparse_bytes: 2 << 20,
 			max_depth: 64,
 			max_lowered_nodes: 100_000,

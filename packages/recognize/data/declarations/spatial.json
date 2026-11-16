@@ -1,0 +1,102 @@
+{
+	"family": "spatial",
+	"shapes": [
+		{
+			"captures": [],
+			"handler": null,
+			"id": "digipin.compact",
+			"kind": "DigipinCompact",
+			"payload": [
+				{
+					"name": "code",
+					"type": "text",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "invalid_character", "invalid_length"],
+			"validator": "DIGIPIN"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "digipin.display",
+			"kind": "DigipinDisplay",
+			"payload": [
+				{
+					"name": "code",
+					"type": "text",
+					"optional": false
+				}
+			],
+			"rejections": ["capture_limit", "capture_mismatch", "invalid_character", "invalid_length"],
+			"validator": "DIGIPIN"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "geojson.object",
+			"kind": "GeoJSONObject",
+			"payload": [
+				{
+					"name": "type",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": true
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": true
+				},
+				{
+					"name": "altitude",
+					"type": "decimal",
+					"optional": true
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"malformed_json",
+				"malformed_position",
+				"misplaced_geojson_type",
+				"missing_member",
+				"not_finite",
+				"unknown_geojson_type"
+			],
+			"validator": "GeoJSON"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "plus_code.token",
+			"kind": "PlusCodeToken",
+			"payload": [
+				{
+					"name": "code",
+					"type": "text",
+					"optional": false
+				},
+				{
+					"name": "full",
+					"type": "boolean",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"invalid_digit",
+				"invalid_prefix_length",
+				"invalid_suffix_length"
+			],
+			"validator": "PlusCode"
+		}
+	]
+}

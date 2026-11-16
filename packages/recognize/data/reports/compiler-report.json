@@ -1,24 +1,205 @@
 {
 	"crossFamily": {
 		"equivalent": [],
-		"overlaps": []
+		"overlaps": [
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "CCCCCCCCCC"
+			}
+		]
 	},
 	"families": {
 		"coordinates": {
 			"automata": [
 				{
-					"backend": "dense",
-					"bytes": 14820,
-					"patterns": 2,
+					"backend": "sparse",
+					"bytes": 44215,
+					"patterns": 7,
 					"role": "whole",
-					"states": 54
+					"states": 780
 				},
 				{
-					"backend": "dense",
-					"bytes": 18204,
-					"patterns": 2,
+					"backend": "sparse",
+					"bytes": 25109,
+					"patterns": 5,
 					"role": "embedded",
-					"states": 66
+					"states": 450
 				}
 			],
 			"equivalent": [],
@@ -33,10 +214,159 @@
 				},
 				{
 					"handler": null,
+					"id": "coordinate.decimal_pair_spaced",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "SpacedPair"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.dms_pair",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "AnglePair"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.dms_pair_spaced",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "AnglePair"
+				},
+				{
+					"handler": null,
 					"id": "coordinate.geo_uri",
 					"scope": "whole_or_embedded",
 					"unreachable": null,
 					"validator": "GeoURI"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.labeled_pair",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "LabeledPair"
+				},
+				{
+					"handler": null,
+					"id": "coordinate.maps_segment",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "MapsSegment"
+				}
+			],
+			"unreachable": []
+		},
+		"identifiers": {
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 7133,
+					"patterns": 12,
+					"role": "whole",
+					"states": 286
+				},
+				{
+					"backend": "dense",
+					"bytes": 27496,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 51
+				}
+			],
+			"equivalent": [],
+			"overlaps": [
+				{
+					"a": "census.geoid_block",
+					"b": "h3.cell",
+					"declared": true,
+					"witness": "800000000000000"
+				}
+			],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "census.geoid_block",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "CensusGEOID"
+				},
+				{
+					"handler": null,
+					"id": "census.geoid_block_group",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "CensusGEOID"
+				},
+				{
+					"handler": null,
+					"id": "census.geoid_county",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "CensusGEOID"
+				},
+				{
+					"handler": null,
+					"id": "census.geoid_state",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "CensusGEOID"
+				},
+				{
+					"handler": null,
+					"id": "census.geoid_tract",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "CensusGEOID"
+				},
+				{
+					"handler": null,
+					"id": "geohash.prefixed",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "Geohash"
+				},
+				{
+					"handler": null,
+					"id": "gnis.reference",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "GNISFeatureID"
+				},
+				{
+					"handler": null,
+					"id": "gnis.summary_url",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "GNISFeatureID"
+				},
+				{
+					"handler": null,
+					"id": "h3.cell",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "H3Cell"
+				},
+				{
+					"handler": null,
+					"id": "h3.prefixed_cell",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "H3Cell"
+				},
+				{
+					"handler": null,
+					"id": "wof.reference",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "WhosOnFirstID"
+				},
+				{
+					"handler": null,
+					"id": "wof.spelunker_url",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "WhosOnFirstID"
 				}
 			],
 			"unreachable": []
@@ -95,6 +425,57 @@
 					"scope": "whole_or_embedded",
 					"unreachable": null,
 					"validator": null
+				}
+			],
+			"unreachable": []
+		},
+		"spatial": {
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 20302,
+					"patterns": 4,
+					"role": "whole",
+					"states": 227
+				},
+				{
+					"backend": "dense",
+					"bytes": 8944,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 31
+				}
+			],
+			"equivalent": [],
+			"overlaps": [],
+			"shapes": [
+				{
+					"handler": null,
+					"id": "digipin.compact",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "DIGIPIN"
+				},
+				{
+					"handler": null,
+					"id": "digipin.display",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "DIGIPIN"
+				},
+				{
+					"handler": null,
+					"id": "geojson.object",
+					"scope": "whole",
+					"unreachable": null,
+					"validator": "GeoJSON"
+				},
+				{
+					"handler": null,
+					"id": "plus_code.token",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": "PlusCode"
 				}
 			],
 			"unreachable": []
