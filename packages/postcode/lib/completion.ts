@@ -5,18 +5,22 @@
  *   Whether a partial postcode can still complete, and for which countries.
  *
  *   The answer keeps two kinds of evidence apart.
- *   Syntax completion states that some suffix makes the text a whole postcode under a country's
- *   rule, the rule `postcodeSyntax` compiles from libaddressinput and `written-forms.ts`.
+ *   Syntax completion states that some suffix makes the text a whole postcode under a country's rule,
+ *   the rule the `postal` family holds, generated from libaddressinput and `written-forms.ts`.
+ *
+ *   The engine's prefix status of the country's shapes answers it.
  *
  *   Membership reports whether a PFX1 prefix index holds an allocated prefix consistent with the text.
  *   A code can satisfy the syntax and be unallocated, and an index covers only part of some countries,
  *   so membership is a separate field with its own coverage and never changes the syntax answer.
  */
 
-import { acceptPostcode, postcodeSyntax } from "#country-formats"
+import { createRecognizer, type PrefixStatus } from "@mailwoman/recognize"
+
+import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PrefixAutomaton } from "#prefix/automaton"
 import type { PostcodePrefixIndexResolver } from "#prefix/index"
+import { type PostalKindsOfCountry, postal, postalKindsOfCountry } from "#recognize/postal"
 
 /**
  * One country whose syntax the partial text can still complete to.
@@ -91,47 +95,35 @@ export interface CanCompleteOptions {
 	readonly prefixIndexes?: readonly PostcodePrefixIndexResolver[]
 }
 
-const automata = new Map<string, PrefixAutomaton>()
+const recognizer = createRecognizer([postal])
 
-function automatonFor(country: string): PrefixAutomaton | null {
-	const syntax = postcodeSyntax(country)
-
-	if (!syntax) return null
-
-	let automaton = automata.get(country)
-
-	if (!automaton) {
-		automaton = new PrefixAutomaton(syntax.pattern.source)
-		automata.set(country, automaton)
-	}
-
-	return automaton
+/**
+ * Whether a prefix status means some suffix, the empty one included, makes the text a match.
+ */
+function canCompleteStatus(status: PrefixStatus | undefined): boolean {
+	return status === "viable" || status === "accepted" || status === "accepted_and_extendable"
 }
 
 /**
- * Whether `text` can still complete to a whole postcode in `country`'s syntax.
+ * Whether `text` can still complete to a whole postcode in `country`'s syntax,
+ * given the prefix status of every shape of the `postal` family for the text.
  *
  * The check ignores leading whitespace, as `acceptPostcode` trims it.
- * The literal the country's layout prints before the postcode, such as `MD-`,
- * may be partly typed, or typed whole and followed by the code.
+ * The literal the country's layout prints before the postcode, such as `MD-`, may be partly
+ * typed, or typed whole and followed by the code: the country's printed shape reports it.
  *
  * Whitespace at the end counts only where the syntax admits whitespace, or
  * when the trimmed text is already whole.
  */
-function syntaxCanComplete(text: string, country: string, automaton: PrefixAutomaton): boolean {
-	const value = text.trimStart()
+function syntaxCanComplete(
+	value: string,
+	country: string,
+	kinds: PostalKindsOfCountry,
+	statuses: ReadonlyMap<string, PrefixStatus>
+): boolean {
+	if (canCompleteStatus(statuses.get(kinds.bare))) return true
 
-	if (automaton.canComplete(value)) return true
-
-	const prefix = postcodeSyntax(country)?.prefix
-
-	if (prefix) {
-		const upper = value.toUpperCase()
-
-		if (prefix.startsWith(upper)) return true
-
-		if (upper.startsWith(prefix) && automaton.canComplete(value.slice(prefix.length).trimStart())) return true
-	}
+	if (kinds.printed && canCompleteStatus(statuses.get(kinds.printed))) return true
 
 	return acceptPostcode(value, country) != null
 }
@@ -204,9 +196,9 @@ function membershipFor(
  * Whether `text`, a partial postcode, can still complete to a syntactically
  * valid postcode, and for which countries.
  *
- * The syntax answer comes from `PrefixAutomaton`, compiled from the same pattern
- * `postcodeSyntax` matches whole, so a text answers true here at every prefix
- * length of every postcode `acceptPostcode` accepts.
+ * The syntax answer comes from the prefix status of the `postal` family's shapes,
+ * the same grammar `acceptPostcode` matches whole, so a text answers true here at
+ * every prefix length of every postcode `acceptPostcode` accepts.
  * Membership is reported beside it from the supplied PFX1 indexes and doesn't filter the syntax answer.
  *
  * @example
@@ -219,17 +211,21 @@ export function canComplete(text: string, options: CanCompleteOptions = {}): Pos
 
 	const syntax: PostcodeSyntaxCompletion[] = []
 	const withoutSyntax: string[] = []
+	const value = text.trimStart()
+	let statuses: ReadonlyMap<string, PrefixStatus> | null = null
 
 	for (const country of countries) {
-		const automaton = automatonFor(country)
+		const kinds = postalKindsOfCountry(country)
 
-		if (!automaton) {
+		if (!kinds) {
 			withoutSyntax.push(country)
 
 			continue
 		}
 
-		if (syntaxCanComplete(text, country, automaton)) {
+		statuses ??= new Map(recognizer.prefixStatus(value).map((entry) => [entry.kind, entry.status]))
+
+		if (syntaxCanComplete(value, country, kinds, statuses)) {
 			syntax.push({ country, complete: acceptPostcode(text, country) != null })
 		}
 	}

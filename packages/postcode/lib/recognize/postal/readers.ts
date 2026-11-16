@@ -114,6 +114,48 @@ export function postalCountryCodes(recognition: { readonly kind: string }): read
 }
 
 /**
+ * The shapes of the `postal` family that stand for one country.
+ */
+export interface PostalKindsOfCountry {
+	/**
+	 * The bare shape of the country's code.
+	 */
+	readonly bare: PostalKind
+	/**
+	 * The shape of the code as the country's layout prints it with its prefix,
+	 * or null when the layout prints none.
+	 */
+	readonly printed: PostalKind | null
+}
+
+let kindsByCountry: ReadonlyMap<string, PostalKindsOfCountry> | null = null
+
+/**
+ * The bare shape and the printed shape of `country`'s postcode, or null
+ * when libaddressinput states no syntax for it.
+ *
+ * `country` is an ISO 3166-1 alpha-2 code in upper case.
+ */
+export function postalKindsOfCountry(country: string): PostalKindsOfCountry | null {
+	if (!kindsByCountry) {
+		const bare = new Map<string, PostalKind>()
+		const printed = new Map<string, PostalKind>()
+
+		for (const [kind, shape] of Object.entries(SHAPES)) {
+			for (const code of shape.countries) {
+				;(shape.kind === "code" ? bare : printed).set(code, kind as PostalKind)
+			}
+		}
+
+		kindsByCountry = new Map(
+			[...bare].map(([code, kind]) => [code, { bare: kind, printed: printed.get(code) ?? null }] as const)
+		)
+	}
+
+	return kindsByCountry.get(country) ?? null
+}
+
+/**
  * The text without the JavaScript white space `String.prototype.trim` removes.
  *
  * `acceptPostcode` removes the same white space before it reads a value.

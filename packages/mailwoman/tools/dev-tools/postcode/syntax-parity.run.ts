@@ -24,7 +24,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { postcodeSyntax, postcodeSyntaxCountries } from "@mailwoman/postcode/country-formats"
+import { postcodeSyntaxCountries } from "@mailwoman/postcode/country-formats"
+import { postcodeSyntaxText } from "@mailwoman/postcode/country-formats/source"
 
 interface SyntaxRow {
 	pattern: string
@@ -53,12 +54,14 @@ const onlyTrainer = recorded.filter((code) => !serving.includes(code))
 const differing = serving
 	.filter((code) => Object.hasOwn(trainer.countries, code))
 	.flatMap((code) => {
-		const compiled = postcodeSyntax(code)
+		const compiled = postcodeSyntaxText(code)
 
-		if (!compiled) throw new Error(`postcodeSyntaxCountries lists ${code} but postcodeSyntax(${code}) returned null`)
+		if (!compiled) {
+			throw new Error(`postcodeSyntaxCountries lists ${code} but postcodeSyntaxText(${code}) returned null`)
+		}
 
 		const row = trainer.countries[code]!
-		const servingRow = { pattern: compiled.pattern.source, prefix: compiled.prefix }
+		const servingRow = { pattern: compiled.pattern, prefix: compiled.prefix }
 
 		return row.pattern === servingRow.pattern && row.prefix === servingRow.prefix
 			? []

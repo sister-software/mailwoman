@@ -3,13 +3,13 @@
 
 import { matchCountry, matchSubdivision, matchSubdivisionsAnywhere } from "@mailwoman/codex/country"
 import { collectNodes, POSTCODE_SHAPE_EXCLUDED_KEY, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
+import { acceptPostcode, statesPostcodeSyntax } from "@mailwoman/postcode/country-formats"
 
 /**
  * Whether libaddressinput states a postcode syntax for `country`, so a span can be checked against it.
  */
 function statesSyntax(country: string): boolean {
-	return postcodeSyntax(country) != null
+	return statesPostcodeSyntax(country)
 }
 
 /**

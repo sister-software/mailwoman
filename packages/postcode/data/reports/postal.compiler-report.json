@@ -1987,15 +1987,15 @@
 		"postal": {
 			"automata": [
 				{
-					"backend": "dense",
-					"bytes": 725116,
+					"backend": "sparse",
+					"bytes": 53709,
 					"patterns": 98,
 					"role": "whole",
 					"states": 1408
 				},
 				{
-					"backend": "dense",
-					"bytes": 966952,
+					"backend": "sparse",
+					"bytes": 91415,
 					"patterns": 98,
 					"role": "embedded",
 					"states": 1846

@@ -18,7 +18,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
-import { postcodeSyntax, acceptPostcode } from "@mailwoman/postcode/country-formats"
+import { acceptPostcode, statesPostcodeSyntax } from "@mailwoman/postcode/country-formats"
 import { TextSpliterator } from "spliterator"
 
 import { OSM_LICENSE } from "#adapters/osm/license"
@@ -238,7 +238,7 @@ export function componentsForOSMRow(
 		} else {
 			countDropped(
 				tally,
-				postcodeSyntax(country) ? "component:postcode:not-country-format" : "component:postcode:country-has-none"
+				statesPostcodeSyntax(country) ? "component:postcode:not-country-format" : "component:postcode:country-has-none"
 			)
 		}
 	}

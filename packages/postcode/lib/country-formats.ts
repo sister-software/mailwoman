@@ -10,102 +10,47 @@
  *
  *   Argentina's `C1425ABC`, Brunei's `BS8811` and Chile's seven digits are postcodes there,
  *   and a four-digit value in a six-digit country isn't.
+ *
+ *   The `postal` family's artifact answers: it holds the form of every country libaddressinput states,
+ *   generated from `./country-formats/data.ts` and `./country-formats/written-forms.ts`.
+ *   A form accepts any case and any run of white space, including none, where the stated form has a space.
+ *
+ *   Case folding is Unicode simple case folding, so the Kelvin sign U+212A
+ *   and the long s U+017F match `k` and `s`.
+ *   A printed prefix is matched by the characters whose upper case is the prefix character, so a
+ *   character whose upper case is longer than itself, such as the ligature `ﬁ`, is no prefix character.
+ *
+ *   The engine loads on the first call.
  */
+
+import { createRecognizer } from "@mailwoman/recognize"
 
 import { COUNTRY_POSTCODE_FORMAT_SOURCES, type PostcodeLocalityPlacement } from "#country-formats/data"
-import { COUNTRY_POSTCODE_WRITTEN_FORMS } from "#country-formats/written-forms"
+import {
+	acceptingCountries,
+	isPostalRecognition,
+	postal,
+	postalCountryCodes,
+	splitPrintedPostcode,
+} from "#recognize/postal"
+
+const recognizer = createRecognizer([postal])
 
 /**
- * One country's postcode format, compiled.
- */
-export interface PostcodeSyntax {
-	/**
-	 * The anchored, case-insensitive pattern a whole postcode matches.
-	 */
-	readonly pattern: RegExp
-	/**
-	 * The literal the country's layout prints immediately before the postcode, such as `MD-`, or null.
-	 */
-	readonly prefix: string | null
-}
-
-const compiled = new Map<string, PostcodeSyntax | null>()
-
-/**
- * Rewrites each literal space in a libaddressinput pattern, and an optional `?` after it, as `\s*`.
+ * Whether libaddressinput states a postcode syntax for `countryCode`.
  *
- * libaddressinput states the form a postal form prints, with one space where the canonical code has one.
- * People type `m113aa`, `BN1  1AA` and `GX111AA`, and spacing is an observation
- * rather than an admission test.
- *
- * A space inside a character class, as in the ZIP+4 separator `[ \-]`, remains unchanged
- * because rewriting it would change the class.
+ * It is false for a country the dataset records no postcode system for, as for the United Arab Emirates.
  */
-export function tolerateSpacing(pattern: string): string {
-	let out = ""
-	let inClass = false
-
-	for (let i = 0; i < pattern.length; i++) {
-		const c = pattern[i]!
-
-		if (c === "\\") {
-			out += c + (pattern[i + 1] ?? "")
-
-			i++
-
-			continue
-		}
-
-		if (c === "[") {
-			inClass = true
-		} else if (c === "]") {
-			inClass = false
-		}
-
-		if (c === " " && !inClass) {
-			out += "\\s*"
-
-			if (pattern[i + 1] === "?") {
-				i++
-			}
-
-			continue
-		}
-
-		out += c
-	}
-
-	return out
+export function statesPostcodeSyntax(countryCode: string): boolean {
+	return Object.hasOwn(COUNTRY_POSTCODE_FORMAT_SOURCES, countryCode.toUpperCase())
 }
 
 /**
- * The postcode format libaddressinput states for `countryCode`, or null when it states none.
- *
- * The compiled pattern accepts any case and any run of whitespace, including none,
- * where the stated form has a space, and each form `COUNTRY_POSTCODE_WRITTEN_FORMS` adds.
- * A null answer means the dataset records no postcode system for the country,
- * as for the United Arab Emirates.
+ * The literal `countryCode`'s layout prints immediately before the postcode, such as `MD-`,
+ * or null when it prints none or the dataset states no postcode for the country.
  */
-export function postcodeSyntax(countryCode: string): PostcodeSyntax | null {
-	const code = countryCode.toUpperCase()
-
-	if (compiled.has(code)) return compiled.get(code) ?? null
-
-	const source = COUNTRY_POSTCODE_FORMAT_SOURCES[code]
-
-	// A written form libaddressinput omits, such as a ZIP+4 with no separator, is one more alternative.
-	const alternatives = source ? [source.pattern, ...(COUNTRY_POSTCODE_WRITTEN_FORMS[code] ?? [])] : []
-
-	const format = source
-		? {
-				pattern: new RegExp(`^(?:${alternatives.map((p) => `(?:${tolerateSpacing(p)})`).join("|")})$`, "iu"),
-				prefix: source.prefix ?? null,
-			}
-		: null
-
-	compiled.set(code, format)
-
-	return format
+export function postcodePrefix(countryCode: string): string | null {
+	return COUNTRY_POSTCODE_FORMAT_SOURCES[countryCode.toUpperCase()]?.prefix ?? null
 }
 
 /**
@@ -127,7 +72,7 @@ export function postcodePlacement(countryCode: string): PostcodeLocalityPlacemen
  * The list's size measures the shape's ambiguity.
  */
 export function countriesAcceptingPostcode(value: string): string[] {
-	return postcodeSyntaxCountries().filter((code) => acceptPostcode(value, code) !== null)
+	return acceptingCountries(recognizer, value)
 }
 
 /**
@@ -135,6 +80,27 @@ export function countriesAcceptingPostcode(value: string): string[] {
  */
 export function postcodeSyntaxCountries(): string[] {
 	return Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES).toSorted()
+}
+
+/**
+ * Whether the whole of `text`, as written, has the form of a bare postcode of `countryCode`.
+ *
+ * The text isn't trimmed and no printed prefix is removed, so `MD-2001` is no bare Moldovan code.
+ * The answer is false for a country with no stated format.
+ */
+export function hasPostcodeForm(text: string, countryCode: string): boolean {
+	const code = countryCode.toUpperCase()
+
+	return recognizer
+		.recognize(text)
+		.recognitions.some(
+			(recognition) =>
+				isPostalRecognition(recognition) &&
+				recognition.start === 0 &&
+				recognition.end === text.length &&
+				splitPrintedPostcode(recognition) === null &&
+				postalCountryCodes(recognition).includes(code)
+		)
 }
 
 /**
@@ -147,16 +113,29 @@ export function postcodeSyntaxCountries(): string[] {
  * For a country with no stated format the answer is always null.
  */
 export function acceptPostcode(value: string, countryCode: string): string | null {
-	const format = postcodeSyntax(countryCode)
-
-	if (!format) return null
-
+	const code = countryCode.toUpperCase()
 	const trimmed = value.trim()
 
-	const unprefixed =
-		format.prefix && trimmed.toUpperCase().startsWith(format.prefix)
-			? trimmed.slice(format.prefix.length).trim()
-			: trimmed
+	if (!trimmed) return null
 
-	return format.pattern.test(unprefixed) ? unprefixed : null
+	let bare = false
+
+	for (const recognition of recognizer.recognize(trimmed).recognitions) {
+		if (
+			!isPostalRecognition(recognition) ||
+			recognition.start !== 0 ||
+			recognition.end !== trimmed.length ||
+			!postalCountryCodes(recognition).includes(code)
+		) {
+			continue
+		}
+
+		const printed = splitPrintedPostcode(recognition)
+
+		if (printed) return printed.code
+
+		bare = true
+	}
+
+	return bare ? trimmed : null
 }

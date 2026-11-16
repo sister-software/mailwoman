@@ -29,8 +29,11 @@ export {
 	type RecognizeOptions,
 	type RecognizeResult,
 	type Recognizer,
+	type ShapePrefixStatus,
 	type TracedRecognizeResult,
 } from "#recognizer"
+
+export type { PrefixStatus } from "#runtime/engine"
 
 export {
 	Outcome,

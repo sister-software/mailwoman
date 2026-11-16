@@ -3,7 +3,13 @@
 
 import { describe, expect, test } from "vitest"
 
-import { postcodePlacement, postcodeSyntax, acceptPostcode } from "#country-formats"
+import {
+	acceptPostcode,
+	hasPostcodeForm,
+	postcodePlacement,
+	postcodePrefix,
+	statesPostcodeSyntax,
+} from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 import { COUNTRY_POSTCODE_WRITTEN_FORMS } from "#country-formats/written-forms"
 
@@ -56,11 +62,22 @@ describe("acceptPostcode", () => {
 		expect(acceptPostcode("0570146731", "US")).toBeNull()
 	})
 
-	test("every written form compiles for a country libaddressinput states", () => {
+	test("every written form belongs to a country libaddressinput states", () => {
 		for (const code of Object.keys(COUNTRY_POSTCODE_WRITTEN_FORMS)) {
 			expect(COUNTRY_POSTCODE_FORMAT_SOURCES[code]).toBeDefined()
-			expect(postcodeSyntax(code)?.pattern).toBeInstanceOf(RegExp)
+			expect(statesPostcodeSyntax(code)).toBe(true)
 		}
+	})
+
+	test("a ligature is no prefix character, so it neither shifts the code nor passes for the prefix (issue 3088)", () => {
+		expect(acceptPostcode("FI-12345", "FI")).toBe("12345")
+		expect(acceptPostcode("ﬁ-123456", "FI")).toBeNull()
+		expect(acceptPostcode("ﬁ-12345", "FI")).toBeNull()
+	})
+
+	test("folds the Kelvin sign and the long s as Unicode case folding does", () => {
+		expect(acceptPostcode("K1A 0B1", "CA")).toBe("K1A 0B1")
+		expect(acceptPostcode("ſW1A 1AA", "GB")).toBe("ſW1A 1AA")
 	})
 
 	test("removes the country-code prefix the layout prints itself", () => {
@@ -81,12 +98,21 @@ describe("acceptPostcode", () => {
 	})
 
 	test("leaves Puerto Rico's region code unprefixed, since the layout prints it after the city", () => {
-		expect(postcodeSyntax("PR")?.prefix).toBeNull()
+		expect(postcodePrefix("PR")).toBeNull()
+		expect(postcodePrefix("MD")).toBe("MD-")
 	})
 
 	test("matches nothing for a country that states no postcode", () => {
-		expect(postcodeSyntax("AE")).toBeNull()
+		expect(statesPostcodeSyntax("AE")).toBe(false)
 		expect(acceptPostcode("00000", "AE")).toBeNull()
+		expect(hasPostcodeForm("00000", "AE")).toBe(false)
+	})
+
+	test("hasPostcodeForm reads the bare form as written, with no trimming and no prefix removed", () => {
+		expect(hasPostcodeForm("2001", "MD")).toBe(true)
+		expect(hasPostcodeForm("MD-2001", "MD")).toBe(false)
+		expect(hasPostcodeForm(" 2001", "MD")).toBe(false)
+		expect(hasPostcodeForm("sw1a1aa", "gb")).toBe(true)
 	})
 
 	test("reads where the layout prints the postcode relative to the locality", () => {
@@ -96,11 +122,5 @@ describe("acceptPostcode", () => {
 		expect(postcodePlacement("JP")).toBeNull()
 		// The UAE states no postcode at all.
 		expect(postcodePlacement("AE")).toBeNull()
-	})
-
-	test("every stated pattern compiles anchored", () => {
-		for (const code of Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)) {
-			expect(postcodeSyntax(code)?.pattern).toBeInstanceOf(RegExp)
-		}
 	})
 })
