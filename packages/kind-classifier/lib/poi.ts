@@ -11,7 +11,8 @@
  */
 
 import type { POISpatialRelation } from "@mailwoman/core/pipeline"
-import type { QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
+import type { QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
+import type { TextFragment } from "@mailwoman/core/tokenization/Span"
 /**
  * Comma-segment ceiling for a POI-led query.
  *
@@ -95,7 +96,7 @@ export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray
 /**
  * A span of the normalized input, with half-open character offsets.
  */
-export type POIQuerySpan = TextSpan
+export type POIQuerySpan = TextFragment
 
 /**
  * The subject phrase {@link matchPOISubject} chose and the lexicon hits for it.

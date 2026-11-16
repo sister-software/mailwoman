@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
-import type { PhraseProposal, RuntimePipelineStages } from "#pipeline/types"
+import { EMPTY_QUERY_SHAPE_VIEW, type PhraseProposal, type RuntimePipelineStages } from "#pipeline/types"
 import { Span } from "#tokenization"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {

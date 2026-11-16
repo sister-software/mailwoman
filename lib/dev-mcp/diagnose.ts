@@ -156,8 +156,8 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 }
 
 /**
- * The format union, pulled off the trace's own type so a format added to
- * `@mailwoman/query-shape` without an entry in {@link COMPONENT_FOR_KNOWN_FORMAT}
+ * The format union, pulled off the trace's own type so a format added to the legacy-formats
+ * table of `@mailwoman/postcode` without an entry in {@link COMPONENT_FOR_KNOWN_FORMAT}
  * is a compile error rather than a silently unchecked detector.
  */
 type KnownFormat = GeocodeTrace["queryShape"]["knownFormats"][number]["format"]

@@ -7,7 +7,6 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
 
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -19,9 +18,11 @@ import {
 	PipelineFaultStage,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	deriveInputMode,
+	isPostcodeFormat,
 } from "#pipeline/types"
 import type {
 	AddressClassifier,
+	NormalizedInputLite,
 	CaseNormalization,
 	AnchorRegionLookupLike,
 	FSTMatcherLike,
@@ -48,13 +49,6 @@ const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
  * A locality-only input longer than this number of characters takes the full pipeline.
  */
 const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
-
-/**
- * Reports whether a query-shape format name denotes a postcode.
- */
-function isPostcodeFormat(format: string): boolean {
-	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
-}
 
 /**
  * The default resolver weight for the coarse-placer country prior.

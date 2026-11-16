@@ -6,7 +6,7 @@ import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@ma
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { isPresent } from "@mailwoman/core/objects"
 import { landmarkPlaceID } from "@mailwoman/core/resolver"
-import { segment } from "@mailwoman/query-shape/segmentation"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
@@ -135,8 +135,8 @@ function adminPriorityFor(allNodes: readonly AddressNode[]): ReadonlyArray<strin
  * Each node keeps a position its tag already held, so the order between tags is unchanged.
  */
 function venueWordsLast(nodes: readonly AddressNode[], input: string): AddressNode[] {
-	const segments = segment(input)
-		.map(({ body }) => normalizeLocalityForKey(body))
+	const segments = computeQueryShape(input)
+		.segments.map(({ body }) => normalizeLocalityForKey(body))
 		.filter(isPresent)
 
 	const venues = nodes

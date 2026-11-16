@@ -19,7 +19,8 @@
  */
 
 import type { PhraseKind, PhraseProposal } from "@mailwoman/core/pipeline"
-import { computeQueryShape, type NormalizedInputLite } from "@mailwoman/query-shape"
+import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { groupPhrasesSync } from "#group"

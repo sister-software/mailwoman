@@ -20,20 +20,9 @@ export type KnownFormat = (typeof LEGACY_FORMATS)[number]["format"] | (typeof PO
 /**
  * The fields the `postcode_legacy` family adds to a recognition result.
  *
- * Offsets are UTF-16 code units, and the order is the order of `detectKnownFormats`
- * of `@mailwoman/query-shape`.
+ * Offsets are UTF-16 code units, and the order is the order of the pipeline's legacy detector:
+ * every one-token pattern in table order, then every two-token pattern, then the PO box.
  */
 export interface PostcodeLegacyFields {
 	readonly knownFormats: ReadonlyArray<KnownFormatHit<KnownFormat>>
-}
-
-/**
- * Whether a known-format name is a postcode format.
- *
- * The check uses the naming convention `us_zip`, `us_zip4` or `<cc>_postcode` instead of a set,
- * so a row added to the table becomes a postcode once it follows the convention.
- * A test checks every row of the table against this function.
- */
-export function isKnownPostcodeFormat(format: string): boolean {
-	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
 }

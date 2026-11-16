@@ -2,33 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Times one `recognizer.recognize(input)` call through the WebAssembly adapter on
- *   the six inputs of `packages/mailwoman/tools/dev-tools/query-shape/bench.run.ts`,
- *   with `computeQueryShape` timed in the same process.
+ *   Times one `recognizer.recognize(input)` call through the WebAssembly adapter on eight inputs:
+ *   the six of the issue's timing table, a 300-digit run and a 300-character run of one CJK character.
  *
- *   Method: 20,000 warm-up calls, then 200,000 timed calls per input,
- *   in one Node process, the legacy tool's method.
+ *   Method: 20,000 warm-up calls, then 200,000 timed calls per input, in one Node process.
  *   Every result feeds a running sum so the engine cannot drop the work.
  *
  *   The recognizer is composed from the `structure`, `primitives` and `coordinates` families.
- *
- *   The two do not do the same work.
- *   `computeQueryShape` computes character class, scripts, tokens, segments and region
- *   abbreviations, and known formats, and the recognizer computes the same structural fields
- *   and also recognizes digit runs, decimals, whitespace, words and decimal pairs.
- *
  *   It doesn't compute known formats, because the `postcode_legacy` family belongs
  *   to `@mailwoman/postcode`, and this package mustn't import it.
+ *
  *   `packages/postcode/tools/bench.run.ts` times the same inputs with that family composed.
  *
- *   The recognizer here therefore does more work than the legacy call on every input,
- *   except the known formats.
- *
- *   Two more inputs stress the search: a 300-digit run and a 300-character run of one CJK character.
  *   The tool makes no assertion on the numbers.
- *
- *   The tool lives here and not beside the legacy benchmark because it imports `@mailwoman/query-shape`,
- *   which `@mailwoman/recognize` takes as a development dependency for this comparison.
+ *   The numbers of the removed legacy implementation, taken in the same process
+ *   before it was deleted, are in `docs/records/engineering/2026-11-16-recognize-swap.md`.
  *
  *   Usage: `node packages/recognize/tools/bench.run.ts [--json]`
  */
@@ -37,7 +25,6 @@ import { gitHead } from "@mailwoman/core/git"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuModel } from "@mailwoman/core/utils/system"
-import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { coordinates } from "#coordinates"
 import { createRecognizer } from "#index"
@@ -51,7 +38,7 @@ const LABEL_MAX_UNITS = 80
 const WHITE_HOUSE = "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America"
 
 /**
- * The inputs of the issue's timing table, in the legacy benchmark's order.
+ * The inputs of the issue's timing table, in its order.
  */
 const INPUTS: readonly string[] = [
 	"68161",
@@ -85,7 +72,6 @@ function microsecondsPerCall(input: string, run: (input: string) => number): { m
 const encoder = new TextEncoder()
 
 const rows = INPUTS.map((input) => {
-	const legacy = microsecondsPerCall(input, (text) => computeQueryShape(text).totalLength)
 	const adapter = microsecondsPerCall(input, (text) => recognizer.recognize(text).recognitions.length)
 
 	return {
@@ -93,9 +79,8 @@ const rows = INPUTS.map((input) => {
 		utf16Units: input.length,
 		utf8Bytes: encoder.encode(input).length,
 		candidates: recognizer.recognize(input).recognitions.length,
-		computeQueryShapeMicroseconds: legacy.microseconds,
 		recognizeMicroseconds: adapter.microseconds,
-		sink: legacy.sink + adapter.sink,
+		sink: adapter.sink,
 	}
 })
 
@@ -115,14 +100,12 @@ if (values.json) {
 } else {
 	console.log(`commit ${report.commit}, node ${report.node}, ${report.cpu}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per input\n`)
-	console.log("| Input | UTF-16 units | Candidates | computeQueryShape (µs/call) | recognize (µs/call) |")
-	console.log("| --- | --- | --- | --- | --- |")
+	console.log("| Input | UTF-16 units | Candidates | recognize (µs/call) |")
+	console.log("| --- | --- | --- | --- |")
 
 	for (const row of rows) {
 		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (${row.utf16Units} units)` : row.input
 
-		console.log(
-			`| \`${label}\` | ${row.utf16Units} | ${row.candidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} |`
-		)
+		console.log(`| \`${label}\` | ${row.utf16Units} | ${row.candidates} | ${row.recognizeMicroseconds.toFixed(2)} |`)
 	}
 }

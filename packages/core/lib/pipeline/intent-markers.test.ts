@@ -10,19 +10,19 @@
  *   It never adds a marker the classifier didn't raise or drops one the classifier did raise.
  */
 
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
 import { describe, expect, test } from "vitest"
 
 import { runPipeline } from "#pipeline/runtime-pipeline"
-import type {
-	AddressClassifier,
-	LocaleHint,
-	POIQueryResult,
-	QueryIntentMarker,
-	QueryKindResult,
-	QueryShapeLite,
-	RuntimePipelineStages,
+import {
+	EMPTY_QUERY_SHAPE_VIEW,
+	type AddressClassifier,
+	type LocaleHint,
+	type NormalizedInputLite,
+	type POIQueryResult,
+	type QueryIntentMarker,
+	type QueryKindResult,
+	type QueryShapeLite,
+	type RuntimePipelineStages,
 } from "#pipeline/types"
 
 const FORK: QueryIntentMarker = {

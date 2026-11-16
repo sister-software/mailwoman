@@ -39,10 +39,11 @@ export:
   bytes and probes a prefix for its weighted ancestry, and `serializePostcodePrefixIndex`, which writes one.
 
 - `@mailwoman/postcode/recognize/legacy` holds `postcodeLegacy`, a family of `@mailwoman/recognize` that fills the
-  `knownFormats` field with the postcode and PO box formats `@mailwoman/query-shape` reports today: the same
-  names, confidences, spans and order. Compose it with the `structure` family, whose tokens it reads. A
+  `knownFormats` field with the postcode and PO box formats the parse pipeline reads: the thirteen legacy names,
+  their confidences, spans and order. Compose it with the `structure` family, whose tokens it reads. A
   composition without `structure` throws a `RecognizeCompositionError` at construction. The family reports no
-  recognitions of its own.
+  recognitions of its own. `@mailwoman/postcode/recognize/query-shape` composes the two once and exports
+  `computeQueryShape`, which the pipeline's stages call.
 
   ```ts
   const { fields } = createRecognizer([structure, postcodeLegacy]).recognize("SW1A 1AA")
@@ -53,7 +54,7 @@ export:
   confidence, and the PO box leaders of each language. `node packages/postcode/tools/generate.run.ts` compiles it
   with `recognize-build --definition`, and `--check` fails when a committed file differs. The patterns are the
   thirteen legacy patterns, so wider recognition from every country's syntax is a separate change.
-  `isKnownPostcodeFormat` is the `isPostcodeFormat` predicate for these names.
+  `isPostcodeFormat` from `@mailwoman/core/pipeline/types` is the predicate for these names.
 
   `@mailwoman/postcode/recognize/postal` holds `postal`, a second family, in a module of its own so that a bundle
   of one family holds no byte of the other's artifact. The family is generated from the syntax of every country that

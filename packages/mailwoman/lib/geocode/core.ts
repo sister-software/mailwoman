@@ -46,7 +46,7 @@ import type {
 import { RESOLVE_SWITCH_DEFAULTS } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
-import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"

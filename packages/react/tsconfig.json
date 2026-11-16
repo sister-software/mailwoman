@@ -24,6 +24,7 @@
 		{ "path": "../core" },
 		{ "path": "../kind-classifier" },
 		{ "path": "../poi-taxonomy" },
-		{ "path": "../query-shape" }
+		{ "path": "../postcode" },
+		{ "path": "../recognize" }
 	]
 }

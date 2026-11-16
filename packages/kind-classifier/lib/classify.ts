@@ -12,7 +12,7 @@
  */
 
 import type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 
 import { deriveIntentMarkers } from "#intent/markers"
 import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent/rules"

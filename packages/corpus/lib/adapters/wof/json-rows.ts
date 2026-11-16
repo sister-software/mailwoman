@@ -14,8 +14,7 @@ import {
 } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { isPresent } from "@mailwoman/core/objects"
-import { classifyTokenScript } from "@mailwoman/query-shape/character-class"
-import type { ScriptCode } from "@mailwoman/query-shape/types"
+import { classifyTokenScript } from "@mailwoman/recognize/charset"
 
 import type { RowSampler, SampledRow } from "#adapters/wof/sample"
 import type { AdapterOptions, CanonicalRow } from "#types"
@@ -92,7 +91,7 @@ const ADMIN_RUN_TAGS: ReadonlySet<ComponentTag> = new Set(["dependent_locality",
 /**
  * Scripts whose addresses join their units without a separator or with a single space.
  */
-const CJK_SCRIPTS: ReadonlySet<ScriptCode> = new Set(["Hani", "Hira", "Kana", "Hang"])
+const CJK_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Hira", "Kana", "Hang"])
 
 /**
  * Chooses the join script for a hierarchy from the names being joined.

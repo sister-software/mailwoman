@@ -124,7 +124,6 @@ const TRACE = {
 		knownFormats: [],
 		regionAbbreviations: [],
 		totalLength: RESULT.input.length,
-		whitespacePattern: "single",
 	},
 	kind: { kind: "structured_address", confidence: 0.9, alternatives: [], intentMarkers: null },
 	inputMode: "formatted",

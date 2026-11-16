@@ -1,16 +1,38 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { CharacterClass, ScriptCode, ScriptShare, SpanRange, TokenCharacterClass, TokenClass } from "#types"
+/**
+ *   Codepoint, token and script classifiers in plain TypeScript.
+ *
+ *   The `structure` family classifies a whole text in one engine call.
+ *   A caller that classifies one codepoint or one token at a time, in a loop that runs
+ *   thousands of times, calls these functions instead and pays no WebAssembly call for each.
+ *
+ *   The ranges are the ones the `structure` family compiles from `crates/recognize-core/src/charset.rs`.
+ *   `charset.test.ts` checks every range against `\p{Script=…}`, and `tools/differential.test.ts`
+ *   checks the family against the frozen output of the classifier these functions come from.
+ */
+
+import type { BCP47 } from "@mailwoman/registry/types"
+
+import type { TokenCharacterClass, TokenClass } from "#types"
 
 /**
  * The character class of a single codepoint.
  */
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
-const CJK_RANGES: ReadonlyArray<[number, number]> = [
+type ScriptName = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "Arab" | "Yiii" | "Zyyy" | "Zzzz"
+
+type Ranges = ReadonlyArray<readonly [number, number]>
+
+function asScript(name: ScriptName): BCP47.ScriptCode {
+	return name as string as BCP47.ScriptCode
+}
+
+const CJK_RANGES: Ranges = [
 	// These are the Han characters inside the CJK symbols block.
-	// The iteration mark `々` appears inside names such as 代々木, so the tokenizer mustn't break a token at it.
+	// The iteration mark `々` appears inside names such as 代々木, so a token mustn't break at it.
 	[0x30_05, 0x30_05],
 	[0x30_07, 0x30_07],
 	[0x30_21, 0x30_29],
@@ -26,14 +48,14 @@ const CJK_RANGES: ReadonlyArray<[number, number]> = [
 	[0x2_00_00, 0x2_a6_df], // CJK Unified Ideographs Extension B
 ]
 
-const CYRILLIC_RANGES: ReadonlyArray<[number, number]> = [
+const CYRILLIC_RANGES: Ranges = [
 	[0x04_00, 0x04_ff],
 	[0x05_00, 0x05_2f], // Cyrillic Supplement
 	[0x2d_e0, 0x2d_ff], // Cyrillic Extended-A
 	[0xa6_40, 0xa6_9f], // Cyrillic Extended-B
 ]
 
-const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
+const ARABIC_RANGES: Ranges = [
 	[0x06_00, 0x06_ff],
 	[0x07_50, 0x07_7f], // Arabic Supplement
 	[0x08_a0, 0x08_ff], // Arabic Extended-A
@@ -47,13 +69,10 @@ const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
  * The `cjk` character class merges Kana, Han and Hangul.
  * These ranges keep the scripts apart so that consumers can tell Korean input from Japanese input.
  *
- * The ranges are written by hand because `computeQueryShape` runs on every keystroke.
- * `character-class.test.ts` checks every codepoint in every range against `\p{Script=…}`.
- *
  * Halfwidth and fullwidth forms belong to several scripts.
  * Fullwidth ASCII is Latin or Common, halfwidth katakana is Kana and halfwidth jamo is Hangul.
  */
-const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, number]>]> = [
+const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptName, Ranges]> = [
 	[
 		"Hira",
 		[
@@ -162,11 +181,10 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 /**
  * Codepoints that Unicode assigns to `Common` inside blocks that otherwise belong to one script.
  *
- * These codepoints map to `Zyyy`, so script shares ignore them.
+ * These codepoints map to `Zyyy`, so script counts ignore them.
  * For example, the prolonged sound mark `ー` in `ブロードウェイ` doesn't count.
- * The word reads as `Kana` 1.00.
  */
-const COMMON_RANGES: ReadonlyArray<[number, number]> = [
+const COMMON_RANGES: Ranges = [
 	[0x06_40, 0x06_40], // Arabic tatweel ـ stretches a joined letter
 	// CJK symbols and punctuation, except the characters that Unicode assigns to Han: 々 (U+3005),
 	// 〇 (U+3007), the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B.
@@ -188,7 +206,7 @@ const COMMON_RANGES: ReadonlyArray<[number, number]> = [
 	[0xff_9e, 0xff_9f], // Halfwidth voiced marks
 ]
 
-function inRange(cp: number, ranges: ReadonlyArray<[number, number]>): boolean {
+function inRange(cp: number, ranges: Ranges): boolean {
 	for (const [lo, hi] of ranges) {
 		if (cp >= lo && cp <= hi) return true
 	}
@@ -277,10 +295,8 @@ export function classifyCodepoint(cp: number): CodepointClass {
  *
  * `Zyyy` (Common) covers characters shared by more than one script, such as digits, commas and spaces.
  * `Zzzz` (Unknown) covers scripts that this file has no ranges for.
- *
- * Script shares skip `Zyyy` so that punctuation doesn't dominate every ranking.
  */
-export function scriptForCodepoint(cp: number): ScriptCode {
+function scriptForCodepoint(cp: number): ScriptName {
 	if (inRange(cp, COMMON_RANGES)) return "Zyyy"
 
 	for (const [script, ranges] of SCRIPT_RANGES) {
@@ -298,12 +314,10 @@ export function scriptForCodepoint(cp: number): ScriptCode {
  * Returns the script of most codepoints in a token, ignoring `Zyyy` codepoints.
  *
  * A token with no script codepoints, such as `10118`, returns `Zyyy`.
- * A token mixes scripts only when a connector joins them, as in `ニューヨーク-NY`.
- *
- * The input's `scripts` list still reports both scripts in that case.
+ * A tie goes to the script seen first.
  */
-export function classifyTokenScript(text: string): ScriptCode {
-	const counts = new Map<ScriptCode, number>()
+export function classifyTokenScript(text: string): BCP47.ScriptCode {
+	const counts = new Map<ScriptName, number>()
 
 	for (let i = 0; i < text.length;) {
 		const cp = text.codePointAt(i)!
@@ -315,7 +329,7 @@ export function classifyTokenScript(text: string): ScriptCode {
 		counts.set(script, (counts.get(script) ?? 0) + 1)
 	}
 
-	let best: ScriptCode = "Zyyy"
+	let best: ScriptName = "Zyyy"
 	let bestCount = 0
 
 	for (const [script, count] of counts) {
@@ -325,40 +339,7 @@ export function classifyTokenScript(text: string): ScriptCode {
 		}
 	}
 
-	return best
-}
-
-/**
- * Returns every script in the input, ranked by share.
- *
- * Each share is a fraction of the codepoints that have a script, so digits and punctuation do not count.
- * For example, `金龍酒家, 12 Gerrard Street, London WC2H 7JS` gives `Latn` 0.82 and `Hani` 0.18.
- *
- * An input without script codepoints, such as a bare postcode, returns an empty list.
- *
- * This list distinguishes scripts that the folded `CharacterClass` merges into `cjk` or `mixed`.
- */
-export function foldInputScripts(text: string): ScriptShare[] {
-	const counts = new Map<ScriptCode, number>()
-	let total = 0
-
-	for (let i = 0; i < text.length;) {
-		const cp = text.codePointAt(i)!
-		i += cp > 0xff_ff ? 2 : 1
-		const script = scriptForCodepoint(cp)
-
-		if (script === "Zyyy") continue
-
-		counts.set(script, (counts.get(script) ?? 0) + 1)
-
-		total++
-	}
-
-	if (!total) return []
-
-	return [...counts]
-		.map(([script, count]) => ({ script, share: count / total }))
-		.toSorted((left, right) => right.share - left.share || left.script.localeCompare(right.script))
+	return asScript(best)
 }
 
 /**
@@ -379,9 +360,8 @@ export function classifyToken(text: string): TokenCharacterClass {
 	for (let i = 0; i < text.length;) {
 		const cp = text.codePointAt(i)!
 		i += cp > 0xff_ff ? 2 : 1
-		const cls = classifyCodepoint(cp)
 
-		switch (cls) {
+		switch (classifyCodepoint(cp)) {
 			case "digit":
 				hasDigit = true
 				break
@@ -425,59 +405,6 @@ export function classifyToken(text: string): TokenCharacterClass {
 }
 
 /**
- * Folds the token classes into one character class for the whole input.
- */
-export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClass {
-	if (!tokens.length) return "alpha"
-
-	let hasDigit = false
-	let hasAlpha = false
-	let hasCjk = false
-	let hasCyrillic = false
-	let hasArabic = false
-	let hasMixed = false
-
-	for (const t of tokens) {
-		switch (t.class) {
-			case "cjk":
-				hasCjk = true
-				break
-			case "cyrillic":
-				hasCyrillic = true
-				break
-			case "arabic":
-				hasArabic = true
-				break
-			case "digit":
-				hasDigit = true
-				break
-			case "alpha":
-				hasAlpha = true
-				break
-			case "mixed":
-				hasMixed = true
-				break
-		}
-	}
-
-	if (hasCjk && !hasAlpha && !hasCyrillic && !hasArabic) return "cjk"
-
-	if (hasCyrillic && !hasAlpha && !hasCjk && !hasArabic) return "cyrillic"
-
-	if (hasArabic && !hasAlpha && !hasCjk && !hasCyrillic) return "arabic"
-
-	if (hasCjk || hasCyrillic || hasArabic) return "mixed"
-
-	if (hasMixed || (hasDigit && hasAlpha)) return "alphanumeric"
-
-	if (hasDigit && !hasAlpha) return "numeric"
-
-	if (hasAlpha && !hasDigit) return "alpha"
-
-	return "mixed"
-}
-
-/**
  * Returns the script of the tokens that overlap the half-open range `[start, end)`.
  *
  * A part of an address can use a different script from the whole.
@@ -487,20 +414,24 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
  * `Zyyy` tokens are skipped.
  * A range with only such tokens returns `Zyyy`.
  *
- * The offsets index the same normalized text as `TokenClass.span`.
+ * The offsets index the same text as `TokenClass.span`.
  */
-export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number, end: number): ScriptCode {
-	const weights = new Map<ScriptCode, number>()
+export function scriptForRange(
+	tokens: ReadonlyArray<Pick<TokenClass, "span" | "script">>,
+	start: number,
+	end: number
+): BCP47.ScriptCode {
+	const weights = new Map<BCP47.ScriptCode, number>()
 
 	for (const token of tokens) {
 		if (token.span.end <= start || token.span.start >= end) continue
 
-		if (token.script === "Zyyy") continue
+		if ((token.script as string) === "Zyyy") continue
 
 		weights.set(token.script, (weights.get(token.script) ?? 0) + (token.span.end - token.span.start))
 	}
 
-	let best: ScriptCode = "Zyyy"
+	let best = asScript("Zyyy")
 	let bestWeight = 0
 
 	for (const [script, weight] of weights) {
@@ -511,88 +442,4 @@ export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number,
 	}
 
 	return best
-}
-
-/**
- * Tokenizes a string and returns each token with its class, length and script.
- *
- * `computeQueryShape` and the tests share this function so that every caller builds tokens the same way.
- */
-export function classifyTokens(text: string): TokenClass[] {
-	return tokenizeForClass(text).map((span) => ({
-		span,
-		class: classifyToken(span.body),
-		length: span.end - span.start,
-		script: classifyTokenScript(span.body),
-	}))
-}
-
-/**
- * Splits a string into token spans at whitespace, punctuation and script changes.
- *
- * Most callers want {@linkcode classifyTokens}, which adds the class and the script to each span.
- */
-export function tokenizeForClass(text: string): SpanRange[] {
-	const tokens: SpanRange[] = []
-	let i = 0
-	const N = text.length
-
-	while (i < N) {
-		const cp = text.codePointAt(i)!
-		const cls = classifyCodepoint(cp)
-
-		if (cls === "whitespace" || cls === "punct") {
-			i += cp > 0xff_ff ? 2 : 1
-
-			continue
-		}
-
-		// A connector at the start of a token is skipped like whitespace.
-		if (cls === "connector") {
-			i += cp > 0xff_ff ? 2 : 1
-
-			continue
-		}
-
-		// The token runs until whitespace, punctuation or a class change.
-		// Connectors stay inside it.
-		const start = i
-		const startCls = cls
-		let cur = i
-
-		while (cur < N) {
-			const ncp = text.codePointAt(cur)!
-			const nstep = ncp > 0xff_ff ? 2 : 1
-			const ncls = classifyCodepoint(ncp)
-
-			if (ncls === "whitespace" || ncls === "punct") break
-
-			if (ncls === "connector") {
-				cur += nstep
-
-				continue
-			}
-
-			// Digits and Latin letters share a token.
-			// Other class changes end it, except that a token starting with an `other`
-			// codepoint may continue into digits or letters.
-			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
-				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
-
-			if (
-				ncls !== startCls &&
-				!isLatinPair(startCls, ncls) &&
-				!(startCls === "other" && (ncls === "digit" || ncls === "alpha"))
-			) {
-				break
-			}
-
-			cur += nstep
-		}
-
-		tokens.push({ start, end: cur, body: text.slice(start, cur) })
-		i = cur
-	}
-
-	return tokens
 }

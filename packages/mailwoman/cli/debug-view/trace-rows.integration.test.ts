@@ -36,7 +36,6 @@ function queryShapeOf(knownFormats: GeocodeTrace["queryShape"]["knownFormats"] =
 		knownFormats,
 		regionAbbreviations: [],
 		totalLength: TEXT.length,
-		whitespacePattern: "single",
 	}
 }
 

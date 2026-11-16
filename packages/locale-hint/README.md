@@ -3,7 +3,7 @@
 **Stage 2 of the Mailwoman runtime pipeline** — rule-based locale detection.
 
 Derives a `LocaleHint` from the structural fingerprint computed by
-`@mailwoman/query-shape`. Uses only universal cues — script class, postcode
+`computeQueryShape` of `@mailwoman/postcode`. Uses only universal cues — script class, postcode
 patterns, known-format hits — never place-name dictionaries. Returns a ranked
 list of candidates so the coordinator can surface disagreement when the
 caller's explicit `--locale` hint differs from what the input shape implies.
@@ -50,7 +50,7 @@ Stage 2 in the [Staged Pipeline Interface](https://github.com/sister-software/ma
 
 ## Related
 
-- [`@mailwoman/query-shape`](../query-shape) — feeds `QueryShape` into this stage
+- [`@mailwoman/postcode`](../postcode) — `computeQueryShape` feeds `QueryShape` into this stage
 - [`@mailwoman/kind-classifier`](../kind-classifier) — Stage 2.5, also consumes `QueryShape`
 - [`@mailwoman/core`](../core) — `LocaleTag` type and pipeline infrastructure
 - [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx)

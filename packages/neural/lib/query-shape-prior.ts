@@ -12,8 +12,8 @@
  *   owner rather than restated, because a restated convention drops the formats added after it.
  */
 
-import type { CharRange } from "@mailwoman/query-shape"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
+import type { CharRange } from "@mailwoman/recognize/types"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"
@@ -24,23 +24,13 @@ import { spansOverlap } from "#span/repair"
 const MAX_PRIOR_CANDIDATES = 4
 
 export interface QueryShapeLike {
-	knownFormats: ReadonlyArray<KnownFormatHitLike>
+	knownFormats: ReadonlyArray<KnownFormatHitView>
 	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
 }
 
 interface RegionAbbreviationHitLike {
 	start: number
 	span: string
-}
-
-export interface KnownFormatHitLike {
-	format: string
-	span: { start: number; end: number }
-	/**
-	 * Confidence in 0..1.
-	 * Ambiguous patterns (5-digit US/FR/DE overlap) score lower.
-	 */
-	confidence: number
 }
 
 /**

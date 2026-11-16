@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
-
 import type { AddressTree } from "#decoder/types"
 import type {
 	LocaleHint,
+	NormalizedInputLite,
 	PhraseProposal,
 	PipelineTiming,
 	PipelineFaultStage,

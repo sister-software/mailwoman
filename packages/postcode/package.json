@@ -61,14 +61,22 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"scripts": {
+		"test:browser": "vitest run --config vitest.browser.config.ts",
+		"test:workers": "vitest run --config vitest.workers.config.ts"
+	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/recognize": "workspace:*"
 	},
 	"devDependencies": {
-		"@mailwoman/query-shape": "workspace:*",
+		"@cloudflare/vitest-plugin": "^1.4.11",
+		"@vitest/browser-playwright": "5.0.5",
 		"oxfmt": "0.75.0",
-		"spliterator": "^10.1.1"
+		"playwright": "^1.64.1",
+		"spliterator": "^10.1.1",
+		"vitest": "^5.0.5",
+		"wrangler": "^4.156.0"
 	}
 }

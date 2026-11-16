@@ -15,7 +15,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { detectLocale } from "@mailwoman/locale-hint"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { JSONSpliterator } from "spliterator"
 import { beforeAll, describe, expect, it } from "vitest"
 

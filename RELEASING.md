@@ -5,7 +5,7 @@ Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus 
 the dependency graph**. If `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
 dependency, that dependency must join the list. Otherwise the published `mailwoman` won't install, because
 npm returns 404 for the dependency. As of v7.0.0 the set is 12 workspaces: `mailwoman` + `@mailwoman/{core,
-normalize, query-shape, kind-classifier, locale-hint, phrase-grouper, codex, corpus, neural,
+normalize, recognize, postcode, kind-classifier, locale-hint, phrase-grouper, codex, corpus, neural,
 neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, publish at one synced version
 (see Versioning policy). The core packages are:
 

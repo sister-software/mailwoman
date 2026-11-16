@@ -15,7 +15,7 @@
  */
 
 import type { LocaleHint, PhraseProposal } from "@mailwoman/core/pipeline"
-import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
+import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 
 import {
 	scoreHyphenatedCompound,

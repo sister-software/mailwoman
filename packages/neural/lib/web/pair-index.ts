@@ -6,7 +6,7 @@
  */
 
 import { detectLocale } from "@mailwoman/locale-hint"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 import { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"

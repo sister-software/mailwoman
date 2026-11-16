@@ -10,7 +10,7 @@ they're built from:
 
 - **`POIExplorer`** is a self-contained POI-intent tester (classify → subject → OverpassQL). The intent
   path runs entirely offline over `@mailwoman/kind-classifier`, `@mailwoman/poi-taxonomy`, and
-  `@mailwoman/query-shape`, without weights or network access. A live poi.db search is opt-in through an
+  `@mailwoman/postcode`, without weights or network access. A live poi.db search is opt-in through an
   injected `runLiveSearch` probe, so the httpvfs/worker implementation never enters this package's graph.
 - **`PipelineExplorer`** is a parse and resolve tester driven by an **injected `PipelineRuntime`**. The
   host supplies `runParse` (compute shape → classify → resolve) and the heavy visualizers as `panels`,

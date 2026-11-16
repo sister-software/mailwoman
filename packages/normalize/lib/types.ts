@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { SpanRange } from "@mailwoman/query-shape"
+import type { TextSpan } from "@mailwoman/recognize/types"
 
 /**
  * A single normalization step, as recorded on `NormalizedInput.transforms`.
@@ -9,7 +9,7 @@ import type { SpanRange } from "@mailwoman/query-shape"
 export type NormalizationTransform =
 	| { kind: "nfc"; changed: boolean }
 	| { kind: "case_fold"; locale: string }
-	| { kind: "expand_abbreviation"; from: string; to: string; at: SpanRange }
+	| { kind: "expand_abbreviation"; from: string; to: string; at: TextSpan }
 	| { kind: "collapse_whitespace"; runs: number }
 	| { kind: "normalize_punctuation"; replacements: number }
 	| { kind: "space_after_comma"; inserted: number }

@@ -56,11 +56,17 @@ export declare namespace Validated {
 }
 
 /**
- * A half-open range of UTF-16 code units and the text it covers.
+ * A half-open range of UTF-16 code units.
  */
-export interface TextSpan {
+export interface CharRange {
 	readonly start: number
 	readonly end: number
+}
+
+/**
+ * A half-open range of UTF-16 code units and the text it covers.
+ */
+export interface TextSpan extends CharRange {
 	readonly body: string
 }
 
@@ -125,7 +131,7 @@ export interface Segment {
 	/**
 	 * The position in the segment list.
 	 *
-	 * `query-shape` tests read it, so it stays until the swap decides.
+	 * The pipeline's `SegmentView` in `@mailwoman/core` holds it.
 	 */
 	readonly index: number
 	readonly separator: SegmentSeparator
@@ -140,8 +146,7 @@ export interface RegionAbbreviation {
 }
 
 /**
- * The fields the `structure` family returns, equal to those of `computeQueryShape`
- * in `@mailwoman/query-shape`.
+ * The fields the `structure` family returns: the structural evidence the parse pipeline reads.
  * Offsets are UTF-16 code units, half-open.
  */
 export interface StructureFields {

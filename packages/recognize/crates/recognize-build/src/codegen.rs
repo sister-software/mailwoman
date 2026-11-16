@@ -257,19 +257,13 @@ pub fn typescript_family(declarations: &Declarations) -> Result<String, String> 
 		"// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial\n"
 	)
 	.unwrap();
-	// The repository's comment layout keeps one sentence on one line when it fits in 120 columns.
+	// The repository's comment layout sets one sentence per line to a measure of 90 columns and rewraps a longer
+	// one. Two short sentences stay under that measure for any family ID, so the linter never rewrites this
+	// header and the committed file stays equal to the generator's output.
 	let sentence = format!(
-		" * The declarations of the `{}` family: its kinds, its payload types and the hash its artifact embeds.",
+		" * The declarations of the `{}` family.\n *\n * It holds the family's kinds, its payload types and the hash its artifact embeds.",
 		declarations.family
 	);
-	let sentence = if sentence.len() <= 120 {
-		sentence
-	} else {
-		format!(
-			" * The declarations of the `{}` family: its kinds, its payload types\n * and the hash its artifact embeds.",
-			declarations.family
-		)
-	};
 
 	writeln!(
 		out,
