@@ -12,6 +12,13 @@
  *   Ten characters from `2` to `9` and the letters `C F J K L M P T` are also
  *   a phone number, a count or a postcode.
  *
+ *   A display-form DIGIPIN is deterministic only when it holds a letter.
+ *   Ten digits from `2` to `9` in the form three, three and four, with hyphens, are also
+ *   how a North American phone number is written, so the all-digit form is a candidate.
+ *
+ *   The validator still reports it as a well-formed DIGIPIN.
+ *   India Post's technical document defines no prefix or other marker that would settle the question.
+ *
  *   A short Plus Code is deterministic as a code, and it decodes only beside a reference position.
  *
  *   A consumer that trims its input passes the trimmed text, because the grammars
@@ -44,6 +51,14 @@ export function isDeterministicSpatial(
 	},
 	text: string
 ): boolean {
+	// The text of a span is `text.slice(start, end)`.
+	if (
+		recognition.kind === SpatialKind.DigipinDisplay &&
+		!/[A-Za-z]/u.test(text.slice(recognition.start, recognition.end))
+	) {
+		return false
+	}
+
 	return (
 		SPATIAL_KINDS.has(recognition.kind) &&
 		!CANDIDATE_ONLY.has(recognition.kind) &&

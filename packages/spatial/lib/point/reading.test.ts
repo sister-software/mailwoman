@@ -10,6 +10,7 @@ import { IdentifiersKind, identifiers } from "@mailwoman/recognize/identifiers"
 import { SpatialKind, spatial } from "@mailwoman/recognize/spatial"
 import { describe, expect, expectTypeOf, test } from "vitest"
 
+import { decodePlusCode, recoverNearestPlusCode } from "#open-location-code"
 import { type PointQueryKind, pointFromText, recognizePointQuery } from "#point/reading"
 import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "#point/text"
 
@@ -209,6 +210,32 @@ describe("recognizePointQuery", () => {
 		})
 
 		expect(pointFromText("39J49LL8T4")).toBeNull()
+	})
+
+	test("a display-form DIGIPIN of only digits is also a phone number, so it is not a point", () => {
+		// The validator still accepts it as a well-formed DIGIPIN.
+		expect(recognizePointQuery("234-567-8923")).toEqual({
+			kind: "not_a_point",
+			recognized: "digipin.display",
+			reason: "digit_group",
+		})
+
+		expect(pointFromText("234-567-8923")).toBeNull()
+		// A display form with one letter of the alphabet is a point.
+		expect(pointFromText("39J-49L-L8T4")).toMatchObject({ kind: "digipin", code: "39J49LL8T4" })
+		expect(pointFromText("234-567-89T3")).toMatchObject({ kind: "digipin", code: "234567" + "89T3" })
+	})
+
+	test("a plus code reads as a full or a short brand that a decoder can take", () => {
+		const full = pointFromText("764MVFQ6+92P")
+		const short = pointFromText("VFQ6+92P")
+
+		if (full?.kind !== "plus_code" || !full.full || short?.kind !== "plus_code" || short.full) {
+			throw new Error("the plus codes did not read as a full code and a short code")
+		}
+
+		expect(decodePlusCode(full.code).lat).toBeCloseTo(12.8884, 3)
+		expect(recoverNearestPlusCode(short.code, 12.88687, -86.53903).lat).toBeCloseTo(12.8884625, 6)
 	})
 
 	test("a GeoJSON Point is the point and every other GeoJSON object names no single position", () => {

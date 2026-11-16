@@ -33,6 +33,7 @@ import {
 	type RecognitionsOf,
 } from "@mailwoman/recognize"
 import { coordinates } from "@mailwoman/recognize/coordinates"
+import { isDeterministicSpatial } from "@mailwoman/recognize/deterministic/spatial"
 import { identifiers } from "@mailwoman/recognize/identifiers"
 import { spatial } from "@mailwoman/recognize/spatial"
 import type { AxisOrder, Validated } from "@mailwoman/recognize/types"
@@ -81,14 +82,21 @@ export type PointReading = {
 	  }
 	| {
 			/**
-			 * An Open Location Code, upper-cased.
-			 *
-			 * A short code decodes only beside a reference position.
-			 * The caller supplies that position.
+			 * A full Open Location Code, upper-cased.
+			 * It decodes to a cell with no further input.
 			 */
 			readonly kind: "plus_code"
-			readonly code: Validated.PlusCode
-			readonly full: boolean
+			readonly full: true
+			readonly code: Validated.FullPlusCode
+	  }
+	| {
+			/**
+			 * A short Open Location Code, upper-cased.
+			 * It decodes only beside a reference position.
+			 */
+			readonly kind: "plus_code"
+			readonly full: false
+			readonly code: Validated.ShortPlusCode
 	  }
 	| {
 			/**
@@ -129,8 +137,10 @@ export type PointReading = {
  *   such as a Census GEOID, a GNIS feature id or a GeoJSON `LineString`.
  * - `ambiguous_without_prefix`: the text is a valid code whose spelling is also a phone number
  *   or a count, so no prefix or separator makes it a position.
+ * - `digit_group`: the text is a well-formed code made only of digits in a grouped form.
+ *   A phone number is written the same way.
  */
-export type NotAPointReason = "names_no_position" | "ambiguous_without_prefix"
+export type NotAPointReason = "names_no_position" | "ambiguous_without_prefix" | "digit_group"
 
 /**
  * The text is a recognized shape and not a point query: a caller sends it to the address classifier.
@@ -213,15 +223,22 @@ const handlers = {
 	},
 
 	"plus_code.token": (recognition): PointReading => {
-		const { code, full } = payloadOf(recognition)
+		const { full_code, short_code } = payloadOf(recognition)
 
-		return { kind: "plus_code", recognized: recognition.kind, code, full }
+		if (full_code != null) return { kind: "plus_code", recognized: recognition.kind, full: true, code: full_code }
+
+		if (short_code != null) return { kind: "plus_code", recognized: recognition.kind, full: false, code: short_code }
+
+		// The validator fills exactly one of the two fields, so a validated payload with neither is a defect in the engine.
+		throw new RangeError(`${recognition.kind} validated with neither a full code nor a short code`)
 	},
-	"digipin.display": (recognition): PointReading => ({
-		kind: "digipin",
-		recognized: recognition.kind,
-		code: payloadOf(recognition).code,
-	}),
+	// The validator accepts the all-digit form.
+	// A phone number is written the same way.
+	// The trust rule decides.
+	"digipin.display": (recognition): PointQueryReading =>
+		isDeterministicSpatial(recognition, recognition.text)
+			? { kind: "digipin", recognized: recognition.kind, code: payloadOf(recognition).code }
+			: { kind: "not_a_point", recognized: recognition.kind, reason: "digit_group" },
 	// Ten characters from `2` to `9` and `C F J K L M P T` are also a phone number, a count or a postcode.
 	"digipin.compact": (recognition): NotAPointQuery => ({
 		kind: "not_a_point",

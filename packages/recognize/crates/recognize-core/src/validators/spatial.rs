@@ -42,12 +42,15 @@ const OLC_ALPHABET: &str = "23456789CFGHJMPQRVWX";
 /// The DIGIPIN characters, in no grid order.
 const DIGIPIN_ALPHABET: &str = "23456789CJKLMPFT";
 
-/// An Open Location Code in upper case.
+/// An Open Location Code in upper case, as the one variant that holds it.
+///
+/// A full code has eight digits before the separator and names a cell by itself. A short code has two, four or six and
+/// names a cell only beside a reference position. The payload holds exactly one of the two fields.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct PlusCodeValue {
-	pub code: String,
-	/// Whether the code is a full code, with eight digits before the separator, and not a short one.
-	pub full: bool,
+#[serde(untagged)]
+pub enum PlusCodeValue {
+	Full { full_code: String },
+	Short { short_code: String },
 }
 
 /// `PlusCode`: a token of Open Location Code digits and a separator, read as a full or a short code.
@@ -60,14 +63,14 @@ impl Validator for PlusCode {
 
 	const PAYLOAD: &'static [PayloadField] = &[
 		PayloadField {
-			name: "code",
-			kind: FieldType::PlusCode,
-			optional: false,
+			name: "full_code",
+			kind: FieldType::FullPlusCode,
+			optional: true,
 		},
 		PayloadField {
-			name: "full",
-			kind: FieldType::Boolean,
-			optional: false,
+			name: "short_code",
+			kind: FieldType::ShortPlusCode,
+			optional: true,
 		},
 	];
 
@@ -103,8 +106,8 @@ impl Validator for PlusCode {
 		}
 
 		match prefix.len() {
-			8 => Ok(PlusCodeValue { code, full: true }),
-			2 | 4 | 6 => Ok(PlusCodeValue { code, full: false }),
+			8 => Ok(PlusCodeValue::Full { full_code: code }),
+			2 | 4 | 6 => Ok(PlusCodeValue::Short { short_code: code }),
 			length => Err(Rejection::new(
 				"invalid_prefix_length",
 				None,
@@ -178,9 +181,8 @@ mod tests {
 	fn a_full_code_has_eight_digits_before_the_separator() {
 		assert_eq!(
 			plus("764mvfq6+92p").unwrap(),
-			PlusCodeValue {
-				code: "764MVFQ6+92P".to_string(),
-				full: true
+			PlusCodeValue::Full {
+				full_code: "764MVFQ6+92P".to_string()
 			}
 		);
 		assert!(plus("764MVFQ6+92PX").is_err());
@@ -189,7 +191,7 @@ mod tests {
 	#[test]
 	fn a_short_code_has_two_four_or_six_digits() {
 		for text in ["VF+92", "VFQ6+92P", "VFQ6M7+92"] {
-			assert!(!plus(text).unwrap().full, "{text}");
+			assert!(matches!(plus(text).unwrap(), PlusCodeValue::Short { .. }), "{text}");
 		}
 
 		for text in ["VFQ+92P", "VFQ6M+92", "VFQ6M7X+92"] {

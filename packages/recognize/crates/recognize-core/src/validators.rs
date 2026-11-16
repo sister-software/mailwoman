@@ -77,8 +77,10 @@ pub enum FieldType {
 	Latitude,
 	Longitude,
 	Uncertainty,
-	/// An Open Location Code in upper case, validated by `PlusCode`.
-	PlusCode,
+	/// A full Open Location Code in upper case, validated by `PlusCode`.
+	FullPlusCode,
+	/// A short Open Location Code in upper case, validated by `PlusCode`.
+	ShortPlusCode,
 	/// A DIGIPIN as ten upper-case characters, validated by `DIGIPIN`.
 	Digipin,
 	AxisOrder,

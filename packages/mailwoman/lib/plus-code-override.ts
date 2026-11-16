@@ -45,7 +45,10 @@ const recognizer = createRecognizer([spatial])
  */
 interface PlusCodeToken {
 	readonly code: string
-	readonly decodable: { readonly code: Validated.PlusCode; readonly full: boolean } | null
+	readonly decodable:
+		| { readonly full: true; readonly code: Validated.FullPlusCode }
+		| { readonly full: false; readonly code: Validated.ShortPlusCode }
+		| null
 }
 
 /**
@@ -72,7 +75,13 @@ function findPlusCodeToken(input: string): PlusCodeToken | null {
 		const code = recognition.text.toUpperCase()
 
 		if (validation.status === "validated") {
-			return { code, decodable: { code: validation.payload.code, full: validation.payload.full } }
+			const { full_code, short_code } = validation.payload
+
+			if (full_code != null) return { code, decodable: { full: true, code: full_code } }
+
+			if (short_code != null) return { code, decodable: { full: false, code: short_code } }
+
+			throw new RangeError("a validated plus code holds neither a full code nor a short code")
 		}
 
 		if (validation.status === "rejected" && validation.rejection.code === "invalid_prefix_length") {
@@ -131,12 +140,12 @@ export function applyPlusCodeOverride(result: GeocodeResult, input: string, reso
 		reference = { lat: result.lat, lon: result.lon }
 	}
 
-	const { code, full } = token.decodable
+	const { decodable } = token
 
-	const cell = full
-		? decodePlusCode(code)
+	const cell = decodable.full
+		? decodePlusCode(decodable.code)
 		: reference
-			? recoverNearestPlusCode(code, reference.lat, reference.lon)
+			? recoverNearestPlusCode(decodable.code, reference.lat, reference.lon)
 			: null
 
 	if (!cell) return

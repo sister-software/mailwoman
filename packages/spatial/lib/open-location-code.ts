@@ -5,7 +5,7 @@
  * @file Open Location Code arithmetic.
  *
  *   A code is read by the `spatial` family of `@mailwoman/recognize`, which owns the alphabet, the separator
- *   and the digit counts. The decoders here take the validated, branded `Validated.PlusCode` the family returns,
+ *   and the digit counts. The decoders here take the validated, branded `Validated.FullPlusCode` and `Validated.ShortPlusCode` the family returns,
  *   so a caller cannot pass an unchecked string. A test or a tool that holds a string reads it through the recognizer.
  */
 
@@ -36,15 +36,13 @@ const GRID_ROWS = 5
 export type DecodedPlusCode = DegreeCell
 
 /**
- * Decodes a full code to its cell, and returns null for a short code.
- * A short code needs a reference position.
+ * Decodes a full code to its cell.
  *
- * The validator guarantees the alphabet and the digit counts.
- * A full code is the one with eight digits before the separator.
+ * The validator guarantees the alphabet and the digit counts, and the brand guarantees
+ * the eight digits before the separator, so no input to this function fails.
+ * A short code has its own brand and decodes through {@link recoverNearestPlusCode}.
  */
-export function decodePlusCode(code: Validated.PlusCode): DecodedPlusCode | null {
-	if (code.indexOf("+") !== FULL_PREFIX_LENGTH) return null
-
+export function decodePlusCode(code: Validated.FullPlusCode): DecodedPlusCode {
 	return decodeDigits(code.replace("+", ""))
 }
 
@@ -132,35 +130,35 @@ export type PlusCodeLength = 10 | 11
  * The digits come from the specification's alphabet and the separator follows the eighth,
  * so the code has the form the validator accepts and the decoders take.
  */
-export function encodePlusCode(lat: number, lon: number, length: PlusCodeLength = 10): Validated.PlusCode {
+export function encodePlusCode(lat: number, lon: number, length: PlusCodeLength = 10): Validated.FullPlusCode {
 	const { digits, latRemainder, lonRemainder } = encodePairs(lat, lon, 10)
 	const code = `${digits.slice(0, FULL_PREFIX_LENGTH)}+${digits.slice(FULL_PREFIX_LENGTH)}`
 
-	if (length === 10) return code as Validated.PlusCode
+	if (length === 10) return code as Validated.FullPlusCode
 
 	const cell = PAIR_RESOLUTIONS[4]!
 	const row = Math.min(Math.floor(latRemainder / (cell / GRID_ROWS)), GRID_ROWS - 1)
 	const column = Math.min(Math.floor(lonRemainder / (cell / GRID_COLUMNS)), GRID_COLUMNS - 1)
 
-	return (code + OLC_ALPHABET[row * GRID_COLUMNS + column]!) as Validated.PlusCode
+	return (code + OLC_ALPHABET[row * GRID_COLUMNS + column]!) as Validated.FullPlusCode
 }
 
 /**
  * Recovers a short plus code to the matching cell nearest a reference coordinate,
  * following the spec's `recoverNearest`.
  *
- * It returns null for a full code.
- * A full code needs no reference.
+ * The brand guarantees two, four or six digits before the separator, so every short code recovers to a cell.
+ * The reference must be a finite coordinate.
+ *
+ * Every caller already holds one.
+ * A full code has its own brand and decodes through {@link decodePlusCode}.
  */
 export function recoverNearestPlusCode(
-	shortCode: Validated.PlusCode,
+	shortCode: Validated.ShortPlusCode,
 	refLat: number,
 	refLon: number
-): DecodedPlusCode | null {
+): DecodedPlusCode {
 	const missing = FULL_PREFIX_LENGTH - shortCode.indexOf("+")
-
-	if (missing <= 0) return null
-
 	const prefix = encodePairDigits(refLat, refLon, missing)
 	const candidate = decodeDigits(prefix + shortCode.replace("+", ""))
 

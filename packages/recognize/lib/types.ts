@@ -23,7 +23,8 @@ export declare namespace Validated {
 	const $Latitude: unique symbol
 	const $Longitude: unique symbol
 	const $Uncertainty: unique symbol
-	const $PlusCode: unique symbol
+	const $FullPlusCode: unique symbol
+	const $ShortPlusCode: unique symbol
 	const $Digipin: unique symbol
 
 	/**
@@ -45,12 +46,20 @@ export declare namespace Validated {
 	type Uncertainty = number & { readonly [$Uncertainty]: true }
 
 	/**
-	 * An Open Location Code in upper case, with two to eight digits before the `+` and two or three after it.
+	 * A full Open Location Code in upper case: eight digits, the `+`, and two or three digits.
 	 *
 	 * The `PlusCode` validator accepted it.
-	 * Eight digits before the separator make a full code, and two, four or six make a short one.
+	 * It decodes to a cell by itself.
 	 */
-	type PlusCode = string & { readonly [$PlusCode]: true }
+	type FullPlusCode = string & { readonly [$FullPlusCode]: true }
+
+	/**
+	 * A short Open Location Code in upper case: two, four or six digits, the `+`, and two or three digits.
+	 *
+	 * The `PlusCode` validator accepted it.
+	 * It decodes to a cell only beside a reference position.
+	 */
+	type ShortPlusCode = string & { readonly [$ShortPlusCode]: true }
 
 	/**
 	 * A DIGIPIN as ten upper-case characters of the DIGIPIN alphabet, without hyphens.

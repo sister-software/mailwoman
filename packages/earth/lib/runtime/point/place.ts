@@ -121,13 +121,7 @@ export async function locatePointQuery(
 		}
 
 		case "plus_code": {
-			if (query.full) {
-				const cell = decodePlusCode(query.code)
-
-				if (!cell) throw new Error(`${query.code} is not a plus code this reader decodes.`)
-
-				return cellPlace(query.code, label, cell)
-			}
+			if (query.full) return cellPlace(query.code, label, decodePlusCode(query.code))
 
 			if (!bias) {
 				throw new Error(
@@ -135,11 +129,7 @@ export async function locatePointQuery(
 				)
 			}
 
-			const cell = recoverNearestPlusCode(query.code, bias.center[1], bias.center[0])
-
-			if (!cell) throw new Error(`${query.code} is not a short plus code this reader recovers.`)
-
-			return cellPlace(query.code, label, cell)
+			return cellPlace(query.code, label, recoverNearestPlusCode(query.code, bias.center[1], bias.center[0]))
 		}
 
 		case "h3":

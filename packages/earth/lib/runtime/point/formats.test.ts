@@ -36,9 +36,9 @@ test("every encoding of a point reads back to the point", async () => {
 	// It validates the text the encoder wrote.
 	const plus = pointFromText(byLabel.get("Plus code")!)
 
-	if (plus?.kind !== "plus_code") throw new Error("the plus code row did not read as a plus code")
+	if (plus?.kind !== "plus_code" || !plus.full) throw new Error("the plus code row did not read as a full plus code")
 
-	const cell = decodePlusCode(plus.code)!
+	const cell = decodePlusCode(plus.code)
 
 	expect(cell.lat).toBeCloseTo(LAT, 4)
 	expect(cell.lon).toBeCloseTo(LON, 4)

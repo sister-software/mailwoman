@@ -79,14 +79,14 @@
 			"kind": "PlusCodeToken",
 			"payload": [
 				{
-					"name": "code",
-					"type": "plus_code",
-					"optional": false
+					"name": "full_code",
+					"type": "full_plus_code",
+					"optional": true
 				},
 				{
-					"name": "full",
-					"type": "boolean",
-					"optional": false
+					"name": "short_code",
+					"type": "short_plus_code",
+					"optional": true
 				}
 			],
 			"rejections": [

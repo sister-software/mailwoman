@@ -194,7 +194,7 @@ test("decodes every approved character", () => {
 	const alphabet = "23456789CJKLMPFT"
 
 	for (const char of alphabet) {
-		const [lon, lat] = getLatLngFromDIGIPIN(recognizedDIGIPIN(`${char.repeat(3)}-${char.repeat(3)}-${char.repeat(4)}`))
+		const [lon, lat] = getLatLngFromDIGIPIN(recognizedDIGIPIN(`${char.repeat(3)}-${char.repeat(3)}-${char.repeat(3)}F`))
 
 		expect(Number.isFinite(lon)).toBe(true)
 		expect(Number.isFinite(lat)).toBe(true)

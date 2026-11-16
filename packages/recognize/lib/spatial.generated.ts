@@ -24,7 +24,7 @@ export const SPATIAL_FAMILY_ID = "spatial"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const SPATIAL_DECLARATIONS_HASH = "47ded166157f7e84868b7b6f018d7357b29785dcb5e97f3e290be6d6ac14443f"
+export const SPATIAL_DECLARATIONS_HASH = "1d85275060cde50d8080e9ae55108ac8210aa146f95766ca6cd16fe8150c4dec"
 
 /**
  * Every kind of recognition the family reports, by name.
@@ -92,8 +92,8 @@ export type GeoJSONObjectRejection =
  * The validated payload of `plus_code.token`.
  */
 export interface PlusCodeTokenPayload {
-	readonly code: Validated.PlusCode
-	readonly full: boolean
+	readonly full_code?: Validated.FullPlusCode
+	readonly short_code?: Validated.ShortPlusCode
 }
 
 /**
