@@ -9,7 +9,7 @@ mod support;
 use recognize_build::{compile_families, compile_repository_families, Limits};
 use recognize_core::{
 	class, literal, one_or_more, optional, reference, render, sequence, shape, term, Backend, DiagnosticKind, Family,
-	Scope,
+	Role, Scope,
 };
 
 use support::probe_family;
@@ -184,7 +184,23 @@ fn the_repository_families_compile_under_the_default_limits_with_room_to_spare()
 				"{} is near the state limit",
 				family.ir.family
 			);
-			assert_eq!(automaton.backend, Backend::Dense, "{} fell back", family.ir.family);
+
+			// The automata whose dense serialization is past the dense budget of `Limits::default` are the sparse ones:
+			// the whole-input automata of `coordinates`, `identifiers` and `spatial`, and the embedded automaton of
+			// `coordinates`. Every other automaton, the `structure` partitions the speed requirement measures among them,
+			// stays dense.
+			let sparse = matches!(
+				(family.ir.family.as_str(), automaton.role),
+				("coordinates", _) | ("identifiers", Role::Whole) | ("spatial", Role::Whole)
+			);
+
+			assert_eq!(
+				automaton.backend,
+				if sparse { Backend::Sparse } else { Backend::Dense },
+				"{} {:?}",
+				family.ir.family,
+				automaton.role
+			);
 		}
 	}
 }

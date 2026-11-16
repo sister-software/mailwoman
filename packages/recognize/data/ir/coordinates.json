@@ -1,24 +1,9 @@
 {
 	"format": "mailwoman.recognize.ir",
 	"version": 1,
-	"hash": "53d071450b7d667df1e99c37853721e7d2912bae3c2490ad7039e7347f4829a0",
+	"hash": "eb280a43c868a8315160dc16216098601de3349e8aa62a1e9e2ccbda7b96259a",
 	"family": "coordinates",
 	"terms": [
-		{
-			"id": "ascii_whitespace",
-			"grammar": {
-				"op": "class",
-				"ranges": [
-					["\t", "\r"],
-					[" ", " "]
-				],
-				"negated": false
-			},
-			"source": {
-				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 81
-			}
-		},
 		{
 			"id": "digit",
 			"grammar": {
@@ -28,7 +13,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 82
+				"line": 141
 			}
 		},
 		{
@@ -44,7 +29,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 83
+				"line": 142
 			}
 		},
 		{
@@ -61,7 +46,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 85
+				"line": 144
 			}
 		},
 		{
@@ -84,7 +69,7 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 90
+				"line": 149
 			}
 		},
 		{
@@ -99,7 +84,30 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 108
+				"line": 167
+			}
+		},
+		{
+			"id": "whitespace",
+			"grammar": {
+				"op": "class",
+				"ranges": [
+					["\t", "\r"],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					[" ", " "],
+					["　", "　"],
+					["﻿", "﻿"]
+				],
+				"negated": false
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 140
 			}
 		}
 	],
@@ -187,7 +195,7 @@
 						"op": "repeat",
 						"node": {
 							"op": "reference",
-							"id": "ascii_whitespace"
+							"id": "whitespace"
 						},
 						"min": 0,
 						"max": null
@@ -204,7 +212,7 @@
 						"op": "repeat",
 						"node": {
 							"op": "reference",
-							"id": "ascii_whitespace"
+							"id": "whitespace"
 						},
 						"min": 0,
 						"max": null
@@ -303,7 +311,3244 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 110
+				"line": 169
+			}
+		},
+		{
+			"id": "coordinate.decimal_pair_spaced",
+			"grammar": {
+				"op": "choice",
+				"alternatives": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "reference",
+											"id": "sign"
+										}
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 1,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "reference",
+											"id": "sign"
+										}
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "reference",
+											"id": "sign"
+										}
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 1,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "reference",
+											"id": "sign"
+										}
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"captures": [],
+			"scope": "whole",
+			"validator": "SpacedPair",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 183
+			}
+		},
+		{
+			"id": "coordinate.dms_pair",
+			"grammar": {
+				"op": "choice",
+				"alternatives": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "sequence",
+														"items": [
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "whitespace"
+																},
+																"min": 0,
+																"max": null
+															},
+															{
+																"op": "choice",
+																"alternatives": [
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["\"", "\""],
+																			["'", "'"],
+																			["°", "°"],
+																			["º", "º"],
+																			["’", "’"],
+																			["”", "”"],
+																			["′", "″"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["D", "D"],
+																			["d", "d"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["M", "M"],
+																			["m", "m"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["S", "S"],
+																			["s", "s"]
+																		],
+																		"negated": false
+																	}
+																]
+															}
+														]
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "whitespace"
+																	},
+																	"min": 0,
+																	"max": null
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "sequence",
+																			"items": [
+																				{
+																					"op": "repeat",
+																					"node": {
+																						"op": "reference",
+																						"id": "digit"
+																					},
+																					"min": 1,
+																					"max": null
+																				},
+																				{
+																					"op": "optional",
+																					"node": {
+																						"op": "sequence",
+																						"items": [
+																							{
+																								"op": "literal",
+																								"value": "."
+																							},
+																							{
+																								"op": "repeat",
+																								"node": {
+																									"op": "reference",
+																									"id": "digit"
+																								},
+																								"min": 1,
+																								"max": null
+																							}
+																						]
+																					}
+																				}
+																			]
+																		},
+																		{
+																			"op": "choice",
+																			"alternatives": [
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["\"", "\""],
+																						["'", "'"],
+																						["°", "°"],
+																						["º", "º"],
+																						["’", "’"],
+																						["”", "”"],
+																						["′", "″"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["D", "D"],
+																						["d", "d"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["M", "M"],
+																						["m", "m"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["S", "S"],
+																						["s", "s"]
+																					],
+																					"negated": false
+																				}
+																			]
+																		}
+																	]
+																}
+															]
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "whitespace"
+																	},
+																	"min": 0,
+																	"max": null
+																},
+																{
+																	"op": "class",
+																	"ranges": [
+																		["E", "E"],
+																		["N", "N"],
+																		["S", "S"],
+																		["W", "W"],
+																		["e", "e"],
+																		["n", "n"],
+																		["s", "s"],
+																		["w", "w"]
+																	],
+																	"negated": false
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "whitespace"
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "class",
+														"ranges": [
+															["E", "E"],
+															["N", "N"],
+															["S", "S"],
+															["W", "W"],
+															["e", "e"],
+															["n", "n"],
+															["s", "s"],
+															["w", "w"]
+														],
+														"negated": false
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "class",
+								"ranges": [
+									[",", ","],
+									[";", ";"]
+								],
+								"negated": false
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "optional",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["E", "E"],
+																["N", "N"],
+																["S", "S"],
+																["W", "W"],
+																["e", "e"],
+																["n", "n"],
+																["s", "s"],
+																["w", "w"]
+															],
+															"negated": false
+														}
+													]
+												}
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "optional",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["E", "E"],
+																["N", "N"],
+																["S", "S"],
+																["W", "W"],
+																["e", "e"],
+																["n", "n"],
+																["s", "s"],
+																["w", "w"]
+															],
+															"negated": false
+														}
+													]
+												}
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "class",
+								"ranges": [
+									[",", ","],
+									[";", ";"]
+								],
+								"negated": false
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "sequence",
+														"items": [
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "whitespace"
+																},
+																"min": 0,
+																"max": null
+															},
+															{
+																"op": "choice",
+																"alternatives": [
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["\"", "\""],
+																			["'", "'"],
+																			["°", "°"],
+																			["º", "º"],
+																			["’", "’"],
+																			["”", "”"],
+																			["′", "″"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["D", "D"],
+																			["d", "d"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["M", "M"],
+																			["m", "m"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["S", "S"],
+																			["s", "s"]
+																		],
+																		"negated": false
+																	}
+																]
+															}
+														]
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "whitespace"
+																	},
+																	"min": 0,
+																	"max": null
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "sequence",
+																			"items": [
+																				{
+																					"op": "repeat",
+																					"node": {
+																						"op": "reference",
+																						"id": "digit"
+																					},
+																					"min": 1,
+																					"max": null
+																				},
+																				{
+																					"op": "optional",
+																					"node": {
+																						"op": "sequence",
+																						"items": [
+																							{
+																								"op": "literal",
+																								"value": "."
+																							},
+																							{
+																								"op": "repeat",
+																								"node": {
+																									"op": "reference",
+																									"id": "digit"
+																								},
+																								"min": 1,
+																								"max": null
+																							}
+																						]
+																					}
+																				}
+																			]
+																		},
+																		{
+																			"op": "choice",
+																			"alternatives": [
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["\"", "\""],
+																						["'", "'"],
+																						["°", "°"],
+																						["º", "º"],
+																						["’", "’"],
+																						["”", "”"],
+																						["′", "″"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["D", "D"],
+																						["d", "d"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["M", "M"],
+																						["m", "m"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["S", "S"],
+																						["s", "s"]
+																					],
+																					"negated": false
+																				}
+																			]
+																		}
+																	]
+																}
+															]
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "whitespace"
+																	},
+																	"min": 0,
+																	"max": null
+																},
+																{
+																	"op": "class",
+																	"ranges": [
+																		["E", "E"],
+																		["N", "N"],
+																		["S", "S"],
+																		["W", "W"],
+																		["e", "e"],
+																		["n", "n"],
+																		["s", "s"],
+																		["w", "w"]
+																	],
+																	"negated": false
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "whitespace"
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "class",
+														"ranges": [
+															["E", "E"],
+															["N", "N"],
+															["S", "S"],
+															["W", "W"],
+															["e", "e"],
+															["n", "n"],
+															["s", "s"],
+															["w", "w"]
+														],
+														"negated": false
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": "AnglePair",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 200
+			}
+		},
+		{
+			"id": "coordinate.dms_pair_spaced",
+			"grammar": {
+				"op": "choice",
+				"alternatives": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "whitespace"
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "class",
+														"ranges": [
+															["E", "E"],
+															["N", "N"],
+															["S", "S"],
+															["W", "W"],
+															["e", "e"],
+															["n", "n"],
+															["s", "s"],
+															["w", "w"]
+														],
+														"negated": false
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 1,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												},
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "whitespace"
+													},
+													"min": 0,
+													"max": null
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "optional",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "repeat",
+															"node": {
+																"op": "reference",
+																"id": "whitespace"
+															},
+															"min": 0,
+															"max": null
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["E", "E"],
+																["N", "N"],
+																["S", "S"],
+																["W", "W"],
+																["e", "e"],
+																["n", "n"],
+																["s", "s"],
+																["w", "w"]
+															],
+															"negated": false
+														}
+													]
+												}
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "sequence",
+														"items": [
+															{
+																"op": "choice",
+																"alternatives": [
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["\"", "\""],
+																			["'", "'"],
+																			["°", "°"],
+																			["º", "º"],
+																			["’", "’"],
+																			["”", "”"],
+																			["′", "″"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["D", "D"],
+																			["d", "d"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["M", "M"],
+																			["m", "m"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["S", "S"],
+																			["s", "s"]
+																		],
+																		"negated": false
+																	}
+																]
+															}
+														]
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "sequence",
+																			"items": [
+																				{
+																					"op": "repeat",
+																					"node": {
+																						"op": "reference",
+																						"id": "digit"
+																					},
+																					"min": 1,
+																					"max": null
+																				},
+																				{
+																					"op": "optional",
+																					"node": {
+																						"op": "sequence",
+																						"items": [
+																							{
+																								"op": "literal",
+																								"value": "."
+																							},
+																							{
+																								"op": "repeat",
+																								"node": {
+																									"op": "reference",
+																									"id": "digit"
+																								},
+																								"min": 1,
+																								"max": null
+																							}
+																						]
+																					}
+																				}
+																			]
+																		},
+																		{
+																			"op": "choice",
+																			"alternatives": [
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["\"", "\""],
+																						["'", "'"],
+																						["°", "°"],
+																						["º", "º"],
+																						["’", "’"],
+																						["”", "”"],
+																						["′", "″"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["D", "D"],
+																						["d", "d"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["M", "M"],
+																						["m", "m"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["S", "S"],
+																						["s", "s"]
+																					],
+																					"negated": false
+																				}
+																			]
+																		}
+																	]
+																}
+															]
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "class",
+																	"ranges": [
+																		["E", "E"],
+																		["N", "N"],
+																		["S", "S"],
+																		["W", "W"],
+																		["e", "e"],
+																		["n", "n"],
+																		["s", "s"],
+																		["w", "w"]
+																	],
+																	"negated": false
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "class",
+														"ranges": [
+															["E", "E"],
+															["N", "N"],
+															["S", "S"],
+															["W", "W"],
+															["e", "e"],
+															["n", "n"],
+															["s", "s"],
+															["w", "w"]
+														],
+														"negated": false
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 1,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "optional",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["E", "E"],
+																["N", "N"],
+																["S", "S"],
+																["W", "W"],
+																["e", "e"],
+																["n", "n"],
+																["s", "s"],
+																["w", "w"]
+															],
+															"negated": false
+														}
+													]
+												}
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "choice",
+															"alternatives": [
+																{
+																	"op": "sequence",
+																	"items": [
+																		{
+																			"op": "repeat",
+																			"node": {
+																				"op": "reference",
+																				"id": "digit"
+																			},
+																			"min": 1,
+																			"max": null
+																		},
+																		{
+																			"op": "optional",
+																			"node": {
+																				"op": "sequence",
+																				"items": [
+																					{
+																						"op": "literal",
+																						"value": "."
+																					},
+																					{
+																						"op": "repeat",
+																						"node": {
+																							"op": "reference",
+																							"id": "digit"
+																						},
+																						"min": 1,
+																						"max": null
+																					}
+																				]
+																			}
+																		}
+																	]
+																},
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["\"", "\""],
+																				["'", "'"],
+																				["°", "°"],
+																				["º", "º"],
+																				["’", "’"],
+																				["”", "”"],
+																				["′", "″"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["D", "D"],
+																				["d", "d"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["M", "M"],
+																				["m", "m"]
+																			],
+																			"negated": false
+																		},
+																		{
+																			"op": "class",
+																			"ranges": [
+																				["S", "S"],
+																				["s", "s"]
+																			],
+																			"negated": false
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											},
+											{
+												"op": "optional",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["E", "E"],
+																["N", "N"],
+																["S", "S"],
+																["W", "W"],
+																["e", "e"],
+																["n", "n"],
+																["s", "s"],
+																["w", "w"]
+															],
+															"negated": false
+														}
+													]
+												}
+											}
+										]
+									}
+								]
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 1,
+								"max": null
+							},
+							{
+								"op": "sequence",
+								"items": [
+									{
+										"op": "optional",
+										"node": {
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["+", "+"],
+														["-", "-"]
+													],
+													"negated": false
+												}
+											]
+										}
+									},
+									{
+										"op": "sequence",
+										"items": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "literal",
+																	"value": "."
+																},
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "repeat",
+												"node": {
+													"op": "sequence",
+													"items": [
+														{
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "repeat",
+																	"node": {
+																		"op": "reference",
+																		"id": "digit"
+																	},
+																	"min": 1,
+																	"max": null
+																},
+																{
+																	"op": "optional",
+																	"node": {
+																		"op": "sequence",
+																		"items": [
+																			{
+																				"op": "literal",
+																				"value": "."
+																			},
+																			{
+																				"op": "repeat",
+																				"node": {
+																					"op": "reference",
+																					"id": "digit"
+																				},
+																				"min": 1,
+																				"max": null
+																			}
+																		]
+																	}
+																}
+															]
+														}
+													]
+												},
+												"min": 0,
+												"max": null
+											}
+										]
+									},
+									{
+										"op": "choice",
+										"alternatives": [
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "sequence",
+														"items": [
+															{
+																"op": "choice",
+																"alternatives": [
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["\"", "\""],
+																			["'", "'"],
+																			["°", "°"],
+																			["º", "º"],
+																			["’", "’"],
+																			["”", "”"],
+																			["′", "″"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["D", "D"],
+																			["d", "d"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["M", "M"],
+																			["m", "m"]
+																		],
+																		"negated": false
+																	},
+																	{
+																		"op": "class",
+																		"ranges": [
+																			["S", "S"],
+																			["s", "s"]
+																		],
+																		"negated": false
+																	}
+																]
+															}
+														]
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "choice",
+																	"alternatives": [
+																		{
+																			"op": "sequence",
+																			"items": [
+																				{
+																					"op": "repeat",
+																					"node": {
+																						"op": "reference",
+																						"id": "digit"
+																					},
+																					"min": 1,
+																					"max": null
+																				},
+																				{
+																					"op": "optional",
+																					"node": {
+																						"op": "sequence",
+																						"items": [
+																							{
+																								"op": "literal",
+																								"value": "."
+																							},
+																							{
+																								"op": "repeat",
+																								"node": {
+																									"op": "reference",
+																									"id": "digit"
+																								},
+																								"min": 1,
+																								"max": null
+																							}
+																						]
+																					}
+																				}
+																			]
+																		},
+																		{
+																			"op": "choice",
+																			"alternatives": [
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["\"", "\""],
+																						["'", "'"],
+																						["°", "°"],
+																						["º", "º"],
+																						["’", "’"],
+																						["”", "”"],
+																						["′", "″"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["D", "D"],
+																						["d", "d"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["M", "M"],
+																						["m", "m"]
+																					],
+																					"negated": false
+																				},
+																				{
+																					"op": "class",
+																					"ranges": [
+																						["S", "S"],
+																						["s", "s"]
+																					],
+																					"negated": false
+																				}
+																			]
+																		}
+																	]
+																}
+															]
+														},
+														"min": 0,
+														"max": null
+													},
+													{
+														"op": "optional",
+														"node": {
+															"op": "sequence",
+															"items": [
+																{
+																	"op": "class",
+																	"ranges": [
+																		["E", "E"],
+																		["N", "N"],
+																		["S", "S"],
+																		["W", "W"],
+																		["e", "e"],
+																		["n", "n"],
+																		["s", "s"],
+																		["w", "w"]
+																	],
+																	"negated": false
+																}
+															]
+														}
+													}
+												]
+											},
+											{
+												"op": "sequence",
+												"items": [
+													{
+														"op": "class",
+														"ranges": [
+															["E", "E"],
+															["N", "N"],
+															["S", "S"],
+															["W", "W"],
+															["e", "e"],
+															["n", "n"],
+															["s", "s"],
+															["w", "w"]
+														],
+														"negated": false
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"captures": [],
+			"scope": "whole",
+			"validator": "AnglePair",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 207
 			}
 		},
 		{
@@ -748,7 +3993,841 @@
 			},
 			"source": {
 				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
-				"line": 124
+				"line": 249
+			}
+		},
+		{
+			"id": "coordinate.labeled_pair",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "capture",
+								"path": "first_label",
+								"node": {
+									"op": "choice",
+									"alternatives": [
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["L", "L"],
+																["l", "l"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["A", "A"],
+																["a", "a"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["T", "T"],
+																["t", "t"]
+															],
+															"negated": false
+														}
+													]
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "class",
+																"ranges": [
+																	["I", "I"],
+																	["i", "i"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["T", "T"],
+																	["t", "t"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["U", "U"],
+																	["u", "u"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["D", "D"],
+																	["d", "d"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["E", "E"],
+																	["e", "e"]
+																],
+																"negated": false
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["L", "L"],
+																["l", "l"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["O", "O"],
+																["o", "o"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["N", "N"],
+																["n", "n"]
+															],
+															"negated": false
+														}
+													]
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "class",
+																"ranges": [
+																	["G", "G"],
+																	["g", "g"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["I", "I"],
+																	["i", "i"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["T", "T"],
+																	["t", "t"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["U", "U"],
+																	["u", "u"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["D", "D"],
+																	["d", "d"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["E", "E"],
+																	["e", "e"]
+																],
+																"negated": false
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["L", "L"],
+														["l", "l"]
+													],
+													"negated": false
+												},
+												{
+													"op": "class",
+													"ranges": [
+														["N", "N"],
+														["n", "n"]
+													],
+													"negated": false
+												},
+												{
+													"op": "class",
+													"ranges": [
+														["G", "G"],
+														["g", "g"]
+													],
+													"negated": false
+												}
+											]
+										}
+									]
+								}
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "optional",
+								"node": {
+									"op": "class",
+									"ranges": [
+										[":", ":"],
+										["=", "="]
+									],
+									"negated": false
+								}
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "capture",
+								"path": "first_value",
+								"node": {
+									"op": "sequence",
+									"items": [
+										{
+											"op": "optional",
+											"node": {
+												"op": "literal",
+												"value": "-"
+											}
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "literal",
+																"value": "."
+															},
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "digit"
+																},
+																"min": 1,
+																"max": null
+															}
+														]
+													}
+												}
+											]
+										}
+									]
+								}
+							}
+						]
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "reference",
+							"id": "whitespace"
+						},
+						"min": 0,
+						"max": null
+					},
+					{
+						"op": "choice",
+						"alternatives": [
+							{
+								"op": "class",
+								"ranges": [
+									[",", ","],
+									[";", ";"]
+								],
+								"negated": false
+							},
+							{
+								"op": "reference",
+								"id": "whitespace"
+							}
+						]
+					},
+					{
+						"op": "repeat",
+						"node": {
+							"op": "reference",
+							"id": "whitespace"
+						},
+						"min": 0,
+						"max": null
+					},
+					{
+						"op": "sequence",
+						"items": [
+							{
+								"op": "capture",
+								"path": "second_label",
+								"node": {
+									"op": "choice",
+									"alternatives": [
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["L", "L"],
+																["l", "l"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["A", "A"],
+																["a", "a"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["T", "T"],
+																["t", "t"]
+															],
+															"negated": false
+														}
+													]
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "class",
+																"ranges": [
+																	["I", "I"],
+																	["i", "i"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["T", "T"],
+																	["t", "t"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["U", "U"],
+																	["u", "u"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["D", "D"],
+																	["d", "d"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["E", "E"],
+																	["e", "e"]
+																],
+																"negated": false
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "sequence",
+													"items": [
+														{
+															"op": "class",
+															"ranges": [
+																["L", "L"],
+																["l", "l"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["O", "O"],
+																["o", "o"]
+															],
+															"negated": false
+														},
+														{
+															"op": "class",
+															"ranges": [
+																["N", "N"],
+																["n", "n"]
+															],
+															"negated": false
+														}
+													]
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "class",
+																"ranges": [
+																	["G", "G"],
+																	["g", "g"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["I", "I"],
+																	["i", "i"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["T", "T"],
+																	["t", "t"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["U", "U"],
+																	["u", "u"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["D", "D"],
+																	["d", "d"]
+																],
+																"negated": false
+															},
+															{
+																"op": "class",
+																"ranges": [
+																	["E", "E"],
+																	["e", "e"]
+																],
+																"negated": false
+															}
+														]
+													}
+												}
+											]
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "class",
+													"ranges": [
+														["L", "L"],
+														["l", "l"]
+													],
+													"negated": false
+												},
+												{
+													"op": "class",
+													"ranges": [
+														["N", "N"],
+														["n", "n"]
+													],
+													"negated": false
+												},
+												{
+													"op": "class",
+													"ranges": [
+														["G", "G"],
+														["g", "g"]
+													],
+													"negated": false
+												}
+											]
+										}
+									]
+								}
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "optional",
+								"node": {
+									"op": "class",
+									"ranges": [
+										[":", ":"],
+										["=", "="]
+									],
+									"negated": false
+								}
+							},
+							{
+								"op": "repeat",
+								"node": {
+									"op": "reference",
+									"id": "whitespace"
+								},
+								"min": 0,
+								"max": null
+							},
+							{
+								"op": "capture",
+								"path": "second_value",
+								"node": {
+									"op": "sequence",
+									"items": [
+										{
+											"op": "optional",
+											"node": {
+												"op": "literal",
+												"value": "-"
+											}
+										},
+										{
+											"op": "sequence",
+											"items": [
+												{
+													"op": "repeat",
+													"node": {
+														"op": "reference",
+														"id": "digit"
+													},
+													"min": 1,
+													"max": null
+												},
+												{
+													"op": "optional",
+													"node": {
+														"op": "sequence",
+														"items": [
+															{
+																"op": "literal",
+																"value": "."
+															},
+															{
+																"op": "repeat",
+																"node": {
+																	"op": "reference",
+																	"id": "digit"
+																},
+																"min": 1,
+																"max": null
+															}
+														]
+													}
+												}
+											]
+										}
+									]
+								}
+							}
+						]
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "first_label",
+					"type": "text"
+				},
+				{
+					"path": "first_value",
+					"type": "decimal"
+				},
+				{
+					"path": "second_label",
+					"type": "text"
+				},
+				{
+					"path": "second_value",
+					"type": "decimal"
+				}
+			],
+			"scope": "whole_or_embedded",
+			"validator": "LabeledPair",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 213
+			}
+		},
+		{
+			"id": "coordinate.maps_segment",
+			"grammar": {
+				"op": "sequence",
+				"items": [
+					{
+						"op": "literal",
+						"value": "@"
+					},
+					{
+						"op": "capture",
+						"path": "first",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "optional",
+									"node": {
+										"op": "literal",
+										"value": "-"
+									}
+								},
+								{
+									"op": "sequence",
+									"items": [
+										{
+											"op": "repeat",
+											"node": {
+												"op": "reference",
+												"id": "digit"
+											},
+											"min": 1,
+											"max": null
+										},
+										{
+											"op": "optional",
+											"node": {
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"op": "literal",
+						"value": ","
+					},
+					{
+						"op": "capture",
+						"path": "second",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "optional",
+									"node": {
+										"op": "literal",
+										"value": "-"
+									}
+								},
+								{
+									"op": "sequence",
+									"items": [
+										{
+											"op": "repeat",
+											"node": {
+												"op": "reference",
+												"id": "digit"
+											},
+											"min": 1,
+											"max": null
+										},
+										{
+											"op": "optional",
+											"node": {
+												"op": "sequence",
+												"items": [
+													{
+														"op": "literal",
+														"value": "."
+													},
+													{
+														"op": "repeat",
+														"node": {
+															"op": "reference",
+															"id": "digit"
+														},
+														"min": 1,
+														"max": null
+													}
+												]
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"op": "optional",
+						"node": {
+							"op": "sequence",
+							"items": [
+								{
+									"op": "literal",
+									"value": ","
+								},
+								{
+									"op": "repeat",
+									"node": {
+										"op": "class",
+										"ranges": [
+											[".", "."],
+											["0", "9"]
+										],
+										"negated": false
+									},
+									"min": 1,
+									"max": null
+								},
+								{
+									"op": "class",
+									"ranges": [
+										["Z", "Z"],
+										["z", "z"]
+									],
+									"negated": false
+								}
+							]
+						}
+					}
+				]
+			},
+			"captures": [
+				{
+					"path": "first",
+					"type": "decimal"
+				},
+				{
+					"path": "second",
+					"type": "decimal"
+				}
+			],
+			"scope": "whole_or_embedded",
+			"validator": "MapsSegment",
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "token",
+			"source": {
+				"file": "packages/recognize/crates/recognize-core/src/grammars/coordinates.rs",
+				"line": 230
 			}
 		}
 	]

@@ -167,6 +167,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.ba",
@@ -191,6 +192,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.ba",
@@ -217,6 +219,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.bl",
@@ -337,6 +340,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.cr",
@@ -437,6 +441,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.cx",
@@ -498,6 +503,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.fm",
@@ -552,6 +558,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.fr",
@@ -584,6 +591,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.gf",
@@ -636,6 +644,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.il",
@@ -700,6 +709,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.il",
@@ -720,6 +730,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"coordinate.dms_pair_spaced",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.il",
@@ -734,6 +745,7 @@
 				"postal.so",
 				"postal.ta",
 				"postal.tc",
+				"wof.reference",
 				"word.ascii"
 			],
 			"metadata": {
@@ -747,6 +759,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.jp",
@@ -805,7 +818,7 @@
 			"pattern": "(?i:(?:[0-9]{5}-?[0-9]{5}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["digipin.compact", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["IR"]
@@ -838,6 +851,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.mc",
@@ -916,7 +930,15 @@
 			"pattern": "(?i:(?:980[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["MC"]
@@ -927,7 +949,15 @@
 			"pattern": "(?i:(?:8[0-9]{4}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["ME"]
@@ -938,7 +968,15 @@
 			"pattern": "(?i:(?:(969[67][0-9])(?:[ \\-]([0-9]{4}))?))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["MH"]
@@ -949,7 +987,15 @@
 			"pattern": "(?i:(?:(9695[012])(?:[ \\-]([0-9]{4}))?))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["MP"]
@@ -960,7 +1006,15 @@
 			"pattern": "(?i:(?:9[78]2[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.mu", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.mu",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["MQ"]
@@ -971,6 +1025,7 @@
 			"pattern": "(?i:(?:[A-Z]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2,4}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
+			"overlaps": ["wof.reference"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["MT"]
@@ -982,6 +1037,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.nc",
@@ -1012,7 +1068,14 @@
 			"pattern": "(?i:(?:988[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["NC"]
@@ -1056,6 +1119,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.pr",
@@ -1076,7 +1140,14 @@
 			"pattern": "(?i:(?:987[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["PF"]
@@ -1097,7 +1168,14 @@
 			"pattern": "(?i:(?:9[78]5[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["PM"]
@@ -1118,7 +1196,14 @@
 			"pattern": "(?i:(?:(00[679][0-9]{2})(?:[ \\-]([0-9]{4}))?))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["PR"]
@@ -1139,7 +1224,14 @@
 			"pattern": "(?i:(?:(969(?:39|40))(?:[ \\-]([0-9]{4}))?))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["PW"]
@@ -1150,7 +1242,14 @@
 			"pattern": "(?i:(?:9[78]4[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["RE"]
@@ -1171,7 +1270,15 @@
 			"pattern": "(?i:(?:4789[0-9]))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.tw", "postal.tz", "postal.us", "postal.xk"],
+			"overlaps": [
+				"census.geoid_county",
+				"number.digit_run",
+				"number.signed_decimal",
+				"postal.tw",
+				"postal.tz",
+				"postal.us",
+				"postal.xk"
+			],
 			"metadata": {
 				"kind": "code",
 				"countries": ["SM"]
@@ -1233,6 +1340,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.tz",
@@ -1255,6 +1363,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.um",
@@ -1275,7 +1384,7 @@
 			"pattern": "(?i:(?:96898))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal", "postal.us"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal", "postal.us"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["UM"]
@@ -1287,6 +1396,7 @@
 			"scope": "whole_or_embedded",
 			"boundary": "token",
 			"overlaps": [
+				"census.geoid_county",
 				"number.digit_run",
 				"number.signed_decimal",
 				"postal.va",
@@ -1305,7 +1415,7 @@
 			"pattern": "(?i:(?:00120))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["VA"]
@@ -1336,7 +1446,7 @@
 			"pattern": "(?i:(?:(008(?:(?:[0-4][0-9])|(?:5[01])))(?:[ \\-]([0-9]{4}))?))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["VI"]
@@ -1347,7 +1457,7 @@
 			"pattern": "(?i:(?:986[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["WF"]
@@ -1358,7 +1468,7 @@
 			"pattern": "(?i:(?:[1-7][0-9]{4}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["XK"]
@@ -1369,7 +1479,7 @@
 			"pattern": "(?i:(?:976[0-9]{2}))",
 			"scope": "whole_or_embedded",
 			"boundary": "token",
-			"overlaps": ["number.digit_run", "number.signed_decimal"],
+			"overlaps": ["census.geoid_county", "number.digit_run", "number.signed_decimal"],
 			"metadata": {
 				"kind": "code",
 				"countries": ["YT"]

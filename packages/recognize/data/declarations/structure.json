@@ -1,0 +1,115 @@
+{
+	"family": "structure",
+	"shapes": [
+		{
+			"captures": [],
+			"handler": null,
+			"id": "segment.comma",
+			"kind": "SegmentComma",
+			"partition": "segment",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "segment.newline",
+			"kind": "SegmentNewline",
+			"partition": "segment",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "segment.space",
+			"kind": "SegmentSpace",
+			"partition": "segment",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "segment.tab",
+			"kind": "SegmentTab",
+			"partition": "segment",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "segment.text",
+			"kind": "SegmentText",
+			"partition": "segment",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.arabic",
+			"kind": "TokenArabic",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.cjk",
+			"kind": "TokenCjk",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.cyrillic",
+			"kind": "TokenCyrillic",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.latin",
+			"kind": "TokenLatin",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.other",
+			"kind": "TokenOther",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "token.skip",
+			"kind": "TokenSkip",
+			"partition": "token",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		}
+	]
+}

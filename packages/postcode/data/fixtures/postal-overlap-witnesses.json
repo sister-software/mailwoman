@@ -2,6 +2,424 @@
 	"pairs": [
 		{
 			"a": {
+				"family": "coordinates",
+				"shape": "coordinate.dms_pair_spaced"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "000 000D"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.as"
+			},
+			"witness": "96799"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ax"
+			},
+			"witness": "22000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ba"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.bl"
+			},
+			"witness": "97000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.cz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fm"
+			},
+			"witness": "96941"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.fr"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gf"
+			},
+			"witness": "97300"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.gu"
+			},
+			"witness": "96910"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.il"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.kh"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mc"
+			},
+			"witness": "98000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.me"
+			},
+			"witness": "80000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mh"
+			},
+			"witness": "96960"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mp"
+			},
+			"witness": "96950"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mq"
+			},
+			"witness": "97200"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mu"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.nc"
+			},
+			"witness": "98800"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pe"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pf"
+			},
+			"witness": "98700"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pm"
+			},
+			"witness": "97500"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pr"
+			},
+			"witness": "00600"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.pw"
+			},
+			"witness": "96939"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.re"
+			},
+			"witness": "97400"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.sm"
+			},
+			"witness": "47890"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tw"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.tz"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.um"
+			},
+			"witness": "96898"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.us"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.va"
+			},
+			"witness": "00120"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.vi"
+			},
+			"witness": "00800"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.wf"
+			},
+			"witness": "98600"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.xk"
+			},
+			"witness": "10000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.yt"
+			},
+			"witness": "97600"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "wof.reference"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.ie"
+			},
+			"witness": "WOF 0000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "wof.reference"
+			},
+			"b": {
+				"family": "postal",
+				"shape": "postal.mt"
+			},
+			"witness": "WOF 00"
+		},
+		{
+			"a": {
 				"family": "postal",
 				"shape": "postal.ac"
 			},
@@ -3761,6 +4179,17 @@
 				"shape": "number.signed_decimal"
 			},
 			"witness": "0000000000"
+		},
+		{
+			"a": {
+				"family": "postal",
+				"shape": "postal.ir"
+			},
+			"b": {
+				"family": "spatial",
+				"shape": "digipin.compact"
+			},
+			"witness": "2222222222"
 		},
 		{
 			"a": {

@@ -7,8 +7,10 @@
  *   same process, on the eight inputs of `packages/recognize/tools/bench.run.ts`.
  *
  *   The recognizer computes every field `computeQueryShape` does, known formats included,
- *   and also recognizes digit runs, decimals, whitespace, words and decimal pairs,
- *   so it does more work on each input.
+ *   and also recognizes digit runs, decimals, whitespace, words and the coordinate
+ *   spellings, so it does more work on each input.
+ *   A last column adds the `spatial` and `identifiers` families to that composition.
+ *
  *   The requirement is that one call takes no longer than `computeQueryShape`.
  *
  *   Method: 20,000 warm-up calls, then 200,000 timed calls per input, in one Node process.
@@ -31,7 +33,9 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createRecognizer } from "@mailwoman/recognize"
 import { coordinates } from "@mailwoman/recognize/coordinates"
 import { defineFamily } from "@mailwoman/recognize/family"
+import { identifiers } from "@mailwoman/recognize/identifiers"
 import { primitives } from "@mailwoman/recognize/primitives"
+import { spatial } from "@mailwoman/recognize/spatial"
 import { structure } from "@mailwoman/recognize/structure"
 
 import { postcodeLegacy } from "#recognize/legacy"
@@ -70,6 +74,11 @@ const postalFamily = otherArtifact ? defineFamily({ ...postal, artifact: () => o
 const recognizer = createRecognizer([structure, postcodeLegacy, primitives, coordinates])
 const withPostal = createRecognizer([structure, postcodeLegacy, postalFamily, primitives, coordinates])
 
+// The same composition and the `spatial` and `identifiers` families.
+// They add the plus code, DIGIPIN, GeoJSON, H3, geohash, Who's On First, GEOID
+// and GNIS shapes to the search.
+const withSpatial = createRecognizer([structure, postcodeLegacy, primitives, coordinates, spatial, identifiers])
+
 function microsecondsPerCall(input: string, run: (input: string) => number): { microseconds: number; sink: number } {
 	let sink = 0
 
@@ -98,7 +107,14 @@ const rows = INPUTS.map((input) => {
 		return result.fields.knownFormats.length + result.recognitions.length
 	})
 
+	const spatialCall = microsecondsPerCall(input, (text) => {
+		const result = withSpatial.recognize(text)
+
+		return result.fields.knownFormats.length + result.recognitions.length
+	})
+
 	return {
+		spatialRecognizeMicroseconds: spatialCall.microseconds,
 		postalRecognizeMicroseconds: postalCall.microseconds,
 		postalCandidates: withPostal.recognize(input).recognitions.filter(({ kind }) => /^(postal|printed)\./u.test(kind))
 			.length,
@@ -108,7 +124,7 @@ const rows = INPUTS.map((input) => {
 		knownFormats: recognizer.recognize(input).fields.knownFormats.length,
 		computeQueryShapeMicroseconds: legacy.microseconds,
 		recognizeMicroseconds: adapter.microseconds,
-		sink: legacy.sink + adapter.sink + postalCall.sink,
+		sink: legacy.sink + adapter.sink + postalCall.sink + spatialCall.sink,
 	}
 })
 
@@ -129,15 +145,15 @@ if (values.json) {
 	console.log(`postal artifact: ${report.postalArtifact}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per input\n`)
 	console.log(
-		"| Input | UTF-16 units | Known formats | Postal candidates | computeQueryShape (µs/call) | recognize without postal (µs/call) | recognize with postal (µs/call) |"
+		"| Input | UTF-16 units | Known formats | Postal candidates | computeQueryShape (µs/call) | recognize without postal (µs/call) | recognize with postal (µs/call) | recognize with spatial and identifiers (µs/call) |"
 	)
-	console.log("| --- | --- | --- | --- | --- | --- | --- |")
+	console.log("| --- | --- | --- | --- | --- | --- | --- | --- |")
 
 	for (const row of rows) {
 		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (${row.utf16Units} units)` : row.input
 
 		console.log(
-			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.postalCandidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} | ${row.postalRecognizeMicroseconds.toFixed(2)} |`
+			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.postalCandidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} | ${row.postalRecognizeMicroseconds.toFixed(2)} | ${row.spatialRecognizeMicroseconds.toFixed(2)} |`
 		)
 	}
 }

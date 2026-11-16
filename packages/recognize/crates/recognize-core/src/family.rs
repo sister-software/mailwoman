@@ -9,7 +9,9 @@
 use crate::ast::{pattern, Node};
 use crate::diagnostic::{Diagnostic, DiagnosticKind, Source};
 use crate::ids::{HandlerID, ValidatorID};
-use crate::ir::{AmbiguityPolicy, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION};
+use crate::ir::{
+	AmbiguityPolicy, Boundary, CaptureSpec, CaptureType, IrDocument, Scope, Shape, Term, IR_FORMAT, IR_VERSION,
+};
 use crate::validate::validate;
 
 /// Declares a named, reusable grammar.
@@ -36,6 +38,7 @@ pub fn shape(id: &str) -> ShapeBuilder {
 		ambiguity: AmbiguityPolicy::Exclusive,
 		unreachable: None,
 		partition: None,
+		boundary: None,
 		source: Source::here(),
 	}
 }
@@ -53,6 +56,7 @@ pub struct ShapeBuilder {
 	ambiguity: AmbiguityPolicy,
 	unreachable: Option<String>,
 	partition: Option<String>,
+	boundary: Option<Boundary>,
 	source: Source,
 }
 
@@ -87,6 +91,12 @@ impl ShapeBuilder {
 	pub fn partition(mut self, name: &str) -> Self {
 		self.scope = Scope::Partition;
 		self.partition = Some(name.to_string());
+		self
+	}
+
+	/// Sets what may touch an embedded match of the shape, so the engine reports none that sits inside a longer token.
+	pub fn boundary(mut self, boundary: Boundary) -> Self {
+		self.boundary = Some(boundary);
 		self
 	}
 
@@ -191,6 +201,7 @@ impl Family {
 				ambiguity,
 				unreachable,
 				partition,
+				boundary,
 				source,
 			} = builder;
 
@@ -219,7 +230,7 @@ impl Family {
 				partition,
 				role: None,
 				order: None,
-				boundary: None,
+				boundary,
 				source,
 			});
 		}

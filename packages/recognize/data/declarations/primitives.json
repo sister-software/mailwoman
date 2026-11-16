@@ -1,0 +1,41 @@
+{
+	"family": "primitives",
+	"shapes": [
+		{
+			"captures": [],
+			"handler": null,
+			"id": "number.digit_run",
+			"kind": "NumberDigitRun",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "number.signed_decimal",
+			"kind": "NumberSignedDecimal",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "space.whitespace",
+			"kind": "SpaceWhitespace",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "word.ascii",
+			"kind": "WordAscii",
+			"payload": [],
+			"rejections": [],
+			"validator": null
+		}
+	]
+}

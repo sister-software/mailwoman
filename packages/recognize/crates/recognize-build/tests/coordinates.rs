@@ -187,21 +187,30 @@ fn a_geo_uri_that_is_not_wgs84_or_out_of_range_matches_and_is_rejected() {
 }
 
 #[test]
-fn a_whitespace_only_separator_is_not_a_pair() {
+fn a_whitespace_only_separator_is_a_pair_in_whole_input_scope_and_never_embedded() {
 	let engine = engine();
 
 	for text in ["12.5 45.2", "40.7128 -74.0060"] {
+		let found = shapes(&engine, text);
+
+		assert!(has(&found, "coordinate.decimal_pair_spaced", 0, text.len()), "{text}");
+		assert!(!has(&found, "coordinate.decimal_pair", 0, text.len()), "{text}");
+	}
+
+	// Embedded, the house number and the `5` of `350 5th Ave` would read as a pair; and without a decimal point `12 34` is
+	// a house number and a postcode.
+	for text in ["350 5th Ave", "12 34", "see 12.5 45.2 now", "Apt 4.5 12 Main St"] {
 		assert!(
 			!shapes(&engine, text)
 				.iter()
-				.any(|(shape, ..)| shape.starts_with("coordinate.")),
+				.any(|(shape, ..)| shape == "coordinate.decimal_pair_spaced"),
 			"{text}"
 		);
 	}
 }
 
 #[test]
-fn the_overlap_analysis_finds_no_language_the_coordinates_family_shares() {
+fn the_overlap_analysis_finds_no_language_the_coordinates_family_shares_with_another_recognize_family() {
 	let build = build_repository_families(&Limits::default()).unwrap();
 	let involved: Vec<_> = build
 		.analysis

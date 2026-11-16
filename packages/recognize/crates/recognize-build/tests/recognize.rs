@@ -141,6 +141,11 @@ fn a_payload_serializes_the_fields_the_declarations_list() {
 			// A text that fills every field, optional ones included.
 			let text = match shape.id.as_str() {
 				"coordinate.decimal_pair" => "1.5, 2.5",
+				"coordinate.decimal_pair_spaced" => "1.5 2.5",
+				"coordinate.dms_pair" => "1.5N, 2.5E",
+				"coordinate.dms_pair_spaced" => "1.5N 2.5E",
+				"coordinate.labeled_pair" => "lat 1.5 lon 2.5",
+				"coordinate.maps_segment" => "@1.5,2.5,17z",
 				_ => "geo:1.5,2.5,3;u=4",
 			};
 			let recognition = engine

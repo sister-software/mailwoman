@@ -256,6 +256,16 @@ fn main() {
 			generated.0.as_bytes(),
 		);
 		write(format!("ts/{}.generated.ts", family.family), generated.1.as_bytes());
+		// The declarations as data: the shapes' kinds, captures, payload fields and rejection codes, which the generated
+		// reference documentation reads.
+		write(
+			format!("declarations/{}.json", family.family),
+			format!(
+				"{}\n",
+				serde_json::to_string_pretty(family).expect("declarations always serialize")
+			)
+			.as_bytes(),
+		);
 		write(
 			format!("ts/artifacts/{}.generated.ts", family.family),
 			recognize_build::codegen::typescript_artifact(

@@ -43,9 +43,18 @@ pub struct Declarations {
 	pub shapes: Vec<ShapeDeclaration>,
 }
 
-/// The parts of a shape ID the repository spells as a whole acronym in a name: `coordinate.geo_uri` is
-/// `CoordinateGeoURI`, as its lint rule for acronyms requires.
-const ACRONYMS: [&str; 3] = ["id", "uri", "url"];
+/// The parts of a shape ID the repository spells as a whole acronym in a name, with the spelling: `coordinate.geo_uri`
+/// is `CoordinateGeoURI` and `census.geoid_county` is `CensusGeoIDCounty`, as the lint rule for acronyms requires.
+const ACRONYMS: [(&str, &str); 8] = [
+	("dms", "DMS"),
+	("geoid", "GeoID"),
+	("geojson", "GeoJSON"),
+	("gnis", "GNIS"),
+	("id", "ID"),
+	("uri", "URI"),
+	("url", "URL"),
+	("wof", "WOF"),
+];
 
 /// The kind name of a shape ID: `coordinate.decimal_pair` is `CoordinateDecimalPair`.
 pub fn kind_name(shape: &str) -> String {
@@ -53,8 +62,8 @@ pub fn kind_name(shape: &str) -> String {
 		.split(['.', '_'])
 		.filter(|part| !part.is_empty())
 		.map(|part| {
-			if ACRONYMS.contains(&part) {
-				return part.to_ascii_uppercase();
+			if let Some((_, spelling)) = ACRONYMS.iter().find(|(acronym, _)| *acronym == part) {
+				return spelling.to_string();
 			}
 
 			let mut characters = part.chars();
@@ -133,6 +142,10 @@ mod tests {
 		assert_eq!(kind_name("word.ascii"), "WordAscii");
 		assert_eq!(kind_name("coordinate.geo_uri"), "CoordinateGeoURI");
 		assert_eq!(kind_name("postcode.generic_5digit"), "PostcodeGeneric5digit");
+		assert_eq!(kind_name("census.geoid_block_group"), "CensusGeoIDBlockGroup");
+		assert_eq!(kind_name("geojson.object"), "GeoJSONObject");
+		assert_eq!(kind_name("wof.spelunker_url"), "WOFSpelunkerURL");
+		assert_eq!(kind_name("coordinate.dms_pair"), "CoordinateDMSPair");
 	}
 
 	#[test]
