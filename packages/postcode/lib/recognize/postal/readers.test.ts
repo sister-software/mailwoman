@@ -6,7 +6,7 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { createRecognizer } from "@mailwoman/recognize"
 import { describe, expect, it } from "vitest"
 
-import { postcodePrefix, postcodeSyntaxCountries } from "#country-formats"
+import { postcodeSyntaxCountries, printedPostcodePrefix } from "#country-formats"
 import {
 	acceptingCountries,
 	postal,
@@ -30,7 +30,7 @@ describe("the postal family's shapes", () => {
 
 	it("holds a printed shape for each country whose layout prints a prefix, and only those", () => {
 		const printed = Object.values(PostalMetadata.shapes).filter((shape) => shape.kind === "printed")
-		const prefixed = postcodeSyntaxCountries().filter((country) => postcodePrefix(country))
+		const prefixed = postcodeSyntaxCountries().filter((country) => printedPostcodePrefix(country))
 
 		expect(printed.flatMap((shape) => [...shape.countries]).toSorted()).toEqual(prefixed)
 	})

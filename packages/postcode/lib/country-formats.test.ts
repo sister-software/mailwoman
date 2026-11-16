@@ -7,7 +7,7 @@ import {
 	acceptPostcode,
 	hasPostcodeForm,
 	postcodePlacement,
-	postcodePrefix,
+	printedPostcodePrefix,
 	statesPostcodeSyntax,
 } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
@@ -98,8 +98,8 @@ describe("acceptPostcode", () => {
 	})
 
 	test("leaves Puerto Rico's region code unprefixed, since the layout prints it after the city", () => {
-		expect(postcodePrefix("PR")).toBeNull()
-		expect(postcodePrefix("MD")).toBe("MD-")
+		expect(printedPostcodePrefix("PR")).toBeNull()
+		expect(printedPostcodePrefix("MD")).toBe("MD-")
 	})
 
 	test("matches nothing for a country that states no postcode", () => {

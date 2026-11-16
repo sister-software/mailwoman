@@ -60,7 +60,7 @@
  *   alternative, and it refuses any other `^`, `$` or `\b`.
  */
 
-import { postcodePrefix, postcodeSyntaxCountries } from "#country-formats"
+import { postcodeSyntaxCountries, printedPostcodePrefix } from "#country-formats"
 import { postcodeSyntaxText } from "#country-formats/source"
 
 /**
@@ -308,7 +308,7 @@ export function translateBody(country: string, rewrites: Rewrite[] = []): string
  * case-insensitively by the upper-case rule.
  */
 export function translatePrinted(country: string): string | null {
-	const prefix = postcodePrefix(country)
+	const prefix = printedPostcodePrefix(country)
 
 	if (!prefix) return null
 
@@ -381,7 +381,7 @@ export interface ReportedOverlap {
  * Each group is in ISO order and the groups are in the ISO order of their first member.
  */
 export function equivalenceGroups(prefix: "bare" | "printed", reported: readonly ReportedOverlap[]): string[][] {
-	const countries = postcodeSyntaxCountries().filter((country) => prefix === "bare" || postcodePrefix(country))
+	const countries = postcodeSyntaxCountries().filter((country) => prefix === "bare" || printedPostcodePrefix(country))
 	const parent = new Map(countries.map((country) => [country, country]))
 
 	const find = (country: string): string => {
@@ -458,7 +458,7 @@ export function postalDefinition(
 
 	for (const group of printed) {
 		const id = postalShapeID("printed", group[0]!)
-		const prefix = postcodePrefix(group[0]!)!
+		const prefix = printedPostcodePrefix(group[0]!)!
 		const bodies = new Set(group.map((country) => bareOf.get(country)))
 
 		if (bodies.size !== 1) throw new Error(`the printed group ${group.join(",")} has several bare shapes`)

@@ -15,7 +15,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
-import { postcodePrefix } from "@mailwoman/postcode/country-formats"
+import { printedPostcodePrefix } from "@mailwoman/postcode/country-formats"
 import { Globerator } from "spliterator/node/fs"
 
 import { LATIN_DISTRICT_BEFORE_LOCALITY_COUNTRIES } from "#tools/dev-tools/codex/latin-district"
@@ -89,7 +89,7 @@ function regionCodeAsSlot(line: string, code: string): string {
 
 	if (!literal.test(line)) return line
 
-	if (postcodePrefix(code)?.trim() === code) return line
+	if (printedPostcodePrefix(code)?.trim() === code) return line
 
 	usesFixedSlot = true
 

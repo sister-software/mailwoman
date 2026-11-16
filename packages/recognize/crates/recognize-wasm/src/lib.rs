@@ -733,7 +733,10 @@ mod tests {
 		assert_eq!(load("coordinates", hash("coordinates")), 1);
 
 		let coordinates = shape_table(1);
-		let position = coordinates.iter().position(|shape| shape == "coordinate.decimal_pair").unwrap() as u32;
+		let position = coordinates
+			.iter()
+			.position(|shape| shape == "coordinate.decimal_pair")
+			.unwrap() as u32;
 
 		let statuses = |text: &str, mask: u32| -> Vec<[u32; 3]> {
 			let count = unsafe { rcg_prefix(text.as_ptr(), text.len(), mask) };
@@ -745,7 +748,11 @@ mod tests {
 
 				assert_eq!(state.records.len(), count as usize * PREFIX_WORDS);
 
-				state.records.chunks(PREFIX_WORDS).map(|word| [word[0], word[1], word[2]]).collect()
+				state
+					.records
+					.chunks(PREFIX_WORDS)
+					.map(|word| [word[0], word[1], word[2]])
+					.collect()
 			})
 		};
 
@@ -753,7 +760,10 @@ mod tests {
 
 		assert_eq!(whole.len(), coordinates.len());
 		assert!(whole.iter().all(|record| record[0] == 1));
-		assert!(matches!(whole.iter().find(|record| record[1] == position).unwrap()[2], 2 | 3));
+		assert!(matches!(
+			whole.iter().find(|record| record[1] == position).unwrap()[2],
+			2 | 3
+		));
 
 		let partial = statuses("40.5,", 0b10);
 

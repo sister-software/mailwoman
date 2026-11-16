@@ -49,7 +49,7 @@ export function statesPostcodeSyntax(countryCode: string): boolean {
  * The literal `countryCode`'s layout prints immediately before the postcode, such as `MD-`,
  * or null when it prints none or the dataset states no postcode for the country.
  */
-export function postcodePrefix(countryCode: string): string | null {
+export function printedPostcodePrefix(countryCode: string): string | null {
 	return COUNTRY_POSTCODE_FORMAT_SOURCES[countryCode.toUpperCase()]?.prefix ?? null
 }
 

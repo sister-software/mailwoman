@@ -74,7 +74,8 @@ describe("bundle fixtures of the postcode families", () => {
 		expect(text).toContain(legacy)
 		expect(text).not.toContain(postal)
 		expect(text).not.toContain(postal.slice(0, 4096))
-		expect(text.length).toBeLessThan(postal.length / 10)
+		// The bundle holds the legacy artifact and the family's few lines of code.
+		expect(text.length).toBeLessThan(legacy.length * 1.5)
 		// The postal generated modules are absent from the module graph, so Node evaluates none of them either.
 		expect(inputs.filter((input) => input.includes("postal"))).toEqual([])
 	})
