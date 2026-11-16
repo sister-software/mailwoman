@@ -30,7 +30,7 @@ The `postal` generation changes three things (observed from the code):
 
 ## The confidence rule (decided, then measured)
 
-`postal-confidence.ts` states the rule in one place.
+`postal/confidence.ts` states the rule in one place.
 `confidence = 0.95 - 0.45 * ln(n) / ln(181)`, minus 0.05 for a bare run of digits, hyphens and white space.
 `n` is the number of countries that accept the form, and 181 is the size of the family.
 The three constants are round numbers that no failing row fitted: 0.95 is the highest legacy value, 0.5 is the legacy locale hint's value for an ambiguous five-digit run, and 0.05 is the step of the legacy table.

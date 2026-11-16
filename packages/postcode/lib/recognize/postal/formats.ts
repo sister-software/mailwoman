@@ -7,7 +7,7 @@
  *
  *   A postcode hit holds the countries whose syntax accepts the form, the form,
  *   the locale of the most populous of those countries, and a confidence derived
- *   from the country count (see `postal-confidence.ts`).
+ *   from the country count (see `confidence.ts`).
  *   A PO box hit holds `null` for the countries, the form and the locale.
  *
  *   Every hit owns its span object.
