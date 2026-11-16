@@ -11,8 +11,8 @@
  *   A permalink reopens them.
  */
 
-import type { PointReading } from "@mailwoman/spatial/point-reading"
-import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point-text"
+import type { PointReading } from "@mailwoman/spatial/point/reading"
+import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point/text"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"

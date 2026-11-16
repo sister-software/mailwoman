@@ -16,7 +16,7 @@
  *   instead of rendering an empty workbench.
  */
 
-import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point-text"
+import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point/text"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 

@@ -10,8 +10,8 @@ import { IdentifiersKind, identifiers } from "@mailwoman/recognize/identifiers"
 import { SpatialKind, spatial } from "@mailwoman/recognize/spatial"
 import { describe, expect, expectTypeOf, test } from "vitest"
 
-import { type PointQueryKind, pointFromText, recognizePointQuery } from "#point-reading"
-import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "#point-text"
+import { type PointQueryKind, pointFromText, recognizePointQuery } from "#point/reading"
+import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "#point/text"
 
 interface FrozenCase {
 	category: string

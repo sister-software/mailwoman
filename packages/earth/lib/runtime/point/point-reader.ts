@@ -4,7 +4,7 @@
 /**
  *   The point reader, imported when it is first needed.
  *
- *   `@mailwoman/spatial/point-reading` imports the recognition engine
+ *   `@mailwoman/spatial/point/reading` imports the recognition engine
  *   and the `coordinates`, `spatial` and `identifiers` artifacts, about 400 kB that
  *   the entry chunk mustn't hold: the service worker precaches no chunk over 2 MiB,
  *   and the entry sat 7 kB under that limit before the reader moved here.
@@ -13,7 +13,7 @@
  *   The reader takes trimmed text, so every caller trims the typed input.
  */
 
-import type { pointFromText } from "@mailwoman/spatial/point-reading"
+import type { pointFromText } from "@mailwoman/spatial/point/reading"
 import { useEffect, useState } from "react"
 
 /**
@@ -28,7 +28,7 @@ let loading: Promise<PointReader> | null = null
  * A failed import rejects, and the next call retries.
  */
 export function loadPointReader(): Promise<PointReader> {
-	loading ??= import("@mailwoman/spatial/point-reading").then(
+	loading ??= import("@mailwoman/spatial/point/reading").then(
 		(module) => module.pointFromText,
 		(error: unknown) => {
 			loading = null

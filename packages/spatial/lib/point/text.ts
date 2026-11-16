@@ -4,12 +4,12 @@
 /**
  * @file The text that writes and labels a point query, apart from the reader.
  *
- *   The reader in `point-reading.ts` imports the recognition engine and three artifacts.
+ *   The reader in `reading.ts` imports the recognition engine and three artifacts.
  *   A page that only writes a coordinate pair or labels a kind in a sentence imports this module.
  *   This module holds none of the engine, because its one import is a type and the build erases it.
  */
 
-import type { PointQueryKind } from "#point-reading"
+import type { PointQueryKind } from "#point/reading"
 
 /**
  * A coordinate pair as text, latitude first, in the form `pointFromText` reads back.

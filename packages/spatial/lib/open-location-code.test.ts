@@ -10,7 +10,7 @@ import type { Validated } from "@mailwoman/recognize/types"
 import { describe, expect, it } from "vitest"
 
 import { decodePlusCode, encodePlusCode, recoverNearestPlusCode } from "#open-location-code"
-import { recognizePointQuery } from "#point-reading"
+import { recognizePointQuery } from "#point/reading"
 
 /**
  * The validated code the recognizer reads from a text: the only way a test holds a branded code of its own.

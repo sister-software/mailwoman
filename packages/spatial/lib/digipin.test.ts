@@ -5,7 +5,7 @@ import type { Validated } from "@mailwoman/recognize/types"
 import { expect, test } from "vitest"
 
 import { getDIGIPIN, getDIGIPINUnsafe, getLatLngFromDIGIPIN, getLatLngFromDIGIPINInto } from "#digipin"
-import { recognizePointQuery } from "#point-reading"
+import { recognizePointQuery } from "#point/reading"
 
 /**
  * Original India Post grid.

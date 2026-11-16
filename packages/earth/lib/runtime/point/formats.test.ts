@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { decodePlusCode } from "@mailwoman/spatial/open-location-code"
-import { pointFromText } from "@mailwoman/spatial/point-reading"
+import { pointFromText } from "@mailwoman/spatial/point/reading"
 import { expect, test } from "vitest"
 
 import { describePoint, h3ResolutionForZoom } from "#runtime/point/formats"

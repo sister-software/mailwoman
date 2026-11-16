@@ -18,8 +18,8 @@ import type { MapBias } from "@mailwoman/react/map"
 import { cellBounds, cellRadiusMeters, type DegreeCell } from "@mailwoman/spatial/coordinate/cell"
 import { DIGIPIN_CELL_DEGREES, getLatLngFromDIGIPIN } from "@mailwoman/spatial/digipin"
 import { decodePlusCode, recoverNearestPlusCode } from "@mailwoman/spatial/open-location-code"
-import type { PointReading } from "@mailwoman/spatial/point-reading"
-import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point-text"
+import type { PointReading } from "@mailwoman/spatial/point/reading"
+import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point/text"
 
 /**
  * The `kindResult.kind` of a point result, so a renderer can tell it from a classified address.

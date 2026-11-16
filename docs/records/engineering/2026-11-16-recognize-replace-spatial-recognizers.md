@@ -36,7 +36,7 @@ The old recognizers' parameter checks are deleted with their tests. Their cases 
 
 ## Where the point reader lives (decided)
 
-`packages/spatial/lib/point-reading.ts`. `@mailwoman/spatial` already depends on `@mailwoman/postcode`, which depends on `@mailwoman/recognize`, so the new direct edge adds no path.
+`packages/spatial/lib/point/reading.ts`. `@mailwoman/spatial` already depends on `@mailwoman/postcode`, which depends on `@mailwoman/recognize`, so the new direct edge adds no path.
 
 ```text
 spatial   -> core, postcode, recognize (new, direct)
@@ -66,7 +66,7 @@ Each class lists the old result, the new result and the specification that decid
 `recognizePointQuery` runs one recognizer over the `coordinates`, `spatial` and `identifiers` families. A recognition becomes a reading only when the validator accepted it and its span is the whole text. An embedded or rejected recognition never does, so `Apt 4, 12 Main St` and `geo:48.8584,2.2945;crs=Moon-2011` read as no point.
 The caller trims, because the grammars admit no outer white space. The earth app trims where it takes the typed input.
 
-The handler object is checked with `satisfies HandlerMap<typeof families>`, so a kind added to any family fails the build until it has a handler. A type-level test in `point-reading.test.ts` keeps one kind out of a map and expects the compiler to refuse it.
+The handler object is checked with `satisfies HandlerMap<typeof families>`, so a kind added to any family fails the build until it has a handler. A type-level test in `point/reading.test.ts` keeps one kind out of a map and expects the compiler to refuse it.
 
 | Kind                                                                                                                              | Result                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -118,4 +118,4 @@ The first build with a static import raised the entry chunk from 2,089.60 kB to 
 
 `packages/spatial/lib/point-query.ts` and its test, `isFullPlusCode`, `isShortPlusCode`, the DIGIPIN text validation with its two `Unsafe` decoders, `PLUS_CODE_TOKEN`, the `PointQuery` type with `POINT_QUERY_LABEL` and `POINT_QUERY_PHRASE`, and the differential tool with its report.
 No caller of the two `Unsafe` DIGIPIN decoders existed outside their module and test (observed with a search of the tree), so both are gone and `getLatLngFromDIGIPINInto` is the one buffer decoder.
-`parsePointQuery` had five call sites, all in `packages/earth`: `GazettePage.tsx` twice, `LiveModelVisualizer.tsx`, `geocoder-runtime.ts` and `remote-geocoder-runtime.ts`. Four files in `packages/earth` and `packages/react` also call `coordinatePairText`, and they now import it from `@mailwoman/spatial/point-text`.
+`parsePointQuery` had five call sites, all in `packages/earth`: `GazettePage.tsx` twice, `LiveModelVisualizer.tsx`, `geocoder-runtime.ts` and `remote-geocoder-runtime.ts`. Four files in `packages/earth` and `packages/react` also call `coordinatePairText`, and they now import it from `@mailwoman/spatial/point/text`.
