@@ -18,8 +18,8 @@
 		"tools/**/*.ts",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"lib/shapes.json",
-		"out/shapes.json",
+		"lib/frozen-shapes.json",
+		"out/frozen-shapes.json",
 		"lib/subregions.json",
 		"out/subregions.json"
 	],

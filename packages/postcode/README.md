@@ -8,9 +8,11 @@ and the JSON tables are imported as modules.
 
 `@mailwoman/postcode` exports the form checks:
 
-- `POSTCODE_SHAPES`, `WHOLE_POSTCODE_SHAPES` and `wholePostcodeShape` find the spans of a line that have a
-  postcode's shape, without knowing the country. `shapes.json` holds the records, and the Python trainer
-  reads the same file.
+- `findPostcodeSpans` (`@mailwoman/postcode/postal-spans`) finds the spans of a line that have a postcode's
+  form in any country, from the `postal` family. It matches either case, and the training encoder reads the same
+  artifact. `POSTCODE_SHAPES`, `WHOLE_POSTCODE_SHAPES` and `wholePostcodeShape` are the frozen legacy table in
+  `frozen-shapes.json`, kept for the published model's `shaped` span mode and postcode repair until the first
+  model that declares `span_mode: "postal"` ships.
 - `acceptPostcode`, `countriesAcceptingPostcode` and `hasPostcodeForm` check a whole value against a country's
   postcode syntax. The `postal` family's artifact answers them, and it is generated from Google's libaddressinput
   tables, which `packages/mailwoman/tools/dev-tools/postcode/country-formats.ts` writes.

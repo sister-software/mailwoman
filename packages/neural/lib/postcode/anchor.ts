@@ -7,6 +7,7 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 
+import type { AnchorSpanMode } from "#anchor-inference"
 import { collectMatches } from "#postcode/repair"
 
 /**
@@ -81,6 +82,13 @@ export interface ExtractPostcodeAnchorsOpts {
 	 * @defaultValue `false`
 	 */
 	fuzzy?: boolean
+
+	/**
+	 * The model card's `requires.anchor.span_mode`.
+	 *
+	 * The `postal` family finds the spans under `postal`, and the frozen table finds them otherwise.
+	 */
+	spanMode?: AnchorSpanMode | null
 }
 
 const MAX_COUNTRIES = 10
@@ -240,7 +248,7 @@ export function extractPostcodeAnchors(
 ): PostcodeAnchor[] {
 	const anchors: PostcodeAnchor[] = []
 
-	for (const match of collectMatches(text)) {
+	for (const match of collectMatches(text, opts.spanMode)) {
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 

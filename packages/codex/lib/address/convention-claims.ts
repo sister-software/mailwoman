@@ -399,7 +399,7 @@ export function stanceFromLayout(
 			// `ordering-reverses-with-script` compares two layouts of one jurisdiction.
 			// `conventionClaimForCountry` holds those and this function doesn't.
 			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its place in a line.
-			// `@mailwoman/postcode/shapes` answers that.
+			// `@mailwoman/postcode/frozen-shapes` answers that.
 			// `premise-subdivision-present` and `planning-word-names-locality` are propositions
 			// about what a row contains, and a rendering table states no row's content.
 			void layout

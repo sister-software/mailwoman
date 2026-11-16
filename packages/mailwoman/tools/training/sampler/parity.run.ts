@@ -20,8 +20,20 @@
  *   and the sampler's first batch, then sampling and encoding per batch over
  *   `--batches` (40) batches of `--batch-size` (128) rows.
  *
+ *   `--set data.key=value` applies after the record's own overrides, and `--ignore <tensor>`
+ *   counts a tensor's differing rows without letting them fail the record.
+ *   A record captured under the retired `shaped` anchor verifies the rest of its tensors
+ *   with `--set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence`.
+ *
+ *   `capture --name <record> --config <yaml> --records-dir <directory>` writes a record in the
+ *   format `verify` reads, from the current sampler and encoder, and never under the data root.
+ *   `--records-dir` also tells `verify` where to read a record.
+ *
  *   Usage:
- *     node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k [--report <json>]
+ *     node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k [--report <json>] \
+ *       [--set data.key=value] [--ignore <tensor>] [--records-dir <directory>]
+ *     node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name <record> --config <yaml> \
+ *       --records-dir <directory> [--split train] [--seed 43] [--rows 5000] [--batch-size 128] [--set data.key=value]
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts stream --config <yaml> --rows 100000 \
  *       [--split train] [--seed 43] [--set data.key=value]
  *     node packages/mailwoman/tools/training/sampler/parity.run.ts profile --config <yaml> [--batches 40] \
@@ -31,7 +43,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { gitSync } from "@mailwoman/core/git"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
@@ -43,6 +56,8 @@ import {
 	encodeCharModelBatch,
 	encodeModelBatch,
 	openSampler,
+	POSTAL_ARTIFACT_PATH,
+	POSTAL_DEFINITION_PATH,
 	readAddressSystemLookup,
 	rowIdentity,
 	sampledBatches,
@@ -78,6 +93,8 @@ const { values, positionals } = parseArguments({
 		batches: { type: "string", default: "40" },
 		"batch-size": { type: "string", default: "128" },
 		set: { type: "string", multiple: true, default: [] },
+		ignore: { type: "string", multiple: true, default: [] },
+		"records-dir": { type: "string" },
 	},
 })
 
@@ -143,14 +160,132 @@ function rowDigests(data: BigInt64Array | Float32Array, rows: number): string[] 
 	)
 }
 
-async function verify(name: string, reportPath: string | undefined): Promise<boolean> {
+/**
+ * The directory of one record: under `--records-dir` when given, and under the data root otherwise.
+ */
+function recordDirectory(name: string): (file: string) => string {
+	if (values["records-dir"]) return (file) => `${values["records-dir"]}/${name}/${file}`
+
 	const directory = dataRootPath("audits", "encoder-parity", name)
+
+	return (file) => directory(file).toString()
+}
+
+/**
+ * Draws a sample through the sampler and the row encoder, as `verify` does,
+ * and writes the record `verify` reads.
+ *
+ * The Python capture that wrote the first fifteen records is gone, so this is
+ * the capture of the postal finders' records.
+ * It reads the Rust sampler and the Rust encoder, and what makes the record an
+ * independent check is the cross-side agreement of `postcode-agreement.run.ts`,
+ * which holds serving's finder to the encoder's on the same rows.
+ *
+ * It never writes under the data root: `--records-dir` names the directory, and an operator moves
+ * a record into `$MAILWOMAN_DATA_ROOT/audits/encoder-parity/` when it should join the others.
+ */
+async function capture(name: string): Promise<void> {
+	if (!values["records-dir"])
+		throw new Error("capture needs --records-dir <directory>, and it never writes the data root")
+
+	if (!values.config) throw new Error("capture needs --config <yaml>")
+
+	const rows = Number(values.rows)
+	const batchSize = Number(values["batch-size"])
+	const config = rerootToHost(applyOverrides(await loadTrainingConfig(values.config), values.set))
+	const mtf = await mtfNode()
+	const addressSystem = await readAddressSystemLookup()
+
+	const encode: (rows: SampledRow[]) => ModelBatch =
+		config.data.char_mode === "off"
+			? (
+					(encoder) => (batch) =>
+						encodeModelBatch(encoder, addressSystem, batch)
+				)(createConfigRowEncoder(mtf, config.data))
+			: (
+					(encoder) => (batch) =>
+						encodeCharModelBatch(encoder, addressSystem, batch)
+				)(createConfigCharEncoder(mtf, config.data))
+
+	const sampler = openSampler(mtf, config, values.split, Number(values.seed), { rowLimit: rows })
+	const sizes: number[] = []
+	const identities: string[] = []
+	const digests: Record<string, string[]> = {}
+	const shapes: Record<string, { dtype: string; row_shape: number[] }> = {}
+
+	for (const batchRows of sampledBatches(sampler, batchSize)) {
+		const batch = encode(batchRows)
+
+		sizes.push(batchRows.length)
+		identities.push(...batchRows.map(rowIdentity))
+
+		for (const tensor of batchTensors(batch)) {
+			shapes[tensor.name] ??= { dtype: tensor.dtype, row_shape: tensor.rowShape }
+			;(digests[tensor.name] ??= []).push(...rowDigests(tensor.data, batchRows.length))
+		}
+	}
+
+	const data = config.data as Record<string, unknown>
+	const inputs: Record<string, { path: string; sha256: string }> = {}
+
+	for (const key of [
+		"anchor_lookup_path",
+		"gazetteer_lexicon_path",
+		"country_lexicon_path",
+		"street_type_lexicon_path",
+		"locality_surface_lexicon_path",
+		"affix_relabel_lexicon_path",
+	]) {
+		const path = data[key]
+
+		if (typeof path === "string" && path) {
+			inputs[key] = { path, sha256: await sha256File(path) }
+		}
+	}
+
+	// The shape and syntax records of the first fifteen records are the `postal` family's artifact and definition now.
+	inputs["postal_artifact"] = { path: POSTAL_ARTIFACT_PATH, sha256: await sha256File(POSTAL_ARTIFACT_PATH) }
+	inputs["postal_definition"] = { path: POSTAL_DEFINITION_PATH, sha256: await sha256File(POSTAL_DEFINITION_PATH) }
+
+	const record = {
+		format: 1,
+		source_revision: gitSync(["rev-parse", "HEAD"]),
+		captured_by: "parity.run.ts capture, from the Rust sampler and the Rust encoder",
+		config: {
+			path: values.config,
+			sha256: await sha256File(values.config),
+			overrides: values.set,
+		},
+		inputs,
+		split: values.split,
+		seed: Number(values.seed),
+		requested_rows: rows,
+		batch_size: batchSize,
+		drop_spans: false,
+		emitted_rows: sizes.reduce((a, b) => a + b, 0),
+		batch_sizes: sizes,
+		tensors: shapes,
+		row_identity: identities,
+		digests,
+	}
+
+	await writeLocalJSONFile(record, recordDirectory(name)("record.json"))
+
+	console.log(`captured ${record.emitted_rows} rows of ${name}`)
+}
+
+async function verify(name: string, reportPath: string | undefined): Promise<boolean> {
+	const directory = recordDirectory(name)
 	const record = await readLocalJSONFile<ParityRecord>(directory("record.json"))
 
 	if (record.format !== 1) throw new Error(`record format ${record.format} is not 1`)
 
 	const configPath = await recordedConfigPath(record.config)
-	const config = rerootToHost(applyOverrides(await loadTrainingConfig(configPath), record.config.overrides))
+
+	const config = rerootToHost(
+		applyOverrides(await loadTrainingConfig(configPath), [...record.config.overrides, ...values.set])
+	)
+
 	const started = performance.now()
 	const mtf = await mtfNode()
 	const addressSystem = await readAddressSystemLookup()
@@ -214,7 +349,7 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 		structural.push(`tensor set, dtypes or shapes differ: now ${stringifyJSON(shapes)}`)
 	}
 
-	const tensors: Record<string, { rows: number; differing_rows: number }> = {}
+	const tensors: Record<string, { rows: number; differing_rows: number; ignored?: boolean }> = {}
 	const differing = new Set<number>()
 	let firstMismatch: { row: number; tensor: string } | null = null
 
@@ -222,17 +357,21 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 		for (const tensor of Object.keys(record.tensors)) {
 			const now = digests[tensor] ?? []
 			const recorded = record.digests[tensor] ?? []
+			const ignored = values.ignore.includes(tensor)
 			let count = 0
 
 			for (const [row, digest] of now.entries()) {
 				if (digest === recorded[row]) continue
 
 				count++
+
+				if (ignored) continue
+
 				differing.add(row)
 				firstMismatch ??= { row, tensor }
 			}
 
-			tensors[tensor] = { rows: now.length, differing_rows: count }
+			tensors[tensor] = { rows: now.length, differing_rows: count, ...(ignored && { ignored: true }) }
 		}
 	}
 
@@ -385,6 +524,10 @@ if (command === "profile") {
 	if (!(await verify(values.name, values.report))) {
 		process.exitCode = 1
 	}
+} else if (command === "capture") {
+	if (!values.name) throw new Error("capture needs --name <record>")
+
+	await capture(values.name)
 } else if (command === "stream") {
 	await stream()
 } else {

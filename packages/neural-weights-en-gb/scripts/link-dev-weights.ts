@@ -94,14 +94,15 @@ const overlay = await materializeDevOverlay({
 	postcodePrefixScopes: ["gb-esw"],
 })
 
-// Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
+// Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode`
+// as `"shaped"` or `"postal"`.
 //
 // Build this binary only for a model trained with shaped (letter-containing) GB anchor lookups.
 // On an older model, the binary regresses results.
 // A stale binary from another checkout can re-enable that behavior.
 //
 // Policy:
-// - `span_mode: "shaped"` -> build the binary
+// - `span_mode: "shaped"` or `"postal"` -> build the binary
 // - otherwise -> remove any existing binary
 
 /**
@@ -127,9 +128,15 @@ const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
  */
 const GB_POSTCODE_BIN_KEYS = 1_749_839
 
-if (overlay.card?.requires?.anchor?.span_mode === "shaped") {
+/**
+ * The span modes that key a space-joined unit (`SW1A2AA`), which `postcode-gb.bin` holds.
+ * The `alnum-run` scan cannot reach those keys.
+ */
+const KEYED_SPAN_MODES: ReadonlySet<string> = new Set(["shaped", "postal"])
+
+if (KEYED_SPAN_MODES.has(overlay.card?.requires?.anchor?.span_mode ?? "")) {
 	console.log(
-		`model-card declares requires.anchor.span_mode "shaped" — building postcode-gb.bin ` +
+		`model-card declares requires.anchor.span_mode "${overlay.card?.requires?.anchor?.span_mode}" — building postcode-gb.bin ` +
 			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_EXTRACT})`
 	)
 
@@ -146,7 +153,7 @@ if (overlay.card?.requires?.anchor?.span_mode === "shaped") {
 	await removePath(POSTCODE_BIN_DEST)
 
 	console.log(
-		`removed stale ${POSTCODE_BIN_DEST} — this card does not declare span_mode "shaped", so the bin's ` +
+		`removed stale ${POSTCODE_BIN_DEST} — this card declares neither span_mode "shaped" nor "postal", so the bin's ` +
 			`unit keys are unreachable and feeding slot 4 is a measured regression (see the block comment)`
 	)
 }

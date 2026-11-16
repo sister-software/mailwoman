@@ -8,7 +8,9 @@
 //! the labels use and is fitted to `max_length`, so the batch packs into `[rows, max_length]` and
 //! `[rows, max_length, dim]` arrays.
 
-use crate::anchor::{AnchorLookup, AnchorPainter};
+use std::collections::HashMap;
+
+use crate::anchor::{AnchorLookup, AnchorPainter, PostcodeCandidate};
 use crate::channel::{Channel, Piece};
 use crate::code_units::{self, CodeUnit};
 use crate::error::{quote, Error};
@@ -20,8 +22,9 @@ use crate::labels::{char_labels_from_tokens, whitespace_spans, LabelTable, Spans
 pub enum AnchorMode {
 	/// The row's gold postcode labels: its `postcode` spans, or its `B-`/`I-postcode` tokens.
 	Gold,
-	/// The postcode-shaped ranges a shape finder detects in the raw text, as inference paints them.
-	Shaped,
+	/// The postcode spans the `postal` family finds in the raw text, as inference paints them when a model's card
+	/// declares `span_mode: "postal"`.
+	Postal,
 }
 
 /// The settings every row of a run is encoded under.
@@ -45,10 +48,12 @@ pub struct Lexicons {
 	pub locality_surface: Option<Lexicon>,
 }
 
-/// The span finders a configuration may need, which the `finders` feature implements with regexes.
+/// The postcode finders a configuration may need, which the `finders` feature implements over the `postal` family.
 pub trait Finders: Sync {
-	/// The postcode-shaped character ranges in `raw`, in start order.
-	fn shaped_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error>;
+	/// The postcode candidates in `raw`, in the order they compete, each with the countries its shapes belong to.
+	fn postcode_spans(&self, raw: &str) -> Result<Vec<PostcodeCandidate>, Error>;
+	/// The country codes a candidate's `countries` index into.
+	fn country_codes(&self) -> &[String];
 	/// The code units of `raw` with their acceptance counts.
 	fn code_units(&self, raw: &[char]) -> Result<Vec<CodeUnit>, Error>;
 }
@@ -96,6 +101,8 @@ pub struct Encoder<'a> {
 	pub finders: Option<&'a dyn Finders>,
 	/// The anchor table's posterior keys mapped to locale slots, computed once.
 	slots: Vec<Option<usize>>,
+	/// Each country code's index in the finder's table, which the painter reads a candidate's countries through.
+	country_index: Option<HashMap<String, u32>>,
 }
 
 /// One row's channels before packing, in `CHANNEL_NAMES` order with `None` for an unconfigured channel.
@@ -111,10 +118,10 @@ impl<'a> Encoder<'a> {
 		lexicons: &'a Lexicons,
 		finders: Option<&'a dyn Finders>,
 	) -> Result<Self, Error> {
-		let shaped = lexicons.anchor.is_some() && config.anchor_mode == AnchorMode::Shaped;
-		if finders.is_none() && (shaped || config.code_units) {
+		let postal = lexicons.anchor.is_some() && config.anchor_mode == AnchorMode::Postal;
+		if finders.is_none() && (postal || config.code_units) {
 			return Err(Error::Input(
-				"the shaped anchor and the code-unit channel need span finders, which this encoder lacks".into(),
+				"the postal anchor and the code-unit channel need postcode finders, which this encoder lacks".into(),
 			));
 		}
 		let slots = lexicons
@@ -122,11 +129,19 @@ impl<'a> Encoder<'a> {
 			.as_ref()
 			.map(|a| a.locale_slots(&lexicons.locales))
 			.unwrap_or_default();
+		let country_index = finders.map(|f| {
+			f.country_codes()
+				.iter()
+				.enumerate()
+				.map(|(index, code)| (code.clone(), index as u32))
+				.collect()
+		});
 		Ok(Self {
 			config,
 			lexicons,
 			finders,
 			slots,
+			country_index,
 		})
 	}
 
@@ -160,9 +175,6 @@ impl<'a> Encoder<'a> {
 		raw: &[char],
 		span_ranges: Option<&[(usize, usize)]>,
 	) -> Result<Vec<(usize, usize)>, Error> {
-		if self.config.anchor_mode == AnchorMode::Shaped {
-			return self.finders().shaped_spans(row.raw);
-		}
 		if let (Some(spans), Some(ranges)) = (&row.spans, span_ranges) {
 			return Ok(ranges
 				.iter()
@@ -234,9 +246,17 @@ impl<'a> Encoder<'a> {
 				lookup,
 				slots: &self.slots,
 				locales: l.locales.len(),
+				country_index: self.country_index.as_ref(),
 			};
-			let ranges = self.anchor_ranges(row, &raw, span_ranges.as_deref())?;
-			channels[0] = Some(fit(painter.paint(&raw, &ranges, pieces)));
+			let candidates = if self.config.anchor_mode == AnchorMode::Postal {
+				self.finders().postcode_spans(row.raw)?
+			} else {
+				self.anchor_ranges(row, &raw, span_ranges.as_deref())?
+					.into_iter()
+					.map(|(start, end)| PostcodeCandidate::unrestricted(start, end))
+					.collect()
+			};
+			channels[0] = Some(fit(painter.paint(&raw, &candidates, pieces)));
 		}
 		if let Some(lexicon) = &l.gazetteer {
 			let mut channel = gazetteer::paint(&raw, pieces, lexicon);

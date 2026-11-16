@@ -270,6 +270,31 @@ describe("a postcode designated by the JP postal mark", () => {
 		expect(result.tokens.filter((t) => t.label === "B-prefecture" || t.label === "B-district")).toHaveLength(2)
 	})
 
+	describe("under a card that declares span_mode postal", () => {
+		const text = "London sw1a 2aa"
+
+		const tokens = (): DecoderToken[] => [
+			tok("London", 0, 6, "B-locality"),
+			tok(" sw1a", 6, 11, "B-postcode"),
+			tok(" 2aa", 11, 15, "B-locality"),
+		]
+
+		it("reads the postal family, which matches a lower-case code the frozen table leaves alone", () => {
+			expect(repairPostcodeLabels(text, tokens()).changed).toBe(0)
+
+			const result = repairPostcodeLabels(text, tokens(), "postal")
+
+			expect(postcodeValue(text, result.tokens)?.trim()).toBe("sw1a 2aa")
+		})
+
+		it("refuses a candidate with no digit, so a word is no postcode", () => {
+			const word = "Toronto Road"
+			const labeled = [tok("Toronto", 0, 7, "B-locality"), tok(" Road", 7, 12, "B-street")]
+
+			expect(repairPostcodeLabels(word, labeled, "postal").changed).toBe(0)
+		})
+	})
+
 	it("leaves the same digits alone without the mark: a numeric shape never overwrites a house number", () => {
 		const { text, tokens } = charTokens([
 			["506-0025", "house_number"],

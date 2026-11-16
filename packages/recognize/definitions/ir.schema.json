@@ -74,8 +74,8 @@
 					"minimum": 0
 				},
 				"boundary": {
-					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector. Absent from a shape any neighbor may touch.",
-					"enum": ["token"]
+					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector, and alnum means neither may be an ASCII letter or an ASCII digit. Absent from a shape any neighbor may touch.",
+					"enum": ["token", "alnum"]
 				},
 				"unreachable": {
 					"description": "The reason the shape is declared unreachable. Absent when the shape declares nothing.",

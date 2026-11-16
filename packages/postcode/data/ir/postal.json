@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognize.ir",
 	"version": 1,
-	"hash": "a75d9736cb18023e69c3ca9b70da6945f21ed408f2fb82f35d1c8c2ab453778c",
+	"hash": "0cf55c830cf1b7c39b27d035d580437e7cdf0844c047b05855be81f8a1992d7b",
 	"family": "postal",
 	"terms": [],
 	"shapes": [
@@ -19,7 +19,7 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie", "postal.sh"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
 				"line": 14
@@ -38,10 +38,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 30
+				"line": 31
 			}
 		},
 		{
@@ -73,10 +73,10 @@
 					"postal.tz"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 42
+				"line": 44
 			}
 		},
 		{
@@ -101,10 +101,10 @@
 					"postal.tz"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 102
+				"line": 105
 			}
 		},
 		{
@@ -137,10 +137,10 @@
 					"postal.tz"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 123
+				"line": 127
 			}
 		},
 		{
@@ -170,10 +170,10 @@
 					"postal.tz"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 152
+				"line": 157
 			}
 		},
 		{
@@ -204,10 +204,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 178
+				"line": 184
 			}
 		},
 		{
@@ -240,10 +240,10 @@
 					"postal.xk"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 205
+				"line": 212
 			}
 		},
 		{
@@ -296,10 +296,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 234
+				"line": 242
 			}
 		},
 		{
@@ -316,10 +316,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie", "postal.so"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 324
+				"line": 333
 			}
 		},
 		{
@@ -345,10 +345,10 @@
 					"postal.tz"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 340
+				"line": 350
 			}
 		},
 		{
@@ -379,10 +379,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 362
+				"line": 373
 			}
 		},
 		{
@@ -399,10 +399,10 @@
 				"policy": "may_overlap",
 				"with": ["word.ascii"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 391
+				"line": 403
 			}
 		},
 		{
@@ -419,10 +419,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.sv", "postal.vc", "postal.vg", "printed.az", "printed.ht"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 406
+				"line": 419
 			}
 		},
 		{
@@ -439,10 +439,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.lb"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 425
+				"line": 439
 			}
 		},
 		{
@@ -459,10 +459,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.kh", "postal.tw"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 442
+				"line": 457
 			}
 		},
 		{
@@ -478,10 +478,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 473
+				"line": 489
 			}
 		},
 		{
@@ -498,10 +498,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.cr", "postal.lb", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 485
+				"line": 502
 			}
 		},
 		{
@@ -518,10 +518,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.ie", "postal.il", "postal.jp"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 504
+				"line": 522
 			}
 		},
 		{
@@ -578,10 +578,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 523
+				"line": 542
 			}
 		},
 		{
@@ -598,10 +598,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 576
+				"line": 596
 			}
 		},
 		{
@@ -651,10 +651,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 594
+				"line": 615
 			}
 		},
 		{
@@ -671,10 +671,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 643
+				"line": 665
 			}
 		},
 		{
@@ -702,10 +702,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 658
+				"line": 681
 			}
 		},
 		{
@@ -722,10 +722,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.om", "postal.tw"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 682
+				"line": 706
 			}
 		},
 		{
@@ -773,10 +773,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 705
+				"line": 730
 			}
 		},
 		{
@@ -793,10 +793,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.gg", "postal.ie", "postal.im", "postal.je"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 749
+				"line": 775
 			}
 		},
 		{
@@ -823,10 +823,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 767
+				"line": 794
 			}
 		},
 		{
@@ -843,10 +843,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 790
+				"line": 818
 			}
 		},
 		{
@@ -863,10 +863,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 805
+				"line": 834
 			}
 		},
 		{
@@ -883,10 +883,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.lb", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 820
+				"line": 850
 			}
 		},
 		{
@@ -903,10 +903,10 @@
 				"policy": "may_overlap",
 				"with": ["postal.ie"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 838
+				"line": 869
 			}
 		},
 		{
@@ -933,10 +933,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 853
+				"line": 885
 			}
 		},
 		{
@@ -971,10 +971,10 @@
 					"word.ascii"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 876
+				"line": 909
 			}
 		},
 		{
@@ -1020,10 +1020,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 907
+				"line": 941
 			}
 		},
 		{
@@ -1039,10 +1039,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 949
+				"line": 984
 			}
 		},
 		{
@@ -1058,10 +1058,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 961
+				"line": 997
 			}
 		},
 		{
@@ -1078,10 +1078,10 @@
 				"policy": "may_overlap",
 				"with": ["digipin.compact", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 973
+				"line": 1010
 			}
 		},
 		{
@@ -1097,10 +1097,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 990
+				"line": 1028
 			}
 		},
 		{
@@ -1117,10 +1117,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1002
+				"line": 1041
 			}
 		},
 		{
@@ -1164,10 +1164,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1018
+				"line": 1058
 			}
 		},
 		{
@@ -1183,10 +1183,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1060
+				"line": 1101
 			}
 		},
 		{
@@ -1203,10 +1203,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.li", "postal.nf", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1072
+				"line": 1114
 			}
 		},
 		{
@@ -1223,10 +1223,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1091
+				"line": 1134
 			}
 		},
 		{
@@ -1242,10 +1242,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1108
+				"line": 1152
 			}
 		},
 		{
@@ -1270,10 +1270,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1120
+				"line": 1165
 			}
 		},
 		{
@@ -1298,10 +1298,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1141
+				"line": 1187
 			}
 		},
 		{
@@ -1326,10 +1326,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1162
+				"line": 1209
 			}
 		},
 		{
@@ -1354,10 +1354,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1183
+				"line": 1231
 			}
 		},
 		{
@@ -1382,10 +1382,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1204
+				"line": 1253
 			}
 		},
 		{
@@ -1402,10 +1402,10 @@
 				"policy": "may_overlap",
 				"with": ["wof.reference"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1225
+				"line": 1275
 			}
 		},
 		{
@@ -1443,10 +1443,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1240
+				"line": 1291
 			}
 		},
 		{
@@ -1470,10 +1470,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1274
+				"line": 1326
 			}
 		},
 		{
@@ -1490,10 +1490,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.tz"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1294
+				"line": 1347
 			}
 		},
 		{
@@ -1509,10 +1509,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1311
+				"line": 1365
 			}
 		},
 		{
@@ -1529,10 +1529,10 @@
 				"policy": "may_overlap",
 				"with": ["number.digit_run", "number.signed_decimal", "postal.tw"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1323
+				"line": 1378
 			}
 		},
 		{
@@ -1560,10 +1560,10 @@
 					"postal.xk"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1340
+				"line": 1396
 			}
 		},
 		{
@@ -1587,10 +1587,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1364
+				"line": 1421
 			}
 		},
 		{
@@ -1606,10 +1606,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1384
+				"line": 1442
 			}
 		},
 		{
@@ -1633,10 +1633,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1396
+				"line": 1455
 			}
 		},
 		{
@@ -1652,10 +1652,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1416
+				"line": 1476
 			}
 		},
 		{
@@ -1679,10 +1679,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1428
+				"line": 1489
 			}
 		},
 		{
@@ -1698,10 +1698,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1448
+				"line": 1510
 			}
 		},
 		{
@@ -1725,10 +1725,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1460
+				"line": 1523
 			}
 		},
 		{
@@ -1752,10 +1752,10 @@
 					"postal.us"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1480
+				"line": 1544
 			}
 		},
 		{
@@ -1771,10 +1771,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1500
+				"line": 1565
 			}
 		},
 		{
@@ -1799,10 +1799,10 @@
 					"postal.xk"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1512
+				"line": 1578
 			}
 		},
 		{
@@ -1818,10 +1818,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1533
+				"line": 1600
 			}
 		},
 		{
@@ -1837,10 +1837,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1545
+				"line": 1613
 			}
 		},
 		{
@@ -1856,10 +1856,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1557
+				"line": 1626
 			}
 		},
 		{
@@ -1875,10 +1875,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1569
+				"line": 1639
 			}
 		},
 		{
@@ -1894,10 +1894,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1581
+				"line": 1652
 			}
 		},
 		{
@@ -1926,10 +1926,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1593
+				"line": 1665
 			}
 		},
 		{
@@ -1957,10 +1957,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1618
+				"line": 1691
 			}
 		},
 		{
@@ -1977,10 +1977,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal", "postal.us"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1642
+				"line": 1716
 			}
 		},
 		{
@@ -2006,10 +2006,10 @@
 					"postal.yt"
 				]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1660
+				"line": 1735
 			}
 		},
 		{
@@ -2026,10 +2026,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1682
+				"line": 1758
 			}
 		},
 		{
@@ -2045,10 +2045,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1699
+				"line": 1776
 			}
 		},
 		{
@@ -2064,10 +2064,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1711
+				"line": 1789
 			}
 		},
 		{
@@ -2084,10 +2084,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1723
+				"line": 1802
 			}
 		},
 		{
@@ -2104,10 +2104,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1740
+				"line": 1820
 			}
 		},
 		{
@@ -2124,10 +2124,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1757
+				"line": 1838
 			}
 		},
 		{
@@ -2144,10 +2144,10 @@
 				"policy": "may_overlap",
 				"with": ["census.geoid_county", "number.digit_run", "number.signed_decimal"]
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1774
+				"line": 1856
 			}
 		},
 		{
@@ -2163,10 +2163,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1791
+				"line": 1874
 			}
 		},
 		{
@@ -2182,10 +2182,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1805
+				"line": 1889
 			}
 		},
 		{
@@ -2201,10 +2201,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1819
+				"line": 1904
 			}
 		},
 		{
@@ -2220,10 +2220,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1833
+				"line": 1919
 			}
 		},
 		{
@@ -2239,10 +2239,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1847
+				"line": 1934
 			}
 		},
 		{
@@ -2258,10 +2258,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1861
+				"line": 1949
 			}
 		},
 		{
@@ -2277,10 +2277,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1875
+				"line": 1964
 			}
 		},
 		{
@@ -2296,10 +2296,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1889
+				"line": 1979
 			}
 		},
 		{
@@ -2315,10 +2315,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1903
+				"line": 1994
 			}
 		},
 		{
@@ -2334,10 +2334,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1917
+				"line": 2009
 			}
 		},
 		{
@@ -2353,10 +2353,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1931
+				"line": 2024
 			}
 		},
 		{
@@ -2372,10 +2372,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1945
+				"line": 2039
 			}
 		},
 		{
@@ -2391,10 +2391,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1959
+				"line": 2054
 			}
 		},
 		{
@@ -2410,10 +2410,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1973
+				"line": 2069
 			}
 		},
 		{
@@ -2429,10 +2429,10 @@
 			"ambiguity": {
 				"policy": "exclusive"
 			},
-			"boundary": "token",
+			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1987
+				"line": 2084
 			}
 		}
 	]

@@ -25,28 +25,27 @@ release verdict.
 
 ## What runs where
 
-| Stage                                                           | Implementation                                          |
-| --------------------------------------------------------------- | ------------------------------------------------------- |
-| Corpus listing, sha256 verification, split attribute, deletions | Rust: `mtf-sampler/src/corpus_files.rs`                 |
-| Row-group reads, row filters, country acceptance, coarse filter | Rust: `file_rows.rs` over the `parquet` crate           |
-| Source mixture, source restarts, held-out quotas                | Rust: `mixture.rs`                                      |
-| Shuffle buffer, astral skip, observer events, `seed + epoch`    | Rust: `sampler.rs`                                      |
-| Augmentation and the affix relabel                              | Rust: `augment/`, `relabel.rs`, `emit.rs`               |
-| `source_reps` weights                                           | Rust: `source_reps.rs`                                  |
-| Tokenization                                                    | Rust: `mtf-core`                                        |
-| Label projection                                                | Rust: `mtf-channels/src/labels.rs`                      |
-| Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`      |
-| Postcode-shape and postcode-syntax finders                      | Rust, the `finders` feature: `finders.rs`               |
-| Array packing                                                   | Rust: `encoder.rs`                                      |
-| The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                    |
-| `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order         |
-| Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice` |
+| Stage                                                           | Implementation                                                                            |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Corpus listing, sha256 verification, split attribute, deletions | Rust: `mtf-sampler/src/corpus_files.rs`                                                   |
+| Row-group reads, row filters, country acceptance, coarse filter | Rust: `file_rows.rs` over the `parquet` crate                                             |
+| Source mixture, source restarts, held-out quotas                | Rust: `mixture.rs`                                                                        |
+| Shuffle buffer, astral skip, observer events, `seed + epoch`    | Rust: `sampler.rs`                                                                        |
+| Augmentation and the affix relabel                              | Rust: `augment/`, `relabel.rs`, `emit.rs`                                                 |
+| `source_reps` weights                                           | Rust: `source_reps.rs`                                                                    |
+| Tokenization                                                    | Rust: `mtf-core`                                                                          |
+| Label projection                                                | Rust: `mtf-channels/src/labels.rs`                                                        |
+| Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`                                        |
+| Postcode spans and postcode-syntax acceptance                   | Rust, the `finders` feature: `finders.rs` over `recognize-core` and the `postal` artifact |
+| Array packing                                                   | Rust: `encoder.rs`                                                                        |
+| The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                                                      |
+| `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order                                           |
+| Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice`                                   |
 
 The painters and the label projection compile without a regex engine. The serving side can therefore
 adopt them later through `mtf-wasm`. For now it keeps its own painters, because the serving painters
-differ from the training painters in three places:
+differ from the training painters in two places:
 
-- `anchoredPostcodeSpans` upper-cases the text before matching, and training matches the raw case;
 - `buildSoftFeatures` builds the locality-surface channel only when the street-type channel matched a
   piece, and training always paints it;
 - `tokenizer.ts` trims the leading space from a `▁` piece's range, and training keeps it.
@@ -56,9 +55,12 @@ Training uses the Rust encoder while serving continues to use the TypeScript pai
 ## Interfaces
 
 `mtf_channels::resources` (the `finders` feature) reads an encoder's files once: `EncoderResources::load` takes the
-label schema, the postcode finders, the anchor table and the lexicons a run configures, and `read_processor` the
-tokenizer model. Each file it cannot read or parse is refused with its path. The trainer and the Node addon only
-convert their options and errors around it. `mtf_channels::Encoder` encodes a batch of rows into an `EncodedBatch`:
+label schema, the `postal` family's artifact and definition (`packages/postcode/data/artifacts/postal.rca1` and
+`packages/postcode/data/definitions/postal.definition.json`), the anchor table and the lexicons a run configures,
+and `read_processor` the tokenizer model. The finder refuses an artifact that isn't the `postal` family, whose
+schema version or declarations hash differs from the one the crate was built against, or whose shapes differ from the
+definition's. Each refusal carries the file's path, and so does each file the loader can't read or parse. The trainer
+and the Node addon only convert their options and errors around it. `mtf_channels::Encoder` encodes a batch of rows into an `EncodedBatch`:
 
 - `input_ids`, `attention_mask`, `labels`: int64 `[B, L]`;
 - per configured channel, `<name>_features` float32 `[B, L, D]` and `<name>_confidence` float32 `[B, L]`.
@@ -100,9 +102,11 @@ The Rust code reproduces the reference interpreter's string semantics rather tha
   with that trainer (#2874), so the committed tables are the record. Rust's `char::is_alphanumeric` admits marks such as U+0940
   that Python's `isalnum` rejects, and its `is_whitespace` rejects U+001C..U+001F.
 - `str.lower` applies CPython's final-sigma rule.
-- The finders rewrite `\d`, `\s`, `\w` and `\b` into explicit classes built from those tables before
-  `fancy-regex` compiles a pattern, because the Rust engines define `\w` to include marks and connector
-  punctuation.
+- The postcode finders no longer read Python semantics. They read the `postal` family through `recognize-core`.
+  A shape writes `\d` as `[0-9]` and matches either case by Unicode simple case folding, which also matches U+212A
+  and U+017F, and the family states one case rule for serving and training. The one place the finder tests a
+  character itself is the white space after a printed prefix, which it reads as JavaScript's `\s`, the class the
+  family writes.
 - The code-unit segmenter is written out by hand. It reproduces
   `(?<![A-Za-z0-9])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-(?=\d)[A-Za-z0-9]+)*(?![A-Za-z0-9])`, including the
   lookahead that accepts a non-ASCII digit after the ASCII run.
@@ -123,7 +127,7 @@ The Python trainer's `audits.encoder_parity capture` drew batches through its lo
 - `arrays.npz` holds every tensor, so `verify` can report the first differing row, tensor and element with
   both values.
 
-`sampler-parity.run.ts verify --name <name>` (below) re-draws the sample through the current sampler and encoder. It fails on a changed emitted count,
+`parity.run.ts verify --name <name>` (below) re-draws the sample through the current sampler and encoder. It fails on a changed emitted count,
 row identity, batch boundary, tensor set, dtype or shape before it compares digests. A char-path config
 builds no SentencePiece tokenizer: the record hashes its `char_vocab_path` in place of `tokenizer_dir` and
 adds `char_ids` to the tensors. The first nine records were captured from the Python encoder at revision
@@ -169,12 +173,20 @@ the composition the Python loader ran, `random.Random(seed)` over `stream.iter_r
 reproduced `c6-train-2k`'s row identities and tensor digests exactly before it captured them.
 
 The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the recorded
-`encode_row` fixture, `text_reference.rs` against the recorded finder and string-operation answers for every
-scalar value in 17 templates, and `code_unit_parity.rs` from segmentation through acceptance counts.
+`encode_row` fixture, `text_reference.rs` against the recorded string-operation answers and code-unit
+segmentation for every scalar value in 17 templates, `code_unit_parity.rs` from segmentation through acceptance
+counts, `postal_finders.rs` for the finder's refusals and its candidate order, and `postcode_agreement.rs` against
+the committed agreement fixture (see The postal finders).
 
-Each record verified with 0 differing rows against the Rust encoder (113,936 emitted rows in total). The broad
-sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
+On 2026-10-28 each record verified with 0 differing rows against the Rust encoder (113,936 emitted rows in total). The
+broad sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
 validation rows, where the validation draw exhausts below its 36,864-row limit.
+
+That result no longer holds on `origin/main`. On 2026-11-16, before the postal finders, fourteen of the fifteen older
+records differed in `address_system_ids` alone, and `aug-grouping-p50-250` matched. The address-system registry changed
+after the records were captured, and TypeScript computes those ids. Every other tensor of every record still matched on
+`origin/main`. The table in The postal finders lists each record's count. This predates the postal finders, and no
+record was regenerated.
 
 `node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name <record>` re-draws a record through the
 Node binding and compares the same fields from `record.json`, without reading `arrays.npz`. On 2026-10-29 it verified
@@ -190,6 +202,106 @@ loader's recorded fixture in order (train, validation, the char path and source 
 covers row limits, exhaustion, the astral skip, source restarts, held-out quotas, observer events,
 cancellation, `seed + epoch` and resume, and the remaining files hold the invariants of the Python data
 tests.
+
+## The postal finders
+
+The encoder's two postcode finders read the `postal` family of `@mailwoman/postcode` through `recognize-core`.
+They don't read a regular-expression engine, a shape record or a syntax record. The serving side reads the same artifact.
+
+**What the finders return.** `Finders::postcode_spans` returns the family's embedded candidates in the order they
+compete. Each candidate is reduced to its code, so a printed prefix and the white space after it fall outside. The order
+is longest first, then earliest start, then form (designated, alphanumeric, numeric) and shape ID, and a range that
+several shapes match appears once. A candidate that a connector separates from the rest of a longer one is dropped
+(`69152` in `69152-656`).
+The anchor painter walks the candidates in that order and keeps the first that the anchor table resolves among those
+that overlap, so a longer candidate the table lacks hides no code inside it. A Somali shape matches `VT 05401`, and
+that candidate hides no ZIP code.
+**The resolution rule.** Each candidate carries the countries of every shape that matches its range, from the
+definition. It resolves only when its anchor-table entry holds weight on at least one of those countries, and the
+posterior it paints holds only the weights on them. The painter doesn't renormalize beyond what it already does: the
+feature vector divides each weight by the total over the locale set, so the remaining weights renormalize as any
+posterior does, and an entry whose remaining countries fall outside the locale set paints zeros with its centroid. A
+candidate with no accepted country is skipped and hides no other. The table's `111 09` entry holds FR and US only, and
+the three-and-two digit shapes belong to other countries, so the house number paints no anchor. A GB unit that fails the
+rule falls back to its outward district under the same rule. The serving side applies it in `anchoredPostcodeSpans`
+(`restrictEntry`) and the encoder in `AnchorLookup::resolve` and `features`, and the agreement check below compares the
+candidates' countries and the keys.
+`Finders::code_units` counts the countries whose syntax accepts a unit with the family's whole-input automaton and the
+shapes' country lists. The family's one case rule is that every shape matches either case.
+`anchor_paint_mode` is `gold` or `postal`. The mode `shaped` is retired. The encoder refuses it with a message that
+points to `postal`, and the 186 historical configs that set it don't run on this encoder.
+
+**Files.** The finder reads `packages/postcode/data/artifacts/postal.rca1` and
+`packages/postcode/data/definitions/postal.definition.json`. Both are generated files of `@mailwoman/postcode`, and
+they replace the two trainer data records that were deleted. The Modal image copies both through `TRAINER_DATA_FILES`
+in `launch/image.ts` to `/repo/packages/postcode/data/`, where `DataFiles::in_repository` reads them.
+
+**Agreement.** `postcode-agreement.run.ts` draws the v8.7.0 config's rows through the sampler (corpus
+`v0.8.19-retention-overlay`, seed 43). It takes the 50,000 train rows and the validation draw, 22,209 rows, because the
+draw exhausts below its 36,864-row limit. For each of the 72,209 rows it compares the encoder's candidates and anchor
+keys with those of `findPostcodeSpans` and `anchoredPostcodeSpans`. On 2026-11-16 no row differed. The committed fixture
+`test/fixtures/postcode-agreement.json` holds a stratified sample of those rows with serving's candidates, and
+`postcode_agreement.rs` and `postal-spans.test.ts` replay it against each side in the fast suites.
+
+**What moved against `shaped`.** The same tool paired each row's anchored spans under the retired table, matched against
+the raw text as the trainer matched it, with the postal finder's:
+
+| Class               |   Rows |
+| ------------------- | -----: |
+| unchanged           | 71,537 |
+| gains a span        |    672 |
+| loses a span        |      0 |
+| span changes extent |      0 |
+
+The 672 rows that gain a span hold spans of two kinds. 639 hold a lower-case letter (`ol15 0bh`, 570 of them GB), and 33
+hold white space inside the code that a shape of the code's own country accepts and the table holds under that country
+(`7553  VZ` NL, `43 300` PL, `58 340` and `74 700` read as French codes). Before the resolution rule the same
+comparison gained 1,928 rows, 1,240 of them with white space inside the code, and 34 of them US rows with a false anchor
+such as the house number `111 09`. The per-country counts are in the tool's moved report. No row loses a span, so no
+loss needs a class.
+The first version of the finder lost 1,776 spans in a 24,210-row run. It dropped every candidate that overlapped a longer
+one before the lookup, and the longer `VT 05401` hid the ZIP code. The next version lost 87 spans in the 72,209-row comparison, and 84
+of them were real codes after a connector (`Lahore-54000`, `FI-FI-01730`) that the engine's connector boundary refused.
+The family's boundary became `alnum`. The connector rule above then removed a side effect, where a code such as
+`69152-656` anchored under the key of another country.
+
+**The records.** The first fifteen records were captured under `shaped`. The anchor tensors of the eleven that paint the
+anchor from the finder no longer match, and they don't decide the new mode. Each of the fifteen was verified on
+2026-11-16 with `--set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence`. The two gold
+records and the two records without an anchor channel ran as recorded.
+
+| Record                  | Rows emitted | Rows that differ, `origin/main` | Rows that differ, this change | Rows with a different anchor |
+| ----------------------- | -----------: | ------------------------------: | ----------------------------: | ---------------------------: |
+| `aug-grouping-2k`       |        1,990 |                               2 |                             2 |                           52 |
+| `aug-grouping-p50-250`  |          250 |                               0 |                             0 |                            4 |
+| `aug-postcode-move-5k`  |        4,999 |                               3 |                             3 |                          114 |
+| `aug-splice-5k`         |        4,999 |                               3 |                             3 |                          139 |
+| `c6-channel-free-5k`    |        4,999 |                               6 |                             6 |                            0 |
+| `c6-gold-spans-5k`      |        4,999 |                               6 |                             6 |                            0 |
+| `c6-gold-tokens-5k`     |        5,000 |                               6 |                             6 |                            0 |
+| `c6-max-length-16-5k`   |        4,999 |                               6 |                             6 |                          104 |
+| `c6-no-choreography-5k` |        4,999 |                               6 |                             6 |                          127 |
+| `c6-train-2k`           |        2,000 |                               3 |                             3 |                           64 |
+| `c6-train-50k`          |       49,989 |                              56 |                            56 |                        1,177 |
+| `c6-val-36864`          |       31,951 |                               1 |                             2 |                           13 |
+| `char-v8-cjk-regs-5k`   |        5,000 |                           1,365 |                         1,365 |                            0 |
+| `code-unit-train-5k`    |        5,000 |                               1 |                            63 |                           49 |
+| `relabel-5k`            |        5,000 |                               5 |                             5 |                          146 |
+
+Every row that differs on `origin/main` differs in `address_system_ids`. The address-system registry changed after the
+records were captured, and TypeScript computes those ids. Two records differ from `origin/main` beyond that.
+`c6-val-36864` has one more row, a gazetteer row (`1461  AR  8  Highway  North,  Warren,  AR  71671-0000`). The
+suppression reads the anchor confidence, which this row's anchor change moved. `code-unit-train-5k` has 62 more rows,
+and the code-unit channel's change explains them. The draw holds 8,869 units, and 51 distinct units changed their
+acceptance count. 50 of them have the form `L-dddd`: Luxembourg prints the prefix `L-`, the retired syntax record held
+`null`, so 0 countries accepted the unit before and Luxembourg accepts it now. The other is `FO700`, because the Faroe
+Islands print `FO` and the old record also held `null`. No unit changed for the case-folding defects of issue 3088,
+because a code unit is ASCII. The comparison matched each unit's old countries with the retired patterns and its new
+countries with `countriesAcceptingPostcode`, and its result is in `docs/records/engineering/2026-11-16-recognize-training-encoder-artifacts.md`.
+
+`parity.run.ts capture --name <record> --config <yaml> --records-dir <directory>` writes a record in the format
+`verify` reads from the current sampler and encoder, and never under the data root. The Python capture is gone, and the
+independent second implementation is serving's finder, which the agreement above holds to the encoder's on 72,209 rows.
 
 ## Measured cost
 
@@ -265,6 +377,23 @@ over 40 batches of 128 rows. On 2026-10-30 at `3988395a0`, on the lab host at lo
 config and the parity records' host overrides, two runs gave 1.35 and 1.25 ms of sampling and 10.51 and 10.10 ms of
 encoding per batch, a sampler initialization of 55.6 s cold and 37.8 s warm, and a peak resident set of 2,441 and
 2,450 MB. The plan's final measurement table (`2026-10-29-python-removal-plan.mdx`) holds the rows.
+
+### The postal finders
+
+On 2026-11-16 the same `profile` command on the same C6 config, seed 43, 40 batches of 128 rows after the first and the
+parity records' host overrides, measured the encoder before and after the change on the lab host. The first arm is
+`origin/main` at `e2211ef0d0` with `anchor_paint_mode: shaped` and the second is this change with `postal`. Each ran
+twice, alternating. The load average read at the end of each run is the first of the three figures `uptime` gives.
+
+| Run                  | Encode ms per batch | Sample ms per batch | Initialization s | Peak RSS MB | Load average |
+| -------------------- | ------------------: | ------------------: | ---------------: | ----------: | -----------: |
+| `origin/main`, run 1 |                9.62 |                1.66 |             55.9 |       2,535 |         5.22 |
+| `origin/main`, run 2 |                9.66 |                1.66 |             50.7 |       2,543 |         4.14 |
+| this change, run 1   |                6.29 |                1.66 |             50.2 |       2,526 |         3.41 |
+| this change, run 2   |                5.78 |                1.45 |             50.1 |       2,529 |         4.87 |
+
+The encode step takes 35 to 40 percent less time per batch. The sparse postal automata were the concern, and they cost
+less than twelve patterns run under `fancy-regex` with the Python class tables.
 
 ## Builds
 

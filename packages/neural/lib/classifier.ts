@@ -709,6 +709,7 @@ export class NeuralAddressClassifier {
 					{
 						...placetypePairOpt,
 						inputText: text,
+						postcodeSpanMode: this.cfg.postcodeAnchorSpanMode,
 						probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace,
 						...(censusForProbe ? { census: censusForProbe } : {}),
 					},
@@ -872,7 +873,7 @@ export class NeuralAddressClassifier {
 		// pattern, extending a truncated span such as "4711" decoded from "47110".
 		if (opts?.postcodeRepair || conventions?.postcodePattern) {
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = repairPostcodeLabels(text, tokens).tokens
+			tokens = repairPostcodeLabels(text, tokens, this.cfg.postcodeAnchorSpanMode).tokens
 
 			if (traceRepairs) {
 				recordRepair("postcodeRepair", before, labelsPerPiece(tokens))

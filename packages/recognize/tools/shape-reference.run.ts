@@ -246,7 +246,11 @@ function section(family: string, shape: IRShape, declaration: ShapeDeclaration |
 	out.push(`| Scope | ${SCOPES[shape.scope] ?? shape.scope} |`)
 
 	if (shape.boundary) {
-		out.push(`| Boundary | A letter, a digit or a connector can't touch an embedded match (\`${shape.boundary}\`) |`)
+		out.push(
+			shape.boundary === "alnum"
+				? `| Boundary | A letter or a digit can't touch an embedded match (\`${shape.boundary}\`) |`
+				: `| Boundary | A letter, a digit or a connector can't touch an embedded match (\`${shape.boundary}\`) |`
+		)
 	}
 
 	if (shape.partition) {
@@ -387,7 +391,7 @@ pages.set(
 		"## Fields of a shape",
 		"",
 		"- Scope: whether the shape matches the whole input, a span inside it, or either.",
-		"- Boundary: the neighbors an embedded match may have. The `token` boundary refuses a match that sits inside a longer run of letters, digits and connectors.",
+		"- Boundary: the neighbors an embedded match may have. The `token` boundary refuses a match that sits inside a longer run of letters, digits and connectors, and the `alnum` boundary refuses one that touches a letter or a digit.",
 		"- Kind: the closed name the generated TypeScript gives the shape.",
 		"- Validator: the code that reads the captures of an accepted span and builds its typed payload or a typed rejection. A shape with no validator is a shape-only recognition.",
 		"- Grammar: the language in a readable form. A term in braces is a named term of the family, `?` marks an optional part, and `(?<name> ...)` is a capture.",

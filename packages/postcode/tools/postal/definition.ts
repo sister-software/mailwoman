@@ -43,10 +43,30 @@
  *   class of code units whose upper case is that character.
  *   The class for `I` holds `ı`, and the class for `S` holds `ſ`.
  *
+ *   # One case rule, for both sides
+ *
+ *   Every shape matches either case, so a person's `sw1a 1aa` is a postcode.
+ *   The serving side and the training encoder read this one family, so both apply the rule.
+ *
+ *   The old shape table required upper case to stay off lower-case prose.
+ *   The serving side upper-cased the text before it matched, and the training encoder matched the raw case.
+ *
+ *   A lower-case run that fits a postcode form is a candidate on both sides now.
+ *   The anchor table decides whether the candidate is a postcode that exists.
+ *   A candidate without an entry paints no piece.
+ *
+ *   # The form of each shape
+ *
+ *   Each shape's metadata states a `form`: `designated` for a printed form, `alnum` for a
+ *   bare form whose language holds a letter, and `numeric` for a bare form of digits.
+ *   See `PostalForm` in `lib/recognize/postal/readers.ts`.
+ *
  *   # The embedded boundary
  *
- *   Every shape has `boundary: "token"`: the engine reports an embedded match only when the character
- *   before it and the one after it are not an ASCII letter, an ASCII digit or a connector.
+ *   Every shape has `boundary: "alnum"`: the engine reports an embedded match only when the
+ *   character before it and the one after it are not an ASCII letter or an ASCII digit.
+ *   A connector may touch a match, so `54000` stands in `Lahore-54000` and in `FI-FI-01730`,
+ *   the spellings the old shape table matched with `\b`.
  *   See `lib/recognize/postal/readers.ts`.
  *
  *   # What the compiler refuses
@@ -346,7 +366,7 @@ export interface DefinitionShape {
 	id: string
 	pattern: string
 	scope?: "whole" | "embedded" | "whole_or_embedded"
-	boundary?: "token"
+	boundary?: "token" | "alnum"
 	overlaps?: string[]
 	metadata?: Record<string, unknown>
 }
@@ -422,6 +442,18 @@ export function equivalenceGroups(prefix: "bare" | "printed", reported: readonly
 }
 
 /**
+ * The form of a bare shape, from the text of its pattern.
+ *
+ * A letter outside a `\x{...}` escape makes the shape alphanumeric.
+ * `PostalForm` in `lib/recognize/postal/readers.ts` states what each form may do.
+ */
+export function bareForm(pattern: string): "alnum" | "numeric" {
+	const readable = pattern.replaceAll(/\\x\{[0-9a-f]+\}/gu, "").replace("(?i:", "")
+
+	return /[A-Za-z]/u.test(readable) ? "alnum" : "numeric"
+}
+
+/**
  * The shape of `prefix`'s group whose first member is `lead`.
  */
 export function postalShapeID(prefix: "bare" | "printed", lead: string): string {
@@ -446,13 +478,15 @@ export function postalDefinition(
 	for (const group of bare) {
 		const id = postalShapeID("bare", group[0]!)
 
+		const pattern = translateBody(group[0]!)
+
 		shapes.push({
 			id,
-			pattern: translateBody(group[0]!),
+			pattern,
 			scope: "whole_or_embedded",
-			boundary: "token",
+			boundary: "alnum",
 			...(declared.get(id)?.length && { overlaps: [...declared.get(id)!] }),
-			metadata: { kind: "code", countries: [...group] },
+			metadata: { kind: "code", form: bareForm(pattern), countries: [...group] },
 		})
 	}
 
@@ -467,9 +501,9 @@ export function postalDefinition(
 			id,
 			pattern: translatePrinted(group[0]!)!,
 			scope: "whole_or_embedded",
-			boundary: "token",
+			boundary: "alnum",
 			...(declared.get(id)?.length && { overlaps: [...declared.get(id)!] }),
-			metadata: { kind: "printed", countries: [...group], prefix, bare: [...bodies][0] },
+			metadata: { kind: "printed", form: "designated", countries: [...group], prefix, bare: [...bodies][0] },
 		})
 	}
 

@@ -3,15 +3,16 @@
 
 //! Encodes the row of `fixtures/encode-row-reference.json` and compares every tensor with the reference record's.
 //!
-//! The fixture's four cases are the token label source, the span label source, the shaped anchor and a row
-//! without channels, each with every channel the case configures. Floats are compared as `f32` bit patterns,
+//! The fixture's four cases are the token label source, the span label source, the postcode anchor and a row
+//! without channels, each with every channel the case configures. The record was captured from the Python loader's
+//! shaped anchor, and its row's one postcode is a span the postal finder paints identically. Floats are compared as `f32` bit patterns,
 //! the values `torch.tensor(..., dtype=torch.float32)` produced from the recorded lists.
 
 #![cfg(feature = "finders")]
 
 use mtf_channels::anchor::AnchorLookup;
 use mtf_channels::encoder::{EncodedBatch, CHANNEL_NAMES};
-use mtf_channels::finders::{PostcodeShapes, PostcodeSyntax, RegexFinders};
+use mtf_channels::finders::PostalFinders;
 use mtf_channels::gazetteer::Lexicon;
 use mtf_channels::labels::{LabelTable, Spans};
 use mtf_channels::{AnchorMode, Encoder, EncoderConfig, Lexicons, Piece, RowInput};
@@ -32,13 +33,11 @@ fn strings(v: &Value) -> Vec<String> {
 		.collect()
 }
 
-fn finders() -> RegexFinders {
-	let shapes = "../../../../packages/trainer/data/postcode-shapes.json";
-	let syntax = "../../../../packages/trainer/data/postcode-syntax.json";
-	RegexFinders {
-		shapes: PostcodeShapes::from_record(&read(shapes), shapes).unwrap(),
-		syntax: PostcodeSyntax::from_json(&read(syntax), syntax).unwrap(),
-	}
+fn finders() -> PostalFinders {
+	let artifact = "../../../postcode/data/artifacts/postal.rca1";
+	let definition = "../../../postcode/data/definitions/postal.definition.json";
+	let bytes = std::fs::read(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(artifact)).unwrap();
+	PostalFinders::load(&bytes, artifact, &read(definition), definition).unwrap()
 }
 
 fn lexicons(doc: &Value, channels: bool) -> Lexicons {
@@ -73,7 +72,7 @@ fn encode(doc: &Value, case: &str) -> EncodedBatch {
 		max_length: doc["max_length"].as_u64().unwrap() as usize,
 		pad_id: doc["pad_id"].as_i64().unwrap(),
 		anchor_mode: if case == "shaped_anchor" {
-			AnchorMode::Shaped
+			AnchorMode::Postal
 		} else {
 			AnchorMode::Gold
 		},
@@ -186,7 +185,7 @@ fn the_span_label_source_matches_the_record() {
 }
 
 #[test]
-fn the_shaped_anchor_matches_the_record() {
+fn the_postal_anchor_paints_the_row_the_shaped_anchor_recorded() {
 	check("shaped_anchor");
 }
 

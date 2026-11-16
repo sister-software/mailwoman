@@ -2,23 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Postcode shape patterns identify substrings of a line that look like a postcode.
+ *   The frozen legacy table of postcode shape patterns.
+ *
+ *   The `postal` family finds postcode spans now, for serving and for the training
+ *   encoder alike (`./postal-spans.ts`).
+ *   This table survives for the two readers whose results the published model's release verdict covers.
+ *
+ *   One is `span_mode: "shaped"` in `@mailwoman/neural`, which model 10.8.0's card declares.
+ *   The other is its postcode repair pass.
+ *
+ *   The training encoder doesn't read the table, and no one may add a row.
+ *   Both readers and this file are deleted together with the legacy-formats family
+ *   when the first model that declares `span_mode: "postal"` ships.
  *
  *   Patterns appear from most-specific to least-specific.
  *   A lower index wins when patterns overlap.
- *
- *   The data lives in `./shapes.json` so non-TypeScript consumers read the same
- *   records as `us/street-suffix.json`.
- *   The neural package uses this table for postcode repair.
- *
- *   The Python trainer reads it in `features/postcode_shapes.py` to paint the
- *   train-side anchor on the spans inference paints.
- *   Separate typed copies drifted twice.
- *
- *   The IE Eircode row appeared in TypeScript one month before it appeared in Python.
- *   The BR CEP row followed five weeks later.
- *
- *   Each gap made the trainer paint one fewer shape than inference.
  *
  *   This function checks postcode form.
  *   `./systems.ts` checks whether a postcode occurs in a gazetteer.
@@ -39,7 +37,7 @@
  *   Keep each runtime's comparison strict.
  */
 
-import postcodeShapeData from "./shapes.json" with { type: "json" }
+import postcodeShapeData from "./frozen-shapes.json" with { type: "json" }
 
 /**
  * What a match is eligible to do.
@@ -95,8 +93,7 @@ export const POSTCODE_SHAPES_VERSION: string = postcodeShapeData.version
  * An anchored test receives a span a caller already isolated, so `sw1a 1aa` is an ordinary
  * way for a person to type a postcode rather than a word that happens to fit.
  *
- * The Python trainer reads `pattern` and never this field, so the anchored
- * form has no cross-runtime constraint.
+ * No other runtime reads `pattern` now, so the anchored form has no cross-runtime constraint.
  */
 export const WHOLE_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map(
 	postcodeShapeData.shapes
@@ -117,7 +114,7 @@ export function wholePostcodeShape(label: string): RegExp {
 		// Codex depends on no other workspace, so this quotes the label directly rather than through
 		// `stringifyJSON`, which lives in `@mailwoman/core` and would invert the dependency.
 		throw new Error(
-			`wholePostcodeShape: shapes.json states no anchored pattern for "${label}"; it has ${[...WHOLE_POSTCODE_SHAPES.keys()].join(", ")}`
+			`wholePostcodeShape: frozen-shapes.json states no anchored pattern for "${label}"; it has ${[...WHOLE_POSTCODE_SHAPES.keys()].join(", ")}`
 		)
 	}
 

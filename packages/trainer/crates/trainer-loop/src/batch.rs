@@ -11,7 +11,7 @@ use crate::address_systems::{locale_id, AddressSystems};
 use crate::config::{DataFiles, RunConfig};
 use crate::{fail, Result};
 use mtf_channels::encoder::CHANNEL_NAMES as CHANNELS;
-use mtf_channels::finders::RegexFinders;
+use mtf_channels::finders::PostalFinders;
 use mtf_channels::label_schema::LabelSchema;
 use mtf_channels::{AnchorMode, Encoder, EncoderConfig, EncoderResources, Finders, Lexicons, ResourcePaths};
 use mtf_core::Processor;
@@ -137,7 +137,7 @@ enum Path_ {
 		processor: Box<Processor>,
 		config: EncoderConfig,
 		lexicons: Box<Lexicons>,
-		finders: Box<RegexFinders>,
+		finders: Box<PostalFinders>,
 	},
 	Char(Box<CharEncoder>),
 }
@@ -235,8 +235,8 @@ impl RunEncoder {
 		let EncoderResources { lexicons, finders, .. } = EncoderResources::load(&ResourcePaths {
 			label_schema: &files.label_schema,
 			label_set: "stage3",
-			postcode_shapes: &files.postcode_shapes,
-			postcode_syntax: &files.postcode_syntax,
+			postal_artifact: &files.postal_artifact,
+			postal_definition: &files.postal_definition,
 			anchor_lookup: anchor_lookup.as_deref(),
 			gazetteer: gazetteer.as_deref(),
 			country: country.as_deref(),

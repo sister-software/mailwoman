@@ -29,8 +29,10 @@ export interface RequiredChannels {
 	 * `span_mode` declares which substrings the runtime looks up.
 	 * Omit it or use `alnum-run` for most models.
 	 *
-	 * Use `shaped` only for a model trained against a lookup with letter-containing
-	 * keys (see `AnchorSpanMode`).
+	 * Use `shaped` or `postal` only for a model trained against a lookup with
+	 * letter-containing keys (see `AnchorSpanMode`).
+	 * A model trained with `anchor_paint_mode: postal` declares `postal`.
+	 *
 	 * A mismatch in either direction changes which postcodes get anchored.
 	 */
 	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
@@ -331,10 +333,10 @@ export async function readRequiredChannels(
 	// An unrecognized span mode would anchor the wrong spans without any error, so it throws.
 	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
 
-	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped" && anchorSpanMode !== "postal") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
-				`expected "alnum-run" or "shaped", got ${stringifyJSON(anchorSpanMode)}.`
+				`expected "alnum-run", "shaped" or "postal", got ${stringifyJSON(anchorSpanMode)}.`
 		)
 	}
 
