@@ -1,23 +1,26 @@
 # v8.7.0-base-c6-90k-usgs-structures-s42 is v8.6.3-base-c6-90k-v0818-wof15-s42.yaml, the recipe shipped as model
 # 10.8.0, with the USGS National Structures Dataset added. Every key and value is that config's except these:
 #
-# 1. `source_reps` gains `usgov-usgs-structures: 0.12`. The adapter yields 421,480 base rows from the 2026-11-13 pull
+# 1. `source_reps` gains `usgov-usgs-structures: 0.075`. The adapter yields 421,480 base rows from the 2026-11-13 pull
 #    of 473,903 features: schools, post offices, fire, police and ambulance stations, hospitals, courthouses, town
 #    halls and cemeteries, each its name as `venue` before its street address. 134,810 of them have no house number
 #    (`venue, street, locality, region, postcode`), a shape #2893 measured at 1,822 training rows on
 #    v0.8.8-nppes-overlay. The weight is the convention for a venue source added since v8.3.2: a `source_reps` target,
 #    so its draws follow its row count, at the 0.12 that `geonames-features`, the comparable venue source, takes over
 #    its 2,244,301 base and variant rows. A rebuilt source holds about five times its base rows (cordis 4.94,
-#    gleif-lei 5.06 on v0.8.10), so at 0.12 the run draws about 250,000 structure rows, near 2% of its 11.52 M, and
-#    fewer than one per base record.
+#    gleif-lei 5.06 on v0.8.10). The v0.8.19 rebuild holds 3,083,904 structure rows, 7.3 per base row, and at 0.12
+#    the epoch-mixture audit drew 32,124 of every 1,000,000, 3.2%. The shipped model 10.8.0 already parses the
+#    source's shapes: 40 of 40 post offices, 20 of 20 schools, 10 of 10 fire and 10 of 10 police stations, with the
+#    name as `venue` and every address part correct (probed 2026-11-16). The weight is therefore 0.075. It draws
+#    about 20,077 an epoch, 2.0%, the share this point first planned. Both receipts of point 2 scale with it.
 # 2. Two receipts floor the source, stated as 90% of their expected draws (`min_fraction_of_expected`, #2391) rather
 #    than as a count read from an audit, so a later change to the reps target or the row count moves them.
 #    `us-structures-venue-street` floors the shape with no house number.
-# 3. `source_reps` gains the two other venue sources the planned corpus adds. `fr-laposte-poincont` takes the same
-#    0.12: La Poste's 2026-11-08 list holds 19,858 counters (bureaux de poste, agences postales, relais poste), each its
-#    label as `venue` before its address, a national venue source of the kind `geonames-features` and
-#    `usgov-usgs-structures` are. If it holds about five rows per base record, as a rebuilt source does (point 1), it
-#    draws about 12,000 rows over the run, near 1,000 a 1,000,000-row epoch. These estimates wait on the built corpus.
+# 3. `source_reps` gains the two other venue sources the planned corpus adds. `fr-laposte-poincont` takes 0.25: La
+#    Poste's 2026-11-08 list holds 19,858 counters (bureaux de poste, agences postales, relais poste), each its label as
+#    `venue` before its address. The rebuild holds 83,415 of its rows, so 0.25 draws about 1,810 an epoch, about one
+#    draw per base record. Its rows hold the venue-led capitals `BIS`/`TER` house numbers 10.8.0 splits wrongly (30 of
+#    30 probed rows, 2026-11-16), and that shape is otherwise almost absent from the corpus.
 #    `nc-opt-agences` takes 4.0, the weight of `fr-finess-overseas` and
 #    `fr-annuaire-education-overseas` (v8.3.2's header, point 4), the venue sources of the overseas territories.
 #    OPT-NC lists 49 agencies, so at 0.12 the run would draw a few dozen of their rows, under three per epoch, and the
@@ -184,9 +187,9 @@ data:
     # v8.6.1's header, point 2.
     wikidata-vital-places: 0.4
     # This config's header, point 1.
-    usgov-usgs-structures: 0.12
+    usgov-usgs-structures: 0.075
     # This config's header, point 3.
-    fr-laposte-poincont: 0.12
+    fr-laposte-poincont: 0.25
     nc-opt-agences: 4.0
     # This config's header, point 4.
     es-sanidad-centros-ap: 0.2
