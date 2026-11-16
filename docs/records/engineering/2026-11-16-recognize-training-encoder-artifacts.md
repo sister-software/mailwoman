@@ -14,12 +14,24 @@ The first brief compiled `shapes.json` into a family and held the encoded tensor
 - One case rule: every shape matches either case. The data supports it: 687 anchored spans in the 72,209 rows hold a lower-case letter (`ol15 0bh`), and the old table, matched against the raw text, found none of them.
 - Each shape states a `form` in its metadata: `designated` for a printed form, `alnum` for a bare form whose language holds a letter, `numeric` for a bare form of digits.
 - Candidates are reduced to their code, ordered longest first, then by earliest start, then by form and shape ID, and listed once per range. A candidate that a connector separates from the rest of a longer candidate is dropped. The anchor painter keeps the first candidate the anchor table resolves among those that overlap.
+- A candidate resolves only under a country its shapes belong to. It carries the countries of every shape that matches its range. Its table entry must hold weight on at least one of them, and the painted posterior holds only the weights on them. The existing arithmetic then renormalizes what remains over the locale set, as it does any posterior, and the weights keep their file order. An entry with weight only outside the candidate's countries is skipped, and a skipped candidate hides no other. A GB unit that fails the rule falls back to its outward district under the same rule. `restrictEntry` in `@mailwoman/neural` and `AnchorLookup::resolve` and `features` in `mtf-channels` implement it, and the entry layout expresses it without changing the tensor's meaning.
 - The engine gained `Boundary::Alnum` and `Engine::whole_shapes`. The WebAssembly binary was rebuilt with `build-wasm.run.ts`. The C interface didn't change, so the ABI version stays.
 - `anchorKey` in `@mailwoman/neural` and `anchor_key` in `mtf-channels` compute the key from the same span: remove each space, upper-case.
 
 ## Where the old shape table stays (decided)
 
-Model 10.8.0's card declares `span_mode: "shaped"`, and the postcode repair pass reads the same table. A default-on model change needs a release verdict, so `packages/postcode/lib/frozen-shapes.json`, `frozen-shapes.ts` and their two readers stay, frozen, and are deleted with the legacy-formats family when the first model that declares `span_mode: "postal"` ships. The training encoder doesn't read them.
+Model 10.8.0's card declares `span_mode: "shaped"`, and the postcode repair pass reads the same table. A default-on model change needs a release verdict, so `packages/postcode/lib/frozen-shapes.json` and `frozen-shapes.ts` stay, frozen, and are deleted with the legacy-formats family when the first model that declares `span_mode: "postal"` ships. The training encoder doesn't read them.
+
+Each reader of the table and the mode it runs under:
+
+| Reader                                                                                                                                                                                                     | Mode                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collectMatches` in `@mailwoman/neural` `postcode/repair.ts`, which `repairPostcodeLabels` (the classifier's repair pass), `extractPostcodeAnchors` and the anchored path of the placetype pair prior call | the frozen table under `shaped`, `alnum-run` and no declaration; the `postal` family under `postal`, where a candidate without a digit is refused |
+| `anchoredPostcodeSpans` in `anchor-inference.ts`                                                                                                                                                           | the frozen table under `shaped`; `findPostcodeSpans` under `postal`                                                                               |
+| `wholePostcodeShape` in `@mailwoman/postcode` `postcode-format.ts`, which `countryFromPostcodeFormat` and `countriesFromPostcodeFormat` call for the resolver and the geocode session                      | every mode: it states the anchored GB, CA, IE and NL forms for a whole value, takes no card, and is unchanged                                     |
+| `gb/anchor-fire.run.ts`, a development tool                                                                                                                                                                | the shaped replay it documents                                                                                                                    |
+
+The last two rows are the places the frozen table survives under a `postal` card.
 
 ## Dependency change (observed)
 
@@ -28,35 +40,34 @@ Model 10.8.0's card declares `span_mode: "shaped"`, and the postcode repair pass
 ## Agreement between the finders (observed)
 
 `postcode-agreement.run.ts` drew the v8.7.0 config's rows (corpus `v0.8.19-retention-overlay`, seed 43): the first 50,000 train rows and the validation draw, 22,209 rows. For each of the 72,209 rows it compared the encoder's candidates and anchor keys with `findPostcodeSpans` and `anchoredPostcodeSpans`.
-**0 rows differ.** 61,611 rows hold a candidate and 31,286 hold an anchored span.
+**0 rows differ**, comparing the candidates, their countries and the anchor keys. 61,611 rows hold a candidate and 30,070 hold an anchored span.
 
 ## What moved against `shaped` (observed)
 
 | Class               |   Rows |
 | ------------------- | -----: |
-| unchanged           | 70,281 |
-| gains a span        |  1,928 |
+| unchanged           | 71,537 |
+| gains a span        |    672 |
 | loses a span        |      0 |
 | span changes extent |      0 |
 
-The 1,928 gaining rows by what the new span has: 1,240 hold white space inside the code, 687 hold a lower-case letter and 4 are an outward code.
+The 672 gaining rows by what the new span has: 639 hold a lower-case letter and 33 hold white space inside the code. Before the resolution rule the comparison gained 1,928 rows: 1,240 with white space inside the code (CZ 1,001 rows and SE 118, the three-and-two digit codes), 687 with a lower-case letter and 4 outward codes, and 34 of the US rows held a false anchor.
 
 | Country |   Rows | Rows that gain | Anchored spans, `shaped` | Anchored spans, `postal` |
 | ------- | -----: | -------------: | -----------------------: | -----------------------: |
-| CZ      |  2,385 |          1,001 |                      967 |                    1,969 |
-| GB      |  5,120 |            574 |                    4,308 |                    4,883 |
-| SE      |    256 |            118 |                        3 |                      122 |
-| NL      |  1,330 |             43 |                    1,209 |                    1,252 |
-| US      | 12,836 |             34 |                   10,395 |                   10,429 |
-| VN      |    512 |             24 |                       23 |                       47 |
-| EE      |    445 |             15 |                      364 |                      379 |
-| KW      |    122 |             12 |                        0 |                       12 |
-| AU      |  1,877 |             11 |                        5 |                       16 |
-| PK      |    934 |             10 |                      167 |                      177 |
-| PL      |    238 |             10 |                        0 |                       10 |
+| GB      |  5,120 |            570 |                    4,308 |                    4,878 |
+| NL      |  1,330 |             42 |                    1,209 |                    1,251 |
+| US      | 12,836 |             11 |                   10,395 |                   10,406 |
+| PK      |    934 |              9 |                      167 |                      176 |
+| SI      |  2,227 |              8 |                        0 |                        8 |
+| CH      |  1,450 |              5 |                        1 |                        6 |
+| AR      |    444 |              4 |                        0 |                        4 |
+| BE      |    266 |              4 |                        1 |                        5 |
+| CZ      |  2,385 |              2 |                      967 |                      969 |
+| SE      |    256 |              0 |                        3 |                        3 |
 
-Examples of each kind: `691 44 Lednice, 21. dubna 685` (CZ, key `69144`), `halesowen b63 3jy` (GB, `B633JY`), `CH62 Invest AB Sundsor 44 SE-155 91 Nykvarn` (SE, key `CH62`, a false anchor: a letter-and-digit house number that fits a three-and-two shape), and `MANOUSKA SAINT GILLES LAW OFCS, 111 09 76TH RD SUITE A3, FOREST HILLS, NY 11375` (US, a house number `111 09` that anchors under `11109`, a false anchor beside the right one).
-Those false anchors are the finder's remaining defect: a candidate that fits some country's form and resolves in the table. 34 US rows and 4 other rows hold one. The `shaped` table had no shape for them.
+Examples: `halesowen b63 3jy` (GB, `B633JY`), `De Gieterij 212, 7553  VZ HENGELO` (NL, two spaces inside the code, from a longer row), `AVIO POLSKA ..., UL GRAZYNSKIEGO 141, 43 300 Bielsko-Biala` (PL, key `43300`), and `Shp 58 340 Waerenga Street West End 4443` (NZ, key `58340`, a house number the French shape reads as a code and the table holds under FR). The spaced CZ and SE codes paint only where the table holds those countries, and it holds few of them: the CZ rows that gain fell from 1,001 to 2 and the SE rows from 118 to 0.
+The 33 remaining gains with white space inside the code are the rule working as stated: the shape belongs to a country that writes the code with a space (FR, NL and PL among them), and the table holds the key under that country. The data gives the finder no way to tell `58 340` as a house number from a French code. I left the 11 US gains uninspected.
 
 Two earlier versions of the finder lost spans, and each was fixed before the comparison reported above:
 

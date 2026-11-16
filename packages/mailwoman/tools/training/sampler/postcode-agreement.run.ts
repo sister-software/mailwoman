@@ -186,6 +186,8 @@ for (const split of ["train", "val"] as const) {
 
 		const agree =
 			stringifyJSON(rustSpans) === stringifyJSON(spanList) &&
+			stringifyJSON(rust.map((span) => span.countries.toSorted())) ===
+				stringifyJSON(servingSpans.map((span) => span.countries.toSorted())) &&
 			rustAnchored.length === servingAnchored.length &&
 			rustAnchored.every((span, index) => same(span, servingAnchored[index]!))
 

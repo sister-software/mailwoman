@@ -205,6 +205,10 @@ export interface NativePostcodeSpan {
 	start: number
 	end: number
 	key?: string | null
+	/**
+	 * The countries the candidate's shapes belong to.
+	 */
+	countries: string[]
 }
 
 /**

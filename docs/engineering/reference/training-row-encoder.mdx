@@ -178,9 +178,15 @@ segmentation for every scalar value in 17 templates, `code_unit_parity.rs` from 
 counts, `postal_finders.rs` for the finder's refusals and its candidate order, and `postcode_agreement.rs` against
 the committed agreement fixture (see The postal finders).
 
-Each record verified with 0 differing rows against the Rust encoder (113,936 emitted rows in total). The broad
-sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
+On 2026-10-28 each record verified with 0 differing rows against the Rust encoder (113,936 emitted rows in total). The
+broad sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
 validation rows, where the validation draw exhausts below its 36,864-row limit.
+
+That result no longer holds on `origin/main`. On 2026-11-16, before the postal finders, fourteen of the fifteen older
+records differed in `address_system_ids` alone, and `aug-grouping-p50-250` matched. The address-system registry changed
+after the records were captured, and TypeScript computes those ids. Every other tensor of every record still matched on
+`origin/main`. The table in The postal finders lists each record's count. This predates the postal finders, and no
+record was regenerated.
 
 `node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name <record>` re-draws a record through the
 Node binding and compares the same fields from `record.json`, without reading `arrays.npz`. On 2026-10-29 it verified
@@ -210,6 +216,16 @@ several shapes match appears once. A candidate that a connector separates from t
 The anchor painter walks the candidates in that order and keeps the first that the anchor table resolves among those
 that overlap, so a longer candidate the table lacks hides no code inside it. A Somali shape matches `VT 05401`, and
 that candidate hides no ZIP code.
+**The resolution rule.** Each candidate carries the countries of every shape that matches its range, from the
+definition. It resolves only when its anchor-table entry holds weight on at least one of those countries, and the
+posterior it paints holds only the weights on them. The painter doesn't renormalize beyond what it already does: the
+feature vector divides each weight by the total over the locale set, so the remaining weights renormalize as any
+posterior does, and an entry whose remaining countries fall outside the locale set paints zeros with its centroid. A
+candidate with no accepted country is skipped and hides no other. The table's `111 09` entry holds FR and US only, and
+the three-and-two digit shapes belong to other countries, so the house number paints no anchor. A GB unit that fails the
+rule falls back to its outward district under the same rule. The serving side applies it in `anchoredPostcodeSpans`
+(`restrictEntry`) and the encoder in `AnchorLookup::resolve` and `features`, and the agreement check below compares the
+candidates' countries and the keys.
 `Finders::code_units` counts the countries whose syntax accepts a unit with the family's whole-input automaton and the
 shapes' country lists. The family's one case rule is that every shape matches either case.
 `anchor_paint_mode` is `gold` or `postal`. The mode `shaped` is retired. The encoder refuses it with a message that
@@ -232,14 +248,17 @@ the raw text as the trainer matched it, with the postal finder's:
 
 | Class               |   Rows |
 | ------------------- | -----: |
-| unchanged           | 70,281 |
-| gains a span        |  1,928 |
+| unchanged           | 71,537 |
+| gains a span        |    672 |
 | loses a span        |      0 |
 | span changes extent |      0 |
 
-The 1,928 rows that gain a span hold spans of three kinds. 1,240 hold white space inside the code (the three-and-two
-digit codes of CZ, SK and SE such as `691 44`, which the old table had no shape for), 687 hold a lower-case letter
-(`ol15 0bh`) and 4 are an outward code. The per-country counts are in the tool's moved report.
+The 672 rows that gain a span hold spans of two kinds. 639 hold a lower-case letter (`ol15 0bh`, 570 of them GB), and 33
+hold white space inside the code that a shape of the code's own country accepts and the table holds under that country
+(`7553  VZ` NL, `43 300` PL, `58 340` and `74 700` read as French codes). Before the resolution rule the same
+comparison gained 1,928 rows, 1,240 of them with white space inside the code, and 34 of them US rows with a false anchor
+such as the house number `111 09`. The per-country counts are in the tool's moved report. No row loses a span, so no
+loss needs a class.
 The first version of the finder lost 1,776 spans in a 24,210-row run. It dropped every candidate that overlapped a longer
 one before the lookup, and the longer `VT 05401` hid the ZIP code. The next version lost 87 spans in the 72,209-row comparison, and 84
 of them were real codes after a connector (`Lahore-54000`, `FI-FI-01730`) that the engine's connector boundary refused.
@@ -253,21 +272,21 @@ records and the two records without an anchor channel ran as recorded.
 
 | Record                  | Rows emitted | Rows that differ, `origin/main` | Rows that differ, this change | Rows with a different anchor |
 | ----------------------- | -----------: | ------------------------------: | ----------------------------: | ---------------------------: |
-| `aug-grouping-2k`       |        1,990 |                               2 |                             2 |                           86 |
-| `aug-grouping-p50-250`  |          250 |                               0 |                             0 |                            6 |
-| `aug-postcode-move-5k`  |        4,999 |                               3 |                             3 |                          184 |
-| `aug-splice-5k`         |        4,999 |                               3 |                             3 |                          242 |
+| `aug-grouping-2k`       |        1,990 |                               2 |                             2 |                           52 |
+| `aug-grouping-p50-250`  |          250 |                               0 |                             0 |                            4 |
+| `aug-postcode-move-5k`  |        4,999 |                               3 |                             3 |                          114 |
+| `aug-splice-5k`         |        4,999 |                               3 |                             3 |                          139 |
 | `c6-channel-free-5k`    |        4,999 |                               6 |                             6 |                            0 |
 | `c6-gold-spans-5k`      |        4,999 |                               6 |                             6 |                            0 |
 | `c6-gold-tokens-5k`     |        5,000 |                               6 |                             6 |                            0 |
-| `c6-max-length-16-5k`   |        4,999 |                               6 |                             6 |                          179 |
-| `c6-no-choreography-5k` |        4,999 |                               6 |                             6 |                          209 |
-| `c6-train-2k`           |        2,000 |                               3 |                             3 |                          100 |
-| `c6-train-50k`          |       49,989 |                              56 |                            56 |                        1,954 |
-| `c6-val-36864`          |       31,951 |                               1 |                             2 |                           21 |
+| `c6-max-length-16-5k`   |        4,999 |                               6 |                             6 |                          104 |
+| `c6-no-choreography-5k` |        4,999 |                               6 |                             6 |                          127 |
+| `c6-train-2k`           |        2,000 |                               3 |                             3 |                           64 |
+| `c6-train-50k`          |       49,989 |                              56 |                            56 |                        1,177 |
+| `c6-val-36864`          |       31,951 |                               1 |                             2 |                           13 |
 | `char-v8-cjk-regs-5k`   |        5,000 |                           1,365 |                         1,365 |                            0 |
-| `code-unit-train-5k`    |        5,000 |                               1 |                            63 |                          156 |
-| `relabel-5k`            |        5,000 |                               5 |                             5 |                          203 |
+| `code-unit-train-5k`    |        5,000 |                               1 |                            63 |                           49 |
+| `relabel-5k`            |        5,000 |                               5 |                             5 |                          146 |
 
 Every row that differs on `origin/main` differs in `address_system_ids`. The address-system registry changed after the
 records were captured, and TypeScript computes those ids. Two records differ from `origin/main` beyond that.

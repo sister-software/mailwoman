@@ -11,27 +11,30 @@
 	"postal_finder_records": {
 		"README": [
 			"Three records captured on 2026-11-16 from the Rust sampler and the Rust encoder with `anchor_paint_mode: postal`, after the",
-			"cross-side agreement of postcode-agreement.run.ts (0 of 72,209 rows differ). Each verified with 0 differing rows through",
-			"`parity.run.ts verify --records-dir`. They were written outside the data root. An operator copies a record into",
-			"$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/, or reruns its capture command, which reads the same draw."
+			"cross-side agreement of postcode-agreement.run.ts (0 of 72,209 rows differ) and the country resolution rule. Each verified with",
+			"0 differing rows through `parity.run.ts verify`. They are new directories under $MAILWOMAN_DATA_ROOT/audits/encoder-parity/,",
+			"and no existing record was touched. An earlier capture of the same names, made before the resolution rule, was never written there."
 		],
 		"records": {
 			"postal-v870-train-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-train-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
 				"emitted_rows": 5000,
-				"record_json_sha256": "686b6f740648e92eb7e3e8de72f66b449b9a4a74a9d69525b88ce80e66848bbc",
+				"path": "/mnt/mw/audits/encoder-parity/postal-v870-train-5k/record.json",
+				"record_json_sha256": "237aa6882114168833bc8c1f7d4e4b9579fc1b3202b43d8791dafc2576681ebd",
 				"verified_differing_rows": 0
 			},
 			"postal-v870-val-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-val-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split val --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
 				"emitted_rows": 4664,
-				"record_json_sha256": "0c6759a1271f6059395c673ddbae57593b02db5ebf2f3bcdd0465378391ecfff",
+				"path": "/mnt/mw/audits/encoder-parity/postal-v870-val-5k/record.json",
+				"record_json_sha256": "7c7602a7c1225c1d063be894ba70a4aa0445ec30d490628c96e292dbbf7a72d9",
 				"verified_differing_rows": 0
 			},
 			"postal-code-unit-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-code-unit-5k --config packages/corpus/data/training-configs/v8.3.0-probe-code-unit-2k.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal plus the six host lexicon overrides of the c6-train-2k record",
 				"emitted_rows": 5000,
-				"record_json_sha256": "b62b90a59cdb874c92e0e733c8b8c44e58ac165eba4bfabebc0c966e2433eb2b",
+				"path": "/mnt/mw/audits/encoder-parity/postal-code-unit-5k/record.json",
+				"record_json_sha256": "e679ed6b913b9d8210ea41315986ebb1c1ab08d451ec4218b1ec3dd1da388564",
 				"verified_differing_rows": 0
 			}
 		}
@@ -414,7 +417,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-grouping-2k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 1990,
@@ -425,8 +428,8 @@
 					"address_system_ids": 2
 				},
 				"ignored_tensors": {
-					"anchor_features": 86,
-					"anchor_confidence": 86
+					"anchor_features": 52,
+					"anchor_confidence": 52
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -697,7 +700,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-grouping-p50-250 --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 250,
@@ -706,8 +709,8 @@
 				"differing_rows_on_origin_main": 0,
 				"differing_rows_by_tensor": {},
 				"ignored_tensors": {
-					"anchor_features": 6,
-					"anchor_confidence": 6
+					"anchor_features": 4,
+					"anchor_confidence": 4
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -1109,7 +1112,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-postcode-move-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -1120,8 +1123,8 @@
 					"address_system_ids": 3
 				},
 				"ignored_tensors": {
-					"anchor_features": 184,
-					"anchor_confidence": 184
+					"anchor_features": 114,
+					"anchor_confidence": 113
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -1524,7 +1527,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-splice-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -1535,8 +1538,8 @@
 					"address_system_ids": 3
 				},
 				"ignored_tensors": {
-					"anchor_features": 242,
-					"anchor_confidence": 242
+					"anchor_features": 139,
+					"anchor_confidence": 139
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -1861,7 +1864,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-channel-free-5k",
 				"emitted_rows": 4999,
@@ -2342,7 +2345,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-gold-spans-5k",
 				"emitted_rows": 4999,
@@ -2823,7 +2826,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-gold-tokens-5k",
 				"emitted_rows": 5000,
@@ -3304,7 +3307,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-max-length-16-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -3315,8 +3318,8 @@
 					"address_system_ids": 6
 				},
 				"ignored_tensors": {
-					"anchor_features": 179,
-					"anchor_confidence": 179
+					"anchor_features": 104,
+					"anchor_confidence": 104
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -3788,7 +3791,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-no-choreography-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -3799,8 +3802,8 @@
 					"address_system_ids": 6
 				},
 				"ignored_tensors": {
-					"anchor_features": 209,
-					"anchor_confidence": 209
+					"anchor_features": 127,
+					"anchor_confidence": 127
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -4246,7 +4249,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 2000,
@@ -4257,8 +4260,8 @@
 					"address_system_ids": 3
 				},
 				"ignored_tensors": {
-					"anchor_features": 100,
-					"anchor_confidence": 100
+					"anchor_features": 64,
+					"anchor_confidence": 64
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -4740,7 +4743,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-50k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 49989,
@@ -4751,8 +4754,8 @@
 					"address_system_ids": 56
 				},
 				"ignored_tensors": {
-					"anchor_features": 1954,
-					"anchor_confidence": 1954
+					"anchor_features": 1177,
+					"anchor_confidence": 1177
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -5182,7 +5185,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-val-36864 --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 31951,
@@ -5195,8 +5198,8 @@
 					"gazetteer_confidence": 1
 				},
 				"ignored_tensors": {
-					"anchor_features": 21,
-					"anchor_confidence": 21
+					"anchor_features": 13,
+					"anchor_confidence": 13
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -5287,7 +5290,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name char-v8-cjk-regs-5k",
 				"emitted_rows": 5000,
@@ -5696,7 +5699,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name code-unit-train-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 5000,
@@ -5708,8 +5711,8 @@
 					"code_unit_features": 62
 				},
 				"ignored_tensors": {
-					"anchor_features": 156,
-					"anchor_confidence": 156
+					"anchor_features": 49,
+					"anchor_confidence": 49
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}
@@ -6116,7 +6119,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
+				"revision": "REVISION_PLACEHOLDER",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name relabel-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 5000,
@@ -6127,8 +6130,8 @@
 					"address_system_ids": 5
 				},
 				"ignored_tensors": {
-					"anchor_features": 203,
-					"anchor_confidence": 203
+					"anchor_features": 146,
+					"anchor_confidence": 146
 				},
 				"note": "address_system_ids differs on origin/main as well: the address-system registry changed after capture. A record captured under the retired shaped anchor is verified with the postal anchor and the anchor tensors ignored."
 			}

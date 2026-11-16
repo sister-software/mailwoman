@@ -44,7 +44,13 @@ fn every_fixture_row_has_the_candidates_serving_found() {
 			raw.chars().all(|c| c.len_utf16() == 1),
 			"an astral row in the fixture: {raw:?}"
 		);
-		assert_eq!(finders.postcode_spans(raw).unwrap(), expected, "candidates of {raw:?}");
+		let found: Vec<(usize, usize)> = finders
+			.postcode_spans(raw)
+			.unwrap()
+			.into_iter()
+			.map(|c| (c.start, c.end))
+			.collect();
+		assert_eq!(found, expected, "candidates of {raw:?}");
 		if !expected.is_empty() {
 			with_spans += 1;
 		}

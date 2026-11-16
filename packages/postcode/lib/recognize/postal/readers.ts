@@ -291,6 +291,12 @@ export interface PostalSpan {
 	 */
 	readonly start: number
 	readonly end: number
+	/**
+	 * The countries whose syntax a shape matching this range belongs to, in ISO order.
+	 *
+	 * A reader that looks the code up under a country restricts the lookup to them.
+	 */
+	readonly countries: readonly string[]
 }
 
 const FORM_RANK: Readonly<Record<PostalForm, number>> = { designated: 0, alnum: 1, numeric: 2 }
@@ -333,6 +339,7 @@ export function postalSpans(recognitions: ReadonlyArray<PostalRecognitionLike>, 
 			form: shape.form,
 			start: recognition.start + code,
 			end: recognition.end,
+			countries: shape.countries,
 		})
 	}
 
@@ -344,10 +351,21 @@ export function postalSpans(recognitions: ReadonlyArray<PostalRecognitionLike>, 
 			(a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0)
 	)
 
-	const distinct = candidates.filter(
-		(candidate, index) =>
-			!candidates.slice(0, index).some((earlier) => earlier.start === candidate.start && earlier.end === candidate.end)
-	)
+	// One candidate for each range, under the first shape that matches it, with the countries of every shape that does.
+	const distinct: PostalSpan[] = []
+
+	for (const candidate of candidates) {
+		const index = distinct.findIndex((earlier) => earlier.start === candidate.start && earlier.end === candidate.end)
+
+		if (index === -1) {
+			distinct.push(candidate)
+		} else {
+			distinct[index] = {
+				...distinct[index]!,
+				countries: [...new Set([...distinct[index]!.countries, ...candidate.countries])].toSorted(),
+			}
+		}
+	}
 
 	return distinct.filter((candidate) => !distinct.some((container) => isConnectorFragment(candidate, container, text)))
 }

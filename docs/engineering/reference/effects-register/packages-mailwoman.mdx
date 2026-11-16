@@ -3648,13 +3648,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 - `runs a statement at module scope`
 
-| Kind    | Interface            | Target                   | Calls |
-| ------- | -------------------- | ------------------------ | ----- |
-| read    | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (parameter)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (property)`  | 1     |
-| process | `runFile`            | `literal:git`            | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`  | 1     |
 
 ## `packages/mailwoman/tools/training/sampler/postcode-agreement.run.ts`
 

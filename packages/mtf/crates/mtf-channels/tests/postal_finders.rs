@@ -49,7 +49,14 @@ fn the_pinned_declarations_hash_is_the_committed_artifacts() {
 #[test]
 fn candidates_are_the_codes_of_a_line_longest_first() {
 	let finders = finders();
-	let spans = |raw: &str| finders.postcode_spans(raw).unwrap();
+	let spans = |raw: &str| -> Vec<(usize, usize)> {
+		finders
+			.postcode_spans(raw)
+			.unwrap()
+			.into_iter()
+			.map(|c| (c.start, c.end))
+			.collect()
+	};
 	let slice = |raw: &str| -> Vec<String> {
 		let chars: Vec<char> = raw.chars().collect();
 		spans(raw)

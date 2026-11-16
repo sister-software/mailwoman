@@ -412,6 +412,19 @@ export interface AnchoredPostcodeSpan {
 }
 
 /**
+ * The entry restricted to the posterior it holds on `countries`, or undefined when it holds none.
+ *
+ * The weights that remain keep their order, and {@linkcode anchorFeatureVector}
+ * renormalizes them over the locale set as it does any posterior.
+ * The training encoder restricts the same way in `mtf-channels/src/anchor.rs`.
+ */
+function restrictEntry(entry: AnchorEntry, countries: readonly string[]): AnchorEntry | undefined {
+	const kept = Object.entries(entry.posterior).filter(([country, weight]) => weight > 0 && countries.includes(country))
+
+	return kept.length ? { ...entry, posterior: Object.fromEntries(kept) } : undefined
+}
+
+/**
  * Returns the postcode spans of `text` that the anchor lookup resolves, with the key each resolved under.
  *
  * {@linkcode buildAnchorFeatures} paints these spans and the anchor-region prior
@@ -428,14 +441,24 @@ export function anchoredPostcodeSpans(
 		for (const match of spanMode === "postal" ? findPostcodeSpans(text) : collectMatches(asciiUpper(text))) {
 			// The train painter's normalization verbatim — uppercased with literal spaces removed.
 			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
+			// A `postal` candidate resolves only under a country its shapes belong to,
+			// and paints that part of the posterior.
+			const countries = "countries" in match ? match.countries : null
+
+			const resolve = (candidateKey: string): AnchorEntry | undefined => {
+				const found = lookup.get(candidateKey)
+
+				return found && countries ? restrictEntry(found, countries) : found
+			}
+
 			let key = anchorKey(text.slice(match.start, match.end))
-			let entry = lookup.get(key)
+			let entry = resolve(key)
 
 			// An unknown GB unit still anchors from its outward district, painting the whole unit span
 			// so the painted extent matches what a known unit would have produced.
 			if (!entry && UK_POSTCODE_PATTERN.test(key)) {
 				key = key.slice(0, -GB_INWARD_LENGTH)
-				entry = lookup.get(key)
+				entry = resolve(key)
 			}
 
 			// The `postal` candidates overlap and arrive in the order they compete,

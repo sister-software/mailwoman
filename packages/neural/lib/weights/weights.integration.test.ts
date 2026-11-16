@@ -159,14 +159,14 @@ describe("resolveWeights — package auto-resolve", () => {
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", async () => {
+	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped or postal", async () => {
 		const manifest = await readPackageJSON(workspacePath("neural-weights-en-gb", "package.json"))
 
 		const card = await readLocalJSONFile<{ requires?: { anchor?: { span_mode?: string } } }>(
 			workspacePath("neural-weights-en-gb", "model-card.json")
 		)
 
-		const shaped = card.requires?.anchor?.span_mode === "shaped"
+		const shaped = ["shaped", "postal"].includes(card.requires?.anchor?.span_mode ?? "")
 		const { files } = manifest
 
 		expect(files, "neural-weights-en-gb/package.json declares no files array").toBeDefined()

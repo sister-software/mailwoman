@@ -904,6 +904,8 @@ pub struct PostcodeSpan {
 	pub start: u32,
 	pub end: u32,
 	pub key: Option<String>,
+	/// The countries the candidate's shapes belong to.
+	pub countries: Vec<String>,
 }
 
 /// One code unit of a line, as character offsets, with the number of countries whose syntax accepts it.
@@ -939,13 +941,27 @@ impl PostcodeFinder {
 	#[napi(catch_unwind)]
 	pub fn spans(&self, raw: String) -> Result<Vec<PostcodeSpan>> {
 		let chars: Vec<char> = raw.chars().collect();
+		let codes = self.finders.country_codes();
 		self.finders.postcode_spans(&raw).map_err(channel_error).map(|spans| {
 			spans
 				.into_iter()
-				.map(|(start, end)| PostcodeSpan {
-					start: start as u32,
-					end: end as u32,
-					key: self.anchor.as_ref().and_then(|table| table.resolve(&chars[start..end])),
+				.map(|candidate| {
+					let listed: Vec<String> = candidate
+						.countries
+						.iter()
+						.flatten()
+						.map(|&index| codes[index as usize].clone())
+						.collect();
+					let allowed = |code: &str| listed.iter().any(|listed| listed == code);
+					PostcodeSpan {
+						start: candidate.start as u32,
+						end: candidate.end as u32,
+						key: self
+							.anchor
+							.as_ref()
+							.and_then(|table| table.resolve(&chars[candidate.start..candidate.end], Some(&allowed))),
+						countries: listed.clone(),
+					}
 				})
 				.collect()
 		})

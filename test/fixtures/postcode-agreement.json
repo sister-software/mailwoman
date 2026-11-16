@@ -3975,6 +3975,13 @@
 			]
 		},
 		{
+			"raw": "warminster ba12 9bw",
+			"spans": [
+				[11, 19],
+				[11, 15]
+			]
+		},
+		{
 			"raw": "paradies, saint john",
 			"spans": [[16, 20]]
 		},
@@ -5477,6 +5484,14 @@
 				[25, 32],
 				[34, 41],
 				[10, 14]
+			]
+		},
+		{
+			"raw": "4 Mews Cottages, Peel, IM5 1HF",
+			"spans": [
+				[23, 30],
+				[2, 6],
+				[17, 21]
 			]
 		},
 		{
@@ -8838,6 +8853,14 @@
 		{
 			"raw": "Liengrenda 431",
 			"spans": [[11, 14]]
+		},
+		{
+			"raw": "Seilø 14",
+			"spans": [[0, 4]]
+		},
+		{
+			"raw": "H0202 13F Parkgata",
+			"spans": [[0, 5]]
 		},
 		{
 			"raw": "Chhapke Dhār, Sudurpashchim Pradesh",
@@ -12466,6 +12489,18 @@
 				[23, 28],
 				[40, 44]
 			]
+		},
+		{
+			"raw": "19 Phố Lê Quý Đôn Phường Suối Hoa Bắc Ninh Vietnam",
+			"spans": [
+				[43, 50],
+				[22, 27],
+				[38, 42]
+			]
+		},
+		{
+			"raw": "42 Nội Khu Hưng Phước 1",
+			"spans": [[13, 18]]
 		},
 		{
 			"raw": "Makénama Torba",

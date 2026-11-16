@@ -19,6 +19,7 @@
 //!
 //! The family matches either case, so a lower-case `sw1a 1aa` is a postcode on both sides.
 
+use crate::anchor::PostcodeCandidate;
 use crate::error::Error;
 use recognize_core::artifact::ARTIFACT_SCHEMA_VERSION;
 use recognize_core::{Engine, Expected};
@@ -116,6 +117,8 @@ pub struct PostalFinders {
 	family: usize,
 	/// Parallel to the family's shapes in the engine's order, which is the byte order of their IDs.
 	shapes: Vec<ShapeInfo>,
+	/// The country codes of every shape, which a shape's `countries` and a candidate's index into.
+	country_codes: Vec<String>,
 	accepted: Mutex<HashMap<String, usize>>,
 }
 
@@ -230,10 +233,14 @@ impl PostalFinders {
 			)));
 		}
 
+		let mut by_index: Vec<(u32, String)> = countries.into_iter().map(|(code, index)| (index, code)).collect();
+		by_index.sort_unstable();
+
 		Ok(Self {
 			engine,
 			family,
 			shapes,
+			country_codes: by_index.into_iter().map(|(_, code)| code).collect(),
 			accepted: Mutex::new(HashMap::new()),
 		})
 	}
@@ -244,7 +251,7 @@ impl PostalFinders {
 	/// The candidates overlap. The anchor painter walks them in this order and keeps the first that the anchor table
 	/// resolves among those that overlap, so `VT 05401`, which a Somali shape matches, does not hide the ZIP code inside
 	/// it.
-	pub fn postcode_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error> {
+	pub fn postcode_spans(&self, raw: &str) -> Result<Vec<PostcodeCandidate>, Error> {
 		let located = self
 			.engine
 			.locate(raw, |family| family == self.family)
@@ -267,17 +274,33 @@ impl PostalFinders {
 			candidates.push((start, end, info.form, found.shape));
 		}
 		candidates.sort_by_key(|&(start, end, form, shape)| (std::cmp::Reverse(end - start), start, form, shape));
-		let mut ordered: Vec<(usize, usize)> = Vec::with_capacity(candidates.len());
-		for (start, end, _, _) in candidates {
-			if !ordered.contains(&(start, end)) {
-				ordered.push((start, end));
+		// One candidate for each range, in competing order, holding the countries of every shape that matches it.
+		let mut ordered: Vec<PostcodeCandidate> = Vec::with_capacity(candidates.len());
+		for (start, end, _, shape) in candidates {
+			let countries = &self.shapes[shape].countries;
+			match ordered.iter_mut().find(|c| c.start == start && c.end == end) {
+				Some(existing) => existing
+					.countries
+					.get_or_insert_with(Vec::new)
+					.extend(countries.iter().copied()),
+				None => ordered.push(PostcodeCandidate {
+					start,
+					end,
+					countries: Some(countries.clone()),
+				}),
 			}
 		}
-		let all = ordered.clone();
-		ordered.retain(|&candidate| {
+		let all: Vec<(usize, usize)> = ordered.iter().map(|c| (c.start, c.end)).collect();
+		ordered.retain(|c| {
 			!all.iter()
-				.any(|&container| is_connector_fragment(candidate, container, &chars))
+				.any(|&container| is_connector_fragment((c.start, c.end), container, &chars))
 		});
+		for candidate in &mut ordered {
+			if let Some(countries) = &mut candidate.countries {
+				countries.sort_unstable();
+				countries.dedup();
+			}
+		}
 		Ok(ordered)
 	}
 
@@ -314,8 +337,12 @@ impl PostalFinders {
 }
 
 impl crate::encoder::Finders for PostalFinders {
-	fn postcode_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error> {
+	fn postcode_spans(&self, raw: &str) -> Result<Vec<PostcodeCandidate>, Error> {
 		PostalFinders::postcode_spans(self, raw)
+	}
+
+	fn country_codes(&self) -> &[String] {
+		&self.country_codes
 	}
 
 	fn code_units(&self, raw: &[char]) -> Result<Vec<crate::code_units::CodeUnit>, Error> {
