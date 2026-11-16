@@ -24,7 +24,7 @@
  *   A Wikidata id can map to more than one current WOF place.
  *   The join isn't a function.
  *
- *   `importance-fanout.ts` resolves the candidates.
+ *   `importance/fanout.ts` resolves the candidates.
  *   It keeps coincident candidates, selects a winner when population distinguishes them
  *   and drops the id when neither condition applies.
  *
@@ -62,7 +62,7 @@ import {
 	type FanoutStats,
 	recordFanout,
 	resolveConcordanceFanout,
-} from "#tools/pipeline/importance-fanout"
+} from "#tools/pipeline/importance/fanout"
 
 /**
  * Columns a Wikidata concordance row needs before it contains a usable mapping.

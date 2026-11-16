@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "#tools/pipeline/importance-fanout"
+import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "#tools/pipeline/importance/fanout"
 
 /**
  * Q61 is Washington DC as WOF models it, one place carrying three placetypes at one point.
