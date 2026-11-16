@@ -2,7 +2,7 @@
 
 crate::declare_family! {
 	family: "spatial",
-	declarations_hash: "f18e652bbb4cb43f29876dd5504bbbe72a6fcb4f15168c41d7d391857cd3a95f",
+	declarations_hash: "1d85275060cde50d8080e9ae55108ac8210aa146f95766ca6cd16fe8150c4dec",
 	shapes: {
 		DigipinCompact = "digipin.compact" => {
 			validator: DIGIPIN,

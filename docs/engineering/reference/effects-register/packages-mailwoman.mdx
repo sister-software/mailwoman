@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 388 of the group's 763 library and tool modules.
+This page lists 387 of the group's 762 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -2130,20 +2130,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | write   | `writeLocalFile`    | `repo:packages/recognize/crates/recognize-core/src/validators/us_state_fips.rs` | 1     |
 | write   | `writeLocalFile`    | `scratch:us_state_fips.rs`                                                      | 1     |
 | process | `runFile`           | `literal:rustfmt`                                                               | 1     |
-
-## `packages/mailwoman/tools/dev-tools/recognize/point-differential.run.ts`
-
-The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
-
-- `awaits at module scope`, 4 times
-- `runs a statement at module scope`, 7 times
-
-| Kind  | Interface           | Target                                                               | Calls |
-| ----- | ------------------- | -------------------------------------------------------------------- | ----- |
-| read  | `readLocalTextFile` | `repo:packages/mailwoman/lib/plus-code-override.ts`                  | 1     |
-| read  | `readLocalTextFile` | `repo:packages/recognize/data/reports/point-query-differential.json` | 1     |
-| read  | `readLocalTextFile` | `repo:packages/spatial/lib`                                          | 1     |
-| write | `writeLocalFile`    | `repo:packages/recognize/data/reports/point-query-differential.json` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/relay-interpolation-extracts.run.ts`
 

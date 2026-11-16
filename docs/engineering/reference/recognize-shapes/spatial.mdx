@@ -33,9 +33,9 @@ The shape declares no captures.
 
 Payload fields:
 
-| Field  | Type | Present |
-| ------ | ---- | ------- |
-| `code` | text | Always  |
+| Field  | Type    | Present |
+| ------ | ------- | ------- |
+| `code` | digipin | Always  |
 
 Rejection codes: `capture_limit`, `capture_mismatch`, `invalid_character`, `invalid_length`
 
@@ -68,9 +68,9 @@ The shape declares no captures.
 
 Payload fields:
 
-| Field  | Type | Present |
-| ------ | ---- | ------- |
-| `code` | text | Always  |
+| Field  | Type    | Present |
+| ------ | ------- | ------- |
+| `code` | digipin | Always  |
 
 Rejection codes: `capture_limit`, `capture_mismatch`, `invalid_character`, `invalid_length`
 
@@ -126,10 +126,10 @@ The shape declares no captures.
 
 Payload fields:
 
-| Field  | Type    | Present |
-| ------ | ------- | ------- |
-| `code` | text    | Always  |
-| `full` | boolean | Always  |
+| Field        | Type            | Present   |
+| ------------ | --------------- | --------- |
+| `full_code`  | full_plus_code  | Sometimes |
+| `short_code` | short_plus_code | Sometimes |
 
 Rejection codes: `capture_limit`, `capture_mismatch`, `invalid_digit`, `invalid_prefix_length`, `invalid_suffix_length`
 

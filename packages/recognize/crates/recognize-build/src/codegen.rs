@@ -210,6 +210,9 @@ fn payload_type(kind: FieldType) -> &'static str {
 		FieldType::Latitude => "Validated.Latitude",
 		FieldType::Longitude => "Validated.Longitude",
 		FieldType::Uncertainty => "Validated.Uncertainty",
+		FieldType::FullPlusCode => "Validated.FullPlusCode",
+		FieldType::ShortPlusCode => "Validated.ShortPlusCode",
+		FieldType::Digipin => "Validated.Digipin",
 		FieldType::AxisOrder => "AxisOrder",
 		FieldType::Boolean => "boolean",
 	}

@@ -25,12 +25,12 @@ describe("the Open Location Code", () => {
 	it("reads a full code and a short code as typed payloads", () => {
 		expect(only("764mvfq6+92p", "plus_code.token")?.validation).toEqual({
 			status: "validated",
-			payload: { code: "764MVFQ6+92P", full: true },
+			payload: { full_code: "764MVFQ6+92P" },
 		})
 
 		expect(only("VFQ6+92P", "plus_code.token")?.validation).toEqual({
 			status: "validated",
-			payload: { code: "VFQ6+92P", full: false },
+			payload: { short_code: "VFQ6+92P" },
 		})
 	})
 
@@ -109,6 +109,10 @@ describe("when a spatial recognition may be trusted", () => {
 		expect(trusted("764MVFQ6+92P", "plus_code.token")).toBe(true)
 		expect(trusted("VFQ+92P", "plus_code.token")).toBe(false)
 		expect(trusted("39J-49L-L8T4", "digipin.display")).toBe(true)
+		// An all-digit display form is also a phone number: the validator accepts it and the rule withholds trust.
+		expect(only("234-567-8923", "digipin.display")?.validation.status).toBe("validated")
+		expect(trusted("234-567-8923", "digipin.display")).toBe(false)
+		expect(trusted("234-567-89T3", "digipin.display")).toBe(true)
 		expect(trusted("2345678923", "digipin.compact")).toBe(false)
 		expect(trusted("Managua, VFQ6+92P", "plus_code.token")).toBe(false)
 	})

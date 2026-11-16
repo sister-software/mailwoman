@@ -16,9 +16,11 @@
  *   instead of rendering an empty workbench.
  */
 
-import { parsePointQuery, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"
+import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point/text"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import { usePointReader } from "#runtime/point/point-reader"
 
 import { CharacterBand } from "./ModelVisualizer/CharacterBand.tsx"
 import { flipsAfterRemoval, type LabelFlip, moveTile, tilesOf } from "./ModelVisualizer/helpers.ts"
@@ -96,7 +98,8 @@ export function LiveModelVisualizer({
 
 	// A point query has no decode path: the classifier labels address words, and coordinates,
 	// a plus code or a Who's On First id are decoded by their own readers on the map page.
-	const pointQuery = parsePointQuery(text)
+	const pointFromText = usePointReader()
+	const pointQuery = useMemo(() => pointFromText?.(text.trim()) ?? null, [pointFromText, text])
 
 	const run = useCallback(
 		async (input: string) => {
@@ -214,8 +217,9 @@ export function LiveModelVisualizer({
 				</div>
 				{pointQuery ? (
 					<p className={styles.traceHint} role="status">
-						This is {POINT_QUERY_PHRASE[pointQuery.kind]}, not an address. The classifier labels address words and has
-						no decode path for it. <a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
+						This is {POINT_QUERY_DESCRIPTIONS[pointQuery.recognized].phrase}, not an address. The classifier labels
+						address words and has no decode path for it.{" "}
+						<a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
 					</p>
 				) : null}
 				{error ? (

@@ -23,7 +23,7 @@
 //!   `crs` and `u` parameters in their places, and any further parameters. The `GeoURI` validator checks the ranges
 //!   and refuses a coordinate reference system other than WGS84.
 //!
-//! Whitespace is the set JavaScript's `\s` matches, so the shapes read what `parsePointQuery` reads. An embedded
+//! Whitespace is the set JavaScript's `\s` matches, so the shapes read the white space a JavaScript reader reads. An embedded
 //! shape that begins or ends with a letter or a digit declares the `token` boundary, so it reports no match that sits
 //! inside a longer token such as `flat 5 lon 6`.
 //!
