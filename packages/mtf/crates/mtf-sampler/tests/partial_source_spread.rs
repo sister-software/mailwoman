@@ -112,6 +112,48 @@ fn an_epoch_reading_part_of_a_source_draws_its_shape_at_the_source_share() {
 }
 
 #[test]
+fn a_short_last_row_group_is_drawn_in_proportion_when_the_visit_floor_binds() {
+	let dir = tempfile::tempdir().unwrap();
+	let corpus = dir.path().join("corpus");
+	let options = WriteOptions {
+		without_spans: true,
+		..Default::default()
+	};
+	// Each file: four full groups of plain rows, then a 200-row last group of shaped rows. The shape is 600 of the
+	// source's 24,600 rows, 2.4%.
+	for file in 0..FILES {
+		let rows: Vec<Row> = (0..GROUPS_PER_FILE * GROUP_ROWS + 200)
+			.map(|i| {
+				let shape = if i >= GROUPS_PER_FILE * GROUP_ROWS { "Shape" } else { "Plain" };
+				row(format!("{file}-{i} {shape} St"), "grouped")
+			})
+			.collect();
+		write_corpus_parquet(
+			&rows,
+			&corpus.join(format!("train/part-grouped-{file}.parquet")),
+			GROUP_ROWS,
+			&options,
+		);
+	}
+	let other: Vec<Row> = (0..OTHER_ROWS).map(|i| row(format!("{i} Other Rd"), "other")).collect();
+	write_corpus_parquet(&other, &corpus.join("train/part-other.parquet"), 1 << 20, &options);
+	let config = sampler_config(&corpus);
+	// 4,000 rows: 3,000 expected from the grouped source, 12% of it, so the 256-row floor binds on a 2,000-row group.
+	let (mut shaped_draws, mut grouped_draws) = (0usize, 0usize);
+	for seed in 1..=16 {
+		for row in epoch(&config, seed, 4_000).iter().filter(|r| r.source == "grouped") {
+			grouped_draws += 1;
+			shaped_draws += usize::from(shaped(row));
+		}
+	}
+	let share = shaped_draws as f64 / grouped_draws as f64;
+	assert!(
+		(share - 600.0 / 24_600.0).abs() < 0.01,
+		"the short groups' shape is {share:.4} of {grouped_draws} draws against 0.0244 of the source"
+	);
+}
+
+#[test]
 fn equal_seeds_draw_equal_spread_epochs() {
 	let dir = tempfile::tempdir().unwrap();
 	let config = sampler_config(&grouped_corpus(dir.path()));

@@ -9,8 +9,8 @@
 //!
 //! A row-limited epoch reads most sources only in part, and a pass read file by file would draw that part from one
 //! row group. A source expected to draw fewer rows than it holds therefore spreads its pass: its row groups are
-//! shuffled across all its files, and each visit takes `max(fraction × group rows, MIN_VISIT_ROWS)` rows from one
-//! group before the next group is visited. One sweep over the groups covers the epoch's expected draws, so each group
+//! shuffled across all its files, and each visit takes `⌈fraction × group rows⌉` rows from one group before the next
+//! group is visited, with the fraction raised so the source's largest group gives at least `MIN_VISIT_ROWS`. One sweep over the groups covers the epoch's expected draws, so each group
 //! contributes about its share. A pass still reads each row once, so the source's restart and its zero-row refusal
 //! keep their meaning. A held-out split has no mixture to steer, so its
 //! files stream one after another in shuffled order, or, with a row limit, each contributes rows in proportion to
@@ -25,11 +25,12 @@ use crate::row::Row;
 use crate::sampler::{Event, Shared};
 use std::sync::Arc;
 
-/// The fewest accepted rows a spread pass takes from a row group per visit, unless the group holds fewer.
+/// The fewest accepted rows a spread pass takes per visit from a source's largest row group.
 ///
 /// Each visit decodes a whole row group, so this floor caps a spread source's decoded rows per drawn row at the
-/// group size over it: about 195 for 50,000-row groups. A source whose proportional quota per group is larger
-/// visits every group once per epoch.
+/// largest group's size over it: about 195 for 50,000-row groups. It raises the fraction taken from every group of
+/// the source alike, so the groups stay in proportion. A source whose fraction already takes more visits every
+/// group once per epoch.
 pub const MIN_VISIT_ROWS: usize = 256;
 
 /// One row group of a spread pass: where it is, how many rows a visit takes, and how far the pass has read it.
@@ -92,19 +93,26 @@ impl SourceRows {
 			});
 		};
 		let mut units = Vec::new();
+		let mut sizes = Vec::new();
 		for (index, file) in self.files.iter().enumerate() {
 			let parquet = ParquetFile::open(&file.path)?;
 			for group in 0..parquet.num_row_groups() {
-				let rows = parquet.row_group_rows(group);
-				let proportional = (fraction * rows as f64).ceil() as usize;
+				sizes.push(parquet.row_group_rows(group));
 				units.push(Unit {
 					file: index,
 					group,
-					take: proportional.max(MIN_VISIT_ROWS.min(rows)).max(1),
+					take: 0,
 					position: 0,
 					exhausted: false,
 				});
 			}
+		}
+		// The floor raises the fraction for the whole source, so a short group, such as a file's last, is still
+		// visited in proportion to its size.
+		let largest = sizes.iter().copied().max().unwrap_or(0).max(1);
+		let fraction = fraction.max(MIN_VISIT_ROWS as f64 / largest as f64).min(1.0);
+		for (unit, &rows) in units.iter_mut().zip(&sizes) {
+			unit.take = ((fraction * rows as f64).ceil() as usize).max(1);
 		}
 		rng.shuffle(&mut units);
 		let seed = rng.getrandbits(64) as i128;

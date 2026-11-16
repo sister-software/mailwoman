@@ -260,10 +260,12 @@ export interface ReceiptExpectation {
  * Over seeds, each of a source's rows is equally likely to be drawn, so the receipt's
  * matching rows take their fraction of the source's draws in expectation.
  *
- * An epoch that reads part of a source takes about `max(fraction × rows, 256)` rows from
- * each row group it visits, in one shuffled sweep over all of the source's files, so each
- * epoch also draws a receipt near its expectation when its rows sit in a few row groups.
- * Where the 256-row floor binds, as for `usgov-nad`, an epoch visits `expected draws / 256` random
+ * An epoch that reads part of a source takes the same fraction of each row group it visits,
+ * in one shuffled sweep over all of the source's files, so each epoch also draws a
+ * receipt near its expectation when its rows sit in a few row groups.
+ * The fraction is raised until the largest group gives 256 rows.
+ *
+ * Where that floor binds, as for `usgov-nad`, an epoch visits about `expected draws / 256` random
  * row groups, and a receipt confined to a few groups still varies more than a Poisson count.
  *
  * A source the epoch reads in full is read file by file, each row once per pass.
