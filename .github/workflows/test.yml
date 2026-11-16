@@ -295,6 +295,13 @@ jobs:
           cargo clippy -p recognize-core -p recognize-build -p recognize-wasm --all-targets --locked -- -D warnings
           cargo test -p recognize-core -p recognize-build -p recognize-wasm --locked
 
+      # A generated family file that differs from its generator's output is a hand edit or a linter rewrite.
+      # Each tool rebuilds the family and exits non-zero when a committed file differs.
+      - name: Check the generated recognizer families against their generators
+        run: |
+          node packages/recognize/tools/generate.run.ts --check
+          node packages/postcode/tools/generate.run.ts --check
+
       - name: Test the basemap tiler's crates
         run: |
           cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --all-targets --locked -- -D warnings
