@@ -213,6 +213,17 @@ covers row limits, exhaustion, the astral skip, source restarts, held-out quotas
 cancellation, `seed + epoch` and resume, and the remaining files hold the invariants of the Python data
 tests.
 
+The spread read changed the rows of every train record, because each draws a row-limited epoch in which most
+sources are read in part. On 2026-11-16 at `1e43fa4021`, `sampler/parity.run.ts capture --name <record> --as
+
+<record>-spread` re-drew the 14 train records and wrote each as `<record>-spread` beside its original, which
+stays as the Python loader's record. Seven of them emit a different count after the astral skip, for example
+`c6-train-50k` 49,992 rows against 49,989. These records pin the Rust sampler and encoder at that revision. They
+are no oracle: each was captured from the code it checks. `c6-train-2k-spread` re-verified with 0 differing
+rows in a fresh process. The held-out record `c6-val-36864` reads no mixture, and its 31,951 row identities all
+still match. One row's `address_system_ids` differs (row 31,268), a value TypeScript computes from the
+address-system registry, which has changed since 2026-10-29.
+
 ## Measured cost
 
 The Python trainer's `audits.loader_profile` measured the host side of a training step: `iter_batches` and
