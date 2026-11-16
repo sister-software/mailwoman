@@ -104,15 +104,17 @@ A short code recovers against the locality the parse resolved, so the same code 
 
 ## The earth app (observed)
 
-The earth build reads the compiled `out/`. The point reader imports the engine and the three artifacts, 414.84 kB before gzip and 32.29 kB gzipped as their own chunk.
+The earth build reads the compiled `out/`. The point reader imports the engine and the three artifacts, 414.83 kB before gzip and 32.31 kB gzipped as their own chunk.
 The first build with a static import raised the entry chunk from 2,089.60 kB to 2,503.10 kB, and `vite build` failed in the service worker step: the precache refuses a file over 2 MiB, and the entry sat 7 kB under it. The earth app now imports the reader on first use, the way it imports the H3 reader, in `packages/earth/lib/runtime/point/point-reader.ts`.
 
 | Build output                           | `origin/main`            | This branch                                |
 | -------------------------------------- | ------------------------ | ------------------------------------------ |
-| entry chunk `index-*.js`               | 2,089.60 kB              | 2,088.74 kB (gzip 592.97 to 592.74)        |
+| entry chunk `index-*.js`               | 2,089.60 kB              | 2,088.73 kB (gzip 592.97 to 592.74)        |
 | the chunk that holds the engine binary | 1,232.00 kB              | 970.34 kB and 262.77 kB, total 1,233.11 kB |
-| the point reader and three artifacts   | none                     | 414.84 kB (gzip 32.29)                     |
-| precache                               | 58 entries, 7,552.11 KiB | 60 entries, 7,957.56 KiB                   |
+| the point reader and three artifacts   | none                     | 414.83 kB (gzip 32.31)                     |
+| precache                               | 58 entries, 7,552.11 KiB | 60 entries, 7,957.55 KiB                   |
+
+The earth browser suite ran 46 tests on this branch: 44 passed, 1 was skipped and 1 failed. The failure is `210/national-rooftop.spec.ts`, the Houston case `1502 A Cage Street`, which resolved to 29.7848, -95.3614 where the fixture expects 29.7747, -95.335 within 0.006 degrees. The same test failed on `origin/main` at `a6e4cf318c` with the same coordinates, so the change doesn't cause it. The three tests of `220-point-queries.spec.ts` passed on this branch.
 
 ## What was deleted
 
