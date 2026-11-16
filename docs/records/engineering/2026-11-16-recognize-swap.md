@@ -164,3 +164,35 @@ No JavaScript file under `docs/build/assets` holds the engine's `rcg_structure` 
 That's inferred to mean the live demo loads the pipeline at run time from the runtime assets and not from this build. The alias list in `docs/plugins/runtime-assets/workspace/aliases.ts` lost its `query-shape` entry, and `recognize` needs none, because it resolves through its own `exports` map.
 
 The default entry of `recognize` embeds the engine binary and the artifacts as hexadecimal text, so the added JavaScript is the engine (479,693 bytes) and the `structure` and `postcode_legacy` artifacts at twice their size. The `.wasm` assets don't change. That's inferred from the sizes. A later change can serve the binary as an asset in a browser.
+
+## What a user sees change (observed)
+
+`mailwoman parse --debug` and a geocode trace print the `queryShape`. Two things in it differ from `07a84aed1c`: the `whitespacePattern` field is gone, and `knownFormats` follows `totalLength` instead of `segments`.
+A token class in the full trace no longer has a `length`.
+The parse tree, the tags, the spans, the kind and the locale hint are the same. The package `@mailwoman/query-shape` is gone from npm's dependency list of `@mailwoman/core`, `@mailwoman/normalize`, `@mailwoman/kind-classifier`, `@mailwoman/locale-hint`, `@mailwoman/phrase-grouper`, `@mailwoman/mtf`, `@mailwoman/neural`, `@mailwoman/corpus`, `@mailwoman/react`, `@mailwoman/resolver` and `mailwoman`.
+Public names that moved are in the owners table above. `KnownFormatHitLike` left the `@mailwoman/neural` entry, and `isKnownPostcodeFormat` left `@mailwoman/postcode/recognize/legacy`.
+
+## Checks and what they showed (observed)
+
+| Check                                                                                                                | Result                                                                                                                                                               |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn clean`, `yarn compile`, `yarn typecheck`                                                                       | exit 0                                                                                                                                                               |
+| `yarn test:unit --run`                                                                                               | exit 0, 1,331 files passed and 1 skipped, 14,684 tests passed and 9 skipped                                                                                          |
+| `yarn test:integration --run` over the twelve touched workspaces                                                     | one failure, `mailwoman/cli/commands/data/pull.integration.test.ts`, which fails the same way at `07a84aed1c` (no weights in a fresh worktree's temporary data root) |
+| `test:browser` and `test:workers` in `recognize` and `postcode`                                                      | exit 0 each                                                                                                                                                          |
+| `test:gazetteer-worker`, `test:license-worker`, `wrangler deploy --dry-run` of the engine, gazetteer and API Workers | exit 0                                                                                                                                                               |
+| `yarn lint`, `lint:prose:code`, `lint:prose:vocab`, `yarn health`, `yarn health:debt`                                | exit 0, with 0 errors and 0 warnings in the Vale runs                                                                                                                |
+| `yarn workspace @mailwoman/docs lint:prose`                                                                          | exit 0, 0 errors, 24 warnings, none in a file this change wrote                                                                                                      |
+| `yarn workspace @mailwoman/docs build`, `yarn workspace @mailwoman/earth build`                                      | exit 0                                                                                                                                                               |
+| `yarn mwops release smoke-clean-install`                                                                             | exit 0, 67 workspaces packed                                                                                                                                         |
+| `node packages/recognize/tools/generate.run.ts --check`                                                              | exit 1 on `identifiers`, `primitives` and `structure`, and the same at `07a84aed1c`; the postcode generator's `--check` exits 0                                      |
+
+No Rust crate changed, so `cargo test` didn't run.
+
+## Decisions the issue left open (decided)
+
+- The stage and its fields keep the name `computeQueryShape` and the `query-shape` trace keys, so no trace key changes.
+- Core's `TokenClassView.length` and `QueryShapeLite.tokenClasses[].length` are gone with the legacy field, and `Segment.index` stays because `SegmentView` in core holds it.
+- `TextSpan` of `query-shape` became `TextFragment` in core, because `@mailwoman/recognize` already exports a different `TextSpan` and the two shapes differ.
+- `@mailwoman/normalize` and `@mailwoman/phrase-grouper` import the type `TextSpan` from `@mailwoman/recognize`, which adds a manifest dependency and no runtime code.
+- The recognizer's postal family, `primitives`, `coordinates`, `spatial` and `identifiers` stay out of the pipeline's composition, as the brief said.
