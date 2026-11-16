@@ -109,8 +109,8 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 
 	// A point-shaped query rather than a name: a `wof:` id opens its place, and the other
 	// shapes are explained, because the gazetteer indexes names and not positions.
-	const readPoint = usePointReader()
-	const pointQuery = useMemo(() => readPoint?.(text.trim()) ?? null, [readPoint, text])
+	const pointFromText = usePointReader()
+	const pointQuery = useMemo(() => pointFromText?.(text.trim()) ?? null, [pointFromText, text])
 
 	// Only the newest search or place load may publish its result.
 	const searchSequence = useRef(0)
@@ -157,10 +157,10 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 		(kind: SearchMode, input: string) => {
 			// The reader loads on mount.
 			// The search waits for it, so a point query never runs as a name search.
-			if (!gazetteer || !readPoint) return
+			if (!gazetteer || !pointFromText) return
 
 			const mine = ++searchSequence.current
-			const point = readPoint(input.trim())
+			const point = pointFromText(input.trim())
 
 			if (point) {
 				setGroups([])
@@ -202,7 +202,7 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 				}
 			)
 		},
-		[gazetteer, navigate, readPoint]
+		[gazetteer, navigate, pointFromText]
 	)
 
 	// A prefix search follows the text after the debounce.

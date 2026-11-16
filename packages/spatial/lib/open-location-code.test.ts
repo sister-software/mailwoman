@@ -10,13 +10,13 @@ import type { Validated } from "@mailwoman/recognize/types"
 import { describe, expect, it } from "vitest"
 
 import { decodePlusCode, encodePlusCode, recoverNearestPlusCode } from "#open-location-code"
-import { readPointQuery } from "#point-reading"
+import { recognizePointQuery } from "#point-reading"
 
 /**
  * The validated code the recognizer reads from a text: the only way a test holds a branded code of its own.
  */
 function recognizedCode(text: string): Validated.PlusCode {
-	const reading = readPointQuery(text)
+	const reading = recognizePointQuery(text)
 
 	if (reading?.kind !== "plus_code") throw new Error(`${text} is not a plus code the recognizer validates`)
 
@@ -88,7 +88,7 @@ describe("decodePlusCode", () => {
 
 	it("is never reached by padded forms and ordinary words: the recognizer reads no code from them", () => {
 		for (const text of ["MAIN+ST", "8FVC0000+", "VFQ+92P"]) {
-			expect(readPointQuery(text)?.kind, text).not.toBe("plus_code")
+			expect(recognizePointQuery(text)?.kind, text).not.toBe("plus_code")
 		}
 	})
 })
@@ -118,11 +118,11 @@ describe("recoverNearestPlusCode", () => {
 
 describe("the recognizer's reading of a token", () => {
 	it("classifies full vs short", () => {
-		expect(readPointQuery("764MVFQ6+92P")).toMatchObject({ kind: "plus_code", full: true })
-		expect(readPointQuery("VFQ6+92P")).toMatchObject({ kind: "plus_code", full: false })
+		expect(recognizePointQuery("764MVFQ6+92P")).toMatchObject({ kind: "plus_code", full: true })
+		expect(recognizePointQuery("VFQ6+92P")).toMatchObject({ kind: "plus_code", full: false })
 	})
 
 	it("refuses an odd count of digits before the separator", () => {
-		expect(readPointQuery("VFQ+92")).toBeNull()
+		expect(recognizePointQuery("VFQ+92")).toBeNull()
 	})
 })

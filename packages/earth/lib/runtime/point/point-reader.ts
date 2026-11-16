@@ -13,13 +13,13 @@
  *   The reader takes trimmed text, so every caller trims the typed input.
  */
 
-import type { readPoint } from "@mailwoman/spatial/point-reading"
+import type { pointFromText } from "@mailwoman/spatial/point-reading"
 import { useEffect, useState } from "react"
 
 /**
  * The reader's own signature, taken from the module without importing it.
  */
-export type PointReader = typeof readPoint
+type PointReader = typeof pointFromText
 
 let loading: Promise<PointReader> | null = null
 
@@ -29,7 +29,7 @@ let loading: Promise<PointReader> | null = null
  */
 export function loadPointReader(): Promise<PointReader> {
 	loading ??= import("@mailwoman/spatial/point-reading").then(
-		(module) => module.readPoint,
+		(module) => module.pointFromText,
 		(error: unknown) => {
 			loading = null
 

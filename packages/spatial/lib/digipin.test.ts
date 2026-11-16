@@ -5,7 +5,7 @@ import type { Validated } from "@mailwoman/recognize/types"
 import { expect, test } from "vitest"
 
 import { getDIGIPIN, getDIGIPINUnsafe, getLatLngFromDIGIPIN, getLatLngFromDIGIPINInto } from "#digipin"
-import { readPointQuery } from "#point-reading"
+import { recognizePointQuery } from "#point-reading"
 
 /**
  * Original India Post grid.
@@ -168,7 +168,7 @@ test("encoding a decoded cell center preserves DIGIPIN", () => {
  * holds a branded DIGIPIN of its own.
  */
 function recognizedDIGIPIN(text: string): Validated.Digipin {
-	const reading = readPointQuery(text)
+	const reading = recognizePointQuery(text)
 
 	if (reading?.kind !== "digipin") throw new Error(`"${text}" is not a DIGIPIN the recognizer validates`)
 
@@ -186,7 +186,7 @@ test("the display form and lower case normalize to the one code the decoder take
 
 test("the recognizer refuses what no decoder would take", () => {
 	for (const text of ["", "FFFFFFFFF", "FFFFFFFFFFF", "FFFFFFFFFA", "FFF-FFF-FFFFF", "FFFF-FFF-FFF"]) {
-		expect(readPointQuery(text)?.kind, text).not.toBe("digipin")
+		expect(recognizePointQuery(text)?.kind, text).not.toBe("digipin")
 	}
 })
 

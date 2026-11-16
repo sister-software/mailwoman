@@ -5,7 +5,7 @@
  * @file What a typed query resolves to when it is a point rather than an address, read from recognitions.
  *
  *   A search field receives coordinates in a dozen spellings, a plus code, an H3 cell, a geohash or a
- *   Who's On First id beside ordinary addresses. {@link readPointQuery} runs one recognizer over the `coordinates`,
+ *   Who's On First id beside ordinary addresses. {@link recognizePointQuery} runs one recognizer over the `coordinates`,
  *   `spatial` and `identifiers` families of `@mailwoman/recognize` and answers from the recognition that spans the text.
  *   It decodes no cell: decoding a code to a coordinate belongs to the module that owns the format,
  *   and the H3 reader loads a WebAssembly binary that a text test shouldn't pay for.
@@ -146,24 +146,24 @@ export interface NotAPointQuery {
  */
 export type PointQueryReading = PointReading | NotAPointQuery
 
-type ValidationOf<R> = R extends { readonly validation: infer V } ? V : never
-
-type PayloadOf<R> =
-	Extract<ValidationOf<R>, { readonly status: "validated" }> extends { readonly payload: infer P } ? P : never
-
 /**
  * The payload of a recognition the reader has already checked is validated.
  *
  * A recognition without one is a defect in the reader, so it throws rather than answering with an absence.
  */
-function payloadOf<R extends { readonly kind: string; readonly validation: { readonly status: string } }>(
-	recognition: R
-): PayloadOf<R> {
-	if (recognition.validation.status !== "validated") {
+function payloadOf<Payload>(recognition: {
+	readonly kind: string
+	readonly validation:
+		| { readonly status: "validated"; readonly payload: Payload }
+		| { readonly status: "rejected" | "unvalidated" }
+}): Payload {
+	const { validation } = recognition
+
+	if (validation.status !== "validated") {
 		throw new RangeError(`${recognition.kind} reached its point handler without a validated payload`)
 	}
 
-	return (recognition.validation as unknown as { payload: PayloadOf<R> }).payload
+	return validation.payload
 }
 
 interface PairPayload {
@@ -275,7 +275,7 @@ const handlers = {
  *
  * @param text The text the caller already trimmed, because the grammars admit no outer white space.
  */
-export function readPointQuery(text: string): PointQueryReading | null {
+export function recognizePointQuery(text: string): PointQueryReading | null {
 	let notAPoint: NotAPointQuery | null = null
 
 	for (const recognition of recognizer.recognize(text).recognitions) {
@@ -299,8 +299,8 @@ export function readPointQuery(text: string): PointQueryReading | null {
 /**
  * Reads a trimmed text as a point, or `null` when it is an address or a recognized shape with no position.
  */
-export function readPoint(text: string): PointReading | null {
-	const reading = readPointQuery(text)
+export function pointFromText(text: string): PointReading | null {
+	const reading = recognizePointQuery(text)
 
 	return reading && reading.kind !== "not_a_point" ? reading : null
 }

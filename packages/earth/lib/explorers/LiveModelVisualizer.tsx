@@ -98,8 +98,8 @@ export function LiveModelVisualizer({
 
 	// A point query has no decode path: the classifier labels address words, and coordinates,
 	// a plus code or a Who's On First id are decoded by their own readers on the map page.
-	const readPoint = usePointReader()
-	const pointQuery = useMemo(() => readPoint?.(text.trim()) ?? null, [readPoint, text])
+	const pointFromText = usePointReader()
+	const pointQuery = useMemo(() => pointFromText?.(text.trim()) ?? null, [pointFromText, text])
 
 	const run = useCallback(
 		async (input: string) => {

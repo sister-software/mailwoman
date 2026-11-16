@@ -21,7 +21,7 @@ After the DMS fix the same run counted 6,637 equal and 1 different value for `pa
 
 ## What was kept (decided)
 
-`packages/spatial/data/fixtures/point-query-frozen.fixture.json` holds 627 cases drawn from those inputs, each a trimmed text and the reading `readPoint` returns, or `null`. It follows the pattern of `query-shape-frozen.fixture.json`: the legacy parser's results are the recorded oracle, and the new function is tested against them.
+`packages/spatial/data/fixtures/point-query-frozen.fixture.json` holds 627 cases drawn from those inputs, each a trimmed text and the reading `pointFromText` returns, or `null`. It follows the pattern of `query-shape-frozen.fixture.json`: the legacy parser's results are the recorded oracle, and the new function is tested against them.
 
 | Category                              | Cases | Meaning                                                                                       |
 | ------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
@@ -63,7 +63,7 @@ Each class lists the old result, the new result and the specification that decid
 
 ## The point reader's handler map (decided)
 
-`readPointQuery` runs one recognizer over the `coordinates`, `spatial` and `identifiers` families. A recognition becomes a reading only when the validator accepted it and its span is the whole text. An embedded or rejected recognition never does, so `Apt 4, 12 Main St` and `geo:48.8584,2.2945;crs=Moon-2011` read as no point.
+`recognizePointQuery` runs one recognizer over the `coordinates`, `spatial` and `identifiers` families. A recognition becomes a reading only when the validator accepted it and its span is the whole text. An embedded or rejected recognition never does, so `Apt 4, 12 Main St` and `geo:48.8584,2.2945;crs=Moon-2011` read as no point.
 The caller trims, because the grammars admit no outer white space. The earth app trims where it takes the typed input.
 
 The handler object is checked with `satisfies HandlerMap<typeof families>`, so a kind added to any family fails the build until it has a handler. A type-level test in `point-reading.test.ts` keeps one kind out of a map and expects the compiler to refuse it.

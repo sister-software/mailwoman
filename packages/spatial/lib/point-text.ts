@@ -12,7 +12,7 @@
 import type { PointQueryKind } from "#point-reading"
 
 /**
- * A coordinate pair as text, latitude first, in the form `readPoint` reads back.
+ * A coordinate pair as text, latitude first, in the form `pointFromText` reads back.
  *
  * Six decimals place a point within about 11 cm.
  */

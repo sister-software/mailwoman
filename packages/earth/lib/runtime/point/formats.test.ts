@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { decodePlusCode } from "@mailwoman/spatial/open-location-code"
-import { readPoint } from "@mailwoman/spatial/point-reading"
+import { pointFromText } from "@mailwoman/spatial/point-reading"
 import { expect, test } from "vitest"
 
 import { describePoint, h3ResolutionForZoom } from "#runtime/point/formats"
@@ -19,9 +19,13 @@ test("every encoding of a point reads back to the point", async () => {
 	expect(formats.every((format) => typeof format.hint === "string")).toBe(true)
 	expect(formats.find((format) => format.label === "H3")?.hint).toBe("H3 cell at resolution 8")
 
-	expect(readPoint(byLabel.get("Coordinates")!)).toMatchObject({ kind: "coordinates", latitude: LAT, longitude: LON })
+	expect(pointFromText(byLabel.get("Coordinates")!)).toMatchObject({
+		kind: "coordinates",
+		latitude: LAT,
+		longitude: LON,
+	})
 
-	const dms = readPoint(byLabel.get("DMS")!)
+	const dms = pointFromText(byLabel.get("DMS")!)
 
 	if (dms?.kind !== "coordinates") throw new Error("the DMS row did not read as coordinates")
 
@@ -30,7 +34,7 @@ test("every encoding of a point reads back to the point", async () => {
 
 	// The plus code row reads back through the recognizer.
 	// It validates the text the encoder wrote.
-	const plus = readPoint(byLabel.get("Plus code")!)
+	const plus = pointFromText(byLabel.get("Plus code")!)
 
 	if (plus?.kind !== "plus_code") throw new Error("the plus code row did not read as a plus code")
 
@@ -39,7 +43,7 @@ test("every encoding of a point reads back to the point", async () => {
 	expect(cell.lat).toBeCloseTo(LAT, 4)
 	expect(cell.lon).toBeCloseTo(LON, 4)
 
-	expect(readPoint(byLabel.get("H3")!)).toMatchObject({ kind: "h3" })
+	expect(pointFromText(byLabel.get("H3")!)).toMatchObject({ kind: "h3" })
 	expect(byLabel.get("Geohash")!.startsWith("dqc")).toBe(true)
 	expect(byLabel.get("MGRS")!.startsWith("18S")).toBe(true)
 })
