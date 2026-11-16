@@ -256,24 +256,49 @@ fn multibyte() -> Family {
 fn the_repository_families_agree_with_the_reference_interpreter() {
 	let mut tally = verify(vec![grammars::primitives::family()], &['0', '.', '-', ' ', 'a'], 4, 7);
 
-	// The `geo:` URI needs the letters of its scheme, so the first alphabet leaves it out and the second holds them.
-	for (status, count) in verify_except(
-		vec![grammars::coordinates::family()],
-		&['0', '.', '-', ',', ' '],
-		3,
-		7,
-		&["coordinate.geo_uri"],
-	) {
-		*tally.entry(status).or_default() += count;
-	}
+	// Each alphabet holds the characters of the shapes it leaves in, and `skip` lists the shapes whose languages need
+	// characters the alphabet lacks: the `geo:` URI needs the letters of its scheme, a degree pair needs a mark, a
+	// Maps segment needs `@`, and a labeled pair needs its labels.
+	let coordinates = [
+		"coordinate.decimal_pair",
+		"coordinate.decimal_pair_spaced",
+		"coordinate.dms_pair",
+		"coordinate.dms_pair_spaced",
+		"coordinate.geo_uri",
+		"coordinate.labeled_pair",
+		"coordinate.maps_segment",
+	];
+	let only = |kept: &[&str]| -> Vec<&'static str> {
+		coordinates
+			.iter()
+			.copied()
+			.filter(|shape| !kept.contains(shape))
+			.collect()
+	};
 
-	for (status, count) in verify(
-		vec![grammars::coordinates::family()],
-		&['g', 'E', 'o', ':', '0', ','],
-		3,
-		7,
-	) {
-		*tally.entry(status).or_default() += count;
+	for (alphabet, kept, word_length) in [
+		(
+			vec!['0', '.', '-', ',', ' '],
+			vec!["coordinate.decimal_pair", "coordinate.decimal_pair_spaced"],
+			7,
+		),
+		(vec!['g', 'E', 'o', ':', '0', ','], vec!["coordinate.geo_uri"], 7),
+		(
+			vec!['1', '°', ',', 'N', ' '],
+			vec!["coordinate.dms_pair", "coordinate.dms_pair_spaced"],
+			6,
+		),
+		(vec!['@', '1', ',', 'z'], vec!["coordinate.maps_segment"], 7),
+	] {
+		for (status, count) in verify_except(
+			vec![grammars::coordinates::family()],
+			&alphabet,
+			3,
+			word_length,
+			&only(&kept),
+		) {
+			*tally.entry(status).or_default() += count;
+		}
 	}
 
 	// The repository grammars have no finite language, so every viable and extendable answer is compared and no

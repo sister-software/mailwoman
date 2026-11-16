@@ -17,7 +17,7 @@
  *   The family has two kinds of shape, and each is scoped `whole_or_embedded`:
  *
  *   - `postal.<cc>` is a bare code.
- *     Its language is the body of `postcodeSyntax`: the libaddressinput pattern
+ *     Its language is the body of `postcodeSyntaxText`: the libaddressinput pattern
  *     and the written forms, with each space tolerated as `\s*`.
  *     One shape stands for every country whose body has the same language,
  *     and `<cc>` is the first of them in ISO order.
@@ -43,10 +43,30 @@
  *   class of code units whose upper case is that character.
  *   The class for `I` holds `ı`, and the class for `S` holds `ſ`.
  *
+ *   # One case rule, for both sides
+ *
+ *   Every shape matches either case, so a person's `sw1a 1aa` is a postcode.
+ *   The serving side and the training encoder read this one family, so both apply the rule.
+ *
+ *   The old shape table required upper case to stay off lower-case prose.
+ *   The serving side upper-cased the text before it matched, and the training encoder matched the raw case.
+ *
+ *   A lower-case run that fits a postcode form is a candidate on both sides now.
+ *   The anchor table decides whether the candidate is a postcode that exists.
+ *   A candidate without an entry paints no piece.
+ *
+ *   # The form of each shape
+ *
+ *   Each shape's metadata states a `form`: `designated` for a printed form, `alnum` for a
+ *   bare form whose language holds a letter, and `numeric` for a bare form of digits.
+ *   See `PostalForm` in `lib/recognize/postal/readers.ts`.
+ *
  *   # The embedded boundary
  *
- *   Every shape has `boundary: "token"`: the engine reports an embedded match only when the character
- *   before it and the one after it are not an ASCII letter, an ASCII digit or a connector.
+ *   Every shape has `boundary: "alnum"`: the engine reports an embedded match only when the
+ *   character before it and the one after it are not an ASCII letter or an ASCII digit.
+ *   A connector may touch a match, so `54000` stands in `Lahore-54000` and in `FI-FI-01730`,
+ *   the spellings the old shape table matched with `\b`.
  *   See `lib/recognize/postal/readers.ts`.
  *
  *   # What the compiler refuses
@@ -60,7 +80,8 @@
  *   alternative, and it refuses any other `^`, `$` or `\b`.
  */
 
-import { postcodeSyntax, postcodeSyntaxCountries } from "#country-formats"
+import { postcodeSyntaxCountries, printedPostcodePrefix } from "#country-formats"
+import { postcodeSyntaxText } from "#country-formats/source"
 
 /**
  * The family's ID.
@@ -76,13 +97,13 @@ export const FAMILY_ID = "postal"
  *
  * The manifest records the backend of each automaton and the budget under `limits.denseBytes`.
  */
-export const POSTAL_DENSE_BYTES = 2_097_152
+export const POSTAL_DENSE_BYTES = 0
 
 /**
  * Why the postal family has the dense budget above.
  */
 export const POSTAL_BACKEND_REASON =
-	"the default dense budget: a sparse build of the artifact is 5.7 times smaller, short of the ten times that would justify it, and 1.3 to 2.5 times slower in a benchmark taken under load"
+	"a budget of zero stores both automata sparse: the artifact is 326,696 bytes against 1,873,640 dense, and the browser and the Workers carry it; countriesAcceptingPostcode on the sparse artifact took 4.1 and 1.7 microseconds for 12345 and SW1A 1AA against 12.6 and 11.9 for the RegExp set it replaced, at a load average near 5"
 
 /**
  * The file name the definition is written under.
@@ -271,19 +292,19 @@ function translateAlternative(country: string, alternative: string, whitespace: 
 /**
  * The body of `country`'s postcode as a regular expression for the compiler.
  *
- * It reads the compiled pattern of `postcodeSyntax`, so the libaddressinput pattern,
+ * It reads the pattern text of `postcodeSyntaxText`, so the libaddressinput pattern,
  * the written forms and the spacing tolerance are the package's own.
  * The result has no assertion and is wrapped in `(?i:...)`.
  */
 export function translateBody(country: string, rewrites: Rewrite[] = []): string {
-	const syntax = postcodeSyntax(country)
+	const syntax = postcodeSyntaxText(country)
 
 	if (!syntax) throw new Error(`${country} has no postcode syntax`)
 
-	const { source } = syntax.pattern
+	const source = syntax.pattern
 
 	if (!source.startsWith("^(?:") || !source.endsWith(")$")) {
-		throw new Error(`${country}: the compiled pattern is not anchored as postcodeSyntax writes it: /${source}/`)
+		throw new Error(`${country}: the pattern is not anchored as postcodeSyntaxText writes it: /${source}/`)
 	}
 
 	const whitespace = whitespaceClass()
@@ -307,7 +328,7 @@ export function translateBody(country: string, rewrites: Rewrite[] = []): string
  * case-insensitively by the upper-case rule.
  */
 export function translatePrinted(country: string): string | null {
-	const prefix = postcodeSyntax(country)?.prefix
+	const prefix = printedPostcodePrefix(country)
 
 	if (!prefix) return null
 
@@ -345,7 +366,7 @@ export interface DefinitionShape {
 	id: string
 	pattern: string
 	scope?: "whole" | "embedded" | "whole_or_embedded"
-	boundary?: "token"
+	boundary?: "token" | "alnum"
 	overlaps?: string[]
 	metadata?: Record<string, unknown>
 }
@@ -380,7 +401,7 @@ export interface ReportedOverlap {
  * Each group is in ISO order and the groups are in the ISO order of their first member.
  */
 export function equivalenceGroups(prefix: "bare" | "printed", reported: readonly ReportedOverlap[]): string[][] {
-	const countries = postcodeSyntaxCountries().filter((country) => prefix === "bare" || postcodeSyntax(country)?.prefix)
+	const countries = postcodeSyntaxCountries().filter((country) => prefix === "bare" || printedPostcodePrefix(country))
 	const parent = new Map(countries.map((country) => [country, country]))
 
 	const find = (country: string): string => {
@@ -421,6 +442,18 @@ export function equivalenceGroups(prefix: "bare" | "printed", reported: readonly
 }
 
 /**
+ * The form of a bare shape, from the text of its pattern.
+ *
+ * A letter outside a `\x{...}` escape makes the shape alphanumeric.
+ * `PostalForm` in `lib/recognize/postal/readers.ts` states what each form may do.
+ */
+export function bareForm(pattern: string): "alnum" | "numeric" {
+	const readable = pattern.replaceAll(/\\x\{[0-9a-f]+\}/gu, "").replace("(?i:", "")
+
+	return /[A-Za-z]/u.test(readable) ? "alnum" : "numeric"
+}
+
+/**
  * The shape of `prefix`'s group whose first member is `lead`.
  */
 export function postalShapeID(prefix: "bare" | "printed", lead: string): string {
@@ -445,19 +478,21 @@ export function postalDefinition(
 	for (const group of bare) {
 		const id = postalShapeID("bare", group[0]!)
 
+		const pattern = translateBody(group[0]!)
+
 		shapes.push({
 			id,
-			pattern: translateBody(group[0]!),
+			pattern,
 			scope: "whole_or_embedded",
-			boundary: "token",
+			boundary: "alnum",
 			...(declared.get(id)?.length && { overlaps: [...declared.get(id)!] }),
-			metadata: { kind: "code", countries: [...group] },
+			metadata: { kind: "code", form: bareForm(pattern), countries: [...group] },
 		})
 	}
 
 	for (const group of printed) {
 		const id = postalShapeID("printed", group[0]!)
-		const prefix = postcodeSyntax(group[0]!)!.prefix!
+		const prefix = printedPostcodePrefix(group[0]!)!
 		const bodies = new Set(group.map((country) => bareOf.get(country)))
 
 		if (bodies.size !== 1) throw new Error(`the printed group ${group.join(",")} has several bare shapes`)
@@ -466,9 +501,9 @@ export function postalDefinition(
 			id,
 			pattern: translatePrinted(group[0]!)!,
 			scope: "whole_or_embedded",
-			boundary: "token",
+			boundary: "alnum",
 			...(declared.get(id)?.length && { overlaps: [...declared.get(id)!] }),
-			metadata: { kind: "printed", countries: [...group], prefix, bare: [...bodies][0] },
+			metadata: { kind: "printed", form: "designated", countries: [...group], prefix, bare: [...bodies][0] },
 		})
 	}
 
@@ -477,7 +512,7 @@ export function postalDefinition(
 		version: 1,
 		family: FAMILY_ID,
 		generator: GENERATOR,
-		metadata: { build: { denseBudget: `${POSTAL_DENSE_BYTES / (1 << 20)} MiB`, reason: POSTAL_BACKEND_REASON } },
+		metadata: { build: { denseBudgetBytes: POSTAL_DENSE_BYTES, reason: POSTAL_BACKEND_REASON } },
 		shapes,
 	}
 }

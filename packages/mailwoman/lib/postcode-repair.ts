@@ -9,7 +9,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
-import type { QueryShape } from "@mailwoman/query-shape"
+import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
 
 /**
  * Postcode formats whose surface is structurally distinguishable from anything else
@@ -37,6 +37,21 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"po_box",
 ])
 
+/**
+ * Whether a hit is a postcode form distinguishable from anything else an address writes.
+ *
+ * The `legacy` generation lists the two formats.
+ * The `postal` generation accepts a form that's printed with a prefix
+ * or holds a letter, and that starts with a letter.
+ *
+ * A form that starts with a digit, such as `1012 AB`, can be a house number and a direction.
+ */
+function isRepairable(shape: QueryShape, hit: QueryShape["knownFormats"][number]): boolean {
+	if (shape.generation !== "postal") return REPAIRABLE_POSTCODE_FORMATS.has(hit.format)
+
+	return hit.format === "postcode" && hit.form !== "numeric" && /^\p{L}/u.test(hit.span.body)
+}
+
 function overlaps(node: AddressNode, start: number, end: number): boolean {
 	return node.start < end && node.end > start
 }
@@ -57,7 +72,7 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 	let repaired = false
 
 	for (const hit of shape.knownFormats) {
-		if (!REPAIRABLE_POSTCODE_FORMATS.has(hit.format) || hit.confidence < MIN_FORMAT_CONFIDENCE) continue
+		if (!isRepairable(shape, hit) || hit.confidence < MIN_FORMAT_CONFIDENCE) continue
 
 		const { start, end, body } = hit.span
 

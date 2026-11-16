@@ -5,7 +5,7 @@
  *   The `structure` family at the TypeScript boundary: the typed fields, UTF-16 offsets
  *   and the rule that a recognizer without the family adds no fields.
  *
- *   The equality with `computeQueryShape` is tested in `tools/differential.test.ts`.
+ *   The equality with the frozen legacy output is tested in `tools/differential.test.ts`.
  */
 
 import { describe, expect, expectTypeOf, it } from "vitest"

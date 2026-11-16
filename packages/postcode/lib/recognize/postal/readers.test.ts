@@ -6,7 +6,7 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { createRecognizer } from "@mailwoman/recognize"
 import { describe, expect, it } from "vitest"
 
-import { postcodeSyntax, postcodeSyntaxCountries } from "#country-formats"
+import { postcodeSyntaxCountries, printedPostcodePrefix } from "#country-formats"
 import {
 	acceptingCountries,
 	postal,
@@ -30,7 +30,7 @@ describe("the postal family's shapes", () => {
 
 	it("holds a printed shape for each country whose layout prints a prefix, and only those", () => {
 		const printed = Object.values(PostalMetadata.shapes).filter((shape) => shape.kind === "printed")
-		const prefixed = postcodeSyntaxCountries().filter((country) => postcodeSyntax(country)?.prefix)
+		const prefixed = postcodeSyntaxCountries().filter((country) => printedPostcodePrefix(country))
 
 		expect(printed.flatMap((shape) => [...shape.countries]).toSorted()).toEqual(prefixed)
 	})
@@ -108,7 +108,10 @@ describe("an embedded candidate", () => {
 
 	it("drops a candidate inside a longer run of letters and digits, and keeps one beside punctuation", () => {
 		expect(candidatesOf("123456").filter(({ text }) => text.length === 5)).toEqual([])
-		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345")).toBe(false)
+		// A connector may touch a candidate, so the five digits before the hyphen stand beside the longer ZIP+4.
+		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345")).toBe(true)
+		expect(candidatesOf("Lahore-54000").some(({ text }) => text === "54000")).toBe(true)
+		expect(candidatesOf("x12345").filter(({ text }) => text === "12345")).toEqual([])
 		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345-6789")).toBe(true)
 		expect(candidatesOf("Main St, 12345.").some(({ text }) => text === "12345")).toBe(true)
 		expect(candidatesOf("〒100-0001東京都").some(({ text }) => text === "〒100-0001")).toBe(true)

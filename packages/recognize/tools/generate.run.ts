@@ -4,6 +4,7 @@
 /**
  *   Writes each grammar family's intermediate representation to `data/ir/<family>.json`, its compiled
  *   artifact to `data/artifacts/<family>.rca1`, the build manifest to `data/manifests/artifacts.json`,
+ *   each family's declarations as data to `data/declarations/<family>.json`,
  *   the compiler report to `data/reports/compiler-report.json` and the overlap witnesses
  *   to `data/fixtures/overlap-witnesses.json`, all with `crates/recognize-build`.
  *
@@ -43,7 +44,6 @@ import { IR_FORMAT, IR_VERSION } from "#ir"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 const recognize = (...segments: string[]): string => workspacePath("recognize", ...segments)
-
 await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build"], { cwd: workspacePath("recognize") })
 
 await using scratch = await temporaryDirectory("recognize-generate-")
@@ -147,6 +147,18 @@ for (const file of rustFiles) {
 		await readLocalTextFile(`${built}/rust/${file}`),
 		"declarations"
 	)
+}
+
+// Each family's declarations as data, for the generated reference documentation.
+for (const { family } of written) {
+	const to = recognize("data", "declarations", `${family}.json`)
+	const formatted = await format(to, await readLocalTextFile(`${built}/declarations/${family}.json`), formatConfig)
+
+	if (formatted.errors.length) {
+		throw new Error(`oxfmt could not format ${to}: ${formatted.errors.map((error) => error.message).join("; ")}`)
+	}
+
+	await settle(to, formatted.code, "declarations data")
 }
 
 for (const { family } of written) {

@@ -10,7 +10,7 @@ import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/write
 import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { packageHasBinaries } from "#weights/channels"
+import { packageHasBinaries, readRequiredChannels } from "#weights/channels"
 
 async function weightsPackage(files: Record<string, string>, card?: Record<string, unknown>) {
 	const directory = await temporaryDirectory("weights-channels-")
@@ -25,6 +25,40 @@ async function weightsPackage(files: Record<string, string>, card?: Record<strin
 
 	return directory.moveWith({ directory: directory.path })
 }
+
+describe("readRequiredChannels", () => {
+	it("reads a card that declares span_mode postal", async () => {
+		await using pkg = await weightsPackage({}, { requires: { anchor: { required: true, span_mode: "postal" } } })
+
+		const channels = await readRequiredChannels(resolvePath(pkg.directory, "model-card.json"))
+
+		expect(channels?.anchor?.span_mode).toBe("postal")
+	})
+
+	it("refuses a span mode the loader doesn't know", async () => {
+		await using pkg = await weightsPackage({}, { requires: { anchor: { required: true, span_mode: "regex" } } })
+
+		await expect(readRequiredChannels(resolvePath(pkg.directory, "model-card.json"))).rejects.toThrow(
+			/"alnum-run", "shaped" or "postal"/
+		)
+	})
+
+	it("reads the query-shape generation a card declares, and leaves it absent otherwise", async () => {
+		await using postal = await weightsPackage({}, { requires: { query_shape: "postal" } })
+		await using bare = await weightsPackage({}, { requires: { anchor: { required: false } } })
+
+		expect((await readRequiredChannels(resolvePath(postal.directory, "model-card.json")))?.query_shape).toBe("postal")
+		expect((await readRequiredChannels(resolvePath(bare.directory, "model-card.json")))?.query_shape).toBeUndefined()
+	})
+
+	it("refuses a query-shape generation it doesn't know", async () => {
+		await using pkg = await weightsPackage({}, { requires: { query_shape: "v2" } })
+
+		await expect(readRequiredChannels(resolvePath(pkg.directory, "model-card.json"))).rejects.toThrow(
+			/"legacy" or "postal"/
+		)
+	})
+})
 
 describe("packageHasBinaries", () => {
 	it("accepts a Latin package on its tokenizer alone", async () => {

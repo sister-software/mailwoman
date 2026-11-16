@@ -1,7 +1,218 @@
 {
 	"crossFamily": {
-		"equivalent": [],
+		"equivalent": [
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.de_postcode_one"
+				}
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.fr_postcode_one"
+				}
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.us_zip_one"
+				}
+			}
+		],
 		"overlaps": [
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.de_postcode_one"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.fr_postcode_one"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postcode_legacy",
+					"shape": "format.us_zip_one"
+				},
+				"declared": false,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
 			{
 				"a": {
 					"family": "postcode_legacy",
@@ -109,6 +320,42 @@
 				},
 				"declared": false,
 				"witness": "BP"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "CCCCCCCCCC"
 			}
 		]
 	},

@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `structure` family against `computeQueryShape`: the golden fixture's 78 inputs, generated
- *   inputs, the whole of Unicode, and the promise that every promised input script has ranges.
+ *   The `structure` family against the frozen output of the legacy classifier: the golden inputs,
+ *   the quirks, the generated inputs and the gauntlet inputs of the fixture, then invariants
+ *   on fresh generated inputs, and the promise that every promised input script has ranges.
  *
- *   The real-row comparison is `tools/differential.run.ts`, and its summary is committed.
+ *   The fixture is `data/fixtures/query-shape-frozen.fixture.json`.
+ *   The class and script of every Unicode codepoint are in `differential.integration.test.ts`.
+ *
+ *   The real-row comparison ran once against the legacy package before it was deleted,
+ *   and its summary is `data/reports/structure-differential.json`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isPresent } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { unicodeScriptsOf } from "@mailwoman/registry"
 import type { BCP47 } from "@mailwoman/registry/types"
@@ -17,50 +21,71 @@ import { describe, expect, it } from "vitest"
 
 import { createRecognizer } from "#index"
 import { structure } from "#structure"
-import { compareOne, generatedInputs } from "#tools/differential"
+import { generatedInputs } from "#tools/differential"
+import { plainFields, readFrozenFixture } from "#tools/frozen"
 
-interface GoldenFixture {
-	cases: Array<{ category: string; input: string }>
-}
+const recognizer = createRecognizer([structure])
 
-describe("the structure family equals computeQueryShape", () => {
-	it("on the golden fixture's inputs", async () => {
-		const fixture = await readLocalJSONFile<GoldenFixture>(
-			workspacePath("query-shape", "test", "fixtures", "compute-query-shape.golden.json").toString()
-		)
+describe("the structure family equals the frozen legacy output", () => {
+	it("on every case of the fixture, in the six structural fields", async () => {
+		const fixture = await readFrozenFixture()
 
-		expect(fixture.cases).toHaveLength(78)
+		expect(fixture.cases.length).toBeGreaterThan(1500)
 
-		const differences = fixture.cases.map(({ input }) => compareOne(input)).filter(isPresent)
+		const differences = fixture.cases
+			.map(({ category, input, fields: frozen }) => {
+				const { knownFormats: _ignored, ...recognized } = plainFields(recognizer.recognize(input).fields)
+				const { knownFormats: _frozenFormats, ...expected } = frozen
 
-		expect(differences).toEqual([])
-	})
-
-	it("on generated inputs over every class the legacy code lists", () => {
-		const differences = generatedInputs(4000, 20_261_115).map(compareOne).filter(isPresent)
+				// oxlint-disable-next-line no-restricted-properties -- the comparison needs a canonical text of plain data
+				return JSON.stringify(recognized) === JSON.stringify(expected)
+					? null
+					: { category, input, recognized, expected }
+			})
+			.filter((difference) => difference !== null)
 
 		expect(differences.slice(0, 5)).toEqual([])
 	})
 
-	it("on the quirks the Phase 0 record lists", () => {
-		const quirks = [
-			"Αθήνα",
-			"ＡＢＣ １２３",
-			"​12345",
-			"北a",
-			"a北",
-			"Main St, NW, Washington",
-			"Box 1012, LG",
-			"ニューヨーク-NY",
-			"a , NY, b",
-			"×",
-		]
+	it("on every category the generators and the sources drew", async () => {
+		const fixture = await readFrozenFixture()
+		const categories = new Set(fixture.cases.map(({ category }) => category.split(":")[0]))
 
-		expect(quirks.map(compareOne).filter(isPresent)).toEqual([])
+		expect([...categories].toSorted()).toEqual([
+			"gauntlet",
+			"generated-known-formats",
+			"generated-structure",
+			"golden",
+			"quirk",
+		])
 	})
+})
 
-	it("on a 300-digit run and a 300-character run of one CJK character", () => {
-		expect(["1".repeat(300), "漢".repeat(300), "a-".repeat(300)].map(compareOne).filter(isPresent)).toEqual([])
+describe("the structure family's invariants on fresh generated inputs", () => {
+	it("returns spans that index the text, tokens in order and segments that do not overlap", () => {
+		for (const text of generatedInputs(2000, 424_242)) {
+			const { tokenClasses, segments, totalLength } = recognizer.recognize(text).fields
+
+			expect(totalLength).toBe(text.length)
+
+			let end = 0
+
+			for (const { span } of tokenClasses) {
+				expect(span.start).toBeGreaterThanOrEqual(end)
+				expect(text.slice(span.start, span.end)).toBe(span.body)
+
+				end = span.end
+			}
+
+			end = 0
+
+			for (const { span, body } of segments) {
+				expect(span.start).toBeGreaterThanOrEqual(end)
+				expect(text.slice(span.start, span.end)).toBe(body)
+
+				end = span.end
+			}
+		}
 	})
 })
 
@@ -70,7 +95,6 @@ describe("the support promises", () => {
 			promises: Array<{ input: string; embeddedNameScripts: string[] }>
 		}>(workspacePath("codex", "lib", "support", "promises.json").toString())
 
-		const recognizer = createRecognizer([structure])
 		const unclassified: string[] = []
 
 		for (const { input, embeddedNameScripts } of promises.promises) {

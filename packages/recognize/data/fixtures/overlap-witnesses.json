@@ -2,6 +2,149 @@
 	"pairs": [
 		{
 			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_block"
+			},
+			"b": {
+				"family": "identifiers",
+				"shape": "h3.cell"
+			},
+			"witness": "800000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_block"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_block"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_block_group"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_block_group"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_county"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_state"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_state"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_tract"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "00000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "census.geoid_tract"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "00000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "h3.cell"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"witness": "800000000000000"
+		},
+		{
+			"a": {
+				"family": "identifiers",
+				"shape": "h3.cell"
+			},
+			"b": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"witness": "800000000000000"
+		},
+		{
+			"a": {
 				"family": "primitives",
 				"shape": "number.digit_run"
 			},
@@ -10,6 +153,39 @@
 				"shape": "number.signed_decimal"
 			},
 			"witness": "0"
+		},
+		{
+			"a": {
+				"family": "primitives",
+				"shape": "number.digit_run"
+			},
+			"b": {
+				"family": "spatial",
+				"shape": "digipin.compact"
+			},
+			"witness": "2222222222"
+		},
+		{
+			"a": {
+				"family": "primitives",
+				"shape": "number.signed_decimal"
+			},
+			"b": {
+				"family": "spatial",
+				"shape": "digipin.compact"
+			},
+			"witness": "2222222222"
+		},
+		{
+			"a": {
+				"family": "primitives",
+				"shape": "word.ascii"
+			},
+			"b": {
+				"family": "spatial",
+				"shape": "digipin.compact"
+			},
+			"witness": "CCCCCCCCCC"
 		}
 	]
 }

@@ -9,9 +9,9 @@
 //! character predicates and case mappings (`python_text`) and its `f64` arithmetic before the one `f32`
 //! conversion.
 //!
-//! The painters and the label projection need no regex engine, so the serving side can share them through
-//! WebAssembly. The `finders` feature adds the regex-backed postcode-shape and postcode-syntax finders the
-//! shaped anchor and the code-unit channel read.
+//! The painters and the label projection need no search engine, so the serving side can share them through
+//! WebAssembly. The `finders` feature adds the postcode finders the postal anchor and the code-unit channel read,
+//! which run the `postal` family's artifact through `recognize-core`.
 
 pub mod anchor;
 pub mod channel;
@@ -32,6 +32,6 @@ pub use encoder::{AnchorMode, EncodedBatch, Encoder, EncoderConfig, Finders, Lex
 pub use error::Error;
 
 #[cfg(feature = "finders")]
-pub use finders::RegexFinders;
+pub use finders::PostalFinders;
 #[cfg(feature = "finders")]
 pub use resources::{EncoderResources, ResourcePaths};

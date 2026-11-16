@@ -373,6 +373,45 @@ impl Engine {
 		self.families.get(family).map_or(&[], |loaded| loaded.shapes.as_slice())
 	}
 
+	/// The shapes of the family at position `family` whose whole-input automaton accepts exactly `text`, as positions in
+	/// [`Engine::shapes`], in ascending order.
+	///
+	/// This runs the whole-input automaton only, so a caller that asks whether a string is a code, and not where a code
+	/// stands inside it, pays no embedded search. A shape of scope `Embedded` has no whole-input pattern and never
+	/// appears. The empty text is accepted by no shape.
+	///
+	/// Fails when the family has no whole-input automaton or `text` is longer than the family's compiler limit admits.
+	pub fn whole_shapes(&self, family: usize, text: &str) -> Result<Vec<usize>, SearchError> {
+		let loaded = &self.families[family];
+		let Some(whole) = &loaded.whole else {
+			return Err(SearchError::NoWhole {
+				family: loaded.header.family.clone(),
+			});
+		};
+		let limit = loaded.header.input_limit_bytes as usize;
+
+		if text.len() > limit {
+			return Err(SearchError::InputTooLong {
+				family: loaded.header.family.clone(),
+				length: text.len(),
+				limit,
+			});
+		}
+
+		let mut shapes = Vec::new();
+
+		if !text.is_empty() {
+			search_whole(whole, text.as_bytes(), |pattern| {
+				shapes.push(whole.shape_indexes[pattern])
+			})?;
+		}
+
+		shapes.sort_unstable();
+		shapes.dedup();
+
+		Ok(shapes)
+	}
+
 	/// The names behind a located span.
 	pub fn candidate(&self, located: Located) -> Candidate<'_> {
 		let family = &self.families[located.family];

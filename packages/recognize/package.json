@@ -25,6 +25,7 @@
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
 		"tools/**/*.ts",
+		"data/declarations/*.json",
 		"data/ir/*.json",
 		"data/artifacts/*.rca1",
 		"data/manifests/*.json",
@@ -78,6 +79,7 @@
 		"access": "public"
 	},
 	"scripts": {
+		"generate:check": "node tools/generate.run.ts --check",
 		"test:browser": "vitest run --config vitest.browser.config.ts",
 		"test:workers": "vitest run --config vitest.workers.config.ts"
 	},
@@ -87,7 +89,6 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-plugin": "^1.4.11",
-		"@mailwoman/query-shape": "workspace:*",
 		"@types/node": "^26.6.6",
 		"@vitest/browser-playwright": "5.0.5",
 		"esbuild": "0.28.2",

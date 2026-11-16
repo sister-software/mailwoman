@@ -10,7 +10,7 @@
  *   the owner walk live here.
  */
 
-import type { CharRange } from "@mailwoman/query-shape"
+import type { CharRange } from "@mailwoman/recognize/types"
 
 export interface WordToken {
 	/**

@@ -285,3 +285,58 @@ describe("when a coordinate recognition may be trusted", () => {
 		}
 	})
 })
+
+describe("the other spellings of a point", () => {
+	function reading(text: string, kind: string): unknown {
+		const found = recognizer.recognize(text).recognitions.find((recognition) => recognition.kind === kind)
+
+		return found?.validation.status === "validated" ? found.validation.payload : found?.validation
+	}
+
+	it("reads a decimal pair divided by white space, in whole-input scope only", () => {
+		expect(reading("48.8584 2.2945", "coordinate.decimal_pair_spaced")).toEqual({
+			latitude: 48.8584,
+			longitude: 2.2945,
+			order: "lat_lon",
+		})
+
+		// Without a decimal point the pair is a house number and a postcode, and embedded it is two adjacent numbers.
+		expect(reading("12 34", "coordinate.decimal_pair_spaced")).toBeUndefined()
+		expect(reading("350 5th Ave", "coordinate.decimal_pair_spaced")).toBeUndefined()
+		expect(reading("Apt 4.5 12 Main St", "coordinate.decimal_pair_spaced")).toBeUndefined()
+	})
+
+	it("reads degrees, minutes, seconds and hemisphere letters", () => {
+		expect(reading("2.2945E, 48.8584N", "coordinate.dms_pair")).toEqual({
+			latitude: 48.8584,
+			longitude: 2.2945,
+			order: "lon_lat",
+		})
+
+		expect(reading("33° 51′ 54″ S 151° 12′ 36″ E", "coordinate.dms_pair_spaced")).toMatchObject({ order: "lat_lon" })
+		expect(reading("12°, 5°", "coordinate.dms_pair")).toMatchObject({ latitude: 12, longitude: 5 })
+
+		expect(reading("40N, 50N", "coordinate.dms_pair")).toMatchObject({
+			status: "rejected",
+			rejection: { code: "conflicting_hemispheres" },
+		})
+	})
+
+	it("reads a labeled pair in either order and a Maps segment", () => {
+		expect(reading("lng=2.2945, lat=48.8584", "coordinate.labeled_pair")).toEqual({
+			latitude: 48.8584,
+			longitude: 2.2945,
+			order: "lon_lat",
+		})
+
+		expect(reading("lat 1 lat 2", "coordinate.labeled_pair")).toMatchObject({
+			rejection: { code: "same_axis_labels" },
+		})
+
+		expect(reading("@48.8584,2.2945,17z", "coordinate.maps_segment")).toEqual({
+			latitude: 48.8584,
+			longitude: 2.2945,
+			order: "lat_lon",
+		})
+	})
+})

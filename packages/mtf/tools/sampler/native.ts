@@ -162,10 +162,10 @@ export interface RowEncoderOptions {
 	labelSet?: string | null
 	maxLength: number
 	padID?: number | null
-	postcodeShapesPath: string
-	postcodeSyntaxPath: string
+	postalArtifactPath: string
+	postalDefinitionPath: string
 	anchorLookupPath?: string | null
-	anchorPaintMode?: "gold" | "shaped" | null
+	anchorPaintMode?: "gold" | "postal" | null
 	gazetteerLexiconPath?: string | null
 	gazetteerChoreography?: boolean | null
 	countryLexiconPath?: string | null
@@ -194,6 +194,41 @@ export interface EncodedRows {
 	attentionMask: BigInt64Array
 	labels: BigInt64Array
 	channels: EncodedChannel[]
+}
+
+/**
+ * One postcode span of a line, as character offsets.
+ *
+ * The key is the one the anchor table resolved it under, when the finder holds a table with that key.
+ */
+export interface NativePostcodeSpan {
+	start: number
+	end: number
+	key?: string | null
+	/**
+	 * The countries the candidate's shapes belong to.
+	 */
+	countries: string[]
+}
+
+/**
+ * The encoder's postcode finder without the rest of the encoder.
+ *
+ * The audits compare it with `findPostcodeSpans` of `@mailwoman/postcode`.
+ */
+export interface NativePostcodeFinder {
+	/**
+	 * The postcode spans of `raw`, in start order.
+	 */
+	spans(raw: string): NativePostcodeSpan[]
+	/**
+	 * The code units of `raw`, as character offsets, with the number of countries whose syntax accepts each.
+	 */
+	codeUnits(raw: string): Array<{ start: number; end: number; accepting: number }>
+	/**
+	 * The number of countries whose postcode syntax accepts the whole of `unit`.
+	 */
+	accepting(unit: string): number
 }
 
 export interface NativeRowEncoder {
@@ -261,6 +296,11 @@ interface NativeModule {
 		readonly channelDims: Array<{ name: string; dim: number }>
 	}
 	CharEncoder: new (options: CharEncoderOptions) => { encodeBatch(rows: SampledRow[]): RawEncodedChars }
+	PostcodeFinder: new (
+		artifactPath: string,
+		definitionPath: string,
+		anchorLookupPath?: string | null
+	) => NativePostcodeFinder
 	sourceRowCounts(config: string, split: string): SourceCount[]
 	deriveSourceWeights(
 		fixed: SourceWeight[] | null,
@@ -378,6 +418,11 @@ export interface MTFNode {
 	SplitColumns: NativeModule["SplitColumns"]
 	createRowEncoder(options: RowEncoderOptions): NativeRowEncoder
 	createCharEncoder(options: CharEncoderOptions): NativeCharEncoder
+	createPostcodeFinder(
+		artifactPath: string,
+		definitionPath: string,
+		anchorLookupPath?: string | null
+	): NativePostcodeFinder
 	sourceRowCounts: NativeModule["sourceRowCounts"]
 	deriveSourceWeights: NativeModule["deriveSourceWeights"]
 	channelNames: NativeModule["channelNames"]
@@ -411,6 +456,9 @@ export async function mtfNode(): Promise<MTFNode> {
 					return { ...batch, inputIDs: inputIds }
 				},
 			}
+		},
+		createPostcodeFinder(artifactPath, definitionPath, anchorLookupPath) {
+			return new native.PostcodeFinder(artifactPath, definitionPath, anchorLookupPath ?? undefined)
 		},
 		createCharEncoder(options) {
 			const encoder = new native.CharEncoder(options)

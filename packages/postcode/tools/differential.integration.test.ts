@@ -2,17 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `postcode_legacy` family's `knownFormats` equal the legacy list, field by field
- *   and in order, on 100,000 generated inputs.
+ *   The recognizer the pipeline reads gives every Unicode codepoint,
+ *   as a one-codepoint text, the character class, token class, scripts, segment count
+ *   and known-format count that the fixture froze from the legacy classifier.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { codepointKey, readFrozenFixture } from "@mailwoman/recognize/tools/frozen"
 import { expect, it } from "vitest"
 
-import { compareKnownFormats, generatedKnownFormatInputs } from "#tools/differential"
+import { computeQueryShape } from "#recognize/query-shape"
 
-it("equals the legacy output on 100,000 generated inputs", { timeout: 600_000 }, () => {
-	const differences = generatedKnownFormatInputs(100_000, 7).map(compareKnownFormats).filter(isPresent)
+it("equals the frozen output on every Unicode codepoint", { timeout: 600_000 }, async () => {
+	const { codepointRuns } = await readFrozenFixture()
+	const failures: Array<{ codepoint: string; expected: string; actual: string }> = []
+	let checked = 0
 
-	expect(differences.slice(0, 5)).toEqual([])
+	for (const [first, last, expected] of codepointRuns) {
+		for (let codepoint = first; codepoint <= last; codepoint++) {
+			const actual = codepointKey(computeQueryShape(String.fromCodePoint(codepoint)))
+
+			checked++
+
+			if (actual !== expected) {
+				failures.push({ codepoint: codepoint.toString(16), expected, actual })
+			}
+		}
+	}
+
+	expect(checked).toBe(0x11_00_00)
+	expect(failures.slice(0, 5)).toEqual([])
 })

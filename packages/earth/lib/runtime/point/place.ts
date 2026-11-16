@@ -4,9 +4,10 @@
 /**
  *   A point-shaped query answers from its own decoder rather than the classifier.
  *
- *   Point shapes are coordinates, a plus code, an H3 cell, a geohash and a Who's On First id.
+ *   Point shapes are coordinates, a GeoJSON point, a plus code, a DIGIPIN,
+ *   an H3 cell, a geohash and a Who's On First id.
  *
- *   This module turns {@link PointQuery} into the {@link ParseResult} the result panel
+ *   This module turns {@link PointReading} into the {@link ParseResult} the result panel
  *   and the map already render, so the point path adds no second renderer.
  *   The H3 reader is imported when an H3 cell is typed, because its WebAssembly
  *   binary has no place in the entry chunk.
@@ -15,8 +16,10 @@
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { MapBias } from "@mailwoman/react/map"
 import { cellBounds, cellRadiusMeters, type DegreeCell } from "@mailwoman/spatial/coordinate/cell"
+import { DIGIPIN_CELL_DEGREES, getLatLngFromDIGIPIN } from "@mailwoman/spatial/digipin"
 import { decodePlusCode, recoverNearestPlusCode } from "@mailwoman/spatial/open-location-code"
-import { coordinatePairText, POINT_QUERY_LABEL, type PointQuery } from "@mailwoman/spatial/point-query"
+import type { PointReading } from "@mailwoman/spatial/point/reading"
+import { coordinatePairText, POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point/text"
 
 /**
  * The `kindResult.kind` of a point result, so a renderer can tell it from a classified address.
@@ -85,32 +88,40 @@ async function h3Cell(cell: string): Promise<DegreeCell> {
  * cards assume, and without a map it stays unplaced.
  */
 export async function locatePointQuery(
-	query: PointQuery,
+	query: PointReading,
 	bias: MapBias | null,
 	readWOFPlace: WOFPlaceReader
 ): Promise<ResolvedPlaceView> {
+	const label = POINT_QUERY_DESCRIPTIONS[query.recognized].label
+
 	switch (query.kind) {
 		case "coordinates":
+		case "geojson_point":
 			return {
 				id: 0,
-				name: coordinatePairText(query.lat, query.lon),
-				placetype: POINT_QUERY_LABEL.coordinates,
-				lat: query.lat,
-				lon: query.lon,
+				name: coordinatePairText(query.latitude, query.longitude),
+				placetype: label,
+				lat: query.latitude,
+				lon: query.longitude,
 				score: 1,
 				bbox: null,
 				tier: null,
 				uncertaintyM: 0,
 			}
 
+		case "digipin": {
+			const [lon, lat] = getLatLngFromDIGIPIN(query.code)
+
+			return cellPlace(query.code, label, {
+				lat,
+				lon,
+				latSpanDeg: DIGIPIN_CELL_DEGREES,
+				lonSpanDeg: DIGIPIN_CELL_DEGREES,
+			})
+		}
+
 		case "plus_code": {
-			if (query.full) {
-				const cell = decodePlusCode(query.code)
-
-				if (!cell) throw new Error(`${query.code} is not a plus code this reader decodes.`)
-
-				return cellPlace(query.code, POINT_QUERY_LABEL.plus_code, cell)
-			}
+			if (query.full) return cellPlace(query.code, label, decodePlusCode(query.code))
 
 			if (!bias) {
 				throw new Error(
@@ -118,15 +129,11 @@ export async function locatePointQuery(
 				)
 			}
 
-			const cell = recoverNearestPlusCode(query.code, bias.center[1], bias.center[0])
-
-			if (!cell) throw new Error(`${query.code} is not a short plus code this reader recovers.`)
-
-			return cellPlace(query.code, POINT_QUERY_LABEL.plus_code, cell)
+			return cellPlace(query.code, label, recoverNearestPlusCode(query.code, bias.center[1], bias.center[0]))
 		}
 
 		case "h3":
-			return cellPlace(query.cell, POINT_QUERY_LABEL.h3, await h3Cell(query.cell))
+			return cellPlace(query.cell, label, await h3Cell(query.cell))
 
 		case "geohash": {
 			const { fromGeohash } = await import("@mailwoman/spatial/coordinate/formats")
@@ -134,7 +141,7 @@ export async function locatePointQuery(
 
 			if (!cell) throw new Error(`${query.hash} is not a geohash.`)
 
-			return cellPlace(query.hash, POINT_QUERY_LABEL.geohash, cell)
+			return cellPlace(query.hash, label, cell)
 		}
 
 		case "wof":
@@ -149,14 +156,22 @@ export async function locatePointQuery(
  */
 export function pointQueryResult(
 	input: string,
-	query: PointQuery,
+	query: PointReading,
 	place: ResolvedPlaceView,
 	lookupMs: number
 ): ParseResult {
 	return {
 		input,
 		tree: { roots: [] },
-		nodes: [{ tag: POINT_QUERY_LABEL[query.kind], value: input.trim(), confidence: 1, start: 0, end: input.length }],
+		nodes: [
+			{
+				tag: POINT_QUERY_DESCRIPTIONS[query.recognized].label,
+				value: input.trim(),
+				confidence: 1,
+				start: 0,
+				end: input.length,
+			},
+		],
 		kindResult: { kind: POINT_QUERY_KIND, confidence: 1, alternatives: [] },
 		timing: { shape: 0, classify: 0, resolve: lookupMs },
 		resolved: place,

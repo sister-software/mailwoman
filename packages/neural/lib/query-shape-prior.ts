@@ -12,8 +12,8 @@
  *   owner rather than restated, because a restated convention drops the formats added after it.
  */
 
-import type { CharRange } from "@mailwoman/query-shape"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
+import type { CharRange } from "@mailwoman/recognize/types"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"
@@ -24,23 +24,23 @@ import { spansOverlap } from "#span/repair"
 const MAX_PRIOR_CANDIDATES = 4
 
 export interface QueryShapeLike {
-	knownFormats: ReadonlyArray<KnownFormatHitLike>
+	knownFormats: ReadonlyArray<KnownFormatHitView>
 	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
 }
 
 interface RegionAbbreviationHitLike {
 	start: number
-	span: string
+	/**
+	 * The abbreviation's text under the `legacy` generation, and its span under the `postal` generation.
+	 */
+	span: string | { end: number }
 }
 
-export interface KnownFormatHitLike {
-	format: string
-	span: { start: number; end: number }
-	/**
-	 * Confidence in 0..1.
-	 * Ambiguous patterns (5-digit US/FR/DE overlap) score lower.
-	 */
-	confidence: number
+/**
+ * The offset one past the abbreviation, in UTF-16 code units.
+ */
+function regionAbbreviationEnd(abbreviation: RegionAbbreviationHitLike): number {
+	return typeof abbreviation.span === "string" ? abbreviation.start + abbreviation.span.length : abbreviation.span.end
 }
 
 /**
@@ -148,7 +148,7 @@ function applyScopedLocalityBias(
 	if (!bLocCol) return
 
 	for (const abbrev of abbrevs) {
-		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
+		if (tokens.some((tok) => tok.start > regionAbbreviationEnd(abbrev))) continue
 
 		// The segment opens after the last comma that precedes the separator before the abbreviation.
 		const prefix = inputText.slice(0, abbrev.start).replace(/[\s,]+$/u, "")

@@ -178,7 +178,9 @@ describe("selectCIScope", () => {
 	it.each([
 		"packages/recognize/crates/recognize-core/src/engine.rs",
 		"packages/recognize/crates/recognize-build/src/main.rs",
-	])("selects the rust job for %s, a recognize crate input", (file) => {
+		"packages/recognize/lib/primitives.generated.ts",
+		"packages/recognize/data/artifacts/primitives.rca1",
+	])("selects the rust job for %s, a recognize crate input or generated file", (file) => {
 		const withRecognize = [
 			...workspaces,
 			{ name: "@mailwoman/recognize", directory: "packages/recognize", dependencies: [] },
@@ -188,6 +190,16 @@ describe("selectCIScope", () => {
 
 		expect(scope).toMatchObject({ full: false, rust: true })
 		expect(scope.affected).toContain("packages/recognize")
+	})
+
+	it.each([
+		"packages/mtf/crates/mtf-channels/src/finders.rs",
+		"packages/postcode/data/artifacts/postal.rca1",
+		"packages/postcode/data/definitions/postal.definition.json",
+		"test/fixtures/postcode-agreement.json",
+		"test/fixtures/code-unit-parity.json",
+	])("selects the rust job for %s, an input of the encoder's postal finders", (file) => {
+		expect(selectCIScope(withMTF, files, [file], []).rust).toBe(true)
 	})
 
 	it.each(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"])(
@@ -210,7 +222,7 @@ describe("selectCIScope", () => {
 	)
 
 	it("selects every suite for a trainer data table, which the JavaScript tests read too", () => {
-		expect(selectCIScope(workspaces, files, ["packages/trainer/data/postcode-shapes.json"], [])).toMatchObject({
+		expect(selectCIScope(workspaces, files, ["packages/trainer/data/postcode-layouts.json"], [])).toMatchObject({
 			full: true,
 			rust: true,
 		})

@@ -9,6 +9,7 @@ import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoma
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
@@ -29,8 +30,10 @@ export interface RequiredChannels {
 	 * `span_mode` declares which substrings the runtime looks up.
 	 * Omit it or use `alnum-run` for most models.
 	 *
-	 * Use `shaped` only for a model trained against a lookup with letter-containing
-	 * keys (see `AnchorSpanMode`).
+	 * Use `shaped` or `postal` only for a model trained against a lookup with
+	 * letter-containing keys (see `AnchorSpanMode`).
+	 * A model trained with `anchor_paint_mode: postal` declares `postal`.
+	 *
 	 * A mismatch in either direction changes which postcodes get anchored.
 	 */
 	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
@@ -73,6 +76,16 @@ export interface RequiredChannels {
 	 * The code-unit channel (#2845), computed from the raw surface with no lexicon.
 	 */
 	code_unit?: { required: boolean }
+	/**
+	 * The generation of the query-shape rules the model trained beside.
+	 *
+	 * Absent or `legacy` selects the original thirteen postcode patterns,
+	 * ten scripts and accidental behaviors.
+	 * Model 10.8.0 trained with them.
+	 *
+	 * `postal` selects postcode hits from the postal family, every Unicode script and the specified behavior.
+	 */
+	query_shape?: QueryShapeGeneration
 }
 
 /**
@@ -331,10 +344,24 @@ export async function readRequiredChannels(
 	// An unrecognized span mode would anchor the wrong spans without any error, so it throws.
 	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
 
-	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped" && anchorSpanMode !== "postal") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
-				`expected "alnum-run" or "shaped", got ${stringifyJSON(anchorSpanMode)}.`
+				`expected "alnum-run", "shaped" or "postal", got ${stringifyJSON(anchorSpanMode)}.`
+		)
+	}
+
+	// An unknown generation would run the wrong rules without any error, so it throws.
+	const queryShape = obj.query_shape
+
+	if (
+		queryShape !== undefined &&
+		queryShape !== QueryShapeGeneration.Legacy &&
+		queryShape !== QueryShapeGeneration.Postal
+	) {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires.query_shape\` — ` +
+				`expected "legacy" or "postal", got ${stringifyJSON(queryShape)}.`
 		)
 	}
 

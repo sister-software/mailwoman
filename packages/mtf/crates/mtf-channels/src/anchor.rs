@@ -209,10 +209,22 @@ impl AnchorLookup {
 	/// The arithmetic is the Python loader's, in `f64` and in the same order: each in-set weight is assigned to
 	/// its locale's slot and added to the total as the posterior lists it, each slot is divided by the total once
 	/// the sum is complete, and latitude and longitude are divided by 90 and 180 and clamped to [-1, 1].
-	fn feature_vector(entry: &Entry, slots: &[Option<usize>], locales: usize) -> Vec<f64> {
+	///
+	/// A `allowed` filter restricts the posterior to the countries it accepts before the arithmetic, so the weights that
+	/// remain are renormalized over the locale set exactly as an unrestricted posterior is.
+	fn feature_vector(
+		&self,
+		entry: &Entry,
+		slots: &[Option<usize>],
+		locales: usize,
+		allowed: Option<CountryFilter<'_>>,
+	) -> Vec<f64> {
 		let mut vec = vec![0.0f64; locales + 2];
 		let mut total = 0.0f64;
 		for &(country, weight) in entry.posterior.iter() {
+			if allowed.is_some_and(|accept| !accept(&self.countries[country as usize])) {
+				continue;
+			}
 			if let Some(slot) = slots[country as usize] {
 				vec[slot] = weight;
 				total += weight;
@@ -228,12 +240,65 @@ impl AnchorLookup {
 		vec
 	}
 
-	/// The feature vector of a postcode key's entry, or `None` on a miss.
-	pub fn features(&self, key: &str, slots: &[Option<usize>], locales: usize) -> Option<Vec<f64>> {
+	/// The key a postcode span resolves under, or `None` when the table holds neither the span's key nor, for a GB unit,
+	/// its outward district.
+	///
+	/// The span's key is `anchor_key` of its text, and an unknown GB unit falls back to its outward district. Serving
+	/// computes the same key in `anchorKey` and `anchoredPostcodeSpans` of `@mailwoman/neural`.
+	///
+	/// With an `allowed` filter an entry resolves only when its posterior holds weight on a country the filter accepts.
+	/// The outward district is tried when the unit's own entry misses or has no accepted country.
+	pub fn resolve(&self, span: &[char], allowed: Option<CountryFilter<'_>>) -> Option<String> {
+		let key_upper = anchor_key(span);
+		let key: String = key_upper.iter().collect();
+		if self.admits(&key, allowed) {
+			return Some(key);
+		}
+		if is_gb_unit_key(&key_upper) {
+			let outward: String = key_upper[..key_upper.len() - GB_INWARD_LENGTH].iter().collect();
+			if self.admits(&outward, allowed) {
+				return Some(outward);
+			}
+		}
+		None
+	}
+
+	/// Whether the table holds `key`, and, under a filter, holds weight on an accepted country for it.
+	fn admits(&self, key: &str, allowed: Option<CountryFilter<'_>>) -> bool {
+		self.entries.get(key).is_some_and(|entry| {
+			allowed.is_none_or(|accept| {
+				entry
+					.posterior
+					.iter()
+					.any(|&(country, weight)| weight > 0.0 && accept(&self.countries[country as usize]))
+			})
+		})
+	}
+
+	/// The feature vector of a postcode key's entry, restricted to the countries `allowed` accepts, or `None` on a miss.
+	pub fn features(
+		&self,
+		key: &str,
+		slots: &[Option<usize>],
+		locales: usize,
+		allowed: Option<CountryFilter<'_>>,
+	) -> Option<Vec<f64>> {
+		if !self.admits(key, allowed) {
+			return None;
+		}
 		self.entries
 			.get(key)
-			.map(|entry| Self::feature_vector(entry, slots, locales))
+			.map(|entry| self.feature_vector(entry, slots, locales, allowed))
 	}
+}
+
+/// A test of a country code, which restricts a candidate to the countries its shape belongs to.
+pub type CountryFilter<'a> = &'a dyn Fn(&str) -> bool;
+
+/// The key the anchor table is looked up under for a postcode span: the span's text with each space removed, upper-cased.
+pub fn anchor_key(span: &[char]) -> Vec<char> {
+	let without_spaces: Vec<char> = span.iter().copied().filter(|&c| c != ' ').collect();
+	upper(&without_spaces).chars().collect()
 }
 
 /// `^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$` under Python's `re.match`, where `\d` is any decimal digit and `$` also
@@ -271,6 +336,32 @@ pub struct AnchorPainter<'a> {
 	pub lookup: &'a AnchorLookup,
 	pub slots: &'a [Option<usize>],
 	pub locales: usize,
+	/// The index of each country code in the finder's country table, which a candidate's `countries` index into.
+	/// A row painted from gold ranges needs none.
+	pub country_index: Option<&'a HashMap<String, u32>>,
+}
+
+/// One range the anchor painter may paint.
+///
+/// `countries` holds, sorted, the finder's indexes of the countries whose syntax the range's shapes belong to. A
+/// candidate resolves only when its table entry holds weight on one of them, and the posterior it paints is restricted
+/// to them. A gold range states none and resolves as the table has it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PostcodeCandidate {
+	pub start: usize,
+	pub end: usize,
+	pub countries: Option<Vec<u32>>,
+}
+
+impl PostcodeCandidate {
+	/// A range with no country restriction.
+	pub fn unrestricted(start: usize, end: usize) -> Self {
+		Self {
+			start,
+			end,
+			countries: None,
+		}
+	}
 }
 
 impl AnchorPainter<'_> {
@@ -280,19 +371,30 @@ impl AnchorPainter<'_> {
 	}
 
 	/// Paints each postcode range that hits the table, then projects the characters onto the pieces.
-	pub fn paint(&self, raw: &[char], ranges: &[(usize, usize)], pieces: &[Piece]) -> Channel {
+	///
+	/// The ranges are in the order they compete, and a range that overlaps one already painted is skipped. A range the
+	/// table lacks paints nothing and hides no range after it. The gold ranges never overlap, so the rule leaves them
+	/// as they were.
+	pub fn paint(&self, raw: &[char], candidates: &[PostcodeCandidate], pieces: &[Piece]) -> Channel {
 		let mut char_feat: Vec<Option<std::rc::Rc<Vec<f64>>>> = vec![None; raw.len()];
-		for &(begin, end) in ranges {
-			let begin = begin.min(raw.len());
-			let end = end.min(raw.len()).max(begin);
-			let key_chars: Vec<char> = raw[begin..end].iter().copied().filter(|&c| c != ' ').collect();
-			let key_upper: Vec<char> = upper(&key_chars).chars().collect();
-			let key: String = key_upper.iter().collect();
-			let mut hit = self.lookup.features(&key, self.slots, self.locales);
-			if hit.is_none() && is_gb_unit_key(&key_upper) {
-				let outward: String = key_upper[..key_upper.len() - GB_INWARD_LENGTH].iter().collect();
-				hit = self.lookup.features(&outward, self.slots, self.locales);
+		for candidate in candidates {
+			let begin = candidate.start.min(raw.len());
+			let end = candidate.end.min(raw.len()).max(begin);
+			if char_feat[begin..end].iter().any(Option::is_some) {
+				continue;
 			}
+			let index = self.country_index;
+			let accept = |code: &str| match (&candidate.countries, index) {
+				(Some(countries), Some(index)) => index
+					.get(code)
+					.is_some_and(|position| countries.binary_search(position).is_ok()),
+				_ => true,
+			};
+			let allowed: Option<CountryFilter<'_>> = candidate.countries.as_ref().map(|_| &accept as CountryFilter<'_>);
+			let hit = self
+				.lookup
+				.resolve(&raw[begin..end], allowed)
+				.and_then(|key| self.lookup.features(&key, self.slots, self.locales, allowed));
 			if let Some(features) = hit {
 				let shared = std::rc::Rc::new(features);
 				for slot in &mut char_feat[begin..end] {
@@ -324,10 +426,33 @@ mod tests {
 		.unwrap();
 		let locales: Vec<String> = ["US", "FR", "DE", "CA"].iter().map(|s| s.to_string()).collect();
 		let slots = lookup.locale_slots(&locales);
-		let v = lookup.features("05401", &slots, locales.len()).unwrap();
+		let v = lookup.features("05401", &slots, locales.len(), None).unwrap();
 		assert_eq!(v[..4], [0.5, 0.0, 0.0, 0.5]);
 		assert_eq!(v[4], 44.4759 / 90.0);
 		assert_eq!(v[5], -73.2121 / 180.0);
+	}
+
+	#[test]
+	fn a_filter_resolves_an_entry_only_under_an_accepted_country_and_renormalizes_what_remains() {
+		let lookup = AnchorLookup::from_json(
+			r#"{"11109": [{"FR": 0.5, "US": 0.5}, 43.0, 3.0, "wof"], "69152": [{"DE": 1, "FR": 1, "US": 1}, 53.0, 14.0, "wof"]}"#,
+			"test",
+		)
+		.unwrap();
+		let locales: Vec<String> = ["US", "FR", "DE", "CZ"].iter().map(|s| s.to_string()).collect();
+		let slots = lookup.locale_slots(&locales);
+		let czech = |code: &str| code == "CZ";
+		let german_or_french = |code: &str| code == "DE" || code == "FR";
+		let span: Vec<char> = "111 09".chars().collect();
+		// A three-and-two digit shape belongs to countries the entry holds no weight on, so the span doesn't resolve.
+		assert_eq!(lookup.resolve(&span, Some(&czech)), None);
+		assert_eq!(lookup.resolve(&span, None), Some("11109".to_string()));
+		// An accepted subset paints, and its weights renormalize over the locale set.
+		let v = lookup
+			.features("69152", &slots, locales.len(), Some(&german_or_french))
+			.unwrap();
+		assert_eq!(v[..4], [0.0, 0.5, 0.5, 0.0]);
+		assert!(lookup.features("69152", &slots, locales.len(), Some(&czech)).is_none());
 	}
 
 	#[test]

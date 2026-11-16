@@ -14,7 +14,8 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
-import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognize/rule-generation"
 
 import { scriptFamilyBase } from "#char-encoder"
 import type { NeuralAddressClassifier } from "#classifier"
@@ -60,12 +61,15 @@ export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "s
  * This experimental router is used only for measurement by `route-census.run.ts`.
  * Because it runs only on an abstention, it can add routes and never changes an existing one.
  */
-export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
-	const shipped = routeFamilyForText(text)
+export function routeFamilyWithLeadingRun(
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): RoutingDecision {
+	const shipped = routeFamilyForText(text, generation)
 
 	if (shipped.family) return shipped
 
-	const shape = computeQueryShape(text)
+	const shape = computeQueryShape(text, generation)
 
 	for (const family of FAMILIES) {
 		if (!family.routingScripts) continue
@@ -89,12 +93,15 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
  * Of the unambiguous formats that `scoreByPostcode` recognizes, only `jp_postcode`
  * maps to a family with routing scripts.
  */
-export function routeFamilyWithPostcode(text: string): RoutingDecision {
-	const shipped = routeFamilyForText(text)
+export function routeFamilyWithPostcode(
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): RoutingDecision {
+	const shipped = routeFamilyForText(text, generation)
 
 	if (shipped.family) return shipped
 
-	const candidate = scoreByPostcode(computeQueryShape(text))
+	const candidate = scoreByPostcode(computeQueryShape(text, generation))
 
 	if (!candidate || candidate.confidence < POSTCODE_ROUTE_CONFIDENCE) return shipped
 
@@ -123,8 +130,11 @@ const POSTCODE_ROUTE_CONFIDENCE = 0.9
  * The segment check matters for mixed input, such as a Han address line followed by a Latin province.
  * A decision without a family records why the router abstained.
  */
-export function routeFamilyForText(text: string): RoutingDecision {
-	const shape = computeQueryShape(text)
+export function routeFamilyForText(
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): RoutingDecision {
+	const shape = computeQueryShape(text, generation)
 	const candidate = scoreByScript(shape)
 	const hinted = candidate ? scriptFamilyBase(candidate.locale) : null
 
@@ -147,8 +157,11 @@ export function routeFamilyForText(text: string): RoutingDecision {
  *
  * {@linkcode routeFamilyForText} also returns the rule that selected the family.
  */
-export function scriptFamilyForText(text: string): string | null {
-	return routeFamilyForText(text).family
+export function scriptFamilyForText(
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): string | null {
+	return routeFamilyForText(text, generation).family
 }
 
 /**
@@ -220,6 +233,14 @@ export class ScriptRoutedClassifier<C extends RoutableClassifier = RoutableClass
 		return this.primary.encoder
 	}
 
+	/**
+	 * The query-shape generation of the primary's model card.
+	 * The routing decision follows it.
+	 */
+	get queryShapeGeneration(): QueryShapeGeneration {
+		return queryShapeGenerationOf(this.primary)
+	}
+
 	get fstPath(): RoutableClassifier["fstPath"] {
 		return this.primary.fstPath
 	}
@@ -241,7 +262,7 @@ export class ScriptRoutedClassifier<C extends RoutableClassifier = RoutableClass
 	 * when one applies and loads, else the primary.
 	 */
 	async forInput(text: string): Promise<C> {
-		const family = scriptFamilyForText(text)
+		const family = scriptFamilyForText(text, this.queryShapeGeneration)
 
 		if (!family || this.primary.encoder === "char" || this.#unavailable.has(family)) {
 			return this.primary

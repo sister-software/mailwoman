@@ -28,7 +28,8 @@ import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { queryShapeGenerationOf } from "@mailwoman/postcode/recognize/rule-generation"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -312,14 +313,16 @@ export function createRuntimePipeline(
 	}
 
 	const classifierShape = opts.classifier as { encoder?: string; forInput?: unknown } | undefined
+	const queryShapeGeneration = queryShapeGenerationOf(opts.classifier)
 
 	const keepPostalMark = (raw: string): boolean =>
-		classifierShape?.encoder === "char" || (!!classifierShape?.forInput && scriptFamilyForText(raw) === "cjk")
+		classifierShape?.encoder === "char" ||
+		(!!classifierShape?.forInput && scriptFamilyForText(raw, queryShapeGeneration) === "cjk")
 
 	const stages: RuntimePipelineStages = {
 		normalize: (raw, normalizeOpts) =>
 			normalize(raw, { ...normalizeOpts, ...(keepPostalMark(raw) ? { postalMark: "keep" } : {}) }),
-		computeQueryShape,
+		computeQueryShape: (input) => computeQueryShape(input, queryShapeGeneration),
 
 		classifyKind:
 			opts.classifyKind ??
@@ -466,7 +469,7 @@ export function createRuntimePipeline(
 
 		const result = await runPipeline(raw, stages, effectiveRunOpts)
 
-		stampSpanScripts(result.tree, result.normalized.normalized)
+		stampSpanScripts(result.tree, result.normalized.normalized, queryShapeGeneration)
 
 		return result
 	}

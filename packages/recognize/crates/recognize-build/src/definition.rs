@@ -23,7 +23,8 @@
 //! ```
 //!
 //! A shape's `boundary` is `token` when an embedded match may not touch an ASCII letter, an ASCII digit or a connector:
-//! the engine then reports no match that sits inside a longer run of those characters.
+//! the engine then reports no match that sits inside a longer run of those characters. It is `alnum` when a match may not
+//! touch an ASCII letter or an ASCII digit, and a connector may touch it.
 //!
 //! A shape may carry two more pieces of data the known-formats pass reads, and the pass reads no naming convention. `role` is
 //! `po_box_leader` for a token that leads a PO box, and `order` is the shape's place, lowest first, in the order the pass
@@ -206,11 +207,12 @@ pub fn read(file: &str, text: &str) -> Result<Definition, Vec<Diagnostic>> {
 		let boundary = match object.get("boundary").and_then(Value::as_str) {
 			None => None,
 			Some("token") => Some(Boundary::Token),
+			Some("alnum") => Some(Boundary::Alnum),
 			Some(other) => {
 				diagnostics.push(Diagnostic::new(
 					DiagnosticKind::MalformedIR,
 					&source,
-					format!("shape `{id}` has the boundary `{other}`; the boundaries are `token`"),
+					format!("shape `{id}` has the boundary `{other}`; the boundaries are `token` and `alnum`"),
 				));
 
 				continue;

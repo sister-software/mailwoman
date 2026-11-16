@@ -31,12 +31,18 @@ export { postal, POSTAL_FAMILY_ID, PostalKind } from "#recognize/postal.generate
 
 export {
 	acceptingCountries,
+	disjointSpans,
 	isPostalRecognition,
 	postalCandidates,
 	postalCountries,
 	postalCountryCodes,
+	postalKindsOfCountry,
+	postalSpans,
 	splitPrintedPostcode,
 	type PostalCandidate,
+	type PostalForm,
+	type PostalSpan,
+	type PostalKindsOfCountry,
 	type PostalRecognitionLike,
 	type PostalRecognizerLike,
 	type PrintedPostcode,

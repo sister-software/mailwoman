@@ -24,7 +24,7 @@
 //!
 //! A decimal pair is read in the order it was written, latitude first. When that reading fails a range and the other
 //! order puts both numbers in range, the pair is read longitude first and the payload's `order` says so. A pair in range
-//! in both orders is latitude first. `parsePointQuery` applies the same rule and reports the same two names. A `geo:` URI never swaps,
+//! in both orders is latitude first. The two names are `lat_lon` and `lon_lat`. A `geo:` URI never swaps,
 //! because RFC 5870 fixes the order as latitude, longitude, altitude.
 
 use std::fmt::Debug;
@@ -34,6 +34,19 @@ use serde::Serialize;
 use crate::captures::Captures;
 use crate::recognition::Rejection;
 
+mod angles;
+mod geojson;
+mod identifiers;
+mod spatial;
+mod us_state_fips;
+
+pub use angles::{AnglePair, LabeledPair, MapsSegment, SpacedPair};
+pub use geojson::{GeoJSON, GeoJSONObject};
+pub use identifiers::{
+	CensusGEOID, CensusParts, GNISFeatureID, GNISIdentifier, Geohash, GeohashText, H3Cell, H3Index, WOFIdentifier,
+	WhosOnFirstID,
+};
+pub use spatial::{DigipinValue, PlusCode, PlusCodeValue, DIGIPIN};
 /// A validator bound to one `ValidatorID`.
 pub trait Validator {
 	/// The typed payload a validated span carries.
@@ -64,7 +77,14 @@ pub enum FieldType {
 	Latitude,
 	Longitude,
 	Uncertainty,
+	/// A full Open Location Code in upper case, validated by `PlusCode`.
+	FullPlusCode,
+	/// A short Open Location Code in upper case, validated by `PlusCode`.
+	ShortPlusCode,
+	/// A DIGIPIN as ten upper-case characters, validated by `DIGIPIN`.
+	Digipin,
 	AxisOrder,
+	Boolean,
 }
 
 /// One field of a validator's payload.
@@ -100,6 +120,18 @@ pub fn schema(id: &str) -> Option<Schema> {
 	match id {
 		WGS84Pair::ID => Some(schema_of::<WGS84Pair>()),
 		GeoURI::ID => Some(schema_of::<GeoURI>()),
+		AnglePair::ID => Some(schema_of::<AnglePair>()),
+		LabeledPair::ID => Some(schema_of::<LabeledPair>()),
+		MapsSegment::ID => Some(schema_of::<MapsSegment>()),
+		SpacedPair::ID => Some(schema_of::<SpacedPair>()),
+		PlusCode::ID => Some(schema_of::<PlusCode>()),
+		DIGIPIN::ID => Some(schema_of::<DIGIPIN>()),
+		GeoJSON::ID => Some(schema_of::<GeoJSON>()),
+		H3Cell::ID => Some(schema_of::<H3Cell>()),
+		Geohash::ID => Some(schema_of::<Geohash>()),
+		WhosOnFirstID::ID => Some(schema_of::<WhosOnFirstID>()),
+		CensusGEOID::ID => Some(schema_of::<CensusGEOID>()),
+		GNISFeatureID::ID => Some(schema_of::<GNISFeatureID>()),
 		_ => None,
 	}
 }
@@ -293,7 +325,7 @@ pub fn required<'a>(captures: &Captures<'a>, path: &str) -> Result<&'a str, Reje
 }
 
 /// Names the capture a rejection is about.
-fn about(path: &str) -> impl FnOnce(Rejection) -> Rejection + '_ {
+pub(crate) fn about(path: &str) -> impl FnOnce(Rejection) -> Rejection + '_ {
 	move |mut rejection| {
 		rejection.capture = Some(path.to_string());
 		rejection
@@ -356,28 +388,30 @@ impl Validator for WGS84Pair {
 	];
 
 	fn validate(captures: &Captures<'_>) -> Result<PairPoint, Rejection> {
-		let first = decimal(captures, "first")?.get();
-		let second = decimal(captures, "second")?.get();
+		read_pair(decimal(captures, "first")?.get(), decimal(captures, "second")?.get())
+	}
+}
 
-		match (Latitude::new(first), Longitude::new(second)) {
+/// Reads two numbers written in this order as a point, by the axis order rule of the module documentation.
+pub(crate) fn read_pair(first: f64, second: f64) -> Result<PairPoint, Rejection> {
+	match (Latitude::new(first), Longitude::new(second)) {
+		(Ok(latitude), Ok(longitude)) => Ok(PairPoint {
+			latitude,
+			longitude,
+			order: AxisOrder::LatLon,
+		}),
+		(latitude, longitude) => match (Latitude::new(second), Longitude::new(first)) {
 			(Ok(latitude), Ok(longitude)) => Ok(PairPoint {
 				latitude,
 				longitude,
-				order: AxisOrder::LatLon,
+				order: AxisOrder::LonLat,
 			}),
-			(latitude, longitude) => match (Latitude::new(second), Longitude::new(first)) {
-				(Ok(latitude), Ok(longitude)) => Ok(PairPoint {
-					latitude,
-					longitude,
-					order: AxisOrder::LonLat,
-				}),
-				_ => Err(match (latitude, longitude) {
-					(Err(rejection), _) => about("first")(rejection),
-					(_, Err(rejection)) => about("second")(rejection),
-					(Ok(_), Ok(_)) => unreachable!("the first reading was in range"),
-				}),
-			},
-		}
+			_ => Err(match (latitude, longitude) {
+				(Err(rejection), _) => about("first")(rejection),
+				(_, Err(rejection)) => about("second")(rejection),
+				(Ok(_), Ok(_)) => unreachable!("the first reading was in range"),
+			}),
+		},
 	}
 }
 

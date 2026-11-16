@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest"
 import {
 	ANCHOR_FEATURE_DIM,
 	anchoredPostcodeSpans,
+	anchorKey,
 	anchoredRegionIDs,
 	anchorFeatureVector,
 	anchorLookupFromPostcodes,
@@ -326,6 +327,51 @@ describe("buildAnchorFeatures — span modes", () => {
 
 		expect(buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" }).confidence.every((c) => c === 0)).toBe(true)
 	})
+
+	it("(e) postal keys a lower-case postcode, which shaped on the raw text cannot", () => {
+		const text = "buckingham palace, london sw1a 2aa"
+		const spans = anchoredPostcodeSpans(text, V2, "postal")
+
+		expect(spans.map((span) => [text.slice(span.start, span.end), span.key])).toEqual([["sw1a 2aa", "SW1A2AA"]])
+	})
+
+	it("(f) postal falls through a longer candidate the lookup lacks to the ZIP code inside it", () => {
+		// `VT 05401` fits a two-letter, five-digit shape of another country,
+		// and that candidate is longer than the ZIP code.
+		const lookup: AnchorLookup = new Map([["05401", { posterior: { US: 1 }, lat: 44.48, lon: -73.21 }]])
+		const text = "Burlington, VT 05401 USA"
+
+		expect(anchoredPostcodeSpans(text, lookup, "postal").map((span) => text.slice(span.start, span.end))).toEqual([
+			"05401",
+		])
+	})
+
+	it("(g) postal gives a hyphenated code to the longer candidate, so its head anchors no other country", () => {
+		// 69152 is a key of other countries, and `69152-656` is a Brazilian CEP.
+		const lookup: AnchorLookup = new Map([["69152", { posterior: { DE: 1 }, lat: 53.09, lon: 14.26 }]])
+
+		expect(anchoredPostcodeSpans("RUA SEM DENOMINACAO 1, Parintins, 69152-656", lookup, "postal")).toEqual([])
+	})
+
+	it("(i) postal resolves a candidate only under a country its shapes belong to, and paints that part of the posterior", () => {
+		// `111 09` fits the three-and-two digit shapes of CZ, GR, SE and SK, and the entry for 11109 holds FR and US only.
+		const french: AnchorLookup = new Map([["11109", { posterior: { FR: 0.5, US: 0.5 }, lat: 43.16, lon: 3.02 }]])
+		const text = "76TH RD SUITE A3, FOREST HILLS, 111 09"
+
+		expect(anchoredPostcodeSpans(text, french, "postal")).toEqual([])
+
+		const czech: AnchorLookup = new Map([["11109", { posterior: { CZ: 0.5, FR: 0.5 }, lat: 50.08, lon: 14.43 }]])
+		const spans = anchoredPostcodeSpans(text, czech, "postal")
+
+		expect(spans.map((span) => text.slice(span.start, span.end))).toEqual(["111 09"])
+		// The entry of the span holds the posterior on the countries the shape belongs to, and no other.
+		expect(spans[0]!.entry.posterior).toEqual({ CZ: 0.5 })
+	})
+
+	it("(h) postal anchors the same spans under the same keys that the encoder's key function computes", () => {
+		expect(anchorKey("sw1a 2aa")).toBe("SW1A2AA")
+		expect(anchorKey("1012 lg")).toBe("1012LG")
+	})
 })
 
 /**
@@ -442,6 +488,7 @@ describe("shapedKeyerObligationViolation", () => {
 
 	it("passes a coherent pairing, and any pairing without unit keys", () => {
 		expect(shapedKeyerObligationViolation(withUnits, "shaped", "postcode-gb.bin")).toBeNull()
+		expect(shapedKeyerObligationViolation(withUnits, "postal", "postcode-gb.bin")).toBeNull()
 		expect(shapedKeyerObligationViolation(withoutUnits, null, "postcode-gb.bin")).toBeNull()
 		expect(shapedKeyerObligationViolation(null, null, null)).toBeNull()
 	})

@@ -2,66 +2,45 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `postcode_legacy` family's `knownFormats` against `computeQueryShape`:
- *   the golden fixture's 78 inputs, generated inputs dense in what triggers a hit,
- *   and the legacy behaviors that look accidental.
+ *   The recognizer the pipeline reads, `computeQueryShape` of `@mailwoman/postcode/recognize/query-shape`,
+ *   against the frozen output of the legacy classifier: the six structural fields and `knownFormats`
+ *   on every case of `@mailwoman/recognize`'s fixture, then the family's own contracts.
  *
- *   The real-row comparison is `tools/differential.run.ts`, and its summary is committed.
+ *   The fixture's cases include the golden inputs, the legacy behaviors that look accidental,
+ *   generated inputs dense in postcode shapes and PO box leaders, and gauntlet inputs.
+ *   The real-row comparison ran once against the legacy package before it was deleted,
+ *   and its summary is `data/reports/known-formats-differential.json`.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isPresent } from "@mailwoman/core/objects"
-import { workspacePath } from "@mailwoman/core/paths"
 import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recognize"
 import { structure } from "@mailwoman/recognize/structure"
+import { plainFields, readFrozenFixture } from "@mailwoman/recognize/tools/frozen"
+import type { StructureFields } from "@mailwoman/recognize/types"
 import { describe, expect, it } from "vitest"
 
 import { postcodeLegacy } from "#recognize/legacy"
-import { compareKnownFormats, generatedKnownFormatInputs, recognizedHits } from "#tools/differential"
+import { computeQueryShape } from "#recognize/query-shape"
+import { generatedKnownFormatInputs, recognizedHits } from "#tools/differential"
 
-interface GoldenFixture {
-	cases: Array<{ category: string; input: string }>
-}
+describe("computeQueryShape equals the frozen legacy output", () => {
+	it("on every case of the fixture, in the six fields and in knownFormats", async () => {
+		const fixture = await readFrozenFixture()
 
-describe("the postcode_legacy family equals computeQueryShape", () => {
-	it("on the golden fixture's inputs", async () => {
-		const fixture = await readLocalJSONFile<GoldenFixture>(
-			workspacePath("query-shape", "test", "fixtures", "compute-query-shape.golden.json").toString()
-		)
+		const differences = fixture.cases
+			.map(({ category, input, fields: frozen }) => {
+				// The legacy generation reports each region abbreviation's text as `span`, as `StructureFields` types it.
+				const recognized = plainFields(computeQueryShape(input) as StructureFields)
 
-		expect(fixture.cases).toHaveLength(78)
-
-		expect(fixture.cases.map(({ input }) => compareKnownFormats(input)).filter(isPresent)).toEqual([])
-	})
-
-	it("on generated inputs dense in postcode shapes and PO box leaders", () => {
-		const differences = generatedKnownFormatInputs(4000, 20_261_115).map(compareKnownFormats).filter(isPresent)
+				// oxlint-disable-next-line no-restricted-properties -- the comparison needs a canonical text of plain data
+				return JSON.stringify(recognized) === JSON.stringify(frozen) ? null : { category, input, recognized, frozen }
+			})
+			.filter((difference) => difference !== null)
 
 		expect(differences.slice(0, 5)).toEqual([])
 	})
 
-	it("on the behaviors that look accidental, which stay until both implementations change together", () => {
-		const quirks = [
-			"123-4567",
-			"〒123-4567",
-			"Box 1012, LG",
-			"1012,\tLG",
-			"1012\nLG",
-			"po box 1 po box 2",
-			"PO BOX",
-			"po 1",
-			"BP 12 BP 13",
-			"apartado a b c 5",
-			"box a b c 5",
-			"ſw1a 1aa",
-			"K1A 0B1",
-			"12345",
-			"123 45",
-			"SW1A 1AA",
-			"68161 68162",
-		]
-
-		expect(quirks.map(compareKnownFormats).filter(isPresent)).toEqual([])
+	it("reads a normalized input's normalized text", () => {
+		expect(computeQueryShape({ raw: "x", normalized: "SW1A 1AA" })).toEqual(computeQueryShape("SW1A 1AA"))
 	})
 })
 
@@ -74,6 +53,14 @@ describe("the postcode_legacy family's hits", () => {
 		])
 
 		expect(recognizedHits("Box 1012, LG").map(({ format }) => format)).toEqual(["nl_postcode", "po_box"])
+	})
+
+	it("index the text on fresh generated inputs", () => {
+		for (const text of generatedKnownFormatInputs(2000, 424_242)) {
+			for (const { span } of recognizedHits(text)) {
+				expect(text.slice(span.start, span.end)).toBe(span.body)
+			}
+		}
 	})
 })
 

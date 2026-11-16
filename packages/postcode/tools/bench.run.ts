@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Times one `recognizer.recognize(input)` call with the `structure`, `postcode_legacy`,
- *   `primitives` and `coordinates` families composed, against `computeQueryShape` in the
- *   same process, on the eight inputs of `packages/recognize/tools/bench.run.ts`.
+ *   Times one `recognizer.recognize(input)` call with the `structure`,
+ *   `postcode_legacy`, `primitives` and `coordinates` families composed,
+ *   on the eight inputs of `packages/recognize/tools/bench.run.ts`.
  *
- *   The recognizer computes every field `computeQueryShape` does, known formats included,
- *   and also recognizes digit runs, decimals, whitespace, words and decimal pairs,
- *   so it does more work on each input.
- *   The requirement is that one call takes no longer than `computeQueryShape`.
+ *   The recognizer computes the structural fields and known formats, and also recognizes
+ *   digit runs, decimals, whitespace, words and the coordinate spellings.
+ *   Further columns add the `postal` family, and the `spatial` and `identifiers`
+ *   families, to that composition.
+ *
+ *   The numbers of the removed legacy implementation, taken in the same process
+ *   before it was deleted, are in `docs/records/engineering/2026-11-16-recognize-swap.md`.
  *
  *   Method: 20,000 warm-up calls, then 200,000 timed calls per input, in one Node process.
  *   Every result feeds a running sum so the engine cannot drop the work.
  *
- *   Run it on a host with no CI run in progress, because busy runners slow both sides two to three times.
+ *   Run it on a host with no CI run in progress, because busy runners slow it two to three times.
  *
  *   The tool lives in this package and not beside the `recognize` benchmark because it
  *   imports `@mailwoman/postcode`, and `@mailwoman/recognize` mustn't import that package.
@@ -27,11 +30,12 @@ import { gitHead } from "@mailwoman/core/git"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuModel } from "@mailwoman/core/utils/system"
-import { computeQueryShape } from "@mailwoman/query-shape"
 import { createRecognizer } from "@mailwoman/recognize"
 import { coordinates } from "@mailwoman/recognize/coordinates"
 import { defineFamily } from "@mailwoman/recognize/family"
+import { identifiers } from "@mailwoman/recognize/identifiers"
 import { primitives } from "@mailwoman/recognize/primitives"
+import { spatial } from "@mailwoman/recognize/spatial"
 import { structure } from "@mailwoman/recognize/structure"
 
 import { postcodeLegacy } from "#recognize/legacy"
@@ -70,6 +74,11 @@ const postalFamily = otherArtifact ? defineFamily({ ...postal, artifact: () => o
 const recognizer = createRecognizer([structure, postcodeLegacy, primitives, coordinates])
 const withPostal = createRecognizer([structure, postcodeLegacy, postalFamily, primitives, coordinates])
 
+// The same composition and the `spatial` and `identifiers` families.
+// They add the plus code, DIGIPIN, GeoJSON, H3, geohash, Who's On First, GEOID
+// and GNIS shapes to the search.
+const withSpatial = createRecognizer([structure, postcodeLegacy, primitives, coordinates, spatial, identifiers])
+
 function microsecondsPerCall(input: string, run: (input: string) => number): { microseconds: number; sink: number } {
 	let sink = 0
 
@@ -89,7 +98,6 @@ function microsecondsPerCall(input: string, run: (input: string) => number): { m
 const encoder = new TextEncoder()
 
 const rows = INPUTS.map((input) => {
-	const legacy = microsecondsPerCall(input, (text) => computeQueryShape(text).knownFormats.length)
 	const adapter = microsecondsPerCall(input, (text) => recognizer.recognize(text).fields.knownFormats.length)
 
 	const postalCall = microsecondsPerCall(input, (text) => {
@@ -98,7 +106,14 @@ const rows = INPUTS.map((input) => {
 		return result.fields.knownFormats.length + result.recognitions.length
 	})
 
+	const spatialCall = microsecondsPerCall(input, (text) => {
+		const result = withSpatial.recognize(text)
+
+		return result.fields.knownFormats.length + result.recognitions.length
+	})
+
 	return {
+		spatialRecognizeMicroseconds: spatialCall.microseconds,
 		postalRecognizeMicroseconds: postalCall.microseconds,
 		postalCandidates: withPostal.recognize(input).recognitions.filter(({ kind }) => /^(postal|printed)\./u.test(kind))
 			.length,
@@ -106,9 +121,8 @@ const rows = INPUTS.map((input) => {
 		utf16Units: input.length,
 		utf8Bytes: encoder.encode(input).length,
 		knownFormats: recognizer.recognize(input).fields.knownFormats.length,
-		computeQueryShapeMicroseconds: legacy.microseconds,
 		recognizeMicroseconds: adapter.microseconds,
-		sink: legacy.sink + adapter.sink + postalCall.sink,
+		sink: adapter.sink + postalCall.sink + spatialCall.sink,
 	}
 })
 
@@ -129,7 +143,7 @@ if (values.json) {
 	console.log(`postal artifact: ${report.postalArtifact}`)
 	console.log(`${WARM_UP_CALLS} warm-up calls, then ${TIMED_CALLS} timed calls per input\n`)
 	console.log(
-		"| Input | UTF-16 units | Known formats | Postal candidates | computeQueryShape (µs/call) | recognize without postal (µs/call) | recognize with postal (µs/call) |"
+		"| Input | UTF-16 units | Known formats | Postal candidates | recognize without postal (µs/call) | recognize with postal (µs/call) | recognize with spatial and identifiers (µs/call) |"
 	)
 	console.log("| --- | --- | --- | --- | --- | --- | --- |")
 
@@ -137,7 +151,7 @@ if (values.json) {
 		const label = row.utf16Units > LABEL_MAX_UNITS ? `${row.input.slice(0, 40)}… (${row.utf16Units} units)` : row.input
 
 		console.log(
-			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.postalCandidates} | ${row.computeQueryShapeMicroseconds.toFixed(2)} | ${row.recognizeMicroseconds.toFixed(2)} | ${row.postalRecognizeMicroseconds.toFixed(2)} |`
+			`| \`${label}\` | ${row.utf16Units} | ${row.knownFormats} | ${row.postalCandidates} | ${row.recognizeMicroseconds.toFixed(2)} | ${row.postalRecognizeMicroseconds.toFixed(2)} | ${row.spatialRecognizeMicroseconds.toFixed(2)} |`
 		)
 	}
 }

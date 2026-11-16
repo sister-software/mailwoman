@@ -2,15 +2,32 @@
 
 crate::declare_family! {
 	family: "coordinates",
-	declarations_hash: "4eb9289261c751ca41e650f7a5d78af99f4971591d15821bbe3d2475eb6cbe00",
+	declarations_hash: "a4b56ec80695f3755dfa67514a4a073ca93b92785448e91f73c3f365e46522b3",
 	shapes: {
 		CoordinateDecimalPair = "coordinate.decimal_pair" => {
 			captures: [first: Decimal, second: Decimal],
 			validator: WGS84Pair,
 		},
+		CoordinateDecimalPairSpaced = "coordinate.decimal_pair_spaced" => {
+			validator: SpacedPair,
+		},
+		CoordinateDMSPair = "coordinate.dms_pair" => {
+			validator: AnglePair,
+		},
+		CoordinateDMSPairSpaced = "coordinate.dms_pair_spaced" => {
+			validator: AnglePair,
+		},
 		CoordinateGeoURI = "coordinate.geo_uri" => {
 			captures: [altitude: Decimal, crs: Text, latitude: Decimal, longitude: Decimal, parameters: Text, uncertainty: Decimal],
 			validator: GeoURI,
+		},
+		CoordinateLabeledPair = "coordinate.labeled_pair" => {
+			captures: [first_label: Text, first_value: Decimal, second_label: Text, second_value: Decimal],
+			validator: LabeledPair,
+		},
+		CoordinateMapsSegment = "coordinate.maps_segment" => {
+			captures: [first: Decimal, second: Decimal],
+			validator: MapsSegment,
 		},
 	}
 }

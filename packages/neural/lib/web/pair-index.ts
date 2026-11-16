@@ -6,7 +6,8 @@
  */
 
 import { detectLocale } from "@mailwoman/locale-hint"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 
 import { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
@@ -65,8 +66,11 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
  * place-name dictionaries, so "10 Downing St, London SW1A 2AA" detects `gb` while a bare
  * "Shoreditch London" falls through to the `en-US` fallback and therefore to `us`.
  */
-export function detectPairIndexCountry(text: string): string {
-	const shape = computeQueryShape(text)
+export function detectPairIndexCountry(
+	text: string,
+	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
+): string {
+	const shape = computeQueryShape(text, generation)
 	const hint = detectLocale(shape)
 
 	return resolvePairIndexCountry(hint.locale)
@@ -83,10 +87,12 @@ export function detectPairIndexCountry(text: string): string {
 export function resolvePairIndexForText(
 	pairIndexes: readonly LoadedPairIndex[],
 	text: string,
-	opts?: { country?: string }
+	opts?: { country?: string; generation?: QueryShapeGeneration }
 ): PlacetypePairPriorOpts | null {
 	if (!pairIndexes.length) return null
-	const country = opts?.country ? resolvePairIndexCountry(opts.country) : detectPairIndexCountry(text)
+
+	const country = opts?.country ? resolvePairIndexCountry(opts.country) : detectPairIndexCountry(text, opts?.generation)
+
 	const match = pairIndexes.find((index) => index.country === country)
 
 	return match ? { index: match.resolver } : null

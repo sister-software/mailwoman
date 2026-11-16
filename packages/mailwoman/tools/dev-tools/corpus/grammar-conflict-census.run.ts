@@ -33,7 +33,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { classifyToken } from "@mailwoman/query-shape/character-class"
+import { classifyToken } from "@mailwoman/recognize/charset"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

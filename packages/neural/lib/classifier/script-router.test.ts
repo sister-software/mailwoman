@@ -13,7 +13,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 import {

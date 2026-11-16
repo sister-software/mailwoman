@@ -6,8 +6,14 @@ it was recorded at.
 
 - `encode-row-reference.json` holds one row encoded by the Python `encode_row` with every soft-feed
   channel on, under both label sources, with the shaped anchor and with no channels. It also holds every
-  input the encoder read: pieces, lexicons, the anchor table and the label table.
-- `text-reference.json` holds the postcode-shape matches, code units with acceptance counts, and
-  `str.lower`, `str.upper` and `str.strip` results for a list of adversarial texts. For each of 17
-  templates, it groups every Unicode scalar value by the answer that value gives when placed in the
-  template.
+  input the encoder read: pieces, lexicons, the anchor table and the label table. The postal anchor
+  paints the shaped case's row identically, and the test says so.
+- `text-reference.json` holds the code units and `str.lower`, `str.upper` and `str.strip` results for a
+  list of adversarial texts. For each of 17 templates, it groups every Unicode scalar value by the
+  segmentation that value gives when placed in the template. The recording also held the retired shape
+  finder's spans and each unit's acceptance count, which the `postal` family's finders replaced, so those
+  answers were removed from the file.
+
+The postal finders' own fixture is `test/fixtures/postcode-agreement.json` at the repository root, beside the
+code-unit parity fixture. `tests/postcode_agreement.rs` replays it against the encoder's finder and
+`packages/postcode/lib/postal-spans.test.ts` against serving's.

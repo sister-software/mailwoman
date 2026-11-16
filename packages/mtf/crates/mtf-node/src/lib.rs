@@ -12,8 +12,9 @@
 
 #![deny(clippy::all)]
 
+use mtf_channels::anchor::AnchorLookup;
 use mtf_channels::encoder::{require_whole_triple, CHANNEL_NAMES};
-use mtf_channels::finders::RegexFinders;
+use mtf_channels::finders::PostalFinders;
 use mtf_channels::label_schema::LabelSchema;
 use mtf_channels::{
 	AnchorMode, Encoder, EncoderConfig, EncoderResources, Finders, Lexicons, Piece, ResourcePaths, RowInput,
@@ -508,10 +509,12 @@ pub struct RowEncoderOptions {
 	pub label_set: Option<String>,
 	pub max_length: u32,
 	pub pad_id: Option<i64>,
-	pub postcode_shapes_path: String,
-	pub postcode_syntax_path: String,
+	/// `packages/postcode/data/artifacts/postal.rca1`.
+	pub postal_artifact_path: String,
+	/// `packages/postcode/data/definitions/postal.definition.json`.
+	pub postal_definition_path: String,
 	pub anchor_lookup_path: Option<String>,
-	/// `gold` or `shaped`.
+	/// `gold` or `postal`.
 	pub anchor_paint_mode: Option<String>,
 	pub gazetteer_lexicon_path: Option<String>,
 	pub gazetteer_choreography: Option<bool>,
@@ -555,7 +558,7 @@ pub struct RowEncoder {
 	processor: Arc<Processor>,
 	config: EncoderConfig,
 	lexicons: Lexicons,
-	finders: RegexFinders,
+	finders: PostalFinders,
 }
 
 impl RowEncoder {
@@ -574,8 +577,8 @@ impl RowEncoder {
 		let EncoderResources { lexicons, finders, .. } = EncoderResources::load(&ResourcePaths {
 			label_schema: Path::new(&options.label_schema_path),
 			label_set: options.label_set.as_deref().unwrap_or("stage3"),
-			postcode_shapes: Path::new(&options.postcode_shapes_path),
-			postcode_syntax: Path::new(&options.postcode_syntax_path),
+			postal_artifact: Path::new(&options.postal_artifact_path),
+			postal_definition: Path::new(&options.postal_definition_path),
 			anchor_lookup: optional_file(&options.anchor_lookup_path),
 			gazetteer: optional_file(&options.gazetteer_lexicon_path),
 			country: optional_file(&options.country_lexicon_path),
@@ -892,6 +895,100 @@ pub fn derive_source_weights(
 			)
 			.collect(),
 	})
+}
+
+/// One postcode span of a line, as character offsets, with the key the anchor table resolved it under when a table is
+/// loaded and holds it.
+#[napi(object)]
+pub struct PostcodeSpan {
+	pub start: u32,
+	pub end: u32,
+	pub key: Option<String>,
+	/// The countries the candidate's shapes belong to.
+	pub countries: Vec<String>,
+}
+
+/// One code unit of a line, as character offsets, with the number of countries whose syntax accepts it.
+#[napi(object)]
+pub struct CodeUnitCount {
+	pub start: u32,
+	pub end: u32,
+	pub accepting: u32,
+}
+
+/// The encoder's postcode finder alone, for the audits that compare it with serving's `findPostcodeSpans`.
+#[napi]
+pub struct PostcodeFinder {
+	finders: PostalFinders,
+	anchor: Option<AnchorLookup>,
+}
+
+#[napi]
+impl PostcodeFinder {
+	/// Loads the `postal` family's artifact and definition, and the anchor table when a path is given.
+	#[napi(constructor, catch_unwind)]
+	pub fn new(artifact_path: String, definition_path: String, anchor_lookup_path: Option<String>) -> Result<Self> {
+		let artifact = std::fs::read(&artifact_path).map_err(|e| input(format!("cannot read {artifact_path}: {e}")))?;
+		let finders = PostalFinders::load(&artifact, &artifact_path, &read(&definition_path)?, &definition_path)
+			.map_err(channel_error)?;
+		let anchor = optional_path(&anchor_lookup_path)
+			.map(|path| AnchorLookup::from_json(&read(path)?, path).map_err(channel_error))
+			.transpose()?;
+		Ok(Self { finders, anchor })
+	}
+
+	/// The postcode spans of `raw`, in start order.
+	#[napi(catch_unwind)]
+	pub fn spans(&self, raw: String) -> Result<Vec<PostcodeSpan>> {
+		let chars: Vec<char> = raw.chars().collect();
+		let codes = self.finders.country_codes();
+		self.finders.postcode_spans(&raw).map_err(channel_error).map(|spans| {
+			spans
+				.into_iter()
+				.map(|candidate| {
+					let listed: Vec<String> = candidate
+						.countries
+						.iter()
+						.flatten()
+						.map(|&index| codes[index as usize].clone())
+						.collect();
+					let allowed = |code: &str| listed.iter().any(|listed| listed == code);
+					PostcodeSpan {
+						start: candidate.start as u32,
+						end: candidate.end as u32,
+						key: self
+							.anchor
+							.as_ref()
+							.and_then(|table| table.resolve(&chars[candidate.start..candidate.end], Some(&allowed))),
+						countries: listed.clone(),
+					}
+				})
+				.collect()
+		})
+	}
+
+	/// The code units of `raw`, with the number of countries whose syntax accepts each.
+	#[napi(catch_unwind)]
+	pub fn code_units(&self, raw: String) -> Result<Vec<CodeUnitCount>> {
+		let chars: Vec<char> = raw.chars().collect();
+		self.finders.code_units(&chars).map_err(channel_error).map(|units| {
+			units
+				.into_iter()
+				.map(|unit| CodeUnitCount {
+					start: unit.start as u32,
+					end: unit.end as u32,
+					accepting: unit.accepting as u32,
+				})
+				.collect()
+		})
+	}
+
+	/// How many countries' postcode syntax accepts the whole of `unit`.
+	#[napi(catch_unwind)]
+	pub fn accepting(&self, unit: String) -> Result<u32> {
+		let chars: Vec<char> = unit.chars().collect();
+		self.finders.accepting(&chars).map(|n| n as u32).map_err(channel_error)
+	}
 }
 
 /// `str.casefold` under the trainer's CPython Unicode tables.

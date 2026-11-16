@@ -31,10 +31,15 @@ describe("the handler map type", () => {
 			"space.whitespace": () => "space",
 			"word.ascii": () => "word",
 			"coordinate.decimal_pair": () => "pair",
+			"coordinate.decimal_pair_spaced": () => "spaced pair",
+			"coordinate.dms_pair": () => "degrees",
+			"coordinate.dms_pair_spaced": () => "spaced degrees",
 			"coordinate.geo_uri": () => "uri",
+			"coordinate.labeled_pair": () => "labeled",
+			"coordinate.maps_segment": () => "maps",
 		} satisfies { [K in Kinds]: Handler<K> }
 
-		expect(Object.keys(handlers)).toHaveLength(6)
+		expect(Object.keys(handlers)).toHaveLength(11)
 	})
 
 	it("refuses a map that omits a kind of a composed family", () => {
@@ -123,6 +128,9 @@ describe("the handler map type", () => {
 
 				return 0
 			},
+			"coordinate.decimal_pair_spaced": () => 0,
+			"coordinate.dms_pair": () => 0,
+			"coordinate.dms_pair_spaced": () => 0,
 			"coordinate.geo_uri": (recognition) => {
 				if (recognition.validation.status === "validated") {
 					expectTypeOf(recognition.validation.payload.altitude).toEqualTypeOf<Validated.Decimal | undefined>()
@@ -130,9 +138,11 @@ describe("the handler map type", () => {
 
 				return 0
 			},
+			"coordinate.labeled_pair": () => 0,
+			"coordinate.maps_segment": () => 0,
 		} satisfies HandlerMap<typeof families>
 
-		expect(Object.keys(handlers)).toHaveLength(6)
+		expect(Object.keys(handlers)).toHaveLength(11)
 	})
 
 	it("types a shape-only kind with its span and text only", () => {

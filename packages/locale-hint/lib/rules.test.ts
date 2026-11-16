@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { KnownFormat, QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW, type QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import { expect, test } from "vitest"
 
 import { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
 
-const fmt = (format: KnownFormat, confidence = 0.9, start = 0, end = 5) => ({
+const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 	format,
 	span: { start, end },
 	confidence,
@@ -111,6 +110,27 @@ test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit"
 		confidence: 0.95,
 		reason: "format=us_zip4",
 	})
+})
+
+test("scoreByPostcode: the postal generation reads the locale and the confidence of the best postcode hit", () => {
+	const hit = (confidence: number, locale: string | null, form: "alnum" | "numeric" | "designated") => ({
+		...fmt("postcode", confidence),
+		locale,
+		form,
+	})
+
+	const postal = (knownFormats: QueryShapeLike["knownFormats"]) =>
+		scoreByPostcode(shape({ generation: "postal", knownFormats }))
+
+	expect(postal([hit(0.55, "en-US", "numeric"), hit(0.95, "en-GB", "alnum")])).toEqual({
+		locale: "en-GB",
+		confidence: 0.95,
+		reason: "postcode form=alnum",
+	})
+
+	expect(postal([hit(0.55, "en-US", "numeric")])).toMatchObject({ locale: "en-US", confidence: 0.55 })
+	expect(postal([{ ...fmt("po_box", 0.85), locale: null }])).toBeNull()
+	expect(postal([])).toBeNull()
 })
 
 test("scoreFallback: always en-US at low confidence (check is never null)", () => {

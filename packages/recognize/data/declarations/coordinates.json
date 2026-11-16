@@ -1,0 +1,311 @@
+{
+	"family": "coordinates",
+	"shapes": [
+		{
+			"captures": [
+				{
+					"path": "first",
+					"type": "decimal"
+				},
+				{
+					"path": "second",
+					"type": "decimal"
+				}
+			],
+			"handler": null,
+			"id": "coordinate.decimal_pair",
+			"kind": "CoordinateDecimalPair",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"missing_capture",
+				"not_a_decimal",
+				"not_finite"
+			],
+			"validator": "WGS84Pair"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "coordinate.decimal_pair_spaced",
+			"kind": "CoordinateDecimalPairSpaced",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"not_a_decimal",
+				"not_finite",
+				"unsplittable_pair"
+			],
+			"validator": "SpacedPair"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "coordinate.dms_pair",
+			"kind": "CoordinateDMSPair",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"conflicting_hemispheres",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"malformed_angle",
+				"no_coordinate_mark",
+				"not_a_decimal",
+				"not_finite",
+				"unsplittable_pair"
+			],
+			"validator": "AnglePair"
+		},
+		{
+			"captures": [],
+			"handler": null,
+			"id": "coordinate.dms_pair_spaced",
+			"kind": "CoordinateDMSPairSpaced",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"conflicting_hemispheres",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"malformed_angle",
+				"no_coordinate_mark",
+				"not_a_decimal",
+				"not_finite",
+				"unsplittable_pair"
+			],
+			"validator": "AnglePair"
+		},
+		{
+			"captures": [
+				{
+					"path": "altitude",
+					"type": "decimal"
+				},
+				{
+					"path": "crs",
+					"type": "text"
+				},
+				{
+					"path": "latitude",
+					"type": "decimal"
+				},
+				{
+					"path": "longitude",
+					"type": "decimal"
+				},
+				{
+					"path": "parameters",
+					"type": "text"
+				},
+				{
+					"path": "uncertainty",
+					"type": "decimal"
+				}
+			],
+			"handler": null,
+			"id": "coordinate.geo_uri",
+			"kind": "CoordinateGeoURI",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "altitude",
+					"type": "decimal",
+					"optional": true
+				},
+				{
+					"name": "uncertainty",
+					"type": "uncertainty",
+					"optional": true
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"misplaced_parameter",
+				"missing_capture",
+				"negative_uncertainty",
+				"not_a_decimal",
+				"not_finite",
+				"unsupported_crs"
+			],
+			"validator": "GeoURI"
+		},
+		{
+			"captures": [
+				{
+					"path": "first_label",
+					"type": "text"
+				},
+				{
+					"path": "first_value",
+					"type": "decimal"
+				},
+				{
+					"path": "second_label",
+					"type": "text"
+				},
+				{
+					"path": "second_value",
+					"type": "decimal"
+				}
+			],
+			"handler": null,
+			"id": "coordinate.labeled_pair",
+			"kind": "CoordinateLabeledPair",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"missing_capture",
+				"not_a_decimal",
+				"not_finite",
+				"same_axis_labels"
+			],
+			"validator": "LabeledPair"
+		},
+		{
+			"captures": [
+				{
+					"path": "first",
+					"type": "decimal"
+				},
+				{
+					"path": "second",
+					"type": "decimal"
+				}
+			],
+			"handler": null,
+			"id": "coordinate.maps_segment",
+			"kind": "CoordinateMapsSegment",
+			"payload": [
+				{
+					"name": "latitude",
+					"type": "latitude",
+					"optional": false
+				},
+				{
+					"name": "longitude",
+					"type": "longitude",
+					"optional": false
+				},
+				{
+					"name": "order",
+					"type": "axis_order",
+					"optional": false
+				}
+			],
+			"rejections": [
+				"capture_limit",
+				"capture_mismatch",
+				"latitude_out_of_range",
+				"longitude_out_of_range",
+				"missing_capture",
+				"not_a_decimal",
+				"not_finite"
+			],
+			"validator": "MapsSegment"
+		}
+	]
+}

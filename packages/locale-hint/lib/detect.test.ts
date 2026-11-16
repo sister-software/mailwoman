@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import { EMPTY_QUERY_SHAPE_VIEW, type QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import { describe, expect, it } from "vitest"
 
 import { detectLocale } from "#detect"

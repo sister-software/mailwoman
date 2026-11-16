@@ -7,6 +7,7 @@
  */
 
 import { deriveInputMode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import {
 	classifyKindSync,
 	createKindClassifier,
@@ -19,11 +20,7 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier"
-import {
-	computeQueryShape,
-	type NormalizedInputLite,
-	type QueryShapeSegmentsView as QueryShapeLike,
-} from "@mailwoman/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { beforeAll, describe, expect, test } from "vitest"
 
 import { poiTaxonomyLookup } from "#poi"

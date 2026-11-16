@@ -5,7 +5,7 @@
  *   Declares the types for the runtime pipeline and its injected stages.
  */
 
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
+import type { BCP47 } from "@mailwoman/registry/types"
 import { z } from "zod"
 
 import { type AddressTree, AddressTreeSchema } from "#decoder/types"
@@ -193,6 +193,122 @@ export interface PipelineOpts {
 }
 
 /**
+ * The normalized-input fields that the pipeline stages and several other packages read.
+ *
+ * `NormalizedInput` from `@mailwoman/normalize` has a compatible shape.
+ */
+export interface NormalizedInputLite {
+	raw: string
+	normalized: string
+	appliedLocale?: string | null
+}
+
+/**
+ * Whether a known-format name is a postcode format.
+ *
+ * The check uses the naming convention instead of a set, so a format added to the recognizer's
+ * known-format table becomes a postcode everywhere once it follows the convention.
+ * The `legacy` generation reports `us_zip`, `us_zip4` and `<cc>_postcode`,
+ * and the `postal` generation reports every postcode as `postcode`.
+ */
+export function isPostcodeFormat(format: string): boolean {
+	return format === "postcode" || format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
+}
+
+/**
+ * The hit a locale or a country can be read from: the countries a postal-generation
+ * hit's syntax accepts, and the locale of the most populous of them.
+ */
+export interface KnownFormatCountryView {
+	/**
+	 * The BCP 47 locale of the most populous accepting country, or null when the hit names none.
+	 */
+	locale?: string | null
+	/**
+	 * What the form is made of: `designated` (a printed prefix), `alnum` (a letter) or `numeric` (digits).
+	 */
+	form?: "alnum" | "numeric" | "designated" | null
+}
+
+/**
+ * A read-only view of the known-format hit fields that later stages read.
+ */
+export interface KnownFormatHitView extends KnownFormatCountryView {
+	format: string
+	span: { start: number; end: number }
+	confidence: number
+}
+
+/**
+ * A read-only view of one segment.
+ *
+ * `span` holds the segment's character offsets, or `null` for a hand-built shape that has none.
+ */
+export interface SegmentView {
+	body: string
+	index: number
+	span: { start: number; end: number } | null
+}
+
+/**
+ * A read-only view of one token classification.
+ */
+export interface TokenClassView {
+	span: { start: number; end: number; body: string }
+	class: string
+	script: BCP47.ScriptCode | null
+}
+
+/**
+ * A read-only view of a query shape with the format hits and the whole-input class.
+ * It is the input type of `@mailwoman/locale-hint`.
+ */
+export interface QueryShapeFormatsView {
+	knownFormats: ReadonlyArray<KnownFormatHitView>
+	characterClass: string | null
+	/**
+	 * The generation of the query-shape rules that computed the shape, `legacy` when absent.
+	 * A consumer that recomputes a shape passes it on.
+	 */
+	generation?: "legacy" | "postal"
+	/**
+	 * The ranked scripts, or null for a hand-built shape that has none.
+	 */
+	scripts: ReadonlyArray<{ script: BCP47.ScriptCode; share: number }> | null
+	totalLength: number | null
+}
+
+/**
+ * A {@link QueryShapeFormatsView} with segments.
+ * It is the input type of `@mailwoman/kind-classifier`.
+ */
+export interface QueryShapeSegmentsView extends QueryShapeFormatsView {
+	segments: ReadonlyArray<SegmentView> | null
+}
+
+/**
+ * A {@link QueryShapeSegmentsView} with token classes.
+ * It is the input type of `@mailwoman/phrase-grouper`.
+ */
+export interface QueryShapeTokensView extends QueryShapeSegmentsView {
+	tokenClasses: ReadonlyArray<TokenClassView> | null
+}
+
+/**
+ * A query-shape view with no format hits and every optional part null.
+ *
+ * Hand-built shapes spread it and set the parts they need.
+ */
+export const EMPTY_QUERY_SHAPE_VIEW: QueryShapeTokensView = {
+	knownFormats: [],
+	characterClass: null,
+	scripts: null,
+	totalLength: null,
+	segments: null,
+	tokenClasses: null,
+}
+
+/**
  * The fields of a query shape that the pipeline reads.
  */
 export interface QueryShapeLite {
@@ -206,15 +322,14 @@ export interface QueryShapeLite {
 	/**
 	 * ISO 15924 scripts ranked by share of characters that belong to a script.
 	 */
-	scripts: ReadonlyArray<{ script: string; share: number }> | null
+	scripts: ReadonlyArray<{ script: BCP47.ScriptCode; share: number }> | null
 	/**
 	 * The class and script of each token.
 	 */
 	tokenClasses: ReadonlyArray<{
 		span: { start: number; end: number; body: string }
 		class: string
-		length: number
-		script: string | null
+		script: BCP47.ScriptCode | null
 	}> | null
 	totalLength: number | null
 }
@@ -233,7 +348,7 @@ export interface LocaleHint {
 	 * The array is empty when no character of the input belongs to a script.
 	 * `locale` stays a BCP-47 language tag.
 	 */
-	script: ReadonlyArray<{ script: string; confidence: number }>
+	script: ReadonlyArray<{ script: BCP47.ScriptCode; confidence: number }>
 	/**
 	 * Diagnostic values that fed the inferred preferences, or null when none did.
 	 * Locale and time zone are independent signals.
@@ -804,7 +919,7 @@ export type LocaleDetector = (
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
-	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
+	computeQueryShape?: (input: NormalizedInputLite | string) => QueryShapeLite
 	detectLocale?: LocaleDetector
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**

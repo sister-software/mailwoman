@@ -14,6 +14,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 
+import type { AnchorSpanMode } from "#anchor-inference"
 import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
 import type { PairEdge, PairIndexLike } from "#pair/index/resolver"
 import {
@@ -100,6 +101,13 @@ export interface PlacetypePairPriorOpts {
 	 * Raw input text used by segment and anchored paths.
 	 */
 	inputText?: string
+	/**
+	 * The model card's `requires.anchor.span_mode`.
+	 *
+	 * It selects the postcode matches the anchored path reads: the `postal` family
+	 * under `postal`, the frozen table otherwise.
+	 */
+	postcodeSpanMode?: AnchorSpanMode | null
 	/**
 	 * Optional trace out-record, mutated in place.
 	 */
@@ -247,13 +255,14 @@ function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: num
 function resolveAnchorParentEnd(
 	nonEmptyGroups: readonly WordGroup[],
 	pieces: ReadonlyArray<TokenLike>,
-	inputText: string | undefined
+	inputText: string | undefined,
+	spanMode: AnchorSpanMode | null | undefined
 ): number {
 	const lastPos = nonEmptyGroups.length - 1
 
 	if (!inputText) return lastPos
 
-	const matches = collectMatches(inputText)
+	const matches = collectMatches(inputText, spanMode)
 
 	if (!matches.length) return lastPos
 
@@ -462,7 +471,7 @@ export function buildPlacetypePairPriors(
 
 	// Auto mode falls back to anchored when segment mode cannot form a pair.
 	if (probeMode === "anchored" || (probeMode === "auto" && segmentWindows!.length < 2)) {
-		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText)
+		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText, opts.postcodeSpanMode)
 
 		// No room for child to the left.
 		if (parentEnd < 1) return { matrix, transitionAdjustments }

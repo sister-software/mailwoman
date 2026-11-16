@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { LocaleHint, PipelineOpts, PipelineResult, POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
 import { matchPOISubject, type POIPhraseLookup, type POIPhraseMatch } from "@mailwoman/kind-classifier"
 import {
 	lookupPOIBrand,
@@ -10,7 +11,6 @@ import {
 	lookupPOICategoryTypo,
 	resolveBrandName,
 } from "@mailwoman/poi-taxonomy"
-import type { NormalizedInputLite } from "@mailwoman/query-shape"
 import type { AliasLookupResult, BrandAlias } from "@mailwoman/variant-aliases"
 import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 

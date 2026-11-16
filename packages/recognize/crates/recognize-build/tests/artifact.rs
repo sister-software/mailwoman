@@ -149,7 +149,8 @@ fn the_loader_does_not_depend_on_where_the_buffer_starts() {
 
 #[test]
 fn every_truncation_is_refused() {
-	let bytes = artifact_of("coordinates");
+	// One load for each prefix, so the cost grows with the square of the size: the smallest family's artifact.
+	let bytes = artifact_of("primitives");
 
 	for length in 0..bytes.len() {
 		assert!(
@@ -161,7 +162,10 @@ fn every_truncation_is_refused() {
 
 #[test]
 fn a_changed_byte_in_a_payload_is_refused_and_a_changed_byte_anywhere_never_panics() {
-	let bytes = artifact_of("coordinates");
+	// The test loads the artifact once for each of its bytes, so its cost grows with the square of the size. The
+	// `primitives` artifact has the layout every family has, a header, its automata and a capture program, and it is
+	// the smallest of them, where `coordinates` grows with every shape the family reads.
+	let bytes = artifact_of("primitives");
 	let artifact = parse(&bytes).unwrap();
 	let start = artifact.payloads[0].bytes.as_ptr() as usize - bytes.as_ptr() as usize;
 	let end = {

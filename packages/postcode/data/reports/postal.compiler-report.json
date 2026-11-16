@@ -1,7 +1,618 @@
 {
 	"crossFamily": {
-		"equivalent": [],
+		"equivalent": [
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.ba"
+				}
+			}
+		],
 		"overlaps": [
+			{
+				"a": {
+					"family": "coordinates",
+					"shape": "coordinate.dms_pair_spaced"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.ie"
+				},
+				"declared": true,
+				"witness": "000 000D"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_block_group"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.as"
+				},
+				"declared": true,
+				"witness": "96799"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.ax"
+				},
+				"declared": true,
+				"witness": "22000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.ba"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.bl"
+				},
+				"declared": true,
+				"witness": "97000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.cr"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.cz"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.fm"
+				},
+				"declared": true,
+				"witness": "96941"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.fr"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.gf"
+				},
+				"declared": true,
+				"witness": "97300"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.gu"
+				},
+				"declared": true,
+				"witness": "96910"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.il"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.kh"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mc"
+				},
+				"declared": true,
+				"witness": "98000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.me"
+				},
+				"declared": true,
+				"witness": "80000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mh"
+				},
+				"declared": true,
+				"witness": "96960"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mp"
+				},
+				"declared": true,
+				"witness": "96950"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mq"
+				},
+				"declared": true,
+				"witness": "97200"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mu"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.nc"
+				},
+				"declared": true,
+				"witness": "98800"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.pe"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.pf"
+				},
+				"declared": true,
+				"witness": "98700"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.pm"
+				},
+				"declared": true,
+				"witness": "97500"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.pr"
+				},
+				"declared": true,
+				"witness": "00600"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.pw"
+				},
+				"declared": true,
+				"witness": "96939"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.re"
+				},
+				"declared": true,
+				"witness": "97400"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.sm"
+				},
+				"declared": true,
+				"witness": "47890"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.tw"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.tz"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.um"
+				},
+				"declared": true,
+				"witness": "96898"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.us"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.va"
+				},
+				"declared": true,
+				"witness": "00120"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.vi"
+				},
+				"declared": true,
+				"witness": "00800"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.wf"
+				},
+				"declared": true,
+				"witness": "98600"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.xk"
+				},
+				"declared": true,
+				"witness": "10000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.yt"
+				},
+				"declared": true,
+				"witness": "97600"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_county"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_state"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "census.geoid_tract"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "00000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "h3.cell"
+				},
+				"b": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"declared": true,
+				"witness": "800000000000000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "wof.reference"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.ie"
+				},
+				"declared": true,
+				"witness": "WOF 0000"
+			},
+			{
+				"a": {
+					"family": "identifiers",
+					"shape": "wof.reference"
+				},
+				"b": {
+					"family": "postal",
+					"shape": "postal.mt"
+				},
+				"declared": true,
+				"witness": "WOF 00"
+			},
 			{
 				"a": {
 					"family": "postal",
@@ -629,6 +1240,18 @@
 			{
 				"a": {
 					"family": "postal",
+					"shape": "postal.ir"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "postal",
 					"shape": "postal.jp"
 				},
 				"b": {
@@ -1321,6 +1944,42 @@
 				},
 				"declared": true,
 				"witness": "97600"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.digit_run"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "number.signed_decimal"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "2222222222"
+			},
+			{
+				"a": {
+					"family": "primitives",
+					"shape": "word.ascii"
+				},
+				"b": {
+					"family": "spatial",
+					"shape": "digipin.compact"
+				},
+				"declared": true,
+				"witness": "CCCCCCCCCC"
 			}
 		]
 	},
@@ -1328,15 +1987,15 @@
 		"postal": {
 			"automata": [
 				{
-					"backend": "dense",
-					"bytes": 725116,
+					"backend": "sparse",
+					"bytes": 53709,
 					"patterns": 98,
 					"role": "whole",
 					"states": 1408
 				},
 				{
-					"backend": "dense",
-					"bytes": 966952,
+					"backend": "sparse",
+					"bytes": 91415,
 					"patterns": 98,
 					"role": "embedded",
 					"states": 1846

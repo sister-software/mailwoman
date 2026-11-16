@@ -42,15 +42,23 @@ export function trainerDataPath(name: string): string {
 }
 
 /**
- * The postcode-shape record the shaped anchor and the postcode finders compile.
+ * The `postal` family's artifact.
+ *
+ * The postcode finders run it through `recognize-core`.
+ * The serving side reads the same artifact in `@mailwoman/postcode`.
  */
-export const POSTCODE_SHAPES_PATH = trainerDataPath("postcode-shapes.json")
+export const POSTAL_ARTIFACT_PATH = workspacePath("postcode", "data", "artifacts", "postal.rca1").toString()
 
 /**
- * Each country's postcode syntax.
- * The postcode finders use it to validate values.
+ * The `postal` family's definition.
+ * It states each shape's countries, form and printed prefix.
  */
-export const POSTCODE_SYNTAX_PATH = trainerDataPath("postcode-syntax.json")
+export const POSTAL_DEFINITION_PATH = workspacePath(
+	"postcode",
+	"data",
+	"definitions",
+	"postal.definition.json"
+).toString()
 
 /**
  * Each country's postcode position relative to its locality-and-region block.
@@ -369,10 +377,10 @@ export function createConfigRowEncoder(mtf: MTFNode, data: TrainingConfig["data"
 		tokenizerModelPath: `${data.tokenizer_dir}/tokenizer.model`,
 		labelSchemaPath: LABEL_SCHEMA_PATH,
 		maxLength: data.max_length,
-		postcodeShapesPath: POSTCODE_SHAPES_PATH,
-		postcodeSyntaxPath: POSTCODE_SYNTAX_PATH,
+		postalArtifactPath: POSTAL_ARTIFACT_PATH,
+		postalDefinitionPath: POSTAL_DEFINITION_PATH,
 		anchorLookupPath: data.anchor_lookup_path,
-		anchorPaintMode: data.anchor_paint_mode as "gold" | "shaped",
+		anchorPaintMode: data.anchor_paint_mode as "gold" | "postal",
 		gazetteerLexiconPath: data.gazetteer_lexicon_path,
 		gazetteerChoreography: data.gazetteer_choreography,
 		countryLexiconPath: data.country_lexicon_path,

@@ -1,0 +1,4924 @@
+{
+	"description": "The point readings of the legacy parsePointQuery, taken before it was deleted, and what recognize reads where the two differ. Each case is a trimmed text and the reading pointFromText returns, or null.",
+	"draw": {
+		"source": "the inputs of packages/mailwoman/tools/dev-tools/recognize/point-differential.run.ts: the string literals of the three spatial test files and seeded generated inputs",
+		"distinctTrimmedInputs": 42122,
+		"agreedPerKind": 60,
+		"agreedCounts": {
+			"coordinates": 2512,
+			"geohash": 245,
+			"h3": 246,
+			"plus_code_full": 825,
+			"plus_code_short": 1752,
+			"wof": 67
+		},
+		"legacyOnly": 28,
+		"recognizeOnly": 88,
+		"differentValues": 1,
+		"neitherCount": 36358,
+		"neitherKept": 150,
+		"note": "agreed rows: both readers return the same value, spread evenly over the sorted inputs of each kind. legacy_only rows: parsePointQuery returned a point and the specification refuses the text. recognize_only rows: parsePointQuery returned null and the specification reads a point."
+	},
+	"cases": [
+		{
+			"category": "agreed:coordinates",
+			"input": "+0       s ; +33° 5s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 33.00138888888889,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+007d 75m  N;007°5m 30''",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 8.25,
+				"longitude": 7.091666666666667,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+0º5 s 007d    30s  S",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -7.008333333333334,
+				"longitude": 0.001388888888888889,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+12.5 , 45.2",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 45.2,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+12.5d    15”  E,- 12.5 5′ 15''",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.5875,
+				"longitude": 12.504166666666666,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+12° 5m   w\t5°30’",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 5.5,
+				"longitude": -12.083333333333334,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+33°  30 ′  5s S;33 d  5 ″ w",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -33.50138888888889,
+				"longitude": -33.00138888888889,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+5  5 m    S , -12.5      e",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -5.083333333333333,
+				"longitude": -12.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "+90°  ; +48.8584 ° 30.5′  N",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 49.366733333333336,
+				"longitude": 90,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 007d    N;33 d 60′",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -7,
+				"longitude": 34,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 0º  30.5m   5''   N\t12°  5m   e",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -0.5097222222222222,
+				"longitude": 12.083333333333334,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 12.5°  30.5’  S , +12.5ºw",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -13.008333333333333,
+				"longitude": -12.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 151d 60 ′  5 s W ; 0d 5”",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.001388888888888889,
+				"longitude": -152.0013888888889,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 48.8584 60 ′   n , 33 °  30 s E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -49.8584,
+				"longitude": 33.00833333333333,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 48.8584º60 m N , 5°   60’  30 s  W",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -49.8584,
+				"longitude": -6.008333333333334,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "- 90      N 33 °    15.25''  w",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": -33.00423611111111,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-0   N , 12.5 ° 30′  w",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": -13,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-030″ N, 33º 30.5m  W",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -3,
+				"longitude": -33.50833333333333,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-12.5 E  48.858460 ′ 5 s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.85984888888889,
+				"longitude": -12.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-12º  60m   30”   , +151d 15.25”w",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -13.008333333333333,
+				"longitude": -151.0042361111111,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-33º 60' 15”  ; 48.8584º5’",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -34.00416666666667,
+				"longitude": 48.94173333333334,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-48.8584º  30s   N , -12°     15\"",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -48.866733333333336,
+				"longitude": -12.004166666666666,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-5°E, 0°       s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": -5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-90,-74.006",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": -74.006,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "-91 E ; +5 d N",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 5,
+				"longitude": -91,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "0 , 180",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 180,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "007\t-74.006",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": -74.006,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "007 °    15.25”  E;- 12º  30 ′",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.5,
+				"longitude": 7.004236111111111,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "007S ; - 12° 15.25″ E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -7,
+				"longitude": -12.004236111111112,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "007°  15 ″ E\t+12.5°",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 7.004166666666666,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "0; 91",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 91,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "0°    30''   E\t- 12.5 d  30.5m   59.9 ″  S",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -13.024972222222221,
+				"longitude": 0.008333333333333333,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12    30 s   N ; - 151º15 s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.008333333333333,
+				"longitude": -151.00416666666666,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12.5\t-74.006",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": -74.006,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12.5 d    E, 12 °15”S",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.004166666666666,
+				"longitude": 12.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12.5; -74.006",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": -74.006,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12.5°  30′  15.25''   s -00730m  E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -13.004236111111112,
+				"longitude": -73,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12d        s ; 91º 30.5m  30s  w",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12,
+				"longitude": -91.51666666666668,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "12°  59.9 ″ , -5d 5”W",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.016638888888888,
+				"longitude": -5.001388888888889,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "139.6917 , -74.006",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -74.006,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "151 30′  ,+48.8584º59.9 ″S",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -48.875038888888895,
+				"longitude": 151.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "180 d      e, - 5d     15''   s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -5.004166666666666,
+				"longitude": 180,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "33 °30s ;12.5 °15 s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 33.00833333333333,
+				"longitude": 12.504166666666666,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "33°  5m     W  48.8584  30’",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 49.3584,
+				"longitude": -33.083333333333336,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "48.8584  15\" ;1230.5’59.9s E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.86256666666667,
+				"longitude": 123.02497222222223,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "48.8584 °  60'  30''  E\t+5d     15.25s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 5.004236111111111,
+				"longitude": 49.866733333333336,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "48.8584; 45.2",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 45.2,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "48.8584°    30”   s , 030’15s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -48.866733333333336,
+				"longitude": 3.004166666666667,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "5       s  +5 °",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -5,
+				"longitude": 5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "5 °30.5 ′  ; 12d 30m    s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.5,
+				"longitude": 5.508333333333333,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "5° 30.5 ′ S\t+33° 15\"E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -5.508333333333333,
+				"longitude": 33.00416666666667,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "90 d    59.9 ″  E\t-12.5  59.9s  N",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.516638888888888,
+				"longitude": 90.01663888888889,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "90.5; 0",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "90° 15″ E ; 33 ° 5m 59.9”  s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -33.09997222222223,
+				"longitude": 90.00416666666666,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "91d 30m E -12 75m   s",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -13.25,
+				"longitude": 91.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "LAT : 48.85;lon=-74",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.85,
+				"longitude": -74,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "Lng : -74  lat =2.29",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 2.29,
+				"longitude": -74,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "lat-74 ; lon91",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -74,
+				"longitude": 91,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "latitude=48.85  lon =-74",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.85,
+				"longitude": -74,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "agreed:coordinates",
+			"input": "lon =2.29  lat =0",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 2.29,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GEOHASH:ezs42",
+			"expected": {
+				"kind": "geohash",
+				"hash": "ezs42"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:1WRK2RF",
+			"expected": {
+				"kind": "geohash",
+				"hash": "1wrk2rf"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:2CFP6M5G6G4D",
+			"expected": {
+				"kind": "geohash",
+				"hash": "2cfp6m5g6g4d"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:42q9q",
+			"expected": {
+				"kind": "geohash",
+				"hash": "42q9q"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:BHJQU4Z",
+			"expected": {
+				"kind": "geohash",
+				"hash": "bhjqu4z"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:QD2Z41P0Y4FP",
+			"expected": {
+				"kind": "geohash",
+				"hash": "qd2z41p0y4fp"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:f",
+			"expected": {
+				"kind": "geohash",
+				"hash": "f"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:jgg6j",
+			"expected": {
+				"kind": "geohash",
+				"hash": "jgg6j"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "GH:tu5zpy163nf3",
+			"expected": {
+				"kind": "geohash",
+				"hash": "tu5zpy163nf3"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:0u1zj6w10ddt",
+			"expected": {
+				"kind": "geohash",
+				"hash": "0u1zj6w10ddt"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:2m01q6fdrqgf",
+			"expected": {
+				"kind": "geohash",
+				"hash": "2m01q6fdrqgf"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:5s12kf6ud6b2",
+			"expected": {
+				"kind": "geohash",
+				"hash": "5s12kf6ud6b2"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:K8C3V",
+			"expected": {
+				"kind": "geohash",
+				"hash": "k8c3v"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:UZU4CUE1H3Z6",
+			"expected": {
+				"kind": "geohash",
+				"hash": "uzu4cue1h3z6"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:c0z84v3",
+			"expected": {
+				"kind": "geohash",
+				"hash": "c0z84v3"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:egv5pmc7j0hg",
+			"expected": {
+				"kind": "geohash",
+				"hash": "egv5pmc7j0hg"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:n0nfe",
+			"expected": {
+				"kind": "geohash",
+				"hash": "n0nfe"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:rmz4sxpz4wej",
+			"expected": {
+				"kind": "geohash",
+				"hash": "rmz4sxpz4wej"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "Geohash:urgx9tjrt75c",
+			"expected": {
+				"kind": "geohash",
+				"hash": "urgx9tjrt75c"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:25N8NDXFNWR4",
+			"expected": {
+				"kind": "geohash",
+				"hash": "25n8ndxfnwr4"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:93c9xj5",
+			"expected": {
+				"kind": "geohash",
+				"hash": "93c9xj5"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:G",
+			"expected": {
+				"kind": "geohash",
+				"hash": "g"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:X",
+			"expected": {
+				"kind": "geohash",
+				"hash": "x"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:cx6jc82v48e6",
+			"expected": {
+				"kind": "geohash",
+				"hash": "cx6jc82v48e6"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:m",
+			"expected": {
+				"kind": "geohash",
+				"hash": "m"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:s1s95",
+			"expected": {
+				"kind": "geohash",
+				"hash": "s1s95"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "geohash:ybu2s",
+			"expected": {
+				"kind": "geohash",
+				"hash": "ybu2s"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\t1",
+			"expected": {
+				"kind": "geohash",
+				"hash": "1"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\t52CRK",
+			"expected": {
+				"kind": "geohash",
+				"hash": "52crk"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\t635ZR40V18VJ",
+			"expected": {
+				"kind": "geohash",
+				"hash": "635zr40v18vj"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tCS8V9XMQ2YRK",
+			"expected": {
+				"kind": "geohash",
+				"hash": "cs8v9xmq2yrk"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tFVMVBBU",
+			"expected": {
+				"kind": "geohash",
+				"hash": "fvmvbbu"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tUK8QP1KQ1MCF",
+			"expected": {
+				"kind": "geohash",
+				"hash": "uk8qp1kq1mcf"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tk7bvxj8",
+			"expected": {
+				"kind": "geohash",
+				"hash": "k7bvxj8"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tr9jv4yr",
+			"expected": {
+				"kind": "geohash",
+				"hash": "r9jv4yr"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:\tuyy3q",
+			"expected": {
+				"kind": "geohash",
+				"hash": "uyy3q"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: 3",
+			"expected": {
+				"kind": "geohash",
+				"hash": "3"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: 57bxmcd",
+			"expected": {
+				"kind": "geohash",
+				"hash": "57bxmcd"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: 8jq6qstq3j8z",
+			"expected": {
+				"kind": "geohash",
+				"hash": "8jq6qstq3j8z"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: FZ1BK",
+			"expected": {
+				"kind": "geohash",
+				"hash": "fz1bk"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: S",
+			"expected": {
+				"kind": "geohash",
+				"hash": "s"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: ddkfe0bccsfb",
+			"expected": {
+				"kind": "geohash",
+				"hash": "ddkfe0bccsfb"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: j275vrrcnkkw",
+			"expected": {
+				"kind": "geohash",
+				"hash": "j275vrrcnkkw"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: r47pbxwtrety",
+			"expected": {
+				"kind": "geohash",
+				"hash": "r47pbxwtrety"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh: uv946mzdcg8j",
+			"expected": {
+				"kind": "geohash",
+				"hash": "uv946mzdcg8j"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:0J0G5UG1R4KB",
+			"expected": {
+				"kind": "geohash",
+				"hash": "0j0g5ug1r4kb"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:3",
+			"expected": {
+				"kind": "geohash",
+				"hash": "3"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:7wmutz50v029",
+			"expected": {
+				"kind": "geohash",
+				"hash": "7wmutz50v029"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:EH0WMKWTVU11",
+			"expected": {
+				"kind": "geohash",
+				"hash": "eh0wmkwtvu11"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:G",
+			"expected": {
+				"kind": "geohash",
+				"hash": "g"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:NHPZH",
+			"expected": {
+				"kind": "geohash",
+				"hash": "nhpzh"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:R1RQ0",
+			"expected": {
+				"kind": "geohash",
+				"hash": "r1rq0"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:U",
+			"expected": {
+				"kind": "geohash",
+				"hash": "u"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:btpxpqrc6097",
+			"expected": {
+				"kind": "geohash",
+				"hash": "btpxpqrc6097"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:ezs42",
+			"expected": {
+				"kind": "geohash",
+				"hash": "ezs42"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:hv0em",
+			"expected": {
+				"kind": "geohash",
+				"hash": "hv0em"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:m0w2djt",
+			"expected": {
+				"kind": "geohash",
+				"hash": "m0w2djt"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:nfyp6c9gxyuk",
+			"expected": {
+				"kind": "geohash",
+				"hash": "nfyp6c9gxyuk"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:s3gdc",
+			"expected": {
+				"kind": "geohash",
+				"hash": "s3gdc"
+			}
+		},
+		{
+			"category": "agreed:geohash",
+			"input": "gh:vwe634gh51rz",
+			"expected": {
+				"kind": "geohash",
+				"hash": "vwe634gh51rz"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "80095622a53e6b1",
+			"expected": {
+				"kind": "h3",
+				"cell": "80095622a53e6b1"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "81CAB2049ED9055",
+			"expected": {
+				"kind": "h3",
+				"cell": "81cab2049ed9055"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "830846B53184145",
+			"expected": {
+				"kind": "h3",
+				"cell": "830846b53184145"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "83E9FC5B9E7BF12",
+			"expected": {
+				"kind": "h3",
+				"cell": "83e9fc5b9e7bf12"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "849637C50ABCFE9",
+			"expected": {
+				"kind": "h3",
+				"cell": "849637c50abcfe9"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "864161FBFB1978F",
+			"expected": {
+				"kind": "h3",
+				"cell": "864161fbfb1978f"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "87B83957845F58C",
+			"expected": {
+				"kind": "h3",
+				"cell": "87b83957845f58c"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "882fa5bdb8decec",
+			"expected": {
+				"kind": "h3",
+				"cell": "882fa5bdb8decec"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "891CF27E32299A1",
+			"expected": {
+				"kind": "h3",
+				"cell": "891cf27e32299a1"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "899729e766b5ad1",
+			"expected": {
+				"kind": "h3",
+				"cell": "899729e766b5ad1"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "8C5575C037BD20C",
+			"expected": {
+				"kind": "h3",
+				"cell": "8c5575c037bd20c"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "8EA1E18BF47726F",
+			"expected": {
+				"kind": "h3",
+				"cell": "8ea1e18bf47726f"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "8b331f09ee2455a",
+			"expected": {
+				"kind": "h3",
+				"cell": "8b331f09ee2455a"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "8e4c0d925c1ec61",
+			"expected": {
+				"kind": "h3",
+				"cell": "8e4c0d925c1ec61"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "8fa7677e88490b7",
+			"expected": {
+				"kind": "h3",
+				"cell": "8fa7677e88490b7"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:80529D14A791A84",
+			"expected": {
+				"kind": "h3",
+				"cell": "80529d14a791a84"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:81AAE37A2A70AEB",
+			"expected": {
+				"kind": "h3",
+				"cell": "81aae37a2a70aeb"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8309FF6404B3663",
+			"expected": {
+				"kind": "h3",
+				"cell": "8309ff6404b3663"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:83a757e4d049a2c",
+			"expected": {
+				"kind": "h3",
+				"cell": "83a757e4d049a2c"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8511B882D7552C5",
+			"expected": {
+				"kind": "h3",
+				"cell": "8511b882d7552c5"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8728C43F16F557B",
+			"expected": {
+				"kind": "h3",
+				"cell": "8728c43f16f557b"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:87D4E7573407727",
+			"expected": {
+				"kind": "h3",
+				"cell": "87d4e7573407727"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8891307B24259AE",
+			"expected": {
+				"kind": "h3",
+				"cell": "8891307b24259ae"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:89299ed3478f33f",
+			"expected": {
+				"kind": "h3",
+				"cell": "89299ed3478f33f"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8C8B344785CABAA",
+			"expected": {
+				"kind": "h3",
+				"cell": "8c8b344785cabaa"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8F9D3D3C199EBB9",
+			"expected": {
+				"kind": "h3",
+				"cell": "8f9d3d3c199ebb9"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8cbb45bd4651bd2",
+			"expected": {
+				"kind": "h3",
+				"cell": "8cbb45bd4651bd2"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "H3:8f74b394c098923",
+			"expected": {
+				"kind": "h3",
+				"cell": "8f74b394c098923"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:80572da5600ab4b",
+			"expected": {
+				"kind": "h3",
+				"cell": "80572da5600ab4b"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:80DE9609C00C418",
+			"expected": {
+				"kind": "h3",
+				"cell": "80de9609c00c418"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:818466B5D181DCE",
+			"expected": {
+				"kind": "h3",
+				"cell": "818466b5d181dce"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:81a2c0acb1a4dcf",
+			"expected": {
+				"kind": "h3",
+				"cell": "81a2c0acb1a4dcf"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:827C3507C7814B3",
+			"expected": {
+				"kind": "h3",
+				"cell": "827c3507c7814b3"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:82E6A3F9C176E9E",
+			"expected": {
+				"kind": "h3",
+				"cell": "82e6a3f9c176e9e"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:832D0DCCCED3F4F",
+			"expected": {
+				"kind": "h3",
+				"cell": "832d0dccced3f4f"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8399645027c868e",
+			"expected": {
+				"kind": "h3",
+				"cell": "8399645027c868e"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:83FF7F8AEA1340C",
+			"expected": {
+				"kind": "h3",
+				"cell": "83ff7f8aea1340c"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:84696C624F430BF",
+			"expected": {
+				"kind": "h3",
+				"cell": "84696c624f430bf"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:851DC1241C9D7D2",
+			"expected": {
+				"kind": "h3",
+				"cell": "851dc1241c9d7d2"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:855e30c18a59745",
+			"expected": {
+				"kind": "h3",
+				"cell": "855e30c18a59745"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:860f6d8ad9aa602",
+			"expected": {
+				"kind": "h3",
+				"cell": "860f6d8ad9aa602"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:86B78A7C297437E",
+			"expected": {
+				"kind": "h3",
+				"cell": "86b78a7c297437e"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:873A44D1243A11C",
+			"expected": {
+				"kind": "h3",
+				"cell": "873a44d1243a11c"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:87988A65D1118DA",
+			"expected": {
+				"kind": "h3",
+				"cell": "87988a65d1118da"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:887d2b387d5370d",
+			"expected": {
+				"kind": "h3",
+				"cell": "887d2b387d5370d"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:890c43a1c320a70",
+			"expected": {
+				"kind": "h3",
+				"cell": "890c43a1c320a70"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:89928fea5639f63",
+			"expected": {
+				"kind": "h3",
+				"cell": "89928fea5639f63"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8A18196A44E64E4",
+			"expected": {
+				"kind": "h3",
+				"cell": "8a18196a44e64e4"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8ADF0F0C3C890E9",
+			"expected": {
+				"kind": "h3",
+				"cell": "8adf0f0c3c890e9"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8B42DF44D1740AA",
+			"expected": {
+				"kind": "h3",
+				"cell": "8b42df44d1740aa"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8C7D48B71BE8C16",
+			"expected": {
+				"kind": "h3",
+				"cell": "8c7d48b71be8c16"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8D408028AB7D029",
+			"expected": {
+				"kind": "h3",
+				"cell": "8d408028ab7d029"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8EABF3D0E2E02E9",
+			"expected": {
+				"kind": "h3",
+				"cell": "8eabf3d0e2e02e9"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8F91F2AF1DE680E",
+			"expected": {
+				"kind": "h3",
+				"cell": "8f91f2af1de680e"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8b87c14cec51521",
+			"expected": {
+				"kind": "h3",
+				"cell": "8b87c14cec51521"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8c54a7c5efc2727",
+			"expected": {
+				"kind": "h3",
+				"cell": "8c54a7c5efc2727"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8d2df4a80eebd3e",
+			"expected": {
+				"kind": "h3",
+				"cell": "8d2df4a80eebd3e"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8de34dd1587ffff",
+			"expected": {
+				"kind": "h3",
+				"cell": "8de34dd1587ffff"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8e55495fb2eeeb4",
+			"expected": {
+				"kind": "h3",
+				"cell": "8e55495fb2eeeb4"
+			}
+		},
+		{
+			"category": "agreed:h3",
+			"input": "h3:8f32f342ae2d432",
+			"expected": {
+				"kind": "h3",
+				"cell": "8f32f342ae2d432"
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "226fjfcr+whq",
+			"expected": {
+				"kind": "plus_code",
+				"code": "226FJFCR+WHQ",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "28MVWPR5+CX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "28MVWPR5+CX",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "2Q6qcpg7+cq3",
+			"expected": {
+				"kind": "plus_code",
+				"code": "2Q6QCPG7+CQ3",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "32X3RF3W+85V",
+			"expected": {
+				"kind": "plus_code",
+				"code": "32X3RF3W+85V",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "3C8Q8G6W+RV",
+			"expected": {
+				"kind": "plus_code",
+				"code": "3C8Q8G6W+RV",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "3X8R9JFW+9VJ",
+			"expected": {
+				"kind": "plus_code",
+				"code": "3X8R9JFW+9VJ",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "43W37QH9+GJG",
+			"expected": {
+				"kind": "plus_code",
+				"code": "43W37QH9+GJG",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "4CG2652c+x79",
+			"expected": {
+				"kind": "plus_code",
+				"code": "4CG2652C+X79",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "4P3mv375+mf",
+			"expected": {
+				"kind": "plus_code",
+				"code": "4P3MV375+MF",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "4p6gr358+g53",
+			"expected": {
+				"kind": "plus_code",
+				"code": "4P6GR358+G53",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "556FQ388+233",
+			"expected": {
+				"kind": "plus_code",
+				"code": "556FQ388+233",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "5JMJ76MM+9C",
+			"expected": {
+				"kind": "plus_code",
+				"code": "5JMJ76MM+9C",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "5g2cjj3q+97c",
+			"expected": {
+				"kind": "plus_code",
+				"code": "5G2CJJ3Q+97C",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "6635m3rw+4x",
+			"expected": {
+				"kind": "plus_code",
+				"code": "6635M3RW+4X",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "6C7JV2F4+H4",
+			"expected": {
+				"kind": "plus_code",
+				"code": "6C7JV2F4+H4",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "6cg92mp4+w92",
+			"expected": {
+				"kind": "plus_code",
+				"code": "6CG92MP4+W92",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "7636HVVW+X6",
+			"expected": {
+				"kind": "plus_code",
+				"code": "7636HVVW+X6",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "7CJwcwg5+rg",
+			"expected": {
+				"kind": "plus_code",
+				"code": "7CJWCWG5+RG",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "7R2H92QV+JF6",
+			"expected": {
+				"kind": "plus_code",
+				"code": "7R2H92QV+JF6",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "82Xvw7xv+9m",
+			"expected": {
+				"kind": "plus_code",
+				"code": "82XVW7XV+9M",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "8FVC9G8F+6XQ",
+			"expected": {
+				"kind": "plus_code",
+				"code": "8FVC9G8F+6XQ",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "8R4F249G+FWX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "8R4F249G+FWX",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "949Q7P4H+F3",
+			"expected": {
+				"kind": "plus_code",
+				"code": "949Q7P4H+F3",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "99995r5r+76p",
+			"expected": {
+				"kind": "plus_code",
+				"code": "99995R5R+76P",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "9QP73C2R+QRX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "9QP73C2R+QRX",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "C83gwhwc+cr8",
+			"expected": {
+				"kind": "plus_code",
+				"code": "C83GWHWC+CR8",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "CWQ6VJFW+H5",
+			"expected": {
+				"kind": "plus_code",
+				"code": "CWQ6VJFW+H5",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "FGXhrff3+7pr",
+			"expected": {
+				"kind": "plus_code",
+				"code": "FGXHRFF3+7PR",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "FV8388PM+25",
+			"expected": {
+				"kind": "plus_code",
+				"code": "FV8388PM+25",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "GCP5pcwr+fv",
+			"expected": {
+				"kind": "plus_code",
+				"code": "GCP5PCWR+FV",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "GPJ4XF32+WQ",
+			"expected": {
+				"kind": "plus_code",
+				"code": "GPJ4XF32+WQ",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "H4Pc7mg9+p9",
+			"expected": {
+				"kind": "plus_code",
+				"code": "H4PC7MG9+P9",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "HP4J6WVJ+M9",
+			"expected": {
+				"kind": "plus_code",
+				"code": "HP4J6WVJ+M9",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "JJ3763Q9+82",
+			"expected": {
+				"kind": "plus_code",
+				"code": "JJ3763Q9+82",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "M3FRW7MC+6QJ",
+			"expected": {
+				"kind": "plus_code",
+				"code": "M3FRW7MC+6QJ",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "MCC9jp24+44w",
+			"expected": {
+				"kind": "plus_code",
+				"code": "MCC9JP24+44W",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "MQH6r58q+77X",
+			"expected": {
+				"kind": "plus_code",
+				"code": "MQH6R58Q+77X",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "P2FP7JG9+CMX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "P2FP7JG9+CMX",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "PPG3Q5X3+W4P",
+			"expected": {
+				"kind": "plus_code",
+				"code": "PPG3Q5X3+W4P",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "Q6G7PXXG+77J",
+			"expected": {
+				"kind": "plus_code",
+				"code": "Q6G7PXXG+77J",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "QV9qw2rp+m4",
+			"expected": {
+				"kind": "plus_code",
+				"code": "QV9QW2RP+M4",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "R63Q73FH+MW",
+			"expected": {
+				"kind": "plus_code",
+				"code": "R63Q73FH+MW",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "RM7j4cc3+3c",
+			"expected": {
+				"kind": "plus_code",
+				"code": "RM7J4CC3+3C",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "V784jp46+3r",
+			"expected": {
+				"kind": "plus_code",
+				"code": "V784JP46+3R",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "VP3pcgxm+pw",
+			"expected": {
+				"kind": "plus_code",
+				"code": "VP3PCGXM+PW",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "WHXP5VQX+XC",
+			"expected": {
+				"kind": "plus_code",
+				"code": "WHXP5VQX+XC",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "X5WX5C6W+W2",
+			"expected": {
+				"kind": "plus_code",
+				"code": "X5WX5C6W+W2",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "XFJF4HCP+29",
+			"expected": {
+				"kind": "plus_code",
+				"code": "XFJF4HCP+29",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "XQ77GXH2+64X",
+			"expected": {
+				"kind": "plus_code",
+				"code": "XQ77GXH2+64X",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "c4wqm9h5+jv",
+			"expected": {
+				"kind": "plus_code",
+				"code": "C4WQM9H5+JV",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "f5w4ffq9+h33",
+			"expected": {
+				"kind": "plus_code",
+				"code": "F5W4FFQ9+H33",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "gff388gm+9x3",
+			"expected": {
+				"kind": "plus_code",
+				"code": "GFF388GM+9X3",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "hmrw3j5x+3vg",
+			"expected": {
+				"kind": "plus_code",
+				"code": "HMRW3J5X+3VG",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "jjxjhp8f+x6",
+			"expected": {
+				"kind": "plus_code",
+				"code": "JJXJHP8F+X6",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "mvj5whvc+2x4",
+			"expected": {
+				"kind": "plus_code",
+				"code": "MVJ5WHVC+2X4",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "pw4j2rrp+365",
+			"expected": {
+				"kind": "plus_code",
+				"code": "PW4J2RRP+365",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "qw3636vp+wp",
+			"expected": {
+				"kind": "plus_code",
+				"code": "QW3636VP+WP",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "rpgvjfmr+43",
+			"expected": {
+				"kind": "plus_code",
+				"code": "RPGVJFMR+43",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "wq7fp5pw+m72",
+			"expected": {
+				"kind": "plus_code",
+				"code": "WQ7FP5PW+M72",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_full",
+			"input": "x9p5ww5h+32",
+			"expected": {
+				"kind": "plus_code",
+				"code": "X9P5WW5H+32",
+				"full": true
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "2222+22",
+			"expected": {
+				"kind": "plus_code",
+				"code": "2222+22",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "288PP2+R4X",
+			"expected": {
+				"kind": "plus_code",
+				"code": "288PP2+R4X",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "2RPV+72",
+			"expected": {
+				"kind": "plus_code",
+				"code": "2RPV+72",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "34Fv6f+2f",
+			"expected": {
+				"kind": "plus_code",
+				"code": "34FV6F+2F",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "3FMGHC+XR",
+			"expected": {
+				"kind": "plus_code",
+				"code": "3FMGHC+XR",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "3XC752+4W",
+			"expected": {
+				"kind": "plus_code",
+				"code": "3XC752+4W",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "432W79+V4W",
+			"expected": {
+				"kind": "plus_code",
+				"code": "432W79+V4W",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "49W3+g4",
+			"expected": {
+				"kind": "plus_code",
+				"code": "49W3+G4",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "4XXgqc+fj4",
+			"expected": {
+				"kind": "plus_code",
+				"code": "4XXGQC+FJ4",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "53H4+55",
+			"expected": {
+				"kind": "plus_code",
+				"code": "53H4+55",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "5CRV+CX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "5CRV+CX",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "5RX2+GG",
+			"expected": {
+				"kind": "plus_code",
+				"code": "5RX2+GG",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "5x96+4hh",
+			"expected": {
+				"kind": "plus_code",
+				"code": "5X96+4HH",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "674hj6+6m",
+			"expected": {
+				"kind": "plus_code",
+				"code": "674HJ6+6M",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "6H+rx",
+			"expected": {
+				"kind": "plus_code",
+				"code": "6H+RX",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "6fw3+85",
+			"expected": {
+				"kind": "plus_code",
+				"code": "6FW3+85",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "76VH+55x",
+			"expected": {
+				"kind": "plus_code",
+				"code": "76VH+55X",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "7M+RM",
+			"expected": {
+				"kind": "plus_code",
+				"code": "7M+RM",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "7X+2J2",
+			"expected": {
+				"kind": "plus_code",
+				"code": "7X+2J2",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "84+59c",
+			"expected": {
+				"kind": "plus_code",
+				"code": "84+59C",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "8C+89",
+			"expected": {
+				"kind": "plus_code",
+				"code": "8C+89",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "8c435m+h2p",
+			"expected": {
+				"kind": "plus_code",
+				"code": "8C435M+H2P",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "933325+99M",
+			"expected": {
+				"kind": "plus_code",
+				"code": "933325+99M",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "9962+237",
+			"expected": {
+				"kind": "plus_code",
+				"code": "9962+237",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "9RJ8+39X",
+			"expected": {
+				"kind": "plus_code",
+				"code": "9RJ8+39X",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "C2+C7P",
+			"expected": {
+				"kind": "plus_code",
+				"code": "C2+C7P",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "CF7m+3c",
+			"expected": {
+				"kind": "plus_code",
+				"code": "CF7M+3C",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "CWCm+6w",
+			"expected": {
+				"kind": "plus_code",
+				"code": "CWCM+6W",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "F83w+3h",
+			"expected": {
+				"kind": "plus_code",
+				"code": "F83W+3H",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "FMWh+j26",
+			"expected": {
+				"kind": "plus_code",
+				"code": "FMWH+J26",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "G4JQ+743",
+			"expected": {
+				"kind": "plus_code",
+				"code": "G4JQ+743",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "GH+5P3",
+			"expected": {
+				"kind": "plus_code",
+				"code": "GH+5P3",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "H3PV+5W",
+			"expected": {
+				"kind": "plus_code",
+				"code": "H3PV+5W",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "HHJW3V+WH",
+			"expected": {
+				"kind": "plus_code",
+				"code": "HHJW3V+WH",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "J5P6+X3",
+			"expected": {
+				"kind": "plus_code",
+				"code": "J5P6+X3",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "JH+GP9",
+			"expected": {
+				"kind": "plus_code",
+				"code": "JH+GP9",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "M34C+MQ",
+			"expected": {
+				"kind": "plus_code",
+				"code": "M34C+MQ",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "MGH8m2+7gf",
+			"expected": {
+				"kind": "plus_code",
+				"code": "MGH8M2+7GF",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "P3CGQ4+R94",
+			"expected": {
+				"kind": "plus_code",
+				"code": "P3CGQ4+R94",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "PG+WRM",
+			"expected": {
+				"kind": "plus_code",
+				"code": "PG+WRM",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "Q2+3G",
+			"expected": {
+				"kind": "plus_code",
+				"code": "Q2+3G",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "Q8+H77",
+			"expected": {
+				"kind": "plus_code",
+				"code": "Q8+H77",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "QMWC+Q4X",
+			"expected": {
+				"kind": "plus_code",
+				"code": "QMWC+Q4X",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "R564+JX",
+			"expected": {
+				"kind": "plus_code",
+				"code": "R564+JX",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "RMCgr4+4g",
+			"expected": {
+				"kind": "plus_code",
+				"code": "RMCGR4+4G",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "V7Gf+5p",
+			"expected": {
+				"kind": "plus_code",
+				"code": "V7GF+5P",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "VR+4Q",
+			"expected": {
+				"kind": "plus_code",
+				"code": "VR+4Q",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "W7Qp6c+72",
+			"expected": {
+				"kind": "plus_code",
+				"code": "W7QP6C+72",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "WMG3+vp7",
+			"expected": {
+				"kind": "plus_code",
+				"code": "WMG3+VP7",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "X5+7C",
+			"expected": {
+				"kind": "plus_code",
+				"code": "X5+7C",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "XH78FV+X38",
+			"expected": {
+				"kind": "plus_code",
+				"code": "XH78FV+X38",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "XX+PP",
+			"expected": {
+				"kind": "plus_code",
+				"code": "XX+PP",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "f3x5g5+fgp",
+			"expected": {
+				"kind": "plus_code",
+				"code": "F3X5G5+FGP",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "g6+x2",
+			"expected": {
+				"kind": "plus_code",
+				"code": "G6+X2",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "hj+5w",
+			"expected": {
+				"kind": "plus_code",
+				"code": "HJ+5W",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "mj+c2f",
+			"expected": {
+				"kind": "plus_code",
+				"code": "MJ+C2F",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "q9x2v5+qh7",
+			"expected": {
+				"kind": "plus_code",
+				"code": "Q9X2V5+QH7",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "rg8h+69",
+			"expected": {
+				"kind": "plus_code",
+				"code": "RG8H+69",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "w3+792",
+			"expected": {
+				"kind": "plus_code",
+				"code": "W3+792",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:plus_code_short",
+			"input": "x6+mj",
+			"expected": {
+				"kind": "plus_code",
+				"code": "X6+MJ",
+				"full": false
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/007/",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/1/",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/1234567890123456/",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/85633793/",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "HTTPS://SPELUNKER.WHOSONFIRST.ORG/ID/9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF  007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF  1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF  1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF  85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF  9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WOF 85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WhosOnFirst:007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WhosOnFirst:1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WhosOnFirst:1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "WhosOnFirst:9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/007/",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/1/",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/1234567890123456/",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "http://spelunker.whosonfirst.org/id/9007199254740991/",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/007/",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/1/",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/1234567890123456/",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "https://spelunker.whosonfirst.org/id/9007199254740991/",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "whosonfirst:007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "whosonfirst:1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "whosonfirst:1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "whosonfirst:85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "whosonfirst:9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof 007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof 1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof 85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof 9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:\t007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:\t1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:\t1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:\t85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:\t9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof: 007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof: 1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof: 85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof: 9007199254740991",
+			"expected": {
+				"kind": "wof",
+				"id": 9007199254740991
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:007",
+			"expected": {
+				"kind": "wof",
+				"id": 7
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:1",
+			"expected": {
+				"kind": "wof",
+				"id": 1
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:1234567890123456",
+			"expected": {
+				"kind": "wof",
+				"id": 1234567890123456
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:1880762729",
+			"expected": {
+				"kind": "wof",
+				"id": 1880762729
+			}
+		},
+		{
+			"category": "agreed:wof",
+			"input": "wof:85633793",
+			"expected": {
+				"kind": "wof",
+				"id": 85633793
+			}
+		},
+		{
+			"category": "legacy_only",
+			"input": "1 ,2, 3",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "1, 2,",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "1,2,3",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "12°, 30°, 5°",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "1;2;3",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "9,0,",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;=",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;a b",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;a=%2",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;crs=Moon-2011",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;u=-1",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;u=1;u=2",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;u=5;crs=wgs84",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;x=1;crs=wgs84",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:1,2,35;é=1",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;=",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;a b",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;a=%2",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;crs=Moon-2011",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;u=-1",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;u=1;u=2",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;u=5;crs=wgs84",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;x=1;crs=wgs84",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "geo:48.8584,2.2945;é=1",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "httpſ://spelunker.whosonfirst.org/id/1",
+			"expected": null
+		},
+		{
+			"category": "legacy_only",
+			"input": "whoſonfirſt:1",
+			"expected": null
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "+12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "-90 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -90,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "007 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 7,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "0 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "12.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 12.5,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "139.6917 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 139.6917,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "48.8584 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 48.8584,
+				"longitude": 0.5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5\t.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5  .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5 ,\n .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5 , .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5, .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5,.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5; .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5;.5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "recognize_only",
+			"input": "90.5 .5",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": 0.5,
+				"longitude": 90.5,
+				"order": "lon_lat"
+			}
+		},
+		{
+			"category": "hemisphere_after_complete_dms_group",
+			"input": "12°30′20S, 5E",
+			"expected": {
+				"kind": "coordinates",
+				"latitude": -12.505555555555556,
+				"longitude": 5,
+				"order": "lat_lon"
+			}
+		},
+		{
+			"category": "neither",
+			"input": "\"",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "'86pfrh+rgr5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "'pTm3'+1GN",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "(JP6X6V86G+7F'",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ")5xgcr9+_",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ")c+4cfx",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+0°60mW  33d 15″ N",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+15115 sE, 0º 30’ 15.25'' e",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+181N,+180° 15s E",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+48.8584 d       , -905″S",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+8P7+2W.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+9m2xx8+p6g(",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "+vjjmqw+5'",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ", JGGV7C6X+7Q5X",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ",4CHWC224+G3x",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ",Q28jw67+245",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "- 007 °  15.25\"  E;33d  30’  59.9 ″  E",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "- 1230.5’30''e - 180 d 75m",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "- 180d 59.9''S ; 48.8584 °75 ′ n",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "- 33d60m 30”e  +180° 30.5′  e",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "- 5º30 ′ 15″\t180° 15.25 sw",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "--1,2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-12.5dN  - 91d 30s W",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-180d      N +1515s s",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-200, 1e3",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-48.8584d 5’  S  0 °  30′    S",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-90 d   S;- 12d30.5m  s",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-91º30.5m  - 180d     59.9 ″",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "-j6+m3p-",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ".9J+CF",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ".pf+RTh7T3@65'",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "0,,1e3",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "007°     15″  e  007d     30''  E",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "0udJ°",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "12.5 d  30’  30″   s ; 48.858475m5 ″S",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "12.5º  60′  30 ″  E,-18160’30s S",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "139.6917,91",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "151d60’15 sS , - 12.5° n",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "180 °30sE\t151 d 30 m 15s",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "181    15.25 s  N;- 151°   S",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "181d75′e,-12d 15.25”E",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "2263k428t",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "29v93mgfr+4v3",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "2t3XWuWmNA0u.G",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "33d      e  91  59.9 s  N",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "376235+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "3P5-369-PJ",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "4 R.QXSow1fw",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "48.8584 5 ′  59.9″ n,-0 N",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "48.8584°75’59.9se;-151°30.5’30''n",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "4PMWQGWQR+GV9",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "5 °60m15 ″e\t48.8584d    15s",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "54+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "58VVC6+PV73",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "5KMT-IJC-C",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "5d  30s \t+180º 75’ 15'' N",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "5º59.9 sW\t- 91°  30′  w",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "68822L54L8",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "6W5s'3PuFwn.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "75F+55f",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "7Lo3M9",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "82Q5J678+X",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "8G+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "8m8vq2+7",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "90.5 -180.5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "91  15.25″ N,-48.85845 ″E",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "91°   N , -12.5°n",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "976M6TJK5T",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "9VFCG+MM5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": ";;toWPh",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "@@1, 2/",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "C23-TJ7-L329C",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "CJ5V78VW+RXRQ",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "ES@3,5@0fM",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "F92-7T8-64KT",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "FW+C4Mx",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "GH:h57qhjcgkcxpb2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "H3:8bba237732d97aa2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "HV/CWXt",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "J9C9C8RHQ+HW",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "K23F8I82M2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "L45-MJ6-P6F",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "LAT:0  latitude =48.85",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Latitude : 48.85 ; lat48.85",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Lng : .5 lat  0",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "M/CpXTJ",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "MG+X",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua 2chj2hx2+c7 Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua 5+h5m4 Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua 775GJ3W9+JC, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua 9MF9f97f+p9 Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua GQ75HW67+VV, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua P+6qhg, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua V3F9r7v9+6r",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua c8j8qxp+pcj",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua vhmmf98fp+qc",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, 3h+27x",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, 67+3V Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, 8P2+CH Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, FRVQ95W+PF",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, M58p2x+9v, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, RG3mq+r225, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, XG9H299F5+R85 Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua, v4cp8xfx+9hj Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,3V7+G6F Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,62FM+JCPX, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,8HRH7+C Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,F8+R52, Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,JJM+R6 Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,QV9P6MG4+76R Nicaragua",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,XGMhg5wv+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Managua,r76735g8+9ww",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "P+Xr",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "PFL4TFK4K6",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Q43+4M",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "R+GP6",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "RtW'lhNnE8Tho",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "TF6-5B4TF6",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "VG2RF2W+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "W63R28R35+VH5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "Wond0eewm's2m@",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "X9P3PCG35+(",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "XW6gg+vj2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "_85mfj2rp+'",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "_wm+68v.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "dS:wN",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "fN;5fVwLetL+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "geo: 48.8584,2.2945",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "gh:\tmh0sr00m83mt9",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "h+5pn2N",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "h3: 8d48b3efd5884b4",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "h9C1npmt e",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "https://spelunker.whosonfirst.org/id/007?q=1",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "l.X4\"d.0sw.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "la:-74 LAT : .5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "lat:2.29LAT =5.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "latitude=0 long:5.",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "lng:0la91",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "lon:48.85 long:0",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "long:2.29Lng  2.29",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "longitude:91, longitude:.5",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "mr+g",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "o1W;+o:ShLR\"",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "pReL,A8",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "s-G",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "t@EAsVHS2",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "uhnhsNn@wTsnPG",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "wh/Rfd",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "x6FFX9V+",
+			"expected": null
+		},
+		{
+			"category": "neither",
+			"input": "xR2+)",
+			"expected": null
+		}
+	]
+}

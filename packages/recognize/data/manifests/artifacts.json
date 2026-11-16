@@ -4,25 +4,50 @@
 			"artifact": "coordinates.rca1",
 			"automata": [
 				{
-					"backend": "dense",
-					"bytes": 14820,
-					"patterns": 2,
+					"backend": "sparse",
+					"bytes": 44215,
+					"patterns": 7,
 					"role": "whole",
-					"states": 54
+					"states": 780
+				},
+				{
+					"backend": "sparse",
+					"bytes": 25109,
+					"patterns": 5,
+					"role": "embedded",
+					"states": 450
+				}
+			],
+			"bytes": 116088,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "a4b56ec80695f3755dfa67514a4a073ca93b92785448e91f73c3f365e46522b3",
+			"irHash": "eb280a43c868a8315160dc16216098601de3349e8aa62a1e9e2ccbda7b96259a",
+			"sha256": "f6ae3c4b544ea345121530759e12e7c1ec5605b38c832c1d3d29453ba15290ff",
+			"unicodeVersion": "16.0.0"
+		},
+		"identifiers": {
+			"artifact": "identifiers.rca1",
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 7133,
+					"patterns": 12,
+					"role": "whole",
+					"states": 286
 				},
 				{
 					"backend": "dense",
-					"bytes": 18204,
+					"bytes": 27496,
 					"patterns": 2,
 					"role": "embedded",
-					"states": 66
+					"states": 51
 				}
 			],
-			"bytes": 41304,
+			"bytes": 54216,
 			"compilerVersion": "0.1.0",
-			"declarationsHash": "4eb9289261c751ca41e650f7a5d78af99f4971591d15821bbe3d2475eb6cbe00",
-			"irHash": "53d071450b7d667df1e99c37853721e7d2912bae3c2490ad7039e7347f4829a0",
-			"sha256": "a2a9c380d43831f84e674b27ebbf632719a4a86c8e200d24c7ad61782b5d379f",
+			"declarationsHash": "9dfe9ca60c9a8670c5922101762da67f27aa222e9286c3787c62d01871bffce8",
+			"irHash": "71f0f88f6ef1b12a2932a042d8261ecea17292f9f4858dd392afa3c1f4ed3fa9",
+			"sha256": "bbcb79c8eeeefa2178a1ded8841464f5fea505efb8ec236a4c4a5b6246cdca04",
 			"unicodeVersion": "16.0.0"
 		},
 		"primitives": {
@@ -48,6 +73,31 @@
 			"declarationsHash": "d33b792cde245ced43db7d0a88552c8a6686a1836ab570d69eadbff8cfef0976",
 			"irHash": "58972e49a294072f781bed5fd982b7d80885589e329be1e4e5cf24e806ceefa8",
 			"sha256": "dbd1f909dcbda819341f42df832461623e985f1bf715704cf9a91d091d21990e",
+			"unicodeVersion": "16.0.0"
+		},
+		"spatial": {
+			"artifact": "spatial.rca1",
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 20302,
+					"patterns": 4,
+					"role": "whole",
+					"states": 227
+				},
+				{
+					"backend": "dense",
+					"bytes": 8944,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 31
+				}
+			],
+			"bytes": 35408,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "1d85275060cde50d8080e9ae55108ac8210aa146f95766ca6cd16fe8150c4dec",
+			"irHash": "0e79db9ad17ab8d656dcc94e9875ebece039ac3ca0da9bcc4f3ae79c3e53176e",
+			"sha256": "2074246ca8292748067f18f8057c1fe891f8d1b8d37e2d3f43e8916005e0ecd4",
 			"unicodeVersion": "16.0.0"
 		},
 		"structure": {
@@ -80,7 +130,7 @@
 	},
 	"limits": {
 		"buildBytes": 33554432,
-		"denseBytes": 2097152,
+		"denseBytes": 100000,
 		"inputBytes": 65536,
 		"maxCaptures": 64,
 		"maxDepth": 64,

@@ -1,148 +1,100 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! The regex-backed span finders: postcode shapes and postcode syntax.
+//! The postcode finders of the training encoder: the postcode spans of a line and the number of countries whose syntax
+//! accepts a code unit.
 //!
-//! The patterns are written for Python's `re`. In a `str` pattern, `\d` matches any decimal digit, `\s` any
-//! character `str.isspace` accepts, `\w` any alphanumeric character or the underscore, and `\b` the boundary
-//! between a `\w` character and anything else. The Rust regex engines define all four differently: `\w` there
-//! includes combining marks and connector punctuation. `translate` therefore rewrites each of them into an
-//! explicit class built from the reference interpreter's tables, so a compiled pattern matches what Python
-//! matched. `fancy-regex` supplies the lookbehind and lookahead the shapes use.
+//! Both read the `postal` family of `@mailwoman/postcode` through `recognize-core`: its compiled artifact
+//! (`packages/postcode/data/artifacts/postal.rca1`) and the family definition that states each shape's countries,
+//! form and printed prefix (`packages/postcode/data/definitions/postal.definition.json`). Serving reads the same
+//! family in `packages/postcode/lib/postal-spans.ts` and reduces its candidates by the same rule, so the two sides
+//! hold one finder. `postalSpans` in `packages/postcode/lib/recognize/postal/readers.ts` states the rule:
+//!
+//! - every embedded candidate is reduced to its code, which leaves out a printed prefix and the white space after it;
+//! - candidates are ordered longest first, then by earliest start, then by form (designated, alphanumeric, numeric) and
+//!   then by the shape's ID, and a range that several shapes match appears once;
+//! - a candidate that a connector separates from the rest of a longer candidate is dropped (`69152` in `69152-656`);
+//! - the candidates overlap, and the anchor painter keeps the first candidate the anchor table resolves among those
+//!   that overlap. A candidate the table lacks hides nothing.
+//!
+//! The family matches either case, so a lower-case `sw1a 1aa` is a postcode on both sides.
 
+use crate::anchor::PostcodeCandidate;
 use crate::error::Error;
-use crate::python_text::{self, is_decimal, is_space, strip, upper};
-use fancy_regex::Regex;
+use recognize_core::artifact::ARTIFACT_SCHEMA_VERSION;
+use recognize_core::{Engine, Expected};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::fmt::Write as _;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
-/// The ranges of a predicate over every scalar value, as a regex class body.
-fn class_body(predicate: fn(char) -> bool) -> String {
-	let mut out = String::new();
-	let mut start: Option<u32> = None;
-	let mut previous = 0u32;
-	let flush = |out: &mut String, a: u32, b: u32| {
-		if a == b {
-			let _ = write!(out, "\\x{{{a:X}}}");
-		} else {
-			let _ = write!(out, "\\x{{{a:X}}}-\\x{{{b:X}}}");
-		}
-	};
-	for c in (0..=char::MAX as u32).filter_map(char::from_u32) {
-		let code = c as u32;
-		if predicate(c) {
-			match start {
-				Some(_) if code == previous + 1 || (previous == 0xD7FF && code == 0xE000) => {}
-				Some(s) => {
-					flush(&mut out, s, previous);
-					start = Some(code);
-				}
-				None => start = Some(code),
-			}
-			previous = code;
-		}
-	}
-	if let Some(s) = start {
-		flush(&mut out, s, previous);
-	}
-	out
+/// The family the finders read.
+pub const POSTAL_FAMILY: &str = "postal";
+
+/// The declarations hash of the artifact this crate was written against.
+///
+/// `packages/postcode/data/manifests/postal.json` records the hash of the committed artifact, and a test compares the
+/// two, so regenerating the family under other declarations fails the crate's tests and not a training run.
+pub const POSTAL_DECLARATIONS_HASH: &str = "0d69452b0205fd7cd7115a132d1eb73d7b96e76c34e622ed35c785e071dfb8ac";
+
+/// What a span of a shape may do, in the order candidates of equal extent compete.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Form {
+	Designated,
+	Alnum,
+	Numeric,
 }
 
-/// The Python class bodies `translate` substitutes, built once per process.
-struct Classes {
-	digit: String,
-	space: String,
-	word: String,
+/// What the definition states about one shape.
+struct ShapeInfo {
+	form: Form,
+	/// The characters of the printed prefix, for a printed shape.
+	prefix_chars: Option<usize>,
+	/// The shape's countries, as indexes into the finder's country table.
+	countries: Vec<u32>,
 }
 
-fn classes() -> &'static Classes {
-	static CLASSES: std::sync::OnceLock<Classes> = std::sync::OnceLock::new();
-	CLASSES.get_or_init(|| Classes {
-		digit: class_body(is_decimal),
-		space: class_body(is_space),
-		word: class_body(python_text::is_word),
-	})
+/// JavaScript's `\s` and `trim`: the white space `String.prototype.trim` removes.
+///
+/// The family's printed shapes write the white space after a prefix as this class, so the code of a printed span starts
+/// after the same characters. Serving reads it with `trimStart`.
+fn is_js_space(c: char) -> bool {
+	matches!(
+		c,
+		'\u{9}'..='\u{d}'
+			| '\u{20}'
+			| '\u{a0}'
+			| '\u{1680}'
+			| '\u{2000}'..='\u{200a}'
+			| '\u{2028}'
+			| '\u{2029}'
+			| '\u{202f}'
+			| '\u{205f}'
+			| '\u{3000}'
+			| '\u{feff}'
+	)
 }
 
-/// A Python `re` pattern rewritten so `\d`, `\s`, `\w`, `\b` and their negations keep Python's meaning.
-pub fn translate(pattern: &str) -> Result<String, Error> {
-	let c = classes();
-	let word_boundary = format!("(?:(?<=[{w}])(?![{w}])|(?<![{w}])(?=[{w}]))", w = c.word);
-	let not_word_boundary = format!("(?:(?<=[{w}])(?=[{w}])|(?<![{w}])(?![{w}]))", w = c.word);
-	let mut out = String::with_capacity(pattern.len());
-	let mut chars = pattern.chars().peekable();
-	let mut in_class = false;
-	let mut class_start = false;
-	while let Some(ch) = chars.next() {
-		if ch == '\\' {
-			let escaped = chars
-				.next()
-				.ok_or_else(|| Error::Input(format!("pattern {pattern:?} ends in a backslash")))?;
-			let body = match escaped {
-				'd' => Some(&c.digit),
-				's' => Some(&c.space),
-				'w' => Some(&c.word),
-				_ => None,
-			};
-			match (in_class, escaped, body) {
-				(true, _, Some(body)) => out.push_str(body),
-				(true, 'D' | 'S' | 'W' | 'b' | 'B', _) => {
-					return Err(Error::Input(format!(
-						"pattern {pattern:?} uses \\{escaped} inside a class, which translate does not rewrite"
-					)))
-				}
-				(false, _, Some(body)) => {
-					let _ = write!(out, "[{body}]");
-				}
-				(false, 'D', _) => {
-					let _ = write!(out, "[^{}]", c.digit);
-				}
-				(false, 'S', _) => {
-					let _ = write!(out, "[^{}]", c.space);
-				}
-				(false, 'W', _) => {
-					let _ = write!(out, "[^{}]", c.word);
-				}
-				(false, 'b', _) => out.push_str(&word_boundary),
-				(false, 'B', _) => out.push_str(&not_word_boundary),
-				_ => {
-					out.push('\\');
-					out.push(escaped);
-				}
-			}
-			class_start = false;
-			continue;
-		}
-		if in_class {
-			if ch == ']' && !class_start {
-				in_class = false;
-			}
-			class_start = class_start && ch == '^';
-			out.push(ch);
-			continue;
-		}
-		if ch == '[' {
-			in_class = true;
-			class_start = true;
-		}
-		out.push(ch);
+/// The characters a code may be joined to its neighbors by: the hyphen-minus, the apostrophe, the low line and the two
+/// curly single quotation marks, the connectors of the engine's `token` boundary.
+const CONNECTORS: [char; 5] = ['-', '\'', '_', '\u{2018}', '\u{2019}'];
+
+/// Whether `candidate` is a piece of `container` that a connector separates from the rest.
+///
+/// `69152` in `69152-656` and `0001` in `100-0001` are pieces of a longer code, and the longer code claims them: a piece
+/// that resolves in the anchor table would anchor the code to another country's key. A piece that white space separates, as
+/// `05401` in `VT 05401`, is no fragment, because the longer candidate may be no postcode at all. `isConnectorFragment`
+/// in `readers.ts` of `@mailwoman/postcode` is the same rule.
+fn is_connector_fragment(candidate: (usize, usize), container: (usize, usize), chars: &[char]) -> bool {
+	if container.0 > candidate.0 || container.1 < candidate.1 {
+		return false;
 	}
-	if in_class {
-		return Err(Error::Input(format!("pattern {pattern:?} leaves a class open")));
+	let apart_at_start = candidate.0 > container.0;
+	let apart_at_end = candidate.1 < container.1;
+	if !apart_at_start && !apart_at_end {
+		return false;
 	}
-	Ok(out)
-}
-
-fn compile(pattern: &str, ignore_case: bool) -> Result<Regex, Error> {
-	let translated = translate(pattern)?;
-	let source = if ignore_case {
-		format!("(?i){translated}")
-	} else {
-		translated
-	};
-	Regex::new(&source).map_err(|e| Error::Input(format!("pattern {pattern:?} does not compile: {e}")))
+	(!apart_at_start || CONNECTORS.contains(&chars[candidate.0 - 1]))
+		&& (!apart_at_end || CONNECTORS.contains(&chars[candidate.1]))
 }
 
 /// The byte-offset-to-character-index table of a string, one entry per byte plus the end.
@@ -159,126 +111,203 @@ fn byte_to_char(text: &str) -> Vec<usize> {
 	out
 }
 
-/// Every match of `regex` over `text`, as character ranges, in the order `re.finditer` returns them.
-fn find_all(regex: &Regex, text: &str, map: &[usize], label: &str) -> Result<Vec<(usize, usize)>, Error> {
-	regex
-		.find_iter(text)
-		.map(|m| {
-			m.map(|m| (map[m.start()], map[m.end()]))
-				.map_err(|e| Error::Finder(format!("{label} on {text:?}: {e}")))
-		})
-		.collect()
-}
-
-/// One postcode-shaped match: its character range, the record's kind, and its priority (lower wins an overlap).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ShapeMatch {
-	pub start: usize,
-	pub end: usize,
-	pub kind: String,
-	pub priority: usize,
-}
-
-/// The postcode shapes the anchor's `shaped` mode paints, from `features/postcode-shapes.json`.
-pub struct PostcodeShapes {
-	/// `(label, kind, pattern)` in record order, each row the record marks `javascriptOnly` left out.
-	shapes: Vec<(String, String, Regex)>,
-}
-
-impl PostcodeShapes {
-	/// Compiles every shape the record does not mark `javascriptOnly`. `file` names the record in errors.
-	pub fn from_record(text: &str, file: &str) -> Result<Self, Error> {
-		let doc: Value = serde_json::from_str(text).map_err(|e| Error::Input(format!("{file}: {e}")))?;
-		let rows = doc
-			.get("shapes")
-			.and_then(Value::as_array)
-			.ok_or_else(|| Error::Input(format!("{file}: \"shapes\" is not an array")))?;
-		let mut shapes = Vec::new();
-		for row in rows {
-			if row.get("javascriptOnly").is_some() {
-				continue;
-			}
-			let text_field = |key: &str| {
-				row.get(key)
-					.and_then(Value::as_str)
-					.map(str::to_string)
-					.ok_or_else(|| Error::Input(format!("{file}: a shape lacks {key:?}: {row}")))
-			};
-			let pattern = text_field("pattern")?;
-			shapes.push((text_field("label")?, text_field("kind")?, compile(&pattern, false)?));
-		}
-		Ok(Self { shapes })
-	}
-
-	/// The labels of the compiled shapes, in priority order.
-	pub fn labels(&self) -> Vec<&str> {
-		self.shapes.iter().map(|(label, _, _)| label.as_str()).collect()
-	}
-
-	/// Non-overlapping postcode-shaped ranges, accepted longest first and then by priority, in start order.
-	pub fn collect_matches(&self, text: &str) -> Result<Vec<ShapeMatch>, Error> {
-		let map = byte_to_char(text);
-		let mut candidates = Vec::new();
-		for (priority, (label, kind, regex)) in self.shapes.iter().enumerate() {
-			for (start, end) in find_all(regex, text, &map, label)? {
-				candidates.push(ShapeMatch {
-					start,
-					end,
-					kind: kind.clone(),
-					priority,
-				});
-			}
-		}
-		candidates.sort_by_key(|c| (std::cmp::Reverse(c.end - c.start), c.priority));
-		let mut accepted: Vec<ShapeMatch> = Vec::new();
-		for c in candidates {
-			if accepted.iter().any(|a| c.start < a.end && a.start < c.end) {
-				continue;
-			}
-			accepted.push(c);
-		}
-		accepted.sort_by_key(|c| c.start);
-		Ok(accepted)
-	}
-}
-
-/// Each country's postcode pattern and printed prefix, from `data/postcode-syntax.json`.
-pub struct PostcodeSyntax {
-	/// `(pattern, prefix)` in country-code order.
-	countries: Vec<(Regex, Option<Vec<char>>)>,
+/// The `Finders` the training encoder uses.
+pub struct PostalFinders {
+	engine: Engine,
+	family: usize,
+	/// Parallel to the family's shapes in the engine's order, which is the byte order of their IDs.
+	shapes: Vec<ShapeInfo>,
+	/// The country codes of every shape, which a shape's `countries` and a candidate's index into.
+	country_codes: Vec<String>,
 	accepted: Mutex<HashMap<String, usize>>,
 }
 
-impl PostcodeSyntax {
-	/// Compiles every country's pattern case-insensitively. `file` names the record in errors.
-	pub fn from_json(text: &str, file: &str) -> Result<Self, Error> {
-		let doc: Value = serde_json::from_str(text).map_err(|e| Error::Input(format!("{file}: {e}")))?;
-		let countries = doc
-			.get("countries")
-			.and_then(Value::as_object)
-			.ok_or_else(|| Error::Input(format!("{file}: \"countries\" is not an object")))?;
-		let mut sorted: Vec<(&String, &Value)> = countries.iter().collect();
-		sorted.sort_by(|a, b| a.0.cmp(b.0));
-		let mut out = Vec::with_capacity(sorted.len());
-		for (code, entry) in sorted {
-			let pattern = entry
-				.get("pattern")
-				.and_then(Value::as_str)
-				.ok_or_else(|| Error::Input(format!("{file}: {code} lacks a pattern")))?;
-			let prefix = match entry.get("prefix") {
-				None | Some(Value::Null) => None,
-				Some(Value::String(p)) => Some(p.chars().collect()),
-				Some(other) => return Err(Error::Input(format!("{file}: {code} prefix is not a string: {other}"))),
-			};
-			out.push((compile(pattern, true)?, prefix));
+impl PostalFinders {
+	/// Loads the artifact and reads the definition. `artifact_file` and `definition_file` name each in errors.
+	///
+	/// The artifact is refused when it is not the `postal` family, when its schema version or declarations hash is not
+	/// the one this crate was built against, or when the definition and the artifact hold different shapes.
+	pub fn load(artifact: &[u8], artifact_file: &str, definition: &str, definition_file: &str) -> Result<Self, Error> {
+		let mut engine = Engine::new();
+		engine
+			.load_checked(
+				artifact,
+				&Expected {
+					ir_hash: None,
+					declarations_hash: Some(POSTAL_DECLARATIONS_HASH),
+				},
+			)
+			.map_err(|e| Error::Input(format!("{artifact_file}: {e}")))?;
+		let not_postal = || {
+			Error::Input(format!(
+				"{artifact_file}: the artifact is not the {POSTAL_FAMILY:?} family"
+			))
+		};
+		let header = engine.header(POSTAL_FAMILY).ok_or_else(not_postal)?;
+		if header.schema_version != ARTIFACT_SCHEMA_VERSION {
+			return Err(Error::Input(format!(
+				"{artifact_file}: artifact schema version {} is not the {ARTIFACT_SCHEMA_VERSION} this encoder reads",
+				header.schema_version
+			)));
 		}
+		let family = engine
+			.family_ids()
+			.iter()
+			.position(|id| *id == POSTAL_FAMILY)
+			.ok_or_else(not_postal)?;
+
+		let doc: Value =
+			serde_json::from_str(definition).map_err(|e| Error::Input(format!("{definition_file}: {e}")))?;
+		let rows = doc
+			.get("shapes")
+			.and_then(Value::as_array)
+			.ok_or_else(|| Error::Input(format!("{definition_file}: \"shapes\" is not an array")))?;
+		let mut by_id: HashMap<&str, &Value> = HashMap::new();
+		for row in rows {
+			let id = row
+				.get("id")
+				.and_then(Value::as_str)
+				.ok_or_else(|| Error::Input(format!("{definition_file}: a shape lacks an id: {row}")))?;
+			by_id.insert(id, row);
+		}
+
+		let mut countries: HashMap<String, u32> = HashMap::new();
+		let mut shapes = Vec::new();
+		for id in engine.shapes(family) {
+			let row = by_id.get(id.as_str()).ok_or_else(|| {
+				Error::Input(format!(
+					"{definition_file}: no shape {id:?}, which {artifact_file} holds"
+				))
+			})?;
+			let metadata = row
+				.get("metadata")
+				.ok_or_else(|| Error::Input(format!("{definition_file}: shape {id:?} states no metadata")))?;
+			let form = match metadata.get("form").and_then(Value::as_str) {
+				Some("designated") => Form::Designated,
+				Some("alnum") => Form::Alnum,
+				Some("numeric") => Form::Numeric,
+				other => {
+					return Err(Error::Input(format!(
+						"{definition_file}: shape {id:?} has the form {other:?}, which is not designated, alnum or numeric"
+					)))
+				}
+			};
+			let prefix_chars = match metadata.get("prefix") {
+				None | Some(Value::Null) => None,
+				Some(Value::String(prefix)) => Some(prefix.chars().count()),
+				Some(other) => {
+					return Err(Error::Input(format!(
+						"{definition_file}: shape {id:?} has a prefix that is not a string: {other}"
+					)))
+				}
+			};
+			if (form == Form::Designated) != prefix_chars.is_some() {
+				return Err(Error::Input(format!(
+					"{definition_file}: shape {id:?} is designated exactly when it states a prefix"
+				)));
+			}
+			let listed = metadata
+				.get("countries")
+				.and_then(Value::as_array)
+				.ok_or_else(|| Error::Input(format!("{definition_file}: shape {id:?} lists no countries")))?;
+			let mut ids = Vec::with_capacity(listed.len());
+			for country in listed {
+				let code = country.as_str().ok_or_else(|| {
+					Error::Input(format!(
+						"{definition_file}: shape {id:?} lists a country that is not text"
+					))
+				})?;
+				let next = countries.len() as u32;
+				ids.push(*countries.entry(code.to_string()).or_insert(next));
+			}
+			shapes.push(ShapeInfo {
+				form,
+				prefix_chars,
+				countries: ids,
+			});
+		}
+		let held: HashSet<&str> = engine.shapes(family).iter().map(String::as_str).collect();
+		if let Some(extra) = by_id.keys().find(|id| !held.contains(**id)) {
+			return Err(Error::Input(format!(
+				"{definition_file}: shape {extra:?} is not in {artifact_file}"
+			)));
+		}
+
+		let mut by_index: Vec<(u32, String)> = countries.into_iter().map(|(code, index)| (index, code)).collect();
+		by_index.sort_unstable();
+
 		Ok(Self {
-			countries: out,
+			engine,
+			family,
+			shapes,
+			country_codes: by_index.into_iter().map(|(_, code)| code).collect(),
 			accepted: Mutex::new(HashMap::new()),
 		})
 	}
 
-	/// How many countries' postcode syntax accepts `value`, after stripping it and any printed prefix.
+	/// The postcode candidates of `raw` as character ranges, in the order they compete: longest first, then earliest
+	/// start, then form and shape ID. A range appears once however many shapes match it.
+	///
+	/// The candidates overlap. The anchor painter walks them in this order and keeps the first that the anchor table
+	/// resolves among those that overlap, so `VT 05401`, which a Somali shape matches, does not hide the ZIP code inside
+	/// it.
+	pub fn postcode_spans(&self, raw: &str) -> Result<Vec<PostcodeCandidate>, Error> {
+		let located = self
+			.engine
+			.locate(raw, |family| family == self.family)
+			.map_err(|e| Error::Finder(format!("postal family on {raw:?}: {e}")))?;
+		if located.is_empty() {
+			return Ok(Vec::new());
+		}
+		let map = byte_to_char(raw);
+		let chars: Vec<char> = raw.chars().collect();
+		let mut candidates: Vec<(usize, usize, Form, usize)> = Vec::with_capacity(located.len());
+		for found in located {
+			let info = &self.shapes[found.shape];
+			let (mut start, end) = (map[found.start], map[found.end]);
+			if let Some(prefix) = info.prefix_chars {
+				start = (start + prefix).min(end);
+				while start < end && is_js_space(chars[start]) {
+					start += 1;
+				}
+			}
+			candidates.push((start, end, info.form, found.shape));
+		}
+		candidates.sort_by_key(|&(start, end, form, shape)| (std::cmp::Reverse(end - start), start, form, shape));
+		// One candidate for each range, in competing order, holding the countries of every shape that matches it.
+		let mut ordered: Vec<PostcodeCandidate> = Vec::with_capacity(candidates.len());
+		for (start, end, _, shape) in candidates {
+			let countries = &self.shapes[shape].countries;
+			match ordered.iter_mut().find(|c| c.start == start && c.end == end) {
+				Some(existing) => existing
+					.countries
+					.get_or_insert_with(Vec::new)
+					.extend(countries.iter().copied()),
+				None => ordered.push(PostcodeCandidate {
+					start,
+					end,
+					countries: Some(countries.clone()),
+				}),
+			}
+		}
+		let all: Vec<(usize, usize)> = ordered.iter().map(|c| (c.start, c.end)).collect();
+		ordered.retain(|c| {
+			!all.iter()
+				.any(|&container| is_connector_fragment((c.start, c.end), container, &chars))
+		});
+		for candidate in &mut ordered {
+			if let Some(countries) = &mut candidate.countries {
+				countries.sort_unstable();
+				countries.dedup();
+			}
+		}
+		Ok(ordered)
+	}
+
+	/// How many countries' postcode syntax accepts the whole of `value`, after it is trimmed as `trim` trims.
+	///
+	/// This is the length of `countriesAcceptingPostcode` in `@mailwoman/postcode`, which the postal family's
+	/// whole-input automaton answers. The answers are cached by `value`.
 	pub fn accepting(&self, value: &[char]) -> Result<usize, Error> {
 		let key: String = value.iter().collect();
 		if let Some(&count) = self
@@ -289,24 +318,16 @@ impl PostcodeSyntax {
 		{
 			return Ok(count);
 		}
-		let trimmed = strip(value);
-		let mut count = 0;
-		for (regex, prefix) in &self.countries {
-			let mut candidate = trimmed;
-			if let Some(prefix) = prefix.as_deref().filter(|p| !p.is_empty()) {
-				let upper_candidate: Vec<char> = upper(candidate).chars().collect();
-				if upper_candidate.starts_with(prefix) {
-					candidate = strip(candidate.get(prefix.len()..).unwrap_or(&[]));
-				}
-			}
-			let text: String = candidate.iter().collect();
-			let found = regex
-				.is_match(&text)
-				.map_err(|e| Error::Finder(format!("postcode syntax on {text:?}: {e}")))?;
-			if found {
-				count += 1;
-			}
+		let trimmed = key.trim_matches(is_js_space);
+		let found = self
+			.engine
+			.whole_shapes(self.family, trimmed)
+			.map_err(|e| Error::Finder(format!("postal family on {trimmed:?}: {e}")))?;
+		let mut countries: HashSet<u32> = HashSet::new();
+		for shape in found {
+			countries.extend(self.shapes[shape].countries.iter().copied());
 		}
+		let count = countries.len();
 		self.accepted
 			.lock()
 			.expect("the acceptance cache is not poisoned")
@@ -315,21 +336,13 @@ impl PostcodeSyntax {
 	}
 }
 
-/// The `Finders` the training encoder uses: the shape record for the shaped anchor and the postcode syntax for
-/// code-unit acceptance counts.
-pub struct RegexFinders {
-	pub shapes: PostcodeShapes,
-	pub syntax: PostcodeSyntax,
-}
+impl crate::encoder::Finders for PostalFinders {
+	fn postcode_spans(&self, raw: &str) -> Result<Vec<PostcodeCandidate>, Error> {
+		PostalFinders::postcode_spans(self, raw)
+	}
 
-impl crate::encoder::Finders for RegexFinders {
-	fn shaped_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error> {
-		Ok(self
-			.shapes
-			.collect_matches(raw)?
-			.into_iter()
-			.map(|m| (m.start, m.end))
-			.collect())
+	fn country_codes(&self) -> &[String] {
+		&self.country_codes
 	}
 
 	fn code_units(&self, raw: &[char]) -> Result<Vec<crate::code_units::CodeUnit>, Error> {
@@ -339,7 +352,7 @@ impl crate::encoder::Finders for RegexFinders {
 				Ok(crate::code_units::CodeUnit {
 					start,
 					end,
-					accepting: self.syntax.accepting(&raw[start..end])?,
+					accepting: self.accepting(&raw[start..end])?,
 				})
 			})
 			.collect()
@@ -351,20 +364,13 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn translate_rewrites_python_escapes_outside_and_inside_classes() {
-		let t = translate(r"\b[A-Z\d]\s").unwrap();
-		assert!(t.starts_with("(?:(?<=["));
-		assert!(t.contains("\\x{30}-\\x{39}"));
-		assert!(!t.contains("\\d") && !t.contains("\\s"));
-		assert_eq!(translate(r"[\-]\(").unwrap(), r"[\-]\(");
-		assert!(translate(r"[\b]").is_err());
-	}
-
-	#[test]
-	fn a_python_word_boundary_ignores_combining_marks() {
-		// U+0301 COMBINING ACUTE is not alphanumeric, so Python's \b falls between it and the digits.
-		let regex = compile(r"\b\d{5}\b", false).unwrap();
-		assert!(regex.is_match("e\u{301}12345").unwrap());
-		assert!(!regex.is_match("_12345").unwrap());
+	fn js_white_space_is_the_set_trim_removes() {
+		for c in ['\t', '\n', ' ', '\u{a0}', '\u{2003}', '\u{3000}', '\u{feff}'] {
+			assert!(is_js_space(c), "U+{:04X}", c as u32);
+		}
+		// U+001C..U+001F are Python white space and not JavaScript's.
+		for c in ['\u{1c}', '\u{85}', 'a', '0', '\u{200b}'] {
+			assert!(!is_js_space(c), "U+{:04X}", c as u32);
+		}
 	}
 }

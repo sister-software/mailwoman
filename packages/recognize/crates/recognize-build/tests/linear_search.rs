@@ -19,7 +19,8 @@ use recognize_build::{compile_families, Limits};
 use recognize_core::artifact::{parse, Backend, Role};
 use recognize_core::grammars::{coordinates, primitives, structure};
 use recognize_core::{
-	choice, class, literal, one_or_more, optional, reference, repeat, sequence, shape, term, Engine, Family, Scope,
+	choice, class, literal, one_or_more, optional, reference, repeat, sequence, shape, term, Boundary, Engine, Family,
+	Scope,
 };
 use regex_automata::dfa::{dense, sparse, Automaton};
 use regex_automata::util::primitives::StateID;
@@ -29,10 +30,13 @@ use support::{actual, engine_with, probe_family};
 
 type Found = BTreeSet<(usize, usize, String, String)>;
 
+/// The scope, the shape ID and the boundary of one pattern of an automaton.
+type PatternFacts = (Scope, String, Option<Boundary>);
+
 /// One family's embedded and whole-input automata, read for the reference search.
 struct Reference {
 	family: String,
-	shapes: Vec<(Role, Vec<(Scope, String)>)>,
+	shapes: Vec<(Role, Vec<PatternFacts>)>,
 	automata: Vec<(Role, Reader)>,
 }
 
@@ -72,7 +76,7 @@ fn read(artifact: &[u8]) -> Reference {
 			meta.role,
 			meta.patterns
 				.iter()
-				.map(|pattern| (pattern.scope, pattern.shape.clone()))
+				.map(|pattern| (pattern.scope, pattern.shape.clone(), pattern.boundary))
 				.collect(),
 		));
 		automata.push((meta.role, reader));
@@ -199,9 +203,14 @@ fn previous(references: &[Reference], text: &str) -> (Found, usize) {
 				.unwrap()
 				.1;
 			let mut report = |pattern: usize, start: usize, end: usize| {
-				let (scope, shape) = &patterns[pattern];
+				let (scope, shape, boundary) = &patterns[pattern];
 
 				if *role == Role::Embedded && *scope == Scope::Embedded && start == 0 && end == text.len() {
+					return;
+				}
+
+				// A shape with a boundary reports no match that touches a character the boundary forbids.
+				if *role == Role::Embedded && boundary.is_some_and(|boundary| !boundary.admits(text, start, end)) {
 					return;
 				}
 

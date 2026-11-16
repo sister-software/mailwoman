@@ -2,34 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postcode-shape record is data authored once in `@mailwoman/postcode`.
+ *   The frozen legacy shape table that postcode repair and `span_mode: "shaped"` read.
  *
- *   The training pipeline (`packages/trainer`, Rust) cannot import that package,
- *   so it vendors a byte-identical copy that this test checks against the authored one.
- *
- *   The test lives in this package because `@mailwoman/postcode` depends only on codex,
- *   and the check needs core's repo-root resolver.
+ *   The training encoder reads the `postal` family and keeps no copy of this table.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/paths"
-import { POSTCODE_SHAPES } from "@mailwoman/postcode/shapes"
+import { POSTCODE_SHAPES } from "@mailwoman/postcode/frozen-shapes"
 import { describe, expect, it } from "vitest"
 
-const AUTHORED = repoRootPath("packages", "postcode", "lib", "shapes.json")
-const VENDORED = repoRootPath("packages", "trainer", "data", "postcode-shapes.json")
-
-describe("the postcode shape record", () => {
-	it("is vendored into the trainer's data directory byte for byte", async () => {
-		const [authored, vendored] = await Promise.all([readLocalBuffer(AUTHORED), readLocalBuffer(VENDORED)])
-
-		expect(
-			vendored.equals(authored),
-			`${VENDORED} has drifted from ${AUTHORED}. The codex copy is the authored one — copy it across rather ` +
-				"than editing the vendored copy."
-		).toBe(true)
-	})
-
+describe("the legacy postcode shape table", () => {
 	it("compiles every shape, in the order the record declares", () => {
 		expect(POSTCODE_SHAPES.length).toBeGreaterThanOrEqual(12)
 

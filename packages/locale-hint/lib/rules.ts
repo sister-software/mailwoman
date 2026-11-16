@@ -6,7 +6,7 @@
  * script class and known postcode formats — never place-name dictionaries.
  */
 
-import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
+import type { QueryShapeFormatsView } from "@mailwoman/core/pipeline/types"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous.
@@ -45,6 +45,8 @@ export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | n
  * at confidence 0.6) are treated as low-confidence US, the most common 5-digit reading globally.
  */
 export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate | null {
+	if (shape.generation === "postal") return scoreByPostalForm(shape)
+
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= UNAMBIGUOUS_FORMAT_CONFIDENCE)
 
 	if (unambiguous.length) {
@@ -72,6 +74,32 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 	}
 
 	return null
+}
+
+/**
+ * Postcode scorer of the `postal` generation.
+ *
+ * Each postcode hit holds the locale of the most populous country whose syntax accepts
+ * its form, and a confidence derived from the number of countries that accept it.
+ * The hit of the highest confidence decides, and the earlier hit wins a tie.
+ *
+ * A run of five digits, accepted by 56 of the 181 countries, scores 0.55.
+ * It yields to a script rule and beats only the fallback.
+ */
+function scoreByPostalForm(shape: QueryShapeFormatsView): LocaleCandidate | null {
+	let best: QueryShapeFormatsView["knownFormats"][number] | null = null
+
+	for (const hit of shape.knownFormats) {
+		if (hit.format !== "postcode" || !hit.locale) continue
+
+		if (!best || hit.confidence > best.confidence) {
+			best = hit
+		}
+	}
+
+	if (!best?.locale) return null
+
+	return { locale: best.locale, confidence: best.confidence, reason: `postcode form=${best.form ?? "unknown"}` }
 }
 
 /**

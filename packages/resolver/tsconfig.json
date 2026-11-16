@@ -11,6 +11,7 @@
 		{ "path": "../gazetteer" },
 		{ "path": "../core" },
 		{ "path": "../postcode" },
+		{ "path": "../recognize" },
 		{ "path": "../spatial" },
 		{ "path": "../codex" },
 		{ "path": "../evidence" },

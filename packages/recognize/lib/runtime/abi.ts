@@ -9,7 +9,18 @@
  * The ABI version this loader implements.
  * It equals `ABI_VERSION` in `crates/recognize-wasm`.
  */
-export const ABI_VERSION = 5
+export const ABI_VERSION = 6
+
+/**
+ * The words of one prefix record, equal to `PREFIX_WORDS` in `crates/recognize-wasm`:
+ * the family's handle, the shape's position in the family's shape table and the status word.
+ */
+export const PREFIX_WORDS = 3
+
+/**
+ * The prefix status words, in the order of `PrefixStatus` in `crates/recognize-core/src/prefix.rs`.
+ */
+export const PREFIX_STATUSES = ["dead", "viable", "accepted", "accepted_and_extendable", "unknown"] as const
 
 /**
  * The `rcg_structure` argument that asks for no known formats, equal to
@@ -101,6 +112,13 @@ export interface Exports {
 	 * It overwrites the recognition records.
 	 */
 	rcg_structure(pointer: number, length: number, family: number, formats: number): number
+	/**
+	 * Answers prefix continuation for the text over the families in `mask`.
+	 *
+	 * Returns the number of records of {@link PREFIX_WORDS} words written at `rcg_result_ptr`, or -1.
+	 * It overwrites the recognition records.
+	 */
+	rcg_prefix(pointer: number, length: number, mask: number): number
 	rcg_result_ptr(): number
 	rcg_json_ptr(): number
 }

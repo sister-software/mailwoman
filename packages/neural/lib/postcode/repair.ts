@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { POSTCODE_SHAPES } from "@mailwoman/postcode/shapes"
+import { POSTCODE_SHAPES } from "@mailwoman/postcode/frozen-shapes"
+import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
+import { disjointSpans } from "@mailwoman/postcode/recognize/postal"
 
+import type { AnchorSpanMode } from "#anchor-inference"
 import {
 	collectMatchesFor,
 	createLabelSetter,
@@ -33,8 +36,9 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/postcode/shapes` because the training pipeline vendors the same data.
- * The copies must stay aligned.
+ * The table is the frozen legacy table in `@mailwoman/postcode/frozen-shapes`.
+ * Repair keeps it while model 10.8.0 is the published model, and it is deleted with the
+ * legacy-formats family when the first model that declares `span_mode: "postal"` ships.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{
 	label: string
@@ -51,9 +55,29 @@ const LOCALITY_I = "I-locality" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
 /**
- * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
+ * The postcode matches of a card that declares `span_mode: "postal"`, from the `postal` family.
+ *
+ * The family's candidates are reduced to disjoint spans in the order they compete,
+ * and the form of each shape is the match's kind.
+ * A candidate with no digit is refused: the family holds shapes made only of letters,
+ * and a repair that added a postcode label over a word such as a place name would do harm.
+ * A refused candidate hides no other.
  */
-export function collectMatches(text: string): PostcodeMatch[] {
+function collectPostalMatches(text: string): PostcodeMatch[] {
+	return disjointSpans(findPostcodeSpans(text), (span) => /\d/u.test(text.slice(span.start, span.end))).map(
+		(span, priority) => ({ start: span.start, end: span.end, kind: span.form, priority })
+	)
+}
+
+/**
+ * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
+ *
+ * A card that declares `span_mode: "postal"` reads the `postal` family,
+ * and any other card reads the frozen table.
+ */
+export function collectMatches(text: string, spanMode?: AnchorSpanMode | null): PostcodeMatch[] {
+	if (spanMode === "postal") return collectPostalMatches(text)
+
 	return collectMatchesFor(POSTCODE_PATTERNS, text).map(({ start, end, priority, pattern }) => ({
 		start,
 		end,
@@ -70,8 +94,12 @@ export function collectMatches(text: string): PostcodeMatch[] {
  *
  * @returns The repaired tokens and the number of labels changed.
  */
-export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
-	const matches = collectMatches(text)
+export function repairPostcodeLabels(
+	text: string,
+	input: readonly DecoderToken[],
+	spanMode?: AnchorSpanMode | null
+): RepairResult {
+	const matches = collectMatches(text, spanMode)
 	const tokens = input.map((t) => ({ ...t }))
 
 	if (!matches.length) return { tokens, changed: 0 }

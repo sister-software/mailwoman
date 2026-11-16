@@ -278,7 +278,14 @@ pub fn engine_with(families: Vec<Family>, limits: &Limits) -> Engine {
 }
 
 pub fn engine_for(families: Vec<Family>) -> Engine {
-	engine_with(families, &Limits::default())
+	// The dense backend whatever the default budget is, so a test that compares it with the sparse backend does.
+	engine_with(
+		families,
+		&Limits {
+			dense_bytes: 2 << 20,
+			..Limits::default()
+		},
+	)
 }
 
 /// What the engine reports, in the same tuple shape as [`expected`].

@@ -4,17 +4,19 @@
 /**
  * `bare-postcode` — a postcode without another address component, in the country's format.
  *
- * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the
- * detector calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
+ * Every surface the recipe renders is run through `computeQueryShape`
+ * and refused unless the detector calls it a postcode, so the rendering table
+ * and the legacy-formats table of `@mailwoman/postcode` must agree.
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { isPostcodeFormat } from "@mailwoman/core/pipeline/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
@@ -78,7 +80,7 @@ const SOURCES: PostcodeSource[] = [
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
 	// `NNN NN`, written with the space.
-	// The four countries share the shape, so `detectKnownFormats` labels all four the same.
+	// The four countries share the shape, so the postal family reports all four on one hit.
 	["CZ", { locale: "cs-CZ", render: spacedThree }],
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
@@ -147,13 +149,14 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 }
 
 /**
- * Whether `known-formats.ts` reads this surface as a postcode across its whole span.
+ * Whether the `postal` family reads this surface as a postcode across its whole span.
  *
  * A surface the detector doesn't recognize would train the model on a string
  * the query-shape prior cannot then support.
+ * The recipe holds no model card, so it reads the `postal` generation.
  */
 export function detectedAsPostcode(surface: string): boolean {
-	return computeQueryShape(surface).knownFormats.some(
+	return computeQueryShape(surface, QueryShapeGeneration.Postal).knownFormats.some(
 		(hit) => isPostcodeFormat(hit.format) && hit.span.start === 0 && hit.span.end === surface.length
 	)
 }
@@ -258,7 +261,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					if (perCountry.get(country)! >= budget) break
 
 					// A surface the detector doesn't read as a postcode is a disagreement
-					// between this table and `known-formats.ts`.
+					// between this table and the legacy-formats table.
 					if (!detectedAsPostcode(surface)) {
 						unrecognized++
 
@@ -292,11 +295,11 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		}
 
 		// A rendered surface the detector refuses is an interface failure: every form here is
-		// one `known-formats.ts` declares a pattern for, so the count is expected to be zero.
+		// one the postal family declares a syntax for, so the count is expected to be zero.
 		if (unrecognized > 0) {
 			throw new Error(
-				`${unrecognized} rendered surfaces were not read as a postcode by detectKnownFormats — the ` +
-					"WRITTEN_FORMS table and known-formats.ts's PATTERNS disagree. Reconcile them before building."
+				`${unrecognized} rendered surfaces were not read as a postcode by computeQueryShape — the ` +
+					"WRITTEN_FORMS table and the postal family of @mailwoman/postcode disagree. Reconcile them before building."
 			)
 		}
 

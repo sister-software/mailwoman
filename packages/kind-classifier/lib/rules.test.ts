@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { KnownFormat, NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
-import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
+import {
+	EMPTY_QUERY_SHAPE_VIEW,
+	type NormalizedInputLite,
+	type QueryShapeSegmentsView as QueryShapeLike,
+} from "@mailwoman/core/pipeline/types"
 import { expect, test } from "vitest"
 
 import {
@@ -18,7 +21,7 @@ import {
 
 const input = (normalized: string): NormalizedInputLite => ({ raw: normalized, normalized })
 
-const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) => ({
+const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
 	format,
 	span: { start, end },
 	confidence,

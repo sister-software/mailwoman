@@ -12,7 +12,7 @@
 		{ "path": "../annotations" },
 		{ "path": "../codex" },
 		{ "path": "../evidence" },
-		{ "path": "../query-shape" }
+		{ "path": "../registry" }
 	],
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]

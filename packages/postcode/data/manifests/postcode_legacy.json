@@ -21,7 +21,7 @@
 	},
 	"limits": {
 		"buildBytes": 33554432,
-		"denseBytes": 2097152,
+		"denseBytes": 100000,
 		"inputBytes": 65536,
 		"maxCaptures": 64,
 		"maxDepth": 64,

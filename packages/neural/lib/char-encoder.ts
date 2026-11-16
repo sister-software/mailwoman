@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { TextSpan } from "@mailwoman/query-shape"
+import type { TextFragment } from "@mailwoman/core/tokenization/Span"
 
 import { familyFallbackFor } from "#weights/families"
 
@@ -52,7 +52,7 @@ export interface CharEncoding {
 	/**
 	 * The real units, in order — the token list the decoder receives (length ≤ S).
 	 */
-	units: TextSpan[]
+	units: TextFragment[]
 }
 
 /**
@@ -68,7 +68,7 @@ export function encodeCharUnits(
 	const codePoints = Array.from(raw)
 	const kept = codePoints.slice(0, maxUnits)
 	const charIDs: number[][] = []
-	const units: TextSpan[] = []
+	const units: TextFragment[] = []
 	let offset = 0
 
 	for (const [index, codePoint] of kept.entries()) {

@@ -6,12 +6,12 @@
  */
 
 import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
-import type { SpanRange } from "@mailwoman/query-shape"
+import type { TextSpan } from "@mailwoman/recognize/types"
 
 export interface AbbreviationResult {
 	text: string
 	map: number[]
-	expansions: Array<{ from: string; to: string; at: SpanRange }>
+	expansions: Array<{ from: string; to: string; at: TextSpan }>
 }
 
 /**
@@ -27,7 +27,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 
 	const out: string[] = []
 	const map: number[] = []
-	const expansions: Array<{ from: string; to: string; at: SpanRange }> = []
+	const expansions: Array<{ from: string; to: string; at: TextSpan }> = []
 
 	let i = 0
 

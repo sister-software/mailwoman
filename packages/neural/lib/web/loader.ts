@@ -512,7 +512,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		diagnostics: runner.diagnostics,
 		labels,
 		pairIndexes,
-		selectPairIndexForText: (text, selectOpts) => resolvePairIndexForText(pairIndexes, text, selectOpts),
+		selectPairIndexForText: (text, selectOpts) =>
+			resolvePairIndexForText(pairIndexes, text, { generation: classifier.queryShapeGeneration, ...selectOpts }),
 		...(anchorRegions ? { anchorRegions } : {}),
 
 		release: () => runner.release(),

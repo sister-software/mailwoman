@@ -239,7 +239,7 @@
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/recognize": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/soil": "workspace:*",
@@ -261,7 +261,6 @@
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
-		"@mailwoman/recognize": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"modal": "0.11.1",
 		"oxc-parser": "^0.155.0",

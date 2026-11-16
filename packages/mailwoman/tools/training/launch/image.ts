@@ -82,12 +82,20 @@ export const TRAINER_BASE_IMAGES: Readonly<Record<TrainerVariant, string>> = {
 export const TRAINER_REPO_ROOT = "/repo"
 
 /**
- * The data file `DataFiles::in_repository` (`trainer-loop/src/config.rs`) reads
+ * The data files `DataFiles::in_repository` (`trainer-loop/src/config.rs`) reads
  * outside `packages/trainer`, relative to the root.
  *
+ * The label schema, and the `postal` family's artifact and definition.
+ * The postcode finders of `mtf-channels` read the two generated files of `@mailwoman/postcode`.
+ *
+ * No copy of them sits in `packages/trainer`.
  * The others sit under `packages/trainer/data`, which the bundle already holds.
  */
-export const TRAINER_DATA_FILES = ["packages/neural/data/label-schema.v1.json"] as const
+export const TRAINER_DATA_FILES = [
+	"packages/neural/data/label-schema.v1.json",
+	"packages/postcode/data/artifacts/postal.rca1",
+	"packages/postcode/data/definitions/postal.definition.json",
+] as const
 
 /**
  * The channel the root `rust-toolchain.toml` pins.
