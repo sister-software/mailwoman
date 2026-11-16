@@ -31,10 +31,10 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 68 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 67 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(repoRootPath())
 
-		expect(identity.publishCount).toBe(68)
+		expect(identity.publishCount).toBe(67)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])

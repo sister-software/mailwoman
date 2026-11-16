@@ -299,8 +299,8 @@ jobs:
       # Each tool rebuilds the family and exits non-zero when a committed file differs.
       - name: Check the generated recognizer families against their generators
         run: |
-          node packages/recognize/tools/generate.run.ts --check
-          node packages/postcode/tools/generate.run.ts --check
+          yarn workspace @mailwoman/recognize generate:check
+          yarn workspace @mailwoman/postcode generate:check
 
       - name: Test the basemap tiler's crates
         run: |

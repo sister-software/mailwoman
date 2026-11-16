@@ -79,6 +79,7 @@
 		"access": "public"
 	},
 	"scripts": {
+		"generate:check": "node tools/generate.run.ts --check",
 		"test:browser": "vitest run --config vitest.browser.config.ts",
 		"test:workers": "vitest run --config vitest.workers.config.ts"
 	},
