@@ -71,7 +71,20 @@
 #
 # Control: the v8.6.3 seed 42 run, shipped as 10.8.0.
 #
-# Prediction: to be stated against the rebuilt corpus before launch.
+# Prediction, written 2026-11-16 after the launch (run 74eaf854986e4211, at step 400) and before any checkpoint or
+# evaluation existed, against the shipped model 10.8.0:
+# - La Poste, venue before a capitals `BIS`/`TER` house number (`LAGNIEU, 11 BIS ROUTE DU PORT, 01150 LAGNIEU`):
+#   10.8.0 labels the house number `11 BIS` in 0 of the 30 probed rows. v8.7.0 labels it in at least 20 of 30.
+# - GB postcodes written in lower case (`sw1a 1aa`): the `postal` anchor paints 570 more GB rows of the 72,209 rows
+#   probed. v8.7.0's GB postcode F1 on heldout-dev-v0.8.18 is no lower than 10.8.0's.
+# - USGS post offices, schools, fire and police stations: 10.8.0 already parses the 80 probed rows correctly. v8.7.0
+#   keeps at least 78 of 80.
+# - Taiwan venue-led post offices (`臺北北門郵局, 100003 臺北市中正區…`) stay at 0 of 40: no source of this run
+#   holds the shape.
+# - Release spec v8 on heldout-dev-v0.8.18 and heldout-confirm-v0.8.18: no country's exact-parse rate falls more
+#   than 0.01 below 10.8.0's, and the overall rate moves by less than ±0.005. The run trains on 5.31 M rows the old
+#   policy held out and spreads each epoch's partial source reads across row groups, so a larger move is evidence
+#   about one of those two changes and is attributed by country before anything else.
 #
 # Launch with `--fresh --device A100-40GB`: 90,000 steps.
 
