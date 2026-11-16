@@ -24,7 +24,7 @@
 //!
 //! A decimal pair is read in the order it was written, latitude first. When that reading fails a range and the other
 //! order puts both numbers in range, the pair is read longitude first and the payload's `order` says so. A pair in range
-//! in both orders is latitude first. `parsePointQuery` applies the same rule and reports the same two names. A `geo:` URI never swaps,
+//! in both orders is latitude first. The two names are `lat_lon` and `lon_lat`. A `geo:` URI never swaps,
 //! because RFC 5870 fixes the order as latitude, longitude, altitude.
 
 use std::fmt::Debug;
@@ -77,6 +77,10 @@ pub enum FieldType {
 	Latitude,
 	Longitude,
 	Uncertainty,
+	/// An Open Location Code in upper case, validated by `PlusCode`.
+	PlusCode,
+	/// A DIGIPIN as ten upper-case characters, validated by `DIGIPIN`.
+	Digipin,
 	AxisOrder,
 	Boolean,
 }

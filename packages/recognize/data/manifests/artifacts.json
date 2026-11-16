@@ -95,9 +95,9 @@
 			],
 			"bytes": 35408,
 			"compilerVersion": "0.1.0",
-			"declarationsHash": "f18e652bbb4cb43f29876dd5504bbbe72a6fcb4f15168c41d7d391857cd3a95f",
+			"declarationsHash": "47ded166157f7e84868b7b6f018d7357b29785dcb5e97f3e290be6d6ac14443f",
 			"irHash": "0e79db9ad17ab8d656dcc94e9875ebece039ac3ca0da9bcc4f3ae79c3e53176e",
-			"sha256": "20d10d7faee66544b4f44cb0d9be12aad747c24637927474759daf0176a44aed",
+			"sha256": "32a1b21cb6c154b96c288daf439bdcbabe69212cb11fa0b080044d0d88b43ce6",
 			"unicodeVersion": "16.0.0"
 		},
 		"structure": {

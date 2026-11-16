@@ -23,6 +23,8 @@ export declare namespace Validated {
 	const $Latitude: unique symbol
 	const $Longitude: unique symbol
 	const $Uncertainty: unique symbol
+	const $PlusCode: unique symbol
+	const $Digipin: unique symbol
 
 	/**
 	 * A latitude in WGS84 degrees, finite and from -90 to 90 inclusive.
@@ -41,6 +43,20 @@ export declare namespace Validated {
 	 * Zero is a specific point and is distinct from an absent uncertainty.
 	 */
 	type Uncertainty = number & { readonly [$Uncertainty]: true }
+
+	/**
+	 * An Open Location Code in upper case, with two to eight digits before the `+` and two or three after it.
+	 *
+	 * The `PlusCode` validator accepted it.
+	 * Eight digits before the separator make a full code, and two, four or six make a short one.
+	 */
+	type PlusCode = string & { readonly [$PlusCode]: true }
+
+	/**
+	 * A DIGIPIN as ten upper-case characters of the DIGIPIN alphabet, without hyphens.
+	 * The `DIGIPIN` validator accepted it.
+	 */
+	type Digipin = string & { readonly [$Digipin]: true }
 
 	/**
 	 * A finite number the engine parsed from a capture.

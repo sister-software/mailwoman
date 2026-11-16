@@ -61,7 +61,7 @@ impl Validator for PlusCode {
 	const PAYLOAD: &'static [PayloadField] = &[
 		PayloadField {
 			name: "code",
-			kind: FieldType::Text,
+			kind: FieldType::PlusCode,
 			optional: false,
 		},
 		PayloadField {
@@ -130,7 +130,7 @@ impl Validator for DIGIPIN {
 
 	const PAYLOAD: &'static [PayloadField] = &[PayloadField {
 		name: "code",
-		kind: FieldType::Text,
+		kind: FieldType::Digipin,
 		optional: false,
 	}];
 

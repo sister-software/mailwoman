@@ -24,7 +24,7 @@ export const SPATIAL_FAMILY_ID = "spatial"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const SPATIAL_DECLARATIONS_HASH = "f18e652bbb4cb43f29876dd5504bbbe72a6fcb4f15168c41d7d391857cd3a95f"
+export const SPATIAL_DECLARATIONS_HASH = "47ded166157f7e84868b7b6f018d7357b29785dcb5e97f3e290be6d6ac14443f"
 
 /**
  * Every kind of recognition the family reports, by name.
@@ -43,7 +43,7 @@ export type SpatialKind = (typeof SpatialKind)[keyof typeof SpatialKind]
  * The validated payload of `digipin.compact`.
  */
 export interface DigipinCompactPayload {
-	readonly code: string
+	readonly code: Validated.Digipin
 }
 
 /**
@@ -55,7 +55,7 @@ export type DigipinCompactRejection = "capture_limit" | "capture_mismatch" | "in
  * The validated payload of `digipin.display`.
  */
 export interface DigipinDisplayPayload {
-	readonly code: string
+	readonly code: Validated.Digipin
 }
 
 /**
@@ -92,7 +92,7 @@ export type GeoJSONObjectRejection =
  * The validated payload of `plus_code.token`.
  */
 export interface PlusCodeTokenPayload {
-	readonly code: string
+	readonly code: Validated.PlusCode
 	readonly full: boolean
 }
 

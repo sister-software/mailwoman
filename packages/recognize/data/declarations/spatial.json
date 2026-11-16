@@ -9,7 +9,7 @@
 			"payload": [
 				{
 					"name": "code",
-					"type": "text",
+					"type": "digipin",
 					"optional": false
 				}
 			],
@@ -24,7 +24,7 @@
 			"payload": [
 				{
 					"name": "code",
-					"type": "text",
+					"type": "digipin",
 					"optional": false
 				}
 			],
@@ -80,7 +80,7 @@
 			"payload": [
 				{
 					"name": "code",
-					"type": "text",
+					"type": "plus_code",
 					"optional": false
 				},
 				{
