@@ -336,16 +336,6 @@ export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
  */
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 
-/**
- * The conventional source of the `importance` column, a WOF admin database carrying
- * `place_importance`, built by `mailwoman gazetteer importance`.
- *
- * Deliberately a separate artifact from {@link DEFAULT_ADMIN_DB}: the scores are
- * expensive to derive and change on their own cadence, so the candidate build joins
- * them in by name rather than assuming one file holds both.
- */
-export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
-
 // country-branch: an ingest list of a built artifact, as the first list in this module states.
 /**
  * The tail database's country set, in the frozen artifact's ingest order.

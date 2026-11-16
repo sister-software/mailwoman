@@ -47,14 +47,14 @@ Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_RO
 
 ## Runbook: rebuild + republish
 
-**0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. Build it onto a COPY of the canonical WOF DB so the gazetteer the resolver uses stays untouched:
+**0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. The command writes a sealed copy of the admin DB with `place_importance` added, beside it as `admin-global-priority-importance-<admin md5, 12 hex>.db`, and leaves the admin DB untouched:
 
 ```bash
-cp $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db \
-   $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db
-mailwoman gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db
+mailwoman gazetteer importance --admin $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 # Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
 ```
+
+Pass that file to `--wof-db` in step 1.
 
 **1. Build the tileset** (maintainer-only — needs the local address-point databases + `tippecanoe` on PATH + the `@duckdb/node-api` dev dep):
 

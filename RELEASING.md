@@ -335,7 +335,7 @@ To get new admin coverage into the demo after a gazetteer rebuild:
 set -a; . ./.env; set +a
 mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
 # …or run the stages independently:
-mailwoman gazetteer build                       # admin build (GeoNames folded in) → candidate build (FTS baked in)
+mailwoman gazetteer build                       # admin build (GeoNames folded in) → importance → candidate build (FTS baked in)
 mailwoman gazetteer promote                      # symlink <data-root>/db/wof/candidate.db → the build
 mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + demo ADMIN_GAZETTEER_VERSION bump
 ```
@@ -346,7 +346,11 @@ The manual recipe below performs the same steps one at a time, for reference and
 # 0. The admin build folds GeoNames places and their alternate names into the admin DB's spr/names
 #    (#743/#193). An alternate name attaches to the WOF place it matches ("Karjaa" → Karis) rather
 #    than adding a second row. Each GeoNames place keeps the id GEONAMES_ID_BASE + geonameid (#3061).
-node packages/mailwoman/out/cli/main.js gazetteer build   # admin (fold included) → candidate, turnkey
+node packages/mailwoman/out/cli/main.js gazetteer build   # admin (fold included) → importance → candidate, turnkey
+# 0b. After a swap, build the importance database for the live admin DB. It lands beside it as
+#     admin-global-priority-importance-<admin md5, 12 hex>.db, and the candidate build finds it by
+#     that md5 and refuses an importance database stamped with another admin DB.
+node packages/mailwoman/out/cli/main.js gazetteer importance --admin $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 # 1. Build the candidate table from the admin DB + the postcode databases. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl extract (NL/FR/DE/ES/IT) + the GeoNames intl extract (PT/AU)

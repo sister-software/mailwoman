@@ -14,7 +14,7 @@
 
 import { allKeyed } from "@mailwoman/core/promises"
 import { formatPhaseTimings } from "@mailwoman/core/utils"
-import { DEFAULT_CANDIDATE_OUT, DEFAULT_IMPORTANCE_DB } from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 
 import {
 	type CommandSpec,
@@ -35,7 +35,9 @@ export const spec = {
 		out: { type: "string", description: "Candidate DB output. Default <data-root>/db/wof/candidate-global.db" },
 		importance: {
 			type: "string",
-			description: `Importance source. Default <data-root>/db/wof/${DEFAULT_IMPORTANCE_DB}`,
+			description:
+				"Importance build to read. Default: the one `gazetteer importance` wrote beside the admin DB, named for its md5. " +
+				"Either way the build refuses an importance build stamped with another admin DB",
 		},
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
 		"include-build-local": {
@@ -52,7 +54,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 	const state = useCommandTask(async () => {
 		const {
 			dataRoot: { dataRootPath },
-			pipeline: { buildCandidate, DEFAULT_ADMIN_DB, resolveImportanceDB, resolvePostcodeDatabases },
+			pipeline: { buildCandidate, DEFAULT_ADMIN_DB, resolvePostcodeDatabases },
 			paths: { wofDatabasePath },
 		} = await allKeyed({
 			dataRoot: import("@mailwoman/core/data-root"),
@@ -65,30 +67,18 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const databases = await resolvePostcodeDatabases(undefined, root)
 
-		const importanceDB = options.skipImportance
-			? false
-			: (options.importance ?? (await resolveImportanceDB(undefined, root)))
-
 		console.error(`▸ candidate build ← ${adminDB} (${databases.length} postcode databases; FTS baked in)`)
 
-		if (importanceDB) {
-			console.error(`  importance ← ${importanceDB}`)
-		} else {
-			// Say which of the two absences this is.
-			// "No importance column" from a missing artifact and from `--skip-importance`
-			// produce the same DB and want different follow-ups.
-			console.error(
-				options.skipImportance
-					? "  importance: SKIPPED by --skip-importance — the column will be empty"
-					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDatabasePath} — the column will be empty`
-			)
+		if (options.skipImportance) {
+			console.error("  importance: SKIPPED by --skip-importance — the column will be empty")
 		}
 
 		const r = await buildCandidate({
 			adminDB,
 			out,
 			postcodeDatabases: databases,
-			importanceDB: importanceDB ?? undefined,
+			// Without `--importance` the build finds the importance build for this admin DB itself.
+			importanceDB: options.skipImportance ? false : options.importance,
 			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})

@@ -38,11 +38,17 @@ node packages/mailwoman/out/cli/main.js wof prepare $MAILWOMAN_DATA_ROOT/src/wof
 
 ### 2. Build Wikipedia importance scores (~15s)
 
-Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
+Downloads wikimedia-importance.csv.gz, joins WOF concordances, and writes the importance database: a
+sealed copy of the admin DB with `place_importance` added and the admin file's md5 and size stamped into
+`importance_source`. It lands beside the admin DB as `<admin name>-importance-<admin md5, 12 hex>.db`.
+The admin DB itself is untouched.
 
 ```bash
-node packages/mailwoman/out/cli/main.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
+node packages/mailwoman/out/cli/main.js gazetteer importance --admin $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 ```
+
+Run it after every admin swap. The candidate build (below) refuses an admin DB with no importance
+database stamped with its md5.
 
 **This step must precede step 3. Check whether it has ever run against the live admin DB:** while
 `admin-global-priority.db` has `place_population` and no `place_importance`, the FST builder
@@ -130,7 +136,14 @@ node packages/mailwoman/out/cli/main.js gazetteer build candidate \
   --out <candidate db>
 ```
 
-Rebuild the candidate after every admin swap, because its rows and ids come from the admin DB.
+Don't pass `--importance`. The build finds the importance database from step 2 by the admin DB's md5
+and checks its `importance_source` stamp. With no matching importance database, or with one stamped
+with another admin DB or with no stamp, it stops and prints both paths. `--skip-importance` builds an
+empty column on purpose. The candidate manifest's `source_vintage` records
+`importance=<path> importance-md5=<md5>`, or `importance=none`.
+
+Rebuild the importance database and then the candidate after every admin swap, because the
+candidate's rows and ids come from the admin DB.
 
 ## The admin DB augment
 

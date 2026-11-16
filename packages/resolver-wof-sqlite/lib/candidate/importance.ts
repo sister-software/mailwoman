@@ -8,10 +8,11 @@
  *
  *   The join key is `(name_key, country, placetype)`, the same {@link normalizeLocalityForKey}
  *   the candidate build uses for its probe key, so the two sides fold identically.
- *   An id join is wrong here, because the score source (`admin-global-priority-importance.db`)
- *   and the candidate build's admin source are different snapshots whose ids disagree.
+ *   The score source is the importance build the candidate build matched to its
+ *   admin database by md5 (`importance-source.ts`).
  *
- *   An id join silently drops rows and leaves the ranking inert on the queries the prior exists for.
+ *   The join stays on the name key rather than the id, the join every candidate build has used,
+ *   so matching the two files changes which scores are read and leaves the join unchanged.
  *
  *   The key by itself isn't enough.
  *   `(warwick, US, locality)` covers eleven different places.

@@ -3,8 +3,8 @@
 
 /**
  *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin`
- *   (WOF + Overture + GeoNames → verified, sealed admin gazetteer) then `build candidate`
- *   (the byte-range candidate table) from that fresh admin artifact.
+ *   (WOF + Overture + GeoNames → verified, sealed admin gazetteer), then `importance` for
+ *   that admin artifact, then `build candidate` (the byte-range candidate table) from both.
  *
  *   The admin build folds GeoNames into the admin database, and the candidate build reads it as built.
  *   Both artifacts land at staging/dated paths.
@@ -29,7 +29,7 @@ import {
  */
 export const spec = {
 	name: "build",
-	description: "Build the admin and candidate gazetteers.",
+	description: "Build the admin gazetteer, its importance database and the candidate gazetteer.",
 	options: {
 		data: { type: "string", description: "WOF repos root. Default <cache-root>/sources/wof-repos" },
 		"skip-verify": { type: "boolean", default: false, description: "Skip the admin verify check (development only)" },
@@ -41,8 +41,10 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const {
 			pipeline: { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases },
 			paths: { wofDatabasePath },
+			importanceBuild: { buildImportance },
 		} = await allKeyed({
 			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			importanceBuild: import("@mailwoman/gazetteer/tools/pipeline/importance"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 		})
 
@@ -52,6 +54,14 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			dataDir: options.data,
 			skipVerify: options.skipVerify,
 			onPhase: phaseReporter(),
+		})
+
+		// The candidate reads the importance build stamped with this admin database's md5, so it is built here.
+		console.error(`▸ build importance ← ${admin.out}`)
+
+		const importance = await buildImportance({
+			adminDB: admin.out,
+			onProgress: (message) => console.error(`  ${message}`),
 		})
 
 		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
@@ -69,6 +79,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		return [
 			`admin: ${admin.out} (${await formatFileSize(admin.out)}) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
+			`importance: ${importance.out} (${importance.total.toLocaleString()} places), sealed`,
 			`candidate: ${candidateOut} (${await formatFileSize(candidateOut)}) — ${candidate.rows.toLocaleString()} rows, sealed`,
 			"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
 		]

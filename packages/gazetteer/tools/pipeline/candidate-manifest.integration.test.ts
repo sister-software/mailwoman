@@ -150,7 +150,7 @@ describe("foldsRefusingPublication", () => {
 
 const BASE = {
 	contributingDatabases: { postcodes: [], localities: [] },
-	importance: true,
+	importance: { path: "/db/admin-importance-0123456789ab.db", md5: "0123456789abcdef0123456789abcdef" },
 	buildSHA: "abc1234",
 	version: "2026-08-17",
 	createdAt: "2026-08-17T00:00:00.000Z",
@@ -231,17 +231,24 @@ describe("candidateLayerManifest", () => {
 
 		expect(manifest.sourceVintage).toContain("postcode-databases=2")
 		expect(manifest.sourceVintage).toContain("locality-databases=1")
-		expect(manifest.sourceVintage).toContain("importance=yes")
+	})
+
+	it("names the importance build it read, by path and md5", async () => {
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratchDirectory())("n.db") })
+
+		expect(manifest.sourceVintage).toContain(
+			"importance=/db/admin-importance-0123456789ab.db importance-md5=0123456789abcdef0123456789abcdef"
+		)
 	})
 
 	it("distinguishes a build with no importance database, which ranks differently", async () => {
 		const manifest = await candidateLayerManifest({
 			...BASE,
-			importance: false,
+			importance: null,
 			adminDBPath: (await scratchDirectory())("n.db"),
 		})
 
-		expect(manifest.sourceVintage).toContain("importance=no")
+		expect(manifest.sourceVintage).toContain("importance=none")
 	})
 
 	it("is never `shipped`, whatever its folds declare", async () => {

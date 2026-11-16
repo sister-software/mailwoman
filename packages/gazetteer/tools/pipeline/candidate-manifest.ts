@@ -58,10 +58,11 @@ export interface CandidateManifestInput {
 		localities: readonly PathBuilderLike[]
 	}
 	/**
-	 * Whether an importance database was folded in.
+	 * The importance build whose scores fill the `importance` column, by path
+	 * and md5, or `null` for an empty column.
 	 * This changes ranking in a way the schema doesn't show.
 	 */
-	importance: boolean
+	importance: { path: string; md5: string } | null
 	buildSHA: string
 	version: string
 	createdAt: string
@@ -298,7 +299,10 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		sourceVintage:
 			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
-			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} importance=${input.importance ? "yes" : "no"}` +
+			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} ` +
+			(input.importance
+				? `importance=${input.importance.path} importance-md5=${input.importance.md5}`
+				: "importance=none") +
 			// Each fold's rows and places, measured on the built table. Recorded here because a fold's share
 			// is recoverable from the artifact itself only while its upstream release is still served.
 			(input.foldCensus?.length
