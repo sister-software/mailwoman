@@ -393,6 +393,55 @@ describe("readCORDISRecord", () => {
 		expect(reading).toEqual({ refused: CORDISRefusal.ComponentsTooFew, country: "BF" })
 	})
 
+	it("labels a repetition index after the number as part of the house number, as BAN does", () => {
+		// Both records are from the archives fetched 2026-10-03.
+		const bis = readCORDISRecord(
+			{
+				name: "THRUSTME",
+				street: "4 BIS RUE DES PETITS RUISSEAUX",
+				postCode: "91370",
+				city: "Verrieres Le Buisson",
+				country: "FR",
+			},
+			lexicon,
+			units
+		)
+
+		expect("admitted" in bis && bis.admitted.components).toMatchObject({
+			house_number: "4 BIS",
+			street: "RUE DES PETITS RUISSEAUX",
+		})
+
+		const ter = readCORDISRecord(
+			{
+				name: "FLUID ACTUATION & CONTROL TOULOUSE",
+				street: "17 TER CHEMIN DES BASTARDS",
+				postCode: "31470",
+				city: "Plaisance-Du-Touch",
+				country: "FR",
+			},
+			lexicon,
+			units
+		)
+
+		expect("admitted" in ter && ter.admitted.components).toMatchObject({
+			house_number: "17 TER",
+			street: "CHEMIN DES BASTARDS",
+		})
+	})
+
+	it("keeps the publisher's case on the repetition index", () => {
+		expect(splitCORDISStreetLine("17 ter chemin des bastards", StreetOrder.NumberFirst, "FR")).toEqual({
+			house_number: "17 ter",
+			street: "chemin des bastards",
+		})
+
+		expect(splitCORDISStreetLine("4 Bis Rue des Petits Ruisseaux", StreetOrder.NumberFirst, "FR")).toEqual({
+			house_number: "4 Bis",
+			street: "Rue des Petits Ruisseaux",
+		})
+	})
+
 	it("refuses a record that places nothing beside its locality", () => {
 		expect(
 			readCORDISRecord({ name: "ACME", street: "-", postCode: "N/A", city: "Lyon", country: "FR" }, lexicon, units)

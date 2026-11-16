@@ -124,6 +124,7 @@ import { Globerator } from "spliterator/node/fs"
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
+import { joinRepetitionIndex, withoutRepetitionIndex } from "#adapters/street/repetition"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { FingerprintSet } from "#fingerprints"
 import { isPlaceholderValue } from "#it/adapters/anac/adapter"
@@ -682,7 +683,9 @@ function placeStreetNumber(
 	// `49, AVENUE JOHN F. KENNEDY` does.
 	// The layout renders its own separator.
 	// The comma stays out of the component.
-	const split = leads ? splitStreetLine(line.replace(LEADING_NUMBER_COMMA, "$1 ")) : splitTrailingStreetLine(line)
+	// A repetition index after a leading number belongs to the number: `20 BIS RUE LOUIS PHILIPPE`.
+	const leading = leads ? splitStreetLine(line.replace(LEADING_NUMBER_COMMA, "$1 ")) : null
+	const split = leads ? leading && joinRepetitionIndex(leading, country) : splitTrailingStreetLine(line)
 
 	if (!split?.house_number || ZERO_NUMBER.test(split.house_number) || unplacedDigit(split.street)) {
 		return { refused: GLEIFRefusal.StreetNumberUnplaced }
@@ -692,7 +695,7 @@ function placeStreetNumber(
 
 	if (refusal) return { refused: refusal }
 
-	if (addressNumber && !numberAgrees(split.house_number, addressNumber)) {
+	if (addressNumber && !numberAgrees(split.house_number, addressNumber, country)) {
 		return { refused: GLEIFRefusal.StreetNumberDisagrees }
 	}
 
@@ -715,12 +718,27 @@ function streetRefusal(street: string): GLEIFRefusal | null {
 /**
  * Whether a split's house number is the publisher's `AddressNumber`, or that number
  * with a subdivision joined to it, as `1A/3` is to `1A`.
+ *
+ * In a country that writes a repetition index, `20 BIS` also agrees with a published `20` or `20BIS`.
  */
-function numberAgrees(split: string, published: string): boolean {
-	const a = split.toUpperCase()
+function numberAgrees(split: string, published: string, country: string): boolean {
 	const b = published.replaceAll(/\s+/gu, "").toUpperCase()
 
-	return a === b || a.startsWith(`${b}/`) || a.startsWith(`${b}-`)
+	const agrees = (candidate: string): boolean => {
+		const a = candidate.toUpperCase()
+
+		return a === b || a.startsWith(`${b}/`) || a.startsWith(`${b}-`)
+	}
+
+	if (agrees(split)) return true
+
+	const number = withoutRepetitionIndex(split, country)
+
+	if (number == null) return false
+
+	const index = split.slice(number.length).trim()
+
+	return agrees(number) || agrees(`${number}${index}`)
 }
 
 /**

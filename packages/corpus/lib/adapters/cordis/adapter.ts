@@ -135,6 +135,7 @@ import { Globerator } from "spliterator/node/fs"
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine, splitTrailingStreetLine, type SplitStreetLine } from "#adapters/street/line"
+import { joinRepetitionIndex } from "#adapters/street/repetition"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
@@ -482,10 +483,13 @@ const LEADING_NUMBER_COMMA = /^(\d+[\p{L}]?),\s*/u
  *
  * `order` is `null` for a country with no unambiguous side, and such a line
  * is kept only where it holds no digit.
+ * In a `country` that writes a repetition index, `20 BIS RUE LOUIS PHILIPPE` yields the house number
+ * `20 BIS` and the street `RUE LOUIS PHILIPPE`, as {@linkcode joinRepetitionIndex} reads it.
  */
 export function splitCORDISStreetLine(
 	line: string,
-	order: StreetOrder | null
+	order: StreetOrder | null,
+	country?: string
 ): SplitStreetLine | { refused: CORDISRefusal } | null {
 	const trimmed = line
 		.replaceAll(/\s+/gu, " ")
@@ -501,6 +505,10 @@ export function splitCORDISStreetLine(
 
 	if (order === StreetOrder.NumberFirst) {
 		split = splitStreetLine(trimmed.replace(LEADING_NUMBER_COMMA, "$1 "))
+
+		if (split && country) {
+			split = joinRepetitionIndex(split, country)
+		}
 	} else if (order === StreetOrder.NumberLast) {
 		split = splitTrailingStreetLine(trimmed)
 	}
@@ -566,7 +574,7 @@ export function readCORDISRecord(
 		// A unit at the end of the line (`BD SAINT-JACQUES BATIMENT B`) comes off first,
 		// so its identifier is never read as the house number.
 		const lineUnit = units.split(streetLine, { country, locality, postcode: fieldValue(record.postCode) })
-		const split = splitCORDISStreetLine(lineUnit?.street ?? streetLine, streetOrderForCountry(country))
+		const split = splitCORDISStreetLine(lineUnit?.street ?? streetLine, streetOrderForCountry(country), country)
 
 		if (split && "refused" in split) return { refused: split.refused, country }
 

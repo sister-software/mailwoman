@@ -182,6 +182,80 @@ describe("readGLEIFAddress", () => {
 		expect(row.source).toBe(GLEIF_ADAPTER_ID)
 	})
 
+	it("labels a repetition index after the number as part of the house number, as BAN does", () => {
+		const bis = admitted(
+			readGLEIFAddress(
+				record({
+					name: "SOFIGA.",
+					legal: { FirstAddressLine: "2 BIS RUE DES ECOLES", City: "AVRANCHES", Country: "FR", PostalCode: "50300" },
+				}),
+				GLEIFAddressBlock.Legal,
+				units
+			)
+		)
+
+		expect(bis.components).toMatchObject({ house_number: "2 BIS", street: "RUE DES ECOLES" })
+
+		const ter = admitted(
+			readGLEIFAddress(
+				record({
+					name: "STCE ASSOCIES",
+					legal: {
+						FirstAddressLine: "29 TER PARC DE MONTRETOUT",
+						City: "SAINT CLOUD",
+						Country: "FR",
+						PostalCode: "92210",
+					},
+				}),
+				GLEIFAddressBlock.Legal,
+				units
+			)
+		)
+
+		expect(ter.components).toMatchObject({ house_number: "29 TER", street: "PARC DE MONTRETOUT" })
+
+		// Monaco writes the index too.
+		// This record writes it in title case, and the label keeps the case.
+		const titled = admitted(
+			readGLEIFAddress(
+				record({
+					name: "Charles III 2016",
+					legal: {
+						FirstAddressLine: "26 Bis Boulevard Princesse Charlotte",
+						City: "Monaco",
+						Country: "MC",
+						PostalCode: "98000",
+					},
+				}),
+				GLEIFAddressBlock.Legal,
+				units
+			)
+		)
+
+		expect(titled.components).toMatchObject({ house_number: "26 Bis", street: "Boulevard Princesse Charlotte" })
+	})
+
+	it("agrees a split repetition index with a published number that omits it", () => {
+		const row = admitted(
+			readGLEIFAddress(
+				record({
+					name: "SOFIGA.",
+					legal: {
+						FirstAddressLine: "2 bis rue des ecoles",
+						AddressNumber: "2",
+						City: "AVRANCHES",
+						Country: "FR",
+						PostalCode: "50300",
+					},
+				}),
+				GLEIFAddressBlock.Legal,
+				units
+			)
+		)
+
+		expect(row.components).toMatchObject({ house_number: "2 bis", street: "rue des ecoles" })
+	})
+
 	it("splits a number-first line and keeps a US state whose code is its written form", () => {
 		const row = admitted(readGLEIFAddress(TWO_SIGMA, GLEIFAddressBlock.Headquarters, units))
 
