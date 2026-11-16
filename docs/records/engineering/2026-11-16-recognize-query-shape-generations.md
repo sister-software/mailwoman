@@ -14,7 +14,7 @@ A `legacy` shape stays as the engine returned it, with no `generation` field, so
 The `postal` generation changes three things (observed from the code):
 
 - `knownFormats` holds a postcode hit for each candidate of the postal family and a PO box hit for each box. A postcode hit lists the accepting countries as a `CountrySet`, the form, the locale of the most populous accepting country, and a confidence derived from the country count.
-- Token classes and scripts come from `unicodeScriptOf` in `@mailwoman/registry`, which reads the Unicode Script property of the runtime for every script the registry holds.
+- Token classes and scripts come from `codePointScript` in `@mailwoman/registry`, which reads the Unicode Script property of the runtime for every script the registry holds.
 - The eleven behaviors of the legacy classifier that looked accidental are specified.
 
 ## Consumers (observed)
@@ -25,7 +25,7 @@ The `postal` generation changes three things (observed from the code):
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Follow the card                                         | the runtime pipeline stage (`mailwoman/lib/runtime-pipeline.ts`), the browser classify stage, the geocode core (3 calls), `intent-refusal`, `span-script`, the script router (3), `pair-index`, `api-engine` and `docker/server.ts` through `deriveGeocodeRegister` |
 | Follow the shape they receive                           | the kind classifier (its inner call passes `shape.generation`), the locale hint, the decoder prior, postcode repair and the phrase grouper                                                                                                                          |
-| Postal for every model, because they hold no model card | `detectedAsPostcode` in the bare-postcode recipe, `hierarchyScript` in the WOF adapter (through `scriptOfText`), and `postcode-format.ts`                                                                                                                           |
+| Postal for every model, because they hold no model card | `detectedAsPostcode` in the bare-postcode recipe, `hierarchyScript` in the WOF adapter (through `textScript`), and `postcode-format.ts`                                                                                                                             |
 | Legacy, outside the card's reach                        | 10 tools and evaluation scripts that pin model 10.8.0's behavior, `geocode/result.ts` (it reads segments, and both generations return the same segments), and `usePOISearch` (a browser hook with no card)                                                          |
 
 ## The confidence rule (decided, then measured)
@@ -60,7 +60,7 @@ The `123 45` row shows a limit of the rule: it scores above the five-digit run b
 
 ## Scripts
 
-`unicodeScriptOf(codePoint)` returns the ISO 15924 code of the Script property, from the runtime's `\p{Script=…}` classes. It adds no byte to a bundle.
+`codePointScript(codePoint)` returns the ISO 15924 code of the Script property, from the runtime's `\p{Script=…}` classes. It adds no byte to a bundle.
 The Unicode version is the runtime's, so a Worker, a browser and Node can differ on a code point that a later version assigned (observed from the design, pinned by `unicode-script.test.ts` for 35 code points).
 
 The rule for Common and Inherited follows UAX #24, section 5 (decided):

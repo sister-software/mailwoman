@@ -8,7 +8,7 @@
  *   Its engine classifies each token with hand-written ranges for ten scripts.
  *
  *   This module classifies each token again from the Unicode Script property, through
- *   `unicodeScriptOf` of `@mailwoman/registry`, so every script the registry knows has an answer.
+ *   `codePointScript` of `@mailwoman/registry`, so every script the registry knows has an answer.
  *
  *   # The rule for Common and Inherited code points
  *
@@ -46,7 +46,7 @@
  *   A fullwidth Latin letter is Latin, so `ＡＢＣ` is `alpha`.
  */
 
-import { unicodeScriptOf } from "@mailwoman/registry/iso15924/unicode-script"
+import { codePointScript } from "@mailwoman/registry/iso15924/unicode-script"
 import type { BCP47 } from "@mailwoman/registry/types"
 
 import type { CharacterClass, ScriptShare, StructureFields, TextSpan, TokenCharacterClass, TokenClass } from "#types"
@@ -120,7 +120,7 @@ export function scanScripts(text: string, base = 0): ScriptScan {
 
 		if (!isAscii(codePoint) && IGNORABLE.test(character)) continue
 
-		let script = unicodeScriptOf(codePoint)
+		let script = codePointScript(codePoint)
 
 		// UAX #24: an Inherited code point takes the script of the one before it.
 		if (script === "Zinh") {
@@ -227,7 +227,7 @@ export function classOfScan(scan: ScriptScan): TokenCharacterClass {
  *
  * A string with no letter and no script mark, such as `2024`, is `Zyyy`.
  */
-export function scriptOfText(text: string): BCP47.ScriptCode {
+export function textScript(text: string): BCP47.ScriptCode {
 	return dominantScript(scanScripts(text))
 }
 
@@ -238,7 +238,7 @@ export function scriptOfText(text: string): BCP47.ScriptCode {
  * `mixed` for one that holds one of them beside another class, `alphanumeric` for a text
  * with a mixed token or both digits and letters, and so on, as the legacy fold did.
  */
-export function foldTokenClasses(classes: Iterable<TokenCharacterClass>): CharacterClass {
+export function collapseTokenClasses(classes: Iterable<TokenCharacterClass>): CharacterClass {
 	let digit = 0
 	let alpha = 0
 	let mixed = 0
@@ -288,7 +288,7 @@ export function foldTokenClasses(classes: Iterable<TokenCharacterClass>): Charac
  * longer token, then to the earlier code.
  * A range with only `Zyyy` tokens returns `Zyyy`.
  */
-export function scriptOfRange(
+export function rangeScript(
 	tokens: ReadonlyArray<Pick<TokenClass, "span" | "script">>,
 	start: number,
 	end: number
@@ -389,7 +389,7 @@ export function specifyStructure(fields: StructureFields, text: string): Specifi
 
 	return {
 		characterClass: tokenClasses.length
-			? foldTokenClasses(tokenClasses.map(({ class: tokenClass }) => tokenClass))
+			? collapseTokenClasses(tokenClasses.map(({ class: tokenClass }) => tokenClass))
 			: "alpha",
 		scripts,
 		tokenClasses,

@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest"
 
 import { isScriptCode } from "#iso15924/codes"
-import { unicodeScriptOf } from "#iso15924/unicode-script"
+import { codePointScript } from "#iso15924/unicode-script"
 
 /**
  * One code point of each script an address is written in, with the Unicode 15 answer.
@@ -49,26 +49,26 @@ const PINNED: ReadonlyArray<readonly [number, string]> = [
 	[0x10_ff_ff, "Zzzz"],
 ]
 
-describe("unicodeScriptOf", () => {
+describe("codePointScript", () => {
 	it.each(PINNED)("reads U+%s as %s", (codePoint, script) => {
-		expect(unicodeScriptOf(codePoint)).toBe(script)
+		expect(codePointScript(codePoint)).toBe(script)
 	})
 
 	it("answers with a registry script code for every pinned code point", () => {
 		for (const [codePoint] of PINNED) {
-			expect(isScriptCode(unicodeScriptOf(codePoint))).toBe(true)
+			expect(isScriptCode(codePointScript(codePoint))).toBe(true)
 		}
 	})
 
 	it("answers the same for a code point the second time", () => {
-		expect(unicodeScriptOf(0x3_b1)).toBe(unicodeScriptOf(0x3_b1))
+		expect(codePointScript(0x3_b1)).toBe(codePointScript(0x3_b1))
 	})
 
 	it("reports Latin for the ASCII letters and Common for the rest of ASCII", () => {
 		for (let code = 0; code < 0x80; code++) {
 			const letter = (code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a)
 
-			expect(unicodeScriptOf(code), `U+${code.toString(16)}`).toBe(letter ? "Latn" : "Zyyy")
+			expect(codePointScript(code), `U+${code.toString(16)}`).toBe(letter ? "Latn" : "Zyyy")
 		}
 	})
 })

@@ -16,7 +16,7 @@ import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/query-shape-generation"
 import { scriptForRange } from "@mailwoman/recognize/charset"
-import { scriptOfRange } from "@mailwoman/recognize/script-run"
+import { rangeScript } from "@mailwoman/recognize/script-run"
 
 /**
  * Write `script` onto every node of `tree`, in place.
@@ -38,9 +38,9 @@ export function stampSpanScripts(
 ): void {
 	const { tokenClasses } = computeQueryShape(text, generation)
 
-	const rangeScript = generation === QueryShapeGeneration.Postal ? scriptOfRange : scriptForRange
+	const scriptOfSpan = generation === QueryShapeGeneration.Postal ? rangeScript : scriptForRange
 
 	for (const node of walkNodes(tree.roots)) {
-		node.script = rangeScript(tokenClasses, node.start, node.end)
+		node.script = scriptOfSpan(tokenClasses, node.start, node.end)
 	}
 }

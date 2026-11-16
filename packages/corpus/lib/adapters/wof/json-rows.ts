@@ -14,7 +14,7 @@ import {
 } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { isPresent } from "@mailwoman/core/objects"
-import { scriptOfText } from "@mailwoman/recognize/script-run"
+import { textScript } from "@mailwoman/recognize/script-run"
 
 import type { RowSampler, SampledRow } from "#adapters/wof/sample"
 import type { AdapterOptions, CanonicalRow } from "#types"
@@ -103,7 +103,7 @@ const CJK_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Hira", "Kana", "Hang"
  */
 function hierarchyScript(parts: readonly string[]): AddressScript {
 	const allCJK = parts.every((part) => {
-		const script = scriptOfText(part)
+		const script = textScript(part)
 
 		return script === "Zyyy" || CJK_SCRIPTS.has(script)
 	})

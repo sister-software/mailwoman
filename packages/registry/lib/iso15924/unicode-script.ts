@@ -88,7 +88,7 @@ function build(): NonNullable<typeof matcher> {
  * @returns `Zyyy` for Common, `Zinh` for Inherited, and `Zzzz` when the runtime
  * assigns the code point no registry script.
  */
-export function unicodeScriptOf(codePoint: number): BCP47.ScriptCode {
+export function codePointScript(codePoint: number): BCP47.ScriptCode {
 	if (codePoint < 0x80) {
 		const lower = codePoint | 0x20
 
