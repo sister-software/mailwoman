@@ -19,7 +19,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { Kysely } from "kysely"
 import { basename, dirname, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { FSTSourceIdentity } from "#fst/freshness"
+import { type FSTSourceIdentity, readWOFSourceIdentity } from "#fst/freshness"
 
 /**
  * The one row of `importance_source`: the admin database the importance build copied.
@@ -118,4 +118,93 @@ export async function readImportanceSource(importanceDB: PathBuilderLike): Promi
 	const [row] = rows
 
 	return { path: row!.admin_path, md5: row!.admin_md5, bytes: Number(row!.admin_bytes) }
+}
+
+/**
+ * The importance build a reader uses, with its own md5 for a manifest or a report.
+ */
+export interface ResolvedImportance {
+	path: string
+	md5: string
+}
+
+/**
+ * A refusal from {@linkcode resolveImportanceForAdmin}.
+ * Its message gives the admin path and the importance path.
+ */
+export class ImportanceSourceError extends Error {
+	constructor(message: string) {
+		super(message)
+
+		this.name = "ImportanceSourceError"
+	}
+}
+
+/**
+ * Find the importance build that belongs with `adminDB` and check its stamp.
+ *
+ * Every reader of importance scores finds its file here, from the admin database it reads.
+ * Without `importanceDB` the file is the one {@linkcode importanceDatabasePath} gives for the admin md5.
+ * A given `importanceDB` is checked the same way.
+ *
+ * @throws {ImportanceSourceError} When no importance build exists for the admin database,
+ * when the file has no `importance_source` stamp, or when its stamp records another admin database.
+ */
+export async function resolveImportanceForAdmin(
+	adminDB: PathBuilderLike,
+	importanceDB?: PathBuilderLike
+): Promise<ResolvedImportance> {
+	if (!(await pathExists(adminDB))) {
+		throw new ImportanceSourceError(`admin ${adminDB} does not exist, so no importance build can be matched to it.`)
+	}
+
+	const admin = await readWOFSourceIdentity(adminDB)
+	const path = (importanceDB ?? importanceDatabasePath(adminDB, admin.md5)).toString()
+	const rebuild = `mailwoman gazetteer importance --admin ${adminDB}`
+
+	if (!(await pathExists(path))) {
+		throw new ImportanceSourceError(
+			`no importance build for admin ${adminDB} (md5 ${admin.md5}): ${path} does not exist. ` +
+				`Build it with \`${rebuild}\`.`
+		)
+	}
+
+	const stamped = await readImportanceSource(path)
+
+	if (!stamped) {
+		throw new ImportanceSourceError(
+			`importance ${path} records no admin database (no importance_source table), so it cannot be ` +
+				`matched to admin ${adminDB} (md5 ${admin.md5}). Rebuild it with \`${rebuild}\`.`
+		)
+	}
+
+	if (stamped.md5 !== admin.md5 || stamped.bytes !== admin.bytes) {
+		throw new ImportanceSourceError(
+			`importance ${path} was built from admin ${stamped.path} (md5 ${stamped.md5}, ` +
+				`${stamped.bytes} bytes), not admin ${adminDB} (md5 ${admin.md5}, ${admin.bytes} bytes). ` +
+				`Rebuild it with \`${rebuild}\`.`
+		)
+	}
+
+	return { path, md5: (await readWOFSourceIdentity(path)).md5 }
+}
+
+/**
+ * {@linkcode resolveImportanceForAdmin} for a report that goes on without scores.
+ *
+ * A refusal comes back as its message, and the message gives both paths.
+ * The report states that message as the reason it read no scores.
+ *
+ * @throws Any error other than an {@linkcode ImportanceSourceError}.
+ */
+export async function resolveImportanceOrRefusal(
+	adminDB: PathBuilderLike
+): Promise<(ResolvedImportance & { refusal: null }) | { path: null; md5: null; refusal: string }> {
+	try {
+		return { ...(await resolveImportanceForAdmin(adminDB)), refusal: null }
+	} catch (error) {
+		if (error instanceof ImportanceSourceError) return { path: null, md5: null, refusal: error.message }
+
+		throw error
+	}
 }

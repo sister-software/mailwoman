@@ -444,7 +444,7 @@ export interface RecipeOptions {
 	/**
 	 * `german`: the WOF admin database the Ortsteil pool is read from.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`
 	 */
 	adminDB?: string
 	/**

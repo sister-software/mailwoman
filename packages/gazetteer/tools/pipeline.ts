@@ -33,6 +33,7 @@ import { createPhaseClock, isoDate, type PhaseTiming } from "@mailwoman/core/uti
 // would evaluate the resolver's module graph on that path.
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import type { ResolvedImportance } from "@mailwoman/resolver-wof-sqlite/importance-source"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { probeManifest } from "mailwoman/data/inventory"
@@ -144,61 +145,27 @@ export async function resolveLocalityDatabases(
 }
 
 /**
- * The importance build a candidate reads, with its own md5 for the candidate manifest.
+ * The importance build for `adminDB`, through `resolveImportanceForAdmin`,
+ * with a refusal raised as a `CommandError` that also offers `--skip-importance`.
  */
-export interface ResolvedImportance {
-	path: string
-	md5: string
-}
-
-/**
- * Find the importance build that belongs with `adminDB` and check its stamp.
- *
- * Without `importanceDB` the build is the one {@linkcode importanceDatabasePath} names for the admin md5.
- * A given `importanceDB` is checked the same way.
- *
- * @throws When no importance build exists for the admin database, when the file has no
- * `importance_source` stamp, or when its stamp records another admin database.
- * Each message gives both paths.
- */
-export async function resolveImportanceForAdmin(
+async function candidateImportance(
 	adminDB: PathBuilderLike,
-	importanceDB?: PathBuilderLike
+	importanceDB: PathBuilderLike | undefined
 ): Promise<ResolvedImportance> {
-	const [{ readWOFSourceIdentity }, { importanceDatabasePath, readImportanceSource }] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite/fst/freshness"),
-		import("@mailwoman/resolver-wof-sqlite/importance-source"),
-	])
+	const { ImportanceSourceError, resolveImportanceForAdmin } =
+		await import("@mailwoman/resolver-wof-sqlite/importance-source")
 
-	const admin = await readWOFSourceIdentity(adminDB)
-	const path = (importanceDB ?? importanceDatabasePath(adminDB, admin.md5)).toString()
-	const rebuild = `mailwoman gazetteer importance --admin ${adminDB}`
+	try {
+		return await resolveImportanceForAdmin(adminDB, importanceDB)
+	} catch (error) {
+		if (error instanceof ImportanceSourceError) {
+			throw new CommandError(
+				`buildCandidate: ${error.message} Pass --skip-importance to build an empty importance column instead.`
+			)
+		}
 
-	if (!(await pathExists(path))) {
-		throw new CommandError(
-			`buildCandidate: no importance build for admin ${adminDB} (md5 ${admin.md5}): ${path} does not exist. ` +
-				`Build it with \`${rebuild}\`, or pass --skip-importance to build an empty importance column.`
-		)
+		throw error
 	}
-
-	const stamped = await readImportanceSource(path)
-
-	if (!stamped) {
-		throw new CommandError(
-			`buildCandidate: importance ${path} records no admin database (no importance_source table), so it cannot be ` +
-				`matched to admin ${adminDB} (md5 ${admin.md5}). Rebuild it with \`${rebuild}\`.`
-		)
-	}
-
-	if (stamped.md5 !== admin.md5 || stamped.bytes !== admin.bytes) {
-		throw new CommandError(
-			`buildCandidate: importance ${path} was built from admin ${stamped.path} (md5 ${stamped.md5}, ` +
-				`${stamped.bytes} bytes), not admin ${adminDB} (md5 ${admin.md5}, ${admin.bytes} bytes). ` +
-				`Rebuild it with \`${rebuild}\`.`
-		)
-	}
-
-	return { path, md5: (await readWOFSourceIdentity(path)).md5 }
 }
 
 export interface BuildOptions {
@@ -229,7 +196,7 @@ export interface BuildOptions {
 	 *
 	 * Pass `false` to build the column empty on purpose.
 	 *
-	 * @defaultValue The importance build {@link resolveImportanceForAdmin} finds for `adminDB`.
+	 * @defaultValue The importance build `resolveImportanceForAdmin` finds for `adminDB`.
 	 */
 	importanceDB?: string | false
 	/**
@@ -282,8 +249,7 @@ export async function buildCandidate(
 
 	// `false` is the caller choosing an empty column.
 	// Every other value resolves to the importance build stamped with this admin database's md5, or refuses.
-	const importance =
-		opts.importanceDB === false ? null : await resolveImportanceForAdmin(opts.adminDB, opts.importanceDB)
+	const importance = opts.importanceDB === false ? null : await candidateImportance(opts.adminDB, opts.importanceDB)
 
 	if (importance) {
 		opts.onProgress?.("importance", `${importance.path} (md5 ${importance.md5}) matches admin ${opts.adminDB}`)

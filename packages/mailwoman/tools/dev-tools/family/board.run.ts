@@ -23,7 +23,8 @@ const { values } = parseArguments({
 	},
 })
 
-const ADMIN_DB = values["admin-db"] ?? wofDatabasePath("admin-global-priority-importance.db")
+// The lookups read `spr`, `place_population` and `ancestors`, so the admin database itself serves.
+const ADMIN_DB = values["admin-db"] ?? wofDatabasePath("admin-global-priority.db")
 const SOURCE = `family-board:${isoDate()}`
 const ADDED_AT = isoDate()
 

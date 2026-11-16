@@ -98,10 +98,10 @@ export const spec = {
 			default: resolvePath(dataRootPath("geonames", "allCountries-postal.txt")),
 			description: "GeoNames postal file",
 		},
-		"wof-db": {
+		admin: {
 			type: "string",
-			default: wofDatabasePath("admin-global-priority-importance.db").toString(),
-			description: "WOF database",
+			default: wofDatabasePath("admin-global-priority.db").toString(),
+			description: "Admin database whose importance build supplies settlement salience",
 		},
 		"postcode-ceiling": unit("postcode ceiling", 0.85),
 		"salience-floor": unit("salience floor", 0.15),
@@ -135,6 +135,14 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#tools/coverage/core")
 
+		// The holes layer reads `place_importance` from the importance build stamped with the admin's md5.
+		// A missing or mismatched build refuses here, giving both paths.
+		const importance = options.postcode
+			? await (await import("@mailwoman/resolver-wof-sqlite/importance-source")).resolveImportanceForAdmin(
+					options.admin
+				)
+			: null
+
 		const rollup = splitNumberList(options.rollup).filter((n) => Number.isInteger(n) && n < options.fineRes)
 
 		return buildCoverageTiles(
@@ -151,7 +159,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 				interpWeight: options.interpWeight,
 				optimisticGamma: options.optimisticGamma,
 				geonamesPostalFile: options.postcode ? options.geonamesPostal : null,
-				wofDB: options.postcode ? options.wofDB : null,
+				wofDB: importance?.path ?? null,
 				postcodeCeiling: options.postcodeCeiling,
 				salienceFloor: options.salienceFloor,
 				postcodeExcludeCountries: extractDelimited(options.postcodeExclude),

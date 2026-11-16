@@ -3,13 +3,13 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights/channels"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { resolveImportanceOrRefusal } from "@mailwoman/resolver-wof-sqlite/importance-source"
 import { poiDatabaseRoot, wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -115,9 +115,13 @@ export async function runLookup(
 
 		case LookupSource.Candidate: {
 			return withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
-				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
+				// The split channels come from the importance build stamped with the live admin database's md5.
+				// A refusal is reported in the notes with both paths, never read as absent scores.
+				const adminPath = wofDatabaseRoot(dataRoot)("admin-global-priority.db")
+				const importance = await resolveImportanceOrRefusal(adminPath)
+				const importancePath = importance.path
 
-				const importanceDB = (await pathExists(importancePath))
+				const importanceDB = importancePath
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
 					: null
 
@@ -125,7 +129,7 @@ export async function runLookup(
 					const candidateOptions = {
 						...(args.country ? { country: args.country } : {}),
 						...(args.limit ? { limit: args.limit } : {}),
-						...(importanceDB ? { importance: { db: importanceDB, artifact: importancePath } } : {}),
+						...(importanceDB && importancePath ? { importance: { db: importanceDB, artifact: importancePath } } : {}),
 					}
 
 					const rows = lookupCandidate(db, queries, candidateOptions)
@@ -138,12 +142,13 @@ export async function runLookup(
 
 					const joined = entries.filter((entry) => entry.importance_split && entry.importance_split !== null).length
 
-					const splitNote = importanceDB
-						? `importance_split joined for ${joined} of ${entries.length} returned row(s) by spr_id from ` +
-							`${basename(importancePath)}. A LOW rate against rows whose blended importance IS measured means ` +
-							"the id spaces diverged (a cross-era pair re-keys Overture-minted ids) — not missing scores."
-						: "No admin-global-priority-importance.db under the data root, so entries carry no importance_split — " +
-							"the split channels are UNREAD here, not absent from the world."
+					const splitNote =
+						importanceDB && importancePath
+							? `importance_split joined for ${joined} of ${entries.length} returned row(s) by spr_id from ` +
+								`${basename(importancePath)}. A LOW rate against rows whose blended importance IS measured means ` +
+								"the id spaces diverged (a cross-era pair re-keys Overture-minted ids) — not missing scores."
+							: `No importance build was read (${importance.refusal}), so entries carry no importance_split — ` +
+								"the split channels are UNREAD here, not absent from the world."
 
 					if (args.compareCandidateDB) {
 						const comparePath = await resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)

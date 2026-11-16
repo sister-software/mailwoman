@@ -243,7 +243,7 @@ export async function readTriplesFromParentJoin(
 	options: { postcodeDB?: PathBuilderLike; adminDB?: PathBuilderLike } = {}
 ): Promise<PostcodeTriple[]> {
 	const postcodeDB = options.postcodeDB ?? wofDatabasePath("postalcode-intl.db")
-	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
+	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority.db")
 
 	await assertPathExists(postcodeDB, `readTriplesFromParentJoin: no postcode database at ${postcodeDB}`)
 	await assertPathExists(adminDB, `readTriplesFromParentJoin: no admin gazetteer at ${adminDB}`)
@@ -391,7 +391,7 @@ export async function readPairsFromAdmin(
 	countries: readonly string[],
 	options: { adminDB?: PathBuilderLike; locale?: (cc: string) => string } = {}
 ): Promise<AdminPair[]> {
-	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
+	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority.db")
 
 	await assertPathExists(adminDB, `readPairsFromAdmin: no admin gazetteer at ${adminDB}`)
 
@@ -452,7 +452,7 @@ export async function createKnownLocalityCheck(
 	country: string,
 	adminDB?: PathBuilderLike
 ): Promise<(name: string) => boolean> {
-	const path = adminDB ?? wofDatabasePath("admin-global-priority-importance.db")
+	const path = adminDB ?? wofDatabasePath("admin-global-priority.db")
 
 	await assertPathExists(path, `createKnownLocalityCheck: no admin gazetteer at ${path}`)
 

@@ -112,10 +112,12 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		dataRoot: { dataRootPath },
 		paths: { repoRootPath },
 		paths2: { poiDatabasePath, wofDatabasePath },
+		importanceSource: { resolveImportanceOrRefusal },
 	} = await allKeyed({
 		dataRoot: import("@mailwoman/core/data-root"),
 		paths: import("@mailwoman/core/paths"),
 		paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		importanceSource: import("@mailwoman/resolver-wof-sqlite/importance-source"),
 	})
 
 	const dataRoot = dataRootPath()
@@ -123,10 +125,15 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	// wof-hot.db belongs to the staged demo rather than the data root, so use `promotion-eval.ts`'s lookup order.
 	const { resolveWOFHotDB } = await import("mailwoman/tools/eval-harness/wof-hot-db")
 
+	// The importance artifact is listed only when its stamp matches the admin md5.
+	// A refusal goes into the notes with both paths.
+	const adminPath = wofDatabasePath("admin-global-priority.db")
+	const importance = await resolveImportanceOrRefusal(adminPath)
+
 	const standard: Array<readonly [string, PathBuilderLike]> = [
-		["admin", wofDatabasePath("admin-global-priority.db")],
+		["admin", adminPath],
 		["candidate", wofDatabasePath("candidate.db")],
-		["importance", wofDatabasePath("admin-global-priority-importance.db")],
+		...(importance.path ? [["importance", importance.path] as const] : []),
 		["poi", poiDatabasePath("poi.db")],
 		["wof-hot", resolveWOFHotDB()],
 	]
@@ -171,6 +178,10 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	}
 
 	const notes: string[] = []
+
+	if (importance.refusal) {
+		notes.push(`importance: ${importance.refusal}`)
+	}
 
 	if (!repos) {
 		notes.push(

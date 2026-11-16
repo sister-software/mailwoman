@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 67 of the group's 105 library and tool modules.
+This page lists 68 of the group's 106 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -54,7 +54,7 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind  | Interface               | Target                   | Calls |
 | ----- | ----------------------- | ------------------------ | ----- |
 | read  | `buildSHA`              | `repo:`                  | 1     |
-| read  | `pathExists`            | `unresolved (call)`      | 4     |
+| read  | `pathExists`            | `unresolved (call)`      | 3     |
 | read  | `pathExists`            | `unresolved (parameter)` | 1     |
 | read  | `pathExists`            | `unresolved (property)`  | 2     |
 | read  | `readLocalJSONFile`     | `unresolved (call)`      | 1     |
@@ -271,6 +271,22 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind | Interface        | Target                   | Calls |
 | ---- | ---------------- | ------------------------ | ----- |
 | read | `DatabaseClient` | `unresolved (parameter)` | 1     |
+
+## `packages/gazetteer/tools/pipeline/importance.ts`
+
+| Kind  | Interface                   | Target                    | Calls |
+| ----- | --------------------------- | ------------------------- | ----- |
+| read  | `copyFileTo`                | `unresolved (call)`       | 1     |
+| read  | `TextSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| read  | `tryStat`                   | `unresolved (call)`       | 1     |
+| read  | `tryStat`                   | `unresolved (identifier)` | 1     |
+| write | `changeMode`                | `unresolved (template)`   | 1     |
+| write | `copyFileTo`                | `unresolved (template)`   | 1     |
+| write | `DatabaseClient`            | `unresolved (template)`   | 1     |
+| write | `makeDirectories`           | `unresolved (call)`       | 1     |
+| write | `sealDatabase`              | `unresolved (template)`   | 1     |
+| write | `swapDatabaseIntoPlace`     | `unresolved (call)`       | 1     |
+| write | `swapDatabaseIntoPlace`     | `unresolved (template)`   | 1     |
 
 ## `packages/gazetteer/tools/pipeline/lieudit-pairs.ts`
 

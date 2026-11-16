@@ -13,13 +13,18 @@ import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, copyFileTo, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
-import { importanceDatabasePath, readImportanceSource } from "@mailwoman/resolver-wof-sqlite/importance-source"
+import {
+	importanceDatabasePath,
+	readImportanceSource,
+	resolveImportanceForAdmin,
+	resolveImportanceOrRefusal,
+} from "@mailwoman/resolver-wof-sqlite/importance-source"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { isSealed } from "@mailwoman/sqlite/sealed/db"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { buildCandidate, resolveImportanceForAdmin } from "#tools/pipeline"
+import { buildCandidate } from "#tools/pipeline"
 import { buildImportance, type BuildImportanceResult } from "#tools/pipeline/importance"
 
 let root: TemporaryDirectory
@@ -91,6 +96,14 @@ describe("resolveImportanceForAdmin", () => {
 		)
 
 		await expect(resolveImportanceForAdmin(adminB)).rejects.toThrow(`${expected} does not exist`)
+	})
+
+	test("a report reader receives the refusal with both paths instead of an empty result", async () => {
+		const refused = await resolveImportanceOrRefusal(adminB)
+
+		expect(refused.path).toBeNull()
+		expect(refused.refusal).toContain(`no importance build for admin ${adminB.toString()}`)
+		await expect(resolveImportanceOrRefusal(adminA)).resolves.toMatchObject({ path: built.out, refusal: null })
 	})
 
 	test("refuses an importance build stamped with another admin database, naming both", async () => {
