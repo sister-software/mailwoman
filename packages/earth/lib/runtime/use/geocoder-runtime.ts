@@ -62,7 +62,6 @@ import {
 } from "@mailwoman/resolver-wof-wasm/remote/street"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
-import { parsePointQuery } from "@mailwoman/spatial/point-query"
 import { parseStageLabelsFor, projectCascadeHits, runClassifyStage } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
@@ -89,6 +88,7 @@ import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { ClosingLRU, closeWhenOpen } from "#runtime/closing-lru"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
+import { loadPointReader } from "#runtime/point/point-reader"
 import { OPEN_STREET_EXTRACT_LIMIT, openStreetLookups, type StreetLookups } from "#runtime/street-lookups"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useReleaseAssetLoader, useStackReloads } from "#runtime/use/gazetteer-reload"
@@ -543,7 +543,8 @@ export function useGeocoderRuntime({
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
 			// A point query has its own decoder, so the classifier never reads it.
-			const point = parsePointQuery(input)
+			// The reader takes trimmed text, so the typed input is trimmed here.
+			const point = (await loadPointReader())(input.trim())
 
 			if (point) {
 				hooks.onStage(0)

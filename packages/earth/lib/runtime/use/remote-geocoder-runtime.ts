@@ -15,13 +15,13 @@ import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/cl
 import { GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
 import type { GeocoderRuntime, MapBias, ResolvedMapPlace, Suggestion } from "@mailwoman/react/map"
 import { useConnectivity } from "@mailwoman/react/network/ReachabilityProvider"
-import { parsePointQuery } from "@mailwoman/spatial/point-query"
 import { useCallback, useMemo, useState } from "react"
 
 import type { EarthConfig } from "#config"
 import { openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam } from "#routes"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
+import { loadPointReader } from "#runtime/point/point-reader"
 import { REMOTE_PARSE_STAGE_LABELS, remoteGeocode } from "#runtime/remote-geocoder"
 import { useGeoBias } from "#runtime/use/geo-bias"
 import {
@@ -143,7 +143,8 @@ export function useRemoteGeocoderRuntime(
 	const runParseWithBias = useCallback(
 		async (input: string, viewport: MapBias | null, hooks: { onStage: (stage: number) => void }) => {
 			// A point query has its own decoder, so it is answered without a request to the API.
-			const point = parsePointQuery(input)
+			// The reader takes trimmed text, so the typed input is trimmed here.
+			const point = (await loadPointReader())(input.trim())
 
 			if (point) {
 				hooks.onStage(0)

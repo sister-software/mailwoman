@@ -1,16 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { Validated } from "@mailwoman/recognize/types"
 import { expect, test } from "vitest"
 
-import {
-	getDIGIPIN,
-	getDIGIPINUnsafe,
-	getLatLngFromDIGIPIN,
-	getLatLngFromDIGIPINUnsafe,
-	getLatLngFromDIGIPINInto,
-	getLatLngFromDIGIPINIntoUnsafe,
-} from "#digipin"
+import { getDIGIPIN, getDIGIPINUnsafe, getLatLngFromDIGIPIN, getLatLngFromDIGIPINInto } from "#digipin"
+import { readPointQuery } from "#point-reading"
 
 /**
  * Original India Post grid.
@@ -168,63 +163,38 @@ test("encoding a decoded cell center preserves DIGIPIN", () => {
 	expect(getDIGIPIN(lat, lon)).toBe(pin)
 })
 
-test("supports case-insensitive decoding", () => {
-	const pin = getDIGIPIN(28.6139, 77.209)
+/**
+ * The validated code the recognizer reads from a text, the only way a test
+ * holds a branded DIGIPIN of its own.
+ */
+function recognizedDIGIPIN(text: string): Validated.Digipin {
+	const reading = readPointQuery(text)
 
-	expect(getLatLngFromDIGIPIN(pin.toLowerCase())).toEqual(getLatLngFromDIGIPIN(pin))
-})
+	if (reading?.kind !== "digipin") throw new Error(`"${text}" is not a DIGIPIN the recognizer validates`)
 
-test.each([
-	"",
-	"F",
-	"FFFFFFFFF",
-	"FFFFFFFFFFF",
-	"FFFFFFFFF0",
-	"FFFFFFFFFA",
-	"FFFFFFFFFI",
-	"FFFFFFFFFO",
-	"FFFFFFFFFU",
-	"FFFFFFFFF-",
-	"FFFFFFFFF ",
-	" FFFFFFFFF",
-	"FFFFFFFFF\n",
-	"FFFFFFFFF😀",
-	"FFFFFFFFFé",
-	"FFFFFFFFFĀ",
-	"FFFF-FFF-FFF",
-	"FF-FFFF-FFFF",
-	"FFF-FFF-FFF",
-	"FFF-FFF-FFFFF",
-	"FFF FFF FFFF",
-	"FFF-FFF-FFF-",
-	"FFFFFF-FFFF",
-])("rejects malformed DIGIPIN %j", (pin) => {
-	expect(() => getLatLngFromDIGIPIN(pin)).toThrow(RangeError)
-})
+	return reading.code
+}
 
-test("decodes the hyphenated display form", () => {
+test("the display form and lower case normalize to the one code the decoder takes", () => {
 	const pin = getDIGIPIN(28.6139, 77.209)
 	const hyphenated = `${pin.slice(0, 3)}-${pin.slice(3, 6)}-${pin.slice(6)}`
 
-	expect(getLatLngFromDIGIPIN(hyphenated)).toEqual(getLatLngFromDIGIPIN(pin))
-	expect(getLatLngFromDIGIPIN(hyphenated.toLowerCase())).toEqual(getLatLngFromDIGIPIN(pin))
+	expect(recognizedDIGIPIN(hyphenated)).toBe(pin)
+	expect(recognizedDIGIPIN(hyphenated.toLowerCase())).toBe(pin)
+	expect(getLatLngFromDIGIPIN(recognizedDIGIPIN(hyphenated.toLowerCase()))).toEqual(getLatLngFromDIGIPIN(pin))
+})
 
-	const output = new Float64Array(2)
-
-	getLatLngFromDIGIPINInto(hyphenated, output)
-
-	expect(Array.from(output)).toEqual(getLatLngFromDIGIPIN(pin))
+test("the recognizer refuses what no decoder would take", () => {
+	for (const text of ["", "FFFFFFFFF", "FFFFFFFFFFF", "FFFFFFFFFA", "FFF-FFF-FFFFF", "FFFF-FFF-FFF"]) {
+		expect(readPointQuery(text)?.kind, text).not.toBe("digipin")
+	}
 })
 
 test("decodes every approved character", () => {
 	const alphabet = "23456789CJKLMPFT"
 
 	for (const char of alphabet) {
-		const pin = char.repeat(10)
-
-		expect(() => getLatLngFromDIGIPIN(pin)).not.toThrow()
-
-		const [lon, lat] = getLatLngFromDIGIPIN(pin)
+		const [lon, lat] = getLatLngFromDIGIPIN(recognizedDIGIPIN(`${char.repeat(3)}-${char.repeat(3)}-${char.repeat(4)}`))
 
 		expect(Number.isFinite(lon)).toBe(true)
 		expect(Number.isFinite(lat)).toBe(true)
@@ -236,12 +206,6 @@ test("unsafe encoder matches validated encoder", () => {
 	const longitude = 77.209
 
 	expect(getDIGIPINUnsafe(latitude, longitude)).toBe(getDIGIPIN(latitude, longitude))
-})
-
-test("unsafe decoder matches validated decoder", () => {
-	const pin = getDIGIPIN(28.6139, 77.209)
-
-	expect(getLatLngFromDIGIPINUnsafe(pin)).toEqual(getLatLngFromDIGIPIN(pin))
 })
 
 test("decodes into a Float64Array", () => {
@@ -266,18 +230,6 @@ test("supports offsets into preallocated buffers", () => {
 	for (let i = 0; i < pins.length; i++) {
 		expect(Array.from(output.slice(i * 2, i * 2 + 2))).toEqual(getLatLngFromDIGIPIN(pins[i]!))
 	}
-})
-
-test("unsafe buffer decoder matches validated decoder", () => {
-	const pin = getDIGIPIN(28.6139, 77.209)
-
-	const safe = new Float64Array(2)
-	const unsafe = new Float64Array(2)
-
-	getLatLngFromDIGIPINInto(pin, safe)
-	getLatLngFromDIGIPINIntoUnsafe(pin, unsafe)
-
-	expect(unsafe).toEqual(safe)
 })
 
 test("supports ordinary JavaScript arrays as output buffers", () => {

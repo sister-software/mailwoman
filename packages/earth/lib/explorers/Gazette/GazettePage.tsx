@@ -11,12 +11,14 @@
  *   A permalink reopens them.
  */
 
-import { parsePointQuery, type PointQuery, POINT_QUERY_LABEL, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import type { PointReading } from "@mailwoman/spatial/point-reading"
+import { POINT_QUERY_DESCRIPTIONS } from "@mailwoman/spatial/point-text"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
 import { pageTitle } from "#page-title"
 import { type GazettePlaceRef, gazettePlaceFromPath, gazettePlacePath, searchWithQuery } from "#routes"
+import { usePointReader } from "#runtime/point/point-reader"
 
 import {
 	type Ancestor,
@@ -107,7 +109,8 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 
 	// A point-shaped query rather than a name: a `wof:` id opens its place, and the other
 	// shapes are explained, because the gazetteer indexes names and not positions.
-	const pointQuery = parsePointQuery(text)
+	const readPoint = usePointReader()
+	const pointQuery = useMemo(() => readPoint?.(text.trim()) ?? null, [readPoint, text])
 
 	// Only the newest search or place load may publish its result.
 	const searchSequence = useRef(0)
@@ -152,10 +155,12 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 
 	const runSearch = useCallback(
 		(kind: SearchMode, input: string) => {
-			if (!gazetteer) return
+			// The reader loads on mount.
+			// The search waits for it, so a point query never runs as a name search.
+			if (!gazetteer || !readPoint) return
 
 			const mine = ++searchSequence.current
-			const point = parsePointQuery(input)
+			const point = readPoint(input.trim())
 
 			if (point) {
 				setGroups([])
@@ -197,7 +202,7 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 				}
 			)
 		},
-		[gazetteer, navigate]
+		[gazetteer, navigate, readPoint]
 	)
 
 	// A prefix search follows the text after the debounce.
@@ -325,7 +330,7 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 						{groups.length
 							? `${groups.length} names`
 							: pointQuery
-								? `${POINT_QUERY_LABEL[pointQuery.kind]}, not a name`
+								? `${POINT_QUERY_DESCRIPTIONS[pointQuery.recognized].label}, not a name`
 								: nameKeyOf(text)
 									? "No names yet"
 									: "Type a name"}
@@ -385,15 +390,15 @@ type PlaceLink = (target: GazettePlaceRef, label: React.ReactNode, className?: s
  * What a point query means to a name index: a `wof:` id opens its chain here, and every
  * other shape belongs on the map, because the gazetteer has no index over positions.
  */
-function PointNote({ query, text }: { query: PointQuery; text: string }): React.JSX.Element {
+function PointNote({ query, text }: { query: PointReading; text: string }): React.JSX.Element {
 	if (query.kind === "wof") {
 		return <p className={styles.hint}>Opening the containment chain of Who&apos;s On First {query.id}.</p>
 	}
 
 	return (
 		<p className={styles.hint}>
-			The gazetteer indexes names, not positions, so {POINT_QUERY_PHRASE[query.kind]} finds no row here.{" "}
-			<a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
+			The gazetteer indexes names, not positions, so {POINT_QUERY_DESCRIPTIONS[query.recognized].phrase} finds no row
+			here. <a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
 		</p>
 	)
 }

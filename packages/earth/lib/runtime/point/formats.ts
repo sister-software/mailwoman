@@ -13,7 +13,7 @@
 
 import type { MapContextMenuRowProps } from "@mailwoman/react/map"
 import { encodePlusCode } from "@mailwoman/spatial/open-location-code"
-import { coordinatePairText } from "@mailwoman/spatial/point-query"
+import { coordinatePairText } from "@mailwoman/spatial/point-text"
 
 /**
  * The finest resolution H3 defines.

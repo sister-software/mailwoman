@@ -8,7 +8,7 @@
  *   A feature with a name is titled by that name, and bare ground by its coordinate.
  */
 
-import { coordinatePairText } from "@mailwoman/spatial/point-query"
+import { coordinatePairText } from "@mailwoman/spatial/point-text"
 import type { ReactNode } from "react"
 
 import { cx } from "#common/cx"

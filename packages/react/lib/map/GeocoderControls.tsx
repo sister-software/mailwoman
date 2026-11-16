@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { coordinatePairText } from "@mailwoman/spatial/point-query"
+import { coordinatePairText } from "@mailwoman/spatial/point-text"
 import type React from "react"
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"

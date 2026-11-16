@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { Validated } from "@mailwoman/recognize/types"
+
 import type { Coordinates2D } from "#position"
 
 /**
@@ -65,37 +67,6 @@ const SPAN = 36
 const PRECISION = 10
 
 /**
- * Length of a DIGIPIN in India Post's display form.
- *
- * The display form inserts a hyphen after the third and sixth characters: `39J-49L-L8T4`.
- */
-const HYPHENATED_LENGTH = PRECISION + 2
-
-/**
- * String positions of the two hyphens in the display form.
- */
-const FIRST_HYPHEN = 3
-const SECOND_HYPHEN = 7
-
-/**
- * ASCII code of the hyphen separator.
- */
-const HYPHEN = "-".charCodeAt(0)
-
-/**
- * ASCII code range of lowercase Latin letters.
- *
- * The checked decoder folds these letters to uppercase.
- */
-const LOWERCASE_A = "a".charCodeAt(0)
-const LOWERCASE_Z = "z".charCodeAt(0)
-
-/**
- * Distance from a lowercase ASCII letter to its uppercase form.
- */
-const CASE_OFFSET = LOWERCASE_A - "A".charCodeAt(0)
-
-/**
  * Number of subdivisions along each coordinate axis.
  *
  * Ten levels of four-way subdivision produce 4^10 cells along each axis, equivalent to 20 bits.
@@ -114,22 +85,16 @@ const SCALE = RESOLUTION / SPAN
 
 /**
  * Geographic width or height of one DIGIPIN cell, in degrees.
- */
-const CELL_SIZE = SPAN / RESOLUTION
-
-/**
- * Sentinel value used to identify invalid DIGIPIN characters.
  *
- * Valid character indices range from 0 through 15.
+ * It is the span of the cell whose center a decoded position is.
  */
-const INVALID = 255
+export const DIGIPIN_CELL_DEGREES = SPAN / RESOLUTION
 
 /**
  * ASCII character-to-grid-index lookup table.
  *
- * Each valid uppercase DIGIPIN character maps to its zero-based position in the flattened character grid.
- *
- * All other ASCII characters map to {@link INVALID}.
+ * Each uppercase DIGIPIN character maps to its zero-based position in the flattened character grid.
+ * The decoders read only validated codes, so no other character reaches the table.
  *
  * Initialized once at module evaluation.
  * It doesn't cache encoding or decoding results.
@@ -140,7 +105,7 @@ const DECODE = buildDecodeTable()
  * Build the ASCII character-to-grid-index lookup table from {@link ALPHABET}.
  */
 function buildDecodeTable(): Uint8Array {
-	const table = new Uint8Array(128).fill(INVALID)
+	const table = new Uint8Array(128)
 
 	for (let i = 0; i < ALPHABET.length; i++) {
 		table[ALPHABET.charCodeAt(i)] = i
@@ -189,10 +154,11 @@ export function validateDIGIPINCoordinates(latitude: number, longitude: number):
  * @example
  * const pin = getDIGIPIN(13.11179621, 80.20264269)
  */
-export function getDIGIPIN(latitude: number, longitude: number): string {
+export function getDIGIPIN(latitude: number, longitude: number): Validated.Digipin {
 	validateDIGIPINCoordinates(latitude, longitude)
 
-	return getDIGIPINUnsafe(latitude, longitude)
+	// The bounds are checked, so the code is ten characters of the alphabet.
+	return getDIGIPINUnsafe(latitude, longitude) as Validated.Digipin
 }
 
 /**
@@ -244,44 +210,26 @@ export function getDIGIPINUnsafe(latitude: number, longitude: number): string {
  * Returns a GeoJSON-compatible position in longitude-first order.
  * Coordinates retain floating-point precision without decimal rounding.
  *
- * @param pin - DIGIPIN to decode, as 10 characters or in the display form `39J-49L-L8T4`.
- * Letters may be lowercase.
+ * The parameter is the validated code of the `spatial` family of `@mailwoman/recognize`:
+ * ten upper-case characters without hyphens.
+ * The validator accepts lower case and the display form `39J-49L-L8T4`
+ * and normalizes both, so this decoder skips every check.
+ *
+ * A caller that holds a string reads it through the recognizer.
+ *
+ * @param pin - Validated DIGIPIN.
  * @returns Cell center as [longitude, latitude].
  *
- * @throws {RangeError} If DIGIPIN has an invalid length or character.
- *
  * @example
- * const [longitude, latitude] = getLatLngFromDIGIPIN("4T396F42L7")
+ * const [longitude, latitude] = getLatLngFromDIGIPIN(getDIGIPIN(13.11179621, 80.20264269))
  */
-export function getLatLngFromDIGIPIN(pin: string): Coordinates2D {
+export function getLatLngFromDIGIPIN(pin: Validated.Digipin): Coordinates2D {
 	/**
 	 * Result position in GeoJSON coordinate order.
 	 */
 	const position: Coordinates2D = [0, 0]
 
 	getLatLngFromDIGIPINInto(pin, position)
-
-	return position
-}
-
-/**
- * Decode a trusted DIGIPIN without validating its format.
- *
- * Returns a GeoJSON-compatible position.
- *
- * @param pin - Previously validated 10-character DIGIPIN without hyphens.
- * @returns Cell center as [longitude, latitude].
- *
- * @remarks Invalid inputs produce unspecified results without throwing.
- * A character outside ASCII decodes as `F`, and an invalid ASCII character corrupts the latitude bits.
- */
-export function getLatLngFromDIGIPINUnsafe(pin: string): Coordinates2D {
-	/**
-	 * Result position in GeoJSON coordinate order.
-	 */
-	const position: Coordinates2D = [0, 0]
-
-	getLatLngFromDIGIPINIntoUnsafe(pin, position)
 
 	return position
 }
@@ -294,107 +242,20 @@ export function getLatLngFromDIGIPINUnsafe(pin: string): Coordinates2D {
  * The destination receives longitude followed by latitude.
  * Supports both ordinary JavaScript arrays and Float64Array buffers.
  *
- * @param pin - DIGIPIN to decode, as 10 characters or in the display form `39J-49L-L8T4`.
- * Letters may be lowercase.
+ * @param pin - Validated DIGIPIN, ten upper-case characters.
  * @param output - Destination coordinate buffer.
  * @param offset - Starting element offset.
  * Defaults to zero.
  *
- * @throws {RangeError} If DIGIPIN has an invalid length or character.
- *
  * @example
- * const pins = ["4T396F42L7", "4T396F42L7"]
+ * const pins = [getDIGIPIN(13.11179621, 80.20264269), getDIGIPIN(28.6139, 77.209)]
  * const output = new Float64Array(pins.length * 2)
  *
  * for (let i = 0; i < pins.length; i++) {
- *   getLatLngFromDIGIPINInto(pins[i], output, i * 2)
+ *   getLatLngFromDIGIPINInto(pins[i]!, output, i * 2)
  * }
  */
-export function getLatLngFromDIGIPINInto(pin: string, output: number[] | Float64Array, offset = 0): void {
-	/**
-	 * Whether the input is in the display form with hyphens after the third and sixth characters.
-	 */
-	const hyphenated =
-		pin.length === HYPHENATED_LENGTH &&
-		pin.charCodeAt(FIRST_HYPHEN) === HYPHEN &&
-		pin.charCodeAt(SECOND_HYPHEN) === HYPHEN
-
-	if (!hyphenated && pin.length !== PRECISION) {
-		throw new RangeError("Invalid DIGIPIN length")
-	}
-
-	/**
-	 * Accumulated 20-bit latitude cell index.
-	 */
-	let lat = 0
-
-	/**
-	 * Accumulated 20-bit longitude cell index.
-	 */
-	let lon = 0
-
-	/**
-	 * String position of the next DIGIPIN character.
-	 */
-	let position = 0
-
-	for (let i = 0; i < PRECISION; i++) {
-		if (hyphenated && (position === FIRST_HYPHEN || position === SECOND_HYPHEN)) {
-			position++
-		}
-
-		/**
-		 * ASCII character code, normalized to uppercase.
-		 */
-		let code = pin.charCodeAt(position++)
-
-		if (code >= LOWERCASE_A && code <= LOWERCASE_Z) {
-			code -= CASE_OFFSET
-		}
-
-		if (code >= DECODE.length) {
-			throw new RangeError("Invalid DIGIPIN character")
-		}
-
-		/**
-		 * Flattened DIGIPIN grid position.
-		 */
-		const index = DECODE[code]
-
-		if (index === INVALID || index === undefined) {
-			throw new RangeError("Invalid DIGIPIN character")
-		}
-
-		lat = (lat << 2) | (3 - (index >>> 2))
-		lon = (lon << 2) | (index & 3)
-	}
-
-	output[offset] = MIN_LON + (lon + 0.5) * CELL_SIZE
-	output[offset + 1] = MIN_LAT + (lat + 0.5) * CELL_SIZE
-}
-
-/**
- * Decode a trusted DIGIPIN directly into an existing buffer.
- *
- * Skips length and character validation.
- * Intended for high-throughput batch processing.
- *
- * @param pin - Previously validated 10-character DIGIPIN.
- * @param output - Destination coordinate buffer.
- * @param offset - Starting element offset.
- * Defaults to zero.
- *
- * @remarks Invalid inputs produce unspecified results.
- *
- * The destination buffer must contain sufficient capacity for two coordinates
- * beginning at the specified offset.
- *
- * @example
- * const output = new Float64Array(2)
- *
- * getLatLngFromDIGIPINIntoUnsafe("4T396F42L7", output)
- */
-export function getLatLngFromDIGIPINIntoUnsafe(pin: string, output: number[] | Float64Array, offset = 0): void {
+export function getLatLngFromDIGIPINInto(pin: Validated.Digipin, output: number[] | Float64Array, offset = 0): void {
 	/**
 	 * Accumulated 20-bit latitude cell index.
 	 */
@@ -407,25 +268,15 @@ export function getLatLngFromDIGIPINIntoUnsafe(pin: string, output: number[] | F
 
 	for (let i = 0; i < PRECISION; i++) {
 		/**
-		 * ASCII character code, normalized to uppercase.
-		 */
-		let code = pin.charCodeAt(i)
-
-		if (code >= LOWERCASE_A && code <= LOWERCASE_Z) {
-			code -= CASE_OFFSET
-		}
-
-		/**
 		 * Flattened DIGIPIN grid position.
 		 */
-		const index = DECODE[code]!
+		const index = DECODE[pin.charCodeAt(i)]!
 
 		lat = (lat << 2) | (3 - (index >>> 2))
 		lon = (lon << 2) | (index & 3)
 	}
 
-	output[offset] = MIN_LON + (lon + 0.5) * CELL_SIZE
-	output[offset + 1] = MIN_LAT + (lat + 0.5) * CELL_SIZE
+	output[offset] = MIN_LON + (lon + 0.5) * DIGIPIN_CELL_DEGREES
+	output[offset + 1] = MIN_LAT + (lat + 0.5) * DIGIPIN_CELL_DEGREES
 }
-
 // #endregion
