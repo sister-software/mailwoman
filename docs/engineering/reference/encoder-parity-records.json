@@ -8,6 +8,34 @@
 		"`verified_postal_finders` is each record's verification on 2026-11-16 against the encoder with the postal finders. The records were",
 		"captured under the retired shaped anchor, so a record that paints the anchor from the finder ignores its two anchor tensors there."
 	],
+	"postal_finder_records": {
+		"README": [
+			"Three records captured on 2026-11-16 from the Rust sampler and the Rust encoder with `anchor_paint_mode: postal`, after the",
+			"cross-side agreement of postcode-agreement.run.ts (0 of 72,209 rows differ). Each verified with 0 differing rows through",
+			"`parity.run.ts verify --records-dir`. They were written outside the data root. An operator copies a record into",
+			"$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/, or reruns its capture command, which reads the same draw."
+		],
+		"records": {
+			"postal-v870-train-5k": {
+				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-train-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
+				"emitted_rows": 5000,
+				"record_json_sha256": "686b6f740648e92eb7e3e8de72f66b449b9a4a74a9d69525b88ce80e66848bbc",
+				"verified_differing_rows": 0
+			},
+			"postal-v870-val-5k": {
+				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-val-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split val --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
+				"emitted_rows": 4664,
+				"record_json_sha256": "0c6759a1271f6059395c673ddbae57593b02db5ebf2f3bcdd0465378391ecfff",
+				"verified_differing_rows": 0
+			},
+			"postal-code-unit-5k": {
+				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-code-unit-5k --config packages/corpus/data/training-configs/v8.3.0-probe-code-unit-2k.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal plus the six host lexicon overrides of the c6-train-2k record",
+				"emitted_rows": 5000,
+				"record_json_sha256": "b62b90a59cdb874c92e0e733c8b8c44e58ac165eba4bfabebc0c966e2433eb2b",
+				"verified_differing_rows": 0
+			}
+		}
+	},
 	"records": {
 		"aug-grouping-2k": {
 			"format": 1,
@@ -386,7 +414,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-grouping-2k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 1990,
@@ -669,7 +697,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-grouping-p50-250 --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 250,
@@ -1081,7 +1109,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-postcode-move-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -1496,7 +1524,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name aug-splice-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -1833,7 +1861,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-channel-free-5k",
 				"emitted_rows": 4999,
@@ -2314,7 +2342,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-gold-spans-5k",
 				"emitted_rows": 4999,
@@ -2795,7 +2823,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-gold-tokens-5k",
 				"emitted_rows": 5000,
@@ -3276,7 +3304,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-max-length-16-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -3760,7 +3788,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-no-choreography-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 4999,
@@ -4218,7 +4246,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-2k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 2000,
@@ -4712,7 +4740,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-train-50k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 49989,
@@ -5154,7 +5182,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name c6-val-36864 --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 31951,
@@ -5259,7 +5287,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name char-v8-cjk-regs-5k",
 				"emitted_rows": 5000,
@@ -5668,7 +5696,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name code-unit-train-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 5000,
@@ -6088,7 +6116,7 @@
 			},
 			"verified_postal_finders": {
 				"verified_on": "2026-11-16",
-				"revision": "REVISION_PLACEHOLDER",
+				"revision": "409535256adfd29d6b53cfc4a27f29edb65af0ab",
 				"host": "the lab host (x86-64, AVX-512)",
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name relabel-5k --set data.anchor_paint_mode=postal --ignore anchor_features --ignore anchor_confidence",
 				"emitted_rows": 5000,
