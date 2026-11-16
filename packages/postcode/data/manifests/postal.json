@@ -4,31 +4,31 @@
 			"artifact": "postal.rca1",
 			"automata": [
 				{
-					"backend": "dense",
-					"bytes": 725116,
+					"backend": "sparse",
+					"bytes": 53709,
 					"patterns": 98,
 					"role": "whole",
 					"states": 1408
 				},
 				{
-					"backend": "dense",
-					"bytes": 966952,
+					"backend": "sparse",
+					"bytes": 91415,
 					"patterns": 98,
 					"role": "embedded",
 					"states": 1846
 				}
 			],
-			"bytes": 1873640,
+			"bytes": 326696,
 			"compilerVersion": "0.1.0",
 			"declarationsHash": "0d69452b0205fd7cd7115a132d1eb73d7b96e76c34e622ed35c785e071dfb8ac",
 			"irHash": "a75d9736cb18023e69c3ca9b70da6945f21ed408f2fb82f35d1c8c2ab453778c",
-			"sha256": "b3c8fa3c5241456507be61b8addfb48f6192802cf43b249de7dae88fc1619a62",
+			"sha256": "4773d8c82a0386701e5f770cc44bf122e5792bb2646208865d76a58fb02187ea",
 			"unicodeVersion": "16.0.0"
 		}
 	},
 	"limits": {
 		"buildBytes": 33554432,
-		"denseBytes": 2097152,
+		"denseBytes": 0,
 		"inputBytes": 65536,
 		"maxCaptures": 64,
 		"maxDepth": 64,

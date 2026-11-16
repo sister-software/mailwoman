@@ -11,8 +11,8 @@
  *   Several recognizers share one engine instance, and each searches only its own families.
  */
 
-import type { AnyFamily, FieldsOf, RecognitionsOf } from "#family"
-import { loadFamily, recognizeText, traceText } from "#runtime/engine"
+import type { AnyFamily, FieldsOf, KindsOf, RecognitionsOf } from "#family"
+import { loadFamily, type PrefixStatus, prefixStatuses, recognizeText, traceText } from "#runtime/engine"
 import { RecognizeCompositionError } from "#runtime/errors"
 import { type Instance, ready } from "#runtime/state"
 import { type KnownFormatsBinding, structureFields } from "#runtime/structure"
@@ -124,6 +124,24 @@ export interface Recognizer<F extends readonly AnyFamily[]> {
 	recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
 	recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
 	recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
+	/**
+	 * Reads `text` as the beginning of a whole-input match of each shape, for every shape of
+	 * every composed family that a search reports, in the engine's order of family and shape.
+	 *
+	 * It loads the engine on the first call, as `recognize` does, and is synchronous.
+	 * A family that fills a field and reports no recognition is left out.
+	 */
+	prefixStatus(text: string): ReadonlyArray<ShapePrefixStatus<F>>
+}
+
+/**
+ * One shape's prefix status for a text.
+ * See {@link PrefixStatus} for the meaning of each status.
+ */
+export interface ShapePrefixStatus<F extends readonly AnyFamily[]> {
+	readonly kind: KindsOf<F>
+	readonly family: string
+	readonly status: PrefixStatus
 }
 
 /**
@@ -162,11 +180,7 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 	let bound: { instance: Instance; mask: number; structure: number; formats: KnownFormatsBinding | undefined } | null =
 		null
 
-	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
-	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
-	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
-
-	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F> {
+	function bind(): NonNullable<typeof bound> {
 		const instance = ready()
 
 		if (bound?.instance !== instance) {
@@ -194,13 +208,30 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 			bound = { instance, mask: mask >>> 0, structure, formats }
 		}
 
+		return bound
+	}
+
+	function prefixStatus(text: string): ReadonlyArray<ShapePrefixStatus<F>> {
+		const { instance, mask } = bind()
+
+		return trusted<ReadonlyArray<ShapePrefixStatus<F>>>(prefixStatuses(instance, text, mask))
+	}
+
+	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
+	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
+	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
+
+	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F> {
+		const binding = bind()
+		const { instance } = binding
+
 		// The recognitions are read out of linear memory before the structure call overwrites the records.
-		const recognitions = recognizeText(instance, text, bound.mask)
+		const recognitions = recognizeText(instance, text, binding.mask)
 
 		const result: RecognizeResult<F> = {
 			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognitions),
 			fields: trusted<FieldsOf<F>>(
-				bound.structure < 0 ? {} : structureFields(instance, text, bound.structure, bound.formats)
+				binding.structure < 0 ? {} : structureFields(instance, text, binding.structure, binding.formats)
 			),
 		}
 
@@ -211,8 +242,8 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 
 		const explain = trace === true ? [] : (trace.explain ?? [])
 
-		return { ...result, traces: traceText(instance, text, bound.mask, explain) }
+		return { ...result, traces: traceText(instance, text, binding.mask, explain) }
 	}
 
-	return { families, recognize }
+	return { families, recognize, prefixStatus }
 }

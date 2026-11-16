@@ -13,7 +13,7 @@
 
 import type { AnyFamily, Rejected, Unvalidated, Validated } from "#family"
 import { offsetMap } from "#offsets"
-import { ErrorCode, MAX_FAMILIES, RECORD_WORDS, Status } from "#runtime/abi"
+import { ErrorCode, MAX_FAMILIES, PREFIX_STATUSES, PREFIX_WORDS, RECORD_WORDS, Status } from "#runtime/abi"
 import { RecognizeArtifactError, RecognizeError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
 import type { Trace, TraceSpan } from "#trace"
@@ -190,6 +190,64 @@ export function recognizeText(instance: Instance, text: string, mask: number): L
 		}
 
 		return readRecognitions(instance, text, written, count)
+	} catch (error) {
+		throw trapped(error)
+	}
+}
+
+/**
+ * What a shape's grammar reports for a text read as the beginning of a whole-input match.
+ *
+ * `dead`: no suffix, the empty one included, makes the text a match.
+ * `viable`: the text isn't a match and some non-empty suffix makes it one.
+ *
+ * `accepted`: the text is a match and no non-empty suffix keeps it one.
+ * `accepted_and_extendable`: the text is a match and some non-empty suffix is also a match.
+ * `unknown`: the engine cannot establish the answer.
+ */
+export type PrefixStatus = (typeof PREFIX_STATUSES)[number]
+
+/**
+ * One shape's prefix status for a text.
+ */
+export interface LoosePrefix {
+	readonly kind: string
+	readonly family: string
+	readonly status: PrefixStatus
+}
+
+/**
+ * The prefix status of every shape of the families whose handle bit is set in `mask`, for `text`.
+ *
+ * The statuses are read in place from linear memory, in the engine's order of family handle and shape.
+ */
+export function prefixStatuses(instance: Instance, text: string, mask: number): LoosePrefix[] {
+	try {
+		const { exports, tables } = instance
+		const { pointer, written } = stageText(instance, text)
+		const count = exports.rcg_prefix(pointer, written, mask)
+
+		if (count < 0) {
+			const message = lastErrorMessage(instance)
+
+			if (exports.rcg_error_code() === ErrorCode.InputTooLong) throw new RangeError(message)
+
+			throw new RecognizeError(message)
+		}
+
+		const words = new Uint32Array(exports.memory.buffer, exports.rcg_result_ptr(), count * PREFIX_WORDS)
+		const out: LoosePrefix[] = []
+
+		for (let index = 0; index < words.length; index += PREFIX_WORDS) {
+			const table = tables[words[index]!]!
+			const status = PREFIX_STATUSES[words[index + 2]!]
+
+			if (!status) throw new RecognizeError(`the engine answered prefix status word ${words[index + 2]}`)
+
+			out.push({ kind: table.shapes[words[index + 1]!]!, family: table.id, status })
+		}
+
+		return out
 	} catch (error) {
 		throw trapped(error)
 	}

@@ -138,9 +138,9 @@ export type PostalKind = (typeof PostalKind)[keyof typeof PostalKind]
 export const PostalMetadata = {
 	family: {
 		build: {
-			denseBudget: "2 MiB",
+			denseBudgetBytes: 0,
 			reason:
-				"the default dense budget: a sparse build of the artifact is 5.7 times smaller, short of the ten times that would justify it, and 1.3 to 2.5 times slower in a benchmark taken under load",
+				"a budget of zero stores both automata sparse: the artifact is 326,696 bytes against 1,873,640 dense, and the browser and the Workers carry it; countriesAcceptingPostcode on the sparse artifact took 4.1 and 1.7 microseconds for 12345 and SW1A 1AA against 12.6 and 11.9 for the RegExp set it replaced, at a load average near 5",
 		},
 	},
 	shapes: {

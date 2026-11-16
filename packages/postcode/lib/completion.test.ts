@@ -7,9 +7,8 @@ import type { PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 
 import { canComplete } from "#completion"
-import { acceptPostcode, postcodeSyntax } from "#country-formats"
+import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PrefixAutomaton } from "#prefix/automaton"
 import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix/index"
 
 const COUNTRIES = Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
@@ -36,16 +35,16 @@ async function readExamples(): Promise<Map<string, string[]>> {
 	return examples
 }
 
-describe("PrefixAutomaton", () => {
-	test.each(COUNTRIES)("compiles %s's syntax and accepts the empty prefix", (country) => {
-		const automaton = new PrefixAutomaton(postcodeSyntax(country)!.pattern.source)
-
-		expect(automaton.canComplete("")).toBe(true)
+describe("canComplete over the postal family", () => {
+	test.each(COUNTRIES)("%s's syntax accepts the empty prefix", (country) => {
+		expect(syntaxOnly("", country)).toBe(true)
 	})
 
-	test("refuses a construct outside the supported subset", () => {
-		expect(() => new PrefixAutomaton("(?=a)b")).toThrow(/unsupported group/u)
-		expect(() => new PrefixAutomaton("\\p{L}")).toThrow(/unsupported escape/u)
+	test("folds the Kelvin sign and the long s as Unicode case folding does (issue 3088)", () => {
+		expect(syntaxOnly("KT1", "GB")).toBe(true)
+		expect(syntaxOnly("ſW1", "GB")).toBe(true)
+		expect(syntaxOnly("K1A", "CA")).toBe(true)
+		expect(canComplete("K1A 0B1", { countries: "CA" }).syntax).toEqual([{ country: "CA", complete: true }])
 	})
 })
 

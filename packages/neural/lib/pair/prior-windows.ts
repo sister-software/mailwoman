@@ -8,7 +8,7 @@
  *   bias writes over the windows this module builds.
  */
 
-import { postcodeSyntax } from "@mailwoman/postcode/country-formats"
+import { hasPostcodeForm, statesPostcodeSyntax } from "@mailwoman/postcode/country-formats"
 
 import type { WordGroup } from "#fst-prior"
 import type { TokenLike } from "#query-shape-prior"
@@ -192,9 +192,14 @@ export const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "d
  * The shape is the country's libaddressinput postcode format, so every country with a
  * pair index strips a trailing postcode the same way the postcode package admits one.
  */
-export function segmentParentPostcodeShape(country: string | null): RegExp | null {
-	return country ? (postcodeSyntax(country)?.pattern ?? null) : null
+export function segmentParentPostcodeShape(country: string | null): PostcodeFormTest | null {
+	return country && statesPostcodeSyntax(country) ? (text) => hasPostcodeForm(text, country) : null
 }
+
+/**
+ * Whether a whole text has the form of a postcode of one country.
+ */
+export type PostcodeFormTest = (text: string) => boolean
 
 /**
  * Drop a trailing postcode-shaped run from a segment's fold tokens before it becomes a parent-candidate key.
@@ -204,13 +209,13 @@ export function segmentParentPostcodeShape(country: string | null): RegExp | nul
  * (longest-first so a two-token GB postcode strips whole), never the entire segment.
  * It strips a run only when `shape` is non-null.
  */
-export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
+export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: PostcodeFormTest | null): number {
 	if (!shape || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 
 	for (let take = maxTake; take >= 1; take--) {
-		if (shape.test(tokens.slice(tokens.length - take).join(""))) return take
+		if (shape(tokens.slice(tokens.length - take).join(""))) return take
 	}
 
 	return 0
@@ -224,13 +229,13 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * Only the probe key changes.
  * The segment and every emitted span stay unchanged.
  */
-export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | null): number {
+export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: PostcodeFormTest | null): number {
 	if (!shape || tokens.length < 2) return 0
 
 	const maxTake = Math.min(tokens.length - 1, MAX_TRAILING_POSTCODE_WORDS)
 
 	for (let take = maxTake; take >= 1; take--) {
-		if (shape.test(tokens.slice(0, take).join(""))) return take
+		if (shape(tokens.slice(0, take).join(""))) return take
 	}
 
 	return 0
@@ -249,8 +254,8 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
 export function buildSegmentWindows(
 	nonEmptyGroups: readonly WordGroup[],
 	groupSegments: readonly number[],
-	parentPostcodeShape: RegExp | null,
-	leadingPostcodeShape: RegExp | null
+	parentPostcodeShape: PostcodeFormTest | null,
+	leadingPostcodeShape: PostcodeFormTest | null
 ): CandidateWindow[] {
 	const windows: CandidateWindow[] = []
 

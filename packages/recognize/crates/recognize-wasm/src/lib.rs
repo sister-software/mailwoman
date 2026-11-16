@@ -40,6 +40,16 @@
 //! `rcg_shapes` writes a family's shape table, the shape IDs in byte order joined by newlines, at `rcg_json_ptr`. The
 //! caller reads it once when it loads the family and keeps the strings.
 //!
+//! `rcg_prefix` answers prefix continuation for a text over the families a mask names. It writes one record of
+//! [`PREFIX_WORDS`] words for each shape at `rcg_result_ptr`, in place of the recognition records, and returns the
+//! number of records:
+//!
+//! ```text
+//! word 0  the family's handle
+//! word 1  the shape's position in the family's shape table (see `rcg_shapes`)
+//! word 2  the status: 0 dead, 1 viable, 2 accepted, 3 accepted and extendable, 4 unknown
+//! ```
+//!
 //! `rcg_structure` computes the `structure` family's fields for a text, in one call, and writes them as `u32` words at
 //! `rcg_result_ptr` in place of the recognition records. It returns the number of words. The layout, with every offset a
 //! UTF-8 byte offset the TypeScript side converts:
@@ -67,11 +77,14 @@ use std::cell::RefCell;
 use recognize_core::charset::SCRIPTS;
 use recognize_core::known_formats::KnownFormats;
 use recognize_core::structure::Structure;
-use recognize_core::{ArtifactError, Engine, Expected, SearchError, ValidationResult};
+use recognize_core::{ArtifactError, Engine, Expected, PrefixStatus, SearchError, ValidationResult};
 
 /// The ABI version the TypeScript loader checks. Bump it on any change to an export's signature or to the result
-/// records' layout. Version 4 added `rcg_structure`. Version 5 gave it a known-formats family argument.
-pub const ABI_VERSION: u32 = 5;
+/// records' layout. Version 4 added `rcg_structure`. Version 5 gave it a known-formats family argument. Version 6 added `rcg_prefix`.
+pub const ABI_VERSION: u32 = 6;
+
+/// The words of one prefix record.
+pub const PREFIX_WORDS: usize = 3;
 
 /// The words of one known-format hit in a structure result.
 pub const KNOWN_FORMAT_WORDS: usize = 4;
@@ -418,6 +431,90 @@ pub unsafe extern "C" fn rcg_structure(ptr: *const u8, len: usize, family: u32, 
 	})
 }
 
+/// The status word of a prefix record.
+fn prefix_word(status: PrefixStatus) -> u32 {
+	match status {
+		PrefixStatus::Dead => 0,
+		PrefixStatus::Viable => 1,
+		PrefixStatus::Accepted => 2,
+		PrefixStatus::AcceptedAndExtendable => 3,
+		PrefixStatus::Unknown => 4,
+	}
+}
+
+/// Answers prefix continuation for the UTF-8 text at `ptr`, for every shape of the families whose handle bit is set in
+/// `mask`, and returns the number of records written at `rcg_result_ptr`, or -1. The layout is in the module
+/// documentation. The call overwrites the records `rcg_recognize` wrote.
+///
+/// # Safety
+/// `ptr` must address `len` readable bytes.
+#[no_mangle]
+pub unsafe extern "C" fn rcg_prefix(ptr: *const u8, len: usize, mask: u32) -> i32 {
+	let bytes = std::slice::from_raw_parts(ptr, len);
+
+	STATE.with(|state| {
+		let mut state = state.borrow_mut();
+		let state = &mut *state;
+		let loaded = state.engine.family_ids().len();
+
+		if loaded < MAX_FAMILIES && mask >> loaded != 0 {
+			return fail(state, code::ARGUMENT, "the mask names a family that is not loaded");
+		}
+
+		let Ok(text) = std::str::from_utf8(bytes) else {
+			return fail(state, code::NOT_UTF8, "the text is not UTF-8");
+		};
+
+		let statuses = match state.engine.prefix_status(text) {
+			Ok(statuses) => statuses,
+			Err(error) => return fail(state, search_code(&error), error.to_string()),
+		};
+
+		let ids = state.engine.family_ids();
+		let mut words = Vec::with_capacity(statuses.len() * PREFIX_WORDS);
+		let mut last = (usize::MAX, 0usize);
+		let mut missing = false;
+
+		for entry in &statuses {
+			let Some(family) = ids.iter().position(|id| *id == entry.family) else {
+				continue;
+			};
+
+			if mask & (1 << family) == 0 {
+				continue;
+			}
+
+			// The engine lists a family's shapes in the byte order of the shape table, so the search resumes where the
+			// previous shape of the family was found.
+			let table = state.engine.shapes(family);
+			let from = if last.0 == family { last.1 } else { 0 };
+
+			let Some(shape) = table[from..]
+				.iter()
+				.position(|id| id.as_str() == entry.shape)
+				.map(|offset| from + offset)
+				.or_else(|| table.iter().position(|id| id.as_str() == entry.shape))
+			else {
+				missing = true;
+
+				break;
+			};
+
+			last = (family, shape + 1);
+
+			words.extend_from_slice(&[family as u32, shape as u32, prefix_word(entry.status)]);
+		}
+
+		if missing {
+			return fail(state, code::ARGUMENT, "the engine reported a shape its table lacks");
+		}
+
+		state.records = words;
+
+		i32::try_from(state.records.len() / PREFIX_WORDS).unwrap_or(-1)
+	})
+}
+
 /// Traces the UTF-8 text at `ptr` over the families whose handle bit is set in `mask`, and returns the byte length of
 /// the JSON text it wrote at `rcg_json_ptr`, or -1.
 ///
@@ -627,6 +724,58 @@ mod tests {
 			unsafe { rcg_trace(text.as_ptr(), text.len(), 0b100, explain.as_ptr(), 0) },
 			-1
 		);
+		assert_eq!(rcg_error_code(), code::ARGUMENT);
+	}
+
+	#[test]
+	fn a_prefix_call_writes_one_record_for_each_shape_of_the_masked_families() {
+		assert_eq!(load("primitives", hash("primitives")), 0);
+		assert_eq!(load("coordinates", hash("coordinates")), 1);
+
+		let coordinates = shape_table(1);
+		let position = coordinates
+			.iter()
+			.position(|shape| shape == "coordinate.decimal_pair")
+			.unwrap() as u32;
+
+		let statuses = |text: &str, mask: u32| -> Vec<[u32; 3]> {
+			let count = unsafe { rcg_prefix(text.as_ptr(), text.len(), mask) };
+
+			assert!(count >= 0, "{}", message());
+
+			STATE.with(|state| {
+				let state = state.borrow();
+
+				assert_eq!(state.records.len(), count as usize * PREFIX_WORDS);
+
+				state
+					.records
+					.chunks(PREFIX_WORDS)
+					.map(|word| [word[0], word[1], word[2]])
+					.collect()
+			})
+		};
+
+		let whole = statuses("40.5, -74", 0b10);
+
+		assert_eq!(whole.len(), coordinates.len());
+		assert!(whole.iter().all(|record| record[0] == 1));
+		assert!(matches!(
+			whole.iter().find(|record| record[1] == position).unwrap()[2],
+			2 | 3
+		));
+
+		let partial = statuses("40.5,", 0b10);
+
+		assert_eq!(partial.iter().find(|record| record[1] == position).unwrap()[2], 1);
+
+		let dead = statuses("zzz", 0b10);
+
+		assert_eq!(dead.iter().find(|record| record[1] == position).unwrap()[2], 0);
+
+		// A mask that leaves a family out leaves its shapes out, and a mask naming no loaded family is refused.
+		assert!(statuses("40.5,", 0b01).iter().all(|record| record[0] == 0));
+		assert_eq!(unsafe { rcg_prefix("1".as_ptr(), 1, 0b100) }, -1);
 		assert_eq!(rcg_error_code(), code::ARGUMENT);
 	}
 

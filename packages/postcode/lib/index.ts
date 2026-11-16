@@ -15,7 +15,7 @@ export {
 	type PostcodeSyntaxCompletion,
 } from "#completion"
 
-export { postcodeSyntax, acceptPostcode, type PostcodeSyntax } from "#country-formats"
+export { acceptPostcode, hasPostcodeForm } from "#country-formats"
 export { normalizePostcodeDisplay } from "#display-form"
 export { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#postcode-format"
 

@@ -17,13 +17,14 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { codeUnitChannel } from "@mailwoman/neural/code-unit-features"
-import { postcodeSyntax, postcodeSyntaxCountries } from "@mailwoman/postcode/country-formats"
+import { postcodeSyntaxCountries } from "@mailwoman/postcode/country-formats"
+import { postcodeSyntaxText } from "@mailwoman/postcode/country-formats/source"
 
 const countries = Object.fromEntries(
 	postcodeSyntaxCountries().map((code) => {
-		const syntax = postcodeSyntax(code)!
+		const syntax = postcodeSyntaxText(code)!
 
-		return [code, { pattern: syntax.pattern.source, prefix: syntax.prefix }]
+		return [code, { pattern: syntax.pattern, prefix: syntax.prefix }]
 	})
 )
 

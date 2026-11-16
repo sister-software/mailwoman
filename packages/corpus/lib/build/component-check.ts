@@ -10,7 +10,7 @@
  *   per-country data or the row itself, so the same rules hold in every country.
  */
 
-import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
+import { acceptPostcode, statesPostcodeSyntax } from "@mailwoman/postcode/country-formats"
 
 import type { UnitSplitter } from "#adapters/street/unit"
 import { writtenSubdivisionCode } from "#adapters/wof/admin/json/region-codes"
@@ -145,7 +145,7 @@ export function componentFindings(
 	const findings: ComponentFinding[] = []
 	const { postcode, street, locality, region } = components
 
-	if (postcode && postcodeSyntax(country) && acceptPostcode(postcode, country) == null) {
+	if (postcode && statesPostcodeSyntax(country) && acceptPostcode(postcode, country) == null) {
 		findings.push({ rule: ComponentRule.PostcodeFormat, values: [postcode] })
 	}
 
