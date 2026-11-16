@@ -19,7 +19,8 @@
  *
  *   Every consumer that holds a model passes the model's generation.
  *
- *   A shape records the generation that computed it, so a consumer that receives a shape follows it.
+ *   A `postal` shape records its generation, so a consumer that receives a shape follows it.
+ *   A `legacy` shape holds no such field, and its bytes equal the original classifier's.
  */
 
 import type { CountrySet } from "@mailwoman/codex/country/sets"
@@ -65,7 +66,9 @@ export type QueryShape = Omit<StructureFields, "regionAbbreviations"> & {
 	readonly regionAbbreviations: ReadonlyArray<QueryShapeRegionAbbreviation>
 	readonly knownFormats: ReadonlyArray<QueryShapeFormatHit>
 	/**
-	 * The generation that computed the shape, `legacy` when a hand-built shape omits it.
+	 * The generation that computed the shape.
+	 *
+	 * The `legacy` generation omits the field, and a reader treats an absent one as `legacy`.
 	 */
 	readonly generation?: QueryShapeGeneration
 }
@@ -105,7 +108,7 @@ export function computeQueryShape(
 
 	legacyRecognizer ??= createRecognizer([structure, postcodeLegacy])
 
-	const fields: StructureFields & PostcodeLegacyFields = legacyRecognizer.recognize(text).fields
-
-	return { ...fields, generation }
+	// The legacy shape stays as the engine returned it, with no `generation` field,
+	// so it equals the original byte for byte.
+	return legacyRecognizer.recognize(text).fields as StructureFields & PostcodeLegacyFields
 }

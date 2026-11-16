@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   LEGACY-QUERY-SHAPE: delete this table with the `postcode_legacy` family
+ *   when the first model that declares `requires.query_shape: "postal"` ships.
+ *
  *   The structural postcode formats that the pipeline reports as `knownFormats`,
  *   and the PO box leaders it recognizes, as data.
  *

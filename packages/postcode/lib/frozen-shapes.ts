@@ -4,6 +4,8 @@
 /**
  *   The frozen legacy table of postcode shape patterns.
  *
+ *   LEGACY-QUERY-SHAPE: delete it with the legacy-formats family.
+ *
  *   The `postal` family finds postcode spans now, for serving and for the training
  *   encoder alike (`./postal-spans.ts`).
  *   This table survives for the two readers whose results the published model's release verdict covers.

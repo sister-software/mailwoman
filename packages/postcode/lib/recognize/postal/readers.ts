@@ -351,8 +351,11 @@ export function postalSpans(recognitions: ReadonlyArray<PostalRecognitionLike>, 
 			(a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0)
 	)
 
-	// One candidate for each range, under the first shape that matches it, with the countries of every shape that does.
+	// One candidate for each range, under the first shape that matches it,
+	// with the countries of every shape that does.
+	// The countries of a range that several shapes match are collected in a set and sorted once.
 	const distinct: PostalSpan[] = []
+	const merged = new Map<number, Set<string>>()
 
 	for (const candidate of candidates) {
 		const index = distinct.findIndex((earlier) => earlier.start === candidate.start && earlier.end === candidate.end)
@@ -360,11 +363,18 @@ export function postalSpans(recognitions: ReadonlyArray<PostalRecognitionLike>, 
 		if (index === -1) {
 			distinct.push(candidate)
 		} else {
-			distinct[index] = {
-				...distinct[index]!,
-				countries: [...new Set([...distinct[index]!.countries, ...candidate.countries])].toSorted(),
+			const countries = merged.get(index) ?? new Set(distinct[index]!.countries)
+
+			for (const country of candidate.countries) {
+				countries.add(country)
 			}
+
+			merged.set(index, countries)
 		}
+	}
+
+	for (const [index, countries] of merged) {
+		distinct[index] = { ...distinct[index]!, countries: [...countries].toSorted() }
 	}
 
 	return distinct.filter((candidate) => !distinct.some((container) => isConnectorFragment(candidate, container, text)))

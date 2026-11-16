@@ -19,7 +19,7 @@ const legacy = (text: string) => computeQueryShape(text, "legacy")
 describe("the postcode hits of the postal generation", () => {
 	it("records its generation on the shape", () => {
 		expect(postal("x").generation).toBe("postal")
-		expect(legacy("x").generation).toBe("legacy")
+		expect(legacy("x").generation).toBeUndefined()
 	})
 
 	it("reports a postcode hit with the accepting countries, the form and the locale of the most populous one", () => {
@@ -39,6 +39,22 @@ describe("the postcode hits of the postal generation", () => {
 
 	it("reports no hit for a word that a letter-only form accepts", () => {
 		expect(postal("New York").knownFormats).toEqual([])
+	})
+
+	it("reports no hit for ordinary text that a country's form accepts", () => {
+		// `Lot 19` and `Qld 4069` match Maltese and Irish forms, and a run of four digits is a house number or a year.
+		expect(postal("LOT 19").knownFormats).toEqual([])
+		expect(postal("Brookfield QLD 4069").knownFormats).toEqual([])
+		expect(postal("PETER J. DONALDSON (1996) LTD.").knownFormats).toEqual([])
+	})
+
+	it("keeps the digit-led and the mixed forms and a run of five digits", () => {
+		for (const text of ["1012 AB", "SW1A 1AA", "K1A 0B1", "12345"]) {
+			expect(
+				postal(text).knownFormats.some(({ span }) => span.body === text),
+				text
+			).toBe(true)
+		}
 	})
 })
 
