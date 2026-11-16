@@ -39,6 +39,11 @@
 #    the 11.52 M. A floor per source at 90% of its expected draws (`min_fraction_of_expected`)
 #    stops the run if a rebuild drops one.
 # 5. `train.output_dir` and `train.trackio_run_name` name the run.
+# 6. `data.anchor_paint_mode` is `postal`: the encoder's postcode finders read the `postal` family of
+#    `@mailwoman/postcode` through `recognize-core` (#3064, pull request 3101), the artifact serving reads. 10.8.0
+#    trained under `shaped`, which the encoder now refuses. On 72,209 rows of this config, 672 gain an anchored span
+#    and none loses or moves one (`docs/engineering/reference/training-row-encoder.mdx`). The model card of a model
+#    trained on this config declares `requires.anchor.span_mode: "postal"`, and leaves `requires.query_shape` unset.
 #
 # The corpus is /data/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay. Its
 # MANIFEST.json has sha256 26eb4ec63dfd9d9032c5ae58464fdee6c2c6152bd7177634ec74f85430c7e12f. It is the overlay
@@ -678,7 +683,7 @@ data:
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
-  anchor_paint_mode: shaped
+  anchor_paint_mode: postal
   anchor_value_mode: posterior_latlon
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
