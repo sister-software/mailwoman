@@ -134,3 +134,33 @@ From the query shape it drops the two fields the swap removes, `whitespacePatter
 | total                                                                                 | 88,184          | 88,184    | 0                  |
 
 No input differs. The comparison reads the pipeline's result and not the CLI's text output, so the CLI's JSON projection is covered only through the result it prints.
+
+## Runtimes (observed)
+
+`@mailwoman/recognize` instantiates its WebAssembly engine on the first call. Each place the pipeline runs resolves the engine as follows.
+
+| Runtime                                                                                                | How the engine loads                                                                                    | Held by                                                                                                        |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Node: the CLI, the corpus recipes, the evaluation harness                                              | the default entry compiles its embedded bytes synchronously                                             | the fast suite (`differential.test.ts`, `query-shape.test.ts`) and both parse comparisons                      |
+| Chromium page, main thread (`mailwoman/browser-runtime/classify.ts`, `usePOISearch.ts`, the earth app) | the default entry, as in Node                                                                           | `packages/postcode/lib/recognize/query-shape.browser.test.ts` (new) and the existing recognize first-call test |
+| Workers (`@mailwoman/engine-worker`)                                                                   | the `workerd` export condition resolves to `out/workerd.js`, which imports `recognize.wasm` as a module | `packages/postcode/lib/recognize/query-shape.workers.test.ts` (new) and the existing recognize first-call test |
+
+`yarn workspace @mailwoman/postcode test:workers` and `test:browser` pass, and so do the two recognize configurations. The new steps are in `.github/workflows/test.yml`, and `vitest.config.ts` excludes the two new file kinds from the root sweep.
+
+`wrangler deploy --dry-run` bundles the engine Worker with the new graph. Its upload is 16,786.36 KiB (gzip 4,231.46 KiB) at `07a84aed1c` and 17,515.51 KiB (gzip 4,418.42 KiB) on this branch, and `--outdir` lists `recognize.wasm` (479,693 bytes) as its own module.
+The gazetteer Worker (981.80 KiB) and the API Worker (71.56 KiB) are the same size before and after, because neither reaches the pipeline.
+
+## Bundle sizes (observed)
+
+The earth app, `vite build`, summed over `dist`:
+
+| Part                        | `07a84aed1c`                 | This branch                  | Change                       |
+| --------------------------- | ---------------------------- | ---------------------------- | ---------------------------- |
+| JavaScript, 46 and 47 files | 6,232,224 B (gzip 1,715,790) | 7,456,185 B (gzip 1,926,020) | +1,223,961 B (gzip +210,230) |
+| `.wasm`, 5 files            | 16,285,977 B                 | 16,285,977 B                 | 0                            |
+
+The docs site, `yarn workspace @mailwoman/docs build`, summed over `docs/build`: JavaScript 8,173,562 bytes (gzip 2,369,604) at `07a84aed1c` and 8,173,559 bytes (gzip 2,369,601) on this branch, a change of 3 bytes. The `.wasm`, `.css`, `.mjs` and `.html` totals are equal or within 150 bytes of gzip.
+No JavaScript file under `docs/build/assets` holds the engine's `rcg_structure` export, so the site's build doesn't bundle the recognizer.
+That's inferred to mean the live demo loads the pipeline at run time from the runtime assets and not from this build. The alias list in `docs/plugins/runtime-assets/workspace/aliases.ts` lost its `query-shape` entry, and `recognize` needs none, because it resolves through its own `exports` map.
+
+The default entry of `recognize` embeds the engine binary and the artifacts as hexadecimal text, so the added JavaScript is the engine (479,693 bytes) and the `structure` and `postcode_legacy` artifacts at twice their size. The `.wasm` assets don't change. That's inferred from the sizes. A later change can serve the binary as an asset in a browser.

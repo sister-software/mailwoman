@@ -21,7 +21,7 @@ it("computes the structural fields and the known formats on the first call", () 
 
 	expect(shape.characterClass).toBe("alphanumeric")
 	expect(shape.segments.map(({ body }) => body)).toEqual(["350 5th Ave", "New York", "NY 10118"])
-	expect(shape.regionAbbreviations).toEqual([{ start: 22, span: "NY" }])
+	expect(shape.regionAbbreviations).toEqual([{ start: 23, span: "NY" }])
 
 	expect(shape.knownFormats.map(({ format, confidence }) => [format, confidence])).toEqual([
 		["us_zip", 0.6],
