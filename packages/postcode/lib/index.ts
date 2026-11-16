@@ -26,7 +26,7 @@ export {
 	wholePostcodeShape,
 	type PostcodeShape,
 	type PostcodeShapeKind,
-} from "#shapes"
+} from "#frozen-shapes"
 
 export { statesSubregionPrefixes, subregionsForPostcode, type PostcodeSubregion } from "#subregions"
 

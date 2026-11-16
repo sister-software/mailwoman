@@ -1,6 +1,6 @@
 {
 	"version": "postcode-shapes-v2",
-	"note": "Postcode SHAPE patterns for detecting postcode-like spans in free text, ordered most-specific to least. Priority IS the array index: a lower index wins an overlap. This is a SHAPE test, not gazetteer membership — see postcode-systems.ts for the per-system membership question. Alphanumeric patterns require UPPERCASE letters, which keeps them off lowercase prose. The regex bodies are written in the subset both JavaScript RegExp and Python re accept, because two runtimes read this file; a row that needs different source text in the two dialects needs a second field and a stated reason, not a loosened comparison.",
+	"note": "FROZEN LEGACY TABLE: read only by span_mode 'shaped' and postcode repair in @mailwoman/neural, and deleted with them when the first model that declares span_mode 'postal' ships; the postal family finds postcode spans for everything else. Postcode SHAPE patterns for detecting postcode-like spans in free text, ordered most-specific to least. Priority IS the array index: a lower index wins an overlap. This is a SHAPE test, not gazetteer membership — see postcode-systems.ts for the per-system membership question. Alphanumeric patterns require UPPERCASE letters, which keeps them off lowercase prose. The regex bodies are written in the subset both JavaScript RegExp and Python re accept, because two runtimes read this file; a row that needs different source text in the two dialects needs a second field and a stated reason, not a loosened comparison.",
 	"shapes": [
 		{
 			"label": "JP-marked",

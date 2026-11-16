@@ -16,7 +16,7 @@
 //!
 //! The segmentation reproduces the Python pattern
 //! `(?<![A-Za-z0-9])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-(?=\d)[A-Za-z0-9]+)*(?![A-Za-z0-9])`, where `\d` is any
-//! decimal digit. The acceptance count needs the postcode-syntax patterns, which the `finders` feature compiles.
+//! decimal digit. The acceptance count needs the `postal` family's whole-input automaton, which the `finders` feature loads.
 
 use crate::channel::{Channel, Piece};
 use crate::python_text::is_decimal;

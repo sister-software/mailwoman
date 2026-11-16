@@ -92,7 +92,7 @@ async function resolveAnchorSource(
 ): Promise<{ path: PathBuilderLike; binary: boolean } | null> {
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
-	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
+	if (spanMode !== "shaped" && spanMode !== "postal" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
 		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	}
 

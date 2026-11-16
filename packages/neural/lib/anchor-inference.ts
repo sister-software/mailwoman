@@ -11,6 +11,7 @@ import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { PostcodeBinaryGroup, PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
@@ -255,8 +256,26 @@ export class BinaryAnchorLookup implements AnchorLookup {
  * `alnum-run` scans `[A-Za-z0-9]+` runs and so can never key a space-joined postcode
  * (`SW1A 2AA`), while `shaped` takes the postcode-shaped spans from {@linkcode collectMatches}
  * and keys them `span.replace(" ", "").toUpperCase()` like the train painter.
+ *
+ * `postal` takes the spans of the `postal` family through `findPostcodeSpans`.
+ * The training encoder reads the same artifact, and the keys come from {@linkcode anchorKey}.
+ *
+ * The family matches either case, so the text isn't upper-cased first.
+ *
+ * `shaped` stays for the models published with it, and the shape table behind it is frozen.
+ * It is deleted when the first model that declares `postal` ships.
  */
-export type AnchorSpanMode = "alnum-run" | "shaped"
+export type AnchorSpanMode = "alnum-run" | "shaped" | "postal"
+
+/**
+ * The key the anchor table is looked up under for a postcode span: the span's
+ * text with each space removed, upper-cased.
+ *
+ * The training encoder computes the same key in `mtf-channels/src/anchor.rs`.
+ */
+export function anchorKey(spanText: string): string {
+	return spanText.replaceAll(" ", "").toUpperCase()
+}
 
 /**
  * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index
@@ -330,7 +349,7 @@ export function shapedKeyerObligationViolation(
 	spanMode: AnchorSpanMode | null,
 	anchorSourcePath: PathBuilderLike | null
 ): string | null {
-	if (!lookup || spanMode === "shaped") return null
+	if (!lookup || spanMode === "shaped" || spanMode === "postal") return null
 	const shapedOnly = countShapedOnlyKeys(lookup)
 
 	if (!shapedOnly) return null
@@ -405,11 +424,11 @@ export function anchoredPostcodeSpans(
 ): AnchoredPostcodeSpan[] {
 	const spans: AnchoredPostcodeSpan[] = []
 
-	if (spanMode === "shaped") {
-		for (const match of collectMatches(asciiUpper(text))) {
+	if (spanMode === "shaped" || spanMode === "postal") {
+		for (const match of spanMode === "postal" ? findPostcodeSpans(text) : collectMatches(asciiUpper(text))) {
 			// The train painter's normalization verbatim — uppercased with literal spaces removed.
 			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
-			let key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
+			let key = anchorKey(text.slice(match.start, match.end))
 			let entry = lookup.get(key)
 
 			// An unknown GB unit still anchors from its outward district, painting the whole unit span
@@ -419,12 +438,15 @@ export function anchoredPostcodeSpans(
 				entry = lookup.get(key)
 			}
 
-			if (entry) {
+			// The `postal` candidates overlap and arrive in the order they compete,
+			// and the first one the lookup resolves keeps its range.
+			// The `shaped` matches are disjoint, so the test never fires for them.
+			if (entry && !spans.some((kept) => match.start < kept.end && kept.start < match.end)) {
 				spans.push({ start: match.start, end: match.end, key, entry })
 			}
 		}
 
-		return spans
+		return spans.toSorted((a, b) => a.start - b.start)
 	}
 
 	const tokenRe = /[A-Za-z0-9]+/g

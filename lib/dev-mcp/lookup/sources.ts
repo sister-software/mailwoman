@@ -812,8 +812,11 @@ export function lookupPostcodeAnchor(
 ): LookupRow[] {
 	return queries.map((query) => {
 		const key = query.replaceAll(/\s+/g, "").toUpperCase()
+
 		// An alphanumeric run stops at any other character, so only `shaped` can key such a query.
-		const reachableByScan = options.spanMode === "shaped" || !/[^\p{L}\p{N}]/u.test(query.trim())
+		const reachableByScan =
+			options.spanMode === "shaped" || options.spanMode === "postal" || !/[^\p{L}\p{N}]/u.test(query.trim())
+
 		const rows = resolver.lookup(key)
 
 		if (!rows.length) {

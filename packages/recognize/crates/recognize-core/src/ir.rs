@@ -121,6 +121,11 @@ pub enum Boundary {
 	/// always reported, and a character of another class, such as white space, other punctuation or a CJK character,
 	/// bounds a match.
 	Token,
+	/// Neither neighbor may be an ASCII letter or an ASCII digit. A connector, white space, other punctuation or a
+	/// character of another script bounds a match, so a code that follows a hyphen or an apostrophe stands
+	/// (`Lahore-54000`). The start and the end of the text bound a match, and a match of the whole text is always
+	/// reported.
+	Alnum,
 }
 
 impl Boundary {
@@ -128,6 +133,7 @@ impl Boundary {
 	pub fn as_str(self) -> &'static str {
 		match self {
 			Boundary::Token => "token",
+			Boundary::Alnum => "alnum",
 		}
 	}
 
@@ -145,6 +151,13 @@ impl Boundary {
 
 				!text[..start].chars().next_back().is_some_and(continues)
 					&& !text[end..].chars().next().is_some_and(continues)
+			}
+			Boundary::Alnum => {
+				!text[..start]
+					.chars()
+					.next_back()
+					.is_some_and(|c| c.is_ascii_alphanumeric())
+					&& !text[end..].chars().next().is_some_and(|c| c.is_ascii_alphanumeric())
 			}
 		}
 	}

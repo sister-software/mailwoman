@@ -108,7 +108,10 @@ describe("an embedded candidate", () => {
 
 	it("drops a candidate inside a longer run of letters and digits, and keeps one beside punctuation", () => {
 		expect(candidatesOf("123456").filter(({ text }) => text.length === 5)).toEqual([])
-		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345")).toBe(false)
+		// A connector may touch a candidate, so the five digits before the hyphen stand beside the longer ZIP+4.
+		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345")).toBe(true)
+		expect(candidatesOf("Lahore-54000").some(({ text }) => text === "54000")).toBe(true)
+		expect(candidatesOf("x12345").filter(({ text }) => text === "12345")).toEqual([])
 		expect(candidatesOf("12345-6789").some(({ text }) => text === "12345-6789")).toBe(true)
 		expect(candidatesOf("Main St, 12345.").some(({ text }) => text === "12345")).toBe(true)
 		expect(candidatesOf("〒100-0001東京都").some(({ text }) => text === "〒100-0001")).toBe(true)

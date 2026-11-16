@@ -13,7 +13,7 @@ use mtf_core::Processor;
 
 use crate::anchor::AnchorLookup;
 use crate::encoder::{AnchorMode, Lexicons};
-use crate::finders::{PostcodeShapes, PostcodeSyntax, RegexFinders};
+use crate::finders::PostalFinders;
 use crate::gazetteer::Lexicon;
 use crate::label_schema::LabelSchema;
 use crate::Error;
@@ -23,8 +23,10 @@ pub struct ResourcePaths<'a> {
 	pub label_schema: &'a Path,
 	/// The label set the labels are encoded against.
 	pub label_set: &'a str,
-	pub postcode_shapes: &'a Path,
-	pub postcode_syntax: &'a Path,
+	/// `packages/postcode/data/artifacts/postal.rca1`.
+	pub postal_artifact: &'a Path,
+	/// `packages/postcode/data/definitions/postal.definition.json`, which states each shape's countries and form.
+	pub postal_definition: &'a Path,
 	pub anchor_lookup: Option<&'a Path>,
 	pub gazetteer: Option<&'a Path>,
 	pub country: Option<&'a Path>,
@@ -36,7 +38,7 @@ pub struct ResourcePaths<'a> {
 pub struct EncoderResources {
 	pub schema: LabelSchema,
 	pub lexicons: Lexicons,
-	pub finders: RegexFinders,
+	pub finders: PostalFinders,
 }
 
 fn read(path: &Path) -> Result<String, Error> {
@@ -71,10 +73,14 @@ impl EncoderResources {
 			.anchor_lookup
 			.map(|p| AnchorLookup::from_json(&read(p)?, &named(p)))
 			.transpose()?;
-		let finders = RegexFinders {
-			shapes: PostcodeShapes::from_record(&read(paths.postcode_shapes)?, &named(paths.postcode_shapes))?,
-			syntax: PostcodeSyntax::from_json(&read(paths.postcode_syntax)?, &named(paths.postcode_syntax))?,
-		};
+		let artifact = std::fs::read(paths.postal_artifact)
+			.map_err(|e| Error::Input(format!("cannot read {}: {e}", paths.postal_artifact.display())))?;
+		let finders = PostalFinders::load(
+			&artifact,
+			&named(paths.postal_artifact),
+			&read(paths.postal_definition)?,
+			&named(paths.postal_definition),
+		)?;
 		let lexicons = Lexicons {
 			labels,
 			locales: schema.locale_countries.clone(),
@@ -93,13 +99,21 @@ impl EncoderResources {
 }
 
 impl AnchorMode {
-	/// `gold`, the mode an unset value reads as, or `shaped`.
+	/// `gold`, the mode an unset value reads as, or `postal`.
+	///
+	/// `shaped` read the retired shape table, which no encoder reads now: a config that sets it names the mode
+	/// `postal` instead, and the model that trains on it declares `requires.anchor.span_mode: "postal"`.
 	pub fn parse(mode: Option<&str>) -> Result<Self, Error> {
 		match mode {
 			None | Some("gold") => Ok(Self::Gold),
-			Some("shaped") => Ok(Self::Shaped),
+			Some("postal") => Ok(Self::Postal),
+			Some("shaped") => Err(Error::Input(
+				"anchor paint mode \"shaped\" is retired: the encoder paints the postcode spans of the postal family, \
+				 which the mode \"postal\" selects"
+					.into(),
+			)),
 			Some(other) => Err(Error::Input(format!(
-				"anchor paint mode {other:?} is not \"gold\" or \"shaped\""
+				"anchor paint mode {other:?} is not \"gold\" or \"postal\""
 			))),
 		}
 	}

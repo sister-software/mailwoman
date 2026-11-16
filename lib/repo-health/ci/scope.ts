@@ -85,6 +85,9 @@ const RUST_CRATE_INPUTS = [
 	"packages/postcode/lib/legacy-formats/",
 	"packages/postcode/data/",
 	"packages/postcode/tools/",
+	// The `mtf-channels` tests replay these fixtures against the encoder's finders.
+	"test/fixtures/postcode-agreement.json",
+	"test/fixtures/code-unit-parity.json",
 	"packages/mtf/rustfmt.toml",
 	"Cargo.toml",
 	"Cargo.lock",

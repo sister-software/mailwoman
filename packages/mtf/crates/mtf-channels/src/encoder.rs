@@ -20,8 +20,9 @@ use crate::labels::{char_labels_from_tokens, whitespace_spans, LabelTable, Spans
 pub enum AnchorMode {
 	/// The row's gold postcode labels: its `postcode` spans, or its `B-`/`I-postcode` tokens.
 	Gold,
-	/// The postcode-shaped ranges a shape finder detects in the raw text, as inference paints them.
-	Shaped,
+	/// The postcode spans the `postal` family finds in the raw text, as inference paints them when a model's card
+	/// declares `span_mode: "postal"`.
+	Postal,
 }
 
 /// The settings every row of a run is encoded under.
@@ -45,10 +46,10 @@ pub struct Lexicons {
 	pub locality_surface: Option<Lexicon>,
 }
 
-/// The span finders a configuration may need, which the `finders` feature implements with regexes.
+/// The postcode finders a configuration may need, which the `finders` feature implements over the `postal` family.
 pub trait Finders: Sync {
-	/// The postcode-shaped character ranges in `raw`, in start order.
-	fn shaped_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error>;
+	/// The postcode character ranges in `raw`, in start order.
+	fn postcode_spans(&self, raw: &str) -> Result<Vec<(usize, usize)>, Error>;
 	/// The code units of `raw` with their acceptance counts.
 	fn code_units(&self, raw: &[char]) -> Result<Vec<CodeUnit>, Error>;
 }
@@ -111,10 +112,10 @@ impl<'a> Encoder<'a> {
 		lexicons: &'a Lexicons,
 		finders: Option<&'a dyn Finders>,
 	) -> Result<Self, Error> {
-		let shaped = lexicons.anchor.is_some() && config.anchor_mode == AnchorMode::Shaped;
-		if finders.is_none() && (shaped || config.code_units) {
+		let postal = lexicons.anchor.is_some() && config.anchor_mode == AnchorMode::Postal;
+		if finders.is_none() && (postal || config.code_units) {
 			return Err(Error::Input(
-				"the shaped anchor and the code-unit channel need span finders, which this encoder lacks".into(),
+				"the postal anchor and the code-unit channel need postcode finders, which this encoder lacks".into(),
 			));
 		}
 		let slots = lexicons
@@ -160,8 +161,8 @@ impl<'a> Encoder<'a> {
 		raw: &[char],
 		span_ranges: Option<&[(usize, usize)]>,
 	) -> Result<Vec<(usize, usize)>, Error> {
-		if self.config.anchor_mode == AnchorMode::Shaped {
-			return self.finders().shaped_spans(row.raw);
+		if self.config.anchor_mode == AnchorMode::Postal {
+			return self.finders().postcode_spans(row.raw);
 		}
 		if let (Some(spans), Some(ranges)) = (&row.spans, span_ranges) {
 			return Ok(ranges

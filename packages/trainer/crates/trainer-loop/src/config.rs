@@ -236,13 +236,14 @@ fn env_path(name: &str) -> Option<PathBuf> {
 	std::env::var_os(name).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
 
-/// Where the trainer finds its repository data files: the postcode layouts, shapes and syntax, and the
-/// address-system registry, which live in `packages/trainer/data/`.
+/// Where the trainer finds its repository data files: the postcode layouts and the address-system registry, which live
+/// in `packages/trainer/data/`, the `postal` family's artifact and definition, which live in
+/// `packages/postcode/data/`, and the label schema.
 #[derive(Clone, Debug)]
 pub struct DataFiles {
 	pub postcode_layouts: PathBuf,
-	pub postcode_shapes: PathBuf,
-	pub postcode_syntax: PathBuf,
+	pub postal_artifact: PathBuf,
+	pub postal_definition: PathBuf,
 	pub address_systems: PathBuf,
 	pub label_schema: PathBuf,
 }
@@ -253,8 +254,8 @@ impl DataFiles {
 		let data = root.join("packages/trainer/data");
 		Self {
 			postcode_layouts: data.join("postcode-layouts.json"),
-			postcode_shapes: data.join("postcode-shapes.json"),
-			postcode_syntax: data.join("postcode-syntax.json"),
+			postal_artifact: root.join("packages/postcode/data/artifacts/postal.rca1"),
+			postal_definition: root.join("packages/postcode/data/definitions/postal.definition.json"),
 			address_systems: data.join("address_systems.json"),
 			label_schema: root.join("packages/neural/data/label-schema.v1.json"),
 		}

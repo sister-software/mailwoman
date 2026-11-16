@@ -45,8 +45,8 @@
 			"properties": {
 				"id": { "$ref": "#/$defs/dottedName" },
 				"boundary": {
-					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector, so the engine reports no match inside a longer run of those characters. The artifact carries the boundary.",
-					"enum": ["token"]
+					"description": "What may touch an embedded match of the shape. token means neither neighbor may be an ASCII letter, an ASCII digit or a connector, so the engine reports no match inside a longer run of those characters. alnum means neither neighbor may be an ASCII letter or an ASCII digit, so a connector may touch the match. The artifact carries the boundary.",
+					"enum": ["token", "alnum"]
 				},
 				"role": {
 					"description": "What the shape is for when it is no plain format. A po_box_leader marks a token that leads a PO box to the known-formats pass. The artifact carries the role.",

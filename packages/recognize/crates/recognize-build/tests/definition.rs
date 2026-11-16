@@ -245,6 +245,37 @@ fn a_token_boundary_drops_the_embedded_matches_that_touch_a_letter_a_digit_or_a_
 	assert!(read_boundary_is_refused());
 }
 
+#[test]
+fn an_alnum_boundary_drops_the_matches_that_touch_a_letter_or_a_digit_and_admits_a_connector() {
+	let definition = json!({
+		"format": "mailwoman.recognize.family-definition",
+		"version": 1,
+		"family": "sample_alnum",
+		"shapes": [
+			{ "id": "alnum.five", "pattern": "[0-9]{5}", "scope": "whole_or_embedded", "boundary": "alnum" }
+		]
+	});
+
+	assert_eq!(validator::violations(&schema(), &definition), Vec::<String>::new());
+
+	let read = read("sample.definition.json", &definition.to_string()).expect("the definition reads");
+	let build = build_documents(vec![read.document], &Limits::default()).expect("the family builds");
+	let mut engine = Engine::new();
+
+	engine.load(&build.families[0].compiled.artifact).unwrap();
+
+	// A digit, a letter or a hyphen-joined run: only the hyphen lets a code stand beside it.
+	let text = "123456 x12345 12345y Lahore-54000 FI-FI-01730 54_321 12345";
+	let found: Vec<&str> = engine
+		.search(text)
+		.unwrap()
+		.into_iter()
+		.map(|candidate| &text[candidate.start..candidate.end])
+		.collect();
+
+	assert_eq!(found, vec!["54000", "01730", "12345"]);
+}
+
 fn read_boundary_is_refused() -> bool {
 	let mut definition = sample();
 

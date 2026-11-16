@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { POSTCODE_SHAPES } from "@mailwoman/postcode/shapes"
+import { POSTCODE_SHAPES } from "@mailwoman/postcode/frozen-shapes"
 
 import {
 	collectMatchesFor,
@@ -33,8 +33,9 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/postcode/shapes` because the training pipeline vendors the same data.
- * The copies must stay aligned.
+ * The table is the frozen legacy table in `@mailwoman/postcode/frozen-shapes`.
+ * Repair keeps it while model 10.8.0 is the published model, and it is deleted with the
+ * legacy-formats family when the first model that declares `span_mode: "postal"` ships.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{
 	label: string
