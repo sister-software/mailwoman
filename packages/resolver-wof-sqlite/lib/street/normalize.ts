@@ -370,6 +370,24 @@ export function withoutApostropheLikeMarks(key: NameKey): NameKey {
 }
 
 /**
+ * The tatweel (U+0640), the short-vowel and shadda marks (U+064B–U+065F) and the superscript
+ * alef (U+0670), with the hamza and madda that NFKD splits off `أ`, `إ`, `آ`, `ؤ` and `ئ`.
+ */
+const ARABIC_MARKS = /[ـً-ٰٟ]/gu
+
+/**
+ * The key with the Arabic letters that writers interchange folded together, so `الاسماعيليه`
+ * and `الإسماعيلية`, or `الوادى الجديد` and `الوادي الجديد`, meet at one key.
+ *
+ * It removes {@link ARABIC_MARKS}, which leaves a hamza-carrying alef as a bare `ا`,
+ * and writes `ى` (alef maqsura) as `ي` (yeh) and `ة` (taa marbuta) as `ه` (heh).
+ * {@link normalizeLocalityForKey} doesn't apply it, so the columns keyed by that fold are unchanged.
+ */
+export function withArabicLetterVariantsFolded(key: NameKey): NameKey {
+	return key.normalize("NFKD").replaceAll(ARABIC_MARKS, "").replaceAll("ى", "ي").replaceAll("ة", "ه") as NameKey
+}
+
+/**
  * Folds a locality name into a {@link NameKey} with the Han fold for `zh`
  * and {@link normalizeLocalityForKey} otherwise.
  *

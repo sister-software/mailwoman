@@ -6,7 +6,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { readRegionNames } from "#build/region-names"
+import { readRegionNames, readSecondLevelNames } from "#build/region-names"
 
 let scratch: TemporaryDirectory
 
@@ -31,6 +31,7 @@ function writeDatabase(
 		names?: string[]
 		abbr?: string
 		iso?: string
+		hasc?: string
 	}[]
 ) {
 	const path = scratch.path("admin.db")
@@ -62,6 +63,10 @@ function writeDatabase(
 
 		if (region.iso) {
 			db.prepare("INSERT INTO concordances VALUES (?, ?, 'iso:id')").run(region.id, region.iso)
+		}
+
+		if (region.hasc) {
+			db.prepare("INSERT INTO concordances VALUES (?, ?, 'hasc:id')").run(region.id, region.hasc)
 		}
 	}
 
@@ -133,6 +138,85 @@ describe("readRegionNames", () => {
 		expect(regions.holds("LV", "Saldus nov.")).toBe(false)
 		// A lone truncated word matches no region.
 		expect(regions.holds("LV", "Rēz.")).toBe(false)
+	})
+
+	it("holds an Arabic region written with ه for ة, ى for ي or a bare alef for a hamza-carrying one", async () => {
+		const regions = await readRegionNames(
+			writeDatabase([
+				{ id: 1, name: "Al Isma`iliyah", placetype: "region", country: "EG", names: ["الإسماعيلية"] },
+				{ id: 2, name: "Al Wadi at Jadid", placetype: "region", country: "EG", names: ["الوادي الجديد"] },
+			])
+		)
+
+		// `81 حارة عبد الرحمن, مكه, الاسماعيليه, 41511` and `8 شارع 4, مدينه الخارجه, الوادى الجديد, 72511`.
+		expect(regions.holds("EG", "الاسماعيليه")).toBe(true)
+		expect(regions.holds("EG", "الوادى الجديد")).toBe(true)
+		expect(regions.holds("EG", "الجديد")).toBe(false)
+	})
+
+	it("holds a dependency's region under the dependency when the region's ISO or HASC code is the dependency's", async () => {
+		const regions = await readRegionNames(
+			writeDatabase([
+				{ id: 1, name: "French Guiana", placetype: "region", country: "FR", names: ["Guyane Francaise"], iso: "GF" },
+				{ id: 2, name: "Bonaire", placetype: "region", country: "NL", iso: "BQ-BO", hasc: "BQ.BO" },
+				{ id: 3, name: "Île-de-France", placetype: "region", country: "FR", hasc: "FR.IF" },
+				{ id: 4, name: "Mayotte", placetype: "country", country: "YT" },
+				{ id: 5, name: "Mamoudzou", placetype: "region", country: "YT" },
+				{ id: 6, name: "Guyane", placetype: "region", country: "GF" },
+				{ id: 7, name: "Saba", placetype: "region", country: "BQ" },
+				{ id: 8, name: "Saint-Martin", placetype: "country", country: "MF" },
+			])
+		)
+
+		// `Gvatemän, French Guiana, France` and `Lagun, Bonaire`.
+		expect(regions.holds("GF", "French Guiana")).toBe(true)
+		expect(regions.holds("GF", "Guyane Francaise")).toBe(true)
+		expect(regions.holds("FR", "French Guiana")).toBe(true)
+		expect(regions.holds("BQ", "Bonaire")).toBe(true)
+		expect(regions.holds("BQ", "BO")).toBe(true)
+		// `Dzoumonye, Mayotte, France`: the dependency's own record.
+		expect(regions.holds("YT", "Mayotte")).toBe(true)
+		// A sovereign state's region whose code is its own country's lends no name elsewhere.
+		expect(regions.holds("GF", "Île-de-France")).toBe(false)
+		// A dependency with no region of its own stays unjudged rather than judged on one name.
+		expect(regions.holds("MF", "Île de Saint-Martin")).toBeNull()
+	})
+
+	it("strips the resolver's county and province qualifiers and reads a slash-joined pair of names", async () => {
+		const regions = await readRegionNames(
+			writeDatabase([
+				{ id: 1, name: "Panamá Oeste", placetype: "region", country: "PA" },
+				{ id: 2, name: "Kerry", placetype: "region", country: "IE" },
+				{ id: 3, name: "Cataluña", placetype: "region", country: "ES", names: ["Catalunya"] },
+				{ id: 4, name: "Constanța", placetype: "region", country: "RO" },
+			])
+		)
+
+		expect(regions.holds("PA", "Panamá Oeste Province")).toBe(true)
+		expect(regions.holds("IE", "Co. Kerry")).toBe(true)
+		expect(regions.holds("ES", "Cataluña/Catalunya")).toBe(true)
+		expect(regions.holds("ES", "Cataluña/Andalucía")).toBe(false)
+		// The resolver's qualifier list holds no `County` suffix.
+		expect(regions.holds("RO", "Constanța County")).toBe(false)
+	})
+
+	it("holds a second-level name only for a country the census admitted", async () => {
+		const database = writeDatabase([
+			{ id: 1, name: "Ayacucho", placetype: "region", country: "PE" },
+			{ id: 2, name: "Huamanga", placetype: "county", country: "PE" },
+			{ id: 3, name: "Texas", placetype: "region", country: "US" },
+			{ id: 4, name: "Harris County", placetype: "county", country: "US" },
+		])
+
+		const admitted = await readRegionNames(database, { secondLevelCountries: ["PE"] })
+		const secondLevel = await readSecondLevelNames(database)
+
+		// `Jr. S. Rosa de Lima 10, Jesús Nazareno, 05011, Huamanga`.
+		expect(admitted.holds("PE", "Huamanga")).toBe(true)
+		expect(admitted.holds("US", "Harris County")).toBe(false)
+		expect((await readRegionNames(database)).holds("PE", "Huamanga")).toBe(false)
+		expect(secondLevel.holds("US", "Harris County")).toBe(true)
+		expect(secondLevel.holds("PE", "Ayacucho")).toBe(false)
 	})
 
 	it("refuses a database without regions rather than judging no row", async () => {

@@ -1,0 +1,966 @@
+{
+	"$description": "Per country, the base rows with a region and those whose region is a second-level (WOF county) name of the country and no region name of it. Written by packages/corpus/lib/tools/region-slot-census.run.ts; secondLevelAdmitted in packages/corpus/lib/build/region-names.ts decides which countries the region:unknown rule admits.",
+	"manifest": "/mnt/mw/corpus/versioned/v0.8.10-retention-overlay/corpus-v0.8.10-retention-overlay/MANIFEST.json",
+	"countries": {
+		"AD": {
+			"withRegion": 1636,
+			"secondLevelOnly": 0
+		},
+		"AE": {
+			"withRegion": 2511,
+			"secondLevelOnly": 0
+		},
+		"AF": {
+			"withRegion": 3311,
+			"secondLevelOnly": 0
+		},
+		"AG": {
+			"withRegion": 1456,
+			"secondLevelOnly": 0
+		},
+		"AI": {
+			"withRegion": 356,
+			"secondLevelOnly": 0
+		},
+		"AL": {
+			"withRegion": 2716,
+			"secondLevelOnly": 0
+		},
+		"AM": {
+			"withRegion": 2502,
+			"secondLevelOnly": 0
+		},
+		"AO": {
+			"withRegion": 2939,
+			"secondLevelOnly": 0
+		},
+		"AQ": {
+			"withRegion": 4,
+			"secondLevelOnly": 0
+		},
+		"AR": {
+			"withRegion": 7004,
+			"secondLevelOnly": 0
+		},
+		"AS": {
+			"withRegion": 370,
+			"secondLevelOnly": 0
+		},
+		"AT": {
+			"withRegion": 3107,
+			"secondLevelOnly": 0
+		},
+		"AU": {
+			"withRegion": 88178,
+			"secondLevelOnly": 0
+		},
+		"AW": {
+			"withRegion": 718,
+			"secondLevelOnly": 0
+		},
+		"AX": {
+			"withRegion": 1104,
+			"secondLevelOnly": 0
+		},
+		"AZ": {
+			"withRegion": 2372,
+			"secondLevelOnly": 0
+		},
+		"BA": {
+			"withRegion": 3016,
+			"secondLevelOnly": 0
+		},
+		"BB": {
+			"withRegion": 1882,
+			"secondLevelOnly": 0
+		},
+		"BD": {
+			"withRegion": 2279,
+			"secondLevelOnly": 0
+		},
+		"BE": {
+			"withRegion": 2492,
+			"secondLevelOnly": 0
+		},
+		"BF": {
+			"withRegion": 1958,
+			"secondLevelOnly": 0
+		},
+		"BG": {
+			"withRegion": 2671,
+			"secondLevelOnly": 0
+		},
+		"BH": {
+			"withRegion": 1535,
+			"secondLevelOnly": 0
+		},
+		"BI": {
+			"withRegion": 2037,
+			"secondLevelOnly": 0
+		},
+		"BJ": {
+			"withRegion": 1669,
+			"secondLevelOnly": 0
+		},
+		"BM": {
+			"withRegion": 663,
+			"secondLevelOnly": 0
+		},
+		"BN": {
+			"withRegion": 1528,
+			"secondLevelOnly": 0
+		},
+		"BO": {
+			"withRegion": 2831,
+			"secondLevelOnly": 0
+		},
+		"BQ": {
+			"withRegion": 527,
+			"secondLevelOnly": 0
+		},
+		"BR": {
+			"withRegion": 4026,
+			"secondLevelOnly": 1
+		},
+		"BS": {
+			"withRegion": 2383,
+			"secondLevelOnly": 0
+		},
+		"BT": {
+			"withRegion": 1596,
+			"secondLevelOnly": 0
+		},
+		"BW": {
+			"withRegion": 1849,
+			"secondLevelOnly": 0
+		},
+		"BY": {
+			"withRegion": 2508,
+			"secondLevelOnly": 0
+		},
+		"BZ": {
+			"withRegion": 2218,
+			"secondLevelOnly": 0
+		},
+		"CA": {
+			"withRegion": 58475,
+			"secondLevelOnly": 0
+		},
+		"CC": {
+			"withRegion": 4,
+			"secondLevelOnly": 0
+		},
+		"CD": {
+			"withRegion": 2375,
+			"secondLevelOnly": 225
+		},
+		"CF": {
+			"withRegion": 2079,
+			"secondLevelOnly": 0
+		},
+		"CG": {
+			"withRegion": 2219,
+			"secondLevelOnly": 0
+		},
+		"CH": {
+			"withRegion": 202507,
+			"secondLevelOnly": 0
+		},
+		"CI": {
+			"withRegion": 1344,
+			"secondLevelOnly": 0
+		},
+		"CK": {
+			"withRegion": 303,
+			"secondLevelOnly": 0
+		},
+		"CL": {
+			"withRegion": 3530,
+			"secondLevelOnly": 6
+		},
+		"CM": {
+			"withRegion": 2651,
+			"secondLevelOnly": 0
+		},
+		"CN": {
+			"withRegion": 17994,
+			"secondLevelOnly": 12
+		},
+		"CO": {
+			"withRegion": 3434,
+			"secondLevelOnly": 1
+		},
+		"CR": {
+			"withRegion": 2973,
+			"secondLevelOnly": 0
+		},
+		"CU": {
+			"withRegion": 3273,
+			"secondLevelOnly": 0
+		},
+		"CV": {
+			"withRegion": 1947,
+			"secondLevelOnly": 0
+		},
+		"CW": {
+			"withRegion": 628,
+			"secondLevelOnly": 0
+		},
+		"CY": {
+			"withRegion": 1744,
+			"secondLevelOnly": 0
+		},
+		"CZ": {
+			"withRegion": 2230,
+			"secondLevelOnly": 0
+		},
+		"DE": {
+			"withRegion": 85000,
+			"secondLevelOnly": 0
+		},
+		"DJ": {
+			"withRegion": 1948,
+			"secondLevelOnly": 0
+		},
+		"DK": {
+			"withRegion": 2887,
+			"secondLevelOnly": 0
+		},
+		"DM": {
+			"withRegion": 1440,
+			"secondLevelOnly": 0
+		},
+		"DO": {
+			"withRegion": 2785,
+			"secondLevelOnly": 0
+		},
+		"DZ": {
+			"withRegion": 3301,
+			"secondLevelOnly": 0
+		},
+		"EC": {
+			"withRegion": 2665,
+			"secondLevelOnly": 1
+		},
+		"EE": {
+			"withRegion": 52441,
+			"secondLevelOnly": 0
+		},
+		"EG": {
+			"withRegion": 52852,
+			"secondLevelOnly": 0
+		},
+		"EH": {
+			"withRegion": 530,
+			"secondLevelOnly": 0
+		},
+		"ER": {
+			"withRegion": 2047,
+			"secondLevelOnly": 0
+		},
+		"ES": {
+			"withRegion": 27477,
+			"secondLevelOnly": 0
+		},
+		"ET": {
+			"withRegion": 2535,
+			"secondLevelOnly": 0
+		},
+		"FI": {
+			"withRegion": 4343,
+			"secondLevelOnly": 0
+		},
+		"FJ": {
+			"withRegion": 1938,
+			"secondLevelOnly": 0
+		},
+		"FM": {
+			"withRegion": 1175,
+			"secondLevelOnly": 0
+		},
+		"FO": {
+			"withRegion": 922,
+			"secondLevelOnly": 0
+		},
+		"FR": {
+			"withRegion": 46104,
+			"secondLevelOnly": 50
+		},
+		"GA": {
+			"withRegion": 2128,
+			"secondLevelOnly": 0
+		},
+		"GB": {
+			"withRegion": 57045,
+			"secondLevelOnly": 0
+		},
+		"GD": {
+			"withRegion": 1721,
+			"secondLevelOnly": 0
+		},
+		"GE": {
+			"withRegion": 1794,
+			"secondLevelOnly": 0
+		},
+		"GF": {
+			"withRegion": 1691,
+			"secondLevelOnly": 0
+		},
+		"GG": {
+			"withRegion": 1529,
+			"secondLevelOnly": 0
+		},
+		"GH": {
+			"withRegion": 2167,
+			"secondLevelOnly": 0
+		},
+		"GL": {
+			"withRegion": 1759,
+			"secondLevelOnly": 0
+		},
+		"GM": {
+			"withRegion": 1837,
+			"secondLevelOnly": 0
+		},
+		"GN": {
+			"withRegion": 2469,
+			"secondLevelOnly": 0
+		},
+		"GP": {
+			"withRegion": 1772,
+			"secondLevelOnly": 0
+		},
+		"GQ": {
+			"withRegion": 1823,
+			"secondLevelOnly": 0
+		},
+		"GR": {
+			"withRegion": 3038,
+			"secondLevelOnly": 0
+		},
+		"GT": {
+			"withRegion": 2691,
+			"secondLevelOnly": 1
+		},
+		"GU": {
+			"withRegion": 331,
+			"secondLevelOnly": 0
+		},
+		"GW": {
+			"withRegion": 1842,
+			"secondLevelOnly": 0
+		},
+		"GY": {
+			"withRegion": 1837,
+			"secondLevelOnly": 0
+		},
+		"HK": {
+			"withRegion": 1935,
+			"secondLevelOnly": 0
+		},
+		"HN": {
+			"withRegion": 2818,
+			"secondLevelOnly": 9
+		},
+		"HR": {
+			"withRegion": 2988,
+			"secondLevelOnly": 0
+		},
+		"HT": {
+			"withRegion": 2407,
+			"secondLevelOnly": 0
+		},
+		"HU": {
+			"withRegion": 2213,
+			"secondLevelOnly": 0
+		},
+		"ID": {
+			"withRegion": 10696,
+			"secondLevelOnly": 26
+		},
+		"IE": {
+			"withRegion": 2934,
+			"secondLevelOnly": 0
+		},
+		"IL": {
+			"withRegion": 2698,
+			"secondLevelOnly": 0
+		},
+		"IM": {
+			"withRegion": 813,
+			"secondLevelOnly": 0
+		},
+		"IN": {
+			"withRegion": 9890,
+			"secondLevelOnly": 1
+		},
+		"IQ": {
+			"withRegion": 3837,
+			"secondLevelOnly": 0
+		},
+		"IR": {
+			"withRegion": 4302,
+			"secondLevelOnly": 1
+		},
+		"IS": {
+			"withRegion": 3024,
+			"secondLevelOnly": 0
+		},
+		"IT": {
+			"withRegion": 7096,
+			"secondLevelOnly": 0
+		},
+		"JE": {
+			"withRegion": 570,
+			"secondLevelOnly": 0
+		},
+		"JM": {
+			"withRegion": 2445,
+			"secondLevelOnly": 0
+		},
+		"JO": {
+			"withRegion": 2351,
+			"secondLevelOnly": 0
+		},
+		"JP": {
+			"withRegion": 18367,
+			"secondLevelOnly": 0
+		},
+		"KE": {
+			"withRegion": 2833,
+			"secondLevelOnly": 13
+		},
+		"KG": {
+			"withRegion": 2159,
+			"secondLevelOnly": 0
+		},
+		"KH": {
+			"withRegion": 2474,
+			"secondLevelOnly": 0
+		},
+		"KI": {
+			"withRegion": 1264,
+			"secondLevelOnly": 0
+		},
+		"KM": {
+			"withRegion": 1506,
+			"secondLevelOnly": 0
+		},
+		"KN": {
+			"withRegion": 1741,
+			"secondLevelOnly": 0
+		},
+		"KP": {
+			"withRegion": 2756,
+			"secondLevelOnly": 0
+		},
+		"KR": {
+			"withRegion": 3109,
+			"secondLevelOnly": 0
+		},
+		"KW": {
+			"withRegion": 1606,
+			"secondLevelOnly": 0
+		},
+		"KZ": {
+			"withRegion": 3280,
+			"secondLevelOnly": 0
+		},
+		"LA": {
+			"withRegion": 2152,
+			"secondLevelOnly": 7
+		},
+		"LB": {
+			"withRegion": 2970,
+			"secondLevelOnly": 0
+		},
+		"LC": {
+			"withRegion": 1769,
+			"secondLevelOnly": 0
+		},
+		"LI": {
+			"withRegion": 1457,
+			"secondLevelOnly": 0
+		},
+		"LK": {
+			"withRegion": 2572,
+			"secondLevelOnly": 0
+		},
+		"LR": {
+			"withRegion": 2227,
+			"secondLevelOnly": 0
+		},
+		"LS": {
+			"withRegion": 1552,
+			"secondLevelOnly": 0
+		},
+		"LT": {
+			"withRegion": 2117,
+			"secondLevelOnly": 0
+		},
+		"LU": {
+			"withRegion": 1171,
+			"secondLevelOnly": 0
+		},
+		"LV": {
+			"withRegion": 442021,
+			"secondLevelOnly": 0
+		},
+		"LY": {
+			"withRegion": 2598,
+			"secondLevelOnly": 0
+		},
+		"MA": {
+			"withRegion": 3284,
+			"secondLevelOnly": 0
+		},
+		"MC": {
+			"withRegion": 693,
+			"secondLevelOnly": 0
+		},
+		"MD": {
+			"withRegion": 1935,
+			"secondLevelOnly": 0
+		},
+		"ME": {
+			"withRegion": 1857,
+			"secondLevelOnly": 0
+		},
+		"MF": {
+			"withRegion": 109,
+			"secondLevelOnly": 0
+		},
+		"MG": {
+			"withRegion": 2375,
+			"secondLevelOnly": 0
+		},
+		"MH": {
+			"withRegion": 472,
+			"secondLevelOnly": 0
+		},
+		"MK": {
+			"withRegion": 2754,
+			"secondLevelOnly": 0
+		},
+		"ML": {
+			"withRegion": 2903,
+			"secondLevelOnly": 92
+		},
+		"MM": {
+			"withRegion": 2615,
+			"secondLevelOnly": 0
+		},
+		"MN": {
+			"withRegion": 2577,
+			"secondLevelOnly": 0
+		},
+		"MO": {
+			"withRegion": 381,
+			"secondLevelOnly": 0
+		},
+		"MP": {
+			"withRegion": 656,
+			"secondLevelOnly": 0
+		},
+		"MQ": {
+			"withRegion": 1813,
+			"secondLevelOnly": 0
+		},
+		"MR": {
+			"withRegion": 2290,
+			"secondLevelOnly": 0
+		},
+		"MS": {
+			"withRegion": 616,
+			"secondLevelOnly": 0
+		},
+		"MT": {
+			"withRegion": 2140,
+			"secondLevelOnly": 0
+		},
+		"MU": {
+			"withRegion": 2017,
+			"secondLevelOnly": 0
+		},
+		"MV": {
+			"withRegion": 1485,
+			"secondLevelOnly": 0
+		},
+		"MW": {
+			"withRegion": 579,
+			"secondLevelOnly": 0
+		},
+		"MX": {
+			"withRegion": 10738,
+			"secondLevelOnly": 0
+		},
+		"MY": {
+			"withRegion": 3441,
+			"secondLevelOnly": 0
+		},
+		"MZ": {
+			"withRegion": 2540,
+			"secondLevelOnly": 0
+		},
+		"NA": {
+			"withRegion": 2310,
+			"secondLevelOnly": 0
+		},
+		"NC": {
+			"withRegion": 1368,
+			"secondLevelOnly": 0
+		},
+		"NE": {
+			"withRegion": 2753,
+			"secondLevelOnly": 0
+		},
+		"NG": {
+			"withRegion": 2601,
+			"secondLevelOnly": 0
+		},
+		"NI": {
+			"withRegion": 2635,
+			"secondLevelOnly": 0
+		},
+		"NL": {
+			"withRegion": 2898,
+			"secondLevelOnly": 0
+		},
+		"NO": {
+			"withRegion": 3701,
+			"secondLevelOnly": 0
+		},
+		"NP": {
+			"withRegion": 817,
+			"secondLevelOnly": 0
+		},
+		"NR": {
+			"withRegion": 1010,
+			"secondLevelOnly": 0
+		},
+		"NZ": {
+			"withRegion": 2759,
+			"secondLevelOnly": 4
+		},
+		"OM": {
+			"withRegion": 2739,
+			"secondLevelOnly": 0
+		},
+		"PA": {
+			"withRegion": 2926,
+			"secondLevelOnly": 0
+		},
+		"PE": {
+			"withRegion": 5089,
+			"secondLevelOnly": 382
+		},
+		"PF": {
+			"withRegion": 1236,
+			"secondLevelOnly": 0
+		},
+		"PG": {
+			"withRegion": 2726,
+			"secondLevelOnly": 0
+		},
+		"PH": {
+			"withRegion": 6156,
+			"secondLevelOnly": 5
+		},
+		"PK": {
+			"withRegion": 5226,
+			"secondLevelOnly": 0
+		},
+		"PL": {
+			"withRegion": 2645,
+			"secondLevelOnly": 0
+		},
+		"PM": {
+			"withRegion": 78,
+			"secondLevelOnly": 0
+		},
+		"PR": {
+			"withRegion": 544,
+			"secondLevelOnly": 415
+		},
+		"PS": {
+			"withRegion": 1821,
+			"secondLevelOnly": 191
+		},
+		"PT": {
+			"withRegion": 9090,
+			"secondLevelOnly": 0
+		},
+		"PW": {
+			"withRegion": 1832,
+			"secondLevelOnly": 0
+		},
+		"PY": {
+			"withRegion": 2293,
+			"secondLevelOnly": 0
+		},
+		"QA": {
+			"withRegion": 1970,
+			"secondLevelOnly": 0
+		},
+		"RE": {
+			"withRegion": 1411,
+			"secondLevelOnly": 0
+		},
+		"RO": {
+			"withRegion": 3048,
+			"secondLevelOnly": 0
+		},
+		"RS": {
+			"withRegion": 1891,
+			"secondLevelOnly": 0
+		},
+		"RU": {
+			"withRegion": 21178,
+			"secondLevelOnly": 0
+		},
+		"RW": {
+			"withRegion": 2017,
+			"secondLevelOnly": 0
+		},
+		"SA": {
+			"withRegion": 3041,
+			"secondLevelOnly": 0
+		},
+		"SB": {
+			"withRegion": 1353,
+			"secondLevelOnly": 0
+		},
+		"SC": {
+			"withRegion": 1615,
+			"secondLevelOnly": 0
+		},
+		"SD": {
+			"withRegion": 2909,
+			"secondLevelOnly": 0
+		},
+		"SE": {
+			"withRegion": 3318,
+			"secondLevelOnly": 0
+		},
+		"SG": {
+			"withRegion": 1591,
+			"secondLevelOnly": 0
+		},
+		"SH": {
+			"withRegion": 550,
+			"secondLevelOnly": 0
+		},
+		"SI": {
+			"withRegion": 1431,
+			"secondLevelOnly": 0
+		},
+		"SJ": {
+			"withRegion": 837,
+			"secondLevelOnly": 0
+		},
+		"SK": {
+			"withRegion": 2004,
+			"secondLevelOnly": 0
+		},
+		"SL": {
+			"withRegion": 2280,
+			"secondLevelOnly": 0
+		},
+		"SM": {
+			"withRegion": 1225,
+			"secondLevelOnly": 0
+		},
+		"SN": {
+			"withRegion": 2401,
+			"secondLevelOnly": 0
+		},
+		"SO": {
+			"withRegion": 2871,
+			"secondLevelOnly": 0
+		},
+		"SR": {
+			"withRegion": 1941,
+			"secondLevelOnly": 0
+		},
+		"SS": {
+			"withRegion": 2223,
+			"secondLevelOnly": 0
+		},
+		"ST": {
+			"withRegion": 1437,
+			"secondLevelOnly": 0
+		},
+		"SV": {
+			"withRegion": 2471,
+			"secondLevelOnly": 12
+		},
+		"SX": {
+			"withRegion": 1030,
+			"secondLevelOnly": 0
+		},
+		"SY": {
+			"withRegion": 3017,
+			"secondLevelOnly": 0
+		},
+		"SZ": {
+			"withRegion": 1579,
+			"secondLevelOnly": 0
+		},
+		"TC": {
+			"withRegion": 246,
+			"secondLevelOnly": 0
+		},
+		"TD": {
+			"withRegion": 2732,
+			"secondLevelOnly": 0
+		},
+		"TF": {
+			"withRegion": 89,
+			"secondLevelOnly": 0
+		},
+		"TG": {
+			"withRegion": 2049,
+			"secondLevelOnly": 0
+		},
+		"TH": {
+			"withRegion": 8231,
+			"secondLevelOnly": 4
+		},
+		"TJ": {
+			"withRegion": 1914,
+			"secondLevelOnly": 0
+		},
+		"TK": {
+			"withRegion": 74,
+			"secondLevelOnly": 0
+		},
+		"TL": {
+			"withRegion": 1754,
+			"secondLevelOnly": 0
+		},
+		"TM": {
+			"withRegion": 2218,
+			"secondLevelOnly": 0
+		},
+		"TN": {
+			"withRegion": 2334,
+			"secondLevelOnly": 0
+		},
+		"TO": {
+			"withRegion": 932,
+			"secondLevelOnly": 0
+		},
+		"TR": {
+			"withRegion": 3743,
+			"secondLevelOnly": 0
+		},
+		"TT": {
+			"withRegion": 1883,
+			"secondLevelOnly": 0
+		},
+		"TV": {
+			"withRegion": 774,
+			"secondLevelOnly": 0
+		},
+		"TW": {
+			"withRegion": 3006,
+			"secondLevelOnly": 0
+		},
+		"TZ": {
+			"withRegion": 2617,
+			"secondLevelOnly": 0
+		},
+		"UA": {
+			"withRegion": 2974,
+			"secondLevelOnly": 0
+		},
+		"UG": {
+			"withRegion": 2220,
+			"secondLevelOnly": 0
+		},
+		"UM": {
+			"withRegion": 653,
+			"secondLevelOnly": 0
+		},
+		"US": {
+			"withRegion": 70959576,
+			"secondLevelOnly": 14
+		},
+		"UY": {
+			"withRegion": 22304,
+			"secondLevelOnly": 0
+		},
+		"UZ": {
+			"withRegion": 2432,
+			"secondLevelOnly": 0
+		},
+		"VA": {
+			"withRegion": 396,
+			"secondLevelOnly": 0
+		},
+		"VC": {
+			"withRegion": 1178,
+			"secondLevelOnly": 0
+		},
+		"VE": {
+			"withRegion": 3666,
+			"secondLevelOnly": 0
+		},
+		"VI": {
+			"withRegion": 1417,
+			"secondLevelOnly": 0
+		},
+		"VN": {
+			"withRegion": 9965,
+			"secondLevelOnly": 14
+		},
+		"VU": {
+			"withRegion": 1954,
+			"secondLevelOnly": 0
+		},
+		"WF": {
+			"withRegion": 157,
+			"secondLevelOnly": 0
+		},
+		"WS": {
+			"withRegion": 1357,
+			"secondLevelOnly": 0
+		},
+		"XK": {
+			"withRegion": 1697,
+			"secondLevelOnly": 0
+		},
+		"XS": {
+			"withRegion": 656,
+			"secondLevelOnly": 0
+		},
+		"XX": {
+			"withRegion": 1117,
+			"secondLevelOnly": 0
+		},
+		"XZ": {
+			"withRegion": 218,
+			"secondLevelOnly": 0
+		},
+		"YE": {
+			"withRegion": 3013,
+			"secondLevelOnly": 0
+		},
+		"YT": {
+			"withRegion": 609,
+			"secondLevelOnly": 0
+		},
+		"ZA": {
+			"withRegion": 3531,
+			"secondLevelOnly": 0
+		},
+		"ZM": {
+			"withRegion": 2454,
+			"secondLevelOnly": 0
+		},
+		"ZW": {
+			"withRegion": 2096,
+			"secondLevelOnly": 0
+		}
+	}
+}
