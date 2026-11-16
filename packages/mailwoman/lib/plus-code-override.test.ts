@@ -76,4 +76,71 @@ describe("applyPlusCodeOverride", () => {
 		expect(result.resolution_tier).toBe("plus_code")
 		expect(result.coordinate_source).toBeNull()
 	})
+
+	function resultFor(postcode: string): GeocodeResult {
+		return {
+			components: { postcode, locality: "El Sauce" },
+			lat: 12.9,
+			lon: -86.5,
+			resolution_tier: "admin",
+			epistemic_status: "derived",
+			uncertainty_m: null,
+			locality: "El Sauce",
+			postcode,
+			coordinate_source: null,
+		} as GeocodeResult
+	}
+
+	it("decodes a full code beside punctuation, which the specification reads as a code", () => {
+		for (const [input, start] of [
+			["El Sauce, (764MVFQ6+92P)", 11],
+			["El Sauce 764MVFQ6+92P.", 9],
+			["El Sauce, 764MVFQ6+92P", 10],
+		] as const) {
+			const tree = buildAddressTree(input, [
+				tok("El Sauce", 0, 8, "B-locality"),
+				tok("764MVFQ6+92P", start, start + 12, "B-postcode"),
+			])
+
+			const result = resultFor("764MVFQ6+92P")
+
+			applyPlusCodeOverride(result, input, tree)
+
+			expect(result.resolution_tier, input).toBe("plus_code")
+			expect(result.lat, input).toBeCloseTo(12.8884, 3)
+			expect(result.lon, input).toBeCloseTo(-86.5399, 3)
+			expect(result.postcode, input).toBeNull()
+		}
+	})
+
+	it("removes a token with an odd count of digits before the separator and decodes nothing", () => {
+		// The validator rejects 3, 5 and 7 digits with `invalid_prefix_length`; the override still evicts the token.
+		for (const code of ["VFQ+92P", "VFQ6M+92", "VFQ6M7X+92"]) {
+			const input = `El Sauce, ${code}`
+
+			const tree = buildAddressTree(input, [
+				tok("El Sauce", 0, 8, "B-locality"),
+				tok(code, 10, 10 + code.length, "B-postcode"),
+			])
+
+			const result = resultFor(code)
+
+			applyPlusCodeOverride(result, input, tree)
+
+			expect(result.postcode, code).toBeNull()
+			expect(result.resolution_tier, code).toBe("admin")
+			expect(result.lat, code).toBe(12.9)
+		}
+	})
+
+	it("leaves a result alone when the input holds no plus code", () => {
+		const input = "El Sauce, 11001"
+		const tree = buildAddressTree(input, [tok("El Sauce", 0, 8, "B-locality"), tok("11001", 10, 15, "B-postcode")])
+		const result = resultFor("11001")
+
+		applyPlusCodeOverride(result, input, tree)
+
+		expect(result.postcode).toBe("11001")
+		expect(result.resolution_tier).toBe("admin")
+	})
 })

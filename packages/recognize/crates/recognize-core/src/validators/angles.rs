@@ -17,7 +17,9 @@
 //! semicolon; or after the first hemisphere letter that white space follows; or at the white space between two tokens.
 //! Anything after a second separator is dropped. Each half is read with the angle program of
 //! [`crate::grammars::angles`]: an optional sign, degrees, optional minutes and seconds and an optional hemisphere
-//! letter. The magnitude is `degrees + minutes / 60 + seconds / 3600`, evaluated left to right in 64-bit floating point,
+//! letter. A capital `S` after a complete group of degrees, symbol-marked minutes and seconds is the southern
+//! hemisphere, as in `12°30′20S`; a lowercase `s` and the word marks of `12d 30m 20s` keep it as the seconds mark. The
+//! magnitude is `degrees + minutes / 60 + seconds / 3600`, evaluated left to right in 64-bit floating point,
 //! and the angle is negative when the sign is `-` or the hemisphere is `S` or `W`.
 //!
 //! Hemisphere letters decide the axis. `N` and `S` name latitudes and `E` and `W` name longitudes. With letters on both
@@ -104,6 +106,13 @@ struct Angle {
 	hemisphere: Option<char>,
 }
 
+/// Whether a mark's text, which holds the white space after it, is the word mark `letter` in either case.
+fn is_word_mark_text(text: &str, letter: char) -> bool {
+	let mut characters = text.trim_matches(is_space).chars();
+
+	matches!((characters.next(), characters.next()), (Some(found), None) if found.eq_ignore_ascii_case(&letter))
+}
+
 fn malformed(half: &str, why: &str) -> Rejection {
 	Rejection::new(
 		"malformed_angle",
@@ -153,10 +162,28 @@ impl Angle {
 
 		Decimal::new(magnitude).map_err(about("degrees"))?;
 
-		let hemisphere = captures
+		let mut hemisphere = captures
 			.get("hemisphere")
 			.and_then(|text| text.chars().next())
 			.map(|letter| letter.to_ascii_uppercase());
+
+		// A complete degrees-minutes-seconds group whose minutes carry a symbol mark and whose seconds end in a capital `S`
+		// and no other mark is a southern hemisphere: `12°30′20S` is 12 degrees, 30 minutes and 20 seconds south. A
+		// lowercase `s` is a seconds mark, as in `12°5′30s`, and so is the `s` of the word marks `12d 30m 20s`, whose
+		// minutes are marked with a word as well.
+		if hemisphere.is_none()
+			&& captures
+				.get("second_mark")
+				.is_some_and(|text| text.trim_matches(is_space) == "S")
+		{
+			let minutes_marked_by_symbol = captures
+				.get("minute_mark")
+				.is_some_and(|text| !is_word_mark_text(text, 'm'));
+
+			if captures.get("minutes").is_some() && captures.get("seconds").is_some() && minutes_marked_by_symbol {
+				hemisphere = Some('S');
+			}
+		}
 		let negative = captures.get("sign") == Some("-") || matches!(hemisphere, Some('S' | 'W'));
 
 		Ok(Angle {
@@ -455,8 +482,18 @@ mod tests {
 		assert_eq!(read("12d 30m N, 5 E").0, 12.5);
 		assert_eq!(dms("12d30m N, 5 E").unwrap_err().code, "malformed_angle");
 		assert_eq!(read("12d, 5E").0, 12.0);
-		// `s` is read as the seconds mark here, as the regular expression reads it, and not as the southern hemisphere.
-		assert_eq!(read("12°30′20S, 5E").0, 12.0 + 30.0 / 60.0 + 20.0 / 3600.0);
+		// A hemisphere letter after a complete degrees-minutes-seconds group is a hemisphere, and not a seconds mark.
+		assert_eq!(
+			read("12°30′20S, 5E"),
+			(-(12.0 + 30.0 / 60.0 + 20.0 / 3600.0), 5.0, AxisOrder::LatLon)
+		);
+		assert_eq!(read("12°30′20 S, 5E").0, -(12.0 + 30.0 / 60.0 + 20.0 / 3600.0));
+		// A lowercase `s` is a seconds mark, and so is the `s` of the word marks.
+		assert_eq!(read("12°30′20s, 5E").0, 12.0 + 30.0 / 60.0 + 20.0 / 3600.0);
+		assert_eq!(read("12d 30m 20s, 5E").0, 12.0 + 30.0 / 60.0 + 20.0 / 3600.0);
+		assert_eq!(read("12D 30M 20S, 5E").0, 12.0 + 30.0 / 60.0 + 20.0 / 3600.0);
+		// Without minutes the group is incomplete, and `s` stays the seconds mark.
+		assert_eq!(read("12°20s, 5E").0, 12.0 + 20.0 / 3600.0);
 	}
 
 	#[test]

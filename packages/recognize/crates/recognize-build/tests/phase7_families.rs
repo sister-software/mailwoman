@@ -138,7 +138,7 @@ fn plus_codes_are_found_whole_and_embedded_and_odd_counts_are_rejected() {
 
 	assert_eq!(
 		payload(&engine, "764mvfq6+92p", "plus_code.token"),
-		serde_json::json!({ "code": "764MVFQ6+92P", "full": true })
+		serde_json::json!({ "full_code": "764MVFQ6+92P" })
 	);
 	assert_eq!(
 		rejection(&engine, "VFQ+92P", "plus_code.token"),
