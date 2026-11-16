@@ -58,7 +58,16 @@ async function manifestRetention(path: string): Promise<SplitRetention | null> {
 	return readSplitRetention(retention.path)
 }
 
-describe.skipIf(!requested || !(await pathExists(manifest)))(`held-out spans in the train split of ${manifest}`, () => {
+const readable = Boolean(requested) && (await pathExists(manifest))
+
+// A corpus split under the evaluation-group policy trains on the declared places
+// outside its frozen groups by design (HOLDOUT_AND_EVALUATION section 4.6),
+// so the train side of this check doesn't apply to it.
+// The overlap audit checks that corpus instead.
+const evaluationGroupSplit =
+	readable && (await readLocalJSONFile<{ evaluation_groups?: unknown }>(manifest)).evaluation_groups != null
+
+describe.skipIf(!readable || evaluationGroupSplit)(`held-out spans in the train split of ${manifest}`, () => {
 	it(
 		"holds every declared place out of train and keeps every region's train supply",
 		async () => {

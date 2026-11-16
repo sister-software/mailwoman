@@ -7,6 +7,9 @@
  *
  * Rows inside a held-out place go to val or test 50/50 by a hash of `source_id`;
  * every other row goes to train.
+ * Under the evaluation-group policy only the groups the frozen evaluation sets drew from
+ * go to test, a per-country quota of the held-out places' groups goes to val, and the rest
+ * of those places trains (`#utils/evaluation-groups`, `#utils/validation-groups`).
  *
  * A holdout change takes effect at the next corpus rebuild.
  * Each versioned corpus keeps the `SPLIT_MANIFEST.json` it was built with, because adding
@@ -25,7 +28,9 @@ import { JSONSpliterator } from "spliterator"
 
 import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
+import { type EvaluationGroups, evaluationGroupOf } from "#utils/evaluation-groups"
 import { shapeKeyOf, type SplitRetention } from "#utils/retention"
+import type { ValidationGroups } from "#utils/validation-groups"
 
 /**
  * The name of one corpus split.
@@ -835,6 +840,12 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
 	 * A caller without them gets no retention lookup.
 	 */
 	span_tags?: readonly string[] | null
+	/**
+	 * The id of the base row an augmented row was derived from.
+	 *
+	 * The evaluation-group policy keys on it, as the overlap audit does.
+	 */
+	base_source_id?: string | null
 }
 
 /**
@@ -846,13 +857,31 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
  * A row of a combination the retention table covers below the floor returns `train`
  * before the holdout is consulted (HOLDOUT_AND_EVALUATION section 5.1: training
  * retention takes precedence over geographic integrity).
+ *
+ * With `evaluationGroups`, the split is the evaluation-group policy
+ * (HOLDOUT_AND_EVALUATION section 4.6), decided by the row's group and no other field:
+ * a frozen group returns `test`, a validation group `val`, and every other row `train`.
+ * The holdout, the trained places and the retention table are then not consulted,
+ * so no retained shape returns a frozen group's variant to train.
+ *
+ * The overlap audit reads `val` as training data, so `evaluationGroupPolicy`
+ * refuses a validation list that holds a frozen group.
  */
 export function splitForRow(
-	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags">,
+	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags" | "base_source_id">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
 	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces(),
-	retention?: SplitRetention
+	retention?: SplitRetention,
+	evaluationGroups?: { frozen: Pick<EvaluationGroups, "groups">; validation: Pick<ValidationGroups, "groups"> }
 ): SplitName {
+	if (evaluationGroups) {
+		const group = evaluationGroupOf(row)
+
+		if (evaluationGroups.frozen.groups.has(group)) return "test"
+
+		return evaluationGroups.validation.groups.has(group) ? "val" : "train"
+	}
+
 	if (retention && row.span_tags && retention.protectedShapes.has(shapeKeyOf(row.country, row.span_tags))) {
 		return "train"
 	}
@@ -932,10 +961,17 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
  * of the SHA-256 digest read as a big-endian uint32.
  */
 export function hashBucket(id: string, n: number): number {
-	const digest = createHash("sha256").update(id).digest()
-	const u = digest[0]! * 0x01_00_00_00 + digest[1]! * 0x01_00_00 + digest[2]! * 0x01_00 + digest[3]!
+	return hashUint32(id) % n
+}
 
-	return u % n
+/**
+ * The first four bytes of an id's SHA-256 digest read as a big-endian uint32,
+ * the value {@link hashBucket} reduces and the validation quota orders groups by.
+ */
+export function hashUint32(id: string): number {
+	const digest = createHash("sha256").update(id).digest()
+
+	return digest[0]! * 0x01_00_00_00 + digest[1]! * 0x01_00_00 + digest[2]! * 0x01_00 + digest[3]!
 }
 
 /**

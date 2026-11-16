@@ -18,6 +18,7 @@ import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { postcodeSyntax } from "@mailwoman/postcode/country-formats"
 import { Globerator } from "spliterator/node/fs"
 
+import { LATIN_DISTRICT_BEFORE_LOCALITY_COUNTRIES } from "#tools/dev-tools/codex/latin-district"
 import {
 	COMMA_JOINED_STREET_COUNTRIES,
 	LOCAL_STREET_NODES,
@@ -216,7 +217,13 @@ for (const file of await Globerator.files("json", {
 	// hand-authored table states one order per country and a country whose two scripts
 	// disagree has no way to represent the second there.
 	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {
-		const latin = layoutSource(metadata.lfmt, code, order, usedSlots)
+		let latin = layoutSource(metadata.lfmt, code, order, usedSlots)
+
+		if (latin && LATIN_DISTRICT_BEFORE_LOCALITY_COUNTRIES.has(code)) {
+			usedSlots.add("subregion")
+			latin = latin.replace("${locality}", "${subregion}, ${locality}")
+		}
+
 		const local = layoutSource(metadata.fmt, code, order, usedSlots, true)
 
 		if (latin) {

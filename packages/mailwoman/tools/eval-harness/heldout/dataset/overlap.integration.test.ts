@@ -3,9 +3,26 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
+import { gbOverlayRow } from "@mailwoman/corpus/test-kit"
+import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
+import {
+	buildEvaluationGroupsFile,
+	evaluationGroupsIdentity,
+	readEvaluationGroups,
+} from "@mailwoman/corpus/utils/evaluation-groups"
+import {
+	evaluationGroupPolicy,
+	readValidationGroups,
+	selectValidationGroups,
+	VALIDATION_GROUPS_ATTRIBUTE,
+	validationTarget,
+} from "@mailwoman/corpus/utils/validation-groups"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { readValidationPool } from "#tools/dev-tools/corpus/validation/quota"
 import { buildHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -26,7 +43,7 @@ const evalRow = (sourceID: string, group = sourceID): HeldoutRow => ({
 	group,
 })
 
-const dataset = buildHeldoutDatasetManifest({
+const datasetInput = {
 	datasetID: "heldout-fixture",
 	createdAt: "2026-10-20T00:00:00.000Z",
 	drawnFrom: {
@@ -45,7 +62,9 @@ const dataset = buildHeldoutDatasetManifest({
 	cells: [{ country: "US", kind: "address", available: 4, sampled: 4 }],
 	rows: [evalRow("same"), evalRow("variant-base"), evalRow("held-only"), evalRow("fresh")],
 	rowsFilePath: "fixture.rows.jsonl",
-})
+} satisfies Parameters<typeof buildHeldoutDatasetManifest>[0]
+
+const dataset = buildHeldoutDatasetManifest(datasetInput)
 
 /**
  * Writes one parquet file of `(source, source_id, base_source_id)` rows and returns its row count.
@@ -408,6 +427,139 @@ describe("auditHeldoutOverlap", () => {
 				pathRoot: root,
 			})
 		).rejects.toThrow(/holds 3 rows; .* records 4; refusing a partial read/u)
+	})
+
+	it("finds no frozen group in train or val of a corpus split under the evaluation-group policy", async () => {
+		const parquet = `${root}/policy/part-gb.parquet`
+		const frozenRows = [gbOverlayRow("gb-f1", "Lemon Street", "Truro", "TR1 2LS")]
+
+		const rows = [
+			...frozenRows,
+			// A case variant of the frozen base row, and two rendered rows of one frozen record.
+			{ ...gbOverlayRow("gb-f1+case-lower", "lemon street", "truro", "tr1 2ls"), base_source_id: "gb-f1" },
+			gbOverlayRow("gb-r#a", "Boscawen Street", "Truro", "TR1 2QQ"),
+			gbOverlayRow("gb-r#b", "Boscawen St", "Truro", "TR1 2QQ"),
+			// Rows of the same held-out place outside the frozen groups, and rows elsewhere.
+			...Array.from({ length: 40 }, (_, index) =>
+				gbOverlayRow(`gb-p${index}`, `${index} River Street`, "Truro", "TR1 2QE")
+			),
+			gbOverlayRow("gb-l1", "Hope Street", "Liverpool", "L1 9BP"),
+		]
+
+		await makeDirectories(`${root}/policy`)
+		await writeParquetFile(rows, parquet, { extractHash: "fixture", codeHash: "fixture", config: {} })
+
+		const frozen = buildHeldoutDatasetManifest({
+			...datasetInput,
+			datasetID: "heldout-frozen",
+			rows: [
+				{ ...evalRow("gb-f1"), source: "rendered-gb-os-open", country: "GB" },
+				{ ...evalRow("gb-r#a", "gb-r"), source: "rendered-gb-os-open", country: "GB" },
+			],
+		})
+
+		const groupsFile = `${root}/policy/groups.json`
+
+		await writeLocalJSONFile(
+			buildEvaluationGroupsFile({
+				drawnFrom: { corpusVersion: "v-policy-base", sha256: "a".repeat(64) },
+				datasets: [
+					{
+						datasetID: frozen.datasetID,
+						version: frozen.version,
+						manifestSHA256: "b".repeat(64),
+						rows: frozen.rows.length,
+						groups: frozen.rows.map((entry) => entry.group),
+					},
+				],
+			}),
+			groupsFile
+		)
+
+		// Writes a one-file corpus manifest for a split of the fixture, with absolute paths.
+		const writeManifest = async (name: string, split: { attribute: string }) => {
+			const manifest = `${root}/${name}/MANIFEST.json`
+
+			await writeLocalJSONFile(
+				{
+					corpus_version: `v-${name}`,
+					files: [
+						{
+							path: parquet,
+							rows: rows.length,
+							sha256: await sha256File(parquet),
+							split_attribute: { path: split.attribute, sha256: await sha256File(split.attribute) },
+						},
+					],
+				},
+				manifest
+			)
+
+			return manifest
+		}
+
+		// The holdout policy's split is the pool the quota draws its validation groups from.
+		const base = await writeManifest(
+			"policy-base",
+			await splitOverlaySlice({ input: parquet, outputDir: `${root}/policy-base` })
+		)
+
+		const frozenGroups = await readEvaluationGroups(groupsFile)
+		const quota = { margin: 2, minimumRows: 5, capRows: 20 }
+		const pool = await readValidationPool({ manifest: base, frozen: frozenGroups, capRows: quota.capRows })
+		const chosen = selectValidationGroups(pool.candidates, () => validationTarget(undefined, quota), quota)
+		const validationFile = `${root}/policy/validation.json`
+
+		await writeLocalJSONFile(
+			{
+				attribute: VALIDATION_GROUPS_ATTRIBUTE,
+				drawnFrom: { manifest: base, sha256: await sha256File(base), corpusVersion: "v-policy-base" },
+				config: { path: "fixture.yaml", sha256: "c".repeat(64) },
+				evaluationGroups: evaluationGroupsIdentity(frozenGroups),
+				quota,
+				countries: chosen.countries,
+				groups: chosen.groups,
+			},
+			validationFile
+		)
+
+		// The quota takes the lowest-hash held-out groups outside the frozen list, and no frozen group.
+		expect(chosen.countries.GB).toMatchObject({ rows: 5, exhausted: false })
+		expect(chosen.groups.some((group) => frozenGroups.groups.has(group))).toBe(false)
+
+		const policy = evaluationGroupPolicy(frozenGroups, await readValidationGroups(validationFile))
+
+		const audit = async (name: string, evaluationGroups: typeof policy) => {
+			const split = await splitOverlaySlice({ input: parquet, outputDir: `${root}/${name}`, evaluationGroups })
+			const manifest = await writeManifest(name, split)
+			const card = await writeCard(name, `v-${name}`)
+
+			return {
+				split,
+				result: await auditHeldoutOverlap({ dataset: frozen, corpora: [manifest], modelCards: [card], pathRoot: root }),
+			}
+		}
+
+		const held = await audit("policy-held", policy)
+
+		expect(held.split.counts).toEqual({ train: rows.length - 9, val: 5, test: 4 })
+
+		expect(held.result.audit.counts).toEqual({
+			verified_unseen: 2,
+			unseen_by_candidate: 0,
+			known_overlap: 0,
+			unknown: 0,
+		})
+
+		// The negative control: a frozen list missing one group lets that group's
+		// rows reach training, and the audit finds them.
+		const leaked = await audit("policy-leaked", {
+			...policy,
+			frozen: { ...frozenGroups, groups: new Set(["gb-f1"]) },
+		})
+
+		expect(leaked.result.audit.counts.known_overlap).toBe(1)
+		expect(leaked.result.rows["rendered-gb-os-open:gb-r#a"]).toMatchObject({ provenance: "known_overlap" })
 	})
 
 	it("refuses a partial read: a listed file that is missing", async () => {

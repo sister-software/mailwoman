@@ -160,6 +160,14 @@
 		{
 			"id": 39,
 			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality locality"
+		},
+		{
+			"id": 40,
+			"key": "postcode region subregion locality dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit)"
+		},
+		{
+			"id": 41,
+			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality subregion locality region postcode"
 		}
 	],
 	"members": [
@@ -1161,12 +1169,12 @@
 		{
 			"country": "TW",
 			"script": "local",
-			"system": 29
+			"system": 40
 		},
 		{
 			"country": "TW",
 			"script": "latin",
-			"system": 11
+			"system": 41
 		},
 		{
 			"country": "TZ",

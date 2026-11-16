@@ -7,6 +7,7 @@
  *   a note naming a campus or hospital, and a list of numbers before one 號.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
@@ -60,6 +61,27 @@ describe("Chunghwa Post structure records", () => {
 			street: "中央西路2段",
 			house_number: "271、273號",
 		})
+	})
+
+	it("renders an office through the codex layout with its district, unseparated, and the venue set off after it", async () => {
+		const [beimen] = await readRecords()
+		const row = formatAddressRow({ ...beimen!.address!, venue: beimen!.name! }, "TW", { singleLine: true })
+
+		expect(row).toMatchObject({
+			raw: "10044臺北市中正區忠孝西路一段120號1樓 臺北北門郵局",
+			unplaced: [],
+			script: "local",
+		})
+	})
+
+	it("places every component of every office the layout renders", async () => {
+		for (const record of await readRecords()) {
+			const components = { ...record.address!, venue: record.name! }
+			const row = formatAddressRow(components, "TW", { singleLine: true })!
+
+			expect(row.unplaced, record.id).toEqual([])
+			expect(row.components, record.id).toEqual(components)
+		}
 	})
 
 	it("never splits inside a section or lane number", () => {
