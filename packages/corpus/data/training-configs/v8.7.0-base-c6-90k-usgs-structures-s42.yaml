@@ -41,22 +41,25 @@
 # 5. `train.output_dir` and `train.trackio_run_name` name the run.
 #
 # The corpus is /data/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay. Its
-# MANIFEST.json has sha256 ec97e8a007d0c79cb6ac60a7a9d4e5ac15ad4bd1696a0fa5a64b389f25f16367. It is the overlay
+# MANIFEST.json has sha256 26eb4ec63dfd9d9032c5ae58464fdee6c2c6152bd7177634ec74f85430c7e12f. It is the overlay
 # v0.8.19-overlay (packages/corpus/data/builds/v0.8.19-overlay/OVERLAY_PLAN.json) on v0.8.18-retention-overlay: the
 # 14 v0.8.18 sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds are replaced by the rebuild's
-# files, and this source, fr-laposte-poincont, nc-opt-agences and the four registers are added. Its split is the
+# files, and this source, fr-laposte-poincont, nc-opt-agences and the four registers are added. The rebuild's cordis
+# and gleif-lei label a repetition index after the number as part of the house number (`20 BIS` and `RUE LOUIS
+# PHILIPPE`, as BAN labels it). That relabels their rows in FR, MC, MU, NC, TN and VN and admits 20 cordis and 313
+# gleif-lei rows the earlier split refused. Its split is the
 # evaluation-group policy (HOLDOUT_AND_EVALUATION section 4.6). `validation/quota.run.ts --config <this file>` over the
 # overlay manifest chose 15,365 validation groups (24,012 rows in 247 countries), and `resplit.run.ts --evaluation-groups
 # packages/corpus/data/holdout/evaluation-groups.v0.8.18.json --validation-groups <that list>` sent the frozen groups'
-# rows to test, the chosen groups to val, and every other row to train: 886,877,786 train, 24,245 val and 221,680 test
-# rows of 887,123,711. The overlap audit finds none of heldout-dev-v0.8.18's 86,845 rows or heldout-confirm-v0.8.18's
+# rows to test, the chosen groups to val, and every other row to train: 886,878,119 train, 24,245 val and 221,680 test
+# rows of 887,124,044. The overlap audit finds none of heldout-dev-v0.8.18's 86,845 rows or heldout-confirm-v0.8.18's
 # 33,402 rows in train or val. The frozen source record is
 # packages/corpus/data/training-manifests/v0.8.19-retention-overlay.json.
 #
 # The validation floors. `required_validation_coverage` keeps its declared floors: the quota sizes val from them, and
 # every one is met on the re-split (GB 2,139 rows, FR 2,003, DE 2,026, US 2,003). NG keeps its whole pool of 58 rows
 # with 27 street rows, PF 105 with 105 and CN 178 with 62. `required_validation_label_support` is re-derived from the
-# re-split by its own rule, half of each label's rows in the val draw, rounded down. The draw is the 22,208 val rows
+# re-split by its own rule, half of each label's rows in the val draw, rounded down. The draw is the 22,210 val rows
 # `country_weights` and the source weights admit.
 #
 # Run shape: from scratch, with no `train.init_from`. Why: a fine-tune can't introduce a source the base never saw.
@@ -639,16 +642,16 @@ data:
   # street_prefix 2,712, street_suffix 1,774, unit 401. dependent_locality 1,651, subregion 596 and po_box 52 take no
   # floor, as the v0.8.2 floors set none for them.
   required_validation_label_support:
-    - {label: postcode, split: val, min_rows: 7676}
-    - {label: locality, split: val, min_rows: 9651}
-    - {label: street, split: val, min_rows: 8377}
-    - {label: house_number, split: val, min_rows: 7654}
-    - {label: region, split: val, min_rows: 2811}
+    - {label: postcode, split: val, min_rows: 7677}
+    - {label: locality, split: val, min_rows: 9650}
+    - {label: street, split: val, min_rows: 8379}
+    - {label: house_number, split: val, min_rows: 7656}
+    - {label: region, split: val, min_rows: 2810}
     - {label: street_suffix, split: val, min_rows: 887}
-    - {label: street_prefix, split: val, min_rows: 1356}
-    - {label: venue, split: val, min_rows: 2021}
-    - {label: unit, split: val, min_rows: 200}
-    - {label: country, split: val, min_rows: 1421}
+    - {label: street_prefix, split: val, min_rows: 1353}
+    - {label: venue, split: val, min_rows: 2018}
+    - {label: unit, split: val, min_rows: 201}
+    - {label: country, split: val, min_rows: 1422}
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row

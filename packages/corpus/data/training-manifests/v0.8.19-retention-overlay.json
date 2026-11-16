@@ -2,7 +2,7 @@
 	"manifestID": "corpus-training-manifest",
 	"schemaVersion": 1,
 	"corpusVersion": "v0.8.19-retention-overlay",
-	"builtAt": "2026-11-15T20:58:51.182Z",
+	"builtAt": "2026-11-16T06:13:20.150Z",
 	"profile": "exploratory",
 	"sources": [
 		{
@@ -143,7 +143,7 @@
 		},
 		{
 			"source": "gleif-lei",
-			"rows": 7212580,
+			"rows": 7212893,
 			"license": "CC0-1.0",
 			"decision": {
 				"licenseID": "unchecked-national-terms-ch-global-legal-entity-identifier-foundation-gle",
@@ -355,7 +355,7 @@
 		},
 		{
 			"source": "cordis",
-			"rows": 301748,
+			"rows": 301768,
 			"license": "CC-BY-4.0",
 			"decision": {
 				"licenseID": "unchecked-national-terms-lu-publications-office-of-the-european-union",
@@ -4548,6 +4548,6 @@
 		}
 	],
 	"refused": {},
-	"totalRows": 887123711,
-	"contentDigest": "7a49227302610703aa75f1c43c0d9da91509a70406da37bc1cd7e0012791fe82"
+	"totalRows": 887124044,
+	"contentDigest": "260f5835c19a8c80edccc2345072611275a53e010741fae32dbe0ef3e5949831"
 }

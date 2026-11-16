@@ -4,13 +4,13 @@
 	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.18-retention-overlay/corpus-v0.8.18-retention-overlay/MANIFEST.json",
 	"modalRoot": "/data/corpus/versioned/v0.8.19-overlay/corpus-v0.8.19-overlay",
 	"note": "v0.8.18-retention-overlay with the 14 sources packages/corpus/data/builds/v0.8.19-rebuild/inputs.json rebuilds replaced by the v0.8.19 rebuild's files, plus usgov-usgs-structures, fr-laposte-poincont, nc-opt-agences, es-sanidad-centros-ap, it-miur-scuole, au-acnc-register and nz-charities-register. The rebuild's val and test files carry split attributes under the base holdout policy; its train files are train.",
-	"appliedAt": "2026-11-15T20:58:51.182Z",
+	"appliedAt": "2026-11-16T06:13:20.150Z",
 	"files": [
 		{
-			"parquet": "au-acnc-register-547abab258d20566ba508d7c5087e32eca0a75ed1dc2b603a0f7e4b81009dfff.parquet",
+			"parquet": "au-acnc-register-5bd3109505f362341696d8b541a0f447b92ceb108876bf871b2c9cde22560f0d.parquet",
 			"source": "au-acnc-register",
 			"splitAttribute": {
-				"path": "au-acnc-register-547abab258d20566ba508d7c5087e32eca0a75ed1dc2b603a0f7e4b81009dfff.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "au-acnc-register-5bd3109505f362341696d8b541a0f447b92ceb108876bf871b2c9cde22560f0d.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -23,18 +23,18 @@
 			}
 		},
 		{
-			"parquet": "cordis-ba9971d8fc220d3ecfad5426fa2d824c4d2d5c3f2beceb5c23fd270ac8ee9158.parquet",
+			"parquet": "cordis-ecadbc761c8ac4f9f9cfcec5c99b53f5827de2a6c8f7a4614a1cc188e1e527e8.parquet",
 			"source": "cordis",
 			"splitAttribute": {
-				"path": "cordis-ba9971d8fc220d3ecfad5426fa2d824c4d2d5c3f2beceb5c23fd270ac8ee9158.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "cordis-ecadbc761c8ac4f9f9cfcec5c99b53f5827de2a6c8f7a4614a1cc188e1e527e8.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
 		{
-			"parquet": "es-sanidad-centros-ap-1195b6fbdffbd90c0f92bf2f689fec235d2f249ae575a99db10b0441d2861dcf.parquet",
+			"parquet": "es-sanidad-centros-ap-712300bf39242773909726cab0a04f04755470646063912f0972e24e9522586a.parquet",
 			"source": "es-sanidad-centros-ap",
 			"splitAttribute": {
-				"path": "es-sanidad-centros-ap-1195b6fbdffbd90c0f92bf2f689fec235d2f249ae575a99db10b0441d2861dcf.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "es-sanidad-centros-ap-712300bf39242773909726cab0a04f04755470646063912f0972e24e9522586a.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -55,18 +55,18 @@
 			}
 		},
 		{
-			"parquet": "gleif-lei-99c557cb524416380005b128b6235c5d7c6562f016d66d4ade491ca9387e7f6a.parquet",
+			"parquet": "gleif-lei-4cb2e6e5aa1a6f5d933732e42d3b8d9c7da95889809d5d348333b0299d7990fa.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": {
-				"path": "gleif-lei-99c557cb524416380005b128b6235c5d7c6562f016d66d4ade491ca9387e7f6a.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "gleif-lei-4cb2e6e5aa1a6f5d933732e42d3b8d9c7da95889809d5d348333b0299d7990fa.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
 		{
-			"parquet": "it-miur-scuole-64011dd590b8c4e6b638da455fd37942b90ee1d98e7ba070bd0b1ceb10f6010a.parquet",
+			"parquet": "it-miur-scuole-43ce2a3ccc1a918cbe8bc67b10bd2e53cdd5752566dbb41c21172a116931d30a.parquet",
 			"source": "it-miur-scuole",
 			"splitAttribute": {
-				"path": "it-miur-scuole-64011dd590b8c4e6b638da455fd37942b90ee1d98e7ba070bd0b1ceb10f6010a.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "it-miur-scuole-43ce2a3ccc1a918cbe8bc67b10bd2e53cdd5752566dbb41c21172a116931d30a.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -79,10 +79,10 @@
 			}
 		},
 		{
-			"parquet": "nz-charities-register-0a5dc4f9045e1f239123618bfe2a1eb92862f36fdccdc44d3f8b56aa502a6fe5.parquet",
+			"parquet": "nz-charities-register-1db2792278e2136b6ee8c390f2ad5f458e67ca9996942afe7a98918285ed0aae.parquet",
 			"source": "nz-charities-register",
 			"splitAttribute": {
-				"path": "nz-charities-register-0a5dc4f9045e1f239123618bfe2a1eb92862f36fdccdc44d3f8b56aa502a6fe5.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "nz-charities-register-1db2792278e2136b6ee8c390f2ad5f458e67ca9996942afe7a98918285ed0aae.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -183,7 +183,7 @@
 			}
 		},
 		{
-			"parquet": "au-acnc-register-b9959692aee474a9f1641af5a2b4351b063fb0e2d3653b5228d48a5b154d4a2d.parquet",
+			"parquet": "au-acnc-register-0e02b552716afdb9ad365787cd5ad2aefb83f08f02ca5436c65180076668b383.parquet",
 			"source": "au-acnc-register",
 			"splitAttribute": null
 		},
@@ -898,12 +898,12 @@
 			"splitAttribute": null
 		},
 		{
-			"parquet": "cordis-2447247ca5cab59ef1de984a5b8622949e6c0eb46c9055d5d14994c837eadd65.parquet",
+			"parquet": "cordis-dc9b112f2d3a53e1511a9e97fa5023e17697e1012ed9505ae347ab8c355cc08b.parquet",
 			"source": "cordis",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "es-sanidad-centros-ap-22a47418da3261a69991f5e6fcf1820461ffb65036b6d36d54dd512e50947517.parquet",
+			"parquet": "es-sanidad-centros-ap-6b1a75304518f58e61989915184833c5311ac7f343f67ca011533ab6aa0cc3d4.parquet",
 			"source": "es-sanidad-centros-ap",
 			"splitAttribute": null
 		},
@@ -923,47 +923,47 @@
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-287a652cde471eef272273d2ee043a1154402fd974ca9c81758750bb0bf789df.parquet",
+			"parquet": "gleif-lei-267c412cea8f330983ba8b1e44a92413bcdbb1abf20ae90af30343064f99fd4d.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-700593b765d7b28d4e28a280b757758fc5985739ed52ded0100668ac68a4a258.parquet",
+			"parquet": "gleif-lei-2d4e8bc0a8f202f84dd463abd648abdd48750b1689866690b5eff53b83bd6052.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-728f6f0edf4f29336b3c66cb2b96ae1f9d5fcc0cd5627ac2dc8180ad878d28c6.parquet",
+			"parquet": "gleif-lei-53837f92c4d8f7e45ca40b037fc50c4c0239243f388f6f77b72321f6c35d8581.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-78e6eeb21149208f2a91020fad1a06de5473bece37728843bdeb66cf73462186.parquet",
+			"parquet": "gleif-lei-85a3cadf1ad46eec08f560bc81f519e55db36584c27da1b7d1db9af6524bada9.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-99df1b62fe73eb97e3418331437ab0b69b65c83b4e4d3ccb12bcbadcdb69d99b.parquet",
+			"parquet": "gleif-lei-a87307dc2434485e036a5c34c4cb6d88f50166f1dc26126fc262199dee4b577a.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-c3ac56d763a56d39185506466e96223696b46fcade58ae7d168a307970d3ee3f.parquet",
+			"parquet": "gleif-lei-b44e643ea18ea635bd9df66fa1ac80537ab4100be55240e8f71c0f7343dfe266.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-cfd88e22e26032d6c45ed0a2ad75782f6039f0990b55f3e67477144556d309a3.parquet",
+			"parquet": "gleif-lei-c3ccd32eb0035e3d7e92901c837078c5a78760063f49255fba34ef303792258b.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "gleif-lei-ea7b7c9ebd868b72133beb2cc38aeb0082d0476068ac80f43a7405b2c6836e33.parquet",
+			"parquet": "gleif-lei-cba3a2fcc5744bc7dd231c664442a0546e8918fdb5faee135f93361348758ca7.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": null
 		},
 		{
-			"parquet": "it-miur-scuole-b60f957260ba32c7b0cf412c795f7e06412182127776f9e3dc14c70ecafecb5a.parquet",
+			"parquet": "it-miur-scuole-ccfe2811d51bb156290bb6a452ad1b112c8719a2e17f371a47d490c4442a277f.parquet",
 			"source": "it-miur-scuole",
 			"splitAttribute": null
 		},
@@ -973,7 +973,7 @@
 			"splitAttribute": null
 		},
 		{
-			"parquet": "nz-charities-register-a5c0b13fce5d904a15b22209f238b70eeda36bc86caf9034445c8bafca018109.parquet",
+			"parquet": "nz-charities-register-233dd99dcba01b3b2a997fca338150f68528becae3fd039cf3269f92553bd13c.parquet",
 			"source": "nz-charities-register",
 			"splitAttribute": null
 		},
@@ -4583,10 +4583,10 @@
 			"splitAttribute": null
 		},
 		{
-			"parquet": "au-acnc-register-d97b01926e318dfcffc370ac3e2b3cb68f55bbd8c0095a5e130efaf978de8d90.parquet",
+			"parquet": "au-acnc-register-f6bafdc031d9cabfcac052d5d1a46d2a1a39a6a7ff6438fc93367a336db8ad4a.parquet",
 			"source": "au-acnc-register",
 			"splitAttribute": {
-				"path": "au-acnc-register-d97b01926e318dfcffc370ac3e2b3cb68f55bbd8c0095a5e130efaf978de8d90.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "au-acnc-register-f6bafdc031d9cabfcac052d5d1a46d2a1a39a6a7ff6438fc93367a336db8ad4a.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -4599,18 +4599,18 @@
 			}
 		},
 		{
-			"parquet": "cordis-98b2f87f94c9f56a0d21acb18ea9d479b4b6d12efc8e57d5c62004d0afad3f39.parquet",
+			"parquet": "cordis-f80928511445ae1cbc66f4b288e8e016190fb6bf1c3dd620c55cc0bb4c9f7fa3.parquet",
 			"source": "cordis",
 			"splitAttribute": {
-				"path": "cordis-98b2f87f94c9f56a0d21acb18ea9d479b4b6d12efc8e57d5c62004d0afad3f39.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "cordis-f80928511445ae1cbc66f4b288e8e016190fb6bf1c3dd620c55cc0bb4c9f7fa3.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
 		{
-			"parquet": "es-sanidad-centros-ap-a794549b3f20a4788a76d5e8bf4423a67dc983dbee3a6b23419f64dbab60edd4.parquet",
+			"parquet": "es-sanidad-centros-ap-dc863450ba887f49718527e2b98f4faf67d03e597227c70b83cea6a9981e0bef.parquet",
 			"source": "es-sanidad-centros-ap",
 			"splitAttribute": {
-				"path": "es-sanidad-centros-ap-a794549b3f20a4788a76d5e8bf4423a67dc983dbee3a6b23419f64dbab60edd4.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "es-sanidad-centros-ap-dc863450ba887f49718527e2b98f4faf67d03e597227c70b83cea6a9981e0bef.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -4631,18 +4631,18 @@
 			}
 		},
 		{
-			"parquet": "gleif-lei-cc33b083dc981ecfa2eaf0cb60b705114fdf4e9d06f708521e2f33113531a093.parquet",
+			"parquet": "gleif-lei-59e063a67ad2ef1e6b4527a17ab7a4c2d0b2670416eae8f20ecee607744cf164.parquet",
 			"source": "gleif-lei",
 			"splitAttribute": {
-				"path": "gleif-lei-cc33b083dc981ecfa2eaf0cb60b705114fdf4e9d06f708521e2f33113531a093.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "gleif-lei-59e063a67ad2ef1e6b4527a17ab7a4c2d0b2670416eae8f20ecee607744cf164.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
 		{
-			"parquet": "it-miur-scuole-5504903a1912e2c02a5fdb47c75ff84e706563e508ab4fe98cffa76b96c4bf73.parquet",
+			"parquet": "it-miur-scuole-faa4e413c76eab94fc84436faa145acca0727dfb1a704f2df8d93ea9534eca41.parquet",
 			"source": "it-miur-scuole",
 			"splitAttribute": {
-				"path": "it-miur-scuole-5504903a1912e2c02a5fdb47c75ff84e706563e508ab4fe98cffa76b96c4bf73.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "it-miur-scuole-faa4e413c76eab94fc84436faa145acca0727dfb1a704f2df8d93ea9534eca41.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
@@ -4655,10 +4655,10 @@
 			}
 		},
 		{
-			"parquet": "nz-charities-register-d68291f244b37685362c9037f78c1557bd1d7875bdf5e17cc961ce0c28135aac.parquet",
+			"parquet": "nz-charities-register-c9bfcb91a7a8882dfd3f32b7304b4419a9ed2b0ca70d987e4d58141ef636731d.parquet",
 			"source": "nz-charities-register",
 			"splitAttribute": {
-				"path": "nz-charities-register-d68291f244b37685362c9037f78c1557bd1d7875bdf5e17cc961ce0c28135aac.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
+				"path": "nz-charities-register-c9bfcb91a7a8882dfd3f32b7304b4419a9ed2b0ca70d987e4d58141ef636731d.split.1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b.json",
 				"policyHash": "1136f180cb56415e0250ee807ea6b0ace4a24bf78bd5719747a081e4186b430b"
 			}
 		},
