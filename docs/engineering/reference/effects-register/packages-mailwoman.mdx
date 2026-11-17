@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 385 of the group's 761 library and tool modules.
+This page lists 387 of the group's 763 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -2949,6 +2949,20 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `workingTreeStatus`         | `unresolved (identifier)` | 1     |
 | write | `makeDirectories`           | `unresolved (other)`      | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (template)`   | 1     |
+
+## `packages/mailwoman/tools/eval-harness/heldout/probes/build.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 10 times
+- `awaits at module scope`, 4 times
+
+## `packages/mailwoman/tools/eval-harness/heldout/probes/build.ts`
+
+| Kind  | Interface            | Target                    | Calls |
+| ----- | -------------------- | ------------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/invariance/fixtures.ts`
 
