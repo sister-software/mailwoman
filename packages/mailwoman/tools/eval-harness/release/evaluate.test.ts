@@ -388,6 +388,7 @@ describe("evaluateReleaseSpec", () => {
 					select: { kinds: ["address"] },
 					maxLoss: 0.01,
 					maxLossReason: "t",
+					sameModelAdmitted: ["verified_unseen", "known_overlap"],
 				},
 			],
 		})
@@ -414,6 +415,43 @@ describe("evaluateReleaseSpec", () => {
 		expect(lost.outcome).toBe(ReleaseOutcome.Fail)
 	})
 
+	it("reads a geocode requirement's same-model classes when both arms carry one model, and the comparative ones otherwise", () => {
+		const requirement = {
+			id: "geocode",
+			kind: "geocode" as const,
+			task: "t",
+			metric: "geocode_outcome" as const,
+			reason: "t",
+			countries: ["US"],
+			maxLoss: 0.01,
+			maxLossReason: "t",
+			sameModelAdmitted: ["verified_unseen" as const, "known_overlap" as const],
+		}
+
+		const oneModel = baseSpec({
+			requirements: [requirement],
+			identities: { ...baseSpec().identities, candidate: { description: "c", sha256: PUBLISHED } },
+		})
+
+		// The resolver change fixes 40 rows the model trained on.
+		const rows = geocodedFor("US", 2000, 1500, 1540).map((row, i) => ({
+			...row,
+			provenance: i < 1000 ? ("verified_unseen" as const) : ("known_overlap" as const),
+		}))
+
+		const same = check(evaluate(oneModel, rows, { published: PUBLISHED, candidate: PUBLISHED }), "geocode")
+
+		expect(same.admitted).toEqual(["verified_unseen", "known_overlap"])
+		expect(same.rows).toBe(2000)
+		expect(same.estimate).toBeCloseTo(40 / 2000, 10)
+
+		const different = check(evaluate(baseSpec({ requirements: [requirement] }), rows, artifacts), "geocode")
+
+		expect(different.admitted).toEqual(["verified_unseen"])
+		expect(different.rows).toBe(1000)
+		expect(different.estimate).toBe(0)
+	})
+
 	it("reports a geocode requirement insufficient when a selected row carries no geocode outcome", () => {
 		const spec = baseSpec({
 			requirements: [
@@ -426,6 +464,7 @@ describe("evaluateReleaseSpec", () => {
 					countries: ["US"],
 					maxLoss: 0.01,
 					maxLossReason: "t",
+					sameModelAdmitted: ["verified_unseen"],
 				},
 			],
 		})

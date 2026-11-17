@@ -171,6 +171,10 @@ export interface CheckResult {
 	check: "minimum" | "max_loss" | "objective"
 	method: BoundMethod
 	threshold: number | null
+	/**
+	 * The provenance classes the check read.
+	 */
+	admitted: readonly HeldoutProvenance[]
 	rows: number
 	groups: number
 	estimate: number | null
@@ -533,6 +537,7 @@ interface CheckPlan {
 	id: string
 	check: CheckResult["check"]
 	threshold: number | null
+	admitted: readonly HeldoutProvenance[]
 	/**
 	 * The admitted rows this check kind reads; `rowIndices` and the strata index into it.
 	 */
@@ -653,21 +658,30 @@ export function evaluateReleaseSpec(
 		return { indices, missingCountries }
 	}
 
-	const geocodeRows = asGeocodeRows(rowsFor.comparative)
+	// Two arms with one model differ only after the parse.
+	// A row that model trained on favors neither arm, so a geocode check
+	// then reads its sameModelAdmitted classes.
+	const sameModel = artifacts.published === artifacts.candidate
 
 	for (const req of spec.requirements) {
 		if (req.kind === "geocode") {
+			const admitted = sameModel
+				? pairedRows.filter((row) => req.sameModelAdmitted.includes(row.provenance))
+				: rowsFor.comparative
+
+			const geocodeRows = asGeocodeRows(admitted)
 			// A geocode check reads ordinary address rows, as the objective does, so it leaves the probes out.
-			const selection = selectIndices(rowsFor.comparative, { ...req.select, countries: req.countries }, true)
+			const selection = selectIndices(admitted, { ...req.select, countries: req.countries }, true)
 			// The bounds read only geocoded rows.
 			// An ungraded selected row makes the check insufficient.
-			const graded = selection.indices.filter((i) => rowsFor.comparative[i]!.geocode != null)
+			const graded = selection.indices.filter((i) => admitted[i]!.geocode != null)
 			const ungraded = selection.indices.length - graded.length
 
 			plans.push({
 				id: req.id,
 				check: "max_loss",
 				threshold: req.maxLoss == null ? null : -req.maxLoss,
+				admitted: sameModel ? req.sameModelAdmitted : spec.provenance.admitted.comparative,
 				rows: geocodeRows,
 				rowIndices: graded,
 				missingCountries: req.countries.filter((country) => !graded.some((i) => geocodeRows[i]!.country === country)),
@@ -694,6 +708,7 @@ export function evaluateReleaseSpec(
 			id: req.id,
 			check: "minimum",
 			threshold: req.minimum,
+			admitted: spec.provenance.admitted.minimum,
 			rows: rowsFor.minimum,
 			rowIndices: minimum.indices,
 			missingCountries: minimum.missingCountries,
@@ -708,6 +723,7 @@ export function evaluateReleaseSpec(
 				id: req.id,
 				check: "max_loss",
 				threshold: -req.maxLoss,
+				admitted: spec.provenance.admitted.comparative,
 				rows: rowsFor.comparative,
 				rowIndices: comparative.indices,
 				missingCountries: comparative.missingCountries,
@@ -730,6 +746,7 @@ export function evaluateReleaseSpec(
 		id: "objective",
 		check: "objective",
 		threshold: spec.objective.minimumImprovement,
+		admitted: spec.provenance.admitted.comparative,
 		rows: rowsFor.comparative,
 		rowIndices: objective.indices,
 		missingCountries: objective.missingCountries,
@@ -847,6 +864,7 @@ export function evaluateReleaseSpec(
 			check: plan.check,
 			method: plan.check === "minimum" ? BoundMethod.ClopperPearson : BoundMethod.ClusterRobustT,
 			threshold: plan.threshold,
+			admitted: plan.admitted,
 			rows: plan.rowIndices.length,
 			groups: independentUnits(rows, plan.rowIndices).length,
 			estimate,

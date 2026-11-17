@@ -150,6 +150,13 @@ describe("validateReleaseSpec", () => {
 			/registers no minimum/u
 		)
 
+		expect(() =>
+			validateReleaseSpec({
+				...spec,
+				requirements: [{ ...geocode, sameModelAdmitted: ["verified_unseen", "unknown"] }],
+			})
+		).toThrow(/admits unknown/u)
+
 		const postalUnit = spec.requirements.find((req) => req.id === "postal_unit")!
 
 		expect(() =>

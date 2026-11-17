@@ -150,6 +150,13 @@ export interface GeocodeRequirement {
 	 */
 	maxLoss: number | null
 	maxLossReason: string
+	/**
+	 * The provenance classes the check reads when both arms' `model.onnx` sha256 are equal.
+	 *
+	 * Those arms differ only after the parse, so a row the one model trained on favors neither arm.
+	 * Otherwise the check reads `provenance.admitted.comparative`.
+	 */
+	sameModelAdmitted: HeldoutProvenance[]
 }
 
 export type ReleaseRequirement = CountryRequirement | CapabilityRequirement | GeocodeRequirement
@@ -518,6 +525,11 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 
 			finite(req.maxLoss, `${path}.maxLoss`, 0, 1, true)
 			string(req.maxLossReason, `${path}.maxLossReason`)
+			stringList(req.sameModelAdmitted, `${path}.sameModelAdmitted`, HELDOUT_PROVENANCE_CLASSES)
+
+			if ((req.sameModelAdmitted as string[]).includes("unknown")) {
+				fail(`${path}.sameModelAdmitted`, "admits unknown, whose rows carry no recorded history")
+			}
 
 			continue
 		}

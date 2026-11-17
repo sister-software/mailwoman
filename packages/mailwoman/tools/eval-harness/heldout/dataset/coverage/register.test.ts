@@ -167,6 +167,7 @@ describe("buildCoverageRegister", () => {
 						id: "us",
 						check: "minimum",
 						threshold: null,
+						admitted: ["verified_unseen"],
 						rows: 3,
 						groups: 2,
 						estimate: 1,

@@ -3,34 +3,34 @@
 	"datasets": [
 		{
 			"datasetID": "heldout-dev-v0.8.18",
-			"version": "00c4698a7fdc6edf",
+			"version": "adeeef40d7d81a7c",
 			"drawnFrom": {
 				"corpusVersion": "0.8.18-retention-overlay",
 				"sha256": "2241efda2892634dc8b4b50ceddef6708680b95adf38055f2ae020a5d236a9d0"
 			},
-			"manifestSHA256": "90afa087d2b9763df7fccb81ec09f26e0cd1bf0442d0834194b863f954c5b929",
+			"manifestSHA256": "5cc49dc70f7913a6fd9e07f15797278e013591064f9694ec8bcb668493787f00",
 			"rows": 86845,
 			"groups": 60188
 		},
 		{
 			"datasetID": "heldout-confirm-v0.8.18",
-			"version": "8606834b12100089",
+			"version": "681959088a46e5c6",
 			"drawnFrom": {
 				"corpusVersion": "0.8.18-retention-overlay",
 				"sha256": "2241efda2892634dc8b4b50ceddef6708680b95adf38055f2ae020a5d236a9d0"
 			},
-			"manifestSHA256": "311e70431535fbbb5b8baa5906c31ae6b8dea5577dea5c4c944b4a6194d3fb84",
+			"manifestSHA256": "3307b8eb2a313afdb464728b4a02004b8e24d29f6fc2318e609aa4864d383a78",
 			"rows": 33402,
 			"groups": 30298
 		},
 		{
 			"datasetID": "heldout-dev-v0.8.19-probes-r2",
-			"version": "c6ff3a6a1bc8aab7",
+			"version": "dd560a53b897dbca",
 			"drawnFrom": {
 				"corpusVersion": null,
 				"sha256": "627621b0c0d7ccef6fabe28f70076395fed38f1810d805287714e07a9f7ffc78"
 			},
-			"manifestSHA256": "3c9298856b73a11fea40a47eb035d26f90aeed4f750f07ed755366f2643c3aa8",
+			"manifestSHA256": "d3f015f5112afffb56d7e423f6e0af8558528a13a05944d24c6be1b6c334fa43",
 			"rows": 5000,
 			"groups": 5000
 		},
