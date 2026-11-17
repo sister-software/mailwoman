@@ -239,12 +239,16 @@ excluded and drawn counts equal r1's.
 
 | Set                                 | Version            |  Rows | Rows sha256                                                        |
 | ----------------------------------- | ------------------ | ----: | ------------------------------------------------------------------ |
-| `heldout-dev-v0.8.19-probes-r2`     | `35918b253d662895` | 5,000 | `a51eb9139eb8e05ba7d4ef0d4173239df3aea6a262d75ce70f8e50e62cf30bb4` |
-| `heldout-confirm-v0.8.19-probes-r2` | `5a8309844bcc2ee3` | 5,000 | `fc64da35dcae86d386268da7b08d1626d00cdd557f93b25373ed46a4e59e84a4` |
+| `heldout-dev-v0.8.19-probes-r2`     | `c6ff3a6a1bc8aab7` | 5,000 | `a51eb9139eb8e05ba7d4ef0d4173239df3aea6a262d75ce70f8e50e62cf30bb4` |
+| `heldout-confirm-v0.8.19-probes-r2` | `8d423f96f9d5a1d4` | 5,000 | `fc64da35dcae86d386268da7b08d1626d00cdd557f93b25373ed46a4e59e84a4` |
 
-The development version equals r1's. The version hashes the lineage (the render settings, the files read and the
-per-leg counts) but not the recipe code, so a code change that keeps every count keeps the version. The two sets are
-told apart by `datasetID` and rows sha256. The `--match-text` overlap audits read the same 1,905 files as section
+The sets were frozen as `35918b253d662895` and `5a8309844bcc2ee3`, and the development version equaled r1's: that
+version rule hashed the lineage (the render settings, the files read and the per-leg counts) and not the rows, so
+a relabeling that kept every count kept the version. The rule now also hashes the rows file's sha256
+(`heldoutDatasetVersion` in `heldout/dataset/manifest.ts`), and `heldout/dataset/restamp.run.ts` rewrote both r2
+manifests under it on 2026-11-17, leaving the rows files unchanged. Under the same rule r1's development set reads
+`94f30c04020344b0`, so the two development sets no longer share a version. The overlap audits and the reports
+below were written before the rewrite and cite the frozen versions. The `--match-text` overlap audits read the same 1,905 files as section
 3 and class all 10,000 rows `verified_unseen`, with no match in any file
 (`heldout-{dev,confirm}-v0.8.19-probes-r2.provenance.json`). `evaluation-groups.v0.8.19.json` now lists the r2
 groups in place of r1's, 100,486 in all (commit `442a51ccec`). The r1 sets stay on disk as a record.

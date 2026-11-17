@@ -14,6 +14,11 @@
  *   The en-us package's `model.onnx` under it (`releaseArmModelPath`) is hashed
  *   and compared with the specification's registered identity.
  *   A missing model file is refused.
+ *
+ *   A report that scored a frozen collection records it in `dataset`.
+ *   The collection is read again from that path, its version recomputed from the
+ *   rows on disk, and a specification pin naming the same collection id with another
+ *   version is refused (`release/collection.ts`).
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -22,6 +27,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
+import { readReportedCollection, verifyReportedCollection } from "#tools/eval-harness/release/collection"
 import {
 	evaluateReleaseSpec,
 	type OutcomeRow,
@@ -71,7 +77,11 @@ const spec = await readReleaseSpec(values.spec)
 const report = await readLocalJSONFile<{
 	outcomes?: Array<{ arm?: unknown; rows?: unknown }>
 	inference?: { rule?: unknown }
+	dataset?: unknown
 }>(values.report)
+
+const reported = readReportedCollection(report, values.report)
+const collection = reported ? await verifyReportedCollection(spec, reported) : null
 
 const inferenceRule = typeof report.inference?.rule === "string" && report.inference.rule ? report.inference.rule : null
 
@@ -114,11 +124,18 @@ if (values.reachability) {
 
 const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule }, reachability)
 
-await writeLocalJSONFile({ spec: values.spec, report: values.report, ...verdict }, values.out)
+await writeLocalJSONFile({ spec: values.spec, report: values.report, collection, ...verdict }, values.out)
 
 const show = (value: number | null) => (value == null ? "n/a" : value.toFixed(4))
 
 console.log(`spec ${verdict.specVersion}: ${verdict.outcome}`)
+
+console.log(
+	collection
+		? `collection ${collection.datasetID}@${collection.version} (rows sha256 ${collection.rowsSHA256}), ` +
+				`pinned as ${collection.pinnedAs.join(", ") || "nothing in this specification"}`
+		: "collection: rows drawn from a corpus manifest, no frozen collection"
+)
 
 for (const reason of verdict.reasons) {
 	console.log(`  ${reason}`)

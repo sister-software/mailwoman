@@ -11,17 +11,21 @@
  *   a hash of its expected spans, and its annotation provenance.
  *   The rows file holds the text and spans the grader parses.
  *
- *   The dataset version is derived from what decides membership: the drawn-from corpus
- *   manifest's sha256, the sampling rule and the source set.
- *   A changed rule or source set therefore yields a new version, and two manifests with
- *   one version hold the same rows unless a corpus manifest was rewritten in place.
+ *   The dataset version is a hash of the frozen rows and of what decided their membership:
+ *   the rows file's sha256 (each row's identity, text, expected spans and group),
+ *   the drawn-from manifest's sha256, the sampling rule and the source set.
+ *   Two collections with different rows therefore record different versions, even
+ *   when their settings and counts are equal.
  *
- *   The rows hash then exposes. {@linkcode compareHeldoutDatasets} reports
- *   what changed between two versions.
+ *   The reader recomputes the version and refuses a manifest whose recorded version differs,
+ *   and the writer refuses a collection whose version a sibling collection with other rows holds.
+ *
+ *   {@linkcode compareHeldoutDatasets} reports what changed between two versions.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readLocalJSONFile, readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { writeLocalJSONFile, writeLocalJSONFileAtomically, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
@@ -38,8 +42,10 @@ import {
 
 /**
  * The manifest format version this module reads and writes.
+ *
+ * A version 1 manifest's `version` hashes no rows; `restamp.run.ts` rewrites it as version 2.
  */
-export const HELDOUT_DATASET_SCHEMA_VERSION = 1
+export const HELDOUT_DATASET_SCHEMA_VERSION = 2
 
 /**
  * One row's entry in a dataset manifest.
@@ -68,7 +74,8 @@ export interface HeldoutDatasetManifest {
 	 */
 	datasetID: string
 	/**
-	 * Derived from `drawnFrom.sha256`, `sampling` and `sources`; see {@linkcode heldoutDatasetVersion}.
+	 * Derived from `rowsFile.sha256`, `drawnFrom.sha256`, `sampling` and `sources`;
+	 * see {@linkcode heldoutDatasetVersion}.
 	 */
 	version: string
 	createdAt: string
@@ -127,20 +134,73 @@ export function expectedSpansSHA256(row: Pick<HeldoutRow, "raw" | "span_starts" 
 }
 
 /**
- * The version of a dataset: the first 16 hex digits of a sha256 over the inputs that decide its membership.
+ * The version of a dataset: the first 16 hex digits of a sha256 over its rows file's sha256
+ * and the inputs that decided its membership.
  */
 export function heldoutDatasetVersion(input: {
+	rowsSHA256: string
 	drawnFromSHA256: string
 	sampling: HeldoutDatasetManifest["sampling"]
 	sources: readonly string[]
 }): string {
 	return sha256Hex(
 		canonicalJSON({
+			rows: input.rowsSHA256,
 			drawnFrom: input.drawnFromSHA256,
 			sampling: input.sampling,
 			sources: [...input.sources].toSorted(),
 		})
 	).slice(0, 16)
+}
+
+/**
+ * The version a manifest's own fields give, for comparison with the version it records.
+ */
+export function recomputeHeldoutDatasetVersion(
+	manifest: Pick<HeldoutDatasetManifest, "rowsFile" | "drawnFrom" | "sampling" | "sources">
+): string {
+	return heldoutDatasetVersion({
+		rowsSHA256: manifest.rowsFile.sha256,
+		drawnFromSHA256: manifest.drawnFrom.sha256,
+		sampling: manifest.sampling,
+		sources: manifest.sources,
+	})
+}
+
+/**
+ * Refuses `manifest` when a collection manifest beside `manifestPath` records
+ * the same version over a different rows file.
+ *
+ * Under a version that hashes the rows, that can only be a hash defect.
+ *
+ * Lineage and provenance files beside the manifests are not read.
+ */
+export async function assertNoVersionCollision(
+	manifestPath: PathBuilderLike,
+	manifest: Pick<HeldoutDatasetManifest, "datasetID" | "version" | "rowsFile">
+): Promise<void> {
+	const own = resolvePath(manifestPath.toString()).toString()
+
+	// A collection written into a directory that doesn't exist yet has no siblings.
+	if (!(await pathExists(dirname(own)))) return
+
+	for (const path of await sortedGlob(dirname(own), "*.json")) {
+		const name = basename(path)
+
+		if (path === own || name.includes(".provenance") || name.includes(".lineage")) continue
+
+		const other = await readLocalJSONFile<Partial<HeldoutDatasetManifest>>(path)
+
+		if (typeof other.version !== "string" || typeof other.rowsFile?.sha256 !== "string") continue
+
+		if (other.version === manifest.version && other.rowsFile.sha256 !== manifest.rowsFile.sha256) {
+			throw new Error(
+				`${manifest.datasetID}@${manifest.version} (rows sha256 ${manifest.rowsFile.sha256}) has the version of ` +
+					`${path}, ${other.datasetID}@${other.version} (rows sha256 ${other.rowsFile.sha256}); ` +
+					`two different row sets share one version, which is a defect in heldoutDatasetVersion`
+			)
+		}
+	}
 }
 
 /**
@@ -187,12 +247,13 @@ export function buildHeldoutDatasetManifest(input: {
 	})
 
 	const sources = [...new Set(entries.map((entry) => entry.source))].toSorted()
-	const text = heldoutRowsText(input.rows)
+	const rowsSHA256 = sha256Hex(heldoutRowsText(input.rows))
 
 	return {
 		schemaVersion: HELDOUT_DATASET_SCHEMA_VERSION,
 		datasetID: input.datasetID,
 		version: heldoutDatasetVersion({
+			rowsSHA256,
 			drawnFromSHA256: input.drawnFrom.sha256,
 			sampling: input.sampling,
 			sources,
@@ -208,7 +269,7 @@ export function buildHeldoutDatasetManifest(input: {
 		cells: input.cells,
 		rowsFile: {
 			path: input.rowsFilePath,
-			sha256: sha256Hex(text),
+			sha256: rowsSHA256,
 			rows: input.rows.length,
 		},
 		rows: entries,
@@ -218,6 +279,8 @@ export function buildHeldoutDatasetManifest(input: {
 /**
  * Writes the rows file and the manifest beside it.
  * The manifest records the rows file by its basename.
+ *
+ * @throws Before writing, when a sibling collection holds the new version over other rows.
  */
 export async function writeHeldoutDataset(
 	manifestPath: PathBuilderLike,
@@ -230,46 +293,71 @@ export async function writeHeldoutDataset(
 		rowsFilePath: rowsName,
 	})
 
+	await assertNoVersionCollision(manifestPath, manifest)
 	await writeLocalTextFile(heldoutRowsText(input.rows), resolvePath(dirname(manifestPath.toString()), rowsName))
 	await writeLocalJSONFile(manifest, manifestPath)
 
 	return manifest
 }
 
+const REQUIRED_MANIFEST_KEYS = [
+	"datasetID",
+	"version",
+	"drawnFrom",
+	"sampling",
+	"sources",
+	"cells",
+	"rowsFile",
+	"rows",
+] as const
+
 /**
- * Reads a dataset manifest, refusing one with a missing field.
+ * Reads a dataset manifest, refusing one with a missing field or one whose recorded version
+ * differs from the version its rows file's sha256 and its membership inputs give.
+ *
+ * Pair it with {@linkcode readHeldoutDatasetRows}, which also checks the rows file against that sha256.
  */
 export async function readHeldoutDatasetManifest(path: PathBuilderLike): Promise<HeldoutDatasetManifest> {
 	const manifest = await readLocalJSONFile<HeldoutDatasetManifest>(path)
+
+	if ((manifest.schemaVersion as number) === 1) {
+		throw new Error(
+			`${path.toString()} is a version 1 held-out dataset manifest, whose version ${manifest.version} hashes no rows; ` +
+				`rewrite it with heldout/dataset/restamp.run.ts`
+		)
+	}
 
 	if (manifest.schemaVersion !== HELDOUT_DATASET_SCHEMA_VERSION) {
 		throw new Error(`${path.toString()} is not a version ${HELDOUT_DATASET_SCHEMA_VERSION} held-out dataset manifest`)
 	}
 
-	for (const key of [
-		"datasetID",
-		"version",
-		"drawnFrom",
-		"sampling",
-		"sources",
-		"cells",
-		"rowsFile",
-		"rows",
-	] as const) {
-		if (manifest[key] == null) throw new Error(`${path.toString()} holds no ${key}`)
+	assertManifestFields(path, manifest)
+
+	const derived = recomputeHeldoutDatasetVersion(manifest)
+
+	if (derived !== manifest.version) {
+		throw new Error(
+			`${path.toString()} records version ${manifest.version}; its rows sha256 and membership inputs give ${derived}`
+		)
 	}
 
 	return manifest
 }
 
+function assertManifestFields(path: PathBuilderLike, manifest: HeldoutDatasetManifest): void {
+	for (const key of REQUIRED_MANIFEST_KEYS) {
+		if (manifest[key] == null) throw new Error(`${path.toString()} holds no ${key}`)
+	}
+}
+
 /**
- * Reads a dataset's rows file, refusing it when its sha256, row count, identities
+ * Reads a manifest's rows file, refusing it when its sha256, row count, identities
  * or groups differ from the manifest's record.
  */
-export async function readHeldoutDatasetRows(
-	manifestPath: PathBuilderLike
-): Promise<{ manifest: HeldoutDatasetManifest; rows: HeldoutRow[] }> {
-	const manifest = await readHeldoutDatasetManifest(manifestPath)
+async function readVerifiedRows(
+	manifestPath: PathBuilderLike,
+	manifest: HeldoutDatasetManifest
+): Promise<HeldoutRow[]> {
 	const rowsPath = resolvePath(dirname(manifestPath.toString()), manifest.rowsFile.path)
 	const text = await readLocalTextFile(rowsPath)
 	const digest = sha256Hex(text)
@@ -295,7 +383,78 @@ export async function readHeldoutDatasetRows(
 		}
 	}
 
-	return { manifest, rows }
+	return rows
+}
+
+/**
+ * Rewrites a manifest's version under the current rule, after checking its rows file
+ * against the recorded sha256, and records it as the current schema version.
+ *
+ * `excludes` is the already restamped manifest a confirmation set was drawn against.
+ * Its version replaces the one `sampling.excludes` records, because the version hashes that record.
+ *
+ * The manifest is replaced atomically unless `write` is false.
+ * The rows file is left as it is.
+ *
+ * @returns The version the manifest recorded before and the version it records now.
+ */
+export async function restampHeldoutDataset(
+	manifestPath: PathBuilderLike,
+	excludes: Pick<HeldoutDatasetManifest, "datasetID" | "version"> | null,
+	write = true
+): Promise<{ manifest: HeldoutDatasetManifest; previous: string }> {
+	const manifest = await readLocalJSONFile<HeldoutDatasetManifest>(manifestPath)
+
+	if (![1, HELDOUT_DATASET_SCHEMA_VERSION].includes(manifest.schemaVersion)) {
+		throw new Error(`${manifestPath.toString()} is not a held-out dataset manifest`)
+	}
+
+	assertManifestFields(manifestPath, manifest)
+	await readVerifiedRows(manifestPath, manifest)
+
+	const recorded = manifest.sampling.excludes
+
+	if (excludes) {
+		if (recorded?.datasetID !== excludes.datasetID) {
+			throw new Error(
+				`${manifestPath.toString()} excludes ${recorded ? recorded.datasetID : "no dataset"}, not ${excludes.datasetID}`
+			)
+		}
+	} else if (recorded) {
+		throw new Error(
+			`${manifestPath.toString()} excludes ${recorded.datasetID}@${recorded.version}; name its restamped manifest`
+		)
+	}
+
+	const restamped: HeldoutDatasetManifest = {
+		...manifest,
+		schemaVersion: HELDOUT_DATASET_SCHEMA_VERSION,
+		sampling: excludes
+			? { ...manifest.sampling, excludes: { datasetID: excludes.datasetID, version: excludes.version } }
+			: manifest.sampling,
+	}
+
+	restamped.version = recomputeHeldoutDatasetVersion(restamped)
+
+	await assertNoVersionCollision(manifestPath, restamped)
+
+	if (write) {
+		await writeLocalJSONFileAtomically(restamped, manifestPath)
+	}
+
+	return { manifest: restamped, previous: manifest.version }
+}
+
+/**
+ * Reads a dataset's rows file with its manifest, refusing either when the manifest's version,
+ * the rows file's sha256, its row count, identities or groups differ from the manifest's record.
+ */
+export async function readHeldoutDatasetRows(
+	manifestPath: PathBuilderLike
+): Promise<{ manifest: HeldoutDatasetManifest; rows: HeldoutRow[] }> {
+	const manifest = await readHeldoutDatasetManifest(manifestPath)
+
+	return { manifest, rows: await readVerifiedRows(manifestPath, manifest) }
 }
 
 /**

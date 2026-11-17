@@ -2858,13 +2858,17 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/manifest.ts`
 
-| Kind  | Interface                   | Target                   | Calls |
-| ----- | --------------------------- | ------------------------ | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`      | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (parameter)` | 1     |
-| read  | `readLocalTextFile`         | `unresolved (call)`      | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (parameter)` | 1     |
-| write | `writeLocalTextFile`        | `unresolved (call)`      | 1     |
+| Kind  | Interface                      | Target                    | Calls |
+| ----- | ------------------------------ | ------------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync`    | `unresolved (call)`       | 1     |
+| read  | `pathExists`                   | `unresolved (call)`       | 1     |
+| read  | `readLocalJSONFile`            | `unresolved (identifier)` | 1     |
+| read  | `readLocalJSONFile`            | `unresolved (parameter)`  | 2     |
+| read  | `readLocalTextFile`            | `unresolved (call)`       | 1     |
+| read  | `sortedGlob`                   | `unresolved (call)`       | 1     |
+| write | `writeLocalJSONFile`           | `unresolved (parameter)`  | 1     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (parameter)`  | 1     |
+| write | `writeLocalTextFile`           | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts`
 
@@ -3240,8 +3244,8 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 12 times
-- `awaits at module scope`, 4 times
+- `runs a statement at module scope`, 13 times
+- `awaits at module scope`, 5 times
 
 | Kind  | Interface            | Target                  | Calls |
 | ----- | -------------------- | ----------------------- | ----- |

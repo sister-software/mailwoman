@@ -25,23 +25,23 @@
 		},
 		{
 			"datasetID": "heldout-dev-v0.8.19-probes-r2",
-			"version": "35918b253d662895",
+			"version": "c6ff3a6a1bc8aab7",
 			"drawnFrom": {
 				"corpusVersion": null,
 				"sha256": "627621b0c0d7ccef6fabe28f70076395fed38f1810d805287714e07a9f7ffc78"
 			},
-			"manifestSHA256": "5e67cd8faea447af4e8156e6196dd6e7591519bf718867f52dc5d822d6748f8a",
+			"manifestSHA256": "3c9298856b73a11fea40a47eb035d26f90aeed4f750f07ed755366f2643c3aa8",
 			"rows": 5000,
 			"groups": 5000
 		},
 		{
 			"datasetID": "heldout-confirm-v0.8.19-probes-r2",
-			"version": "5a8309844bcc2ee3",
+			"version": "8d423f96f9d5a1d4",
 			"drawnFrom": {
 				"corpusVersion": null,
 				"sha256": "627621b0c0d7ccef6fabe28f70076395fed38f1810d805287714e07a9f7ffc78"
 			},
-			"manifestSHA256": "2ea7fdd73033317e6468fbac25d426801de830bf33aacc348073206e964972fb",
+			"manifestSHA256": "6dd4bce438356317d4690acb9644690f2260a19ffd405d5359b81250d71f1ca5",
 			"rows": 5000,
 			"groups": 5000
 		}

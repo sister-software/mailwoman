@@ -225,6 +225,17 @@ class SpecError extends Error {
 	}
 }
 
+/**
+ * Splits a pinned collection id, `<datasetID>@<version>`, or returns `null` for any other shape.
+ *
+ * The version is the 16 hex digits `heldoutDatasetVersion` derives from the collection's rows.
+ */
+export function parseCollectionID(id: string): { datasetID: string; version: string } | null {
+	const match = /^(?<datasetID>[^@\s]+)@(?<version>[0-9a-f]{16})$/u.exec(id)
+
+	return match?.groups ? { datasetID: match.groups.datasetID!, version: match.groups.version! } : null
+}
+
 type Check = (value: unknown, path: string) => void
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -260,6 +271,12 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 	const nullableString: Check = (value, path) => {
 		if (value !== null) {
 			string(value, path)
+		}
+	}
+
+	const collectionID: Check = (value, path) => {
+		if (value !== null && !(typeof value === "string" && parseCollectionID(value))) {
+			fail(path, "must be null or <datasetID>@<16 hex digit version>")
 		}
 	}
 
@@ -389,7 +406,7 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 	const identities = object(root.identities, "$.identities")
 	const dataset = object(identities.dataset, "$.identities.dataset")
 
-	nullableString(dataset.id, "$.identities.dataset.id")
+	collectionID(dataset.id, "$.identities.dataset.id")
 	nullableString(dataset.sha256, "$.identities.dataset.sha256")
 
 	const scorer = object(identities.scorer, "$.identities.scorer")
@@ -493,7 +510,7 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 	for (const which of ["development", "confirmation"] as const) {
 		const evaluation = object(evaluations[which], `$.evaluations.${which}`)
 
-		nullableString(evaluation.id, `$.evaluations.${which}.id`)
+		collectionID(evaluation.id, `$.evaluations.${which}.id`)
 		string(evaluation.description, `$.evaluations.${which}.description`)
 	}
 

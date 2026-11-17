@@ -3,13 +3,17 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import {
+	assertNoVersionCollision,
 	buildHeldoutDatasetManifest,
 	compareHeldoutDatasets,
+	readHeldoutDatasetManifest,
 	readHeldoutDatasetRows,
+	restampHeldoutDataset,
 	writeHeldoutDataset,
 } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { HeldoutCellCount, HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -94,6 +98,15 @@ describe("buildHeldoutDatasetManifest", () => {
 		expect(build([...rows, row("f1", "FR", "ban")]).version).not.toBe(base.version)
 	})
 
+	it("derives different versions for two row sets drawn under equal settings and counts", () => {
+		const first = build([row("a1", "US", "oa-us", "12 Main St")])
+		const relabeled = build([{ ...row("a1", "US", "oa-us", "12 Main St"), span_tags: ["house_number", "venue"] }])
+		const retexted = build([row("a1", "US", "oa-us", "12 Main Street")])
+
+		expect(new Set([first.version, relabeled.version, retexted.version]).size).toBe(3)
+		expect(relabeled.cells).toEqual(first.cells)
+	})
+
 	it("refuses rows that share an identity", () => {
 		expect(() => build([row("a1", "US", "oa-us"), row("a1", "US", "oa-us")])).toThrow(/share/u)
 	})
@@ -132,24 +145,27 @@ describe("compareHeldoutDatasets", () => {
 	})
 })
 
+const write = (path: PathBuilderLike, rows: HeldoutRow[], datasetID = "heldout-fixture") =>
+	writeHeldoutDataset(path, {
+		datasetID,
+		createdAt: "2026-10-20T00:00:00.000Z",
+		drawnFrom: {
+			manifest: "/data/MANIFEST.json",
+			sha256: "a".repeat(64),
+			corpusVersion: null,
+			files: [],
+		},
+		sampling: sampling(2),
+		cells: cells(rows),
+		rows,
+	})
+
 describe("writeHeldoutDataset and readHeldoutDatasetRows", () => {
 	it("round-trips the rows and refuses a rows file whose sha256 changed", async () => {
 		const path = directory.path("fixture.json")
 		const rows = [row("a1", "US", "oa-us"), row("f1", "FR", "ban")]
 
-		await writeHeldoutDataset(path, {
-			datasetID: "heldout-fixture",
-			createdAt: "2026-10-20T00:00:00.000Z",
-			drawnFrom: {
-				manifest: "/data/MANIFEST.json",
-				sha256: "a".repeat(64),
-				corpusVersion: null,
-				files: [],
-			},
-			sampling: sampling(2),
-			cells: cells(rows),
-			rows,
-		})
+		await write(path, rows)
 
 		expect((await readHeldoutDatasetRows(path)).rows).toEqual(rows)
 
@@ -157,5 +173,74 @@ describe("writeHeldoutDataset and readHeldoutDatasetRows", () => {
 
 		await writeLocalTextFile(`${await readLocalTextFile(rowsPath)}\n`, rowsPath)
 		await expect(readHeldoutDatasetRows(path)).rejects.toThrow(/sha256/u)
+	})
+
+	it("refuses a manifest whose recorded version differs from the version its rows give, naming both", async () => {
+		const path = directory.path("pinned.json")
+		const written = await write(path, [row("a1", "US", "oa-us")], "pinned")
+
+		await writeLocalJSONFile({ ...written, version: "0123456789abcdef" }, path)
+
+		await expect(readHeldoutDatasetManifest(path)).rejects.toThrow(
+			new RegExp(`records version 0123456789abcdef; .* give ${written.version}`, "u")
+		)
+	})
+})
+
+describe("assertNoVersionCollision", () => {
+	it("refuses a collection whose version a sibling holds over other rows, and admits equal rows", async () => {
+		const sibling = await temporaryDirectory("mw-heldout-collision-")
+
+		try {
+			const first = await write(sibling.path("first.json"), [row("a1", "US", "oa-us")], "first")
+
+			await expect(
+				assertNoVersionCollision(sibling.path("second.json"), {
+					datasetID: "second",
+					version: first.version,
+					rowsFile: { ...first.rowsFile, sha256: "c".repeat(64) },
+				})
+			).rejects.toThrow(/two different row sets share one version/u)
+
+			await expect(write(sibling.path("again.json"), [row("a1", "US", "oa-us")], "again")).resolves.toMatchObject({
+				version: first.version,
+			})
+		} finally {
+			await sibling[Symbol.asyncDispose]()
+		}
+	})
+})
+
+describe("restampHeldoutDataset", () => {
+	it("rewrites a version 1 manifest and the confirmation set that excludes it", async () => {
+		const devPath = directory.path("restamp-dev.json")
+		const confirmPath = directory.path("restamp-confirm.json")
+		const dev = await write(devPath, [row("d1", "US", "oa-us")], "restamp-dev")
+
+		await writeLocalJSONFile({ ...dev, schemaVersion: 1, version: "1111111111111111" }, devPath)
+
+		const confirm = await writeHeldoutDataset(confirmPath, {
+			datasetID: "restamp-confirm",
+			createdAt: "2026-10-20T00:00:00.000Z",
+			drawnFrom: { manifest: "/data/MANIFEST.json", sha256: "a".repeat(64), corpusVersion: null, files: [] },
+			sampling: { ...sampling(2), excludes: { datasetID: "restamp-dev", version: "1111111111111111" } },
+			cells: cells([row("c1", "US", "oa-us")]),
+			rows: [row("c1", "US", "oa-us")],
+		})
+
+		await writeLocalJSONFile({ ...confirm, schemaVersion: 1, version: "2222222222222222" }, confirmPath)
+
+		await expect(readHeldoutDatasetManifest(devPath)).rejects.toThrow(/version 1 held-out dataset manifest/u)
+		await expect(restampHeldoutDataset(confirmPath, null)).rejects.toThrow(/excludes restamp-dev@1111111111111111/u)
+
+		const restampedDev = await restampHeldoutDataset(devPath, null)
+
+		expect(restampedDev.previous).toBe("1111111111111111")
+		expect(restampedDev.manifest.version).toBe(dev.version)
+
+		const restampedConfirm = await restampHeldoutDataset(confirmPath, restampedDev.manifest)
+
+		expect(restampedConfirm.manifest.sampling.excludes).toEqual({ datasetID: "restamp-dev", version: dev.version })
+		expect((await readHeldoutDatasetRows(confirmPath)).manifest.version).toBe(restampedConfirm.manifest.version)
 	})
 })
