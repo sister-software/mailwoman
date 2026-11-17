@@ -17,6 +17,10 @@
  *   Both readers and this file are deleted together with the legacy-formats family
  *   when the first model that declares `span_mode: "postal"` ships.
  *
+ *   The repair under a `postal` card reads the `designated` rows too.
+ *   They're the postal marks the family's printed shapes lack (`S(…)` around a Singapore code),
+ *   so the family holds those marks before this file can go.
+ *
  *   Patterns appear from most-specific to least-specific.
  *   A lower index wins when patterns overlap.
  *

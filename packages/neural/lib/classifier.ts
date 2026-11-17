@@ -883,7 +883,8 @@ export class NeuralAddressClassifier {
 		// pattern, extending a truncated span such as "4711" decoded from "47110".
 		if (opts?.postcodeRepair || conventions?.postcodePattern) {
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = repairPostcodeLabels(text, tokens, this.cfg.postcodeAnchorSpanMode).tokens
+			const country = containmentCountry(confidentLocaleCountry(localeLogits), opts?.localeHint)
+			tokens = repairPostcodeLabels(text, tokens, this.cfg.postcodeAnchorSpanMode, country).tokens
 
 			if (traceRepairs) {
 				recordRepair("postcodeRepair", before, labelsPerPiece(tokens))

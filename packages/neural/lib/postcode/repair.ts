@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { hasCountry } from "@mailwoman/codex/country/sets"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { POSTCODE_SHAPES } from "@mailwoman/postcode/frozen-shapes"
-import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
-import { disjointSpans } from "@mailwoman/postcode/recognize/postal"
+import { findPostcodeHits } from "@mailwoman/postcode/postal-spans"
 
 import type { AnchorSpanMode } from "#anchor-inference"
 import {
@@ -13,6 +13,7 @@ import {
 	isAddSafe,
 	isTagLabel,
 	type RepairResult,
+	selectNonOverlappingMatches,
 	type SpanMatch,
 	tagOf,
 	tokenIndicesOverlapping,
@@ -31,6 +32,13 @@ export interface PostcodeMatch extends SpanMatch {
 	 * `designated` means digits after a postal marker and may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
+	/**
+	 * Where the printed prefix before the code starts (`SE-`, `FO`), for a match of a printed shape.
+	 *
+	 * The repair leaves the prefix's labels as the model decoded them, so the model decides
+	 * whether the prefix is part of the postcode.
+	 */
+	prefixStart?: number
 }
 
 /**
@@ -54,19 +62,65 @@ const LOCALITY_B = "B-locality" as DecoderToken["label"]
 const LOCALITY_I = "I-locality" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
+const FORM_RANK: Readonly<Record<PostcodeMatch["kind"], number>> = { designated: 0, alnum: 1, numeric: 2 }
+
+/**
+ * The frozen table's shapes that a postal mark designates, such as `S(…)` around a Singapore code.
+ *
+ * The family's printed shapes come from libaddressinput's prefixes.
+ * Those prefixes hold no such mark.
+ */
+const MARKED_PATTERNS = POSTCODE_PATTERNS.filter((pattern) => pattern.kind === "designated")
+
+/**
+ * Whether a letter or a digit of any script touches the range, so the range splits a word.
+ *
+ * The family's engine bounds a candidate by ASCII letters and digits only,
+ * so `6454 Fl` stands inside `6454 Flüelen`.
+ */
+function splitsWord(text: string, start: number, end: number): boolean {
+	return /[\p{L}\p{N}]/u.test(text.charAt(start - 1)) || /[\p{L}\p{N}]/u.test(text.charAt(end))
+}
+
 /**
  * The postcode matches of a card that declares `span_mode: "postal"`, from the `postal` family.
  *
- * The family's candidates are reduced to disjoint spans in the order they compete,
- * and the form of each shape is the match's kind.
- * A candidate with no digit is refused: the family holds shapes made only of letters,
- * and a repair that added a postcode label over a word such as a place name would do harm.
- * A refused candidate hides no other.
+ * The candidates are the family's postcode hits (`findPostcodeHits`).
+ * That reader refuses a candidate with no digit, a bare candidate that reads as
+ * ordinary text such as `TX 75001`, and a connector fragment.
+ *
+ * A digit run keeps the `numeric` form whatever its shape allows.
+ *
+ * Here a hit is also refused when it splits a word.
+ * A bare hit is refused when `country` is known and the hit's countries exclude it.
+ *
+ * The prefix of a printed hit states its country, and a hit inside a frozen postal
+ * mark is `designated`, so neither is refused for the country.
+ *
+ * The hits that remain are reduced longest first, then by form, as the frozen table's matches are.
+ * A match covers the code, and `prefixStart` marks where a printed prefix starts.
  */
-function collectPostalMatches(text: string): PostcodeMatch[] {
-	return disjointSpans(findPostcodeSpans(text), (span) => /\d/u.test(text.slice(span.start, span.end))).map(
-		(span, priority) => ({ start: span.start, end: span.end, kind: span.form, priority })
-	)
+function collectPostalMatches(text: string, country: string | null): PostcodeMatch[] {
+	const marked = collectMatchesFor(MARKED_PATTERNS, text)
+
+	const candidates = findPostcodeHits(text).flatMap((hit) => {
+		if (splitsWord(text, hit.start, hit.end)) return []
+
+		const isMarked = marked.some((m) => m.start === hit.codeStart && m.end === hit.end)
+		const kind = isMarked ? "designated" : hit.form
+
+		if (kind !== "designated" && country && !hasCountry(hit.countries, country)) return []
+
+		return [{ hit, kind, start: hit.start, end: hit.end, priority: FORM_RANK[kind] }]
+	})
+
+	return selectNonOverlappingMatches(candidates).map(({ hit, kind }, priority) => ({
+		start: hit.codeStart,
+		end: hit.end,
+		kind,
+		priority,
+		...(hit.codeStart > hit.start ? { prefixStart: hit.start } : {}),
+	}))
 }
 
 /**
@@ -74,9 +128,16 @@ function collectPostalMatches(text: string): PostcodeMatch[] {
  *
  * A card that declares `span_mode: "postal"` reads the `postal` family,
  * and any other card reads the frozen table.
+ *
+ * @param country The row's country, from the caller's locale hint or the locale
+ * classifier, read only by the `postal` family.
  */
-export function collectMatches(text: string, spanMode?: AnchorSpanMode | null): PostcodeMatch[] {
-	if (spanMode === "postal") return collectPostalMatches(text)
+export function collectMatches(
+	text: string,
+	spanMode?: AnchorSpanMode | null,
+	country: string | null = null
+): PostcodeMatch[] {
+	if (spanMode === "postal") return collectPostalMatches(text, country)
 
 	return collectMatchesFor(POSTCODE_PATTERNS, text).map(({ start, end, priority, pattern }) => ({
 		start,
@@ -92,14 +153,16 @@ export function collectMatches(text: string, spanMode?: AnchorSpanMode | null): 
  *
  * A purely numeric match only corrects an existing postcode label and never creates one.
  *
+ * @param country The row's country, read only under a `postal` card (see {@linkcode collectMatches}).
  * @returns The repaired tokens and the number of labels changed.
  */
 export function repairPostcodeLabels(
 	text: string,
 	input: readonly DecoderToken[],
-	spanMode?: AnchorSpanMode | null
+	spanMode?: AnchorSpanMode | null,
+	country: string | null = null
 ): RepairResult {
-	const matches = collectMatches(text, spanMode)
+	const matches = collectMatches(text, spanMode, country)
 	const tokens = input.map((t) => ({ ...t }))
 
 	if (!matches.length) return { tokens, changed: 0 }
@@ -119,9 +182,18 @@ export function repairPostcodeLabels(
 			if (m.kind === "alnum" && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 		}
 
-		overlap.forEach((i, k) => setLabel(i, k === 0 ? POSTCODE_B : POSTCODE_I))
+		// A printed prefix the model labeled as postcode stays the start of the span.
+		const prefix =
+			typeof m.prefixStart === "number"
+				? tokenIndicesOverlapping(tokens, m.prefixStart, m.start).filter((i) => i < overlap[0]!)
+				: []
 
-		for (let j = overlap[0]! - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
+		const prefixInSpan = prefix.length > 0 && isTagLabel(tokens[prefix.at(-1)!]!.label, "postcode")
+		const before = prefixInSpan ? prefix[0]! : overlap[0]!
+
+		overlap.forEach((i, k) => setLabel(i, k === 0 && !prefixInSpan ? POSTCODE_B : POSTCODE_I))
+
+		for (let j = before - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
 			setLabel(j, OUTSIDE)
 		}
 

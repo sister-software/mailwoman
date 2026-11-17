@@ -295,6 +295,139 @@ describe("a postcode designated by the JP postal mark", () => {
 		})
 	})
 
+	describe("the rows that a postal card regressed against model 10.8.0's shaped card", () => {
+		/**
+		 * Tokens over `text`, one per listed surface, located left to right, with the labels
+		 * the shipped model decoded for the board or held-out row before the repair ran.
+		 */
+		function labeled(text: string, spans: readonly (readonly [string, BIOLabel])[]): DecoderToken[] {
+			let from = 0
+
+			return spans.map(([surface, label]) => {
+				const start = text.indexOf(surface, from)
+
+				if (start === -1) throw new Error(`${surface} is not in ${text} after ${from}`)
+				from = start + surface.length
+
+				return tok(surface, start, from, label)
+			})
+		}
+
+		const labelOf = (tokens: readonly DecoderToken[], piece: string) => tokens.find((t) => t.piece === piece)?.label
+
+		it("leaves a US state code outside the ZIP code", () => {
+			const text = "4900 Airport Pkwy, Addison TX 75001"
+
+			const tokens = labeled(text, [
+				["4900", "B-house_number"],
+				["Airport", "B-street"],
+				["Pkwy", "B-street_suffix"],
+				[",", "O"],
+				["Addison", "B-locality"],
+				["TX", "B-region"],
+				["75001", "B-postcode"],
+			])
+
+			for (const country of [null, "US"]) {
+				const out = repairPostcodeLabels(text, tokens, "postal", country).tokens
+
+				expect(postcodeValue(text, out)).toBe("75001")
+				expect(labelOf(out, "TX")).toBe("B-region")
+			}
+		})
+
+		it("leaves a region the model decoded in place before a ZIP code", () => {
+			const text = "Alameda, CA 94501"
+
+			const tokens = labeled(text, [
+				["Alameda", "B-locality"],
+				[",", "O"],
+				["CA", "B-region"],
+				["94501", "B-postcode"],
+			])
+
+			const out = repairPostcodeLabels(text, tokens, "postal", "US").tokens
+
+			expect(postcodeValue(text, out)).toBe("94501")
+			expect(labelOf(out, "CA")).toBe("B-region")
+		})
+
+		it("keeps the printed country prefix the model labeled as part of a Swedish code", () => {
+			const text = "Isak Health Clinic AB, Vinkelgatan 2, SE-235 36 Vellinge"
+
+			const tokens = labeled(text, [
+				["2", "B-house_number"],
+				[",", "O"],
+				["SE", "B-postcode"],
+				["-", "I-postcode"],
+				["235", "I-postcode"],
+				["36", "B-postcode"],
+				["Vellinge", "B-locality"],
+			])
+
+			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal").tokens)).toBe("SE-235 36")
+		})
+
+		it("keeps the printed prefix of a Faroese code", () => {
+			const text = "Norðurhædd 62, FO600 Saltangará"
+
+			const tokens = labeled(text, [
+				["62", "B-house_number"],
+				[",", "O"],
+				["FO", "B-postcode"],
+				["600", "I-postcode"],
+				["Saltangará", "B-locality"],
+			])
+
+			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal").tokens)).toBe("FO600")
+		})
+
+		it("never runs a Swiss code into the locality after it", () => {
+			const text = "Kirchstrasse 27, CH-6454 Flüelen"
+
+			const tokens = labeled(text, [
+				["Kirchstrasse", "B-street"],
+				["27", "B-house_number"],
+				[",", "O"],
+				["CH", "O"],
+				["-", "O"],
+				["6454", "B-postcode"],
+				["F", "B-locality"],
+				["lü", "I-locality"],
+				["elen", "I-locality"],
+			])
+
+			const out = repairPostcodeLabels(text, tokens, "postal").tokens
+
+			expect(postcodeValue(text, out)).toBe("6454")
+			expect(localityValue(text, out)).toBe("Flüelen")
+		})
+
+		it("adds a Singapore code written in its S( ) mark", () => {
+			const text = "77A Neil Road S(088903)"
+
+			const tokens = labeled(text, [
+				["77A", "B-house_number"],
+				["Neil", "B-street"],
+				["Road", "B-street_suffix"],
+				["S", "O"],
+				["(", "O"],
+				["088903", "O"],
+				[")", "O"],
+			])
+
+			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal", "US").tokens)).toBe("088903")
+		})
+
+		it("refuses a bare code whose countries exclude the row's country", () => {
+			const text = "Dublin D6W XV67"
+			const tokens = [tok("Dublin", 0, 6, "B-locality"), tok("D6W", 7, 10, "O"), tok("XV67", 11, 15, "O")]
+
+			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal", "IE").tokens)).toBe("D6W XV67")
+			expect(repairPostcodeLabels(text, tokens, "postal", "FR").changed).toBe(0)
+		})
+	})
+
 	it("leaves the same digits alone without the mark: a numeric shape never overwrites a house number", () => {
 		const { text, tokens } = charTokens([
 			["506-0025", "house_number"],
