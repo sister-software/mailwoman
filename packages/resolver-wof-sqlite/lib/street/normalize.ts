@@ -382,6 +382,8 @@ const ARABIC_MARKS = /[ـً-ٰٟ]/gu
  * It removes {@link ARABIC_MARKS}, which leaves a hamza-carrying alef as a bare `ا`,
  * and writes `ى` (alef maqsura) as `ي` (yeh) and `ة` (taa marbuta) as `ه` (heh).
  * {@link normalizeLocalityForKey} doesn't apply it, so the columns keyed by that fold are unchanged.
+ * A candidate build applies it to `name_key` only under the `arabic-letter-variants` key fold
+ * (`#candidate/key-fold`), which the artifact records so its reader folds query keys too.
  */
 export function withArabicLetterVariantsFolded(key: NameKey): NameKey {
 	return key.normalize("NFKD").replaceAll(ARABIC_MARKS, "").replaceAll("ى", "ي").replaceAll("ة", "ه") as NameKey

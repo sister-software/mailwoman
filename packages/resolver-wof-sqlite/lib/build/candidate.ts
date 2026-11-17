@@ -17,6 +17,7 @@ import { stageCountryDisplayNames } from "#candidate/country-display-names"
 import { foldExtract } from "#candidate/extract-fold"
 import { createCandidateFTS } from "#candidate/fts"
 import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
+import { applyCandidateKeyFold, type CandidateKeyFold } from "#candidate/key-fold"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
@@ -96,6 +97,14 @@ export interface BuildCandidateOptions {
 	 * @defaultValue {@linkcode GLOSS_KEY_THRESHOLD}
 	 */
 	glossKeyThreshold?: number
+
+	/**
+	 * Folds applied to every `name_key` after `normalizeLocalityForKey`, recorded in
+	 * the artifact so its reader folds query keys the same way.
+	 *
+	 * @defaultValue none
+	 */
+	keyFolds?: readonly CandidateKeyFold[]
 }
 
 /**
@@ -546,6 +555,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	kdb.exec(`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};`)
 	await kdb.schema.dropTable("cand_stage").execute()
+
+	for (const fold of opts.keyFolds ?? []) {
+		const { rekeyed, merged } = await applyCandidateKeyFold(kdb, fold)
+
+		progress("key-fold", `${fold}: ${rekeyed.toLocaleString()} rows rekeyed, ${merged.toLocaleString()} merged`)
+	}
 
 	progress("fts", "building FTS5-trigram fuzzy index")
 	createCandidateFTS(kdb)

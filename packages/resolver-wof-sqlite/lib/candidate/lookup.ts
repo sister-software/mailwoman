@@ -19,6 +19,7 @@ import {
 	type IntervalLabel,
 } from "#candidate/ancestors/schema"
 import { CANDIDATE_FTS_TABLE } from "#candidate/fts"
+import { candidateQueryKeyFold } from "#candidate/key-fold"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate/schema"
 import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal/city/candidate-schema"
@@ -134,12 +135,18 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
+	 * The folds the artifact recorded for its `name_key` column, applied to every query key.
+	 */
+	readonly #queryKeyFold: (key: NameKey) => NameKey
+	/**
 	 * Ancestor lineage accessor, nearest-first, present only when the artifact supports it.
 	 */
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		super(opts)
+
+		this.#queryKeyFold = candidateQueryKeyFold(this.database)
 
 		for (const r of allRows<CountryCodeTable>(this.database.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
@@ -246,7 +253,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		for (const key of regionQualifierProbeKeys(qualifier, country)) {
 			if (!key) continue
 
-			for (const row of allRows<{ spr_id: number }>(this.#qualifierProbe, key)) {
+			for (const row of allRows<{ spr_id: number }>(this.#qualifierProbe, this.#queryKeyFold(key as NameKey))) {
 				ids.add(Number(row.spr_id))
 			}
 		}
@@ -425,7 +432,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			text = text.replaceAll(/\s+/g, "")
 		}
 
-		const nameKey = normalizeLocalityForKey(text)
+		const nameKey = this.#queryKeyFold(normalizeLocalityForKey(text))
+		const strippedNameKey = this.#queryKeyFold(normalizeLocalityForKey(stripLocalityQualifier(text)))
 
 		if (!nameKey) return []
 
@@ -545,13 +553,9 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		const cascade = (regionID: number | null): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
-			if (!rows.length) {
-				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
-
-				if (strippedKey && strippedKey !== nameKey) {
-					// Stripped probes only accept primary rows to avoid alias-scrape matches.
-					rows = probe(strippedKey, regionID).filter((r) => r.is_primary === 1)
-				}
+			// Stripped probes only accept primary rows to avoid alias-scrape matches.
+			if (!rows.length && strippedNameKey && strippedNameKey !== nameKey) {
+				rows = probe(strippedNameKey, regionID).filter((r) => r.is_primary === 1)
 			}
 
 			// Typo-tolerant fallback for true name misses only, skipping postcodes.
@@ -577,7 +581,9 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 					const hits = allRows<{ name_key: string }>(this.#ftsProbe, match, FUZZY_FETCH)
 
 					const ranked = hits
-						.map((h) => ({ nk: String(h.name_key), s: wordFuzzySimilarity(nameKey, String(h.name_key)) }))
+						// An index built before the artifact's key folds holds unfolded keys, so each hit is folded too.
+						.map((h) => this.#queryKeyFold(String(h.name_key) as NameKey))
+						.map((nk) => ({ nk, s: wordFuzzySimilarity(nameKey, nk) }))
 						.filter((h) => h.s >= WORD_FUZZY_MIN && (hasCountryEvidence || h.nk[0] === nameKey[0]))
 						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
@@ -642,7 +648,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		// Admin-containment re-rank runs last.
 		const containmentOptions: ContainmentOptions = {
 			nameKey,
-			strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
+			strippedKey: strippedNameKey,
 			shapeFilters,
 			shapeParams,
 			limit,
