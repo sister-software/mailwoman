@@ -12,6 +12,10 @@ Status: **proposed**. The operator approved building larger capability-probe dra
 `2026-11-14-release-requirements-v8.md`). The two probe sets below are frozen and audited. The specification
 change of section 5 waits for the operator's approval, and `release/current-spec.ts` still names v8.
 
+Section 6 supersedes the sets of section 3. Three recipe labels the first render wrote disagreed with the schema,
+so the sets were re-rendered and re-frozen as `heldout-dev-v0.8.19-probes-r2` and
+`heldout-confirm-v0.8.19-probes-r2`. A v9 registration would name the r2 sets.
+
 ## 1. The groups each check needs
 
 V8 declares 15 checks: nine country minima, four capability minima, the `po_box_cedex` loss and the objective.
@@ -210,3 +214,74 @@ The alternative, a probe-only selector (`select.collections`) so that the two ch
 rows, was weighed and not proposed. The v0.8.18 probe rows number 159 and 52 against 5,000 per set, and pooling
 moved the development estimates by 0.11 and 1.56 points. A selector by collection would also need every outcome
 row to record its collection id.
+
+## 6. The r2 sets: the recipe labels corrected
+
+A sample of 10.8.0's misses on the development set (lane AB, `/mnt/mw/audits/probes/lane-ab-fail-sample-dev.json`)
+found three gold labels that disagreed with the schema rather than model errors. Commit `f615f6ea7d` fixes them:
+
+1. **US PMB rows.** `renderPmbUs` kept the street type inside `street` (`2510 ABBOTT PLZ, pmb 489` gave
+   `street=ABBOTT PLZ`), where the schema and the scorer split it into `street_suffix`. 18 of the 20 sampled US
+   misses had this shape. `splitUSStreet` now takes the terminal Pub-28 word with `matchTrailingSuffix`, joining a
+   post-directional to it, and a leading directional with `matchLeadingDirectional`.
+2. **French named complexes.** The FR leg of `postal-unit-guideline` labeled `RESIDENCE …` and `LOTISSEMENT …`
+   `unit`. Decided: a named complex is `venue`, the schema's place with a proper name, and a designator with a
+   number or letter (`BATIMENT B`, `ETAGE 6`) stays `unit`.
+3. **PO-box lines in four register adapters.** The codex matcher reads `POB 1088`, `usgov-nppes` calls
+   `splitUSStreetLine`, and `state-ny-notaries` takes a box written on either address line. These reach training
+   only through the next corpus build (`v0.8.20-rebuild/inputs.json`) and don't change the probe rows. Over their
+   inputs the fixed adapters relabel 9,666 of 9,197,061 NPPES rows, 27 of 511,304 TX rows, 17 of 16,912 IA rows and
+   395 of 32,097 NY rows.
+
+`build.run.ts` was rerun with the settings of section 3: render seed 1900, order seeds 1820 and 1821, 500 rows per
+`po_box_cedex` leg, 200 per `postal_unit` leg, floor 20, the same two corpora excluded. Every leg's rendered,
+excluded and drawn counts equal r1's.
+
+| Set                                 | Version            |  Rows | Rows sha256                                                        |
+| ----------------------------------- | ------------------ | ----: | ------------------------------------------------------------------ |
+| `heldout-dev-v0.8.19-probes-r2`     | `35918b253d662895` | 5,000 | `a51eb9139eb8e05ba7d4ef0d4173239df3aea6a262d75ce70f8e50e62cf30bb4` |
+| `heldout-confirm-v0.8.19-probes-r2` | `5a8309844bcc2ee3` | 5,000 | `fc64da35dcae86d386268da7b08d1626d00cdd557f93b25373ed46a4e59e84a4` |
+
+The development version equals r1's. The version hashes the lineage (the render settings, the files read and the
+per-leg counts) but not the recipe code, so a code change that keeps every count keeps the version. The two sets are
+told apart by `datasetID` and rows sha256. The `--match-text` overlap audits read the same 1,905 files as section
+3 and class all 10,000 rows `verified_unseen`, with no match in any file
+(`heldout-{dev,confirm}-v0.8.19-probes-r2.provenance.json`). `evaluation-groups.v0.8.19.json` now lists the r2
+groups in place of r1's, 100,486 in all (commit `442a51ccec`). The r1 sets stay on disk as a record.
+
+10.8.0 against itself under spec v8, as in section 4. Reports:
+`/mnt/mw/models/arms/heldout-{dev,confirm}-v0.8.19-probes-r2-published-10.8.0.json`, verdicts
+`verdict-{dev,confirm}-v0.8.19-probes-r2-10.8.0-self.json` in the same directory. Probe rows alone, G = 4,000 and
+1,000:
+
+| Check                  | r1 development                 | r2 development           | Outcome               | r2 confirmation                |
+| ---------------------- | ------------------------------ | ------------------------ | --------------------- | ------------------------------ |
+| `po_box_cedex` minimum | 0.8283 [0.8101, 0.8454], fail  | 0.8450 [0.8276, 0.8614]  | insufficient evidence | 0.8492 [0.8320, 0.8654]        |
+| `po_box_cedex` loss    | 0.0000 [−0.0019, 0.0019], pass | 0.0000 [−0.0019, 0.0019] | pass                  | 0.0000 [−0.0019, 0.0019], pass |
+| `postal_unit` minimum  | 0.6790 [0.6342, 0.7216], fail  | 0.7230 [0.6797, 0.7636]  | fail                  | 0.7330 [0.6901, 0.7730], fail  |
+
+The r2 confirmation reading is 10.8.0's one baseline scoring of that set, and its `po_box_cedex` minimum is also
+insufficient evidence. The pooled reading with the v0.8.18 sets wasn't repeated.
+
+Exact rows per leg, r1 and r2 development. Only two cells moved, and each by its corrected rows:
+
+| Source                           | Country | r1 development | r2 development | r2 confirmation |
+| -------------------------------- | ------- | -------------: | -------------: | --------------: |
+| `invented-po-box-cedex`          | US      |        399/500 |        466/500 |         474/500 |
+| `invented-po-box-cedex`          | AU      |        436/500 |        436/500 |         442/500 |
+| `invented-po-box-cedex`          | CA      |        497/500 |        497/500 |         495/500 |
+| `invented-po-box-cedex`          | FR      |        500/500 |        500/500 |         498/500 |
+| `invented-po-box-cedex`          | NZ      |        499/500 |        499/500 |         499/500 |
+| `invented-postal-guideline`      | AU      |        116/500 |        116/500 |         129/500 |
+| `invented-postal-guideline`      | DE      |        500/500 |        500/500 |         500/500 |
+| `invented-postal-guideline`      | IT      |        366/500 |        366/500 |         360/500 |
+| `invented-postal-unit-guideline` | FR      |         15/200 |         59/200 |          57/200 |
+| `invented-postal-unit-guideline` | AU      |         65/200 |         65/200 |          76/200 |
+| `invented-postal-unit-guideline` | GB      |        200/200 |        200/200 |         200/200 |
+| `invented-postal-unit-guideline` | IT      |        200/200 |        200/200 |         200/200 |
+| `invented-postal-unit-guideline` | NZ      |        199/200 |        199/200 |         200/200 |
+
+FR rose from 15 to 59 exact rows only through the named-complex rows: 44 of 44 such rows are exact in each set, against 15 of 156 and 13 of
+156 numbered unit rows. The FR unit gap is therefore the model's, as is AU's in both recipes. Those 44 rows now test a
+`venue` span inside a check whose task reads "as one unit component". Whether the `postal_unit` selector should leave
+them out is open, and a v9 registration should decide it.
