@@ -27,6 +27,7 @@ import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
+import { KRYPTONITE_COUNTRY } from "#recipes/deepseek/batches"
 import { baseManifestFiles } from "#tools/overlay/manifest"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
@@ -69,11 +70,14 @@ export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow>
 			)
 		}
 
+		// The generator tagged its `french-saint` rows FR, though they're US addresses like every kryptonite row.
+		const tagged = source === "deepseek-kryptonite" ? KRYPTONITE_COUNTRY : null
+
 		yield {
 			raw: raw["raw"] as string,
 			components,
-			country: (raw["country"] as string) ?? "US",
-			locale: (raw["locale"] as string) ?? undefined,
+			country: tagged?.country ?? (raw["country"] as string) ?? "US",
+			locale: tagged?.locale ?? (raw["locale"] as string) ?? undefined,
 			source,
 			source_id: raw["source_id"] as string,
 			license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",

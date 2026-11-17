@@ -198,10 +198,12 @@ export function planKryptoniteBatches(targetCount: number, batchSize: number): K
 }
 
 /**
- * The categories whose addresses are French.
- * The others are US.
+ * The country and locale of every kryptonite row.
+ *
+ * `KRYPTONITE_USER_TEMPLATE` asks for US addresses in every category, `french-saint` included,
+ * so each row is a US address: `1 Rue Saint-Denis, New York, NY 10001`.
  */
-const FRENCH_CATEGORIES: ReadonlySet<string> = new Set(["french-saint"])
+export const KRYPTONITE_COUNTRY = { country: "US", locale: "en-US" } as const
 
 /**
  * One generated canonical row, in the key order the Python generator wrote.
@@ -254,7 +256,7 @@ export function canonicalTranslitRow(
 }
 
 /**
- * One adversarial row: French for a French category, else US.
+ * One adversarial row, a US address in every category ({@linkcode KRYPTONITE_COUNTRY}).
  */
 export function canonicalKryptoniteRow(
 	category: KryptoniteCategory,
@@ -263,13 +265,11 @@ export function canonicalKryptoniteRow(
 	components: Readonly<Record<string, string>>,
 	kind: string
 ): DeepSeekRow {
-	const [country, locale] = FRENCH_CATEGORIES.has(category.category) ? ["FR", "fr-FR"] : ["US", "en-US"]
-
 	return {
 		raw,
 		components,
-		country,
-		locale,
+		country: KRYPTONITE_COUNTRY.country,
+		locale: KRYPTONITE_COUNTRY.locale,
 		source: "deepseek-kryptonite",
 		source_id: deterministicID("deepseek-kryptonite", `${category.category}|${index}|${raw}`),
 		license: DEEPSEEK_LICENSE_LABEL,

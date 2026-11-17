@@ -35,4 +35,45 @@ describe("canonicalRows", () => {
 
 		await expect(Array.fromAsync(canonicalRows(jsonl))).resolves.toHaveLength(2)
 	})
+
+	it("reads a french-saint row the generator tagged FR as the US address it is", async () => {
+		const jsonl = root.path("french-saint.jsonl").toString()
+
+		await writeLocalTextFile(
+			stringifyJSON({
+				raw: "1 Rue Saint-Denis, New York, NY 10001",
+				components: { street: "Rue Saint-Denis", locality: "New York", region: "NY" },
+				country: "FR",
+				locale: "fr-FR",
+				source: "deepseek-kryptonite",
+				source_id: "k-fr",
+				surface: "composed",
+			}),
+			jsonl
+		)
+
+		const [row] = await Array.fromAsync(canonicalRows(jsonl))
+
+		expect(row).toMatchObject({ country: "US", locale: "en-US" })
+	})
+
+	it("keeps another source's own country", async () => {
+		const jsonl = root.path("translit.jsonl").toString()
+
+		await writeLocalTextFile(
+			stringifyJSON({
+				raw: "x",
+				components: {},
+				country: "FR",
+				source: "deepseek-translit-cyrl",
+				source_id: "t",
+				surface: "composed",
+			}),
+			jsonl
+		)
+
+		const [row] = await Array.fromAsync(canonicalRows(jsonl))
+
+		expect(row?.country).toBe("FR")
+	})
 })

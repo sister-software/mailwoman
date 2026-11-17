@@ -19,6 +19,7 @@ import {
 	canonicalTranslitRow,
 	deterministicID,
 	emittedDeepSeekSources,
+	KRYPTONITE_COUNTRY,
 	loadTranslitSeeds,
 	parseJSONLResponse,
 	planKryptoniteBatches,
@@ -169,17 +170,26 @@ describe("the DeepSeek generator's deterministic halves", async () => {
 			reference.translit_row
 		)
 
-		expect(
-			digest(
-				canonicalKryptoniteRow(
-					KRYPTONITE_CATEGORIES[7]!,
-					3,
-					"1 Place Carnot",
-					{ street: "Place Carnot" },
-					"french-saint"
-				)
-			)
-		).toBe(reference.kryptonite_row)
+		const frenchSaint = canonicalKryptoniteRow(
+			KRYPTONITE_CATEGORIES[7]!,
+			3,
+			"1 Place Carnot",
+			{ street: "Place Carnot" },
+			"french-saint"
+		)
+
+		// Python tagged a `french-saint` row FR, while the prompt asks for US addresses in every category.
+		// The row is Python's in every field but those two.
+		expect(frenchSaint).toMatchObject(KRYPTONITE_COUNTRY)
+		expect(digest({ ...frenchSaint, country: "FR", locale: "fr-FR" })).toBe(reference.kryptonite_row)
+	})
+
+	it("tags every category's rows with the country the prompt asks for", () => {
+		expect(KRYPTONITE_USER_TEMPLATE).toContain(" US postal-address cases")
+
+		for (const category of KRYPTONITE_CATEGORIES) {
+			expect(canonicalKryptoniteRow(category, 0, "x", {}, category.category)).toMatchObject(KRYPTONITE_COUNTRY)
+		}
 	})
 
 	it("parses and validates as the Python module did", () => {
