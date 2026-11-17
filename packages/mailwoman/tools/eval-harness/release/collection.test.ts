@@ -7,11 +7,11 @@ import { afterAll, describe, expect, it } from "vitest"
 import { writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 import {
+	type CollectionPinSource,
 	readReportedCollections,
 	verifyReportedCollection,
 	verifyReportedCollections,
 } from "#tools/eval-harness/release/collection"
-import type { ReleaseRequirementSpec } from "#tools/eval-harness/release/requirements"
 
 const directory = await temporaryDirectory("mw-release-collection-")
 
@@ -50,8 +50,8 @@ const spec = (
 	confirmation: string[],
 	dataset: Array<{ id: string; sha256: string }> = [],
 	development: string[] = [OTHER]
-): Pick<ReleaseRequirementSpec, "identities" | "evaluations"> => ({
-	identities: { dataset } as never,
+): CollectionPinSource => ({
+	identities: { dataset },
 	evaluations: {
 		development: { ids: development, description: "" },
 		confirmation: { ids: confirmation, description: "" },

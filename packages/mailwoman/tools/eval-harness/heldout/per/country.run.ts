@@ -56,6 +56,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -210,7 +211,7 @@ function splitList(value: string): string[] {
 	return value
 		.split(",")
 		.map((entry) => entry.trim())
-		.filter(Boolean)
+		.filter(isPresent)
 }
 
 /**

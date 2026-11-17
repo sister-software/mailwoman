@@ -96,11 +96,18 @@ export function readReportedCollections(report: { dataset?: unknown }, source: s
 }
 
 /**
+ * The parts of a release specification that pin collections: the dataset identities
+ * and the evaluation roles.
+ */
+export interface CollectionPinSource {
+	identities: Pick<ReleaseRequirementSpec["identities"], "dataset">
+	evaluations: ReleaseRequirementSpec["evaluations"]
+}
+
+/**
  * Every pin a specification declares, with where it is declared.
  */
-function specPins(
-	spec: Pick<ReleaseRequirementSpec, "identities" | "evaluations">
-): Array<{ pin: CollectionPin; id: string; sha256: string | null }> {
+function specPins(spec: CollectionPinSource): Array<{ pin: CollectionPin; id: string; sha256: string | null }> {
 	return [
 		...spec.identities.dataset.map((entry) => ({
 			pin: "identities.dataset" as const,
@@ -120,7 +127,7 @@ function specPins(
  * from the collection's, or when a pin identifies the collection with another version or rows sha256.
  */
 export async function verifyReportedCollection(
-	spec: Pick<ReleaseRequirementSpec, "identities" | "evaluations">,
+	spec: CollectionPinSource,
 	reported: ReportedCollection
 ): Promise<VerifiedCollection> {
 	const { manifest } = await readHeldoutDatasetRows(reported.path)
@@ -172,7 +179,7 @@ export async function verifyReportedCollection(
  * and when the report lists one dataset id twice.
  */
 export async function verifyReportedCollections(
-	spec: Pick<ReleaseRequirementSpec, "identities" | "evaluations">,
+	spec: CollectionPinSource,
 	reported: readonly ReportedCollection[]
 ): Promise<VerifiedCollections> {
 	const seen = new Set<string>()

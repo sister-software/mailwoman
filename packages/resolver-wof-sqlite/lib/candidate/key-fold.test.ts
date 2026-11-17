@@ -28,9 +28,12 @@ async function candidateDatabase(
 }
 
 function keys(db: DatabaseClient<CandidateDatabase>): string[] {
-	return (db.prepare("SELECT name_key, spr_id FROM candidate ORDER BY spr_id, name_key").all() as never[]).map(
-		(row: { name_key: string; spr_id: number }) => `${row.spr_id}:${row.name_key}`
-	)
+	const rows = db.prepare("SELECT name_key, spr_id FROM candidate ORDER BY spr_id, name_key").all() as Array<{
+		name_key: string
+		spr_id: number
+	}>
+
+	return rows.map((row) => `${row.spr_id}:${row.name_key}`)
 }
 
 describe("applyCandidateKeyFold", () => {
