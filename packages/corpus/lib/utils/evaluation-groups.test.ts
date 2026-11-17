@@ -14,6 +14,7 @@ import {
 	buildEvaluationGroupsFile,
 	evaluationGroupOf,
 	evaluationGroupsV0818Path,
+	evaluationGroupsV0819Path,
 	readEvaluationGroups,
 } from "#utils/evaluation-groups"
 import { defaultHoldouts, splitForRow } from "#utils/split"
@@ -78,11 +79,12 @@ describe("the evaluation-group file", () => {
 	it("reads back the groups it was built from", async () => {
 		const path = directory.path("groups.json").toString()
 
+		const drawnFrom = { corpusVersion: "v-test", sha256: "a".repeat(64) }
+
 		const file = buildEvaluationGroupsFile({
-			drawnFrom: { corpusVersion: "v-test", sha256: "a".repeat(64) },
 			datasets: [
-				{ datasetID: "dev", version: "1", manifestSHA256: "b".repeat(64), rows: 3, groups: ["b", "a", "a"] },
-				{ datasetID: "confirm", version: "2", manifestSHA256: "c".repeat(64), rows: 1, groups: ["c"] },
+				{ datasetID: "dev", version: "1", drawnFrom, manifestSHA256: "b".repeat(64), rows: 3, groups: ["b", "a", "a"] },
+				{ datasetID: "confirm", version: "2", drawnFrom, manifestSHA256: "c".repeat(64), rows: 1, groups: ["c"] },
 			],
 		})
 
@@ -104,8 +106,16 @@ describe("the evaluation-group file", () => {
 		await writeLocalJSONFile(
 			{
 				...buildEvaluationGroupsFile({
-					drawnFrom: { corpusVersion: null, sha256: "" },
-					datasets: [{ datasetID: "d", version: "1", manifestSHA256: "", rows: 0, groups: [] }],
+					datasets: [
+						{
+							datasetID: "d",
+							version: "1",
+							drawnFrom: { corpusVersion: null, sha256: "" },
+							manifestSHA256: "",
+							rows: 0,
+							groups: [],
+						},
+					],
 				}),
 			},
 			empty
@@ -122,6 +132,21 @@ describe("the evaluation-group file", () => {
 
 		expect(groups.datasets.map((set) => set.datasetID)).toEqual(["heldout-dev-v0.8.18", "heldout-confirm-v0.8.18"])
 		// The confirmation set was drawn with every development group excluded, so the two sets share no group.
+		expect(groups.groups.size).toBe(groups.datasets.reduce((sum, set) => sum + set.groups, 0))
+	})
+
+	it("commits the v0.8.19 list as every v0.8.18 group plus the probe sets' groups, no set sharing a group", async () => {
+		const earlier = await readEvaluationGroups(evaluationGroupsV0818Path())
+		const groups = await readEvaluationGroups(evaluationGroupsV0819Path())
+
+		expect(groups.datasets.map((set) => set.datasetID)).toEqual([
+			"heldout-dev-v0.8.18",
+			"heldout-confirm-v0.8.18",
+			"heldout-dev-v0.8.19-probes",
+			"heldout-confirm-v0.8.19-probes",
+		])
+
+		expect([...earlier.groups].filter((group) => !groups.groups.has(group))).toEqual([])
 		expect(groups.groups.size).toBe(groups.datasets.reduce((sum, set) => sum + set.groups, 0))
 	})
 })

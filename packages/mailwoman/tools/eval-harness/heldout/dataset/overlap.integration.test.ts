@@ -462,11 +462,11 @@ describe("auditHeldoutOverlap", () => {
 
 		await writeLocalJSONFile(
 			buildEvaluationGroupsFile({
-				drawnFrom: { corpusVersion: "v-policy-base", sha256: "a".repeat(64) },
 				datasets: [
 					{
 						datasetID: frozen.datasetID,
 						version: frozen.version,
+						drawnFrom: { corpusVersion: "v-policy-base", sha256: "a".repeat(64) },
 						manifestSHA256: "b".repeat(64),
 						rows: frozen.rows.length,
 						groups: frozen.rows.map((entry) => entry.group),

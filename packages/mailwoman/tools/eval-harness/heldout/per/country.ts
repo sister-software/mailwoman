@@ -340,7 +340,8 @@ export interface HeldoutSamplingRule {
 	 * `per-stratum-hash-order`: each country's quota split across its publisher's regions
 	 * in proportion to their rows, every region given a floor, and each region's rows
 	 * taken in the order of a seeded sha256 of their identity.
-	 * The evaluation-only sources draw this way.
+	 * The evaluation-only sources draw this way, and so do the capability-probe renders
+	 * (`heldout/probes/build.ts`), whose strata are each leg's rendered templates.
 	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */

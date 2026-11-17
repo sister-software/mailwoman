@@ -239,6 +239,18 @@ the corpus it was drawn from, because it depends on that corpus's rows. `resplit
 corpus manifest's `evaluation_groups` record. A new frozen set needs a new list, a new quota pass and a new
 re-split before any corpus trains on rows outside it.
 
+Under this policy a corpus's test split holds no probe row outside the frozen groups: v0.8.19's test split holds
+126 of 50,000 `invented-po-box-cedex` rows, 15 of 6,000 `invented-postal-guideline` rows and 70 of 10,000
+`invented-postal-unit-guideline` rows. A larger probe draw therefore comes from a render that no
+training source emits. `heldout/probes/build.run.ts` runs the three probe recipes with a seed no corpus build
+uses, drops every rendered row whose group or folded text a `--corpora` manifest holds in any split, and freezes a
+development and a confirmation set stratified by probe leg and rendered template. The rows keep the recipes'
+source names, so the capability selectors read them, and a later render of the same components takes the same
+group. `evaluation-groups.v0.8.19.json` lists the v0.8.18 sets' groups and the probe sets' groups
+(`heldout-dev-v0.8.19-probes`, `heldout-confirm-v0.8.19-probes`), so the next re-split keeps a repeated render in
+`test`. Each set in a list records what it was drawn from. The v0.8.18 list predates that field and stays as
+written, because corpus v0.8.19's policy hash records its sha256.
+
 The no-leak guarantee is the overlap audit's: no frozen group may appear in a corpus's train or val split.
 `overlap.integration.test.ts` splits a fixture under the policy and audits it, and a list missing one group is
 its negative control. The guarantee compares groups and identities. A frozen address that another source writes

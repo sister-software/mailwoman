@@ -33,6 +33,10 @@ export interface EvaluationGroupDataset {
 	datasetID: string
 	version: string
 	/**
+	 * What the set was drawn from: a corpus manifest, or the lineage of a probe render no corpus holds.
+	 */
+	drawnFrom: EvaluationGroupSource
+	/**
 	 * The sha256 of the dataset manifest read.
 	 */
 	manifestSHA256: string
@@ -41,14 +45,25 @@ export interface EvaluationGroupDataset {
 }
 
 /**
+ * The corpus manifest or render lineage a frozen set records as `drawnFrom`.
+ */
+export interface EvaluationGroupSource {
+	corpusVersion: string | null
+	sha256: string
+}
+
+/**
  * The committed file: every frozen group, sorted.
+ *
+ * Each set records its own `drawnFrom`, so one list can join sets drawn from a corpus
+ * with capability-probe sets rendered outside every corpus.
+ * `evaluation-groups.v0.8.18.json` predates that field and records one top-level
+ * `drawnFrom` for its two sets.
+ *
+ * It stays as written, because corpus v0.8.19's split policy hash records its sha256.
  */
 export interface EvaluationGroupsFile {
 	attribute: typeof EVALUATION_GROUPS_ATTRIBUTE
-	/**
-	 * The corpus manifest the frozen sets were drawn from.
-	 */
-	drawnFrom: { corpusVersion: string | null; sha256: string }
 	datasets: EvaluationGroupDataset[]
 	groups: string[]
 }
@@ -100,7 +115,6 @@ export function evaluationGroupOf(row: { source_id: string; base_source_id?: str
  * Builds the committed file from each frozen set's groups.
  */
 export function buildEvaluationGroupsFile(input: {
-	drawnFrom: EvaluationGroupsFile["drawnFrom"]
 	datasets: ReadonlyArray<Omit<EvaluationGroupDataset, "groups"> & { groups: Iterable<string> }>
 }): EvaluationGroupsFile {
 	const all = new Set<string>()
@@ -118,7 +132,6 @@ export function buildEvaluationGroupsFile(input: {
 
 	return {
 		attribute: EVALUATION_GROUPS_ATTRIBUTE,
-		drawnFrom: input.drawnFrom,
 		datasets,
 		groups: [...all].toSorted(),
 	}
@@ -148,4 +161,12 @@ export async function readEvaluationGroups(path: string): Promise<EvaluationGrou
  */
 export function evaluationGroupsV0818Path(): string {
 	return resolveModulePath("@mailwoman/corpus/data/holdout/evaluation-groups.v0.8.18.json")
+}
+
+/**
+ * The committed group list of the v0.8.18 frozen sets and the v0.8.19 capability-probe
+ * sets (`heldout-dev-v0.8.19-probes` and `heldout-confirm-v0.8.19-probes`).
+ */
+export function evaluationGroupsV0819Path(): string {
+	return resolveModulePath("@mailwoman/corpus/data/holdout/evaluation-groups.v0.8.19.json")
 }

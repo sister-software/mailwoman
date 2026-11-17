@@ -7,12 +7,13 @@
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/evaluation-groups.run.ts \
- *     --datasets /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.v2.json \
- *     --out packages/corpus/data/holdout/evaluation-groups.v0.8.18.json
+ *     --datasets /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.v2.json,\
+ *   /mnt/mw/corpus/heldout/heldout-dev-v0.8.19-probes.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.19-probes.json \
+ *     --out packages/corpus/data/holdout/evaluation-groups.v0.8.19.json
  *
  *   Each manifest is read with `readHeldoutDatasetManifest`, and each entry's
  *   `group` is the value the freeze wrote.
- *   Every set in `--datasets` must have been drawn from one corpus manifest.
+ *   Each set records what it was drawn from, a corpus manifest or a probe render's lineage.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -40,20 +41,12 @@ const manifests = await Promise.all(
 	paths.map(async (path) => ({ path, manifest: await readHeldoutDatasetManifest(path) }))
 )
 
-const drawnFrom = new Set(manifests.map(({ manifest }) => manifest.drawnFrom.sha256))
-
-if (drawnFrom.size !== 1) {
-	throw new Error(`the named sets were drawn from ${drawnFrom.size} corpus manifests; name sets drawn from one`)
-}
-
-const first = manifests[0]!.manifest
-
 const file = buildEvaluationGroupsFile({
-	drawnFrom: { corpusVersion: first.drawnFrom.corpusVersion, sha256: first.drawnFrom.sha256 },
 	datasets: await Promise.all(
 		manifests.map(async ({ path, manifest }) => ({
 			datasetID: manifest.datasetID,
 			version: manifest.version,
+			drawnFrom: { corpusVersion: manifest.drawnFrom.corpusVersion, sha256: manifest.drawnFrom.sha256 },
 			manifestSHA256: await sha256File(path),
 			rows: manifest.rows.length,
 			groups: manifest.rows.map((row) => row.group),
