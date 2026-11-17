@@ -28,7 +28,7 @@ const evaluate = (
 
 const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequirementSpec =>
 	validateReleaseSpec({
-		schemaVersion: 3,
+		schemaVersion: 4,
 		specVersion: "test",
 		rationale: "test",
 		requirements: [
@@ -42,7 +42,7 @@ const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequi
 		],
 		objective: { countries: ["US", "FR"], minimumImprovement: 0 },
 		identities: {
-			dataset: { id: null, sha256: null },
+			dataset: [{ id: "heldout-confirm-test@0123456789abcdef", sha256: "c".repeat(64) }],
 			scorer: { id: "exact-parse", revision: "test" },
 			inference: { description: "test", options: {} },
 			published: { description: "p", sha256: PUBLISHED },
@@ -63,8 +63,8 @@ const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequi
 			},
 		},
 		evaluations: {
-			development: { id: null, description: "d" },
-			confirmation: { id: null, description: "c" },
+			development: { ids: ["heldout-dev-test@0123456789abcdef"], description: "d" },
+			confirmation: { ids: ["heldout-confirm-test@0123456789abcdef"], description: "c" },
 		},
 		...overrides,
 	})
@@ -81,8 +81,19 @@ const rowsFor = (country: string, n: number, published: number, candidate: numbe
 		provenance: "verified_unseen",
 		group: group ? group(i) : null,
 		weightsLocale: "en-us",
+		tags: ["house_number", "street"],
 		published: i < published,
 		candidate: i < candidate,
+		geocode: null,
+	}))
+
+/**
+ * Rows whose parse outcomes are equal in both arms and whose geocode outcomes differ as given.
+ */
+const geocodedFor = (country: string, n: number, published: number, candidate: number) =>
+	rowsFor(country, n, n, n, (i) => `g${i}`).map((row, i) => ({
+		...row,
+		geocode: { published: i < published, candidate: i < candidate },
 	}))
 
 const check = (verdict: ReturnType<typeof evaluateReleaseSpec>, id: string) => verdict.checks.find((c) => c.id === id)!
@@ -109,10 +120,10 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("reads the current specification as insufficient evidence when required countries have no rows", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v8\.json$/u)
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v9\.json$/u)
 
 		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v8.json", import.meta.url).pathname)
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v9.json", import.meta.url).pathname)
 		)
 
 		const verdict = evaluate(committed, rowsFor("US", 50, 40, 45), {
@@ -327,6 +338,125 @@ describe("evaluateReleaseSpec", () => {
 		).toThrow(/maximumUnreachableEdges/u)
 	})
 
+	it("leaves a row whose expected spans hold a withoutTags tag out of a capability", () => {
+		const spec = baseSpec({
+			requirements: [
+				{
+					id: "postal_unit",
+					kind: "capability",
+					task: "t",
+					metric: "exact_parse",
+					reason: "t",
+					minimum: 0.5,
+					select: { kinds: ["address"], sources: ["invented-postal-unit-guideline"], withoutTags: ["venue"] },
+				},
+			],
+		})
+
+		const probe = (tags: string[]) =>
+			rowsFor("FR", 50, 0, 0, (i) => `${tags.join("+")}${i}`).map((row) => ({
+				...row,
+				rowID: `${tags.join("+")}:${row.rowID}`,
+				source: "invented-postal-unit-guideline",
+				tags,
+			}))
+
+		const rows = [...probe(["unit", "street"]), ...probe(["venue", "street"]), ...rowsFor("US", 50, 40, 40)]
+		const capability = check(evaluate(spec, rows, artifacts), "postal_unit")
+
+		expect(capability.rows).toBe(50)
+
+		expect(() =>
+			evaluate(
+				spec,
+				rows.map((row) => ({ ...row, tags: null })),
+				artifacts
+			)
+		).toThrow(/records no expected tags/u)
+	})
+
+	it("bounds a geocode requirement's loss on the geocode outcomes, which a parse-only change leaves equal", () => {
+		const spec = baseSpec({
+			requirements: [
+				{
+					id: "geocode",
+					kind: "geocode",
+					task: "t",
+					metric: "geocode_outcome",
+					reason: "t",
+					countries: ["US", "FR"],
+					select: { kinds: ["address"] },
+					maxLoss: 0.01,
+					maxLossReason: "t",
+				},
+			],
+		})
+
+		// The parse outcomes are equal.
+		// The candidate's geocode fixes 40 US rows and loses none.
+		const fixed = evaluate(
+			spec,
+			[...geocodedFor("US", 2000, 1500, 1540), ...geocodedFor("FR", 2000, 1800, 1800)],
+			artifacts
+		)
+
+		const geocode = check(fixed, "geocode")
+
+		expect(geocode.check).toBe("max_loss")
+		expect(geocode.estimate).toBeCloseTo(40 / 2000 / 2, 10)
+		expect(geocode.outcome).toBe(ReleaseOutcome.Pass)
+
+		const lost = check(
+			evaluate(spec, [...geocodedFor("US", 2000, 1500, 1300), ...geocodedFor("FR", 2000, 1800, 1800)], artifacts),
+			"geocode"
+		)
+
+		expect(lost.outcome).toBe(ReleaseOutcome.Fail)
+	})
+
+	it("reports a geocode requirement insufficient when a selected row carries no geocode outcome", () => {
+		const spec = baseSpec({
+			requirements: [
+				{
+					id: "geocode",
+					kind: "geocode",
+					task: "t",
+					metric: "geocode_outcome",
+					reason: "t",
+					countries: ["US"],
+					maxLoss: 0.01,
+					maxLossReason: "t",
+				},
+			],
+		})
+
+		const rows = [
+			...geocodedFor("US", 2000, 1500, 1500),
+			...rowsFor("US", 10, 5, 5).map((r) => ({ ...r, rowID: `x${r.rowID}` })),
+		]
+
+		const geocode = check(evaluate(spec, rows, artifacts), "geocode")
+
+		expect(geocode.rows).toBe(2000)
+		expect(geocode.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(geocode.reasons.join(" ")).toMatch(/10 of 2010 selected rows carry no geocode outcome/u)
+
+		const none = check(evaluate(spec, rowsFor("US", 100, 50, 50), artifacts), "geocode")
+
+		expect(none.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(none.reasons).toContain("required country US has no admitted rows")
+	})
+
+	it("makes a verdict insufficient when the collections make up no evaluation role", () => {
+		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)]
+
+		const verdict = evaluateReleaseSpec(baseSpec(), rows, artifacts, INFERENCE, null, ["the report lacks a collection"])
+
+		expect(verdict.checks.every((c) => c.outcome === ReleaseOutcome.Pass)).toBe(true)
+		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(verdict.reasons).toContain("the report lacks a collection")
+	})
+
 	it("is deterministic", () => {
 		const rows = [...rowsFor("US", 60, 30, 40), ...rowsFor("FR", 60, 30, 40)]
 
@@ -493,6 +623,23 @@ describe("pairOutcomes", () => {
 		Reflect.set(unreadable, "exact", "yes")
 
 		expect(() => pairOutcomes([row("a", true)], [unreadable])).toThrow(/unreadable/u)
+	})
+
+	it("carries each arm's geocode outcome and refuses a row geocoded in one arm only", () => {
+		const paired = pairOutcomes(
+			[{ ...row("a", true), geocode: { exact: false } }],
+			[{ ...row("a", true), geocode: { exact: true } }]
+		)
+
+		expect(paired[0]).toMatchObject({
+			published: true,
+			candidate: true,
+			geocode: { published: false, candidate: true },
+		})
+
+		expect(() => pairOutcomes([{ ...row("a", true), geocode: { exact: true } }], [row("a", true)])).toThrow(
+			/geocode outcome in one arm only/u
+		)
 	})
 
 	it("carries the weights locale and refuses arms parsed by different packages", () => {

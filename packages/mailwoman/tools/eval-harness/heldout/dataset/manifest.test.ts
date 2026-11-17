@@ -11,11 +11,14 @@ import {
 	assertNoVersionCollision,
 	buildHeldoutDatasetManifest,
 	compareHeldoutDatasets,
+	mergeHeldoutCollections,
 	readHeldoutDatasetManifest,
 	readHeldoutDatasetRows,
 	restampHeldoutDataset,
+	reviseHeldoutDataset,
 	writeHeldoutDataset,
 } from "#tools/eval-harness/heldout/dataset/manifest"
+import { COUNTY_IN_LOCALITY_SLOT } from "#tools/eval-harness/heldout/dataset/relabel"
 import type { HeldoutCellCount, HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 
 const directory = await temporaryDirectory("mw-heldout-dataset-")
@@ -242,5 +245,107 @@ describe("restampHeldoutDataset", () => {
 
 		expect(restampedConfirm.manifest.sampling.excludes).toEqual({ datasetID: "restamp-dev", version: dev.version })
 		expect((await readHeldoutDatasetRows(confirmPath)).manifest.version).toBe(restampedConfirm.manifest.version)
+	})
+})
+
+describe("mergeHeldoutCollections", () => {
+	it("joins two collections' rows and sums their cells, and refuses a row identity both hold", async () => {
+		const main = await write(directory.path("merge-main.json"), [row("m1", "US", "oa-us")], "merge-main")
+
+		const probes = await write(
+			directory.path("merge-probes.json"),
+			[row("p1", "US", "invented-po-box-cedex")],
+			"merge-probes"
+		)
+
+		const merged = mergeHeldoutCollections([
+			{ path: "merge-main.json", manifest: main, rows: [row("m1", "US", "oa-us")] },
+			{ path: "merge-probes.json", manifest: probes, rows: [row("p1", "US", "invented-po-box-cedex")] },
+		])
+
+		expect(merged.rows.map((r) => r.source_id)).toEqual(["m1", "p1"])
+		expect(merged.counts).toEqual([{ country: "US", kind: "address", available: 200, sampled: 2 }])
+		expect(merged.dataset.map((d) => d.datasetID)).toEqual(["merge-main", "merge-probes"])
+
+		expect(() =>
+			mergeHeldoutCollections([
+				{ path: "a.json", manifest: main, rows: [row("m1", "US", "oa-us")] },
+				{ path: "b.json", manifest: probes, rows: [row("m1", "US", "oa-us")] },
+			])
+		).toThrow(/merge-probes and merge-main both hold row oa-us:m1/u)
+	})
+})
+
+describe("reviseHeldoutDataset", () => {
+	const county = (sourceID: string, locality: string): HeldoutRow => {
+		const raw = `12 Main St, ${locality}`
+
+		return {
+			raw,
+			span_starts: [0, 3, 12],
+			span_ends: [2, 10, raw.length],
+			span_tags: ["house_number", "street", "locality"],
+			country: "US",
+			source: "usgov-nad",
+			source_id: sourceID,
+			group: sourceID,
+		}
+	}
+
+	it("writes a new collection that records its source, its rule and every changed row, leaving the source", async () => {
+		const sourcePath = directory.path("revise-source.json")
+		const source = await write(sourcePath, [county("n1", "CARTER COUNTY"), county("n2", "ARDMORE")], "revise")
+		const sourceText = await readLocalTextFile(sourcePath)
+		const outPath = directory.path("revise-source.v2.json")
+
+		const revised = await reviseHeldoutDataset(sourcePath, outPath, {
+			rule: COUNTY_IN_LOCALITY_SLOT.rule,
+			annotation: `relabel:${COUNTY_IN_LOCALITY_SLOT.id}`,
+			revise: COUNTY_IN_LOCALITY_SLOT.revise,
+			sourceExcludes: null,
+			excludes: null,
+			createdAt: "2026-11-17T00:00:00.000Z",
+		})
+
+		expect(revised.datasetID).toBe("revise")
+		expect(revised.version).not.toBe(source.version)
+
+		expect(revised.revision).toEqual({
+			from: {
+				datasetID: "revise",
+				version: source.version,
+				manifest: sourcePath.toString(),
+				rowsSHA256: source.rowsFile.sha256,
+			},
+			rule: COUNTY_IN_LOCALITY_SLOT.rule,
+			rows: [{ rowID: "usgov-nad:n1", before: ["locality=CARTER COUNTY"], after: ["subregion=CARTER COUNTY"] }],
+		})
+
+		expect(
+			revised.rows.map((entry) => entry.annotation.endsWith("+relabel:county-in-locality-slot-subregion"))
+		).toEqual([true, false])
+
+		const reread = await readHeldoutDatasetRows(outPath)
+
+		expect(reread.manifest.version).toBe(revised.version)
+		expect(reread.rows[0]!.span_tags).toEqual(["house_number", "street", "subregion"])
+		expect(await readLocalTextFile(sourcePath)).toBe(sourceText)
+	})
+
+	it("refuses a revision that changes no row", async () => {
+		const sourcePath = directory.path("revise-none.json")
+
+		await write(sourcePath, [county("n3", "ARDMORE")], "revise-none")
+
+		await expect(
+			reviseHeldoutDataset(sourcePath, directory.path("revise-none.v2.json"), {
+				rule: "r",
+				annotation: "a",
+				revise: (r) => r,
+				sourceExcludes: null,
+				excludes: null,
+				createdAt: "2026-11-17T00:00:00.000Z",
+			})
+		).rejects.toThrow(/changes no row/u)
 	})
 })

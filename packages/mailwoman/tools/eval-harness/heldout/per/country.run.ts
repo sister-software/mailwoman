@@ -10,15 +10,27 @@
  *     --manifest <corpus MANIFEST.json> --baseline <weights cache> --candidates <cache>,<cache> --out <report .json> \
  *     [--provenance <history .json>]
  *
- *   `--dataset <dataset manifest .json>` scores a frozen, versioned sample
- *   (`heldout/dataset/freeze.run.ts`) in place of drawing one from `--manifest`;
- *   the rows file's sha256 is checked against the manifest.
- *   Every outcome includes the row's `group`.
+ *   `--dataset <manifest .json>,<manifest .json>` scores frozen, versioned samples
+ *   (`heldout/dataset/freeze.run.ts`) in place of drawing one from `--manifest`,
+ *   all the collections of one evaluation role together.
+ *   Each rows file's sha256 is checked against its manifest, two collections that share
+ *   a row identity are refused, and the report's `dataset` lists every collection.
+ *
+ *   Every outcome includes the row's `group` and its expected tags.
  *   `release/evaluate.ts` uses that group for resampling.
  *
- *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
- *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it doesn't
- *   name is classed `unknown`.
+ *   An optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
+ *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. `--provenance`
+ *   takes one per collection, comma-separated, and refuses two that class one row differently.
+ *   A row none of them names is classed `unknown`.
+ *
+ *   An arm is a weights cache root, optionally with resolver pins after a `#`
+ *   (`heldout/per/arm.ts`): `<root>#countyDesignatorFallback=on`.
+ *   Arms that share a root share one parse.
+ *
+ *   `--geocode` also geocodes, with every distinct arm, the rows the specification's
+ *   `geocode` requirements select (`heldout/per/geocode.ts`), and records each
+ *   row's geocode outcome beside its parse outcome.
  *
  *   `--spec` names the release specification (default: the current one) whose
  *   capability requirements select the capability-probe sources.
@@ -46,7 +58,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
 import {
 	type HeldoutRowOutcome,
 	assertPairedArms,
@@ -62,6 +75,7 @@ import {
 	sampleHeldoutRows,
 	scoreHeldoutArm,
 } from "#tools/eval-harness/heldout/per/country"
+import { geocodeRequirementSelects as selectsForGeocode } from "#tools/eval-harness/heldout/per/geocode-outcome"
 import {
 	byKindAndProvenance,
 	byProvenance,
@@ -87,7 +101,13 @@ const { values } = parseArguments({
 		},
 		dataset: {
 			type: "string",
-			description: "A frozen held-out dataset manifest (heldout/dataset/freeze.run.ts), in place of --manifest",
+			description:
+				"Frozen held-out dataset manifests (heldout/dataset/freeze.run.ts), comma-separated, in place of --manifest",
+		},
+		geocode: {
+			type: "boolean",
+			default: false,
+			description: "Also geocode the rows the specification's geocode requirements select, with every arm",
 		},
 		"per-country": {
 			type: "string",
@@ -109,7 +129,7 @@ const { values } = parseArguments({
 		},
 		provenance: {
 			type: "string",
-			description: "Recorded exclusion history keyed by row identity",
+			description: "Recorded exclusion histories keyed by row identity, comma-separated",
 		},
 		out: {
 			type: "string",
@@ -183,6 +203,49 @@ function printPairedSplits(arms: readonly string[], outcomes: readonly (readonly
 	}
 }
 
+/**
+ * A comma-separated option as its trimmed, non-empty entries.
+ */
+function splitList(value: string): string[] {
+	return value
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter(Boolean)
+}
+
+/**
+ * Reads and verifies each collection, then joins them (`mergeHeldoutCollections`).
+ */
+async function readCollections(paths: readonly string[]) {
+	const collections = []
+
+	for (const path of paths) {
+		collections.push({ path, ...(await readHeldoutDatasetRows(path)) })
+	}
+
+	return mergeHeldoutCollections(collections)
+}
+
+/**
+ * Prints each arm's geocode-outcome rate per country over the geocoded rows.
+ */
+function printGeocodeRates(arms: readonly string[], outcomes: readonly (readonly HeldoutRowOutcome[])[]): void {
+	console.log("\n# geocode outcome on geocoded rows")
+	console.log(["country", "rows", ...arms.map((_, i) => (i ? `cand${i} %` : "baseline %"))].join("\t"))
+
+	const countries = [...new Set(outcomes[0]!.filter((o) => o.geocode).map((o) => o.country))].toSorted()
+
+	for (const country of countries) {
+		const rates = outcomes.map((arm) => {
+			const rows = arm.filter((o) => o.country === country && o.geocode)
+
+			return { rows: rows.length, exact: rows.filter((o) => o.geocode!.exact).length }
+		})
+
+		console.log([country, rates[0]!.rows, ...rates.map((r) => ((100 * r.exact) / r.rows).toFixed(2))].join("\t"))
+	}
+}
+
 if (values["from-report"]) {
 	const earlier = await readLocalJSONFile<{ outcomes?: { arm: string; rows: HeldoutRowOutcome[] }[] }>(
 		values["from-report"]
@@ -209,39 +272,47 @@ async function scoreAndReport(): Promise<void> {
 
 	let history: ProvenanceHistory | undefined
 
-	if (values.provenance) {
-		const file = await readLocalJSONFile<{
-			rows?: Record<string, ProvenanceRecord>
-		}>(values.provenance)
+	const provenancePaths = values.provenance ? splitList(values.provenance) : []
 
-		if (!file.rows) throw new Error(`${values.provenance} holds no rows object`)
+	if (provenancePaths.length) {
+		const merged = new Map<string, ProvenanceRecord>()
 
-		for (const [rowID, record] of Object.entries(file.rows)) {
-			if (
-				!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(record.provenance) ||
-				(record.provenance as string) === "unknown"
-			) {
-				throw new Error(`${values.provenance} row ${rowID} has provenance ${String(record.provenance)}`)
-			}
+		for (const path of provenancePaths) {
+			const file = await readLocalJSONFile<{
+				rows?: Record<string, ProvenanceRecord>
+			}>(path)
 
-			if (typeof record.evidence !== "string" || !record.evidence) {
-				throw new Error(`${values.provenance} row ${rowID} records no evidence`)
+			if (!file.rows) throw new Error(`${path} holds no rows object`)
+
+			for (const [rowID, record] of Object.entries(file.rows)) {
+				if (
+					!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(record.provenance) ||
+					(record.provenance as string) === "unknown"
+				) {
+					throw new Error(`${path} row ${rowID} has provenance ${String(record.provenance)}`)
+				}
+
+				if (typeof record.evidence !== "string" || !record.evidence) {
+					throw new Error(`${path} row ${rowID} records no evidence`)
+				}
+
+				const earlier = merged.get(rowID)
+
+				if (earlier && earlier.provenance !== record.provenance) {
+					throw new Error(
+						`${path} classes row ${rowID} ${record.provenance}; an earlier file classes it ${earlier.provenance}`
+					)
+				}
+
+				merged.set(rowID, earlier ?? record)
 			}
 		}
 
-		history = new Map(Object.entries(file.rows))
+		history = merged
 	}
 
 	const { rows, counts, dataset } = values.dataset
-		? await readHeldoutDatasetRows(values.dataset).then((frozen) => ({
-				rows: frozen.rows,
-				counts: frozen.manifest.cells,
-				dataset: {
-					path: values.dataset!,
-					datasetID: frozen.manifest.datasetID,
-					version: frozen.manifest.version,
-				},
-			}))
+		? await readCollections(splitList(values.dataset))
 		: {
 				...(await sampleHeldoutRows(
 					values.manifest!,
@@ -257,23 +328,35 @@ async function scoreAndReport(): Promise<void> {
 
 	console.error(`${rows.length} held-out rows from ${values.dataset ?? values.manifest}`)
 
-	const arms = [values.baseline, ...values.candidates.split(",").map((s) => s.trim())]
+	const arms = [values.baseline, ...splitList(values.candidates)]
+	const parsedArms = arms.map(parseHeldoutArm)
 	const scored: HeldoutArmResult[] = []
 	const packages = await readHeldoutLocalePackages()
-	const capabilitySources = capabilityProbeSources(await readReleaseSpec(values.spec))
+	const spec = await readReleaseSpec(values.spec)
+	const capabilitySources = capabilityProbeSources(spec)
 
 	const parseSources: HeldoutParseSource[] = []
+	// Arms that share a weights cache root parse identically, because their pins act only in the resolver.
+	const parsesByRoot = new Map<string, Awaited<ReturnType<typeof parseHeldoutRows>>>()
 
-	for (const [index, arm] of arms.entries()) {
-		console.error(`scoring arm ${index + 1} of ${arms.length}: ${arm}`)
+	for (const [index, arm] of parsedArms.entries()) {
+		console.error(`scoring arm ${index + 1} of ${arms.length}: ${arm.label}`)
 
-		const { parses, source } = await parseHeldoutRows(rows, arm, {
-			packages,
-			workers: Number(values.workers),
-			threads: Number(values.threads),
-			localeHint: values["no-hint"] ? "none" : "row-country",
-			...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
-		})
+		let parsed = parsesByRoot.get(arm.cacheRoot)
+
+		if (!parsed) {
+			parsed = await parseHeldoutRows(rows, arm.cacheRoot, {
+				packages,
+				workers: Number(values.workers),
+				threads: Number(values.threads),
+				localeHint: values["no-hint"] ? "none" : "row-country",
+				...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
+			})
+
+			parsesByRoot.set(arm.cacheRoot, parsed)
+		}
+
+		const { parses, source } = parsed
 
 		parseSources.push(source)
 
@@ -289,6 +372,60 @@ async function scoreAndReport(): Promise<void> {
 	}
 
 	assertPairedArms(scored)
+
+	const geocodeRequirements = spec.requirements.filter((req) => req.kind === "geocode")
+	let geocode: { rule: string; requirements: string[]; rows: number; seconds: Record<string, number> } | null = null
+
+	if (values.geocode) {
+		if (!geocodeRequirements.length) throw new Error(`${values.spec} declares no geocode requirement to geocode for`)
+
+		const { geocodeHeldoutRows, HELDOUT_GEOCODE_RULE } = await import("#tools/eval-harness/heldout/per/geocode")
+
+		const selected = rows.filter((row) =>
+			geocodeRequirements.some((req) => selectsForGeocode(req, row, capabilitySources))
+		)
+
+		const outcomesByLabel = new Map<string, Awaited<ReturnType<typeof geocodeHeldoutRows>>>()
+		const seconds: Record<string, number> = {}
+
+		for (const arm of parsedArms) {
+			if (outcomesByLabel.has(arm.label)) continue
+
+			console.error(`geocoding ${selected.length} rows with ${arm.label}`)
+
+			const started = Date.now()
+
+			outcomesByLabel.set(
+				arm.label,
+				await geocodeHeldoutRows(selected, arm, (done, total) => {
+					if (done % 500 === 0 || done === total) {
+						console.error(`  ${done} of ${total}`)
+					}
+				})
+			)
+
+			seconds[arm.label] = Math.round((Date.now() - started) / 1000)
+		}
+
+		for (const [i, arm] of parsedArms.entries()) {
+			const outcomes = outcomesByLabel.get(arm.label)!
+
+			for (const outcome of scored[i]!.rows) {
+				const graded = outcomes.get(outcome.rowID)
+
+				if (graded) {
+					outcome.geocode = graded
+				}
+			}
+		}
+
+		geocode = {
+			rule: HELDOUT_GEOCODE_RULE,
+			requirements: geocodeRequirements.map((req) => req.id),
+			rows: selected.length,
+			seconds,
+		}
+	}
 
 	const rate = (n: number, d: number) => (d ? n / d : null)
 
@@ -331,7 +468,8 @@ async function scoreAndReport(): Promise<void> {
 		{
 			manifest: values.manifest ?? null,
 			dataset,
-			provenance: values.provenance ?? null,
+			provenance: provenancePaths.length ? provenancePaths : null,
+			geocode,
 			capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },
 			inference: {
 				rule: HELDOUT_INFERENCE_RULE,
@@ -381,4 +519,11 @@ async function scoreAndReport(): Promise<void> {
 		arms,
 		scored.map((arm) => arm.rows)
 	)
+
+	if (geocode) {
+		printGeocodeRates(
+			arms,
+			scored.map((arm) => arm.rows)
+		)
+	}
 }

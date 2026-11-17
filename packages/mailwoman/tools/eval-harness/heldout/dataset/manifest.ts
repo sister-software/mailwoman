@@ -107,6 +107,40 @@ export interface HeldoutDatasetManifest {
 	cells: HeldoutCellCount[]
 	rowsFile: { path: string; sha256: string; rows: number }
 	rows: HeldoutDatasetEntry[]
+	/**
+	 * Present on a collection made from another by changing expected spans under a recorded decision
+	 * ({@linkcode reviseHeldoutDataset}): the source collection, the rule, and every row it changed.
+	 *
+	 * The rows file's sha256 enters the version, so a revision always records a new version.
+	 */
+	revision?: HeldoutDatasetRevision
+}
+
+/**
+ * How a revised collection differs from the collection it was made from.
+ */
+export interface HeldoutDatasetRevision {
+	from: {
+		datasetID: string
+		/**
+		 * The source's version under the current rule, `heldoutDatasetVersion`.
+		 */
+		version: string
+		manifest: string
+		rowsSHA256: string
+	}
+	/**
+	 * The change, as one sentence naming the decision that made it.
+	 */
+	rule: string
+	rows: Array<{
+		rowID: string
+		/**
+		 * The changed spans before and after, each `<tag>=<text>`, in span order.
+		 */
+		before: string[]
+		after: string[]
+	}>
 }
 
 /**
@@ -455,6 +489,168 @@ export async function readHeldoutDatasetRows(
 	const manifest = await readHeldoutDatasetManifest(manifestPath)
 
 	return { manifest, rows: await readVerifiedRows(manifestPath, manifest) }
+}
+
+/**
+ * Joins collections an evaluation role scores together: their rows in the order given,
+ * their cell counts summed per country and row kind, and the collection each came from.
+ *
+ * @throws When two collections hold a row with one identity, because paired outcomes join by identity.
+ */
+export function mergeHeldoutCollections(
+	collections: ReadonlyArray<{ path: string; manifest: HeldoutDatasetManifest; rows: readonly HeldoutRow[] }>
+): {
+	rows: HeldoutRow[]
+	counts: HeldoutCellCount[]
+	dataset: Array<{ path: string; datasetID: string; version: string }>
+} {
+	const owner = new Map<string, string>()
+	const cells = new Map<string, HeldoutCellCount>()
+	const rows: HeldoutRow[] = []
+
+	for (const { manifest, rows: collectionRows } of collections) {
+		for (const row of collectionRows) {
+			const rowID = heldoutRowID(row)
+			const earlier = owner.get(rowID)
+
+			if (earlier) throw new Error(`${manifest.datasetID} and ${earlier} both hold row ${rowID}`)
+
+			owner.set(rowID, manifest.datasetID)
+			rows.push(row)
+		}
+
+		for (const cell of manifest.cells) {
+			const key = `${cell.country}/${cell.kind}`
+			const sum = cells.get(key) ?? { country: cell.country, kind: cell.kind, available: 0, sampled: 0 }
+
+			sum.available += cell.available
+			sum.sampled += cell.sampled
+			cells.set(key, sum)
+		}
+	}
+
+	return {
+		rows,
+		counts: [...cells.values()].toSorted((a, b) => `${a.country}/${a.kind}`.localeCompare(`${b.country}/${b.kind}`)),
+		dataset: collections.map(({ path, manifest }) => ({
+			path,
+			datasetID: manifest.datasetID,
+			version: manifest.version,
+		})),
+	}
+}
+
+/**
+ * `<tag>=<text>` for each span of a row, in span order.
+ */
+function spanLabels(row: Pick<HeldoutRow, "raw" | "span_starts" | "span_ends" | "span_tags">): string[] {
+	return row.span_tags.map((tag, i) => `${tag}=${row.raw.slice(row.span_starts[i], row.span_ends[i])}`)
+}
+
+/**
+ * Makes a new collection from `sourcePath` by changing rows' expected spans under one recorded rule,
+ * leaving every row's identity, text and group, the sampling and the drawn-from record as they are.
+ *
+ * The source may be a schema 1 manifest: it is restamped in memory first (`restampHeldoutDataset`),
+ * with `sourceExcludes` as the restamped collection its sampling excludes.
+ * The new manifest records the source by its current-rule version and rows sha256,
+ * the rule, and every changed row's spans before and after.
+ * A changed row's annotation gains `+<annotation>`.
+ *
+ * `excludes` replaces the excluded collection the new sampling records, and is required
+ * when the source's sampling records one.
+ *
+ * @throws When `revise` changes a row's identity, text or group, when no row changes,
+ * or when a sibling manifest holds the new version over other rows.
+ */
+export async function reviseHeldoutDataset(
+	sourcePath: PathBuilderLike,
+	outPath: PathBuilderLike,
+	input: {
+		rule: string
+		annotation: string
+		revise: (row: HeldoutRow) => HeldoutRow
+		sourceExcludes: Pick<HeldoutDatasetManifest, "datasetID" | "version"> | null
+		excludes: Pick<HeldoutDatasetManifest, "datasetID" | "version"> | null
+		createdAt: string
+	},
+	write = true
+): Promise<HeldoutDatasetManifest> {
+	const { manifest: source } = await restampHeldoutDataset(sourcePath, input.sourceExcludes, false)
+	const unrevised = await readVerifiedRows(sourcePath, source)
+	const changed: HeldoutDatasetRevision["rows"] = []
+
+	const rows = unrevised.map((row) => {
+		const revised = input.revise(row)
+
+		if (heldoutRowID(revised) !== heldoutRowID(row) || revised.raw !== row.raw || revised.group !== row.group) {
+			throw new Error(`the revision changes the identity, text or group of ${heldoutRowID(row)}`)
+		}
+
+		if (expectedSpansSHA256(revised) === expectedSpansSHA256(row)) return row
+
+		const before = spanLabels(row)
+		const after = spanLabels(revised)
+
+		changed.push({
+			rowID: heldoutRowID(row),
+			before: before.filter((label, i) => label !== after[i]),
+			after: after.filter((label, i) => label !== before[i]),
+		})
+
+		return revised
+	})
+
+	if (!changed.length) throw new Error(`the revision changes no row of ${sourcePath.toString()}`)
+
+	if (source.sampling.excludes && !input.excludes) {
+		throw new Error(
+			`${sourcePath.toString()} excludes ${source.sampling.excludes.datasetID}; name the collection the revision excludes`
+		)
+	}
+
+	const changedIDs = new Set(changed.map((row) => row.rowID))
+	const rowsName = `${basename(outPath.toString()).replace(/\.json$/u, "")}.rows.jsonl`
+	const rowsText = heldoutRowsText(rows)
+
+	const revised: HeldoutDatasetManifest = {
+		...source,
+		createdAt: input.createdAt,
+		sampling: input.excludes
+			? { ...source.sampling, excludes: { datasetID: input.excludes.datasetID, version: input.excludes.version } }
+			: source.sampling,
+		rowsFile: { path: rowsName, sha256: sha256Hex(rowsText), rows: rows.length },
+		rows: source.rows.map((entry, i) =>
+			changedIDs.has(entry.rowID)
+				? {
+						...entry,
+						spansSHA256: expectedSpansSHA256(rows[i]!),
+						annotation: `${entry.annotation}+${input.annotation}`,
+					}
+				: entry
+		),
+		revision: {
+			from: {
+				datasetID: source.datasetID,
+				version: source.version,
+				manifest: resolvePath(sourcePath.toString()).toString(),
+				rowsSHA256: source.rowsFile.sha256,
+			},
+			rule: input.rule,
+			rows: changed,
+		},
+	}
+
+	revised.version = recomputeHeldoutDatasetVersion(revised)
+
+	await assertNoVersionCollision(outPath, revised)
+
+	if (write) {
+		await writeLocalTextFile(rowsText, resolvePath(dirname(outPath.toString()), rowsName))
+		await writeLocalJSONFile(revised, outPath)
+	}
+
+	return revised
 }
 
 /**

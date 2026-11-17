@@ -37,6 +37,7 @@ import { mulberry32 } from "@mailwoman/core/random"
 import { evaluateReleaseSpec, type PairedRow, ReleaseOutcome } from "#tools/eval-harness/release/evaluate"
 import {
 	MultipleComparisonMethod,
+	RELEASE_SPEC_SCHEMA_VERSION,
 	type ReleaseRequirementSpec,
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
@@ -333,7 +334,9 @@ function drawSet(scenario: SimulationScenario, random: () => number): DrawnSet {
 					provenance: "verified_unseen",
 					group: scenario.grouping === "metadata" ? `${c.country}:g${g}` : null,
 					weightsLocale: "simulation",
+					tags: null,
 					published: unitPublished[unit] === 1,
+					geocode: null,
 				})
 			}
 		}
@@ -383,13 +386,19 @@ const PUBLISHED_SHA = "0".repeat(64)
 const CANDIDATE_SHA = "1".repeat(64)
 
 /**
+ * The collection id a synthetic specification pins.
+ * A simulation reads no frozen collection.
+ */
+const SIMULATED_COLLECTION = "simulation@0000000000000000"
+
+/**
  * The synthetic specification a scenario is evaluated against.
  * Its thresholds are simulation parameters.
  */
 export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSpec {
 	return validateReleaseSpec(
 		{
-			schemaVersion: 3,
+			schemaVersion: RELEASE_SPEC_SCHEMA_VERSION,
 			specVersion: `simulation:${scenario.id}`,
 			rationale: "Simulation parameters for statistical validation; not a registered requirement.",
 			requirements: scenario.countries
@@ -406,7 +415,7 @@ export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSp
 				minimumImprovement: scenario.minimumImprovement,
 			},
 			identities: {
-				dataset: { id: null, sha256: null },
+				dataset: [{ id: SIMULATED_COLLECTION, sha256: PUBLISHED_SHA }],
 				scorer: { id: "exact-parse", revision: "simulation" },
 				inference: { description: "simulation", options: {} },
 				published: {
@@ -428,8 +437,8 @@ export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSp
 			},
 			provenance: { admitted: { minimum: ["verified_unseen"], comparative: ["verified_unseen"] } },
 			evaluations: {
-				development: { id: null, description: "simulation" },
-				confirmation: { id: null, description: "simulation" },
+				development: { ids: [SIMULATED_COLLECTION], description: "simulation" },
+				confirmation: { ids: [SIMULATED_COLLECTION], description: "simulation" },
 			},
 		},
 		`simulation scenario ${scenario.id}`

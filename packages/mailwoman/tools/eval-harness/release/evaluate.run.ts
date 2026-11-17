@@ -15,10 +15,15 @@
  *   and compared with the specification's registered identity.
  *   A missing model file is refused.
  *
- *   A report that scored a frozen collection records it in `dataset`.
- *   The collection is read again from that path, its version recomputed from the
+ *   An arm label may end in resolver switch pins after a `#` (`heldout/per/arm.ts`).
+ *   The model hashed is the one under its weights cache root.
+ *
+ *   A report that scored frozen collections records them in `dataset`.
+ *   Each collection is read again from its path, its version recomputed from the
  *   rows on disk, and a specification pin naming the same collection id with another
  *   version is refused (`release/collection.ts`).
+ *
+ *   A report that doesn't score exactly one evaluation role's collections reads insufficient evidence.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -27,7 +32,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
-import { readReportedCollection, verifyReportedCollection } from "#tools/eval-harness/release/collection"
+import { readReportedCollections, verifyReportedCollections } from "#tools/eval-harness/release/collection"
 import {
 	evaluateReleaseSpec,
 	type OutcomeRow,
@@ -80,8 +85,12 @@ const report = await readLocalJSONFile<{
 	dataset?: unknown
 }>(values.report)
 
-const reported = readReportedCollection(report, values.report)
-const collection = reported ? await verifyReportedCollection(spec, reported) : null
+const reported = readReportedCollections(report, values.report)
+const collections = reported ? await verifyReportedCollections(spec, reported) : null
+
+const collectionReasons = collections
+	? collections.reasons
+	: ["the report scored rows drawn from a corpus manifest, which no evaluation role pins"]
 
 const inferenceRule = typeof report.inference?.rule === "string" && report.inference.rule ? report.inference.rule : null
 
@@ -122,20 +131,30 @@ if (values.reachability) {
 	reachability = entry
 }
 
-const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule }, reachability)
+const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule }, reachability, collectionReasons)
 
-await writeLocalJSONFile({ spec: values.spec, report: values.report, collection, ...verdict }, values.out)
+await writeLocalJSONFile(
+	{
+		spec: values.spec,
+		report: values.report,
+		role: collections?.role ?? null,
+		collections: collections?.collections ?? null,
+		...verdict,
+	},
+	values.out
+)
 
 const show = (value: number | null) => (value == null ? "n/a" : value.toFixed(4))
 
 console.log(`spec ${verdict.specVersion}: ${verdict.outcome}`)
+console.log(`role: ${collections?.role ?? "none"}`)
 
-console.log(
-	collection
-		? `collection ${collection.datasetID}@${collection.version} (rows sha256 ${collection.rowsSHA256}), ` +
-				`pinned as ${collection.pinnedAs.join(", ") || "nothing in this specification"}`
-		: "collection: rows drawn from a corpus manifest, no frozen collection"
-)
+for (const collection of collections?.collections ?? []) {
+	console.log(
+		`collection ${collection.datasetID}@${collection.version} (rows sha256 ${collection.rowsSHA256}), ` +
+			`pinned as ${collection.pinnedAs.join(", ") || "nothing in this specification"}`
+	)
+}
 
 for (const reason of verdict.reasons) {
 	console.log(`  ${reason}`)

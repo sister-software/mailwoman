@@ -54,7 +54,7 @@ const dataset = buildHeldoutDatasetManifest({
 })
 
 const spec = validateReleaseSpec({
-	schemaVersion: 3,
+	schemaVersion: 4,
 	specVersion: "fixture-1",
 	rationale: "fixture",
 	requirements: [
@@ -82,7 +82,7 @@ const spec = validateReleaseSpec({
 	],
 	objective: { countries: ["US", "IS"], minimumImprovement: null },
 	identities: {
-		dataset: { id: null, sha256: null },
+		dataset: [{ id: "fixture@0123456789abcdef", sha256: "f".repeat(64) }],
 		scorer: { id: "exact-parse", revision: "x" },
 		inference: { description: "fixture", options: {} },
 		published: { description: "p", sha256: null },
@@ -98,8 +98,8 @@ const spec = validateReleaseSpec({
 	},
 	provenance: { admitted: { minimum: [], comparative: [] } },
 	evaluations: {
-		development: { id: null, description: "fixture" },
-		confirmation: { id: null, description: "fixture" },
+		development: { ids: ["fixture@0123456789abcdef"], description: "fixture" },
+		confirmation: { ids: ["fixture@0123456789abcdef"], description: "fixture" },
 	},
 })
 

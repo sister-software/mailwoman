@@ -37,6 +37,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
 
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
+import type { HeldoutGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode-outcome"
 import { scoreExactParseUnderConvention, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
 
 /**
@@ -145,6 +146,15 @@ export interface HeldoutRowOutcome {
 	 * Additional predictions are permitted.
 	 */
 	goldRecovered: boolean
+	/**
+	 * The distinct component tags of the row's expected spans, sorted.
+	 * A `withoutTags` selector reads them.
+	 */
+	tags: string[]
+	/**
+	 * The arm's geocode outcome (`heldout/per/geocode-outcome`), present only on rows the report geocoded.
+	 */
+	geocode?: HeldoutGeocodeOutcome
 }
 
 /**
@@ -671,6 +681,7 @@ export function scoreHeldoutSpans(
 		spans: row.span_tags.length,
 		spansRecovered,
 		goldRecovered: spansRecovered === row.span_tags.length,
+		tags: [...new Set(row.span_tags)].toSorted(),
 	}
 }
 

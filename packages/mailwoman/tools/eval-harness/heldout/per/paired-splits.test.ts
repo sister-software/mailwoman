@@ -29,6 +29,7 @@ function outcome(rowID: string, overrides: Partial<HeldoutRowOutcome>): HeldoutR
 		spans: 1,
 		spansRecovered: 1,
 		goldRecovered: true,
+		tags: ["street"],
 		...overrides,
 	}
 }

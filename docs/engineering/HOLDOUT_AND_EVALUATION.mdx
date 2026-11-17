@@ -390,6 +390,16 @@ records again from its path and refuses a specification pin that gives the same 
 A manifest frozen under the earlier rule, which hashed no rows, is schema version 1. The reader refuses it until
 `heldout/dataset/restamp.run.ts` rewrites it.
 
+An answer-key decision never edits a frozen collection's rows. `heldout/dataset/relabel.run.ts` writes a new
+manifest beside the source, under the source's datasetID, whose `revision` field records the source's version and
+rows sha256, states the rule and lists every changed row's spans before and after. Its rows file is new, so its
+version is new. The first revision, `county-in-locality-slot-subregion` (2026-11-17), relabels a `locality` span
+written with its country's county designator as `subregion`.
+
+From release specification v9 each evaluation role lists its collections, and a report scores all of them
+together (`heldout/per/country.run.ts --dataset <a>,<b>`). `release/evaluate.run.ts` reads the role a report's
+collections make up and reads insufficient evidence when they match no role exactly.
+
 ## 7. Candidate grading and the three-run rule
 
 ### 7.1 The grading

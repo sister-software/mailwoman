@@ -14,6 +14,7 @@
  *   The reader refuses a malformed specification rather than filling a field.
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
@@ -21,8 +22,11 @@ import type { HeldoutProvenance, HeldoutRowKind } from "#tools/eval-harness/held
 
 /**
  * The specification format version this reader accepts.
+ *
+ * Schema 4 lists each evaluation role's collections, lists the dataset identity's collections,
+ * adds the `withoutTags` selector and the `geocode` requirement kind.
  */
-export const RELEASE_SPEC_SCHEMA_VERSION = 3
+export const RELEASE_SPEC_SCHEMA_VERSION = 4
 
 /**
  * The multiple-comparison corrections the evaluator implements for simultaneous bounds.
@@ -67,6 +71,14 @@ export interface RowSelector {
 	 * An absent list admits every country.
 	 */
 	countries?: string[]
+	/**
+	 * Component tags that exclude a row when its expected spans hold any of them.
+	 * An absent list admits every row.
+	 *
+	 * A row whose outcome records no expected tags can't be selected by this field,
+	 * and the evaluator refuses it.
+	 */
+	withoutTags?: string[]
 }
 
 /**
@@ -112,7 +124,35 @@ export interface CapabilityRequirement {
 	select: RowSelector
 }
 
-export type ReleaseRequirement = CountryRequirement | CapabilityRequirement
+/**
+ * A required geocode outcome: the loss a change may make in the share of rows whose
+ * resolved components and places equal the expected ones (`heldout/per/geocode`).
+ *
+ * It reads the rows of `countries` that `select` admits, with probe sources left out, and bounds
+ * the equal-country mean paired difference, candidate minus published, below by `-maxLoss`.
+ * A change that moves only the resolver leaves every exact-parse outcome equal,
+ * so this is the check that measures it.
+ * It registers no minimum.
+ */
+export interface GeocodeRequirement {
+	id: string
+	kind: "geocode"
+	task: string
+	metric: "geocode_outcome"
+	reason: string
+	/**
+	 * The countries whose rows the check reads, each one stratum of equal weight.
+	 */
+	countries: string[]
+	select?: Omit<RowSelector, "countries">
+	/**
+	 * The largest permitted loss in equal-country geocode outcome rate, or `null` while unregistered.
+	 */
+	maxLoss: number | null
+	maxLossReason: string
+}
+
+export type ReleaseRequirement = CountryRequirement | CapabilityRequirement | GeocodeRequirement
 
 /**
  * An identity the evaluation is tied to.
@@ -121,6 +161,32 @@ export type ReleaseRequirement = CountryRequirement | CapabilityRequirement
 export interface ArtifactIdentity {
 	description: string
 	sha256: string | null
+}
+
+/**
+ * A pinned collection of the dataset identity and the rows sha256 its manifest records.
+ */
+export interface DatasetIdentity {
+	id: string
+	sha256: string
+}
+
+/**
+ * The two evaluation roles a specification pins collections for.
+ */
+export const EVALUATION_ROLES = ["development", "confirmation"] as const
+
+export type EvaluationRole = (typeof EVALUATION_ROLES)[number]
+
+/**
+ * One evaluation role: the collections a report for that role scores together.
+ */
+export interface EvaluationCollections {
+	/**
+	 * Pinned collection ids, `<datasetID>@<version>`, with distinct dataset ids.
+	 */
+	ids: string[]
+	description: string
 }
 
 export interface ReleaseRequirementSpec {
@@ -144,7 +210,10 @@ export interface ReleaseRequirementSpec {
 		minimumImprovement: number | null
 	}
 	identities: {
-		dataset: { id: string | null; sha256: string | null }
+		/**
+		 * The collections the release decision reads, the confirmation role's collections.
+		 */
+		dataset: DatasetIdentity[]
 		scorer: { id: string; revision: string }
 		inference: { description: string; options: Record<string, unknown> }
 		published: ArtifactIdentity
@@ -193,10 +262,7 @@ export interface ReleaseRequirementSpec {
 			comparative: HeldoutProvenance[]
 		}
 	}
-	evaluations: {
-		development: { id: string | null; description: string }
-		confirmation: { id: string | null; description: string }
-	}
+	evaluations: Record<EvaluationRole, EvaluationCollections>
 	/**
 	 * A limit on the candidate vocabulary, read from a reachability census
 	 * (`heldout/dataset/reachability.run.ts`) of the candidate's `tokenizer.model`.
@@ -243,6 +309,81 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * Throws, through `fail`, naming the first malformed collection pin: the dataset
+ * identity's list and each evaluation role's `ids`.
+ */
+function assertCollectionPins(
+	dataset: unknown,
+	evaluations: Record<string, unknown>,
+	fail: (path: string, problem: string) => never
+): void {
+	const collectionList = (value: unknown, path: string) => {
+		if (!Array.isArray(value) || !value.length) {
+			fail(path, "must be a non-empty array")
+		}
+
+		const datasetIDs = new Set<string>()
+
+		for (const [i, id] of (value as unknown[]).entries()) {
+			const parsed = typeof id === "string" ? parseCollectionID(id) : null
+
+			if (!parsed) {
+				fail(`${path}[${i}]`, "must be <datasetID>@<16 hex digit version>")
+			}
+
+			if (datasetIDs.has(parsed!.datasetID)) {
+				fail(`${path}[${i}]`, `pins ${parsed!.datasetID} a second time`)
+			}
+
+			datasetIDs.add(parsed!.datasetID)
+		}
+	}
+
+	if (!Array.isArray(dataset) || !dataset.length) {
+		fail("$.identities.dataset", "must be a non-empty array of { id, sha256 } (a single object is schema 3)")
+	}
+
+	const entries = dataset as unknown[]
+
+	for (const [i, entry] of entries.entries()) {
+		if (!isObject(entry)) {
+			fail(`$.identities.dataset[${i}]`, "must be an object")
+		}
+
+		const sha256 = (entry as Record<string, unknown>).sha256
+
+		if (!(typeof sha256 === "string" && /^[0-9a-f]{64}$/u.test(sha256))) {
+			fail(`$.identities.dataset[${i}].sha256`, "must be the rows file's lowercase sha256 hex digest")
+		}
+	}
+
+	collectionList(
+		entries.map((entry) => (entry as Record<string, unknown>).id),
+		"$.identities.dataset"
+	)
+
+	for (const which of EVALUATION_ROLES) {
+		const evaluation = evaluations[which]
+
+		if (!isObject(evaluation)) {
+			fail(`$.evaluations.${which}`, "must be an object")
+		}
+
+		const role = evaluation as Record<string, unknown>
+
+		if ("id" in role) {
+			fail(`$.evaluations.${which}.id`, "is schema 3's single pin; schema 4 lists the role's collections under ids")
+		}
+
+		collectionList(role.ids, `$.evaluations.${which}.ids`)
+
+		if (typeof role.description !== "string" || !role.description.trim()) {
+			fail(`$.evaluations.${which}.description`, "must be a non-empty string")
+		}
+	}
+}
+
+/**
  * Validates a parsed specification and returns it typed, or throws naming the first malformed field.
  */
 export function validateReleaseSpec(input: unknown, source = "release spec"): ReleaseRequirementSpec {
@@ -265,18 +406,6 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 	const string: Check = (value, path) => {
 		if (typeof value !== "string" || !value.trim()) {
 			fail(path, "must be a non-empty string")
-		}
-	}
-
-	const nullableString: Check = (value, path) => {
-		if (value !== null) {
-			string(value, path)
-		}
-	}
-
-	const collectionID: Check = (value, path) => {
-		if (value !== null && !(typeof value === "string" && parseCollectionID(value))) {
-			fail(path, "must be null or <datasetID>@<16 hex digit version>")
 		}
 	}
 
@@ -314,9 +443,13 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 		const sel = object(value, path)
 
 		for (const key of Object.keys(sel)) {
-			if (key !== "kinds" && key !== "sources" && !(countries && key === "countries")) {
+			if (key !== "kinds" && key !== "sources" && key !== "withoutTags" && !(countries && key === "countries")) {
 				fail(`${path}.${key}`, "is unknown")
 			}
+		}
+
+		if (sel.withoutTags !== undefined) {
+			stringList(sel.withoutTags, `${path}.withoutTags`, COMPONENT_TAGS)
 		}
 
 		if (sel.kinds !== undefined) {
@@ -360,6 +493,35 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 		ids.add(req.id as string)
 		string(req.reason, `${path}.reason`)
 
+		if (req.kind === "geocode") {
+			if ("minimum" in req) {
+				fail(`${path}.minimum`, "is not a geocode check's: it bounds a loss and registers no minimum")
+			}
+
+			string(req.task, `${path}.task`)
+
+			if (req.metric !== "geocode_outcome") {
+				fail(`${path}.metric`, "must be geocode_outcome")
+			}
+
+			stringList(req.countries, `${path}.countries`)
+
+			if (!(req.countries as unknown[]).length) {
+				fail(`${path}.countries`, "must name at least one country")
+			}
+
+			selector(req.select, `${path}.select`, false)
+
+			if (!("maxLoss" in req)) {
+				fail(`${path}.maxLoss`, "must be present (null while unregistered)")
+			}
+
+			finite(req.maxLoss, `${path}.maxLoss`, 0, 1, true)
+			string(req.maxLossReason, `${path}.maxLossReason`)
+
+			continue
+		}
+
 		if (!("minimum" in req)) {
 			fail(`${path}.minimum`, "must be present (null while unregistered)")
 		}
@@ -388,7 +550,7 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 				fail(`${path}.select`, "must name the capability's rows")
 			}
 		} else {
-			fail(`${path}.kind`, "must be country or capability")
+			fail(`${path}.kind`, "must be country, capability or geocode")
 		}
 	}
 
@@ -404,10 +566,8 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 	finite(objective.minimumImprovement, "$.objective.minimumImprovement", -1, 1, true)
 
 	const identities = object(root.identities, "$.identities")
-	const dataset = object(identities.dataset, "$.identities.dataset")
 
-	collectionID(dataset.id, "$.identities.dataset.id")
-	nullableString(dataset.sha256, "$.identities.dataset.sha256")
+	assertCollectionPins(identities.dataset, object(root.evaluations, "$.evaluations"), fail)
 
 	const scorer = object(identities.scorer, "$.identities.scorer")
 
@@ -503,15 +663,6 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 		if (!(admitted.minimum as string[]).includes(cls)) {
 			fail(`$.provenance.admitted.comparative[${i}]`, `admits ${cls}, which minimum checks do not admit`)
 		}
-	}
-
-	const evaluations = object(root.evaluations, "$.evaluations")
-
-	for (const which of ["development", "confirmation"] as const) {
-		const evaluation = object(evaluations[which], `$.evaluations.${which}`)
-
-		collectionID(evaluation.id, `$.evaluations.${which}.id`)
-		string(evaluation.description, `$.evaluations.${which}.description`)
 	}
 
 	if (root.vocabulary !== undefined) {

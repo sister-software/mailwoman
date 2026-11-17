@@ -29,6 +29,14 @@
  *
  *   Country checks, the objective and the per-class country report leave its rows out.
  *
+ *   Geocode checks.
+ *   A `geocode` requirement reads each arm's geocode outcome (`heldout/per/geocode`) in place
+ *   of its parse outcome, on comparative rows of its countries with the probes left out,
+ *   and bounds the equal-country paired difference as the objective does.
+ *
+ *   A selected row without a geocode outcome makes the check insufficient evidence.
+ *   The evaluator never reads it as unchanged.
+ *
  *   Simultaneous bounds.
  *   Every check the specification declares counts toward the registered correction (Bonferroni or Sidak),
  *   registered threshold or not, giving one per-side tail probability for every bound.
@@ -105,16 +113,27 @@ export interface PairedRow {
 	 * The weights locale package that parsed the row in both arms, `null` when the outcomes do not record it.
 	 */
 	weightsLocale: string | null
+	/**
+	 * The component tags of the row's expected spans, `null` when the outcomes do not record them.
+	 */
+	tags: readonly string[] | null
 	published: boolean
 	candidate: boolean
+	/**
+	 * Each arm's geocode outcome (`heldout/per/geocode`), `null` when the row wasn't geocoded.
+	 */
+	geocode: { published: boolean; candidate: boolean } | null
 }
 
 /**
- * The per-row outcome fields this evaluator reads, with the optional grouping and package metadata.
+ * The per-row outcome fields this evaluator reads, with the optional grouping,
+ * package, tag and geocode metadata.
  */
 export type OutcomeRow = Pick<HeldoutRowOutcome, "rowID" | "country" | "source" | "kind" | "provenance" | "exact"> & {
 	group?: string | null
 	weightsLocale?: string | null
+	tags?: readonly string[] | null
+	geocode?: { exact: boolean } | null
 }
 
 /**
@@ -272,6 +291,23 @@ export function pairOutcomes(published: readonly OutcomeRow[], candidate: readon
 
 		if ((p.group ?? null) !== (c.group ?? null)) throw new Error(`row ${p.rowID} differs between arms in group`)
 
+		if ((p.tags ?? []).join("\u0000") !== (c.tags ?? []).join("\u0000") || (p.tags == null) !== (c.tags == null)) {
+			throw new Error(`row ${p.rowID} differs between arms in its expected tags`)
+		}
+
+		if ((p.geocode == null) !== (c.geocode == null)) {
+			throw new Error(`row ${p.rowID} carries a geocode outcome in one arm only`)
+		}
+
+		for (const [name, row] of [
+			["published", p],
+			["candidate", c],
+		] as const) {
+			if (row.geocode != null && typeof row.geocode.exact !== "boolean") {
+				throw new TypeError(`${name} outcome ${row.rowID} holds a geocode outcome without a boolean exact flag`)
+			}
+		}
+
 		if (seen.has(p.rowID)) throw new Error(`two rows share the identity ${p.rowID}`)
 		seen.add(p.rowID)
 
@@ -283,8 +319,10 @@ export function pairOutcomes(published: readonly OutcomeRow[], candidate: readon
 			provenance: p.provenance,
 			group: p.group ?? null,
 			weightsLocale: p.weightsLocale ?? null,
+			tags: p.tags ?? null,
 			published: p.exact,
 			candidate: c.exact,
+			geocode: p.geocode && c.geocode ? { published: p.geocode.exact, candidate: c.geocode.exact } : null,
 		}
 	})
 }
@@ -313,6 +351,16 @@ function selects(row: PairedRow, select: RowSelector | undefined): boolean {
 	if (select.sources && !select.sources.includes(row.source)) return false
 
 	if (select.countries && !select.countries.includes(row.country)) return false
+
+	if (select.withoutTags) {
+		if (!row.tags) {
+			throw new Error(
+				`row ${row.rowID} records no expected tags, so a withoutTags selector can't read it; score it with the current heldout/per/country`
+			)
+		}
+
+		if (select.withoutTags.some((tag) => row.tags!.includes(tag))) return false
+	}
 
 	return true
 }
@@ -500,6 +548,21 @@ interface CheckPlan {
 	 * Difference checks read these strata.
 	 */
 	strata: Array<{ label: string; weight: number; indices: number[] }>
+	/**
+	 * Reasons found while planning that make the check insufficient.
+	 */
+	reasons: string[]
+}
+
+/**
+ * The rows as a geocode check reads them: each arm's outcome is its geocode outcome.
+ *
+ * A row without one keeps its parse outcome and is counted as ungraded before any bound is computed.
+ */
+function asGeocodeRows(rows: readonly PairedRow[]): PairedRow[] {
+	return rows.map((row) =>
+		row.geocode ? { ...row, published: row.geocode.published, candidate: row.geocode.candidate } : row
+	)
 }
 
 /**
@@ -507,15 +570,18 @@ interface CheckPlan {
  *
  * @param artifacts The sha256 digests measured from the two evaluated artifacts.
  * A digest that differs from a registered one is refused.
+ * @param collectionReasons Why the scored collections don't make up one pinned evaluation
+ * role (`release/collection`); each makes the verdict insufficient.
  */
 export function evaluateReleaseSpec(
 	spec: ReleaseRequirementSpec,
 	pairedRows: readonly PairedRow[],
 	artifacts: { published: string; candidate: string },
 	inference: { rule: string | null },
-	reachability: VocabularyCensusReading | null = null
+	reachability: VocabularyCensusReading | null = null,
+	collectionReasons: readonly string[] = []
 ): ReleaseVerdict {
-	const globalReasons: string[] = []
+	const globalReasons: string[] = [...collectionReasons]
 	let vocabularyFails = false
 
 	if (spec.vocabulary) {
@@ -587,7 +653,40 @@ export function evaluateReleaseSpec(
 		return { indices, missingCountries }
 	}
 
+	const geocodeRows = asGeocodeRows(rowsFor.comparative)
+
 	for (const req of spec.requirements) {
+		if (req.kind === "geocode") {
+			// A geocode check reads ordinary address rows, as the objective does, so it leaves the probes out.
+			const selection = selectIndices(rowsFor.comparative, { ...req.select, countries: req.countries }, true)
+			// The bounds read only geocoded rows.
+			// An ungraded selected row makes the check insufficient.
+			const graded = selection.indices.filter((i) => rowsFor.comparative[i]!.geocode != null)
+			const ungraded = selection.indices.length - graded.length
+
+			plans.push({
+				id: req.id,
+				check: "max_loss",
+				threshold: req.maxLoss == null ? null : -req.maxLoss,
+				rows: geocodeRows,
+				rowIndices: graded,
+				missingCountries: req.countries.filter((country) => !graded.some((i) => geocodeRows[i]!.country === country)),
+				strata: req.countries.map((country) => ({
+					label: country,
+					weight: 1 / req.countries.length,
+					indices: graded.filter((i) => geocodeRows[i]!.country === country),
+				})),
+				reasons: ungraded
+					? [
+							`${ungraded} of ${selection.indices.length} selected rows carry no geocode outcome; ` +
+								"score them with heldout/per/country.run.ts --geocode",
+						]
+					: [],
+			})
+
+			continue
+		}
+
 		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
 		const minimum = selectIndices(rowsFor.minimum, select, req.kind === "country")
 
@@ -599,6 +698,7 @@ export function evaluateReleaseSpec(
 			rowIndices: minimum.indices,
 			missingCountries: minimum.missingCountries,
 			strata: [],
+			reasons: [],
 		})
 
 		if (req.kind === "capability" && req.maxLoss != null) {
@@ -612,6 +712,7 @@ export function evaluateReleaseSpec(
 				rowIndices: comparative.indices,
 				missingCountries: comparative.missingCountries,
 				strata: [{ label: req.id, weight: 1, indices: comparative.indices }],
+				reasons: [],
 			})
 		}
 	}
@@ -637,6 +738,7 @@ export function evaluateReleaseSpec(
 			weight: 1 / spec.objective.countries.length,
 			indices: objective.indices.filter((i) => rowsFor.comparative[i]!.country === country),
 		})),
+		reasons: [],
 	})
 
 	const { confidenceLevel, multipleComparison, rowsIndependent } = spec.statistics
@@ -649,7 +751,7 @@ export function evaluateReleaseSpec(
 	}
 
 	const checks = plans.map((plan): CheckResult => {
-		const reasons: string[] = []
+		const reasons: string[] = [...plan.reasons]
 		const { rows } = plan
 		const ungrouped = plan.rowIndices.filter((i) => rows[i]!.group == null).length
 		const unitsValid = rowsIndependent || ungrouped === 0

@@ -11,21 +11,29 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v8.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v9.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
+/**
+ * The two fields schema 3 records hold as single pins.
+ */
+interface SchemaThreePins {
+	identities: { dataset: { id: string | null; sha256: string | null } }
+	evaluations: Record<"development" | "confirmation", { id: string | null; description: string }>
+}
+
 describe("validateReleaseSpec", () => {
-	it("accepts the current v8 specification with every requirement registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v8\.json$/u)
+	it("accepts the current v9 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v9\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
-		expect(spec.schemaVersion).toBe(3)
+		expect(spec.schemaVersion).toBe(4)
 		expect(spec.statistics.rowsIndependent).toBe(false)
 		expect(spec.statistics.confidenceLevel).not.toBeNull()
 		expect(spec.objective.minimumImprovement).not.toBeNull()
 		expect(spec.requirements.length).toBeGreaterThan(0)
-		expect(spec.requirements.every((req) => req.minimum !== null)).toBe(true)
+		expect(spec.requirements.every((req) => (req.kind === "geocode" ? req.maxLoss : req.minimum) !== null)).toBe(true)
 
 		expect(spec.provenance.admitted).toEqual({
 			minimum: ["verified_unseen", "unseen_by_candidate"],
@@ -54,13 +62,102 @@ describe("validateReleaseSpec", () => {
 
 	it("carries every v7 threshold into v8 and registers both evaluation collections", async () => {
 		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(7))
-		const v8 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(8))
+
+		const v8 = await readLocalJSONFile<Omit<ReleaseRequirementSpec, keyof SchemaThreePins> & SchemaThreePins>(
+			specRecord(8)
+		)
 
 		expect(v8.requirements).toEqual(v7.requirements)
 		expect(v8.objective).toEqual(v7.objective)
 		expect(v8.statistics).toEqual(v7.statistics)
 		expect(v8.identities.dataset.id).toBe(v8.evaluations.confirmation.id)
 		expect(v8.evaluations.development.id).not.toBeNull()
+	})
+
+	it("differs from v8 in the listed collections, postal_unit's venue exclusion and the geocode check only", async () => {
+		const v8 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(8))
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
+		const byID = (spec: ReleaseRequirementSpec) => new Map(spec.requirements.map((req) => [req.id, req]))
+		const before = byID(v8)
+		const after = byID(v9)
+
+		for (const [id, req] of before) {
+			if (id === "postal_unit") continue
+
+			expect(after.get(id), id).toEqual(req)
+		}
+
+		const postalUnit = after.get("postal_unit")!
+
+		expect(postalUnit).toMatchObject({ minimum: 0.85, select: { withoutTags: ["venue"] } })
+
+		expect({ ...postalUnit, reason: null, select: { ...postalUnit.select, withoutTags: undefined } }).toEqual({
+			...before.get("postal_unit"),
+			reason: null,
+			select: { ...before.get("postal_unit")!.select, withoutTags: undefined },
+		})
+
+		expect([...after.keys()].filter((id) => !before.has(id))).toEqual(["geocode"])
+		expect(after.get("geocode")).toMatchObject({ kind: "geocode", countries: v9.objective.countries, maxLoss: 0.01 })
+		expect(v9.objective).toEqual(v8.objective)
+		expect(v9.statistics).toEqual(v8.statistics)
+		expect(v9.provenance).toEqual(v8.provenance)
+		expect({ ...v9.identities, dataset: null }).toEqual({ ...v8.identities, dataset: null })
+	})
+
+	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
+
+		expect(v9.evaluations.development.ids).toHaveLength(2)
+		expect(v9.identities.dataset.map((entry) => entry.id)).toEqual(v9.evaluations.confirmation.ids)
+		expect(v9.rationale).toMatch(/Confirmation reads before registration/u)
+	})
+
+	it("refuses a role pin in the schema 3 shape, an empty role and a dataset id pinned twice in one role", async () => {
+		const spec = await readLocalJSONFile<Record<string, Record<string, Record<string, unknown>>>>(committedPath)
+		const ids = spec.evaluations!.development!.ids as string[]
+
+		expect(() =>
+			validateReleaseSpec({
+				...spec,
+				evaluations: { ...spec.evaluations, development: { id: ids[0], description: "d" } },
+			})
+		).toThrow(/schema 3's single pin/u)
+
+		expect(() =>
+			validateReleaseSpec({ ...spec, evaluations: { ...spec.evaluations, development: { ids: [], description: "d" } } })
+		).toThrow(/development.ids must be a non-empty array/u)
+
+		const twice = ids[0]!.replace(/@[0-9a-f]{16}$/u, "@0000000000000000")
+
+		expect(() =>
+			validateReleaseSpec({
+				...spec,
+				evaluations: { ...spec.evaluations, development: { ids: [ids[0], twice], description: "d" } },
+			})
+		).toThrow(/pins heldout-dev-v0.8.18 a second time/u)
+
+		expect(() =>
+			validateReleaseSpec({ ...spec, identities: { ...spec.identities, dataset: { id: ids[0], sha256: null } } })
+		).toThrow(/a single object is schema 3/u)
+	})
+
+	it("refuses a geocode requirement with a minimum and a withoutTags tag outside the schema", async () => {
+		const spec = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const geocode = spec.requirements.find((req) => req.kind === "geocode")!
+
+		expect(() => validateReleaseSpec({ ...spec, requirements: [{ ...geocode, minimum: 0.9 }] })).toThrow(
+			/registers no minimum/u
+		)
+
+		const postalUnit = spec.requirements.find((req) => req.id === "postal_unit")!
+
+		expect(() =>
+			validateReleaseSpec({
+				...spec,
+				requirements: [{ ...postalUnit, select: { ...postalUnit.select, withoutTags: ["named_complex"] } }],
+			})
+		).toThrow(/withoutTags\[0\] must be one of/u)
 	})
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
@@ -147,10 +244,10 @@ describe("validateReleaseSpec", () => {
 		expect(withoutChanges(v7)).toEqual(withoutChanges(v6))
 	})
 
-	it("refuses the schema 2 records, which hold a single admitted list", async () => {
-		for (const version of [2, 3]) {
+	it("refuses the earlier schema records: single admitted lists through schema 2, single pins in schema 3", async () => {
+		for (const version of [2, 3, 4, 5, 6, 7, 8]) {
 			await expect(readLocalJSONFile<unknown>(specRecord(version)).then((s) => validateReleaseSpec(s))).rejects.toThrow(
-				/schemaVersion must be 3/u
+				/schemaVersion must be 4/u
 			)
 		}
 
