@@ -8,7 +8,7 @@ import {
 	type GeocodeOutcomeInput,
 	geocodeRequirementSelects,
 	scoreGeocodeOutcome,
-} from "#tools/eval-harness/heldout/per/geocode-outcome"
+} from "#tools/eval-harness/heldout/per/geocode/outcome"
 
 /**
  * A held-out row from spans given as `[tag, text]`, joined by `, `.

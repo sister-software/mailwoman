@@ -75,7 +75,7 @@ import {
 	sampleHeldoutRows,
 	scoreHeldoutArm,
 } from "#tools/eval-harness/heldout/per/country"
-import { geocodeRequirementSelects as selectsForGeocode } from "#tools/eval-harness/heldout/per/geocode-outcome"
+import { geocodeRequirementSelects as selectsForGeocode } from "#tools/eval-harness/heldout/per/geocode/outcome"
 import {
 	byKindAndProvenance,
 	byProvenance,

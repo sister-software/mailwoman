@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Geocodes held-out rows with one arm and grades each result (`heldout/per/geocode-outcome`).
+ *   Geocodes held-out rows with one arm and grades each result (`heldout/per/geocode/outcome`).
  *
  *   The geocode is the gauntlet's (`gauntlet/harness` `buildGauntletDeps`): the arm's weights
  *   cache loaded as production loads it, the row's country selecting its weights overlay,
@@ -13,7 +13,7 @@
 import { buildGauntletDeps, PRODUCTION_RESOLVER_PINS } from "#tools/eval-harness/gauntlet/harness"
 import type { HeldoutArm } from "#tools/eval-harness/heldout/per/arm"
 import { type HeldoutRow, heldoutRowID } from "#tools/eval-harness/heldout/per/country"
-import { type HeldoutGeocodeOutcome, scoreGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode-outcome"
+import { type HeldoutGeocodeOutcome, scoreGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode/outcome"
 
 /**
  * The geocode rule a report records beside its geocode outcomes.

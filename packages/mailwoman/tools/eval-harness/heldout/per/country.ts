@@ -37,7 +37,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
 
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
-import type { HeldoutGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode-outcome"
+import type { HeldoutGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode/outcome"
 import { scoreExactParseUnderConvention, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
 
 /**
@@ -152,7 +152,7 @@ export interface HeldoutRowOutcome {
 	 */
 	tags: string[]
 	/**
-	 * The arm's geocode outcome (`heldout/per/geocode-outcome`), present only on rows the report geocoded.
+	 * The arm's geocode outcome (`heldout/per/geocode/outcome`), present only on rows the report geocoded.
 	 */
 	geocode?: HeldoutGeocodeOutcome
 }
