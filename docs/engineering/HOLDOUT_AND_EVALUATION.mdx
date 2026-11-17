@@ -247,8 +247,8 @@ uses, drops every rendered row whose group or folded text a `--corpora` manifest
 development and a confirmation set stratified by probe leg and rendered template. The rows keep the recipes'
 source names, so the capability selectors read them, and a later render of the same components takes the same
 group. `evaluation-groups.v0.8.19.json` lists the v0.8.18 sets' groups and the probe sets' groups
-(`heldout-dev-v0.8.19-probes`, `heldout-confirm-v0.8.19-probes`), so the next re-split keeps a repeated render in
-`test`. Each set in a list records what it was drawn from. The v0.8.18 list predates that field and stays as
+(`heldout-dev-v0.8.19-probes-r2`, `heldout-confirm-v0.8.19-probes-r2`, which replaced the first render after its
+recipe labels were corrected), so the next re-split keeps a repeated render in `test`. Each set in a list records what it was drawn from. The v0.8.18 list predates that field and stays as
 written, because corpus v0.8.19's policy hash records its sha256.
 
 The no-leak guarantee is the overlap audit's: no frozen group may appear in a corpus's train or val split.

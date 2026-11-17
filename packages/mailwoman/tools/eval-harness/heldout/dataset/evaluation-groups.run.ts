@@ -8,7 +8,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/evaluation-groups.run.ts \
  *     --datasets /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.v2.json,\
- *   /mnt/mw/corpus/heldout/heldout-dev-v0.8.19-probes.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.19-probes.json \
+ *   /mnt/mw/corpus/heldout/heldout-dev-v0.8.19-probes-r2.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.19-probes-r2.json \
  *     --out packages/corpus/data/holdout/evaluation-groups.v0.8.19.json
  *
  *   Each manifest is read with `readHeldoutDatasetManifest`, and each entry's

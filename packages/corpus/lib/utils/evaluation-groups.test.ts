@@ -142,8 +142,8 @@ describe("the evaluation-group file", () => {
 		expect(groups.datasets.map((set) => set.datasetID)).toEqual([
 			"heldout-dev-v0.8.18",
 			"heldout-confirm-v0.8.18",
-			"heldout-dev-v0.8.19-probes",
-			"heldout-confirm-v0.8.19-probes",
+			"heldout-dev-v0.8.19-probes-r2",
+			"heldout-confirm-v0.8.19-probes-r2",
 		])
 
 		expect([...earlier.groups].filter((group) => !groups.groups.has(group))).toEqual([])

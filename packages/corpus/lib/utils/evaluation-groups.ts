@@ -165,7 +165,7 @@ export function evaluationGroupsV0818Path(): string {
 
 /**
  * The committed group list of the v0.8.18 frozen sets and the v0.8.19 capability-probe
- * sets (`heldout-dev-v0.8.19-probes` and `heldout-confirm-v0.8.19-probes`).
+ * sets (`heldout-dev-v0.8.19-probes-r2` and `heldout-confirm-v0.8.19-probes-r2`).
  */
 export function evaluationGroupsV0819Path(): string {
 	return resolveModulePath("@mailwoman/corpus/data/holdout/evaluation-groups.v0.8.19.json")
