@@ -52,6 +52,7 @@ export const PICK_METADATA_KEYS = [
 	"admin_containment",
 	"parent_fallback",
 	"variant_alias_exemption",
+	"county_designator_fallback",
 ] as const
 
 /**

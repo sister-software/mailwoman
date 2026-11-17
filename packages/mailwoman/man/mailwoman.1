@@ -154,6 +154,10 @@ Options:
                                               and answer its point;
                                               \-\-no\-dependent\-locality\-containment disables it
                                               (#2804). (default: true)
+  \-\-county\-designator\-fallback                Resolve a locality span written with its country's
+                                              county designator (Harris County, TX) as the region's
+                                              county when no locality of that name is there.
+                                              (default: false)
   \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
                                               auto (skip when the capitals reference is missing),
                                               required (fail when it is missing), or off. (default:

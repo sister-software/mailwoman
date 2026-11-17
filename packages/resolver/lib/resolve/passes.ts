@@ -306,6 +306,12 @@ export interface ResolutionState {
 	dependentLocalityContainment: boolean
 
 	/**
+	 * Whether a `locality` node is looked up as its region's WOF `county` when no locality in
+	 * the region matches it and its value is written with its country's county designator.
+	 */
+	countyDesignatorFallback: boolean
+
+	/**
 	 * The tree's first region value.
 	 *
 	 * The region and locality nodes are siblings, so the walk wouldn't otherwise

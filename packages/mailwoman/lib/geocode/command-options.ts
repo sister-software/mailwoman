@@ -57,6 +57,13 @@ export interface GeocodeCommandOptions {
 	 */
 	dependentLocalityContainment: boolean
 	/**
+	 * A `locality` span written with its country's county designator resolves as its region's county.
+	 * Off by default.
+	 *
+	 * `--county-designator-fallback` opts in.
+	 */
+	countyDesignatorFallback: boolean
+	/**
 	 * Capital-status ranking axis (`--capital-tier auto|required|off`).
 	 */
 	capitalTier: CapitalTier
@@ -93,6 +100,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		postcodeContainmentCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 		dependentLocalityContainment: GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
+		countyDesignatorFallback: GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,

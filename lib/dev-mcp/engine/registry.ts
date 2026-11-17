@@ -72,6 +72,12 @@ export interface EngineConfig {
 	 */
 	dependent_locality_containment?: SwitchPin
 	/**
+	 * Whether a `locality` span written with its country's county designator resolves as its region's county.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback`
+	 */
+	county_designator_fallback?: SwitchPin
+	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
@@ -130,6 +136,7 @@ export const EFFECTIVE_KEY_FOR = {
 	postcode_containment_coherence: "postcodeContainmentCoherence",
 	admin_containment_rerank: "adminContainmentRerank",
 	dependent_locality_containment: "dependentLocalityContainment",
+	county_designator_fallback: "countyDesignatorFallback",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
 	variant_alias_exemption: "variantAliasExemption",
@@ -194,6 +201,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		dependentLocalityContainment: pinnedSwitch(
 			config.dependent_locality_containment ?? "production",
 			production.dependentLocalityContainment
+		),
+		countyDesignatorFallback: pinnedSwitch(
+			config.county_designator_fallback ?? "production",
+			production.countyDesignatorFallback
 		),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,

@@ -29,6 +29,7 @@ import {
 	applyRegionCountryCoherence,
 } from "#admin/coherence-passes"
 import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
+import { COUNTY_DESIGNATOR_FALLBACK, countyFromDesignatedLocality } from "#admin/county-designator"
 import { resolveCompoundMunicipality } from "#admin/jp-municipality"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
@@ -56,6 +57,7 @@ import {
 	DIAGNOSTIC_BANDS,
 	firstPostcodeValue,
 	NOOP_TRACE_RECORDER,
+	type NodeTraceRecorder,
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
@@ -83,6 +85,15 @@ export { DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve/passes"
 
 export function createWOFResolver(backend: ResolverBackend): Resolver {
 	return new WOFResolver(backend)
+}
+
+/**
+ * One lookup's pick: the place, its runners-up, and the metadata the walk stamps on the node.
+ */
+interface LookupPick {
+	top: CoordinateOptionalPlace
+	alternatives: ResolvedPlace[]
+	metadata?: Record<string, unknown>
 }
 
 /**
@@ -183,6 +194,7 @@ class WOFResolver implements Resolver {
 			// Optional admin containment rerank uses a pre-scanned region qualifier.
 			adminContainmentRerank: opts.adminContainmentRerank,
 			dependentLocalityContainment: opts.dependentLocalityContainment,
+			countyDesignatorFallback: opts.countyDesignatorFallback,
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 		}
@@ -388,6 +400,8 @@ class WOFResolver implements Resolver {
 					decorated.tag = "country"
 				} else if (decorated.metadata?.["bare_region_repick"]) {
 					decorated.tag = "region"
+				} else if (decorated.metadata?.[COUNTY_DESIGNATOR_FALLBACK]) {
+					decorated.tag = "subregion"
 				}
 
 				// Optional lineage attachment.
@@ -437,6 +451,91 @@ class WOFResolver implements Resolver {
 		}
 
 		return found
+	}
+
+	/**
+	 * The county of a designated `locality` value's name in its region, when the locality
+	 * lookup found no locality known to be inside that region.
+	 *
+	 * A candidate is known inside when the lookup was scoped by the region and kept it,
+	 * or when the qualifier containment partition marked it contained.
+	 * A candidate whose containment neither the region scope nor the partition
+	 * computed keeps the locality pick.
+	 *
+	 * A `locality` lookup is region-scoped exactly when its resolved parent has
+	 * a numeric id (`applyParentScope`).
+	 */
+	async #countyDesignatorPick(
+		node: AddressNode,
+		placetype: string,
+		country: string | undefined,
+		candidates: readonly ResolvedPlace[],
+		parentResolved: CoordinateOptionalPlace | null,
+		state: ResolutionState,
+		rec: NodeTraceRecorder
+	): Promise<LookupPick | null> {
+		if (!state.countyDesignatorFallback || placetype !== "locality" || node.tag !== "locality" || !country) return null
+
+		const regionScoped = typeof parentResolved?.id === "number"
+
+		const inRegion = candidates.some(
+			(c) => c.containedByQualifier === true || (regionScoped && c.regionScopeMiss !== true)
+		)
+
+		const unplaced = candidates.some((c) => c.containedByQualifier == null && !regionScoped)
+
+		if (inRegion || unplaced) return null
+
+		const parentIsRegion = parentResolved?.placetype === "region" || parentResolved?.placetype === "macroregion"
+
+		const county = await countyFromDesignatedLocality(this.#backend, node.value, {
+			country,
+			regionID: parentIsRegion && typeof parentResolved.id === "number" ? parentResolved.id : null,
+			regionQualifier: state.regionQualifier ?? null,
+			limit: state.candidatesPerLookup,
+		})
+
+		if (!county) return null
+
+		rec.check(COUNTY_DESIGNATOR_FALLBACK)
+		rec.emit({ id: county.top.id, name: county.top.name, source: COUNTY_DESIGNATOR_FALLBACK })
+
+		return { ...county, metadata: { [COUNTY_DESIGNATOR_FALLBACK]: true } }
+	}
+
+	/**
+	 * The postcode-prefix prior's pick for a `postalcode` lookup that missed,
+	 * when the prior is on and the prefix index holds the code's prefix.
+	 */
+	#postcodePrefixPick(
+		node: AddressNode,
+		placetype: string,
+		country: string | undefined,
+		candidates: readonly ResolvedPlace[],
+		state: ResolutionState,
+		rec: NodeTraceRecorder
+	): LookupPick | null {
+		if (candidates.length || placetype !== "postalcode" || !state.postcodePrefixPrior || !state.postcodePrefixIndex) {
+			return null
+		}
+
+		const probe = probePostcodePrefix(node.value, state.postcodePrefixIndex, country)
+
+		if (!probe) return null
+
+		const metadata: Record<string, unknown> = {
+			postcode_prefix: probe.prefix,
+			postcode_prefix_ancestors: probe.node.ancestors,
+			...(probe.node.radiusP95Km != null ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
+			...(probe.node.lat != null && probe.node.lon != null ? { coordinate_source: "postcode_prefix" } : {}),
+		}
+
+		rec.check("postcode_prefix_prior")
+		const prefixPlace = postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex)
+
+		rec.emit({ id: prefixPlace.id, name: prefixPlace.name, source: "postcode_prefix" })
+
+		return { top: prefixPlace, alternatives: [], metadata }
 	}
 
 	async #lookupAndPick(
@@ -570,30 +669,12 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		// Optional postcode-prefix prior when postcode lookup misses.
-		if (!candidates.length && placetype === "postalcode" && state.postcodePrefixPrior && state.postcodePrefixIndex) {
-			const probe = probePostcodePrefix(node.value, state.postcodePrefixIndex, query.country)
+		// A designated county span resolves as its region's county, and a missed postcode takes the prefix prior.
+		const recovered =
+			(await this.#countyDesignatorPick(node, placetype, query.country, candidates, parentResolved, state, rec)) ??
+			this.#postcodePrefixPick(node, placetype, query.country, candidates, state, rec)
 
-			if (probe) {
-				const metadata: Record<string, unknown> = {
-					postcode_prefix: probe.prefix,
-					postcode_prefix_ancestors: probe.node.ancestors,
-					...(probe.node.radiusP95Km != null ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
-					...(probe.node.lat != null && probe.node.lon != null ? { coordinate_source: "postcode_prefix" } : {}),
-				}
-
-				rec.check("postcode_prefix_prior")
-				const prefixPlace = postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex)
-
-				rec.emit({ id: prefixPlace.id, name: prefixPlace.name, source: "postcode_prefix" })
-
-				return {
-					top: prefixPlace,
-					alternatives: [],
-					metadata,
-				}
-			}
-		}
+		if (recovered) return recovered
 
 		// Bare-toponym race: locality-tagged single spans also probe country/region.
 		const isBareRace = placetype === "locality" && node === state.bareLocalityNode

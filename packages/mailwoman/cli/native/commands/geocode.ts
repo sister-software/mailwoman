@@ -152,6 +152,12 @@ export const spec = {
 			description:
 				"Resolve a parsed dependent locality inside its parent and answer its point; --no-dependent-locality-containment disables it (#2804).",
 		},
+		"county-designator-fallback": {
+			type: "boolean",
+			default: false,
+			description:
+				"Resolve a locality span written with its country's county designator (Harris County, TX) as the region's county when no locality of that name is there.",
+		},
 		"capital-tier": {
 			type: "string",
 			default: "auto",
@@ -238,6 +244,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
+		countyDesignatorFallback: booleanValue(values, "county-designator-fallback"),
 		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
 		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,

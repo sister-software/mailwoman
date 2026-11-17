@@ -73,6 +73,12 @@ export const spec = {
 			default: "production",
 			description: "Pin the dependent-locality containment",
 		},
+		"county-designator-fallback": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the county-designator fallback",
+		},
 		"poi-venue-tier": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

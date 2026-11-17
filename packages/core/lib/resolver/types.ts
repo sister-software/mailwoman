@@ -277,6 +277,7 @@ export interface ResolveSwitches {
 	includeAncestors: boolean
 	adminContainmentRerank: boolean
 	dependentLocalityContainment: boolean
+	countyDesignatorFallback: boolean
 	diagnoseUnreachable: boolean
 }
 
@@ -297,6 +298,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	includeAncestors: false,
 	adminContainmentRerank: true,
 	dependentLocalityContainment: true,
+	countyDesignatorFallback: false,
 	diagnoseUnreachable: false,
 }
 
@@ -523,6 +525,15 @@ export interface ResolveOpts {
 	 */
 	dependentLocalityContainment?: boolean
 	/**
+	 * Looks a `locality` span up as a WOF `county` in its resolved region
+	 * when no locality of that name is there and the value is written with
+	 * its country's county designator (`Harris County`, `Jefferson Parish`),
+	 * from `countyNameWithoutDesignator` in `@mailwoman/codex/county-designators`.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
+	 */
+	countyDesignatorFallback?: boolean
+	/**
 	 * Optional sink for resolver-internal trace records.
 	 */
 	traceSink?: ((record: ResolveNodeTrace) => void) | null
@@ -595,6 +606,7 @@ export interface ResolveNodeTrace {
 			| "empty_admin"
 			| "span_rescore"
 			| "postal_compound_recovery"
+			| "county_designator_fallback"
 	} | null
 }
 

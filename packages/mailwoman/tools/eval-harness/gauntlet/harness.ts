@@ -157,6 +157,11 @@ export interface GauntletResolverPins {
 	 */
 	dependentLocalityContainment: SwitchPin
 	/**
+	 * A `locality` span written with its country's county designator resolves as its
+	 * region's county when no locality of that name is in the region.
+	 */
+	countyDesignatorFallback: SwitchPin
+	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
@@ -207,6 +212,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	gazetteerPrior: "production",
 	adminContainmentRerank: "production",
 	dependentLocalityContainment: "production",
+	countyDesignatorFallback: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
@@ -226,6 +232,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	dependentLocalityContainment?: boolean
+	countyDesignatorFallback?: boolean
 	poiVenueTier?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
@@ -233,6 +240,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
 		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
+		...switchPinEntry("countyDesignatorFallback", pins.countyDesignatorFallback),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
 		...(pins.spanRescoreWeakResolution === "production"
 			? {}

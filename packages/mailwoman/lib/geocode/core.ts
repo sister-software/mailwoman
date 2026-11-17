@@ -128,6 +128,11 @@ export interface GeocodeSwitches {
 	 */
 	dependentLocalityContainment: boolean
 	/**
+	 * Resolves a `locality` span written with its country's county designator as its
+	 * region's county when no locality of that name is in the region.
+	 */
+	countyDesignatorFallback: boolean
+	/**
 	 * Uses the postcode-prefix prior.
 	 * It needs {@link GeocodeDeps.postcodePrefixIndex}.
 	 */
@@ -152,6 +157,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	postcodeContainmentCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
 	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
+	countyDesignatorFallback: RESOLVE_SWITCH_DEFAULTS.countyDesignatorFallback,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
 
@@ -551,6 +557,7 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"postcodeContainmentCoherence",
 	"adminContainmentRerank",
 	"dependentLocalityContainment",
+	"countyDesignatorFallback",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
 

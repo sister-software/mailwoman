@@ -106,6 +106,11 @@ export interface GauntletRunOptions {
 	 */
 	dependentLocalityContainment?: SwitchPin
 	/**
+	 * Pin the county-designator fallback for every layer.
+	 * @defaultValue `"production"`
+	 */
+	countyDesignatorFallback?: SwitchPin
+	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
@@ -180,6 +185,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		gazetteerPrior: options.gazetteerPrior ?? "production",
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
 		dependentLocalityContainment: options.dependentLocalityContainment ?? "production",
+		countyDesignatorFallback: options.countyDesignatorFallback ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",
 		venueHeadPrior: options.venueHeadPrior ?? "production",

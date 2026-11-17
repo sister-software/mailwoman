@@ -174,6 +174,14 @@ export interface GeocodeSessionOptions {
 	 */
 	dependentLocalityContainment?: boolean
 
+	/**
+	 * Whether a `locality` span written with its country's county designator resolves as
+	 * its region's county when no locality of that name is in the region.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	countyDesignatorFallback?: boolean
+
 	placeCountryThreshold: number
 
 	/**
@@ -557,6 +565,7 @@ export async function createGeocodeSession(
 			adminContainmentRerank: options.adminContainmentRerank ?? GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 			dependentLocalityContainment:
 				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
+			countyDesignatorFallback: options.countyDesignatorFallback ?? GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
