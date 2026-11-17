@@ -7,6 +7,7 @@
  */
 
 import { dependentTerritories, hasCountry } from "@mailwoman/codex/country/sets"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
@@ -20,8 +21,9 @@ import {
 	type NameKey,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { loadAdmin1 } from "#adapters/geonames/adapter"
 import { subdivisionWrittenForms } from "#adapters/wof/admin/json/region-codes"
 
 /**
@@ -157,6 +159,56 @@ export interface RegionNames {
  * The fold the resolver keys its region lookups with, with Arabic letter variants folded together.
  */
 export const foldRegionName = (name: string): string => withArabicLetterVariantsFolded(normalizeLocalityForKey(name))
+
+/**
+ * A folded region name with its spaces, dashes and format characters removed,
+ * `nakhonphanom` for `nakhon phanom`, `bariavungtau` for `ba ria - vung tau`,
+ * and `ชลบุรี` for `ชลบุรี` written with a trailing zero-width space.
+ *
+ * Over the WOF admin database of 2026-11-14, 11 of 5,095 regions and macroregions share a
+ * compact key with another region of their country that no spaced key of theirs shares.
+ */
+export const compactRegionKey = (key: string): string => key.replaceAll(/[\s\p{Pd}\p{Cf}]/gu, "")
+
+const LATIN_INITIAL = /^\p{Script=Latin}/u
+
+/**
+ * The fewest words a name needs before all of it collapses to initials, so no initialism
+ * of a whole name is two letters long and meets a two-letter subdivision code.
+ */
+const WHOLE_NAME_INITIALISM_MIN_WORDS = 3
+
+/**
+ * The compact keys a folded name of Latin words gives when a run of two or more of its
+ * words is written as their initials: `ntb` and `ntbarat` for `nusa tenggara barat`,
+ * `diyogyakarta` for `daerah istimewa yogyakarta`.
+ *
+ * The whole name collapses only when it has three or more words, so no two-letter key comes of it.
+ * Over the WOF admin database of 2026-11-14 the 67,031 keys this gives include 143 that
+ * are another country's region key, such as `slp` for San Luis Potosí.
+ */
+export function regionInitialisms(key: string): string[] {
+	const words = key.split(" ")
+
+	if (words.length < 2 || !words.every((word) => LATIN_INITIAL.test(word))) return []
+
+	const initialisms: string[] = []
+
+	for (let start = 0; start < words.length; start++) {
+		for (let end = start + 2; end <= words.length; end++) {
+			if (start === 0 && end === words.length && words.length < WHOLE_NAME_INITIALISM_MIN_WORDS) continue
+
+			const initials = words
+				.slice(start, end)
+				.map((word) => word[0])
+				.join("")
+
+			initialisms.push(compactRegionKey([...words.slice(0, start), initials, ...words.slice(end)].join("")))
+		}
+	}
+
+	return initialisms
+}
 
 /**
  * The keys a row's region value is looked up under: the resolver's region-qualifier expansion
@@ -308,8 +360,44 @@ function createNameMatcher(namesOf: (country: string) => Set<string> | undefined
 		return false
 	}
 
-	const holdsValue = (country: string, names: Set<string>, region: string): boolean =>
-		lookupKeys(country, region).some((key) => names.has(key)) || holdsTruncation(country, names, region)
+	const compactByCountry = new Map<string, Set<string>>()
+
+	// Each name with its spaces and dashes removed, and with each run of two or more
+	// of its words written as their initials, so `NakhonPhanom` finds `nakhon phanom`
+	// and `DIY` finds `daerah istimewa yogyakarta`.
+	const compactOf = (country: string, names: Set<string>): Set<string> => {
+		const cached = compactByCountry.get(country)
+
+		if (cached) return cached
+
+		const compact = new Set<string>()
+
+		for (const name of names) {
+			compact.add(compactRegionKey(name))
+
+			for (const initialism of regionInitialisms(name)) {
+				compact.add(initialism)
+			}
+		}
+
+		compactByCountry.set(country, compact)
+
+		return compact
+	}
+
+	const holdsValue = (country: string, names: Set<string>, region: string): boolean => {
+		const keys = lookupKeys(country, region)
+
+		if (keys.some((key) => names.has(key)) || holdsTruncation(country, names, region)) return true
+
+		const compact = compactOf(country, names)
+
+		return keys.some((key) => {
+			const folded = compactRegionKey(key)
+
+			return folded.length > 0 && compact.has(folded)
+		})
+	}
 
 	return (country: string, region: string): boolean | null => {
 		const code = country.toUpperCase()
@@ -334,7 +422,19 @@ export interface ReadRegionNamesOptions {
 	 * The countries whose second-level (WOF `county`) names a row's region may also hold.
 	 */
 	secondLevelCountries?: readonly string[]
+	/**
+	 * The GeoNames directory whose `admin1CodesASCII.txt` names each country's first-level divisions.
+	 *
+	 * Those names widen the country's set with the names GeoNames-derived rows
+	 * write (`Munster`, `Lesser Poland`).
+	 */
+	geonamesDirectory?: PathBuilderLike
 }
+
+/**
+ * The GeoNames file of first-level division names, under a GeoNames directory.
+ */
+const GEONAMES_ADMIN1_FILE = "admin1CodesASCII.txt"
 
 /**
  * Reads every current region's `spr` name, `names` rows, `place_abbr` abbreviations
@@ -430,6 +530,21 @@ export async function readRegionNames(
 		addName(widening, row.country, row.name)
 	}
 
+	if (options.geonamesDirectory) {
+		const directory = PathBuilder.from(options.geonamesDirectory)
+
+		if (!(await pathExists(directory(GEONAMES_ADMIN1_FILE)))) {
+			throw new Error(
+				`${directory(GEONAMES_ADMIN1_FILE).toString()} is missing, so no GeoNames region name can be read`
+			)
+		}
+
+		// Keyed `<CC>.<admin1 code>`.
+		for (const [code, name] of await loadAdmin1(directory)) {
+			addName(widening, code.split(".")[0] ?? null, name)
+		}
+	}
+
 	// WOF's abbreviations and ISO codes miss some postal codes addresses write
 	// for a subdivision (Italian provinces' `TO`, US `PR` and the military `AE`),
 	// so libaddressinput's keys and names join each country's set.
@@ -486,13 +601,19 @@ async function readSecondLevelRegionCountries(): Promise<string[]> {
 }
 
 /**
- * The default WOF admin database's region names, with the second-level names of the countries
- * {@link SECOND_LEVEL_REGION_TABLE_PATH} admits, or `null` when the database isn't on this host.
+ * The default WOF admin database's region names, with the second-level names of the
+ * countries {@link SECOND_LEVEL_REGION_TABLE_PATH} admits and the data root's GeoNames
+ * first-level names, or `null` when the database isn't on this host.
+ *
+ * @throws When the database is on this host and the GeoNames first-level file isn't.
  */
 export async function tryReadDefaultRegionNames(): Promise<RegionNames | null> {
 	const path = wofDatabasePath("admin-global-priority.db")
 
 	if (!(await pathExists(path))) return null
 
-	return readRegionNames(path, { secondLevelCountries: await readSecondLevelRegionCountries() })
+	return readRegionNames(path, {
+		secondLevelCountries: await readSecondLevelRegionCountries(),
+		geonamesDirectory: dataRootPath("geonames"),
+	})
 }

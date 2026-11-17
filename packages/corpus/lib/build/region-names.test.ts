@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -217,6 +218,55 @@ describe("readRegionNames", () => {
 		expect((await readRegionNames(database)).holds("PE", "Huamanga")).toBe(false)
 		expect(secondLevel.holds("US", "Harris County")).toBe(true)
 		expect(secondLevel.holds("PE", "Ayacucho")).toBe(false)
+	})
+
+	it("holds a region written without its spaces or with a run of its words as initials", async () => {
+		const regions = await readRegionNames(
+			writeDatabase([
+				{ id: 1, name: "Nakhon Phanom", placetype: "region", country: "TH", names: ["จังหวัดชลบุรี"] },
+				{ id: 2, name: "Yogyakarta", placetype: "region", country: "ID", names: ["Daerah Istimewa Yogyakarta"] },
+				{ id: 3, name: "Nusa Tenggara Barat", placetype: "region", country: "ID" },
+				{ id: 4, name: "Jawa Barat", placetype: "region", country: "ID" },
+			])
+		)
+
+		// `35/5 NakhonPhanom-TardPhanom Road, …, NakhonPhanom 48000` and `…, จังหวัด ชลบุรี 20230`.
+		expect(regions.holds("TH", "NakhonPhanom")).toBe(true)
+		expect(regions.holds("TH", "จังหวัด ชลบุรี")).toBe(true)
+		// `102/8 ซอยแกรก 4, Nong Pla Eel, ชลบุรี 20150`, whose region ends in a zero-width space.
+		expect(regions.holds("TH", "จังหวัดชลบุรี​")).toBe(true)
+		// `Jalan Janti 379, Banguntapan, Bantul, DIY 55198` and `…, Kota Bima, NTB 84113`.
+		expect(regions.holds("ID", "DIY")).toBe(true)
+		expect(regions.holds("ID", "DI Yogyakarta")).toBe(true)
+		expect(regions.holds("ID", "D.I. Yogyakarta")).toBe(true)
+		expect(regions.holds("ID", "NTB")).toBe(true)
+		// A two-word name never collapses to two letters.
+		expect(regions.holds("ID", "JB")).toBe(false)
+		expect(regions.holds("ID", "Yogya")).toBe(false)
+	})
+
+	it("widens a judged country with GeoNames first-level names and refuses a missing GeoNames file", async () => {
+		const database = writeDatabase([
+			{ id: 1, name: "County Cork", placetype: "region", country: "IE" },
+			{ id: 2, name: "Texas", placetype: "region", country: "US" },
+		])
+
+		await writeLocalTextFile(
+			["IE.M\tMunster\tMunster\t7521315", "FO.ST\tStreymoy\tStreymoy\t2612225"],
+			scratch.path("geonames", "admin1CodesASCII.txt")
+		)
+
+		const regions = await readRegionNames(database, { geonamesDirectory: scratch.path("geonames") })
+
+		// `Foynes, Munster`, a GeoNames feature whose region is its admin1 name.
+		expect(regions.holds("IE", "Munster")).toBe(true)
+		expect(regions.holds("US", "Munster")).toBe(false)
+		// GeoNames names widen a country WOF holds a region of and judge no other.
+		expect(regions.holds("FO", "Streymoy")).toBeNull()
+
+		await expect(readRegionNames(database, { geonamesDirectory: scratch.path("absent") })).rejects.toThrow(
+			/admin1CodesASCII\.txt is missing/
+		)
 	})
 
 	it("refuses a database without regions rather than judging no row", async () => {
