@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 250 of the group's 425 library and tool modules.
+This page lists 251 of the group's 426 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -278,10 +278,11 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 ## `packages/corpus/lib/build/region-names.ts`
 
-| Kind | Interface        | Target                                      | Calls |
-| ---- | ---------------- | ------------------------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (parameter)`                    | 1     |
-| read | `pathExists`     | `data-root:db/wof/admin-global-priority.db` | 1     |
+| Kind | Interface           | Target                                      | Calls |
+| ---- | ------------------- | ------------------------------------------- | ----- |
+| read | `DatabaseClient`    | `unresolved (parameter)`                    | 2     |
+| read | `pathExists`        | `data-root:db/wof/admin-global-priority.db` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`                         | 1     |
 
 ## `packages/corpus/lib/build/rows.ts`
 
@@ -1564,6 +1565,19 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `assertPathExists`         | `unresolved (parameter)` | 1     |
 | read | `DatabaseClient`           | `unresolved (other)`     | 3     |
 | read | `TSVSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+
+## `packages/corpus/lib/tools/region-slot-census.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 4 times
+- `runs a statement at module scope`, 4 times
+
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/tools/registry-corpus.run.ts`
 
