@@ -1,11 +1,11 @@
 {
 	"dataset": {
 		"datasetID": "heldout-dev-v0.8.18",
-		"version": "00c4698a7fdc6edf",
-		"rowsSHA256": "bdcaa41f8b35baf1a3d5144b3ae31cde0eb42e151176c55b1fd92974a8486bf6",
+		"version": "adeeef40d7d81a7c",
+		"rowsSHA256": "b904f768bbd57deabab683ad12dcff7dd1c86dee429762ddf723b93ac6faab53",
 		"corpusVersion": "0.8.18-retention-overlay"
 	},
-	"specVersion": "8",
+	"specVersion": "9",
 	"verdict": null,
 	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.provenance-published-10.8.0.json (audit 4d6047b6254b33ee)",
 	"rows": [

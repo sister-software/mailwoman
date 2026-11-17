@@ -63,9 +63,12 @@ before comparing two training arms. A comparison uses three instruments from it:
      reported under `attribution`. Board regressions are findings with their addresses and do not
      block.
 
-   **The registered requirements.** `release-requirements.v8.json` registers nine country minima,
-   four capabilities, the equal-weight objective, the confidence settings, and the development and
-   confirmation collections frozen from corpus v0.8.18-retention-overlay. Version 8 keeps the
+   **The registered requirements.** `release-requirements.v9.json` registers nine country minima,
+   four capabilities, a geocode-outcome loss check, the equal-weight objective, the confidence settings, and each
+   role's collections: the v0.8.18 collections revised under the 2026-11-17 county decision, beside the r2
+   capability-probe collections ([the v9 record](../records/evals/2026-11-17-release-requirements-v9.md)). The
+   geocode check reads each row's resolved components and places (`heldout/per/country.run.ts --geocode`), so a
+   change that acts only in the resolver is graded by it. Version 8 keeps the
    values decided for version 3, and their reasons are in
    [the v3 decision record](../records/evals/2026-10-20-release-requirements-v3.md). Each later
    version's `rationale` field records what it changed, including the fourth capability,
