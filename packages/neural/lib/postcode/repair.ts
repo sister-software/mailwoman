@@ -182,18 +182,20 @@ export function repairPostcodeLabels(
 			if (m.kind === "alnum" && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 		}
 
-		// A printed prefix the model labeled as postcode stays the start of the span.
+		// A printed prefix the model labeled as postcode stays in the span with every postcode
+		// label the model put before it, as the doubled prefix of `L-L-6735` shows.
 		const prefix =
 			typeof m.prefixStart === "number"
 				? tokenIndicesOverlapping(tokens, m.prefixStart, m.start).filter((i) => i < overlap[0]!)
 				: []
 
 		const prefixInSpan = prefix.length > 0 && isTagLabel(tokens[prefix.at(-1)!]!.label, "postcode")
-		const before = prefixInSpan ? prefix[0]! : overlap[0]!
 
 		overlap.forEach((i, k) => setLabel(i, k === 0 && !prefixInSpan ? POSTCODE_B : POSTCODE_I))
 
-		for (let j = before - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
+		const clearFrom = prefixInSpan ? -1 : overlap[0]! - 1
+
+		for (let j = clearFrom; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
 			setLabel(j, OUTSIDE)
 		}
 

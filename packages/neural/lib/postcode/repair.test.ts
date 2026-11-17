@@ -382,6 +382,23 @@ describe("a postcode designated by the JP postal mark", () => {
 			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal").tokens)).toBe("FO600")
 		})
 
+		it("leaves a doubled Luxembourg prefix the model labeled in the code", () => {
+			const text = "LUXINFRA, 2A RUE PRINCE HENRI, L-L-6735 GREVENMACHER"
+
+			const tokens = labeled(text, [
+				["HENRI", "I-street"],
+				[",", "O"],
+				["L", "B-postcode"],
+				["-", "I-postcode"],
+				["L", "I-postcode"],
+				["-", "I-postcode"],
+				["6735", "I-postcode"],
+				["GREVENMACHER", "B-locality"],
+			])
+
+			expect(postcodeValue(text, repairPostcodeLabels(text, tokens, "postal", "LU").tokens)).toBe("L-L-6735")
+		})
+
 		it("never runs a Swiss code into the locality after it", () => {
 			const text = "Kirchstrasse 27, CH-6454 Flüelen"
 
