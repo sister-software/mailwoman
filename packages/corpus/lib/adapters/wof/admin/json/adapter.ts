@@ -545,6 +545,15 @@ export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
 }
 
 /**
+ * The `wof:country` WOF writes on a record it assigns to no country,
+ * such as a disputed area or a record not yet placed.
+ *
+ * A row takes its country from the record, so such a record's rows are tagged `XX`
+ * and write another country's region: `Pecinan, England, United Kingdom`.
+ */
+export const WOF_NO_COUNTRY = "XX"
+
+/**
  * Registry id for this adapter.
  *
  * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
@@ -571,9 +580,10 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			// A record whose placetype maps to no ComponentTag (campus, county-region hybrids on
 			// which Mailwoman has no opinion) is neither rendered nor an ancestor.
+			// A record WOF assigns to no country names none for its rows, so it is skipped too.
 			// A country-filtered run keeps only that country's records, ancestors included.
 			using stored = await openStoredRecordEntries(opts, {
-				keep: (record) => Boolean(placetypeToTag(record.placetype)),
+				keep: (record) => Boolean(placetypeToTag(record.placetype)) && record.country !== WOF_NO_COUNTRY,
 				resolve: (record, lookup) => ancestorRecordsOf(record, lookup, placetypeToTag),
 			})
 

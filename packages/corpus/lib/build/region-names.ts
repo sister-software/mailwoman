@@ -25,6 +25,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { loadAdmin1 } from "#adapters/geonames/adapter"
 import { subdivisionWrittenForms } from "#adapters/wof/admin/json/region-codes"
+import { codeCountry, SUBDIVISION_OF_SOURCES } from "#utils/wof-json"
 
 /**
  * The WOF placetypes a row's `region` may name: a region, or the macroregion above it where a country's
@@ -42,17 +43,6 @@ const SECOND_LEVEL_PLACETYPES = ["county"] as const
  * The WOF concordances that hold a region's current ISO 3166-2 code, such as `CH-ZH`.
  */
 const ISO_SUBDIVISION_SOURCES = ["iso:id", "iso:code"] as const
-
-/**
- * The WOF concordances whose leading two letters are the code of the country a region is a
- * subdivision of: the ISO code and the HASC code (`GF` for French Guiana, `BQ.BO` for Bonaire).
- */
-const SUBDIVISION_OF_SOURCES = ["iso:id", "iso:code", "hasc:id"] as const
-
-/**
- * The country code that leads an ISO 3166 or HASC code, `GF` for `GF` and `BQ` for `BQ.BO` or `BQ-BO`.
- */
-const CODE_COUNTRY = /^([A-Z]{2})(?:[-.]|$)/u
 
 /**
  * The committed table of the countries whose rows write a second-level name in the region slot.
@@ -498,7 +488,7 @@ export async function readRegionNames(
 			addName(byCountry, row.country, writtenISOSubdivisionCode(row.country, row.code))
 		}
 
-		const named = CODE_COUNTRY.exec(row.code.toUpperCase())?.[1]
+		const named = codeCountry(row.code)
 
 		if (!named || named === row.country.toUpperCase() || !hasCountry(dependents, named)) continue
 

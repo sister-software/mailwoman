@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 5001,
+	"properties": {
+		"wof:id": 5001,
+		"wof:name": "France",
+		"wof:placetype": "country",
+		"wof:country": "FR",
+		"wof:parent_id": -1,
+		"wof:concordances": { "hasc:id": "FR", "iso:code": "FR" },
+		"mz:is_current": 1,
+		"geom:latitude": 46.6,
+		"geom:longitude": 2.4
+	},
+	"geometry": null
+}

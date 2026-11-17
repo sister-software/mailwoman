@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 5200,
+	"properties": {
+		"wof:id": 5200,
+		"wof:name": "Unplaced Quarter",
+		"wof:placetype": "locality",
+		"wof:country": "XX",
+		"wof:parent_id": 5010,
+		"wof:hierarchy": [{ "country_id": 5001, "region_id": 5010, "locality_id": 5200 }],
+		"mz:is_current": 1,
+		"geom:latitude": 43.7,
+		"geom:longitude": 7.26
+	},
+	"geometry": null
+}

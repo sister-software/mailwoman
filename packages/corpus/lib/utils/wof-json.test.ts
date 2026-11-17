@@ -195,10 +195,57 @@ function rec(
 	parent_id: number | null,
 	name = `n${id}`,
 	placetype = "locality",
-	ancestors: number[] = []
+	ancestors: number[] = [],
+	country = "US",
+	codeCountries: string[] = []
 ): WOFRecord {
-	return { id, parent_id, name, placetype, country: "US", nameVariants: new Map(), ancestors }
+	return { id, parent_id, name, placetype, country, nameVariants: new Map(), ancestors, codeCountries }
 }
+
+test("an ancestor in another country names no level of the record's chain", () => {
+	// WOF files Monaco's La Condamine under France's Alpes-Maritimes, and the row's country is Monaco.
+	const byID = new Map<number, WOFRecord>([
+		[1, rec(1, null, "France", "country", [], "FR")],
+		[2, rec(2, 1, "Alpes-Maritimes", "region", [1], "FR")],
+		[3, rec(3, null, "Monaco", "country", [], "MC")],
+		[4, rec(4, 2, "La Condamine", "locality", [2, 3], "MC")],
+	])
+
+	expect(buildAncestorNameIndex(byID, tagOf).get(4)).toEqual({ country: "Monaco" })
+})
+
+test("an ancestor in another country whose own code leads with the record's country stays in its chain", () => {
+	// France's region Guadeloupe has `iso:id` `GP`, and each of its communes has `wof:country` `GP`.
+	const byID = new Map<number, WOFRecord>([
+		[1, rec(1, null, "France", "country", [], "FR")],
+		[2, rec(2, 1, "Guadeloupe", "region", [1], "FR", ["GP"])],
+		[3, rec(3, 2, "Gourbeyre", "locality", [2, 1], "GP")],
+	])
+
+	expect(buildAncestorNameIndex(byID, tagOf).get(3)).toEqual({ region: "Guadeloupe" })
+})
+
+test("recordFromFeature reads the other countries its ISO and HASC codes name", () => {
+	const feature = (concordances: Record<string, string>): WOFFeature => ({
+		type: "Feature",
+		id: 85_671_209,
+		properties: {
+			"wof:name": "Guadeloupe",
+			"wof:placetype": "region",
+			"wof:country": "FR",
+			"wof:concordances": concordances,
+		},
+	})
+
+	expect(
+		recordFromFeature(feature({ "hasc:id": "GP", "iso:code": "FR-971", "iso:id": "GP", "gn:id": "3579143" }), new Set())
+			?.codeCountries
+	).toEqual(["GP"])
+
+	expect(recordFromFeature(feature({ "hasc:id": "FR.PR.AM", "iso:code": "FR-06" }), new Set())?.codeCountries).toEqual(
+		[]
+	)
+})
 
 test("buildAncestorNameIndex reads wof:hierarchy ancestors for a record whose parent is -4", () => {
 	// Brooklyn sits under New York City, and New York City's parent_id is -4.

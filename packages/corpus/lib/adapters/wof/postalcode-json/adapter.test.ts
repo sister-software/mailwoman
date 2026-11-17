@@ -28,6 +28,7 @@ describe("postcodeVariantsFor (pure)", () => {
 		country: "US",
 		nameVariants: new Map<string, string>(),
 		ancestors: [] as number[],
+		codeCountries: [] as string[],
 		...over,
 	})
 

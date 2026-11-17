@@ -34,6 +34,7 @@ const rec = (over: Partial<TestRecord>): TestRecord => ({
 	country: "US",
 	nameVariants: new Map(),
 	ancestors: [],
+	codeCountries: [],
 	...over,
 })
 
@@ -543,6 +544,28 @@ describe("wof-admin-json adapter against fixture", () => {
 			.map((r) => r.raw)
 
 		expect(colloquialRaws.length).toBeGreaterThan(0)
+	})
+})
+
+describe("wof-admin-json adapter on records whose chain leaves their country", () => {
+	it("writes Monaco's La Condamine without France's region and renders no record WOF assigns to no country", async () => {
+		await removePathIfPresent(scratch.path(WOF_ADMIN_ADAPTER_ID))
+
+		await runAdapter({
+			adapter: createWOFAdminAdapter(),
+			adapterOptions: { inputPath: workspacePath("corpus", "fixtures", "wof-admin-cross-country") },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await loadRows()
+		const condamine = rows.filter((r) => r.components.locality === "La Condamine")
+
+		expect(condamine.length).toBeGreaterThan(0)
+		expect(condamine.every((r) => r.country === "MC" && r.components.region == null)).toBe(true)
+		expect(condamine.some((r) => r.components.country === "Monaco")).toBe(true)
+		expect(rows.filter((r) => r.country === "XX" || r.raw.includes("Unplaced Quarter"))).toEqual([])
+		expect(rows.some((r) => r.country === "FR" && r.components.region === "Alpes-Maritimes")).toBe(true)
 	})
 })
 

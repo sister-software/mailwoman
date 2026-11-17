@@ -1,0 +1,15 @@
+{
+	"type": "Feature",
+	"id": 5100,
+	"properties": {
+		"wof:id": 5100,
+		"wof:name": "Monaco",
+		"wof:placetype": "country",
+		"wof:country": "MC",
+		"wof:parent_id": -1,
+		"mz:is_current": 1,
+		"geom:latitude": 43.74,
+		"geom:longitude": 7.42
+	},
+	"geometry": null
+}

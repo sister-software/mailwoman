@@ -70,6 +70,52 @@ export interface WOFRecord {
 	 * Empty when the record lists no hierarchy, in which case the parent chain answers.
 	 */
 	ancestors: readonly number[]
+	/**
+	 * The countries that lead the record's own ISO 3166 and HASC codes ({@linkcode SUBDIVISION_OF_SOURCES}),
+	 * where one differs from `country`: `GP` for France's region Guadeloupe (`iso:id` `GP`).
+	 */
+	codeCountries: readonly string[]
+}
+
+/**
+ * The WOF concordances whose leading two letters are the code of the country a region is a
+ * subdivision of: the ISO code and the HASC code (`GF` for French Guiana, `BQ.BO` for Bonaire).
+ */
+export const SUBDIVISION_OF_SOURCES = ["iso:id", "iso:code", "hasc:id"] as const
+
+const CODE_COUNTRY = /^([A-Z]{2})(?:[-.]|$)/u
+
+/**
+ * The country code that leads an ISO 3166 or HASC code, `GF` for `GF` and `BQ` for `BQ.BO`
+ * or `BQ-BO`, or `null` for a code that leads with none.
+ */
+export function codeCountry(code: string): string | null {
+	return CODE_COUNTRY.exec(code.toUpperCase())?.[1] ?? null
+}
+
+const NO_CODE_COUNTRIES: readonly string[] = Object.freeze([])
+
+/**
+ * The {@linkcode WOFRecord.codeCountries} of a record's properties.
+ */
+function codeCountriesOf(props: Record<string, unknown>, country: string): readonly string[] {
+	const concordances = props["wof:concordances"]
+
+	if (!concordances || typeof concordances !== "object") return NO_CODE_COUNTRIES
+	const found = new Set<string>()
+
+	for (const source of SUBDIVISION_OF_SOURCES) {
+		const code = (concordances as Record<string, unknown>)[source]
+		const named = typeof code === "string" ? codeCountry(code) : null
+
+		if (named && named !== country) {
+			found.add(named)
+		}
+	}
+
+	// An admin run holds millions of records.
+	// Most hold no other country's code, so those records share one empty list.
+	return found.size ? [...found] : NO_CODE_COUNTRIES
 }
 
 /**
@@ -255,6 +301,7 @@ export function recordFromFeature(feature: WOFFeature, refutedParents: ReadonlyS
 		country,
 		nameVariants: extractNameVariants(props),
 		ancestors: placed ? agreedHierarchyAncestors(id, props["wof:hierarchy"]) : [],
+		codeCountries: codeCountriesOf(props, country),
 	}
 }
 
@@ -366,6 +413,11 @@ export function ancestorNamesOf(records: AncestorRecords): AncestorNames {
  * Only a corrupt fixture holds a cycle.
  *
  * A record whose ancestors are absent resolves the tags it can reach rather than failing.
+ *
+ * An ancestor in another country claims no tag, unless its own ISO or HASC code leads with
+ * the record's country, as France's region Guadeloupe (`GP`) does for a record in `GP`.
+ * A row takes its country from the record, so any other such ancestor would write another country's
+ * region under it: WOF files Monaco's quarters under Alpes-Maritimes and Macau's under Guangdong.
  */
 export function ancestorRecordsOf(
 	rec: WOFRecord,
@@ -375,6 +427,8 @@ export function ancestorRecordsOf(
 	const names: AncestorRecords = {}
 
 	const claim = (ancestor: WOFRecord): void => {
+		if (ancestor.country !== rec.country && !ancestor.codeCountries.includes(rec.country)) return
+
 		const tag = tagOf(ancestor.placetype)
 
 		for (const wanted of ANCESTOR_NAME_TAGS) {

@@ -82,6 +82,7 @@ describe("findDualRolePairs", () => {
 			country: "DE",
 			nameVariants: new Map(),
 			ancestors: [],
+			codeCountries: [],
 		}
 
 		expect(

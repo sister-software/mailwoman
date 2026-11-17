@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 5120,
+	"properties": {
+		"wof:id": 5120,
+		"wof:name": "La Condamine",
+		"wof:placetype": "locality",
+		"wof:country": "MC",
+		"wof:parent_id": 5010,
+		"wof:hierarchy": [{ "country_id": 5100, "region_id": 5010, "locality_id": 5120 }],
+		"mz:is_current": 1,
+		"geom:latitude": 43.73,
+		"geom:longitude": 7.42
+	},
+	"geometry": null
+}

@@ -1,0 +1,17 @@
+{
+	"type": "Feature",
+	"id": 5010,
+	"properties": {
+		"wof:id": 5010,
+		"wof:name": "Alpes-Maritimes",
+		"wof:placetype": "region",
+		"wof:country": "FR",
+		"wof:parent_id": 5001,
+		"wof:hierarchy": [{ "country_id": 5001, "region_id": 5010 }],
+		"wof:concordances": { "hasc:id": "FR.PR.AM", "iso:code": "FR-06" },
+		"mz:is_current": 1,
+		"geom:latitude": 43.9,
+		"geom:longitude": 7.1
+	},
+	"geometry": null
+}
