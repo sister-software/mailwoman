@@ -1,0 +1,45 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
+	"$draft-note": "A draft for the next build, written 2026-11-17 and not yet built. The rebuilt and new sources replace or join their v0.8.19-overlay files in an overlay on that corpus.",
+	"$overlay-note": "`usgov-nad` is rebuilt because its adapter now labels a place column that writes the record's own county as `subregion` (`1 1st Street, Polk County, OR 97347`). Over release 24 that relabels 243,004 of the 90,566,949 rows with a state, a ZIP Code and a place value. The adapter's code digest changes, so v0.8.19's NAD run can't be resumed. It reads the v0.8.18 street index, as v0.8.19-rebuild did, so the relabel is the run's only change. A v0.8.19 index doesn't exist yet. Every other v0.8.19-overlay source is carried unchanged.",
+	"$recipe-outputs-note": "This file names adapters only: `readBuildInputs` reads `adapters` and nothing else, and a recipe output reaches a corpus through `mailwoman corpus recipe` and the overlay, as every recipe output in v0.8.19 did. The recipe outputs this build adds are therefore recorded here as the invocations to run, each writing an `.invocation.json` beside its output under `corpus/recipe-outputs/`. `us-county` writes three new sources. `invented-house-venue` replaces both v0.8.19 files, `corpus-v0.8.0/invented-house-venue.parquet` and `corpus-v0.8.1/invented-house-venue-intl-v27.parquet`, which predate the record-id repair of #2894 and record neither the tuples nor the limit they were built from.",
+	"$recipe-outputs": [
+		{
+			"recipe": "us-county",
+			"sources": ["rendered-us-county", "rendered-us-city-county", "rendered-us-city-state"],
+			"command": "mailwoman corpus recipe us-county --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/us-county-v0820.jsonl --count 200000 --seed 20261117",
+			"reads": [
+				"db/wof/admin-global-priority.db",
+				"db/wof/postalcode-us.db",
+				"the WOF record store for src/wof-repos under $MAILWOMAN_CACHE_ROOT/derived/wof-records"
+			],
+			"rows": {
+				"rendered-us-county": 6198,
+				"rendered-us-city-county": 157069,
+				"rendered-us-city-state": 157069
+			}
+		},
+		{
+			"recipe": "house-venue",
+			"sources": ["invented-house-venue"],
+			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/house-venue-v0820.jsonl --seed 42",
+			"replaces": "corpus-v0.8.0/invented-house-venue.parquet",
+			"tuples": 179725
+		},
+		{
+			"recipe": "house-venue",
+			"sources": ["invented-house-venue"],
+			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/tuples/house-venue-intl-v27-tuples.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/house-venue-intl-v0820.jsonl --seed 20260922",
+			"replaces": "corpus-v0.8.1/invented-house-venue-intl-v27.parquet",
+			"tuples": 18000,
+			"note": "The tuples file is stored compressed as house-venue-intl-v27-tuples.jsonl.zst; the seed is the one recorded in house-venue-intl-v27.jsonl.invocation.json."
+		}
+	],
+	"corpusVersion": "v0.8.20-rebuild",
+	"adapters": {
+		"usgov-nad": {
+			"inputPath": "snapshots/usgov-nad/r24/TXT_NAD_r24.parquet",
+			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
+		}
+	}
+}

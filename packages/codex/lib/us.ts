@@ -3,11 +3,12 @@
 
 /**
  *   The United States address system (USPS): street suffixes, secondary unit designators,
- *   floor-class designators (USPS Pub 28 C2 floor/level subset), military/diplomatic
- *   post office designators (USPS Pub 28 Chapter 7: APO/FPO/DPO + PSC/CMR/unit),
- *   ZIP codes, plus the state abbreviations they hang off of.
+ *   floor-class designators (USPS Pub 28 C2 floor/level subset), military/diplomatic post
+ *   office designators (USPS Pub 28 Chapter 7: APO/FPO/DPO + PSC/CMR/unit), ZIP codes,
+ *   county designators, plus the state abbreviations they hang off of.
  */
 
+export * from "#us/county"
 export * from "#us/floor-designator"
 export * from "#us/military-address"
 export * from "#us/po-box"

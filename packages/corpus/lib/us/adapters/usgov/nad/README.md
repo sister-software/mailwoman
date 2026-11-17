@@ -51,9 +51,19 @@ keeps one `source_id` across both reads.
 | `Zip_Code` + `Plus_4` (joined as `XXXXX-NNNN` when both present)                                                           | `postcode`     |
 | `LandmkName` (typically a park, school, hospital, or other facility with a name)                                           | `venue`        |
 
-All other NAD fields (geometry, county, FIPS, addressing authority, anomaly
-status, etc.) are ignored, because Phase 1 is component-level only. Spatial fields
-belong in a future Phase 5+ adapter.
+A contributor may fill a place column with the county for an address outside any
+municipality: Oregon writes `Inc_Muni` `Polk County` beside `County` `Polk`, and Texas
+writes `Post_City` `DENTON COUNTY`. When the chosen place value is the record's own
+`County` followed by a county designator (`@mailwoman/codex/us/county`), its span is
+labeled `subregion` and the row has no `locality`: `1 1st Street, Polk County, OR 97347`.
+Over release 24 that's 243,004 of 90,566,949 rows with a ZIP Code, a valid state and a
+place value: 120,543 from `Inc_Muni`, 114,122 from `Post_City`, 8,329 from `Uninc_Comm`
+and 10 Alaska rows whose `County` already reads `Bristol Bay Borough`. A place that
+shares its county's name without the designator (`Denton`) stays a locality.
+
+The adapter reads `County` only for that comparison. All other NAD fields (geometry,
+FIPS, addressing authority, anomaly status, etc.) are ignored, because Phase 1 is
+component-level only. Spatial fields belong in a future Phase 5+ adapter.
 
 ## Output
 

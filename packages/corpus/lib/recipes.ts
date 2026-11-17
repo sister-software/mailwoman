@@ -46,6 +46,7 @@ import { venueRecipe } from "#recipes/venue"
 import { sgRegisterRecipe } from "#sg/recipes/register"
 import { siBareVillageRecipe } from "#si/recipes/bare-village"
 import { bdRegisterRecipe, pkRegisterRecipe } from "#south-asia/recipes/register"
+import { usCountyRecipe } from "#us/recipes/county"
 import { reviewedPostcodeTailRecipe } from "#ve/recipes/reviewed-postcode-tail"
 
 export * from "#recipes/scaffold"
@@ -56,6 +57,7 @@ export * from "#recipes/scaffold"
 const RECIPES: readonly CorpusRecipe[] = [
 	bareCountryRecipe,
 	trailingRegionRecipe,
+	usCountyRecipe,
 	reviewedPostcodeTailRecipe,
 	streetRecipe,
 	streetBareRecipe,

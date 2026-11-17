@@ -6,6 +6,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { namesUSCounty } from "@mailwoman/codex/us/county"
 import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { isPresent } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
@@ -387,6 +388,31 @@ export function nadAddressComponents(record: NADRecord): CanonicalRow["component
 }
 
 /**
+ * The rendered components with a locality that writes the record's own county moved to `subregion`.
+ *
+ * NAD contributors fill a place column with the county for an address outside any
+ * municipality: Oregon's `Inc_Muni` reads `Polk County` where `County` reads `Polk`,
+ * and Texas's `Post_City` reads `DENTON COUNTY`.
+ * The row's text keeps the county where the locality would be, as
+ * `1 1st Street, Polk County, OR 97347`, and the span is labeled the county it is.
+ *
+ * A place that shares its county's name without a designator (`Denton` in Denton County) stays a locality.
+ */
+export function nadCountyAsSubregion(
+	components: CanonicalRow["components"],
+	record: Pick<NADRecord, "County">
+): CanonicalRow["components"] {
+	const locality = components["locality"]
+	const county = record.County?.trim()
+
+	if (!locality || !county || !namesUSCounty(locality, county)) return components
+
+	return Object.fromEntries(
+		Object.entries(components).map(([tag, value]) => [tag === "locality" ? "subregion" : tag, value])
+	) as CanonicalRow["components"]
+}
+
+/**
  * Creates the NAD adapter.
  *
  * The adapter skips records without a US state code, locality, or ZIP code.
@@ -423,7 +449,8 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 				if (!rendered) continue
 
-				const { raw, components: aligned } = rendered
+				const { raw } = rendered
+				const aligned = nadCountyAsSubregion(rendered.components, record)
 
 				if (Object.keys(aligned).length <= 2) continue
 

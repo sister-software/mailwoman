@@ -113,6 +113,7 @@ function entries(
 
 const LOCALE_RECIPE = "international/recipes/locale.ts"
 const TRAILING_REGION = "recipes/trailing-region.ts"
+const US_COUNTY_RECIPE = "us/recipes/county.ts"
 
 /**
  * Every recipe-output source that a corpus on disk, a training config
@@ -159,6 +160,21 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		["no-street-led", "no/recipes/street/led.ts"],
 		["si-bare-village", "si/recipes/bare-village.ts"],
 		["nl-postcode", "nl/recipes/postcode.ts"],
+		[
+			"us-county",
+			US_COUNTY_RECIPE,
+			"A WOF county and its state, in two rows per county. The retired spelling never reached a corpus: the recipe was written after the rename.",
+		],
+		[
+			"us-city-county",
+			US_COUNTY_RECIPE,
+			"A WOF locality, the one county WOF places it in, its state and one of its ZIP Codes on half the rows. The retired spelling never reached a corpus.",
+		],
+		[
+			"us-city-state",
+			US_COUNTY_RECIPE,
+			"A WOF locality and its state, with one of its ZIP Codes on half the rows. The retired spelling never reached a corpus.",
+		],
 	]),
 	// Germany is the one locale the retired names spelled as a language word
 	// where every other reads as an ISO code, so its tail becomes `de`.

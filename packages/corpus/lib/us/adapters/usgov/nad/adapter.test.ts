@@ -103,6 +103,52 @@ describe("usgov-nad adapter", () => {
 		expect(row!.source_id).toMatch(/^usgov-nad-0002173c-ada8-4421-acf2-f9b6f12b52f0-[0-9a-f]{12}$/u)
 	})
 
+	it("labels a place column that writes the record's own county as the subregion, and leaves a city named for its county a locality", async () => {
+		// OID 16587994 and 73538981 of release 24, as published.
+		const polk = {
+			OID_: 16_587_994,
+			UUID: "{FF8C1D86-330A-48E2-B804-26A796352719}",
+			Add_Number: 1,
+			AddNo_Full: "1",
+			St_Name: "1st",
+			St_PosTyp: "Street",
+			StNam_Full: "1st Street",
+			County: "Polk",
+			Inc_Muni: "Polk County",
+			Post_City: "Not stated",
+			State: "OR",
+			Zip_Code: "97347",
+		}
+
+		const denton = {
+			OID_: 73_538_981,
+			UUID: "{00023F69-CE5E-4DC7-9776-73973FF45E02}",
+			Add_Number: 1408,
+			AddNo_Full: "1408",
+			St_Name: "VATTIER",
+			St_PosTyp: "Street",
+			StNam_Full: "VATTIER Street",
+			County: "Denton",
+			Inc_Muni: "DENTON COUNTY",
+			Post_City: "DENTON COUNTY",
+			State: "TX",
+			Zip_Code: "75068",
+		}
+
+		const city = { ...denton, OID_: 1, UUID: "{00000000-0000-0000-0000-000000000001}", Post_City: "Denton" }
+		const rows = await collect(createUsgovNADAdapter(), {}, await writeReleaseParquet([polk, denton, city]))
+
+		const labeled = new Map(
+			rows.map((row) => [row.raw, [row.components.subregion ?? null, row.components.locality ?? null]])
+		)
+
+		expect(Object.fromEntries(labeled)).toEqual({
+			"1 1st Street, Polk County, OR 97347": ["Polk County", null],
+			"1408 VATTIER Street, DENTON COUNTY, TX 75068": ["DENTON COUNTY", null],
+			"1408 VATTIER Street, Denton, TX 75068": [null, "Denton"],
+		})
+	})
+
 	it("composes a 4-component address with venue when LandmkName is set", async () => {
 		const rows = await collect()
 		const wh = rows.find((r) => r.components.venue === "The White House")

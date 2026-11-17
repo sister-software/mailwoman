@@ -3269,6 +3269,44 @@
 				}
 			]
 		},
+		"rendered-us-city-county": {
+			"aliases": ["synth-us-city-county"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "US locality names, the one county each sits in with that county's `wof:label` or English name, its state, and the US postalcode records whose parent it is"
+				}
+			],
+			"authored": [
+				"US_COUNTY_DESIGNATORS in @mailwoman/codex/us/county, read off the Census Bureau's legal/statistical area descriptions"
+			]
+		},
+		"rendered-us-city-state": {
+			"aliases": ["synth-us-city-state"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "US locality names, their state, and the US postalcode records whose parent each is"
+				}
+			],
+			"authored": ["US state codes in @mailwoman/codex/us/state"]
+		},
+		"rendered-us-county": {
+			"aliases": ["synth-us-county"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "US county records' `wof:label` and English names, and their state"
+				}
+			],
+			"authored": [
+				"US_COUNTY_DESIGNATORS in @mailwoman/codex/us/county, read off the Census Bureau's legal/statistical area descriptions",
+				"US state codes and names in @mailwoman/codex/us/state"
+			]
+		},
 		"reviewed-postcode-tail": {
 			"aliases": ["synth-reviewed-postcode-tail"],
 			"inputs": [],
