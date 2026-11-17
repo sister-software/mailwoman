@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
@@ -28,5 +29,43 @@ describe("extractWOFFeature over the record store's reduced features", () => {
 			expect(reduced, file).not.toBeNull()
 			expect(extractWOFFeature(reduced!.feature, ALL_PLACETYPES), file).toEqual(extractWOFFeature(text, ALL_PLACETYPES))
 		}
+	})
+})
+
+describe("the names extractWOFFeature keeps", () => {
+	const namesOf = (names: Record<string, string[]>) =>
+		extractWOFFeature(
+			stringifyJSON({ properties: { "wof:id": 1, "wof:placetype": "region", "wof:country": "SG", ...names } }),
+			ADMIN_PLACETYPES
+		)?.names
+
+	it("keeps the colloquial, unclassified and subtagged names an address writes", () => {
+		expect(
+			namesOf({
+				"name:eng_x_preferred": ["Singapore"],
+				"name:eng_x_colloquial": ["Lion City", "Singers"],
+				"name:eng_x_unknown": ["SG"],
+				"name:zho_tw_x_preferred": ["新加坡"],
+				"name:zho_min_nan_x_preferred": ["Sin-ka-pho"],
+			})
+		).toEqual([
+			{ name: "Singapore", language: "eng", privateuse: "preferred", official: 1 },
+			{ name: "Lion City", language: "eng", privateuse: "colloquial", official: 0 },
+			{ name: "Singers", language: "eng", privateuse: "colloquial", official: 0 },
+			{ name: "SG", language: "eng", privateuse: "unknown", official: 0 },
+			// The official flag reads the base language, so a subtagged Chinese name is official where Chinese is.
+			{ name: "新加坡", language: "zho_tw", privateuse: "preferred", official: 1 },
+			{ name: "Sin-ka-pho", language: "zho_min_nan", privateuse: "preferred", official: 1 },
+		])
+	})
+
+	it("leaves out historical names and keys outside the name grammar", () => {
+		expect(
+			namesOf({
+				"name:fra_x_historical": ["Département des Basses-Pyrénées"],
+				"name:eng_x_preferred_abbreviation": ["CRD"],
+				"name:eng": ["Singapore"],
+			})
+		).toEqual([])
 	})
 })

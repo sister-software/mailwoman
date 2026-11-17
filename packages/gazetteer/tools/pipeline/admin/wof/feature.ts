@@ -23,14 +23,37 @@ import type { WOFFeature, WOFProperties } from "#whosonfirst"
 const BBOX_2D_LENGTH = 4
 
 /**
- * One name a WOF record holds under a `name:<lang>_x_<preferred|variant>` property.
+ * One name a WOF record holds under a `name:<lang>[_<subtag>…]_x_<kind>` property.
  */
 export interface WOFFeatureName {
 	name: string
+	/**
+	 * The key's language tag without its kind: `eng`, or `zho_tw` for a tag with subtags.
+	 */
 	language: string
 	privateuse: string
 	official: number
 }
+
+/**
+ * The name kinds a postal address writes: the preferred and variant names,
+ * a colloquial name (`Lion City`, `NYC`) and an unclassified one.
+ *
+ * An unclassified name is mostly a code (`CBA` for Córdoba, `BHR`).
+ *
+ * A `historical` name is left out, because an address doesn't write one.
+ * Nearly every one repeats a name the record already holds.
+ *
+ * The rest are superseded names (`Département des Basses-Pyrénées`) or the titles of
+ * Wikipedia disambiguation pages (`Mazedonien (Begriffsklärung)`).
+ */
+const ADDRESS_NAME_KINDS = ["preferred", "variant", "colloquial", "unknown"] as const
+
+/**
+ * A `name:*` key: an ISO 639-3 language, any subtags (a region in `zho_tw`, a script in
+ * `srp_lat`, a variety in `zho_min_nan`), and one of {@linkcode ADDRESS_NAME_KINDS}.
+ */
+const NAME_KEY = new RegExp(`^name:(([a-z]{3})(?:_[a-z0-9]+)*)_x_(${ADDRESS_NAME_KINDS.join("|")})$`)
 
 /**
  * The stored fields of one WOF record, before any GeoNames adjudication of its point.
@@ -135,18 +158,18 @@ export function extractParsedWOFFeature(
 	const country = props["wof:country"] ?? ""
 
 	for (const [key, value] of Object.entries(props)) {
-		const match = key.match(/^name:([a-z]{3})_x_(preferred|variant)$/)
+		const match = NAME_KEY.exec(key)
 
 		if (!match || !value) continue
-		const lang = match[1]!
-		const privateuse = match[2]!
+		const language = match[1]!
+		const privateuse = match[3]!
 		// A name is official only when it is a preferred form in an official language.
-		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
+		const official = privateuse === "preferred" && isOfficialLanguage(country, match[2]!) ? 1 : 0
 		const vals = Array.isArray(value) ? value : [value]
 
 		for (const v of vals) {
 			if (typeof v === "string" && v) {
-				names.push({ name: v, language: lang, privateuse, official })
+				names.push({ name: v, language, privateuse, official })
 			}
 		}
 	}
