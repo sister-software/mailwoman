@@ -23,7 +23,7 @@ import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
-import { splitUSStreetLine } from "#us/street-unit"
+import { splitUSStreetLine, usPOBoxLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -81,8 +81,13 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
+				// A business line followed by a box line (`ONE PLEASANT AVE`, `POB 1424`)
+				// is delivered to the box, the line above the city.
+				// When either line is a whole-line box, the row keeps that line as its `po_box`
+				// and leaves the other line out.
+				const boxLine = usPOBoxLine(address2) ?? usPOBoxLine(address1)
 				const fullAddress = [address1, address2].filter(isPresent).join(" ")
-				const line = splitUSStreetLine(fullAddress, units)
+				const line = boxLine ?? splitUSStreetLine(fullAddress, units)
 
 				if (!line) continue
 

@@ -53,4 +53,15 @@ describe("state-ia-contractors adapter against fixture sample.csv", () => {
 		expect(box.components.po_box).toBe("PO BOX 846")
 		expect(box.components.street).toBeUndefined()
 	})
+
+	it("labels a POB line po_box with its number", async () => {
+		// Registration C151236 in the 2026-05 file writes `POB 10044`.
+		// Its name and contact columns are blanked here.
+		const rows = await loadRows()
+		const box = rows.find((r) => r.components.venue === "FULL SPECTRUM PAINTING")!
+
+		expect(box.components).toMatchObject({ po_box: "POB 10044", locality: "CEDAR RAPIDS", postcode: "52410" })
+		expect(box.components.street).toBeUndefined()
+		expect(box.components.house_number).toBeUndefined()
+	})
 })

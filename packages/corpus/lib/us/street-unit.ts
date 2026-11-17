@@ -39,11 +39,21 @@ export function unitLine(line: string): string | null {
 export type USStreetLineComponents = { po_box: string } | { house_number?: string; street: string; unit?: string }
 
 /**
+ * A whole line that's a box designator and an identifier holding a digit
+ * (`PO BOX 846`, `P.O. Box 10240`, `POB 1088`) as the `po_box` component, or `null` for any other line.
+ *
+ * The digit requirement keeps a street such as `BOX ELDER RD` a street.
+ */
+export function usPOBoxLine(line: string): { po_box: string } | null {
+	const box = matchPOBox(line)
+
+	return box && /\d/u.test(box.id) ? { po_box: line.trim() } : null
+}
+
+/**
  * Splits one US street line, as a register writes it, into its address components.
  *
- * A whole line that's a box designator and an identifier holding a digit
- * (`PO BOX 846`, `P.O. Box 10240`) becomes `po_box`.
- * The digit requirement keeps a street such as `BOX ELDER RD` a street.
+ * A whole-line PO box ({@linkcode usPOBoxLine}) becomes `po_box`.
  *
  * Any other line takes the house number off its start with `splitStreetLine`
  * and a secondary unit off its end with the shared unit splitter (`#adapters/street/unit`),
@@ -56,9 +66,9 @@ export function splitUSStreetLine(
 	units: UnitSplitter,
 	place: Omit<StreetPlace, "country"> = {}
 ): USStreetLineComponents | null {
-	const box = matchPOBox(line)
+	const box = usPOBoxLine(line)
 
-	if (box && /\d/u.test(box.id)) return { po_box: line.trim() }
+	if (box) return box
 	const split = splitStreetLine(line)
 
 	if (!split) return null

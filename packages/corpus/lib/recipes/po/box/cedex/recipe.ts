@@ -34,7 +34,18 @@ import {
 } from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
-const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
+const COMPONENT_ORDER = [
+	"house_number",
+	"street_prefix",
+	"street",
+	"street_suffix",
+	"po_box",
+	"venue",
+	"locality",
+	"postcode",
+	"region",
+	"cedex",
+]
 
 const orderComponents = (components: Record<string, string>): Record<string, string> =>
 	Object.fromEntries(COMPONENT_ORDER.filter((key) => components[key]).map((key) => [key, components[key]!]))

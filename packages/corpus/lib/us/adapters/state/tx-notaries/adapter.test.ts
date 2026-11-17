@@ -1,9 +1,39 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { describe, expect, it } from "vitest"
 
-import { parseTxNotaryAddress, splitTxNotaryStreetLines } from "#us/adapters/state/tx-notaries/adapter"
+import { writeDelimitedFixture } from "#test-kit"
+import {
+	createStateTxNotariesAdapter,
+	parseTxNotaryAddress,
+	splitTxNotaryStreetLines,
+} from "#us/adapters/state/tx-notaries/adapter"
+
+describe("state-tx-notaries adapter", () => {
+	it("labels a POB line po_box with its number", async () => {
+		// Notary 1808823's `Address` field in the 2026-05 file.
+		// The name and contact columns are blanked here.
+		await using scratch = await temporaryDirectory("mailwoman-tx-notaries-")
+
+		const path = await writeDelimitedFixture(
+			scratch.path("test.csv"),
+			"Notary ID,First Name,Last Name,Effective Date,Expire Date,Address,Email Address,Surety Company,Agency",
+			['1808823,,,12/31/2024,12/31/2028,"POB 277\nNORMANGEE, TX 77871",,,']
+		)
+
+		const rows = []
+
+		for await (const row of createStateTxNotariesAdapter().rows({ inputPath: path })) {
+			rows.push(row)
+		}
+
+		expect(rows.map((row) => row.components)).toEqual([
+			{ po_box: "POB 277", locality: "NORMANGEE", region: "TX", postcode: "77871" },
+		])
+	})
+})
 
 describe("parseTxNotaryAddress", () => {
 	// Each input is a registry `Address` field.

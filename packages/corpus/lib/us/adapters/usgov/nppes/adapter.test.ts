@@ -112,6 +112,27 @@ describe("usgov-nppes adapter", () => {
 		expect(rows[1]!.raw).toContain("1650 KING ST STE 300 BLDG 4")
 	})
 
+	it("labels a whole-line PO box po_box, as the schema does, rather than street", async () => {
+		// NPI 1952303091's practice location in the 2026-05 file writes `POB 289` on its first line.
+		const p = await writeCSV(
+			'"1952303091","1","","BENJAMIN","ROSEMARY","POB 289","114 S. 2ND ST.","FOWLERVILLE","MI","48836"',
+			"1000000006,2,ACME CLINIC,,,PO BOX 1191,,BELTON,TX,76513"
+		)
+
+		const rows = []
+
+		for await (const r of createUsgovNPPESAdapter().rows({ inputPath: p })) {
+			rows.push(r)
+		}
+
+		expect(rows.map((r) => [r.components.po_box, r.components.street, r.components.house_number])).toEqual([
+			["POB 289", undefined, undefined],
+			["PO BOX 1191", undefined, undefined],
+		])
+
+		expect(rows[0]!.raw).toContain("POB 289, FOWLERVILLE")
+	})
+
 	it("trims a padded organization name so the venue span ends on its last letter", async () => {
 		const p = await writeCSV("1000000001,2,JQM INC ,,,344 PASEO REYES DR,,ST AUGUSTINE,FL,320958464")
 		const a = createUsgovNPPESAdapter()

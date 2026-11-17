@@ -18,13 +18,28 @@ test("isPOBox: recognizes the USPS designator phrases with an id", () => {
 		"Caller 5",
 		"Firm Caller 7",
 		"Box 42",
+		"POB 1088", // a Texas notary's line
+		"POB  10044",
+		"P.O.B. 7",
 	]) {
 		expect(isPOBox(yes)).toBe(true)
 	}
 })
 
 test("isPOBox: rejects non-PO-box input (incl. a designator with no id)", () => {
-	for (const no of ["123 Main St", "PO Box", "Boxford 12", "", "  ", 42, null, undefined]) {
+	for (const no of [
+		"123 Main St",
+		"PO Box",
+		"Boxford 12",
+		"POB",
+		"POBLANO",
+		"POBOY 12",
+		"",
+		"  ",
+		42,
+		null,
+		undefined,
+	]) {
 		expect(isPOBox(no)).toBe(false)
 	}
 })
@@ -45,6 +60,7 @@ test("matchPOBox: splits the designator phrase from the id, preserving surface c
 	expect(matchPOBox("Post Office Box 7")).toEqual({ matched: "Post Office Box", id: "7" })
 	expect(matchPOBox("Drawer 5")).toEqual({ matched: "Drawer", id: "5" })
 	expect(matchPOBox("PO Box #99")).toEqual({ matched: "PO Box", id: "99" }) // '#' consumed rather than part of id
+	expect(matchPOBox("POB 1088")).toEqual({ matched: "POB", id: "1088" })
 	expect(matchPOBox("123 Main St")).toBeNull()
 })
 

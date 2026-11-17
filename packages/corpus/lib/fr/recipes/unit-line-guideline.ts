@@ -11,8 +11,9 @@
  *   writes `Escalier 4` and `Entrée C`.
  *   The flat is written as the example's `Appartement` or as line 2's `APP`.
  *
- *   A residence or housing estate takes another held-out place's name as its identifier.
- *   Every other designator takes a number or a letter.
+ *   A residence or housing estate takes another held-out place's name as its identifier,
+ *   and is labeled `venue`, the schema's place with a proper name.
+ *   Every other designator takes a number or a letter and is labeled `unit`.
  *
  *   The street is the example's `RUE DE` and another held-out place's name.
  */
@@ -38,6 +39,8 @@ const RULES = FR_UNIT_LINE_RULES.filter((rule) => !TRAINING_DESIGNATORS.has(rule
 
 /**
  * The designators whose identifier is a place name rather than a number or letter.
+ *
+ * A line that gives a complex's proper name is a `venue`, not a `unit`.
  */
 const NAMED_DESIGNATORS: ReadonlySet<string> = new Set(["RESIDENCE", "LOTISSEMENT"])
 
@@ -77,7 +80,9 @@ export const FR_UNIT_LINE_GUIDELINE_LEG: PostalGuidelineLeg = {
 		// A residence with the street's name would leave the aligner two equal spans.
 		const residenceName = (drawOtherPlaceName(random, place, pool) ?? "jonquille").toUpperCase()
 
-		const identifier = NAMED_DESIGNATORS.has(rule.designator)
+		const named = NAMED_DESIGNATORS.has(rule.designator)
+
+		const identifier = named
 			? residenceName === streetName
 				? "JONQUILLE"
 				: residenceName
@@ -94,7 +99,7 @@ export const FR_UNIT_LINE_GUIDELINE_LEG: PostalGuidelineLeg = {
 			ruleID: rule.id,
 			...joinGuidelineLines(
 				[
-					[["unit", `${form} ${identifier}`]],
+					[[named ? "venue" : "unit", `${form} ${identifier}`]],
 					[
 						["house_number", houseNumber],
 						["street", `RUE DE ${streetName}`],

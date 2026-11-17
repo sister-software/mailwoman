@@ -5,6 +5,7 @@
  sibling arms cover the other countries. A layout call would answer the same string for the only country that reaches
    it. */
 
+import { matchLeadingDirectional, matchTrailingSuffix } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
 
 import { makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
@@ -56,11 +57,51 @@ export function renderPoBoxUs(random: () => number, tuple: USTuple): Rendered {
 	}
 }
 
+const LEADING_WORD = /^(\S+)\s+/u,
+	TRAILING_WORD = /\s+(\S+)$/u,
+	TRAILING_SUFFIX_AND_DIRECTIONAL = /\s+((\S+)\s+(\S+))$/u
+
+/**
+ * Splits a US skeleton's street into the schema's `street_prefix`, `street`
+ * and `street_suffix`, keeping each span's text as the skeleton writes it.
+ *
+ * The suffix is the terminal Pub-28 word (`matchTrailingSuffix`), with a post-directional
+ * after it joining the suffix as the schema states (`AVENUE NW`).
+ * The prefix is a leading directional (`matchLeadingDirectional`).
+ *
+ * Each is split off only when a street name is left beside it, so `N ST` keeps
+ * `N` as its name and a one-word street stays whole.
+ */
+export function splitUSStreet(street: string): Record<string, string> {
+	let name = street.trim()
+	const parts: Record<string, string> = {}
+	const pair = TRAILING_SUFFIX_AND_DIRECTIONAL.exec(name)
+	const trailing = TRAILING_WORD.exec(name)
+
+	if (pair && matchTrailingSuffix(pair[2]!) && matchLeadingDirectional(pair[3]!)) {
+		parts.street_suffix = pair[1]!
+		name = name.slice(0, pair.index)
+	} else if (trailing && matchTrailingSuffix(trailing[1]!)) {
+		parts.street_suffix = trailing[1]!
+		name = name.slice(0, trailing.index)
+	}
+
+	const leading = LEADING_WORD.exec(name)
+
+	if (leading && matchLeadingDirectional(leading[1]!)) {
+		parts.street_prefix = leading[1]!
+		name = name.slice(leading[0].length)
+	}
+
+	return { ...parts, street: name }
+}
+
 export function renderPmbUs(random: () => number, tuple: USTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, US_PMB_LEADERS)
 	const { house_number, street, locality, region, postcode } = tuple
 	const road = `${house_number} ${street}`
-	const components = { house_number, street, po_box: phrase, locality, region, postcode }
+	const streetParts = splitUSStreet(street)
+	const components = { house_number, ...streetParts, po_box: phrase, locality, region, postcode }
 	const draw = random()
 
 	if (draw < PMB_AFTER_STREET_CUTOFF)
@@ -69,5 +110,5 @@ export function renderPmbUs(random: () => number, tuple: USTuple): Rendered {
 	if (draw < PMB_COMMA_CUTOFF)
 		return { fmt: "pmb-comma", raw: `${road}, ${phrase}, ${locality}, ${region} ${postcode}`, components }
 
-	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number, street, po_box: phrase } }
+	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number, ...streetParts, po_box: phrase } }
 }

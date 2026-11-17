@@ -41,6 +41,10 @@ const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, str
 	["POST OFFICE BOX", String.raw`post\s+office\s+box`],
 	["PO BOX", String.raw`p\.?\s*o\.?\s*box`],
 	["P O BOX", String.raw`p\.?\s*o\.?\s*box`],
+	// `POB 1088` isn't a Pub 28 form, but registers write it and the corpus templates draw it.
+	// The lookahead keeps the bare word `POB` from reading as a designator
+	// and a word such as `POBLANO` from reading as a box.
+	["PO BOX", String.raw`p\.?\s*o\.?\s*b\.?(?=[\s#\d])`],
 	["FIRM CALLER", String.raw`firm\s+caller`],
 	["CALLER", "caller"],
 	["DRAWER", "drawer"],

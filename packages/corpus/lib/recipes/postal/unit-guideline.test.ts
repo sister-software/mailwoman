@@ -115,7 +115,7 @@ describe("postal-unit-guideline", () => {
 		expect(SOURCE).not.toBe(defaultRecipeSource("synth-postal-guideline"))
 	})
 
-	it("emits rows each with one unit span that matches its component", () => {
+	it("emits rows each with one unit or named-complex venue span that matches its component", () => {
 		const rows = generate(7)
 
 		expect(rows).toHaveLength(40 * POSTAL_UNIT_GUIDELINE_LEGS.length)
@@ -126,7 +126,7 @@ describe("postal-unit-guideline", () => {
 			const starts = row.span_starts!
 			const ends = row.span_ends!
 
-			expect(tags.filter((tag) => tag === "unit")).toHaveLength(1)
+			expect(tags.filter((tag) => tag === "unit" || tag === "venue")).toHaveLength(1)
 			expect(tags).toHaveLength(Object.keys(row.components).length)
 
 			tags.forEach((tag, index) => {
@@ -189,8 +189,27 @@ describe("postal-unit-guideline", () => {
 		for (const row of generate(9)) {
 			const leg = POSTAL_UNIT_GUIDELINE_LEGS.find((candidate) => candidate.country === row.country)!
 
-			expect(leg.designators.some((designator) => row.components.unit!.startsWith(designator))).toBe(true)
+			const line = row.components.unit ?? row.components.venue!
+
+			expect(leg.designators.some((designator) => line.startsWith(designator))).toBe(true)
 		}
+	})
+
+	it("labels a French named complex venue and a designator with a number or letter unit", () => {
+		const fr = generate(5).filter((row) => row.country === "FR")
+		const named = fr.filter((row) => /^(RESIDENCE|LOTISSEMENT) /u.test(row.components.venue ?? ""))
+
+		const numbered = fr.filter((row) =>
+			/^(BATIMENT|ETAGE|TOUR|IMMEUBLE|COULOIR|BAL|APP|Appartement) /u.test(row.components.unit ?? "")
+		)
+
+		expect(named.length).toBeGreaterThan(0)
+		expect(numbered.length).toBeGreaterThan(0)
+		expect(fr.filter((row) => /^(RESIDENCE|LOTISSEMENT) /u.test(row.components.unit ?? ""))).toEqual([])
+
+		expect(
+			fr.filter((row) => row.components.venue && !/^(RESIDENCE|LOTISSEMENT) /u.test(row.components.venue))
+		).toEqual([])
 	})
 
 	it("writes no designator a training recipe draws", () => {

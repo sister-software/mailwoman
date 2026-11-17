@@ -13,13 +13,12 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street/line"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
-import { unitLine } from "#us/street-unit"
+import { splitUSStreetLine, unitLine } from "#us/street-unit"
 
 /**
  * The adapter stamps this id on every emitted row.
@@ -138,23 +137,21 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const split = splitStreetLine(address1)
+				// A whole-line PO box (`PO BOX 1191`, `POB 1191`) is `po_box`.
+				// A unit written on the first line (`2560 HUNTINGTON AVE STE 302`) is split off the street,
+				// and one on the second line follows it, so the rendered row keeps the publisher's order.
+				const split = splitUSStreetLine(address1, units, { locality: city, postcode })
 
 				if (!split) continue
 
-				// A unit written on the first line (`2560 HUNTINGTON AVE STE 302`) is split off the street,
-				// and one on the second line follows it, so the rendered row keeps the publisher's order.
-				const trailing = units.split(split.street, { country: "US", locality: city, postcode })
-				const street = trailing?.street ?? split.street
-				const unit = [trailing?.unit, unitLine(address2)].filter(isPresent).join(" ")
+				const unit = "po_box" in split ? "" : [split.unit, unitLine(address2)].filter(isPresent).join(" ")
+				const line = unit ? { ...split, unit } : split
 
 				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street,
-					...(unit ? { unit } : {}),
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					postcode,
