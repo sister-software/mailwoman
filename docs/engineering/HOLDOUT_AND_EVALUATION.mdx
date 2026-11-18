@@ -394,7 +394,9 @@ An answer-key decision never edits a frozen collection's rows. `heldout/dataset/
 manifest beside the source, under the source's datasetID, whose `revision` field records the source's version and
 rows sha256, states the rule and lists every changed row's spans before and after. Its rows file is new, so its
 version is new. The first revision, `county-in-locality-slot-subregion` (2026-11-17), relabels a `locality` span
-written with its country's county designator as `subregion`.
+written with its country's county designator as `subregion`. The second, `county-designator-codex-tag`
+(2026-11-18), gives such a span the tag the codex `county-designators` table records for the country's counties:
+`subregion` in US and CA, and `region` in IE, where WOF holds the written counties as regions.
 
 From release specification v9 each evaluation role lists its collections, and a report scores all of them
 together (`heldout/per/country.run.ts --dataset <a>,<b>`). `release/evaluate.run.ts` reads the role a report's

@@ -5,13 +5,22 @@
  * @file The words an address writes beside a county's name, per country, and the bare name they leave.
  *
  *   The resolver reads the table when no locality in the resolved region matches a span tagged `locality`:
- *   a value written with one of its country's designators is looked up as a WOF `county` there.
+ *   a value written with one of its country's designators is looked up as a WOF `county` there, in a
+ *   country whose counties `subregion` names.
+ *   The held-out answer key reads `tag` for the component a designated county takes.
  */
+
+import type { ComponentTag } from "#component"
 
 /**
  * One country's county designators, each lower-case with internal whitespace collapsed to one space.
  */
 export interface CountyDesignators {
+	/**
+	 * The component tag a county written with a designator takes: the tag whose
+	 * WOF placetype holds the country's counties.
+	 */
+	tag: Extract<ComponentTag, "subregion" | "region">
 	/**
 	 * Words written after the name: `Harris County`, `Jefferson Parish`, `Petersburg Borough`.
 	 */
@@ -35,6 +44,10 @@ export interface CountyDesignators {
  * - `ie`: the 31 county places have `county <name>` (26) and `co <name>` (7) keys,
  *   the order Irish addresses write.
  *   The 15 `<name> county` keys are kept as a suffix too.
+ *   Those 31 places are the local authorities (`Fingal`, `Cork County`).
+ *   WOF holds the 26 counties an address writes (`Co. Westmeath`, `Co. Dublin`) as `region` places,
+ *   so an IE county's tag is `region`, the tag the gauntlet board gives `Co. Westmeath`.
+ *   US and CA counties are WOF `county` places, tag `subregion`.
  *
  * The countries left out:
  *
@@ -47,9 +60,9 @@ export interface CountyDesignators {
  * - `ee` stores `<name> parish` on 64 of 79 rows, an English rendering of `vald`.
  */
 const COUNTY_DESIGNATORS: Readonly<Record<string, CountyDesignators>> = {
-	us: { suffixes: ["county", "parish", "borough", "census area", "city and borough"], prefixes: [] },
-	ca: { suffixes: ["county"], prefixes: [] },
-	ie: { suffixes: ["county"], prefixes: ["county", "co.", "co"] },
+	us: { tag: "subregion", suffixes: ["county", "parish", "borough", "census area", "city and borough"], prefixes: [] },
+	ca: { tag: "subregion", suffixes: ["county"], prefixes: [] },
+	ie: { tag: "region", suffixes: ["county"], prefixes: ["county", "co.", "co"] },
 }
 
 /**

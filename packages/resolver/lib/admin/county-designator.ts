@@ -9,7 +9,7 @@
  *   `subregion` to the WOF `county` placetype, and the county's row stores the same name.
  */
 
-import { countyNameWithoutDesignator } from "@mailwoman/codex/county-designators"
+import { countyDesignatorsFor, countyNameWithoutDesignator } from "@mailwoman/codex/county-designators"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 /**
@@ -32,7 +32,8 @@ export interface CountyDesignatorScope {
 /**
  * The county of the designated value's name inside its region, with the other counties of that name there.
  *
- * It is `null` when the value has no designator for the country, when the region
+ * It is `null` when the value has no designator for the country, when the country's
+ * counties take a tag other than `subregion` (IE's are WOF regions), when the region
  * is unknown, or when no county of that name is inside it.
  *
  * The whole value is probed first, because WOF keys most US counties as `<name> county` too.
@@ -45,6 +46,9 @@ export async function countyFromDesignatedLocality(
 	value: string,
 	scope: CountyDesignatorScope
 ): Promise<{ top: ResolvedPlace; alternatives: ResolvedPlace[] } | null> {
+	// The walk retags a hit `subregion`, the tag of a WOF `county`.
+	if (countyDesignatorsFor(scope.country)?.tag !== "subregion") return null
+
 	const bare = countyNameWithoutDesignator(value, scope.country)
 
 	if (!bare) return null

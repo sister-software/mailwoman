@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { COUNTY_IN_LOCALITY_SLOT } from "#tools/eval-harness/heldout/dataset/relabel"
+import { COUNTY_DESIGNATOR_TAG, COUNTY_IN_LOCALITY_SLOT } from "#tools/eval-harness/heldout/dataset/relabel"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 
 const row = (raw: string, country: string, spans: Array<[string, string]>): HeldoutRow => ({
@@ -15,6 +15,44 @@ const row = (raw: string, country: string, spans: Array<[string, string]>): Held
 	source: "usgov-nad",
 	source_id: "r1",
 	group: "r1",
+})
+
+describe("COUNTY_DESIGNATOR_TAG", () => {
+	it("gives an IE county the codex region tag, from locality or subregion, and keeps US counties subregion", () => {
+		// Held-out row gleif-lei-0ee0330b18fa after county-in-locality-slot-subregion.
+		const relabeled = row("65 Monkstown road, co Dublin, A94 DF76", "IE", [
+			["street", "Monkstown road"],
+			["subregion", "co Dublin"],
+		])
+
+		const written = row("Athlone, Co. Westmeath", "IE", [
+			["locality", "Athlone"],
+			["locality", "Co. Westmeath"],
+		])
+
+		const us = row("2368 foxden road, carter county, ok 73401", "US", [
+			["street", "foxden road"],
+			["subregion", "carter county"],
+			["region", "ok"],
+		])
+
+		expect(COUNTY_DESIGNATOR_TAG.revise(relabeled).span_tags).toEqual(["street", "region"])
+		expect(COUNTY_DESIGNATOR_TAG.revise(written).span_tags).toEqual(["locality", "region"])
+		expect(COUNTY_DESIGNATOR_TAG.revise(us)).toBe(us)
+	})
+
+	it("leaves a subregion without a designator and a country outside the table", () => {
+		const fingal = row("Swords, Fingal", "IE", [
+			["locality", "Swords"],
+			["subregion", "Fingal"],
+		])
+
+		const gb = row("County Durham", "GB", [["subregion", "County Durham"]])
+
+		for (const unchanged of [fingal, gb]) {
+			expect(COUNTY_DESIGNATOR_TAG.revise(unchanged)).toBe(unchanged)
+		}
+	})
 })
 
 describe("COUNTY_IN_LOCALITY_SLOT", () => {

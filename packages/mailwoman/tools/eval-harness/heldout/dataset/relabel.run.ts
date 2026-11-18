@@ -7,7 +7,7 @@
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/relabel.run.ts \
- *     --source <dataset manifest .json> --out <new manifest .json> --relabel county-in-locality-slot-subregion \
+ *     --source <dataset manifest .json> --out <new manifest .json> --relabel <revision id> \
  *     [--excludes <restamped manifest .json> | --excludes-version <v>] [--check]
  *
  *   The new manifest keeps the source's datasetID, sampling and drawn-from record, takes a version
@@ -32,10 +32,15 @@ import {
 	readHeldoutDatasetManifest,
 	reviseHeldoutDataset,
 } from "#tools/eval-harness/heldout/dataset/manifest"
-import { COUNTY_IN_LOCALITY_SLOT, type HeldoutRelabel } from "#tools/eval-harness/heldout/dataset/relabel"
+import {
+	COUNTY_DESIGNATOR_TAG,
+	COUNTY_IN_LOCALITY_SLOT,
+	type HeldoutRelabel,
+} from "#tools/eval-harness/heldout/dataset/relabel"
 
 const RELABELS: Record<string, HeldoutRelabel> = {
 	[COUNTY_IN_LOCALITY_SLOT.id]: COUNTY_IN_LOCALITY_SLOT,
+	[COUNTY_DESIGNATOR_TAG.id]: COUNTY_DESIGNATOR_TAG,
 }
 
 const { values } = parseArguments({

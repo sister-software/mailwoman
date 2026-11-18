@@ -12,6 +12,7 @@ import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
+import { countyFromDesignatedLocality } from "#admin/county-designator"
 import { createWOFResolver } from "#index"
 
 const TEXAS = 10
@@ -128,6 +129,33 @@ describe("county-designator fallback", () => {
 
 		expect(locality.tag).toBe("locality")
 		expect(locality.placeID).toBe("wof:202")
+	})
+
+	it("does not probe in a country whose written county is a WOF region (IE)", async () => {
+		// WOF IE holds the county Cork as a region and the local authority Cork as a county.
+		const backend = new FakeBackend([
+			{
+				...EMPTY_PLACE_FIELDS,
+				id: 301,
+				name: "Cork",
+				placetype: "county",
+				country: "IE",
+				parent_id: 30,
+				lat: 51.9,
+				lon: -8.5,
+				score: 5,
+			},
+		])
+
+		const county = await countyFromDesignatedLocality(backend, "Co. Cork", {
+			country: "IE",
+			regionID: 30,
+			regionQualifier: null,
+			limit: 5,
+		})
+
+		expect(county).toBeNull()
+		expect(backend.calls).toEqual([])
 	})
 
 	it("does not fire on a value without its country's designator", async () => {
