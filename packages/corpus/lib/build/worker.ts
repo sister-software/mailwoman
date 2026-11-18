@@ -359,7 +359,9 @@ if (import.meta.main) {
 			process.exit(0)
 		},
 		(error: unknown) => {
-			console.error(error instanceof Error ? (error.stack ?? error.message) : error)
+			// Node's inspector prints an Error's stack followed by its whole `cause` chain.
+			// A wrapped DuckDB or filesystem failure is only visible in that chain.
+			console.error(error)
 
 			process.exit(1)
 		}
