@@ -166,6 +166,71 @@ The NPPES `2026-11` snapshot and the BAN export were downloaded to `/mnt/mw/snap
 run was stopped and its partial output removed. `heldout/snapshot/candidates.run.ts` stays for a later section 6.4
 draw.
 
+## 5. Verdicts under v10
+
+Run 2026-11-18 01:22–03:14 UTC at commit `2d0b660ea4`, with lane AF's arms and provenance files (the v9 record,
+section 5). Every report was geocoded against `/mnt/mw/db/wof/candidate.db`, which pointed to
+`/mnt/mw/db/wof/candidate-global-2026-11-16.db` at the start and end of each of the four reports. Reports, verdicts
+and logs are under `/mnt/mw/models/arms/v10/`, written by `scratchpad/2026/11/18/lane-ai/v10-verdicts.ts`. Bonferroni
+over 16 checks.
+
+Every verdict is `insufficient_evidence`, and every one states `the candidate artifact identity is unregistered`. No
+check fails in any of the eight.
+
+### 5.1 10.8.0 against itself, and `countyDesignatorFallback` on against off
+
+The two arms differ only in the geocode check, so one table holds both. Estimates are point [bound], groups.
+
+| Check                  | Development                  | Outcome      | Confirmation                       | Outcome      |
+| ---------------------- | ---------------------------- | ------------ | ---------------------------------- | ------------ |
+| `country-US`           | 0.929 [0.673, 0.998], 28     | pass         | 0.846 [0.407, 0.995], 13           | insufficient |
+| `country-FR`           | 0.981 [0.844, 1.000], 52     | insufficient | 1.000 [0.889, 1.000], 55           | insufficient |
+| `country-GB`           | 0.997 [0.985, 1.000]         | pass         | 1.000 [0.993, 1.000]               | pass         |
+| `country-DE`           | 0.993 [0.979, 0.999]         | pass         | 0.995 [0.982, 0.999]               | pass         |
+| `country-IN`           | 0.865 [0.815, 0.906]         | pass         | 0.894 [0.828, 0.941]               | pass         |
+| `country-ES`           | 0.858 [0.822, 0.890]         | pass         | 0.877 [0.843, 0.906]               | pass         |
+| `country-IT`           | 0.848 [0.811, 0.880]         | pass         | 0.840 [0.803, 0.872]               | pass         |
+| `country-AU`           | 0.981 [0.958, 0.993]         | pass         | 0.977 [0.954, 0.991]               | pass         |
+| `country-NZ`           | 0.960 [0.923, 0.983]         | pass         | 0.923 [0.776, 0.987], 65           | insufficient |
+| `po_box_cedex` minimum | 0.846 [0.828, 0.862]         | insufficient | 0.849 [0.831, 0.865]               | insufficient |
+| `po_box_cedex` loss    | 0.000 [−0.002, 0.002]        | pass         | 0.000 [−0.002, 0.002]              | pass         |
+| `venue_unit`           | 0.988 [0.898, 1.000]         | pass         | 0.961 [0.847, 0.997]               | insufficient |
+| `country_token`        | 1.000 [0.928, 1.000]         | pass         | 1.000 [0.933, 1.000]               | pass         |
+| `postal_unit` loss     | 0.000 [−0.007, 0.007], 1,017 | insufficient | 0.000 [−0.008, 0.008], 965         | insufficient |
+| `geocode` loss, self   | 0.000 [−0.003, 0.003]        | pass         | 0.000 [−0.012, 0.012]              | insufficient |
+| `geocode` loss, county | +0.0016 [−0.0014, +0.0045]   | pass         | +0.0019 [−0.0101, +0.0139]         | insufficient |
+| objective              | 0.000 [−0.034, 0.034]        | insufficient | no ES, IT, AU, NZ comparative rows | insufficient |
+
+`postal_unit` reads 10.8.0's rate as 0.725 (development) and 0.720 (confirmation), the v9 values. Under v9 it failed
+both arms. Under v10 it reads insufficient, as section 2 expects of two arms with one model. The default for
+`countyDesignatorFallback` stays off, because no verdict passes.
+
+### 5.2 v8.7.0 seeds 42 and 43 against 10.8.0
+
+| Check                  | s42 development            | s43 development            | s42 confirmation                    | s43 confirmation                    |
+| ---------------------- | -------------------------- | -------------------------- | ----------------------------------- | ----------------------------------- |
+| `country-US`           | 0.845 [0.809, 0.877] pass  | 0.840 [0.803, 0.873] pass  | 0.824 [0.786, 0.858] pass           | 0.822 [0.784, 0.856] pass           |
+| `country-FR`           | 0.996 pass                 | 0.996 pass                 | 0.988 pass                          | 0.986 pass                          |
+| `country-GB`           | 0.991 pass                 | 0.991 pass                 | 0.995 pass                          | 0.995 pass                          |
+| `country-DE`           | 0.987 pass                 | 0.987 pass                 | 0.989 pass                          | 0.989 pass                          |
+| `country-IN`           | 0.933 pass                 | 0.933 pass                 | 0.961 pass                          | 0.954 pass                          |
+| `country-ES`           | 0.974 pass                 | 0.979 pass                 | 0.980 pass                          | 0.980 pass                          |
+| `country-IT`           | 0.995 pass                 | 0.993 pass                 | 0.995 pass                          | 0.993 pass                          |
+| `country-AU`           | 0.989 pass                 | 0.927 pass                 | 0.985 pass                          | 0.931 pass                          |
+| `country-NZ`           | 0.958 pass                 | 0.951 pass                 | 0.945 [0.819, 0.993] pass           | 0.959 [0.840, 0.997] pass           |
+| `po_box_cedex` minimum | 0.881 [0.865, 0.895] pass  | 0.894 [0.879, 0.908] pass  | 0.886 [0.870, 0.900] pass           | 0.901 [0.886, 0.914] pass           |
+| `po_box_cedex` loss    | +0.035 [0.023, 0.048] pass | +0.049 [0.037, 0.061] pass | +0.037 [0.025, 0.049] pass          | +0.052 [0.041, 0.064] pass          |
+| `venue_unit`           | 0.988 pass                 | 1.000 pass                 | 0.974 pass                          | 0.987 pass                          |
+| `country_token`        | 1.000 pass                 | 1.000 pass                 | 1.000 pass                          | 1.000 pass                          |
+| `postal_unit` loss     | +0.100 [0.072, 0.129] pass | +0.046 [0.023, 0.069] pass | +0.094 [0.066, 0.123] pass          | +0.045 [0.020, 0.069] pass          |
+| `geocode` loss         | +0.037 [0.016, 0.058] pass | +0.039 [0.017, 0.060] pass | +0.037 [−0.035, 0.108] insufficient | +0.036 [−0.035, 0.107] insufficient |
+| objective              | +0.045 [0.024, 0.066] pass | +0.047 [0.031, 0.062] pass | +0.043 [−0.029, 0.114] insufficient | +0.040 [−0.032, 0.111] insufficient |
+
+On development both seeds pass every check. The only reason left is the unregistered candidate identity. On
+confirmation the geocode and objective bounds are wide: the v870 audit's comparative rows hold 13 US and 73 NZ
+groups (the v9 record, section 6). Section 4 forbids choosing between the two seeds by
+these confirmation results.
+
 ## Reproduce
 
 Scripts in `scratchpad/2026/11/18/lane-ai/` of the lane worktree: `ie-county-survey.ts` (the IE designator search)
