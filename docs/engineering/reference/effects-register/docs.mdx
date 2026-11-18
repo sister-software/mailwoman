@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `docs`
 
 The manifest at `docs/package.json` has no `sideEffects` field.
-This page lists 16 of the group's 61 library and tool modules.
+This page lists 18 of the group's 64 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -22,6 +22,18 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 - `imports "@sister.software/fonts/apply.css" for its effects`
 - `imports "@sister.software/theme/tokens.css" for its effects`
 - `imports "@sister.software/docusaurus-theme/css/infima/index.css" for its effects`
+
+## `docs/plugins/code-snippet/plugin.ts`
+
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
+
+## `docs/plugins/code-snippet/remark.ts`
+
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `docs/plugins/glossary/plugin.ts`
 

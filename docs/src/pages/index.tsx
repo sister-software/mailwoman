@@ -15,6 +15,7 @@ import { TourStops } from "../components/HeroMap/tour.ts"
 import { HeroSearch } from "../components/HeroSearch/HeroSearch.tsx"
 import { useReleaseVersion } from "../hooks/release.ts"
 import { useSiteConfig } from "../hooks/site.ts"
+import { useCodeSnippet } from "../hooks/snippet.ts"
 
 import styles from "./index.module.css"
 
@@ -351,6 +352,7 @@ function FeaturedWork(): ReactNode {
 
 function QuickStart(): ReactNode {
 	const releaseVersion = useReleaseVersion()
+	const homeSnippet = useCodeSnippet("home")
 
 	return (
 		<section className={styles.codeSection}>
@@ -363,27 +365,7 @@ function QuickStart(): ReactNode {
   mailwoman@${releaseVersion} \\
   @mailwoman/neural@${releaseVersion} \\
   @mailwoman/neural-weights-en-us@${releaseVersion}`}</CodeBlock>
-						<CodeBlock language="js">
-							{`import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({
-  locale: "en-US",
-})
-const parse = createRuntimePipeline({ classifier })
-
-const result = await parse(
-  "apt 4b 350 5th ave new york ny 10118",
-)
-console.log("normalized:", result.tree.raw)
-
-function printNode(node, depth = 0) {
-  console.log("  ".repeat(depth) + node.tag + ": " + JSON.stringify(node.value))
-  for (const child of node.children) printNode(child, depth + 1)
-}
-
-for (const root of result.tree.roots) printNode(root)`}
-						</CodeBlock>
+						<CodeBlock language="ts">{homeSnippet}</CodeBlock>
 					</div>
 					<div className="col col--6">
 						<h4>Published 11.0.0 result</h4>

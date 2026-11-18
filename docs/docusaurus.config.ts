@@ -7,6 +7,9 @@ import { gitSync } from "@mailwoman/core/git"
 import { FontFamilies } from "@sister.software/theme"
 import { themes as prismThemes } from "prism-react-renderer"
 
+import type { CodeSnippetPluginOptions } from "./plugins/code-snippet/plugin.ts"
+// Fills a ` ```ts file=./x.snippet.mts ` fence from the snippet file (see plugins/code-snippet/remark.ts).
+import remarkCodeSnippet from "./plugins/code-snippet/remark.ts"
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
 // Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
@@ -124,6 +127,11 @@ const config: Config = {
 		"./plugins/search-index/plugin.ts",
 		"./plugins/release-version/plugin.ts",
 		[
+			// The snippet files TSX pages show, by the name `useCodeSnippet` reads.
+			"./plugins/code-snippet/plugin.ts",
+			{ snippets: { home: "src/snippets/home.snippet.mts" } } satisfies CodeSnippetPluginOptions,
+		],
+		[
 			// Wraps docusaurus-plugin-glossary with the same validation, tooltips and remark.
 			// Adds a custom page with tag filters and a category TOC.
 			"./plugins/glossary/plugin.ts",
@@ -165,6 +173,7 @@ const config: Config = {
 					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					remarkPlugins: [
+						remarkCodeSnippet,
 						remarkReleaseVersion,
 						[
 							glossaryRemarkPlugin,
@@ -178,7 +187,7 @@ const config: Config = {
 					],
 				},
 				pages: {
-					remarkPlugins: [remarkReleaseVersion],
+					remarkPlugins: [remarkCodeSnippet, remarkReleaseVersion],
 					// Co-located `.ts` helpers are not pages and SSG-fail ("no default export")
 					// if routed, so exclude them.
 					// The other entries reproduce Docusaurus's defaults.
