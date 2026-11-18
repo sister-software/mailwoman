@@ -5,7 +5,12 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { buildProbeSets, type ProbeCandidate } from "#tools/eval-harness/heldout/probes/build"
+import {
+	buildProbeSets,
+	foldProbeTexts,
+	type ProbeCandidate,
+	readProbeExclusions,
+} from "#tools/eval-harness/heldout/probes/build"
 
 let scratch: TemporaryDirectory
 
@@ -73,6 +78,39 @@ describe("buildProbeSets", () => {
 		}
 
 		expect(built.legs.find((leg) => leg.source === "probe-a")).toMatchObject({ rendered: 40, excluded: 2 })
+	})
+
+	it("excludes every group and folded text of a frozen probe set a grading already read", async () => {
+		const candidates = Array.from({ length: 12 }, (_, i) => candidate("probe-a", "AU", i, "box"))
+
+		const built = await buildProbeSets({
+			names: { development: "dev-probes", confirmation: "confirm-probes" },
+			candidates,
+			folded: await foldProbeTexts(candidates),
+			exclusions: { groups: new Set(), texts: new Set() },
+			legs: [{ source: "probe-a", country: "AU", quota: 4 }],
+			seeds: { development: 1, confirmation: 2 },
+			floor: 1,
+			render: {},
+			excludedBy: [],
+			outDirectory: scratch.path().toString(),
+			createdAt: "2026-11-17T00:00:00.000Z",
+		})
+
+		const read = await readHeldoutDatasetRows(built.confirmation.path)
+
+		const exclusions = await readProbeExclusions({
+			corpora: [],
+			datasets: [built.confirmation.path],
+			sources: ["probe-a"],
+			pathRoot: scratch.path().toString(),
+		})
+
+		const readFolds = await foldProbeTexts(read.rows.map((row) => ({ row, template: "box" })))
+
+		expect(exclusions.groups).toEqual(new Set(read.rows.map((row) => row.group)))
+		expect(exclusions.texts).toEqual(new Set(readFolds.values()))
+		expect(exclusions.datasets).toEqual([{ datasetID: "confirm-probes", version: read.manifest.version, rows: 4 }])
 	})
 
 	it("refuses a leg whose supply cannot fill a quota rather than drawing fewer", async () => {

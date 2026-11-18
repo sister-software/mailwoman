@@ -373,6 +373,10 @@ export interface HeldoutSamplingRule {
 	 */
 	excludes?: { datasetID: string; version: string }
 	/**
+	 * Further frozen collections whose groups this sample never draws: the sets a grading already read.
+	 */
+	excludesRead?: Array<{ datasetID: string; version: string }>
+	/**
 	 * Manifest file paths the sample didn't read, such as a file that lacks a grouping column.
 	 */
 	skippedFiles?: string[]
@@ -412,6 +416,9 @@ export function heldoutSampleOrder(seed: number | null): string {
  * corpus yields the same sample on every run.
  *
  * @param pathRoot The local directory that stands for the manifest's `/data` prefix, such as the data root.
+ * @param exclusions Frozen collections whose groups are never drawn.
+ * The first is the development set the sample is drawn against, recorded as `excludes`,
+ * and the rest are recorded under `excludesRead`.
  */
 export async function sampleHeldoutRows(
 	manifestPath: PathBuilderLike,
@@ -419,7 +426,7 @@ export async function sampleHeldoutRows(
 	pathRoot: string,
 	seed: number | null = null,
 	limits: DuckDBLimits = {},
-	exclude: HeldoutSampleExclusion | null = null,
+	exclusions: readonly HeldoutSampleExclusion[] = [],
 	skipFiles: readonly string[] = []
 ): Promise<{
 	rows: HeldoutRow[]
@@ -510,7 +517,7 @@ export async function sampleHeldoutRows(
 
 	await insert(
 		"excluded_groups",
-		(exclude?.groups ?? []).map((group) => `(${quote(group)})`)
+		[...new Set(exclusions.flatMap((exclusion) => exclusion.groups))].map((group) => `(${quote(group)})`)
 	)
 
 	// A row's identity is `<source>:<source_id>` (`heldoutRowID`).
@@ -575,12 +582,15 @@ export async function sampleHeldoutRows(
 		available: Number(row.n),
 	}))
 
+	const [against, ...read] = exclusions.map(({ datasetID, version }) => ({ datasetID, version }))
+
 	const rule: HeldoutSamplingRule = {
 		method: "per-record-id-country-kind-hash-order",
 		perCountry: Math.trunc(perCountry),
 		seed,
 		order: heldoutSampleOrder(seed),
-		...(exclude ? { excludes: { datasetID: exclude.datasetID, version: exclude.version } } : {}),
+		...(against ? { excludes: against } : {}),
+		...(read.length ? { excludesRead: read } : {}),
 		...(skipFiles.length ? { skippedFiles: [...skipFiles].toSorted() } : {}),
 		gazetteerSources: HELDOUT_GAZETTEER_SOURCES,
 	}

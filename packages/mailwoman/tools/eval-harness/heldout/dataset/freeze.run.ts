@@ -7,7 +7,8 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts \
  *     --manifest <corpus MANIFEST.json> --dataset-id <name> --out <dataset manifest .json> \
- *     [--per-country 200] [--seed <integer>] [--path-root /mnt/mw]
+ *     [--per-country 200] [--seed <integer>] [--path-root /mnt/mw] \
+ *     [--exclude-dataset <development manifest>,<read manifest>,...]
  *
  *   The rows file is written beside the manifest as `<name>.rows.jsonl`.
  */
@@ -52,7 +53,9 @@ const { values } = parseArguments({
 		"duckdb-threads": { type: "string", description: "DuckDB worker threads" },
 		"exclude-dataset": {
 			type: "string",
-			description: "A frozen dataset manifest whose groups this sample never draws, for a disjoint confirmation set",
+			description:
+				"Frozen dataset manifests, comma-separated, whose groups this sample never draws: the development set " +
+				"first (recorded as excludes), then every set a grading already read (recorded as excludesRead)",
 		},
 		"skip-files": {
 			type: "string",
@@ -73,6 +76,12 @@ if (!values.manifest || !values["dataset-id"] || !values.out) {
 	throw new Error("--manifest, --dataset-id and --out are required")
 }
 
+const listedPaths = (value: string | undefined) =>
+	(value ?? "")
+		.split(",")
+		.map((path) => path.trim())
+		.filter((path) => path.length > 0)
+
 const seed = values.seed == null ? null : Number(values.seed)
 
 if (seed != null && !Number.isSafeInteger(seed)) throw new Error(`--seed ${values.seed} is not an integer`)
@@ -85,21 +94,18 @@ const sample = await sampleHeldoutRows(
 	values["path-root"],
 	seed,
 	duckDBLimits,
-	await (async () => {
-		if (!values["exclude-dataset"]) return null
+	await Promise.all(
+		listedPaths(values["exclude-dataset"]).map(async (path) => {
+			const excluded = await readHeldoutDatasetManifest(path)
 
-		const excluded = await readHeldoutDatasetManifest(values["exclude-dataset"])
-
-		return {
-			datasetID: excluded.datasetID,
-			version: excluded.version,
-			groups: [...new Set(excluded.rows.map((row) => row.group))],
-		}
-	})(),
-	(values["skip-files"] ?? "")
-		.split(",")
-		.map((path) => path.trim())
-		.filter((path) => path.length > 0)
+			return {
+				datasetID: excluded.datasetID,
+				version: excluded.version,
+				groups: [...new Set(excluded.rows.map((row) => row.group))],
+			}
+		})
+	),
+	listedPaths(values["skip-files"])
 )
 
 const engine = await (async () => {

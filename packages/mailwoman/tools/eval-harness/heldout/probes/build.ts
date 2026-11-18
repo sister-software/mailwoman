@@ -28,11 +28,15 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
-import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { resolvePath } from "path-ts"
 
-import { type HeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
+import {
+	type HeldoutDatasetManifest,
+	readHeldoutDatasetRows,
+	writeHeldoutDataset,
+} from "#tools/eval-harness/heldout/dataset/manifest"
 import { overlapTextFoldSQL } from "#tools/eval-harness/heldout/dataset/overlap"
 import { stratumQuotas } from "#tools/eval-harness/heldout/fresh/build"
 import { countHeldoutCells, type HeldoutRow, heldoutRowID } from "#tools/eval-harness/heldout/per/country"
@@ -122,9 +126,15 @@ export function drawProbeSet(
 /**
  * The groups and folded texts of every row of the probe sources' files in `corpora`,
  * in every split: a train or val row trained, and a test row belongs to an earlier frozen set.
+ *
+ * `datasets` adds every row of earlier frozen probe sets.
+ * Those rows sit in no corpus split.
+ *
+ * A later render of the same components takes the same group, and a grading already read it.
  */
 export async function readProbeExclusions(input: {
 	corpora: readonly string[]
+	datasets?: readonly string[]
 	sources: readonly string[]
 	pathRoot: string
 	limits?: DuckDBLimits
@@ -132,13 +142,34 @@ export async function readProbeExclusions(input: {
 	groups: Set<string>
 	texts: Set<string>
 	files: Array<{ corpus: string; corpusSHA256: string; path: string; rows: number }>
+	datasets: Array<{ datasetID: string; version: string; rows: number }>
 }> {
 	const groups = new Set<string>()
 	const texts = new Set<string>()
 	const files: Array<{ corpus: string; corpusSHA256: string; path: string; rows: number }> = []
+	const datasets: Array<{ datasetID: string; version: string; rows: number }> = []
 	const quote = (value: string) => `'${escapeSQLString(value)}'`
 
 	using db = await openDuckDB(input.limits ?? {})
+
+	for (const path of input.datasets ?? []) {
+		const { manifest, rows } = await readHeldoutDatasetRows(path)
+
+		for (const row of rows) {
+			groups.add(row.group)
+		}
+
+		for (const text of (
+			await foldTexts(
+				db,
+				rows.map((row) => row.raw)
+			)
+		).values()) {
+			texts.add(text)
+		}
+
+		datasets.push({ datasetID: manifest.datasetID, version: manifest.version, rows: rows.length })
+	}
 
 	for (const corpus of input.corpora) {
 		const manifest = await readLocalJSONFile<object>(corpus)
@@ -177,7 +208,24 @@ export async function readProbeExclusions(input: {
 		}
 	}
 
-	return { groups, texts, files }
+	return { groups, texts, files, datasets }
+}
+
+/**
+ * Each text's fold under the overlap audit's SQL, keyed by its index in `raws`.
+ */
+async function foldTexts(db: DisposableDuckDB, raws: readonly string[]): Promise<Map<number, string>> {
+	await db.run(`CREATE OR REPLACE TEMP TABLE fold_raw (i INTEGER, raw VARCHAR)`)
+
+	for (let start = 0; start < raws.length; start += 2000) {
+		const values = raws.slice(start, start + 2000).map((raw, i) => `(${start + i}, '${escapeSQLString(raw)}')`)
+
+		await db.run(`INSERT INTO fold_raw VALUES ${values.join(", ")}`)
+	}
+
+	const reader = await db.runAndReadAll(`SELECT i, ${overlapTextFoldSQL("raw")} AS t FROM fold_raw`)
+
+	return new Map(reader.getRowObjects().map((row) => [Number(row.i), String(row.t)]))
 }
 
 /**
@@ -189,19 +237,12 @@ export async function foldProbeTexts(
 ): Promise<Map<string, string>> {
 	using db = await openDuckDB(limits)
 
-	await db.run(`CREATE TEMP TABLE probe_raw (row_id VARCHAR, raw VARCHAR)`)
+	const folded = await foldTexts(
+		db,
+		candidates.map((c) => c.row.raw)
+	)
 
-	for (let start = 0; start < candidates.length; start += 2000) {
-		const values = candidates
-			.slice(start, start + 2000)
-			.map((c) => `('${escapeSQLString(heldoutRowID(c.row))}', '${escapeSQLString(c.row.raw)}')`)
-
-		await db.run(`INSERT INTO probe_raw VALUES ${values.join(", ")}`)
-	}
-
-	const reader = await db.runAndReadAll(`SELECT row_id, ${overlapTextFoldSQL("raw")} AS t FROM probe_raw`)
-
-	return new Map(reader.getRowObjects().map((row) => [String(row.row_id), String(row.t)]))
+	return new Map(candidates.map((c, i) => [heldoutRowID(c.row), folded.get(i)!]))
 }
 
 export interface ProbeSetNames {

@@ -8,6 +8,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/probes/build.run.ts \
  *     --corpora <corpus MANIFEST.json>,<corpus MANIFEST.json> --out <directory> \
+ *     [--exclude-datasets <frozen probe manifest>,<frozen probe manifest>] \
  *     [--name v0.8.19-probes] [--render-seed 1900] [--seed 1820] [--confirm-seed 1821] \
  *     [--po-box-quota 500] [--postal-unit-quota 200] [--floor 20] [--path-root /mnt/mw]
  *
@@ -40,6 +41,11 @@ import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 const { values } = parseArguments({
 	options: {
 		corpora: { type: "string", description: "Training corpus MANIFEST.json files, comma-separated" },
+		"exclude-datasets": {
+			type: "string",
+			description:
+				"Frozen probe set manifests a grading already read, comma-separated; their groups and texts are never drawn",
+		},
 		out: { type: "string", description: "The directory the sets are written to" },
 		name: { type: "string", default: "v0.8.19-probes", description: "The suffix of both set names" },
 		"render-seed": { type: "string", default: "1900", description: "The recipes' PRNG seed" },
@@ -184,21 +190,26 @@ console.error(`=== postal-guideline and postal-unit-guideline, ${guidelineCount}
 await guideline(POSTAL_GUIDELINE_LEGS, POSTAL_GUIDELINE)
 await guideline(POSTAL_UNIT_GUIDELINE_LEGS, POSTAL_UNIT_GUIDELINE)
 
-const corpora = values.corpora
-	.split(",")
-	.map((path) => path.trim())
-	.filter((path) => path.length > 0)
+const listedPaths = (value: string | undefined) =>
+	(value ?? "")
+		.split(",")
+		.map((path) => path.trim())
+		.filter((path) => path.length > 0)
 
 const limits = { memoryLimitBytes: 4 * 2 ** 30, threads: 4 }
 
 const exclusions = await readProbeExclusions({
-	corpora,
+	corpora: listedPaths(values.corpora),
+	datasets: listedPaths(values["exclude-datasets"]),
 	sources: [PO_BOX_CEDEX, POSTAL_GUIDELINE, POSTAL_UNIT_GUIDELINE],
 	pathRoot: values["path-root"],
 	limits,
 })
 
-console.error(`excluding ${exclusions.groups.size} groups and ${exclusions.texts.size} folded texts`)
+console.error(
+	`excluding ${exclusions.groups.size} groups and ${exclusions.texts.size} folded texts ` +
+		`(${exclusions.datasets.map((set) => `${set.datasetID}@${set.version}`).join(", ") || "no frozen sets"})`
+)
 
 const built = await buildProbeSets({
 	names: { development: `heldout-dev-${values.name}`, confirmation: `heldout-confirm-${values.name}` },
@@ -216,7 +227,9 @@ const built = await buildProbeSets({
 			{ recipe: "postal-unit-guideline", source: POSTAL_UNIT_GUIDELINE, countPerLeg: guidelineCount },
 		],
 	},
-	excludedBy: exclusions.files,
+	excludedBy: exclusions.datasets.length
+		? { corpora: exclusions.files, datasets: exclusions.datasets }
+		: exclusions.files,
 	outDirectory: values.out,
 	createdAt: new Date().toISOString(),
 })

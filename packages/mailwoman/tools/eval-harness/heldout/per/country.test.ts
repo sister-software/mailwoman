@@ -182,21 +182,22 @@ describe("sampleHeldoutRows grouping", () => {
 
 		expect(all.rows.map((row) => row.source_id).toSorted()).toEqual(["a1", "a1~lower", "a2"])
 
-		const rest = await sampleHeldoutRows(
-			manifest,
-			10,
-			directory.path.toString(),
-			7,
-			{},
-			{
-				datasetID: "dev",
-				version: "v",
-				groups: ["a1"],
-			}
-		)
+		const rest = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7, {}, [
+			{ datasetID: "dev", version: "v", groups: ["a1"] },
+		])
 
 		expect(rest.rows.map((row) => row.source_id)).toEqual(["a2"])
 		expect(rest.rule.excludes).toEqual({ datasetID: "dev", version: "v" })
+		expect(rest.rule).not.toHaveProperty("excludesRead")
+
+		// A set a grading already read is excluded too, and recorded apart from the development set.
+		const unread = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7, {}, [
+			{ datasetID: "dev", version: "v", groups: ["a1"] },
+			{ datasetID: "confirm", version: "w", groups: ["a2"] },
+		])
+
+		expect(unread.rows).toEqual([])
+		expect(unread.rule.excludesRead).toEqual([{ datasetID: "confirm", version: "w" }])
 	})
 
 	it("refuses a file that lacks the base_source_id column", async () => {

@@ -321,7 +321,7 @@ async function scoreAndReport(): Promise<void> {
 					values["path-root"],
 					null,
 					{},
-					null,
+					[],
 					values["skip-file"] ? values["skip-file"].split(",").map((path) => path.trim()) : []
 				)),
 				dataset: null,

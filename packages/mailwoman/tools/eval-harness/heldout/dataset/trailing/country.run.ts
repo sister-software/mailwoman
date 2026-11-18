@@ -83,7 +83,7 @@ const wof = await sampleHeldoutRows(
 	values["path-root"],
 	null,
 	{},
-	null,
+	[],
 	wofFiles.filter((file) => file.source !== "wof-admin").map((file) => file.path)
 )
 

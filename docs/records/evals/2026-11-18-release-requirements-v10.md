@@ -80,17 +80,49 @@ node packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts \
   --manifest /mnt/mw/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay/MANIFEST.json \
   --dataset-id heldout-confirm-v0.8.19 --out /mnt/mw/corpus/heldout/heldout-confirm-v0.8.19.json \
   --per-country 1000 --seed 1822 \
-  --exclude-dataset /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v4.json \
+  --exclude-dataset /mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v4.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.18.v3.json \
   --skip-files /data/corpus/versioned/v0.8.0/corpus-v0.8.0/part-deepseek-kryptonite-train.parquet
 
 node packages/mailwoman/tools/eval-harness/heldout/probes/build.run.ts \
   --corpora /mnt/mw/corpus/versioned/v0.8.18-retention-overlay/corpus-v0.8.18-retention-overlay/MANIFEST.json,/mnt/mw/corpus/versioned/v0.8.19-retention-overlay/corpus-v0.8.19-retention-overlay/MANIFEST.json \
+  --exclude-datasets /mnt/mw/corpus/heldout/heldout-dev-v0.8.19-probes-r2.v2.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.19-probes-r2.json \
   --out /mnt/mw/corpus/heldout --name v0.8.19-probes-r3 --render-seed 1901 --seed 1823 --confirm-seed 1824
 ```
 
-Two gaps remain. `freeze.run.ts` takes one `--exclude-dataset`, and the confirmation v3 groups would need a second.
-`probes/build.ts` excludes the groups and text of the training corpora but not of the r2 probe sets, and those r2 rows
-sit in no corpus split. A new render can therefore repeat an r2 group.
+`freeze.run.ts --exclude-dataset` now takes several manifests: the development set first, recorded as
+`sampling.excludes`, then every set a grading read, recorded under `sampling.excludesRead`. `probes/build.run.ts
+--exclude-datasets` keeps out every group and folded text of earlier frozen probe sets. Those sets sit in no
+corpus split.
+
+### 4.1 Unsampled source rows (section 6.3)
+
+On 2026-11-18 the coordinator chose a draw from source records no corpus build sampled. It can't produce a
+confirmation role that keeps seeds 42 and 43 gradable, because US and FR have no unsampled address rows. Observed:
+
+- The development collection's largest address sources per objective country:
+
+  | Country | Sources (rows)                                 |
+  | ------- | ---------------------------------------------- |
+  | US      | `usgov-nad` 791, `tiger` 107, `usgov-nppes` 90 |
+  | FR      | `ban` 996                                      |
+  | GB      | `rendered-gb-os-open` 840                      |
+  | DE      | `rendered-de` 584, `spliced-affix` 170         |
+  | IN      | `osm-in` 461                                   |
+  | ES      | `overture` 909                                 |
+  | IT      | `overture` 998                                 |
+  | AU      | `gnaf` 575                                     |
+  | NZ      | `gleif-lei` 482, `fragment-assay` 386          |
+
+- The `ban`, `usgov-nad` and `usgov-nppes` adapters emit every record that passes their field checks. Their only cap
+  is `limit`, which `packages/corpus/data/builds/v0.8.19-rebuild/inputs.json` doesn't set, and `tiger` is emitted
+  whole too. The records they skip lack a locality, a postcode or a parseable street line, so they can't be address
+  rows either.
+- Supply exists where a build sampled: `gnaf` (149,969 corpus rows), `overture`, `osm-in`, the `rendered-gb-os-open`
+  and `rendered-de` recipe outputs, and the WOF and GeoNames gazetteer adapters. Each needs its own reader of the
+  records it left out. No such reader exists, and two of these sources come from recipes rather than adapters.
+
+A confirmation role drawn this way has no admitted US or FR rows. `country-US`, `country-FR` and the objective's
+US and FR strata would read insufficient evidence for every arm, so no verdict could pass.
 
 ## Reproduce
 
