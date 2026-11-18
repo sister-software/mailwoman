@@ -1,8 +1,29 @@
 {
 	"extends": "@sister.software/tsconfig/node",
+	"watchOptions": {
+		"excludeDirectories": [
+			"**/.git",
+			"**/.yarn",
+			"**/.vscode",
+			"**/.vscode-test-web",
+			"**/dist",
+			"**/out",
+			"**/.drafts",
+			"**/.github",
+			"**/node_modules",
+			"**/.claude",
+			"**/target",
+			"**/output*"
+		]
+	},
 	"compilerOptions": {
 		"types": ["node"]
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.mts", "./**/*.test.tsx"]
+	"exclude": [
+		"./out/**/*",
+		"./**/*.test.ts",
+		"./**/*.test.mts",
+		"./**/*.test.tsx"
+	]
 }

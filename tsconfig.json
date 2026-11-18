@@ -10,7 +10,10 @@
 			"**/out",
 			"**/.drafts",
 			"**/.github",
-			"**/node_modules"
+			"**/node_modules",
+			"**/.claude",
+			"**/target",
+			"**/output*"
 		]
 	},
 	"compilerOptions": {
