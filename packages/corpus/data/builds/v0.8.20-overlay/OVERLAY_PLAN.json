@@ -1,0 +1,3595 @@
+{
+	"corpusVersion": "0.8.20-overlay",
+	"overlayBase": "0.8.19-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.19-overlay/corpus-v0.8.19-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.20-overlay/corpus-v0.8.20-overlay",
+	"note": "v0.8.19-overlay with the 7 adapter sources packages/corpus/data/builds/v0.8.20-rebuild/inputs.json rebuilds replaced by the v0.8.20 rebuild's files, the kryptonite, po-box-cedex, postal-unit-guideline and both house-venue recipe outputs replaced by their v0.8.20 renders, and rendered-us-county, rendered-us-city-county and rendered-us-city-state added. The rebuild's val and test files and every recipe file carry split attributes under the base holdout policy; the rebuild's train files are train.",
+	"appliedAt": "2026-11-18T18:36:39.848Z",
+	"files": [
+		{
+			"parquet": "state-ia-contractors-56944f4a1b774fb4bdd5ca86ef68ddc8699ae04ae3e0f26d3067960973d6fe2d.parquet",
+			"source": "state-ia-contractors",
+			"splitAttribute": {
+				"path": "state-ia-contractors-56944f4a1b774fb4bdd5ca86ef68ddc8699ae04ae3e0f26d3067960973d6fe2d.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "state-tx-notaries-3c719e1edac2ea49113cd32634ee4bce3f9e89924f7c58fb3ac083029930d0dd.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": {
+				"path": "state-tx-notaries-3c719e1edac2ea49113cd32634ee4bce3f9e89924f7c58fb3ac083029930d0dd.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-356c4c571d6ee9a429a0d13cbf9316d3ba51c45eba99a7f5b40d357988a483e4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-356c4c571d6ee9a429a0d13cbf9316d3ba51c45eba99a7f5b40d357988a483e4.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-65b4628bd4ce0cdda575605fb820f1832535f97e1fa84dfad04663b7299217ac.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-65b4628bd4ce0cdda575605fb820f1832535f97e1fa84dfad04663b7299217ac.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-dbede1f85a5bfc71ffadfdfdff982ebd658ffbaa196a34598279631ba3074963.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-dbede1f85a5bfc71ffadfdfdff982ebd658ffbaa196a34598279631ba3074963.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nppes-a0bf6753921d0b6c25cc445f37ed3cb60cfdb173a257d33e6064c3c958c3092c.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": {
+				"path": "usgov-nppes-a0bf6753921d0b6c25cc445f37ed3cb60cfdb173a257d33e6064c3c958c3092c.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "wof-admin-cc21bae106818c1f960e0a305089d07cc5417c33e7e44d49251ba451379c43bf.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-cc21bae106818c1f960e0a305089d07cc5417c33e7e44d49251ba451379c43bf.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "wof-postalcode-3587d62877a0b08543b87ab558af8176b656543c288509503db0604e4ca5f6f6.parquet",
+			"source": "wof-postalcode",
+			"splitAttribute": {
+				"path": "wof-postalcode-3587d62877a0b08543b87ab558af8176b656543c288509503db0604e4ca5f6f6.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "state-ia-contractors-8ba80e95b20311ae841c4e03c67563a5487dcbfb6c628839a610fbe1e4b8c818.parquet",
+			"source": "state-ia-contractors",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-ny-notaries-7fed6b7f5a1c8f353f559cefb611008306b8d4cd70c3d1a6a63667804e613b51.parquet",
+			"source": "state-ny-notaries",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-tx-notaries-89d66b7b1528868dee377aa7f7f81da9c39e8185d432f96c1a6398e88376de6a.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-tx-notaries-ab488319b7e61f688b5fc296eec9f866ad4326a3883d1da2ce1733e05b0c1fce.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-tx-notaries-ad5f7607f50aac739d13dbc8dd9c8e8b4b0ed9693759f887f720c75c89992089.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-tx-notaries-b9036eb34454581acee08993c0f9a6dbd38d29360ca0f3a718ebd330af7a7028.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-001bdda62a92c318e0fae7f1379258ec0e0451790e6a214dc644e63c0e031174.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0029d2afef2b29e513a3b5d5d71eb12db3ee8bf10e60d7b072d9556c158c6597.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-006625392979177551dda838d56bb9dfa0bd6872ee3527c45cce3930392dda69.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0127b93f52283660930987f8935484c207fb5e86cee852715dae0c71933debe1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-01aac801278a3f52ffc00ffefbe6529ef2f2696cb97bf7d93cb9ca80ece64fb6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-023e6cdc6d16a9f7fe42132c0e858375fc5709ad1a41a69b9c51d04d37c151bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-02cf2add7d40da6d92fe07eaf83d36ad57b31ba1f1fad176882b25b47857b855.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-032fd95df8b5ff626f264d2e95324301af1e61fe424b4dc9632a4cabe3483918.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-04058555da6f358ee25a8bf71822083a1ba1ac4c7568568bd1da855bd76aa17e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-041c9426372238748031bab84c5c16f5958bbc7579d929d601f42c50d0ed5a79.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-049951e8cee1b422708245d4dd6c07764f89bcf85b1576a2c7a6a618555667f8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-04d19cb9511c76bbd2671c6b4e089001d47095a13c44ae084e6e1c3f9a4e02d7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-05e6f7ec11ddcf961edc7efef4c1557fd4a8d37b69317181859b7f9b535d3b21.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-074fb6efae57477302e275cc0fad27a25750815092e113ce80d9b0488a679ac0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0843d5942c7c48f4b3531445ee9408b220d46e22a5910790158a6b87f6d06e01.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-08c046e6cd3a69a4e92b701bb29c6bef4c755d336c62915236d96d71e4f77989.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-093f2dd4815715389d876b7b3e2ce26bdb46a0d6609c95b9aa9cf52ac257a2b8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0951afd37792e5c33616749f7dee518fea2d2c21ec3fb0a1c147dd80f043c190.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0981b71d8c0185f0fc7c6d00f4234b6a03ebb17c82d806e30362410506298213.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-09d0a136a6ff44054bd9364b7aed5aa4304ed2d7bc2c278a44755277b10cb11e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0a3836ed8425181e7c29e48385b03f444a3df1bb47c2c84a509c348f52afc43b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0a6b2c3614894efb2c5b1b1d6537ad8699b1d10d832b7555ea8e8df5426a320c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0b17c3b0bc6c563e9839e9632a7c2f6e285294ad756e619cd36f7fcfc936131a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0b53601d38e7285f3cf69f9c979ce6060a0184be1c3e5534053cc580d926ff76.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0ba1cc511f6c4f2662cdd9c470303629c9e70536706f6885c968d49f99f194b9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0c0ecce3a45ebd2fdb65d5f28400f408d948c1d6eb74a7a22a407bc0b405574a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0e89db6ea0d6e93dc1ff6b75edc871a1322923c21685f288e0ab12490c0b5335.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-0ff9b6382eaf4f258021c351bf504a7b3163e635d88edd67d3b44ed1a2270659.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-10365b2ce79de118b2340167a8786b7aa7c42294f310f940ffad788204b0391d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-111671f5f603ab289bd93e78eb21e1b1766e8d8bc8454b5d86a8284c6d75619a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1156705e52248f115899101b2f243cf7a0717f846c8e9e71bc1484563a19e608.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-124ac00ea971acfa37916595b98e0d40fd5eda5944eed0f3b03c96e846aa3dd7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-126ffd4479e4cdf2350f9edb2330a76ebd578353a858df496ce34d5881a78203.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1299448c34399886f813bbde95f45f4cbe283c2f2820f00192f7e32e1ca5f706.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-12a5ea5a71822038c299a1ab4524b2e2dd2056489eb20061fa1717d5bce2f6a6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-12d5938587a4e5cb3fc0a1218c994552ea20142f2299eb11ed21d1a10cf4b680.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-12eb05bf12658a411e8142f2ebe5cec8c63150bbce1291b065ca8eb1317bd9d6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-133709f8b1b1f945e8e45f5a8b3df01d34c64aa65ed2598066d9b149905c6a6a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-135b0c6d90113adb83e5bac1a706364d04fefc1284f8925bbd21bfe03babfd7d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-13fbf16fe4759b7efe4c7a9c5dd85b08c9ac4c4133fce3f3a058241b388b25da.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1454d40f3e8be81a0a3e638857fbfb23420ac921dccd461e48b3b8d962d97e91.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1466054d0bbd4705b2c9ae891aa855126c3ca330666ec4191dd2db516dec42ad.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-151e7f5cff8b672c332a06c03b8f835c85caa17260757142ca9992f88dd5daaf.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-16d311a02fe48d33f244ca71089c1f44b7525bc0a5cb67dc6b5bf47a6c8fef56.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-16eb1ce8c59db77c1776133ef767be8c9850467310ee997f25cdf4493c6a141b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-16eb7708dda22cc291a12525996d95d42ce31293b61f6b777aefe49ca8c6ebf4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-175603860ef1273791021fabda96a73979a07a056ce1d1c53b295fcc01bdf993.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1812a33f0144aeb9465892f60c1a6cc35554d740e2b4a57cf2425b318fa5e7fb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-18234f46ad4d9d33c348736338400a061a2144e65425d0cd971d0ea37e3a614d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-188e7cddbfb7cf5984c59bf64d57615c279693cc613373f0fb59b81a76eac3de.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-19374dc45cb1ecab207ef3a4697997294eac3afac665a00230da3c52b2dff3e3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-19c2a5a76f16efaf1524a0c29901dc759d08fca2866d40a442b50881693ed202.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-19d23ffe66a9e56382a1e7533f50013e69ed4375f955fe9a6a369cd9f623c9bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1aa0dfcfc0d9363b5b65a37fa746b910b295f9cb3aaf5a74f331366d1eb6860b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1aa159a8f14120b0cb5bbfbe837d4c335fde10a9cb655fe85436f23a4482fb0d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1af8afd746dfc879740fd6c8cc1e93e110858d814bb91a722cafb429f1671a7d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1afe41d31665db054cf9f568e538b491a64f36b62b23a03282fffa0db0480369.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1c037a1a99afd1cfe22a1f589a0938f63da4538ee8087dec597491f4c7ad174a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1c3926400f8dd85d3a2e905aa72224d6d0677f722f99c4c1761da16e130da0aa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1ca006f7b31b7c8c9b37300d820c920b0399b956d520283a03e31a7ca7d3ebf9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1cbcd735317ef97248758ba269f3c222b3204c0e9d4adc57bffbe7bac2c0a169.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1d80d11bd1d6c12071187deb643918141315add1d0d2c55b199601274f807181.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1d80f21add259708a8359b8b3fc2eb38bbae9503be82dc54ee8788bd43db40de.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1e98f5a874d588a361aaed6f5462506fae7e6e21c6d8eb5bdbc8a6e0d7f693f5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1ecbe1329488d02b96b438691b1824a14f1d3208222b7c4b1ff74d9996625852.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1ee96cd36f02cb5336f8f1b6ce9f907efc5903c577ff6c2aa8958c6fa8816025.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1f74b0dcb543aa778ee1c95d498bf987274532891d22020ddd834a1a3a3b68c2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-1f9bb0d96bfd733b70cc210822ad85d1acb3027cbe9f25a8280de969ea887cc6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-20c7bf5041b0f5c351027592e15bc0d0e92b99149cfc128c4d99e406e8d3440a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2161dca3bd12438d780c933e74db8c14fa38d3322259453e5bafef10b17d786d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2186a1afd5c430513ffcc04f4daa64fb5abd22c8fa3ec792f0b6b4199d887152.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-219fd80bb6fe7320120fe2b0854c6f6d6d0aa34f615907eca9e7bf041cff5ea9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-21d46514addbf91ed91806b3254be8a662b953cfbc89a55da4f90b8c433ce8b5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-21e69ce9bf039db981411c4b73d5fb834e944fbe55f381c2c047ad9a7d3c8883.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-22d179a5e300045febe33f0edb6bd6a7893b7a648fed0449e9552145bf0ba6e0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-23306e16955001ac8345e8831cb119238a8e8431bbafb954a12abb58a0de13cd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-23c797f139904e1dd72ca2931a267929a4e7019e0c1aeeb16c8327a64e2894ee.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-24302098c77cac44f01584d0ea36d6071ee2c79e43d5577f1ad36c7aa20dfa9a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-260b9ae7fab027c625432722b434503c460d1a51a123a7f6a3492dabec4013bf.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-26e5447774adba25d49363c7e2cb11a1b713f6965dfc18c251f7bb6282bc1db7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2735522d192424167e1e5d76dfbf21aaa1db0301467e889a695745d7f1488745.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2751dd91226f357ed48ff9c15e319ca8c615964af956d5e4023997461f65c7b8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-281951ac48b026eae834ee8386bf6bab42c85525d1fdaa6283862b923f5eb738.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-28c8a614793f01463c14173ed32631dc196236b15ded8d704fb9bf56039557b6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-299ccad830012e893959bb48726409a789da166710bc4f714a484b59106e642a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-29a2cbd8e855c4f09e4cd87b0dd86f3d8648288961833d560de09395900ed381.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-29bd3f621859396813111462cf609e8b327f3e03f4f0d3442e85bc35ab8c0767.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2a409623b95c05dcf01ab3b9b6fd240f65a90d9ed09993dd02e43dba927a9df1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2ab64ee7a6c7aa420f71e59c3367c0820a716e14700ea110af07685b78584808.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2b0e9900ed2e42facf0d2c140e395b7ead1b177d5c7aea1cc6ddba4e14bc51a1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2b7e0155d3862d7bfcdd33da914e1fce8dc610c45ddaf5bd57076e6c6682ed20.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2bdabb7edecb5d7126b07766eeb28c8a90a2ff96bc84dcce809db79ffacafab3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2c04d10eb2d62b80f250542d23db6d90a7929f4cabe2137e1ac08f658c11c16b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2d62a972768fafdcb831d2c75c3d0b400f1f22126db886a4ddacf4b5a807d80d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2da106176f5bbe6598812ac1b6c01012a66071bc181d57ff13bf4cc726fd5869.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2e1c82293034f44026eb5c8d067e100eab92b125b94efb241fa0382190166541.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2e9f5fb896522bef91bf2266b2a5293f40ce3b445ba0461c0c222f0c96c0e326.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2eaee84125364a458e19b32eacf04e53f90abce0a599640caf0c96c48891d1db.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2f3812c8acfb7b7c0806cc4cb9388320c2b77935d090ebeb4f5b75f17378af48.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2fba8ef3b3caf6c170c6dcb9704c9ba0e820d7c0e777151ec0edaf42d81328dd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-2fe9247c86ae665cff080c4d8940d3d598ff36d17306f9334988850787d1da8b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-302bd9edba88b1b9d45ce904f3d8469cc102aafd012e939d59a90b6b10cee55b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-305d4941e64623f5209929314ee63219d8542f52f122978bc1d4eca82dff1b68.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3087db3f1291f047ebe5cc79cad28c00e6f2c4e83a9aa46e4e06be3044a37954.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-30a88cda8d52660fe0c2338b7391bcbf71b9c9a2f0e675a5df2430754794f50a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-30fb83745791ac5f6533d84aefe0030779d6a3bd58659e5b0ce71e57f78a7f06.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-310350f29c31f1a4706f535b65990d99b3d848b86a32ef002c6908290556964b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-311b8b74d9a2ca16326d9853ca29c9338b119462c9ff00541adf52fb213c4005.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3397ea4e819df4230479889a5201df04a620072827c45fb74afb33b9a5d8ecbe.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3426c5eef69aa66ba5f0c2c56c0d00c19ec94f8500ec008fc26ee27b5d956565.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-34fa7032c8b4c28cdd47435d6f3941bae5ab5a01dc04355976c49eb31635b32e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-351b9d20733a2232dea574233429cb33d2d491eb302243398ce8855f20ecae9f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3520e65cd6715bedd9b5f26b166d974fdc7dcf5f04f7b332d0ae7dc7343766df.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-357311cddad8838d1e81a410c9c6afbf6d67a668ebc7eb0245347891ba370fe5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-36a85fda45cc9ce5203bc9e79d4bfb21d51de1ecd4f3a8cb0b8424e67d7f80cb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-36c54eb3bdac1f073e17501a6319ba179443fff3aaabb243a973cdccb93f11eb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-37096004a877efaa4294406072b16319af6bf83c8b7cf2815091a897301847c3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-384c7d8e646c3c117742f40730acf0b62849fd2976255aad6d7762e97ace0e7d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-385f66b539f41e8ed1220bd7692e74738057eb7ff2952447dea952c8cd072013.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-388e0d3dd24671943ab3010af4573c45bef65a3f485a9f71bc8baefac56d18a3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-38d3ee922bf8ddd8b1f74927ea0d5340c93f07ab9f74f6e5f7a336b7dd3c20e6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-38f0a7e4277aee98b9f4f6741abe8ba46a74c2277b45c957a2d9be973bf33272.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-39159311f07a3247a0e9c3d937f0db5f464c615278c7bbce8e9828f7c846f013.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-394e2f539f7264f189ff6b0d748caf30a56406d48bde65ffa18e33f627d8f3e8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-398dca38b7e66d7afc9d21bd7ece3bd5702e40537f883f3e096300eff153395c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3a5e62507c541dcaf4a87c08ab68e85e6eb2b6206aba91c7dd6dcad865046f95.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3a86545d27f53c1be026eb1429a476b91c0ad130e81f733577a51bdf2bd368a2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3a8dcebfdb03753a7bf8b876768fcf15e04eb025cdce0d92f32d9f363139e1ea.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3b0ab48428dab681846f94a7866f7899926a9d7580cb4a443650e80f1b9ecca5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3b3076567774a32e8d628aeacb87b96af16d0c35b06b24a597852982809fae30.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3ba1603f9c129fc202250b74d933e5041544617d4fb22e65f5d773453f3c4b1c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3bf20e224cc67f01610efeb1a9eef8ff7ffd4768a4b0a2b7a86dde10847ed4be.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3c065620ad022399d6aee909326c3d65453baff1559aa2bf6ab4f811b62761ff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3c9999adbf80bb3909aab5b430df713dc70a4490e83330bd82dd3b6526e0ef4b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3d7e9f2ce3421e14668b3794c0b4956fa2cef2129c83cddc656e30094eecbc07.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3d89d05b595d44b6af171e224a33e63bac929cebf3aaef93ed6910e26c342e15.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3d8ecdea6aecbe6e424d9b4a404672717a1653e6c489bb64b55aebb92fdd5f89.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3d9d348d66f6139f55350399e120537645102c92004f87d531decbd526b65757.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3dafa8be4ee9d58ecd4f96b04036c97dbe99ed3d3cb84d97aa6776ae03a62d06.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3e58e37b7b818c08eb0ea21c931f95b7ab273d6a36a8bc6060b399535d7e9f2d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-3e6608d72d69f7481029276a2ab9e1d727a6b7762c1af80901590806de71acd2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-403bdcb8186d8d9e5998aa339a09b306c564fc410c92366dcd09450859be2b7d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4058daeb89a2144a0d97f49d08d9ec4c235f8af560a0dfd4e8935cf5380f9b3f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-40e876c5f35f361b18f2ec408b2d480cf052cc581b0b7452bb413523fa0a18db.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4184428be8672c9f49097457b3f5ce7b1badd505dc63289856cdd7029a4857b8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-426170b2d0c0689e2571845bfd93d5b5468e58b9e55f311b1d0f5d1901ccf9e7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-442167107e013a56929a9137644deb3d0c608e2f30408e04d7f01d4c4128275c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4442119eb4a6cf1e77837537df5a84db1c3c7ed66f4e5eb0d68a9bd78696a612.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-444470d0c5188a82a3cbf402afac788fc787e1c2cf641fe6dc40b4dafdc23bee.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-445da36301728623ab82e78a97aed1559bde32ea64c3e3e07c531fbad44c07b5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-44a59cadc5209ceff87ec8392ee3a2d3aa25e2591366fbbbec7cf86288a8a96b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4565ac61d60dcfeb1f433a7143fabb3139e18278db7228ee8a11f36aa38bd88e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4623ac805025da8036fd2d6f7ee89c09f2f8b6e5d9d68637979b68e4e68f0dfa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4639b5cf4f8988016e230c187a542829e10dc5f2fa3ebe32f7e4d4e2e0250e35.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-466f53aed9047878f1bd87bd35ac823687a6a7ab105061b9564222ede77f56d4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-467179f9f30143075e371218e318fcfd29b1d1382dca34f5ece228c9f058c8d4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-47dfa9aea992f84585d19a60a0a4173b6d2d2e547a08a8007bccf006927e1878.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-48105f8067dde08552763c233a104390a94930c189f4064290d21598a96fa1fa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4838da108c7a5c18d4a3336f3af4a83e97905b9a8213764931e6443e004b07d7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4864ede5f71bad2f5773a4e44e286de6c6ba4cda6a7f833e266d6f7687077b70.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-48b5cc118369598fc108c333854586296c80e68f15e2955f26f9ada8f2798d43.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-48ea204c2381ea1feeeecb184382ad8b6a31fe33d1c5834f064bf61f9bf8123e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4940fd6e7eeb2b00231ae1974f0f1a066c73709aedc56589cfdd11909864e2cd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-498c55b23a1e8d9affa6ed787e62656cf16a7a4c41bb0e5c0703fad435d3f207.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-49ed604600bc080043147d99507035431624a3a8ec5836efa439a7269cd91d92.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4c124f4c86d021df5777c7c2c076e9be5757eef41e6d82b42fa4d0cbf344e3d9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4c46acb6799a0bae7db0bba6d9933b7c225fb2887eab7b11e45f91b386d76d2f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4cb796f2a8789f8e0fb757ea438ab102119fe9e0a00189029b473705b770d88e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4cfdb6a88e0b20f43f275b64228347f0a317ac64c18ec3998098ae4eef066224.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4d625d35b139e37c4953c56d18a0a2bcec39c601bacda596fc0466824a185cc0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4db344f0ac91872cfe53a9f091bc247b0dcb3624e1288d860450f43bc6046c45.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4dd8c5b094ff6b713b60185bd5986edbe3af1fa37d4076822c378a3156e7ebe1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4e9f2b0e984d4b3d28e7277bf5bcfc51baf85c3318434943c6215fdeda876763.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4ea8e0452f77362611b13ef431a28f0e5c036e25dddf9c5974aa6f303c719eed.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4ea98fc2da7dfaa2d546399aaba3330ed5248519cf770fe406afd090e5bf46af.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4ea9ffa5e6560a2ceb9c92d7a5c00c57d973c596240fcf6c2fdd64163a55fd1b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-4f2adf24a35e4742833e714548756a5c16627af69ee8d2ac0d9bef815675434d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-50111b05204d3312119b2f530b561c94f4ed981688d36612daf13f76ec30520c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-507d0024157ca4b74dcfd9534a9adca2cf5def829332848e74ff03ff826fde00.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-50a6a359db7500a1f089546c6891ef558e81ddb8d4a5b9b5d759bf1cce28dc30.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-511428d71dd0d2ec4b8769e964ccb7d7accd81598426d792c30725256b68831c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-511c53bf7c6697266f7199da318548f6d7495bd9100c67360abe041f1308b109.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5137d81c8583b0645f78b05a15302d33a3fb4412c5105b2be2dbafd344288783.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-517d970121b9d133eb30109ece5009e8ba6ad5ef88fc06c09d3ca41b8e974e3c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-52babc943cc5f06c28e057adda9808463c5486e9ed6585d7ff09c30fa3ccb440.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-531c1855cb66019d384b9070643931b96ee696b79aab7a1af377e34a64401a8a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5370e706fb202a212426ea69416a5eefb3ba198ce70eb00281fee813e3ba6900.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-542684518dd49e8544a25af02e1295753a3c1ff67bb732934b5159d7b9bc0981.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-548e5ab847f8462d7db7c77da0eb626bac1eccb47cb61c4d248fb5c18cdb43a3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-54c0da2a613c85b43d2671a08fba792811b893937d0737643293834ba69d9b32.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-557315e3b4675b2afe5c7dad0da74c977c79ff76bb28b60715c1bb8c77066766.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-55ed4f9a88e0ae3ec2bfdd1e9936a17aacfda199fd61660fb912e9643b46060f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-56855ac44bb218b76148cfe69ef4d5e0dc7697791094ec605a9b3f797260f6dd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-569f647cda82bd51c1a22a5c28cd6fa12d77a5a4952e478eb22f96b9fd50495b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-56b7c712ca08236a960378648c21d663e146c6a3fbcbf996a35873df90fccb61.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-56cb11ce4626c762482f61f1f96c71c52472ff99f6a97e069f79bc678e66e983.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-57aaa36fab51fb37b5f89fa8dc257be6452f5be02729ad44a94e043de1bf5870.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5875adaea69edd4316b7667e3ddd23fae0d33f4548a151f95ba881a34c76fed2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-597b92e69ae72bb4c23c672df95d34caf913942ece1c6a49dd8dc21fac284e14.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5a0cfb68ae9d445e59dd7389bb549862af42399588d7aec94545e64097b07e71.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5a3ecc018a2feca7d752c01ff339fbccc974bce128bbe0777d04b81be3fdafe6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5a5aca24f5f1d9cf93615a5ccc8ef37d7d19f7370076d6e67d7eed618f2c7e8d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5a5b416fc2271ea26b1e199747bcd1203384d720bd45577d922c5f07c8971db9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5ad5c18ca94f6613a4ad8ae2f8cf58a98f5ff1c3a3cd5a5555903d38529e74b9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5b3784ae6d503fb6f2d2d02f9c8a31a1dbf956dd7ba75dad31ebdd985b2fbb81.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5bffef2cd6ee82bd7a73b3b21136a353b8efb3d401b1fc64d3b552a3141a9d7e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5d4692594b376f951dc8512b7f8399b090b78d22b692271c3565139129c74b1b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5dc53f9b605eae4b952eeec87537880c293c93688cfbce1cc6bda652d931d2f6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5fc07081926f2768803e833885199416e33d1dbf657f094f4b1f557f335913b4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-5ff2a5d61af74b21359ec41d9c19473f56f5b44ed1c3b3d6da9ea6c3aa06daea.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-612dcd2f38914ccb364b9008e59a3b6684935fd062fbd1ca3f0b947eea3ed116.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-618245ef34c94c3a5722d7175e4dd8c1c6f07ffc25cb0a03f7f472f54cd9d528.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-620220558b4bb44f848646c5a727f2aa66432f5e0d93bfefa4afa4d471752d5e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-62cf68356635164738a19cc75be5b97eb7c27f2ac4e865cc9f22faa2110b7667.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-633e8dfa90b002b6773bec0a9e3d55ba5740b5cc56a5f2cef28aa98f33ca5952.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-636b6b170c2beffe06bc4891e1199fbab444a81f63372dcb44ea27111173b88a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-64bb706c462a5a599b1b3e3f3f29343da18ba83130db4777bbe56c02cd3a5c9b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-64e67cc73029413da41b355387a14f77b2651118aa720914897df199ee07e7d6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6556060338dafaa849c665dd6d5bb06aec7e2fc626892afb126db7141b386190.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-65769ff84bc56622763bb3f17d6153b357fcf59eab6fd0fb3333653aaa0f3440.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6580cf38fabc8e32d6070ce1856bcc5fc46afdc6a09b97b298fa7f2e351dd4e5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6605d497257b9330d46037fee0547edabe2596d7779ce3ac31abfc3c5a6d46b1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6629d3deae7e10b9e75364df08af59bcbe60e138f2b0ea89c36a3ae68cee71bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-674899f8a29341670712b8395f395293cddad4b6fe9905019987cdc0f24db511.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-67a24f969200f26f2f3fa42c51cd05a7ee550ff323fcd2e6132879913272624f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-685354937c5f2c0546f19d09c76b1719205f82140cab152f89c175649470127a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-686b279e03ed9fa8c0754aebb838a7da8d541759fee7fe858ea242da271efa0c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-68c37e29f0d849fc60ed8fbde83b6a1df29a245db626a67380dc86a3b9c574c5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-68f7d6125c9b7fbfce6c33a1765af9ccdf1bc3e99bc9ab3e316514ad0f8bcc72.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6913e0845828c1aa2e700cdea987f773a8bdefe406e858462d4ffbc5d3b240fb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6943064a8b46783b0878dcc2ec85a888ca9cc8c91770d843e7831e7742ac62ad.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-695a144741fe6f1af6a507b3b641249dcf4f87cf490a13ee8c256c773a91db98.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-69b54f5278346427233ac18f77df26d8e0e75f57289bd4ba119a5d78c337d50a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-69dadefa0a59125ab311947a8437c88ad48adf3fa92a03940d784c9e2ea09f1f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-69f67f9679f5343c190d702e8336a24dc875ceab76a9620e8c684cbb1919eb0c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6b00d1dd5fdfc19078afd5042f95e21fba8cb5ddabe6f723ada675ced9433a48.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6b3728fadfa5aa9e3f7a2dccd9caaf75239189c799a3bcec25ef64cbc4a44855.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6b975eebee50d31cdcff1c01e0a9ff127d68fd9358347c5c72e9f759ccb50964.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6d1147908db1c9359c349e39e9faa801bf7ccf2365abc409fa6d4046258decc0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6d3bb1e2218ea72dc9bf7b724451911bbabefac5ac8927b42b20832688ed91ae.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6e78e48d4a90ba2fef5806ab94e0c75ed25f7ef6c03824699da26625ee11f28b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6ea5a184b9935b08c4fab55abfa3fbfbc092b51696bff44e9a6147bf31d0bd30.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6ed2b3348841fcc7bca6029aecbea6e4787d33c8c6c049c4b9d200491225aabb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6f6b21a0b2f19f282126e322e5712af32902ed96e1382da4266d884e380cf295.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6f71fe112e4339659bcfbcc33c68737cd67aa3fa52a35fc22bafbf8d3ea4de4b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6f84d2820621d40095500c7bfe3ef90c5df60061a8396cdbe869984ec1360a34.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6fb0950e309df007fab875bc8aa59cbb4a0456bc7541385b9e87313c06c80440.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6fb5d095ddaa2d16fa731773bdaa0d9564880215de4694f8d105c6f5505cf19a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-6fd35c4825071472905fb2de361f09674a424927490ef4b48408b5cdb1ac2122.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7022aea5e2db52ddf2e98accdd2b57848a0dd363700af8b52c79bad6b8bc49ff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7059e5df531c2d6c81fcd9fad19d59680a2b59f857895f9b9dcb20ab91d3a275.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-706fa6875b5c9b9be9c27f473a36afc696e5705356e02bb5d270664e28f38220.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-709eca566c64d3b90342ad522c3e317deebfa80a8abf405392b88414422a0c33.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-71325e52cfdcbb6dea5f2e3a39c9076a1acf8dd890159b436e2ab01989ee8eab.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-722a834a5368b29f629af2e233c46d3edb1af857390c591f8dacad5d79ae5e84.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-728338b874b2b596ab7ae956ef7bc358d588d8bf6d2163027257e30fc609b721.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-72b08a7fc5d31d0f1099c725bdb88119f157538bbdccbc426bfafbd96e60fb94.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-72ec9299368a79b607101fe5abee542222cbd9e58375b7e303ea00fa97259352.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-73d6382da6a33bbb5f18dac1933bb13b1f845c7df9e0c813819567b2034f880a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7413d76edb4ac0e3481c0f85fedfedcdf408963902241470002ddded369b2983.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-744b948ca0dc640d0236c004e28fadce266935e8b9a3ee59907ca5e539dcfd72.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-74a0e74e4c5f6e6a7c2d3869cd7d06a1c8dc8f1c5382eb7261fbeecabdeb2ab7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7572373b4ff7a252c9964bd9e158edc4d96e04cf5b8eceaaea6e79d94ffebd96.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7591178bea7289e8a8c307cc0084540f0ac20ff6f4ab7c4c3b712837c402a727.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-75a1c80ca5c401462cc73d9792a0bd5ed46b2ced06893292014302703135020a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-75b59579c2ab7d639c44e659f345ebfaf857c0756280aefd4f89e2ea2b1a3eab.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-75c7733f2210665767176e4a05483532d18e8423b3f7a12b608feb0a1aff17e2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7605819af29c2fb091eaf49ffc1f3a35aed25f0fea2831d2a56308937d54f324.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-76523c728d887055c9937db56745bcef6f430661be9105019f8582d3e8b891a3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-76f78c18b63f4cfdee3288dc2ec68c4f86e4a40052221d656d6d9cedff19c187.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-778e283d4b8698af497bcb8243dfbf3570431dc771cf152a31a4bb3fe745eb4d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-77fcefa4304c1fb38afdf5826c3cf39989ec7ba18a241fc49ac1025d59ab2f8e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-78929234c77325560bf2c3b454222583e1971294624c1f40d60d0b6b7751985a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-78f420ce8277f35d9882ab2d071528eb72908f440b986f8b73f49acb4b2eca7a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-78f6c2f3dbd9cc289272fa339122b27ff2381c681c7b0aca3a26d5aa94fd06f4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-791a0110a7ef267538437570830f907b3e74ab23212d5d9a106d921a2417695e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-79781143dccbedbee68496c155523d8fd36bb773295b66dc9206f31fcf463511.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-79f71282f3caa1602fc2fbae9e3f187e4fb5df3797fce11f3b6d03e210af5160.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7a169cc9a9a0aefbfd7ed5cd2c14cbe2d981af808999810fd6a6f0c7105e6aad.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7ac63d16186f3d4c6c305087811d7482a700b0d2401606d9885afe19c50f1ce9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7afe68e5a25cdd9b7042285325dfec1f2a996e2c6805ccfb3870298e3aa6ba99.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7bb3027f4d3320da7a145687536e4ed60bcb140f7b0fda2b7747fa36283cfe31.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7bc311e5bea91e5de7df9b871dc1a7a3d6822ef347c4fdce9184c19bc940e43f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7bcf53d7181956fb8d9f134b1c90e4b3c0a925623af642ce0922e078726c2c96.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7c688211fa9243764715c36de0c08163dab1719f5c2f6d8c6c0b0e62e1af6a90.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7cec9ffcba7d417fc85dbd853f165686dfbd920fae1203799f9c28f3e7217f8e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7cef79957480e0396aced75f6ee8f5862d37c7e21a6241e6284971fc624c24b1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7cf076ea4279855a78aa5a11eb94babaf1e7b3c40a8165af7ad235e021b6e933.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7d0010b7d7ff014591e8d8c7dda6370095eb15f210d2d2bc766ce0b057c79585.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7d312d4ef8c4fc0f58866e7ce31da4fb75a8a66be30469069c586794a60a9ce8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7d36380191522bd1a8d96a7a87e3a72eeb957c3c405ab29010a4de45254d53b9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7d6fe9f48c69a725bffa3a594076bbeff1fa8c0ba90a10c2e266778b94ca15c0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7e6aa4b9c43db665ee49a75d564f190d261ad49d893b1c800c4146b461c17f25.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7f13ad93068e4f4a44259c2c1f906a9e03ec1ec359bf1d6de82cdf705a58ccc4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-7ffdea214d96eb5557bb1d997501f52e56d7ec35e5500ebbb954175c15de89fb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-807d96ab4e0b94c4a191d6d411d9e70b6bc66f0d2d7a08a1fdf8ba049b5223da.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-80a1306e666065363a038de8f2645c731c26b42b9ad0dce66a3e3a680fe520e7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-80cd2431b4c7d749a065279ec92427d33d10d11356cbc66ffda7b993114cd227.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-81158da0a21dd8297d22675ea7c7d528dcc3045644cb2946f7c089175e017ff7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-81b1418355081ef078364ecc618840861950b43aad1b1b0225b0b7f732bbaf37.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-81cfdc02fbd391ae8925dd2fdb8a6c97e303ccaec5931335554290fc7c56b6ea.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-81f2f59838da139158e8ddcb7692a9acae856713f491e5522a74a30777c1269b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-824ab684cfb907a8fa68c573fc268786bbbc3c7c4703f10e1ecd00d67c9552b5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-82e7592a8228672e325b9ec29b31ab0223cc617e494399bc9a69f1801d877962.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8320495ef8cbbaf53c3c834a8887085c97da7d85ad0f8673ac2b41b5802e13a8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-842d9628ac55e525607cfa141c860c8c103b3ae2d2bc9639d1058b9e4cca8517.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-84df6da41229b2ec8809d88742c539c342da1243324fb6d870fde5066b6e4ba5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-84e726a205d246ba3ca5e8b9f8aef1c3da1ba704f84f1cb5ce5cb1f5f47d8311.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8525badbd94c7bcaff03607476b6c3c1593aed6d0160e243e1648b5bcf6f208b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-855c44070a4015236f7b078923e19618fae3950b2bebc147ac977d4974c51680.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-865a703f316f02eeb4961e979707e6f92627ac63cb6f24e296416c82aed97aea.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-867177d33ccf55c7caf04e3ff343df4fd37d16b1792b22d5a03667073b26ecff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-86cf4787debeae93de01d1d8f9efc15b4ef2edd0e3e30bda59fffa7fa4a771e0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-86f4a17c1d6ffd7f7095a98d05717f79f10cc66fdfe426932a7060c458679f37.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-88a7fe7fca8481e367b3855af395cfc0fdb1e9bc9adea29152fad510d51e1f93.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-890df7b35953660e48361b74a2cc23327247c4a0d1854f3d6ae1f0cfe2ea7976.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-899726dd9f5f67ea34f86c178cfac3943f4c066042a7ff32144002f9773deae1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-89a880215164a4314660027b5505c05b3a57fcb0e161852c8fa3badb1f898b35.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-89ac68ecb7480049ab9587dbe52af8bb15a488eca0d3cfda9236502d0b161b60.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-89c8bc2644ec26bb500da22c81cfb798b2f5939763cecc2bb5d7dc8a3ee6a432.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8a04f99e34886560afc30a130d30c4e49995bd9dd3de1ea6fc8abe4bc4b7b10f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8a219f834efceb8ce3a2d79161696c53e0988b2c55291d3cc877363afd47a170.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8aaa1cea3ce6d58ad91700d93e44eb8234202ec86d92ef38a0a57c5c2478a9e8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8c0b2d172578bd332b54a82aaaf58f695fe7555d974074502569074a89a1f74e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8c1760a50b2cae76d4216bf3293bd697ea6c9a0e2b81e791615de9a97888f57a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8c821885991b55755a3ff2bc0381340f53e62257e6e057a292695e1a79d9eed0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8c9916abf54560386df92cbdf2c58e6676594a676fad5af69a434cab3cb0d7b3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8e1378b8f568aa67be134c7f2cb28f88fc1bc832802c98333f0e07bf9214adee.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8f527c9a6367d65559f636ecb2981705e527c6b6b28d0eb7a87744e04b87a127.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8f668062c0d8c4018e4f4450e9cb3caebbce2431113f6b43123f4b4d8fb270e5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8faba72de872e259525af37d42df18f3118f0cd67a4419551623b39055fa4eae.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-8fda740c29dcca572d7d0f439d0124039ac39930f90130d64eabd59092d3ca59.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-901775dbac185799e279d7583fec4d8d01cfdf05b242f82c8cab15dae172eb21.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-903232c5815f13a40d4ec0cb1a5aa638add32833904e7f5ed0b08a9f8a2be497.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-915c77f2057b0c4bed450e9ab634d6ed29230086b17acaa91ab5bf2af04e25fe.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-920d63c3b1ebe1c603904dd3ebf44c53288808611dc1a39403c83aa0187deafa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-923fa891128332edbe4bc95844612cc4c3c273afb69cb167183caf1453bf5e43.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9272625ecfef0069a774ba7809862fcaf1d83c3c8644ce9be9bc8f33c54f2144.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-92df2cd96506b916028d68422da599b5b17862aa5f7e967c77a222918c749934.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-93466c601805aa1516221eeff061a1d6ccf1e919344636978fbf8177111b70fc.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9369ac311070cc6c7110c0d9da3193c4f64ba526736d6cde8f8ce635791507b3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-937819b3d3219c7fd6d8c0fcb7518581e8cf509d625bf797ea25144aa7e2c9e1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-937d6ffaaae302c782cf4b2178af8c769a69ec82f6920ab64e01f33341c5c2b6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-94300a61a5eee2c6e5d5aa62fed19ffc57e8bbd49d3d1a0e8c2c881122327855.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-946f5ddddf8d01287225045811190596f76e3666977274c74881cbe6737e6a70.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9553fd52aeabdf1cb3fb50b5e0753f07ae589c03e5d4ee3db578d747d2128f7c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-95efaa91fe33a11069601441756bc19154e3f217a3cd3e65101659336060101c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9623b5fc5e6b19ce4e40274a0f2651fa314a926689869b098c417b9689d34c96.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-96400aa7707493c8b31700fc8146f239bfa79bfe94c28022fab0bdeebc5431de.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-96f00e98f247a6f5069fc99959bac8c21fa2c5150f048864fe3e9609531638c7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-96f8de13b78ab5fd72b404989e48e7a3e53652afb0e33e3071a67925265058a8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-97012c5a9dea0fa93c6a3e81af590db3337db823851c00a54e1458a3ca9692c1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-970c7010acf4ff1b29469dfd5f30d64a7b96d4e428ba83b058dd80d6711a0605.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9757dd96997a51e4633f94976a6fb872393ee1469944b2deb59414e230198d8f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9794db8ee8da70ca119c39f60bb8752d42a1a1768bd8ae82a794f2240a186cea.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-990a59d482fa64510d91addd04d7d330feeb0b83313797a3a3eabcec044028b6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-991a7e1ca77f9e8ae67ee3c78e0d8b2d98eb6cc8465558a10e0c51e87ef16e88.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9990f719289bbd506ad7f4e8002c3d961576ec086fd42fb5896fdcad2dfee31d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-99b10e88b4c05f72d4f6d3f1766bf7b85920893518f49cc2c4743de2b804acff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9a11727242e453e77aef5b48397093f0dca26989e4858d382b98c3abc03269d4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9a25359d6abab57745ce57ab54ed62da8a5cd5866a1abd81ba731fb12654632b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9b126f96e4790300982ddc8c4d5e1654f5f16157d477528a876f81de48cd05d5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9b1d55e2ba156d10c5d0553ca0b3554f84bdb65eab73daa707df79795f24ab92.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9ba8f959526ec677c766bbd29804d18e62f87662173669560fb3418c47aa48fa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9baaa7fa5b95c813ef6f8d5ff887b85fcaba96d17d26256e53a21ec641e8ab7b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9babb0e92e3e8a456f73c83ddf1f24236fc447f88cb64ec10af7850b7976afaa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9c015778a9a9b1f25aaff9ed4082415b9d7c7e620ca523203a945d45514ac1c8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9c635f74d619d10ac8d278c49278410acfdc8b6a42f80f388757203fc14169e7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9d183c01a286a5f0248459ef22f4284d33ff290fa67a0622e37156d6d6172188.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9dce3c963b54dcd681c87b7ca72c0f2f212493831a1a19006f16f65490943894.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9e1887b504ca5fd4c8c1f898baa5fa067279ba84bcb660ba64df74cf14e8a3bb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9e4d4a29b943e228b9961fb3d25a4d1a489f7a65003c61a0811aae1d0bbb8b28.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9e8c2147df7edbb3155eaf2ecec015cd2215c38f7f453bae969ba5440427866b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9ecd96b2c981fd327672ba63bb11f5bc6970bffaafef5d5e1d658a869332d9d4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9ed1b30ecb7b95d4d9a535e81910aa32e5fb7a459a53918569f9fcb906fb136d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9f67944f6494e9c2437896b2673f407d3ad1d54ca74e33952fee694b6ba8b812.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9f977e9c310df85b10ba071628f8a660d7f84b27dda2c0d1bfc749bc3692a0f8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9fcf2e1f84e2b75f221d902c7ee1b01347100d6c70b013f7ba2afcfc98e7fad9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-9fcfedc7b63241473bf86807d321497f618be4624237f2143d1996b628c78884.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a0932badd7f8eb9629c12c4d2236d8738a0ae6c4e0c8930121a3427818b47227.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a09ab92edcf37fbe342913ab6fedfd77d26d70a69107d70eb946d081f6fe7c88.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a09b6c469d6c71848c287089c4bb7edf1aabc19692e73093659622c0ac69f4f9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a0fdd8cfa82a96b965b467c2c555116802db550a05d060a59a7fe9ecbed5c8bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a103e4201bb21941601e1271cd86fbf98fba6f52c63d88f6a2209f28635da619.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a1c973ca2df2175ebf7d8e105588fb1d53e070aaff0b1d02494975a366491853.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a1f92933101ce4d50dd476275b9b80fcfa941b998e57db426d8cd1525daa3cc6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a280f5d20a3ba979606275361f42ec830b57125c4c27cd9d7597ca18e0c80a75.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a29ecb5bf9c7bd6da3b2b82430bd137af310ef8c10f47291bf0f96840b5f9ded.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a405b854bb9bef7a1e262961ae7647c9938492241380f320c666f62277564e81.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a42cf4e7f11282b854f9a6fa933afd554806c29e6b7edc2a9bcf33fc3101483d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a4484dabb0a2cf4c82a2eb5b51d5ca50f0c901cf64a2caa2d7f41f1312676b96.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a496fc6bccf795d38ca8364bcbcdd3d981e7125e28f001fd9c08fedc2e293f05.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a4a94d4ecc188ce5eb50777c5636cf0354a87482d2c7a394d5f1aa9f9aef6f5b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a4b2053ba1a999333dcdb6dd55146488dba74901725d6c548ba8b322da537446.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a4ebbeae577c58ab4305afdb72bc1c6550be2e82f66ab8400257d0c76e258325.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a51a5d0eac3a3a092942842d023847ebcfcf857f3746864bd438290beef85182.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a54477c232e73edfa7a12f4aa68379bde3b8e87d22829632e1c72235beca5156.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a5ca4104e473ac05bf7157b21f9c72ef9101e1539da669652529faea3808ab5b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a5cf7ec049d29f5fb5044383f570bedc4a9dba34d4550e155fa44f03c421387f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a704a0436a1c4dbe1bc7f30cafd11958c76653dd9321e0f49ce7f3980240eda4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a738188729348c2b771af8fd66a25043795cf7aa68018f5b0b8e44803da1c16d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a73d14c482059d856d6dae425f509e076cd508b525faa9d0c5b916675554b76c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a799f03710672c91d61dcf09337a11b3ba52e7f86abe54037289d9b1142da2b4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a7b45688ff8790a9ffcbbfe91574e47af342b48984c2abed3cc59476e140dd74.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a7d46747a5856b5af7a50e2c3505ae0b97c63a1b4a2d6248400f4db51072bf07.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a82eb61dc4a8a8e6b3aebdf1c03a9b1c6d8bb6c65b93d57aa2db057a218e890b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a838cc47032d83cddec30347c70228f579b7aef8a0e5fb9490fd0aa515c6252e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a92fec6fc4d7fb714adf8fa1b444c4e587733a2e8217f826704a4ace9e25d7af.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a94e31075df4ce0a8160f4776ad2c211857d1cf8788e4fc57e0a5b662e0bd543.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-a9d5687da964352c137db9f9c0712bd4e2e1c170b2b798b7c42b960d486c02fb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-aa3ca1c18e4764b76665c20cc107f0cc0aad93ae26fa81c3c3a90da439cfcd7a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-aa6666ab6e6751bf33f28686969abf0ebcbe801664966f11793e7e13306ec7b1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-aad7eb6083ed9ee528e843cb30982aa8e5a16fb6a02130e6e7afee2f83791744.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-aaf8ce8ef00467ddb266b93e1e65707eb5175c3a2396410cc21f5156e700574e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ab14d0e58b822c0a2dec2f66c9471e22ffe451f6a9a2c87bea71c15035c26acb.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ab3fc2cb5e1f1ae98352154b1525b6b8068d7cdd2b863f57c2005d1949bcd027.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-abe36209cf843d4f218a2e03e31633baef876f2409f7219285827e71ccfcb005.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ac1cda8caf0f14d6c71d29d5893e3aede6010d24e43795ad680377dff63f0018.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ac4f66bd1ea3ae1ef59f0961092380ccdf6464f6fd35211c880c45b0fa8393be.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ac4f72b9512ca2b1b96d6462138bb05994ba788182bb7a65173870b7d3f3d845.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-acbe18fef861165a6a03eed0c5f6bd403d5517e5cc68d83706edd5bf62388e46.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-acdbd05009f2b7d706e6d3a285d3f9523090c8cab40933daf2802bdb005d5f4f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ad725e0f30dfde277af3f5177157fe1b13c9e273a8f2dabeecebe02200a1d527.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ada97bf5bc3e7bd9cdc2c5f4d85e03d6e3fc4cdc8d5ff183fbcef0f2b82b4e50.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ae5c55917bb073ad62713323f41d5f5308c02c4b22c1e7b16e0f1a9427adf4b0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-af0185e15ccaca55e6750fe3f29c944b7ce30e80850d1e7764a2d4a12738f8c8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-af120e1c1faef58e248a5012792c19243f96d2730d1558166b2d69a575a10945.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-af2a90f56e122c1d1fdc62ca698f3c388c751b9cebc1b5f0b8f69e8b045ccd21.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b006a25f60e4e87fe6c16b56b77cf359b66fc3cdaa4a14ffca3016963a457e57.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b01026cd7ed061ff32f95f5ad3c5ba1e9d031261607c3281d8021d86526c9703.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b01b472025ec84002382716608d2ed6e2678f5489adcf9c0e0b164833691c83f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b0d28636a21ffeff6072a62799083155d7f6e9e2832ffb7e177ec84d480299cc.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b12d9c05468a32110c8b75720ed9d62f7565934bc7eeeae0419c232370509e19.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b19f96e22237017479b9cf38b93716d366d023ff0a15c947536863b45a93fd26.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b1ba464f51add1d867dd5b23032ae67dd8556481fc29a50c4c318c443268a303.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b25e13623548034280c997929105fd03c340c72aea59f5a2c0a7699601ab9ad9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b2ead2cde20c688ee6314ceb829ac54533cd323666428233ec562be70e12154e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b2f58c9b9300887e5bf8af596bb5a3a8ddd9ce99ba8cc62edf70c11d70dc39f7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b329f26546ad2113cff0f499a0b7055a5ffcc506352e0d5fba532e3432cd1166.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b416384bdf270ab67e9e1898283ba9092a650642c77ee0f85ecc381cf5b4ae3b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b449cfec5c7cb04478e82f58120222c3b6acc919f51dd6c534ef963eef827592.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b4bc812f24866fd7ca8c98d8fdc97de6b59f12e785851350594efcce7bc450a5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b4e275458944edd076030b047d93603cca66f342d78ef7e453d9e0e413ee15ef.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b5340c62b200c4d31766710f14948685529fcdff03d7b6ce8507646e3f31feb3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b58602b673f9a79db37a6c0ab7e28f5dfb46d3b48cec58c403eb1142e4421517.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b69b941322ec70e1dd2b0b835df99d82fd9c2d1279dc08ff338c21c1527f88bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b6dc6e8fe5bd80c982f7c50ce305baf39773911fe38b391bfd639621801e1d25.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b70294fcc5b944d8e88f4885a739f79c1eee7dc7ca7812e440b9b6a5a4270e72.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b710ed669d75ad3492cdb0487e5cd88702feb89cb6b57fcae867951be04a98cd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b79c6015283f4cc357392918ea4383d3b221a1111698367cfcd65d73ecfe1074.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b849fd6972bdedaebfe3082e76a4bdef40a96e4508d82abf946535aac330a5e8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b9b547be2378ca10b27bb37134d280c5dbd63d55eee350e9c7c7868afd660217.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-b9ff3cf5ed43c160f7bb958f298189d9995871ab77f6b30b52b2fb26121a6d50.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ba66f7ea8be6dd482864926c472d7e6cfdc03a32e25442ebc9476d0bd94d0fa9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ba691d1f436f3b5c2c1dbbe79e58fa1e09223664e400d4df00f06914f1999846.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-baa8e264464738b8e1287c35ed2593621f94ed63eb2eeefa849a7a84a9c3ab15.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-badabad560a1259485c32069819f72bab514433b4a0ecf20be00e19e23c42ed4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bb5e893638c1bb7debb940c7bd3ce72a14c7e02bf6f0d4ebd06dc01532761b37.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bb66d13d67103cf134e112a065cf260d8b454d1a96bd3942eb1c3f54e99cd12f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bbfc55b8e4170911ed75d9a1b8de2257ab292b391c51ebf3cc02d483214413a4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bc356d0787fd9717dae2168c2e9bb7cb79fd4d7fc2bbf6f53a8df5202e489728.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bc960928eadc8510f85b0b22d9b0770e6c9aa48460dc205aa63aa9cefed6d103.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bcbb7ba31d82b782a64728b86f6e494485d7b4cd1ed402068a832a51c555ae0f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bccb9adb2ee28530fcf99b2eddcd9f111a8d1757c1fb4c2bf83a37ee89f2c365.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bd1a5a46f013280d48a1524e84b3b022ed889ea18f7d362200ad8bae1577dfc6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bd8354913a638921663adda1a2e4643df4ae2f55f32265e2d3af8dd2ab14188f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-be23e298c882b92a47e6526bf970924660e7a6e9e5ebbb773e535468ba864366.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-be7342fe4d17e8ce51e610f5db3a9320f7543f682203ef236a49122c80265de3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-be8859a175f77bd970a5f47005ac9a33a8e084053360c2c18afc466304093994.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bef03fa9978a4f0cc8fbe4e445c5758d9c5ce74dd2824d1d33f4193dc5d9064a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-bf9561b5e00f6aac5cb747c2dc1c766a0b9cf2b2ed4268cf26255e2a0d369252.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c1cc48ba23536f26e6e5fc7018b32bfd9309907fed9398e263cf0bcaaff6c2e3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c1d5c271eed1174887ab7aef2f1688ad4010a94f18f776524618e524b577af2a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c20b4381a8373d9e702f262ed87857b4bab8c37c5a3c1da94a63ab0a560f50c6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c258f575879e301c570e6f273633227ffbaf8a1b4af43f39c8a0819fb23c28e8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c2ac54dbc7527a87b3524d1a07420baad6e570a63716cc0b5c8d9ef8488f9b59.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c2d64d73c24d5ab93ddb001b4dff65cd9b06327074339251e3a3c46373567c5c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c31ce1222e1b4b0d75f6578102cbf1d2c58b31dac0018ec0470a1d14005deaa9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c3979eb34e0ed98d7018e450b4e0d3d4bbc7d32c830283a4f5349d1d30f44b57.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c3c5b7d5e01db17b74334189a66b3ffa0c4864404ab61a3c42f86be297792542.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c3cba29b9110add5dcadd9a7f3d35eb326438f6b661d22d30f9dbb54ecf3964a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c520f8af36094166acd49c0c551c76536a7dc0b995d941e7313a27e39f30e4ee.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c53ec755552be9a016a7cae88847fa5c423c23fc0b3e06e2a30624f6395f6f18.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c7136927c527c048b11187492702a0da34d198e38b703759d90caf45180941da.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c88495c5b5cb02c5173219556f651560dea7074eaf6c49f3e551673eab18b0e5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c88595020f6c48d7b96d62d1fab3b5ba35e2b3ee576b3635c5e5c6860aa497a7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c8c226594a34e18bd200c3370250d2294a2658a195350ec9e3a6e35190ef3d1b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c8cb7492d60f36f772fee87826d5f0ac8eba595502c1c60bf0998582148f02b8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c8ec219f13615b4e4020516a0b4f22d9f7d6da50dde7fbc9d33165dd3c33d4f9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c9013d76c653061da812724ade39ff17f74c055c897446929b741696f2f614be.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-c9618a99cc4deb4feefc32b7a4e137fee186bf8f9e8811329f0b87660c3ac6a0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ca813ba59e198bd917944bf8144b50f10a2a88ff4a35b7d3872c70ca1c0d70f1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cad964b14235ee3f175ebf03e2998f2fd43688ae385d5fb213132daeed9942ad.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cadeb260c789a3ddbe01e896d2b410bc2ef19d681970df71bddd854edbbd2055.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-caf122eafb543fe185a7eaa85f906b80d27f7421f6120dbb6762e24ed424e2d2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cb1a8486f6991495a3c1f99dcafd9b44ce8ede22a1d288a6226368c9a9eb5ed2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cc9b4dd5f7f229cff391922bbd5e712115b7c1d87027963b11cb9470b1753922.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cd23257eaab3a20e0ccfc42ba086d31053f34c1b16a85ced34e8a6b0e6c194fa.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cd9cab4f008f73d1ad1fb60452bf95d17d93a1e48960e183e8bc8fe093264616.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-cdbcf89c09e6726c043b797a335739e937546eafb4aba9303a578f67afc1bfa3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ce6cfd6ca65e1374a8722a830e043254bec66c4c08bdd56fa3cfa8829566ac6f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d01f175429b7309814f32424531f1f873befb549594614572bad9b2c5bcf91c5.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d02089055506f686dc3212ec1f9fb7add55c656a1b0d5db07a293761c64c9e4d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d0320af7da90a6ce8498f8c6da8e589b62b0730709b8600a52d84b4b2fcc7ce2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d11dee6205154b70162d66e1d741d1e7f4c15e8db23acbb650b4a9f141df0c4f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d24723efe614480a2e5b65528d17b74f9eeb58e07552b207b6892f530591f269.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d482ffaf32e8323f9950fa34be8fd33927107b268651bcd335886cfe6cc06562.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d48b6d6db20732ef42b7457349e04e662d233b65ad58bcc52e4a93e10c13654e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d4a40d5bb683f5bd5a2e8b290f02502559f6fc218109d2b408189ef805598264.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d5397489404a94fa33ade488dc414d415628bfddd00e9854cccf570134558ea7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d69d3eed2c92e77ec5333e1a6308a6088b0bb434c913ce4fd57d4f0bec410b1a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d6f628ee810e7c7ae3da35d97b074b01c9f74f0e4a8aa4d7f01972f5d0118e8b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d720b2721761e5c536c9f688961899ebfe845a9af2b0c68b2ba0f4ded9b51d54.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d74fe799ae6d4c151b6709edbc50f2966e6bfbce7d7c28594e9ed1f38452c5b6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d7c52adc913e26290f7500db9884fe01fafa7f5d39df349dde39ab2b418964b3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d97b434dad2d27ab877260c85cc01ce3206c0a699555f597e534649db6ffec72.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d98de8fd3431890e353ebecafc691a841f83edb92fcf3b53ee4205417e693e88.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-d9af22ffec355b3be91f0b6fa21050dcfcab0053c41111817b66bb5e4dc93d60.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-da0b0bb88f9d74abb53cfbcb78b32c116710d52db45b7f3a8a7b516eae1976fd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-da3a73347197e412454bb24bc7fe12964a6b3bae754a5db6344baf697c4a9dff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-da3b37f35d41b47f2b1e4d12c628755d756def312fdcb8d69a1051662a82ca68.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-da4b62f5d0b660e2bd33e780fc21d7f374ddefef85155b2c66545a7d3e12e088.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dabe245da459393357d0cde85dc18554da2ed407fe6ab5701273108ef778f722.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-daf600d68a7d9a7683d62f30c02989b3e9730c085ee4695658b49e5facdf3709.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-daffcb82b6c6c90fb9fd9a630b070ec57aac7f2939f11a2daa2dadf6f79bd279.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-db3c98d79ce50791697b2670a6f24022cbadb40ef48bff6c7324b87d631de31a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dbcdb8eb375ee2cda01ff9c5eab90b8e404b42269642551fde568241e3553c1f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dc70ce7101fe81b6600c72d662d47d5a0bf5f62fc19ecd9ff8fe66961245911c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dc79c2c777464bc698fb2c27f7bd0319175814d45b4d3a6759172e26ff72bf9a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dd07ec8954fd95d3eae68582722cafdf913e774f404a46c021dfa66797b6cd18.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dd8d9ccc419fa61a4559b09d5b986e40505dd1632ae456764c60c1e82820e6d7.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ddaf65a86ed85f45abe4c7ddebdbeb6920718309f1364e7d5c79328f8e963d37.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dddef973499ff80aac915511d438f224a82a540e394044a10f2c1c1ee3a67b4d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-dee5fac6a7aec47fd1e48211d9a2b09be0621402045adf6e30a1a69560391d29.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e03a38ea0eca31d54f8cdcd1ed813e6f8725e872719bdc62813b023ffe4aafec.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e0487b717560cb9fdb8105dbc754a98a994f506dbd31c65102f85e560c385abc.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e0d2a9d55999085e35b48db7c546dc098b915899fb1bb0f7ab4b13bfe36ffc93.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e10d7f4a6bf7fc15a4fa8d032a92b76b18d70d7ffa3f0a9c598c389368dbb0c6.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e16478b9f628db0b2ce3671af77c767c09a582c8d72430cd32e781574e70d0f9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e18dc9d485b11767e40768677f775fa1659dc3b3b7ef21208e3ece01b896401f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e1d31f32599b70d90205a70548f80e995862acae141473d70ad596fec35818fc.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e2309a7333daf09dbaf50b6a0a7eb108a69ad42d69aa1e4dda008430f12f6f83.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e24fe18c5a1d82b8cbb45dfe81bdc10303e0dc242f46afa21c40a98b0a39fece.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e2587be1ffdd9116859938ad0b4aa47cae243827f1742ebc9b8184d2407de9ff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e355adf9b116f891f43d3fe8b648b76df9158b1d9b3b37457a2054d5af03a3ec.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e395286417f5335826f61f364313790f17467ba3e7f4d06809ea97c310f37da3.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e3e3318327cbde01059bc175a84fd53bee33eeebabca481b033b868e16d42882.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e3f70a742cd28623ff80fbcb6e723eb3bbef95bc5842091a59140344a475b9ed.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e46aaa7e7c5c3e266fc8c09787a238a54f7592737db1612634ef3d0e12403b80.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e4d41f831f5015c2a2144125beb9348e5aa2628616346fdfe8011c4f15f41cfc.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e55b176a0f780ccc1d32501baa7692803229efc86b1725fdd46c550bebe8823e.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e575a090429e6a04b192d6d54cb750d1c70d26a6792b0f33e7aa4f0b2fb1de31.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e5b8932ef3e97ffff76a396085b17dc7241c073730c29d6dccea483df6fb081f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e675e3c2d88f382487a7e067520a7bf98d6cfce05cec72e0da5e6a26cb3b7497.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e6deca84358322a297cde6432d93e4f533f10574abc3640eff08b35b69ae3d68.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e7fd8a96b53cb4303f798d14445750be91ab6ffb26e39bb273045ac74f6cb2ef.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e8739f19957fdcfe024672b9517c9a2d644d6bacad279605d568e93fe9898747.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-e997cd9e284ace3f157182ccb3da811ae444b434591a6b718e2a18a98f8a06ff.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ea21bbfce35e08b690e7bc7ea5c6fcab39a34e039836c0f6db9c4321559c303d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ea4800244317d22f25cc34937678897d3991b7738f3fe7bdedd733d62427bc2f.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ea800b5c295c0a79ac8f390997ec4224cc1c6a91cd866d0897ecf4f657d066f0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ea83ef211c2343eeeb8f4e04506118bbf4d0e5f651f59a9fc92f7f2471da50db.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ead822ed103b53f60e9262fc27d754af00b48ef126efb635cba98c429f2ee712.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-eb418d8be03a926b59993c7dcebb955cc17bbda73a615f282ff6a34a193ada43.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ebab6b1dca7f570276bb3048da15393b430ec2c4cb0e96eaf920311d50d79301.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ebdc02b1f94a7c8ac0b6bb8846d12be50a61218eeb511f8cf2084f784239b91c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ebf9ebfd1cd8d91247fefa364933bc870b5ccf116aeb8255658ba3e4e3ee3c34.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ec86904df1e72ab7fddd8c0ce058fe61f4ef3b6ecaab1f99c2cc66954c3f84dd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ec8c4cb1d4152d86f324dcb25a21546a1e9f74b09e5c93de51b2f3a89a6601bf.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ed197a96b0f2f3ee2eec03d56cada9710d8b0f972a625f9ae23c0a09a2f3ac37.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ed9d6a4cf5f263b084aa257b51374e5b1846f48144aaf4c4aec0ba513e2494d8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ee574edaac490293b550b082928dca2e387bbbc4ab507c1b1aaa4ab355606166.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-eef7ba95e2341737e6b65a483c6d7ea530f75bd34b7afee68bf19f0f69020967.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-ef54e54d80eb772a875761cfe7a734e8fbcb8e8f8821c1395084bdca8e8c0976.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f036e88672f27427cdf6efd60c0fda8c2b6aca6ea4aa2c4adb1a29fb9b5e72bd.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f0efb3e19369ebc555e17eaff7181c6614216afc6e0b9b15b02250c9dcd72d14.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f1784c62f0a6d78813c708ef23e241dac6bb134b4659ee895c6aab1ce834d120.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f216b376764ac0d1328cb4a363efb99a56cfb2d9db0cf397f98c627f25dc78a0.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f224c1d84f7d36d54802edb53019e32bb921431671abe03bfccb1039a689bc0a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f24431dcc95574a4107557270aac2d69fe9e117f13ceb95cd72b39b05c2a1214.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f28264c6d21d20817485c23ea38550bcf9448b3b54c0c75d5b86e82ad7e9d7e4.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f33990d2ff4f114edd51765d4b21dbabc7a0e769fe29cbc7b8605eb061d5dda8.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f3ab0d363bdc7a803874a7a79d1d2e52aab6df5aa82a56e237fa51cf5e735180.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f40aacd37bc6563ee1f2b2b7a22cf2e6eb8e12d30e83804ed861d8a0633ac2df.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f47c338bff39d8ff8fde17581152bc9a0aca342228031685d8c08f5f9458fcf9.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f4b7d0f557528bcfc6b7f9ec4e759795c45bd2a4fecae149136f3c2f94e9d37a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f4ea9d1a8a36a9646a3ffcab77e73209726e245b553a0b1832758ba0d98e16c1.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f5eab992d8f58568d3d6c820bc2898fb70211580e76e6a43986437bac27d2651.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f5fb8f43bcd6c049a955acde1e349ffd555268e99ba3df22132f5bbe69199c8c.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f6325ef76cedfcdb4b25e6993fb7d9375523a0f1c507ac47963e2545997c5e26.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f64754dff4e00d8017cf61daec5893fd202623b22374fd914a8d20ca5b8ba451.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f665e503d5bf88206b0ab2485d3289f2b04d5159d07cec8a2dd670a4be8dda7d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f7b9ff550840a66f1fb5b9aefea604734bc5fababd22083cfa00efd23e3b60f2.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f80d03e14fbd7bd806bd699e19f6ed41b8c9cb7c16a7fdd155e69d1e843d96df.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f86085ea6501898ff197edec93da6f9667fa6ebfccd6ebae85e79561a321e144.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-f8afa793ca3cb812c43706b0bb34e43cb3a46c3c05bc9c35a09653413e9cb040.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fa9c84ea6df3805f5a436032a40cbe7d02bf27d01b716d6a7faf86b0027e3b9a.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fb1c8b00bc4483a5df38b1f82e28c12fc69eedf2d9b945e9af89292da739dbab.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fb6d391d5cbc7f71780a8d1df722e14f6da173654e2e4b64fed3b25c02b0286d.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fbce3f760b9199561cadb43b08bd8cde134209ab1cbb2aabda3067d2c9db3a76.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fd5fb8b1229961f0e1e9c5a4b1dd7c3fcbf433e004ec6909be042c9aa79f766b.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nad-fee21fde58c8bf1b9876b4863163dc255a1cdf41ffbc41c17af5b3383bdbbd84.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-01749cc4e684356f606f8aabd8e9afdff3158fd36592291aeef3519866b35952.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-03c5beabadc97c8ab9ee2c0ff010d654eea07882962aef28bb5159add167ef27.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-128c32b60037c2bd6c1ec7049fa91b853fc641f02b86e9601844953fd3ed5bf2.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-148802f33664701c5d419abe9818406ad995ec8dea2a34e0406b7c6f69bb7e5c.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-17aaa234f36ab1f8d6c21ba2cb3d3cf7b2e6ca3438c15424b8151154695c4a8a.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-1830b81e5c5b3a952ba1b7a4ff1c725348d41889ce1fc46e9ea3c180228e1925.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-19f655150ea44175ffe90c5d48b3befa666bbb9400df7c276cb2e6957c811609.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-1ffe748767c9c5ad6f130082ea7aff7211411c1f0096e020d2c003aba5eb2d47.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-20328b7ddf3e0580dcb0d4f1dde1808ebfea51d31335a7a3a009c9ba9d6c2603.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-2624f720b4f526da95e74fc832f955e5b1ab07fd462f35f23d9c1e4d7c6ce560.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-27ecc3ca0e44f3cfce32bd74f815332263224384982f64b94f2d09ce297f5451.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-2b26dac16b8c4b25623be9118fb5b6f99f84c5cabb273715bb93ac105ad762d4.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-36bf41bb3c71b11e87c0977860aa3d4ea7300c2c0a834361f070ef5d5308bc06.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-38c6fddd6d86c2b40f5f8dc20b4d8a4725140d8567384323d2a82c90ba5f6f49.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3b10549254e28af95efe51dbe6dbd2b71de8460baf351742062bf748d7af9b2e.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3b397a9553aa49a3ffe9f1fbdef184b9b818345ab23307320ce47480a4761af0.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3c7f72fc1cd741788842130fe633898126ab8a1b5a7f267a38f6c685bb9454ec.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3e82daef79c645434b3c715114b79b9aa0ca56f482053889b77d9cf0b4440bc3.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3ee6cdbe5b0ad43d33056e631b7b92ddbaf1fd49b0168fd32144d5b574041068.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-3f641d50c7ce4e272441cfe938c2e3c13a52d21d434aceedc39f4ef9ba3648a5.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-41865a0a8ed4f9e08341e2ceaf279a522a76a5ed74994c151d6e6aa763d781d9.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-4f79dcbc1b5f0de076575770c7de0230c44dfad216fbf50b6b3c9962ae959306.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-523c6afe6baa3f9d1ed5e38b1cc373d2b40fc0af9396cb347b980343475abb72.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-5d692b81ef136ddf5cf9ab7701002be0e2d20edff2ef4530d84a99848cfe3ca2.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-5e8712fa8cc2a7dc8789823a965f13e4bb1834cb7146f3bc3ea2f1789f0b8879.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-66de7c4a41c7acf4a86e7e9ac9ee7115bf7fc04e3e9cd38fcfc0cfb815657e40.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-69ac1803b9dc285a2246196d08cda414403763d1d24474b91fb513f6ed8d2701.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-6ddd03dd8af26aa75b74e5a134c11d52a85da56464f63dda284ff1677d9ee988.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-6fa0578a209b735d567bad84443409ce45138eea863f8c87484b9a9d99137aa6.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-7228678aa7d029ca71093f2d6ab48fb5302917a7248d6088e2ce1ec643945294.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-726acb873b0a320db0d1bfb4f9671ce3d1b1e73b8216526040ce730ba1b025d4.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-7594019003b589fbf0a71c3e150a1d1d9edc1b3d37976e5373e86b0a0cf4ef64.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-77771025e995203be29987258ab825cad5253984f56884500eb837b9d647e684.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-7ff10af999ca197371ee5b6c0f6248ec102b2bcf83e534fc5ca0d3149435db57.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-84684920250ff4ffb3245559a504982a6ab3f8175144bcda6b6a0eb8be6d9bb0.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-85c323a41d21fb4d010c2b6b52457a677935bc46ebbfd4e19c8968ea362bc87b.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-89233dd85164c8dd82b0db501154b27101853210bd9c9abcf3c4278b5ffd24f2.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-8932ac6b1e1d8be9d4385e594e6825a9acaa21a2a94bd897230613c2c7737cc2.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-89e540400dd571660bfc570c765e070830b72983014597482cf2c6ceca2502ca.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-936da393ebc838cd6b2c429bf7b0b23b12d5e316a6ab6f6007520a515e9167c3.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-939782f1cc95291312190a5c3b09f464656fd1d906b34d46d50b795fab0a4450.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-94f4ed23d5630a219169d27b1638e6f0f0e7a6750401527ab0bc32c35984499b.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-9982f97a7db0ac162790e21d5ff232fbe980abc7d661d38bf92fe5b1d2e0d507.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-a0bde55947e5ba18d3e337d9931267b4f05254399eb0cf02d891962d9dfde44e.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-a3b113e0dde7f74b7c4fd0e92939a85236668e82df1d50f37bf04d1cd7e04232.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-a3dd6879e3666b447c8125df323bd408613378ea27db54c571833ab59075aa3b.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-a5bc45a97d9212d0cf05a81dd211db70692dedd7dcc26c889808255a06d375ea.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-adbb16185a229eb1a249634fd495cc49aefb9824de96485d4c44d5fb9b76d569.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-b4ae61cadceb2bcaeda22c8a0fa4e660d8a407a3ce4404ecdb9d1ccaee691bae.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-b75bbf7c65b7ab59fe60b4c60102eb4dfa8b63a1213053017d214f45ad895f89.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-b9a13909b1aa4b1e29a9e8a33034c586b003aa245aadf9bda43c74c88f8ebe20.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ba02f3a9af302193877675cf96f67bf9f182df0e1779eae08489228b6ff717ca.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ba440727a0d66978d9e5cf896f0f2fa097ac445d974d0b087eecf3f3e9dc4a75.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-c07fa339d4de82c121d4f65b1e4c039e5d36108f203d063bb214bfdc261cb649.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ceb2ed6c8e887eaabd57f1562d2377d3faa3ada7f41a2a3d6010be3c193569c0.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-e7d0bb989b22a8d318d0599a3073a5fac5ac85a1ae75b50e8a39c0c649d6752e.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-e9df9801488ca244a7547ad04d47d589531957c3836d3cb9dd1c29d0dc5868e3.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ec001ec61a6bbb5a70ff940d4df4663d6e6c5628ee6200cc9d1bfa0e5f65d44b.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ed85ad798970d1b74589b2bada7223760aa269c3b017cb2400b1ed94635d4afd.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-ee9ecaf41a5ae1228ab6861e7ea3827c3bc42f7b2351678d3abda3c4c3bc640f.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-f38895df43139056416814591230318a73e2e6c6d8e8b529049ace1679e8d4a7.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-fa437b4f9edeaa04c1e10ed33cb28342cfafdf96f31f961b50af4579dbdc65f6.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "usgov-nppes-fc1713e20b656ea1721110fe2e92b4f7ccb1d8aa168a59d99dedb537138fe256.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-7e70b179a43541c1a98b3c4436ccb9791fa23a3c40fa80d91ab3c5af9a98089d.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-8fb813f5e95cb0a25df773be5baae58498fb7fab1e14e64d046e7699cdf7e6e2.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-f36e5181b5b7b119ce9739fdf3c5830ef970e48e340ea9dbeab0bd4a11e7ba73.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-postalcode-5a6449e82df6d869fcb60a962e44fe545657dfee4641d9f6b619324e81bb2111.parquet",
+			"source": "wof-postalcode",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-postalcode-ab84e5549f19d5399e14a35d9a35f237cb3cfba0debc08dd1e67811fa4d9254d.parquet",
+			"source": "wof-postalcode",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "state-ia-contractors-6560e974a391a46c173d21596e130faf3893cda3347ee4e9c5cc3147456b6998.parquet",
+			"source": "state-ia-contractors",
+			"splitAttribute": {
+				"path": "state-ia-contractors-6560e974a391a46c173d21596e130faf3893cda3347ee4e9c5cc3147456b6998.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "state-tx-notaries-ddefff751af72ff7f9cf5a5bc8b9823e304a8e754535e400e4667f1ce05ad58c.parquet",
+			"source": "state-tx-notaries",
+			"splitAttribute": {
+				"path": "state-tx-notaries-ddefff751af72ff7f9cf5a5bc8b9823e304a8e754535e400e4667f1ce05ad58c.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-1de59ca35f326f8e087be55c038381e36806bee065971eb766bfd9f979697c11.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-1de59ca35f326f8e087be55c038381e36806bee065971eb766bfd9f979697c11.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-4ede3aa57e5abf3ef343e19eacf17cf7db0cb472c4dfe79b5a2f278c68460200.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-4ede3aa57e5abf3ef343e19eacf17cf7db0cb472c4dfe79b5a2f278c68460200.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nad-c30b5dcdc8f8b84cebaca6e4c5871da6973e3415c114510ff25bea384bbe4a75.parquet",
+			"source": "usgov-nad",
+			"splitAttribute": {
+				"path": "usgov-nad-c30b5dcdc8f8b84cebaca6e4c5871da6973e3415c114510ff25bea384bbe4a75.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "usgov-nppes-8067c8b3a88b12097d424c3f2ec003c7cd8f93e19181e09e1696da23489713d6.parquet",
+			"source": "usgov-nppes",
+			"splitAttribute": {
+				"path": "usgov-nppes-8067c8b3a88b12097d424c3f2ec003c7cd8f93e19181e09e1696da23489713d6.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "wof-admin-2b062e6bbab1a197b4dc8f97aa14ca1b2e21e58923a2377a96b663a7e4dd4155.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-2b062e6bbab1a197b4dc8f97aa14ca1b2e21e58923a2377a96b663a7e4dd4155.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "wof-postalcode-f6df89cdd613eb44bac42ff86cd329dbdaa83de36bab98d8f2965fef9ee65c9b.parquet",
+			"source": "wof-postalcode",
+			"splitAttribute": {
+				"path": "wof-postalcode-f6df89cdd613eb44bac42ff86cd329dbdaa83de36bab98d8f2965fef9ee65c9b.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "part-deepseek-kryptonite-train-v0.8.20.parquet",
+			"source": "deepseek-kryptonite",
+			"splitAttribute": {
+				"path": "part-deepseek-kryptonite-train-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "invented-po-box-cedex-v0.8.20.parquet",
+			"source": "invented-po-box-cedex",
+			"splitAttribute": {
+				"path": "invented-po-box-cedex-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "invented-postal-unit-guideline-v0.8.20.parquet",
+			"source": "invented-postal-unit-guideline",
+			"splitAttribute": {
+				"path": "invented-postal-unit-guideline-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "invented-house-venue-v0.8.20.parquet",
+			"source": "invented-house-venue",
+			"splitAttribute": {
+				"path": "invented-house-venue-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "invented-house-venue-intl-v0.8.20.parquet",
+			"source": "invented-house-venue",
+			"splitAttribute": {
+				"path": "invented-house-venue-intl-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "rendered-us-county-v0.8.20.parquet",
+			"source": "rendered-us-county",
+			"splitAttribute": {
+				"path": "rendered-us-county-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "rendered-us-city-county-v0.8.20.parquet",
+			"source": "rendered-us-city-county",
+			"splitAttribute": {
+				"path": "rendered-us-city-county-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "rendered-us-city-state-v0.8.20.parquet",
+			"source": "rendered-us-city-state",
+			"splitAttribute": {
+				"path": "rendered-us-city-state-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		}
+	],
+	"replacedSources": [
+		"usgov-nad",
+		"usgov-nppes",
+		"state-ia-contractors",
+		"state-tx-notaries",
+		"state-ny-notaries",
+		"wof-admin",
+		"wof-postalcode",
+		"deepseek-kryptonite",
+		"invented-po-box-cedex",
+		"invented-postal-unit-guideline",
+		"invented-house-venue"
+	]
+}
