@@ -5,6 +5,8 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Install, check, roll back and prune local data
 
 Use this procedure to manage the geographic data a Mailwoman installation reads. Each `mailwoman data pull` installs files into a data root and records the new selection as a numbered generation. You can return to the previous generation, select an installed file by its ID, and delete files that no kept generation uses.
@@ -13,7 +15,7 @@ This guide uses the smallest <Country code="US" /> files so each step finishes i
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
+- <NodeRequirement />.
 
 Install the published packages:
 

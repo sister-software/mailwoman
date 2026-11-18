@@ -5,6 +5,8 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Check parsed records against an application policy
 
 Use this procedure when an application needs a stated completeness check before it accepts a parsed <Country code="US" /> street address. The example requires one `house_number`, `street`, `locality`, `region`, and `postcode` component. It then checks the postcode's <Country code="US" /> ZIP Code shape. These are application requirements for this example, separate from the rules the postal service applies.
@@ -13,8 +15,8 @@ The check returns `pass` when all required components appear once and the postco
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published 11.0.0 packages:
 

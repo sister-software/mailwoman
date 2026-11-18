@@ -6,14 +6,16 @@ source-of-truth: packages/annotations/lib/index.ts, packages/spatial/lib/coordin
 verified-with: published @mailwoman/annotations, spatial, codex, core v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Annotate a result
 
 Use this procedure when a consumer needs derived facts about a coordinate, such as coordinate formats or country reference data. Keep the address parse or geocode result separately when the consumer also needs repeated components, coordinate provenance, or resolution evidence. The examples use a fixed public coordinate and address fields supplied by hand, in place of a geocode result.
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published 11.0.0 packages the examples use:
 

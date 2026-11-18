@@ -6,14 +6,16 @@ source-of-truth: packages/normalize/lib/compute.ts, packages/normalize/lib/types
 verified-with: published @mailwoman/normalize, neural, neural-weights-en-us v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Normalize an address before direct parsing
 
 Use this procedure when your application calls `NeuralAddressClassifier.parse` directly and must preserve the caller's original text. The classifier parses the exact string you pass to it. Run the deterministic normalizer first when your input has extra spaces or punctuation, and keep its `raw` and `offsetMap` beside the parse result. The [first parse tutorial](../start.mdx) shows the full runtime pipeline. That pipeline runs the normalizer itself.
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the packages used in this example:
 

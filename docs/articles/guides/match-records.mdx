@@ -6,6 +6,8 @@ source-of-truth: packages/match/lib/blocking.ts, packages/match/lib/fellegi-sunt
 verified-with: published @mailwoman/match v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Match candidate address records
 
 Use this procedure when you've labeled address pairs and need to inspect a matching policy before linking records. This example compares street text and postcode exactly. It leaves apartment units out of the score on purpose, so that a false match shows up in the evaluation. The addresses below are synthetic, and the exercise uses no parser or geographic database.
@@ -14,8 +16,8 @@ The procedure scores pairs of address records. Entity resolution of people or or
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the matcher:
 

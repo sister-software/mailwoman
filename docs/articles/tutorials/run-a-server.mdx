@@ -5,13 +5,15 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Run the Mailwoman HTTP server
 
 In this tutorial you start the native Mailwoman HTTP server on your machine and send it four requests: a health check, a parse, a geocode, and a request with a missing field. You then stop the server. Each step shows the complete response the server returned.
 
 ## Before you start
 
-- Node.js `^24.22.3 || >=26.13.1`.
+- <NodeRequirement />.
 - An empty project directory.
 
 Install the published 11.0.0 packages:

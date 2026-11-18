@@ -6,6 +6,8 @@ source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, 
 verified-with: mailwoman v11.0.0
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Packages and runtime
 
 This page describes the published 11.0.0 Node packages used by the first-parse exercise and the selected settings that affect their runtime. The package names and import surfaces below were checked against installed 11.0.0 manifests. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
@@ -24,7 +26,7 @@ The [CLI reference](./cli.mdx) lists the current checkout's generated command an
 
 The [first-parse tutorial](../start.mdx) installs the first three packages and runs a complete parse. The [record-check guide](../guides/validate-records.mdx) also installs `@mailwoman/codex` for `isZipCode`. `mailwoman` declares `@mailwoman/neural` and `onnxruntime-node` as dependencies. The tutorial installs `@mailwoman/neural` explicitly because its script imports `NeuralAddressClassifier` from that package. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
 
-Mailwoman requires Node.js `^24.22.3 || >=26.13.1`. These are the patched release floors from the [November 2026 Node.js security release](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
+Mailwoman requires <NodeRequirement />. These are the patched release floors from the [November 2026 Node.js security release](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
 
 The manifest also declares `type: "module"`. The examples on these pages are TypeScript files that Node runs directly, from a project whose `package.json` sets `"type": "module"`. The en-US weights package version is 11.0.0, while its model card identifies the model inside it as version 10.8.0.
 

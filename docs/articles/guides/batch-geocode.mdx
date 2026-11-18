@@ -5,6 +5,8 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Batch geocode a file of records
 
 Use this procedure to geocode a file of records that each have an ID. The script on this page runs one geocoder process for the whole file. It writes one output record per input row, marks the rows left without a coordinate, and skips rows already finished when you run it again.
@@ -13,8 +15,8 @@ Use this procedure to geocode a file of records that each have an ID. The script
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published 11.0.0 packages:
 

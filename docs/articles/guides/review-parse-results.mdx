@@ -6,14 +6,16 @@ source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/p
 verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Route parse results to review
 
 Use this procedure when a <Country code="US" /> street-address intake needs a consistent rule for sending parser output to a review queue. Define what your downstream workflow requires first. This example requires a `structured_address` kind, an empty `faults` array, and nodes tagged `house_number`, `street`, `locality`, `region`, and `postcode`. A row meeting those conditions moves to a separate validation step. Whether the address exists or receives mail needs postal or geographic evidence beyond this rule.
 
 ## Prerequisites
 
-- Node.js `^24.22.3 || >=26.13.1`.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published parser packages:
 
