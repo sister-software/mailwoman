@@ -21,7 +21,9 @@ import {
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
 import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix/index"
+import { readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import { peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { resolvePath } from "path-ts"
 
 import { $public } from "#release-kit/env"
@@ -400,6 +402,35 @@ async function materializePostcodePrefix(context: MaterializationContext, worksp
 	}
 }
 
+/**
+ * Remove the store's pair index when its header records a borough database other than `boroughDB`.
+ *
+ * The store key hashes the generating code and the committed inputs, and leaves the admin database out.
+ * An admin swap therefore keeps the key, and the entry built from the previous database would serve.
+ *
+ * The PIX1 header records the md5 of every source the build read, including the admin database.
+ */
+async function evictPairIndexOfAnotherDatabase(
+	context: MaterializationContext,
+	filename: string,
+	boroughDB: string
+): Promise<void> {
+	const cached = resolvePath(context.derivedStore, filename)
+
+	if (!(await pathExists(cached))) return
+
+	const { md5 } = await readWOFSourceIdentity(boroughDB)
+	const { sourceMD5s } = await peekPairIndexHeaderFields(cached)
+
+	if (sourceMD5s.includes(md5)) return
+
+	context.log(
+		`derived store entry evicted → ${filename}: built from [${sourceMD5s.join(", ")}], ${boroughDB} is ${md5}`
+	)
+
+	await removePathIfPresent(cached)
+}
+
 async function materializePairIndex(context: MaterializationContext, workspace: string, dir: string) {
 	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const entry = context.pairIndexByCountry[country]
@@ -436,6 +467,10 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 				`Missing pair-index ${label} for ${country}: ${path}\nSet MAILWOMAN_DATA_ROOT or softFeed.pairIndexByCountry.${country}.`
 			)
 		}
+	}
+
+	if (boroughDB) {
+		await evictPairIndexOfAnotherDatabase(context, `pair-index-${country}.bin`, boroughDB)
 	}
 
 	if (await serveFromDerivedStore(context, dir, `pair-index-${country}.bin`)) return
