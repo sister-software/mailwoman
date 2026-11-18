@@ -706,6 +706,10 @@ captures run against the real shipped weights instead of a staging candidate:
    Verify whether the row is in the ledger and report it. Also flag any missing row for a prior version
    that you notice, because missing rows otherwise accumulate unnoticed.
 
+Install and run commands in the docs need no edit at release. They write `{{release.version}}`, and the
+docs build substitutes the `mailwoman` manifest's version. Dated evidence sentences keep the version they
+were checked against until a capture is rerun.
+
 `limits-and-status.mdx` and `releases.mdx` change together when a model promotion changes the shipped
 model version. Add a row to the releases matrix and update the public status page's release summary.
 
