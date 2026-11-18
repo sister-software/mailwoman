@@ -25,7 +25,7 @@ import { tryReadDefaultRegionNames } from "@mailwoman/corpus/build/region-names"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { writeSnapshotCandidates } from "#tools/eval-harness/heldout/snapshot/candidates"
+import { writeUnreadRows } from "#tools/eval-harness/heldout/snapshot/candidates"
 
 const { values } = parseArguments({
 	options: {
@@ -66,7 +66,7 @@ if (!inputs.length) throw new Error(`${values.input} holds no .csv file`)
 
 const streetIndex = values["street-index"] ?? null
 
-const record = await writeSnapshotCandidates({
+const record = await writeUnreadRows({
 	adapter,
 	adapterOptions: inputs.map((inputPath) => ({ inputPath, streetIndex })),
 	fetchRecord: await readLocalJSONFile<unknown>(values["fetch-record"]),

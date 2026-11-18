@@ -99,7 +99,7 @@ export function snapshotCandidatesManifestPath(outDirectory: string, source: str
  * @throws When a corpus lists no file of the adapter's source.
  * An unread corpus would make the exclusion silently empty.
  */
-export async function writeSnapshotCandidates(input: {
+export async function writeUnreadRows(input: {
 	adapter: CorpusAdapter
 	/**
 	 * One adapter run per input file of the snapshot, such as BAN's one file per département.

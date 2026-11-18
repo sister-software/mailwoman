@@ -6,15 +6,12 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { createUnitSplitter } from "@mailwoman/corpus/adapters/street/unit"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { buildProbeSets } from "#tools/eval-harness/heldout/probes/build"
-import {
-	snapshotCandidatesManifestPath,
-	writeSnapshotCandidates,
-} from "#tools/eval-harness/heldout/snapshot/candidates"
+import { snapshotCandidatesManifestPath, writeUnreadRows } from "#tools/eval-harness/heldout/snapshot/candidates"
 
 let scratch: TemporaryDirectory
 
@@ -33,15 +30,19 @@ const record = (id: string, house: string, street: string): CanonicalRow => ({
 	license: "public-domain",
 })
 
-const adapterOf = (rows: readonly CanonicalRow[]): CorpusAdapter =>
-	({
-		id: "probe-snapshot",
-		async *rows() {
-			yield* rows
-		},
-	}) as unknown as CorpusAdapter
+const adapterOf = (rows: readonly CanonicalRow[]): CorpusAdapter => ({
+	id: "probe-snapshot",
+	defaultLicense: "public-domain",
+	addressRole: AddressRole.Premise,
+	register: null,
+	surface: SurfaceOrigin.Rendered,
+	description: "Rows for the snapshot-candidates test.",
+	async *rows() {
+		yield* rows
+	},
+})
 
-describe("writeSnapshotCandidates", () => {
+describe("writeUnreadRows", () => {
 	it("keeps only the records no corpus or frozen set holds by identity, group or folded text", async () => {
 		const corpusFile = scratch.path("corpus.parquet").toString()
 
@@ -96,7 +97,7 @@ describe("writeSnapshotCandidates", () => {
 
 		const out = scratch.path("out").toString()
 
-		const result = await writeSnapshotCandidates({
+		const result = await writeUnreadRows({
 			adapter: adapterOf([
 				record("1", "1", "Elm St"),
 				record("2", "2", "Oak St"),
