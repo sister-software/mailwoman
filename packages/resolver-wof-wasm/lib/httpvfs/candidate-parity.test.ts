@@ -60,10 +60,24 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 		expect(b.referential).toBe(n.referential)
 	})
 
-	test("'NYC' — the one structural divergence: Node's fuzzy tier answers, the browser abstains", async () => {
+	// WOF 85977539 holds `NYC` as a colloquial and an unknown-kind name,
+	// so both readers answer it through the exact tier.
+	test("'NYC' — both readers answer New York City by its exact colloquial name", async () => {
 		const nodeHits = await node!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 		const browserHits = await browser!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 
+		expect(Number(nodeHits[0]?.id)).toBe(85_977_539)
+		expect(nodeHits[0]?.exactMatch).toBe(true)
+		expect(Number(browserHits[0]?.id)).toBe(85_977_539)
+		expect(browserHits[0]?.exactMatch).toBe(true)
+	})
+
+	// A misspelling holds no exact row, so only Node's fuzzy tier can answer it.
+	test("'Philadelpia' — the one structural divergence: Node's fuzzy tier answers, the browser abstains", async () => {
+		const nodeHits = await node!.findPlace({ text: "Philadelpia", placetype: "locality", limit: 5 })
+		const browserHits = await browser!.findPlace({ text: "Philadelpia", placetype: "locality", limit: 5 })
+
+		expect(nodeHits.length).toBeGreaterThan(0)
 		expect(nodeHits.every((h) => h.exactMatch !== true)).toBe(true)
 		expect(browserHits).toEqual([])
 	})
