@@ -207,3 +207,7 @@
 		padding: var(--ss-spacing-2);
 	}
 }
+
+.ss-code pre {
+	tab-size: 2;
+}
