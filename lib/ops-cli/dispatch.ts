@@ -48,7 +48,7 @@ import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { importSizesPath, writeImportSizes } from "#repo-health/effects/import-sizes"
 import { writeEffectsRegister } from "#repo-health/effects/register"
-import { lintCodeBlocks } from "#repo-health/markdown/code-block-lint"
+import { lintCodeBlocks } from "#repo-health/markdown/code/block-lint"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 

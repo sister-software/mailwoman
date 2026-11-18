@@ -13,7 +13,7 @@
  *   only hold one inside a string literal, where it parses.
  */
 
-import { type Fence, pageLines, scanFences } from "./fences.ts"
+import { type Fence, pageLines, scanFences } from "../fences.ts"
 
 /**
  * The file extension each fence language is linted as.

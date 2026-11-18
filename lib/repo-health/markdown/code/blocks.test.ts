@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { extractCodeBlocks, replaceCodeBlocks } from "#repo-health/markdown/code-blocks"
+import { extractCodeBlocks, replaceCodeBlocks } from "#repo-health/markdown/code/blocks"
 
 describe("extractCodeBlocks", () => {
 	test("returns lintable blocks with the page lines of their first and last content lines", () => {

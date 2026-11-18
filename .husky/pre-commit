@@ -131,7 +131,7 @@ fi
 # - Both run from source through `mwops`, so neither needs `yarn compile`.
 # - Each runs when the staged paths include what it reads.
 DOCS_PAGES='^docs/(articles|src/pages|research)/.*\.mdx?$'
-CODE_BLOCK_SETUP='^(oxlint\.[^/]+\.ts|config/oxlint/.+\.ts|lib/repo-health/markdown/[^/]+\.ts)$'
+CODE_BLOCK_SETUP='^(oxlint\.[^/]+\.ts|config/oxlint/.+\.ts|lib/repo-health/markdown/.+\.ts)$'
 if printf '%s\n' "$STAGED" | grep -qE "$DOCS_PAGES"; then
 	node lib/ops-cli/cli.ts health mdx-angles
 fi

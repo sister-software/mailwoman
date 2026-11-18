@@ -44,7 +44,7 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { type CodeBlock, extractCodeBlocks, replaceCodeBlocks } from "./code-blocks.ts"
+import { type CodeBlock, extractCodeBlocks, replaceCodeBlocks } from "./blocks.ts"
 
 /**
  * The repo-relative directory the extracted blocks are written to.
@@ -68,7 +68,7 @@ const PAGE_EXTENSION = /\.mdx?$/
 /**
  * The files whose content decides what oxlint reports, besides the page itself.
  */
-const SETUP_FILE = /^(?:oxlint\.[^/]+\.ts|config\/oxlint\/.+\.ts|lib\/repo-health\/markdown\/[^/]+\.ts)$/
+const SETUP_FILE = /^(?:oxlint\.[^/]+\.ts|config\/oxlint\/.+\.ts|lib\/repo-health\/markdown\/.+\.ts)$/
 
 /**
  * The rule code given to a diagnostic oxlint reports without one. oxlint reports a parse error that way.
