@@ -18,7 +18,7 @@ Use the published finite-state transducer (FST) to suggest **place names** as so
 Install the two packages the example uses:
 
 ```sh
-npm install --save-exact @mailwoman/resolver-wof-sqlite@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install --save-exact @mailwoman/resolver-wof-sqlite@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 Check that `node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin` exists in this project before starting the server. The path is relative to the project directory. The [data and locales reference](../reference/data-and-locales.mdx) distinguishes this place-name index from the geographic databases needed to resolve coordinates.

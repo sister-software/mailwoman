@@ -17,7 +17,7 @@ Use this procedure to give an MCP client, such as a coding assistant or an agent
 Install the server with the parser packages:
 
 ```bash
-npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0 @mailwoman/mcp@11.1.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/mcp@{{release.version}}
 ```
 
 The MCP server loads the parser and the place resolver together, so its parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:

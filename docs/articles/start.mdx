@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0
 
 # Install Mailwoman and inspect a first parse
 
-You'll make a small TypeScript script that parses one address and prints each labeled part with its position in the text. The exercise uses the published Mailwoman 11.0.0 packages and takes about ten minutes, plus package download time.
+You'll make a small TypeScript script that parses one address and prints each labeled part with its position in the text. The exercise installs the current published Mailwoman packages and takes about ten minutes, plus package download time.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ npm pkg set type=module
 ## 2. Install the packages
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 `mailwoman` supplies the pipeline, `@mailwoman/neural` runs the classifier, and `@mailwoman/neural-weights-en-us` supplies the English model files. npm reports its download progress and dependency count for your environment. Check the installed Mailwoman version:
@@ -36,7 +36,7 @@ node -p "require('mailwoman/package.json').version"
 ```
 
 ```text
-11.0.0
+{{release.version}}
 ```
 
 ## 3. Write the parser script
