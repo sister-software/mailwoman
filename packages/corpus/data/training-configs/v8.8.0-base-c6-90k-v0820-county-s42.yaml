@@ -25,9 +25,21 @@
 #    from the v8.7.0 seed 42 audit (/mnt/mw/audits/epoch-mixture-v8.7.0-base-c6-90k-usgs-structures-s42.json) and the
 #    relabel counts in the inputs file, and the audit replaces them:
 #    - the three county sources, at 0.9 of about 2,690, 7,499 and 13,634;
-#    - `usgov-nad` rows with `subregion, region` (the county relabel, 243,004 of 90,566,949 base rows): about 10
-#      of NAD's 3,612 draws an epoch, so a presence floor of 1. NAD's epoch reads whole row groups, so this count
-#      varies more than a Poisson one;
+#    - the NAD county relabel takes no receipt (decided 2026-11-18). Its evidence is a population count instead:
+#      - Population: 1,570,484 `usgov-nad` rows of v0.8.20 run `subregion, region`, 0.2587% of 606,956,657, counted
+#        with DuckDB over the spans of every NAD file. The epoch-mixture audit's own population count gives the
+#        same fraction. The rows sit in 1,197 of NAD's 12,140 row groups and in 102 of its 608 files. 83 groups hold
+#        half of them.
+#      - One epoch: an epoch takes about 246 rows from each of about 13 random NAD row groups (3,318 NAD draws in
+#        the audited epoch). Over the measured per-group counts, a simulation of that pass draws none of these rows
+#        in 58% of seeds, with a mean of 8.1. The audit of seed 43 drew 0 against an expectation of 8.8.
+#      - The run: over its 11.5 epochs (11,520,000 samples) the simulation expects 89 rows, median 76, 10th
+#        percentile 2.
+#      - Why no receipt: the three county recipes of point 2 teach the county shape, about 274,000 rows over the
+#        run, and each passes its receipt. NAD labeled a county place value `locality`, against the recipes. The
+#        relabel removes that contradiction. Its exposure count therefore isn't the hypothesis under test.
+#      - The audit has no run-level receipt scope. The preflight audits one epoch, and a floor of 1, the smallest
+#        the loader admits, refuses the 58% of seeds whose epoch visits no group holding these rows;
 #    - the PO-box relabels: `usgov-nppes` `po_box` rows (9,666 of 9,197,061 base rows, about 7 of 7,105 draws) at
 #      a presence floor of 1, and `state-ny-notaries` (395 of 32,097, about 85 of 6,946) at 0.5. `state-tx-notaries`
 #      relabels 27 of 511,304 rows, about 0.3 expected draws an epoch, so it takes no receipt, and
@@ -63,10 +75,11 @@
 #   `audits/validation/coverage.run.ts` finds every `required_validation_coverage` floor met on the re-split's 23,234
 #   val rows. The tightest are NG at 27 rows against 20 and PF at 100. `val_rows` (36,864) stays above the 21,361-row
 #   draw, so the draw holds every admitted val row, as it did on v0.8.19;
-# - re-check every absolute `min_draws` receipt inherited from v8.7.0 against the v0.8.20 audit. Point 2 lowers
-#   every other source's share by 2.4%. On the v8.7.0 seed 42 audit the tightest absolute floor was `ban-bl-exposure`,
-#   452 drawn against 408. A 2.4% fall leaves it at about 441;
-# - run the CPU-only epoch-mixture audit (the receipt preflight) with the command at the end of this header.
+# - done 2026-11-18: the epoch-mixture audit (seed 43, 1,000,000 draws) on v0.8.20 meets every inherited absolute
+#   `min_draws` floor. The tightest is `ban-bl-exposure`, 450 drawn against 408 (expected 481.3). Every new receipt
+#   but the NAD county receipt is met. That receipt drew 0 of 8.8 expected, and point 4 records the evidence
+#   that replaced it. The audit of this config without it exits 0, in 13 min 40 s of host CPU. Its report is
+#   /mnt/mw/audits/epoch-mixture-v8.8.0-base-c6-90k-v0820-county-s42.json.
 #
 # Run shape: from scratch, with no `train.init_from`. Why: a fine-tune can't introduce a source the base never saw,
 # and the three county sources are new. Control: the v8.7.0 seed 42 run (74eaf854986e4211, corpus
@@ -624,14 +637,7 @@ data:
       component_sequence:
         - locality
         - region
-    # This config's header, point 4: the relabels.
-    - name: us-nad-county-subregion
-      min_draws: 1
-      source: usgov-nad
-      country: US
-      component_sequence:
-        - subregion
-        - region
+    # This config's header, point 4: the relabels. The NAD county relabel takes no receipt (point 4 states why).
     - name: us-nppes-exposure
       min_fraction_of_expected: 0.8
       source: usgov-nppes
