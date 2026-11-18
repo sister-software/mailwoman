@@ -7,10 +7,9 @@ owner: evaluation
 
 # Release requirements v10, postal_unit without loss, IE counties and the confirmation successor
 
-Status: **drafted. The reader refuses it until its confirmation pins are filled**. The operator decided three
-things on 2026-11-18. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v10.json` applies
-them. Its confirmation role lists two collections that aren't frozen yet, as `<datasetID>@pending`, and the reader refuses that
-placeholder. `release/current-spec.ts` stays on v9 until both pins are filled.
+Status: **registered**. The operator's decisions of 2026-11-18 are applied in
+`packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v10.json`, and `release/current-spec.ts`
+names it.
 
 ## 1. Route: a new version
 
@@ -60,11 +59,39 @@ confirmation v3 set or either r2 probe set. A separate search for any IE span st
 or ending with `county`, under any tag, found those 2 rows in 504 development IE rows, and the three other
 collections hold no IE row.
 
-## 4. The confirmation successor
+## 4. The confirmation role
 
-Section 6.5 retires `heldout-confirm-v0.8.18` and `heldout-confirm-v0.8.19-probes-r2`. Seed 42 read both and
-failed, and so did seed 43. The successor has to come from groups that no grading of 10.8.0, seed 42 or seed 43
-read. Corpus `v0.8.19-retention-overlay` holds none (observed from its `MANIFEST.json`):
+Decided by the operator on 2026-11-18: v10 keeps v9's confirmation collections,
+`heldout-confirm-v0.8.18@681959088a46e5c6` with `heldout-confirm-v0.8.19-probes-r2@8d423f96f9d5a1d4`. The rationale
+records every confirmation read before registration:
+
+| Date       | Spec | Arm                                   | Collections                                | Verdict                  |
+| ---------- | ---- | ------------------------------------- | ------------------------------------------ | ------------------------ |
+| 2026-11-16 | v8   | v8.7.0 seed 42, postal card           | `heldout-confirm-v0.8.18@8606834b12100089` | fail                     |
+| 2026-11-16 | v8   | seed 42, shaped card and fixed repair | the same                                   | insufficient evidence    |
+| 2026-11-17 | v9   | 10.8.0 against itself (baseline)      | both v9 confirmation collections           | fail, from `postal_unit` |
+| 2026-11-17 | v9   | `countyDesignatorFallback` on/off     | the same                                   | fail, from `postal_unit` |
+| 2026-11-17 | v9   | seed 42 `n42-i8`, seed 43 `n43-i8`    | the same                                   | fail, fail               |
+
+What section 6.5 then means for these rows. Seed 42 and seed 43 each read them and failed, so the rows are retired
+for recipe selection:
+
+- No choice of recipe, seed, checkpoint, decoder setting or corpus may be made by comparing confirmation results on
+  them, including the choice between seed 42 and seed 43. Those choices read the development role.
+- They stay readable for the release decision of a candidate already chosen on development, and every such read is
+  recorded in the next specification's rationale. A pass on them is weaker evidence than a pass on unread rows,
+  because v10's `postal_unit` change was decided after these rows' v9 verdicts were seen. The release report states
+  that.
+- 10.8.0's baseline scoring under v10 is its one baseline read for this version.
+
+The plan for the successor: corpus v0.8.20's split holds out new groups, so the next confirmation collection is drawn
+from its test split with `freeze.run.ts --exclude-dataset` listing every read collection, audited, and registered in
+v11 before the next release-directed run. A candidate trained on v0.8.20 has never seen those groups. Seeds 42 and 43
+trained on v0.8.19, so a verdict for them on the v0.8.20 draw also needs that draw's overlap audit against v0.8.19.
+
+### 4.1 Why the v0.8.19 corpus can't supply a successor
+
+Corpus `v0.8.19-retention-overlay` holds no group that no grading read (observed from its `MANIFEST.json`):
 
 - its `evaluation_groups` record names `evaluation-groups.v0.8.18.json`: the 90,486 groups of
   `heldout-dev-v0.8.18` and `heldout-confirm-v0.8.18`;
@@ -94,7 +121,7 @@ node packages/mailwoman/tools/eval-harness/heldout/probes/build.run.ts \
 --exclude-datasets` keeps out every group and folded text of earlier frozen probe sets. Those sets sit in no
 corpus split.
 
-### 4.1 Unsampled source rows (section 6.3)
+### 4.2 Unsampled source rows (section 6.3)
 
 On 2026-11-18 the coordinator chose a draw from source records no corpus build sampled. It can't produce a
 confirmation role that keeps seeds 42 and 43 gradable, because US and FR have no unsampled address rows. Observed:
@@ -123,6 +150,21 @@ confirmation role that keeps seeds 42 and 43 gradable, because US and FR have no
 
 A confirmation role drawn this way has no admitted US or FR rows. `country-US`, `country-FR` and the objective's
 US and FR strata would read insufficient evidence for every arm, so no verdict could pass.
+
+### 4.3 Newer snapshots (section 6.4), stopped
+
+The coordinator then chose newer releases of the US and FR sources. Observed on 2026-11-18:
+
+| Source        | Corpus read                                               | Newest published                                                  |
+| ------------- | --------------------------------------------------------- | ----------------------------------------------------------------- |
+| `usgov-nppes` | `2026-05` (`npidata_pfile_20050523-20260510.csv`)         | `NPPES_Data_Dissemination_November_2026_V2.zip` (`2026-11`)       |
+| `usgov-nad`   | `r24`, archive 8,477,543,836 bytes                        | `r24`: the portal's archive is the same size, compiled 2026-09-30 |
+| `ban`         | `corpus/staging/ban-france.csv`, downloaded by 2026-06-12 | the national export, last modified 2026-11-17                     |
+
+The NPPES `2026-11` snapshot and the BAN export were downloaded to `/mnt/mw/snapshots/usgov-nppes/2026-11/` and
+`/mnt/mw/snapshots/ban/2026-11-17/ban/`. The operator then decided not to refresh these sources, and the candidate
+run was stopped and its partial output removed. `heldout/snapshot/candidates.run.ts` stays for a later section 6.4
+draw.
 
 ## Reproduce
 

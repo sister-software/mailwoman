@@ -120,11 +120,7 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("reads the current specification as insufficient evidence when required countries have no rows", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v9\.json$/u)
-
-		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v9.json", import.meta.url).pathname)
-		)
+		const committed = validateReleaseSpec(await readLocalJSONFile<unknown>(CURRENT_RELEASE_SPEC))
 
 		const verdict = evaluate(committed, rowsFor("US", 50, 40, 45), {
 			published: committed.identities.published.sha256!,

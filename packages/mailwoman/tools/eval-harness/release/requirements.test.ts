@@ -12,7 +12,7 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v9.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v10.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 /**
@@ -24,8 +24,8 @@ interface SchemaThreePins {
 }
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v9 specification with every threshold registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v9\.json$/u)
+	it("accepts the current v10 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v10\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -106,26 +106,21 @@ describe("validateReleaseSpec", () => {
 		expect({ ...v9.identities, dataset: null }).toEqual({ ...v8.identities, dataset: null })
 	})
 
-	it("refuses v10 until its confirmation collections are frozen and pinned", async () => {
-		await expect(readLocalJSONFile<unknown>(specRecord(10)).then((s) => validateReleaseSpec(s))).rejects.toThrow(
-			/holds the placeholder heldout-confirm-v0\.8\.19@pending/u
-		)
+	it("refuses a collection pinned as a placeholder until it is frozen", async () => {
+		const spec = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const pending = `heldout-confirm-v0.8.20${PENDING_COLLECTION_SUFFIX}`
+
+		expect(() =>
+			validateReleaseSpec({
+				...spec,
+				evaluations: { ...spec.evaluations, confirmation: { ...spec.evaluations.confirmation, ids: [pending] } },
+			})
+		).toThrow(/holds the placeholder heldout-confirm-v0\.8\.20@pending/u)
 	})
 
-	it("differs from v9 in postal_unit's no-loss form and the collections only", async () => {
+	it("differs from v9 in postal_unit's no-loss form and the development collection only", async () => {
 		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
-		const draft = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(10))
-
-		const pinned = (id: string) =>
-			id.endsWith(PENDING_COLLECTION_SUFFIX) ? id.replace(/@pending$/u, "@0123456789abcdef") : id
-
-		const confirmation = draft.evaluations.confirmation.ids.map(pinned)
-
-		const v10 = validateReleaseSpec({
-			...draft,
-			identities: { ...draft.identities, dataset: confirmation.map((id) => ({ id, sha256: "c".repeat(64) })) },
-			evaluations: { ...draft.evaluations, confirmation: { ...draft.evaluations.confirmation, ids: confirmation } },
-		})
+		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(10)))
 
 		const byID = (spec: ReleaseRequirementSpec) => new Map(spec.requirements.map((req) => [req.id, req]))
 		const before = byID(v9)
@@ -146,9 +141,10 @@ describe("validateReleaseSpec", () => {
 		expect(v10.objective).toEqual(v9.objective)
 		expect(v10.statistics).toEqual(v9.statistics)
 		expect(v10.provenance).toEqual(v9.provenance)
-		expect({ ...v10.identities, dataset: null }).toEqual({ ...v9.identities, dataset: null })
+		expect(v10.identities).toEqual(v9.identities)
+		expect(v10.evaluations.confirmation.ids).toEqual(v9.evaluations.confirmation.ids)
 		expect(v10.evaluations.development.ids).not.toEqual(v9.evaluations.development.ids)
-		expect(v10.rationale).toMatch(/Confirmation reads under v9/u)
+		expect(v10.rationale).toMatch(/Confirmation reads before registration/u)
 	})
 
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {
