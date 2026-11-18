@@ -38,6 +38,7 @@ interface AddressRecord {
 	raw: string | null
 	countryCode: string | null
 }
+
 interface PolicyResult {
 	status: "pass" | "fail" | "unknown"
 	reason: string
@@ -56,26 +57,32 @@ function collect(nodes: readonly TreeNode[], found = new Map<string, string[]>()
 		found.set(node.tag, values)
 		collect(node.children, found)
 	}
+
 	return found
 }
 
 async function check(record: AddressRecord): Promise<PolicyResult> {
 	if (record.countryCode !== "US")
 		return { status: "unknown", reason: "US policy requires an established US country code" }
+
 	if (typeof record.raw !== "string" || record.raw.trim() === "") {
 		return { status: "unknown", reason: "address input is missing" }
 	}
 
 	const result = await parse(record.raw, { locale: "en-US" })
-	if (result.faults.length > 0) return { status: "unknown", reason: "parser reported a stage fault" }
+
+	if (result.faults.length) return { status: "unknown", reason: "parser reported a stage fault" }
 	const components = collect(result.tree.roots)
 	const missing = required.filter((tag) => (components.get(tag)?.length ?? 0) !== 1)
-	if (missing.length > 0) {
+
+	if (missing.length) {
 		return { status: "unknown", reason: `required component is missing or repeated: ${missing.join(", ")}` }
 	}
 
 	const [postcode] = components.get("postcode") ?? []
+
 	if (!isZipCode(postcode)) return { status: "fail", reason: `postcode ${postcode} fails US ZIP Code shape` }
+
 	return { status: "pass", reason: "required components are present and postcode has US ZIP Code shape" }
 }
 
@@ -87,6 +94,7 @@ const records: AddressRecord[] = [
 
 for (const record of records) {
 	const { status, reason } = await check(record)
+
 	console.log(`${record.id}: ${status} — ${reason}`)
 }
 ```

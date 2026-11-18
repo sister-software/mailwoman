@@ -196,6 +196,7 @@ try {
 		const result = geocoder.reverseGeocodeSync(point.lat, point.lon)
 		const locality = result.hierarchy.find((place) => place.placetype === "locality")
 		const country = result.hierarchy.find((place) => place.placetype === "country")
+
 		console.log(
 			`${point.id}: ${locality?.name ?? "-"}, ${country?.name ?? "-"} (${result.containment}, ${result.hierarchy.length} places)`
 		)

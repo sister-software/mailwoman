@@ -203,7 +203,14 @@ rather than by reordering the negation.
     as "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. The
     `Release version literals` step of `docs/scripts/check/docs-structure.mts` rejects a literal version in
     fenced code under `articles/` and `src/pages/`. TSX pages read the version with `useReleaseVersion`.
-11. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
+11. **Code blocks pass the same lint as other code.** `yarn lint:code-blocks` (`mwops code-blocks`) writes
+    each `js`, `jsx`, `ts` or `tsx` block of `articles/` and `src/pages/` to `.cache/code-blocks/` and
+    lints it with the repository's oxlint config. The `.cache/code-blocks/**` override in
+    `oxlint.config.ts` turns off the rules that govern repository code rather than a reader's script, such
+    as the license header and the Node builtin import ban. `yarn fix:code-blocks` applies oxlint's fixes,
+    writes each changed block back into its page, and runs oxfmt over the page. A signature or other
+    partial example adds `fragment` after the language, as in ` ```ts fragment `, and the lint skips it.
+12. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
     recipe header, a config comment or a model card cites the paper rather than the product's source
     (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.
 

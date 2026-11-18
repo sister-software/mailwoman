@@ -64,6 +64,7 @@ interface InputRow {
 	id: string
 	address: string
 }
+
 interface GeocodeResult {
 	input: string
 	lat: number | null
@@ -71,6 +72,7 @@ interface GeocodeResult {
 	resolution_tier: string
 	coordinate_source: { source: string } | null
 }
+
 type OutputRecord =
 	| { id: string; status: "failed"; reason: string }
 	| {
@@ -92,11 +94,12 @@ const rows: InputRow[] = readFileSync(inputPath, "utf8")
 	.filter((line) => line.includes(","))
 	.map((line) => {
 		const comma = line.indexOf(",")
+
 		return {
 			id: line.slice(0, comma),
 			address: line
 				.slice(comma + 1)
-				.replace(/\s+/g, " ")
+				.replaceAll(/\s+/g, " ")
 				.trim(),
 		}
 	})
@@ -109,17 +112,19 @@ const done = new Set<string>(
 				.map((line) => (JSON.parse(line) as OutputRecord).id)
 		: []
 )
+
 const pending = rows.filter((row) => !done.has(row.id))
 const write = (record: OutputRecord) => appendFileSync(outputPath, `${JSON.stringify(record)}\n`)
 
-for (const row of pending.filter((row) => row.address === "")) {
+for (const row of pending.filter((candidate) => candidate.address === "")) {
 	write({ id: row.id, status: "failed", reason: "empty address" })
 }
 
 const work = pending.filter((row) => row.address !== "")
 
-if (work.length === 0) {
+if (!work.length) {
 	console.log(`nothing to geocode; ${done.size} rows were already done`)
+
 	process.exit(0)
 }
 
@@ -130,8 +135,10 @@ let next = 0
 createInterface({ input: geocoder.stdout }).on("line", (line) => {
 	const row = work[next++]
 	const result = JSON.parse(line) as GeocodeResult
+
 	if (result.input !== row.address)
 		throw new Error(`result for "${result.input}" belongs to a row other than ${row.id}`)
+
 	write({
 		id: row.id,
 		status: result.lat == null ? "unresolved" : "resolved",
@@ -142,15 +149,22 @@ createInterface({ input: geocoder.stdout }).on("line", (line) => {
 	})
 })
 
-for (const row of work) geocoder.stdin.write(`${row.address}\n`)
+for (const row of work) {
+	geocoder.stdin.write(`${row.address}\n`)
+}
+
 geocoder.stdin.end()
 
 geocoder.on("close", (code) => {
 	const seconds = ((Date.now() - started) / 1000).toFixed(1)
+
 	console.log(
 		`geocoder exit ${code}: ${next} of ${work.length} rows written in ${seconds} s; ${done.size} rows were already done`
 	)
-	if (code !== 0 || next !== work.length) process.exitCode = 1
+
+	if (code !== 0 || next !== work.length) {
+		process.exitCode = 1
+	}
 })
 ```
 

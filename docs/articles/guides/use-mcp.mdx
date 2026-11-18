@@ -63,7 +63,11 @@ import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js"
 
 // Pass the shell's environment, including MAILWOMAN_DATA_ROOT, to the server.
 const env: Record<string, string> = {}
-for (const [key, value] of Object.entries(process.env)) if (value != null) env[key] = value
+
+for (const [key, value] of Object.entries(process.env))
+	if (value != null) {
+		env[key] = value
+	}
 
 const transport = new StdioClientTransport({ command: "npx", args: ["mailwoman-mcp"], env, stderr: "ignore" })
 const client = new Client({ name: "mcp-check", version: "1.0.0" })
@@ -71,6 +75,7 @@ const client = new Client({ name: "mcp-check", version: "1.0.0" })
 await client.connect(transport)
 
 const { tools } = await client.listTools()
+
 console.log(`tools: ${tools.map((tool) => tool.name).join(", ")}`)
 
 for (const name of ["mailwoman_parse", "mailwoman_geocode"]) {
@@ -80,8 +85,13 @@ for (const name of ["mailwoman_parse", "mailwoman_geocode"]) {
 			arguments: { text: "1600 Pennsylvania Avenue NW, Washington, DC 20500" },
 		})
 	)
+
 	console.log(`\n${name} isError: ${result.isError ?? false}`)
-	for (const part of result.content) if (part.type === "text") console.log(part.text)
+
+	for (const part of result.content)
+		if (part.type === "text") {
+			console.log(part.text)
+		}
 }
 
 await client.close()

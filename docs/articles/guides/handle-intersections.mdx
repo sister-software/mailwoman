@@ -33,6 +33,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const parse = createRuntimePipeline({ classifier })
 
 type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
+
 interface FlatNode {
 	tag: string
 	value: string
@@ -43,14 +44,22 @@ interface FlatNode {
 for (const input of ["5th Avenue and Main Street, Springfield, IL", "5th and Main"]) {
 	const result = await parse(input)
 	const nodes: FlatNode[] = []
+
 	function visit(node: TreeNode): void {
 		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
-		for (const child of node.children) visit(child)
+
+		for (const child of node.children) {
+			visit(child)
+		}
 	}
-	for (const root of result.tree.roots) visit(root)
+
+	for (const root of result.tree.roots) {
+		visit(root)
+	}
 
 	const first = nodes.find((node) => node.tag === "intersection_a")
 	const second = nodes.find((node) => node.tag === "intersection_b")
+
 	const route = result.faults.length
 		? "review-stage-fault"
 		: first && second
@@ -58,6 +67,7 @@ for (const input of ["5th Avenue and Main Street, Springfield, IL", "5th and Mai
 			: result.kind.kind === "intersection"
 				? "request-clarification"
 				: "other-address-flow"
+
 	console.log(
 		JSON.stringify({
 			input,

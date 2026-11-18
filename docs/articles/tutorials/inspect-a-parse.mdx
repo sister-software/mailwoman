@@ -40,6 +40,7 @@ interface TraceNode {
 	confidence: number
 	children: TraceNode[]
 }
+
 interface Trace {
 	input: string
 	path: string
@@ -60,20 +61,28 @@ console.log("kind:", trace.kind.kind)
 
 for (const match of trace.queryShape.knownFormats) {
 	const { start, end, body } = match.span
+
 	console.log(`shape: ${match.format} [${start}, ${end}): ${JSON.stringify(body)}`)
 }
 
 function printNode(node: TraceNode, depth = 0): void {
 	const source = raw.slice(node.start, node.end)
+
 	if (source !== node.value) throw new Error(`Unexpected span for ${node.tag}`)
 	const indent = "  ".repeat(depth)
+
 	console.log(
 		`${indent}${node.tag} [${node.start}, ${node.end}): ${JSON.stringify(node.value)} score ${node.confidence.toFixed(3)}`
 	)
-	for (const child of node.children) printNode(child, depth + 1)
+
+	for (const child of node.children) {
+		printNode(child, depth + 1)
+	}
 }
 
-for (const root of trace.tree.roots) printNode(root)
+for (const root of trace.tree.roots) {
+	printNode(root)
+}
 ```
 
 The `Trace` interface declares the fields this reader uses, out of the larger trace document. The `raw.slice` check compares each node's value with the text at its offsets in `tree.raw`, the text returned with the tree. For this input, each selected substring equals the node's displayed value.
