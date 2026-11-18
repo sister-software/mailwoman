@@ -35,7 +35,9 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -82,6 +84,8 @@ function slugify(value: string): string {
 }
 
 const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { pbf, region, country: rawCountry, release } = options
 
@@ -188,7 +192,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 			tier: LayerTier.BuildLocal,
 			coverageCellsOverride: coverage.cells,
 			createdAt: new Date().toISOString(),
-			onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
+			onProgress: progress.report,
 		})
 
 		const { completeness } = coverage
@@ -212,8 +216,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

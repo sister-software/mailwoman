@@ -21,7 +21,9 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -46,6 +48,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const [
 			{ BDCFileCategory, BDCFilingDataType, BDCProviderSubCategory, BDCTechnologyType },
@@ -163,7 +167,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
 				providers: options.providerListPath ? parseProviderList(options.providerListPath) : null,
 				filerDB: filerDB ?? undefined,
-				onProgress: (message) => console.error(`  [bdc] ${message}`),
+				onProgress: (message) => progress.report("bdc", message),
 			})
 
 			return [
@@ -178,7 +182,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		}
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	if (state.status === "done") {
 		return <CommandSummaryLines lines={state.result} />

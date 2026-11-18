@@ -19,9 +19,15 @@
  */
 
 import { Box, Text } from "ink"
-import { useState } from "react"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -44,7 +50,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GNAFAssemble: CommandComponent<typeof spec> = ({ options }) => {
-	const [progress, setProgress] = useState<string>()
+	const progress = useStageProgress()
 
 	const state = useCommandTask(async () => {
 		const { assembleGNAF } = await import("@mailwoman/corpus")
@@ -54,7 +60,7 @@ const GNAFAssemble: CommandComponent<typeof spec> = ({ options }) => {
 			sampleSize: options.n,
 			out: options.out,
 			holdoutPath: options.holdout,
-			onProgress: setProgress,
+			onProgress: (message) => progress.report("assemble", message),
 		})
 	})
 
@@ -83,7 +89,7 @@ const GNAFAssemble: CommandComponent<typeof spec> = ({ options }) => {
 	return (
 		<Box flexDirection="column">
 			<Text>assembling G-NAF Australian addresses…</Text>
-			{progress ? <Text dimColor>{progress}</Text> : null}
+			<StageLine progress={progress} />
 		</Box>
 	)
 }

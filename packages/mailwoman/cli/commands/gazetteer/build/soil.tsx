@@ -31,7 +31,9 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -76,6 +78,7 @@ export const spec = {
 async function runVerification(
 	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk/verify").verifySoilDatabase>[0]["client"],
+	report: (name: string, message: string) => void,
 	count?: number | null
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk/verify")
@@ -87,7 +90,7 @@ async function runVerification(
 		databasePath,
 		client,
 		points,
-		onProgress: (message) => console.error(`  [verify] ${message}`),
+		onProgress: (message) => report("verify", message),
 	})
 
 	return formatLayerVerification(verified, {
@@ -101,6 +104,8 @@ async function runVerification(
 }
 
 const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { soilDatabasePath } = await import("@mailwoman/soil/paths")
 
@@ -137,6 +142,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
+				progress.report,
 				typeof options.verifyPoints === "string" ? Number(options.verifyPoints) : null
 			)
 		}
@@ -145,7 +151,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			client,
 			prefix,
 			cacheRoot: soilDatabasePath("cache", "archives"),
-			onProgress: (message) => console.error(`  [acquire] ${message}`),
+			onProgress: (message) => progress.report("acquire", message),
 		})
 
 		console.error(`▸ product vintage: ${acquired.sourceVintage} (${acquired.areas.length} survey area(s))`)
@@ -164,7 +170,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 				const report = await measureSoilCellResolutions({
 					shapefilePath: area.shapefilePath,
 					resolutions,
-					onProgress: (message) => console.error(`  [measure] ${message}`),
+					onProgress: (message) => progress.report("measure", message),
 				})
 
 				lines.push(
@@ -196,7 +202,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...(options.chunkSize ? { chunkSize: Number(options.chunkSize) } : {}),
-			onProgress: (message) => console.error(`  [soil] ${message}`),
+			onProgress: (message) => progress.report("soil", message),
 		})
 
 		const lines = [
@@ -222,14 +228,20 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		if (options.verify) {
-			lines.push(...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : null)))
+			lines.push(
+				...(await runVerification(
+					out,
+					client,
+					progress.report,
+					options.verifyPoints ? Number(options.verifyPoints) : null
+				))
+			)
 		}
 
 		return lines
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

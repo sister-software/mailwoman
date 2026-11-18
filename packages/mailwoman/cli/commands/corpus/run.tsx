@@ -16,7 +16,6 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
-import { useState } from "react"
 
 import {
 	isCorpusVersion,
@@ -25,7 +24,18 @@ import {
 	type CommandComponent,
 	positiveIntegerOption,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
+
+interface RunCounts {
+	yielded: number
+	written: number
+	bytes: number
+}
+
+function describeCounts({ yielded, written, bytes }: RunCounts): string {
+	return `yielded=${yielded}  written=${written}  bytes=${bytes}`
+}
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -68,11 +78,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
-	const [progress, setProgress] = useState<{ yielded: number; written: number; bytes: number }>({
-		yielded: 0,
-		written: 0,
-		bytes: 0,
-	})
+	const progress = useStageProgress<RunCounts>({ describe: describeCounts })
 
 	const state = useCommandTask(async () => {
 		const { defaultAdapterRegistry, runAdapter } = await import("@mailwoman/corpus")
@@ -106,7 +112,7 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 			sourceName: options.sourceName,
 			progressEvery: options.progressEvery,
 			onProgress: (snap) => {
-				setProgress({ yielded: snap.yielded, written: snap.written, bytes: snap.bytes })
+				progress.report(adapterID, { yielded: snap.yielded, written: snap.written, bytes: snap.bytes })
 			},
 		})
 	})
@@ -133,15 +139,12 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 		)
 	}
 
-	const ratio = progress.written && progress.yielded ? (progress.written / progress.yielded) * 100 : 0
+	const counts = progress.stage?.detail ?? { yielded: 0, written: 0, bytes: 0 }
+	const ratio = counts.written && counts.yielded ? (counts.written / counts.yielded) * 100 : 0
 
 	return (
 		<Box flexDirection="column">
-			<Text>
-				yielded={progress.yielded}
-				{"  "}written={progress.written}
-				{"  "}bytes={progress.bytes}
-			</Text>
+			<Text>{describeCounts(counts)}</Text>
 			<Box paddingX={1}>
 				<ProgressBar value={Math.min(100, ratio)} />
 			</Box>

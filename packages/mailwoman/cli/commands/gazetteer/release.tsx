@@ -5,7 +5,15 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	phaseReporter,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * Command specification for `gazetteer release`.
@@ -40,6 +48,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			dataRoot: { dataRootPath },
@@ -75,7 +85,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			out,
 			postcodeDatabases: databases,
 			includeBuildLocalFolds: options.includeBuildLocal,
-			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+			onProgress: progress.report,
 		})
 
 		lines.push(`built ${out} — ${r.rows.toLocaleString()} rows, ${r.postcodes.toLocaleString()} postcodes`)
@@ -108,7 +118,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	if (state.status === "done") {
 		return (

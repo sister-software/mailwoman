@@ -11,7 +11,14 @@ import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { allKeyed } from "@mailwoman/core/promises"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -30,6 +37,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			streets: { buildStreetTable },
@@ -48,13 +57,13 @@ const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 			countries: ["GB"],
 			boundariesPath: options.boundaries ?? wofDatabasePath("wof-polygons.db"),
 			out,
-			onProgress: (progress) => console.error(`streets: ${stringifyJSON(progress)}`),
+			onProgress: (step) => progress.report("streets", stringifyJSON(step)),
 		})
 
 		return `streets: ${stringifyJSON(counts)} → ${out} — sealed 0444`
 	})
 
-	return <CommandTaskResult state={state} />
+	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 }
 
 export default GazetteerBuildStreets

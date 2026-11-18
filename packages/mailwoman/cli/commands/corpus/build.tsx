@@ -17,14 +17,20 @@
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import type { BuildStage } from "@mailwoman/corpus"
 import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
-import { useState } from "react"
 
-import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	isCorpusVersion,
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * The accepted `--license-policy` values, for the flag's validation message.
@@ -207,7 +213,7 @@ function readInlineAdapterInputs(
 }
 
 const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
-	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
+	const progress = useStageProgress()
 
 	const state = useCommandTask(async () => {
 		const {
@@ -265,7 +271,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 						.map((source) => source.trim())
 						.filter((source) => source.length > 0)
 				: undefined,
-			onProgress: (name, message) => setStage({ name, message }),
+			onProgress: progress.report,
 		})
 
 		return {
@@ -322,11 +328,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	return (
 		<Box flexDirection="column">
 			<Text>building corpus-v{options.corpusVersion}…</Text>
-			{stage ? (
-				<Text dimColor>
-					[{stage.name}] {stage.message}
-				</Text>
-			) : null}
+			<StageLine progress={progress} />
 		</Box>
 	)
 }

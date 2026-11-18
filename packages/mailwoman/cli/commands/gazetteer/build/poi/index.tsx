@@ -39,7 +39,9 @@ import {
 	type CommandComponent,
 	phaseReporter,
 	splitCountryCodes,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
@@ -88,6 +90,8 @@ function parseBBoxFlag(raw: string): LatLonBounds {
 }
 
 const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			layers: { LayerTier },
@@ -160,7 +164,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 				tier: LayerTier.BuildLocal,
 				coverageCellsOverride,
 				createdAt: new Date().toISOString(),
-				onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
+				onProgress: progress.report,
 			})
 
 			return [
@@ -204,7 +208,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			release,
 			buildSHA,
 			createdAt: new Date().toISOString(),
-			onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
+			onProgress: progress.report,
 		})
 
 		const countryLines = [...result.countries.entries()]
@@ -220,8 +224,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

@@ -21,7 +21,9 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	phaseReporter,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -37,6 +39,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			pipeline: { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases },
@@ -61,7 +65,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		const importance = await buildImportance({
 			adminDB: admin.out,
-			onProgress: (message) => console.error(`  ${message}`),
+			onProgress: (message) => progress.report("importance", message),
 		})
 
 		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
@@ -74,7 +78,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			adminDB: admin.out,
 			out: candidateOut,
 			postcodeDatabases: databases,
-			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+			onProgress: progress.report,
 		})
 
 		return [
@@ -85,8 +89,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

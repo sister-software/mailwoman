@@ -544,13 +544,27 @@ export async function runNativeCommand(
 }
 
 /**
+ * Whether Ink redraws its frame in place on `stdout`.
+ *
+ * Ink renders to stdout, so the frame changes while a command runs only when stdout is a terminal.
+ * Elsewhere Ink writes its last frame at exit, and `useStageProgress` writes each stage to stderr instead.
+ *
+ * The check reads stdout rather than stderr because the frame is what the plain lines replace:
+ * `cmd > log` with stderr on a terminal shows the lines there, and `cmd 2> log` keeps the live frame.
+ * {@linkcode renderInkCommand} passes this as Ink's `interactive` option, so Ink and the hook agree.
+ */
+export function redrawsInPlace(stdout: NodeJS.WritableStream): boolean {
+	return "isTTY" in stdout && stdout.isTTY === true
+}
+
+/**
  * Render one Ink element and answer the process exit code.
  *
  * Ink loads lazily, so the ordinary data path never pays for it.
  */
 export async function renderInkCommand(element: React.ReactElement): Promise<number> {
 	const { render } = await import("ink")
-	const instance = render(element)
+	const instance = render(element, { interactive: redrawsInPlace(process.stdout) })
 
 	await instance.waitUntilExit()
 

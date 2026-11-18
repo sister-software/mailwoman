@@ -23,13 +23,14 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/paths"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
-import { useState } from "react"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
 	splitNumberList,
+	StageLine,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -130,7 +131,7 @@ export const spec = {
  * Builds the coverage tiles and renders progress and a summary.
  */
 const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
-	const [stage, setStage] = useState<{ name: string; message: string }>()
+	const progress = useStageProgress()
 
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#tools/coverage/core")
@@ -168,7 +169,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 				keepNdjson: options.keepNdjson,
 				threads: options.threads,
 			},
-			(name, message) => setStage({ name, message })
+			progress.report
 		)
 	})
 
@@ -192,11 +193,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	return (
 		<Box flexDirection="column">
 			<Text>building coverage tiles…</Text>
-			{stage ? (
-				<Text dimColor>
-					[{stage.name}] {stage.message}
-				</Text>
-			) : null}
+			<StageLine progress={progress} />
 		</Box>
 	)
 }

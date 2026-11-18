@@ -13,7 +13,14 @@ import type { TriageRow, TriageSummary } from "@mailwoman/gazetteer/tools/pipeli
 import { Box, Text } from "ink"
 import { PathBuilder, dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -34,6 +41,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			utils: { isoDate },
@@ -59,7 +68,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 			adminDB,
 			geonamesDir,
 			...(countries.length ? { countries } : {}),
-			onProgress: () => {},
+			onProgress: progress.report,
 		})
 
 		const emitted = options.uncoveredOnly ? rows.filter((r) => r.coverage === CoverageVerdict.Uncovered) : rows
@@ -75,7 +84,19 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		return { outPath, emitted: emitted.length, total: rows.length, summary, queue }
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running="Triaging WOF currency…" />
+	if (state.status !== "done") {
+		return (
+			<CommandTaskResult
+				state={state}
+				running={
+					<Box flexDirection="column">
+						<Text>Triaging WOF currency…</Text>
+						<StageLine progress={progress} />
+					</Box>
+				}
+			/>
+		)
+	}
 
 	const { outPath, emitted, total, summary, queue } = state.result
 

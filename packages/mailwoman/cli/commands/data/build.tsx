@@ -20,7 +20,7 @@ import { type BuildRecipe, BuildRecipeName } from "@mailwoman/core/layers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { Text } from "ink"
+import { Box, Text } from "ink"
 
 import {
 	type Check,
@@ -29,7 +29,9 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	mailwomanCommandPrefix,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 	writeRawStdout,
 } from "#cli-kit"
 import { executeBuild, planBuild, type BuildReport, type BuildResult } from "#data/build"
@@ -181,6 +183,7 @@ async function build(
 		activate: boolean
 		dataRoot: string
 		hosts: { geofabrik?: string; geoBoundaries?: string }
+		onProgress: (message: string) => void
 	}
 ): Promise<BuildCommandResult> {
 	const loaded = await loadRecipe(recipeName, opts.hosts)
@@ -239,7 +242,7 @@ async function build(
 			builderSHA: `mailwoman@${await readMailwomanVersion()} @mailwoman/osm@${loaded.version}`,
 			activate: opts.activate,
 			signal: controller.signal,
-			onProgress: (message) => console.error(`  ${message}`),
+			onProgress: opts.onProgress,
 		})
 
 		for (const input of result.inputs) {
@@ -293,6 +296,9 @@ async function build(
 }
 
 const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
+	// `--json` keeps stdout for the report, so its stages go to stderr.
+	const progress = useStageProgress({ inline: !options.json })
+
 	const state = useCommandTask(
 		async () => {
 			const [recipe] = args
@@ -315,6 +321,7 @@ const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
 					...(options.geofabrikHost ? { geofabrik: options.geofabrikHost } : {}),
 					...(options.geoboundariesHost ? { geoBoundaries: options.geoboundariesHost } : {}),
 				},
+				onProgress: (message) => progress.report("build", message),
 			})
 
 			if (options.json) {
@@ -326,7 +333,19 @@ const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">building…</Text>} />
+	if (state.status !== "done") {
+		return (
+			<CommandTaskResult
+				state={state}
+				running={
+					<Box flexDirection="column">
+						<Text color="gray">building…</Text>
+						<StageLine progress={progress} />
+					</Box>
+				}
+			/>
+		)
+	}
 
 	if (options.json) return null
 

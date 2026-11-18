@@ -38,9 +38,11 @@ import {
 	describeProgressStep,
 	mailwomanCommandPrefix,
 	ProgressLines,
+	StageLine,
 	TransferProgress,
 	useCommandTask,
 	useProgressFeed,
+	useStageProgress,
 	writeRawStdout,
 } from "#cli-kit"
 import { BUNDLES, type BundleRightsSummary, summarizeBundleRights } from "#data/bundles"
@@ -262,6 +264,10 @@ async function pull(
 		 * Receives each download's bytes.
 		 */
 		onTransfer: (remotePath: string, received: number, total: number | null) => void
+		/**
+		 * Receives each installation step's message.
+		 */
+		onProgress: (message: string) => void
 	}
 ): Promise<PullResult> {
 	const plan = await planInstallation({
@@ -324,7 +330,7 @@ async function pull(
 		const result = await executeInstallation(plan, {
 			client,
 			signal: controller.signal,
-			onProgress: (message) => console.error(`  ${message}`),
+			onProgress: opts.onProgress,
 			onTransfer: opts.onTransfer,
 		})
 
@@ -417,9 +423,10 @@ function TermsBlock({ terms }: { terms: BundleTerms }): ReactElement {
 
 const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 	const feed = useProgressFeed()
-	// Ink redraws a frame in place only on a terminal, and `--json` keeps stdout for the report.
-	// Elsewhere a line per tenth of each transfer goes to stderr.
-	const live = process.stdout.isTTY === true && !options.json
+	// `--json` keeps stdout for the report.
+	// Without a frame that redraws in place, a line per tenth of each transfer goes to stderr.
+	const progress = useStageProgress({ inline: !options.json })
+	const { live, report } = progress
 
 	const [transfers] = useState(() =>
 		live
@@ -433,8 +440,8 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 	useEffect(() => {
 		if (live) return watch(transfers)
 
-		return transfers.on("progress", ({ command, ...step }) => console.error(`  ${describeProgressStep(command, step)}`))
-	}, [live, watch, transfers])
+		return transfers.on("progress", ({ command, ...step }) => report("transfer", describeProgressStep(command, step)))
+	}, [live, watch, transfers, report])
 
 	const state = useCommandTask(
 		async () => {
@@ -459,6 +466,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				command,
 				onTerms: setPlannedTerms,
 				onTransfer: transfers.report.bind(transfers),
+				onProgress: (message) => report("pull", message),
 			})
 
 			if (options.json) {
@@ -478,6 +486,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 					<Box flexDirection="column">
 						{options.json ? null : plannedTerms.map((terms) => <TermsBlock key={terms.bundle} terms={terms} />)}
 						<Text color="gray">pulling…</Text>
+						<StageLine progress={progress} />
 						<ProgressLines entries={feed.entries} />
 					</Box>
 				}

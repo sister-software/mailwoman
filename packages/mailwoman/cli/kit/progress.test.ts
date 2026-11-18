@@ -10,6 +10,7 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { type ProcessProgress, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
@@ -98,6 +99,96 @@ const DOWNLOAD_HARNESS = `
 	console.error("bytes " + bytes)
 	setTimeout(() => app.unmount(), 50)
 `
+
+/**
+ * A command that reports three stages through `useStageProgress`, then exits.
+ *
+ * With `tty` it renders interactively to a stdout that claims to be a terminal
+ * and prints both captures as JSON.
+ * Without it, it renders through `renderInkCommand` to the piped stdio, as a detached command does.
+ */
+const STAGE_HARNESS = `
+	import { Writable } from "node:stream"
+	import { createElement as h, useEffect } from "react"
+	import { render, useApp } from "ink"
+	import { renderInkCommand, StageLine, useStageProgress } from "mailwoman/cli/kit"
+
+	const STEPS = [["download", "1 of 2 files"], ["download", "2 of 2 files"], ["index", "built 3 rows"]]
+
+	function View() {
+		const progress = useStageProgress()
+		const { exit } = useApp()
+
+		useEffect(() => {
+			let next = 0
+			const timer = setInterval(() => {
+				if (next < STEPS.length) return progress.report(...STEPS[next++])
+
+				clearInterval(timer)
+				process.stderr.write("before exit\\n")
+				exit()
+			}, 60)
+
+			return () => clearInterval(timer)
+		}, [])
+
+		return h(StageLine, { progress })
+	}
+
+	class Capture extends Writable {
+		text = ""
+		_write(chunk, _encoding, callback) {
+			this.text += chunk.toString()
+			callback()
+		}
+	}
+
+	if (process.argv[1] === "tty") {
+		const stdout = Object.assign(new Capture(), { isTTY: true, columns: 80, rows: 24 })
+		const stderr = new Capture()
+		const app = render(h(View), { stdout, stderr, interactive: true, patchConsole: false })
+
+		await app.waitUntilExit()
+		process.stdout.write(JSON.stringify({ stdout: stdout.text, stderr: stderr.text }))
+	} else {
+		await renderInkCommand(h(View))
+	}
+`
+
+const STAGE_LINE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \[(\w+)\] (.+)$/u
+
+test("without a terminal, each stage is a timestamped stderr line written before exit, and no frame repeats it", async () => {
+	const { stdout, stderr } = await runFile(process.execPath, ["--input-type=module", "-e", STAGE_HARNESS], {
+		cwd: repoRootPath(),
+		env: childEnv(),
+	})
+
+	const lines = [...stripANSI(stderr).matchAll(/^.+$/gmu)].map(([line]) => STAGE_LINE.exec(line)?.slice(1, 3) ?? line)
+
+	expect(lines).toEqual([
+		["download", "1 of 2 files"],
+		["download", "2 of 2 files"],
+		["index", "built 3 rows"],
+		"before exit",
+	])
+
+	expect(stripANSI(stdout)).not.toContain("files")
+}, 30_000)
+
+test("on a terminal, the latest stage is drawn in the frame and nothing goes to stderr", async () => {
+	const { stdout } = await runFile(process.execPath, ["--input-type=module", "-e", STAGE_HARNESS, "tty"], {
+		cwd: repoRootPath(),
+		env: childEnv(),
+	})
+
+	const captured = parseJSONStrict<{ stdout: string; stderr: string }>(stdout)
+	const frames = stripANSI(captured.stdout)
+
+	expect(frames).toContain("[download] 1 of 2 files")
+	expect(frames).toContain("[download] 2 of 2 files")
+	expect(frames).toContain("[index] built 3 rows")
+	expect(captured.stderr).toBe("")
+}, 30_000)
 
 test("TransferProgress emits a step only when the whole percent or, without a total, the megabyte changes", () => {
 	const transfers = new TransferProgress({ now: () => 0 })

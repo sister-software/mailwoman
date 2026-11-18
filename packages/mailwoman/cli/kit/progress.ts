@@ -10,9 +10,11 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import type { ProcessProgress } from "@mailwoman/core/process"
 import { TypedEventTarget } from "@mailwoman/core/utils/events"
-import { Box, Text } from "ink"
+import { Box, Text, useStderr, useStdout } from "ink"
 import { createElement as h, useCallback, useState } from "react"
 import type * as React from "react"
+
+import { redrawsInPlace } from "#cli/native/spec"
 
 /**
  * A progress step, with the transfer rate and the time remaining when a byte transfer has measured them.
@@ -180,7 +182,7 @@ const BAR_CELLS = 24
  * One progress step as a line: the bar and percent when the step states a percent,
  * then the stage, the counts, the rate and the time remaining.
  *
- * `ProgressLines` draws it, and a command without a terminal writes it to stderr.
+ * `ProgressLines` draws it, and a command whose frame doesn't redraw in place writes it to stderr.
  */
 export function describeProgressStep(key: string, step: ProgressStep): string {
 	const parts: string[] = []
@@ -270,6 +272,94 @@ export function useProgressFeed(): ProgressFeed {
 	}, [])
 
 	return { entries, watch, clear }
+}
+
+/**
+ * The latest stage a long-running command reported, and its detail.
+ */
+export interface Stage<T = string> {
+	name: string
+	detail: T
+}
+
+/**
+ * How {@linkcode useStageProgress} writes a stage's detail, and whether it may draw in the frame.
+ */
+export interface StageProgressOptions<T> {
+	/**
+	 * The detail as text.
+	 *
+	 * Default `String`.
+	 * Pass a function declared outside the component, so `report` keeps one identity.
+	 */
+	describe?: (detail: T) => string
+	/**
+	 * False keeps progress out of the frame, as for a command that writes a `--json` report to stdout.
+	 *
+	 * Its stages then go to stderr as plain lines.
+	 * Default true.
+	 */
+	inline?: boolean
+}
+
+/**
+ * What {@linkcode useStageProgress} answers.
+ */
+export interface StageProgress<T> {
+	/**
+	 * The latest stage, kept only while the frame redraws in place.
+	 */
+	stage: Stage<T> | null
+	/**
+	 * The latest stage as `[name] detail`, kept only while the frame redraws in place.
+	 */
+	line: string | null
+	/**
+	 * Whether stages are drawn in the frame rather than written to stderr.
+	 */
+	live: boolean
+	/**
+	 * Report a stage: the frame's state on a terminal, otherwise one stderr line.
+	 */
+	report(name: string, detail: T): void
+}
+
+/**
+ * Report a long-running command's stages to its terminal frame, or to stderr when the frame doesn't redraw.
+ *
+ * When Ink redraws in place (see `redrawsInPlace`), the latest stage is React state the command draws.
+ * Otherwise Ink writes only its final frame at exit, so each stage is written to stderr at once
+ * as `<ISO UTC time> [name] detail`, and no state changes, so the frame isn't drawn per stage.
+ */
+export function useStageProgress<T = string>(options: StageProgressOptions<T> = {}): StageProgress<T> {
+	const { stdout } = useStdout()
+	const { stderr } = useStderr()
+	const live = options.inline !== false && redrawsInPlace(stdout)
+	const describe = options.describe ?? String
+	const [stage, setStage] = useState<Stage<T> | null>(null)
+
+	const report = useCallback(
+		(name: string, detail: T) => {
+			if (live) {
+				setStage({ name, detail })
+
+				return
+			}
+
+			stderr.write(`${new Date().toISOString()} [${name}] ${describe(detail)}\n`)
+		},
+		[live, stderr, describe]
+	)
+
+	return { stage, line: stage ? `[${stage.name}] ${describe(stage.detail)}` : null, live, report }
+}
+
+/**
+ * The latest stage of a {@linkcode useStageProgress} feed as a dim line, or `null`
+ * before the first stage and whenever stages go to stderr.
+ */
+export function StageLine({ progress }: { progress: StageProgress<unknown> }): React.ReactElement | null {
+	return progress.line ? h(Text, { dimColor: true }, progress.line) : null
 }
 
 /**

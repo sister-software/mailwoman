@@ -40,7 +40,9 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -85,6 +87,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { coastalDatabasePath } = await import("@mailwoman/coastal/paths")
 
@@ -163,7 +167,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				url,
 				revisionDate: sourceVintage,
 				cacheRoot: coastalDatabasePath("cache"),
-				onProgress: (message) => console.error(`  [download] ${message}`),
+				onProgress: (message) => progress.report("download", message),
 			})
 		}
 
@@ -173,7 +177,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				resolutions: splitNumberList(options.measureResolutions),
 				scenarioKeys,
 				...(options.limit ? { limit: Number(options.limit) } : {}),
-				onProgress: (message) => console.error(`  [measure] ${message}`),
+				onProgress: (message) => progress.report("measure", message),
 			})
 
 			return [
@@ -239,7 +243,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...(Object.keys(expectedFeatureCounts).length ? { expectedFeatureCounts } : {}),
-			onProgress: (message) => console.error(`  [coastal] ${message}`),
+			onProgress: (message) => progress.report("coastal", message),
 		})
 
 		const lines = [
@@ -272,7 +276,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				outsideScenarioKey: scenarioKeys.includes(DEFAULT_NCERM_SCENARIO)
 					? DEFAULT_NCERM_SCENARIO
 					: (scenarioKeys[0] ?? DEFAULT_NCERM_SCENARIO),
-				onProgress: (message) => console.error(`  [verify] ${message}`),
+				onProgress: (message) => progress.report("verify", message),
 			})
 
 			lines.push(
@@ -290,8 +294,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

@@ -20,7 +20,9 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -39,6 +41,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildStructures: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { build, layers, paths, registry } = await allKeyed({
 			build: import("@mailwoman/gazetteer/tools/pipeline/structures/build"),
@@ -55,7 +59,7 @@ const GazetteerBuildStructures: CommandComponent<typeof spec> = ({ options }) =>
 			sourcesRoot,
 			out,
 			buildSHA: resolveBuildSHA(repoRootPath()),
-			onProgress: (phase, message) => console.error(`  [${phase}] ${message}`),
+			onProgress: progress.report,
 		})
 
 		return [
@@ -71,7 +75,7 @@ const GazetteerBuildStructures: CommandComponent<typeof spec> = ({ options }) =>
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

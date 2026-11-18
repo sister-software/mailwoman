@@ -18,7 +18,9 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -39,6 +41,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(
 		async () => {
 			const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")
@@ -57,7 +61,7 @@ const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => 
 				try {
 					const result = buildPlaceSearchFTS(db, {
 						drop: options.drop,
-						onProgress: (phase, detail) => console.error(`  [${phase}]${detail ? ` — ${detail}` : ""}`),
+						onProgress: (phase, detail) => progress.report(phase, detail ?? ""),
 					})
 
 					checks.push({
@@ -75,7 +79,7 @@ const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => 
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	if (state.status === "done") return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 

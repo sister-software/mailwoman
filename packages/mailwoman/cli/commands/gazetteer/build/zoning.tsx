@@ -28,7 +28,9 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -72,6 +74,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const [
 			{ zoningDatabasePath },
@@ -135,7 +139,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				url: await client.readExportURL(),
 				vintage,
 				cacheRoot: zoningDatabasePath("cache"),
-				onProgress: (message) => console.error(`  [download] ${message}`),
+				onProgress: (message) => progress.report("download", message),
 			})
 		}
 
@@ -145,7 +149,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				resolutions: splitNumberList(options.measureResolutions),
 				...(options.authority ? { authorityCode: options.authority } : {}),
 				...(options.limit ? { limit: Number(options.limit) } : {}),
-				onProgress: (message) => console.error(`  [measure] ${message}`),
+				onProgress: (message) => progress.report("measure", message),
 			})
 
 			return [
@@ -231,7 +235,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...serviceChecks,
-			onProgress: (message) => console.error(`  [zoning] ${message}`),
+			onProgress: (message) => progress.report("zoning", message),
 		})
 
 		const lines = [
@@ -280,7 +284,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				databasePath: out,
 				readServiceFeatures: createServiceReader(client),
 				points,
-				onProgress: (message) => console.error(`  [verify] ${message}`),
+				onProgress: (message) => progress.report("verify", message),
 			})
 
 			lines.push(
@@ -299,9 +303,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	// Progress streams to stderr until the summary lands.
 	// `CommandTaskResult` renders it.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

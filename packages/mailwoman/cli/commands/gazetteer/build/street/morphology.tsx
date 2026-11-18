@@ -12,7 +12,14 @@
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	StageLine,
+	useCommandTask,
+	useStageProgress,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -38,6 +45,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { buildStreetMorphologyArtifact } = await import("@mailwoman/gazetteer/tools/pipeline/street-morphology")
 
@@ -45,13 +54,13 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 			dictionariesDir: options.dictionaries,
 			locales: options.locales ? extractDelimited(options.locales) : null,
 			output: options.out,
-			onProgress: (line) => console.error(line),
+			onProgress: (line) => progress.report("morphology", line),
 		})
 
 		return `${built.path} (${(built.bytes / 1e3).toFixed(0)} kB, ${built.canonicalCount} canonicals, ${built.variantCount} variants, ${built.localeCount} locales)`
 	})
 
-	return <CommandTaskResult state={state} />
+	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 }
 
 export default GazetteerBuildStreetMorphology

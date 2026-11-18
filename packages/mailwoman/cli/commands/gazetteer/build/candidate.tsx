@@ -6,8 +6,6 @@
  *   (FTS5-trigram fuzzy index baked in), built from the admin database the admin
  *   build already folded GeoNames into.
  *
- *   Progress streams to stderr.
- *
  *   The final summary goes to stdout.
  *   See releasing.md Step 5.
  */
@@ -21,7 +19,9 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
+	StageLine,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -51,6 +51,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			dataRoot: { dataRootPath },
@@ -80,7 +82,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			// Without `--importance` the build finds the importance build for this admin DB itself.
 			importanceDB: options.skipImportance ? false : options.importance,
 			includeBuildLocalFolds: options.includeBuildLocal,
-			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
+			onProgress: progress.report,
 		})
 
 		return [
@@ -95,9 +97,8 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		]
 	})
 
-	// Progress streams to stderr until the summary lands.
 	// `CommandTaskResult` renders that summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
 
 	return <CommandSummaryLines lines={state.result} />
 }
