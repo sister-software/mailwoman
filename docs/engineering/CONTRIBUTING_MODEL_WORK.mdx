@@ -63,11 +63,13 @@ before comparing two training arms. A comparison uses three instruments from it:
      reported under `attribution`. Board regressions are findings with their addresses and do not
      block.
 
-   **The registered requirements.** `release-requirements.v10.json` registers nine country minima,
+   **The registered requirements.** `release-requirements.v11.json` registers nine country minima,
    four capabilities, a geocode-outcome loss check, the equal-weight objective, the confidence settings, and each
-   role's collections: the v0.8.18 collections revised under the 2026-11-17 county decision and the 2026-11-18 IE
-   county decision, beside the r2 capability-probe collections. `postal_unit` is a no-loss check against the
-   published model ([the v10 record](../records/evals/2026-11-18-release-requirements-v10.md)). The
+   role's collections. Development keeps the v0.8.18 collection, revised under the 2026-11-17 county decision and
+   the 2026-11-18 IE county decision, beside the r2 capability probes. Confirmation is the unread
+   `heldout-confirm-v0.8.20` draw with its probe set, plus the IN rows of the retired v0.8.18 confirmation set
+   ([the v11 record](../records/evals/2026-11-18-release-requirements-v11.md)). `postal_unit` is a no-loss check
+   against the published model ([the v10 record](../records/evals/2026-11-18-release-requirements-v10.md)). The
    geocode check reads each row's resolved components and places (`heldout/per/country.run.ts --geocode`), so a
    change that acts only in the resolver is graded by it. Version 8 keeps the
    values decided for version 3, and their reasons are in

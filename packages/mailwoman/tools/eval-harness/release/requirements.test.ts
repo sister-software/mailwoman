@@ -12,7 +12,7 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v10.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v11.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 /**
@@ -24,8 +24,8 @@ interface SchemaThreePins {
 }
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v10 specification with every threshold registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v10\.json$/u)
+	it("accepts the current v11 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v11\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -145,6 +145,25 @@ describe("validateReleaseSpec", () => {
 		expect(v10.evaluations.confirmation.ids).toEqual(v9.evaluations.confirmation.ids)
 		expect(v10.evaluations.development.ids).not.toEqual(v9.evaluations.development.ids)
 		expect(v10.rationale).toMatch(/Confirmation reads before registration/u)
+	})
+
+	it("differs from v10 in the confirmation collections and the dataset identity only", async () => {
+		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(10)))
+		const v11 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(11)))
+
+		expect(v11.requirements).toEqual(v10.requirements)
+		expect(v11.objective).toEqual(v10.objective)
+		expect(v11.statistics).toEqual(v10.statistics)
+		expect(v11.provenance).toEqual(v10.provenance)
+		expect({ ...v11.identities, dataset: null }).toEqual({ ...v10.identities, dataset: null })
+		expect(v11.identities.candidate.sha256).toBeNull()
+		expect(v11.evaluations.development.ids).toEqual(v10.evaluations.development.ids)
+		expect(v11.identities.dataset.map((entry) => entry.id)).toEqual(v11.evaluations.confirmation.ids)
+
+		const retired = new Set(v10.evaluations.confirmation.ids)
+
+		expect(v11.evaluations.confirmation.ids.filter((id) => retired.has(id))).toEqual([])
+		expect(v11.rationale).toMatch(/Confirmation reads before registration/u)
 	})
 
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {
