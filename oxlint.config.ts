@@ -222,6 +222,24 @@ export default {
 			},
 		},
 		{
+			// The docs pages' code blocks, written here by `mwops code-blocks`,
+			// are a reader's script rather than repository code.
+			// A reader may import Node builtins, read `process`, print with `JSON.stringify`,
+			// split text, and type a literal limit, and the file starts without a license header.
+			// Correctness and layout rules still apply.
+			files: [".cache/code-blocks/**"],
+			rules: {
+				"mailwoman/comment-reflow": "off",
+				"mailwoman/prefer-home": "off",
+				"mailwoman/prefer-spliterator": "off",
+				"mailwoman/spdx-header": "off",
+				"no-restricted-properties": "off",
+				"sister-software/no-process-globals": "off",
+				"sister-software/no-unnamed-threshold": "off",
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
 			// A test may import modules in a set order, as when one evaluates only after an earlier one sets up a mock.
 			files: ["**/*.test.ts", "**/*.test.tsx"],
 			rules: {

@@ -124,12 +124,17 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 	fi
 fi
 
-# MDX raw-angle lint:
-# - Catches build-breaking MDX/JSX parse cases like bare `<55` in prose.
-# - Runs through compiled CLI tooling, so it requires `yarn compile` output.
-# - If not compiled, warn and skip locally; CI full lint still enforces it.
-if [ -f packages/mailwoman/out/cli/main.js ]; then
-	node packages/mailwoman/out/cli/main.js dev lint mdx-angles
-else
-	echo "pre-commit: packages/mailwoman/out/cli/main.js not compiled — skipping mdx-angles lint (run 'yarn compile')" >&2
+# Docs pages:
+# - `health mdx-angles` reports prose that MDX parses as JSX, such as a bare `<55`, which fails the build.
+# - `code-blocks` lints the pages' JavaScript and TypeScript code blocks with oxlint.
+#   Its cache relints only the pages that changed, and `yarn fix:code-blocks` applies the fixes.
+# - Both run from source through `mwops`, so neither needs `yarn compile`.
+# - Each runs when the staged paths include what it reads.
+DOCS_PAGES='^docs/(articles|src/pages|research)/.*\.mdx?$'
+CODE_BLOCK_SETUP='^(oxlint\.[^/]+\.ts|config/oxlint/.+\.ts|lib/repo-health/markdown/[^/]+\.ts)$'
+if printf '%s\n' "$STAGED" | grep -qE "$DOCS_PAGES"; then
+	node lib/ops-cli/cli.ts health mdx-angles
+fi
+if printf '%s\n' "$STAGED" | grep -qE "$DOCS_PAGES|$CODE_BLOCK_SETUP"; then
+	node lib/ops-cli/cli.ts code-blocks
 fi

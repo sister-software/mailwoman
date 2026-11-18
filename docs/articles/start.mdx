@@ -60,11 +60,17 @@ console.log("kind:", result.kind.kind)
 
 function printNode(node: TreeNode, depth = 0): void {
 	const indent = "  ".repeat(depth)
+
 	console.log(`${indent}${node.tag} [${node.start}, ${node.end}): ${JSON.stringify(node.value)}`)
-	for (const child of node.children) printNode(child, depth + 1)
+
+	for (const child of node.children) {
+		printNode(child, depth + 1)
+	}
 }
 
-for (const root of result.tree.roots) printNode(root)
+for (const root of result.tree.roots) {
+	printNode(root)
+}
 ```
 
 The address is lowercase, has no commas, and places the apartment before the street number. The script loads one model, builds one parser, and gives that parser the address. `TreeNode` takes its type from the parse result, so the script needs no type import.

@@ -33,10 +33,12 @@ const raw = "  350   5th Ave,New York, NY 10118  "
 const result = normalize(raw)
 const wanted = "5th Ave"
 const start = result.normalized.indexOf(wanted)
-if (start < 0) throw new Error("The normalized text is missing the expected street substring")
+
+if (start === -1) throw new Error("The normalized text is missing the expected street substring")
 const end = start + wanted.length
 const rawStart = result.offsetMap[start]
 const rawEnd = result.offsetMap[end - 1] + 1
+
 if (result.offsetMap.length !== result.normalized.length) throw new Error("Offset map length differs")
 
 console.log("raw:", JSON.stringify(result.raw))
@@ -47,6 +49,7 @@ console.log("raw street:", JSON.stringify(result.raw.slice(rawStart, rawEnd)), `
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const tree = await classifier.parse(result.normalized)
+
 console.log("parser text:", JSON.stringify(tree.raw))
 ```
 

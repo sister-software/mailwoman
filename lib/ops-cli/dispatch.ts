@@ -48,6 +48,7 @@ import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { importSizesPath, writeImportSizes } from "#repo-health/effects/import-sizes"
 import { writeEffectsRegister } from "#repo-health/effects/register"
+import { lintCodeBlocks } from "#repo-health/markdown/code-block-lint"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
@@ -119,6 +120,7 @@ function usage(io: DispatchIO): number {
 			"  mwops health <check>|all [--json]",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
+			"  mwops code-blocks [--fix] [--no-cache] [--summary] [--json]   (lint the docs pages' JavaScript and TypeScript code blocks with oxlint)",
 			"  mwops ci-replay --ref <sha> --out <file> [--commits N] [--runs N]   (replay test selection over history)",
 			"  mwops ci-replay --compare <before> <after>                          (pair two replays row by row)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
@@ -601,6 +603,65 @@ async function reportCheckoutLocality(io: DispatchIO): Promise<number> {
 	return 0
 }
 
+const CODE_BLOCK_OPTIONS = {
+	cache: { type: "boolean", default: true },
+	fix: { type: "boolean", default: false },
+	json: { type: "boolean", default: false },
+	summary: { type: "boolean", default: false },
+} as const satisfies ParseArgsOptionsConfig
+
+/**
+ * `mwops code-blocks [--fix] [--no-cache] [--summary] [--json]` lints the docs
+ * pages' JavaScript and TypeScript code blocks with oxlint.
+ *
+ * `--fix` applies oxlint's fixes and writes each changed block back into its page before linting.
+ *
+ * @returns 1 when oxlint reports any finding, warnings included, as the
+ * pre-commit hook's `--deny-warnings` does.
+ */
+async function runCodeBlockLint(args: readonly string[], io: DispatchIO): Promise<number> {
+	const { options } = parseFlags(args, CODE_BLOCK_OPTIONS)
+
+	const result = await lintCodeBlocks({
+		repoRoot: io.repoRoot,
+		trackedFiles: await io.trackedFiles(),
+		cache: options.cache !== false,
+		fix: options.fix === true,
+	})
+
+	if (options.json === true) {
+		io.stdout(prettyJSON(result))
+	} else {
+		if (result.cacheNote) {
+			io.stderr(`code-blocks: ${result.cacheNote}\n`)
+		}
+
+		for (const page of result.fixed) {
+			io.stdout(`code-blocks: fixed ${page}\n`)
+		}
+
+		for (const finding of options.summary === true ? [] : result.findings) {
+			io.stdout(
+				`${finding.file}:${finding.line}:${finding.column}  ${finding.severity}  ${finding.code}  ${finding.message}\n`
+			)
+		}
+
+		const byRule = Object.groupBy(result.findings, (finding) => `${finding.severity} ${finding.code}`)
+
+		for (const [rule, findings = []] of Object.entries(byRule).toSorted(
+			([, a = []], [, b = []]) => b.length - a.length
+		)) {
+			io.stdout(`  ${String(findings.length).padStart(4)}  ${rule}\n`)
+		}
+
+		io.stdout(
+			`code-blocks: ${result.findings.length} finding(s) in ${result.blocks} block(s) across ${result.pages} page(s); ${result.linted} page(s) linted, ${result.cached} from the cache, in ${result.elapsedMs} ms\n`
+		)
+	}
+
+	return result.findings.length ? 1 : 0
+}
+
 const CI_REPLAY_OPTIONS = {
 	ref: { type: "string" },
 	commits: { type: "string", default: "200" },
@@ -678,6 +739,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 		case "ci-scope":
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0
+		case "code-blocks":
+			return runCodeBlockLint(rest, io)
 		case "ci-replay":
 			return runCIReplay(rest, io)
 		case "effects": {

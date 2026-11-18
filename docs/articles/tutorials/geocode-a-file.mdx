@@ -113,6 +113,7 @@ const rows: GeocodeRow[] = readFileSync("results.jsonl", "utf8")
 for (const row of rows) {
 	const where = row.lat == null || row.lon == null ? "no coordinate" : `${row.lat.toFixed(5)}, ${row.lon.toFixed(5)}`
 	const source = row.coordinate_source ? `${row.coordinate_source.source} ${row.coordinate_source.release}` : "-"
+
 	console.log(`${row.input}\n  ${row.resolution_tier} / ${row.epistemic_status} · ${where} · source: ${source}`)
 }
 ```
