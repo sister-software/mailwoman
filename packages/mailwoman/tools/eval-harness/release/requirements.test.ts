@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import {
 	capabilityProbeSources,
+	PENDING_COLLECTION_SUFFIX,
 	type ReleaseRequirementSpec,
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
@@ -103,6 +104,51 @@ describe("validateReleaseSpec", () => {
 		expect(v9.statistics).toEqual(v8.statistics)
 		expect(v9.provenance).toEqual(v8.provenance)
 		expect({ ...v9.identities, dataset: null }).toEqual({ ...v8.identities, dataset: null })
+	})
+
+	it("refuses v10 until its confirmation collections are frozen and pinned", async () => {
+		await expect(readLocalJSONFile<unknown>(specRecord(10)).then((s) => validateReleaseSpec(s))).rejects.toThrow(
+			/holds the placeholder heldout-confirm-v0\.8\.19@pending/u
+		)
+	})
+
+	it("differs from v9 in postal_unit's no-loss form and the collections only", async () => {
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
+		const draft = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(10))
+
+		const pinned = (id: string) =>
+			id.endsWith(PENDING_COLLECTION_SUFFIX) ? id.replace(/@pending$/u, "@0123456789abcdef") : id
+
+		const confirmation = draft.evaluations.confirmation.ids.map(pinned)
+
+		const v10 = validateReleaseSpec({
+			...draft,
+			identities: { ...draft.identities, dataset: confirmation.map((id) => ({ id, sha256: "c".repeat(64) })) },
+			evaluations: { ...draft.evaluations, confirmation: { ...draft.evaluations.confirmation, ids: confirmation } },
+		})
+
+		const byID = (spec: ReleaseRequirementSpec) => new Map(spec.requirements.map((req) => [req.id, req]))
+		const before = byID(v9)
+		const after = byID(v10)
+
+		expect([...after.keys()]).toEqual([...before.keys()])
+
+		for (const [id, req] of before) {
+			if (id === "postal_unit") continue
+
+			expect(after.get(id), id).toEqual(req)
+		}
+
+		const postalUnit = after.get("postal_unit")!
+
+		expect("minimum" in postalUnit).toBe(false)
+		expect(postalUnit).toMatchObject({ kind: "capability", maxLoss: 0, select: before.get("postal_unit")!.select })
+		expect(v10.objective).toEqual(v9.objective)
+		expect(v10.statistics).toEqual(v9.statistics)
+		expect(v10.provenance).toEqual(v9.provenance)
+		expect({ ...v10.identities, dataset: null }).toEqual({ ...v9.identities, dataset: null })
+		expect(v10.evaluations.development.ids).not.toEqual(v9.evaluations.development.ids)
+		expect(v10.rationale).toMatch(/Confirmation reads under v9/u)
 	})
 
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {

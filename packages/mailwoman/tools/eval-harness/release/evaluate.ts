@@ -702,19 +702,23 @@ export function evaluateReleaseSpec(
 		}
 
 		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
-		const minimum = selectIndices(rowsFor.minimum, select, req.kind === "country")
 
-		plans.push({
-			id: req.id,
-			check: "minimum",
-			threshold: req.minimum,
-			admitted: spec.provenance.admitted.minimum,
-			rows: rowsFor.minimum,
-			rowIndices: minimum.indices,
-			missingCountries: minimum.missingCountries,
-			strata: [],
-			reasons: [],
-		})
+		// A capability that omits its minimum plans only its loss check below.
+		if ("minimum" in req) {
+			const minimum = selectIndices(rowsFor.minimum, select, req.kind === "country")
+
+			plans.push({
+				id: req.id,
+				check: "minimum",
+				threshold: req.minimum ?? null,
+				admitted: spec.provenance.admitted.minimum,
+				rows: rowsFor.minimum,
+				rowIndices: minimum.indices,
+				missingCountries: minimum.missingCountries,
+				strata: [],
+				reasons: [],
+			})
+		}
 
 		if (req.kind === "capability" && req.maxLoss != null) {
 			const comparative = selectIndices(rowsFor.comparative, select, false)

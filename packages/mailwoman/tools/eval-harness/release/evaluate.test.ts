@@ -289,6 +289,53 @@ describe("evaluateReleaseSpec", () => {
 		})
 	})
 
+	it("judges a capability without a minimum by its no-loss bound alone", () => {
+		const lossOnly = (maxLoss: number) =>
+			baseSpec({
+				requirements: [
+					{
+						id: "cap",
+						kind: "capability",
+						task: "t",
+						metric: "exact_parse",
+						reason: "t",
+						maxLoss,
+						maxLossReason: "t",
+						select: { countries: ["US"] },
+					},
+				],
+			})
+
+		// The published model reads 0.70, under a 0.85 minimum, and the candidate repairs it.
+		const repaired = rowsFor("US", 1000, 700, 820, (i) => `g${i}`)
+		const verdict = evaluate(lossOnly(0), [...repaired, ...rowsFor("FR", 400, 300, 300)], artifacts)
+		const checks = verdict.checks.filter((c) => c.id === "cap")
+
+		expect(checks.map((c) => c.check)).toEqual(["max_loss"])
+		expect(checks[0]!.outcome).toBe(ReleaseOutcome.Pass)
+		expect(checks[0]!.estimate).toBeCloseTo(0.12)
+
+		// An arm that loses on the capability fails, however high its rate.
+		const lost = rowsFor("US", 1000, 950, 900, (i) => `g${i}`)
+
+		expect(check(evaluate(lossOnly(0), lost, artifacts), "cap").outcome).toBe(ReleaseOutcome.Fail)
+
+		expect(() =>
+			baseSpec({
+				requirements: [
+					{
+						id: "cap",
+						kind: "capability",
+						task: "t",
+						metric: "exact_parse",
+						reason: "t",
+						select: { countries: ["US"] },
+					},
+				],
+			})
+		).toThrow(/may be omitted only beside a registered maxLoss/u)
+	})
+
 	it("reports the inference rule and refuses outcomes that record none", () => {
 		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)]
 		const recorded = evaluate(baseSpec(), rows, artifacts)

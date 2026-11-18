@@ -112,7 +112,12 @@ export interface CapabilityRequirement {
 	task: string
 	metric: "exact_parse"
 	reason: string
-	minimum: number | null
+	/**
+	 * Minimum candidate exact parse rate in `[0, 1]`, or `null` while unregistered.
+	 *
+	 * Absent registers no minimum, and the registered `maxLoss` is then the capability's only check.
+	 */
+	minimum?: number | null
 	/**
 	 * The largest permitted loss, `published - candidate`, in exact parse rate.
 	 *
@@ -309,6 +314,14 @@ export function parseCollectionID(id: string): { datasetID: string; version: str
 	return match?.groups ? { datasetID: match.groups.datasetID!, version: match.groups.version! } : null
 }
 
+/**
+ * The version a specification writes for a collection it names before the
+ * collection is frozen, `<datasetID>@pending`.
+ *
+ * The reader refuses it, so the specification can't be read until the pin is filled.
+ */
+export const PENDING_COLLECTION_SUFFIX = "@pending"
+
 type Check = (value: unknown, path: string) => void
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -324,6 +337,16 @@ function assertCollectionPins(
 	evaluations: Record<string, unknown>,
 	fail: (path: string, problem: string) => never
 ): void {
+	const refusePlaceholder = (id: unknown, path: string) => {
+		if (typeof id === "string" && id.endsWith(PENDING_COLLECTION_SUFFIX)) {
+			fail(
+				path,
+				`holds the placeholder ${id}: the collection isn't frozen yet; pin <datasetID>@<version> once ` +
+					"heldout/dataset/freeze.run.ts writes it"
+			)
+		}
+	}
+
 	const collectionList = (value: unknown, path: string) => {
 		if (!Array.isArray(value) || !value.length) {
 			fail(path, "must be a non-empty array")
@@ -332,6 +355,8 @@ function assertCollectionPins(
 		const datasetIDs = new Set<string>()
 
 		for (const [i, id] of (value as unknown[]).entries()) {
+			refusePlaceholder(id, `${path}[${i}]`)
+
 			const parsed = typeof id === "string" ? parseCollectionID(id) : null
 
 			if (!parsed) {
@@ -356,6 +381,8 @@ function assertCollectionPins(
 		if (!isObject(entry)) {
 			fail(`$.identities.dataset[${i}]`, "must be an object")
 		}
+
+		refusePlaceholder((entry as Record<string, unknown>).id, `$.identities.dataset[${i}].id`)
 
 		const sha256 = (entry as Record<string, unknown>).sha256
 
@@ -387,6 +414,26 @@ function assertCollectionPins(
 		if (typeof role.description !== "string" || !role.description.trim()) {
 			fail(`$.evaluations.${which}.description`, "must be a non-empty string")
 		}
+	}
+}
+
+/**
+ * Throws, through `fail`, unless a requirement that omits its minimum is a
+ * capability with a registered `maxLoss`.
+ *
+ * The loss bound is then that capability's only check.
+ */
+function assertLossOnly(
+	req: Record<string, unknown>,
+	path: string,
+	fail: (path: string, problem: string) => never
+): void {
+	if (req.kind !== "capability") {
+		fail(path, "must be present (null while unregistered)")
+	}
+
+	if (typeof req.maxLoss !== "number") {
+		fail(path, "may be omitted only beside a registered maxLoss, which then judges the capability")
 	}
 }
 
@@ -534,11 +581,11 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 			continue
 		}
 
-		if (!("minimum" in req)) {
-			fail(`${path}.minimum`, "must be present (null while unregistered)")
+		if ("minimum" in req) {
+			finite(req.minimum, `${path}.minimum`, 0, 1, true)
+		} else {
+			assertLossOnly(req, `${path}.minimum`, fail)
 		}
-
-		finite(req.minimum, `${path}.minimum`, 0, 1, true)
 
 		if (req.kind === "country") {
 			string(req.country, `${path}.country`)
