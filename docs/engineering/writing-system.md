@@ -197,7 +197,13 @@ rather than by reordering the negation.
    neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
    benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
    never at one particular project.
-10. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
+10. **An instruction installs the current release, and a record keeps the release it checked.** A fenced
+    command writes `mailwoman@{{release.version}}`, which `docs/plugins/release-version/remark.ts`
+    replaces with the `mailwoman` manifest's version at build time. A sentence that records a check, such
+    as "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. The
+    `Release version literals` step of `docs/scripts/check/docs-structure.mts` rejects a literal version in
+    fenced code under `articles/` and `src/pages/`. TSX pages read the version with `useReleaseVersion`.
+11. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
     recipe header, a config comment or a model card cites the paper rather than the product's source
     (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.
 

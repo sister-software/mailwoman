@@ -11,6 +11,8 @@ import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
 // Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
 import { createSidebarMegaMenu } from "./plugins/navbar-menus.ts"
+// Substitutes `{{release.version}}` in code with the synced release version (see plugins/release-version/remark.ts).
+import remarkReleaseVersion from "./plugins/release-version/remark.ts"
 
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
@@ -120,6 +122,7 @@ const config: Config = {
 		],
 		"./plugins/runtime-assets/plugin.ts",
 		"./plugins/search-index/plugin.ts",
+		"./plugins/release-version/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary with the same validation, tooltips and remark.
 			// Adds a custom page with tag filters and a category TOC.
@@ -162,6 +165,7 @@ const config: Config = {
 					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					remarkPlugins: [
+						remarkReleaseVersion,
 						[
 							glossaryRemarkPlugin,
 							{
@@ -174,6 +178,7 @@ const config: Config = {
 					],
 				},
 				pages: {
+					remarkPlugins: [remarkReleaseVersion],
 					// Co-located `.ts` helpers are not pages and SSG-fail ("no default export")
 					// if routed, so exclude them.
 					// The other entries reproduce Docusaurus's defaults.

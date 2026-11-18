@@ -19,7 +19,7 @@ The check returns `pass` when all required components appear once and the postco
 Install the published 11.0.0 packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/codex@11.0.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/codex@{{release.version}}
 ```
 
 The parser and ZIP Code shape check run without a geocoding database. Take `countryCode: "US"` from your application's own country field before using this policy, because a country inferred from the postcode shape would make the policy circular. Adapt the required tags and postcode check for other address types or countries.

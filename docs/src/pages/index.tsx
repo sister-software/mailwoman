@@ -13,6 +13,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import { CoverageTable } from "../components/CoverageTable/CoverageTable.tsx"
 import { TourStops } from "../components/HeroMap/tour.ts"
 import { HeroSearch } from "../components/HeroSearch/HeroSearch.tsx"
+import { useReleaseVersion } from "../hooks/release.ts"
 import { useSiteConfig } from "../hooks/site.ts"
 
 import styles from "./index.module.css"
@@ -349,6 +350,8 @@ function FeaturedWork(): ReactNode {
 }
 
 function QuickStart(): ReactNode {
+	const releaseVersion = useReleaseVersion()
+
 	return (
 		<section className={styles.codeSection}>
 			<div className="container">
@@ -357,9 +360,9 @@ function QuickStart(): ReactNode {
 					<div className="col col--6">
 						<h4>JavaScript &amp; TypeScript</h4>
 						<CodeBlock language="bash">{`npm install \\
-  mailwoman@11.0.0 \\
-  @mailwoman/neural@11.0.0 \\
-  @mailwoman/neural-weights-en-us@11.0.0`}</CodeBlock>
+  mailwoman@${releaseVersion} \\
+  @mailwoman/neural@${releaseVersion} \\
+  @mailwoman/neural-weights-en-us@${releaseVersion}`}</CodeBlock>
 						<CodeBlock language="js">
 							{`import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"

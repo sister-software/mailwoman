@@ -17,7 +17,7 @@ Use this procedure to find the places that contain a coordinate, such as the nei
 Install the published 11.0.0 packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/resolver-wof-sqlite@11.0.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/resolver-wof-sqlite@{{release.version}}
 ```
 
 The reverse geocoder reads an admin gazetteer: a Who's On First SQLite database with a `place_bbox` spatial index. The 11.0.0 data bundles ship without one, and the `candidate.db` file from `mailwoman data pull candidate` lacks that index. Build the gazetteer from local clones of the Who's On First repositories, then add its search and spatial indexes:
