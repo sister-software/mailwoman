@@ -39,6 +39,7 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | D21            | `/docs/guides/handle-bare-postcodes`        | guide       | Require caller country context before a bare-postcode lookup and preserve unresolved results.       |
 | D22            | `/docs/guides/handle-landmark-queries`      | guide       | Route a landmark or relative-place query and inspect the available place evidence.                  |
 | D23            | `/docs/guides/review-parse-results`         | guide       | Route parsed records to accept, request more input, or review under a measured application policy.  |
+| D24            | `/docs/guides/review-geocode-evidence`      | guide       | Inspect a saved result, installed data identity, rights terms, and correction route.                |
 | R01            | `/docs/reference/library`                   | reference   | Library imports, signatures, options, returns, and errors.                                          |
 | R02            | `/docs/reference/cli`                       | reference   | Commands, flags, exit codes, and generated command output.                                          |
 | R03            | `/docs/reference/http`                      | reference   | Native and compatibility endpoints, request/response shapes, and errors.                            |
@@ -50,12 +51,13 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | E03            | `/docs/explanation/geocoding`               | explanation | How geocoding sources and precision tiers affect a coordinate.                                      |
 | E04            | `/docs/explanation/confidence-and-limits`   | explanation | What confidence, ambiguity, and abstention mean for use decisions.                                  |
 | E05            | `/docs/explanation/data-and-model-quality`  | explanation | How corpus provenance, holdouts, and release evaluation support claims.                             |
+| E06            | `/docs/explanation/trust-and-evidence`      | explanation | Which technical, legal, and institutional claims a result and its records can support.              |
 | V01            | `/evidence/benchmarks`                      | evidence    | Dated benchmark index and how to read the metrics.                                                  |
 | V02            | Folded into `V01`                           | evidence    | `V01` lists each country panel's version, sample, denominator, method, and caveats.                 |
 | V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                          |
 | A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                                      |
 
-This revised architecture proposes 43 routes: 6 product/solution landing pages + 23 learning/work pages + 6 reference pages + 5 explanation pages + 2 evidence pages + 1 about page = 43. The five added guide destinations split the former D10 brief by reader outcome. `V02` keeps its ID without a route. `V01` indexes the France BAN and Belgium panels with their versions, samples, denominators, methods, and caveats. A separate panel page would repeat that index until a panel is rerun against a published release, and a rerun panel joins `V01`.
+This revised architecture proposes 45 routes: 6 product/solution landing pages + 24 learning/work pages + 6 reference pages + 6 explanation pages + 2 evidence pages + 1 about page = 45. The guide destinations split the former D10 brief by reader outcome and add a provenance review task. `V02` keeps its ID without a route. `V01` indexes the France BAN and Belgium panels with their versions, samples, denominators, methods, and caveats. A separate panel page would repeat that index until a panel is rerun against a published release, and a rerun panel joins `V01`.
 
 ## Navigation and cross-links
 

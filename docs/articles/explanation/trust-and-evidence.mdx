@@ -1,0 +1,33 @@
+---
+title: What an address result can establish
+description: How source records, result fields, permissions, and independent checks support different claims.
+role: explanation
+source-of-truth: packages/core/lib/geocode/result.ts, packages/mailwoman/lib/geocode/result.ts, packages/mailwoman/lib/data/bundles.ts, packages/mailwoman/lib/data/published-bundles.ts
+verified-with: published mailwoman v11.0.0 schema and repository source inspected 2026-11-18. Geographic artifact behavior awaits a versioned rebuild
+---
+
+# What an address result can establish
+
+A team may need to know whether a coordinate came from a register, whether the register may be used for its purpose, and whether a data holder can control its use. Those are separate questions. Mailwoman records some evidence for each, but an address result cannot settle every question on its own.
+
+## The evidence behind a coordinate
+
+A geocode starts with a parsed address and searches installed geographic data. The chosen `resolution_tier` identifies how the coordinate was obtained: an address point, interpolation, street, postcode, administrative place, venue, or plus code. A house number in the parsed components doesn't place a coordinate at that house. The `epistemic_status` describes the kind of claim supported by the geographic evidence. It is independent of the coordinate tier.
+
+For a stamped address-point or interpolation row, `coordinate_source` copies the row's `source` and, when present, `release`. A landmark result can record a source with `release: null`. The field is null on other tiers and when a matching row has no source stamp. A source string identifies the row's recorded provenance. It doesn't by itself identify the original authority behind every transformed input. The [schema reference](../reference/schema.mdx#geocode-result-and-provenance) gives the field conditions. A `candidates` entry identifies a possible place and can include a ranking score. That score compares candidates in one response. It isn't a verified distance from the destination.
+
+The [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/bundles.ts) identifies published sources and recorded rights terms. An installed artifact's `layer_manifest` can carry source, source vintage, build identity, attribution, and a license expression. Those records describe the artifact and its build. The selected result doesn't automatically include the full ingestion path or every upstream record used to build that artifact. A published bundle declaration also doesn't establish which file an operator installed. [Data and locales](../reference/data-and-locales.mdx) explains how to check an installation.
+
+## Three decisions with different owners
+
+Technical trust concerns whether the input, model, data, and selected coordinate can be inspected and checked. A source stamp, versioned artifact, and reproducible test help. An authentic trace can still contain an incorrect or stale source observation. A trace of a neural parser's output records what the runtime produced. It doesn't explain every internal model decision.
+
+Legal trust concerns the rights and duties attached to each dataset and use. The [data and licensing page](/product/data-and-licensing) records publisher terms and unresolved questions for the published bundles. A license record doesn't establish that a coordinate is accurate or fit for a particular decision. The data owner or legal reviewer must resolve uncertain terms for the exact artifact and intended use.
+
+Institutional trust concerns the data holder's control over purpose, disclosure, retention, attribution, and withdrawal. A holder might authorize retrieval while withholding permission for model training or public disclosure of individual records. An operator can control deployment and local files when it runs Mailwoman in its own environment. This deployment doesn't create a contributor permission system for datasets that the operator imports. Those permissions require a separate agreement and operational controls.
+
+## Where verification stops
+
+An independent check needs an expected address or coordinate from an identified source, the exact input, the model and runtime version, the selected data snapshot, and the observed output. It also needs a stated acceptance rule. The current public docs have no release-matched geographic accuracy result for the published 11.0.0 bundles. A fresh data artifact is being built, so an example that depends on its row contents remains pending. [How data and evaluation support quality claims](./data-and-model-quality.mdx) explains the separate held-out evidence needed for model claims.
+
+The [provenance review guide](../guides/review-geocode-evidence.mdx) shows how to inspect a result and the associated data terms. The [problem-report guide](../guides/report-a-problem.mdx) records a correction with the original input, expected result, observed result, and first visible mismatch.

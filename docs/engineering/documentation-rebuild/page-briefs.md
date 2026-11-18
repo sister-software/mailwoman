@@ -80,6 +80,13 @@ D22 status: the guide is published at `docs/articles/guides/handle-landmark-quer
 | V02 | Folded into V01. A geocoding panel rerun against a published release is added to V01 with method, source, sample, losses, and command. | V01 already labels the France BAN and Belgium panels as historical 8.7.0 runs and checks their numbers against the committed result files.  |
 | V03 | Compare documented alternatives for a bounded use case with date, configuration, runnable method, and limitations.                     | Google Maps, Nominatim, Pelias/libpostal, and comparison index. Verify third-party claims from primary current sources at publication time. |
 
+## Trust-boundary additions
+
+| ID  | Reader outcome and owner                                                                                                                                                                                    | Records and acceptance check                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D24 | A developer or data steward records the evidence available for one saved geocode result and routes a rights or correction question. Documentation owns the procedure. The data owner decides permitted use. | Published `GeocodeResult` schema, `mailwoman data status`, `mailwoman doctor --verbose`, and bundle rights registry. Keep null and unavailable values explicit. A row-specific example requires the versioned rebuilt artifact. |
+| E06 | A product evaluator distinguishes technical evidence, legal permission, and a data holder's control. Documentation owns the explanation. The legal owner approves interpretations of source terms.          | Published result extractor, layer manifest, bundle registry, and weights provenance. Accept when each claim is scoped to its recorded source and no unverified accuracy or privacy guarantee appears.                           |
+
 ## Draft and review sequence
 
 1. Confirm the reader question and the page role. The proposed role can change if a task exercise reveals a different need.
