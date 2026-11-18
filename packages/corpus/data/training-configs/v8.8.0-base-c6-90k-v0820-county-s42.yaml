@@ -1,11 +1,13 @@
 # v8.8.0-base-c6-90k-v0820-county-s42 is v8.7.0-base-c6-90k-usgs-structures-s42.yaml (run 74eaf854986e4211) on corpus
 # v0.8.20. Every key and value is that config's except these:
 #
-# 1. `data.corpus_dir` names no corpus yet. Corpus v0.8.20 is the overlay of
-#    packages/corpus/data/builds/v0.8.20-rebuild/inputs.json (lane AK) on v0.8.19-overlay, re-split under the
-#    evaluation-group policy, and its manifest doesn't exist. The path holds `PENDING-MANIFEST`, so the launcher's
-#    preflight refuses it (`the preflight receipt key needs …/MANIFEST.json`) until the path is replaced by the admitted manifest's
-#    directory, and the replacement is the edit that re-derives the floors listed under "Before launch".
+# 1. `data.corpus_dir` is corpus v0.8.20,
+#    /data/corpus/versioned/v0.8.20-retention-overlay/corpus-v0.8.20-retention-overlay. Its MANIFEST.json has sha256 ce86a79b67c8c8583eadca0459e373c260fcdc8ac6c883673fa083caf18cfc89 (read on the host
+#    copy under /mnt/mw, 2026-11-18). It is the overlay of packages/corpus/data/builds/v0.8.20-rebuild/inputs.json
+#    (lane AK) on v0.8.19-overlay, re-split under the evaluation-group policy with
+#    packages/corpus/data/holdout/evaluation-groups.v0.8.20.json: 889,624,742 rows in 1,102 files, 889,338,725 train,
+#    23,234 val and 262,783 test. The frozen source record is
+#    packages/corpus/data/training-manifests/v0.8.20-retention-overlay.json.
 # 2. `source_reps` gains the three sources of the `us-county` recipe, at lane AK's proposed weights
 #    (`$training-config-note` of the inputs file): `rendered-us-county` 5.0 (6,198 rows, `Polk County, OR`),
 #    `rendered-us-city-county` 0.55 (157,069 rows, `Goode Crossing, Powhatan County, VA`) and `rendered-us-city-state`
@@ -56,9 +58,11 @@
 # classes those collection rows `known_overlap`. No check admits that class.
 #
 # Before launch, on the admitted v0.8.20 manifest (HOLDOUT_AND_EVALUATION sections 4.4 item 5 and 8):
-# - replace `data.corpus_dir` with the manifest's directory under /data, and record its MANIFEST.json sha256 here;
-# - re-derive `required_validation_label_support` from the v0.8.20 val draw (half each label's rows, rounded down),
-#   and re-check `required_validation_coverage` and `val_rows` against the re-split;
+# - done 2026-11-18: `data.corpus_dir` names the admitted manifest's directory (point 1);
+# - done 2026-11-18: `required_validation_label_support` is re-derived from the v0.8.20 val draw, and
+#   `audits/validation/coverage.run.ts` finds every `required_validation_coverage` floor met on the re-split's 23,234
+#   val rows. The tightest are NG at 27 rows against 20 and PF at 100. `val_rows` (36,864) stays above the 21,361-row
+#   draw, so the draw holds every admitted val row, as it did on v0.8.19;
 # - re-check every absolute `min_draws` receipt inherited from v8.7.0 against the v0.8.20 audit. Point 2 lowers
 #   every other source's share by 2.4%. On the v8.7.0 seed 42 audit the tightest absolute floor was `ban-bl-exposure`,
 #   452 drawn against 408. A 2.4% fall leaves it at about 441;
@@ -106,7 +110,8 @@
 # Launch with `--fresh --device A100-40GB`: 90,000 steps. Each v8.7.0 run billed about $3.38, and this run should
 # bill about the same, about 8% of the $40 Modal budget, of which about $7 is spent.
 #
-# The receipt preflight, CPU only, after point 1's edit (the launcher runs it before it starts a sandbox):
+# The receipt preflight, CPU only, on a copy of this config re-rooted at /mnt/mw (the launcher runs it before it
+# starts a sandbox):
 #   node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts \
 #     --config packages/corpus/data/training-configs/v8.8.0-base-c6-90k-v0820-county-s42.yaml \
 #     --json /mnt/mw/audits/epoch-mixture-v8.8.0-base-c6-90k-v0820-county-s42.json
@@ -141,7 +146,7 @@
 #    (`--spec v9.0.0-base`) against every declared floor.
 
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.20-PENDING-MANIFEST/corpus-v0.8.20-PENDING-MANIFEST
+  corpus_dir: /data/corpus/versioned/v0.8.20-retention-overlay/corpus-v0.8.20-retention-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c6-isolated-punctuation
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
@@ -785,19 +790,22 @@ data:
       min_street_rows: 10
     # PM has no entry. The hashed place holdout (6ff893e25) leaves it no held-out place, so its val split held 1 row on
     # v0.8.1, and a country with no held-out split gets no floor, as BL and MF got none in v7.2.0.
-  # v8.7.0's floors, half of each label's rows in the 22,208-row val draw of v0.8.19-retention-overlay. They are
-  # re-derived from the v0.8.20 val draw before launch (this config's header, "Before launch").
+  # Half of each label's rows in the 21,361-row val draw of v0.8.20-retention-overlay, rounded down, measured
+  # 2026-11-18 by audits/label/support.run.ts on this config re-rooted at /mnt/mw. Measured counts: locality 18,804,
+  # street 16,708, postcode 15,312, house_number 15,289, region 4,931, venue 3,951, street_prefix 2,716, country
+  # 2,436, street_suffix 1,768, unit 387. dependent_locality 1,357, subregion 361 and po_box 48 take no floor, as
+  # the v0.8.2 floors set none for them.
   required_validation_label_support:
-    - {label: postcode, split: val, min_rows: 7677}
-    - {label: locality, split: val, min_rows: 9650}
-    - {label: street, split: val, min_rows: 8379}
-    - {label: house_number, split: val, min_rows: 7656}
-    - {label: region, split: val, min_rows: 2810}
-    - {label: street_suffix, split: val, min_rows: 887}
-    - {label: street_prefix, split: val, min_rows: 1353}
-    - {label: venue, split: val, min_rows: 2018}
-    - {label: unit, split: val, min_rows: 201}
-    - {label: country, split: val, min_rows: 1422}
+    - {label: postcode, split: val, min_rows: 7656}
+    - {label: locality, split: val, min_rows: 9402}
+    - {label: street, split: val, min_rows: 8354}
+    - {label: house_number, split: val, min_rows: 7644}
+    - {label: region, split: val, min_rows: 2465}
+    - {label: street_suffix, split: val, min_rows: 884}
+    - {label: street_prefix, split: val, min_rows: 1358}
+    - {label: venue, split: val, min_rows: 1975}
+    - {label: unit, split: val, min_rows: 193}
+    - {label: country, split: val, min_rows: 1218}
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
