@@ -1,15 +1,17 @@
 {
 	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
-	"$draft-note": "A draft for the next build, written 2026-11-17 and not yet built. The rebuilt and new sources replace or join their v0.8.19-overlay files in an overlay on that corpus.",
-	"$overlay-note": "`usgov-nad` is rebuilt because its adapter now labels a place column that writes the record's own county as `subregion` (`1 1st Street, Polk County, OR 97347`). Over release 24 that relabels 243,004 of the 90,566,949 rows with a state, a ZIP Code and a place value. The adapter's code digest changes, so v0.8.19's NAD run can't be resumed. It reads the v0.8.18 street index, as v0.8.19-rebuild did, so the relabel is the run's only change. A v0.8.19 index doesn't exist yet. Every other v0.8.19-overlay source is carried unchanged, except the four PO-box sources of `$po-box-note`.",
+	"$draft-note": "The input record for corpus v0.8.20, built 2026-11-18 (lane AK). The rebuilt adapter sources and the re-rendered recipe outputs replace their v0.8.19-overlay files in an overlay on that corpus (`--replace-source`), and the overlay is then re-split under the evaluation-group policy with `evaluation-groups.v0.8.20.json`. An overlay rebuilds seven adapters and six recipe outputs; a base build would also rebuild every unchanged adapter and leave usgov-nad, the longest run of either shape, on its critical path.",
+	"$wof-note": "Both WOF adapters are rebuilt because their ancestor chain now drops an ancestor in another country unless its ISO 3166 or HASC code names the record's country, and wof-admin skips a record whose wof:country is XX (26d6cea17c). They sample as v0.8.19-rebuild did, with the same seed, cells and comparison cells, and write their cell counts and comparison rows beside this build.",
+	"$overlay-note": "`usgov-nad` is rebuilt because its adapter now labels a place column that writes the record's own county as `subregion` (`1 1st Street, Polk County, OR 97347`). Over release 24 that relabels 243,004 of the 90,566,949 rows with a state, a ZIP Code and a place value. The adapter's code digest changes, so v0.8.19's NAD run can't be resumed. It reads the v0.8.18 street index, as v0.8.19-rebuild did, so the relabel is the run's only change. A v0.8.19 index doesn't exist yet. Every other v0.8.19-overlay adapter source is carried unchanged, except the four PO-box sources of `$po-box-note` and the two WOF sources of `$wof-note`.",
 	"$snapshot-note": "`usgov-nppes` reads the November 2026 NPPES dissemination (npidata_pfile_20050523-20261102.csv, sha256 2c78861a…f722c, 11,776,341,517 bytes, MANIFEST.json beside it), downloaded 2026-11-18, in place of May 2026's file, which v0.8.19 read. The adapter is rebuilt for the PO-box relabel either way, so the newer file adds no build. A BAN export of 2026-11-17 sits at snapshots/ban/2026-11-17/ for the next BAN rebuild; this draft keeps v0.8.19's BAN run.",
-	"$po-box-note": "`usgov-nppes`, `state-tx-notaries`, `state-ia-contractors` and `state-ny-notaries` are rebuilt because each now labels a whole-line PO box `po_box` where v0.8.19 labeled it `street` (lane AC, 2026-11-17). The codex matcher reads `POB 1088`, NPPES calls `splitUSStreetLine` as the other three did, and NY takes a box written on either address line rather than matching the two lines joined. Over the inputs below the fixed adapters relabel 17 of 16,912 IA rows, 27 of 511,304 TX rows, 395 of 32,097 NY rows and 9,666 of 9,197,061 NPPES rows (scratchpad/2026/11/17/lane-ac/po-box-relabel-count.ts). Each adapter's code digest changes, so none of the four v0.8.19 runs can be resumed. Their inputs and street index are v0.8.19-rebuild's. Two recipe fixes of the same lane reach training only when their recipe outputs are re-rendered, which this draft doesn't do: `po-box-cedex` splits a PMB row's street into `street_prefix`, `street` and `street_suffix`, and the FR leg of `postal-unit-guideline` labels a named complex (`RESIDENCE …`, `LOTISSEMENT …`) `venue`. The training files `corpus-v0.8.0/invented-po-box-cedex.parquet` and `corpus-v0.8.1/invented-postal-unit-guideline-v0.8.1.parquet` keep the earlier labels.",
-	"$recipe-outputs-note": "This file names adapters only: `readBuildInputs` reads `adapters` and nothing else, and a recipe output reaches a corpus through `mailwoman corpus recipe` and the overlay, as every recipe output in v0.8.19 did. The recipe outputs this build adds are therefore recorded here as the invocations to run, each writing an `.invocation.json` beside its output under `corpus/recipe-outputs/`. `us-county` writes three new sources. `invented-house-venue` replaces both v0.8.19 files, `corpus-v0.8.0/invented-house-venue.parquet` and `corpus-v0.8.1/invented-house-venue-intl-v27.parquet`, which predate the record-id repair of #2894 and record neither the tuples nor the limit they were built from.",
+	"$po-box-note": "`usgov-nppes`, `state-tx-notaries`, `state-ia-contractors` and `state-ny-notaries` are rebuilt because each now labels a whole-line PO box `po_box` where v0.8.19 labeled it `street` (lane AC, 2026-11-17). The codex matcher reads `POB 1088`, NPPES calls `splitUSStreetLine` as the other three did, and NY takes a box written on either address line rather than matching the two lines joined. Over the inputs below the fixed adapters relabel 17 of 16,912 IA rows, 27 of 511,304 TX rows, 395 of 32,097 NY rows and 9,666 of 9,197,061 NPPES rows (scratchpad/2026/11/17/lane-ac/po-box-relabel-count.ts). Each adapter's code digest changes, so none of the four v0.8.19 runs can be resumed. Their inputs and street index are v0.8.19-rebuild's. Two recipe fixes of the same lane reach training only when their recipe outputs are re-rendered, so `$recipe-outputs` re-renders both: `po-box-cedex` splits a PMB row's street into `street_prefix`, `street` and `street_suffix`, and the FR leg of `postal-unit-guideline` labels a named complex (`RESIDENCE …`, `LOTISSEMENT …`) `venue`. Their outputs replace `corpus-v0.8.0/invented-po-box-cedex.parquet` and `corpus-v0.8.1/invented-postal-unit-guideline-v0.8.1.parquet`, which keep the earlier labels.",
+	"$recipe-outputs-note": "This file names adapters only: `readBuildInputs` reads `adapters` and nothing else, and a recipe output reaches a corpus through `mailwoman corpus recipe` and the overlay, as every recipe output in v0.8.19 did. The recipe outputs this build adds are therefore recorded here as the invocations run on 2026-11-18, each writing an `.invocation.json` beside its output under `corpus/recipe-outputs-v0.8.20/`. Each output was aligned with `mailwoman corpus align-recipe` (0 rows quarantined in any) and converted with `mailwoman dev jsonl-to-parquet`. `us-county` writes three new sources into one file, which is split into one labeled file per source before conversion, because an overlay entry records one source per parquet. No LLM call was made: the kryptonite overlay rebuilds the 4,822 DeepSeek rows already on disk with every row tagged US. `invented-house-venue` replaces both v0.8.19 files, `corpus-v0.8.0/invented-house-venue.parquet` and `corpus-v0.8.1/invented-house-venue-intl-v27.parquet`, which predate the record-id repair of #2894 and record neither the tuples nor the limit they were built from.",
+	"$training-config-note": "The county lane also proposes training weights, which a training config holds rather than a corpus: `source_reps` 5.0 for rendered-us-county, 0.55 for rendered-us-city-county and 1.0 for rendered-us-city-state, and the B- and I-subregion class weight raised from 0.3 to 1.0. The corpus carries the three sources' rows at their rendered counts.",
 	"$recipe-outputs": [
 		{
 			"recipe": "us-county",
 			"sources": ["rendered-us-county", "rendered-us-city-county", "rendered-us-city-state"],
-			"command": "mailwoman corpus recipe us-county --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/us-county-v0820.jsonl --count 200000 --seed 20261117",
+			"command": "mailwoman corpus recipe us-county --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/us-county-v0.8.20.jsonl --count 200000 --seed 20261117",
 			"reads": [
 				"db/wof/admin-global-priority.db",
 				"db/wof/postalcode-us.db",
@@ -24,21 +26,84 @@
 		{
 			"recipe": "house-venue",
 			"sources": ["invented-house-venue"],
-			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/house-venue-v0820.jsonl --seed 42",
+			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/invented-house-venue-v0.8.20.jsonl --seed 42",
 			"replaces": "corpus-v0.8.0/invented-house-venue.parquet",
-			"tuples": 179725
+			"tuples": 179725,
+			"rows": 179725,
+			"note": "179,720 distinct source ids over 179,725 rows, where the replaced file held 46,956 over 120,000."
 		},
 		{
 			"recipe": "house-venue",
 			"sources": ["invented-house-venue"],
-			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/tuples/house-venue-intl-v27-tuples.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/house-venue-intl-v0820.jsonl --seed 20260922",
+			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/house-venue-intl-v27-tuples.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/invented-house-venue-intl-v0.8.20.jsonl --seed 20260922",
 			"replaces": "corpus-v0.8.1/invented-house-venue-intl-v27.parquet",
 			"tuples": 18000,
-			"note": "The tuples file is stored compressed as house-venue-intl-v27-tuples.jsonl.zst; the seed is the one recorded in house-venue-intl-v27.jsonl.invocation.json."
+			"rows": 18000,
+			"note": "The tuples file is stored compressed as corpus/tuples/house-venue-intl-v27-tuples.jsonl.zst, which the recipe can't read, so `zstd -d` wrote the copy it reads; the seed is the one recorded in house-venue-intl-v27.jsonl.invocation.json."
+		},
+		{
+			"recipe": "kryptonite",
+			"sources": ["deepseek-kryptonite"],
+			"command": "mailwoman corpus recipe kryptonite --jsonl $MAILWOMAN_DATA_ROOT/corpus/overlays-v0.5.0/jsonl/kryptonite-train.jsonl.zst --base-manifest $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.8.19-overlay/corpus-v0.8.19-overlay/MANIFEST.json --out-dir $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/kryptonite --corpus-version 0.8.20-kryptonite",
+			"replaces": "corpus-v0.8.0/part-deepseek-kryptonite-train.parquet",
+			"rows": 4822,
+			"note": "The 432 french-saint rows the replaced file tagged FR are tagged US (a2d5649aa6); the overlay takes the parquet the command writes under store/ and ignores the combined manifest it also writes."
+		},
+		{
+			"recipe": "po-box-cedex",
+			"sources": ["invented-po-box-cedex"],
+			"command": "mailwoman corpus recipe po-box-cedex --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/invented-po-box-cedex-v0.8.20.jsonl --count 50000 --seed 20261118",
+			"replaces": "corpus-v0.8.0/invented-po-box-cedex.parquet",
+			"rows": 50000,
+			"note": "The replaced file records no seed. Of the US rows writing `pmb`, 3,076 of 3,384 carry a `street_suffix` span, against 0 of 3,465 in the replaced file."
+		},
+		{
+			"recipe": "postal-unit-guideline",
+			"sources": ["invented-postal-unit-guideline"],
+			"command": "mailwoman corpus recipe postal-unit-guideline --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/invented-postal-unit-guideline-v0.8.20.jsonl --count 2000 --seed 2764",
+			"replaces": "corpus-v0.8.1/invented-postal-unit-guideline-v0.8.1.parquet",
+			"rows": 10000,
+			"note": "The count and seed are slices/invented-postal-unit-guideline-v0.8.0.jsonl.invocation.json's; the v0.8.1 file records none. Of the FR rows writing RESIDENCE or LOTISSEMENT, 426 of 426 carry a `venue` span, against 0 of 431 in the replaced file."
 		}
 	],
 	"corpusVersion": "v0.8.20-rebuild",
 	"adapters": {
+		"wof-admin": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 2500,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.20-rebuild/wof-admin-cell-counts.json",
+				"compareCells": [
+					"FR|country region subregion",
+					"FR|country region subregion dependent_locality",
+					"GB|country region",
+					"IR|country locality",
+					"IR|country region locality",
+					"IR|country subregion locality",
+					"IR|region locality",
+					"IR|region subregion locality",
+					"KR|country region locality",
+					"KR|region locality",
+					"KR|region subregion locality",
+					"KR|subregion locality",
+					"KZ|country locality",
+					"US|region dependent_locality"
+				],
+				"comparisonFile": "corpus/versioned/v0.8.20-rebuild/wof-admin-comparison-cells.jsonl",
+				"heldOutPerCell": 60
+			}
+		},
+		"wof-postalcode": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 90000,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.20-rebuild/wof-postalcode-cell-counts.json"
+			}
+		},
 		"usgov-nad": {
 			"inputPath": "snapshots/usgov-nad/r24/TXT_NAD_r24.parquet",
 			"streetIndex": "corpus/street-index/v0.8.18-retention-overlay/street-index.db"
