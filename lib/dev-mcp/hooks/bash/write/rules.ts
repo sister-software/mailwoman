@@ -62,6 +62,7 @@ const ADMITTED = new Set([
 	"getent",
 	"grep",
 	"ip",
+	"lsblk",
 	"mtr",
 	"ping",
 	"tracepath",

@@ -16,17 +16,18 @@
  *   and two `mailwoman geocode` calls. The caller may supply a
  *   data root to avoid repeating the pull.
  *
- *   The first script follows `docs/articles/start.mdx`. The CLI and geocode legs check package behavior
+ *   The first script is `docs/articles/start.snippet.mts`, the file `start.mdx` includes. The CLI and geocode legs check package behavior
  *   independently of that tutorial.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { installedMailwomanBin } from "#release-kit/release/smoke/installed-bin"
 import { packWorkspaces, walkWorkspaceClosure } from "#release-kit/release/workspace-closure"
@@ -39,32 +40,12 @@ import { packWorkspaces, walkWorkspaceClosure } from "#release-kit/release/works
 export const GET_STARTED_SEEDS = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-us"] as const
 
 /**
- * The script from `docs/articles/start.mdx`, verbatim.
+ * The tutorial's script, relative to the repository root.
  *
- * The page and this string must say the same thing.
+ * `docs/articles/start.mdx` includes this file with a `file=` fence, so the page
+ * and the smoke test run one copy.
  */
-const FIRST_PARSE_SCRIPT = `import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
-const result = await parse("apt 4b 350 5th ave new york ny 10118")
-
-type TreeNode = (typeof result)["tree"]["roots"][number]
-
-console.log("input:", result.input)
-console.log("normalized:", result.tree.raw)
-console.log("locale:", result.locale.locale)
-console.log("kind:", result.kind.kind)
-
-function printNode(node: TreeNode, depth = 0): void {
-	const indent = "  ".repeat(depth)
-	console.log(\`\${indent}\${node.tag} [\${node.start}, \${node.end}): \${JSON.stringify(node.value)}\`)
-	for (const child of node.children) printNode(child, depth + 1)
-}
-
-for (const root of result.tree.roots) printNode(root)
-`
+const FIRST_PARSE_SNIPPET = "docs/articles/start.snippet.mts"
 
 const FIRST_PARSE_NEEDLES = [
 	"locale: en-US",
@@ -162,7 +143,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	const cli = await installedMailwomanBin(project)
 
 	log("[get-started] start.mdx: the parse script…")
-	await writeLocalTextFile(FIRST_PARSE_SCRIPT, project("parse.ts"))
+	await writeLocalTextFile(await readLocalTextFile(resolvePath(repoRoot, FIRST_PARSE_SNIPPET)), project("parse.ts"))
 	assertNeedles(run("node", ["parse.ts"], project), FIRST_PARSE_NEEDLES, "start.mdx")
 	legs.push("first-parse")
 

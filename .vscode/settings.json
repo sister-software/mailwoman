@@ -15,6 +15,11 @@
 		"editor.defaultFormatter": "oxc.oxc-vscode",
 		"editor.colorDecorators": false
 	},
+	// `.mdx` files have their own language id, so the `[markdown]` block above doesn't reach them.
+	// oxfmt formats an MDX page and the code inside its fences.
+	"[mdx]": {
+		"editor.defaultFormatter": "oxc.oxc-vscode"
+	},
 	"[shellscript]": {
 		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
@@ -37,6 +42,8 @@
 	"editor.codeActionsOnSave": {
 		"source.fixAll.oxc": "explicit"
 	},
+	// Saving runs the formatter set for the file's language, which is oxfmt for every language above.
+	"editor.formatOnSave": true,
 
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,

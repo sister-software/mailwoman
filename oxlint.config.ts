@@ -222,12 +222,12 @@ export default {
 			},
 		},
 		{
-			// The docs pages' code blocks, written here by `mwops code-blocks`,
-			// are a reader's script rather than repository code.
+			// The docs pages' code blocks are a reader's script rather than repository code: the inline
+			// blocks `mwops code-blocks` writes here, and the `*.snippet.*` files a page includes.
 			// A reader may import Node builtins, read `process`, print with `JSON.stringify`,
 			// split text, and type a literal limit, and the file starts without a license header.
 			// Correctness and layout rules still apply.
-			files: [".cache/code-blocks/**"],
+			files: [".cache/code-blocks/**", "docs/**/*.snippet.{ts,mts,tsx}"],
 			rules: {
 				"mailwoman/comment-reflow": "off",
 				"mailwoman/prefer-home": "off",

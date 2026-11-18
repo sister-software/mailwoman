@@ -2,7 +2,7 @@
 title: Node library API
 description: Look up Mailwoman 11.0.0 library imports, parse and geocode calls, options, return types, and errors.
 role: reference
-source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/stream.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
+source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/stream.ts, packages/entity-resolution/lib/geocode-handler.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
 verified-with: mailwoman v11.0.0
 ---
 
@@ -74,18 +74,18 @@ NeuralAddressClassifier.loadFromWeights(
 
 `loadFromWeights` loads a model for one locale. The published en-US exercise installs `@mailwoman/neural-weights-en-us@11.0.0` and passes `{ locale: "en-US" }`. The loader also accepts explicit `modelPath`, `tokenizerPath` or `charVocabPath`, `modelCardPath`, `tier`, and `cacheRoot` options. `tier` is `server` by default; `pocket` omits lexicons and keeps the postcode anchor. The full loader type is `ResolveWeightsOpts` plus inference and diagnostic options in `packages/neural/lib/classifier/loader.ts`.
 
-| Method                         | Return type                                      | Projection                                                                                         |
-| ------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `parse(text, opts?)`           | `Promise<AddressTree>`                           | Nested labeled tree.                                                                               |
-| `parseJSON(text, opts?)`       | `Promise<Partial<Record<ComponentTag, string>>>` | One string per retained tag. Optional serialization settings can include unknown or dropped spans. |
-| `parseTuples(text, opts?)`     | `Promise<Array<[ComponentTag, string]>>`         | Tag and value pairs. Optional serialization settings can include unknown spans.                    |
-| `parseXML(text, opts?)`        | `Promise<string>`                                | XML serialization.                                                                                 |
-| `parseWithLogits(text, opts?)` | `Promise<ParseWithLogitsResult>`                 | Tree, logits, and piece offsets.                                                                   |
-| `traceParse(text, opts?)`      | `Promise<NeuralParseTrace>`                      | Serializable decode trace.                                                                         |
+| Method                         | Return type                                      | Projection                                                                                                                 |
+| ------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `parse(text, opts?)`           | `Promise<AddressTree>`                           | Nested labeled tree.                                                                                                       |
+| `parseJSON(text, opts?)`       | `Promise<Partial<Record<ComponentTag, string>>>` | One string per retained tag. With serialization options, the result can also contain `unknown` and `dropped` arrays.       |
+| `parseTuples(text, opts?)`     | `Promise<Array<[ComponentTag, string]>>`         | Source-ordered tag and value pairs, including repeated tags. With `includeUnknown`, a tuple's tag can also be `"unknown"`. |
+| `parseXML(text, opts?)`        | `Promise<string>`                                | XML serialization.                                                                                                         |
+| `parseWithLogits(text, opts?)` | `Promise<ParseWithLogitsResult>`                 | Parsed tree, raw model logits from before priors and repairs, and piece offsets.                                           |
+| `traceParse(text, opts?)`      | `Promise<NeuralParseTrace>`                      | Serializable decode trace. The trace omits `opts.calibrate`.                                                               |
 
 Each method takes `ParseOpts` where shown. Common settings include `inputMode`, `caseNormalization`, `queryShape`, `fst`, `calibrate`, and `placetypePair`. Direct classifier calls have their own defaults and omit the runtime pipeline's surrounding stages. Use `createRuntimePipeline` for the complete parse path and the classifier methods when the direct model result or logits are needed.
 
-`decodeAsJSON(tree, opts?)` from `@mailwoman/core/decoder` flattens an `AddressTree` to one value per tag. Its `includeUnknown` and `includeDropped` options add diagnostic arrays. The flat projection can lose repeated spans and tree nesting. Read `tree` when either matters.
+`decodeAsJSON(tree, opts?)` from `@mailwoman/core/decoder` flattens an `AddressTree` to one value per tag. Its `includeUnknown` and `includeDropped` options add diagnostic arrays, including empty arrays when requested and no spans qualify. When two spans have the same tag, the projection keeps the grounded span first, then uses document order for administrative and postal tags or label confidence for other tags. The `dropped` array identifies a discarded value and the value that took its slot. Read `tree` when repeated spans or tree nesting matter.
 
 ## Geocode and batch calls
 
@@ -113,7 +113,17 @@ function geocodeStream(
 ): AsyncIterableIterator<SourceRecord>
 ```
 
-Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `classifier` and `resolver`. A geocode also requires geographic data behind the resolver. The optional `databases`, `nationalDatabases`, and `osmDatabases` fields select additional region and address-point layers. `parseForGeocode` accepts the parse-related subset of `GeocodeDeps` and returns a tree without running the full coordinate cascade. `geocodeStream` starts workers from a `GeocodeStreamConfig` containing `wofDBPath`, `dataRoot`, and `locale`. It also needs a `ColumnMapping` for the input records. `USStateDatabaseProvider.create(factory, dataRoot, catalog?)` reads the active data selection and warms <Country code="US" /> state database paths before it returns a disposable provider. Its factory supplies the SQLite lookup classes.
+Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `classifier` and `resolver`. A geocode also requires geographic data behind the resolver. The optional `databases`, `nationalDatabases`, and `osmDatabases` fields select additional region and address-point layers. `parseForGeocode` accepts the parse-related subset of `GeocodeDeps` and returns a tree without running the full coordinate cascade. `USStateDatabaseProvider.create(factory, dataRoot, catalog?)` reads the release manifest and warms <Country code="US" /> state database paths before it returns a disposable provider. It uses the supplied `catalog` snapshot when present and reads the active selection otherwise. Its factory supplies the SQLite lookup classes.
+
+`geocodeStream` starts workers with these `GeocodeStreamOptions` fields. The workers rebuild their classifier, resolver, and database handles from the serializable `geocode` configuration. When `geocode.country` is absent, the worker uses `"US"` as the resolver's default country. A record with `raw` input and a mapped address receives the geocode result in its `address` field, or `null` when the geocoder returns no address. A record without `raw` input or a mapped address passes through unchanged. The stream yields records in worker completion order. A caller that needs input order must retain each record's input position and reorder the results by its `SourceRecord.id`.
+
+| Stream option | Type and default                                | Effect                                                                                       |
+| ------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `mapping`     | `ColumnMapping`, required                       | Recomputes each record's address in the worker. Use the mapping used to normalize the input. |
+| `geocode`     | `GeocodeStreamConfig`, required                 | Supplies `wofDBPath`, `dataRoot`, and `locale`; `country` is optional.                       |
+| `concurrency` | `number`; `Math.min(4, availableParallelism())` | Sets the worker pool size. Each worker loads the model and opens the database.               |
+| `batchSize`   | `number`; `32`                                  | Sets the number of records per dispatched batch.                                             |
+| `worker`      | `string` or `URL`; compiled geocode worker      | Replaces the worker module. The source uses this option for tests.                           |
 
 `GeocodeResult` separates parsed `components` from `lat`, `lon`, `resolution_tier`, `epistemic_status`, and `coordinate_source`. The [result schema](./schema.mdx#geocode-result-and-provenance) defines those fields. The geocoding calls and stream were checked against the published 11.0.0 declarations and repository source, without a geographic database, so this page records no geocoding response or batch output. [Geocode a file of addresses](../tutorials/geocode-a-file.mdx) shows executed geocodes.
 
@@ -124,7 +134,7 @@ function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrato
 type Calibrator = (rawConfidence: number) => number
 ```
 
-`createCalibrator` from `@mailwoman/core/decoder` makes a function from a supplied calibration table. Pass that function as `ParseOpts.calibrate` on a direct classifier call. The default parse path doesn't apply a calibration table. The caller supplies a table fitted for the model being used. This function doesn't select one.
+`createCalibrator` from `@mailwoman/core/decoder` makes a function from a supplied calibration table. It sorts the bins by center, interpolates between adjacent centers, and clamps inputs outside the table to its endpoint values. Pass that function as `ParseOpts.calibrate` on a direct classifier call. The default parse path doesn't apply a calibration table. The caller supplies a table fitted for the model being used. This function doesn't select one.
 
 ## Errors and absence
 

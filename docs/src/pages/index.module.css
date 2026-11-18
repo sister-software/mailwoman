@@ -68,6 +68,15 @@
 	color: var(--ifm-button-color);
 }
 
+.heroNext {
+	margin: 0.75rem 0 0;
+	font-size: 0.9rem;
+}
+
+.heroNext a {
+	display: inline-block;
+}
+
 .visuallyHidden {
 	position: absolute;
 	width: 1px;
@@ -483,16 +492,15 @@
 }
 
 @media screen and (max-width: 600px) {
-	/* On a phone the map becomes a band above the panel. */
+	/* The panel starts below the navbar on a phone. */
 	.hero {
 		display: block;
 		min-height: 0;
-		padding: 14rem 0 1.5rem;
+		padding: 1.5rem 0;
 	}
 
 	.heroMap {
-		bottom: auto;
-		height: 16rem;
+		display: none;
 	}
 
 	.heroSearch {
