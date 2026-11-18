@@ -11,7 +11,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test"
  * The press is therefore retried until the dialog is open.
  */
 async function openSearch(page: Page): Promise<Locator> {
-	await page.goto("/", { waitUntil: "networkidle" })
+	await page.goto("/", { waitUntil: "domcontentloaded" })
 
 	const dialog = page.locator("dialog.mw-search")
 
