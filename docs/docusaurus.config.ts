@@ -20,11 +20,13 @@ import remarkReleaseVersion from "./plugins/release-version/remark.ts"
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
  *
- * `state` (an alias of `region`) fired on 38 pages and `tier` on 39 in ordinary senses.
- * Suppression is by surface, so `region` still links and a multi-word phrase
- * containing a suppressed word still links in full.
+ * The words `state`, `tier`, and `register` have meanings outside their glossary entries.
+ * `state` is also an alias of `region`.
+ *
+ * Suppression uses the matched surface.
+ * The word `region` and multi-word phrases containing a suppressed word still link.
  */
-const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
+const GLOSSARY_NO_AUTO_LINK = ["state", "tier", "register"] as const
 
 const gitHash = (() => {
 	try {

@@ -92,6 +92,9 @@ function HomepageHeader(): ReactNode {
 							label: styles.visuallyHidden,
 						}}
 					/>
+					<p className={styles.heroNext}>
+						Geocode opens Earth. <Link to="/docs/start">Run the first local parse →</Link>
+					</p>
 
 					<figure className={styles.heroResult} aria-live="polite">
 						<figcaption className={styles.heroLandmark}>
