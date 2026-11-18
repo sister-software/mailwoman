@@ -17,7 +17,7 @@ This page records the evidence checked on 9 November 2026 for published `mailwom
 | What was installed for this check?   | The published CLI reported missing artifacts for all four bundles in the verification host's default data root.                                           | A reader must check their own installation separately.                                                                                            |
 | What has coordinate-graded evidence? | The maintained scope declaration cites dated coordinate panels for its graded tiers and separate character-path evidence.                                 | The evaluation ledger doesn't establish a coordinate panel for the exact 11.0.0 release and model 10.8.0. That release-matched status is unknown. |
 
-- Node.js 24 LTS or later. The published `mailwoman@11.0.0` package declares the range `^24.22.1 || >=26.12.1`.
+Mailwoman requires Node.js `^24.22.3 || >=26.13.1`. These floors include the [November 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
 
 The published `@mailwoman/neural-weights-en-us@11.0.0` model card identifies model version `10.8.0`. A [first parse](/docs/start) was executed with those packages. The parser runs without a gazetteer. The geocoder and native server need suitable local geographic data.
 

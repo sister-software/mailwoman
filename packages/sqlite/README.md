@@ -29,7 +29,7 @@ console.log(place?.name) // "Paris"
 
 `DatabaseClient` extends Kysely and owns one SQLite connection. Pass a file path
 to its constructor for a persistent database. `DatabaseClient.temp()` creates an
-in-memory database. The package requires Node.js `^24.22.1 || >=26.12.1`.
+in-memory database. The package requires Node.js `^24.22.3 || >=26.13.1`.
 
 ## Open a built artifact
 

@@ -18,7 +18,7 @@
 # slim (glibc, NOT musl/alpine). arm64 is a follow-up (needs the arm64 ORT prebuild verified).
 
 # ---- install stage: resolve + fetch the published npm packages ----
-FROM node:24.22.1-slim AS install
+FROM node:24.22.3-slim AS install
 
 ARG MAILWOMAN_VERSION=latest
 
@@ -34,10 +34,10 @@ RUN node -e "const fs = require('node:fs'); const manifest = JSON.parse(fs.readF
 	&& npm cache clean --force
 
 # ---- runtime stage ----
-FROM node:24.22.1-slim AS runtime
+FROM node:24.22.3-slim AS runtime
 
 # libgomp1 = the OpenMP runtime onnxruntime-node links for threaded ONNX inference. Everything else the
-# prebuilt ORT binary needs (libstdc++6, libc) is already in node:24.22.1-slim.
+# prebuilt ORT binary needs (libstdc++6, libc) is already in node:24.22.3-slim.
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libgomp1 \
 	&& rm -rf /var/lib/apt/lists/*
