@@ -18,7 +18,7 @@ Use this procedure when a <Country code="US" /> street-address intake needs a co
 Install the published parser packages:
 
 ```sh
-npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install --save-exact mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 The seven labels in the script below are illustrative application decisions stated before this rule is evaluated. The first three complete street-address strings are labeled `ready`. The PO box, intersection, isolated unit, and row with an unsupported region string are labeled `review`. These labels describe this intake's desired routing, as opposed to a postal authority's judgment or a verified location. The example reads no geographic database.
@@ -35,6 +35,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const parse = createRuntimePipeline({ classifier })
 
 type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
+
 type Route = "ready" | "review"
 
 const examples: Array<[id: string, expected: Route, input: string]> = [
@@ -46,6 +47,7 @@ const examples: Array<[id: string, expected: Route, input: string]> = [
 	["R3", "review", "Suite 400"],
 	["R4", "review", "42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000"],
 ]
+
 const required = ["house_number", "street", "locality", "region", "postcode"]
 let readyCorrect = 0
 let reviewCorrect = 0
@@ -53,17 +55,40 @@ let reviewCorrect = 0
 for (const [id, expected, input] of examples) {
 	const result = await parse(input)
 	const nodes: TreeNode[] = []
+
 	function visit(node: TreeNode): void {
 		nodes.push(node)
-		for (const child of node.children) visit(child)
+
+		for (const child of node.children) {
+			visit(child)
+		}
 	}
-	for (const root of result.tree.roots) visit(root)
+
+	for (const root of result.tree.roots) {
+		visit(root)
+	}
+
 	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
+
 	const route: Route =
 		result.faults.length || result.kind.kind !== "structured_address" || missing.length ? "review" : "ready"
-	const weakest = nodes.reduce<TreeNode | null>((a, b) => (!a || b.confidence < a.confidence ? b : a), null)
-	if (expected === "ready" && route === "ready") readyCorrect++
-	if (expected === "review" && route === "review") reviewCorrect++
+
+	let weakest: TreeNode | null = null
+
+	for (const node of nodes) {
+		if (!weakest || node.confidence < weakest.confidence) {
+			weakest = node
+		}
+	}
+
+	if (expected === "ready" && route === "ready") {
+		readyCorrect++
+	}
+
+	if (expected === "review" && route === "review") {
+		reviewCorrect++
+	}
+
 	console.log(
 		JSON.stringify({
 			id,
@@ -76,8 +101,10 @@ for (const [id, expected, input] of examples) {
 		})
 	)
 }
+
 const readyTotal = examples.filter((example) => example[1] === "ready").length
 const reviewTotal = examples.filter((example) => example[1] === "review").length
+
 console.log(`Labeled ready routed ready: ${readyCorrect}/${readyTotal}`)
 console.log(`Labeled review routed review: ${reviewCorrect}/${reviewTotal}`)
 ```

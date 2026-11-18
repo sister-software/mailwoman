@@ -11,7 +11,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test"
  * The press is therefore retried until the dialog is open.
  */
 async function openSearch(page: Page): Promise<Locator> {
-	await page.goto("/", { waitUntil: "networkidle" })
+	await page.goto("/", { waitUntil: "domcontentloaded" })
 
 	const dialog = page.locator("dialog.mw-search")
 
@@ -28,7 +28,7 @@ test("the search modal returns a hit for a reference page", async ({ page }) => 
 	const input = dialog.getByRole("combobox")
 
 	await expect(input).toBeFocused()
-	await input.fill("locales and tiers")
+	await input.fill("locales and data bundles")
 
 	const dataAndLocales = dialog.locator('a[role="option"][href^="/docs/reference/data-and-locales"]')
 

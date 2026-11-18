@@ -1,0 +1,51 @@
+---
+title: Review the evidence for a geocoding result
+description: Inspect a saved result, identify its data and model versions, and route rights or correction questions.
+role: guide
+audience: developers and data stewards
+prerequisites: A saved GeocodeResult and access to the installation that produced it
+verified-with: published mailwoman v11.0.0 schema and repository source inspected 2026-11-18. Artifact-specific output awaits a versioned data rebuild
+---
+
+# Review the evidence for a geocoding result
+
+Record what a geocoding response says about its coordinate, the installed data behind it, and the rights questions that remain open.
+
+## Prerequisites
+
+- Save the complete `GeocodeResult` as `result.json`. Keep the original query, command or API request, and any resolver trace together. Review them for private addresses before sharing.
+- Use the same installation and data root that produced the result. A bundle listed in the published registry may be absent from this installation.
+- Record the package, weights, and data versions at the time of the request. A later installation can select different files.
+
+## 1. Read the selected coordinate evidence
+
+Inspect `lat`, `lon`, `resolution_tier`, `epistemic_status`, `coordinate_source`, `uncertainty_m`, `candidates`, and `derivation` in the saved response. Preserve null values. A null `coordinate_source` means that this response provides no row source stamp for its selected coordinate. It doesn't identify a missing or unlicensed source. A null `derivation` means the caller supplied no resolver trace sink for that projection.
+
+Use the [result schema](../reference/schema.mdx#geocode-result-and-provenance) to interpret each field. Compare the original input and selected coordinate with the expected result from an identified reference. Check `unfollowed_components` when the response used a coordinate that didn't follow every parsed component.
+
+## 2. Record the installed artifact identities
+
+Run these commands with the data root used by the request:
+
+```sh
+mailwoman data status
+mailwoman doctor --verbose
+```
+
+Save the output and command exit statuses. `data status` reports the selected bundle files; `doctor --verbose` reports the resolved data root and database settings. If a command cannot inspect the data root, record that failure as an unknown artifact identity. The [data and locales reference](../reference/data-and-locales.mdx#check-an-installation) gives the checked command behavior and the syntax for a specific bundle.
+
+## 3. Check the source terms for the intended use
+
+Identify the installed artifact and its source records before using or redistributing its data. Read the [published bundle terms](/product/data-and-licensing#data-bundles-and-their-recorded-terms) and the artifact's own manifest when available. Record the publisher, source vintage, attribution, license expression, and unresolved component-level rights separately. Ask the data owner or legal reviewer to decide whether those terms permit the intended use. A row's `coordinate_source` isn't a license grant.
+
+## 4. File a correction with the evidence you can share
+
+If the result conflicts with an identified source, follow [report a parsing or geocoding problem](./report-a-problem.mdx). Include the exact input, expected and observed coordinates or components, first visible mismatch, package and data versions, and the source used for the expectation. Remove private address data from a public report. Use the private security route for an exploitable vulnerability.
+
+## Verify
+
+The review record has the original input, response, runtime and model identity, installed artifact identity or an explicit unknown, a source for the expected result, and a rights decision owner. A response with no selected coordinate or source stamp remains a valid review record with those values marked null. The rebuilt geographic artifact is required before this page can include a reproducible row-specific geocoding example.
+
+## Limits
+
+The response doesn't contain a complete chain from every upstream publication through every candidate. An installed artifact and its terms need a separate inspection. The commands above do not prove source freshness, coordinate accuracy, or permission to use restricted data. Request an artifact-specific review from the data owner before making those claims.

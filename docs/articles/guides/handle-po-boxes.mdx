@@ -18,7 +18,7 @@ Use this guide when a <Country code="US" /> mailing-address intake needs to sepa
 Install the published parser packages:
 
 ```sh
-npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install --save-exact mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 The example uses the English model and reads no geographic database. Save the following complete script as `route-po-box.ts`.
@@ -33,6 +33,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 const parse = createRuntimePipeline({ classifier })
 
 type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
+
 interface FlatNode {
 	tag: string
 	value: string
@@ -43,15 +44,23 @@ interface FlatNode {
 for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
 	const result = await parse(input)
 	const nodes: FlatNode[] = []
+
 	function visit(node: TreeNode): void {
 		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
-		for (const child of node.children) visit(child)
+
+		for (const child of node.children) {
+			visit(child)
+		}
 	}
-	for (const root of result.tree.roots) visit(root)
+
+	for (const root of result.tree.roots) {
+		visit(root)
+	}
 
 	const required = ["po_box", "locality", "region", "postcode"]
 	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
 	const mailingCandidate = result.kind.kind === "po_box" && result.faults.length === 0 && missing.length === 0
+
 	console.log(
 		JSON.stringify({
 			input,

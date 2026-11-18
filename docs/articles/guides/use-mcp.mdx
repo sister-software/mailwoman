@@ -17,7 +17,7 @@ Use this procedure to give an MCP client, such as a coding assistant or an agent
 Install the server with the parser packages:
 
 ```bash
-npm install mailwoman@11.1.0 @mailwoman/neural@11.1.0 @mailwoman/neural-weights-en-us@11.1.0 @mailwoman/mcp@11.1.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/mcp@{{release.version}}
 ```
 
 The MCP server loads the parser and the place resolver together, so its parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:
@@ -63,7 +63,11 @@ import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js"
 
 // Pass the shell's environment, including MAILWOMAN_DATA_ROOT, to the server.
 const env: Record<string, string> = {}
-for (const [key, value] of Object.entries(process.env)) if (value != null) env[key] = value
+
+for (const [key, value] of Object.entries(process.env))
+	if (value != null) {
+		env[key] = value
+	}
 
 const transport = new StdioClientTransport({ command: "npx", args: ["mailwoman-mcp"], env, stderr: "ignore" })
 const client = new Client({ name: "mcp-check", version: "1.0.0" })
@@ -71,6 +75,7 @@ const client = new Client({ name: "mcp-check", version: "1.0.0" })
 await client.connect(transport)
 
 const { tools } = await client.listTools()
+
 console.log(`tools: ${tools.map((tool) => tool.name).join(", ")}`)
 
 for (const name of ["mailwoman_parse", "mailwoman_geocode"]) {
@@ -80,8 +85,13 @@ for (const name of ["mailwoman_parse", "mailwoman_geocode"]) {
 			arguments: { text: "1600 Pennsylvania Avenue NW, Washington, DC 20500" },
 		})
 	)
+
 	console.log(`\n${name} isError: ${result.isError ?? false}`)
-	for (const part of result.content) if (part.type === "text") console.log(part.text)
+
+	for (const part of result.content)
+		if (part.type === "text") {
+			console.log(part.text)
+		}
 }
 
 await client.close()

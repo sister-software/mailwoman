@@ -56,6 +56,7 @@ import { weightsReconciliationCheck } from "#repo-health/checks/weights/reconcil
 import { weightsRightsCheck } from "#repo-health/checks/weights/rights"
 import { wireIdentifiersCheck } from "#repo-health/checks/wire-identifiers"
 import { workspaceExportsCheck, workspaceFilesCheck } from "#repo-health/checks/workspace-manifest"
+import { mdxAnglesCheck } from "#repo-health/markdown/mdx-angles"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read
@@ -92,6 +93,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	nestedIndexCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
+	mdxAnglesCheck,
 	duplicateExportedShapeCheck,
 	stylesheetCheck,
 	runtimeFlagsCheck,

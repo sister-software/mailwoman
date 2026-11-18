@@ -18,7 +18,7 @@ Use this procedure when a consumer needs derived facts about a coordinate, such 
 Install the published 11.0.0 packages the examples use:
 
 ```sh
-npm install --save-exact @mailwoman/annotations@11.0.0 @mailwoman/spatial@11.0.0 @mailwoman/codex@11.0.0 @mailwoman/core@11.0.0
+npm install --save-exact @mailwoman/annotations@{{release.version}} @mailwoman/spatial@{{release.version}} @mailwoman/codex@{{release.version}} @mailwoman/core@{{release.version}}
 ```
 
 The coordinate-format and country-reference annotators used below need no geographic database. The repeated-component check later uses `@mailwoman/core`.
@@ -33,18 +33,21 @@ import { countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 
 const annotate = composeAnnotators([coordinateFormatAnnotator, countryReferenceAnnotator])
+
 const set = await annotate({
 	lat: 38.8977,
 	lon: -77.0365,
 	countryCode: "US",
 	date: new Date("2026-11-09T12:00:00Z"),
 })
+
 if (!set.dms || set.iso3166?.alpha2 !== "US") {
 	throw new Error("The coordinate or country annotator returned no expected value")
 }
 
 const native = toNative(set)
 const openCage = toOpenCage(set)
+
 console.log(JSON.stringify({ native, openCage }, null, 2))
 ```
 
@@ -174,10 +177,13 @@ The following fixture constructs a tree with two `locality` nodes by hand, to sh
 import { decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 
 const raw = "07691 Portopetro, Illes Balears, Spain"
+
 const node = (tag: AddressNode["tag"], value: string, children: AddressNode[] = []): AddressNode => {
 	const start = raw.indexOf(value)
+
 	return { tag, value, start, end: start + value.length, confidence: 1, children }
 }
+
 const tree: AddressTree = {
 	raw,
 	roots: [
@@ -187,6 +193,7 @@ const tree: AddressTree = {
 		]),
 	],
 }
+
 const flat = decodeAsJSON(tree, { includeDropped: true })
 
 console.log(

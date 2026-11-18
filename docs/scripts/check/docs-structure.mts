@@ -9,8 +9,14 @@
  */
 
 // CI runs this script before `yarn install`, so imports must be Node builtins or relative paths.
+/* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
+import { readFile } from "node:fs/promises"
+import * as path from "node:path"
+/* oxlint-enable typescript/no-restricted-imports */
+
 import sidebars from "../../sidebars.mts"
 import {
+	ARTICLES_DIR,
 	collectDocPages,
 	type DocPage,
 	isDelegatedWorkstream,
@@ -19,6 +25,7 @@ import {
 import { validatePage } from "../docs/frontmatter/metadata.mts"
 import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.mts"
 import { censusPathCitations } from "../docs/path-citations.mts"
+import { findReleaseVersionLiterals } from "../docs/release-version-literals.mts"
 import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.mts"
 
 // #region Frontmatter validity
@@ -169,6 +176,30 @@ async function checkPathCitations(): Promise<string[]> {
 
 // #endregion
 
+// #region Release version literals
+
+/**
+ * Check that fenced code in the published article tree and the site pages installs the current release.
+ */
+async function checkReleaseVersionLiterals(): Promise<string[]> {
+	const roots = [ARTICLES_DIR, path.join(path.dirname(ARTICLES_DIR), "src", "pages")]
+	const failures: string[] = []
+
+	for (const root of roots) {
+		for (const file of await collectMarkdownFiles(root)) {
+			for (const { line, literal } of findReleaseVersionLiterals(await readFile(file, "utf8"))) {
+				failures.push(
+					`${path.relative(path.dirname(ARTICLES_DIR), file)}:${line}: \`${literal}\` in a code block — write {{release.version}}`
+				)
+			}
+		}
+	}
+
+	return failures
+}
+
+// #endregion
+
 const pages = await collectDocPages()
 const published = pages.filter((page) => !isExcludedFromBuild(page))
 
@@ -178,6 +209,7 @@ const failuresByCheck: [name: string, failures: string[]][] = [
 	["Orphan pages", checkOrphans(published)],
 	["Relative links", await checkRelativeLinks()],
 	["Path citations", await checkPathCitations()],
+	["Release version literals", await checkReleaseVersionLiterals()],
 ]
 
 let failureCount = 0

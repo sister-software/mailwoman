@@ -18,7 +18,7 @@ Use the browser loader when an application needs address components in the tab. 
 Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install these exact published versions in a fresh project:
 
 ```sh
-npm install --save-exact @mailwoman/core@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 onnxruntime-web@1.31.1 vite@8.3.5
+npm install --save-exact @mailwoman/core@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} onnxruntime-web@1.31.1 vite@8.3.5
 ```
 
 The model files must be served over HTTP. Copy the ten files used by this example into Vite's `public/mailwoman` directory. Keep the four lexicons beside `model.onnx`: the loader derives their URLs from the model URL and the published model card.
@@ -58,6 +58,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web/loader"
 
 const result = document.querySelector<HTMLPreElement>("#result")
+
 if (!result) throw new Error("The page has no #result element")
 
 try {
@@ -71,7 +72,9 @@ try {
 		country: "US",
 		runner: { wasmPathsRoot: "/ort/" },
 	})
+
 	const tree = await classifier.parse("350 5th Ave, New York, NY 10118")
+
 	result.textContent = JSON.stringify(
 		{
 			backend: diagnostics?.backend,
@@ -83,6 +86,7 @@ try {
 		null,
 		2
 	)
+
 	await release()
 } catch (error) {
 	result.textContent = String(error)

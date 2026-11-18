@@ -9,7 +9,7 @@ verified-with: mailwoman v11.1.0
 
 Use this procedure to run the native Mailwoman HTTP server from the published container image, `ghcr.io/sister-software/mailwoman`. The image installs the published packages at its tag's version and includes the model weights. You mount the geographic data into it read-only.
 
-Each release publishes an image tagged with its version, such as `11.1.0`, and moves `latest` to it. The commands below were run with Podman. Docker accepts the same `pull` and `run` arguments.
+Each release publishes an image tagged with its version, such as `{{release.version}}`, and moves `latest` to it. The commands below were run with Podman. Docker accepts the same `pull` and `run` arguments.
 
 ## Prerequisites
 
@@ -21,8 +21,8 @@ Each release publishes an image tagged with its version, such as `11.1.0`, and m
 The example installs the global place candidates and the Washington, DC address points into a data root of its own:
 
 ```bash
-npx mailwoman@11.1.0 data pull candidate --data-root ./mailwoman-data
-npx mailwoman@11.1.0 data pull us --only dc --data-root ./mailwoman-data
+npx mailwoman@{{release.version}} data pull candidate --data-root ./mailwoman-data
+npx mailwoman@{{release.version}} data pull us --only dc --data-root ./mailwoman-data
 ```
 
 `--only` filters every bundle in the same command, so the candidate bundle is pulled on its own. On the host used for this page, the candidate pull took 672 s and the DC pull took 23 s.
@@ -30,7 +30,7 @@ npx mailwoman@11.1.0 data pull us --only dc --data-root ./mailwoman-data
 ## 2. Pull the image
 
 ```bash
-podman pull ghcr.io/sister-software/mailwoman:11.1.0
+podman pull ghcr.io/sister-software/mailwoman:{{release.version}}
 ```
 
 The image measured 1.09 GB. It runs as the unprivileged `node` user, reads its data from `/data`, and serves the native `/v1` API on port 3000.
@@ -42,7 +42,7 @@ Mount the data root read-only at `/data`:
 ```bash
 podman run -d --name mailwoman -p 127.0.0.1:3000:3000 \
 	-v "$PWD/mailwoman-data":/data:ro \
-	ghcr.io/sister-software/mailwoman:11.1.0
+	ghcr.io/sister-software/mailwoman:{{release.version}}
 ```
 
 The server reads the pull's selection from the data root and found the candidate database without any other setting:
@@ -88,7 +88,7 @@ After one geocode, `podman stats` reported 383.9 MB of memory for the running co
 
 ## Run a compatible server or build your own image
 
-The image also installs the Nominatim, Photon and libpostal servers. To run one, override the command, for example with `node node_modules/@mailwoman/nominatim/out/cli/main.js`. The repository's `Dockerfile` lists each server's command and port, and `docker/docker-compose.yml` runs them. To build an image from a checkout, run `podman build --build-arg MAILWOMAN_VERSION=11.1.0 -t mailwoman:11.1.0 .` at the repository root.
+The image also installs the Nominatim, Photon and libpostal servers. To run one, override the command, for example with `node node_modules/@mailwoman/nominatim/out/cli/main.js`. The repository's `Dockerfile` lists each server's command and port, and `docker/docker-compose.yml` runs them. To build an image from a checkout, run `podman build --build-arg MAILWOMAN_VERSION={{release.version}} -t mailwoman:{{release.version}} .` at the repository root.
 
 ## Not covered
 

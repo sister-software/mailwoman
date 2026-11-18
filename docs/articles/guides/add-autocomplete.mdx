@@ -18,7 +18,7 @@ Use the published finite-state transducer (FST) to suggest **place names** as so
 Install the two packages the example uses:
 
 ```sh
-npm install --save-exact @mailwoman/resolver-wof-sqlite@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+npm install --save-exact @mailwoman/resolver-wof-sqlite@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 Check that `node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin` exists in this project before starting the server. The path is relative to the project directory. The [data and locales reference](../reference/data-and-locales.mdx) distinguishes this place-name index from the geographic databases needed to resolve coordinates.
@@ -43,47 +43,64 @@ let requests = 0
 
 const server = createServer((request, response) => {
 	const url = new URL(request.url ?? "/", "http://localhost")
+
 	if (url.pathname !== "/suggest") {
 		response.writeHead(404).end()
+
 		return
 	}
 
 	requests++
 	const query = url.searchParams.get("q")?.trim() ?? ""
+
 	const entries: Suggestion[] =
 		query.length < 3
 			? []
 			: autocomplete(fst, query, { maxSuggestions: 2, dedupeByName: true }).suggestions.map(
 					({ name, placetype, wofID }) => ({ name, placetype, wofID })
 				)
+
 	response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ entries }))
 })
 
-await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+await new Promise<void>((resolve) => {
+	server.listen(0, "127.0.0.1", resolve)
+})
+
 const address = server.address()
+
 if (typeof address === "string" || address === null) throw new Error("Expected TCP address")
 
 let lastQuery = ""
+
 for (const input of ["s", "sa", "san", "san ", "san f", "san fr", "san franc"]) {
 	const query = input.trim()
+
 	if (query.length < 3) {
 		console.log(`${JSON.stringify(input)}: skipped (short)`)
+
 		continue
 	}
+
 	if (query === lastQuery) {
 		console.log(`${JSON.stringify(input)}: skipped (unchanged)`)
+
 		continue
 	}
 
 	lastQuery = query
 	const response = await fetch(`http://127.0.0.1:${address.port}/suggest?q=${encodeURIComponent(query)}`)
+
 	if (!response.ok) throw new Error(`HTTP ${response.status}`)
 	const data = (await response.json()) as { entries: Suggestion[] }
+
 	console.log(
 		`${JSON.stringify(input)}: ${data.entries.map(({ name, placetype }) => `${name} (${placetype})`).join("; ")}`
 	)
 }
+
 console.log(`HTTP requests: ${requests} of 7 input events`)
+
 server.close()
 ```
 

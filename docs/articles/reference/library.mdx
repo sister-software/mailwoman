@@ -23,7 +23,7 @@ This page describes the principal Node library calls in the published 11.0.0 pac
 
 ## Runtime parse pipeline
 
-```ts
+```ts fragment
 function createRuntimePipeline(
 	opts?: CreateRuntimePipelineOpts
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
@@ -66,7 +66,7 @@ The returned function accepts these `PipelineOpts` fields on each call. A per-ca
 
 ## Neural classifier
 
-```ts
+```ts fragment
 NeuralAddressClassifier.loadFromWeights(
   ...args: Parameters<typeof loadClassifierFromWeights>
 ): Promise<NeuralAddressClassifier>
@@ -89,7 +89,7 @@ Each method takes `ParseOpts` where shown. Common settings include `inputMode`, 
 
 ## Geocode and batch calls
 
-```ts
+```ts fragment
 function parseForGeocode(
 	input: string,
 	deps: Pick<
@@ -119,7 +119,7 @@ Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `class
 
 ## Confidence calibration
 
-```ts
+```ts fragment
 function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator
 type Calibrator = (rawConfidence: number) => number
 ```
@@ -140,7 +140,7 @@ type Calibrator = (rawConfidence: number) => number
 The example needs Node.js 24 LTS or later and an ECMAScript module project, with `"type": "module"` in its `package.json`. Install the packages:
 
 ```bash
-npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/core@11.0.0
+npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/core@{{release.version}}
 ```
 
 Save this complete file as `library.ts`:

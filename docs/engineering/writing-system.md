@@ -197,7 +197,20 @@ rather than by reordering the negation.
    neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
    benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
    never at one particular project.
-10. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
+10. **An instruction installs the current release, and a record keeps the release it checked.** A fenced
+    command writes `mailwoman@{{release.version}}`, which `docs/plugins/release-version/remark.ts`
+    replaces with the `mailwoman` manifest's version at build time. A sentence that records a check, such
+    as "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. The
+    `Release version literals` step of `docs/scripts/check/docs-structure.mts` rejects a literal version in
+    fenced code under `articles/` and `src/pages/`. TSX pages read the version with `useReleaseVersion`.
+11. **Code blocks pass the same lint as other code.** `yarn lint:code-blocks` (`mwops code-blocks`) writes
+    each `js`, `jsx`, `ts` or `tsx` block of `articles/` and `src/pages/` to `.cache/code-blocks/` and
+    lints it with the repository's oxlint config. The `.cache/code-blocks/**` override in
+    `oxlint.config.ts` turns off the rules that govern repository code rather than a reader's script, such
+    as the license header and the Node builtin import ban. `yarn fix:code-blocks` applies oxlint's fixes,
+    writes each changed block back into its page, and runs oxfmt over the page. A signature or other
+    partial example adds `fragment` after the language, as in ` ```ts fragment `, and the lint skips it.
+12. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
     recipe header, a config comment or a model card cites the paper rather than the product's source
     (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.
 
