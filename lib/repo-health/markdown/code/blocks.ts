@@ -69,7 +69,8 @@ function lintExtension(fence: Fence): string | null {
 	const [language = "", ...meta] = fence.info.split(/\s+/)
 	const extension = LANGUAGE_EXTENSIONS[language.toLowerCase()]
 
-	if (!extension || meta.includes(FRAGMENT_MARKER)) return null
+	// A `file=` fence shows a snippet file, and oxlint lints that file in place.
+	if (!extension || meta.includes(FRAGMENT_MARKER) || meta.some((word) => word.startsWith("file="))) return null
 
 	return extension
 }

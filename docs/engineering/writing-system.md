@@ -210,6 +210,13 @@ rather than by reordering the negation.
     as the license header and the Node builtin import ban. `yarn fix:code-blocks` applies oxlint's fixes,
     writes each changed block back into its page, and runs oxfmt over the page. A signature or other
     partial example adds `fragment` after the language, as in ` ```ts fragment `, and the lint skips it.
+    A script a reader runs, or one that a smoke test or a TSX page also uses, lives in a `*.snippet.mts`
+    file beside its page. The page shows it with an empty fence, ` ```ts file=./start.snippet.mts `, which
+    `docs/plugins/code-snippet/remark.ts` fills at build time. A TSX page reads it with `useCodeSnippet`.
+    oxlint lints the file in place under the same override, and `yarn compile` type-checks it against the
+    workspace packages. oxfmt formats both a snippet file and the code inside an inline fence. The editor runs
+    it on save, because `.vscode/settings.json` sets `editor.formatOnSave` and an `[mdx]` formatter. Each
+    snippet is a knip entry, because a page reads it as text and no module imports it.
 12. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
     recipe header, a config comment or a model card cites the paper rather than the product's source
     (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.

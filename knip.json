@@ -112,6 +112,7 @@
 				"docusaurus.config.ts",
 				"sidebars.mts",
 				"playwright.config.mts",
+				"**/*.snippet.{ts,mts,tsx}",
 				"plugins/**/*.ts",
 				"scripts/**/*.{ts,mts}",
 				"src/**/*.{js,ts,tsx}",
