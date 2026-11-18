@@ -28,7 +28,7 @@ test("the search modal returns a hit for a reference page", async ({ page }) => 
 	const input = dialog.getByRole("combobox")
 
 	await expect(input).toBeFocused()
-	await input.fill("locales and tiers")
+	await input.fill("data and locales")
 
 	const dataAndLocales = dialog.locator('a[role="option"][href^="/docs/reference/data-and-locales"]')
 
