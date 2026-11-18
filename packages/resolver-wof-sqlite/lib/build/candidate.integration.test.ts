@@ -446,6 +446,91 @@ describe("buildCandidateTable", () => {
 		const { result } = await adminOnlyCandidate()
 
 		expect(result.regionOfficialRefused).toBe(0)
+		expect(result.nicknameRefused).toBe(0)
+	})
+
+	test("a colloquial or unclassified name is refused where a populated place holds its key by a real name", async () => {
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
+		buildFixtureAdmin(input)
+
+		const names: Array<[id: number, name: string, language: string, privateuse: string]> = [
+			// Toronto's colloquial T.O. folds to Tó's own name.
+			// The Big Smoke spells no other place.
+			[101_735_835, "T.O.", "eng", "colloquial"],
+			[101_735_835, "The Big Smoke", "eng", "colloquial"],
+			// Motor City, California has no population, so Detroit keeps its nickname.
+			[101_718_083, "Motor City", "eng", "colloquial"],
+			// Two places sharing a nickname both keep it.
+			[200, "The Windy City", "eng", "colloquial"],
+			[101_915_529, "The Windy City", "eng", "colloquial"],
+			// Germany's ISO code spells Delaware's abbreviation.
+			[85_633_111, "DE", "eng", "unknown"],
+			// A key the place also holds by a variant stays: the variant row is a real name.
+			[101_718_095, "Philly", "eng", "colloquial"],
+			[101_718_095, "Philly", "eng", "variant"],
+		]
+
+		{
+			using src = new DatabaseClient<WOFDatabase>(input)
+
+			src.exec(`
+				INSERT INTO spr VALUES (101735835, 'Toronto', 'locality', 'CA', 43.65, -79.38, 43.58, -79.64, 43.86, -79.12, -1, 0);
+				INSERT INTO spr VALUES (1511683519, 'Tó', 'localadmin', 'PT', 41.33, -6.64, 41.30, -6.70, 41.36, -6.60, -1, 0);
+				INSERT INTO spr VALUES (101718083, 'Detroit', 'locality', 'US', 42.33, -83.05, 42.25, -83.29, 42.45, -82.91, -1, 0);
+				INSERT INTO spr VALUES (1209122291, 'Motor City', 'locality', 'US', 38.73, -120.74, 38.73, -120.74, 38.73, -120.74, -1, 0);
+				INSERT INTO spr VALUES (101915529, 'Wellington', 'locality', 'AU', -32.56, 148.94, -32.6, 148.9, -32.5, 149.0, -1, 0);
+				INSERT INTO spr VALUES (85633111, 'Germany', 'country', 'DE', 51.1, 10.4, 47.3, 5.9, 55.1, 15.0, -1, 0);
+				INSERT INTO spr VALUES (85688671, 'Delaware', 'region', 'US', 39.0, -75.5, 38.45, -75.79, 39.84, -75.05, -1, 0);
+				INSERT INTO spr VALUES (101718095, 'Philadelphia', 'locality', 'US', 39.95, -75.16, 39.87, -75.28, 40.14, -74.96, -1, 0);
+				INSERT INTO spr VALUES (1360000001, 'Philly', 'locality', 'US', 37.0, -90.0, 37.0, -90.0, 37.0, -90.0, -1, 0);
+				INSERT INTO place_population VALUES (101735835, 2600000);
+				INSERT INTO place_population VALUES (1511683519, 154);
+				INSERT INTO place_population VALUES (101718083, 633218);
+				INSERT INTO place_population VALUES (101915529, 4581);
+				INSERT INTO place_population VALUES (85633111, 83237124);
+				INSERT INTO place_population VALUES (85688671, 1031890);
+				INSERT INTO place_population VALUES (101718095, 1550542);
+				INSERT INTO place_population VALUES (1360000001, 50);
+				INSERT INTO place_abbr VALUES (85688671, 'DE');
+				CREATE TABLE names (
+					id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+					country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+					privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+					lastmodified INTEGER NOT NULL DEFAULT 0
+				);
+			`)
+
+			const insertName = src.prepare("INSERT INTO names (id, name, language, privateuse) VALUES (?, ?, ?, ?)")
+
+			for (const row of names) {
+				insertName.run(...row)
+			}
+
+			// The admin build writes each place's names into its alias bag.
+			const insertBag = src.prepare("INSERT OR REPLACE INTO place_search VALUES (?, ?)")
+
+			for (const placeID of new Set(names.map(([id]) => id))) {
+				insertBag.run(
+					placeID,
+					[...new Set(names.filter((n) => n[0] === placeID).map((n) => n[1]))].join(ALIAS_SEPARATOR)
+				)
+			}
+		}
+
+		const result = await buildCandidateTable({ input, output })
+
+		expect(result.nicknameRefused).toBe(2)
+
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		const answers = (name: string) => probe(db, normalizeLocalityForKey(name)).map((r) => r.name)
+
+		expect(answers("T.O.")).toEqual(["Tó"])
+		expect(answers("DE")).toEqual(["Delaware"])
+		expect(answers("The Big Smoke")).toEqual(["Toronto"])
+		expect(answers("Motor City")).toEqual(["Detroit", "Motor City"])
+		expect(answers("The Windy City")).toEqual(["Chicago", "Wellington"])
+		expect(answers("Philly")).toEqual(["Philadelphia", "Philly"])
 	})
 
 	test("a locality extract that names its region folds in with that region's scope and a closure row", async () => {

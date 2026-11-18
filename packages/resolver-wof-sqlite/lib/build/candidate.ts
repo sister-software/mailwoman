@@ -19,6 +19,7 @@ import { createCandidateFTS } from "#candidate/fts"
 import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
 import { applyCandidateKeyFold, type CandidateKeyFold } from "#candidate/key-fold"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
+import { refuseNicknamesOfNamesakes } from "#candidate/nickname-namesakes"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
 	CANDIDATE_COLUMNS,
@@ -128,6 +129,14 @@ export interface BuildCandidateResult {
 	 * The count is always zero for a source without a `names` table.
 	 */
 	regionOfficialRefused: number
+
+	/**
+	 * The count of alias rows from a colloquial or unclassified name dropped
+	 * because a populated place holds the same key by a real name.
+	 *
+	 * The count is always zero for a source without a `names` table.
+	 */
+	nicknameRefused: number
 	abbrevs: number
 	postcodes: number
 
@@ -448,6 +457,14 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	kdb.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
+	const nicknames = refuseNicknamesOfNamesakes(src, kdb, attrs)
+
+	progress(
+		"nicknames",
+		`${nicknames.rows.toLocaleString()} colloquial or unclassified alias rows refused on ` +
+			`${nicknames.keys.toLocaleString()} keys a populated place holds by a real name`
+	)
+
 	const roles = stampNameRoles({
 		src,
 		out: kdb,
@@ -580,6 +597,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		aliases: nAlias,
 		markFreeAliases: nMarkFree,
 		regionOfficialRefused,
+		nicknameRefused: nicknames.rows,
 		abbrevs: nAbbr,
 		postcodes: nPostcode,
 		postcodeAliases: nPostcodeAlias,
