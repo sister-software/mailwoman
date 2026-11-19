@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 391 of the group's 775 library and tool modules.
+This page lists 393 of the group's 779 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -2838,11 +2838,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 3 times
+- `runs a statement at module scope`, 4 times
 - `awaits at module scope`, 2 times
 
 | Kind  | Interface            | Target                  | Calls |
 | ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts`
@@ -2874,7 +2875,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 6 times
+- `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 2 times
 
 | Kind  | Interface            | Target                  | Calls |
@@ -3297,6 +3298,18 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `readLocalJSONFile`  | `unresolved (property)` | 2     |
 | write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
+## `packages/mailwoman/tools/eval-harness/release/register-candidate.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 2 times
+- `runs a statement at module scope`, 4 times
+
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `pathExists`         | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+
 ## `packages/mailwoman/tools/eval-harness/release/requirements.ts`
 
 | Kind | Interface           | Target                   | Calls |
@@ -3585,6 +3598,18 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | Kind | Interface                   | Target                    | Calls |
 | ---- | --------------------------- | ------------------------- | ----- |
 | read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+
+## `packages/mailwoman/tools/training/exposure/shape-diff.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 8 times
+- `awaits at module scope`, 3 times
+
+| Kind  | Interface            | Target                    | Calls |
+| ----- | -------------------- | ------------------------- | ----- |
+| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
 
 ## `packages/mailwoman/tools/training/exposure/shapes.run.ts`
 
