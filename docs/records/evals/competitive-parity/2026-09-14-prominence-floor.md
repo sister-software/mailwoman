@@ -140,7 +140,7 @@ miss.
 
 ## Reproduction
 
-```bash
+```sh
 node packages/mailwoman/lib/dev-tools/prominence-floor.run.ts panel
 node packages/mailwoman/lib/dev-tools/prominence-floor.run.ts record
 node packages/mailwoman/lib/dev-tools/prominence-floor.run.ts run

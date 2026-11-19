@@ -84,7 +84,7 @@ The five deferred imports have a comment claiming they keep `tokenizer.py` impor
 
 - [ ] **Step 1: Measure the import weight claim**
 
-```bash
+```sh
 uv run python -X importtime -c "import mailwoman_train.tokenizer" 2>&1 | tail -1
 uv run python -X importtime -c "import mailwoman_train.gazetteer_anchor, mailwoman_train.country_lexicon" 2>&1 | tail -1
 ```
@@ -191,7 +191,7 @@ def test_piece_span_is_declared_in_types() -> None:
 
 - [ ] **Step 3: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
@@ -229,7 +229,7 @@ class PieceSpan:
 
 Delete the `PieceSpan` dataclass from `tokenizer.py:54-59` and add `from .types import PieceSpan` to its module-level imports. Then:
 
-```bash
+```sh
 grep -rln 'from \.tokenizer import.*PieceSpan\|from mailwoman_train\.tokenizer import.*PieceSpan' src tests scripts
 ```
 
@@ -248,7 +248,7 @@ Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 56
 
 - [ ] **Step 7: Run the new test and the full suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
@@ -257,7 +257,7 @@ Expected: the hygiene test passes, and the suite reports at least **984 passed**
 
 - [ ] **Step 8: Lint, type-check, commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -336,7 +336,7 @@ def test_builder_machinery_answers_from_corpora() -> None:
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_text_normalize.py -q
 ```
 
@@ -374,7 +374,7 @@ Move `SCHEMA`, `RowRenderer`, `MAX_FIELD_CHARS`, `MAX_RENDERED_CHARS`, `coverage
 
 - [ ] **Step 6: Repoint every importer**
 
-```bash
+```sh
 grep -rn 'from \.build_jp_slice import\|from \.build_tw_slice import\|from \.build_cjk_overlay import' src
 ```
 
@@ -382,7 +382,7 @@ Rewrite each to name `.text.kana`, `.text.normalize` or `.corpora.builder` per t
 
 - [ ] **Step 7: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
@@ -390,7 +390,7 @@ Expected: at least **989 passed** (984 from Task 1 plus the five new tests).
 
 - [ ] **Step 8: Lint, type-check, commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -464,13 +464,13 @@ Every other role `__init__.py` contains only a docstring. Do not add re-exports 
 
 Take the next group from the table. For each file:
 
-```bash
+```sh
 git mv src/mailwoman_train/<old>.py src/mailwoman_train/<group>/<new>.py
 ```
 
 - [ ] **Step 2: Repoint that group's importers**
 
-```bash
+```sh
 grep -rn 'from \.<old> import\|from \.\.<old> import\|from mailwoman_train\.<old> import\|import mailwoman_train\.<old>' src tests scripts modal
 ```
 
@@ -478,7 +478,7 @@ Rewrite each hit to the new dotted path. A module that moved down one level need
 
 - [ ] **Step 3: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
@@ -486,7 +486,7 @@ Expected: at least **989 passed**. A failure here points to exactly one import t
 
 - [ ] **Step 4: Lint and commit the group**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
 git commit -m "refactor(train): move <group> into its role directory"
@@ -498,7 +498,7 @@ Fourteen groups, fourteen commits. Do not batch them: a single green suite per g
 
 - [ ] **Step 6: Type-check the whole tree**
 
-```bash
+```sh
 uv run mypy
 ```
 
@@ -521,7 +521,7 @@ Expected: clean. `config/schema.py` is 478 lines, under the 500 limit. `tokenize
 
 - [ ] **Step 1: Confirm the current size**
 
-```bash
+```sh
 wc -l src/mailwoman_train/tokenizer/__init__.py
 ```
 
@@ -541,7 +541,7 @@ Add `encode_with_features` to `__all__` if the module declares one.
 
 - [ ] **Step 4: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/tokenizer/__init__.py src/mailwoman_train/tokenizer/features.py
 ```
@@ -550,7 +550,7 @@ Expected: at least 989 passed, and both files under 500 lines.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
 git commit -m "refactor(tokenizer): split the feature-channel encode path out of the package index"
@@ -622,13 +622,13 @@ If `load_config(None, strict=False)` doesn't yield a usable default, read `confi
 
 - [ ] **Step 2: Run it and record the baseline**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_encoder_split_parity.py -q
 ```
 
 Expected: pass before any split. Save the logits to a file the split can diff against:
 
-```bash
+```sh
 uv run python - <<'PY' > /tmp/encoder-reference.txt
 import torch
 from tests.mailwoman_train.test_encoder_split_parity import _tiny_model
@@ -684,7 +684,7 @@ Same treatment for the 415-line `forward`: one private method per stage (embed, 
 
 - [ ] **Step 7: Verify the tensors are identical**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_encoder_split_parity.py -q
 uv run python - <<'PY' > /tmp/encoder-after.txt
 import torch
@@ -702,7 +702,7 @@ Expected: `IDENTICAL`. A diff here means a sub-builder changed an initialization
 
 - [ ] **Step 8: Run the suite and check sizes**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/nn/*.py
 ```
@@ -711,7 +711,7 @@ Expected: at least 990 passed, and every `nn/` module under 500 lines.
 
 - [ ] **Step 9: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -755,7 +755,7 @@ Move `save_checkpoint` and `find_latest_checkpoint` into `train/checkpoint.py`.
 
 - [ ] **Step 4: Repoint the test imports**
 
-```bash
+```sh
 grep -rn '_cosine_with_warmup\|_linear_cooldown\|_constant_with_warmup\|_build_scheduler\|_restamp_resume_lrs\|_token_f1\|_cross_pollution' tests
 ```
 
@@ -763,7 +763,7 @@ Each hit imports a now-public name from a new module. `test_resume_lr_restamp.py
 
 - [ ] **Step 5: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/train/trainer.py
 ```
@@ -772,7 +772,7 @@ Expected: at least 990 passed. `trainer.py` should now be near 400 lines, holdin
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -825,7 +825,7 @@ def test_train_callback_protocol_declares_the_expected_members() -> None:
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_protocols.py -q
 ```
 
@@ -891,7 +891,7 @@ class TrainCallback(Protocol):
 
 - [ ] **Step 4: Run the test and the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_protocols.py -q
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
@@ -900,7 +900,7 @@ Expected: pass, with at least 992 passed overall.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -970,7 +970,7 @@ def test_every_shipped_callback_satisfies_the_protocol() -> None:
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_train_callbacks.py -q
 ```
 
@@ -1012,7 +1012,7 @@ Replace the inline logging, eval, checkpoint and trackio blocks with hook calls 
 
 - [ ] **Step 5: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 wc -l src/mailwoman_train/train/trainer.py
 ```
@@ -1021,7 +1021,7 @@ Expected: at least 994 passed. `train()` should now be under 120 lines.
 
 - [ ] **Step 6: Run a smoke train to prove the loop still trains**
 
-```bash
+```sh
 uv run python -m mailwoman_train smoke --help
 ```
 
@@ -1029,7 +1029,7 @@ If `cmd_smoke` (former `cli.py:270`) offers a CPU-only smoke path, run it. This 
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -1086,7 +1086,7 @@ def test_an_unknown_code_names_the_known_ones() -> None:
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_country_registry.py -q
 ```
 
@@ -1094,7 +1094,7 @@ Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.count
 
 - [ ] **Step 3: Move Japan**
 
-```bash
+```sh
 mkdir -p src/mailwoman_train/countries/jp
 git mv src/mailwoman_train/jp_registry.py src/mailwoman_train/countries/jp/registers.py
 git mv src/mailwoman_train/jp_kana.py src/mailwoman_train/countries/jp/kana.py
@@ -1136,7 +1136,7 @@ Read `build_jp_slice.py`'s actual entry point before writing `build_corpus`. If 
 
 The same moves:
 
-```bash
+```sh
 mkdir -p src/mailwoman_train/countries/kr src/mailwoman_train/countries/tw src/mailwoman_train/countries/cjk
 git mv src/mailwoman_train/kr_registry.py src/mailwoman_train/countries/kr/registers.py
 git mv src/mailwoman_train/kr_juso.py src/mailwoman_train/countries/kr/juso.py
@@ -1184,7 +1184,7 @@ def country_module(code: str) -> Any:
 
 - [ ] **Step 6: Repoint every importer and move `build_registry_corpus.py`**
 
-```bash
+```sh
 grep -rn 'build_jp_slice\|build_kr_slice\|build_tw_slice\|build_cjk_overlay\|jp_registry\|kr_registry\|tw_registry\|kr_juso\|jp_kana' src tests scripts modal
 ```
 
@@ -1192,7 +1192,7 @@ grep -rn 'build_jp_slice\|build_kr_slice\|build_tw_slice\|build_cjk_overlay\|jp_
 
 - [ ] **Step 7: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
@@ -1200,7 +1200,7 @@ Expected: at least 997 passed.
 
 - [ ] **Step 8: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -1265,7 +1265,7 @@ def test_each_subcommand_accepts_help(name: str) -> None:
 
 - [ ] **Step 2: Run it to confirm it fails**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_cli_commands.py -q
 ```
 
@@ -1287,7 +1287,7 @@ Add each to `EXPECTED` in the test as you add it, so the test tracks reality rat
 
 - [ ] **Step 5: Verify the entry point**
 
-```bash
+```sh
 uv run python -m mailwoman_train --help
 uv run python -m mailwoman_train train --help
 ```
@@ -1296,7 +1296,7 @@ Expected: both print help and exit 0.
 
 - [ ] **Step 6: Run the suite**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ls scripts/
 ```
@@ -1305,7 +1305,7 @@ Expected: at least 1006 passed, and `scripts/` holds only `verify_toolchain.py`.
 
 - [ ] **Step 7: Confirm the pre-commit path still works**
 
-```bash
+```sh
 python3 scripts/verify_toolchain.py
 ```
 
@@ -1313,7 +1313,7 @@ Expected: exit 0, run with the system `python3` and no `uv`. This is the check t
 
 - [ ] **Step 8: Commit**
 
-```bash
+```sh
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 uv run mypy
 git add -A
@@ -1342,7 +1342,7 @@ No test imports `modal/train_remote.py` today. So a passing suite after the coll
 
 - [ ] **Step 2: Run it and record the census**
 
-```bash
+```sh
 uv run python -c "
 from tests.launch.extract_current import extract_sync_functions
 from pathlib import Path
@@ -1392,7 +1392,7 @@ def test_the_census_fixture_matches_the_committed_table() -> None:
 
 - [ ] **Step 4: Generate and commit the fixture**
 
-```bash
+```sh
 uv run python -c "
 import json
 from pathlib import Path
@@ -1409,7 +1409,7 @@ The fixture is the pre-collapse behavior, frozen. Do not regenerate it after Tas
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add tests/launch
 git commit -m "test(launch): pin the 57 sync functions before collapsing them"
 ```
@@ -1433,7 +1433,7 @@ The rename is forced rather than stylistic. Step 1 re-measures the reason.
 
 - [ ] **Step 1: Re-measure the shadowing**
 
-```bash
+```sh
 uv run python -c "import sys; sys.path.insert(0,'.'); import modal; print('resolved to:', modal.__file__)"
 ```
 
@@ -1441,13 +1441,13 @@ Expected: `resolved to: None`, meaning `import modal` found the local directory 
 
 - [ ] **Step 2: Rename**
 
-```bash
+```sh
 git mv modal launch
 ```
 
 - [ ] **Step 3: Verify the shadow is gone**
 
-```bash
+```sh
 uv run python -c "import sys; sys.path.insert(0,'.'); import modal; print('resolved to:', modal.__file__)"
 ```
 
@@ -1455,7 +1455,7 @@ Expected: a path ending in `site-packages/modal/__init__.py`. If it still prints
 
 - [ ] **Step 4: Sweep the quoted literals**
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman/.claude/worktrees/python-layout
 grep -rn 'modal/train_remote\.py\|corpus-python/modal' --include='*.ts' --include='*.md' --include='*.json' --include='*.yml' . \
   --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=.git --exclude-dir=docs/records
@@ -1471,7 +1471,7 @@ The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rule
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add -A
 git commit -m "refactor(launch): rename modal/ to launch/ so the package stops shadowing the SDK"
 ```
@@ -1517,7 +1517,7 @@ from .app import app  # noqa: F401
 
 `launch/corpora.py` holds one entry per corpus version, each carrying what a clone varied. Generate the first draft from the extractor:
 
-```bash
+```sh
 uv run python -c "
 from tests.launch.extract_current import extract_sync_functions
 from pathlib import Path
@@ -1534,7 +1534,7 @@ Transcribe each into a `CorpusVersion`. Read every one, because the generator pr
 
 - [ ] **Step 4: Run the parity test**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests/launch/test_sync_table_parity.py -q
 ```
 
@@ -1546,7 +1546,7 @@ The same treatment, into `launch/init.py` as one `mean_init(name: str)` over a t
 
 - [ ] **Step 6: Delete the old file and verify the app loads**
 
-```bash
+```sh
 git rm launch/train_remote.py
 uv run python -c "import launch; print(len(launch.app.registered_functions), 'functions registered')"
 ```
@@ -1559,7 +1559,7 @@ Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_
 
 - [ ] **Step 8: Run everything and commit**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 uv run --extra dev ruff check --fix corpus-python && uv run --extra dev ruff format corpus-python
 git add -A
@@ -1588,7 +1588,7 @@ Move each test beside the module it covers: `test_crf.py` to `tests/mailwoman_tr
 
 - [ ] **Step 2: Run the suite from the new tree**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 ```
 
@@ -1596,7 +1596,7 @@ Expected: the same count as after Task 13. A drop means a test file was moved wi
 
 - [ ] **Step 3: Add `py.typed` and widen mypy**
 
-```bash
+```sh
 touch src/mailwoman_train/py.typed
 ```
 
@@ -1611,7 +1611,7 @@ mailwoman_train = ["py.typed"]
 
 - [ ] **Step 4: Delete the empty package**
 
-```bash
+```sh
 grep -rn 'mailwoman_corpus' --include='*.py' --include='*.toml' --include='*.json' . --exclude-dir=.venv --exclude-dir=.mypy_cache | grep -v egg-info
 git rm -r src/mailwoman_corpus
 ```
@@ -1626,7 +1626,7 @@ The TypeScript check excludes workspace directories because a directory name is 
 
 - [ ] **Step 6: Run the check and the repo's own suites**
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman/.claude/worktrees/python-layout
 yarn mwops health python-prefix-directories
 ```
@@ -1635,7 +1635,7 @@ Expected: zero groups.
 
 - [ ] **Step 7: Run the full acceptance set**
 
-```bash
+```sh
 uv run --extra dev --extra train pytest corpus-python/tests -q
 uv run mypy
 uv run --extra dev ruff check corpus-python
@@ -1650,7 +1650,7 @@ Every one must pass. `yarn health` and `yarn test` need `node_modules` in the wo
 
 - [ ] **Step 8: Verify the size and hygiene criteria**
 
-```bash
+```sh
 find corpus-python/src/mailwoman_train -name '*.py' -exec wc -l {} + | sort -rn | head -5
 uv run --extra dev --extra train pytest corpus-python/tests/mailwoman_train/test_import_hygiene.py -q
 ```
@@ -1659,7 +1659,7 @@ Expected: no module over 500 lines, and the hygiene test passes.
 
 - [ ] **Step 9: Commit**
 
-```bash
+```sh
 git add -A
 git commit -m "chore(train): mirror the test tree, ship py.typed, add the Python prefix check"
 ```

@@ -93,7 +93,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
 
 ## Reproduce
 
-```bash
+```sh
 yarn compile
 # Phase 1 — post-hoc score comparison on the frozen model:
 node scripts/coarse-placer/eval-openset.mjs --model $MAILWOMAN_DATA_ROOT/coarse-placer/model \

@@ -102,7 +102,7 @@ pre-registered and probed rather than tuned in the dark.
 
 ## Reproduce
 
-```bash
+```sh
 python3 scratchpad/build-no-fragment-full.run.ts
 python3 scratchpad/assemble-no-fragment-overlay.py
 # push overlay + config to the volume, then:

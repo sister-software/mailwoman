@@ -130,7 +130,7 @@ Expected: `exhibit21.test.ts` is fully green, and no existing assertion changes.
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add filer/sdk/exhibit21.ts
 git commit -m "fix(filer): parse the exhibit rather than EDGAR's SGML envelope around it"
 ```
@@ -235,7 +235,7 @@ Expected: all green, including all 13 fixtures in `exhibit21-real.test.ts` at th
 
 - [ ] **Step 8: Commit**
 
-```bash
+```sh
 git add filer/sdk/exhibit21.ts
 git commit -m "fix(filer): read every table in an Exhibit 21, and the columns its header names"
 ```
@@ -373,7 +373,7 @@ Expected: all green.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add filer/sdk/edgar-filings.ts filer/sdk/edgar-filings.test.ts
 git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document manifest"
 ```
@@ -453,7 +453,7 @@ Expected: all green.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add filer/sdk/edgar-filings.ts filer/sdk/edgar-filings.test.ts
 git commit -m "fix(filer): one candidate per registrant — share classes are not a tie"
 ```

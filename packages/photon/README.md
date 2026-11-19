@@ -2,7 +2,7 @@
 
 A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.post) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
 
-```bash
+```sh
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):
 MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" npx mailwoman data pull candidate
 
@@ -15,7 +15,7 @@ MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" \
 Prefer to try before self-hosting? A hosted trial endpoint runs at
 **https://photon.mailwoman.post** (`/api` + `/reverse`, conservative rate limits).
 
-```bash
+```sh
 curl "http://localhost:2322/api?q=1600 penn&limit=5&lat=38.9&lon=-77"
 curl "http://localhost:2322/reverse?lat=38.8977&lon=-77.0365"
 ```

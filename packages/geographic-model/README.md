@@ -70,7 +70,7 @@ poi-taxonomy pharmacy  → the pharmacy concept
 
 [`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation. **Do not hand-edit it.** Regenerate it instead:
 
-```bash
+```sh
 node packages/geographic-model/tools/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 

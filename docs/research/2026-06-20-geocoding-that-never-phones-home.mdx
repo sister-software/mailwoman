@@ -48,7 +48,7 @@ Rooftop precision (the actual building rather than the neighborhood) currently w
 
 Mapbox does ship on-device geocoding, but only in their native mobile SDK, and it performs reverse geocoding (coordinate to address) rather than forward geocoding. The precise claim is that Mailwoman is the only geocoder that runs the full forward pipeline in a browser without a server. That's a narrow claim, and no other product we know of meets it. There's not yet a batch endpoint or an SLA. Mailwoman is infrastructure you embed, and it isn't a hosted service with an on-call team.
 
-```bash
+```sh
 npm install mailwoman @mailwoman/neural
 ```
 

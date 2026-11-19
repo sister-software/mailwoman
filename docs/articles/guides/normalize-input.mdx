@@ -6,7 +6,7 @@ source-of-truth: packages/normalize/lib/compute.ts, packages/normalize/lib/types
 verified-with: published @mailwoman/normalize, neural, neural-weights-en-us v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Normalize an address before direct parsing
 
@@ -14,8 +14,7 @@ Use this procedure when your application calls `NeuralAddressClassifier.parse` d
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the packages used in this example:
 

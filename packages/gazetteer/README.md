@@ -11,7 +11,7 @@ Gazetteer databases are built and distributed separately from this package's cod
 
 ## Installation
 
-```bash
+```sh
 npm install @mailwoman/gazetteer
 ```
 

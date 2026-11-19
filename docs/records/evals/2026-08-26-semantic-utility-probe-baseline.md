@@ -130,7 +130,7 @@ diagnostic delta bar is +2 rather than +3.
 
 ## Reproduce the probe
 
-```bash
+```sh
 yarn compile
 node packages/mailwoman/out/cli.js eval semantic-utility-probe --arm baseline --json
 ```

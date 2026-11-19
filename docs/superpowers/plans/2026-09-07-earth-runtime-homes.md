@@ -57,7 +57,7 @@
 
 - [ ] **Step 1: Confirm the three shape questions with greps, and record the answers in the commit**
 
-```bash
+```sh
 grep -n "stateHint" -r docs/src packages/react/lib | grep -v "resources/index.ts" | head
 grep -n "export interface DualRole\b" -A8 packages/resolver-wof-wasm/lib/browser-cascade.ts
 grep -n "export interface QueryKindResult" -A6 packages/core/lib/pipeline/types.ts
@@ -171,7 +171,7 @@ import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 
 keeping `PipelineLoadingState`, `PipelineRuntime` and `PipelinePanels`, which are UI state. In `packages/react/lib/index.ts` remove the six names from the `export type { … } from "#pipeline/types"` block. Then rewrite every react importer:
 
-```bash
+```sh
 grep -rln "ParsedComponent\|ResolvedPlaceView\|DualRoleView\|StageTiming\|FSTProvenance\|ParseResult" packages/react/lib packages/react/test --include='*.ts' --include='*.tsx' | grep -v "/out/"
 ```
 
@@ -189,7 +189,7 @@ In `docs/src/shared/resources/index.ts` delete `KindResult`, `ResultNode`, `Stag
 | `KindResult`  | `KindView` (or `QueryKindResult` per Step 1) |
 | `StageTiming` | `StageTiming`                                |
 
-```bash
+```sh
 grep -rln "\bDemoResult\b\|\bResultNode\b\|\bResolvedHit\b\|\bKindResult\b\|\bStageTiming\b" docs/src docs/test --include='*.ts' --include='*.tsx'
 grep -rln "ParseResult\|ResolvedPlaceView\|ParsedComponent\|DualRoleView\|FSTProvenance" docs/src docs/test --include='*.ts' --include='*.tsx' | xargs grep -ln 'from "@mailwoman/react"'
 ```
@@ -200,7 +200,7 @@ The second command lists the docs files that took those names from react. They s
 
 Add `browserRow("@mailwoman/core/pipeline/client-result"),` after the `core/pipeline` row in `bundle-graph.ts`. Then:
 
-```bash
+```sh
 yarn compile
 yarn oxlint packages/core/lib/pipeline/client-result.ts packages/react docs/src
 yarn mwops health bundle-graph
@@ -213,7 +213,7 @@ Expected: every command passes, and the docs build exits 0.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/core packages/react docs packages/repo-health
 git commit -m "refactor(core,react,docs): the client parse result is one interface, core/pipeline/client-result"
 ```
@@ -236,7 +236,7 @@ git commit -m "refactor(core,react,docs): the client parse result is one interfa
 
 - [ ] **Step 1: Move the four modules and rewrite their imports**
 
-```bash
+```sh
 mkdir -p packages/resolver-wof-wasm/lib/httpvfs
 git mv docs/src/shared/httpvfs-resolver.ts packages/resolver-wof-wasm/lib/httpvfs/resolver.ts
 git mv docs/src/shared/httpvfs-street.ts   packages/resolver-wof-wasm/lib/httpvfs/street.ts
@@ -349,7 +349,7 @@ Add to `packages/resolver-wof-wasm/package.json` `exports`, in the shape of `"./
 "./host-assets":      { "node": "./lib/host-assets.ts",      "default": "./out/host-assets.js",      "types": "./out/host-assets.d.ts" }
 ```
 
-```bash
+```sh
 mkdir -p packages/resolver-wof-wasm/lib/httpvfs
 git mv packages/resolver-wof-wasm/lib/httpvfs/resolver.test.ts packages/resolver-wof-wasm/lib/httpvfs/resolver.test.ts
 git mv packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts
@@ -362,7 +362,7 @@ The third substitution is right only for `street.test.ts`, whose one `demo-helpe
 
 - [ ] **Step 5: The docs importers**
 
-```bash
+```sh
 grep -rn "#shared/httpvfs-resolver\|#shared/httpvfs-street\|#shared/poi-httpvfs\|#shared/sqljs-rows\|resolveStreet\|StreetResolution" docs/src --include='*.ts' --include='*.tsx'
 ```
 
@@ -372,7 +372,7 @@ Each hit imports the wasm subpath instead. The known ones: `demo-loader.ts` (`lo
 
 Add to `bundle-graph.ts`: `browserRow("@mailwoman/resolver-wof-wasm/httpvfs/resolver")`, `browserRow("@mailwoman/resolver-wof-wasm/httpvfs/street")`, `browserRow("@mailwoman/resolver-wof-wasm/httpvfs/poi")`. `host-assets` is Node-side and gets no row.
 
-```bash
+```sh
 yarn install
 yarn compile
 yarn oxlint packages/resolver-wof-wasm docs/src docs/plugins
@@ -387,7 +387,7 @@ Expected: all pass. `health:architecture` (dependency-cruiser) reports no cycle 
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add packages/resolver-wof-wasm docs packages/repo-health yarn.lock
 git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, their tests and the sql.js host staging live with the browser resolver"
 ```
@@ -415,7 +415,7 @@ git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, 
 
 - [ ] **Step 1: Move the three modules into the split**
 
-```bash
+```sh
 mkdir -p packages/mailwoman/lib/browser-runtime
 git mv docs/src/shared/resources/index.ts packages/mailwoman/lib/browser-runtime/resources.ts
 git mv docs/src/shared/demo-helpers.ts     packages/mailwoman/lib/browser-runtime/classify.ts
@@ -458,7 +458,7 @@ Add to `packages/mailwoman/package.json` `exports`, in the shape of `"./gazettee
 
 - [ ] **Step 3: The moved tests**
 
-```bash
+```sh
 mkdir -p packages/mailwoman/lib/browser-runtime
 git mv docs/src/shared/demo-helpers.test.ts       packages/mailwoman/lib/browser-runtime/classify.test.ts
 git mv docs/src/shared/manifest-wire-keys.test.ts packages/mailwoman/lib/browser-runtime/manifest.test.ts
@@ -472,7 +472,7 @@ sed -i 's#@mailwoman/docs/shared/demo-helpers#mailwoman/browser-runtime/classify
 
 `docs/package.json`: add `"mailwoman": "workspace:*"` to `dependencies`; delete `imports["#shared/resources"]`. Then rewrite the docs importers with these substitutions (a file that took a name that moved between modules follows the Interfaces block above):
 
-```bash
+```sh
 grep -rln "#shared/resources\|#shared/demo-helpers\|#shared/demo-loader\|shared/resources/index\|shared/demo-helpers\|shared/demo-loader" docs/src docs/test --include='*.ts' --include='*.tsx'
 ```
 
@@ -482,7 +482,7 @@ For each: `#shared/resources` → `mailwoman/browser-runtime/resources` for URLs
 
 Add `browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS })` to `bundle-graph.ts`; the loader's `import("@mailwoman/neural/web-loader")` stays external under the default policy, and no module on its static graph may reach Node.
 
-```bash
+```sh
 yarn install
 yarn compile
 yarn oxlint packages/mailwoman/lib/browser-runtime docs/src docs/test
@@ -498,7 +498,7 @@ Expected: every command passes. If the `mailwoman/browser-runtime` row reports a
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/mailwoman docs packages/repo-health yarn.lock
 git commit -m "feat(mailwoman): browser-runtime — the release manifest, asset URLs and pins, the classify stage and the release loader have one home"
 ```
@@ -514,14 +514,14 @@ git commit -m "feat(mailwoman): browser-runtime — the release manifest, asset 
 
 - [ ] **Step 1: Move, export, dedupe**
 
-```bash
+```sh
 git mv docs/src/shared/confidence-tiers.ts packages/react/lib/common/confidence-tiers.ts
 git mv docs/src/shared/text-tokens.ts      packages/react/lib/common/text-tokens.ts
 ```
 
 Add exports `./common/confidence-tiers` and `./common/text-tokens` in the shape of `./common/KindBadge`. In `ConfidenceCell.tsx`, delete the local `HIGH_CONFIDENCE_MIN`, `MID…` and the private tier function (lines 13-30 region, read them first) and `import { confidenceTierOrMid } from "#common/confidence-tiers"` (or `confidenceTier`, whichever the cell's null handling matches). Rewrite the docs consumers:
 
-```bash
+```sh
 grep -rln "#shared/confidence-tiers\|#shared/text-tokens" docs/src --include='*.tsx' --include='*.ts'
 ```
 
@@ -529,7 +529,7 @@ grep -rln "#shared/confidence-tiers\|#shared/text-tokens" docs/src --include='*.
 
 - [ ] **Step 2: Verify and commit**
 
-```bash
+```sh
 yarn compile
 yarn oxlint packages/react/lib/common docs/src/components
 yarn workspace @mailwoman/react test:browser
@@ -547,14 +547,14 @@ Expected: the shadow check no longer lists a private confidence threshold in rea
 
 - [ ] **Step 1: Confirm the residue**
 
-```bash
+```sh
 ls docs/src/shared
 grep -rn "docs/src/shared" packages --include='*.ts' --include='*.tsx' | grep -v "/out/"
 ```
 
 Expected: `maplibre-worker.ts`, `maplibre-worker-url.ts`, `register-range-sw.ts` and no other file. The second command prints only the two twin comments in `resolver-wof-sqlite` (`candidate-lookup.ts:8`, `primary-preference.ts:8`) and `spatial/polyline.ts:11`. Those comments now name the wasm subpath:
 
-```bash
+```sh
 sed -i 's#docs/src/shared/httpvfs-resolver.ts#packages/resolver-wof-wasm/lib/httpvfs/resolver.ts#' packages/resolver-wof-sqlite/lib/candidate-lookup.ts packages/resolver-wof-sqlite/lib/primary-preference.ts
 sed -i 's#docs/src/shared/httpvfs-street.ts#packages/resolver-wof-wasm/lib/httpvfs/street.ts#' packages/spatial/lib/polyline.ts
 sed -i 's#docs/src/shared/#packages/resolver-wof-wasm/lib/httpvfs/#' packages/resolver-wof-wasm/lib/browser-cascade.ts
@@ -564,7 +564,7 @@ Read each edited sentence afterwards. A sentence that only makes sense as a "thi
 
 - [ ] **Step 2: Commit**
 
-```bash
+```sh
 git add packages/resolver-wof-sqlite packages/spatial packages/resolver-wof-wasm
 git commit -m "docs(comments): the browser twins are named by their package path"
 ```
@@ -575,7 +575,7 @@ git commit -m "docs(comments): the browser twins are named by their package path
 
 - [ ] **Step 1: Serve the build and run the two specs**
 
-```bash
+```sh
 cd docs
 yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; grep -n "^EXIT=\|Can't resolve" /tmp/docs-build.log
 BROWSER=none yarn docusaurus serve --no-open --host 0.0.0.0 --port 7770 > /tmp/docs-serve.log 2>&1 &
@@ -589,7 +589,7 @@ Expected: `EXIT=0`, and 7 of 7 specs pass. `docusaurus serve` opens a browser th
 
 - [ ] **Step 2: The lockstep test still holds**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts
 ```
 
@@ -601,7 +601,7 @@ Expected: pass. This is the browser-versus-Node candidate ranking parity. It mov
 
 - [ ] **Step 1: Preflight**
 
-```bash
+```sh
 yarn compile
 yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "✗\|error:\|EXIT=" /tmp/health.log | head
 yarn typecheck:tests
@@ -613,7 +613,7 @@ yarn workspace @mailwoman/react test:browser
 
 - [ ] **Step 2: Push and open the PR**
 
-```bash
+```sh
 git push -u origin feat/earth-runtime-homes
 gh pr create --title "Earth runtime, part 1: the browser runtime's package homes" --body-file - <<'EOF'
 Implements the move map of docs/superpowers/specs/2026-09-06-earth-app-design.md by docs/superpowers/plans/2026-09-07-earth-runtime-homes.md. The docs site still serves the geocoder page; it now consumes packages for everything under the former docs/src/shared.
@@ -644,7 +644,7 @@ In `docs/superpowers/specs/2026-09-06-earth-app-design.md`, "The move map": the 
 
 And in "Docs after the move", replace the dependency list with: "`docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave. The list is measured at that point rather than predicted here."
 
-```bash
+```sh
 git add docs/superpowers/specs/2026-09-06-earth-app-design.md
 git commit -m "docs(specs): the Earth move map records where the runtime landed and why"
 git push

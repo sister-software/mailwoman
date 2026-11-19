@@ -342,7 +342,7 @@ Expected: pass, 11 tests.
 
 Run: `yarn oxlint packages/core/lib/license/stamp.ts packages/core/lib/license/stamp.test.ts` (or `yarn lint:oxlint` if the single-file form isn't wired).
 
-```bash
+```sh
 git add packages/core/lib/license/stamp.ts packages/core/lib/license/index.ts packages/core/lib/license/stamp.test.ts
 git commit -m "feat(core): the engine stamp — which license branch produced a response, built once from the doctor's inputs
 
@@ -533,7 +533,7 @@ Expected: pass, 3 tests.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/package.json packages/mailwoman/lib/cli/kit/engine-stamp.test.ts
 git commit -m "feat(mailwoman): resolve the engine stamp once per process
 
@@ -624,7 +624,7 @@ Expected: three lines — the version, then the two notice lines.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/mailwoman/lib/cli.ts packages/mailwoman/lib/cli/launcher.test.ts
 git commit -m "feat(cli): every invocation ends with the license notice on stderr
 
@@ -737,7 +737,7 @@ same `engine` stamp as `geocode --json` and `reverse --json`. Read `entries` whe
 
 Run: `yarn compile`, then:
 
-```bash
+```sh
 node packages/mailwoman/out/cli.js autocomplete new yo --json 2>/dev/null | head -12
 node packages/mailwoman/out/cli.js reverse 51.5074 -0.1278 --format json 2>/dev/null | tail -8
 node packages/mailwoman/out/cli.js geocode "10 Downing Street, London SW1A 2AA" --json 2>/dev/null | tail -8
@@ -751,7 +751,7 @@ Expected: the first three end with an `engine` object, and the last prints `0`.
 Run: `yarn vitest run packages/mailwoman/lib/commands/reverse-cli.integration.test.ts packages/mailwoman/lib/cli/native`
 Expected: pass.
 
-```bash
+```sh
 git add packages/mailwoman/lib/cli-native/commands/geocode.ts packages/mailwoman/lib/cli-native/commands/reverse.ts packages/mailwoman/lib/cli-native/commands/autocomplete.ts packages/mailwoman/test CHANGELOG.md
 git commit -m "feat(cli): geocode, reverse and autocomplete JSON records carry the engine stamp
 
@@ -944,7 +944,7 @@ Expected: pass, 4 tests.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/api-kit/lib/engine-stamp.ts packages/api-kit/lib/index.ts packages/api-kit/lib/engine-stamp.test.ts
 git commit -m "feat(api-kit): the engine stamp's schema, response headers, and body helper
 
@@ -1101,7 +1101,7 @@ If a route's `responses` schema in `routes.ts` is declared with the wire schema 
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/api/lib packages/api/test
 git commit -m "feat(api): /v1 bodies carry the engine stamp and every response carries the license headers
 
@@ -1206,7 +1206,7 @@ and at each response site:
 Run: `yarn vitest run packages/nominatim/lib`
 Expected: pass.
 
-```bash
+```sh
 git add packages/nominatim/lib packages/nominatim/test
 git commit -m "feat(nominatim): results carry the engine stamp beside the data attribution
 
@@ -1290,7 +1290,7 @@ Expected: the two new tests fail.
 Run: `yarn vitest run packages/photon/lib`
 Expected: pass.
 
-```bash
+```sh
 git add packages/photon/lib packages/photon/test
 git commit -m "feat(photon): the FeatureCollection carries the engine stamp as a foreign member
 
@@ -1353,7 +1353,7 @@ Expected: the new test fails on the `server` header.
 Run: `yarn vitest run packages/libpostal/lib`
 Expected: pass.
 
-```bash
+```sh
 git add packages/libpostal/lib packages/libpostal/test
 git commit -m "feat(libpostal): every response carries the license headers
 
@@ -1435,7 +1435,7 @@ Expected: clean.
 
 Then, each on its own line with a free port, and stop each after the check:
 
-```bash
+```sh
 node packages/mailwoman/out/cli.js serve --port 8091 & sleep 8; curl -si http://127.0.0.1:8091/health | grep -i -E '^(server|link):'; kill %1
 ```
 
@@ -1443,7 +1443,7 @@ Expected: both headers, and the two notice lines on the server's stderr after it
 
 - [ ] **Step 4: Commit**
 
-```bash
+```sh
 git add packages/nominatim/lib/cli.ts packages/photon/lib/cli.ts packages/libpostal/lib/cli.ts packages/mailwoman/lib/commands/serve.tsx
 git commit -m "feat(serve): the four servers carry the engine stamp and print the license notice at listen
 
@@ -1497,7 +1497,7 @@ the price and what it covers are on the [pricing page](/docs/pricing). To obtain
 
 A key is a signed token verified offline against the public keys each release ships.
 
-```bash
+```sh
 export MAILWOMAN_LICENSE_KEY="mwl1.…"
 mailwoman license verify --online
 mailwoman doctor
@@ -1522,7 +1522,7 @@ Run: `yarn workspace @mailwoman/docs build 2>&1 | tail -5` (this takes minutes; 
 
 - [ ] **Step 3: Commit**
 
-```bash
+```sh
 git add docs/src/pages/license.mdx
 git commit -m "docs: the /license page the notice, the engine stamp, and the Link header point at
 
@@ -1563,7 +1563,7 @@ For each committed JSON document, regenerate it with the command its header or t
 
 Run, in order, and paste the tail of each into the PR description:
 
-```bash
+```sh
 yarn compile
 yarn typecheck:tests
 yarn lint
@@ -1574,7 +1574,7 @@ Expected: all clean. `yarn lint` includes `health`, which counts synchronous fil
 
 - [ ] **Step 4: Commit and open the PR**
 
-```bash
+```sh
 git add CHANGELOG.md
 git commit -m "docs(changelog): the engine stamp and the license notice
 

@@ -2,7 +2,7 @@
 
 A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.post) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
 
-```bash
+```sh
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):
 MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" npx mailwoman data pull candidate
 

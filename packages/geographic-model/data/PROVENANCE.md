@@ -67,7 +67,7 @@ with, and the POI branch searches the union rather than choosing between them.
 
 Produced by `scripts/build-artifact.ts` from `model/`. **Do not hand-edit.** Regenerate with:
 
-```bash
+```sh
 node packages/geographic-model/tools/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 

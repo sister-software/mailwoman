@@ -68,7 +68,7 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
 1. Re-render the three recipe sources from the post-#2750 tree, at their v0.7.x counts and seeds. The recipes no
    longer take `--intl-fraction`, and `fr-order` now renders variants A, B and D:
 
-   ```bash
+   ```sh
    mailwoman corpus slice locale --country GB --count 800000 --seed 42 --out <dir>/rendered-gb-os-open.jsonl
    mailwoman corpus slice german --count 200000 --seed 42 --out <dir>/rendered-de.jsonl
    mailwoman corpus slice fr-order --count 50000 --seed 42 --out <dir>/rendered-fr-order.jsonl
@@ -84,7 +84,7 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
    orders under one id (2,400,000 rows, 2,298,332 ids). Across the 12 countries it would also drop 68,923 native rows,
    52,799 of them in FI. The rows are filtered by content instead:
 
-   ```bash
+   ```sh
    node packages/mailwoman/tools/dev-tools/corpus/order-deletions.run.ts \
      --in <v0.7.0-de-holdout>/train/part-overture-multilocale-3order-train.train.parquet \
      --write-native <dir>/overture-multilocale-native.parquet
@@ -101,7 +101,7 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
 
 3. Assemble v0.8.0 over the store, replacing the three re-rendered sources and `overture`:
 
-   ```bash
+   ```sh
    mailwoman corpus overlay-manifest --base /mnt/mw/corpus/versioned/v0.8.0-store/MANIFEST.json \
      --replace-source rendered-gb-os-open --replace-source rendered-de --replace-source rendered-fr-order \
      --replace-source overture --corpus-version 0.8.0 …
@@ -161,7 +161,7 @@ What can be asserted before a GPU is allocated:
 
 From `corpus-python/`, one per arm:
 
-```bash
+```sh
 modal run -m launch.train_remote::audit_epoch_mixture --config-name v8.0.0-postcode-move-p000-60k.yaml
 modal run -m launch.train_remote::audit_epoch_mixture --config-name v8.0.0-postcode-move-p005-60k.yaml
 modal run -m launch.train_remote::audit_epoch_mixture --config-name v8.0.0-postcode-move-p015-60k.yaml
@@ -171,7 +171,7 @@ Each writes `/data/audits/epoch-mixture-<stem>.json`. A failed receipt stops the
 
 ## Training
 
-```bash
+```sh
 node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <log> --cwd corpus-python \
   -- uv run --extra dev modal run -d -m launch.train_remote --config v8.0.0-postcode-move-p000-60k.yaml --resume none
 ```
@@ -192,7 +192,7 @@ directory by dereferencing symlinks. Its md5 must differ from `5356ecba83e3774a5
    The D-rule applies to US, GB, FR and DE: no regressed row there against shipped.
 3. The held-out non-native postcode sweep, generated once from the v0.8.0 test split:
 
-   ```bash
+   ```sh
    node packages/mailwoman/tools/dev-tools/corpus/non-native-postcode-order-eval.run.ts \
      --corpus /mnt/mw/corpus/versioned/v0.8.0/corpus-v0.8.0 --countries US,GB,FR,DE,IT,ES,MX,BR,CA,NZ \
      --sources ban,usgov-nad,tiger,rendered-gb-os-open,rendered-de,overture --cap 500 --seed 7 \

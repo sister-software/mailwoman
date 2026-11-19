@@ -263,7 +263,7 @@ Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/module-coun
 
 - [x] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/core
 git commit -m "feat(core): the config-root license key file and refresh credentials, read after the environment variable
 
@@ -500,7 +500,7 @@ Read `packages/core/lib/api/APIClient.ts` for the exact request-options shape (`
 Run: `yarn vitest run packages/core/lib/license/status.test.ts`. Expected: pass.
 Run: `yarn mwops health manifest-targets`. Expected: pass.
 
-```bash
+```sh
 git add packages/core
 git commit -m "feat(core): the license worker client — per-license status and the refresh that trades a lid and secret for the current token
 
@@ -777,7 +777,7 @@ JSON gains `...(lidStatus ? { lid_status: lidStatus } : {})`; the text gains `${
 Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`. Expected: pass.
 The pre-commit hook regenerates `docs/articles/developers/reference/cli.mdx` and `packages/mailwoman/man/mailwoman.1` from the spec. Stage both when it does.
 
-```bash
+```sh
 git add packages/mailwoman docs/articles/developers/reference/cli.mdx
 git commit -m "feat(cli): mailwoman license adopt and refresh over the config-root key file; verify --online reports the per-license status
 
@@ -862,7 +862,7 @@ Run: `yarn vitest run packages/mailwoman/lib/doctor`. Expected: fail on `lidStat
 
 Run: `yarn vitest run packages/mailwoman/lib/doctor`. Expected: pass.
 
-```bash
+```sh
 git add packages/mailwoman
 git commit -m "feat(doctor): the per-license status beside the key-id publication, as a fifth word the online check adds
 
@@ -981,14 +981,14 @@ Under "Configuring and checking a key", after the code block, add a section:
 A self-service license renews with its subscription, and each renewal issues a new key whose date is the paid period's
 end plus 14 days. The purchase page and the first email carry a refresh secret. Adopt the key once:
 
-```bash
+```sh
 mailwoman license adopt "mwl1.…" --secret "<refresh secret>"
 ```
 
 That writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key`, which mailwoman reads when `MAILWOMAN_LICENSE_KEY` is
 unset, and the secret to `refresh.json` beside it with owner-only permissions. After a renewal, fetch the current key:
 
-```bash
+```sh
 mailwoman license refresh
 ```
 
@@ -1012,7 +1012,7 @@ Start the docs dev server as `docs/.claude/skills/run-docs/SKILL.md` describes, 
 
 - [x] **Step 4: Commit**
 
-```bash
+```sh
 git add docs/src
 git commit -m "feat(docs): the Purchase section, the refresh paragraph and the refunds explanation on /license
 
@@ -1248,7 +1248,7 @@ With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/licen
 
 - [x] **Step 6: Commit**
 
-```bash
+```sh
 git add docs/src docs/license-claim.test.ts
 git commit -m "feat(docs): /license/issued — poll the claim route, show the key and the one-time refresh secret, say what a wait means
 
@@ -1279,7 +1279,7 @@ writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `r
 
 - [ ] **Step 3: Full check**
 
-```bash
+```sh
 yarn compile
 yarn typecheck:tests
 yarn lint

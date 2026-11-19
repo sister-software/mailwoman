@@ -172,7 +172,7 @@ population would all have passed this defect. The FR leg caught it.
 
 ## Reproduce
 
-```bash
+```sh
 node neural-weights-en-us/scripts/link-dev-weights.ts   # and -en-gb, -en-nz, -fr-fr
 node mailwoman/out/cli.js eval gauntlet                                  # OFF
 MAILWOMAN_PAIR_PARENT_DELTA=6 node mailwoman/out/cli.js eval gauntlet    # ON

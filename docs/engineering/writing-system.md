@@ -322,7 +322,7 @@ quantities under Numbers and measurement to `styles/Weasel.yml`. The chat-only r
 
 Run it three ways:
 
-```bash
+```sh
 # Lint every tracked Markdown and MDX file with .vale.ini.
 yarn workspace @mailwoman/docs lint:prose
 

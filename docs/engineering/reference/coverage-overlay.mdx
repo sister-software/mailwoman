@@ -49,7 +49,7 @@ Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_RO
 
 **0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. The command writes a sealed copy of the admin DB with `place_importance` added, beside it as `admin-global-priority-importance-<admin md5, 12 hex>.db`, and leaves the admin DB untouched:
 
-```bash
+```sh
 mailwoman gazetteer importance --admin $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 # Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
 ```
@@ -58,7 +58,7 @@ Step 1 finds that file from `--admin` by the admin md5 and stops, printing both 
 
 **1. Build the tileset** (maintainer-only — needs the local address-point databases + `tippecanoe` on PATH + the `@duckdb/node-api` dev dep):
 
-```bash
+```sh
 mailwoman coverage build --states all --exclude-states AK \
   --out $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.pmtiles
 # ~10–15 min; archive ≈ 1 GiB. The global holes layer is on by default (--no-postcode to skip it).
@@ -67,7 +67,7 @@ mailwoman coverage build --states all --exclude-states AK \
 
 **2. Publish to the tile-worker bucket** (`mailwoman-tiles`):
 
-```bash
+```sh
 set -a; . ./.env; set +a
 # mailwoman-tiles is written by the *_PUBLIC_* R2 keys (see failure mode below):
 RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \

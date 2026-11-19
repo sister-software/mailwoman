@@ -76,7 +76,7 @@ in scope.
 
 ## Run it yourself
 
-```bash
+```sh
 mailwoman filer edgar-ingest \
   --names names.txt \
   --lookup /tmp/cik-lookup-data.txt \

@@ -70,7 +70,7 @@ The taxonomy generator combines the Overture category snapshot with
 [`curated-overlay.json`](data/curated-overlay.json). Run it from the repository
 root to regenerate the table from the local inputs:
 
-```bash
+```sh
 node packages/poi-taxonomy/tools/generate-taxonomy.ts
 ```
 
@@ -78,7 +78,7 @@ Inspect [the generator](tools/generate-taxonomy.ts) before refreshing the upstre
 snapshot or changing its version. Brand data is built from the POI database by
 the gazetteer tools. See [the POI runbook](../../docs/engineering/reference/poi-layer-runbook.mdx).
 
-```bash
+```sh
 yarn test --run packages/poi-taxonomy
 ```
 

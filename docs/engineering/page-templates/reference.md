@@ -54,7 +54,7 @@ the next step. A meaning that only restates the code's name gives the reader no 
 
 <!-- illustrative -->
 
-```bash
+```sh
 curl -sS localhost:3000/v1/parse -H 'content-type: application/json' \
   -d '{"address":"221B Baker St, London NW1 6XE"}'
 # 501, from an engine with no `parse` method:

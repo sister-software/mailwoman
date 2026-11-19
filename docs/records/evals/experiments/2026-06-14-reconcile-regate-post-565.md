@@ -121,7 +121,7 @@ prerequisite for this verdict.
 
 ## Reproduce
 
-```bash
+```sh
 yarn compile
 node scripts/eval/reconcile-regate.mjs data/eval/golden/v0.1.2/us.jsonl data/eval/golden/v0.1.2/fr.jsonl
 node scripts/eval/reconcile-precondition-regate.mjs /tmp/ood-truth.jsonl

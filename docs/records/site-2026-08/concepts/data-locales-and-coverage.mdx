@@ -23,7 +23,7 @@ The trained model determines whether it can read a locale. Data artifacts on dis
 
 Both runs below are captured verbatim, with `$MAILWOMAN_WOF_DB` pointing at the reference admin gazetteer. First, a Tier-1 address — the Élysée Palace, by street and number:
 
-```bash
+```sh
 mailwoman geocode "55 Rue du Faubourg Saint-Honoré, 75008 Paris" --locale fr-FR --format text
 ```
 
@@ -40,7 +40,7 @@ hierarchy:
 
 Now a Tier-2 address, in the middle of Kraków's old town:
 
-```bash
+```sh
 mailwoman geocode "ul. Floriańska 3, 31-019 Kraków" --default-country none --format text
 ```
 

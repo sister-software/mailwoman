@@ -12,7 +12,7 @@ IRS Exempt Organizations Business Master File (EO BMF) → `CanonicalRow`. US no
 
 Direct, stable CSV URLs (no auth):
 
-```bash
+```sh
 DIR=$MAILWOMAN_DATA_ROOT/irs-bmf
 mkdir -p "$DIR" && cd "$DIR"
 for f in eo1 eo2 eo3 eo4 eo_pr eo_xx; do curl -O "https://www.irs.gov/pub/irs-soi/$f.csv"; done
@@ -22,7 +22,7 @@ for f in eo1 eo2 eo3 eo4 eo_pr eo_xx; do curl -O "https://www.irs.gov/pub/irs-so
 
 ## Run
 
-```bash
+```sh
 npx mailwoman corpus run usgov-irs-bmf --input $MAILWOMAN_DATA_ROOT/irs-bmf/eo1.csv --country US --limit 50000
 # In a full build: adapterInputs["usgov-irs-bmf"] = { inputPath: ".../eoN.csv", country: "US" } per file.
 ```

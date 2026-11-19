@@ -3,7 +3,7 @@ title: Compare Mailwoman with other geocoders
 description: How Mailwoman differs from Google's Geocoding API, self-hosted Nominatim and Pelias on where data lives, what self-hosting needs and what results you may keep, with the one dated measured comparison and the command that reproduces it.
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 import "./evidence-tables.css"
 
@@ -63,7 +63,7 @@ Three limits apply to these numbers:
 
 The scorer recomputes every count above from the committed results file, with no network access. From a checkout of the repository at tag `v11.0.0`:
 
-```bash
+```sh
 cd docs/static/benchmarks
 node open-truth-three-arm.mjs
 ```

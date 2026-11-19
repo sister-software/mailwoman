@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Install, check, roll back and prune local data
 
@@ -19,13 +19,13 @@ This guide uses the smallest <Country code="US" /> files so each step finishes i
 
 Install the published packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 Choose a data root. `data pull` creates the directory when it doesn't exist yet:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 ```
 
@@ -35,7 +35,7 @@ Every `data` command reads `$MAILWOMAN_DATA_ROOT`, and each one also accepts `--
 
 `data --list` prints the bundles: `candidate`, `poi`, `fr` and `us`. Add `--dry-run` to a pull to print its plan, licensing terms and download size without downloading anything. `--only` limits a pull to files whose path contains the given text:
 
-```bash
+```sh
 npx mailwoman data pull us --only us-vi --dry-run
 ```
 
@@ -93,7 +93,7 @@ The `scope` objects are reformatted onto one line each here. Each pull adds its 
 
 ## 3. Roll back to the previous selection
 
-```bash
+```sh
 npx mailwoman data activate --rollback
 ```
 
@@ -107,7 +107,7 @@ A rollback records a new generation whose entries are those of the generation th
 
 `data prune` deletes installed files that no kept generation and no running geocoder session uses. Without `--yes`, it prints its plan and leaves every file in place. By default it keeps two generations, counting the active one. With generation 3 active, the default plan kept generations 2 and 3, and both of them still used every installed file:
 
-```bash
+```sh
 npx mailwoman data prune
 ```
 
@@ -118,7 +118,7 @@ generation 3; keeping generations 2, 3 and 0 running session lease(s)
 
 With `--retain 1`, the plan keeps only the active generation and lists the DC interpolation file for deletion:
 
-```bash
+```sh
 npx mailwoman data prune --retain 1
 ```
 
@@ -134,7 +134,7 @@ Neither command above deleted anything. Add `--yes` to delete the planned files.
 
 To select an installed file again, pass its installation ID to `data activate`. The ID appears in `active.json`, and the command's help points to `data status --json` for it:
 
-```bash
+```sh
 npx mailwoman data activate inst-ef88aea8b6c19743
 ```
 

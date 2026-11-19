@@ -30,7 +30,7 @@ The trainer and the exporter are the Rust crates in `packages/trainer`. A releas
 updates within the tolerances in `docs/engineering/reference/training-row-encoder.mdx`, so a retrain today matches the
 recorded scores rather than the recorded bytes.
 
-```bash
+```sh
 # 1. Train (Modal A100). `start` resolves the config, runs the preflight on the host copy of the volume and starts one
 #    detached sandbox; `status <run key>` and `logs <run key>` follow it.
 node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.0.2-consolidation-runB --fresh

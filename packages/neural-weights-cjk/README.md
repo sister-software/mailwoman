@@ -59,7 +59,7 @@ Decision record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; the ru
 
 The graph isn't committed. Link it into the data-root overlay from `release.config.json`'s `charWeights.cjk`:
 
-```bash
+```sh
 node packages/neural-weights-cjk/scripts/link-dev-weights.ts
 ```
 

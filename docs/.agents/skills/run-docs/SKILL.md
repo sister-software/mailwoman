@@ -11,13 +11,13 @@ The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. T
 
 Yarn 4 workspaces. Run install from `docs/` (it installs the whole workspace):
 
-```bash
+```sh
 yarn install
 ```
 
 Playwright's headless Chromium needs to be present once per machine:
 
-```bash
+```sh
 npx playwright install chromium
 ```
 
@@ -35,7 +35,7 @@ You don't need to build for dev. Two optional pre-steps:
 
 - **Production build.** Static output to `build/`:
 
-  ```bash
+  ```sh
   yarn build
   ```
 
@@ -50,7 +50,7 @@ You don't need to build for dev. Two optional pre-steps:
 
 The driver assumes the dev server is already up. Start it once, in the background, then reuse it for repeated checks:
 
-```bash
+```sh
 yarn start > /tmp/docs-start.log 2>&1 &
 # wait until ready (first build is ~10–20s, but on a clean .docusaurus cache can be 60s+)
 until curl -fsS http://localhost:7770 -o /dev/null; do sleep 2; done
@@ -58,7 +58,7 @@ until curl -fsS http://localhost:7770 -o /dev/null; do sleep 2; done
 
 Then use the driver (from the docs root) to check pages, take screenshots, and run JS snippets in the page context:
 
-```bash
+```sh
 # screenshot a page (full-page, 1280×800 viewport)
 node .claude/skills/run-docs/driver.mts --screenshot / /tmp/docs-home.png
 node .claude/skills/run-docs/driver.mts --screenshot /demo/ /tmp/docs-demo.png
@@ -80,7 +80,7 @@ Screenshots default to `/tmp/mailwoman-docs/<route>.png` if you omit the output 
 
 ## Run (human path)
 
-```bash
+```sh
 yarn start         # foreground; serves http://localhost:7770, watch mode
 yarn serve         # serves a prior `yarn build` output
 ```
@@ -89,7 +89,7 @@ Both are useless headless except as a server for the driver above. `yarn start` 
 
 ## Test
 
-```bash
+```sh
 yarn typecheck                              # tsc, no emit
 yarn test:e2e                               # the build-health check: docusaurus build with no warnings
 ```

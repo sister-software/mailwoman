@@ -47,7 +47,7 @@ _"my harness is."_
 Stage it by dereferencing symlinks — a candidate directory that points back at the shipped artifacts grades
 the shipped model under the candidate's name:
 
-```bash
+```sh
 for f in "$OVERLAY"/*; do cp -L "$f" "$CAND/$(basename "$f")"; done
 cp -f <candidate int8> "$CAND/model.onnx"
 md5sum "$CAND/model.onnx"     # MUST differ from the shipped md5

@@ -243,7 +243,7 @@ whole record. Both are null in PLACETYPE_PROJECTION.`
 
 - [ ] **Step 9: Commit**
 
-```bash
+```sh
 git add mailwoman/gazetteer-pipeline/placetype-census.ts \
         mailwoman/gazetteer-pipeline/placetype-census.test.ts \
         docs/articles/plan/reference/placetype-evidence.mdx
@@ -428,7 +428,7 @@ Expected: pass, all three describe blocks.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add mailwoman/gazetteer-pipeline/granularity.ts mailwoman/gazetteer-pipeline/granularity.test.ts
 git commit -m "feat(gazetteer): the granularity rung ladder
 
@@ -789,7 +789,7 @@ Expected: pass, all six `buildGranularityLadder` tests plus Task 2's three descr
 
 Run:
 
-```bash
+```sh
 node --input-type=module -e '
 import { buildGranularityLadder } from "./mailwoman/gazetteer-pipeline/granularity.ts"
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -811,7 +811,7 @@ join is wrong. **If the counts do not match the probe, stop and diagnose before 
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add mailwoman/gazetteer-pipeline/granularity.ts mailwoman/gazetteer-pipeline/granularity.test.ts
 git commit -m "feat(gazetteer): measure the depth ladder against the admin DB
 
@@ -994,7 +994,7 @@ Expected: pass, every describe block in the file.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add mailwoman/gazetteer-pipeline/granularity.ts mailwoman/gazetteer-pipeline/granularity.test.ts
 git commit -m "feat(gazetteer): derive the bottoms-out-at rung
 
@@ -1253,7 +1253,7 @@ Expected: pass, all five tests.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add mailwoman/gazetteer-pipeline/granularity-report.ts mailwoman/gazetteer-pipeline/granularity-report.test.ts
 git commit -m "feat(gazetteer): render the depth scorecard as markdown
 
@@ -1445,7 +1445,7 @@ Expected: pass. This is the ~15s pure-surface leg, and it must be green before t
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add mailwoman/commands/gazetteer/granularity.tsx \
         docs/articles/evals/coverage/gazetteer-depth-scorecard.md
 git commit -m "feat(gazetteer): mailwoman gazetteer granularity

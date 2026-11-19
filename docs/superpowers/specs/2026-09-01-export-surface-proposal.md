@@ -172,7 +172,7 @@ neither of today's PRs is a source of growth. The growth is real. It belongs to 
 
 ## 6. How to reproduce each number
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman
 node -e 'const p=require("./package.json");let t=0,pub=0,se=[];for(const w of p.workspaces){const m=require("./"+w+"/package.json");const n=Object.keys(m.exports||{}).filter(k=>k!=="./package.json").length;t+=n;if(m.private!==true)pub+=n;if(m.sideEffects!==undefined)se.push(w)}console.log({total:t,published:pub,sideEffects:se})'
 

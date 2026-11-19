@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Reverse-geocode a coordinate
 
@@ -13,18 +13,17 @@ Use this procedure to find the places that contain a coordinate, such as the nei
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.0.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/resolver-wof-sqlite@{{release.version}}
 ```
 
 The reverse geocoder reads an admin gazetteer: a Who's On First SQLite database with a `place_bbox` spatial index. The 11.0.0 data bundles ship without one, and the `candidate.db` file from `mailwoman data pull candidate` lacks that index. Build the gazetteer from local clones of the Who's On First repositories, then add its search and spatial indexes:
 
-```bash
+```sh
 npx mailwoman gazetteer build admin --data /path/to/whosonfirst-repos --out admin-global-priority.db
 npx mailwoman gazetteer build fts admin-global-priority.db
 ```
@@ -33,7 +32,7 @@ The two commands above are checked against the published `--help` output only. T
 
 Point the reverse geocoder at the result:
 
-```bash
+```sh
 export MAILWOMAN_WOF_ADMIN_DB="$PWD/admin-global-priority.db"
 ```
 
@@ -43,7 +42,7 @@ The output below was captured with locally built admin and polygon databases. Pl
 
 ## 1. Reverse-geocode one coordinate
 
-```bash
+```sh
 npx mailwoman reverse 38.8977 -77.0365
 ```
 
@@ -126,7 +125,7 @@ The output above is reformatted with one place per line. `hierarchy` runs from t
 
 Set the polygon sidecar and repeat the command:
 
-```bash
+```sh
 export MAILWOMAN_WOF_POLYGONS_DB="$PWD/wof-polygons.db"
 npx mailwoman reverse 38.8977 -77.0365
 ```
@@ -135,7 +134,7 @@ The hierarchy is the same six places. The result now reads `containment: "polygo
 
 `--format text` prints one place per line. For a coordinate in Arlington, Virginia, with and then without the sidecar:
 
-```bash
+```sh
 npx mailwoman reverse 38.8816 -77.0910 --format text
 ```
 
@@ -163,7 +162,7 @@ Both runs returned the same places for this coordinate. The approximate method c
 
 A point in open ocean returns an empty hierarchy:
 
-```bash
+```sh
 npx mailwoman reverse 35 -40 --format text
 ```
 
@@ -208,7 +207,7 @@ try {
 }
 ```
 
-```bash
+```sh
 node reverse-points.ts
 ```
 

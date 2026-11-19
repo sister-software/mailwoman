@@ -14,7 +14,7 @@ coarser admin gazetteer lacks) — the cheapest way to broaden the corpus's **lo
 
 Per-country dumps + two sibling name files, all from the same directory:
 
-```bash
+```sh
 DIR=$MAILWOMAN_DATA_ROOT/geonames
 mkdir -p "$DIR" && cd "$DIR"
 curl -O https://download.geonames.org/export/dump/US.zip && unzip -o US.zip   # → US.txt (per country)
@@ -28,7 +28,7 @@ component (region / country) is omitted and the adapter still emits locality-onl
 
 ## Run
 
-```bash
+```sh
 # Single country (CLI):
 npx mailwoman corpus run geonames --input $MAILWOMAN_DATA_ROOT/geonames/US.txt --country US --limit 5000
 

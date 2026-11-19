@@ -44,7 +44,7 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 
 ## Step 0 — determine the version (the landmine that bit v4.13.0)
 
-```bash
+```sh
 npm view mailwoman version            # the LATEST published (e.g. 4.12.0)
 git tag -l 'v4.*' | tail              # confirm no gap/collision
 npm view mailwoman versions --json | jq 'index("4.13.0")'   # null = your target is FREE
@@ -58,7 +58,7 @@ A model promotion is a **minor** bump from the latest published. Pick the explic
 For a **model release**, on a branch off current `main`:
 
 1. **Stage the int8 BESIDE the canonical** (new filename, never overwrite):
-   ```bash
+   ```sh
    cp out/v<run>/model.onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v<run>-step-40000-int8.onnx
    md5sum out/v<run>/model.onnx   # record this — you'll verify it in the published tarball
    ```
@@ -119,7 +119,7 @@ declare from the PUBLIC HF bucket at `en-us/v<cardVersion>/`. Stage them there f
 fails before publishing. The fetch plan decides the set, and this runbook doesn't, so verify with the fetch
 itself rather than trusting a list.
 
-```bash
+```sh
 # Materialize the binaries into the workspaces (reads release.config.json → the new int8):
 yarn mwops release copy-weights
 md5sum packages/neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5
@@ -200,7 +200,7 @@ The "Production Integrity" ruleset requires the release commit to land via a PR 
 `test` check, so the ship is two dispatches around an auto-merging release PR (the direct
 release-it push is retired — the GH013 failure mode below states why):
 
-```bash
+```sh
 # Optional preview — shows the bump diff without pushing anything:
 gh workflow run publish.yml --ref main -f mode=prepare -f version=<target> -f dry_run=true
 
@@ -235,7 +235,7 @@ gh run watch <rid> --exit-status --interval 15
 
 ## Step 4 — verify the ship (the published tarball rather than the workspace)
 
-```bash
+```sh
 for p in mailwoman @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us @mailwoman/neural-weights-fr-fr; do
   echo "$p -> $(npm view $p version)"          # all == <target>
 done
@@ -251,7 +251,7 @@ npm view @mailwoman/neural-weights-en-us@<target> --json | jq '.dist.attestation
 
 Check the container image the publish job dispatched after the SBOM step:
 
-```bash
+```sh
 gh run list --workflow docker-publish.yml --limit 1 --json event,status,conclusion,createdAt   # a workflow_dispatch after the publish run
 podman pull ghcr.io/sister-software/mailwoman:<target>
 podman image inspect ghcr.io/sister-software/mailwoman:<target> --format '{{.Config.Healthcheck}}'   # the /health check, not <nil>
@@ -301,7 +301,7 @@ held one transitively. At 10.4.0 that set was twelve packages: `mailwoman`, `@ma
 
 The mitigation repoints `latest` on each affected package to the last fully listed version:
 
-```bash
+```sh
 npm dist-tag add mailwoman@<last good> latest
 ```
 

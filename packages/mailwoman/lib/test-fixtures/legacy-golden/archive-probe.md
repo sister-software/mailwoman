@@ -5,7 +5,7 @@
 
 ## Commands
 
-```bash
+```sh
 PROBE_DIR=$(mktemp -d)
 cd "$PROBE_DIR"
 npm init -y > /dev/null

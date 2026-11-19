@@ -46,7 +46,7 @@ code, flag, and more) attached to every result. The other self-hosted stacks don
 
 And when you're migrating from Nominatim, Photon, or [libpostal](./switching-from-libpostal.mdx), you don't rewrite your client. Point it at the matching package:
 
-```bash
+```sh
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /lookup, /status
 npx @mailwoman/photon serve      # Photon-compatible /api, /reverse (GeoJSON)
 npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand

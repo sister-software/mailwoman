@@ -92,7 +92,7 @@ useful. Filed as a tracked issue.
 
 ## Reproduce
 
-```bash
+```sh
 yarn compile   # both scripts read the compiled out/ trees
 # precondition audit (raw vs pipeline), any OA-format holdout:
 node scripts/eval/reconcile-precondition-audit.mjs data/eval/external/openaddresses-us-sample.jsonl 700

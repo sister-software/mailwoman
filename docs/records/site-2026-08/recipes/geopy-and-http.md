@@ -16,7 +16,7 @@ You don't have to rewrite the client to fix any of that. Mailwoman ships a [Nomi
 
 The container installs the published `@mailwoman/*` packages and bakes the model weights in, so a first run parses with no data at all. The geocoder needs a gazetteer. The gazetteer stays out of the image and mounts at `/data`. Run the Nominatim drop-in and point it at a mailwoman data root:
 
-```bash
+```sh
 docker run --rm -p 8080:8080 \
   -v /path/to/mailwoman-data:/data:ro \
   -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
@@ -26,7 +26,7 @@ docker run --rm -p 8080:8080 \
 
 Don't have a gazetteer yet? The worldwide candidate database is one download (~1.4 GB, and it opens read-only, so the `:ro` mount above is correct):
 
-```bash
+```sh
 mkdir -p mailwoman-data/wof
 curl -fSL https://public.mailwoman.post/mailwoman/gazetteer/2026-07-07a/candidate.db \
   -o mailwoman-data/wof/candidate.db
@@ -34,14 +34,14 @@ curl -fSL https://public.mailwoman.post/mailwoman/gazetteer/2026-07-07a/candidat
 
 If you'd rather run the whole set of drop-ins together (native `/v1` API, Nominatim, Photon, libpostal), the repo ships a [`docker-compose.yml`](https://github.com/sister-software/mailwoman/blob/main/docker/docker-compose.yml):
 
-```bash
+```sh
 MAILWOMAN_DATA_HOST=/path/to/mailwoman-data \
   docker compose -f docker/docker-compose.yml up nominatim
 ```
 
 Either way you get a server on port 8080. Check it's up:
 
-```bash
+```sh
 curl -s http://localhost:8080/status
 # {"status":0,"message":"OK"}
 ```
@@ -105,7 +105,7 @@ print(tz["name"], tz["offset_sec"])
 
 geopy is one client. The endpoint is plain HTTP with the Nominatim query interface, so anything that speaks `GET /search?q=…` works — `curl`, `requests`, a Go or Rust client, a browser `fetch`. Here it is with `curl`:
 
-```bash
+```sh
 curl -s "http://localhost:8080/search?q=350+5th+Ave,+New+York,+NY+10118&format=json&addressdetails=1"
 ```
 

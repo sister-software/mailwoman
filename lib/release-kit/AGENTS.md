@@ -47,7 +47,7 @@ Every workspace's committed `exports` map is the DEV map only: one `*` pattern p
 
 A `private: true` flag is checkable. Membership in a JSON array isn't, so check the arithmetic whenever you add or move a workspace:
 
-```bash
+```sh
 node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoman/core/workspaces'; import r from './.release-it.json' with { type: 'json' }; const w = await readWorkspaceDirectories('.'); console.log(w.filter((x) => !r.plugins['@release-it-plugins/workspaces'].workspaces.includes(x)))"
 ```
 

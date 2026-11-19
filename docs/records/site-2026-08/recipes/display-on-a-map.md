@@ -45,7 +45,7 @@ The basemap tiles come from R2, and they're CORS-restricted to `localhost` and t
 
 Serve the file over localhost and the basemap fills in:
 
-```bash
+```sh
 npx serve .   # then open http://localhost:3000/map.html
 ```
 

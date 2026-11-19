@@ -14,7 +14,7 @@ download you fetch once.
 
 Before debugging anything else:
 
-```bash
+```sh
 npx mailwoman doctor
 ```
 
@@ -27,7 +27,7 @@ layer is a reported gap with a `fix:` line rather than a failure. Read that line
 
 ## Parse
 
-```bash
+```sh
 npx mailwoman parse "350 5th Ave, New York, NY 10118"
 ```
 
@@ -59,7 +59,7 @@ review, say — wire the calibrator shipped in the weights package first (`creat
 
 The geocoder needs a gazetteer database on disk. One download is the whole setup:
 
-```bash
+```sh
 npx mailwoman data pull candidate
 npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
@@ -106,7 +106,7 @@ File at https://github.com/sister-software/mailwoman/issues.
 
 ## Install this skill in a new project
 
-```bash
+```sh
 npx mailwoman skill install
 ```
 

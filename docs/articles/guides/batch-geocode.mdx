@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Batch geocode a file of records
 
@@ -15,18 +15,17 @@ Use this procedure to geocode a file of records that each have an ID. The script
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.0.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 Install the data for the places your records cover. The example rows need the global place candidates, French address points, and the Washington, DC and Vermont address points:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
@@ -174,7 +173,7 @@ The script appends each record to the output as soon as its result arrives. Each
 
 ## 3. Run the batch
 
-```bash
+```sh
 node batch-geocode.ts
 ```
 
@@ -207,7 +206,7 @@ The script writes the empty-address records first and the geocoded records after
 
 Run the same command again. The script reads the IDs already in `geocoded.jsonl` and sends only the rest:
 
-```bash
+```sh
 node batch-geocode.ts
 ```
 

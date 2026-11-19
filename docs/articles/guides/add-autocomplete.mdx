@@ -6,7 +6,7 @@ source-of-truth: packages/resolver-wof-sqlite/lib/fst.ts, packages/mailwoman/lib
 verified-with: published @mailwoman/resolver-wof-sqlite and @mailwoman/neural-weights-en-us v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Add place-name autocomplete
 
@@ -14,8 +14,7 @@ Use the published finite-state transducer (FST) to suggest **place names** as so
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the two packages the example uses:
 

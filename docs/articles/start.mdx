@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Install Mailwoman and inspect a first parse
 
@@ -20,20 +20,20 @@ You'll make a small TypeScript script that parses one address and prints each la
 
 Run these commands in the empty project directory. The second one marks the project as an ECMAScript module project. Node needs that setting to run the script's `import` statements and top-level `await`:
 
-```bash
+```sh
 npm init -y
 npm pkg set type=module
 ```
 
 ## 2. Install the packages
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 `mailwoman` supplies the pipeline, `@mailwoman/neural` runs the classifier, and `@mailwoman/neural-weights-en-us` supplies the English model files. npm reports its download progress and dependency count for your environment. Check the installed Mailwoman version:
 
-```bash
+```sh
 node -p "require('mailwoman/package.json').version"
 ```
 
@@ -55,7 +55,7 @@ The address is lowercase, has no commas, and places the apartment before the str
 
 Node runs the TypeScript file directly:
 
-```bash
+```sh
 node parse.ts
 ```
 

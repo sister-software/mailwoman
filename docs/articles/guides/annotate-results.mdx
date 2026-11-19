@@ -6,7 +6,7 @@ source-of-truth: packages/annotations/lib/index.ts, packages/spatial/lib/coordin
 verified-with: published @mailwoman/annotations, spatial, codex, core v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Annotate a result
 
@@ -14,8 +14,7 @@ Use this procedure when a consumer needs derived facts about a coordinate, such 
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.0.0 packages the examples use:
 

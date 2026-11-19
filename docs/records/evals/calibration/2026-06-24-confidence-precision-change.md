@@ -51,7 +51,7 @@ The plan opened as a head-to-head against Nominatim on the same messy set. That 
 
 ## Reproduce
 
-```bash
+```sh
 node scripts/eval/confidence-discrimination.ts \
   --locales us,it,pt,pl,fr,au --n 80 --rows-out /tmp/rows.jsonl --out scorecard.md --svg curve.svg
 # re-analyze instantly from the cached rows (no re-parse, no API):

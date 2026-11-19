@@ -16,7 +16,7 @@ Like the timezone lookup, it's **server-side** and you build the database once b
 
 Grab the UNECE code list (`code-list.csv`) and build the read-only DB:
 
-```bash
+```sh
 npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db
 ```
 
@@ -24,7 +24,7 @@ npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db
 
 By country and place name, or by nearest coordinate. The coordinate form needs a leading `--` before the negative longitude, or the CLI's flag parser reads `-74.0060` as an unknown option:
 
-```bash
+```sh
 npx @mailwoman/un-locode-lookup --db un-locode.db --country NL --name "Rotterdam"
 # {"unLocode":"NL RTM"}
 

@@ -161,13 +161,13 @@ AT&T, T-Mobile and Telephone and Data Systems.
 
 The vendored corpus needs no network:
 
-```bash
+```sh
 yarn vitest run filer/sdk/exhibit21-real.test.ts
 ```
 
 Re-deriving `expected.json` uses the repository's TypeScript toolchain:
 
-```bash
+```sh
 node packages/filer/lib/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
 ```
 

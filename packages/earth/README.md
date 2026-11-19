@@ -56,7 +56,7 @@ with no model download. Cloudflare's SPA fallback serves `index.html` for each, 
 custom domain and its certificate are created from the file on the first deploy. With `CLOUDFLARE_API_TOKEN` and
 `CLOUDFLARE_ACCOUNT_ID` in the environment:
 
-```bash
+```sh
 yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth wrangler deploy
 ```
 

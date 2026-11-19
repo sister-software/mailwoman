@@ -4,11 +4,11 @@ A **libpostal-compatible** parse/expand HTTP API over [Mailwoman](https://mailwo
 neural address parser. It is the drop-in API with the fewest dependencies, because `/parse` needs only the
 model and no gazetteer.
 
-```bash
+```sh
 npx @mailwoman/libpostal serve --port 8081
 ```
 
-```bash
+```sh
 curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington DC 20500"
 # [{"label":"house_number","value":"1600"},{"label":"road","value":"Pennsylvania Ave NW"},
 #  {"label":"city","value":"Washington"},{"label":"state","value":"DC"},{"label":"postcode","value":"20500"}]

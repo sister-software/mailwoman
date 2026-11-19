@@ -68,7 +68,7 @@ Tile and TileJSON responses use the Worker cache.
 Compile from the repository root before starting Wrangler, because its entry
 points to emitted JavaScript:
 
-```bash
+```sh
 yarn ci:workers
 yarn workspace @mailwoman/tile-worker exec wrangler dev
 ```
@@ -78,7 +78,7 @@ successfully can still lack a requested archive or database.
 
 Run the package tests from the repository root:
 
-```bash
+```sh
 yarn test --run packages/tile-worker
 ```
 
@@ -92,7 +92,7 @@ With Cloudflare credentials and the intended bucket and domain configured, compi
 with `yarn ci:workers` before deployment. The deploy command publishes the Worker
 and applies its Wrangler configuration:
 
-```bash
+```sh
 yarn workspace @mailwoman/tile-worker exec wrangler deploy
 ```
 

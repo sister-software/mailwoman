@@ -59,7 +59,7 @@
 
 - [ ] **Step 1: Move the four files and rewrite their imports**
 
-```bash
+```sh
 mkdir -p packages/earth/lib/runtime
 git mv docs/src/pages/demo/_runtime.ts       packages/earth/lib/runtime/use-geocoder-runtime.ts
 git mv docs/src/pages/demo/_hooks.tsx        packages/earth/lib/runtime/use-browser-geolocation.ts
@@ -117,7 +117,7 @@ Render the map immediately at `DEFAULT_CENTER` and let the geolocation answer mo
 
 - [ ] **Step 5: Build and run the real thing**
 
-```bash
+```sh
 yarn compile
 yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?" >> /tmp/earth-build.log; grep -n "EXIT=\|node:\|externalized" /tmp/earth-build.log
 yarn workspace @mailwoman/earth preview
@@ -125,7 +125,7 @@ yarn workspace @mailwoman/earth preview
 
 Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.post`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
 
-```bash
+```sh
 git add packages/earth packages/site-kit docs
 git commit -m "feat(earth): the real geocoder runtime is application code; the service worker carries the range cache"
 ```
@@ -142,7 +142,7 @@ git commit -m "feat(earth): the real geocoder runtime is application code; the s
 
 - [ ] **Step 1: Move, rename, rewire**
 
-```bash
+```sh
 mkdir -p packages/earth/lib/panels packages/earth/lib/explorers
 git mv docs/src/pages/demo/_compare.tsx      packages/earth/lib/panels/Compare.tsx
 git mv docs/src/pages/demo/_controls.tsx     packages/earth/lib/panels/Controls.tsx
@@ -169,14 +169,14 @@ The `panels` object from `docs/src/pages/demo/index.tsx` (header `<About/>`, `re
 
 - [ ] **Step 3: Build, look at all three routes, commit**
 
-```bash
+```sh
 yarn compile && yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth preview
 cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -2 /tmp/docs-build.log; cd -
 ```
 
 `/`, `/debug` (drawer open), `/trace` (the visualizer) each render on the real runtime. The docs build exits 0 without the page (its route is gone until Task 6's redirect). Commit:
 
-```bash
+```sh
 git add packages/earth packages/react docs
 git commit -m "feat(earth): the host panels and the live explainers are application code; /debug and /trace are routes"
 ```
@@ -192,7 +192,7 @@ git commit -m "feat(earth): the host panels and the live explainers are applicat
 
 - [ ] **Step 1: Move and repoint**
 
-```bash
+```sh
 mkdir -p packages/earth/test/browser packages/earth/test/e2e
 git mv docs/test/browser/*.spec.ts packages/earth/test/browser/
 git mv docs/test/e2e/index.ts docs/test/e2e/fixtures docs/test/e2e/utils packages/earth/test/e2e/
@@ -206,14 +206,14 @@ git mv docs/test/e2e/index.ts docs/test/e2e/fixtures docs/test/e2e/utils package
 
 - [ ] **Step 3: Run the seven parity specs on the app, on the real assets**
 
-```bash
+```sh
 yarn workspace @mailwoman/earth test:browser test/browser/100-demo-cold-load.spec.ts test/browser/200-demo-resolve.spec.ts
 yarn workspace @mailwoman/earth test:browser
 ```
 
 Expected: 7 of 7, then the full suite passes. The cold-load spec's action timeout is 30 s. A timeout on a cold model load can be slow loading rather than a defect, and a second run distinguishes the two. Commit:
 
-```bash
+```sh
 git add packages/earth docs .github/workflows
 git commit -m "test(earth): the browser suite and its fixtures run against the app; the smoke workflow targets earth.mailwoman.post"
 ```
@@ -228,7 +228,7 @@ git commit -m "test(earth): the browser suite and its fixtures run against the a
 
 - [ ] **Step 1: Rename files and symbols in react**
 
-```bash
+```sh
 cd packages/react/lib/map
 git mv GeocoderDemo.tsx Geocoder.tsx; git mv GeocoderDemo.stories.tsx Geocoder.stories.tsx
 git mv DemoMap.tsx MapCanvas.tsx; git mv DemoMap.stories.tsx MapCanvas.stories.tsx
@@ -240,7 +240,7 @@ git mv packages/react/lib/map/GeocoderDemo.test.tsx packages/react/lib/map/Geoco
 
 Then apply the rename map with word-boundary substitutions across the listed trees:
 
-```bash
+```sh
 FILES=$(grep -rlE "GeocoderDemo|DemoMap|DemoControls|useDemoGeocode|DemoRuntime|DemoPanels|DemoMapStyle|DemoVersionOption|DemoBackend|DemoCompareContext|DemoResultContext|useDemoRuntime|DemoManifest|DemoReleaseBase|DemoRuntimeConfig|DemoLoaderState|DemoAssetsLoadContext|makeDemoRuntime" packages/react packages/earth docs/src --include='*.ts' --include='*.tsx' --include='*.json' | grep -v "/out/")
 sed -i -E 's/\bGeocoderDemoProps\b/GeocoderProps/g; s/\bGeocoderDemo\b/Geocoder/g; s/\bDemoMapExtraProps\b/MapCanvasExtraProps/g; s/\bDemoMapProps\b/MapCanvasProps/g; s/\bDemoMapStyle\b/MapCanvasStyle/g; s/\bDemoMap\b/MapCanvas/g; s/\bDemoControlsProps\b/GeocoderControlsProps/g; s/\bDemoControls\b/GeocoderControls/g; s/\bUseDemoGeocodeOptions\b/UseGeocodeOptions/g; s/\bUseDemoGeocode\b/UseGeocode/g; s/\buseDemoGeocode\b/useGeocode/g; s/\bDemoRuntimeConfig\b/ReleaseRuntimeConfig/g; s/\bDemoRuntime\b/GeocoderRuntime/g; s/\bDemoPanels\b/GeocoderPanels/g; s/\bDemoVersionOption\b/VersionOption/g; s/\bDemoBackend\b/InferenceBackend/g; s/\bDemoCompareContext\b/CompareContext/g; s/\bDemoResultContext\b/ResultContext/g; s/\buseDemoRuntime\b/useReleaseRuntime/g; s/\bDemoManifest\b/ReleaseManifest/g; s/\bDemoReleaseBase\b/ReleaseBase/g; s/\bDemoLoaderState\b/ReleaseLoaderState/g; s/\bDemoAssetsLoadContext\b/AssetsLoadContext/g; s/\bmakeDemoRuntime\b/makeFakeGeocoderRuntime/g; s#map/GeocoderDemo#map/Geocoder#g; s#map/DemoMap#map/MapCanvas#g; s#runtime/useDemoRuntime#runtime/useReleaseRuntime#g' $FILES
 ```
@@ -249,7 +249,7 @@ sed -i -E 's/\bGeocoderDemoProps\b/GeocoderProps/g; s/\bGeocoderDemo\b/Geocoder/
 
 - [ ] **Step 2: Verify and commit**
 
-```bash
+```sh
 yarn compile
 yarn workspace @mailwoman/react test:browser
 yarn workspace @mailwoman/react build-storybook > /tmp/sb.log 2>&1; echo "EXIT=$?" >> /tmp/sb.log; tail -1 /tmp/sb.log
@@ -266,7 +266,7 @@ git commit -m "refactor(react,earth,docs): the geocoder surface is named for wha
 
 - [ ] **Step 1: CORS is already in place from the shell plan. Verify against production data**
 
-```bash
+```sh
 for u in https://public.mailwoman.post/mailwoman/en-us/releases.json https://tiles.mailwoman.post/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.post" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
 curl -sI -H "Origin: https://earth.mailwoman.post" -H "Range: bytes=0-65535" "https://public.mailwoman.post/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
 ```
@@ -277,7 +277,7 @@ Expected: `200`/`206` and an `Access-Control-Allow-Origin` echoing the origin (o
 
 The Workers Builds project from the shell plan deploys `main` on merge. Before merging, a preview build (`wrangler versions upload` on the branch, or the dashboard's preview) at the preview URL runs:
 
-```bash
+```sh
 MAILWOMAN_EARTH_URL=https://<preview>.workers.dev yarn workspace @mailwoman/earth test:browser --grep @smoke
 ```
 
@@ -341,7 +341,7 @@ export default function DemoRedirect() {
 
 `docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.post`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they're redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
 
-```bash
+```sh
 yarn install
 yarn mwops health exports > /tmp/knip.log 2>&1; grep -n "docs" /tmp/knip.log
 ```
@@ -354,7 +354,7 @@ Remove every docs dependency knip names as unused, and re-run until it names non
 
 - [ ] **Step 4: The proofs**
 
-```bash
+```sh
 ls docs/src/shared docs/src/pages docs/src/pages/demo
 grep -rn "docs/src/shared\|@mailwoman/docs" packages --include='*.ts' --include='*.tsx' | grep -v "/out/"
 grep -rn "\"demo\"" docs/docusaurus.config.ts
@@ -372,7 +372,7 @@ Expected:
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add docs AGENTS.md .github/workflows/docs-build.yml
 git commit -m "chore(docs): the geocoder leaves Docusaurus — redirects to earth.mailwoman.post, the runtime-assets plugin keeps only what the explainers need, dependencies by knip"
 ```
@@ -383,7 +383,7 @@ git commit -m "chore(docs): the geocoder leaves Docusaurus — redirects to eart
 
 - [ ] **Step 1: Preflight**
 
-```bash
+```sh
 yarn compile
 yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "✗\|error:\|EXIT=" /tmp/health.log | head
 yarn typecheck:tests
@@ -401,7 +401,7 @@ In `docs/superpowers/specs/2026-09-06-earth-app-design.md`, "Definition of done"
 
 - [ ] **Step 3: PR**
 
-```bash
+```sh
 git push -u origin feat/earth-runtime-launch
 gh pr create --title "Earth runtime, part 2: the real geocoder at earth.mailwoman.post; the docs retire the page" --body-file - <<'EOF'
 Implements the application rows of docs/superpowers/specs/2026-09-06-earth-app-design.md by docs/superpowers/plans/2026-09-07-earth-runtime-launch.md.

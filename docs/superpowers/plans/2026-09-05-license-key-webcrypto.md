@@ -65,7 +65,7 @@ This runs against the current `node:crypto` implementation before any code chang
 
 - [ ] **Step 1: Rename the branch**
 
-```bash
+```sh
 git branch -m docs/license-shop-design feat/license-key-webcrypto
 ```
 
@@ -100,7 +100,7 @@ Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/
 
 - [ ] **Step 3: Verify the fixture verifies today**
 
-```bash
+```sh
 node packages/mailwoman/out/cli.js license verify --key "$(python3 -c 'import json;print(json.load(open("packages/core/test/fixtures/license/legacy-token.json"))["token"])')"
 ```
 
@@ -108,7 +108,7 @@ Expected: `status: unknown_key`, because the fixture key isn't in the shipped tr
 
 - [ ] **Step 4: Commit**
 
-```bash
+```sh
 git add packages/core/test/fixtures/license/legacy-token.json
 git commit -m "test(core): a license token signed by the node:crypto implementation, kept as the fixture the WebCrypto verifier must accept
 
@@ -418,7 +418,7 @@ Expected: pass, 8 tests. If the deterministic-signature test fails while the ver
 
 - [ ] **Step 5: Lint and commit**
 
-```bash
+```sh
 yarn oxlint packages/core/lib/crypto packages/core/lib/crypto
 git add packages/core/lib/crypto packages/core/lib/crypto packages/core/package.json
 git commit -m "feat(core): Ed25519 and base64url on the web platform's primitives, one implementation for Node, a Worker and a browser
@@ -740,7 +740,7 @@ Expected: pass. Every other license test in core still fails to compile at this 
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 yarn oxlint packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/lib/license/key/key.test.ts
 git add packages/core/lib/license/key.ts packages/core/lib/hash.ts packages/core/lib/license/key/key.test.ts
 git commit -m "feat(core): the license key signs and verifies on WebCrypto and carries lid and agreement
@@ -961,7 +961,7 @@ Expected: pass, 3 tests.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 yarn oxlint packages/core/lib/license
 git add packages/core/lib/license packages/core/package.json packages/core/lib/license/register.test.ts docs/static/.well-known/mailwoman/license-keys.json
 git commit -m "feat(core): one typed register of signing keys derives both the shipped trust map and the well-known JSON
@@ -1035,7 +1035,7 @@ Expected: pass. The launcher test spawns the compiled CLI, so run `yarn compile`
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 yarn oxlint packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/lib/doctor/runner.test.ts packages/core/lib/license/stamp.test.ts
 git add packages/core/lib/license/configured.ts packages/mailwoman/lib/cli-kit/engine-stamp.ts packages/mailwoman/lib/doctor/runner.ts packages/mailwoman/lib/doctor/runner.test.ts packages/core/lib/license/stamp.test.ts
 git commit -m "refactor(license): every caller awaits the WebCrypto verifier — the configured key, the stamp resolver, the doctor
@@ -1182,7 +1182,7 @@ Expected: no diff (Task 3's scratch write already matched the derivation).
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 yarn oxlint packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts
 git add packages/mailwoman/lib/cli-native/commands/license.ts packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts packages/mailwoman/man docs/articles/developers/reference/cli.mdx
 git commit -m "feat(cli): license keygen, issue and verify on the WebCrypto key; license register prints or writes the well-known file
@@ -1282,7 +1282,7 @@ Expected: pass; `health all` lists `license-register` among its checks with no d
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/repo-health
 git commit -m "feat(repo-health): license-register refuses a well-known file that differs from the typed register
 
@@ -1360,7 +1360,7 @@ Expected: the test passes if Tasks 1 to 3 left the graph clean. Otherwise it fai
 
 - [ ] **Step 3: Commit**
 
-```bash
+```sh
 git add packages/core/package.json yarn.lock packages/core/lib/worker-bundle.integration.test.ts
 git commit -m "test(core): the license key's subpaths bundle for a Worker under the workerd/worker/browser conditions with no node: import
 
@@ -1391,7 +1391,7 @@ file; `mailwoman license register --write` regenerates it and the `license-regis
 
 - [ ] **Step 2: Full check**
 
-```bash
+```sh
 yarn compile
 yarn typecheck:tests
 yarn lint
@@ -1402,7 +1402,7 @@ Then run `yarn test` with no other process running. Read the failures in the log
 
 - [ ] **Step 3: Measure the launcher**
 
-```bash
+```sh
 node --import /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/count-modules.mjs packages/mailwoman/out/cli.js --version 2>&1 >/dev/null | grep -E "^COUNT="
 ```
 
@@ -1410,7 +1410,7 @@ Update `MEASURED_MODULE_COUNT` in `packages/mailwoman/lib/cli/kit/module-count.t
 
 - [ ] **Step 4: Commit, push, PR**
 
-```bash
+```sh
 git add CHANGELOG.md packages/mailwoman/lib/cli/kit/module-count.test.ts
 git commit -m "docs(changelog): the license key on WebCrypto, the typed register, and the Worker-safe subpaths
 

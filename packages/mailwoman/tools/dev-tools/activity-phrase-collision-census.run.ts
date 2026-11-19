@@ -14,7 +14,7 @@
  * The committed report is `packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json`.
  * Regenerate it whenever the lexicon or the database moves.
  *
- * ```bash
+ * ```sh
  * node packages/mailwoman/tools/dev-tools/activity-phrase-collision-census.run.ts \ --out packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json
  * ```
  *

@@ -80,7 +80,7 @@ before blocking can use them.
 
 The `mailwoman` CLI exposes `registry` as a command:
 
-```bash
+```sh
 # Multi-source entity resolution
 mailwoman registry --sources config.json --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out entities.geojson
 

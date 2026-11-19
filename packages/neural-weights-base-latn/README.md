@@ -38,7 +38,7 @@ that workspace and lexicons from the shared artifact sources.
 After making the intended local model artifacts available, run from the
 repository root:
 
-```bash
+```sh
 node packages/neural-weights-base-latn/scripts/link-dev-weights.ts
 ```
 

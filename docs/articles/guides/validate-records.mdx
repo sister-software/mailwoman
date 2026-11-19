@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Check parsed records against an application policy
 
@@ -15,12 +15,11 @@ The check returns `pass` when all required components appear once and the postco
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.0.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/codex@{{release.version}}
 ```
 
@@ -105,7 +104,7 @@ The recursive `collect` function reads nested nodes and keeps repeated tags. The
 
 ## 2. Run the check
 
-```bash
+```sh
 node validate-records.ts
 ```
 

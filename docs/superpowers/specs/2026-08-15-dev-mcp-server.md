@@ -922,7 +922,7 @@ The package is `packages/dev-mcp/`, `private: true`, and absent from `.release-i
 the **56th** entry in the root `workspaces` array and the **seventh** name printed by AGENTS.md's
 arithmetic check:
 
-```bash
+```sh
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
 ```
 

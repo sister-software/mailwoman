@@ -58,7 +58,7 @@ Expected shape (the 2026-08-21 baseline, for comparison):
 
 - [ ] **Step 3: Extract the locality-band coverage misses**
 
-```bash
+```sh
 F=<the result file path from the notification>
 jq -r '[.misses[] | select((.elsewhere|length)==0 and .band=="locality")][] | "\(.value)\t|\t\(.input)"' "$F" | sort -u
 ```
@@ -96,7 +96,7 @@ Write `scratchpad/2026-08-21-coverage-miss-decomposition.md` containing: the fiv
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add scratchpad/2026-08-21-coverage-miss-decomposition.md
 git commit -m "evidence: decompose the board's 187 coverage misses before building an exclusion"
 ```
@@ -426,14 +426,14 @@ Add `"packages/evidence"` to `.release-it.json` → `plugins["@release-it-plugin
 
 - [ ] **Step 9: Verify the registration arithmetic**
 
-```bash
+```sh
 yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
 ```
 
 Expected output: only the six known absences, `docs`, `packages/tile-worker`, `packages/geocode-oracle`, `packages/neural-weights-base-latn`, `packages/dev-mcp`, `packages/osm`. If `packages/evidence` appears, step 8 was incomplete.
 
-```bash
+```sh
 yarn compile
 ```
 
@@ -451,7 +451,7 @@ Expected: no `sister-software/no-title-case-acronym` findings in `packages/evide
 
 - [ ] **Step 12: Commit**
 
-```bash
+```sh
 git add packages/evidence package.json tsconfig.json .release-it.json yarn.lock
 git commit -m "evidence: one vocabulary for what is known and how well it is known
 
@@ -746,7 +746,7 @@ In `packages/core/tsconfig.json`, add to `references`:
 
 - [ ] **Step 8: Verify no downstream consumer broke**
 
-```bash
+```sh
 yarn install
 yarn compile
 yarn vitest run packages/core/lib/layers
@@ -885,7 +885,7 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 
 - [ ] **Step 12: Verify the move changed no cell**
 
-```bash
+```sh
 yarn compile
 yarn vitest run packages/bdc packages/spatial
 ```
@@ -896,7 +896,7 @@ be edited.
 
 - [ ] **Step 13: Commit**
 
-```bash
+```sh
 git add packages/evidence packages/core/lib/layers packages/core/package.json packages/core/tsconfig.json packages/spatial packages/bdc/lib/sdk/filing-landscape.ts yarn.lock
 git commit -m "evidence: own CoverageBasis, and refuse an exclusion whose fold does not match the layer's
 
@@ -926,7 +926,7 @@ and Sao Paulo - SP both read as coverage misses on the board and both are real."
 
 - [ ] **Step 1: Run the existing suite and record the baseline**
 
-```bash
+```sh
 yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
@@ -976,7 +976,7 @@ Find each place the module pushes into `evidence` and add `kind`, `source` and (
 
 - [ ] **Step 5: Run the suite to verify it passes UNCHANGED**
 
-```bash
+```sh
 yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
@@ -985,7 +985,7 @@ Expected: pass with the same test count as Step 1, and **zero edits to the test 
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/bdc yarn.lock
 git commit -m "bdc: say plausibility's evidence in the shared vocabulary, same answers
 
@@ -1189,7 +1189,7 @@ Ireland coordinate returns `null` for the other reason. NI is outside OS Open UP
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add packages/resolver-wof-sqlite/uprn-existence.ts packages/resolver-wof-sqlite/uprn-existence.test.ts packages/resolver-wof-sqlite/package.json packages/resolver-wof-sqlite/tsconfig.json yarn.lock
 git commit -m "resolver-wof-sqlite: separate uprn's two nulls
 
@@ -1336,7 +1336,7 @@ Run the `mwdev_promotion_eval` MCP tool. Expected: 369 rows and no regression ag
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add packages/resolver yarn.lock
 git commit -m "resolver: let a coverage-licensed absence demote a sibling, never delete one
 
@@ -1431,7 +1431,7 @@ Expected: pass. A new required field on `GeocodeResult` reaches every drop-in's 
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/mailwoman/lib/geocode-core.ts packages/mailwoman/geocode-core.test.ts
 git commit -m "geocode: report what the evidence permits, beside how the coordinate was made
 
@@ -1560,7 +1560,7 @@ Expected: pass.
 
 - [ ] **Step 8: Commit**
 
-```bash
+```sh
 git add packages/evidence packages/mailwoman/lib/geocode-core.ts packages/resolver/resolve-trace.test.ts
 git commit -m "evidence: project the derivation from the trace we already record
 
@@ -1681,13 +1681,13 @@ Expected: pass, 2 tests.
 
 - [ ] **Step 6: Verify against the real file at county scale**
 
-```bash
+```sh
 node packages/tiger/out/scripts/... # use the CLI: mailwoman tiger redistricting --state 06 --county 037
 ```
 
 Then check the required relationship across every loaded block:
 
-```bash
+```sh
 node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.env.MAILWOMAN_DATA_ROOT+'/tiger/tiger.db',{readOnly:true});console.log(db.prepare('select count(*) bad from pl_block where occupied + vacant != housing_units').get())"
 ```
 
@@ -1695,7 +1695,7 @@ Expected: `{ bad: 0 }`.
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add packages/tiger/lib/sdk/schema.ts packages/tiger/lib/sdk/redistricting.ts packages/tiger/lib/sdk/redistricting.test.ts
 git commit -m "tiger: carry H1 housing units beside the P2 race counts
 
@@ -1722,7 +1722,7 @@ the ingester, the GEOID join and the cache were already here."
 
 - [ ] **Step 1: Establish the denominator**
 
-```bash
+```sh
 node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.env.MAILWOMAN_DATA_ROOT+'/ban/street-centroids-fr.db',{readOnly:true});console.log(db.prepare('select count(*) streets, count(distinct locality_base) communes from street_centroid').get())"
 ```
 
@@ -1743,7 +1743,7 @@ Either verdict must state what was measured rather than what was assumed.
 
 - [ ] **Step 4: Commit**
 
-```bash
+```sh
 git add scratchpad/2026-08-21-ban-designation-probe.md
 git commit -m "ban: measure whether BAN designates per commune before claiming it does
 

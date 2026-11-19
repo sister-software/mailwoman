@@ -51,7 +51,7 @@ The WOF postcode records (and their ids) come from the operator's own WOF build.
 the priority chain below (own → GeoNames → WOF admin). US already ships as `postalcode-us.db`. For another
 country, clone its WOF postcode repo, build the extract, then backfill:
 
-```bash
+```sh
 # 1. clone the WOF postcode repo (small for most; GB is ~8 GB and deferred)
 git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalcode-fr.git \
   $MAILWOMAN_CACHE_ROOT/sources/wof-repos/whosonfirst-data-postalcode-fr

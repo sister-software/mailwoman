@@ -285,7 +285,7 @@ done, and the knob table above is the re-run.
 
 ## Reproduction
 
-```bash
+```sh
 node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
 node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
 ```

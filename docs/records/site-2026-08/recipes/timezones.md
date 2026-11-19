@@ -16,7 +16,7 @@ Two costs to name up front. It's **server-side** — the polygon test runs over 
 
 Download the `combined-with-oceans.json` release from timezone-boundary-builder, then build the read-only DB you'll ship alongside your service:
 
-```bash
+```sh
 npx @mailwoman/timezone-lookup build --geojson combined-with-oceans.json --out timezone.db
 ```
 
@@ -26,7 +26,7 @@ That's a one-time step. The `.db` is an immutable artifact — build it in CI, s
 
 Hand it a latitude and longitude. A leading `--` is required before a negative longitude, or the CLI's flag parser reads `-74.0060` as an unknown option and errors:
 
-```bash
+```sh
 npx @mailwoman/timezone-lookup --db timezone.db -- 40.7128 -74.0060
 # {"timezone":"America/New_York","offsetSec":-14400}
 ```

@@ -123,7 +123,7 @@ Built on the lab data root and staged to R2 (2026-09-06), so the probe is one co
 | the untrained base (`v8-cjk-kana`) on the KR board                              | 0.0000 on every tag but `house_number` (0.0428); 0 of 20,000 @15 km                                                           |
 | configs                                                                         | `v8-cjk-kr-probe.yaml` (2,000 steps), `v8-cjk-kr.yaml` (24,000), pre-registered in their headers                              |
 
-```bash
+```sh
 modal run corpus-python/modal/train_remote.py::sync_v8cjk_kr
 modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kr-probe.yaml --resume auto
 ```

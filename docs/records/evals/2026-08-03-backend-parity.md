@@ -25,7 +25,7 @@ Run on `45dcf8da` (current main), shipped model `model-v401-base-step-060000-int
 `localeToCountry(options.locale)` for FTS and `undefined` for candidate. `--locale` defaults to
 `en-US`. So the documented A/B —
 
-```bash
+```sh
 node mailwoman/out/cli.js parse "…" --resolve --resolve-db $WOF               # FTS,       dc=US
 MAILWOMAN_CANDIDATE_DB=… node mailwoman/out/cli.js parse "…" --resolve …      # candidate, dc=none
 ```
@@ -345,7 +345,7 @@ To ship either change independently, the code must separate `resolverDefaultCoun
 
 Instruments B, D and E use shipped tooling:
 
-```bash
+```sh
 WOF=$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 CAND=$MAILWOMAN_DATA_ROOT/db/wof/candidate-global-1026.db
 

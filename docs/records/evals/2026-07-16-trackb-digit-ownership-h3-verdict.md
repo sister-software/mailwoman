@@ -166,7 +166,7 @@ it.
 
 ## Reproduce
 
-```bash
+```sh
 modal run corpus-python/modal/train_remote.py::digit_prior --rows 400000
 modal run corpus-python/modal/train_remote.py::piece_prior --rows 200000
 node scratchpad/piece-position-probe.run.ts

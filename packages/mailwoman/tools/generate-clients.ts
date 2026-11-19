@@ -408,7 +408,7 @@ function pythonReadme(): string {
 		"",
 		"## Install",
 		"",
-		"```bash",
+		"```sh",
 		"pip install mailwoman-client",
 		"```",
 		"",

@@ -44,7 +44,7 @@ The corpus build uses the `--repos` filter to fetch only the few repositories it
 
 After `sync` has populated the local clone of `whosonfirst-placetypes`, `wof mermaid` renders the hierarchy, or any subtree of it, as a Mermaid flowchart. Output goes to stdout by default, or to a file with `--output`. The `--roles` flag filters descendants by `common`, `common_optional`, and/or `optional`, which keeps charts readable when the optional part of the tree is large.
 
-```bash
+```sh
 # Full tree from the root, piped to a file
 node mailwoman/out/cli.js wof mermaid <localRepoDir> planet > planet.mmd
 
@@ -64,7 +64,7 @@ The renderer is `generateMermaidMarkup` in `core/resources/whosonfirst/placetype
 
 `wof tree` takes the same inputs as `wof mermaid` (`<localRepoDir> <placetype>`, optional `--roles`, optional `--output`). It produces a recursive `PlacetypeTreeNode` (`{ name, id, role, children }`) for consumers that expect a nested tree, such as `d3-hierarchy`. `--compact` turns off pretty-printing.
 
-```bash
+```sh
 # Pretty tree from "country" filtered to common roles
 node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
 
@@ -78,7 +78,7 @@ The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetype
 
 `wof graph` is the flat counterpart to `wof tree`. It emits `{ root, nodes: [...], links: [{ source, target }] }`, in which each node and each parent→child edge appears exactly once, regardless of DAG topology. `planet` is 9.4 KB in this shape, compared with 174 MB nested. Field names follow d3-force / react-flow / cytoscape conventions, so common HTML graph viewers can load the output directly.
 
-```bash
+```sh
 # Full planet graph, compact JSON, ~9 KB
 node mailwoman/out/cli.js wof graph <localRepoDir> planet --compact --output planet-graph.json
 

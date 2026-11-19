@@ -70,7 +70,7 @@ policy title.
 
 Regenerate the catalog from the repository root when refreshing its sources:
 
-```bash
+```sh
 node packages/structures/sdk/plateau/tilesets.run.ts
 yarn exec oxfmt packages/structures/data/plateau-tilesets.json
 ```
@@ -80,7 +80,7 @@ JSON. Review the resulting data and source decisions before using it in a layer.
 
 ## Verification
 
-```bash
+```sh
 yarn test --run packages/structures
 ```
 

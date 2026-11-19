@@ -46,7 +46,7 @@ first line instead of at the fourth step.
 
 <!-- illustrative -->
 
-```bash
+```sh
 npx @mailwoman/nominatim serve --port 8080 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidates.db"
 ```
 

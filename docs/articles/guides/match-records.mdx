@@ -6,7 +6,7 @@ source-of-truth: packages/match/lib/blocking.ts, packages/match/lib/fellegi-sunt
 verified-with: published @mailwoman/match v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Match candidate address records
 
@@ -16,8 +16,7 @@ The procedure scores pairs of address records. Entity resolution of people or or
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the matcher:
 

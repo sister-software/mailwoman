@@ -588,7 +588,7 @@ Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:
 
 - [x] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/license-worker package.json tsconfig.json knip.json vitest.config.ts yarn.lock packages/release-kit/lib/release/stage.ts .github/workflows/test.yml
 git commit -m "feat(license-worker): the workspace, two Wrangler environments, and a Worker that answers /health under the Workers test pool
 
@@ -908,7 +908,7 @@ Expected: pass, 4 tests.
 
 - [x] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/license-worker/migrations packages/license-worker/lib/ledger packages/license-worker/test
 git commit -m "feat(license-worker): the D1 ledger — three tables under unique constraints, typed through Kysely
 
@@ -1258,7 +1258,7 @@ Run: the four files. Expected: pass, 10 tests.
 
 - [x] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/license-worker/lib/plans.ts packages/license-worker/lib/dates.ts packages/license-worker/lib/identifiers.ts packages/license-worker/lib/signing.ts packages/license-worker/test
 git commit -m "feat(license-worker): the closed plan catalog, UTC calendar arithmetic, identifiers, and the signing self-test
 
@@ -1495,7 +1495,7 @@ export function mockStripe(routes: Record<string, unknown>): void {
 
 Run: `yarn workspace @mailwoman/license-worker test test/webhook.test.ts`. Expected: pass, 4 tests.
 
-```bash
+```sh
 git add packages/license-worker/lib/stripe packages/license-worker/test
 git commit -m "feat(license-worker): Stripe on the fetch client, webhook verification on SubtleCrypto, and the seven-event allowlist
 
@@ -2151,7 +2151,7 @@ Where the handler reads the ledger directly (`selectFrom("license_tokens")`), mo
 
 Run: `yarn workspace @mailwoman/license-worker test test/fulfil.test.ts`. Expected: pass, 5 tests. If the Stripe SDK's typed field names differ from the fixtures (`current_period_end` placement, `status_transitions`), correct the fixtures to the SDK's types rather than casting.
 
-```bash
+```sh
 git add packages/license-worker/lib packages/license-worker/test
 git commit -m "feat(license-worker): fulfillment — re-read from Stripe, mint once per invoice, persist, email under the invoice id
 
@@ -2421,7 +2421,7 @@ Each route file exports `register<Name>Route(app, env, deps)` in the drop-in sty
 
 Run: `yarn workspace @mailwoman/license-worker test`. Expected: every file passes (health, ledger, dates, plans, identifiers, signing, webhook, fulfill, routes).
 
-```bash
+```sh
 git add packages/license-worker
 git commit -m "feat(license-worker): the webhook, claim, refresh and status routes, with the kill switch and the signing check in front of them
 
@@ -2592,7 +2592,7 @@ export async function reconcile(
 
 Run: `yarn workspace @mailwoman/license-worker test`. Expected: pass.
 
-```bash
+```sh
 git add packages/license-worker
 git commit -m "feat(license-worker): a six-hourly reconciliation mints what the webhook missed and re-sends what failed, once each
 
@@ -2674,7 +2674,7 @@ Vale it with `config/vale/.vale-vocab.ini`.
 
 - [x] **Step 3: The dry run**
 
-```bash
+```sh
 yarn workspace @mailwoman/license-worker wrangler deploy --env sandbox --dry-run --outdir /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/worker-dry-run
 grep -c "node:" /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/worker-dry-run/index.js
 ```
@@ -2683,7 +2683,7 @@ Expected: the dry run bundles without error and the grep reads `0`. A `node:` hi
 
 - [x] **Step 4: Commit**
 
-```bash
+```sh
 git add .github/workflows/license-worker.yml packages/license-worker/README.md
 git commit -m "feat(license-worker): a manual deploy workflow per environment, and the operator's runbook
 
@@ -2709,7 +2709,7 @@ key is not an active entry of the shipped register. Deploys by manual dispatch o
 
 - [x] **Step 2: Full check**
 
-```bash
+```sh
 yarn compile
 yarn typecheck:tests
 yarn lint

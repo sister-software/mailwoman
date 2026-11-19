@@ -120,6 +120,6 @@ the operator's call. But it attacks the root the extract only dents.
 
 ## Reproduce
 
-```bash
+```sh
 node scratchpad/pl-piece-probe.run.ts
 ```

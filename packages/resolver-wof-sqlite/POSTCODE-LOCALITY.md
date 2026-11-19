@@ -31,7 +31,7 @@ polygons (+ a candidate set of localities within ~10km), accumulating per countr
 build is idempotent, because a rerun for a country replaces only that country's rows. It needs the country's `whosonfirst-data-admin-<cc>`
 GeoJSON repo (locality polygons) and a postcode SQLite (centroids).
 
-```bash
+```sh
 # one per country into the shared asset
 node scripts/build-postcode-locality.ts --country DE \
   --admin-repo   .../whosonfirst-data/whosonfirst-data-admin-de \

@@ -191,7 +191,7 @@ on their own disk. It isn't published and not in the data-bundles registry.
 
 To rebuild it:
 
-```bash
+```sh
 mw gazetteer build poi-coverage \
   --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf" \
   --region "Île-de-France" --admin-level 4 --category pharmacy \

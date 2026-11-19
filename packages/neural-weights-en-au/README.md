@@ -25,7 +25,7 @@ locale's country scope (AU) fixes that class without any model change or trainin
 
 ## Dev setup
 
-```bash
+```sh
 node scripts/link-dev-weights.ts
 ```
 

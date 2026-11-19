@@ -10,7 +10,7 @@ describe("extractCodeBlocks", () => {
 		const source = [
 			"# Page",
 			"",
-			"```bash",
+			"```sh",
 			"npm install mailwoman",
 			"```",
 			"",

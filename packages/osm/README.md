@@ -72,7 +72,7 @@ aren't lost.
 Install the package beside `mailwoman`, which loads it as an optional peer when it is present, and build
 through the public CLI:
 
-```bash
+```sh
 npm install mailwoman @mailwoman/osm
 
 # The plan: the regional extract, the outline when the region holds other countries, the outputs,
@@ -96,7 +96,7 @@ Without `--activate`, the command prints the `mailwoman data activate <inst-id>`
 The scripts below build one database at the conventional `db/osm/address-points-<cc>-<cc>.db` path
 instead, from an extract you download yourself:
 
-```bash
+```sh
 OSM="$(npm root)/@mailwoman/osm/out/tools"
 
 # 1. Download a Geofabrik extract as a dated snapshot. The vintage is the date of the server's

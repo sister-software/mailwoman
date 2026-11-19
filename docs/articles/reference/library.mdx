@@ -6,7 +6,7 @@ source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/runtime
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Node library API
 
@@ -151,7 +151,7 @@ type Calibrator = (rawConfidence: number) => number
 
 The example needs <NodeRequirement /> and an <ECMAScriptModuleProject />. Install the packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/core@{{release.version}}
 ```
 

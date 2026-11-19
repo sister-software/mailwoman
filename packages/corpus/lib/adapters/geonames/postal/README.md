@@ -10,7 +10,7 @@ multi-locale goal).
 
 ## Download
 
-```bash
+```sh
 DIR=$MAILWOMAN_DATA_ROOT/geonames-postal
 mkdir -p "$DIR" && cd "$DIR"
 for cc in DE FR ES IT NL; do curl -O "https://download.geonames.org/export/zip/$cc.zip" && unzip -o "$cc.zip"; done
@@ -18,7 +18,7 @@ for cc in DE FR ES IT NL; do curl -O "https://download.geonames.org/export/zip/$
 
 ## Run
 
-```bash
+```sh
 npx mailwoman corpus run geonames-postal --input $MAILWOMAN_DATA_ROOT/geonames-postal/DE.txt --country DE --limit 50000
 ```
 

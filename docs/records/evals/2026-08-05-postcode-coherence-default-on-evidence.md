@@ -345,7 +345,7 @@ The landing record already flagged that last gap for its own ticket.
 
 ## 6. Reproduce this test
 
-```bash
+```sh
 # Gap (a) — the check, both ways. Rebuild the corpus first: the committed seed carries
 # seven cases the built artifact does not.
 mailwoman eval gauntlet-build regression-db

@@ -97,7 +97,7 @@ By making a contribution to this project, I certify that:
 
 ## Setup
 
-```bash
+```sh
 git clone https://github.com/sister-software/mailwoman.git
 cd mailwoman
 corepack enable          # activates the pinned Yarn 4
@@ -177,7 +177,7 @@ import cycle.
 
 After `yarn compile`:
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 node packages/mailwoman/out/cli/main.js --help
 ```

@@ -30,7 +30,7 @@ BAN's per-département dumps are a current source under `$MAILWOMAN_CACHE_ROOT/s
 streams them without an external CLI or DuckDB, so it has few dependencies and doesn't run out of memory
 on the 26M-row national set.
 
-```bash
+```sh
 # 1. Download the per-département dumps (or the national adresses-france.csv.gz):
 #    https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-<dept>.csv.gz
 #    → $MAILWOMAN_CACHE_ROOT/sources/ban/   (where `mailwoman corpus fetch ban` writes them)

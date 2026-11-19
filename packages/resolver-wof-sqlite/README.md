@@ -6,7 +6,7 @@ Phase 4.2 of the mailwoman neural-resolver plan — see [`docs/plan/phases/PHASE
 
 ## Installation
 
-```bash
+```sh
 npm install @mailwoman/resolver-wof-sqlite
 ```
 
@@ -90,7 +90,7 @@ The Geocode Earth team mirrors WOF SQLite distributions at <https://data.geocode
 | `whosonfirst-data-admin-us-latest.db.bz2`      | ~845 MB    | US administrative places (country / region / locality / borough). |
 | `whosonfirst-data-postalcode-us-latest.db.bz2` | ~320 MB    | US postcodes.                                                     |
 
-```bash
+```sh
 curl -L -o whosonfirst-data-admin-us-latest.db.bz2 \
   https://data.geocode.earth/wof/dist/sqlite/whosonfirst-data-admin-us-latest.db.bz2
 bunzip2 whosonfirst-data-admin-us-latest.db.bz2
@@ -107,7 +107,7 @@ Upstream WOF SQLite distributions ship a `places` table but **not** an FTS5 inde
 
 A one-shot operator script ships with this package as a `bin`:
 
-```bash
+```sh
 mailwoman gazetteer build fts /path/to/whosonfirst-data-admin-us-latest.db
 ```
 
@@ -122,7 +122,7 @@ The CLI:
   `populating-bbox` and `done`.
 - Exits 0 with a no-op message if both indexes already exist.
 
-```bash
+```sh
 # Refresh after pulling a newer WOF dump
 mailwoman gazetteer build fts /path/to/wof.db --drop
 ```
@@ -133,7 +133,7 @@ mailwoman gazetteer build fts /path/to/wof.db --drop
 
 Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Path B of the demo plan). The full admin-US distribution is ~4 GB. A slim US bundle with the top-1k localities by population plus all postcodes lands at **~35 MB**, small enough to ship as a static asset.
 
-```bash
+```sh
 # Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
 # The slim wof-hot.db distribution is RETIRED (2026-06-20): the demo byte-range-resolves
 # against the global candidate table. `buildSlimWOFDatabase` remains importable from

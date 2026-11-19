@@ -34,7 +34,7 @@ The call is the one you already had, and it now resolves to a rooftop-level resu
 
 The container installs the published packages and bakes the model weights in, so a fresh pull parses addresses with no data at all. The container needs a gazetteer at runtime, so it mounts one at `/data`:
 
-```bash
+```sh
 docker run --rm -p 8080:8080 \
   -v /path/to/mailwoman-data:/data:ro \
   ghcr.io/sister-software/mailwoman:latest \

@@ -158,7 +158,7 @@ ships its own hand-curated fixture set. See [`PHASE_8 §D`](../../records/plan/p
 
 ## Audit the output
 
-```bash
+```sh
 npx tsx corpus/scripts/audit.ts \
   $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0 \
   --config corpus-python/src/mailwoman_train/configs/v0_5_0.yaml
@@ -208,7 +208,7 @@ Implemented in `generate_deepseek_corpus.py`, which is now the package
 `corpus-python/src/mailwoman_train/corpora/deepseek/` and runs as
 `python3 -m mailwoman_train.corpora.deepseek`. The invocation below is the one the recorded run used:
 
-```bash
+```sh
 python3 corpus-python/scripts/generate_deepseek_corpus.py \
   --mode transliteration \
   --out-dir /data/corpus/versioned/v0.4.0/transliteration \

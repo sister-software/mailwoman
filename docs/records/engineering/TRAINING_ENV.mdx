@@ -32,7 +32,7 @@ The last two items block classifier training. Tokenizer training (A0, A1) needed
 
 From the host (this is operator-side rather than in-container):
 
-```bash
+```sh
 incus config device add <container> gpu gpu
 incus config device add <container> kfd unix-char source=/dev/kfd
 ```
@@ -41,7 +41,7 @@ The first line passes through `/dev/dri/card0` + `/dev/dri/renderD128` (graphics
 
 Verify in-container:
 
-```bash
+```sh
 ls -la /dev/kfd /dev/dri/
 ```
 
@@ -51,7 +51,7 @@ Expect to see `kfd`, `card0`, `renderD128` all present with `crw-rw-...` permiss
 
 The mailwoman `corpus-python` package splits its dependencies. The heavy ML dependencies (PyTorch, Transformers, Datasets, ONNX) live under the `[train]` extras, so tokenizer-only work doesn't install them. Create a dedicated venv:
 
-```bash
+```sh
 uv venv ~/training-venv --python=3.12
 source ~/training-venv/bin/activate
 ```
@@ -62,7 +62,7 @@ Install the ROCm-built PyTorch wheel before `pip install -e .[train]`. On x86_64
 
 For the lab's Radeon 780M (gfx1103, RDNA 3 iGPU):
 
-```bash
+```sh
 pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
 ```
 
@@ -70,7 +70,7 @@ The download is ~3 GB and takes 5-10 min on the home uplink.
 
 ### Step 2b — Install corpus-python + train extras
 
-```bash
+```sh
 cd ~/workspace/mailwoman/corpus-python
 pip install -e .[train]
 ```
@@ -79,7 +79,7 @@ This adds `transformers>=4.41`, `datasets>=2.19`, `onnx>=1.16`, `onnxruntime>=1.
 
 ## Step 3 — Verify GPU detected
 
-```bash
+```sh
 python -c '
 import torch
 print("cuda:", torch.cuda.is_available())
@@ -103,7 +103,7 @@ hip: 6.2.41133-XXXXXXXX
 
 The Radeon 780M reports itself as `gfx1103` but ROCm's compute kernels target `gfx1100`. Set this env var before any training command:
 
-```bash
+```sh
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
 ```
 

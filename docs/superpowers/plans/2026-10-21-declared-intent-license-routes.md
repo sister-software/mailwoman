@@ -127,7 +127,7 @@ Expected: the run passes.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/core/lib/license/key.ts packages/core/lib/license/key/key.test.ts
 git commit -F /tmp/claude-1000/-home-lab-Projects-mailwoman/b81e6a7e-810b-4cae-8dee-b1899e57600c/scratchpad/msg-1.txt
 ```

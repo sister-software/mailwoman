@@ -8,7 +8,8 @@
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
 		"#hooks/*": "./src/hooks/*.ts",
-		"#shared/*": "./src/shared/*.ts"
+		"#shared/*": "./src/shared/*.ts",
+		"#partials/*": "./src/partials/*.ts"
 	},
 	"exports": {
 		"./package.json": "./package.json",

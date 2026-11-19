@@ -6,14 +6,14 @@ Point-in-polygon over the [Eurostat GISCO](https://ec.europa.eu/eurostat/web/gis
 
 ## Build the DB
 
-```bash
+```sh
 # from a Eurostat GISCO NUTS GeoJSON (e.g. NUTS_RG_03M_2021_4326.geojson)
 npx @mailwoman/nuts-lookup build --geojson NUTS_RG_03M_2021_4326.geojson --out nuts.db
 ```
 
 ## Look up
 
-```bash
+```sh
 npx @mailwoman/nuts-lookup --db nuts.db -- 52.52 13.405
 # {"nuts":{"level1":"DE3","level2":"DE30","level3":"DE300"}}   (Berlin)
 ```

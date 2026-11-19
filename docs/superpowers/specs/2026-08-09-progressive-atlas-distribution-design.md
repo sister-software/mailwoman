@@ -140,7 +140,7 @@ but sets no byte target before a real build and lookup benchmark.
 
 The ten-minute path remains short:
 
-```bash
+```sh
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 npx mailwoman doctor
 npx mailwoman parse "350 5th Ave, New York, NY 10118"
@@ -162,7 +162,7 @@ size, and fallback value. Address, street, POI, and domain layers remain optiona
 The guide promises worldwide country/region/locality resolution at the depth supported by those
 layers. It then shows one explicit refinement:
 
-```bash
+```sh
 npx mw data plan --area gb --detail address
 npx mw data pull --area gb --detail address
 ```
@@ -189,7 +189,7 @@ cities and sparse rural regions before we fix it.
 
 A country request stays simple:
 
-```bash
+```sh
 mw data pull --area nz --detail address
 ```
 
@@ -247,7 +247,7 @@ schema version without requiring every other address extract from the same count
 
 Issue #1577 supplies the consumer acceptance surface for this design:
 
-```bash
+```sh
 mw data list
 mw data list --installed
 mw data list --area gb

@@ -7,7 +7,7 @@ This calibration maps it to one (Expected Calibration Error 0.067 → 0.004 on t
 
 ## The pipeline
 
-```bash
+```sh
 # 1. Build the 50/50 OpenAddresses + training-corpus calibration set (needs the corpus parquet).
 python3 scripts/eval/build-calibration-set.py \
   --corpus $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-0000.parquet \

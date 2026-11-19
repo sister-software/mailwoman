@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Geocode a file of addresses
 
@@ -13,18 +13,17 @@ In this tutorial you geocode a six-line file of addresses in one command. You th
 
 ## Before you start
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.0.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 The geocoder reads geographic data from a local directory. Choose a data directory, then download the global place candidates, the French address points, and the address points for Washington, DC and Vermont:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
@@ -52,7 +51,7 @@ qwerty asdf
 
 Run the geocoder over the file. `--stdin` reads one address per line and loads the model and data once for the whole file. It writes one JSON object per line:
 
-```bash
+```sh
 npx mailwoman geocode --stdin < addresses.txt > results.jsonl
 ```
 
@@ -122,7 +121,7 @@ for (const row of rows) {
 
 Run it:
 
-```bash
+```sh
 node summarize-results.ts
 ```
 

@@ -25,7 +25,7 @@ The scripts-side ingest tool produces the dump and does the DuckDB / S3 work. Th
 `@mailwoman/corpus` because corpus is a **runtime dep of the `mailwoman` CLI** and mustn't pull the
 heavy native `@duckdb/node-api`.
 
-```bash
+```sh
 mailwoman gazetteer overture-ingest \
   --release 2026-06-17.0 --countries ES,IT,NL,PT --corpus-jsonl
 # → $MAILWOMAN_DATA_ROOT/snapshots/overture/2026-06-17.0/addresses-<cc>.parquet
@@ -40,7 +40,7 @@ other corpus adapter inputs under `corpus/staging/`.
 
 `--country` is required because the JSONL is per-country and its rows omit a country field:
 
-```bash
+```sh
 mailwoman corpus run overture \
   --input $MAILWOMAN_DATA_ROOT/corpus/staging/overture/2026-06-17.0/overture-es.corpus.jsonl \
   --country ES --output /data/corpus-staging

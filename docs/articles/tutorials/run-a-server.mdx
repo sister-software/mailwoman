@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Run the Mailwoman HTTP server
 
@@ -18,13 +18,13 @@ In this tutorial you start the native Mailwoman HTTP server on your machine and 
 
 Install the published 11.0.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 The server doesn't start without geographic data. It exits with status 1 before listening when it finds neither a candidate database nor Who's On First databases. Download the global place candidates and the address points for Washington, DC:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
@@ -36,7 +36,7 @@ The two pulls download about 3 GB: `candidate` 2.9 GB and DC 127.5 MB. If you co
 
 Start the server on port 7801 with one worker process, bound to your own machine only:
 
-```bash
+```sh
 npx mailwoman serve --port 7801 --host 127.0.0.1 --cpus 1
 ```
 
@@ -56,7 +56,7 @@ Your process IDs will differ. Leave this terminal running and open a second term
 
 ## 2. Check its health
 
-```bash
+```sh
 curl -i http://127.0.0.1:7801/health
 ```
 
@@ -82,7 +82,7 @@ On the host used for this page, the health route answered 13 seconds after the s
 
 Send an address to `GET /v1/parse`:
 
-```bash
+```sh
 curl -i --get http://127.0.0.1:7801/v1/parse --data-urlencode "address=1 Main St, Burlington, VT 05401"
 ```
 
@@ -106,7 +106,7 @@ Keep-Alive: timeout=5
 
 Send a JSON body to `POST /v1/geocode`:
 
-```bash
+```sh
 curl -i -X POST http://127.0.0.1:7801/v1/geocode -H "content-type: application/json" -d '{"address":"1600 Pennsylvania Ave NW, Washington, DC 20500"}'
 ```
 
@@ -130,7 +130,7 @@ The server returned an `address_point` coordinate from the US National Address D
 
 Send a geocode request without an `address`:
 
-```bash
+```sh
 curl -i -X POST http://127.0.0.1:7801/v1/geocode -H "content-type: application/json" -d '{}'
 ```
 
@@ -154,7 +154,7 @@ A request error returns a 4xx status with an `error` message. Check the status c
 
 Send a termination signal to the manager process that the server printed at startup:
 
-```bash
+```sh
 kill 3934763
 ```
 

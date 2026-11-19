@@ -91,7 +91,7 @@ break, and it's a sharper, cheaper target than reviving Stage 2.7.
 
 ## Reproduce
 
-```bash
+```sh
 # v0 (deterministic, no model)
 node scripts/eval/score-punctuation-stress.ts --engine v0
 # neural ship config (folded gold, head-to-head)

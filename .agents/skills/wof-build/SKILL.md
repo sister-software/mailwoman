@@ -31,7 +31,7 @@ matches. When the custom schema lacks a field, extend the build. US postcodes ar
 
 Only needed when GeoJSON repos have been updated. Skip if the existing unified DB is current.
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js wof prepare $MAILWOMAN_DATA_ROOT/src/wof-repos/ \
   --unified-db $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-unified.db
 ```
@@ -43,7 +43,7 @@ sealed copy of the admin DB with `place_importance` added and the admin file's m
 `importance_source`. It lands beside the admin DB as `<admin name>-importance-<admin md5, 12 hex>.db`.
 The admin DB itself is untouched.
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer importance --admin $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 ```
 
@@ -63,7 +63,7 @@ Use the CLI rather than a hand-rolled `node -e`. It applies the degenerate-surfa
 surface-ambiguity scan once across all locales, and stamps the source DB's md5 into each artifact's
 provenance trailer (see step 5).
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer build fst \
   --output $MAILWOMAN_DATA_ROOT/db/wof/fst-staging-$(date -u +%F)
 ```
@@ -79,7 +79,7 @@ names only artifacts a command can regenerate.
 
 ### 4. Build slim WOF DB for browser (~20s)
 
-```bash
+```sh
 node resolver-wof-sqlite/out/build-slim-cli.js \
   --in $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db \
   --in $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-postalcode-us-latest.db \
@@ -93,7 +93,7 @@ The FST freshness section of `gazetteer verify` answers "which artifacts were bu
 database" — the question that, while unanswerable, once left every FST pointing at a gazetteer
 that no longer existed after an admin swap:
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer verify --no-reverse-panel
 ```
 
@@ -103,7 +103,7 @@ and a dev tree with an old bias list must still run. The same check runs from th
 (`neural-weights-{en-us,en-gb,fr-fr}/scripts/link-dev-weights.ts`), so `yarn test` surfaces the drift
 too.
 
-```bash
+```sh
 # Query smoke on a staged artifact
 node --input-type=module -e "
 import { readFile } from 'node:fs/promises'
@@ -130,7 +130,7 @@ live DB, that's what the number means.
 The admin build folds GeoNames into the admin DB. The candidate build reads that admin DB as built
 and adds the postcode databases and the importance column:
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer build candidate \
   --admin admin-global-priority.db \
   --out <candidate db>

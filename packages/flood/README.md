@@ -74,14 +74,14 @@ where it is irreducible.
 **Prerequisite: the OSGB36 datum grid.** OSGB36 to WGS84 is accurate to a meter only through the
 OSTN15 grid. Without it, PROJ substitutes a ballpark offset and reports no warning. Install it once:
 
-```bash
+```sh
 projsync --area-of-use "United Kingdom"
 ```
 
 The build refuses to run without it and prints the reason, because the failure is otherwise invisible. The
 trap list below describes it.
 
-```bash
+```sh
 # Measure the partial share at the candidate resolutions and stop. Single-process, so pair it with
 # --limit on anything large — see the note below.
 mailwoman gazetteer build flood --measure-resolutions 7,8,9 --limit 200000

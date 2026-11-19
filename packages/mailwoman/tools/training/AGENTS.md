@@ -7,7 +7,7 @@ trainer on Modal and the host audits a launch requires.
 
 `launch/launch.run.ts` runs `trainer train` in a Modal sandbox. It needs no Python and starts no Modal Function.
 
-```bash
+```sh
 node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh [--device <Modal GPU>]
 node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>
 node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines 200]
@@ -101,7 +101,7 @@ with no variable set. CI downloads the same archive in its `rust` job and sets `
 The audits under `audits/` read the corpus through the `mtf-node` addon on a host that mirrors the volume at
 `MAILWOMAN_DATA_ROOT`. Each writes the report the preflight records:
 
-```bash
+```sh
 node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts --config <yaml> --json <path>
 node packages/mailwoman/tools/training/audits/validation/coverage.run.ts <yaml> --json <path>
 node packages/mailwoman/tools/training/audits/label/support.run.ts <yaml> --json <path>

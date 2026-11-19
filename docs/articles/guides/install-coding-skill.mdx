@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0, Claude Code v2.1.319
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Install the Mailwoman skill for Claude Code
 
@@ -20,13 +20,13 @@ The installer **removes the entire destination skill directory before copying th
 
 Run the commands from that project's root. Install the pinned package when the project lacks it:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}}
 ```
 
 If <code>.claude/skills/mailwoman/</code> already exists, save its current contents before running the installer. The block stops without copying if an earlier backup already exists:
 
-```bash
+```sh
 if test -d .claude/skills/mailwoman && test ! -e .claude/skills/mailwoman.before-update; then
 	cp -R .claude/skills/mailwoman .claude/skills/mailwoman.before-update
 else
@@ -41,7 +41,7 @@ Skip those backup commands on a first install, when <code>.claude/skills/mailwom
 
 From the project root, run the installed 11.0.0 CLI:
 
-```bash
+```sh
 npx --no-install mailwoman skill install --dest "$PWD"
 ```
 
@@ -51,14 +51,14 @@ npx --no-install mailwoman skill install --dest "$PWD"
 
 Check that the file exists and matches the copy in the installed package:
 
-```bash
+```sh
 test -s .claude/skills/mailwoman/SKILL.md
 cmp node_modules/mailwoman/skills/mailwoman/SKILL.md .claude/skills/mailwoman/SKILL.md
 ```
 
 Both commands exited 0 in the disposable test. The installed file begins with `name: mailwoman` and a description of parsing, geocoding, validation, setup, and bug reporting. If Claude Code 2.1.233 or later is available, validate the project skill directory:
 
-```bash
+```sh
 claude plugin validate .claude/skills
 ```
 
@@ -70,7 +70,7 @@ After upgrading the project's `mailwoman` package, back up the existing skill as
 
 If the replacement is unsuitable, restore the saved directory from the project root. The following block moves the skill only when <code>.claude/skills/mailwoman.before-update/</code> exists and <code>.claude/skills/mailwoman.updated/</code> is free:
 
-```bash
+```sh
 if test -d .claude/skills/mailwoman.before-update && test ! -e .claude/skills/mailwoman.updated; then
 	if test -e .claude/skills/mailwoman; then
 		mv .claude/skills/mailwoman .claude/skills/mailwoman.updated

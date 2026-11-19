@@ -85,7 +85,7 @@ admin centroid to OA's real point without circularity.
 Built by [`scripts/eval/ingest-openaddresses.ts`](../../../scripts/eval/ingest-openaddresses.ts).
 Gathered 2026-05-30. Regenerate with:
 
-```bash
+```sh
 node scripts/eval/ingest-openaddresses.ts \
   --out data/eval/external/openaddresses-us-sample.jsonl \
   --cache /tmp/oa-cache --target 10000 --per-state 1500 --seed 42
@@ -172,7 +172,7 @@ the respective US government agencies").
 The ingest script uses `curl -L`; if the environment blocks it, fetch the zips
 by hand into the cache dir and re-run with `--offline`:
 
-```bash
+```sh
 for kv in us/ca/berkeley us/ca/marin us/il/cook us/dc/statewide \
           us/ia/statewide us/mt/statewide us/vt/statewide us/sd/statewide; do
   ! curl -sSL -o "/tmp/oa-cache/$(echo "$kv" | sed 's#/#__#g').zip" \
@@ -232,7 +232,7 @@ tuples by the `locale` recipe's `--golden` mode
 
 Rebuild:
 
-```bash
+```sh
 mailwoman corpus recipe locale --country ES --count 1500 --seed 7 --golden \
   --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
 ```
@@ -241,7 +241,7 @@ mailwoman corpus recipe locale --country ES --count 1500 --seed 7 --golden \
 
 All three arenas run through one push-button script:
 
-```bash
+```sh
 yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
 # default shipped weights:
 node packages/mailwoman/tools/dev-tools/external-arenas.run.ts

@@ -65,7 +65,7 @@ plateau (real-data realism is the change, and we don't have enough of it yet).
 
 ## Reproduce
 
-```bash
+```sh
 node scripts/ingest-overture-addresses.ts --release 2026-05-20.0 \
   --countries PL,BR,MX,PT,CZ,CA,LI --limit 6000
 node scripts/coarse-placer/build-outlier-latin.mjs            # appends OTHER + writes the test file

@@ -114,7 +114,7 @@ In `packages/react/package.json`, beside `"./map/ResultPanel"`:
 
 In `test/mocks.tsx`, delete the five moved definitions and the now-unused imports (`DemoMapStyle`, `DemoRuntime`, `ParseResult`, `PipelineRuntime`, `Suggestion`, `ResolvedMapPlace`). In the three `lib/**/*.stories.tsx` files replace `from "#test/mocks"` with `from "#map/fake-runtime"` for those names (a story that also uses a POI fake keeps its `#test/mocks` import for it). In the three `lib/**/*.test.tsx` files replace the same names' source with `from "@mailwoman/react/map/fake-runtime"`.
 
-```bash
+```sh
 grep -rn "makeDemoRuntime\|makePipelineRuntime\|makeFakeParseResult\|FAKE_SUGGESTIONS\|STUB_MAP_STYLE" packages/react --include='*.ts' --include='*.tsx' | grep -v "/out/" | grep -v "fake-runtime.ts"
 ```
 
@@ -122,7 +122,7 @@ Expected: every hit imports from `#map/fake-runtime` (under `lib/`) or `@mailwom
 
 - [ ] **Step 4: Verify**
 
-```bash
+```sh
 yarn compile
 yarn oxlint packages/react/lib/map/fake-runtime.ts packages/react/test/mocks.tsx
 yarn workspace @mailwoman/react test:browser
@@ -133,7 +133,7 @@ Expected: the react browser suite passes with the same count as on `main`; knip 
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/react
 git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/fake-runtime rather than a test helper"
 ```
@@ -375,7 +375,7 @@ The watch paths grow when the runtime moves in (`neural`, `resolver-wof-wasm`, `
 
 - [ ] **Step 5: Install and check the registers**
 
-```bash
+```sh
 yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
 yarn vitest --run --config vitest.slow.config.ts packages/release-kit/lib/release-stage.integration.test.ts
@@ -386,7 +386,7 @@ Expected: the absence list prints 15 names and includes `packages/earth` and `pa
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add package.json yarn.lock tsconfig.json packages/earth packages/site-kit packages/release-kit/lib/release/stage.ts dependency-cruiser.config.cjs
 git commit -m "feat(earth,site-kit): the two private workspaces, registered in the four registers"
 ```
@@ -472,7 +472,7 @@ test("renderBuildInfo emits the three fields as tab-indented JSON with a trailin
 
 - [ ] **Step 2: Run them to see the failure**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/earth/lib packages/site-kit/lib
 ```
 
@@ -597,7 +597,7 @@ export function renderBuildInfo(info: BuildInfo): string {
 
 - [ ] **Step 4: Run the tests and the checks**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/earth/lib packages/site-kit/lib
 yarn oxlint packages/earth packages/site-kit
 yarn compile
@@ -608,7 +608,7 @@ Expected: 8 tests pass, and oxlint reports no findings. `tsc -b` emits `packages
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/earth packages/site-kit
 git commit -m "feat(earth,site-kit): routes and origins in the app, build-info in site-kit, all pure and tested"
 ```
@@ -816,7 +816,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 
 Render the two PNGs once with ImageMagick. The lab has it at `/usr/bin/convert`:
 
-```bash
+```sh
 cd packages/earth/public && convert -background none icon.svg -resize 192x192 icon-192.png && convert -background none icon.svg -resize 512x512 icon-512.png && cd -
 ```
 
@@ -843,7 +843,7 @@ createRoot(root).render(<p>Mailwoman Earth</p>)
 
 - [ ] **Step 3: Build and read the output**
 
-```bash
+```sh
 yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?" >> /tmp/earth-build.log; tail -12 /tmp/earth-build.log
 ls packages/earth/dist
 cat packages/earth/dist/build.json
@@ -854,7 +854,7 @@ Expected: `EXIT=0`; `dist/` holds `index.html`, `build.json`, `manifest.webmanif
 
 - [ ] **Step 4: Typecheck the config and worker**
 
-```bash
+```sh
 yarn tsc -p packages/earth/tsconfig.test.json --noEmit
 ```
 
@@ -862,7 +862,7 @@ Expected: no error. `vite/client` and `vite-plugin-pwa/client` in `types` supply
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/earth packages/site-kit
 git commit -m "feat(earth,site-kit): Vite build with the PWA manifest, a precache service worker, and build.json"
 ```
@@ -991,7 +991,7 @@ The debug and trace routes render the same geocoder in this plan. The drawer-ope
 
 - [ ] **Step 2: Build and look**
 
-```bash
+```sh
 yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?" >> /tmp/earth-build.log; tail -3 /tmp/earth-build.log
 ```
 
@@ -999,7 +999,7 @@ Expected: `EXIT=0`. Then `yarn workspace @mailwoman/earth preview` and open `htt
 
 - [ ] **Step 3: Commit**
 
-```bash
+```sh
 git add packages/earth
 git commit -m "feat(earth): the app mounts the geocoder on the fake runtime, with routes and a not-found view"
 ```
@@ -1042,7 +1042,7 @@ In `packages/tile-worker/lib/cors.ts`, add to `AllowedOrigins` after `"https://m
 
 - [ ] **Step 3: Dry run**
 
-```bash
+```sh
 yarn workspace @mailwoman/earth build
 yarn workspace @mailwoman/earth deploy:dry-run 2>&1 | tail -8
 ```
@@ -1051,7 +1051,7 @@ Expected: wrangler reports the asset upload plan for `dist/` and ends with `--dr
 
 - [ ] **Step 4: The tile worker's tests**
 
-```bash
+```sh
 yarn vitest --run packages/tile-worker
 ```
 
@@ -1059,7 +1059,7 @@ Expected: the same pass count as on `main`.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/earth/wrangler.toml packages/tile-worker/lib/cors.ts
 git commit -m "feat(earth): assets-only wrangler configuration; the tile worker admits the three body origins"
 ```
@@ -1190,7 +1190,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 - [ ] **Step 3: Run it**
 
-```bash
+```sh
 yarn workspace @mailwoman/earth exec playwright install chromium
 yarn workspace @mailwoman/earth test:browser 2>&1 | tail -12
 ```
@@ -1210,7 +1210,7 @@ That leg installs Chromium with `yarn workspace @mailwoman/react exec playwright
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/earth packages/site-kit .github/workflows/test.yml
 git commit -m "test(earth,site-kit): the shell smoke under Playwright, on the preview server and in the react CI leg"
 ```
@@ -1221,7 +1221,7 @@ git commit -m "test(earth,site-kit): the shell smoke under Playwright, on the pr
 
 - [ ] **Step 1: The full preflight**
 
-```bash
+```sh
 yarn compile
 yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "✗\|error:\|EXIT=" /tmp/health.log | head
 yarn typecheck:tests
@@ -1234,7 +1234,7 @@ Expected: `health` passes every step (if `health:debt` fails on counters this br
 
 - [ ] **Step 2: Push and open the PR**
 
-```bash
+```sh
 git push -u origin feat/earth-shell
 gh pr create --title "Earth shell: packages/earth, the geocoder on a fake runtime, static Workers Assets" --body-file - <<'EOF'
 Implements the shell half of docs/superpowers/specs/2026-09-06-earth-app-design.md by docs/superpowers/plans/2026-09-07-earth-shell.md.

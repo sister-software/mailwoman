@@ -265,7 +265,7 @@ Expected: pass, including the existing `resolver.test.ts`, `street.test.ts` and 
 Run: `yarn tsc -b packages/resolver-wof-wasm`
 Expected: zero errors, and `packages/resolver-wof-wasm/out/httpvfs/range-worker.js` is rewritten. The docs plugin stages this file.
 
-```bash
+```sh
 git add packages/resolver-wof-wasm/lib/httpvfs/worker-protocol.ts packages/resolver-wof-wasm/lib/httpvfs/range-worker.ts packages/resolver-wof-wasm/lib/httpvfs/database.ts packages/resolver-wof-wasm/lib/httpvfs/database.test.ts
 git commit -m "Open a remote SQLite file whole in the range worker, inflating a gzip URL" -- packages/resolver-wof-wasm/lib/httpvfs
 ```
@@ -971,7 +971,7 @@ Expected: the log line `search-index: N records from M pages, X raw, Y gzip` and
 
 - [ ] **Step 12: Commit**
 
-```bash
+```sh
 git add docs/plugins/search-index docs/src/search/constants.ts docs/src/search/fixtures.ts packages/react/lib/search/types.ts docs/docusaurus.config.ts docs/package.json packages/react/package.json yarn.lock
 git commit -m "Write a gzip SQLite search index from the docs build (N records from M pages)" -- docs/plugins/search-index docs/src/search packages/react/lib/search/types.ts docs/docusaurus.config.ts docs/package.json packages/react/package.json yarn.lock
 ```
@@ -1612,7 +1612,7 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 Run: `yarn vitest run docs/src/search docs/plugins/search-index`
 Expected: pass for every file.
 
-```bash
+```sh
 git add docs/src/search
 git commit -m "Query the search index: quoted FTS5 tokens, vocabulary typo correction, one hit per page" -- docs/src/search
 ```
@@ -1710,7 +1710,7 @@ Expected: pass, 6 tests. For a failing row, print the first eight hits with thei
 
 - [ ] **Step 3: Commit**
 
-```bash
+```sh
 git add docs/src/search/search.integration.test.ts docs/superpowers/specs/2026-10-02-docs-search-design.md
 git commit -m "Run the spec's acceptance queries against an index of the real docs build" -- docs/src/search/search.integration.test.ts docs/superpowers/specs/2026-10-02-docs-search-design.md
 ```
@@ -2187,7 +2187,7 @@ Expected: pass, 6 tests.
 Run: `git add packages/react/lib/search packages/react/lib/search.ts && yarn lint`
 Expected: the `workspace-exports` check reports the missing `./search` entries. Apply the fix it names, rerun `yarn lint`, and expect zero findings under `packages/react`.
 
-```bash
+```sh
 git commit -m "Add a docs search modal on a native dialog and an ARIA combobox" -- packages/react
 ```
 
@@ -2357,7 +2357,7 @@ Run the `chrome-devtools-mcp:a11y-debugging` audit on the open dialog and fix ea
 Run: `git add docs/src/theme/SearchBar.tsx docs/test/search.spec.ts && yarn lint && yarn typecheck && yarn test`
 Expected: each command exits 0. `yarn lint` includes the prose check on this plan and the spec.
 
-```bash
+```sh
 git commit -m "Mount the search modal in the docs navbar over the sqlite-wasm index and delete the Algolia config" -- docs/src docs/test/search.spec.ts docs/docusaurus.config.ts
 ```
 

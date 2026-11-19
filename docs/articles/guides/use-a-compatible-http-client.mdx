@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Point a Nominatim, Photon or libpostal client at Mailwoman
 
@@ -17,13 +17,13 @@ Use this procedure when an application already calls Nominatim, Photon or a libp
 
 Install the compatibility package for your client next to the parser packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/nominatim@{{release.version}} @mailwoman/photon@{{release.version}} @mailwoman/libpostal@{{release.version}}
 ```
 
 The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. The examples query Washington, DC:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
@@ -35,7 +35,7 @@ The libpostal server parses text and reads no geographic data. The responses bel
 
 Start the server on the port your client will call:
 
-```bash
+```sh
 npx nominatim serve --port 7803 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
 ```
 
@@ -43,7 +43,7 @@ It prints the routes it serves: `GET /search`, `GET /reverse`, `GET /lookup`, `G
 
 A free-text search with `format=jsonv2` and `addressdetails=1`:
 
-```bash
+```sh
 curl --get http://127.0.0.1:7803/search --data-urlencode "q=1600 Pennsylvania Ave NW, Washington, DC 20500" --data-urlencode "format=jsonv2" --data-urlencode "addressdetails=1"
 ```
 
@@ -93,7 +93,7 @@ Check these differences against your client:
 
 A structured search with `city` and `state` returned the Springfield, Illinois city point. Its result has no `class`, `type` or `address` fields:
 
-```bash
+```sh
 curl --get http://127.0.0.1:7803/search --data-urlencode "city=Springfield" --data-urlencode "state=IL" --data-urlencode "format=json"
 ```
 
@@ -131,7 +131,7 @@ That capture came from a data root with additional local databases. Those databa
 
 `/lookup` isn't implemented and returns status 501:
 
-```bash
+```sh
 curl -i "http://127.0.0.1:7803/lookup?osm_ids=W5013364"
 ```
 
@@ -144,7 +144,7 @@ content-type: application/json
 
 Only the status line, content type and body of that response are shown. `/reverse` needs a Who's On First admin gazetteer. You build that gazetteer separately from the data bundles. [Reverse-geocode a coordinate](./reverse-geocode.mdx) describes how to build one. Without it, `/reverse` returns status 200 with the body `null`:
 
-```bash
+```sh
 curl "http://127.0.0.1:7803/reverse?lat=38.8977&lon=-77.0365&format=jsonv2"
 ```
 
@@ -158,13 +158,13 @@ The compatible servers look for the admin gazetteer among the data root's Who's 
 
 Start the server and point the client at it:
 
-```bash
+```sh
 npx photon serve --port 7804 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
 ```
 
 It serves `GET /api`, `GET /reverse` and `GET /openapi.json`. A search:
 
-```bash
+```sh
 curl --get http://127.0.0.1:7804/api --data-urlencode "q=1600 Pennsylvania Ave NW, Washington, DC 20500" --data-urlencode "limit=1"
 ```
 
@@ -226,13 +226,13 @@ Without an admin gazetteer, `/reverse` returns an empty feature collection with 
 
 The libpostal server parses and expands text without geographic data:
 
-```bash
+```sh
 npx libpostal serve --port 7805 --host 127.0.0.1
 ```
 
 It serves `GET` and `POST` on `/parse` and `/expand`, and `GET /openapi.json`. A parse:
 
-```bash
+```sh
 curl -X POST http://127.0.0.1:7805/parse -H "content-type: application/json" -d '{"query":"781 Franklin Ave Crown Heights Brooklyn NYC NY 11216 USA"}'
 ```
 
@@ -251,7 +251,7 @@ The response is the ordered `label` and `value` array that libpostal REST servic
 
 An expansion:
 
-```bash
+```sh
 curl -X POST http://127.0.0.1:7805/expand -H "content-type: application/json" -d '{"address":"781 Franklin Ave Brooklyn NY"}'
 ```
 

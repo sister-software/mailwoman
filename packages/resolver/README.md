@@ -6,7 +6,7 @@ This is the half of [mailwoman](https://www.npmjs.com/package/mailwoman) that tu
 
 ## Installation
 
-```bash
+```sh
 npm install @mailwoman/resolver
 ```
 

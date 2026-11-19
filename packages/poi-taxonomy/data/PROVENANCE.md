@@ -27,7 +27,7 @@ layer, and the generator merges it over the Overture snapshot.
 
 Produced by `scripts/generate-taxonomy.ts` from the two inputs above. **Do not hand-edit.** Regenerate with:
 
-```bash
+```sh
 node poi-taxonomy/scripts/generate-taxonomy.ts && npx oxfmt poi-taxonomy/data/taxonomy.json
 # add --fetch to refresh the CSV from the source URL first:
 node poi-taxonomy/scripts/generate-taxonomy.ts --fetch && npx oxfmt poi-taxonomy/data/taxonomy.json
@@ -54,7 +54,7 @@ A rebuild against the same `poi.db` is byte-identical. Every ordering decision i
 rather than SQL row order or `Map` iteration order: brands by row count descending then QID ascending,
 the modal name by count descending then name ascending, aliases alphabetical.
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer build poi-brands
 ```
 
@@ -84,6 +84,6 @@ country display names in every ICU locale. A suffix is admitted when it ends at 
 venue last words and, in a spaced script, is itself a venue last word with `minSupport` names, so a
 city name cannot supply a suffix by itself. Regenerate with:
 
-```bash
+```sh
 node packages/mailwoman/out/cli/main.js gazetteer build venue-heads && npx oxfmt packages/poi-taxonomy/data/venue-heads.json
 ```

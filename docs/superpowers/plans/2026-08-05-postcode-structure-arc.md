@@ -592,7 +592,7 @@ more than one variable per run.
 
 ## Reproduce the measurements
 
-```bash
+```sh
 node <scratchpad>/m1b.ts          # M-1  exclusion population, stratified on ground truth
 node <scratchpad>/m2-gb-outward.ts # M-2  GB outward dispersion + the BT zero
 node <scratchpad>/m3c-zip.ts       # M-3  ZIP-prefix discriminative power + the firm-ZIP finding

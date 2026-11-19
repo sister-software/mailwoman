@@ -13,11 +13,11 @@ calibrated neural tagger instead of the CRF.
 
 ## One command
 
-```bash
+```sh
 npx @mailwoman/libpostal serve --port 8081
 ```
 
-```bash
+```sh
 curl "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington DC 20500"
 # [{"label":"house_number","value":"1600"},{"label":"road","value":"Pennsylvania Ave NW"},
 #  {"label":"city","value":"Washington"},{"label":"state","value":"DC"},{"label":"postcode","value":"20500"}]

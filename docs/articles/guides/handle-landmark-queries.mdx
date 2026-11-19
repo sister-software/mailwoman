@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.1.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Handle landmark and relative-place queries
 
@@ -15,18 +15,17 @@ This guide applies one rule. Use a coordinate only when the result's `resolution
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published 11.1.0 packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
 ```
 
 Place names resolve against the point-of-interest database. Download it with the global place candidates:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate poi
 ```
@@ -45,7 +44,7 @@ Behind the gas station
 
 Geocode them:
 
-```bash
+```sh
 npx mailwoman geocode --stdin < landmarks.txt > landmarks.jsonl
 ```
 
@@ -122,7 +121,7 @@ for (const row of rows) {
 }
 ```
 
-```bash
+```sh
 node route-landmarks.ts
 ```
 

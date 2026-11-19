@@ -131,7 +131,7 @@ and the extract fixes it, the vocab work is an optimization rather than a prereq
 
 ## Reproduce
 
-```bash
+```sh
 node scratchpad/intraword-mailwoman.run.ts
 node scratchpad/mp-designator.mjs
 cd /home/lab/Projects/deepparse && source .venv/bin/activate && \

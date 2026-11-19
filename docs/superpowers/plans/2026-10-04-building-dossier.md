@@ -383,7 +383,7 @@ Expected: pass, 13 tests.
 Run: `git add packages/dossier tsconfig.json packages/release-kit docs/engineering/reference/workspaces.mdx AGENTS.md yarn.lock && yarn tsc -b packages/dossier && yarn lint`
 Expected: zero errors, and the `workspace-exports`, `workspace-files` and `nested-index` checks report the new workspace as conforming.
 
-```bash
+```sh
 git commit -m "Add the dossier workspace with entity identifiers and the three time concepts" -- packages/dossier tsconfig.json packages/release-kit docs/engineering/reference/workspaces.mdx AGENTS.md yarn.lock
 ```
 
@@ -766,7 +766,7 @@ Expected: pass, 18 tests.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/dossier
 git commit -m "Model parcels, buildings, entrances and units with sourced aliases and containment" -- packages/dossier
 ```
@@ -1165,7 +1165,7 @@ Expected: pass, 26 tests. The shared-parcel assertion compares `parts` to `SHARE
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/dossier
 git commit -m "Add sourced claims on eight axes and unit totals that stay unresolved when counts conflict" -- packages/dossier
 ```
@@ -1435,7 +1435,7 @@ Expected: pass, 30 tests.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/dossier
 git commit -m "Keep six commercial event kinds, permission scope and signing authority distinct" -- packages/dossier
 ```
@@ -1783,7 +1783,7 @@ Expected: pass, 39 tests.
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/dossier
 git commit -m "Date provider availability, classify layer readings by coverage basis, and hold filing totals to blocks" -- packages/dossier
 ```
@@ -2599,7 +2599,7 @@ Expected: pass for every file. If `dossier.test.ts`'s admitted list differs in o
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 git add packages/dossier
 git commit -m "Build an as-of dossier from validated records and render the operator report" -- packages/dossier
 ```
@@ -2625,7 +2625,7 @@ Run `yarn vale --config config/vale/.vale.ini docs/superpowers/specs/2026-10-04-
 
 - [ ] **Step 3: Commit**
 
-```bash
+```sh
 git add packages/dossier/README.md docs/superpowers/specs/2026-10-04-building-dossier-contract-inventory.md
 git commit -m "Record the dossier package in the inventory and show the Example House report" -- packages/dossier/README.md docs/superpowers/specs/2026-10-04-building-dossier-contract-inventory.md
 ```

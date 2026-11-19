@@ -291,7 +291,7 @@ describe("browser client subpaths bundle under the browser condition", () => {
 
 Run:
 
-```bash
+```sh
 yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts
 ```
@@ -300,7 +300,7 @@ Expected: 8 rows pass, 2 fail. `@mailwoman/core/objects` fails on the static-cha
 
 - [ ] **Step 3: Commit the failing test**
 
-```bash
+```sh
 git add packages/neural/lib/browser-bundle.integration.test.ts
 git commit -m "test(neural): browser-condition bundle test over the client subpaths (two rows red)"
 ```
@@ -339,7 +339,7 @@ Line 115 (`const keys = isIterable(constraints) ? Array.from(constraints) : Obje
 
 Run:
 
-```bash
+```sh
 yarn compile
 yarn oxlint packages/core/lib/objects.ts
 yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts -t "core/objects"
@@ -355,7 +355,7 @@ Expected: the same count of passing files as on `main` (run the same command on 
 
 - [ ] **Step 4: Commit**
 
-```bash
+```sh
 git add packages/core/lib/objects.ts
 git commit -m "fix(core): objects no longer imports the spliterator barrel, which put seven node: builtins on the browser path"
 ```
@@ -445,7 +445,7 @@ Leave the two `import(/* webpackIgnore: true */ "#classifier/loader")` lines as 
 
 Run:
 
-```bash
+```sh
 yarn compile
 yarn oxlint packages/neural/lib/classifier/loader-browser.ts packages/neural/lib/classifier/index.ts
 yarn vitest --run --config vitest.slow.config.ts packages/neural/lib/browser-bundle.integration.test.ts
@@ -461,7 +461,7 @@ Expected: the same pass count as on `main` (the fast CI leg excludes `neural/tes
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add packages/neural/lib/classifier/loader-browser.ts packages/neural/package.json packages/neural/lib/classifier/index.ts
 git commit -m "feat(neural): #classifier/loader resolves to a refusing module under the browser condition"
 ```
@@ -570,7 +570,7 @@ export function configureDemoWebpack(
 
 First confirm the three files have no other consumer:
 
-```bash
+```sh
 grep -rn "empty-shim\|node-builtin-stubs\|node-path-shim" docs --include='*.ts' --include='*.tsx' --include='*.js' --include='*.json' -l | grep -v node_modules
 ```
 
@@ -578,7 +578,7 @@ Expected: only `docs/plugins/demo-assets/webpack-policy.ts` and `docs/plugins/de
 
 In `docs/plugins/demo-assets/plugin.ts`: delete line 18 (`const emptyShim = …`); change lines 23-24 to `client: await bundleAliases(false),` and `server: await bundleAliases(true),`; change line 50 to `return configureDemoWebpack(config, isServer ? aliases.server : aliases.client, isServer)`. If `resolvePath` has no other use in the file after the deletion, remove it from the import.
 
-```bash
+```sh
 git rm docs/plugins/demo-assets/node-builtin-stubs.js docs/plugins/demo-assets/node-path-shim.js docs/src/empty-shim.js
 ```
 
@@ -597,7 +597,7 @@ Replace the sentence beginning "Bundling THAT needs the node-builtin shim policy
 
 Run:
 
-```bash
+```sh
 yarn compile
 cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -5 /tmp/docs-build.log; grep -n "Module not found\|Can't resolve\|node:" /tmp/docs-build.log | head
 ```
@@ -608,7 +608,7 @@ Expected: `EXIT=0` and no `Can't resolve` line. Read the log's `EXIT` line rathe
 
 Run, from `docs/`:
 
-```bash
+```sh
 yarn test:e2e --project=chromium test/browser/100-demo-cold-load.spec.ts test/browser/200-demo-resolve.spec.ts
 ```
 
@@ -616,7 +616,7 @@ Expected: pass. `100-demo-cold-load` asserts the page hydrates without style, te
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add docs/plugins/demo-assets/webpack-policy.ts docs/plugins/demo-assets/plugin.ts packages/neural/lib/web/browser-slo.integration.test.ts
 git commit -m "chore(docs): the geocoder page bundles with no node: stub, shim or fallback for @mailwoman/*"
 ```
@@ -637,7 +637,7 @@ Change `rspackBundler: false` to `rspackBundler: true`. Leave `rspackPersistentC
 
 Run, from `docs/`:
 
-```bash
+```sh
 yarn build > /tmp/docs-build-rspack.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build-rspack.log; tail -5 /tmp/docs-build-rspack.log
 ```
 
@@ -661,7 +661,7 @@ If the build fails: set `rspackBundler` back to `false` and replace the comment 
 
 - [ ] **Step 4: Commit**
 
-```bash
+```sh
 git add docs/docusaurus.config.ts
 git commit -m "chore(docs): rspack bundler retried after the browser-condition fixes"
 ```
@@ -688,7 +688,7 @@ Status line: append `Implemented`, today's date, and the PR number once `gh pr c
 
 Run, from the repo root:
 
-```bash
+```sh
 yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "error\|EXIT" /tmp/health.log | head
 yarn typecheck:tests
 yarn ci:test:fast
@@ -698,7 +698,7 @@ Expected: `health` exits 0 (if `health:debt` reports `asNever` or `doubleCast` g
 
 - [ ] **Step 3: Commit and open the PR**
 
-```bash
+```sh
 git add docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md
 git commit -m "docs(specs): browser export conditions — implemented, receipts recorded"
 git push -u origin feat/browser-export-conditions

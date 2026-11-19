@@ -31,7 +31,7 @@ Geofabrik extract. GDAL and the PBF stay in that package, and this one streams t
 reads the region's newest vintage under `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/<region>/`, and
 `--vintage` names another:
 
-```bash
+```sh
 node packages/osm/out/tools/emit-corpus-jsonl.js \
   --region asia/pakistan --vintage 2026-08-19 \
   --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
@@ -52,7 +52,7 @@ node packages/osm/out/tools/emit-corpus-jsonl.js \
 
 `--country` is required because the JSONL is per-country and its rows omit a country field:
 
-```bash
+```sh
 mailwoman corpus run osm \
   --input $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-vn.corpus.jsonl \
   --country VN --output /data/corpus-staging

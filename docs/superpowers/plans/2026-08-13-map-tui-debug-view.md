@@ -237,7 +237,7 @@ export function metersPerPixel(lat: number, zoom: number): number {
 
 - [ ] **Step 2: Write the generator script.**
 
-```bash
+```sh
 #!/usr/bin/env bash
 # Regenerates portland.pmtiles from the hand-authored GeoJSON sources.
 # Requires tippecanoe (https://github.com/felt/tippecanoe). The output is

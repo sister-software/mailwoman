@@ -128,7 +128,7 @@ The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[Hil
 
 - [ ] **Step 3: Run, then the cartographer and docs consumers**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/cartographer
 yarn compile
 cd docs && yarn typecheck && cd -
@@ -303,7 +303,7 @@ The test's expected layer list assumes a hillshade URL, so adjust the test to pa
 
 - [ ] **Step 3: Run, commit**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/cartographer
 yarn compile && yarn mwops health manifest-targets && yarn mwops health bundle-graph
 git add packages/cartographer
@@ -452,7 +452,7 @@ export default defineConfig({
 
 - [ ] **Step 4: Run, register, commit**
 
-```bash
+```sh
 yarn install
 yarn compile
 yarn vitest --run --config vitest.fast.config.ts packages/planetary/lib
@@ -539,13 +539,13 @@ Read `MapCameraTarget` in `packages/react/lib/map/place-render.ts` for the exact
 
 - [ ] **Step 3: Build both, look, commit**
 
-```bash
+```sh
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary preview
 ```
 
 Open `http://localhost:7790/`: a dark globe with lunar hillshade and labels. Click Tycho. The panel shows 85.29 km and the URL becomes `/feature/<id>`. Then `PLANETARY_BODY=mars` and Olympus Mons. Commit:
 
-```bash
+```sh
 git add packages/planetary
 git commit -m "feat(planetary): the globe over the body's archives, click-to-select with a semantic feature panel, stable feature URLs"
 ```
@@ -588,7 +588,7 @@ Add Mare Tranquillitatis with its alias to the astrogeology Moon fixture if it i
 
 - [ ] **Step 3: Run, commit**
 
-```bash
+```sh
 yarn vitest --run --config vitest.fast.config.ts packages/planetary/lib
 git add packages/planetary packages/astrogeology/test/fixtures
 git commit -m "feat(planetary): search over the pipeline's ancestrie artifact, through the shared autocomplete listbox"
@@ -656,7 +656,7 @@ The README contains the Workers Builds table from the spec (two projects, `PLANE
 
 - [ ] **Step 4: Preflight and PR**
 
-```bash
+```sh
 yarn compile && yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "✗\|error:\|EXIT=" /tmp/health.log | head
 yarn typecheck:tests && yarn ci:test:fast
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary test:browser

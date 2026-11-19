@@ -111,7 +111,7 @@ states that an artifact is cleared for a particular use.
 
 For the installation in front of you:
 
-```bash
+```sh
 mailwoman license attribution
 ```
 
@@ -138,7 +138,7 @@ you which release you have.
 source URL and receives the key in the response. The other intents give an organization and an address
 at it, and the key arrives by email while the command waits for it.
 
-```bash
+```sh
 mailwoman license declare --intent open-source --name "Your project" --project https://github.com/you/project
 mailwoman license declare --intent academic --name "Dr You" --organization "Your University" --email you@example.edu
 ```
@@ -152,7 +152,7 @@ of licensed bundles until it is re-issued.
 **Evaluate** for thirty days with an email address. An address receives one evaluation, and the key isn't
 re-issued. After it, declare or buy.
 
-```bash
+```sh
 mailwoman license evaluate --name "Your team" --email you@example.com
 ```
 
@@ -164,7 +164,7 @@ further states the tier and the `mailwoman data pull` command that fetches it.
 
 A key is a signed token verified offline against the public keys each release ships.
 
-```bash
+```sh
 export MAILWOMAN_LICENSE_KEY="mwl1.…"
 mailwoman license verify --online
 mailwoman doctor
@@ -181,7 +181,7 @@ A self-service license renews with its subscription, and each renewal issues a n
 the paid period's end plus 14 days. The purchase page and the first email contain a refresh secret.
 Adopt the key once:
 
-```bash
+```sh
 mailwoman license adopt "mwl1.…" --secret "<refresh secret>"
 ```
 
@@ -189,7 +189,7 @@ That writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key`, which mailwoman rea
 `MAILWOMAN_LICENSE_KEY` is unset, and the secret to `refresh.json` beside it with owner-only
 permissions. After a renewal, fetch the current key:
 
-```bash
+```sh
 mailwoman license refresh
 ```
 

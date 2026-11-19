@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Use the Mailwoman MCP server
 
@@ -13,18 +13,17 @@ Use this procedure to give an MCP client, such as a coding assistant or an agent
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the server with the parser packages:
 
-```bash
+```sh
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/mcp@{{release.version}}
 ```
 
 The MCP server loads the parser and the place resolver together, so its parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:
 
-```bash
+```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
@@ -54,7 +53,7 @@ Set `MAILWOMAN_DATA_ROOT` to your data directory as an absolute path, because a 
 
 Install the MCP TypeScript SDK and save this script as `mcp-check.ts`. It starts the server the way a client does, lists the tools, and calls the parse and geocode tools:
 
-```bash
+```sh
 npm install @modelcontextprotocol/sdk@1.32.2
 ```
 
@@ -101,7 +100,7 @@ await client.close()
 
 The transport's `env` option takes string values only, so the loop copies each variable that has one. `CallToolResultSchema.parse` checks the tool result's shape and gives `result.content` its type.
 
-```bash
+```sh
 node mcp-check.ts
 ```
 

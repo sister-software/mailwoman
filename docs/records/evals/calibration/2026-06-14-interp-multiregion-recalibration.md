@@ -96,7 +96,7 @@ that it under-covers rural geocodes.
 
 ## Reproduce
 
-```bash
+```sh
 node scripts/eval/build-situs-holdout.mjs --extract <state-situs.db> --region <ABBR> --n 2000
 node scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/<abbr>-situs-holdout.jsonl \

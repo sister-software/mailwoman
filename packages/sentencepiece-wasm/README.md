@@ -83,7 +83,7 @@ To rebuild, activate an Emscripten SDK and make Git and CMake available. Use a
 dedicated SentencePiece checkout because the script checks out its pinned tag.
 Then run from the repository root:
 
-```bash
+```sh
 bash packages/sentencepiece-wasm/build.sh
 ```
 

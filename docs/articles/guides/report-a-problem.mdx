@@ -6,7 +6,7 @@ audience: developers
 verified-with: mailwoman v11.0.0, GitHub bug-report.yml and SECURITY.md checked 2026-11-09
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Report a parsing or geocoding problem
 
@@ -33,7 +33,7 @@ The example used throughout this page is fictional. It demonstrates the report f
 
 Set `ADDRESS` to the exact input. Run the installed CLI with the locale you used when the problem appeared. The following command keeps the full JSON trace and standard-error diagnostics in separate local files:
 
-```bash
+```sh
 ADDRESS='17 Imaginary Lane, Exampletown, ZZ 00000'
 npx --no-install mailwoman parse --locale en-US --debug "$ADDRESS" > trace.json 2> parse.stderr
 ```
@@ -52,7 +52,7 @@ In the fictional example, `normalized.normalized` preserves the input and `kind.
 
 Run these commands in the same installation:
 
-```bash
+```sh
 node --version
 node -p "require('mailwoman/package.json').version"
 npx --no-install mailwoman doctor --json > doctor.json 2> doctor.stderr

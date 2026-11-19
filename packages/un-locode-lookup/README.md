@@ -6,14 +6,14 @@ by country + place name, or by nearest coordinate. `node:sqlite` over the UNECE 
 
 ## Build the DB
 
-```bash
+```sh
 # from the UNECE code list (e.g. datasets/un-locode code-list.csv)
 npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db
 ```
 
 ## Look up
 
-```bash
+```sh
 npx @mailwoman/un-locode-lookup --db un-locode.db --country NL --name "Rotterdam"
 # {"unLocode":"NL RTM"}
 

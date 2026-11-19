@@ -287,7 +287,7 @@ with `published = 0`, and the Environment Agency documents no policy or defense 
 
 ## Build it
 
-```bash
+```sh
 # Fixtures — no network, no GDAL.
 yarn vitest run --root packages/coastal
 

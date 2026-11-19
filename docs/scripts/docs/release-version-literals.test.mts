@@ -8,7 +8,7 @@ import { findReleaseVersionLiterals } from "./release-version-literals.mts"
 describe("findReleaseVersionLiterals", () => {
 	test("reports package, image and build-argument versions inside a fence", () => {
 		const source = [
-			"```bash",
+			"```sh",
 			"npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 onnxruntime-web@1.31.1",
 			"podman pull ghcr.io/sister-software/mailwoman:11.1.0",
 			"podman build --build-arg MAILWOMAN_VERSION=11.1.0 .",

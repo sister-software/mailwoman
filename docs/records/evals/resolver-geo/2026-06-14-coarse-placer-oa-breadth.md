@@ -63,7 +63,7 @@ threshold gets _close_ but not all the way.
 
 ## Reproduce
 
-```bash
+```sh
 # data: OA europe+asia → extract off-map countries → build OTHER (leave-one-family-out)
 node scripts/coarse-placer/build-dataset.mjs
 node scripts/coarse-placer/build-outlier-exposure.mjs

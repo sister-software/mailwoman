@@ -163,7 +163,7 @@ the gap.
 
 ## Reproduce this diagnostic
 
-```bash
+```sh
 node scripts/harness-postcode.ts \
   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v060-step-100000-int8.onnx \
   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
@@ -176,7 +176,7 @@ node scripts/harness-postcode.ts \
 
 For check use in CI:
 
-```bash
+```sh
 node scripts/harness-postcode.ts ... --check --floor 0.9 --min-count 10
 ```
 

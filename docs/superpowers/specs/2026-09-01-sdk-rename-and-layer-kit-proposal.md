@@ -39,7 +39,7 @@ Eleven packages had `lib/sdk/`, and `spatial` no longer does. The ten that remai
 and no runtime package has one. The directory therefore does correspond to a real category, as the audit
 assumed.
 
-```bash
+```sh
 for d in packages/*/lib/sdk; do [ -d "$d" ] && echo "$d: $(ls "$d" | tr '\n' ' ')"; done
 grep -rl '"#sdk/' packages --include='*.ts' | grep -v /out/ | wc -l
 ```
@@ -114,7 +114,7 @@ four: `cells.ts`, `client.ts`, `download.ts`, `index.ts`, `ingest-chunk.ts`, `in
 
 ### 4.1 The measurement
 
-```bash
+```sh
 npx jscpd packages/{coastal,flood,soil,zoning}/lib/sdk --min-lines 20 --reporters console
 ```
 
@@ -244,7 +244,7 @@ corpus content hash. Each edit requires a deliberate re-pin, so a sweep must pre
 
 ## 7. How to reproduce each number
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman
 for d in packages/*/lib/sdk; do [ -d "$d" ] && echo "$d: $(ls "$d" | tr '\n' ' ')"; done
 grep -rl '"#sdk/' packages --include='*.ts' | grep -v /out/ | cut -d/ -f2 | sort | uniq -c | sort -rn

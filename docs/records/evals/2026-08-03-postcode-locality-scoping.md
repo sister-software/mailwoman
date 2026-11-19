@@ -307,7 +307,7 @@ predicate needs a resolver gauntlet measurement before any number for it is trus
 
 ## Reproduction
 
-```bash
+```sh
 WOF=$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 
 # the reported behaviour

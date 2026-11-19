@@ -162,7 +162,7 @@ interface PipelineOpts {
 
 ## CLI
 
-```bash
+```sh
 mailwoman parse [options] <address string>
 ```
 
@@ -257,7 +257,7 @@ The authoritative record is the route table rather than a checked-in file. Every
 
 To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin) — or skip the server and lint the CLI's own output directly:
 
-```bash
+```sh
 # From a running server:
 npx @mailwoman/nominatim serve --port 8081 --candidate-db <path> &
 curl -s http://127.0.0.1:8081/openapi.json -o /tmp/nominatim-openapi.json
@@ -297,7 +297,7 @@ PyPI account and a crates.io account, each with a publish token) documented in t
 builds the artifacts on a release dispatch, and only pushes to PyPI/crates.io when the operator
 explicitly opts in for that run. Until then, build them yourself:
 
-```bash
+```sh
 mailwoman clients generate
 # clients-build/python/dist/mailwoman_client-<version>-py3-none-any.whl
 # clients-build/rust/  (cargo check --examples already passed; cargo package/publish when ready)

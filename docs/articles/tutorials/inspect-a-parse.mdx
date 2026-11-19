@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { NodeRequirement } from "#partials/runtime"
 
 # Inspect the decisions behind a parse
 
@@ -21,7 +21,7 @@ You'll save a parser trace for the same address used in [the first-parse tutoria
 
 Run the installed command from the project directory:
 
-```bash
+```sh
 npx mailwoman parse --debug "apt 4b 350 5th ave new york ny 10118" > trace.json
 ```
 
@@ -91,7 +91,7 @@ The `Trace` interface declares the fields this reader uses, out of the larger tr
 
 ## 3. Read the result
 
-```bash
+```sh
 node inspect-trace.ts
 ```
 

@@ -221,7 +221,7 @@ export function greatCircleDistance(
 
 - [ ] **Step 4: Install, check, commit**
 
-```bash
+```sh
 yarn install
 node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)).length)"
 yarn vitest --run --config vitest.slow.config.ts packages/release-kit/lib/release-stage.integration.test.ts
@@ -577,7 +577,7 @@ The Marco Polo P test expects `minLon` −0.8023 from 359.1977 and `maxLon` 0.16
 
 - [ ] **Step 3: Run, lint, commit**
 
-```bash
+```sh
 yarn compile
 yarn vitest --run --config vitest.fast.config.ts packages/astrogeology/lib
 yarn oxlint packages/astrogeology
@@ -600,7 +600,7 @@ git commit -m "feat(astrogeology): bodies, the nomenclature feature schema, and 
 
 - [ ] **Step 1: Look for a streaming download home before writing one**
 
-```bash
+```sh
 grep -n "fetch(\|pipeline(\|movePath\|tmp" packages/core/lib/utils/geodatabase-archive.ts packages/tiger/lib/sdk/download.ts packages/osm/lib/sdk/fetch.ts | head -20
 ```
 
@@ -698,7 +698,7 @@ export async function downloadPinned(
 
 - [ ] **Step 4: Fetch the two nomenclature snapshots for real, commit the lock**
 
-```bash
+```sh
 yarn compile
 node packages/astrogeology/out/cli.js fetch --body moon --kind nomenclature
 node packages/astrogeology/out/cli.js fetch --body mars --kind nomenclature
@@ -707,7 +707,7 @@ cat packages/astrogeology/sources.lock.json
 
 Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB, so run them on the lab rather than in CI). The `fetch` command is written in Task 7. For this step, a three-line `node -e` over `downloadPinned` is acceptable if the command doesn't exist yet, but the lock content is what gets committed.
 
-```bash
+```sh
 git add packages/astrogeology
 git commit -m "feat(astrogeology): pinned sources, the lock, and the streaming fetch; nomenclature snapshots locked"
 ```
@@ -848,7 +848,7 @@ Compute the z4 tile for Tycho with the standard XYZ formula before pinning `7, 9
 
 - [ ] **Step 5: Run and commit**
 
-```bash
+```sh
 yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/lib
 git add packages/astrogeology
@@ -946,7 +946,7 @@ export async function buildHillshadePMTiles(options: {
 
 Generate the fixture once and commit it:
 
-```bash
+```sh
 gdal_create -of GTiff -outsize 64 64 -bands 1 -ot Int16 -a_srs EPSG:4326 -a_ullr -180 90 180 -90 -burn 0 packages/astrogeology/test/fixtures/dem-64.tif
 python3 -c "
 import numpy, sys
@@ -959,7 +959,7 @@ The test builds `dem-64.tif` to `hillshade.pmtiles` with `maxZoom: 2`, asserts t
 
 - [ ] **Step 3: Run and commit**
 
-```bash
+```sh
 yarn compile
 yarn vitest --run --config vitest.slow.config.ts packages/astrogeology/lib
 git add packages/astrogeology
@@ -981,7 +981,7 @@ git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's met
 
 - [ ] **Step 1: Read the ancestrie builder's interface, then write the index**
 
-```bash
+```sh
 sed -n 1,80p packages/ancestrie/README.md
 grep -n "export interface AncestrieEntry\|export interface AncestrieBuilderOptions\|export type AncestrieEntry" -A12 packages/ancestrie/lib/*.ts | head -40
 ```
@@ -996,7 +996,7 @@ The builder takes entries with a path of tokens, a rank and a payload, and the r
 
 After the nomenclature build: `buildSearchIndex(features, index)`, then `Ancestrie.from(await readLocalBuffer(index))` and `autocomplete(reader, ["tych"])` returns Tycho's id first. After both builds: `emitManifest` writes a file that `PlanetaryBuildManifestSchema.parse` accepts, with two outputs and two sources. Commit:
 
-```bash
+```sh
 git add packages/astrogeology
 git commit -m "feat(astrogeology): the search artifact over feature names, and the build manifest with checksums"
 ```
@@ -1017,7 +1017,7 @@ git commit -m "feat(astrogeology): the search artifact over feature names, and t
 
 - [ ] **Step 1: Read the two CLIs this one copies from**
 
-```bash
+```sh
 sed -n 1,80p packages/mailwoman/lib/commands/tiles/publish.tsx
 sed -n 40,120p packages/libpostal/lib/cli.ts
 grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | head -c 4000
@@ -1037,7 +1037,7 @@ The astrogeology `publish` command calls `publishTiles({ file, tileset: body, bu
 
 - [ ] **Step 4: Build the Moon for real, then Mars**
 
-```bash
+```sh
 yarn compile
 node packages/astrogeology/out/cli.js fetch --body moon --kind dem     # 8.5 GB; run on the lab, once
 node packages/astrogeology/out/cli.js build --body moon --max-zoom 6
@@ -1049,7 +1049,7 @@ Expected: `moon.pmtiles` (a few MB), `moon-hillshade.pmtiles` (zoom 6 over the w
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 git add packages/astrogeology packages/mailwoman
 git commit -m "feat(astrogeology): the bin — fetch, build, verify, publish; publishTiles is a mailwoman function"
 ```
@@ -1060,7 +1060,7 @@ git commit -m "feat(astrogeology): the bin — fetch, build, verify, publish; pu
 
 - [ ] **Step 1: Publish both bodies**
 
-```bash
+```sh
 node packages/astrogeology/out/cli.js publish --body moon --dry-run
 node packages/astrogeology/out/cli.js publish --body moon
 node packages/astrogeology/out/cli.js publish --body mars
@@ -1078,7 +1078,7 @@ Expected: `200` for the TileJSON, the z0 hillshade tile and the search artifact,
 
 - [ ] **Step 3: Preflight and PR**
 
-```bash
+```sh
 yarn compile && yarn health > /tmp/health.log 2>&1; echo "EXIT=$?" >> /tmp/health.log; grep -n "✗\|error:\|EXIT=" /tmp/health.log | head
 yarn typecheck:tests
 yarn ci:test:fast

@@ -2,7 +2,7 @@
 
 A **Fastify plugin** that mounts the [Mailwoman](https://mailwoman.post) pipeline as HTTP routes. Register it and your Fastify app parses, geocodes, and answers POI queries locally — no external geocoding service.
 
-```bash
+```sh
 npm i @mailwoman/fastify fastify
 ```
 
@@ -15,7 +15,7 @@ await app.register(mailwomanFastify, { prefix: "/geo", resolveDatabasePath: "/da
 await app.listen({ port: 8080 })
 ```
 
-```bash
+```sh
 curl -sX POST localhost:8080/geo/v1/geocode -H content-type:application/json -d '{"address":"350 5th Ave, New York, NY 10118"}'
 ```
 

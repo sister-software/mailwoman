@@ -36,7 +36,7 @@ neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, 
 
 Verify the flow without publishing:
 
-```bash
+```sh
 yarn release --dry-run
 ```
 
@@ -56,7 +56,7 @@ Inspect the output. If it looks wrong, fix and re-run.
 The v9.2.0 release needed four publish dispatches, because no tool could exercise the release tree the
 way CI publishes it without creating a tag or writing to a registry. The preflight does that:
 
-```bash
+```sh
 yarn compile                             # the audit packs compiled out/ trees
 yarn release:preflight                   # --source repo (default): weights from this machine's data root
 yarn release:preflight --source hf       # weights from the public HF bucket — what CI publishes
@@ -96,7 +96,7 @@ never fetched, because it stays in the bucket, the runtime never reads it, and n
 
 ## Rights audit — what the release publishes about its sources
 
-```bash
+```sh
 yarn mwops release rights-audit
 ```
 
@@ -127,7 +127,7 @@ merged that way on 2026-08-24, and two board rows shipped with stale pins that s
 on the first branch that ran the suite. The bypass stays available for nights when the CI fleet is
 slow, through exactly one route:
 
-```bash
+```sh
 mailwoman release merge-admin <pr-number> [--method merge|squash|rebase]
 ```
 
@@ -144,7 +144,7 @@ Before shipping a model (or any change that can move a coordinate), run the full
 It grades the assembled output (coordinate + tier) instead of per-tag F1. #566 showed why per-tag F1 isn't
 enough.
 
-```bash
+```sh
 # Self-check on the shipped default (regression + metamorphic):
 node packages/mailwoman/out/cli/main.js eval gauntlet
 
@@ -184,7 +184,7 @@ ships the union, so the pieces land in this order:
 
 ## Real release
 
-```bash
+```sh
 yarn release
 ```
 
@@ -205,7 +205,7 @@ to the GitHub release. The generator reads the **published** tarball, so it runs
 and waits for the registry to serve the version. The job cannot commit to `main` under the branch
 ruleset, so the docs copy is a post-release commit:
 
-```bash
+```sh
 yarn mwops release sbom --version <version>   # writes docs/static/sbom/mailwoman-<version>.{spdx,cdx}.json
 node packages/mailwoman/cli/main.ts data bom   # writes docs/static/sbom/mailwoman-data-<version>.cdx.json
 ```
@@ -221,7 +221,7 @@ Once the SBOM step has seen npm serve every release workspace, the publish job d
 from the published packages and moves `latest` to it. When npm holds a package past the SBOM step's wait,
 the job skips the dispatch and prints the command to run once the registry serves it:
 
-```bash
+```sh
 gh workflow run docker-publish.yml --ref main -f tag=<version>
 ```
 
@@ -232,7 +232,7 @@ gh workflow run docker-publish.yml --ref main -f tag=<version>
 `$MAILWOMAN_DATA_ROOT`. Bump the model there when a new model ships, and the script resolves and copies the
 real artifacts. Override them per run through environment variables:
 
-```bash
+```sh
 MAILWOMAN_DATA_ROOT=/some/other/root          # the machine's data dir
 MAILWOMAN_PUBLISH_MODEL=/path/to/model.onnx \  # absolute path, wins outright
 MAILWOMAN_PUBLISH_TOKENIZER=/path/to/tokenizer.model \
@@ -260,7 +260,7 @@ this information from the artifact before the log existed.
 
 ### Step 1 — build + verify + seal (one command)
 
-```bash
+```sh
 yarn compile
 node packages/mailwoman/out/cli/main.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
 ```
@@ -283,7 +283,7 @@ it.** Update the baseline deliberately: regenerate it through `generateBaseline`
 When the change could move coordinates, also run the forward no-regression eval (same US eval, same model,
 old vs new DB). The two `**neural**` rows must match:
 
-```bash
+```sh
 PC=$MAILWOMAN_DATA_ROOT/db/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
   node packages/mailwoman/out/cli/main.js eval oa-resolver \
@@ -296,7 +296,7 @@ done
 
 ### Step 4 — swap + record
 
-```bash
+```sh
 cd $MAILWOMAN_DATA_ROOT/db/wof
 mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
 mv admin-global-priority.REBUILD.db admin-global-priority.db           # promote (instant; same fs)
@@ -330,7 +330,7 @@ To get new admin coverage into the demo after a gazetteer rebuild:
 
 **Turnkey:** `mailwoman gazetteer` commands wrap the whole pipeline below, with every decision set as a default (fold countries, postcode set, FTS, the dated version):
 
-```bash
+```sh
 # build + promote + publish + demo bump, one shot (source .env for the R2 creds first):
 set -a; . ./.env; set +a
 mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
@@ -342,7 +342,7 @@ mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + de
 
 The manual recipe below performs the same steps one at a time, for reference and one-off variations:
 
-```bash
+```sh
 # 0. The admin build folds GeoNames places and their alternate names into the admin DB's spr/names
 #    (#743/#193). An alternate name attaches to the WOF place it matches ("Karjaa" → Karis) rather
 #    than adding a second row. Each GeoNames place keeps the id GEONAMES_ID_BASE + geonameid (#3061).
@@ -480,7 +480,7 @@ The npm packages and the demo model **drift apart**. Code-only releases bump npm
 npm), while the demo/HF model stays at the version that last shipped a model (e.g. `v4.6.0`). They share a
 number namespace but are not in lockstep at any given moment. Check both:
 
-```bash
+```sh
 curl -s https://registry.npmjs.org/mailwoman | jq -r '."dist-tags".latest'      # e.g. 4.10.0 (npm code)
 curl -s https://public.mailwoman.post/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
 ```
@@ -499,7 +499,7 @@ these updates in `main` before staging anything:
 2. In `release.config.json`, bump `version`, repoint `weights.model`, update `weights.lineage` + `weights.trainingStep`, and put the new int8 md5 in the lineage string.
 3. In `neural-weights-en-us/model-card.json`, rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the promotion eval evidence), and `files_md5`. **State any regression that crosses the 2pp threshold** in the card itself. `requires` (the ship-config) is unchanged when the model reused the prior recipe.
 4. Regenerate the capabilities manifest. The fail-closed capabilities delta check reads it, and without a regeneration the generator's `$comment` names the wrong model. The generator **refuses to run if a `capabilities` block already exists**, so rewrite the card without that block first, then run:
-   ```bash
+   ```sh
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
    node packages/mailwoman/out/cli/main.js eval capability-manifest \
      --model $MAILWOMAN_DATA_ROOT/.../model-v<NNN>-step-<step>-int8.onnx \
@@ -520,7 +520,7 @@ contents. Include every reused FST and pair index declared by the release, as we
 
 Check that the prior objects are readable before downloading them:
 
-```bash
+```sh
 B=https://public.mailwoman.post/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
 for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
   curl --fail --silent --show-error --head "$B/$f"
@@ -534,7 +534,7 @@ because the model was evaluated against that lexicon, and it can differ by a few
 
 ### Step 3 — stage HF, then R2, then verify both backends agree
 
-```bash
+```sh
 HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<NEW> \
   --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
@@ -564,7 +564,7 @@ basename as the Latin base's graph but different bytes, so it is never staged in
 `--char-vocab` selects the family layout, the directory is `<locale>/<version>` with the family's card version,
 and no `releases.json` entry is written, because the demo doesn't serve it.
 
-```bash
+```sh
 HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<CJK CARD VERSION> \
   --locale cjk --label "…" --description "…" \
   --model $MAILWOMAN_DATA_ROOT/models/<run>/served-package/model.onnx \
@@ -603,7 +603,7 @@ from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output t
 
 **A release is done only when both backends agree.** CI's weight fetch reads HF, and the demo reads R2:
 
-```bash
+```sh
 curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, both == v<NEW>
 curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the conditional md5
 ```
@@ -644,7 +644,7 @@ The "Production Integrity" ruleset on `main` (2026-07-22) requires every change,
 version-bump commit, to land through a PR with a green `test` check. The publish is therefore two dispatches
 around an auto-merging PR:
 
-```bash
+```sh
 # Phase 1: bump versions on release/v<NEW>, open the PR, auto-merge when `test` is green
 gh workflow run publish.yml -f mode=prepare -f version=<NEW>
 gh run watch <id> --exit-status
@@ -658,7 +658,7 @@ gh run watch <id> --exit-status
 `npm view` caches for minutes, so verify against the registry directly. Then check that the whole closure
 installs. This check catches the broken clean install from #596:
 
-```bash
+```sh
 curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/mailwoman/<NEW>     # 200
 cd $(mktemp -d) && npm init -y >/dev/null && npm install mailwoman@<NEW> --dry-run     # exit 0, no 404
 ```
@@ -723,7 +723,7 @@ updated. The CI step **Verify release metadata is propagated** runs it after the
 preflight and before release-it, on both dry and real runs (it is skipped only on `publish_only`
 recovery). Run it locally at any time:
 
-```bash
+```sh
 yarn mwops release verify-metadata   # exit 0 = propagated; exit 1 = one actionable error per stale surface
 ```
 
@@ -752,7 +752,7 @@ The CI publish can publish most packages and then fail partway. On v4.11.0 a tra
 each workspace publish uses `--tolerate-republish`, so already-published packages are no-ops. The recovery
 is to run the same dispatch again:
 
-```bash
+```sh
 gh workflow run publish.yml -f mode=publish
 ```
 
@@ -809,7 +809,7 @@ npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet.*
 
 Run the bootstrap on a machine with `npm login` rights to the `@mailwoman` scope. The **lab host has no npm credentials**, so use the operator's machine:
 
-```bash
+```sh
 git checkout main && git pull   # main already carries the release commit's versions
 for ws in <new-workspace-dirs>; do
   RELEASE_IT_WORKSPACES_TAG=latest RELEASE_IT_WORKSPACES_ACCESS=public \
@@ -850,7 +850,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 
 1. **Stage the model on HF first.** Run this on the operator's host. It needs only the HF token and no npm auth:
 
-   ```bash
+   ```sh
    HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.js release hf v<version> \
      --locale en-us \
      --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
@@ -867,7 +867,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 > mandatory step. Stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the
 > prior version's R2 path when unchanged) into the R2 layout and run:
 >
-> ```bash
+> ```sh
 > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
 > node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>
 > ```
@@ -978,7 +978,7 @@ client-only bug that cannot wait), revisit the sync decision before reaching for
 
 ### Local receipt — before touching the pipeline or provisioning anything
 
-```bash
+```sh
 yarn compile
 node packages/mailwoman/out/cli/main.js clients generate
 ```

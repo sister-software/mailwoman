@@ -14,7 +14,7 @@ Suppose you have ten thousand addresses, from a spreadsheet, a CSV a colleague s
 
 `POST /v1/batch` takes a JSON body of `{ addresses: string[] }` and returns `{ results }` in the **same order you sent them**. See the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full OpenAPI interface. Run it against a `mailwoman serve` instance:
 
-```bash
+```sh
 curl -s localhost:3000/v1/batch \
   -H 'content-type: application/json' \
   -d '{"addresses": ["350 5th Ave, New York, NY 10118", "Vienna, Austria"]}'
@@ -115,7 +115,7 @@ The guaranteed order is what makes the bulk endpoint easy to use. You can match 
 
 Most malformed input doesn't cause an error. An address without a recognizable component, such as an empty string, resolves normally with every field `null` and the tier at `admin`. A row throws only when it exceeds the classifier's token budget. The model tokenizes into a fixed 128-token window. A longer row, such as one where a CSV escaping bug concatenated an entire delivery note into the address column, throws inside the classifier instead of being truncated. Batch isolation handles that case. The server catches the error, puts it in that row's own `{ input, error }` slot, and still returns the rest of the batch.
 
-```bash
+```sh
 # the second "address" is a 106-word, 600+ character delivery note that a CSV
 # escaping bug dumped into the address column — shown truncated below (…)
 curl -s localhost:3000/v1/batch \

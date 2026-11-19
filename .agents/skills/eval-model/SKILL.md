@@ -98,7 +98,7 @@ prior fixes stays listed in `KNOWN_INVALID` until the sweep reads the geocode pa
 Thirty seconds, before anything expensive. Six presets, US-only, and it proves exactly one thing: the
 model still emits structured tags.
 
-```bash
+```sh
 yarn compile
 for addr in \
   "1600 Pennsylvania Ave NW, Washington, DC 20500" \

@@ -66,7 +66,7 @@ the same pattern. Public subpaths use this same locale-first layout.
 Every entry point is a `mailwoman` command. This package has no `scripts/` directory, and the
 `no-root-scripts` health check refuses a path that identifies one.
 
-```bash
+```sh
 # Build one recipe's output
 mailwoman corpus recipe boundary-stress --count 10000 --out /tmp/boundary-stress.jsonl
 

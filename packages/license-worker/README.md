@@ -75,7 +75,7 @@ before that.
 2. Provision the Stripe objects from the catalog in `lib/shop/catalog.ts`. The catalog is the single definition of the
    Product, the two Prices, the Payment Links' shape, the portal's features and the webhook's events:
 
-   ```bash
+   ```sh
    yarn mwops shop status --mode live                      # read what the account holds; writes nothing
    yarn mwops shop provision --mode live --apply           # create what is missing; write the ids into lib/shop/ids.json
    ```
@@ -92,7 +92,7 @@ before that.
 
 3. Set the four secrets for the environment:
 
-   ```bash
+   ```sh
    yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY
    yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET
    yarn workspace @mailwoman/license-worker wrangler secret put LICENSE_SIGNING_KEY_PEM
@@ -104,7 +104,7 @@ before that.
    changes it or one of its dependencies, running `yarn compile` before `wrangler deploy`. A first deploy by hand uses
    the same command:
 
-   ```bash
+   ```sh
    yarn workspace @mailwoman/license-worker migrate:production
    yarn workspace @mailwoman/license-worker wrangler deploy
    ```
@@ -113,7 +113,7 @@ before that.
    answers 503 when the ledger doesn't respond.
 7. Create the webhook destination against the deployed origin, and store the secret that Stripe returns once:
 
-   ```bash
+   ```sh
    yarn mwops shop provision --mode live --apply --worker-origin https://license.mailwoman.post
    yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
@@ -134,7 +134,7 @@ The renewal path needs a customer on a Stripe test clock. A Payment Link cannot 
 builds the Checkout Session itself with the same collection the Link configures (`checkoutCollection` in
 `lib/shop/catalog.ts`):
 
-```bash
+```sh
 yarn mwops shop rehearse                                  # prints the session id and the URL; pay it with card 4242 4242 4242 4242
 yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev
 ```
@@ -189,7 +189,7 @@ no Cloudflare credential. Secrets and overrides come from `.dev.vars`, which is 
 `.dev.vars.example`. Set the test-mode Stripe key, any string as the webhook secret, the sandbox signing pair's private
 half, and `ISSUANCE_ENABLED=true` to mint. Then run:
 
-```bash
+```sh
 yarn workspace @mailwoman/license-worker wrangler d1 migrations apply LICENSE_LEDGER -c wrangler.sandbox.toml --local
 yarn workspace @mailwoman/license-worker wrangler dev -c wrangler.sandbox.toml --test-scheduled
 curl -s http://localhost:8787/health

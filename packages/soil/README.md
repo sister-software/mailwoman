@@ -167,7 +167,7 @@ local agencies. `Farmland of statewide importance` in Iowa and in Georgia are th
 
 ## Build
 
-```bash
+```sh
 # The smoke rung: one real survey area, end to end.
 mailwoman gazetteer build soil --area IA153 --verify
 

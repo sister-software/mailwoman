@@ -13,13 +13,13 @@ The image is built from the repo-root [`Dockerfile`](../Dockerfile),
 release version, so the `11.0.0` image holds the `11.0.0` packages. A local build without the argument
 installs `latest`:
 
-```bash
+```sh
 docker build --build-arg MAILWOMAN_VERSION=11.0.0 -t mailwoman:11.0.0 .
 ```
 
 ## First run — parse works with no data
 
-```bash
+```sh
 docker run --rm -p 3000:3000 ghcr.io/sister-software/mailwoman:latest
 
 curl -s -X POST localhost:3000/v1/parse \
@@ -35,7 +35,7 @@ available", ...}`) instead of crashing. Address parsing always works, and mounti
 
 Point `/data` at a mailwoman data root (a `wof/candidate.db` plus optional per-state extracts):
 
-```bash
+```sh
 docker run --rm -p 3000:3000 \
   -v /path/to/mailwoman-data:/data:ro \
   -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
@@ -50,7 +50,7 @@ curl -s -X POST localhost:3000/v1/geocode \
 If you do not have a gazetteer yet, pull the worldwide candidate DB (~1.65 GB, population-first
 ranking) with the same image. The host doesn't need Node or npm for this step:
 
-```bash
+```sh
 mkdir -p mailwoman-data
 docker run --rm -v "$(pwd)/mailwoman-data:/data" \
   ghcr.io/sister-software/mailwoman:latest \
@@ -98,7 +98,7 @@ uses its own port. The image's default HEALTHCHECK requests `:3000/health`, so o
 when you change the command. The [`docker-compose.yml`](./docker-compose.yml) does this for each
 service.
 
-```bash
+```sh
 # Nominatim-compatible — GET /search /reverse /lookup /status  (port 8080)
 docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
   -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
@@ -119,7 +119,7 @@ docker run --rm -p 8081:8081 \
 
 Or bring the whole set up with compose:
 
-```bash
+```sh
 MAILWOMAN_DATA_HOST=/path/to/mailwoman-data docker compose -f docker/docker-compose.yml up mailwoman
 ```
 

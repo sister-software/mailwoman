@@ -50,7 +50,7 @@ therefore a build with the matching `PLANETARY_BODY` followed by `wrangler deplo
 creates the custom domain and its certificate from the file. With `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
 in the environment, run:
 
-```bash
+```sh
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary wrangler deploy --env moon
 PLANETARY_BODY=mars yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary wrangler deploy --env mars
 ```

@@ -328,7 +328,7 @@ float32 exactly, as `load_state_dict` does. It writes the graph with prost types
 defaults: the `Gemm` to `MatMul` rewrite, `MatMulInteger` with `DynamicQuantizeLinear`, uint8 `Gather` tables, and
 the scale and zero point arithmetic in the same float32 and float64 steps.
 
-```bash
+```sh
 cargo run --release --manifest-path packages/trainer/Cargo.toml -- export-onnx --checkpoint <dir> --output fp32.onnx
 cargo run --release --manifest-path packages/trainer/Cargo.toml -- quantize --input fp32.onnx --output int8.onnx
 node packages/neural/tools/onnx/export-parity.run.ts --weights-overlay <root> --reference <a.onnx> \
@@ -1323,7 +1323,7 @@ sources, shippable), and its output directory is empty on the volume. A Rust lau
 config unchanged: `--fresh` would clear that run's checkpoints, and without it the Rust trainer would try to resume
 from them.
 
-```bash
+```sh
 node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python \
   -- uv run --extra dev modal run -d -m launch.train_remote --trainer rust --gpu A100-40GB \
   --config $MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml --fresh

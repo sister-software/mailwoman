@@ -20,7 +20,7 @@ Each release publishes an image tagged with its version, such as `{{release.vers
 
 The example installs the global place candidates and the Washington, DC address points into a data root of its own:
 
-```bash
+```sh
 npx mailwoman@{{release.version}} data pull candidate --data-root ./mailwoman-data
 npx mailwoman@{{release.version}} data pull us --only dc --data-root ./mailwoman-data
 ```
@@ -29,7 +29,7 @@ npx mailwoman@{{release.version}} data pull us --only dc --data-root ./mailwoman
 
 ## 2. Pull the image
 
-```bash
+```sh
 podman pull ghcr.io/sister-software/mailwoman:{{release.version}}
 ```
 
@@ -39,7 +39,7 @@ The image measured 1.09 GB. It runs as the unprivileged `node` user, reads its d
 
 Mount the data root read-only at `/data`:
 
-```bash
+```sh
 podman run -d --name mailwoman -p 127.0.0.1:3000:3000 \
 	-v "$PWD/mailwoman-data":/data:ro \
 	ghcr.io/sister-software/mailwoman:{{release.version}}
@@ -64,7 +64,7 @@ A symbolic link inside the mounted directory must point to a path that also exis
 
 ## 4. Check readiness
 
-```bash
+```sh
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/health
 ```
 
@@ -74,7 +74,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/health
 
 A 200 from `/health` means the server answered, and a container without data answers it too. Send one known address after each deployment to check that geocoding reaches the address points:
 
-```bash
+```sh
 curl -s -X POST http://127.0.0.1:3000/v1/geocode -H "content-type: application/json" -d '{"address":"1600 Pennsylvania Ave NW, Washington, DC 20500"}'
 ```
 

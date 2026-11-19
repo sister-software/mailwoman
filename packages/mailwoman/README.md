@@ -7,7 +7,7 @@ number, street, locality, region, postcode, country, …) and resolves them to
 coordinates via a gazetteer. It is the user-facing CLI and library entry point
 for the Mailwoman ecosystem.
 
-```bash
+```sh
 # CLI — parse an address
 npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```
@@ -46,7 +46,7 @@ for token classification.
 
 ## Installation
 
-```bash
+```sh
 # Parser: CLI + neural runtime + US-English model weights
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 
@@ -62,7 +62,7 @@ back to the legacy rule parser (weaker); install the weights to use the neural m
 
 ## CLI
 
-```bash
+```sh
 # Parse an address
 mailwoman parse "123 Main St, Springfield, IL 62701"
 
@@ -160,7 +160,7 @@ gazetteer SQLite database — build one with `mailwoman gazetteer build admin` +
 administrative/postcode-level rather than rooftop: it returns place centroids (locality, region,
 postcode) rather than delivery-point coordinates.
 
-```bash
+```sh
 # CLI — resolve while parsing, or geocode directly
 mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.sqlite
 mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"

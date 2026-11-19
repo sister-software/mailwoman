@@ -6,7 +6,7 @@ source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/p
 verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
 ---
 
-import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Route intersection descriptions for review
 
@@ -14,8 +14,7 @@ Use this guide when a location-intake workflow receives a possible street inters
 
 ## Prerequisites
 
-- <NodeRequirement />.
-- An <ECMAScriptModuleProject />.
+<CommonPrerequisites />
 
 Install the published parser packages:
 

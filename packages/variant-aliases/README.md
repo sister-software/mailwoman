@@ -49,7 +49,7 @@ The Node entry loads [`data/aliases.json`](data/aliases.json) at module
 initialization. Treat returned table records as read-only. When editing the
 table, update its version and exercise the lookup tests:
 
-```bash
+```sh
 yarn test --run packages/variant-aliases
 ```
 

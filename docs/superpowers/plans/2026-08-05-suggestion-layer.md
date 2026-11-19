@@ -840,7 +840,7 @@ Mechanism 1 of this document can still ship, because the format nudge needs no g
 
 ## Reproduce the measurements
 
-```bash
+```sh
 S1_LIMIT=90  node scripts/diagnostic/suggestion/s1-roundtrip.ts        # S-1  round-trip fidelity
              node scripts/diagnostic/suggestion/s1b-probe.ts           # S-1b the slot-swap probes
 S2_LIMIT=139 node scripts/diagnostic/suggestion/s2-postcode-free.ts    # S-2  postcode ablation

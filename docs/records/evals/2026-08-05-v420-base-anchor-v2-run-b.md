@@ -319,7 +319,7 @@ structure. Every head has nonzero mass.
 
 ## Reproduce
 
-```bash
+```sh
 node mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
 node scripts/probe-gb-anchor-fire.ts --bin <dir>/postcode-gb.bin
 node mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <cache> \

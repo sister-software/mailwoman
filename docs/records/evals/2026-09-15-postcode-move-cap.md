@@ -128,7 +128,7 @@ tighter value doesn't have it.
 
 ## Reproduction
 
-```bash
+```sh
 mailwoman eval oa-resolver \
   --eval <rows.jsonl> \
   --model $MAILWOMAN_DATA_ROOT/weights/en-us/model.onnx \

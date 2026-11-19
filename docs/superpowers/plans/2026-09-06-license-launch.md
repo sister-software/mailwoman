@@ -41,13 +41,13 @@
 
 - [x] **Step 1:** create the sandbox D1 and the three rate-limit namespaces, then write the database id into `[env.sandbox.d1_databases]`.
 
-```bash
+```sh
 yarn workspace @mailwoman/license-worker wrangler d1 create mailwoman-license-sandbox
 ```
 
 - [x] **Step 2:** secrets for the sandbox: the test-mode `STRIPE_SECRET_KEY` (from `MAILWOMAN_STRIPE_SECRET_KEY`), `LICENSE_SIGNING_KEY_PEM` from `~/.config/mailwoman-sandbox/license/signing-key.pem`, `EMAIL_API_KEY` (a Resend test key, or a placeholder until Task 6: a failed send is recorded and re-sent by reconciliation).
 
-```bash
+```sh
 yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY --env sandbox
 yarn workspace @mailwoman/license-worker wrangler secret put LICENSE_SIGNING_KEY_PEM --env sandbox
 yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY --env sandbox
@@ -55,7 +55,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY --env
 
 - [x] **Step 3:** deploy with migrations, and read `/health`.
 
-```bash
+```sh
 yarn workspace @mailwoman/license-worker migrate:sandbox
 yarn workspace @mailwoman/license-worker deploy:sandbox
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/health
@@ -65,7 +65,7 @@ Expected: `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok","emai
 
 - [x] **Step 4:** the webhook destination against the deployed origin, then its secret.
 
-```bash
+```sh
 yarn mwops shop provision --mode test --apply --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev
 yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET --env sandbox
 ```
@@ -76,7 +76,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECR
 
 - [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.post/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.post`, which is still missing. Therefore, read the session id from the URL and claim it from the sandbox by hand:
 
-```bash
+```sh
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license
 ```
 
@@ -84,7 +84,7 @@ Expected within seconds of the redirect: `{"status":"issued","token":"mwl1.…",
 
 - [x] **Step 2:** verify the token offline against the sandbox public key. No release trusts that key:
 
-```bash
+```sh
 MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev node packages/mailwoman/out/cli.js license verify --key "mwl1.…" --online
 ```
 

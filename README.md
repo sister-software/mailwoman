@@ -37,13 +37,13 @@ It runs in Node.js and the browser, without Elasticsearch or a multi-gigabyte li
 install. The model is about 30 MB. It resolves coordinates from a SQLite gazetteer at the finest
 tier available: admin, postcode, street, or rooftop (US and French national registers).
 
-```bash
+```sh
 npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ```
 
 ## Installation
 
-```bash
+```sh
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 ```
 
@@ -56,7 +56,7 @@ addresses, add `@mailwoman/neural-weights-fr-fr`. For coordinate resolution, add
 
 ## CLI
 
-```bash
+```sh
 # Parse an address into components
 mailwoman parse "350 5th Ave, New York, NY 10118"
 
@@ -127,7 +127,7 @@ If you're migrating off Nominatim, Photon, or libpostal, each has a compatible s
 server keeps the same wire interface and reads a SQLite file instead of a cluster. A hosted
 Photon-compatible endpoint is live for evaluation:
 
-```bash
+```sh
 curl "https://photon.mailwoman.post/api?q=berlin&limit=3"   # hosted — nothing to install
 npx @mailwoman/photon    serve   # Photon-compatible    /api, /reverse
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /status
@@ -183,7 +183,7 @@ answer. You can build that layer yourself from your own OSM extract.
 MCP-compatible agent: parse, geocode, POI search, and an OverpassQL export. Both features ship
 on npm as of `mailwoman` 7.2.1.
 
-```bash
+```sh
 mailwoman poi "gas station near Springfield, IL" --db poi.db
 ```
 
@@ -238,7 +238,7 @@ Mailwoman is a Yarn 4 monorepo: one root package (`mailwoman`) plus the scoped
 orientation map (workspaces, where to read next, the release pipeline) and
 [`docs/records/plan/`](./docs/records/plan/) for the design record.
 
-```bash
+```sh
 git clone https://github.com/sister-software/mailwoman.git
 cd mailwoman
 yarn install

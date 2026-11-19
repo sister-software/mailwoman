@@ -66,7 +66,7 @@ The repo's Actions cache holds 10.7 GB in 78 entries against a 10 GB limit, so G
 
 - [ ] **Step 1: Read the current cache state and record it**
 
-```bash
+```sh
 gh api repos/sister-software/mailwoman/actions/cache/usage
 gh api --paginate repos/sister-software/mailwoman/actions/caches \
   --jq '.actions_caches[] | "\(.size_in_bytes)\t\(.key | split("-")[0:3] | join("-"))"' \
@@ -188,14 +188,14 @@ jobs:
 
 Run:
 
-```bash
+```sh
 node -e 'const{readFileSync}=require("node:fs");readFileSync(".github/workflows/cache-prune.yml","utf8");console.log("read ok")'
 gh workflow list 2>/dev/null | head -20
 ```
 
 Then push the branch and run the workflow in report-only mode:
 
-```bash
+```sh
 gh workflow run cache-prune.yml -f apply=false
 sleep 30 && gh run list --workflow=cache-prune.yml --limit 1
 ```
@@ -206,14 +206,14 @@ Expected: the run is green and the log lists `KEEP (newest <lang>)` lines and `D
 
 - [ ] **Step 4: Apply it once by hand**
 
-```bash
+```sh
 gh workflow run cache-prune.yml -f apply=true
 ```
 
 ⚠ Do not verify with `/actions/cache/usage`. It is eventually consistent and lagged badly here: it
 still read 10.7 GB / 77 entries immediately after 51 confirmed deletions. Sum the live listing:
 
-```bash
+```sh
 gh api --paginate repos/sister-software/mailwoman/actions/caches \
   --jq '.actions_caches[].size_in_bytes' | awk '{s+=$1} END {printf "%.0f MB\n", s/1048576}'
 gh api "repos/sister-software/mailwoman/actions/caches?per_page=1" --jq '.total_count'
@@ -225,7 +225,7 @@ Expected: under 8 GB (from 10.7 GB) and the codeql group down to 3 entries.
 
 Push an empty commit to the branch and check the install step across two consecutive runs:
 
-```bash
+```sh
 git commit --allow-empty -m "chore: probe install timing after cache prune"
 git push
 # wait for the run, then:
@@ -237,7 +237,7 @@ Expected: ≤ 30s on both runs (was 83s cold / 24s warm). Record both numbers.
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 yarn oxfmt .github/workflows/cache-prune.yml
 git add .github/workflows/cache-prune.yml
 git commit -m "$(cat <<'EOF'
@@ -476,7 +476,7 @@ Expected: pass, 7 tests.
 
 ⚠ If `DERIVED_WEIGHTS_INPUTS` names a path that doesn't exist in this checkout, that's fine at runtime (it hashes as absent) but wrong as a spec. Verify each one:
 
-```bash
+```sh
 for f in release.config.json data/gazetteer/borough-pairs.json data/gazetteer/london-pairs-v2.jsonl \
          mailwoman/gazetteer-pipeline/borough-pairs.ts mailwoman/gazetteer-pipeline/lieudit-pairs.ts \
          mailwoman/commands/gazetteer/pair-index.tsx mailwoman/commands/gazetteer/postcode-binary.tsx; do
@@ -600,7 +600,7 @@ process.stderr.write(`built soft-feed → ${workspace}/pair-index-${country}.bin
 
 ⚠ This writes real files into `neural-weights-*/`. That's what `copy-weights.ts` does by design, and it is idempotent — but it replaces the `link-dev-weights` symlinks with real copies. Re-run `yarn vitest run neural/test/weights.test.ts` afterwards to restore them.
 
-```bash
+```sh
 yarn compile
 # Cold: builds and deposits.
 rm -rf "$(node -e 'import("@mailwoman/core/utils").then(m=>console.log(String(m.dataRootPath("derived","weights"))))')"
@@ -613,7 +613,7 @@ Expected: the first run prints `derived store WRITE →` lines and takes minutes
 
 - [ ] **Step 8: Verify the artifacts are byte-identical**
 
-```bash
+```sh
 node -e '
 const {execFileSync} = require("node:child_process");
 const {createHash} = require("node:crypto");
@@ -664,7 +664,7 @@ Expected: pass. Note the wall-clock — it should be unchanged from the ~240s ba
 
 - [ ] **Step 11: Commit**
 
-```bash
+```sh
 yarn oxfmt scripts/derived-weights-key.ts scripts/derived-weights-key.test.ts scripts/copy-weights.ts .github/workflows/test.yml
 yarn lint:oxlint
 git add scripts/derived-weights-key.ts scripts/derived-weights-key.test.ts scripts/copy-weights.ts .github/workflows/test.yml
@@ -869,7 +869,7 @@ Add `statSync` to the file's `node:fs` import.
 
 ⚠ The returned Map is now SHARED between callers. Confirm no caller mutates it:
 
-```bash
+```sh
 grep -rn "computeSurfaceCountryCounts" --include="*.ts" --include="*.tsx" . | grep -v node_modules | grep -v "\.claude/"
 ```
 
@@ -904,7 +904,7 @@ with the original body renamed to `function scanPersonNameSurfaces(): Set<string
 
 Apply the same shared-instance check:
 
-```bash
+```sh
 grep -rn "loadPersonNameSurfaces" --include="*.ts" --include="*.tsx" . | grep -v node_modules | grep -v "\.claude/"
 ```
 
@@ -917,7 +917,7 @@ Expected: pass, and meaningfully faster than the 236.9s baseline. Record the num
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 yarn oxfmt mailwoman/gazetteer-pipeline/fst.ts mailwoman/gazetteer-pipeline/evidence-lexicons.ts mailwoman/gazetteer-pipeline/scan-memo.test.ts
 yarn lint:oxlint
 git add mailwoman/gazetteer-pipeline/fst.ts mailwoman/gazetteer-pipeline/evidence-lexicons.ts mailwoman/gazetteer-pipeline/scan-memo.test.ts
@@ -1209,7 +1209,7 @@ Expected: it runs in under a second. Some assertions will likely fail on the fir
 
 ⚠ For each failure, diagnose before adjusting. Print the build's counters and the produced keys:
 
-```bash
+```sh
 yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts --reporter=verbose
 ```
 
@@ -1255,7 +1255,7 @@ Then delete lines 195–261 from `evidence-lexicons.test.ts` (the `const ADMIN_D
 
 Run:
 
-```bash
+```sh
 yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts
 yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts
 ```
@@ -1286,7 +1286,7 @@ Expected: pass in ~90s (was ~240s). This is the headline number for the whole pl
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 yarn oxfmt mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts package.json
 yarn lint:oxlint
 git add mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts package.json
@@ -1508,7 +1508,7 @@ jobs:
 
 Run:
 
-```bash
+```sh
 for f in .github/workflows/test.yml .github/workflows/lexicon-nightly.yml .github/workflows/publish.yml; do
   node -e "require('node:fs').readFileSync('$f','utf8'); console.log('read ok: $f')"
 done
@@ -1517,7 +1517,7 @@ yarn oxfmt .github/workflows/test.yml .github/workflows/lexicon-nightly.yml .git
 
 Then push and confirm on a real PR:
 
-```bash
+```sh
 git push
 gh pr create --fill --base main
 ```
@@ -1528,7 +1528,7 @@ Expected on a PR that **doesn't** touch the gazetteer pipeline: `lexicon-full` i
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 git add .github/workflows/test.yml .github/workflows/lexicon-nightly.yml .github/workflows/publish.yml
 git commit -m "$(cat <<'EOF'
 ci(lexicon): give the full-scale build a path check, a nightly, and a release run
@@ -1572,7 +1572,7 @@ The file takes 96.6s across 14 tests. Five tests in the pair-prior block each ca
 
 Run:
 
-```bash
+```sh
 yarn vitest run neural/test/weights.test.ts --reporter=json --outputFile=/tmp/weights-before.json
 node -e '
 const j=require("/tmp/weights-before.json");
@@ -1633,7 +1633,7 @@ ensureDevWeightsLinked("en-us", "en-gb")
 
 Find them all:
 
-```bash
+```sh
 grep -n "link-dev-weights.ts" neural/test/weights.test.ts
 ```
 
@@ -1648,7 +1648,7 @@ Expected: pass, same test count as baseline. Record the new wall-clock.
 
 Inspect what each pair-prior test passes to `loadFromWeights`:
 
-```bash
+```sh
 grep -n "loadFromWeights(" neural/test/weights.test.ts
 ```
 
@@ -1693,7 +1693,7 @@ Expected: pass. Record the wall-clock.
 
 - [ ] **Step 7: Commit**
 
-```bash
+```sh
 yarn oxfmt neural/test/weights.test.ts
 yarn lint:oxlint
 git add neural/test/weights.test.ts
@@ -1736,7 +1736,7 @@ EOF
 
 Run:
 
-```bash
+```sh
 git check-ignore -q core/out && echo "ignored: ok" || echo "NOT IGNORED — stop"
 du -shc $(find . -maxdepth 2 -type d -name out -not -path "./node_modules/*" -not -path "./.claude/*") 2>/dev/null | tail -1
 find . -maxdepth 2 -name "*.tsbuildinfo" -not -path "./node_modules/*" -not -path "./.claude/*" | wc -l
@@ -1773,7 +1773,7 @@ In `.github/workflows/test.yml`, insert immediately **before** every `- name: Co
 
 Push and read the step timings across two consecutive runs:
 
-```bash
+```sh
 gh api repos/sister-software/mailwoman/actions/runs/<id>/jobs \
   --jq '.jobs[] | {job: .name, steps: [.steps[] | select(.name=="Compile" or .name=="Restore compiled tree") | {name, dur: ((.completed_at|fromdateiso8601)-(.started_at|fromdateiso8601))}]}'
 ```
@@ -1789,7 +1789,7 @@ Expected: still under 8 GB after several runs. If not, tighten the key as descri
 
 - [ ] **Step 5: Commit**
 
-```bash
+```sh
 yarn oxfmt .github/workflows/test.yml
 git add .github/workflows/test.yml
 git commit -m "$(cat <<'EOF'
@@ -1832,7 +1832,7 @@ Two small things. The excludes fix a confirmed local flake. The worker cap has t
 
 Run from the **main checkout**. That checkout has the virtualenv:
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman
 yarn vitest list --run 2>/dev/null | grep -c ".venv" || echo 0
 ```
@@ -1860,7 +1860,7 @@ In `vitest.config.ts`, add to the `exclude` array, after the `.claude/worktrees`
 
 Run (from the main checkout again):
 
-```bash
+```sh
 cd /home/lab/Projects/mailwoman
 yarn vitest list --run 2>/dev/null | grep -c ".venv" || echo 0
 cd /home/lab/Projects/mailwoman/.claude/worktrees/perf+test-suite
@@ -1873,7 +1873,7 @@ Expected: pass with **no** `1 skipped` and no `legend.test.js` failure.
 
 - [ ] **Step 4: Measure the worker cap on the post-Task-4 slow leg**
 
-```bash
+```sh
 for w in 4 8 16; do
   echo "=== maxWorkers=$w ==="
   /usr/bin/time -f "WALL %e s CPU %P" yarn ci:test:slow --maxWorkers=$w 2>&1 | grep -E "Test Files|Duration|WALL"
@@ -1894,7 +1894,7 @@ If no value beats the default on either axis, **change no setting** and record t
 
 - [ ] **Step 6: Commit**
 
-```bash
+```sh
 yarn oxfmt vitest.config.ts package.json
 yarn lint:oxlint
 git add vitest.config.ts package.json
@@ -1924,7 +1924,7 @@ EOF
 
 - [ ] **Run the whole suite clean**
 
-```bash
+```sh
 yarn compile
 yarn ci:test:fast
 yarn ci:test:slow
@@ -1937,7 +1937,7 @@ All must pass.
 
 - [ ] **Measure the acceptance criteria over three consecutive CI runs**
 
-```bash
+```sh
 for i in 1 2 3; do
   git commit --allow-empty -m "chore: acceptance probe $i"
   git push

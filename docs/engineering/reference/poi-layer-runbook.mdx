@@ -24,7 +24,7 @@ than rebuilding poi.db.
 
 ## Build
 
-```bash
+```sh
 node mailwoman/out/cli.js gazetteer build poi --countries US,CA,MX,FR \
 	--out $MAILWOMAN_DATA_ROOT/db/poi/poi-full.db
 ```
@@ -85,7 +85,7 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 
 A build isn't verified until a **live query** returns ranked results:
 
-```bash
+```sh
 node mailwoman/out/cli.js poi "coffee near <city-in-coverage>" --db <built.db>
 ```
 

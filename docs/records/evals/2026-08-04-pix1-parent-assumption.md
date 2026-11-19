@@ -90,7 +90,7 @@ boards to show byte-stability where the assumption holds, per the D-rule.
 
 ## Reproduce
 
-```bash
+```sh
 node scripts/scratchpad/tag-margins.ts    # per-piece raw argmax + margins
 node scripts/scratchpad/prior-trace.ts    # which prior fired, and the post-prior labels
 ```

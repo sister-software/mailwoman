@@ -61,7 +61,7 @@ authored entries. The build reads only that file. The `.db` is the compiled, que
 ]
 ```
 
-```bash
+```sh
 # build from source (validates strategy names; rejects unknown ones loudly)
 node scripts/build-conventions.ts \
   --src data/conventions/conventions.json \

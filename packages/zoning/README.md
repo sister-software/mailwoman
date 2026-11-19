@@ -226,7 +226,7 @@ The full national build ran on this lab at the chosen resolution 10, with covera
 
 ## Build it
 
-```bash
+```sh
 # The whole country. Downloads the 247 MB export on the first run and caches it under its vintage.
 mailwoman gazetteer build zoning
 
