@@ -151,6 +151,54 @@ export interface OverlapAudit {
 	textCompared: boolean
 	reasons: string[]
 	counts: Record<HeldoutProvenance, number>
+	/**
+	 * Rows a training row matched, per kind of match.
+	 *
+	 * A row matched in several ways counts under each, where its evidence cites the first match only.
+	 */
+	overlapRows: Record<OverlapKind, number>
+}
+
+/**
+ * How a training row matched a held-out row.
+ */
+export const OverlapKind = {
+	/**
+	 * The same `<source>:<source_id>`.
+	 */
+	Identity: "identity",
+	/**
+	 * The same record group, so a variant of the held-out row.
+	 */
+	Group: "group",
+	/**
+	 * The same folded text under another record.
+	 */
+	Text: "text",
+} as const
+
+export type OverlapKind = (typeof OverlapKind)[keyof typeof OverlapKind]
+
+/**
+ * Rows per kind of match, from each overlapping row's kinds.
+ */
+function countOverlapKinds(rows: Iterable<ReadonlySet<OverlapKind>>): Record<OverlapKind, number> {
+	const counts: Record<OverlapKind, number> = { identity: 0, group: 0, text: 0 }
+
+	for (const kinds of rows) {
+		for (const kind of kinds) {
+			counts[kind]++
+		}
+	}
+
+	return counts
+}
+
+/**
+ * The kinds in `refuse` under which the audit found an overlapping row, with each kind's row count.
+ */
+export function refusedOverlaps(audit: Pick<OverlapAudit, "overlapRows">, refuse: Iterable<OverlapKind>) {
+	return [...new Set(refuse)].map((kind) => ({ kind, rows: audit.overlapRows[kind] })).filter((entry) => entry.rows > 0)
 }
 
 /**
@@ -437,10 +485,17 @@ export async function auditHeldoutOverlap(input: {
 	const overlapCorpora = new Map<string, Set<string>>()
 	const corpora: OverlapCorpusRecord[] = []
 
-	const recordOverlap = (rowID: string, label: string, detail: string) => {
+	/**
+	 * The kinds of match each overlapping row was found by.
+	 */
+	const overlapKinds = new Map<string, Set<OverlapKind>>()
+
+	const recordOverlap = (rowID: string, label: string, kind: OverlapKind, detail: string) => {
 		if (!evidence.has(rowID)) {
 			evidence.set(rowID, detail)
 		}
+
+		overlapKinds.set(rowID, (overlapKinds.get(rowID) ?? new Set<OverlapKind>()).add(kind))
 
 		const found = overlapCorpora.get(rowID) ?? new Set<string>()
 
@@ -590,20 +645,25 @@ export async function auditHeldoutOverlap(input: {
 				const where = `in ${label} ${split} file ${descriptor.path}`
 
 				if (byID.has(trainingID)) {
-					recordOverlap(trainingID, label, `identity ${trainingID} ${where}`)
+					recordOverlap(trainingID, label, OverlapKind.Identity, `identity ${trainingID} ${where}`)
 				}
 
 				const groupID = row.base_source_id == null ? sourceID : String(row.base_source_id)
 				const group = groupID == null ? null : recordIDOf(groupID)
 
 				for (const member of (group != null && byGroup.get(group)) || []) {
-					recordOverlap(member, label, `group ${group} (training row ${trainingID}) ${where}`)
+					recordOverlap(member, label, OverlapKind.Group, `group ${group} (training row ${trainingID}) ${where}`)
 				}
 
 				const folded = row.folded == null ? null : String(row.folded)
 
 				for (const member of (folded != null && byText.get(folded)) || []) {
-					recordOverlap(member, label, `folded text "${folded}" (training row ${trainingID}) ${where}`)
+					recordOverlap(
+						member,
+						label,
+						OverlapKind.Text,
+						`folded text "${folded}" (training row ${trainingID}) ${where}`
+					)
 				}
 			}
 
@@ -678,6 +738,7 @@ export async function auditHeldoutOverlap(input: {
 		textCompared: matchText,
 		reasons,
 		counts,
+		overlapRows: countOverlapKinds(overlapKinds.values()),
 	}
 
 	const auditSHA256 = sha256Hex(canonicalJSON(audit))

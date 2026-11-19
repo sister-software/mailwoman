@@ -11,7 +11,12 @@
  *     --model-cards <published model-card.json>,<candidate model-card.json> \
  *     [--training-configs <config .yaml>,…] \
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
- *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text] [--duckdb-memory-gib 4] [--duckdb-threads 4]
+ *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text] [--refuse-overlap identity,group]
+ *     [--duckdb-memory-gib 4] [--duckdb-threads 4]
+ *
+ *   `--refuse-overlap` exits 1, after writing the provenance file, when a row overlaps
+ *   training by one of the listed kinds, so a build step stops on a registered row in train.
+ *   A kind the flag doesn't list, such as `text`, is reported and admitted.
  *
  *   `--match-text` also compares every training row's folded text with the
  *   dataset's row texts, read from its rows file.
@@ -31,7 +36,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { readHeldoutDatasetManifest, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
+import { auditHeldoutOverlap, OverlapKind, refusedOverlaps } from "#tools/eval-harness/heldout/dataset/overlap"
 import { heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 
 const { values } = parseArguments({
@@ -66,6 +71,10 @@ const { values } = parseArguments({
 			type: "boolean",
 			description: "Also compare training rows by folded text, reading the dataset's rows file",
 		},
+		"refuse-overlap": {
+			type: "string",
+			description: "Exit 1 when a row overlaps training by these kinds, comma-separated: identity, group, text",
+		},
 		out: { type: "string", description: "Where to write the provenance file" },
 		"duckdb-memory-gib": {
 			type: "string",
@@ -84,6 +93,13 @@ const split = (value: string | undefined) =>
 		.split(",")
 		.map((item) => item.trim())
 		.filter((item) => item.length > 0)
+
+const kinds = new Set<string>(Object.values(OverlapKind))
+const refuse = split(values["refuse-overlap"])
+
+for (const kind of refuse) {
+	if (!kinds.has(kind)) throw new Error(`--refuse-overlap ${kind} isn't one of ${[...kinds].join(", ")}`)
+}
 
 const rowTexts =
 	values["match-text"] === true
@@ -136,4 +152,21 @@ console.log(
 
 for (const reason of result.audit.reasons) {
 	console.log(`  verified_unseen refused: ${reason}`)
+}
+
+console.log(
+	`overlapping rows by kind: ${Object.entries(result.audit.overlapRows)
+		.map(([kind, rows]) => `${kind} ${rows}`)
+		.join(", ")}`
+)
+
+const refused = refusedOverlaps(result.audit, refuse as OverlapKind[])
+
+if (refused.length) {
+	console.log(
+		`refused: ${refused.map(({ kind, rows }) => `${rows} row(s) overlap training by ${kind}`).join(", ")} ` +
+			`(--refuse-overlap ${refuse.join(",")}); the provenance file is written`
+	)
+
+	process.exitCode = 1
 }

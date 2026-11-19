@@ -355,6 +355,7 @@ export async function freezeOSMSuites(input: {
 		textCompared: false,
 		reasons: ["the sample holds no row, so no audit ran"],
 		counts: { verified_unseen: 0, unseen_by_candidate: 0, known_overlap: 0, unknown: 0 },
+		overlapRows: { identity: 0, group: 0, text: 0 },
 	}
 
 	const classOf = (row: OSMSuiteRow): HeldoutProvenance => provenance?.rows[heldoutRowID(row)]?.provenance ?? "unknown"

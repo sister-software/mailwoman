@@ -24,7 +24,7 @@ import { afterAll, describe, expect, it } from "vitest"
 
 import { readValidationPool } from "#tools/dev-tools/corpus/validation/quota"
 import { buildHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
-import { auditHeldoutOverlap } from "#tools/eval-harness/heldout/dataset/overlap"
+import { auditHeldoutOverlap, OverlapKind, refusedOverlaps } from "#tools/eval-harness/heldout/dataset/overlap"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 
 const directory = await temporaryDirectory("mw-heldout-overlap-")
@@ -163,6 +163,12 @@ describe("auditHeldoutOverlap", () => {
 
 		expect(result.rows["oa-us:same"]!.evidence).toMatch(/identity oa-us:same in v-published train/u)
 		expect(result.rows["oa-us:variant-base"]!.evidence).toMatch(/group variant-base/u)
+
+		// `overlap.run.ts --refuse-overlap identity,group` exits 1 on these.
+		expect(refusedOverlaps(result.audit, [OverlapKind.Identity, OverlapKind.Group])).toEqual([
+			{ kind: "identity", rows: 1 },
+			{ kind: "group", rows: 2 },
+		])
 
 		// A row present only in the training corpus's test split isn't training data.
 		expect(result.rows["oa-us:held-only"]).toMatchObject({
@@ -390,6 +396,10 @@ describe("auditHeldoutOverlap", () => {
 		)
 
 		expect(withText.rows["oa-us:held-only"]).toMatchObject({ provenance: "verified_unseen" })
+
+		// A text-only match is reported and never refused by identity or group.
+		expect(withText.audit.overlapRows).toEqual({ identity: 0, group: 0, text: 1 })
+		expect(refusedOverlaps(withText.audit, [OverlapKind.Identity, OverlapKind.Group])).toEqual([])
 
 		const withoutText = await auditHeldoutOverlap({ dataset, corpora: [manifest], modelCards: [card], pathRoot: root })
 
