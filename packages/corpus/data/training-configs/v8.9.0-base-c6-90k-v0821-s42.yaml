@@ -2,8 +2,11 @@
 # that config's except these:
 #
 # 1. `data.corpus_dir` is corpus v0.8.21,
-#    /data/corpus/versioned/v0.8.21-retention-overlay/corpus-v0.8.21-retention-overlay. Its manifest doesn't exist
-#    yet: the re-split is running. Corpus v0.8.21 is v0.8.20 with one file replaced and new held-out groups:
+#    /data/corpus/versioned/v0.8.21-retention-overlay/corpus-v0.8.21-retention-overlay. Its MANIFEST.json has sha256
+#    5a9f26e52b89492d35a1eeea942b81838c3345d5eab979f3467df70f45199d1b (read on the host copy under /mnt/mw,
+#    2026-11-19), and its split, under packages/corpus/data/holdout/evaluation-groups.v0.8.21.json, is 889,624,742
+#    rows in 1,102 files: 889,265,391 train, 22,426 val and 336,925 test. Corpus v0.8.21 is v0.8.20 with one file
+#    replaced and new held-out groups:
 #    - `invented-house-venue-intl` is re-rendered by the recipe fix of 9b93bccef2 (lane AT). v0.8.20's render wrote
 #      every IN row as `Locality PIN, State`. The fixed recipe writes IN in both forms the codex `WRITTEN_LAYOUTS`
 #      table records. Of the 6,000 IN rows of the 18,000-row file
@@ -20,11 +23,15 @@
 # 2 to 4 give the county weights, the subregion class weight and the receipts.
 #
 # Before launch, on the admitted v0.8.21 manifest (HOLDOUT_AND_EVALUATION sections 4.4 item 5 and 8):
-# - record the manifest's sha256 and split counts in point 1;
-# - re-derive `required_validation_label_support` from the v0.8.21 val draw (half each label's rows, rounded down),
-#   and re-check `required_validation_coverage` and `val_rows` against the re-split. Until then the floors are
-#   v8.8.0's, from the v0.8.20 val draw;
-# - run the epoch-mixture audit on a copy of this config re-rooted at /mnt/mw, and check every receipt against it.
+# - done 2026-11-19: point 1 records the manifest's sha256 and split counts;
+# - done 2026-11-19: `required_validation_label_support` is re-derived from the v0.8.21 val draw, and
+#   `audits/validation/coverage.run.ts` finds every `required_validation_coverage` floor met on the re-split's 22,426
+#   val rows. The tightest are NG at 27 rows against 20, PF at 100, and LV at 177 rows with 123 street rows. DE fell
+#   from 2,027 val rows to 1,609, still above its 1,000. `val_rows` (36,864) stays above the 20,748-row draw;
+# - done 2026-11-19: the epoch-mixture audit (seed 43, 1,000,000 draws) meets every receipt, with no floor changed.
+#   The tightest are `nz-charities-register-exposure`, 1,269 drawn against 1,200, and `ban-bl-exposure`, 449 against
+#   408. It took 14 min 10 s of host CPU, and its report is
+#   /mnt/mw/audits/epoch-mixture-v8.9.0-base-c6-90k-v0821-s42.json.
 #
 # Run shape: from scratch, with no `train.init_from`, as v8.8.0. Why: the run repeats v8.8.0's recipe on a corpus
 # that corrects one recipe output, so the change under test is that file. Control: the v8.8.0 seed 42 run, the same
@@ -693,19 +700,22 @@ data:
       min_street_rows: 10
     # PM has no entry. The hashed place holdout (6ff893e25) leaves it no held-out place, so its val split held 1 row on
     # v0.8.1, and a country with no held-out split gets no floor, as BL and MF got none in v7.2.0.
-  # v8.8.0's floors, half of each label's rows in the 21,361-row val draw of v0.8.20-retention-overlay, rounded down.
-  # They're re-derived from the v0.8.21 val draw before launch (this config's header, "Before launch").
+  # Half of each label's rows in the 20,748-row val draw of v0.8.21-retention-overlay, rounded down, measured
+  # 2026-11-19 by audits/label/support.run.ts on this config re-rooted at /mnt/mw. Measured counts: locality 18,235,
+  # street 16,155, house_number 14,804, postcode 14,754, region 4,806, venue 3,915, street_prefix 2,594, country
+  # 2,441, street_suffix 1,771, unit 369. dependent_locality 1,312, subregion 360 and po_box 47 take no floor, as
+  # the v0.8.2 floors set none for them.
   required_validation_label_support:
-    - {label: postcode, split: val, min_rows: 7656}
-    - {label: locality, split: val, min_rows: 9402}
-    - {label: street, split: val, min_rows: 8354}
-    - {label: house_number, split: val, min_rows: 7644}
-    - {label: region, split: val, min_rows: 2465}
-    - {label: street_suffix, split: val, min_rows: 884}
-    - {label: street_prefix, split: val, min_rows: 1358}
-    - {label: venue, split: val, min_rows: 1975}
-    - {label: unit, split: val, min_rows: 193}
-    - {label: country, split: val, min_rows: 1218}
+    - {label: postcode, split: val, min_rows: 7377}
+    - {label: locality, split: val, min_rows: 9117}
+    - {label: street, split: val, min_rows: 8077}
+    - {label: house_number, split: val, min_rows: 7402}
+    - {label: region, split: val, min_rows: 2403}
+    - {label: street_suffix, split: val, min_rows: 885}
+    - {label: street_prefix, split: val, min_rows: 1297}
+    - {label: venue, split: val, min_rows: 1957}
+    - {label: unit, split: val, min_rows: 184}
+    - {label: country, split: val, min_rows: 1220}
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
