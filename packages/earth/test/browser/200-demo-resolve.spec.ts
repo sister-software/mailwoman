@@ -232,8 +232,9 @@ test.describe("Demo — resolution cascade", () => {
 		await demo.submitForUpdate()
 		await expect(page).toHaveURL(/q=Moscow/u)
 		// The title reads the resolved place's own name.
-		// For Moscow that's its Russian primary name.
-		await expect(page).toHaveTitle(/^Москва · /u)
+		// Moscow resolves to WOF 85688085.
+		// Its primary name in the candidate table is `Moscow`.
+		await expect(page).toHaveTitle(/^Moscow · /u)
 
 		await page.goBack()
 		await expect(page).toHaveURL(/q=Chicago/u)
