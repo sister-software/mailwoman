@@ -8,9 +8,8 @@
 //! accumulate gradients.
 
 use crate::batch::RunEncoder;
-use crate::checkpoint::{
-	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, save_checkpoint,
-};
+use crate::checkpoint::{checkpoint_extras, read_resume_state, restore_generators, save_checkpoint};
+use crate::startup::Startup;
 
 /// The name the MLM mask generator's state is saved under in `rng_state.safetensors`.
 const MLM_MASK_GENERATOR: &str = "mlm_mask";
@@ -18,10 +17,10 @@ use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::masking::mask_tokens;
 use crate::optim::{clip_grad_norm, AdamW, Group};
 use crate::schedules::{LambdaLr, Schedule};
-use crate::supervised::{build_model, device, resolve_precision, TrainOptions};
+use crate::supervised::{build_model, device, resolve_precision, resolve_resume, TrainOptions};
 use crate::{fail, Result};
+use mtf_sampler::corpus_files::corpus_split_files;
 use mtf_sampler::{CancelToken, Sampler, TrainingBatches};
-use std::path::PathBuf;
 use std::time::Instant;
 use tch::{Device, Tensor};
 use trainer_model::autocast::{Autocast, Generator};
@@ -30,20 +29,20 @@ use trainer_model::CoarseEncoder;
 
 /// `pretrain`.
 pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
+	let mut startup = Startup::new("[pretrain] [startup]");
 	let files = options.files.clone().unwrap_or_else(DataFiles::discover);
 	let output_dir = run.output_dir()?;
 	std::fs::create_dir_all(&output_dir)?;
-	let resume: Option<PathBuf> = match options.resume.as_deref() {
-		None => None,
-		Some("auto") => find_latest_checkpoint(&output_dir)?,
-		Some(dir) => Some(PathBuf::from(dir)),
-	};
+	startup.step(format_args!("output dir: {}", output_dir.display()));
+	let resume = resolve_resume(options, &output_dir)?;
+	startup.resume(options.resume.as_deref(), resume.as_deref());
 	let encoder = RunEncoder::build(run, &files)?;
 	if run.char_mode()? != "off" {
 		return Err(fail!(
 			"the MLM objective reads SentencePiece ids; data.char_mode must be off"
 		));
 	}
+	startup.step(format_args!("encoder built: vocab_size={}", encoder.vocab_size));
 	let mask_token_id = encoder.unk_id;
 	let device = device();
 	let mut model = match &resume {
@@ -53,7 +52,12 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		}
 		None => build_model(run, &encoder)?,
 	};
+	startup.step(match &resume {
+		Some(dir) => format!("model loaded from {}", dir.display()),
+		None => "model built".to_owned(),
+	});
 	model.to_device(device);
+	startup.step(format_args!("model moved to {device:?}"));
 	let precision = resolve_precision(run, device, options.autocast_on_cpu)?;
 	let mask_prob = run.train_f64("mlm_mask_prob")?;
 	println!(
@@ -102,6 +106,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			);
 		}
 	}
+	startup.step(format_args!("optimizer and schedule ready at step {resume_step}"));
 	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
 	let batch_size = run.train_i64("batch_size")? as usize;
 	let log_every = run.train_i64("log_every_steps")?.max(1);
@@ -114,6 +119,13 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut step = resume_step;
 	let mut running = 0.0;
 	if step < max_steps {
+		let train_files = corpus_split_files(&sampler, "train")?;
+		startup.step(format_args!(
+			"sampler configured: {} train files listed and verified",
+			train_files.len()
+		));
+		let index = startup.index_files(&train_files)?;
+		startup.step(format_args!("sampler indexed: {index}"));
 		let mut batches = TrainingBatches::new(
 			sampler.clone(),
 			batch_size,

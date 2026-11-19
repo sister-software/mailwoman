@@ -677,6 +677,78 @@ fn count_sources(file: &CorpusFile) -> Result<Vec<(String, u64)>> {
 
 /// Source counts for many files, computed four files at a time and returned in the files' order.
 pub fn files_source_counts(files: &[CorpusFile]) -> Vec<SourceCounts> {
+	files_source_counts_with(files, &|_, _| {})
+}
+
+/// One file's source counts, or the error that names the file the train mixture cannot index.
+pub(crate) fn indexed(file: &CorpusFile, counted: SourceCounts) -> Result<Vec<(String, u64)>> {
+	counted.map_err(|e| Error::Input(format!("cannot index {} by source: {e}", file.path.display())))
+}
+
+/// What a split's files hold over the rows each file's filter admits.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SplitIndex {
+	pub files: usize,
+	pub rows: u64,
+	pub sources: usize,
+}
+
+impl std::fmt::Display for SplitIndex {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{} files, {} rows, {} sources", self.files, self.rows, self.sources)
+	}
+}
+
+/// The running totals of [`index_split`].
+#[derive(Default)]
+struct IndexProgress {
+	files: usize,
+	rows: u64,
+	sources: FxHashSet<String>,
+}
+
+impl IndexProgress {
+	fn index(&self) -> SplitIndex {
+		SplitIndex {
+			files: self.files,
+			rows: self.rows,
+			sources: self.sources.len(),
+		}
+	}
+}
+
+/// Counts `files` by source as the train mixture indexes them, calling `on_file` with the running totals after each
+/// file is read.
+///
+/// The counts land in the process cache [`file_source_counts`] reads, so a mixture opened over the same files reads
+/// them back rather than the files.
+pub fn index_split(files: &[CorpusFile], on_file: &(dyn Fn(SplitIndex) + Sync)) -> Result<SplitIndex> {
+	let progress = Mutex::new(IndexProgress::default());
+	let counts = files_source_counts_with(files, &|_, counted| {
+		let index = {
+			let mut p = progress.lock().expect("not poisoned");
+			p.files += 1;
+			if let Ok(counted) = counted {
+				for (source, rows) in counted {
+					p.rows += rows;
+					p.sources.insert(source.clone());
+				}
+			}
+			p.index()
+		};
+		on_file(index);
+	});
+	for (file, counted) in files.iter().zip(counts) {
+		indexed(file, counted)?;
+	}
+	Ok(progress.into_inner().expect("not poisoned").index())
+}
+
+/// [`files_source_counts`], calling `counted` from the counting thread with each file and its result once it is read.
+fn files_source_counts_with(
+	files: &[CorpusFile],
+	counted: &(dyn Fn(&CorpusFile, &SourceCounts) + Sync),
+) -> Vec<SourceCounts> {
 	let next = std::sync::atomic::AtomicUsize::new(0);
 	let results: Mutex<Vec<Option<SourceCounts>>> = Mutex::new(vec![None; files.len()]);
 	std::thread::scope(|scope| {
@@ -686,8 +758,9 @@ pub fn files_source_counts(files: &[CorpusFile]) -> Vec<SourceCounts> {
 				if i >= files.len() {
 					break;
 				}
-				let counted = file_source_counts(&files[i]);
-				results.lock().expect("not poisoned")[i] = Some(counted);
+				let result = file_source_counts(&files[i]);
+				counted(&files[i], &result);
+				results.lock().expect("not poisoned")[i] = Some(result);
 			});
 		}
 	});

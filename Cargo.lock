@@ -2646,6 +2646,7 @@ name = "trainer-loop"
 version = "0.1.0"
 dependencies = [
  "arrow-array",
+ "chrono",
  "mtf-channels",
  "mtf-core",
  "mtf-sampler",

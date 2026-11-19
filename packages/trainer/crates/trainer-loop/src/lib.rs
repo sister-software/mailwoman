@@ -31,6 +31,7 @@ pub mod parity;
 pub mod pretrain;
 pub mod realized;
 pub mod schedules;
+pub mod startup;
 pub mod supervised;
 
 /// A training failure, with the message that names what could not be read, built or written.

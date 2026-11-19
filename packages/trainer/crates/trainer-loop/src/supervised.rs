@@ -19,7 +19,9 @@ use crate::noise::{apply_curricula, Curricula};
 use crate::optim::{build_groups, clip_grad_norm, AdamW};
 use crate::realized::RealizedRows;
 use crate::schedules::{restamp_resume_lrs, LambdaLr, Schedule};
+use crate::startup::Startup;
 use crate::{fail, Result};
+use mtf_sampler::corpus_files::corpus_split_files;
 use mtf_sampler::{CancelToken, Sampler, SamplerConfig, TrainingBatches};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -373,6 +375,15 @@ pub struct TrainOptions {
 	pub autocast_on_cpu: bool,
 }
 
+/// The checkpoint `--resume` names, or the newest complete one under `output_dir` for `auto`.
+pub fn resolve_resume(options: &TrainOptions, output_dir: &Path) -> Result<Option<PathBuf>> {
+	Ok(match options.resume.as_deref() {
+		None => None,
+		Some("auto") => find_latest_checkpoint(output_dir)?,
+		Some(dir) => Some(PathBuf::from(dir)),
+	})
+}
+
 /// Restores the optimizer, the scheduler and the generators from a checkpoint, and returns its step.
 fn resume_state(
 	run: &RunConfig,
@@ -496,6 +507,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	if run.train_str("objective")? == "mlm" {
 		return crate::pretrain::pretrain(run, options);
 	}
+	let mut startup = Startup::new("[startup]");
 	let files = options.files.clone().unwrap_or_else(DataFiles::discover);
 	let output_dir = run.output_dir()?;
 	std::fs::create_dir_all(&output_dir)?;
@@ -510,17 +522,30 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		)?;
 		println!("UNSHIPPABLE run: {reason}");
 	}
-	let resume_from: Option<PathBuf> = match options.resume.as_deref() {
-		None => None,
-		Some("auto") => find_latest_checkpoint(&output_dir)?,
-		Some(dir) => Some(PathBuf::from(dir)),
-	};
+	startup.step(format_args!(
+		"output dir: {}, corpus record of {corpus_dir} written",
+		output_dir.display()
+	));
+	let resume_from = resolve_resume(options, &output_dir)?;
+	startup.resume(options.resume.as_deref(), resume_from.as_deref());
 	let encoder = RunEncoder::build(run, &files)?;
+	startup.step(format_args!("encoder built: vocab_size={}", encoder.vocab_size));
 	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
+	let train_files = corpus_split_files(&sampler, "train")?;
+	startup.step(format_args!(
+		"sampler configured: {} train files listed and verified",
+		train_files.len()
+	));
 	encoder.verify_tokenizer_alignment(&sampler)?;
+	startup.step("tokenizer alignment verified");
 	let device = device();
 	let mut model = load_or_build_model(run, &encoder, resume_from.as_deref())?;
+	startup.step(match &resume_from {
+		Some(dir) => format!("model loaded from {}", dir.display()),
+		None => "model built".to_owned(),
+	});
 	model.to_device(device);
+	startup.step(format_args!("model moved to {device:?}"));
 	println!(
 		"device={device:?} param_count={}",
 		crate::callbacks::grouped(model.store.parameter_count())
@@ -533,6 +558,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		Some(dir) => resume_state(run, dir, device, &mut optim, &mut scheduler, &live)?,
 		None => 0,
 	};
+	startup.step(format_args!("optimizer and schedule ready at step {resume_step}"));
 	let max_steps = run.train_i64("max_steps")?;
 	// A launch on a finished run resumes at its last step and has no step left to train. The periodic checkpoint at
 	// `max_steps` precedes the end-of-run writes, so the run is finished only when its completion record exists. Without
@@ -614,6 +640,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		};
 	}
 	if step < max_steps {
+		startup.step("loop state ready");
+		let index = startup.index_files(&train_files)?;
+		startup.step(format_args!("sampler indexed: {index}"));
 		let mut batches = TrainingBatches::new(
 			sampler.clone(),
 			batch_size,

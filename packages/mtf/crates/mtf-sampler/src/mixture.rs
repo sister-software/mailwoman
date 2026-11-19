@@ -16,7 +16,7 @@
 //! files stream one after another in shuffled order, or, with a row limit, each contributes rows in proportion to
 //! its size.
 
-use crate::corpus_files::{file_source_counts, files_source_counts, CorpusFile};
+use crate::corpus_files::{file_source_counts, files_source_counts, indexed, CorpusFile};
 use crate::error::{Error, Result};
 use crate::file_rows::{FileRows, RowGroupVisit, StartState};
 use crate::parquet_file::ParquetFile;
@@ -261,8 +261,7 @@ impl Mixture {
 		let mut by_source: Vec<(String, Vec<CorpusFile>)> = Vec::new();
 		let mut source_rows: Vec<(String, u64)> = Vec::new();
 		for (file, counted) in files.iter().zip(files_source_counts(&files)) {
-			let counted =
-				counted.map_err(|e| Error::Input(format!("cannot index {} by source: {e}", file.path.display())))?;
+			let counted = indexed(file, counted)?;
 			for (source, rows) in counted {
 				match source_rows.iter_mut().find(|(s, _)| *s == source) {
 					Some((_, total)) => *total += rows,
