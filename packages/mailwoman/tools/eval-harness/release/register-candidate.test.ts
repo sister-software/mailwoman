@@ -3,15 +3,18 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { deriveCandidateSpec } from "#tools/eval-harness/release/register-candidate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
+/**
+ * A committed version registered with no candidate identity.
+ */
+const SOURCE_SPEC = new URL("specs/release-requirements.v11.json", import.meta.url).pathname
 const SHA256 = "3017222708d1ddb67139d128006a11da6b7aed64b7a08d6ce28f1f428537ce89"
 
 describe("deriveCandidateSpec", () => {
 	it("changes only the version, the rationale and the candidate identity", async () => {
-		const source = await readReleaseSpec(CURRENT_RELEASE_SPEC)
+		const source = await readReleaseSpec(SOURCE_SPEC)
 
 		const derived = deriveCandidateSpec(source, {
 			sha256: SHA256,
@@ -30,12 +33,12 @@ describe("deriveCandidateSpec", () => {
 			identities: { ...spec.identities, candidate: null },
 		})
 
-		expect(unchanged(derived)).toEqual(unchanged(source))
 		expect(source.identities.candidate.sha256).toBeNull()
+		expect(unchanged(derived)).toEqual(unchanged(source))
 	})
 
 	it("refuses a malformed digest, an empty rationale and the source's own version", async () => {
-		const source = await readReleaseSpec(CURRENT_RELEASE_SPEC)
+		const source = await readReleaseSpec(SOURCE_SPEC)
 		const registration = { sha256: SHA256, description: "seed 42 int8", rationale: "Why." }
 
 		expect(() => deriveCandidateSpec(source, { ...registration, sha256: "ABC" })).toThrow(/candidate.sha256/u)
