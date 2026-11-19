@@ -38,3 +38,39 @@ confirmation role before v13.
 
 Section 6.5 of HOLDOUT_AND_EVALUATION records every confirmation read in the next version's rationale. The reads
 under v13 are listed here as they happen and carried into v14.
+
+| Date       | Arms                                 | Collections                     | Verdict  |
+| ---------- | ------------------------------------ | ------------------------------- | -------- |
+| 2026-11-19 | 10.8.0 (baseline) and v8.9.0 seed 42 | all three v13 confirmation sets | **pass** |
+
+This is the first read of `heldout-confirm-v0.8.20` and `heldout-confirm-v0.8.20-probes`, and 10.8.0's one baseline
+scoring under v13. `heldout-confirm-v0.8.18-in` was read under v9 and v10 by 10.8.0 and v8.7.0 seeds 42 and 43, so its
+IN rows are not unread evidence for 10.8.0.
+
+The report ran 10:57–11:23 UTC from commit `6efb424d5c` with a clean tree, geocoded against
+`/mnt/mw/db/wof/candidate-global-2026-11-19.db`, with the candidate's provenance from text-matching audits over
+corpora `v0.8.18-retention-overlay` and `v0.8.21-retention-overlay`
+(`/mnt/mw/models/arms/v890/provenance/heldout-confirm-*.provenance-v890.json`). Report
+`/mnt/mw/models/arms/v890/heldout-confirm-v890.json`, verdict `/mnt/mw/models/arms/v890/verdict-confirm-v13-n890.json`,
+whose candidate sha256 is the registered `d51bb0ef…12b39f`. Bonferroni over 16 checks:
+
+| Check                  | Estimate [bound]        | Threshold |
+| ---------------------- | ----------------------- | --------- |
+| `country-US`           | 0.899 [0.867, 0.925]    | 0.60      |
+| `country-FR`           | 0.996 [0.986, 1.000]    | 0.90      |
+| `country-GB`           | 0.990 [0.946, 1.000]    | 0.80      |
+| `country-DE`           | 0.995 [0.983, 0.999]    | 0.85      |
+| `country-IN`           | 0.969 [0.933, 0.989]    | 0.50      |
+| `country-ES`           | 0.978 [0.961, 0.990]    | 0.80      |
+| `country-IT`           | 0.991 [0.978, 0.997]    | 0.80      |
+| `country-AU`           | 0.982 [0.965, 0.992]    | 0.80      |
+| `country-NZ`           | 0.995 [0.984, 0.999]    | 0.80      |
+| `po_box_cedex` minimum | 0.908 [0.894, 0.921]    | 0.85      |
+| `po_box_cedex` loss    | +0.069 [+0.057, +0.082] | −0.05     |
+| `venue_unit`           | 0.985 [0.877, 1.000]    | 0.85      |
+| `country_token`        | 0.990 [0.914, 1.000]    | 0.85      |
+| `postal_unit` loss     | +0.054 [+0.031, +0.078] | 0         |
+| `geocode` loss         | +0.073 [+0.053, +0.093] | −0.01     |
+| objective              | +0.081 [+0.061, +0.101] | 0         |
+
+Every check passes.
