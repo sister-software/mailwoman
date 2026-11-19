@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { WRITTEN_LAYOUTS } from "@mailwoman/codex/address/layouts"
 import { makeLcg } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
@@ -131,6 +132,35 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(row!.components.locality).toBe("Barcelona")
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 		expect(row!.components.street).toBe("Avenida Country Club")
+	})
+
+	it("renders IN rows in both the postal and the written order, at the codex share", () => {
+		// A render that collapses IN to one order teaches a model no other order.
+		const random = makeLcg(11)
+		const rows = 2000
+		let postal = 0
+		let written = 0
+
+		for (let i = 0; i < rows; i++) {
+			const row = synthesizeHouseVenueRow(
+				{ locality: "Bengaluru", region: "Karnataka", postcode: "560100", country: "IN" },
+				{ random }
+			)
+
+			if (row!.raw.endsWith("Bengaluru 560100, Karnataka")) {
+				postal++
+			}
+
+			if (row!.raw.endsWith("Bengaluru, Karnataka 560100")) {
+				written++
+			}
+		}
+
+		const share = WRITTEN_LAYOUTS.IN!.reduce((sum, layout) => sum + layout.share, 0)
+
+		expect(postal + written).toBe(rows)
+		expect(written / rows).toBeGreaterThan(share - 0.05)
+		expect(written / rows).toBeLessThan(share + 0.05)
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {

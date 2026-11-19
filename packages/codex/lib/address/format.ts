@@ -8,6 +8,7 @@
  *   This module is the public surface over {@linkcode renderAddress}.
  */
 
+import type { AddressLayout } from "#address/layout"
 import {
 	defaultScriptForCountry,
 	layoutForCountry,
@@ -64,6 +65,14 @@ export interface FormatAddressOptions {
 	 * A country with no region position renders with its ordinary layout and reports the region unplaced.
 	 */
 	withRegion?: boolean
+
+	/**
+	 * Render through this layout in place of the one the country and script select,
+	 * such as a written order from `writtenLayoutForCountry`.
+	 *
+	 * The country still decides the line join and the postal style.
+	 */
+	layout?: AddressLayout
 
 	/**
 	 * Print the country's postal-authority form: its recorded casing and punctuation,
@@ -263,7 +272,10 @@ export function formatAddressRow(
 	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components, country) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 
-	const layout = (opts.withRegion ? regionLayoutForCountry(country, script) : null) ?? layoutForCountry(country, script)
+	const layout =
+		opts.layout ??
+		(opts.withRegion ? regionLayoutForCountry(country, script) : null) ??
+		layoutForCountry(country, script)
 
 	if (!layout) return null
 

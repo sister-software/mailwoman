@@ -426,6 +426,70 @@ export function regionLayoutForCountry(countryCode: string | null, script?: Addr
 }
 
 /**
+ * An order a country's address writers use beside the postal layout {@linkcode layoutForCountry} answers.
+ */
+export interface WrittenLayout {
+	readonly layout: AddressLayout
+	/**
+	 * The fraction of rendered rows a synthesizer gives this order.
+	 *
+	 * The postal layout keeps what a country's written layouts leave.
+	 */
+	readonly share: number
+	/**
+	 * The sources that show the order in use, and why the share is what it is.
+	 */
+	readonly basis: string
+}
+
+/**
+ * Orders a country writes beside its postal layout.
+ *
+ * A synthesizer renders the mix a reader meets rather than the one order an input system asks for.
+ * A corpus rendered only in the postal order teaches a model no other order,
+ * and the model then misreads the written one.
+ */
+export const WRITTEN_LAYOUTS: Readonly<Record<string, readonly WrittenLayout[]>> = {
+	IN: [
+		{
+			// `Bengaluru, Karnataka 560001`: the region before the PIN, as US addresses place a ZIP Code.
+			layout: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality}
+${region} ${postcode}
+${country}`,
+			share: 0.5,
+			basis:
+				"libaddressinput's IN `fmt` (`%C %Z%n%S`) states the postal order, `Bengaluru 560001, Karnataka`. " +
+				"Every IN gauntlet input that names a locality, a state and a PIN writes the state first " +
+				"(7 of 7 in packages/mailwoman/tools/eval-harness/gauntlet/cases/in, such as " +
+				"`12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`). " +
+				"Neither source measures how often each order occurs, so the two share the rows evenly.",
+		},
+	],
+}
+
+/**
+ * Returns the written layout a uniform draw in `[0, 1)` selects for `country`.
+ *
+ * It returns `null` when the draw falls to the postal layout or the country records no written layout.
+ * The draw is the caller's so a seeded synthesizer stays reproducible.
+ */
+export function writtenLayoutForCountry(countryCode: string | null, draw: number): AddressLayout | null {
+	let cumulative = 0
+
+	for (const written of WRITTEN_LAYOUTS[countryCode?.trim().toUpperCase() ?? ""] ?? []) {
+		cumulative += written.share
+
+		if (draw < cumulative) return written.layout
+	}
+
+	return null
+}
+
+/**
  * Address systems that print the largest unit first, derived from the layouts
  * rather than listed because the layout is the statement of print order.
  *

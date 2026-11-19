@@ -204,12 +204,17 @@ export function synthesizeHouseVenueRow(
 
 	// The layout decides the tail's order and which parts it prints: FR prints no region,
 	// VE keeps the region after the postcode, GB puts the postcode after the locality.
-	const tail = layoutAdminTail(base.country, {
-		locality: base.locality,
-		region: base.region,
-		postcode: base.postcode,
-		country: countrySurface,
-	})
+	// A country with written orders beside its postal one, such as IN, renders a mix of them.
+	const tail = layoutAdminTail(
+		base.country,
+		{
+			locality: base.locality,
+			region: base.region,
+			postcode: base.postcode,
+			country: countrySurface,
+		},
+		{ random }
+	)
 
 	if (!tail) return null
 
