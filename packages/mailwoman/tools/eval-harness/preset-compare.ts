@@ -33,6 +33,14 @@ export interface PresetCompareOptions {
 	 * Candidate tokenizer path (paired with `modelPath`).
 	 */
 	tokenizerPath?: string
+	/**
+	 * Candidate model card path (paired with `modelPath`).
+	 *
+	 * The card's address-system table must match the graph's `address_system_logits` width.
+	 * Omitted, the loader reads the installed card.
+	 * That card describes the shipped graph.
+	 */
+	modelCardPath?: string
 }
 
 /**
@@ -56,10 +64,10 @@ export async function presetCompare(
 		report(`    → ${comps || "(empty)"}\n`)
 	}
 
-	const { modelPath, tokenizerPath } = options
+	const { modelPath, tokenizerPath, modelCardPath } = options
 
 	if (modelPath) {
-		const candidate = await NeuralAddressClassifier.loadFromWeights({ modelPath, tokenizerPath })
+		const candidate = await NeuralAddressClassifier.loadFromWeights({ modelPath, tokenizerPath, modelCardPath })
 		report(`\n=== CANDIDATE (${modelPath}) ===\n`)
 
 		for (const addr of PRESETS) {

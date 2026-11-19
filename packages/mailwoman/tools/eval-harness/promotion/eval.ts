@@ -436,6 +436,16 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		return 2
 	}
 
+	// The package-shaped battery grades the cache's own model.onnx, so a loose --model
+	// or --int8 beside it would go ungraded while the verdict still expected its report.
+	if (WC && (MODEL || INT8)) {
+		console.error(
+			"✗ --weights-cache grades the cache's own model.onnx — drop --model/--int8, and pass the int8 arm as --int8-weights-cache"
+		)
+
+		return 2
+	}
+
 	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
 	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
@@ -626,7 +636,12 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const presetLines: string[] = []
 
 	try {
-		await profile.time("presets", null, () => presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line)))
+		await profile.time("presets", null, () =>
+			presetCompare(
+				{ modelPath: shipModel, tokenizerPath: EFF_TOK.toString(), modelCardPath: EFF_CARD.toString() },
+				(line) => presetLines.push(line)
+			)
+		)
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}

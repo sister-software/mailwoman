@@ -204,6 +204,12 @@ describe("paired weights-caches (#47)", () => {
 		).resolves.toBe(2)
 	})
 
+	it("refuses a loose --int8 beside --weights-cache, which the cache battery would leave ungraded", async () => {
+		const wc = await stageFakeCache("fp32", "f")
+
+		await expect(runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8: "x-int8.onnx" })).resolves.toBe(2)
+	})
+
 	it("refuses a paired fp32 arm that carries quant nodes — the arms are swapped or mislabeled", async () => {
 		const wc = await stageFakeCache("int8", "d")
 		const int8 = await stageFakeCache("int8", "e")
