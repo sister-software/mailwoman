@@ -37,6 +37,15 @@ const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
 /**
+ * The projections `--format` prints a parse tree in.
+ *
+ * `outline` prints one `tag [start, end): "value"` line per node, each child indented under its parent.
+ */
+const PARSE_FORMATS = ["json", "tuple", "xml", "outline"] as const
+
+type ParseFormat = (typeof PARSE_FORMATS)[number]
+
+/**
  * The summary at the top of `mailwoman parse --help`.
  *
  * It distinguishes `parse` from `geocode`, because both commands take the same argument.
@@ -98,7 +107,7 @@ export const spec = {
 		poi: { type: "boolean", default: true, description: "Enable POI query detection" },
 		"download-weights": { type: "boolean", default: false, description: "Download missing weights" },
 		degraded: { type: "boolean", default: false, description: "Run structural stages only" },
-		format: { type: "string", choices: ["json", "tuple", "xml"], default: "json", description: "Output projection" },
+		format: { type: "string", choices: PARSE_FORMATS, default: "json", description: "Output projection" },
 		model: { type: "string", description: "Explicit model path" },
 		tokenizer: { type: "string", description: "Explicit tokenizer path" },
 		policy: {
@@ -129,7 +138,7 @@ interface ParseOptions {
 	poi: boolean
 	downloadWeights: boolean
 	degraded: boolean
-	format: "json" | "tuple" | "xml"
+	format: ParseFormat
 	model?: string
 	tokenizer?: string
 	policy?: string[]
@@ -334,12 +343,14 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 
 async function serializeTree(
 	tree: AddressTree,
-	format: "json" | "tuple" | "xml",
+	format: ParseFormat,
 	opts: { includeAlternatives?: boolean } = {}
 ): Promise<string> {
-	const { decodeAsJSON, decodeAsTuples, decodeAsXML } = await import("@mailwoman/core/decoder")
+	const { decodeAsJSON, decodeAsOutline, decodeAsTuples, decodeAsXML } = await import("@mailwoman/core/decoder")
 
 	switch (format) {
+		case "outline":
+			return decodeAsOutline(tree)
 		case "xml":
 			return decodeAsXML(tree, { includeAlternatives: opts.includeAlternatives })
 		case "tuple":
@@ -684,9 +695,9 @@ async function tryLoadNeural(options: ParseOptions): Promise<ScriptRoutedClassif
  */
 async function serializeResult(
 	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
-	format: "json" | "tuple" | "xml"
+	format: ParseFormat
 ): Promise<unknown> {
-	const { decodeAsXML } = await import("@mailwoman/core/decoder")
+	const { decodeAsOutline, decodeAsXML } = await import("@mailwoman/core/decoder")
 
 	return {
 		input: result.input,
@@ -705,7 +716,8 @@ async function serializeResult(
 					faults: result.faults.map(({ stage, name, message }) => ({ stage, name, message })),
 				}
 			: {}),
-		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,
+		tree:
+			format === "xml" ? decodeAsXML(result.tree) : format === "outline" ? decodeAsOutline(result.tree) : result.tree,
 	}
 }
 

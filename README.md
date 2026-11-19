@@ -61,7 +61,7 @@ addresses, add `@mailwoman/neural-weights-fr-fr`. For coordinate resolution, add
 mailwoman parse "350 5th Ave, New York, NY 10118"
 
 # Other output formats
-mailwoman parse "350 5th Ave, New York, NY 10118" --format tuple   # or: xml
+mailwoman parse "350 5th Ave, New York, NY 10118" --format tuple   # or: xml, outline
 
 # Resolve components to a Who's On First place + coordinate (needs a gazetteer DB)
 mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.sqlite
