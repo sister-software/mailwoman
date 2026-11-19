@@ -35,7 +35,7 @@ A command reports a long-running library's `onProgress` or `onPhase` through `us
 redirected logs each stage to stderr as a timestamped line while it runs rather than only Ink's final frame at
 exit. Pass `progress.report` for a `(phase, detail?)` callback and `progress.stage(name)` for a `(detail)` one,
 and hand `progress` to `CommandTaskResult` to draw the stage line. A library reports its phase and detail
-unformatted; the hook adds the brackets.
+unformatted. The hook adds the brackets.
 
 `percentile` and `median` in core use nearest-rank semantics matched to the promotion eval. Keep
 those semantics. Declare a boolean positively with `default: true`; `cli/native/spec.ts` parses

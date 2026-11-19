@@ -10,12 +10,12 @@
 	"inherited_lineage": {
 		"package": "@mailwoman/neural-weights-en-us",
 		"package_version": "11.1.0",
-		"model_card_version": "10.8.0",
+		"model_card_version": "11.2.0",
 		"chain": ["@mailwoman/neural-weights-es-es", "@mailwoman/neural-weights-en-us"],
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Corpus v0.8.18-retention-overlay renders 30% of the osm sources' rows with a trailing country name. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.8.18-retention-overlay.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
+				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Corpus v0.8.21-retention-overlay reads v0.8.18's osm extracts, which render 30% of the osm sources' rows with a trailing country name. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.8.21-retention-overlay.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
 				"license_named": "ODbL-1.0"
 			},
 			{
@@ -62,6 +62,11 @@
 				"statement": null
 			},
 			{
+				"license": "CC-BY-3.0-AU",
+				"sources": ["au-acnc-register"],
+				"statement": null
+			},
+			{
 				"license": "CC-BY-4.0",
 				"sources": [
 					"cordis",
@@ -74,6 +79,16 @@
 					"ro-retea-scolara",
 					"ryhti-ax"
 				],
+				"statement": null
+			},
+			{
+				"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse AND LicenseRef-unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida AND LicenseRef-unchecked-corpus-input-us-alpine-county-california AND LicenseRef-unchecked-corpus-input-us-amador-county-information-technology-departme AND LicenseRef-unchecked-corpus-input-us-athens-clarke-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-baker-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-bay-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-broward-county-gis-bcgis-florida AND LicenseRef-unchecked-corpus-input-us-butte-county-california AND LicenseRef-unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality AND LicenseRef-unchecked-corpus-input-us-charlotte-county-florida AND LicenseRef-unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f AND LicenseRef-unchecked-corpus-input-us-city-and-county-of-san-francisco-california AND LicenseRef-unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida AND LicenseRef-unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn AND LicenseRef-unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania AND LicenseRef-unchecked-corpus-input-us-clay-county-florida AND LicenseRef-unchecked-corpus-input-us-collier-county-growth-management-department-g AND LicenseRef-unchecked-corpus-input-us-columbia-county-florida AND LicenseRef-unchecked-corpus-input-us-contra-costa-county-california AND LicenseRef-unchecked-corpus-input-us-county-of-alameda-california AND LicenseRef-unchecked-corpus-input-us-county-of-calaveras-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-colusa-california AND LicenseRef-unchecked-corpus-input-us-county-of-fresno-california AND LicenseRef-unchecked-corpus-input-us-county-of-kern-california AND LicenseRef-unchecked-corpus-input-us-county-of-los-angeles-california AND LicenseRef-unchecked-corpus-input-us-county-of-monterey-california AND LicenseRef-unchecked-corpus-input-us-county-of-nevada-california AND LicenseRef-unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge AND LicenseRef-unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso AND LicenseRef-unchecked-corpus-input-us-county-of-san-benito-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-joaquin-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi AND LicenseRef-unchecked-corpus-input-us-county-of-santa-clara-california AND LicenseRef-unchecked-corpus-input-us-county-of-shasta-california AND LicenseRef-unchecked-corpus-input-us-county-of-sonoma-california AND LicenseRef-unchecked-corpus-input-us-dekalb-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-del-norte-county-assessor-s-office-california AND LicenseRef-unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis AND LicenseRef-unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie AND LicenseRef-unchecked-corpus-input-us-flagler-county-board-of-county-commissioners AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m AND LicenseRef-unchecked-corpus-input-us-glenn-county-gis-california AND LicenseRef-unchecked-corpus-input-us-hardee-county-gis-florida AND LicenseRef-unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f AND LicenseRef-unchecked-corpus-input-us-highlands-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-hillsborough-county-florida AND LicenseRef-unchecked-corpus-input-us-humboldt-county-gis-california AND LicenseRef-unchecked-corpus-input-us-imperial-county-california AND LicenseRef-unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida AND LicenseRef-unchecked-corpus-input-us-inyo-county-california AND LicenseRef-unchecked-corpus-input-us-jackson-county-oregon-gis AND LicenseRef-unchecked-corpus-input-us-kings-county-california AND LicenseRef-unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak AND LicenseRef-unchecked-corpus-input-us-lake-county-i-t-dept-california AND LicenseRef-unchecked-corpus-input-us-manatee-county-florida AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-martin-county-florida AND LicenseRef-unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm AND LicenseRef-unchecked-corpus-input-us-mendocino-county-information-services-departm AND LicenseRef-unchecked-corpus-input-us-merced-county-california AND LicenseRef-unchecked-corpus-input-us-miami-dade-county-florida AND LicenseRef-unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo AND LicenseRef-unchecked-corpus-input-us-mississippi-automated-resource-information-sy AND LicenseRef-unchecked-corpus-input-us-modoc-county-reach-parcels-service-california AND LicenseRef-unchecked-corpus-input-us-napa-county-california AND LicenseRef-unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp AND LicenseRef-unchecked-corpus-input-us-oakland-county-michigan AND LicenseRef-unchecked-corpus-input-us-okaloosa-county-florida AND LicenseRef-unchecked-corpus-input-us-orange-county-fl-orange-county-florida AND LicenseRef-unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or AND LicenseRef-unchecked-corpus-input-us-osceolagis-osceola-county-florida AND LicenseRef-unchecked-corpus-input-us-overture-maps-foundation AND LicenseRef-unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida AND LicenseRef-unchecked-corpus-input-us-pasco-county-pascogisonline-florida AND LicenseRef-unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services AND LicenseRef-unchecked-corpus-input-us-plumas-county-california AND LicenseRef-unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net AND LicenseRef-unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid AND LicenseRef-unchecked-corpus-input-us-sacramento-county-california AND LicenseRef-unchecked-corpus-input-us-san-bernardino-county-california AND LicenseRef-unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor AND LicenseRef-unchecked-corpus-input-us-sarasota-county-florida AND LicenseRef-unchecked-corpus-input-us-seminole-county-florida AND LicenseRef-unchecked-corpus-input-us-sierra-county-california AND LicenseRef-unchecked-corpus-input-us-siskiyou-county-california AND LicenseRef-unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno AND LicenseRef-unchecked-corpus-input-us-st-johns-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-st-lucie-county-slcgis-florida AND LicenseRef-unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform AND LicenseRef-unchecked-corpus-input-us-sutter-county-california AND LicenseRef-unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot AND LicenseRef-unchecked-corpus-input-us-trinity-county-planning-department-california AND LicenseRef-unchecked-corpus-input-us-tulare-county-california AND LicenseRef-unchecked-corpus-input-us-tuolumne-county-california AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-volusia-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-walton-county-gis-department-florida AND LicenseRef-unchecked-corpus-input-us-waupaca-county-land-information-wisconsin AND LicenseRef-unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca AND LicenseRef-unchecked-corpus-input-us-yuba-county-ca-california AND etalab-2.0",
+				"sources": ["invented-house-venue"],
+				"statement": null
+			},
+			{
+				"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-city-of-berkeley AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-montana-state-library AND LicenseRef-unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-us-property-building-5 AND etalab-2.0",
+				"sources": ["invented-po-box-cedex"],
 				"statement": null
 			},
 			{
@@ -144,6 +159,21 @@
 				"statement": null
 			},
 			{
+				"license": "LicenseRef-unchecked-access-free-es-ministerio-de-sanidad",
+				"sources": ["es-sanidad-centros-ap"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-access-free-it-ministero-dell-istruzione-e-del-merito",
+				"sources": ["it-miur-scuole"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-access-free-nz-nz-charity-nonprofit-1",
+				"sources": ["nz-charities-register"],
+				"statement": null
+			},
+			{
 				"license": "LicenseRef-unchecked-access-free-us-us-health-1",
 				"sources": ["usgov-nppes"],
 				"statement": null
@@ -151,6 +181,16 @@
 			{
 				"license": "LicenseRef-unchecked-access-free-us-us-health-2",
 				"sources": ["usgov-hrsa-fqhc"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+				"sources": ["deepseek-kryptonite"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-fr-agence-du-num-rique-en-sant AND etalab-2.0",
+				"sources": ["fr-laposte-poincont", "nc-opt-agences"],
 				"statement": null
 			},
 			{
@@ -179,8 +219,19 @@
 				"statement": null
 			},
 			{
+				"license": "LicenseRef-unchecked-corpus-input-us-u-s-geological-survey",
+				"sources": ["usgov-usgs-structures"],
+				"statement": null
+			},
+			{
 				"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
-				"sources": ["wof-admin", "wof-postalcode"],
+				"sources": [
+					"rendered-us-city-county",
+					"rendered-us-city-state",
+					"rendered-us-county",
+					"wof-admin",
+					"wof-postalcode"
+				],
 				"statement": null
 			},
 			{
@@ -305,11 +356,6 @@
 				"statement": null
 			},
 			{
-				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
-				"sources": ["invented-po-box-cedex"],
-				"statement": null
-			},
-			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 				"sources": ["spliced-affix"],
 				"statement": null
@@ -366,7 +412,7 @@
 			},
 			{
 				"license": "Synthetic — derived from CC-BY / public-domain input tuples",
-				"sources": ["invented-house-venue", "invented-po-box-military"],
+				"sources": ["invented-po-box-military"],
 				"statement": null
 			},
 			{
@@ -407,11 +453,6 @@
 			{
 				"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 				"sources": ["spliced-trailing-region-ca-bare", "spliced-trailing-region-es-v28", "spliced-trailing-region-us"],
-				"statement": null
-			},
-			{
-				"license": "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-				"sources": ["deepseek-kryptonite"],
 				"statement": null
 			},
 			{
@@ -528,7 +569,7 @@
 				],
 				"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract",
 				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/59ebed0358279c08a6ce6e3b9f23d99a2ba5655c/MANIFEST.json",
-				"statement": "The OpenStreetMap-derived training extracts of corpus v0.8.18-retention-overlay, © OpenStreetMap contributors: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names this model under produced_works."
+				"statement": "The OpenStreetMap-derived training extracts of corpus v0.8.21-retention-overlay, © OpenStreetMap contributors. Corpus v0.8.21 reads its osm sources from the v0.8.18 overlay's parquet files, and each of its 102 ODbL sources holds the row count its v0.8.18 frozen record states, so the extracts are v0.8.18's: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names model 10.8.0, trained on the same extracts, under produced_works."
 			}
 		],
 		"unresolved": null
