@@ -59,7 +59,7 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 
 		const resourcesFile = options.bumpDemo
-			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
+			? repoRootPathBuilder("packages", "mailwoman", "lib", "browser-runtime", "resources.ts")
 			: null
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
