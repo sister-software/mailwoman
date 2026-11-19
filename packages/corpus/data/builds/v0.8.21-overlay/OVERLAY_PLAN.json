@@ -1,5 +1,5 @@
 {
-	"$plan-note": "A plan for corpus v0.8.21, written 2026-11-19 (lane AT) and not yet applied: `appliedAt` is null until the overlay is assembled, when `assembleOverlayManifest` writes the applied plan beside the new MANIFEST.json. The resplit under the evaluation-group policy follows the assembly, as it did for v0.8.20-retention-overlay.",
+	"$plan-note": "The plan for corpus v0.8.21, written 2026-11-19 (lane AT) and applied at `appliedAt` by scratchpad/2026/11/19/lane-at/v0821-overlay.ts, which wrote the applied plan's fields over this file's. The resplit under the evaluation-group policy followed, as it did for v0.8.20-retention-overlay, and wrote /mnt/mw/corpus/versioned/v0.8.21-retention-overlay/corpus-v0.8.21-retention-overlay/MANIFEST.json (sha256 5a9f26e52b89492d35a1eeea942b81838c3345d5eab979f3467df70f45199d1b; train 889,265,391, val 22,426, test 336,925).",
 	"$why": "The v0.8.20 render of invented-house-venue-intl wrote all 6,000 IN rows in the postal order `Vijayapura 586108, Karnataka`, where the v0.8.19 file wrote all 6,000 as `Vijayapura, Karnataka 586108`. Model v8.8.0, trained on v0.8.20, lost the second form. The recipe now renders IN through WRITTEN_LAYOUTS in packages/codex/lib/address/layouts.ts, which gives the written order half of the rows.",
 	"$recipe-outputs": [
 		{
@@ -12,9 +12,16 @@
 			"replaces": "invented-house-venue-intl-v0.8.20.parquet",
 			"rows": 18000,
 			"orders": {
-				"IN": { "locality postcode region": 3025, "locality region postcode": 2975 },
-				"MX": { "postcode locality region": 6000 },
-				"PT": { "postcode locality": 6000 }
+				"IN": {
+					"locality postcode region": 3025,
+					"locality region postcode": 2975
+				},
+				"MX": {
+					"postcode locality region": 6000
+				},
+				"PT": {
+					"postcode locality": 6000
+				}
 			},
 			"note": "The tuples and seed are v0.8.20's. The tuples file is a copy of corpus/recipe-outputs-v0.8.20/house-venue-intl-v27-tuples.jsonl."
 		},
@@ -42,7 +49,7 @@
 	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.20-retention-overlay/corpus-v0.8.20-retention-overlay/MANIFEST.json",
 	"modalRoot": "/data/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay",
 	"note": "v0.8.20-retention-overlay with invented-house-venue-intl replaced by its v0.8.21 render, which writes IN rows in both the postal order and the written order `Locality, State PIN`. The v0.8.20 invented-house-venue file is carried unchanged beside it, because both files carry the replaced source. Both recipe files carry split attributes under the base holdout policy.",
-	"appliedAt": null,
+	"appliedAt": "2026-11-19T03:20:25.972Z",
 	"files": [
 		{
 			"parquet": "invented-house-venue-v0.8.20.parquet",
