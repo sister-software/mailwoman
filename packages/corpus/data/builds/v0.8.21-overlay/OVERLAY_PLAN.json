@@ -1,0 +1,65 @@
+{
+	"$plan-note": "A plan for corpus v0.8.21, written 2026-11-19 (lane AT) and not yet applied: `appliedAt` is null until the overlay is assembled, when `assembleOverlayManifest` writes the applied plan beside the new MANIFEST.json. The resplit under the evaluation-group policy follows the assembly, as it did for v0.8.20-retention-overlay.",
+	"$why": "The v0.8.20 render of invented-house-venue-intl wrote all 6,000 IN rows in the postal order `Vijayapura 586108, Karnataka`, where the v0.8.19 file wrote all 6,000 as `Vijayapura, Karnataka 586108`. Model v8.8.0, trained on v0.8.20, lost the second form. The recipe now renders IN through WRITTEN_LAYOUTS in packages/codex/lib/address/layouts.ts, which gives the written order half of the rows.",
+	"$recipe-outputs": [
+		{
+			"recipe": "house-venue",
+			"source": "invented-house-venue",
+			"command": "mailwoman corpus recipe house-venue --input $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.21/house-venue-intl-v27-tuples.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.21/invented-house-venue-intl-v0.8.21.jsonl --seed 20260922",
+			"aligned": "mailwoman corpus align-recipe, 18,000 labeled, 0 quarantined; converted with mailwoman dev jsonl-to-parquet",
+			"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.21/invented-house-venue-intl-v0.8.21.parquet",
+			"sha256": "e8ca8f343c313f3dfebcc815be274cfe47c17137594207cdffbfc5f54da08b32",
+			"replaces": "invented-house-venue-intl-v0.8.20.parquet",
+			"rows": 18000,
+			"orders": {
+				"IN": { "locality postcode region": 3025, "locality region postcode": 2975 },
+				"MX": { "postcode locality region": 6000 },
+				"PT": { "postcode locality": 6000 }
+			},
+			"note": "The tuples and seed are v0.8.20's. The tuples file is a copy of corpus/recipe-outputs-v0.8.20/house-venue-intl-v27-tuples.jsonl."
+		},
+		{
+			"recipe": "house-venue",
+			"source": "invented-house-venue",
+			"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.20/invented-house-venue-v0.8.20.parquet",
+			"sha256": "4a49e18942b864b67e76253a38f50681a3cf46698b4e311463b5e96fc3cb76a9",
+			"rows": 179725,
+			"note": "Carried unchanged. It holds FR, GB and US rows, none of which records a written layout, so the fixed recipe takes no extra draw for them: re-rendered with v0.8.20's command (`--seed 42` over house-venue-tuples-v7.jsonl), its jsonl is byte-identical to v0.8.20's (sha256 8f60b2a14ae99738e4b13180248156611a4fedb37dfe6439d5677a56a68f26ea). It is listed because both files carry source invented-house-venue and the overlay replaces a source rather than a file."
+		}
+	],
+	"$split-attributes": "Each splitAttribute was written by `mailwoman corpus split-overlay` under the base holdout policy: the intl file's under corpus/recipe-outputs-v0.8.21/split-dry/ (train 16,743, val 608, test 649), and the carried file's is v0.8.20's under corpus/recipe-outputs-v0.8.20/split-dry/, which applies because its bytes are unchanged.",
+	"$resplit": {
+		"note": "OverlayPlan records the assembly only: it has no evaluation-groups field, because the group list is an input to the resplit, as evaluation-groups.v0.8.20.json was to v0.8.20-retention-overlay's. The v0.8.21 resplit reads packages/corpus/data/holdout/evaluation-groups.v0.8.21.json: every dataset and group of evaluation-groups.v0.8.20.json plus lane AR's heldout-dev-v0.8.21, frozen from the rows 10.8.0's corpus held out (the v0.8.18 test split), which v0.8.20 trains on. The resplit moves those groups to test. The file isn't written yet: it waits for the path of lane AR's frozen manifest, written below as <heldout-dev-v0.8.21 manifest>.",
+		"evaluationGroups": "packages/corpus/data/holdout/evaluation-groups.v0.8.21.json",
+		"commands": [
+			"node packages/mailwoman/tools/eval-harness/heldout/dataset/evaluation-groups.run.ts --extend packages/corpus/data/holdout/evaluation-groups.v0.8.20.json --datasets <heldout-dev-v0.8.21 manifest> --out packages/corpus/data/holdout/evaluation-groups.v0.8.21.json",
+			"node packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts --manifest /mnt/mw/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay/MANIFEST.json --config <training config> --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.21.json --out /mnt/mw/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay/VALIDATION_GROUPS.json",
+			"node packages/mailwoman/tools/dev-tools/corpus/resplit.run.ts --manifest /mnt/mw/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay/MANIFEST.json --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.21.json --validation-groups /mnt/mw/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay/VALIDATION_GROUPS.json --out /mnt/mw/corpus/versioned/v0.8.21-retention-overlay/corpus-v0.8.21-retention-overlay --corpus-version 0.8.21-retention-overlay --jobs 4 --duckdb-memory-gb 6"
+		]
+	},
+	"corpusVersion": "0.8.21-overlay",
+	"overlayBase": "0.8.20-retention-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.20-retention-overlay/corpus-v0.8.20-retention-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.21-overlay/corpus-v0.8.21-overlay",
+	"note": "v0.8.20-retention-overlay with invented-house-venue-intl replaced by its v0.8.21 render, which writes IN rows in both the postal order and the written order `Locality, State PIN`. The v0.8.20 invented-house-venue file is carried unchanged beside it, because both files carry the replaced source. Both recipe files carry split attributes under the base holdout policy.",
+	"appliedAt": null,
+	"files": [
+		{
+			"parquet": "invented-house-venue-v0.8.20.parquet",
+			"source": "invented-house-venue",
+			"splitAttribute": {
+				"path": "invented-house-venue-v0.8.20.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		},
+		{
+			"parquet": "invented-house-venue-intl-v0.8.21.parquet",
+			"source": "invented-house-venue",
+			"splitAttribute": {
+				"path": "invented-house-venue-intl-v0.8.21.split.779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e.json",
+				"policyHash": "779ec991ee6f833c7624748e7f72eb283a9b77975f226a8ff91d341acddebe4e"
+			}
+		}
+	],
+	"replacedSources": ["invented-house-venue"]
+}
