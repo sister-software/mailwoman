@@ -9,7 +9,7 @@
 		"#components/*": "./src/components/*.tsx",
 		"#hooks/*": "./src/hooks/*.ts",
 		"#shared/*": "./src/shared/*.ts",
-		"#partials/*": "./src/partials/*.ts"
+		"#partials/*": "./src/partials/*.tsx"
 	},
 	"exports": {
 		"./package.json": "./package.json",
