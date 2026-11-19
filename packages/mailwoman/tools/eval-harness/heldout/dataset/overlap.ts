@@ -56,7 +56,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
-import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
@@ -399,6 +399,10 @@ export async function auditHeldoutOverlap(input: {
 	 * @throws When a dataset row has no text here.
 	 */
 	rowTexts?: ReadonlyMap<string, string>
+	/**
+	 * The DuckDB connection's memory and thread limits; `openDuckDB`'s shares of the host when omitted.
+	 */
+	duckDBLimits?: DuckDBLimits
 }): Promise<OverlapProvenanceFile> {
 	const { dataset } = input
 
@@ -444,7 +448,7 @@ export async function auditHeldoutOverlap(input: {
 		overlapCorpora.set(rowID, found)
 	}
 
-	using db = await openDuckDB()
+	using db = await openDuckDB(input.duckDBLimits)
 
 	await loadKeys(db, "eval_ids", byID)
 	await loadKeys(db, "eval_groups", byGroup.keys())

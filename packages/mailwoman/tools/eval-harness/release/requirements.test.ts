@@ -165,6 +165,24 @@ describe("validateReleaseSpec", () => {
 		expect(v11.rationale).toMatch(/Confirmation reads before registration/u)
 	})
 
+	it("drafts v12 from v11 with an added development collection and no candidate", async () => {
+		const v11 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(11)))
+		const v12 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(12)))
+
+		const development = (spec: ReleaseRequirementSpec) => ({
+			...spec,
+			specVersion: null,
+			rationale: null,
+			evaluations: { ...spec.evaluations, development: null },
+		})
+
+		expect(development(v12)).toEqual(development(v11))
+		expect(v12.identities.candidate.sha256).toBeNull()
+		expect(v12.evaluations.development.ids.slice(0, -1)).toEqual(v11.evaluations.development.ids)
+		expect(v12.evaluations.development.ids.at(-1)).toMatch(/^heldout-dev-v0\.8\.21@/u)
+		expect(v12.rationale).toMatch(/Reads of v11/u)
+	})
+
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {
 		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(9)))
 

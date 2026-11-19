@@ -11,7 +11,7 @@
  *     --model-cards <published model-card.json>,<candidate model-card.json> \
  *     [--training-configs <config .yaml>,…] \
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
- *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text]
+ *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text] [--duckdb-memory-gib 4] [--duckdb-threads 4]
  *
  *   `--match-text` also compares every training row's folded text with the
  *   dataset's row texts, read from its rows file.
@@ -67,6 +67,11 @@ const { values } = parseArguments({
 			description: "Also compare training rows by folded text, reading the dataset's rows file",
 		},
 		out: { type: "string", description: "Where to write the provenance file" },
+		"duckdb-memory-gib": {
+			type: "string",
+			description: "DuckDB memory limit in GiB; defaults to openDuckDB's share of host memory",
+		},
+		"duckdb-threads": { type: "string", description: "DuckDB worker threads" },
 	},
 })
 
@@ -94,6 +99,12 @@ const result = await auditHeldoutOverlap({
 	...(values["candidate-model-card"] ? { candidateModelCard: values["candidate-model-card"] } : {}),
 	pathRoot: values["path-root"],
 	verifyFileSHA256: values["verify-file-sha256"] === true,
+	duckDBLimits: {
+		...(values["duckdb-memory-gib"]
+			? { memoryLimitBytes: Math.floor(Number(values["duckdb-memory-gib"]) * 2 ** 30) }
+			: {}),
+		...(values["duckdb-threads"] ? { threads: Number(values["duckdb-threads"]) } : {}),
+	},
 })
 
 await writeLocalJSONFile(result, values.out)
