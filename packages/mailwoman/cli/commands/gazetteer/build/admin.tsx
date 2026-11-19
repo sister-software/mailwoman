@@ -19,7 +19,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
@@ -43,6 +43,8 @@ export const spec = {
 const csv = (raw: string | null | undefined): string[] | null => (raw ? splitCountryCodes(raw) : null)
 
 const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { buildAdmin } = await import("@mailwoman/gazetteer/tools/pipeline")
 
@@ -53,7 +55,7 @@ const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 			geonamesCountries: csv(options.geonamesCountries),
 			overtureRelease: options.overtureRelease,
 			skipVerify: options.skipVerify,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		return [
@@ -66,9 +68,7 @@ const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	// Progress streams to stderr until the summary lands.
-	// `CommandTaskResult` renders that summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

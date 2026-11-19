@@ -31,7 +31,6 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -78,7 +77,7 @@ export const spec = {
 async function runVerification(
 	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk/verify").verifySoilDatabase>[0]["client"],
-	report: (name: string, message: string) => void,
+	onProgress: (message?: string) => void,
 	count?: number | null
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk/verify")
@@ -90,7 +89,7 @@ async function runVerification(
 		databasePath,
 		client,
 		points,
-		onProgress: (message) => report("verify", message),
+		onProgress,
 	})
 
 	return formatLayerVerification(verified, {
@@ -142,7 +141,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
-				progress.report,
+				progress.stage("verify"),
 				typeof options.verifyPoints === "string" ? Number(options.verifyPoints) : null
 			)
 		}
@@ -151,7 +150,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			client,
 			prefix,
 			cacheRoot: soilDatabasePath("cache", "archives"),
-			onProgress: (message) => progress.report("acquire", message),
+			onProgress: progress.stage("acquire"),
 		})
 
 		console.error(`▸ product vintage: ${acquired.sourceVintage} (${acquired.areas.length} survey area(s))`)
@@ -170,7 +169,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 				const report = await measureSoilCellResolutions({
 					shapefilePath: area.shapefilePath,
 					resolutions,
-					onProgress: (message) => progress.report("measure", message),
+					onProgress: progress.stage("measure"),
 				})
 
 				lines.push(
@@ -202,7 +201,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...(options.chunkSize ? { chunkSize: Number(options.chunkSize) } : {}),
-			onProgress: (message) => progress.report("soil", message),
+			onProgress: progress.stage("soil"),
 		})
 
 		const lines = [
@@ -232,7 +231,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 				...(await runVerification(
 					out,
 					client,
-					progress.report,
+					progress.stage("verify"),
 					options.verifyPoints ? Number(options.verifyPoints) : null
 				))
 			)
@@ -241,7 +240,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

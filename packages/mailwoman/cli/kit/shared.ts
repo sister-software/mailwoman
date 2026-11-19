@@ -20,6 +20,7 @@ import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
 
 import type { Check } from "#check"
+import { type StageProgress, StageLine } from "#cli/kit/progress"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 
 /**
@@ -195,13 +196,19 @@ export function reportToStderr(line: string): void {
 /**
  * Props for the standard command-task result renderer.
  */
-export interface CommandTaskResultProps<T> {
+export interface CommandTaskResultProps<T, P = string> {
 	state: CommandTaskState<T>
 	/**
 	 * Content shown while the task runs.
 	 * The renderer displays no element when this value is absent.
 	 */
 	running?: React.ReactNode
+	/**
+	 * The command's stage feed.
+	 *
+	 * Its latest stage is drawn under `running` while the task runs.
+	 */
+	progress?: StageProgress<P>
 	/**
 	 * Content shown after success.
 	 *
@@ -213,11 +220,18 @@ export interface CommandTaskResultProps<T> {
 /**
  * Renders the running, error and success states of a one-shot command.
  */
-export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
+export function CommandTaskResult<T, P = string>({
+	state,
+	running,
+	progress,
+	done,
+}: CommandTaskResultProps<T, P>): React.ReactElement | null {
 	if (state.status === "running") {
-		if (!running || running === null) return null
+		const content = !running ? null : typeof running === "string" ? h(Text, null, running) : h(Fragment, null, running)
 
-		return typeof running === "string" ? h(Text, null, running) : h(Fragment, null, running)
+		if (!progress) return content
+
+		return h(Box, { flexDirection: "column" }, content, h(StageLine<P>, { progress }))
 	}
 
 	if (state.status === "error") {
@@ -246,13 +260,6 @@ export function CommandSummaryLines({ lines }: { lines: readonly string[] }): Re
 			h(Text, { key: index, ...(index === 0 ? { color: "green" } : {}) }, index === 0 ? "✓ " : "  ", line)
 		)
 	)
-}
-
-/**
- * Creates a function that writes build-phase progress lines to stderr.
- */
-export function phaseReporter(prefix = "  "): (phase: string, detail?: string) => void {
-	return (phase, detail) => console.error(`${prefix}[${phase}]${detail ? ` ${detail}` : ""}`)
 }
 
 /**

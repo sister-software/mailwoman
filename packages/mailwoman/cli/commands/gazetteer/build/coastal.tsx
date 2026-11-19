@@ -40,7 +40,6 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -167,7 +166,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				url,
 				revisionDate: sourceVintage,
 				cacheRoot: coastalDatabasePath("cache"),
-				onProgress: (message) => progress.report("download", message),
+				onProgress: progress.stage("download"),
 			})
 		}
 
@@ -177,7 +176,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				resolutions: splitNumberList(options.measureResolutions),
 				scenarioKeys,
 				...(options.limit ? { limit: Number(options.limit) } : {}),
-				onProgress: (message) => progress.report("measure", message),
+				onProgress: progress.stage("measure"),
 			})
 
 			return [
@@ -243,7 +242,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...(Object.keys(expectedFeatureCounts).length ? { expectedFeatureCounts } : {}),
-			onProgress: (message) => progress.report("coastal", message),
+			onProgress: progress.stage("coastal"),
 		})
 
 		const lines = [
@@ -276,7 +275,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 				outsideScenarioKey: scenarioKeys.includes(DEFAULT_NCERM_SCENARIO)
 					? DEFAULT_NCERM_SCENARIO
 					: (scenarioKeys[0] ?? DEFAULT_NCERM_SCENARIO),
-				onProgress: (message) => progress.report("verify", message),
+				onProgress: progress.stage("verify"),
 			})
 
 			lines.push(
@@ -294,7 +293,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

@@ -182,12 +182,24 @@ const BAR_CELLS = 24
  * One progress step as a line: the bar and percent when the step states a percent,
  * then the stage, the counts, the rate and the time remaining.
  *
- * `ProgressLines` draws it, and a command whose frame doesn't redraw in place writes it to stderr.
+ * `ProgressLines` draws it.
  */
 export function describeProgressStep(key: string, step: ProgressStep): string {
+	return `${key}: ${progressStepParts(step, true).join("  ")}`
+}
+
+/**
+ * A step's parts, led by the bar and percent when `bar` is set and the step states a percent.
+ * Without the bar, the percent leads as `50%`.
+ */
+function progressStepParts(step: ProgressStep, bar: boolean): string[] {
 	const parts: string[] = []
 
-	if (step.percent != null) {
+	if (step.percent != null && !bar) {
+		parts.push(`${step.percent}%`)
+	}
+
+	if (step.percent != null && bar) {
 		const filled = Math.round((Math.min(100, Math.max(0, step.percent)) / 100) * BAR_CELLS)
 
 		parts.push(`${"█".repeat(filled)}${"░".repeat(BAR_CELLS - filled)}`, `${String(step.percent).padStart(3)}%`)
@@ -207,14 +219,40 @@ export function describeProgressStep(key: string, step: ProgressStep): string {
 		parts.push(`${formatRemaining(step.secondsRemaining)} left`)
 	}
 
-	return `${key}: ${parts.join("  ")}`
+	return parts
+}
+
+/**
+ * The plain line a command whose frame doesn't redraw writes to stderr for one report:
+ * `<ISO UTC time> [name] detail`, or `<ISO UTC time> [name]` without a detail.
+ */
+function formatLogLine(name: string, detail: string | null): string {
+	return `${new Date().toISOString()} [${name}]${detail ? ` ${detail}` : ""}\n`
+}
+
+/**
+ * Whether a command's progress is drawn in its frame: `inline` isn't false
+ * and Ink redraws the frame in place.
+ */
+function useLiveProgress(inline: boolean | undefined): { live: boolean; stderr: NodeJS.WritableStream } {
+	const { stdout } = useStdout()
+	const { stderr } = useStderr()
+
+	return { live: inline !== false && redrawsInPlace(stdout), stderr }
 }
 
 /**
  * What {@linkcode useProgressFeed} answers.
  */
 export interface ProgressFeed {
+	/**
+	 * The latest step per key, kept only while the frame redraws in place.
+	 */
 	entries: ProgressEntries
+	/**
+	 * Whether steps are drawn in the frame rather than written to stderr.
+	 */
+	live: boolean
 	/**
 	 * Subscribe to a source for the rest of the command, answering the function that unsubscribes.
 	 *
@@ -233,14 +271,24 @@ export interface ProgressFeed {
  *
  * A step that repeats the stage and percent already shown is dropped.
  * Git redraws its byte rate between percentage changes, and those redraws cause no render.
+ *
+ * When the frame doesn't redraw in place, each step is written to stderr as a timestamped
+ * line without the bar, as {@linkcode useStageProgress} writes a stage.
  */
-export function useProgressFeed(): ProgressFeed {
+export function useProgressFeed(options: { inline?: boolean } = {}): ProgressFeed {
+	const { live, stderr } = useLiveProgress(options.inline)
 	const [entries, setEntries] = useState<ProgressEntries>(new Map())
 
 	const watch = useCallback(
 		(source: ProgressSource, label?: string) =>
 			source.on("progress", ({ command, ...step }) => {
 				const key = label ?? command
+
+				if (!live) {
+					stderr.write(formatLogLine(key, progressStepParts(step, false).join("  ")))
+
+					return
+				}
 
 				setEntries((current) => {
 					const previous = current.get(key)
@@ -256,7 +304,7 @@ export function useProgressFeed(): ProgressFeed {
 					return new Map(current).set(key, step)
 				})
 			}),
-		[]
+		[live, stderr]
 	)
 
 	const clear = useCallback((key: string) => {
@@ -271,15 +319,15 @@ export function useProgressFeed(): ProgressFeed {
 		})
 	}, [])
 
-	return { entries, watch, clear }
+	return { entries, live, watch, clear }
 }
 
 /**
- * The latest stage a long-running command reported, and its detail.
+ * The latest stage a long-running command reported, and its detail when it gave one.
  */
 export interface Stage<T = string> {
 	name: string
-	detail: T
+	detail?: T
 }
 
 /**
@@ -309,11 +357,7 @@ export interface StageProgress<T> {
 	/**
 	 * The latest stage, kept only while the frame redraws in place.
 	 */
-	stage: Stage<T> | null
-	/**
-	 * The latest stage as `[name] detail`, kept only while the frame redraws in place.
-	 */
-	line: string | null
+	current: Stage<T> | null
 	/**
 	 * Whether stages are drawn in the frame rather than written to stderr.
 	 */
@@ -321,7 +365,22 @@ export interface StageProgress<T> {
 	/**
 	 * Report a stage: the frame's state on a terminal, otherwise one stderr line.
 	 */
-	report(name: string, detail: T): void
+	report(name: string, detail?: T): void
+	/**
+	 * A reporter bound to one stage name, for a library callback that passes only the detail.
+	 */
+	stage(name: string): (detail?: T) => void
+	/**
+	 * The detail as text, as {@linkcode StageProgressOptions.describe} gives it.
+	 */
+	describe(detail: T): string
+}
+
+/**
+ * A stage's detail as text, or `null` when it gave none.
+ */
+function describeDetail<T>(stage: Stage<T>, describe: (detail: T) => string): string | null {
+	return stage.detail == null ? null : describe(stage.detail)
 }
 
 /**
@@ -332,34 +391,42 @@ export interface StageProgress<T> {
  * as `<ISO UTC time> [name] detail`, and no state changes, so the frame isn't drawn per stage.
  */
 export function useStageProgress<T = string>(options: StageProgressOptions<T> = {}): StageProgress<T> {
-	const { stdout } = useStdout()
-	const { stderr } = useStderr()
-	const live = options.inline !== false && redrawsInPlace(stdout)
+	const { live, stderr } = useLiveProgress(options.inline)
 	const describe = options.describe ?? String
-	const [stage, setStage] = useState<Stage<T> | null>(null)
+	const [current, setCurrent] = useState<Stage<T> | null>(null)
 
 	const report = useCallback(
-		(name: string, detail: T) => {
+		(name: string, detail?: T) => {
+			const stage: Stage<T> = detail == null ? { name } : { name, detail }
+
 			if (live) {
-				setStage({ name, detail })
+				setCurrent(stage)
 
 				return
 			}
 
-			stderr.write(`${new Date().toISOString()} [${name}] ${describe(detail)}\n`)
+			stderr.write(formatLogLine(name, describeDetail(stage, describe)))
 		},
 		[live, stderr, describe]
 	)
 
-	return { stage, line: stage ? `[${stage.name}] ${describe(stage.detail)}` : null, live, report }
+	const stage = useCallback((name: string) => (detail?: T) => report(name, detail), [report])
+
+	return { current, live, report, stage, describe }
 }
 
 /**
- * The latest stage of a {@linkcode useStageProgress} feed as a dim line, or `null`
- * before the first stage and whenever stages go to stderr.
+ * The latest stage of a {@linkcode useStageProgress} feed as a dim `[name] detail` line,
+ * or `null` before the first stage and whenever stages go to stderr.
  */
-export function StageLine({ progress }: { progress: StageProgress<unknown> }): React.ReactElement | null {
-	return progress.line ? h(Text, { dimColor: true }, progress.line) : null
+export function StageLine<T>({ progress }: { progress: StageProgress<T> }): React.ReactElement | null {
+	const { current } = progress
+
+	if (!current) return null
+
+	const detail = describeDetail(current, progress.describe)
+
+	return h(Text, { dimColor: true }, `[${current.name}]${detail ? ` ${detail}` : ""}`)
 }
 
 /**

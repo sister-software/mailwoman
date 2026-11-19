@@ -29,7 +29,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -47,6 +47,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
 			await import("@mailwoman/gazetteer/tools/pipeline/postcode/ni/osm/database")
@@ -55,7 +57,7 @@ const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options })
 			sourceDir: options.sourceDir,
 			out: options.out,
 			offline: options.offline,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		const { stats } = result
@@ -89,8 +91,7 @@ const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options })
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

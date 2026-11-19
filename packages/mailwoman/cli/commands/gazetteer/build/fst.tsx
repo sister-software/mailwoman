@@ -5,14 +5,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Command specification for `gazetteer build fst`, which builds curated per-locale FST gazetteers.
@@ -50,7 +43,7 @@ const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 			dbPath: options.db,
 			outputDir: options.out,
 			uncurated: options.uncurated,
-			onProgress: (line) => progress.report("fst", line),
+			onProgress: progress.report,
 		})
 
 		return built.map(
@@ -59,7 +52,7 @@ const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") {
 		return (

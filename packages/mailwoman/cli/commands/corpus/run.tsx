@@ -139,7 +139,7 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 		)
 	}
 
-	const counts = progress.stage?.detail ?? { yielded: 0, written: 0, bytes: 0 }
+	const counts = progress.current?.detail ?? { yielded: 0, written: 0, bytes: 0 }
 	const ratio = counts.written && counts.yielded ? (counts.written / counts.yielded) * 100 : 0
 
 	return (

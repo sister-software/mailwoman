@@ -19,11 +19,46 @@ import { expect, test } from "vitest"
 
 import { describeProgressStep, type ProgressStep, TransferProgress } from "#cli-kit"
 
+/**
+ * A stdout that claims to be a terminal and a stderr, both captured.
+ *
+ * A harness run with `tty` renders to them and prints both captures as JSON at the end.
+ */
+const TERMINAL = `
+	import { Writable } from "node:stream"
+
+	class Capture extends Writable {
+		text = ""
+		_write(chunk, _encoding, callback) {
+			this.text += chunk.toString()
+			callback()
+		}
+	}
+
+	const tty = process.argv.includes("tty")
+	const terminal = { stdout: Object.assign(new Capture(), { isTTY: true, columns: 80, rows: 24 }), stderr: new Capture() }
+	const renderOptions = tty ? { ...terminal, interactive: true, patchConsole: false } : {}
+	const printCaptures = () => tty && process.stdout.write(JSON.stringify({ stdout: terminal.stdout.text, stderr: terminal.stderr.text }))
+`
+
+interface Captures {
+	stdout: string
+	stderr: string
+}
+
+async function runHarness(harness: string, ...args: string[]): Promise<{ stdout: string; stderr: string }> {
+	return runFile(process.execPath, ["--input-type=module", "-e", harness, ...args], {
+		cwd: repoRootPath(),
+		env: childEnv(),
+	})
+}
+
 const HARNESS = `
 	import { createElement as h, useEffect } from "react"
 	import { render } from "ink"
 	import { TypedEventTarget } from "@mailwoman/core/utils/events"
 	import { ProgressLines, useProgressFeed } from "mailwoman/cli/kit"
+	${TERMINAL}
 
 	class Source extends TypedEventTarget {
 		step(command, stage, percent) {
@@ -41,20 +76,24 @@ const HARNESS = `
 		return h(ProgressLines, { entries: feed.entries })
 	}
 
-	const app = render(h(View))
+	const app = render(h(View), renderOptions)
 
 	setTimeout(() => {
 		source.step("git clone a", "Receiving objects", 20)
 		source.step("git clone a", "Receiving objects", 50)
 		source.step("git clone b", "Resolving deltas", 100)
-		setTimeout(() => app.unmount(), 50)
+		setTimeout(() => {
+			app.unmount()
+			printCaptures()
+		}, 50)
 	}, 50)
 `
 
 /**
  * A local HTTP server answers three megabytes in three paced writes, and `streamToDisk`
  * reports them through a `TransferProgress` to the progress lines.
- * Interactive rendering keeps every frame on stdout.
+ *
+ * Interactive rendering to the captured terminal keeps every frame.
  */
 const DOWNLOAD_HARNESS = `
 	import { createServer } from "node:http"
@@ -62,6 +101,7 @@ const DOWNLOAD_HARNESS = `
 	import { render } from "ink"
 	import { streamToDisk } from "@mailwoman/core/utils"
 	import { ProgressLines, TransferProgress, useProgressFeed } from "mailwoman/cli/kit"
+	${TERMINAL}
 
 	const MB = 1_000_000
 	const server = createServer(async (_request, response) => {
@@ -87,7 +127,7 @@ const DOWNLOAD_HARNESS = `
 		return h(ProgressLines, { entries: feed.entries })
 	}
 
-	const app = render(h(View), { interactive: true })
+	const app = render(h(View), renderOptions)
 	const bytes = await streamToDisk({
 		url: "http://127.0.0.1:" + server.address().port + "/object",
 		destination: process.argv[1],
@@ -96,24 +136,26 @@ const DOWNLOAD_HARNESS = `
 	})
 
 	server.close()
-	console.error("bytes " + bytes)
-	setTimeout(() => app.unmount(), 50)
+	setTimeout(() => {
+		app.unmount()
+		terminal.stderr.text += "bytes " + bytes
+		printCaptures()
+	}, 50)
 `
 
 /**
- * A command that reports three stages through `useStageProgress`, then exits.
+ * A command that reports four stages through `useStageProgress`, the last without a detail, then exits.
  *
- * With `tty` it renders interactively to a stdout that claims to be a terminal
- * and prints both captures as JSON.
+ * With `tty` it renders interactively to the captured terminal.
  * Without it, it renders through `renderInkCommand` to the piped stdio, as a detached command does.
  */
 const STAGE_HARNESS = `
-	import { Writable } from "node:stream"
 	import { createElement as h, useEffect } from "react"
 	import { render, useApp } from "ink"
 	import { renderInkCommand, StageLine, useStageProgress } from "mailwoman/cli/kit"
+	${TERMINAL}
 
-	const STEPS = [["download", "1 of 2 files"], ["download", "2 of 2 files"], ["index", "built 3 rows"]]
+	const STEPS = [["download", "1 of 2 files"], ["download", "2 of 2 files"], ["index", "built 3 rows"], ["verify"]]
 
 	function View() {
 		const progress = useStageProgress()
@@ -135,59 +177,66 @@ const STAGE_HARNESS = `
 		return h(StageLine, { progress })
 	}
 
-	class Capture extends Writable {
-		text = ""
-		_write(chunk, _encoding, callback) {
-			this.text += chunk.toString()
-			callback()
-		}
-	}
-
-	if (process.argv[1] === "tty") {
-		const stdout = Object.assign(new Capture(), { isTTY: true, columns: 80, rows: 24 })
-		const stderr = new Capture()
-		const app = render(h(View), { stdout, stderr, interactive: true, patchConsole: false })
+	if (tty) {
+		const app = render(h(View), renderOptions)
 
 		await app.waitUntilExit()
-		process.stdout.write(JSON.stringify({ stdout: stdout.text, stderr: stderr.text }))
+		printCaptures()
 	} else {
 		await renderInkCommand(h(View))
 	}
 `
 
-const STAGE_LINE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \[(\w+)\] (.+)$/u
+/**
+ * A plain stderr line: the ISO UTC time, the bracketed name, and the detail when the report gave one.
+ */
+const LOG_LINE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \[([^\]]+)\](?: (.+))?$/u
+
+function logLines(stderr: string): Array<string | [string, string | undefined]> {
+	return [...stripANSI(stderr).matchAll(/^.+$/gmu)].map(([line]) => {
+		const match = LOG_LINE.exec(line)
+
+		return match ? [match[1]!, match[2]] : line
+	})
+}
 
 test("without a terminal, each stage is a timestamped stderr line written before exit, and no frame repeats it", async () => {
-	const { stdout, stderr } = await runFile(process.execPath, ["--input-type=module", "-e", STAGE_HARNESS], {
-		cwd: repoRootPath(),
-		env: childEnv(),
-	})
+	const { stdout, stderr } = await runHarness(STAGE_HARNESS)
 
-	const lines = [...stripANSI(stderr).matchAll(/^.+$/gmu)].map(([line]) => STAGE_LINE.exec(line)?.slice(1, 3) ?? line)
-
-	expect(lines).toEqual([
+	expect(logLines(stderr)).toEqual([
 		["download", "1 of 2 files"],
 		["download", "2 of 2 files"],
 		["index", "built 3 rows"],
+		["verify", undefined],
 		"before exit",
 	])
 
+	// A stage without a detail ends at its bracket, with no trailing space.
+	expect(stripANSI(stderr)).toMatch(/Z \[verify\]\n/u)
 	expect(stripANSI(stdout)).not.toContain("files")
 }, 30_000)
 
 test("on a terminal, the latest stage is drawn in the frame and nothing goes to stderr", async () => {
-	const { stdout } = await runFile(process.execPath, ["--input-type=module", "-e", STAGE_HARNESS, "tty"], {
-		cwd: repoRootPath(),
-		env: childEnv(),
-	})
-
-	const captured = parseJSONStrict<{ stdout: string; stderr: string }>(stdout)
+	const captured = parseJSONStrict<Captures>((await runHarness(STAGE_HARNESS, "tty")).stdout)
 	const frames = stripANSI(captured.stdout)
 
 	expect(frames).toContain("[download] 1 of 2 files")
 	expect(frames).toContain("[download] 2 of 2 files")
 	expect(frames).toContain("[index] built 3 rows")
+	expect(frames).toMatch(/\[verify\]\n/u)
 	expect(captured.stderr).toBe("")
+}, 30_000)
+
+test("without a terminal, the feed writes each step to stderr as a timestamped line without the bar", async () => {
+	const { stdout, stderr } = await runHarness(HARNESS)
+
+	expect(logLines(stderr)).toEqual([
+		["git clone a", "20%  Receiving objects  (2/10)"],
+		["git clone a", "50%  Receiving objects  (5/10)"],
+		["git clone b", "100%  Resolving deltas  (10/10)"],
+	])
+
+	expect(stripANSI(stdout)).not.toContain("Receiving")
 }, 30_000)
 
 test("TransferProgress emits a step only when the whole percent or, without a total, the megabyte changes", () => {
@@ -213,10 +262,8 @@ test("draws a local download's bytes, total and percent as it arrives", async ()
 	await using scratch = await temporaryDirectory()
 	const destination = scratch.path("object.db")
 
-	const { stdout, stderr } = await runFile(
-		process.execPath,
-		["--input-type=module", "-e", DOWNLOAD_HARNESS, destination.toString()],
-		{ cwd: repoRootPath(), env: childEnv() }
+	const { stdout, stderr } = parseJSONStrict<Captures>(
+		(await runHarness(DOWNLOAD_HARNESS, destination.toString(), "tty")).stdout
 	)
 
 	const total = ByteFormatter.formatSI(3_000_000)
@@ -233,13 +280,8 @@ test("draws a local download's bytes, total and percent as it arrives", async ()
 	expect(stripANSI(stdout)).toContain(`geo/object.db: ${"█".repeat(24)}  100%  ${total} of ${total}`)
 }, 30_000)
 
-test("renders the latest step per command", async () => {
-	const { stdout } = await runFile(process.execPath, ["--input-type=module", "-e", HARNESS], {
-		cwd: repoRootPath(),
-		env: childEnv(),
-	})
-
-	const text = stripANSI(stdout)
+test("on a terminal, renders the latest step per command", async () => {
+	const text = stripANSI(parseJSONStrict<Captures>((await runHarness(HARNESS, "tty")).stdout).stdout)
 
 	expect(text).toMatch(/git clone a: [█░]{24}\s+50%\s+Receiving objects\s+\(5\/10\)/u)
 	expect(text).toMatch(/git clone b: █{24}\s+100%\s+Resolving deltas\s+\(10\/10\)/u)

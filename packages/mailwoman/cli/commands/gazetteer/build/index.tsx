@@ -20,8 +20,6 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -52,25 +50,25 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 		})
 
-		console.error("▸ build admin (staging)")
+		progress.report("admin", "building (staging)")
 
 		const admin = await buildAdmin({
 			dataDir: options.data,
 			skipVerify: options.skipVerify,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		// The candidate reads the importance build stamped with this admin database's md5, so it is built here.
-		console.error(`▸ build importance ← ${admin.out}`)
+		progress.report("importance", `building ← ${admin.out}`)
 
 		const importance = await buildImportance({
 			adminDB: admin.out,
-			onProgress: (message) => progress.report("importance", message),
+			onProgress: progress.stage("importance"),
 		})
 
 		const candidateOut = wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
-		console.error(`▸ build candidate ← ${admin.out}`)
+		progress.report("candidate", `building ← ${admin.out}`)
 
 		const databases = await resolvePostcodeDatabases()
 
@@ -89,7 +87,7 @@ const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

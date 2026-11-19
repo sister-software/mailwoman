@@ -11,14 +11,7 @@
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -52,13 +45,13 @@ const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ o
 			placetypes: options.placetypes ? extractDelimited(options.placetypes) : null,
 			dbPath: options.db,
 			output: options.out,
-			onProgress: (line) => progress.report("lexicon", line),
+			onProgress: progress.stage("lexicon"),
 		})
 
 		return `${built.path} — ${built.entries} entries (${built.homographs} homograph-flagged; ${built.skippedDegenerate} degenerate + ${built.skippedRegionVocabulary} region-vocab + ${built.skippedSubPhrase} alt-subphrase + ${built.skippedProminence} sub-prominence skipped), max_ngram=${built.maxNgram}`
 	})
 
-	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	return <CommandTaskResult state={state} progress={progress} />
 }
 
 export default GazetteerBuildLocalitySurfaceLexicon

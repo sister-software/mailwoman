@@ -12,14 +12,7 @@
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -54,13 +47,13 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 			dictionariesDir: options.dictionaries,
 			locales: options.locales ? extractDelimited(options.locales) : null,
 			output: options.out,
-			onProgress: (line) => progress.report("morphology", line),
+			onProgress: progress.report,
 		})
 
 		return `${built.path} (${(built.bytes / 1e3).toFixed(0)} kB, ${built.canonicalCount} canonicals, ${built.variantCount} variants, ${built.localeCount} locales)`
 	})
 
-	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	return <CommandTaskResult state={state} progress={progress} />
 }
 
 export default GazetteerBuildStreetMorphology

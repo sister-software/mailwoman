@@ -37,9 +37,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
 	splitCountryCodes,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -194,7 +192,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 				release,
 				countries,
 				limit,
-				onPhase: phaseReporter(),
+				onPhase: progress.report,
 			})
 
 			parquetPaths = countries.map((cc) => ingest.countryParquet[cc]).filter((p): p is string => Boolean(p))
@@ -224,7 +222,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

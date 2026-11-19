@@ -8,15 +8,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PolygonBuildCounts } from "@mailwoman/gazetteer/tools/pipeline/polygons"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -33,7 +27,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildPolygons: CommandComponent<typeof spec> = ({ options }) => {
-	const progress = useStageProgress()
+	const progress = useStageProgress<PolygonBuildCounts>({ describe: stringifyJSON })
 
 	const state = useCommandTask(async () => {
 		const { buildPolygonsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/polygons")
@@ -43,13 +37,13 @@ const GazetteerBuildPolygons: CommandComponent<typeof spec> = ({ options }) => {
 			...(options.countries ? { countries: options.countries.split(",") } : {}),
 			...(options.tolerance ? { tolerance: Number(options.tolerance) } : {}),
 			postcodes: options.postcodes === true,
-			onProgress: (step) => progress.report("polygons", stringifyJSON(step)),
+			onProgress: progress.stage("polygons"),
 		})
 
 		return `polygons: ${stringifyJSON(counts)} → ${out} — sealed 0444`
 	})
 
-	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	return <CommandTaskResult state={state} progress={progress} />
 }
 
 export default GazetteerBuildPolygons

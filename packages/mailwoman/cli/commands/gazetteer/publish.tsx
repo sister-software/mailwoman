@@ -16,7 +16,7 @@ import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -44,6 +44,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			paths: { repoRootPathBuilder },
@@ -64,8 +66,9 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 
-		console.error(
-			`▸ publish ${candidateDB} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
+		progress.report(
+			"publish",
+			`${candidateDB} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
 
 		const r = await publishGazetteer({
@@ -77,7 +80,7 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 			prefix: options.prefix,
 			dryRun: options.dryRun,
 			overrideRefusals: options.overrideRefusals,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		return [
@@ -88,7 +91,7 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") {
 		return (

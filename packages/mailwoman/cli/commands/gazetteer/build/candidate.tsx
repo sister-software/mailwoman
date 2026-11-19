@@ -19,7 +19,6 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -98,7 +97,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 	})
 
 	// `CommandTaskResult` renders that summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

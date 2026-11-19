@@ -20,7 +20,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -45,6 +45,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			paths: { repoRootPath },
@@ -61,7 +63,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			out: options.out,
 			uprnDatabasePath: options.uprnDB,
 			buildSHA: buildSHA(repoRootPath()),
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		const regions = Object.entries(result.readByRegion)
@@ -83,7 +85,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") {
 		return <CommandSummaryLines lines={state.result} />

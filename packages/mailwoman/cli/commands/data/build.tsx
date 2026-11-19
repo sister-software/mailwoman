@@ -20,7 +20,7 @@ import { type BuildRecipe, BuildRecipeName } from "@mailwoman/core/layers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { Box, Text } from "ink"
+import { Text } from "ink"
 
 import {
 	type Check,
@@ -29,7 +29,6 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	mailwomanCommandPrefix,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 	writeRawStdout,
@@ -321,7 +320,7 @@ const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
 					...(options.geofabrikHost ? { geofabrik: options.geofabrikHost } : {}),
 					...(options.geoboundariesHost ? { geoBoundaries: options.geoboundariesHost } : {}),
 				},
-				onProgress: (message) => progress.report("build", message),
+				onProgress: progress.stage("build"),
 			})
 
 			if (options.json) {
@@ -334,17 +333,7 @@ const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
 	)
 
 	if (state.status !== "done") {
-		return (
-			<CommandTaskResult
-				state={state}
-				running={
-					<Box flexDirection="column">
-						<Text color="gray">building…</Text>
-						<StageLine progress={progress} />
-					</Box>
-				}
-			/>
-		)
+		return <CommandTaskResult state={state} running={<Text color="gray">building…</Text>} progress={progress} />
 	}
 
 	if (options.json) return null

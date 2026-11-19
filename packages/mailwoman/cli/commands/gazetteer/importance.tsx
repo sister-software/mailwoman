@@ -21,7 +21,6 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -60,7 +59,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		const r = await buildImportance({
 			adminDB: options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB),
 			tsv: options.tsv,
-			onProgress: (message) => progress.report("importance", message),
+			onProgress: progress.stage("importance"),
 		})
 
 		const elapsed = ((performance.now() - t0) / 1000).toFixed(1)
@@ -75,7 +74,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		]
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

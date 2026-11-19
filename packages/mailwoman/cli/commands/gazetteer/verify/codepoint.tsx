@@ -19,7 +19,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -44,6 +44,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const {
 			utils: { isoDate },
@@ -60,13 +62,13 @@ const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ optio
 		const report = runCodePointCheck({
 			codepointPath: options.codepoint ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`),
 			incumbentPath: options.incumbent ?? wofDatabasePath("frozen-backup-2026-08-04", "postalcode-geonames-tail.db"),
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		return options.json ? [prettyJSON(report)] : formatCodePointCheckReport(report)
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") {
 		return <CommandSummaryLines lines={state.result} />

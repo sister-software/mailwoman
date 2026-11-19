@@ -35,10 +35,8 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
-	describeProgressStep,
 	mailwomanCommandPrefix,
 	ProgressLines,
-	StageLine,
 	TransferProgress,
 	useCommandTask,
 	useProgressFeed,
@@ -422,14 +420,13 @@ function TermsBlock({ terms }: { terms: BundleTerms }): ReactElement {
 }
 
 const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
-	const feed = useProgressFeed()
-	// `--json` keeps stdout for the report.
-	// Without a frame that redraws in place, a line per tenth of each transfer goes to stderr.
+	// `--json` keeps stdout for the report, so its progress goes to stderr.
+	const feed = useProgressFeed({ inline: !options.json })
 	const progress = useStageProgress({ inline: !options.json })
-	const { live, report } = progress
 
+	// Without a frame that redraws in place, a line per tenth of each transfer goes to stderr.
 	const [transfers] = useState(() =>
-		live
+		feed.live
 			? new TransferProgress()
 			: new TransferProgress({ percentStep: 10, unsizedStepBytes: 100_000_000, refreshMs: Infinity })
 	)
@@ -437,11 +434,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 	const [plannedTerms, setPlannedTerms] = useState<BundleTerms[]>([])
 	const { watch } = feed
 
-	useEffect(() => {
-		if (live) return watch(transfers)
-
-		return transfers.on("progress", ({ command, ...step }) => report("transfer", describeProgressStep(command, step)))
-	}, [live, watch, transfers, report])
+	useEffect(() => watch(transfers), [watch, transfers])
 
 	const state = useCommandTask(
 		async () => {
@@ -466,7 +459,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				command,
 				onTerms: setPlannedTerms,
 				onTransfer: transfers.report.bind(transfers),
-				onProgress: (message) => report("pull", message),
+				onProgress: progress.stage("pull"),
 			})
 
 			if (options.json) {
@@ -482,11 +475,11 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 		return (
 			<CommandTaskResult
 				state={state}
+				progress={progress}
 				running={
 					<Box flexDirection="column">
 						{options.json ? null : plannedTerms.map((terms) => <TermsBlock key={terms.bundle} terms={terms} />)}
 						<Text color="gray">pulling…</Text>
-						<StageLine progress={progress} />
 						<ProgressLines entries={feed.entries} />
 					</Box>
 				}

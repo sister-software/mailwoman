@@ -36,7 +36,6 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -149,7 +148,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 				url,
 				revisionDate: sourceVintage,
 				cacheRoot: floodDatabasePath("cache"),
-				onProgress: (message) => progress.report("download", message),
+				onProgress: progress.stage("download"),
 			})
 		}
 
@@ -158,7 +157,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 				geodatabasePath,
 				resolutions: splitNumberList(options.measureResolutions),
 				...(options.limit ? { limit: Number(options.limit) } : {}),
-				onProgress: (message) => progress.report("measure", message),
+				onProgress: progress.stage("measure"),
 			})
 
 			return [
@@ -229,7 +228,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			// A `--limit` run has deliberately fewer features than the service reports,
 			// so the check is skipped there rather than made to pass.
 			...(options.offline || options.limit ? {} : { expectedFeatureCount: await client.readFeatureCount() }),
-			onProgress: (message) => progress.report("flood", message),
+			onProgress: progress.stage("flood"),
 		})
 
 		const lines = [
@@ -257,7 +256,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 				databasePath: out,
 				readServiceFeatures: createEAServiceReader(client),
 				points,
-				onProgress: (message) => progress.report("verify", message),
+				onProgress: progress.stage("verify"),
 			})
 
 			lines.push(
@@ -275,7 +274,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

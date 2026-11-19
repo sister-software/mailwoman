@@ -54,7 +54,10 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 * @defaultValue `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`
 	 */
 	output?: string
-	onProgress?: (line: string) => void
+	/**
+	 * Receives each build phase and its detail, unformatted.
+	 */
+	onProgress?: (phase: string, detail?: string) => void
 }
 
 export interface BuiltStreetMorphologyArtifact {
@@ -77,13 +80,13 @@ export async function buildStreetMorphologyArtifact(
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
 	const outPath = resolvePath(opts.output ?? wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME))
 
-	progress(`building street-morphology FST from ${dictionariesDir}`)
+	progress("morphology", `building street-morphology FST from ${dictionariesDir}`)
 
 	const result = await buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
 		...(opts.minVariantLength ? { minVariantLength: opts.minVariantLength } : {}),
-		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
+		onProgress: progress,
 	})
 
 	// Provenance appears in the artifact trailer (locales-as-countries, counts, sourceDB = the dictionaries dir).
@@ -96,7 +99,8 @@ export async function buildStreetMorphologyArtifact(
 	await changeMode(outPath, 0o444)
 
 	progress(
-		`  wrote ${outPath} (${(bytes.length / 1e3).toFixed(0)} kB, ${result.canonicalCount} canonicals, ${result.variantCount} variants, ${result.locales.length} locales) — sealed 0444`
+		"morphology",
+		`wrote ${outPath} (${(bytes.length / 1e3).toFixed(0)} kB, ${result.canonicalCount} canonicals, ${result.variantCount} variants, ${result.locales.length} locales) — sealed 0444`
 	)
 
 	return {

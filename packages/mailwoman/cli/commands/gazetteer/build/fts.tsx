@@ -18,7 +18,6 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -61,7 +60,7 @@ const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => 
 				try {
 					const result = buildPlaceSearchFTS(db, {
 						drop: options.drop,
-						onProgress: (phase, detail) => progress.report(phase, detail ?? ""),
+						onProgress: progress.report,
 					})
 
 					checks.push({
@@ -79,7 +78,7 @@ const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => 
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 

@@ -11,14 +11,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { allKeyed } from "@mailwoman/core/promises"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -62,7 +55,7 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 		if (options.fetch) {
 			await ingestPlaceNames({
 				release: options.release,
-				onPhase: (phase, detail) => progress.report(phase, detail ?? ""),
+				onPhase: progress.report,
 			})
 		}
 
@@ -77,13 +70,13 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 			corpusManifest: options.corpusManifest,
 			filePath: (listed) => listed.replace(/^\/data\//, `${dataRoot}/`),
 			...(options.out ? { out: options.out } : {}),
-			onProgress: (line) => progress.report("venue-heads", line),
+			onProgress: progress.stage("venue-heads"),
 		})
 
 		return `${path} — ${Object.keys(table.countries).length} countries, ${Object.keys(table.languages).length} languages`
 	})
 
-	return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	return <CommandTaskResult state={state} progress={progress} />
 }
 
 export default GazetteerBuildVenueHeads

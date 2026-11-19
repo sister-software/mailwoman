@@ -19,7 +19,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
@@ -44,6 +44,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { buildPostcodeGeonamesTail } = await import("@mailwoman/gazetteer/tools/pipeline")
 
@@ -53,7 +55,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 			countries,
 			out: options.out,
 			postalDir: options.geonamesPostal,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		const perCountry = result.countries.map((cc) => `${cc} ${(result.byCountry[cc] ?? 0).toLocaleString()}`).join(" · ")
@@ -69,8 +71,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

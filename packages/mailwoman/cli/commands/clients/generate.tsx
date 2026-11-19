@@ -15,7 +15,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -38,6 +38,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(
 		async () => {
 			const { generateClients } = await import("#tools/generate-clients")
@@ -45,15 +47,14 @@ const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
 			return generateClients({
 				outDir: options.outDir,
 				skipVerify: options.skipVerify,
-				onPhase: phaseReporter(),
+				onPhase: progress.report,
 			})
 		},
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	// Progress streams to stderr until the summary lands.
 	// `CommandTaskResult` renders that summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	const { ok, checks, receipt } = state.result
 

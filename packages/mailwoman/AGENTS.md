@@ -30,9 +30,12 @@ arrive camelCase (`options.dryRun`). When a command keeps several sibling module
 choice, such as `corpus fetch <source>`, it keeps a table of entries that each import their own
 module, and `satisfies Record<…>` keeps the table complete against the choices.
 
-A command reports a long-running library's `onProgress` through `useStageProgress` in `cli/kit/progress.ts`,
-never through its own React state or `console.error`, so a detached run with stdout redirected logs each stage
-to stderr as a timestamped line while it runs rather than only Ink's final frame at exit.
+A command reports a long-running library's `onProgress` or `onPhase` through `useStageProgress` in
+`cli/kit/progress.ts`, never through its own React state or `console.error`, so a detached run with stdout
+redirected logs each stage to stderr as a timestamped line while it runs rather than only Ink's final frame at
+exit. Pass `progress.report` for a `(phase, detail?)` callback and `progress.stage(name)` for a `(detail)` one,
+and hand `progress` to `CommandTaskResult` to draw the stage line. A library reports its phase and detail
+unformatted; the hook adds the brackets.
 
 `percentile` and `median` in core use nearest-rank semantics matched to the promotion eval. Keep
 those semantics. Declare a boolean positively with `default: true`; `cli/native/spec.ts` parses

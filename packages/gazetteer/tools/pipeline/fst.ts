@@ -385,7 +385,10 @@ export interface BuildLocaleFSTsOpts {
 	 * Skip the curation (an A/B control build with the same current DB).
 	 */
 	uncurated?: boolean
-	onProgress?: (line: string) => void
+	/**
+	 * Receives each build phase and its detail, unformatted.
+	 */
+	onProgress?: (phase: string, detail?: string) => void
 }
 
 export interface BuiltLocaleFST {
@@ -406,7 +409,8 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 
 	if (exclusion) {
 		progress(
-			`curation: ${exclusion.surfaces.size} whole surfaces + ${exclusion.stopwordTokens.size} stopword tokens (${EXCLUSION_POLICY_ID})`
+			"curation",
+			`${exclusion.surfaces.size} whole surfaces + ${exclusion.stopwordTokens.size} stopword tokens (${EXCLUSION_POLICY_ID})`
 		)
 	}
 
@@ -416,7 +420,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
 
 	if (surfaceCountryCounts) {
-		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
+		progress("ambiguity", `${surfaceCountryCounts.size} surfaces scanned across all countries`)
 	}
 
 	await makeDirectories(outputDir)
@@ -428,7 +432,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 
 		if (!countries) throw new Error(`unknown FST locale ${locale} — add it to FST_LOCALES with its country scope`)
 
-		progress(`building fst-${locale} (countries=[${countries}]) from ${dbPath}`)
+		progress(`fst-${locale}`, `building (countries=[${countries}]) from ${dbPath}`)
 
 		const { matcher, provenance } = await buildFSTFromWOF({
 			dbPath,
@@ -441,7 +445,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 					}
 				: {}),
 			...(surfaceCountryCounts ? { surfaceCountryCounts } : {}),
-			onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
+			onProgress: progress,
 		})
 
 		const outPath = outputDir(`fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
@@ -457,7 +461,8 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 		})
 
 		progress(
-			`  wrote ${outPath} (${ByteFormatter.formatIEC(bytes.length)}, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
+			`fst-${locale}`,
+			`wrote ${outPath} (${ByteFormatter.formatIEC(bytes.length)}, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
 		)
 	}
 

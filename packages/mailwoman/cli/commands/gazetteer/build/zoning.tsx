@@ -28,7 +28,6 @@ import {
 	formatLayerVerification,
 	type CommandComponent,
 	splitNumberList,
-	StageLine,
 	useCommandTask,
 	useStageProgress,
 } from "#cli-kit"
@@ -139,7 +138,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				url: await client.readExportURL(),
 				vintage,
 				cacheRoot: zoningDatabasePath("cache"),
-				onProgress: (message) => progress.report("download", message),
+				onProgress: progress.stage("download"),
 			})
 		}
 
@@ -149,7 +148,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				resolutions: splitNumberList(options.measureResolutions),
 				...(options.authority ? { authorityCode: options.authority } : {}),
 				...(options.limit ? { limit: Number(options.limit) } : {}),
-				onProgress: (message) => progress.report("measure", message),
+				onProgress: progress.stage("measure"),
 			})
 
 			return [
@@ -235,7 +234,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			...serviceChecks,
-			onProgress: (message) => progress.report("zoning", message),
+			onProgress: progress.stage("zoning"),
 		})
 
 		const lines = [
@@ -284,7 +283,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				databasePath: out,
 				readServiceFeatures: createServiceReader(client),
 				points,
-				onProgress: (message) => progress.report("verify", message),
+				onProgress: progress.stage("verify"),
 			})
 
 			lines.push(
@@ -304,7 +303,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 	})
 
 	// `CommandTaskResult` renders it.
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

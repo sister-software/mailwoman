@@ -26,7 +26,7 @@ import {
 	CommandSummaryLines,
 	CommandTaskResult,
 	type CommandComponent,
-	phaseReporter,
+	useStageProgress,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -47,6 +47,8 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(async () => {
 		const { buildPostcodeCodePoint } = await import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/database")
 
@@ -54,7 +56,7 @@ const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof spec> = ({ option
 			sourceDir: options.sourceDir,
 			out: options.out,
 			offline: options.offline,
-			onPhase: phaseReporter(),
+			onPhase: progress.report,
 		})
 
 		const { stats, metadata } = result
@@ -77,8 +79,7 @@ const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof spec> = ({ option
 		]
 	})
 
-	// Progress streams to stderr, leaving stdout for the summary.
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	return <CommandSummaryLines lines={state.result} />
 }

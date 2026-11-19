@@ -60,7 +60,7 @@ const GNAFAssemble: CommandComponent<typeof spec> = ({ options }) => {
 			sampleSize: options.n,
 			out: options.out,
 			holdoutPath: options.holdout,
-			onProgress: (message) => progress.report("assemble", message),
+			onProgress: progress.stage("assemble"),
 		})
 	})
 

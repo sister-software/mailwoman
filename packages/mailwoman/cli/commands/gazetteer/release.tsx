@@ -5,15 +5,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	phaseReporter,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Command specification for `gazetteer release`.
@@ -78,7 +70,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 
 		const databases = await resolvePostcodeDatabases(undefined, root)
 
-		console.error(`▸ build ← ${adminDB} (${databases.length} postcode databases; FTS baked in)`)
+		progress.report("build", `← ${adminDB} (${databases.length} postcode databases; FTS baked in)`)
 
 		const r = await buildCandidate({
 			adminDB,
@@ -99,7 +91,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 			await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 
-			console.error(`▸ publish → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
+			progress.report("publish", `→ R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
 
 			const p = await publishGazetteer({
 				candidateDB: out,
@@ -109,7 +101,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 				prefix: "mailwoman",
 				dryRun: options.dryRun,
 				overrideRefusals: options.overrideRefusals,
-				onPhase: phaseReporter(),
+				onPhase: progress.report,
 			})
 
 			lines.push(`published R2 ${p.key}${p.bumped ? ` + demo → ${version} (commit resources.tsx)` : ""}`)
@@ -118,7 +110,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<StageLine progress={progress} />} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
 
 	if (state.status === "done") {
 		return (

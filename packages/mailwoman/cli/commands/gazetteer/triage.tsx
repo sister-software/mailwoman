@@ -13,14 +13,7 @@ import type { TriageRow, TriageSummary } from "@mailwoman/gazetteer/tools/pipeli
 import { Box, Text } from "ink"
 import { PathBuilder, dirname } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type CommandComponent,
-	StageLine,
-	useCommandTask,
-	useStageProgress,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -85,17 +78,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	})
 
 	if (state.status !== "done") {
-		return (
-			<CommandTaskResult
-				state={state}
-				running={
-					<Box flexDirection="column">
-						<Text>Triaging WOF currency…</Text>
-						<StageLine progress={progress} />
-					</Box>
-				}
-			/>
-		)
+		return <CommandTaskResult state={state} running="Triaging WOF currency…" progress={progress} />
 	}
 
 	const { outPath, emitted, total, summary, queue } = state.result
