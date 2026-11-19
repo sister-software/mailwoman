@@ -4,7 +4,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
-import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
+import { CURRENT_RELEASE_SPEC, releaseSpecPath } from "#tools/eval-harness/release/current-spec"
 import {
 	capabilityProbeSources,
 	PENDING_COLLECTION_SUFFIX,
@@ -12,8 +12,7 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v11.json", import.meta.url).pathname
-const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
+const committedPath = releaseSpecPath(11)
 
 /**
  * The two fields schema 3 records hold as single pins.
@@ -62,10 +61,10 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("carries every v7 threshold into v8 and registers both evaluation collections", async () => {
-		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(7))
+		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(7))
 
 		const v8 = await readLocalJSONFile<Omit<ReleaseRequirementSpec, keyof SchemaThreePins> & SchemaThreePins>(
-			specRecord(8)
+			releaseSpecPath(8)
 		)
 
 		expect(v8.requirements).toEqual(v7.requirements)
@@ -76,8 +75,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v8 in the listed collections, postal_unit's venue exclusion and the geocode check only", async () => {
-		const v8 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(8))
-		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
+		const v8 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(8))
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(9)))
 		const byID = (spec: ReleaseRequirementSpec) => new Map(spec.requirements.map((req) => [req.id, req]))
 		const before = byID(v8)
 		const after = byID(v9)
@@ -119,8 +118,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v9 in postal_unit's no-loss form and the development collection only", async () => {
-		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
-		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(10)))
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(9)))
+		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(10)))
 
 		const byID = (spec: ReleaseRequirementSpec) => new Map(spec.requirements.map((req) => [req.id, req]))
 		const before = byID(v9)
@@ -148,8 +147,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v10 in the confirmation collections and the dataset identity only", async () => {
-		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(10)))
-		const v11 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(11)))
+		const v10 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(10)))
+		const v11 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(11)))
 
 		expect(v11.requirements).toEqual(v10.requirements)
 		expect(v11.objective).toEqual(v10.objective)
@@ -167,7 +166,7 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {
-		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(specRecord(9)))
+		const v9 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(9)))
 
 		expect(v9.evaluations.development.ids).toHaveLength(2)
 		expect(v9.identities.dataset.map((entry) => entry.id)).toEqual(v9.evaluations.confirmation.ids)
@@ -229,8 +228,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
-		const v3 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(3))
-		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(4))
+		const v3 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(3))
+		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(4))
 
 		expect(v4.requirements).toEqual(v3.requirements)
 		expect(v4.objective).toEqual(v3.objective)
@@ -239,8 +238,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v4 only in the po_box_cedex source selector, the rationale and the version", async () => {
-		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(4))
-		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(5))
+		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(4))
+		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(5))
 		const v4Selector = v4.requirements.find((req) => req.id === "po_box_cedex")!.select
 		const v5Selector = v5.requirements.find((req) => req.id === "po_box_cedex")!.select
 
@@ -261,8 +260,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v5 only by the postal_unit capability, the rationale and the version", async () => {
-		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(5))
-		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(6))
+		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(5))
+		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(6))
 		const added = v6.requirements.filter((req) => !v5.requirements.some((old) => old.id === req.id))
 
 		expect(v6.specVersion).toBe("6")
@@ -293,8 +292,8 @@ describe("validateReleaseSpec", () => {
 	})
 
 	it("differs from v6 only in the scorer revision, the rationale and the version", async () => {
-		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(6))
-		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(7))
+		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(6))
+		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(releaseSpecPath(7))
 
 		expect(v7.specVersion).toBe("7")
 		expect(v7.rationale).not.toBe(v6.rationale)
@@ -314,9 +313,9 @@ describe("validateReleaseSpec", () => {
 
 	it("refuses the earlier schema records: single admitted lists through schema 2, single pins in schema 3", async () => {
 		for (const version of [2, 3, 4, 5, 6, 7, 8]) {
-			await expect(readLocalJSONFile<unknown>(specRecord(version)).then((s) => validateReleaseSpec(s))).rejects.toThrow(
-				/schemaVersion must be 4/u
-			)
+			await expect(
+				readLocalJSONFile<unknown>(releaseSpecPath(version)).then((s) => validateReleaseSpec(s))
+			).rejects.toThrow(/schemaVersion must be 4/u)
 		}
 
 		const spec = await readLocalJSONFile<Record<string, Record<string, unknown>>>(committedPath)
