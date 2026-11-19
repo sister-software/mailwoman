@@ -31,7 +31,7 @@ Save this complete file as `validate-records.ts`:
 
 ```ts
 import { isZipCode } from "@mailwoman/codex/us"
-import { type AddressNode, parse, walkNodes } from "mailwoman"
+import { groupTuplesByTag, parse } from "mailwoman"
 
 interface AddressRecord {
 	id: string
@@ -46,16 +46,6 @@ interface PolicyResult {
 
 const required = ["house_number", "street", "locality", "region", "postcode"]
 
-function collect(roots: readonly AddressNode[]): Map<string, string[]> {
-	const found = new Map<string, string[]>()
-
-	for (const node of walkNodes(roots)) {
-		found.set(node.tag, [...(found.get(node.tag) ?? []), node.value])
-	}
-
-	return found
-}
-
 async function check(record: AddressRecord): Promise<PolicyResult> {
 	if (record.countryCode !== "US")
 		return { status: "unknown", reason: "US policy requires an established US country code" }
@@ -67,7 +57,7 @@ async function check(record: AddressRecord): Promise<PolicyResult> {
 	const result = await parse(record.raw, { locale: "en-US" })
 
 	if (result.faults.length) return { status: "unknown", reason: "parser reported a stage fault" }
-	const components = collect(result.tree.roots)
+	const components = groupTuplesByTag(result.tree)
 	const missing = required.filter((tag) => (components.get(tag)?.length ?? 0) !== 1)
 
 	if (missing.length) {
@@ -94,7 +84,7 @@ for (const record of records) {
 }
 ```
 
-The `collect` function visits every nested node through `walkNodes` and keeps repeated tags. The policy treats a missing or repeated required tag as unknown, because the parse then holds no single value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script, so an operational failure surfaces as an error instead of a policy result.
+`groupTuplesByTag` collects every value under its tag, nested nodes and repeated tags included. The policy treats a missing or repeated required tag as unknown, because the parse then holds no single value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script, so an operational failure surfaces as an error instead of a policy result.
 
 ## 2. Run the check
 

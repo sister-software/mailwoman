@@ -4,11 +4,21 @@
 export { createParser, parse, type Parser, type ParserOptions } from "#parser"
 
 // The declarations below belong to `@mailwoman/core` and `@mailwoman/codex`.
-// Each type appears in a signature exported above, and `walkNodes`, `decodeAsJSON`
-// and `decodeAsTuples` read the tree a parse returns, so a consumer who installed
-// only `mailwoman` imports them from here.
+// Each type appears in a signature exported above, and each function reads the tree a
+// parse returns, so a consumer who installed only `mailwoman` imports them from here.
 export type { ComponentTag } from "@mailwoman/codex/component"
-export { type AddressNode, type AddressTree, decodeAsJSON, decodeAsTuples, walkNodes } from "@mailwoman/core/decoder"
+
+export {
+	type AddressNode,
+	type AddressTree,
+	decodeAsJSON,
+	decodeAsOutline,
+	decodeAsTuples,
+	type FlatTreeNode,
+	flattenTreeNodes,
+	groupTuplesByTag,
+	walkNodes,
+} from "@mailwoman/core/decoder"
 
 export type {
 	CaseNormalization,

@@ -14,13 +14,13 @@ This page describes the principal Node library calls. `parse` and `createParser`
 
 ## Imports
 
-| Import                       | Public entry points covered here                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `mailwoman`                  | `parse`, `createParser`, `walkNodes`, `decodeAsJSON`, and the `AddressNode` and `PipelineResult` types |
-| `mailwoman/runtime-pipeline` | `createRuntimePipeline`                                                                                |
-| `mailwoman/geocode`          | `parseForGeocode`, `geocodeAddress`, `geocodeStream`, `USStateDatabaseProvider`                        |
-| `@mailwoman/neural`          | `NeuralAddressClassifier`                                                                              |
-| `@mailwoman/core/decoder`    | `createCalibrator`                                                                                     |
+| Import                       | Public entry points covered here                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| `mailwoman`                  | `parse`, `createParser`, the tree readers below, and the `AddressNode` and `PipelineResult` types |
+| `mailwoman/runtime-pipeline` | `createRuntimePipeline`                                                                           |
+| `mailwoman/geocode`          | `parseForGeocode`, `geocodeAddress`, `geocodeStream`, `USStateDatabaseProvider`                   |
+| `@mailwoman/neural`          | `NeuralAddressClassifier`                                                                         |
+| `@mailwoman/core/decoder`    | `createCalibrator`                                                                                |
 
 The `mailwoman` package installs the classifier and the en-US model, so a parse needs no other package.
 
@@ -57,7 +57,18 @@ An input in another script, such as Chinese or Japanese text, routes to that scr
 | `poiQueryKind`       | `extract` or `none`; `extract`           | Detects point-of-interest queries.                                        |
 | `scope`              | `ServiceRegistry`, absent                | Reuses the classifier a geocode process scope already holds.              |
 
-`walkNodes(roots)` yields every node of a tree in depth-first order, each parent before its children. `decodeAsJSON(tree, opts?)` flattens a tree to one value per tag. The [neural classifier](#neural-classifier) section describes its options.
+These functions read the tree a parse returns:
+
+| Function                 | Returns                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `decodeAsJSON(tree)`     | One value per tag. The [neural classifier](#neural-classifier) section describes its options.   |
+| `decodeAsTuples(tree)`   | `[tag, value]` pairs in source order, repeated tags included.                                   |
+| `groupTuplesByTag(tree)` | A `Map` from each tag to all of its values, in source order.                                    |
+| `flattenTreeNodes(tree)` | Every node in source order with its tag, value, span, score and resolved place fields.          |
+| `decodeAsOutline(tree)`  | Text with one node per line, `tag [start, end): "value"`, each child indented under its parent. |
+| `walkNodes(roots)`       | A generator over every node in depth-first order, each parent before its children.              |
+
+`console.table(flattenTreeNodes(result.tree), ["tag", "value", "start", "end"])` prints the components with their spans.
 
 ## Runtime pipeline
 
@@ -201,8 +212,8 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 
 console.log("kind:", result.kind.kind)
 console.log("path:", result.path)
-console.log("components:", JSON.stringify(decodeAsJSON(result.tree)))
 console.log("faults:", result.faults.length)
+console.table(decodeAsJSON(result.tree))
 ```
 
 Run `node library.ts`. The script prints this output on Linux x64:
@@ -210,8 +221,18 @@ Run `node library.ts`. The script prints this output on Linux x64:
 ```text
 kind: structured_address
 path: full
-components: {"region":"NY","locality":"New York","postcode":"10118","street":"5TH","unit":"Apt 4B","house_number":"350","street_suffix":"Ave"}
 faults: 0
+┌───────────────┬────────────┐
+│ (index)       │ Values     │
+├───────────────┼────────────┤
+│ region        │ 'NY'       │
+│ locality      │ 'New York' │
+│ postcode      │ '10118'    │
+│ street        │ '5TH'      │
+│ unit          │ 'Apt 4B'   │
+│ house_number  │ '350'      │
+│ street_suffix │ 'Ave'      │
+└───────────────┴────────────┘
 ```
 
 ## See also

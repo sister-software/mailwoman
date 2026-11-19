@@ -364,25 +364,22 @@ function QuickStart(): ReactNode {
 				<div className={clsx("row", styles.codeRow)}>
 					<div className="col col--6">
 						<h4>JavaScript &amp; TypeScript</h4>
-						<CodeBlock language="bash">{`npm install \\
-  mailwoman@${releaseVersion} \\
-  @mailwoman/neural@${releaseVersion} \\
-  @mailwoman/neural-weights-en-us@${releaseVersion}`}</CodeBlock>
+						<CodeBlock language="bash">{`npm install mailwoman@${releaseVersion}`}</CodeBlock>
 						<CodeBlock language="ts">{homeSnippet}</CodeBlock>
 					</div>
 					<div className="col col--6">
-						<h4>Published 11.0.0 result</h4>
+						<h4>Result</h4>
 						<CodeBlock language="text">{`normalized: Apt 4B 350 5TH Ave New York NY 10118
-region: "NY"
-  locality: "New York"
-    street: "5TH"
-      unit: "Apt 4B"
-      house_number: "350"
-      street_suffix: "Ave"
-    postcode: "10118"`}</CodeBlock>
+region [28, 30): "NY"
+  locality [19, 27): "New York"
+    street [11, 14): "5TH"
+      unit [0, 6): "Apt 4B"
+      house_number [7, 10): "350"
+      street_suffix [15, 18): "Ave"
+    postcode [31, 36): "10118"`}</CodeBlock>
 						<p>
-							The first-parse tutorial prints the complete tree, including each label&apos;s position in the normalized
-							text. Geocoding needs a separate geographic data layer.
+							Each line gives a label, its position in the normalized text, and its value. The first-parse tutorial
+							explains how to read the spans. Geocoding needs a separate geographic data layer.
 						</p>
 						<p>
 							<Link to="/docs/start">Run the first parse →</Link>

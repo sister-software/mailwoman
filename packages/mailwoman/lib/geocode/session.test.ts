@@ -31,7 +31,7 @@ test("a session that fails to start releases the lease it took on the active gen
 	} as GeocodeSessionOptions
 
 	await expect(createGeocodeSession(options)).rejects.toThrow(
-		/geocode requires the neural weights|file is not a database/u
+		/Loading the neural weights for zz-ZZ failed|file is not a database/u
 	)
 
 	// Disposal starts the lease file's removal without awaiting it, so the test waits for the file to go.

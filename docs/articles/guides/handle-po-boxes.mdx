@@ -27,39 +27,44 @@ The example uses the English model and reads no geographic database. Save the fo
 ## Parse and apply a mailing intake rule
 
 ```ts
-import { parse, walkNodes } from "mailwoman"
+import { decodeAsJSON, flattenTreeNodes, parse } from "mailwoman"
+
+const required = ["po_box", "locality", "region", "postcode"] as const
 
 for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
 	const result = await parse(input)
-	const nodes = [...walkNodes(result.tree.roots)].map(({ tag, value, start, end }) => ({ tag, value, start, end }))
+	const components = decodeAsJSON(result.tree)
+	const missing = required.filter((tag) => !components[tag])
+	const mailingCandidate = result.kind.kind === "po_box" && !result.faults.length && !missing.length
+	const route = mailingCandidate ? "mailing-address-review" : "request-more-input"
 
-	const required = ["po_box", "locality", "region", "postcode"]
-	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
-	const mailingCandidate = result.kind.kind === "po_box" && result.faults.length === 0 && missing.length === 0
-
-	console.log(
-		JSON.stringify({
-			input,
-			kind: result.kind.kind,
-			tree: nodes,
-			decision: {
-				route: mailingCandidate ? "mailing-address-review" : "request-more-input",
-				missing,
-				deliveryStatus: "unknown",
-				buildingCoordinate: "unknown",
-			},
-		})
-	)
+	console.log(`${input}\nkind: ${result.kind.kind}, route: ${route}, missing: ${missing.join(", ") || "none"}`)
+	console.table(flattenTreeNodes(result.tree), ["tag", "value", "start", "end"])
 }
 ```
 
-The code flattens the returned tree for display and keeps each component's tag, value, and offsets. It requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
+`decodeAsJSON` gives one value per tag for the required-field check. `flattenTreeNodes` lists the returned components in source order, and `console.table` prints each one's tag, value, and offsets. The rule requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
 
 Run `node route-po-box.ts`. The script prints this complete output:
 
-```json
-{"input":"PO Box 1234, Springfield, IL 62701","kind":"po_box","tree":[{"tag":"region","value":"IL","start":26,"end":28},{"tag":"locality","value":"Springfield","start":13,"end":24},{"tag":"po_box","value":"PO Box 1234","start":0,"end":11},{"tag":"postcode","value":"62701","start":29,"end":34}],"decision":{"route":"mailing-address-review","missing":[],"deliveryStatus":"unknown","buildingCoordinate":"unknown"}}
-{"input":"PO Box 1234","kind":"po_box","tree":[{"tag":"po_box","value":"PO Box 1234","start":0,"end":11}],"decision":{"route":"request-more-input","missing":["locality","region","postcode"],"deliveryStatus":"unknown","buildingCoordinate":"unknown"}}
+```text
+PO Box 1234, Springfield, IL 62701
+kind: po_box, route: mailing-address-review, missing: none
+┌─────────┬────────────┬───────────────┬───────┬─────┐
+│ (index) │ tag        │ value         │ start │ end │
+├─────────┼────────────┼───────────────┼───────┼─────┤
+│ 0       │ 'po_box'   │ 'PO Box 1234' │ 0     │ 11  │
+│ 1       │ 'locality' │ 'Springfield' │ 13    │ 24  │
+│ 2       │ 'region'   │ 'IL'          │ 26    │ 28  │
+│ 3       │ 'postcode' │ '62701'       │ 29    │ 34  │
+└─────────┴────────────┴───────────────┴───────┴─────┘
+PO Box 1234
+kind: po_box, route: request-more-input, missing: locality, region, postcode
+┌─────────┬──────────┬───────────────┬───────┬─────┐
+│ (index) │ tag      │ value         │ start │ end │
+├─────────┼──────────┼───────────────┼───────┼─────┤
+│ 0       │ 'po_box' │ 'PO Box 1234' │ 0     │ 11  │
+└─────────┴──────────┴───────────────┴───────┴─────┘
 ```
 
 For `PO Box 1234, Springfield, IL 62701`, the parser returned kind `po_box` and a `po_box` component containing `PO Box 1234`. The first record has the four components this intake requires, so the application routes it to mailing-address review. For `PO Box 1234`, the parse has the box component and lacks the three place fields, so the application requests more input. In both cases, delivery status and the location of a building remain unknown.

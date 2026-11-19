@@ -27,7 +27,7 @@ This exercise parses text and reads no geographic database. Save the following f
 ## Keep caller country separate from the parse
 
 ```ts
-import { createParser, walkNodes } from "mailwoman"
+import { createParser, decodeAsJSON, flattenTreeNodes } from "mailwoman"
 
 await using parser = await createParser({ locale: "en-US", machinePreferences: "none" })
 
@@ -44,29 +44,22 @@ for (const example of cases) {
 
 	const options = resolverPreference ? { resolveOpts: { defaultCountry: resolverPreference } } : undefined
 	const result = await parser.parse(example.input, options)
-	const nodes = [...walkNodes(result.tree.roots)].map(({ tag, value, start, end }) => ({ tag, value, start, end }))
-
-	const hasPostcode = nodes.some((node) => node.tag === "postcode")
+	const { postcode } = decodeAsJSON(result.tree)
 
 	const route =
-		result.faults.length || result.kind.kind !== "postcode_only" || !hasPostcode
+		result.faults.length || result.kind.kind !== "postcode_only" || !postcode
 			? "review-parse"
 			: example.applicationCountry
 				? "country-scoped-lookup-pending-data"
 				: "request-country"
 
+	const formats = result.queryShape.knownFormats.map((match) => match.format).join(", ")
+
 	console.log(
-		JSON.stringify({
-			input: example.input,
-			applicationCountry: example.applicationCountry,
-			resolverPreference,
-			path: result.path,
-			kind: result.kind.kind,
-			formats: result.queryShape.knownFormats.map((match) => match.format),
-			tree: nodes,
-			decision: { route, coordinate: "unknown", deliverability: "unknown" },
-		})
+		`${example.input} (application country: ${example.applicationCountry ?? "none"})\n` +
+			`path: ${result.path}, kind: ${result.kind.kind}, formats: ${formats || "none"}, route: ${route}`
 	)
+	console.table(flattenTreeNodes(result.tree), ["tag", "value", "start", "end"])
 }
 ```
 
@@ -74,12 +67,30 @@ The application owns `applicationCountry`. When it has `US`, the example also pa
 
 Run `node route-postcodes.ts`. The script prints this complete output:
 
-```json
-{"input":"10118","applicationCountry":null,"resolverPreference":null,"path":"full","kind":"postcode_only","formats":["us_zip","fr_postcode","de_postcode"],"tree":[{"tag":"postcode","value":"10118","start":0,"end":5}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}
-{"input":"10118","applicationCountry":"US","resolverPreference":{"country":"US","source":"caller"},"path":"full","kind":"postcode_only","formats":["us_zip","fr_postcode","de_postcode"],"tree":[{"tag":"postcode","value":"10118","start":0,"end":5}],"decision":{"route":"country-scoped-lookup-pending-data","coordinate":"unknown","deliverability":"unknown"}}
-{"input":"10118-1234","applicationCountry":null,"resolverPreference":null,"path":"fast-path","kind":"postcode_only","formats":["us_zip4"],"tree":[{"tag":"postcode","value":"10118-1234","start":0,"end":10}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}
+```text
+10118 (application country: none)
+path: full, kind: postcode_only, formats: us_zip, fr_postcode, de_postcode, route: request-country
+┌─────────┬────────────┬─────────┬───────┬─────┐
+│ (index) │ tag        │ value   │ start │ end │
+├─────────┼────────────┼─────────┼───────┼─────┤
+│ 0       │ 'postcode' │ '10118' │ 0     │ 5   │
+└─────────┴────────────┴─────────┴───────┴─────┘
+10118 (application country: US)
+path: full, kind: postcode_only, formats: us_zip, fr_postcode, de_postcode, route: country-scoped-lookup-pending-data
+┌─────────┬────────────┬─────────┬───────┬─────┐
+│ (index) │ tag        │ value   │ start │ end │
+├─────────┼────────────┼─────────┼───────┼─────┤
+│ 0       │ 'postcode' │ '10118' │ 0     │ 5   │
+└─────────┴────────────┴─────────┴───────┴─────┘
+10118-1234 (application country: none)
+path: fast-path, kind: postcode_only, formats: us_zip4, route: request-country
+┌─────────┬────────────┬──────────────┬───────┬─────┐
+│ (index) │ tag        │ value        │ start │ end │
+├─────────┼────────────┼──────────────┼───────┼─────┤
+│ 0       │ 'postcode' │ '10118-1234' │ 0     │ 10  │
+└─────────┴────────────┴──────────────┴───────┴─────┘
 ```
 
 Both `10118` runs returned kind `postcode_only` and the same `postcode` node. Both listed `us_zip`, `fr_postcode`, and `de_postcode` as format matches. The country `US` came from the application record, and the parser left the choice between those three shapes open. `10118-1234` matched only `us_zip4` and took the fast path, and this policy still requests an application-supplied country.
 
-All three records keep coordinate and deliverability as `unknown`, because this exercise ran neither a geographic lookup nor a postal-authority check. With a [verified data bundle](../reference/data-and-locales.mdx), run the country-scoped lookup and inspect its candidate evidence, `resolution_tier`, and `epistemic_status`. A country preference narrows the lookup and supplies no coordinate itself. When a later lookup returns `lat` and `lon` as `null`, store them as `null` in your record. The [result schema](../reference/schema.mdx) defines the fields, and the [confidence and limits explanation](../explanation/confidence-and-limits.mdx) separates format, place, and coordinate evidence.
+The coordinate and deliverability of all three records stay unknown, because this exercise ran neither a geographic lookup nor a postal-authority check. With a [verified data bundle](../reference/data-and-locales.mdx), run the country-scoped lookup and inspect its candidate evidence, `resolution_tier`, and `epistemic_status`. A country preference narrows the lookup and supplies no coordinate itself. When a later lookup returns `lat` and `lon` as `null`, store them as `null` in your record. The [result schema](../reference/schema.mdx) defines the fields, and the [confidence and limits explanation](../explanation/confidence-and-limits.mdx) separates format, place, and coordinate evidence.
