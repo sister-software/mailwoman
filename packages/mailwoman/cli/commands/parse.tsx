@@ -31,7 +31,7 @@ import {
 } from "#cli-kit"
 import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
-import type { createRuntimePipeline } from "#index"
+import type { createRuntimePipeline } from "#runtime-pipeline"
 
 const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -393,7 +393,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 }
 
 async function structuralResult(input: string, options: ParseOptions) {
-	const { createRuntimePipeline } = await import("#index")
+	const { createRuntimePipeline } = await import("#runtime-pipeline")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 
 	return pipeline(input, { locale: options.locale })
@@ -483,7 +483,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// A `false` value disables it.
 	const streetEvidence = options.streetEvidenceRerank ? "auto" : "none"
 
-	const { createRuntimePipeline } = await import("#index")
+	const { createRuntimePipeline } = await import("#runtime-pipeline")
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
@@ -598,7 +598,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
-	const { createRuntimePipeline } = await import("#index")
+	const { createRuntimePipeline } = await import("#runtime-pipeline")
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>

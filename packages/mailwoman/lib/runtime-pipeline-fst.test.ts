@@ -95,6 +95,21 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		expect(venueHeadOpts.isStreetAffix("nw")).toBe(false)
 	})
 
+	it("concurrent first calls all parse with the auto-loaded FST", async () => {
+		await using dirDirectory = await temporaryDirectory("mw-fst-concurrent-")
+		const { classifier, calls } = fakeClassifier(await writeTinyFST(dirDirectory.path))
+		const pipeline = createRuntimePipeline({ classifier })
+
+		await Promise.all(["1 Testville Road", "2 Testville Road", "3 Testville Road"].map((input) => pipeline(input)))
+
+		expect(calls.length).toBeGreaterThanOrEqual(3)
+
+		for (const call of calls) {
+			expect(call.fst).toBeDefined()
+			expect(call.fst).not.toBeNull()
+		}
+	})
+
 	it("streetMorphologyPrior: false keeps the matcher at the zeroed weights, and venueHead: none drops the lexicon", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-fst-prior-off-")
 		const dir = dirDirectory.path

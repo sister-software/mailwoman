@@ -34,11 +34,8 @@ npx mailwoman parse "350 5th Ave, New York, NY 10118"
 or in code:
 
 ```js
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
+import { parse } from "mailwoman"
 
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
 const result = await parse(input)
 ```
 

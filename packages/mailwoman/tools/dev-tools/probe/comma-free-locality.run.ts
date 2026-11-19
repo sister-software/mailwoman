@@ -23,7 +23,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#index"
+import { createRuntimePipeline } from "#runtime-pipeline"
 import { fold } from "#tools/dev-tools/register-board"
 import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#tools/eval-harness/parity-corpus"
 

@@ -2,8 +2,8 @@
 title: Route PO box records for mailing review
 description: Identify a PO box parse and keep mailing intake separate from building-coordinate use.
 role: guide
-source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
-verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
+source-of-truth: packages/mailwoman/lib/parser.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
+verified-with: mailwoman source with the parse API of issue 3121
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -16,10 +16,10 @@ Use this guide when a <Country code="US" /> mailing-address intake needs to sepa
 
 <CommonPrerequisites />
 
-Install the published parser packages:
+Install the parser:
 
 ```sh
-npm install --save-exact mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
+npm install --save-exact mailwoman@{{release.version}}
 ```
 
 The example uses the English model and reads no geographic database. Save the following complete script as `route-po-box.ts`.
@@ -27,36 +27,11 @@ The example uses the English model and reads no geographic database. Save the fo
 ## Parse and apply a mailing intake rule
 
 ```ts
-import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
-
-type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
-
-interface FlatNode {
-	tag: string
-	value: string
-	start: number
-	end: number
-}
+import { parse, walkNodes } from "mailwoman"
 
 for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
 	const result = await parse(input)
-	const nodes: FlatNode[] = []
-
-	function visit(node: TreeNode): void {
-		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
-
-		for (const child of node.children) {
-			visit(child)
-		}
-	}
-
-	for (const root of result.tree.roots) {
-		visit(root)
-	}
+	const nodes = [...walkNodes(result.tree.roots)].map(({ tag, value, start, end }) => ({ tag, value, start, end }))
 
 	const required = ["po_box", "locality", "region", "postcode"]
 	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
@@ -80,7 +55,7 @@ for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
 
 The code flattens the returned tree for display and keeps each component's tag, value, and offsets. It requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
 
-Run `node route-po-box.ts`. The published 11.0.0 packages returned this complete output:
+Run `node route-po-box.ts`. The script prints this complete output:
 
 ```json
 {"input":"PO Box 1234, Springfield, IL 62701","kind":"po_box","tree":[{"tag":"region","value":"IL","start":26,"end":28},{"tag":"locality","value":"Springfield","start":13,"end":24},{"tag":"po_box","value":"PO Box 1234","start":0,"end":11},{"tag":"postcode","value":"62701","start":29,"end":34}],"decision":{"route":"mailing-address-review","missing":[],"deliveryStatus":"unknown","buildingCoordinate":"unknown"}}

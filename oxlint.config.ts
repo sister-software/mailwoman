@@ -270,6 +270,14 @@ export default {
 			},
 		},
 		{
+			// The root entry lists each core and codex declaration that a public `mailwoman`
+			// signature uses, so a consumer who installed only `mailwoman` can import it.
+			files: ["packages/mailwoman/lib/index.ts"],
+			rules: {
+				"mailwoman/no-cross-package-reexport": "off",
+			},
+		},
+		{
 			// `@mailwoman/core/git` is the module the raw-git rule points at.
 			files: ["packages/core/lib/git.ts"],
 			rules: {

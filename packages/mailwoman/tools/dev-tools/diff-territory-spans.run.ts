@@ -10,7 +10,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { TextSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#index"
+import { createRuntimePipeline } from "#runtime-pipeline"
 import { REGISTERS as BASE_REGISTERS, register } from "#tools/dev-tools/register-board"
 
 const REGISTERS = [...BASE_REGISTERS, "comma-drop"] as const

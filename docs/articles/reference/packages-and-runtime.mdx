@@ -17,12 +17,12 @@ The [CLI reference](./cli.mdx) lists the current checkout's generated command an
 
 ## Packages to install directly
 
-| Package                                  | Purpose                                       | Public surface used here                                                                                         |
-| ---------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `mailwoman@11.0.0`                       | CLI and parse pipeline                        | `mailwoman` and `mw` binaries; `mailwoman` for `createRuntimePipeline`; `mailwoman/geocode` for geocoding calls. |
-| `@mailwoman/neural@11.0.0`               | Neural classifier runtime                     | `@mailwoman/neural` for `NeuralAddressClassifier`.                                                               |
-| `@mailwoman/neural-weights-en-us@11.0.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.                            |
-| `@mailwoman/codex@11.0.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                                          |
+| Package                                  | Purpose                                       | Public surface used here                                                                         |
+| ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `mailwoman@11.0.0`                       | CLI and parse pipeline                        | `mailwoman` and `mw` binaries; `mailwoman` for `parse`; `mailwoman/geocode` for geocoding calls. |
+| `@mailwoman/neural@11.0.0`               | Neural classifier runtime                     | `@mailwoman/neural` for `NeuralAddressClassifier`.                                               |
+| `@mailwoman/neural-weights-en-us@11.0.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.            |
+| `@mailwoman/codex@11.0.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                          |
 
 The [first-parse tutorial](../start.mdx) installs the first three packages and runs a complete parse. The [record-check guide](../guides/validate-records.mdx) also installs `@mailwoman/codex` for `isZipCode`. `mailwoman` declares `@mailwoman/neural` and `onnxruntime-node` as dependencies. The tutorial installs `@mailwoman/neural` explicitly because its script imports `NeuralAddressClassifier` from that package. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
 

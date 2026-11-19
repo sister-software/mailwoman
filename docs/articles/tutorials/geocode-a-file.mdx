@@ -17,9 +17,8 @@ In this tutorial you geocode a six-line file of addresses in one command. You th
 
 Install the published 11.0.0 packages:
 
-```sh
-npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
-```
+````sh
+npm install mailwoman@{{release.version}}```
 
 The geocoder reads geographic data from a local directory. Choose a data directory, then download the global place candidates, the French address points, and the address points for Washington, DC and Vermont:
 
@@ -28,7 +27,7 @@ export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
 npx mailwoman data pull us --only us-vt
-```
+````
 
 The four pulls download about 10.2 GB: `candidate` 2.9 GB, `fr` 7 GB, DC 127.5 MB and Vermont 132.2 MB. The `candidate` bundle resolves places such as cities and regions worldwide. The `fr` and `us` files add individual address points. Add `--dry-run` to any pull to see its plan and size first. [Data and locales](../reference/data-and-locales.mdx) lists every bundle.
 

@@ -2,8 +2,8 @@
 title: Route parse results to review
 description: Apply an explicit row-level intake rule and inspect its decisions against labeled examples.
 role: guide
-source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/types.ts
-verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
+source-of-truth: packages/mailwoman/lib/parser.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/types.ts
+verified-with: mailwoman source with the parse API of issue 3121
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -19,7 +19,7 @@ Use this procedure when a <Country code="US" /> street-address intake needs a co
 Install the published parser packages:
 
 ```sh
-npm install --save-exact mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
+npm install --save-exact mailwoman@{{release.version}}
 ```
 
 The seven labels in the script below are illustrative application decisions stated before this rule is evaluated. The first three complete street-address strings are labeled `ready`. The PO box, intersection, isolated unit, and row with an unsupported region string are labeled `review`. These labels describe this intake's desired routing, as opposed to a postal authority's judgment or a verified location. The example reads no geographic database.
@@ -29,13 +29,7 @@ The seven labels in the script below are illustrative application decisions stat
 Save the following file as `review-parses.ts`:
 
 ```ts
-import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
-
-type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
+import { type AddressNode, parse, walkNodes } from "mailwoman"
 
 type Route = "ready" | "review"
 
@@ -55,26 +49,14 @@ let reviewCorrect = 0
 
 for (const [id, expected, input] of examples) {
 	const result = await parse(input)
-	const nodes: TreeNode[] = []
-
-	function visit(node: TreeNode): void {
-		nodes.push(node)
-
-		for (const child of node.children) {
-			visit(child)
-		}
-	}
-
-	for (const root of result.tree.roots) {
-		visit(root)
-	}
+	const nodes = [...walkNodes(result.tree.roots)]
 
 	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
 
 	const route: Route =
 		result.faults.length || result.kind.kind !== "structured_address" || missing.length ? "review" : "ready"
 
-	let weakest: TreeNode | null = null
+	let weakest: AddressNode | null = null
 
 	for (const node of nodes) {
 		if (!weakest || node.confidence < weakest.confidence) {
@@ -114,7 +96,7 @@ The rule checks the kind and component tags across the whole tree. It prints the
 
 ## Inspect the decisions
 
-Run `node review-parses.ts`. Published 11.0.0 returned this complete output:
+Run `node review-parses.ts`. The script prints this complete output:
 
 ```text
 {"id":"A1","input":"1600 Pennsylvania Avenue NW, Washington, DC 20500","expected":"ready","route":"ready","kind":"structured_address","missing":[],"weakest":"postcode:0.914"}

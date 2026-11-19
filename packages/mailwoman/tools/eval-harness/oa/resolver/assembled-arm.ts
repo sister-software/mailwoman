@@ -8,7 +8,8 @@
 
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 
-import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
+import { loadDefaultPlaceCountry } from "#default/placer"
+import { createRuntimePipeline } from "#runtime-pipeline"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { buildParseRig } from "#tools/eval-harness/oa/resolver/parse-rig"
 

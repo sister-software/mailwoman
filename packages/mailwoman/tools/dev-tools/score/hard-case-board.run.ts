@@ -20,8 +20,8 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#index"
 import { createResolverBackend, existingWOFDatabasePaths } from "#resolver-backend"
+import { createRuntimePipeline } from "#runtime-pipeline"
 import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#tools/eval-harness/oa/resolver/tree-hits"
 

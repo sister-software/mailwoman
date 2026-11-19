@@ -44,7 +44,7 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 ## Installation
 
 ```sh
-npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+npm install mailwoman
 ```
 
 That installs the CLI, the neural runtime, and the US-English model weights. For French
@@ -73,12 +73,7 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ## Library
 
 ```ts
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
+import { decodeAsJSON, parse } from "mailwoman"
 
 const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 console.log(decodeAsJSON(tree))

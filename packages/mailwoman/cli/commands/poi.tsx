@@ -234,7 +234,7 @@ async function formatResult(result: POIQueryResult, options: Options): Promise<s
 }
 
 async function runPOI(input: string, options: Options): Promise<string> {
-	const { createRuntimePipeline } = await import("#index")
+	const { createRuntimePipeline } = await import("#runtime-pipeline")
 
 	// An attempted-but-failed encoder load always reports its failure.
 	// Absent weights produce an install hint.

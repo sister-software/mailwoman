@@ -15,8 +15,8 @@ import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#index"
 import { createResolverBackend } from "#resolver-backend"
+import { createRuntimePipeline } from "#runtime-pipeline"
 
 /**
  * Options for the POI board and its pipeline.

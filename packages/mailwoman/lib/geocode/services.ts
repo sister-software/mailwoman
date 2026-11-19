@@ -26,8 +26,7 @@ import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
-import { createToken, type ServiceRegistry, type ServiceToken } from "async-init"
+import type { ServiceRegistry } from "async-init"
 import { resolvePath } from "path-ts"
 
 import type { LayerCatalog } from "#data/catalog"
@@ -39,7 +38,6 @@ import type { GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import type { ParsePriorArtifacts, ParsePriors } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
 import { type ForkEntityProbe, type LayerRoutes, loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
@@ -51,28 +49,11 @@ import {
 	resolveCandidateDBPath,
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
+import { ClassifierService, registerClassifierService } from "#services/classifier"
+import { ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
+import { need, noInputs, provide, type ServiceKey, serviceKey, type ServiceTimings } from "#services/registry"
 
 type ResolverModule = typeof import("@mailwoman/resolver-wof-sqlite")
-
-/**
- * A service's value and the release its scope runs at disposal.
- *
- * A registry disposes only an instance that declares `Symbol.asyncDispose`,
- * and the repository's database handles declare the synchronous `Symbol.dispose`.
- * Every service is held in this shape, so the registry releases each one.
- */
-export interface Held<T> extends AsyncDisposable {
-	readonly value: T
-}
-
-/**
- * A registry token for a {@link Held} service value.
- */
-export type ServiceKey<T> = ServiceToken<Held<T>>
-
-function serviceKey<T>(description: string): ServiceKey<T> {
-	return createToken<Held<T>>(description)
-}
 
 /**
  * Releases a value that's a disposable handle or `null`.
@@ -82,29 +63,19 @@ function disposeHandle(handle: Disposable | null | undefined): void {
 }
 
 /**
- * The tokens of the process scope.
+ * The token of the resolver module.
+ *
+ * The process scope holds it beside {@link ClassifierService}.
  */
-export const ProcessServices = {
-	classifier: serviceKey<ScriptRoutedClassifier<NeuralAddressClassifier>>("classifier"),
-	resolverModule: serviceKey<ResolverModule>("resolver-module"),
-} as const
+export const ResolverModuleService = serviceKey<ResolverModule>("resolver-module")
 
 /**
- * The parse priors and the artifact paths they were read from.
- */
-export interface LoadedParsePriors {
-	priors: ParsePriors
-	artifacts: ParsePriorArtifacts
-}
-
-/**
- * The tokens of the generation scope.
+ * The tokens of the generation scope, besides {@link ParsePriorsService}.
  */
 export const GenerationServices = {
 	selection: serviceKey<Awaited<ReturnType<typeof holdActiveSelection>>>("selection"),
 	candidateDB: serviceKey<string | null>("candidate-db"),
 	wofPaths: serviceKey<string[]>("wof-paths"),
-	parsePriors: serviceKey<LoadedParsePriors>("parse-priors"),
 	lookup: serviceKey<Awaited<ReturnType<typeof createResolverBackend>>>("resolver-backend"),
 	capitals: serviceKey<Awaited<ReturnType<typeof capitalIndexFor>>>("capitals"),
 	regionDatabases: serviceKey<USStateDatabaseProvider>("region-databases"),
@@ -124,51 +95,6 @@ export const GenerationServices = {
 } as const
 
 /**
- * Wall-clock milliseconds of each service's own work, keyed by its token's description.
- *
- * The clock starts after the service's inputs resolve, so a figure excludes the wait for another service.
- * Services resolve in parallel, so the figures overlap and do not sum to the session's total.
- */
-export type ServiceTimings = Record<string, number>
-
-/**
- * Registers one service: `inputs` awaits the services it reads, `build` constructs
- * the value, and `release` gives it back when the scope disposes.
- */
-function provide<I, T>(
-	registry: ServiceRegistry,
-	timings: ServiceTimings,
-	key: ServiceKey<T>,
-	inputs: () => Promise<I>,
-	build: (inputs: I) => T | Promise<T>,
-	release?: (value: T) => void | Promise<void>
-): void {
-	registry.register(key, async () => {
-		const resolved = await inputs()
-		const startedAt = performance.now()
-		const value = await build(resolved)
-
-		timings[key.description] = performance.now() - startedAt
-
-		return {
-			value,
-			[Symbol.asyncDispose]: async () => {
-				await release?.(value)
-			},
-		}
-	})
-}
-
-/**
- * The value of a registered service, resolving it on first use.
- */
-export async function need<T>(registry: ServiceRegistry, key: ServiceKey<T>): Promise<T> {
-	return (await registry.get(key)).value
-}
-
-const none = async (): Promise<null> => null
-
-/**
  * Registers the process-scope services: the routed neural classifier and the resolver module.
  *
  * A scope serves only sessions built with the same `locale`, `dataRoot` and `weightsCacheRoot`,
@@ -179,21 +105,9 @@ export function registerProcessServices(
 	options: Pick<GeocodeSessionOptions, "locale" | "dataRoot" | "weightsCacheRoot">,
 	timings: ServiceTimings = {}
 ): void {
-	provide(registry, timings, ProcessServices.classifier, none, async () => {
-		try {
-			return await NeuralAddressClassifier.loadRoutedFromWeights({
-				locale: options.locale,
-				overlayRoot: resolvePath(options.dataRoot, "weights"),
-				...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
-			})
-		} catch {
-			throw new CommandError(
-				"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
-			)
-		}
-	})
+	registerClassifierService(registry, options, timings)
 
-	provide(registry, timings, ProcessServices.resolverModule, none, async () => {
+	provide(registry, timings, ResolverModuleService, noInputs, async () => {
 		try {
 			return await import("@mailwoman/resolver-wof-sqlite")
 		} catch {
@@ -246,7 +160,7 @@ export function registerGenerationServices(
 		registry,
 		timings,
 		S.selection,
-		none,
+		noInputs,
 		() => holdActiveSelection(options.dataRoot),
 		(selection) => disposeHandle(selection.lease)
 	)
@@ -263,24 +177,19 @@ export function registerGenerationServices(
 		({ candidateDB, catalog: snapshot }) => (candidateDB ? [] : resolveWOFPath(options, snapshot))
 	)
 
-	provide(
+	registerParsePriorsService(
 		registry,
-		timings,
-		S.parsePriors,
-		() => allKeyed({ routed: get(ProcessServices.classifier), catalog: catalog() }),
-		async ({ routed, catalog: snapshot }) => {
-			const { loadParsePriors } = await import("#geocode/parse-priors")
+		{
 			// The FSTs the active selection lists, else the files beside the weights.
-			const artifacts = await selectedParsePriorArtifacts(routed.primary, options.locale, options.dataRoot, snapshot)
-
-			const priors = await loadParsePriors(artifacts, {
+			select: async (primary) =>
+				selectedParsePriorArtifacts(primary, options.locale, options.dataRoot, await catalog()),
+			load: {
 				gazetteerPrior: settings.gazetteerPrior,
 				venueHeadPrior: settings.venueHeadPrior,
 				label: `locale ${options.locale}`,
-			})
-
-			return { priors, artifacts }
-		}
+			},
+		},
+		timings
 	)
 
 	provide(
@@ -289,7 +198,7 @@ export function registerGenerationServices(
 		S.lookup,
 		() =>
 			allKeyed({
-				mod: get(ProcessServices.resolverModule),
+				mod: get(ResolverModuleService),
 				candidateDB: get(S.candidateDB),
 				wofPaths: get(S.wofPaths),
 				catalog: catalog(),
@@ -317,7 +226,7 @@ export function registerGenerationServices(
 		registry,
 		timings,
 		S.regionDatabases,
-		() => allKeyed({ mod: get(ProcessServices.resolverModule), catalog: catalog() }),
+		() => allKeyed({ mod: get(ResolverModuleService), catalog: catalog() }),
 		({ mod, catalog: snapshot }) => USStateDatabaseProvider.create(mod, options.dataRoot, snapshot),
 		disposeHandle
 	)
@@ -328,7 +237,7 @@ export function registerGenerationServices(
 		registry,
 		timings,
 		S.explicitAddressPoints,
-		() => get(ProcessServices.resolverModule),
+		() => get(ResolverModuleService),
 		(mod) =>
 			options.addressPointsDB
 				? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAddressPointLocale })
@@ -340,7 +249,7 @@ export function registerGenerationServices(
 		registry,
 		timings,
 		S.explicitInterpolation,
-		() => get(ProcessServices.resolverModule),
+		() => get(ResolverModuleService),
 		(mod) => (options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null),
 		disposeHandle
 	)
@@ -373,7 +282,7 @@ export function registerGenerationServices(
 		disposeHandle
 	)
 
-	provide(registry, timings, S.classifyKind, none, async () => {
+	provide(registry, timings, S.classifyKind, noInputs, async () => {
 		const locale = options.locale ?? "en-US"
 		const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
 		const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
@@ -382,7 +291,7 @@ export function registerGenerationServices(
 			classify(input, shape, { locale, confidence: 1, alternatives: [], script: [], evidence: null, source: "caller" })
 	})
 
-	provide(registry, timings, S.placer, none, () =>
+	provide(registry, timings, S.placer, noInputs, () =>
 		options.placeCountry
 			? loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
 			: null
@@ -423,10 +332,10 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 	const get = <T>(key: ServiceKey<T>) => need(registry, key)
 
 	return allKeyed({
-		routed: get(ProcessServices.classifier),
+		routed: get(ClassifierService),
 		selection: get(S.selection),
 		candidateDB: get(S.candidateDB),
-		parsePriors: get(S.parsePriors),
+		parsePriors: get(ParsePriorsService),
 		lookup: get(S.lookup),
 		capitals: get(S.capitals),
 		regionDatabases: get(S.regionDatabases),

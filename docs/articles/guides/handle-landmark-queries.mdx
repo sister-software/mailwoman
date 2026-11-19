@@ -19,16 +19,15 @@ This guide applies one rule. Use a coordinate only when the result's `resolution
 
 Install the published 11.1.0 packages:
 
-```sh
-npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
-```
+````sh
+npm install mailwoman@{{release.version}}```
 
 Place names resolve against the point-of-interest database. Download it with the global place candidates:
 
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate poi
-```
+````
 
 The two bundles download about 6.8 GB: `candidate` 2.9 GB and `poi` 3.9 GB. The `poi` bundle covers the <Country code="US" />, Canada, Mexico and France. The output below was captured with local builds of both bundles that are newer than the 11.1.0 registry entries, so your coordinates and confidence values can differ.
 

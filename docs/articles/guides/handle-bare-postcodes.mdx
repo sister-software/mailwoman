@@ -2,8 +2,8 @@
 title: Require country context for a bare postcode
 description: Parse a postcode-only input and request caller country context before a geographic lookup.
 role: guide
-source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/resolver/types.ts, packages/postcode/lib/legacy-formats/table.ts
-verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
+source-of-truth: packages/mailwoman/lib/parser.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/resolver/types.ts, packages/postcode/lib/legacy-formats/table.ts
+verified-with: mailwoman source with the parse API of issue 3121
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -19,7 +19,7 @@ Use this guide when a user enters only a postcode and your application needs to 
 Install the published parser packages:
 
 ```sh
-npm install --save-exact mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}}
+npm install --save-exact mailwoman@{{release.version}}
 ```
 
 This exercise parses text and reads no geographic database. Save the following file as `route-postcodes.ts`.
@@ -27,20 +27,9 @@ This exercise parses text and reads no geographic database. Save the following f
 ## Keep caller country separate from the parse
 
 ```ts
-import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createParser, walkNodes } from "mailwoman"
 
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier, machinePreferences: "none" })
-
-type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
-
-interface FlatNode {
-	tag: string
-	value: string
-	start: number
-	end: number
-}
+await using parser = await createParser({ locale: "en-US", machinePreferences: "none" })
 
 const cases: Array<{ input: string; applicationCountry: string | null }> = [
 	{ input: "10118", applicationCountry: null },
@@ -54,20 +43,8 @@ for (const example of cases) {
 		: null
 
 	const options = resolverPreference ? { resolveOpts: { defaultCountry: resolverPreference } } : undefined
-	const result = await parse(example.input, options)
-	const nodes: FlatNode[] = []
-
-	function visit(node: TreeNode): void {
-		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
-
-		for (const child of node.children) {
-			visit(child)
-		}
-	}
-
-	for (const root of result.tree.roots) {
-		visit(root)
-	}
+	const result = await parser.parse(example.input, options)
+	const nodes = [...walkNodes(result.tree.roots)].map(({ tag, value, start, end }) => ({ tag, value, start, end }))
 
 	const hasPostcode = nodes.some((node) => node.tag === "postcode")
 
@@ -95,7 +72,7 @@ for (const example of cases) {
 
 The application owns `applicationCountry`. When it has `US`, the example also passes `{ country: "US", source: "caller" }` through `resolveOpts.defaultCountry`, the resolver's country preference. This exercise configures no resolver, so the parse output can't show whether a lookup applied that preference. The policy reads the application field directly and marks a future country-scoped lookup as pending data. It requests a country when that field is absent, even when one format name looks specific to a country.
 
-Run `node route-postcodes.ts`. Published 11.0.0 returned this complete output:
+Run `node route-postcodes.ts`. The script prints this complete output:
 
 ```json
 {"input":"10118","applicationCountry":null,"resolverPreference":null,"path":"full","kind":"postcode_only","formats":["us_zip","fr_postcode","de_postcode"],"tree":[{"tag":"postcode","value":"10118","start":0,"end":5}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}

@@ -35,13 +35,13 @@ A missing or blank `address` or `query` answers `400 { error, detail }`; the POI
 
 ## Options
 
-| Option                | Type              | Purpose                                                                                                            |
-| --------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `pipeline`            | `RuntimePipeline` | A pre-built pipeline (`createRuntimePipeline(...)`). The DI / testing path — supply it and no weights are loaded.  |
-| `resolveDatabasePath` | `string`          | WOF gazetteer (`candidate.db` / `wof.db`) for the lazily-built resolver. Omit → parse works, geocode has no coord. |
-| `poiDatabasePath`     | `string`          | A `poi.db` layer. Enables `POST /v1/poi`; wires POI execution on the lazily-built pipeline.                        |
-| `locale`              | `string`          | Locale for the lazily-loaded weights + default per-call hint. Defaults to `"en-US"`.                               |
-| `prefix`              | `string`          | Fastify `register` prefix for all plugin routes (e.g. `"/geo"` exposes `POST /geo/v1/parse`).                      |
+| Option                | Type              | Purpose                                                                                                                                             |
+| --------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pipeline`            | `RuntimePipeline` | A pre-built pipeline (`createRuntimePipeline(...)` from `mailwoman/runtime-pipeline`). The DI / testing path — supply it and no weights are loaded. |
+| `resolveDatabasePath` | `string`          | WOF gazetteer (`candidate.db` / `wof.db`) for the lazily-built resolver. Omit → parse works, geocode has no coord.                                  |
+| `poiDatabasePath`     | `string`          | A `poi.db` layer. Enables `POST /v1/poi`; wires POI execution on the lazily-built pipeline.                                                         |
+| `locale`              | `string`          | Locale for the lazily-loaded weights + default per-call hint. Defaults to `"en-US"`.                                                                |
+| `prefix`              | `string`          | Fastify `register` prefix for all plugin routes (e.g. `"/geo"` exposes `POST /geo/v1/parse`).                                                       |
 
 Supply `pipeline` to inject your own pipeline. Otherwise the plugin builds one lazily on the first request. Weights and gazetteer data resolve through `@mailwoman/neural`'s standard resolution — the same lookup the CLI and the drop-in servers use.
 

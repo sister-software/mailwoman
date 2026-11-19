@@ -60,7 +60,7 @@ async function loadHelpers(): Promise<PipelineHelpers> {
 	return { decodeAsTuples, extractGeocodeResult }
 }
 
-const loadPipelineModules = () => Promise.all([import("mailwoman"), import("@mailwoman/neural")])
+const loadPipelineModules = () => Promise.all([import("mailwoman/runtime-pipeline"), import("@mailwoman/neural")])
 
 const loadResolverModules = () =>
 	Promise.all([

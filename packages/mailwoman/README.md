@@ -14,12 +14,7 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 ```ts
 // Library — parse programmatically
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
+import { decodeAsJSON, parse } from "mailwoman"
 
 const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 console.log(decodeAsJSON(tree))
@@ -47,8 +42,8 @@ for token classification.
 ## Installation
 
 ```sh
-# Parser: CLI + neural runtime + US-English model weights
-npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+# Parser: CLI, neural runtime and the US-English model weights
+npm install mailwoman
 
 # Optional: coordinate resolution (the `geocode` command + `--resolve`)
 npm install @mailwoman/resolver-wof-sqlite
@@ -57,8 +52,7 @@ npm install @mailwoman/resolver-wof-sqlite
 npm install @mailwoman/neural-weights-fr-fr
 ```
 
-Requires Node.js ≥ 22.5.1. Without a `neural-weights-*` package the CLI still runs but falls
-back to the legacy rule parser (weaker); install the weights to use the neural model.
+Requires Node.js ≥ 22.5.1.
 
 ## CLI
 
@@ -85,17 +79,11 @@ mailwoman doctor --json   # machine-readable { checks: [{ id, label, status, det
 
 ## Library API
 
-You supply a neural classifier loaded from a weights package; `createRuntimePipeline` wires
-up normalization, locale detection, kind classification, phrase grouping, and token
-classification with production-ready defaults.
+`parse` runs normalization, locale detection, kind classification, phrase grouping and token
+classification. It loads the en-US model on its first call and keeps it loaded for later calls.
 
 ```ts
-import { decodeAsJSON, decodeAsTuples } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
-
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
+import { decodeAsJSON, decodeAsTuples, parse } from "mailwoman"
 
 const result = await parse("350 5th Ave, New York, NY 10118")
 ```
@@ -130,27 +118,30 @@ for (const root of result.tree.roots) {
 }
 ```
 
-Confidence calibration ships with the weights: `loadFromWeights` applies the bundled
+Confidence calibration ships with the weights: the parser applies the bundled
 per-locale calibrator, so node confidences are calibrated probabilities (a `0.88` is
 right about 88% of the time) rather than raw scores.
 
 ### Options
 
-Factory options configure the pipeline, and per-call `PipelineOpts` tune a single parse. The
-ones you'll reach for most:
+`createParser` options configure a parser, and per-call `PipelineOpts` tune a single parse.
+The ones you'll reach for most:
 
 ```ts
-const parse = createRuntimePipeline({
-	classifier,
-	resolver, // optional — see "Geocoding" below
+import { createParser } from "mailwoman"
+
+await using parser = await createParser({
+	locale: "en-US", // the weights package of the primary model (the default)
 	caseNormalization: "title-case", // title-case detected all-caps input before the model (the default)
 })
 
-await parse("350 5TH AVE, NEW YORK, NY 10118", {
+await parser.parse("350 5TH AVE, NEW YORK, NY 10118", {
 	locale: "en-US", // assert a locale instead of detecting it
 	placerCountryUse: "filter", // confine resolution to a confidently-detected country (the default)
 })
 ```
+
+`await using` releases the parser's model when the block ends.
 
 ## Geocode addresses
 
@@ -168,7 +159,8 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 
 Programmatically, build a `WOFSQLitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
-and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
+and hand the resolver to `createRuntimePipeline({ classifier, resolver })` from
+`mailwoman/runtime-pipeline`. The resolved
 `result.tree` roots then have a `wof:id` and coordinate. See
 [Data and locales](https://mailwoman.post/docs/reference/data-and-locales)
 for database prerequisites and installation checks.

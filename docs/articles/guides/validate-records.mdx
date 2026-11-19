@@ -2,7 +2,7 @@
 title: Check parsed records against an application policy
 description: Classify parsed US street-address records as pass, fail, or unknown using required components and ZIP Code shape.
 role: guide
-verified-with: mailwoman v11.0.0
+verified-with: mailwoman source with the parse API of issue 3121
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -17,10 +17,10 @@ The check returns `pass` when all required components appear once and the postco
 
 <CommonPrerequisites />
 
-Install the published 11.0.0 packages:
+Install the parser and the codex package, which holds the ZIP Code shape check:
 
 ```sh
-npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/codex@{{release.version}}
+npm install mailwoman@{{release.version}} @mailwoman/codex@{{release.version}}
 ```
 
 The parser and ZIP Code shape check run without a geocoding database. Take `countryCode: "US"` from your application's own country field before using this policy, because a country inferred from the postcode shape would make the policy circular. Adapt the required tags and postcode check for other address types or countries.
@@ -31,8 +31,7 @@ Save this complete file as `validate-records.ts`:
 
 ```ts
 import { isZipCode } from "@mailwoman/codex/us"
-import { createRuntimePipeline } from "mailwoman"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { type AddressNode, parse, walkNodes } from "mailwoman"
 
 interface AddressRecord {
 	id: string
@@ -46,17 +45,12 @@ interface PolicyResult {
 }
 
 const required = ["house_number", "street", "locality", "region", "postcode"]
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const parse = createRuntimePipeline({ classifier })
 
-type TreeNode = Awaited<ReturnType<typeof parse>>["tree"]["roots"][number]
+function collect(roots: readonly AddressNode[]): Map<string, string[]> {
+	const found = new Map<string, string[]>()
 
-function collect(nodes: readonly TreeNode[], found = new Map<string, string[]>()): Map<string, string[]> {
-	for (const node of nodes) {
-		const values = found.get(node.tag) ?? []
-		values.push(node.value)
-		found.set(node.tag, values)
-		collect(node.children, found)
+	for (const node of walkNodes(roots)) {
+		found.set(node.tag, [...(found.get(node.tag) ?? []), node.value])
 	}
 
 	return found
@@ -100,7 +94,7 @@ for (const record of records) {
 }
 ```
 
-The recursive `collect` function reads nested nodes and keeps repeated tags. The policy treats a missing or repeated required tag as unknown, because the parse then holds no single value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script, so an operational failure surfaces as an error instead of a policy result.
+The `collect` function visits every nested node through `walkNodes` and keeps repeated tags. The policy treats a missing or repeated required tag as unknown, because the parse then holds no single value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script, so an operational failure surfaces as an error instead of a policy result.
 
 ## 2. Run the check
 
@@ -108,7 +102,7 @@ The recursive `collect` function reads nested nodes and keeps repeated tags. The
 node validate-records.ts
 ```
 
-The published 11.0.0 packages produced this output:
+The script prints this output:
 
 ```text
 complete: pass — required components are present and postcode has US ZIP Code shape

@@ -10,7 +10,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolvePath } from "path-ts"
 
-import { createRuntimePipeline } from "#index"
+import { createRuntimePipeline } from "#runtime-pipeline"
 
 /**
  * Per-call parser options.

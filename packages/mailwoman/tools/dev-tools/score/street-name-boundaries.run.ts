@@ -17,7 +17,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
-import { createRuntimePipeline } from "#index"
+import { createRuntimePipeline } from "#runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { overlayLocale, routeCountry } from "#tools/eval-harness/gauntlet/routing"
 

@@ -45,10 +45,10 @@ import {
 	registerGenerationServices,
 	registerProcessServices,
 	resolveGenerationServices,
-	type ServiceTimings,
 } from "#geocode/services"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import type { CapitalTier } from "#resolver-backend"
+import type { ServiceTimings } from "#services/registry"
 
 /**
  * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.

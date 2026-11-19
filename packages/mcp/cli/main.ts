@@ -19,9 +19,9 @@ import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { createRuntimePipeline } from "mailwoman"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 
 import {
 	assertBDCDatabaseExists,

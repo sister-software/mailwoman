@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import {
+	type AnchorRegionLookupLike,
 	type CaseNormalization,
 	type PlacerCountryUse,
 	type FSTMatcherLike,
@@ -79,8 +81,8 @@ export type POIQueryKindSetting = "extract" | "none" | { poiDatabasePath: PathBu
 /**
  * Options for {@link createRuntimePipeline}.
  *
- * `machinePreferences`, `placeCountry`, `streetEvidence`, `fst` and `streetMorphology`
- * take a {@link StageSource} and default to `"auto"`.
+ * `machinePreferences`, `placeCountry`, `streetEvidence`, `fst`, `streetMorphology`
+ * and `anchorRegions` take a {@link StageSource} and default to `"auto"`.
  */
 export interface CreateRuntimePipelineOpts {
 	/**
@@ -115,6 +117,14 @@ export interface CreateRuntimePipelineOpts {
 	 * when an FST matcher is active.
 	 */
 	streetMorphology?: StageSource<FSTMatcherLike>
+
+	/**
+	 * The postcode-prefix lookup that gives an anchored postcode its admin ancestry.
+	 *
+	 * `"auto"` loads the classifier's `postcodePrefixPaths` beside an `"auto"` FST.
+	 * An explicit FST without an explicit lookup runs without one.
+	 */
+	anchorRegions?: StageSource<AnchorRegionLookupLike>
 
 	/**
 	 * Whether the street-morphology matcher also biases a street affix on a segment that
@@ -276,6 +286,7 @@ export function createRuntimePipeline(
 	const machinePreferencesSource = opts.machinePreferences ?? "auto"
 	const fstSource = opts.fst ?? "auto"
 	const streetMorphologySource = opts.streetMorphology ?? "auto"
+	const anchorRegionsSource = opts.anchorRegions ?? "auto"
 	const venueHeadSource = opts.venueHead ?? "auto"
 	const placeCountrySource = opts.placeCountry ?? "auto"
 	const streetEvidenceSource = opts.streetEvidence ?? "auto"
@@ -337,6 +348,7 @@ export function createRuntimePipeline(
 
 		...(typeof fstSource === "object" ? { fst: fstSource } : {}),
 		...(typeof streetMorphologySource === "object" ? { streetMorphology: streetMorphologySource } : {}),
+		...(typeof anchorRegionsSource === "object" ? { anchorRegions: anchorRegionsSource } : {}),
 		streetMorphologyPrior: opts.streetMorphologyPrior ?? true,
 		...(venueHeadSource === "auto"
 			? { venueHead: venueHeadForLocale }
@@ -378,16 +390,14 @@ export function createRuntimePipeline(
 		})
 	}
 
-	let placeCountryResolved = placeCountrySource !== "auto"
-	let streetEvidenceResolved = streetEvidenceSource !== "auto"
-	let priorsResolved = fstSource !== "auto" && streetMorphologySource !== "auto"
-
 	const poiDatabasePath = typeof poiQueryKind === "object" ? poiQueryKind.poiDatabasePath : null
-	let poiLookupResolved = !poiDatabasePath
 
-	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
-		if (!placeCountryResolved) {
-			placeCountryResolved = true
+	// Every call awaits this one load before it reads `stages`, so concurrent
+	// first calls run with the same stages.
+	// A load that throws clears the memo and the next call loads again.
+	// Each assignment below writes the same value on a retry.
+	const loadFirstCallStages = memoizeResettable(async () => {
+		if (placeCountrySource === "auto") {
 			const fn = await loadDefaultPlaceCountry()
 
 			if (fn) {
@@ -395,9 +405,7 @@ export function createRuntimePipeline(
 			}
 		}
 
-		if (!poiLookupResolved && poiDatabasePath) {
-			poiLookupResolved = true
-
+		if (poiDatabasePath) {
 			try {
 				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
 
@@ -415,8 +423,7 @@ export function createRuntimePipeline(
 			} catch {}
 		}
 
-		if (!streetEvidenceResolved) {
-			streetEvidenceResolved = true
+		if (streetEvidenceSource === "auto") {
 			const grammar = (opts.classifier as Partial<NeuralAddressClassifier> | undefined)?.spanGrammar
 
 			if (grammar) {
@@ -428,8 +435,7 @@ export function createRuntimePipeline(
 			}
 		}
 
-		if (!priorsResolved) {
-			priorsResolved = true
+		if (fstSource === "auto" || streetMorphologySource === "auto") {
 			const artifacts = classifierPriorArtifacts(opts.classifier)
 
 			// A classifier without an FST artifact parses without the FST priors, as it did
@@ -444,7 +450,7 @@ export function createRuntimePipeline(
 				stages.fst = loaded.fst
 			}
 
-			if (fstSource === "auto" && loaded.anchorRegions) {
+			if (fstSource === "auto" && anchorRegionsSource === "auto" && loaded.anchorRegions) {
 				stages.anchorRegions = loaded.anchorRegions
 			}
 
@@ -452,6 +458,10 @@ export function createRuntimePipeline(
 				stages.streetMorphology = loaded.streetMorphology
 			}
 		}
+	})
+
+	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
+		await loadFirstCallStages()
 
 		let effectiveRunOpts = runOpts
 

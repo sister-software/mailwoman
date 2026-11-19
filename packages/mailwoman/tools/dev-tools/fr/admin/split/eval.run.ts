@@ -178,7 +178,7 @@ async function main() {
 			import("@mailwoman/resolver-wof-sqlite"),
 			import("@mailwoman/neural/scorer"),
 			import("@mailwoman/resolver"),
-			import("#index"),
+			import("#default/placer"),
 		])
 
 	const anchorPath = args["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")

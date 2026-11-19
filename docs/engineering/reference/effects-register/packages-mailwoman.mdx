@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 390 of the group's 770 library and tool modules.
+This page lists 391 of the group's 775 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -1940,6 +1940,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `pathExists`                | `data-root:eval/coord`             | 1     |
 | read  | `pathExists`                | `repo:data/eval/golden/v0.1.3/dev` | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (property)`            | 1     |
+
+## `packages/mailwoman/tools/dev-tools/parser-api-bench.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `awaits at module scope`, 4 times
+- `runs a statement at module scope`, 2 times
 
 ## `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts`
 

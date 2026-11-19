@@ -34,10 +34,11 @@ import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
 import { createGeocodeCommandOptions } from "#geocode/command-options"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { need, ProcessServices } from "#geocode/services"
 import { createGeocodeProcessScope, createGeocodeSession, type GeocodeSessionOptions } from "#geocode/session"
 import { GeocodeSessionSlot } from "#geocode/session/slot"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
+import { ClassifierService } from "#services/classifier"
+import { need } from "#services/registry"
 
 const DATA_ROOT = dataRootPath()
 
@@ -203,7 +204,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	let parse: MailwomanAPIEngine["parse"]
 
 	try {
-		const classifier = (await need(processScope, ProcessServices.classifier)).primary
+		const classifier = (await need(processScope, ClassifierService)).primary
 
 		parse = async (address, opts) => {
 			const inputMode =
