@@ -12,7 +12,7 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = releaseSpecPath(11)
+const committedPath = releaseSpecPath(12)
 
 /**
  * The two fields schema 3 records hold as single pins.
@@ -23,8 +23,8 @@ interface SchemaThreePins {
 }
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v11 specification with every threshold registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v11\.json$/u)
+	it("accepts the current v12 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v12\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
