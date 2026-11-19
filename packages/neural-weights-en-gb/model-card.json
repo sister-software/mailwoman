@@ -12,8 +12,8 @@
 	],
 	"locale": "en-gb",
 	"files_md5": {
-		"$comment": "The bytes `mwops release fetch-hf-weights` verifies for this package's own artifacts, staged under the base card's bucket directory. `pair-index-gb.bin` is the index built without Price Paid Data (#2635); a local rebuild differs because the header records its build date.",
-		"pair-index-gb.bin": "83821bcf2f5543951cb0862278182050"
+		"$comment": "The bytes `mwops release fetch-hf-weights` verifies for this package's own artifacts, staged under the base card's bucket directory. `pair-index-gb.bin` is the index built without Price Paid Data (#2635); a local rebuild differs because the header records its build date. 11.2.0 stages the 2026-11-19 build, whose pair records are byte-identical to 10.8.0's (md5 83821bcf2f5543951cb0862278182050): the files differ only in the header's build date and admin-database digest.",
+		"pair-index-gb.bin": "656cfcb66e28367a6768dd392c07074c"
 	},
 	"base_model": {
 		"package": "@mailwoman/neural-weights-en-us",
@@ -30,10 +30,10 @@
 		},
 		"pair_index_gb_bin": {
 			"format": "PIX1 placetype-pair index (placetype-pair-prior arc, Task 3) — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Didsbury\", \"Manchester\")",
-			"source": "Who's On First admin database $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db, md5 12a9d4b46242c18f6cd867f89208fdc3, for the borough pairs, plus data/gazetteer/london-pairs-v2.jsonl, ni-pairs-v1.jsonl and gb-regions-v1.jsonl. No tuple CSV: `gazetteer pair-index` refuses a GB `--source`.",
+			"source": "Who's On First admin database $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db, md5 adedf267ddfc130aee045f2940745b20 (the 2026-11-19 build; 10.8.0's index read md5 12a9d4b46242c18f6cd867f89208fdc3), for the borough pairs, plus data/gazetteer/london-pairs-v2.jsonl, ni-pairs-v1.jsonl and gb-regions-v1.jsonl. No tuple CSV: `gazetteer pair-index` refuses a GB `--source`.",
 			"pairs": 13380,
 			"bytes": 358656,
-			"md5": "83821bcf2f5543951cb0862278182050",
+			"md5": "656cfcb66e28367a6768dd392c07074c",
 			"$comment_ppd_removal": "Rebuilt 2026-10-17 without HM Land Registry Price Paid Data, whose address fields packages/corpus/data/license-decisions.json refuses (#2635). The previous index held 30,825 pairs, 19,209 of them first contributed by Price Paid Data. Measured on the 190-row GB regression board against the index staged for 10.1.0, routed through en-GB with both arms package-shaped and a self-control of 0 of 190 differing rows: 7 rows changed, 1 improved (the Manchester Airport terminal row, whose airport name no longer reads as a dependent_locality) and 1 regressed (gb-interesting-mischicks: `Halling` before `Rochester ME2 1FW` no longer parses as dependent_locality and joins the street). Five further rows changed without a graded component: `West End` before `Woking` lost its dependent_locality in two rows and `Waun Fawr` before `Aberystwyth` in one, `Hythe Marina Village, Hythe` narrowed to `Hythe`, and `Milford on Sea` narrowed to `Milford`. OS Open Names pairs (OGL v3.0, settlements inside a town's bounding rectangle) were measured as an addition and as a replacement: 2 and 7 regressions, the added one `Tolgus Mount` read as a dependent_locality in `Tricky's @ The Tolgus Inn, Tolgus Mount, Redruth TR15 3TA`. Removing the index altogether regressed 18 rows. The Who's On First admin database is also a newer snapshot than the one the 10.1.0 index was built from, so the measured difference is the source removal and that refresh together.",
 			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's — +1 byte per pair, pair COUNT unchanged. Schema 1 and 2 binaries are refused; the artifact must be rebuilt.",
 			"delta_calibration": "parentDelta=5 (whole-edge parent bias, #46 — the record's own parentTag gets +5 over the parent window). δ=5 is the smallest magnitude that saturates bar B-2's brooklyn-class sub-board and is flat through 20, at 0.00% parent-side FP on B-3: docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md. GB's own shipped board moved 66/69 → 69/69 whole-edge with it on. δ=10 (Option-A sweep on the SHIPPED v385, task-8 report 2026-07-23 — supersedes 6.6.0's δ=5.0, which was calibrated for the never-promoted feed-8k candidate and is provably inert on v385: 0/69). v385's dead-row deficit is uniform (~7.0 logits mean, 4.95 min), so the emit/correct curves and the venue-FP curve all saturate together at δ=10 (δ=12/15 byte-flat). δ remains a recall/FP dial in general — the sweep table lives in eval.delta_sweep_v385 below.",
