@@ -67,9 +67,15 @@ pub struct CorpusFile {
 
 /// The hex sha256 of a file, read in 8 MiB chunks.
 pub fn file_sha256(path: &Path) -> Result<String> {
+	hash_file(path).map(|(digest, _)| digest)
+}
+
+/// The hex sha256 of a file and the bytes read to compute it.
+fn hash_file(path: &Path) -> Result<(String, u64)> {
 	let mut file = std::fs::File::open(path).map_err(|e| Error::Io(format!("{}: {e}", path.display())))?;
 	let mut digest = Sha256::new();
 	let mut buffer = vec![0u8; 8 << 20];
+	let mut bytes = 0u64;
 	loop {
 		let read = file
 			.read(&mut buffer)
@@ -77,9 +83,72 @@ pub fn file_sha256(path: &Path) -> Result<String> {
 		if read == 0 {
 			break;
 		}
+		bytes += read as u64;
 		digest.update(&buffer[..read]);
 	}
-	Ok(digest.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>())
+	Ok((
+		digest.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>(),
+		bytes,
+	))
+}
+
+/// How far the listing of a split has got.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ListProgress {
+	/// The files whose sha256 has been checked, against the process's verified set, the sha256 cache or a hash.
+	pub checked: usize,
+	/// The files the split lists.
+	pub files: usize,
+	/// The bytes hashed for the files neither set vouched for.
+	pub bytes_hashed: u64,
+	/// The split attributes read, each holding the held-out id sets of one file.
+	pub attributes: usize,
+}
+
+impl std::fmt::Display for ListProgress {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(
+			f,
+			"{}/{} files checked, {:.2} GiB hashed, {} split attributes read",
+			self.checked,
+			self.files,
+			self.bytes_hashed as f64 / (1u64 << 30) as f64,
+			self.attributes
+		)
+	}
+}
+
+/// The running [`ListProgress`] of one listing, reported to its caller after each change.
+struct Listing<'a> {
+	progress: Mutex<ListProgress>,
+	report: &'a (dyn Fn(ListProgress) + Sync),
+}
+
+impl<'a> Listing<'a> {
+	fn new(report: &'a (dyn Fn(ListProgress) + Sync)) -> Self {
+		Self {
+			progress: Mutex::new(ListProgress::default()),
+			report,
+		}
+	}
+
+	/// Applies `change` and reports the result under the lock, so the reports arrive in the order of the changes.
+	fn update(&self, change: impl FnOnce(&mut ListProgress)) {
+		let mut progress = self.progress.lock().expect("not poisoned");
+		change(&mut progress);
+		(self.report)(*progress);
+	}
+
+	/// Verifies the listed files, counting each one checked.
+	fn verify(&self, files: &[(PathBuf, Option<String>)], cache_path: Option<&Path>) -> Result<()> {
+		self.update(|p| p.files = files.len());
+		verify_sha256s_with(files, cache_path, &|bytes| {
+			self.update(|p| {
+				p.checked += 1;
+				p.bytes_hashed += bytes;
+			})
+		})
+	}
 }
 
 /// The files this process has already verified, keyed by path and the digest the manifest lists.
@@ -96,6 +165,16 @@ const HASH_THREADS: usize = 4;
 /// An entry with no sha256 is an error: a file the manifest cannot vouch for is not one the loader can tell apart
 /// from a file rewritten in place. Digests measured here are recorded in the sha256 cache when one is configured.
 pub fn verify_sha256s(files: &[(PathBuf, Option<String>)], cache_path: Option<&Path>) -> Result<()> {
+	verify_sha256s_with(files, cache_path, &|_| {})
+}
+
+/// [`verify_sha256s`], calling `checked` with the bytes hashed for each file once its digest is known: zero for a
+/// file the verified set or the cache vouched for.
+fn verify_sha256s_with(
+	files: &[(PathBuf, Option<String>)],
+	cache_path: Option<&Path>,
+	checked: &(dyn Fn(u64) + Sync),
+) -> Result<()> {
 	let mut pending: Vec<(usize, &Path)> = Vec::new();
 	let mut actual: Vec<Option<String>> = vec![None; files.len()];
 	let entries = cache_path.map(sha256_cache::load_entries).unwrap_or_default();
@@ -110,10 +189,14 @@ pub fn verify_sha256s(files: &[(PathBuf, Option<String>)], cache_path: Option<&P
 			};
 			if done.contains(&(path.clone(), expected.to_owned())) {
 				actual[index] = Some(expected.to_owned());
+				checked(0);
 				continue;
 			}
 			match sha256_cache::entry_digest(&entries, path)? {
-				Some(digest) => actual[index] = Some(digest),
+				Some(digest) => {
+					actual[index] = Some(digest);
+					checked(0);
+				}
 				None => pending.push((index, path)),
 			}
 		}
@@ -124,7 +207,20 @@ pub fn verify_sha256s(files: &[(PathBuf, Option<String>)], cache_path: Option<&P
 			.collect();
 		let handles: Vec<_> = chunks
 			.into_iter()
-			.map(|chunk| scope.spawn(move || chunk.into_iter().map(|(i, p)| (i, file_sha256(p))).collect::<Vec<_>>()))
+			.map(|chunk| {
+				scope.spawn(move || {
+					chunk
+						.into_iter()
+						.map(|(i, p)| {
+							let hashed = hash_file(p).map(|(digest, bytes)| {
+								checked(bytes);
+								digest
+							});
+							(i, hashed)
+						})
+						.collect::<Vec<_>>()
+				})
+			})
 			.collect();
 		handles
 			.into_iter()
@@ -388,7 +484,7 @@ fn split_attribute(entry: &Value, corpus_dir: &Path, config: &SamplerConfig) -> 
 }
 
 /// The directory-glob listing of a corpus with no manifest file list, each file verified against its record.
-fn glob_split(corpus_dir: &Path, split: &str, config: &SamplerConfig) -> Result<Vec<PathBuf>> {
+fn glob_split(corpus_dir: &Path, split: &str, config: &SamplerConfig, listing: &Listing) -> Result<Vec<PathBuf>> {
 	let dir = corpus_dir.join(split);
 	// A missing directory lists no file and is refused below with the corpus's own message. Any other failure to read
 	// the directory or one of its entries is reported, because a partial listing would sample from fewer files.
@@ -433,7 +529,7 @@ fn glob_split(corpus_dir: &Path, split: &str, config: &SamplerConfig) -> Result<
 			serde_json::from_str(&text).map_err(|e| Error::Input(format!("{}: {e}", record.display())))?;
 		listed.push((path.clone(), str_field(&value, "sha256").map(str::to_owned)));
 	}
-	verify_sha256s(&listed, config.sha256_cache_path.as_deref())?;
+	listing.verify(&listed, config.sha256_cache_path.as_deref())?;
 	Ok(paths)
 }
 
@@ -443,6 +539,7 @@ fn manifest_split_entries(
 	corpus_dir: &Path,
 	split: &str,
 	config: &SamplerConfig,
+	listing: &Listing,
 ) -> Result<Vec<(PathBuf, Value)>> {
 	let mut resolved = Vec::new();
 	let mut missing = Vec::new();
@@ -489,12 +586,23 @@ fn manifest_split_entries(
 		.iter()
 		.map(|(p, e)| (p.clone(), str_field(e, "sha256").map(str::to_owned)))
 		.collect();
-	verify_sha256s(&listed, config.sha256_cache_path.as_deref())?;
+	listing.verify(&listed, config.sha256_cache_path.as_deref())?;
 	Ok(resolved)
 }
 
 /// The parquet files of one split, sorted by path, each with the row filter the manifest sets.
 pub fn corpus_split_files(config: &SamplerConfig, split: &str) -> Result<Vec<CorpusFile>> {
+	corpus_split_files_with(config, split, &|_| {})
+}
+
+/// [`corpus_split_files`], calling `report` with the listing's progress after each file is checked and each split
+/// attribute is read.
+pub fn corpus_split_files_with(
+	config: &SamplerConfig,
+	split: &str,
+	report: &(dyn Fn(ListProgress) + Sync),
+) -> Result<Vec<CorpusFile>> {
+	let listing = Listing::new(report);
 	let corpus_dir = &config.corpus_dir;
 	let manifest = corpus_dir.join("MANIFEST.json");
 	let data: Value = if exists(&manifest) {
@@ -505,12 +613,12 @@ pub fn corpus_split_files(config: &SamplerConfig, split: &str) -> Result<Vec<Cor
 	};
 	let files = manifest_files(&data);
 	if files.is_empty() {
-		return Ok(glob_split(corpus_dir, split, config)?
+		return Ok(glob_split(corpus_dir, split, config, &listing)?
 			.into_iter()
 			.map(|path| CorpusFile { path, filter: None })
 			.collect());
 	}
-	let entries = manifest_split_entries(&files, corpus_dir, split, config)?;
+	let entries = manifest_split_entries(&files, corpus_dir, split, config, &listing)?;
 	if entries.is_empty() {
 		return Err(Error::Input(format!(
 			"{} lists no '{split}' parquet file",
@@ -536,6 +644,7 @@ pub fn corpus_split_files(config: &SamplerConfig, split: &str) -> Result<Vec<Cor
 		let mut keep = None;
 		if entry.get("split_attribute").is_some() {
 			let held = split_attribute(&entry, corpus_dir, config)?;
+			listing.update(|p| p.attributes += 1);
 			match split {
 				"train" => drop.extend(
 					[held.val.clone(), held.test.clone()]

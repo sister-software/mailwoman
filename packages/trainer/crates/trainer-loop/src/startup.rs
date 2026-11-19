@@ -8,7 +8,8 @@
 //! moment of startup is counted against one step.
 
 use crate::Result;
-use mtf_sampler::corpus_files::{index_split, CorpusFile, SplitIndex};
+use mtf_sampler::corpus_files::{corpus_split_files_with, index_split, CorpusFile, ListProgress, SplitIndex};
+use mtf_sampler::SamplerConfig;
 use std::fmt::Display;
 use std::path::Path;
 use std::sync::Mutex;
@@ -62,19 +63,34 @@ impl Startup {
 		}
 	}
 
-	/// Indexes the train split's files by source, reporting the running totals while the count runs.
-	pub fn index_files(&mut self, files: &[CorpusFile]) -> Result<SplitIndex> {
+	/// A reporter for a long step's progress, which prints at most one line per `every`, from whichever thread reports.
+	fn throttled<'a, P>(&'a self, describe: impl Fn(&P) -> Option<String> + Sync + 'a) -> impl Fn(P) + Sync + 'a {
 		let last_line = Mutex::new(Instant::now());
-		let index = index_split(files, &|index| {
+		move |progress| {
 			let mut last = last_line.lock().expect("not poisoned");
-			if last.elapsed() >= self.every && index.files < files.len() {
-				self.line(
-					format_args!("sampler index ({}/{} files): {index} so far", index.files, files.len()),
-					self.since,
-				);
+			if last.elapsed() < self.every {
+				return;
+			}
+			if let Some(message) = describe(&progress) {
+				self.line(message, self.since);
 				*last = Instant::now();
 			}
-		})?;
-		Ok(index)
+		}
+	}
+
+	/// Lists a split's files, checking each one's sha256 and reading its held-out id sets, reporting the progress
+	/// while the listing runs.
+	pub fn list_files(&mut self, sampler: &SamplerConfig, split: &str) -> Result<Vec<CorpusFile>> {
+		let report = self.throttled(|p: &ListProgress| Some(format!("{split} files: {p} so far")));
+		Ok(corpus_split_files_with(sampler, split, &report)?)
+	}
+
+	/// Indexes the train split's files by source, reporting the running totals while the count runs.
+	pub fn index_files(&mut self, files: &[CorpusFile]) -> Result<SplitIndex> {
+		let report = self.throttled(|index: &SplitIndex| {
+			(index.files < files.len())
+				.then(|| format!("sampler index ({}/{} files): {index} so far", index.files, files.len()))
+		});
+		Ok(index_split(files, &report)?)
 	}
 }

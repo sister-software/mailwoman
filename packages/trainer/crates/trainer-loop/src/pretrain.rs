@@ -19,7 +19,6 @@ use crate::optim::{clip_grad_norm, AdamW, Group};
 use crate::schedules::{LambdaLr, Schedule};
 use crate::supervised::{build_model, device, resolve_precision, resolve_resume, TrainOptions};
 use crate::{fail, Result};
-use mtf_sampler::corpus_files::corpus_split_files;
 use mtf_sampler::{CancelToken, Sampler, TrainingBatches};
 use std::time::Instant;
 use tch::{Device, Tensor};
@@ -119,7 +118,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut step = resume_step;
 	let mut running = 0.0;
 	if step < max_steps {
-		let train_files = corpus_split_files(&sampler, "train")?;
+		let train_files = startup.list_files(&sampler, "train")?;
 		startup.step(format_args!(
 			"sampler configured: {} train files listed and verified",
 			train_files.len()

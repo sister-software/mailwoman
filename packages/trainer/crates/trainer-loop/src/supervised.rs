@@ -21,7 +21,6 @@ use crate::realized::RealizedRows;
 use crate::schedules::{restamp_resume_lrs, LambdaLr, Schedule};
 use crate::startup::Startup;
 use crate::{fail, Result};
-use mtf_sampler::corpus_files::corpus_split_files;
 use mtf_sampler::{CancelToken, Sampler, SamplerConfig, TrainingBatches};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -531,7 +530,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let encoder = RunEncoder::build(run, &files)?;
 	startup.step(format_args!("encoder built: vocab_size={}", encoder.vocab_size));
 	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
-	let train_files = corpus_split_files(&sampler, "train")?;
+	let train_files = startup.list_files(&sampler, "train")?;
 	startup.step(format_args!(
 		"sampler configured: {} train files listed and verified",
 		train_files.len()
