@@ -5,13 +5,15 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Inspect the decisions behind a parse
 
 You'll save a parser trace for the same address used in [the first-parse tutorial](../start.mdx), then run a short script that checks every returned span and prints the decisions leading to the tree. The exercise takes about ten minutes after that tutorial's packages are installed.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
+- <NodeRequirement />.
 - The project directory from [Install Mailwoman and inspect a first parse](../start.mdx), with `mailwoman@11.0.0`, `@mailwoman/neural@11.0.0`, and `@mailwoman/neural-weights-en-us@11.0.0` installed.
 - The exact input `apt 4b 350 5th ave new york ny 10118`. The printed spans and scores belong to that input and the stated package versions.
 

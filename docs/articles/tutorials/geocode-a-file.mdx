@@ -5,14 +5,16 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Geocode a file of addresses
 
 In this tutorial you geocode a six-line file of addresses in one command. You then read four things from the results: how precise each coordinate is, the record that supplied it, the place candidates the geocoder weighed, and whether the address resolved at all. The file mixes <Country code="US" /> and French street addresses, a city without a street, and two inputs that should stay unresolved.
 
 ## Before you start
 
-- Node.js 24 LTS or later.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published 11.0.0 packages:
 

@@ -5,13 +5,15 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Install Mailwoman and inspect a first parse
 
 You'll make a small TypeScript script that parses one address and prints each labeled part with its position in the text. The exercise installs the current published Mailwoman packages and takes about ten minutes, plus package download time.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
+- <NodeRequirement />.
 - An empty project directory with room for the packages and the English model. This exercise reads no geocoding database.
 
 ## 1. Set up the project

@@ -5,6 +5,8 @@ role: guide
 verified-with: mailwoman v11.0.0, Claude Code v2.1.319
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Install the Mailwoman skill for Claude Code
 
 The published `mailwoman@11.0.0` package contains `skills/mailwoman/SKILL.md`. Its `mailwoman skill install` command copies that directory into a project's <code>.claude/skills/mailwoman/</code> directory. [Claude Code's project-skill documentation](https://code.claude.com/docs/en/skills#choose-where-skills-load) identifies that location as a project skill. This procedure was tested with npm 11.19.1 and Claude Code 2.1.319 in a disposable project directory, where Claude Code skill validation passed. That test covered installation and validation, and interactive skill use remains untested.
@@ -13,7 +15,7 @@ The installer **removes the entire destination skill directory before copying th
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
+- <NodeRequirement />.
 - A project that runs Claude Code.
 
 Run the commands from that project's root. Install the pinned package when the project lacks it:

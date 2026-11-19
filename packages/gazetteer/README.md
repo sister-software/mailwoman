@@ -15,7 +15,7 @@ Gazetteer databases are built and distributed separately from this package's cod
 npm install @mailwoman/gazetteer
 ```
 
-The package requires Node.js `^24.22.1 || >=26.12.1`. The `mailwoman gazetteer`
+The package requires Node.js `^24.22.3 || >=26.13.1`. The `mailwoman gazetteer`
 commands described below come from the separate `mailwoman` package.
 
 ## Compare placetypes

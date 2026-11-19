@@ -6,14 +6,16 @@ source-of-truth: packages/neural/lib/web/loader.ts, packages/mailwoman/lib/brows
 verified-with: published @mailwoman/neural, @mailwoman/neural-weights-en-us, and @mailwoman/core v11.0.0, onnxruntime-web 1.31.1, Vite 8.3.5, and Chromium 156.0.8078.4
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Parse an address in a browser
 
 Use the browser loader when an application needs address components in the tab. This procedure runs the published en-US model on one address. It returns a parse tree. A geographic lookup and a delivery check are separate operations.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later, for the build commands.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />, for the build commands.
+- An <ECMAScriptModuleProject />.
 
 Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install these exact published versions in a fresh project:
 

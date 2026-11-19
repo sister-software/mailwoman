@@ -6,6 +6,8 @@ source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/runtime
 verified-with: mailwoman v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Node library API
 
 This page describes the principal Node library calls in the published 11.0.0 packages. The runtime pipeline parses an address into a labeled tree. A geocode also requires a resolver and geographic databases. [Parse and geocode result schema](./schema.mdx) defines the result fields, tags, coordinate tiers, and provenance values.
@@ -147,7 +149,7 @@ type Calibrator = (rawConfidence: number) => number
 
 ## Example: parse one address
 
-The example needs Node.js 24 LTS or later and an ECMAScript module project, with `"type": "module"` in its `package.json`. Install the packages:
+The example needs <NodeRequirement /> and an <ECMAScriptModuleProject />. Install the packages:
 
 ```bash
 npm install mailwoman@{{release.version}} @mailwoman/neural@{{release.version}} @mailwoman/neural-weights-en-us@{{release.version}} @mailwoman/core@{{release.version}}

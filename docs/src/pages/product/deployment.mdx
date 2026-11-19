@@ -3,6 +3,8 @@ title: Choose a deployment shape
 description: Compare the checked library and browser paths with the data and resource requirements for HTTP deployments.
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Choose a deployment shape
 
 Choose where the caller needs the result and whether the result needs geographic data. This comparison applies to published Mailwoman 11.0.0. A parse labels address text. A geographic lookup needs a suitable local database. The library and browser parse paths below have executed examples. A data-backed HTTP deployment hasn't been run in this verification installation.
@@ -27,7 +29,7 @@ The published [bundle registry estimates](/product/limits-and-status#downloadabl
 
 ## Check the deployment before serving requests
 
-- Node.js 24 LTS or later, for a Node.js application, native service, or Node.js based container or serverless host. The published `mailwoman@11.0.0` manifest declares the range `^24.22.1 || >=26.12.1`.
+For a Node.js application, native service, container, or serverless host, use <NodeRequirement />. These floors include the [November 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
 
 A browser deployment uses Node only to build. The browser runs the generated JavaScript and WebAssembly.
 

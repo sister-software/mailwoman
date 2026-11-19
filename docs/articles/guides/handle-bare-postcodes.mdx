@@ -6,14 +6,16 @@ source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/p
 verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Require country context for a bare postcode
 
 Use this guide when a user enters only a postcode and your application needs to decide whether it has enough context to attempt a geographic lookup. Keep the country supplied by your application or user beside the original input. A postcode's shape can match several national formats, so the postcode's country needs context beyond its shape.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published parser packages:
 

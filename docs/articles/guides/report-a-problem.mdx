@@ -6,13 +6,15 @@ audience: developers
 verified-with: mailwoman v11.0.0, GitHub bug-report.yml and SECURITY.md checked 2026-11-09
 ---
 
+import { NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Report a parsing or geocoding problem
 
 You'll have a reproducible report with the exact input, expected and observed results, the first visible mismatch, package and data versions, and a safe submission route.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
+- <NodeRequirement />.
 - A Mailwoman installation that reproduces the result. The commands below were checked with published `mailwoman@11.0.0` on Linux x64.
 - Use an address you may publish. The parser trace includes the full input. If the only reproducer contains a private address, keep its trace local and email [teffen@sister.software](mailto:teffen@sister.software) to arrange a private report.
 - If the behavior could be exploited as a security vulnerability, use the [private security route](#report-a-security-issue) before preparing a public issue.

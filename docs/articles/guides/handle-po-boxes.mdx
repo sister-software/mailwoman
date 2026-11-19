@@ -6,14 +6,16 @@ source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/p
 verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0
 ---
 
+import { ECMAScriptModuleProject, NodeRequirement } from "@site/src/partials/RuntimePrerequisites.mdx"
+
 # Route PO box records for mailing review
 
 Use this guide when a <Country code="US" /> mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. The example records a complete PO box parse as a mailing-address candidate for review and requests more input when the box has no locality, region, or postcode. These are application choices. Whether the box exists and accepts mail is a question for the postal service.
 
 ## Prerequisites
 
-- Node.js 24 LTS or later.
-- An ECMAScript module project, with `"type": "module"` in its `package.json`.
+- <NodeRequirement />.
+- An <ECMAScriptModuleProject />.
 
 Install the published parser packages:
 
