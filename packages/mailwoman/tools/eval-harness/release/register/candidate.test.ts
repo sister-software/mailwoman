@@ -4,13 +4,14 @@
 import { describe, expect, it } from "vitest"
 
 import { releaseSpecPath } from "#tools/eval-harness/release/current-spec"
-import { deriveCandidateSpec } from "#tools/eval-harness/release/register-candidate"
+import { deriveCandidateSpec } from "#tools/eval-harness/release/register/candidate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 /**
  * A committed version registered with no candidate identity.
  */
 const SOURCE_SPEC = releaseSpecPath(11)
+
 const candidate = {
 	description: "seed 42 int8",
 	sha256: "3017222708d1ddb67139d128006a11da6b7aed64b7a08d6ce28f1f428537ce89",

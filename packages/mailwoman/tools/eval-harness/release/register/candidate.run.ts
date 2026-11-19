@@ -9,7 +9,7 @@
  *   The record is validated and written to the committed path of its own version.
  *
  *   Usage:
- *   node packages/mailwoman/tools/eval-harness/release/register-candidate.run.ts \
+ *   node packages/mailwoman/tools/eval-harness/release/register/candidate.run.ts \
  *     --model <the exact model.onnx that ships> --description <artifact> \
  *     --rationale <why, and every read of the source version> [--spec <source spec .json>] [--spec-version <n>]
  *
@@ -23,7 +23,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { CURRENT_RELEASE_SPEC, releaseSpecPath } from "#tools/eval-harness/release/current-spec"
-import { deriveCandidateSpec } from "#tools/eval-harness/release/register-candidate"
+import { deriveCandidateSpec } from "#tools/eval-harness/release/register/candidate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const SCOPE = "register-candidate"

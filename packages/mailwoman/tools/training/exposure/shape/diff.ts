@@ -13,7 +13,7 @@
 import { ADMIN_HIERARCHY_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { stringifyJSON } from "@mailwoman/core/json"
 
-import type { TrainShapeCount } from "./train-shapes.ts"
+import type { TrainShapeCount } from "../train-shapes.ts"
 
 /**
  * Which tags a distribution keys on.

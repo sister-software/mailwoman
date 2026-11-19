@@ -3,8 +3,8 @@
 
 import { describe, expect, test } from "vitest"
 
-import { compareShapeDistributions, shapeDistribution, ShapeView } from "./shape-diff.ts"
-import type { TrainShapeCount } from "./train-shapes.ts"
+import type { TrainShapeCount } from "../train-shapes.ts"
+import { compareShapeDistributions, shapeDistribution, ShapeView } from "./diff.ts"
 
 const row = (country: string, spanTags: string[], rows: number): TrainShapeCount => ({
 	source: "invented-house-venue",

@@ -11,7 +11,7 @@
  *   It exits 1 when an order's share moved by more than `--tolerance` in a country that no
  *   `--explain <CC>=<reason>` names, so a re-render that collapses a country to one order stops the launch.
  *   Usage:
- *     node packages/mailwoman/tools/training/exposure/shape-diff.run.ts \
+ *     node packages/mailwoman/tools/training/exposure/shape/diff.run.ts \
  *       --before <MANIFEST.json | recipe.parquet> --after <MANIFEST.json | recipe.parquet> \
  *       [--source <source>[,<source>…]] [--tolerance 0.05] [--explain IN="…"]… [--memory-gb <n>] [--json <report.json>]
  */
@@ -20,8 +20,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { compareShapeDistributions, shapeDistribution, ShapeView, type ShapeDifference } from "./shape-diff.ts"
-import { countTrainShapes, type TrainShapeCount } from "./train-shapes.ts"
+import { countTrainShapes, type TrainShapeCount } from "../train-shapes.ts"
+import { compareShapeDistributions, shapeDistribution, ShapeView, type ShapeDifference } from "./diff.ts"
 
 const { values } = parseArguments({
 	options: {
