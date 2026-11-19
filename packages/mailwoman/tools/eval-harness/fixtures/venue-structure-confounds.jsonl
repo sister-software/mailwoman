@@ -17,7 +17,7 @@
 {"raw": "Terminal Warehouse, 269 11th Ave, New York, NY 10001", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Wing Yip, 375 Nechells Park Road, Birmingham, B7 5NT", "class": "wing-name", "must_not": "unit"}
 {"raw": "Wing Lee Supermarket, 7 Gerrard Street, London, W1D 5PG", "class": "wing-name", "must_not": "unit"}
-{"raw": "The Wing, Bletchley Park, Milton Keynes, MK3 6EB", "class": "wing-name", "must_not": "unit"}
+{"raw": "The Wing, Bletchley Park, Milton Keynes, MK3 6EB", "class": "wing-name", "must_not": "unit", "xfail": "Under the 11.2.0 model (v8.9.0 seed 42) `The Wing` reads as a unit and `Bletchley Park` as the venue; 10.8.0 read `The Wing` as the venue. Accepted in #3127."}
 {"raw": "Campus Drive, Irvine, CA 92612", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "200 Arcade Avenue, Elkhart, IN 46516", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit"}

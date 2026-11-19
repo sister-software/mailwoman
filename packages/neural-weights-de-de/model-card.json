@@ -10,8 +10,8 @@
 		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed interface via createScorer. This overlay shares the base model.onnx byte-for-byte, so the channels it was trained against are the base's; keep in lockstep with neural-weights-en-us/model-card.json on every base ship. Without this block the loader inferred the channels from the ONNX graph and resolved the evidence lexicons by legacy filename, which fed street_type by guess and left locality_surface OFF (v6 sought, v7 shipped); a consumer of the published tarball, which carried no lexicon at all, ran gazetteer, country and both evidence channels OFF against a model trained with them (#1668, #2115). Measured before shipping: locality_surface ON vs OFF, 0 of 49 board rows differ (DE 12, ES 25, IT 12).",
 		"anchor": {
 			"required": true,
-			"span_mode": "shaped",
-			"$comment": "span_mode 'shaped' is the 9.0.0 SHIP OBLIGATION (recipe header + ROAD_TO_V9 A2): the train painter keys postcodes as shape-detected spans, space-stripped upper ('SW1A 2AA' → 'SW1A2AA'); the default alnum-run scan can NEVER produce that key, so omitting this leaves GB/NL postcodes unanchored at serve — the mirror image of #1467. createScorer fails closed on a shaped-declaring card paired with an artifact whose keys the scan cannot reach."
+			"span_mode": "postal",
+			"$comment": "11.2.0: the base model trained under data.anchor_paint_mode postal (the postal family of @mailwoman/postcode read through recognize-core, v8.9.0-base-c6-90k-v0821-s42.yaml), so serving paints the same spans. The release verdicts and board graded this overlay with this span mode. 9.0.0 to 10.8.0 shipped 'shaped'."
 		},
 		"gazetteer": {
 			"required": true
