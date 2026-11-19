@@ -3,7 +3,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { createRecognizer } from "@mailwoman/recognize"
+import { createRecognizer } from "@mailwoman/recognizer"
 import { describe, expect, it } from "vitest"
 
 import { postcodeSyntaxCountries, printedPostcodePrefix } from "#country-formats"

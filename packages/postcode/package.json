@@ -69,7 +69,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/recognize": "workspace:*"
+		"@mailwoman/recognizer": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-plugin": "^1.4.11",

@@ -51,7 +51,7 @@
 		{ "path": "../../osm/tools" },
 		{ "path": "../../phrase-grouper" },
 		{ "path": "../../poi-taxonomy" },
-		{ "path": "../../recognize" },
+		{ "path": "../../recognizer" },
 		{ "path": "../../entity-resolution" },
 		{ "path": "../../entity-resolution/tools" },
 		{ "path": "../../resolver" },

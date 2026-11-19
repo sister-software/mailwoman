@@ -3,7 +3,7 @@
 
 /**
  *   Vitest config that runs `lib/**\/*.workers.test.ts` under the Workers runtime through
- *   Miniflare, the way `@mailwoman/recognize` runs its first-call test.
+ *   Miniflare, the way `@mailwoman/recognizer` runs its first-call test.
  *
  *   The test proves that the recognizer the parse pipeline reads, `computeQueryShape`,
  *   works in a runtime that refuses to compile WebAssembly from bytes.

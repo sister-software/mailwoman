@@ -25,6 +25,6 @@
 		{ "path": "../kind-classifier" },
 		{ "path": "../poi-taxonomy" },
 		{ "path": "../postcode" },
-		{ "path": "../recognize" }
+		{ "path": "../recognizer" }
 	]
 }

@@ -6,7 +6,7 @@
  */
 
 import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
-import type { TextSpan } from "@mailwoman/recognize/types"
+import type { TextSpan } from "@mailwoman/recognizer/types"
 
 export interface AbbreviationResult {
 	text: string

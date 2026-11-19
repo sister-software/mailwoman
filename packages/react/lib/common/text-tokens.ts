@@ -10,7 +10,7 @@
  *   the owner walk live here.
  */
 
-import type { CharRange } from "@mailwoman/recognize/types"
+import type { CharRange } from "@mailwoman/recognizer/types"
 
 export interface WordToken {
 	/**

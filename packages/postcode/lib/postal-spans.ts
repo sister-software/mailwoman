@@ -18,7 +18,7 @@
  */
 
 import type { CountrySet } from "@mailwoman/codex/country/sets"
-import { createRecognizer } from "@mailwoman/recognize"
+import { createRecognizer } from "@mailwoman/recognizer"
 
 import { postal, type PostalForm, postalSpans, type PostalSpan } from "#recognize/postal"
 import { POSTAL_FORMAT, postalFormatHits } from "#recognize/postal/formats"

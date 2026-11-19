@@ -22,7 +22,7 @@
 
 import { scriptFamilyForText } from "@mailwoman/neural/classifier/script-router"
 import type { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { classifyCodepoint } from "@mailwoman/recognize/charset"
+import { classifyCodepoint } from "@mailwoman/recognizer/charset"
 
 import { type HeldoutRow, heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 

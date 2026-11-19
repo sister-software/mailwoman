@@ -144,8 +144,8 @@ export default defineConfig({
 			"**/license-worker/**/*.test.ts",
 			"**/gazetteer-worker/**/*.test.ts",
 			// The recognize engine's first-call tests run in Chromium and under the Workers pool, each from its own config.
-			"**/recognize/**/*.browser.test.ts",
-			"**/recognize/**/*.workers.test.ts",
+			"**/recognizer/**/*.browser.test.ts",
+			"**/recognizer/**/*.workers.test.ts",
 			// The same holds for the recognizer the parse pipeline reads.
 			// `@mailwoman/postcode` composes it.
 			"**/postcode/**/*.browser.test.ts",

@@ -15,7 +15,7 @@ import { detectPairIndexCountry, resolvePairIndexForText } from "#web/pair-index
 const browserSafePackageRoots = {
 	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint"),
 	// Only the library root: the tools of this package read the file system.
-	recognize: resolvePackageDirectory("@mailwoman/recognize")("lib"),
+	recognizer: resolvePackageDirectory("@mailwoman/recognizer")("lib"),
 } as const
 
 async function sourceFiles(dir: PathBuilder): Promise<PathBuilder[]> {
@@ -50,7 +50,7 @@ function specifierOf(line: string): string {
 }
 
 describe("Browser-safe locale packages exclude Node dependencies", () => {
-	for (const pkg of ["locale-hint", "recognize"]) {
+	for (const pkg of ["locale-hint", "recognizer"]) {
 		test(`@mailwoman/${pkg} omits Node runtime imports from its transitive source`, async () => {
 			const files = await sourceFiles(browserSafePackageRoots[pkg as keyof typeof browserSafePackageRoots])
 

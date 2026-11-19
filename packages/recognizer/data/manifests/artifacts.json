@@ -1,0 +1,144 @@
+{
+	"families": {
+		"coordinates": {
+			"artifact": "coordinates.rca1",
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 44215,
+					"patterns": 7,
+					"role": "whole",
+					"states": 780
+				},
+				{
+					"backend": "sparse",
+					"bytes": 25109,
+					"patterns": 5,
+					"role": "embedded",
+					"states": 450
+				}
+			],
+			"bytes": 116104,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "a4b56ec80695f3755dfa67514a4a073ca93b92785448e91f73c3f365e46522b3",
+			"irHash": "799f6e7481f9b35fbf50121b66493e5909782c9923cbf66d684d51e74753e19b",
+			"sha256": "1f3cad37c3c27c3ef57369966ce5a18ef024f84ad2bc0505fd37ce71e903c4b6",
+			"unicodeVersion": "16.0.0"
+		},
+		"identifiers": {
+			"artifact": "identifiers.rca1",
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 7133,
+					"patterns": 12,
+					"role": "whole",
+					"states": 286
+				},
+				{
+					"backend": "dense",
+					"bytes": 27496,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 51
+				}
+			],
+			"bytes": 54232,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "9dfe9ca60c9a8670c5922101762da67f27aa222e9286c3787c62d01871bffce8",
+			"irHash": "319a5fa686a3bb4a06bf0b0d972cc2421279297aabc6a316063dd2c05f68b8c5",
+			"sha256": "de0c35725808f518d8e5f5b884a5a9f110c498c336213d510b21544c3ca3b7cb",
+			"unicodeVersion": "16.0.0"
+		},
+		"primitives": {
+			"artifact": "primitives.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 2816,
+					"patterns": 4,
+					"role": "whole",
+					"states": 15
+				},
+				{
+					"backend": "dense",
+					"bytes": 3816,
+					"patterns": 4,
+					"role": "embedded",
+					"states": 22
+				}
+			],
+			"bytes": 10448,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "d33b792cde245ced43db7d0a88552c8a6686a1836ab570d69eadbff8cfef0976",
+			"irHash": "2da6a835e564ec8480df442ff1036e10e158217e58215e55b0badc8620429208",
+			"sha256": "a5c8cb140eda9d74d8dc24d45b487ee749ec80eaa082b35f7fa4e5c09660b5c3",
+			"unicodeVersion": "16.0.0"
+		},
+		"spatial": {
+			"artifact": "spatial.rca1",
+			"automata": [
+				{
+					"backend": "sparse",
+					"bytes": 20302,
+					"patterns": 4,
+					"role": "whole",
+					"states": 227
+				},
+				{
+					"backend": "dense",
+					"bytes": 8944,
+					"patterns": 2,
+					"role": "embedded",
+					"states": 31
+				}
+			],
+			"bytes": 35416,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "1d85275060cde50d8080e9ae55108ac8210aa146f95766ca6cd16fe8150c4dec",
+			"irHash": "c7e354ae9e65cff4d4f4ea04c7c7aff8afbf19d5605f2c37b756203cab2509a7",
+			"sha256": "de00af7cf3eceb8be89588fd730578795f7e1cf1829a0287dc14fae5a33e669c",
+			"unicodeVersion": "16.0.0"
+		},
+		"structure": {
+			"artifact": "structure.rca1",
+			"automata": [
+				{
+					"backend": "dense",
+					"bytes": 19192,
+					"partition": "segment",
+					"patterns": 5,
+					"role": "partition",
+					"states": 70
+				},
+				{
+					"backend": "dense",
+					"bytes": 65840,
+					"partition": "token",
+					"patterns": 6,
+					"role": "partition",
+					"states": 125
+				}
+			],
+			"bytes": 94536,
+			"compilerVersion": "0.1.0",
+			"declarationsHash": "204df148bcd9ed73d2e22c033161957189ffd97a2bc58b95c240dc143f3c7233",
+			"irHash": "958803a68b433084821ca99efed13adab6ceba52679635d8ee2fc317d6244404",
+			"sha256": "ba89797d79da0f3a0096c58de926ddc455e1d1ccda993eb12050fc290007f6bd",
+			"unicodeVersion": "16.0.0"
+		}
+	},
+	"limits": {
+		"buildBytes": 33554432,
+		"denseBytes": 100000,
+		"inputBytes": 65536,
+		"maxCaptures": 64,
+		"maxDepth": 64,
+		"maxLoweredNodes": 100000,
+		"maxProductStates": 1000000,
+		"maxStates": 50000,
+		"nfaBytes": 8388608,
+		"partitionInputBytes": 1048576,
+		"sparseBytes": 2097152
+	}
+}

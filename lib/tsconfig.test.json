@@ -6,6 +6,6 @@
 		"types": ["node"]
 	},
 	// Without a reference to the build project, the test program follows `@mailwoman/spatial` into its source,
-	// and from there into `@mailwoman/recognize` and `@mailwoman/registry` sources, which fail under this project's options.
+	// and from there into `@mailwoman/recognizer` and `@mailwoman/registry` sources, which fail under this project's options.
 	"references": [{ "path": "./tsconfig.json" }]
 }

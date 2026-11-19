@@ -5,8 +5,8 @@
  *   Builds the family definition of the `postcode_legacy` family from the legacy-formats table.
  *
  *   The definition is the input format `recognize-build --definition` compiles.
- *   See `packages/recognize/crates/recognize-build/src/definition.rs`
- *   and `packages/recognize/definitions/family-definition.schema.json`.
+ *   See `packages/recognizer/crates/recognize-build/src/definition.rs`
+ *   and `packages/recognizer/definitions/family-definition.schema.json`.
  *
  *   Shape IDs are plain identifiers.
  *   The known-formats pass reads two pieces of data from each shape and no naming convention:

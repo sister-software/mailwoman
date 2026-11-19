@@ -18,7 +18,7 @@
 
 import { type CountrySet, countriesDeclaredBy } from "@mailwoman/codex/country/sets"
 import { matchSubdivisionsAnywhere } from "@mailwoman/codex/country/subdivision"
-import type { TokenClass } from "@mailwoman/recognize/types"
+import type { TokenClass } from "@mailwoman/recognizer/types"
 
 import type { QueryShapeRegionAbbreviation } from "#recognize/query-shape"
 

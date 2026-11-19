@@ -15,7 +15,7 @@
 		// ---
 		{ "path": "../annotations" },
 		{ "path": "../postcode" },
-		{ "path": "../recognize" },
+		{ "path": "../recognizer" },
 		{ "path": "../core" }
 	]
 }

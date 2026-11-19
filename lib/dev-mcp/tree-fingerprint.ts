@@ -27,7 +27,7 @@ export const FINGERPRINTED_WORKSPACES = [
 	"packages/resolver",
 	"packages/resolver-wof-sqlite",
 	"packages/normalize",
-	"packages/recognize",
+	"packages/recognizer",
 	"packages/postcode",
 	"packages/locale-hint",
 	"packages/kind-classifier",

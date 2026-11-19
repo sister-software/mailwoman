@@ -260,7 +260,7 @@
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
-		"@mailwoman/recognize": "workspace:*",
+		"@mailwoman/recognizer": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@sister.software/fonts": "^14.8.0",
 		"@sister.software/theme": "^14.8.0",

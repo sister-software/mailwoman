@@ -5,17 +5,17 @@
  *   The recognizer the parse pipeline reads its structural evidence from.
  *
  *   Two generations answer, selected by the model card's `requires.query_shape`.
- *   The `legacy` generation composes the `structure` family of `@mailwoman/recognize` with
+ *   The `legacy` generation composes the `structure` family of `@mailwoman/recognizer` with
  *   the `postcode_legacy` family, and reports the thirteen hand-written postcode patterns.
  *
  *   The `postal` generation composes `structure` with the `postal` family and reports a
  *   hit for each postcode candidate of the 181 countries' syntax and each PO box.
  *
- *   This module lives in `@mailwoman/postcode` because both families do: `@mailwoman/recognize`
- *   may not import this package, and this package already imports it.
+ *   This module lives in `@mailwoman/postcode` because both families do:
+ *   `@mailwoman/recognizer` may not import this package, and this package already imports it.
  *
  *   The first call instantiates the WebAssembly engine, as every recognizer does.
- *   Call `init` from `@mailwoman/recognize` first where synchronous compilation is refused.
+ *   Call `init` from `@mailwoman/recognizer` first where synchronous compilation is refused.
  *
  *   Every consumer that holds a model passes the model's generation.
  *
@@ -25,10 +25,10 @@
 
 import type { CountrySet } from "@mailwoman/codex/country/sets"
 import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
-import { createRecognizer, type Recognizer } from "@mailwoman/recognize"
-import { specifyStructure } from "@mailwoman/recognize/script-run"
-import { structure } from "@mailwoman/recognize/structure"
-import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognize/types"
+import { createRecognizer, type Recognizer } from "@mailwoman/recognizer"
+import { specifyStructure } from "@mailwoman/recognizer/script-run"
+import { structure } from "@mailwoman/recognizer/structure"
+import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognizer/types"
 
 import type { PostcodeLegacyFields } from "#recognize/fields"
 import { postal } from "#recognize/postal.generated"

@@ -6,7 +6,7 @@
  *   derived from the legacy-formats table.
  */
 
-import type { KnownFormatHit } from "@mailwoman/recognize/types"
+import type { KnownFormatHit } from "@mailwoman/recognizer/types"
 
 import type { LEGACY_FORMATS, PO_BOX } from "#legacy-formats/table"
 
