@@ -7,7 +7,7 @@
  *   and known-format count that the fixture froze from the legacy classifier.
  */
 
-import { codepointKey, readFrozenFixture } from "@mailwoman/recognize/tools/frozen"
+import { codepointKey, readFrozenFixture } from "@mailwoman/recognizer/tools/frozen"
 import { expect, it } from "vitest"
 
 import { computeQueryShape } from "#recognize/query-shape"

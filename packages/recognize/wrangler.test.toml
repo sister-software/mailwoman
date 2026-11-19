@@ -1,5 +1,0 @@
-# The Workers runtime the `workerd` entry's test runs in. Nothing deploys from this file: it names no routes and no
-# bindings, and `main` is the test pool's placeholder.
-
-name = "mailwoman-recognize-test"
-compatibility_date = "2026-10-24"

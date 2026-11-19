@@ -51,7 +51,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/recognize": "workspace:*"
+		"@mailwoman/recognizer": "workspace:*"
 	},
 	"devDependencies": {
 		"@mailwoman/postcode": "workspace:*"

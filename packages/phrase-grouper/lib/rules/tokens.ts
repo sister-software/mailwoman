@@ -7,7 +7,7 @@
 
 import { US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { Span } from "@mailwoman/core/tokenization"
-import type { TextSpan } from "@mailwoman/recognize/types"
+import type { TextSpan } from "@mailwoman/recognizer/types"
 
 /**
  * One token within a segment — absolute offsets into the normalized input.

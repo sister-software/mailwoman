@@ -17,7 +17,7 @@
 			"path": "../core"
 		},
 		{
-			"path": "../recognize"
+			"path": "../recognizer"
 		}
 	]
 }

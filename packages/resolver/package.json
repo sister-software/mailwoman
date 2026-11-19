@@ -70,7 +70,7 @@
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
-		"@mailwoman/recognize": "workspace:*",
+		"@mailwoman/recognizer": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"spliterator": "^10.1.1"

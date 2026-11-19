@@ -10,7 +10,7 @@
  *   stay with the dictionary readers.
  *
  *   ```ts
- *   import { createRecognizer } from "@mailwoman/recognize"
+ *   import { createRecognizer } from "@mailwoman/recognizer"
  *   import { postal, postalCandidates } from "@mailwoman/postcode/recognize/postal"
  *
  *   const text = "12345 Main Street"

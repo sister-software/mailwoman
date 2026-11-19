@@ -41,7 +41,7 @@ export:
 - `@mailwoman/postcode/prefix-index` holds `PostcodePrefixIndexResolver`, which reads a PFX1 prefix index from
   bytes and probes a prefix for its weighted ancestry, and `serializePostcodePrefixIndex`, which writes one.
 
-- `@mailwoman/postcode/recognize/legacy` holds `postcodeLegacy`, a family of `@mailwoman/recognize` that fills the
+- `@mailwoman/postcode/recognize/legacy` holds `postcodeLegacy`, a family of `@mailwoman/recognizer` that fills the
   `knownFormats` field with the postcode and PO box formats the parse pipeline reads: the thirteen legacy names,
   their confidences, spans and order. Compose it with the `structure` family, whose tokens it reads. A
   composition without `structure` throws a `RecognizeCompositionError` at construction. The family reports no

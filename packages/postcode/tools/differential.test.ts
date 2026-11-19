@@ -4,7 +4,7 @@
 /**
  *   The recognizer the pipeline reads, `computeQueryShape` of `@mailwoman/postcode/recognize/query-shape`,
  *   against the frozen output of the legacy classifier: the six structural fields and `knownFormats`
- *   on every case of `@mailwoman/recognize`'s fixture, then the family's own contracts.
+ *   on every case of `@mailwoman/recognizer`'s fixture, then the family's own contracts.
  *
  *   The fixture's cases include the golden inputs, the legacy behaviors that look accidental,
  *   generated inputs dense in postcode shapes and PO box leaders, and gauntlet inputs.
@@ -12,10 +12,10 @@
  *   and its summary is `data/reports/known-formats-differential.json`.
  */
 
-import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recognize"
-import { structure } from "@mailwoman/recognize/structure"
-import { plainFields, readFrozenFixture } from "@mailwoman/recognize/tools/frozen"
-import type { StructureFields } from "@mailwoman/recognize/types"
+import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recognizer"
+import { structure } from "@mailwoman/recognizer/structure"
+import { plainFields, readFrozenFixture } from "@mailwoman/recognizer/tools/frozen"
+import type { StructureFields } from "@mailwoman/recognizer/types"
 import { describe, expect, it } from "vitest"
 
 import { postcodeLegacy } from "#recognize/legacy"

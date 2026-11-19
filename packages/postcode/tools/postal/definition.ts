@@ -6,7 +6,7 @@
  *   readers of every country's postcode syntax.
  *
  *   The definition is the input format `recognize-build --definition` compiles.
- *   See `packages/recognize/crates/recognize-build/src/definition.rs`.
+ *   See `packages/recognizer/crates/recognize-build/src/definition.rs`.
  *
  *   # What a recognition reports
  *

@@ -23,7 +23,7 @@
  *   The engine loads on the first call.
  */
 
-import { createRecognizer } from "@mailwoman/recognize"
+import { createRecognizer } from "@mailwoman/recognizer"
 
 import { COUNTRY_POSTCODE_FORMAT_SOURCES, type PostcodeLocalityPlacement } from "#country-formats/data"
 import {

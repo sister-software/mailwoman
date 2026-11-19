@@ -8,7 +8,7 @@
  * Edit the family definition and the generator and not this file.
  */
 
-import { defineFamily } from "@mailwoman/recognize/family"
+import { defineFamily } from "@mailwoman/recognizer/family"
 
 import { postalArtifact } from "./artifacts/postal.generated.ts"
 

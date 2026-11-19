@@ -68,7 +68,7 @@ const postcode = (...segments: string[]): string => workspacePath("postcode", ..
 const BINARY = repoRootPath("target", "release", "recognize-build").toString()
 
 await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build"], {
-	cwd: workspacePath("recognize"),
+	cwd: workspacePath("recognizer"),
 })
 
 await using scratch = await temporaryDirectory("postcode-generate-")
@@ -212,8 +212,8 @@ const bare = equivalenceGroups("bare", probe)
 const printed = equivalenceGroups("printed", probe)
 
 // Every pair of the grouped definition that shares a string, declared on the side that sorts first.
-// A pair with a shape of another family is declared on the postal side,
-// because `recognize` cannot name a shape of this package.
+// A pair with a shape of another family is declared on the postal side, because
+// `@mailwoman/recognizer` cannot name a shape of this package.
 const ungrouped = await listOverlaps(postalDefinition(bare, printed), POSTAL_DEFINITION_FILE)
 const declared = new Map<string, string[]>()
 

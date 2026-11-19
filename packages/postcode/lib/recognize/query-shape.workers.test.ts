@@ -5,7 +5,7 @@
  *   The recognizer the parse pipeline reads, `computeQueryShape`, runs under the Workers runtime.
  *
  *   Workers refuse to compile WebAssembly from bytes.
- *   `@mailwoman/recognize` resolves to its `workerd` entry and that entry imports the `.wasm` file.
+ *   `@mailwoman/recognizer` resolves to its `workerd` entry and that entry imports the `.wasm` file.
  *
  *   The structural fields and known formats come back on the first call with no `init`.
  *

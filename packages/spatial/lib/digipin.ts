@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Validated } from "@mailwoman/recognize/types"
+import type { Validated } from "@mailwoman/recognizer/types"
 
 import type { Coordinates2D } from "#position"
 
@@ -210,7 +210,7 @@ export function getDIGIPINUnsafe(latitude: number, longitude: number): string {
  * Returns a GeoJSON-compatible position in longitude-first order.
  * Coordinates retain floating-point precision without decimal rounding.
  *
- * The parameter is the validated code of the `spatial` family of `@mailwoman/recognize`:
+ * The parameter is the validated code of the `spatial` family of `@mailwoman/recognizer`:
  * ten upper-case characters without hyphens.
  * The validator accepts lower case and the display form `39J-49L-L8T4`
  * and normalizes both, so this decoder skips every check.

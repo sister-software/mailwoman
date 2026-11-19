@@ -3,11 +3,11 @@
 
 /**
  * Writes the FIPS codes of the states and territories into the `identifiers` family's
- * validator: `packages/recognize/crates/recognize-core/src/validators/us_state_fips.rs`.
+ * validator: `packages/recognizer/crates/recognize-core/src/validators/us_state_fips.rs`.
  *
  * The `CensusGEOID` validator checks the state code of a GEOID against this table.
- * `@mailwoman/recognize` cannot depend on `@mailwoman/tiger`, which owns the codes as `AdminLevel1Code`,
- * because `tiger` depends on `spatial` and `spatial` on `postcode`, which depends on `recognize`.
+ * `@mailwoman/recognizer` cannot depend on `@mailwoman/tiger`, which owns the codes as `AdminLevel1Code`,
+ * because `tiger` depends on `spatial` and `spatial` on `postcode`, which depends on `recognizer`.
  *
  * This tool lives under `mailwoman`, which depends on all of them, and writes the table as a constant.
  *
@@ -26,7 +26,7 @@ import { AdminLevel1Code } from "@mailwoman/tiger/state"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 
-const target = workspacePath("recognize", "crates", "recognize-core", "src", "validators", "us_state_fips.rs")
+const target = workspacePath("recognizer", "crates", "recognize-core", "src", "validators", "us_state_fips.rs")
 const codes = [...new Set(Object.values(AdminLevel1Code))].toSorted()
 
 if (codes.some((code) => !/^\d{2}$/u.test(code))) {
@@ -49,7 +49,7 @@ await runFile("rustfmt", [
 	"--edition",
 	"2021",
 	"--config-path",
-	workspacePath("recognize", "rustfmt.toml").toString(),
+	workspacePath("recognizer", "rustfmt.toml").toString(),
 	scratchFile,
 ])
 

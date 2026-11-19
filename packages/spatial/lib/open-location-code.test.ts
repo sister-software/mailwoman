@@ -6,7 +6,7 @@
  *   plus the board's live Nicaraguan pair.
  */
 
-import type { Validated } from "@mailwoman/recognize/types"
+import type { Validated } from "@mailwoman/recognizer/types"
 import { describe, expect, it } from "vitest"
 
 import { decodePlusCode, encodePlusCode, recoverNearestPlusCode } from "#open-location-code"

@@ -4,12 +4,12 @@
 /**
  * @file Open Location Code arithmetic.
  *
- *   A code is read by the `spatial` family of `@mailwoman/recognize`, which owns the alphabet, the separator
+ *   A code is read by the `spatial` family of `@mailwoman/recognizer`, which owns the alphabet, the separator
  *   and the digit counts. The decoders here take the validated, branded `Validated.FullPlusCode` and `Validated.ShortPlusCode` the family returns,
  *   so a caller cannot pass an unchecked string. A test or a tool that holds a string reads it through the recognizer.
  */
 
-import type { Validated } from "@mailwoman/recognize/types"
+import type { Validated } from "@mailwoman/recognizer/types"
 
 import type { DegreeCell } from "#coordinate/cell"
 

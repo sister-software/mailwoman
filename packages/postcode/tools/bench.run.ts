@@ -4,7 +4,7 @@
 /**
  *   Times one `recognizer.recognize(input)` call with the `structure`,
  *   `postcode_legacy`, `primitives` and `coordinates` families composed,
- *   on the eight inputs of `packages/recognize/tools/bench.run.ts`.
+ *   on the eight inputs of `packages/recognizer/tools/bench.run.ts`.
  *
  *   The recognizer computes the structural fields and known formats, and also recognizes
  *   digit runs, decimals, whitespace, words and the coordinate spellings.
@@ -19,8 +19,8 @@
  *
  *   Run it on a host with no CI run in progress, because busy runners slow it two to three times.
  *
- *   The tool lives in this package and not beside the `recognize` benchmark because it
- *   imports `@mailwoman/postcode`, and `@mailwoman/recognize` mustn't import that package.
+ *   The tool lives in this package and not beside the `recognizer` benchmark because it
+ *   imports `@mailwoman/postcode`, and `@mailwoman/recognizer` mustn't import that package.
  *
  *   Usage: `node packages/postcode/tools/bench.run.ts [--json]`
  */
@@ -30,13 +30,13 @@ import { gitHead } from "@mailwoman/core/git"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuModel } from "@mailwoman/core/utils/system"
-import { createRecognizer } from "@mailwoman/recognize"
-import { coordinates } from "@mailwoman/recognize/coordinates"
-import { defineFamily } from "@mailwoman/recognize/family"
-import { identifiers } from "@mailwoman/recognize/identifiers"
-import { primitives } from "@mailwoman/recognize/primitives"
-import { spatial } from "@mailwoman/recognize/spatial"
-import { structure } from "@mailwoman/recognize/structure"
+import { createRecognizer } from "@mailwoman/recognizer"
+import { coordinates } from "@mailwoman/recognizer/coordinates"
+import { defineFamily } from "@mailwoman/recognizer/family"
+import { identifiers } from "@mailwoman/recognizer/identifiers"
+import { primitives } from "@mailwoman/recognizer/primitives"
+import { spatial } from "@mailwoman/recognizer/spatial"
+import { structure } from "@mailwoman/recognizer/structure"
 
 import { postcodeLegacy } from "#recognize/legacy"
 import { postal } from "#recognize/postal"
@@ -48,7 +48,7 @@ const LABEL_MAX_UNITS = 80
 const WHITE_HOUSE = "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States of America"
 
 /**
- * The inputs of the `recognize` benchmark, the issue's timing table.
+ * The inputs of the `recognizer` benchmark, the issue's timing table.
  */
 const INPUTS: readonly string[] = [
 	"68161",

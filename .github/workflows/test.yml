@@ -299,7 +299,7 @@ jobs:
       # Each tool rebuilds the family and exits non-zero when a committed file differs.
       - name: Check the generated recognizer families against their generators
         run: |
-          yarn workspace @mailwoman/recognize generate:check
+          yarn workspace @mailwoman/recognizer generate:check
           yarn workspace @mailwoman/postcode generate:check
 
       - name: Test the basemap tiler's crates
@@ -692,11 +692,11 @@ jobs:
       # page's main thread and one under the Workers runtime. That runtime refuses to compile WebAssembly from bytes.
       - name: Test recognize first-call instantiation (Chromium)
         if: needs.scope.outputs.worker == 'true'
-        run: yarn workspace @mailwoman/recognize test:browser
+        run: yarn workspace @mailwoman/recognizer test:browser
 
       - name: Test recognize first-call instantiation (Workers pool)
         if: needs.scope.outputs.worker == 'true'
-        run: yarn workspace @mailwoman/recognize test:workers
+        run: yarn workspace @mailwoman/recognizer test:workers
 
       # The parse pipeline reads its structural evidence from `computeQueryShape` of `@mailwoman/postcode`, which
       # composes the recognize engine. The same two runtimes hold that composition.

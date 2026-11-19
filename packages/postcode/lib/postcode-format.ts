@@ -23,7 +23,7 @@
  * `geocode-core` re-exports these functions for its consumers and tests.
  */
 
-import { createRecognizer } from "@mailwoman/recognize"
+import { createRecognizer } from "@mailwoman/recognizer"
 
 import { postal } from "#recognize/postal.generated"
 import { acceptingCountries } from "#recognize/postal/readers"

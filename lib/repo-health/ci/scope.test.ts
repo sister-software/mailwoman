@@ -176,20 +176,20 @@ describe("selectCIScope", () => {
 	})
 
 	it.each([
-		"packages/recognize/crates/recognize-core/src/engine.rs",
-		"packages/recognize/crates/recognize-build/src/main.rs",
-		"packages/recognize/lib/primitives.generated.ts",
-		"packages/recognize/data/artifacts/primitives.rca1",
+		"packages/recognizer/crates/recognize-core/src/engine.rs",
+		"packages/recognizer/crates/recognize-build/src/main.rs",
+		"packages/recognizer/lib/primitives.generated.ts",
+		"packages/recognizer/data/artifacts/primitives.rca1",
 	])("selects the rust job for %s, a recognize crate input or generated file", (file) => {
 		const withRecognize = [
 			...workspaces,
-			{ name: "@mailwoman/recognize", directory: "packages/recognize", dependencies: [] },
+			{ name: "@mailwoman/recognizer", directory: "packages/recognizer", dependencies: [] },
 		]
 
 		const scope = selectCIScope(withRecognize, files, [file], [])
 
 		expect(scope).toMatchObject({ full: false, rust: true })
-		expect(scope.affected).toContain("packages/recognize")
+		expect(scope.affected).toContain("packages/recognizer")
 	})
 
 	it.each([

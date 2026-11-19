@@ -6,7 +6,7 @@
  *
  *   A search field receives coordinates in a dozen spellings, a plus code, an H3 cell, a geohash or a
  *   Who's On First id beside ordinary addresses. {@link recognizePointQuery} runs one recognizer over the `coordinates`,
- *   `spatial` and `identifiers` families of `@mailwoman/recognize` and answers from the recognition that spans the text.
+ *   `spatial` and `identifiers` families of `@mailwoman/recognizer` and answers from the recognition that spans the text.
  *   It decodes no cell: decoding a code to a coordinate belongs to the module that owns the format,
  *   and the H3 reader loads a WebAssembly binary that a text test shouldn't pay for.
  *
@@ -31,12 +31,12 @@ import {
 	type KindsOf,
 	type Recognition,
 	type RecognitionsOf,
-} from "@mailwoman/recognize"
-import { coordinates } from "@mailwoman/recognize/coordinates"
-import { isDeterministicSpatial } from "@mailwoman/recognize/deterministic/spatial"
-import { identifiers } from "@mailwoman/recognize/identifiers"
-import { spatial } from "@mailwoman/recognize/spatial"
-import type { AxisOrder, Validated } from "@mailwoman/recognize/types"
+} from "@mailwoman/recognizer"
+import { coordinates } from "@mailwoman/recognizer/coordinates"
+import { isDeterministicSpatial } from "@mailwoman/recognizer/deterministic/spatial"
+import { identifiers } from "@mailwoman/recognizer/identifiers"
+import { spatial } from "@mailwoman/recognizer/spatial"
+import type { AxisOrder, Validated } from "@mailwoman/recognizer/types"
 
 /**
  * The families a point query is read from, composed once.

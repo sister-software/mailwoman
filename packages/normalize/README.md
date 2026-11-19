@@ -60,7 +60,7 @@ This package is stage 1 in the [Staged Pipeline Interface](https://github.com/si
 
 ## Related
 
-- [`@mailwoman/recognize`](../recognize): stage 1.5, the structural evidence engine that reads the normalized output.
+- [`@mailwoman/recognizer`](../recognizer): stage 1.5, the structural evidence engine that reads the normalized output.
 - [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx)
 - [Tokenization concepts](https://mailwoman.post/articles/concepts/tokenization/)
 

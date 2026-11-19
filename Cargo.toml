@@ -9,7 +9,7 @@ members = ["packages/*/crates/*"]
 default-members = [
 	"packages/core/crates/*",
 	"packages/mtf/crates/*",
-	"packages/recognize/crates/*",
+	"packages/recognizer/crates/*",
 	"packages/registry/crates/*",
 	"packages/trainer/crates/trainer-export",
 	"packages/hrt/crates/*",
@@ -27,7 +27,7 @@ tch = "0.26.0"
 mtf-core = { path = "packages/mtf/crates/mtf-core" }
 mtf-channels = { path = "packages/mtf/crates/mtf-channels" }
 mtf-sampler = { path = "packages/mtf/crates/mtf-sampler" }
-recognize-core = { path = "packages/recognize/crates/recognize-core" }
+recognize-core = { path = "packages/recognizer/crates/recognize-core" }
 
 # The size-optimized profile `wasm/mtf.wasm` is built with.
 [profile.release]

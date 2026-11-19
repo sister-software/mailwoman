@@ -20,7 +20,7 @@
 		{ "path": "../dictionaries" },
 		{ "path": "../evidence" },
 		{ "path": "../poi-taxonomy" },
-		{ "path": "../recognize" },
+		{ "path": "../recognizer" },
 		{ "path": "../spatial" }
 	]
 }

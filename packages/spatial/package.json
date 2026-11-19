@@ -65,7 +65,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
-		"@mailwoman/recognize": "workspace:*",
+		"@mailwoman/recognizer": "workspace:*",
 		"@sister.software/h3": "^1.1.0",
 		"@types/google.maps": "^3.66.9",
 		"geo-coordinates-parser": "^1.7.4",

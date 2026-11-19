@@ -6,7 +6,7 @@
  *   when the first model that declares `requires.query_shape: "postal"` ships.
  *
  *   The `postcode_legacy` family: the postcode and PO box formats `@mailwoman/query-shape`
- *   reports as `knownFormats`, as a family of `@mailwoman/recognize`.
+ *   reports as `knownFormats`, as a family of `@mailwoman/recognizer`.
  *
  *   Compose it with the `structure` family.
  *   The result's `fields.knownFormats` is a list of `{ format, span, confidence }` in
@@ -16,8 +16,8 @@
  *   without `structure` throws a `RecognizeCompositionError` at construction.
  *
  *   ```ts
- *   import { createRecognizer } from "@mailwoman/recognize"
- *   import { structure } from "@mailwoman/recognize/structure"
+ *   import { createRecognizer } from "@mailwoman/recognizer"
+ *   import { structure } from "@mailwoman/recognizer/structure"
  *   import { postcodeLegacy } from "@mailwoman/postcode/recognize/legacy"
  *
  *   const { fields } = createRecognizer([structure, postcodeLegacy]).recognize("SW1A 1AA")

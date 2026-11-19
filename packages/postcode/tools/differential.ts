@@ -5,15 +5,15 @@
  *   The generator behind the frozen comparison of the `postcode_legacy` family,
  *   and the recognizer the comparison runs.
  *
- *   `@mailwoman/recognize/tools/frozen` holds the output of the legacy `computeQueryShape`
+ *   `@mailwoman/recognizer/tools/frozen` holds the output of the legacy `computeQueryShape`
  *   for 500 inputs this generator drew (seed 20261116) and for other draws.
- *   The comparison lives here, and not in `@mailwoman/recognize`, because it needs the
- *   `postcode_legacy` family, and `recognize` mustn't import this package.
+ *   The comparison lives here, and not in `@mailwoman/recognizer`, because it needs the
+ *   `postcode_legacy` family, and `recognizer` mustn't import this package.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"
-import { createRecognizer } from "@mailwoman/recognize"
-import { structure } from "@mailwoman/recognize/structure"
+import { createRecognizer } from "@mailwoman/recognizer"
+import { structure } from "@mailwoman/recognizer/structure"
 
 import { postcodeLegacy } from "#recognize/legacy"
 

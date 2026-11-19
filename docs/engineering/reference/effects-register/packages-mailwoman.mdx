@@ -2091,13 +2091,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 - `runs a statement at module scope`, 4 times
 - `awaits at module scope`, 2 times
 
-| Kind    | Interface           | Target                                                                          | Calls |
-| ------- | ------------------- | ------------------------------------------------------------------------------- | ----- |
-| read    | `readLocalTextFile` | `repo:packages/recognize/crates/recognize-core/src/validators/us_state_fips.rs` | 1     |
-| read    | `readLocalTextFile` | `scratch:us_state_fips.rs`                                                      | 1     |
-| write   | `writeLocalFile`    | `repo:packages/recognize/crates/recognize-core/src/validators/us_state_fips.rs` | 1     |
-| write   | `writeLocalFile`    | `scratch:us_state_fips.rs`                                                      | 1     |
-| process | `runFile`           | `literal:rustfmt`                                                               | 1     |
+| Kind    | Interface           | Target                                                                           | Calls |
+| ------- | ------------------- | -------------------------------------------------------------------------------- | ----- |
+| read    | `readLocalTextFile` | `repo:packages/recognizer/crates/recognize-core/src/validators/us_state_fips.rs` | 1     |
+| read    | `readLocalTextFile` | `scratch:us_state_fips.rs`                                                       | 1     |
+| write   | `writeLocalFile`    | `repo:packages/recognizer/crates/recognize-core/src/validators/us_state_fips.rs` | 1     |
+| write   | `writeLocalFile`    | `scratch:us_state_fips.rs`                                                       | 1     |
+| process | `runFile`           | `literal:rustfmt`                                                                | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/relay-interpolation-extracts.run.ts`
 

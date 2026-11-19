@@ -54,7 +54,7 @@
 				"packages/poi-taxonomy",
 				"packages/react",
 				"packages/record",
-				"packages/recognize",
+				"packages/recognizer",
 				"packages/registry",
 				"packages/entity-resolution",
 				"packages/resolver",

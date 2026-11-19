@@ -16,8 +16,8 @@
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country/population"
 import { type CountrySet, countriesDeclaredBy, hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
-import { poBoxSpans } from "@mailwoman/recognize/po-box"
-import type { KnownFormatHit, TokenClass } from "@mailwoman/recognize/types"
+import { poBoxSpans } from "@mailwoman/recognizer/po-box"
+import type { KnownFormatHit, TokenClass } from "@mailwoman/recognizer/types"
 
 import { postcodeSyntaxCountries } from "#country-formats"
 import { postalConfidence } from "#recognize/postal/confidence"

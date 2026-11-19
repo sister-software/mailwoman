@@ -7,16 +7,16 @@
  *
  *   See {@link applyPlusCodeOverride} for the interface.
  *   The decoder itself lives in `@mailwoman/spatial` (pure arithmetic, officially-vectored),
- *   and the token is found by the `spatial` family of `@mailwoman/recognize`,
+ *   and the token is found by the `spatial` family of `@mailwoman/recognizer`,
  *   which owns the alphabet, the separator and the digit counts.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { collectNodes, firstNodeWhere, slotNodes } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { createRecognizer } from "@mailwoman/recognize"
-import { SpatialKind, spatial } from "@mailwoman/recognize/spatial"
-import type { Validated } from "@mailwoman/recognize/types"
+import { createRecognizer } from "@mailwoman/recognizer"
+import { SpatialKind, spatial } from "@mailwoman/recognizer/spatial"
+import type { Validated } from "@mailwoman/recognizer/types"
 import { cellRadiusMeters, decodePlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
 import { epistemicStatusFor } from "#geocode/epistemic-status"

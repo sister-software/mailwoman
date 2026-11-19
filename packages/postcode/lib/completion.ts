@@ -15,7 +15,7 @@
  *   so membership is a separate field with its own coverage and never changes the syntax answer.
  */
 
-import { createRecognizer, type PrefixStatus } from "@mailwoman/recognize"
+import { createRecognizer, type PrefixStatus } from "@mailwoman/recognizer"
 
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"

@@ -5,8 +5,8 @@
  *   Stamp each parsed span with the ISO 15924 script it is written in.
  *
  *   This lives in `mailwoman` rather than in either package it draws on, because neither may reach the
- *   other: `@mailwoman/recognize` owns `scriptForRange` and may not import `@mailwoman/core`'s
- *   tree, and `@mailwoman/core` owns `AddressTree` and may not depend on `recognize`.
+ *   other: `@mailwoman/recognizer` owns `scriptForRange` and may not import `@mailwoman/core`'s
+ *   tree, and `@mailwoman/core` owns `AddressTree` and may not depend on `recognizer`.
  *
  *   The entry package depends on both, so the join happens once, here,
  *   rather than as a re-typed fold on either side.
@@ -15,8 +15,8 @@
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
-import { scriptForRange } from "@mailwoman/recognize/charset"
-import { rangeScript } from "@mailwoman/recognize/script-run"
+import { scriptForRange } from "@mailwoman/recognizer/charset"
+import { rangeScript } from "@mailwoman/recognizer/script-run"
 
 /**
  * Write `script` onto every node of `tree`, in place.

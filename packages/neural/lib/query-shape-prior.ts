@@ -13,7 +13,7 @@
  */
 
 import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
-import type { CharRange } from "@mailwoman/recognize/types"
+import type { CharRange } from "@mailwoman/recognizer/types"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"

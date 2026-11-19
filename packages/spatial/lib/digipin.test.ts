@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Validated } from "@mailwoman/recognize/types"
+import type { Validated } from "@mailwoman/recognizer/types"
 import { expect, test } from "vitest"
 
 import { getDIGIPIN, getDIGIPINUnsafe, getLatLngFromDIGIPIN, getLatLngFromDIGIPINInto } from "#digipin"

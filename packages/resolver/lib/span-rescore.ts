@@ -10,7 +10,7 @@
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend, WeakResolutionReading } from "@mailwoman/core/resolver"
-import { isRegionAbbreviationToken } from "@mailwoman/recognize/region-abbreviation"
+import { isRegionAbbreviationToken } from "@mailwoman/recognizer/region-abbreviation"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { partitionByContainment } from "#admin/containment"
