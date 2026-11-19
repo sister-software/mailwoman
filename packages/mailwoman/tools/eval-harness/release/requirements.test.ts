@@ -12,7 +12,7 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = releaseSpecPath(12)
+const committedPath = releaseSpecPath(13)
 
 /**
  * The two fields schema 3 records hold as single pins.
@@ -23,8 +23,8 @@ interface SchemaThreePins {
 }
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v12 specification with every threshold registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v12\.json$/u)
+	it("accepts the current v13 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v13\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -181,6 +181,22 @@ describe("validateReleaseSpec", () => {
 		expect(v12.evaluations.development.ids.slice(0, -1)).toEqual(v11.evaluations.development.ids)
 		expect(v12.evaluations.development.ids.at(-1)).toMatch(/^heldout-dev-v0\.8\.21@/u)
 		expect(v12.rationale).toMatch(/Reads of v11/u)
+	})
+
+	it("registers the v8.9.0 candidate in v13 and keeps every other v12 value", async () => {
+		const v12 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(12)))
+		const v13 = validateReleaseSpec(await readLocalJSONFile<unknown>(releaseSpecPath(13)))
+
+		const unchanged = (spec: ReleaseRequirementSpec) => ({
+			...spec,
+			specVersion: null,
+			rationale: null,
+			identities: { ...spec.identities, candidate: null },
+		})
+
+		expect(unchanged(v13)).toEqual(unchanged(v12))
+		expect(v13.identities.candidate.sha256).toBe("d51bb0efa5a61e5fc7233b94f0f7c9946be988100b230bc6b17c40808112b39f")
+		expect(v13.rationale).toMatch(/Reads of v12/u)
 	})
 
 	it("pins each role's collections, and names the confirmation collections as the dataset identity", async () => {

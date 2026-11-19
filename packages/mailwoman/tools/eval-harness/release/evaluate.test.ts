@@ -124,7 +124,7 @@ describe("evaluateReleaseSpec", () => {
 
 		const verdict = evaluate(committed, rowsFor("US", 50, 40, 45), {
 			published: committed.identities.published.sha256!,
-			candidate: CANDIDATE,
+			candidate: committed.identities.candidate.sha256 ?? CANDIDATE,
 		})
 
 		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)

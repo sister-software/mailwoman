@@ -25,4 +25,4 @@ export function releaseSpecPath(version: string | number): string {
  *
  * A new specification version moves this path in the same change.
  */
-export const CURRENT_RELEASE_SPEC: string = releaseSpecPath(12)
+export const CURRENT_RELEASE_SPEC: string = releaseSpecPath(13)
