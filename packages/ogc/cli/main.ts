@@ -32,7 +32,7 @@ import { parseObligationRefusals } from "mailwoman/data/obligations"
 import { $public } from "mailwoman/env"
 import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openServingRooftopProviders } from "mailwoman/geocode/serving-layers"
+import { openServingRooftopProviders, unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 
 import {
@@ -309,7 +309,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				)
 			}
 
-			for (const line of placeItems.bannerLines) {
+			for (const line of [...placeItems.bannerLines, ...unattachedLayerLines(rooftops)]) {
 				console.error(line)
 			}
 

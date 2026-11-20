@@ -350,6 +350,7 @@ import {
 	createLayerCoverageTable,
 	writeLayerManifest,
 	readLayerManifest,
+	probeLayerManifest,
 	writeLayerCoverage,
 	readLayerCoverage,
 	COVERAGE_INSERT_BATCH,
@@ -366,7 +367,11 @@ import {
   `COVERAGE_INSERT_BATCH` (5,000 rows/statement) to stay under SQLite's limit of 32,766 bound
   variables. A continental-scale res-6 cell count exceeds that limit in one `.values()` call.
 - **Read**: `readLayerManifest(db)` returns the parsed, camelCase `LayerManifest`, and throws on
-  an empty, multi-row, or invalid table. `readLayerCoverage(db, h3Cell)` returns a `CoverageCell`
+  a missing, empty, multi-row, or invalid table. `probeLayerManifest(db)` reads the same row but
+  returns `{ state: "absent", reason }` when the database has no `layer_manifest` table, the state of an
+  artifact built before the layer interface. A reader that serves several layers uses it to report
+  that file and keep serving the others. An empty or invalid table still throws, because the build
+  that created the table never wrote its row. `readLayerCoverage(db, h3Cell)` returns a `CoverageCell`
   or `undefined`. Apply the meaning-of-zero rule to `undefined`.
 
 Validation runs at both ends, so a hand-built or corrupted layer fails when it is

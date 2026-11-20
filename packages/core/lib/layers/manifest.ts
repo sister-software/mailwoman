@@ -6,6 +6,7 @@
  */
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
+import { sql } from "kysely"
 
 import { parseJSONStrict, stringifyJSON } from "#json"
 import { assertTierMatchesLicense } from "#layers/publication"
@@ -371,9 +372,77 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 }
 
 /**
+ * Whether a layer database holds a `layer_manifest` table.
+ */
+export const LayerManifestState = {
+	/**
+	 * The table holds one valid row.
+	 */
+	Present: "present",
+	/**
+	 * The database has no `layer_manifest` table, so it records no identity, license or provenance.
+	 *
+	 * An artifact built before the layer interface reads this way until it is rebuilt.
+	 */
+	Absent: "absent",
+} as const
+
+export type LayerManifestState = (typeof LayerManifestState)[keyof typeof LayerManifestState]
+
+/**
+ * The result of {@linkcode probeLayerManifest}.
+ */
+export type LayerManifestRead =
+	| { state: typeof LayerManifestState.Present; manifest: LayerManifest }
+	| {
+			state: typeof LayerManifestState.Absent
+			/**
+			 * Why no manifest was read.
+			 * A report prints it beside the file's path.
+			 */
+			reason: string
+	  }
+
+/**
+ * Read and validate the manifest, or report that the database has no manifest table.
+ *
+ * Only a missing table reads as {@link LayerManifestState.Absent}.
+ * An empty table, several rows or an invalid row throws, as {@linkcode readLayerManifest} does.
+ *
+ * @throws When the table exists and its contents can't be read as one valid manifest.
+ */
+export async function probeLayerManifest(db: layerschemahandle): Promise<LayerManifestRead> {
+	const table = await db
+		.selectFrom(sql<{ type: string; name: string }>`sqlite_master`.as("master"))
+		.select("master.name")
+		.where("master.type", "=", "table")
+		.where("master.name", "=", "layer_manifest")
+		.executeTakeFirst()
+
+	if (!table) {
+		return { state: LayerManifestState.Absent, reason: "the database has no layer_manifest table" }
+	}
+
+	return { state: LayerManifestState.Present, manifest: await readManifestRow(db) }
+}
+
+/**
  * Read and validate the manifest.
+ *
+ * @throws When the database has no `layer_manifest` table, or the table holds other than one
+ * valid row. {@linkcode probeLayerManifest} reports the missing table as a state instead.
  */
 export async function readLayerManifest(db: layerschemahandle): Promise<LayerManifest> {
+	const read = await probeLayerManifest(db)
+
+	if (read.state === LayerManifestState.Absent) {
+		throw new Error(`layer manifest: ${read.reason}`)
+	}
+
+	return read.manifest
+}
+
+async function readManifestRow(db: layerschemahandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 
 	if (rows.length !== 1) {

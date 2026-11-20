@@ -4,6 +4,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { writeLayerManifest, type LayerManifest } from "@mailwoman/core/layers"
+import { createAddressPointTable, type AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/schema"
 import {
 	createSpineAddressPointTables,
 	ADDRESS_POINT_H3_RESOLUTION,
@@ -79,6 +80,39 @@ describe("OSMRegionDatabaseProvider admission", () => {
 				},
 			})
 		).rejects.toThrow(/refused ODbL-1\.0 at .*address-points-nz-nz\.db/)
+	})
+
+	it("lists an extract without a layer_manifest table as unread and attaches the others", async () => {
+		await using directory = await temporaryDirectory("mw-osm-provider-")
+
+		await dataRootWithExtract(directory)
+
+		const unmanifested = osmDatabaseRoot(directory.path)("address-points-fr-fr.db").toString()
+
+		// The table layout of an extract built before the layer interface, with no `layer_manifest`.
+		{
+			using db = new DatabaseClient<AddressPointDatabase>(unmanifested)
+
+			await createAddressPointTable(db)
+		}
+
+		const admitted: string[] = []
+
+		using provider = await OSMRegionDatabaseProvider.create(directory.path, {
+			admit: (manifest) => {
+				admitted.push(manifest.name)
+			},
+		})
+
+		expect(admitted).toEqual([MANIFEST.name])
+
+		expect(provider.unreadExtracts).toEqual([
+			{ country: "fr", path: unmanifested, reason: expect.stringMatching(/no layer_manifest table/) },
+		])
+
+		expect(provider.for("fr")).toEqual({})
+		expect(provider.layerDatabases("fr")).toEqual([])
+		expect(provider.for("nz").addressPoints).toBeDefined()
 	})
 
 	it("reads no manifest when no admission is set", async () => {

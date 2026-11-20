@@ -18,10 +18,17 @@
  *
  *   A caller that applies a license policy passes `admit`, which sees each extract's manifest
  *   before the provider attaches it and throws to refuse it.
+ *   Under that policy an extract without a `layer_manifest` table records no license to check,
+ *   so the provider leaves it unattached and lists it in `unreadExtracts`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { readLayerManifest, type LayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import {
+	LayerManifestState,
+	probeLayerManifest,
+	type LayerManifest,
+	type layerschemadatabase,
+} from "@mailwoman/core/layers"
 import type { RegionDatabaseProvider, RegionDatabases, RegionLayerDatabase } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -47,6 +54,18 @@ export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
  * A skipped extract would make its country read as having no OpenStreetMap data.
  */
 export type OSMExtractAdmission = (manifest: LayerManifest, path: string) => void
+
+/**
+ * An extract on disk that the provider didn't attach because it couldn't read the extract's manifest.
+ */
+export interface OSMUnreadExtract {
+	/**
+	 * Lowercase ISO 3166-1 alpha-2 country.
+	 */
+	country: string
+	path: string
+	reason: string
+}
 
 /**
  * Options for {@linkcode OSMRegionDatabaseProvider.create}.
@@ -87,6 +106,7 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	readonly #onDisk = new Set<string>()
 	readonly #admit: OSMExtractAdmission | undefined
 	readonly #selected: ReadonlyMap<string, string>
+	readonly #unread: OSMUnreadExtract[] = []
 	#warmPromise?: Promise<void>
 
 	constructor(dataRoot: PathBuilder, options: OSMRegionDatabaseProviderOptions = {}) {
@@ -136,12 +156,35 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 
 			if (this.#admit) {
 				using db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+				const read = await probeLayerManifest(db)
 
-				this.#admit(await readLayerManifest(db), path)
+				// An extract without a manifest has an unknown license class.
+				// A refusal policy can't admit an unknown class.
+				if (read.state === LayerManifestState.Absent) {
+					this.#unread.push({
+						country: cc,
+						path,
+						reason: `${read.reason}, so its license can't be checked against the refusal policy`,
+					})
+
+					continue
+				}
+
+				this.#admit(read.manifest, path)
 			}
 
 			this.#onDisk.add(path)
 		}
+	}
+
+	/**
+	 * The extracts {@linkcode warm} found on disk and left unattached because it couldn't read their manifest.
+	 *
+	 * A country listed here answers `{}` from `for`, as a country with no extract does.
+	 * A caller reports the list, so the country doesn't read as having no OpenStreetMap data.
+	 */
+	get unreadExtracts(): readonly OSMUnreadExtract[] {
+		return this.#unread
 	}
 
 	/**
