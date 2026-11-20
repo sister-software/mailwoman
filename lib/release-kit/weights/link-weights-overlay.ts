@@ -22,7 +22,7 @@
  *   ```
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, weightsOverlayRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
@@ -86,7 +86,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		...($public.MAILWOMAN_DEV_TOKENIZER ? { tokenizer: $public.MAILWOMAN_DEV_TOKENIZER } : {}),
 	})
 
-	const overlayRoot = resolvePath(dataRoot, "weights")
+	const overlayRoot = weightsOverlayRootPath()
 	const locales = options.locale ? [options.locale.toLowerCase()] : recipe.locales
 
 	let linked = 0

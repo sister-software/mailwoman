@@ -3,12 +3,13 @@
 
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExists, statPath, statLink } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import {
 	createSymbolicLink,
 	makeDirectories,
 	movePath,
 	removePath,
+	replaceFileAtomically,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -18,6 +19,7 @@ import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
@@ -37,21 +39,6 @@ export async function linkForce(src: PathBuilderLike, dest: PathBuilderLike): Pr
 
 	await createSymbolicLink(src, tmp)
 	await movePath(tmp, dest)
-}
-
-/**
- * Removes a file or symlink at `dest` so that the runtime falls back to the base en-us weights.
- */
-export async function removeIfPresent(dest: PathBuilder): Promise<void> {
-	try {
-		await statLink(dest)
-	} catch {
-		return
-	}
-
-	await removePath(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }
 
 /**
@@ -310,8 +297,10 @@ export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Prom
 /**
  * Symlinks the per-locale FST gazetteer `fst-<locale>.bin` into an overlay
  * and checks it with {@link warnIfFSTStale}.
+ *
+ * @returns Whether the source existed and was linked.
  */
-export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promise<void> {
+export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promise<boolean> {
 	const source = wofDatabasePath("fst-per-locale", `fst-${locale}.bin`)
 
 	const linked = await linkSoftFeedSibling(
@@ -323,14 +312,19 @@ export async function linkLocaleFST(destDir: PathBuilder, locale: string): Promi
 	if (linked) {
 		await warnIfFSTStale(source, locale)
 	}
+
+	return linked
 }
 
 /**
  * Symlinks the newest dated PFX1 postcode-prefix index of each scope into an overlay under
  * the scope's shipped name, so the anchor-region prior reads the file the package would ship.
+ *
+ * @returns The overlay names it linked.
  */
-export async function linkPostcodePrefixIndexes(destDir: PathBuilder, scopes: readonly string[]): Promise<void> {
+export async function linkPostcodePrefixIndexes(destDir: PathBuilder, scopes: readonly string[]): Promise<string[]> {
 	const newest = await newestPostcodePrefixFiles()
+	const linkedNames: string[] = []
 
 	for (const scope of scopes) {
 		const file = newest.get(scope)
@@ -345,20 +339,28 @@ export async function linkPostcodePrefixIndexes(destDir: PathBuilder, scopes: re
 			continue
 		}
 
-		await linkSoftFeedSibling(
+		const linked = await linkSoftFeedSibling(
 			file.path,
 			destDir(name),
 			"the anchor-region prior reads the data-root directory instead."
 		)
+
+		if (linked) {
+			linkedNames.push(name)
+		}
 	}
+
+	return linkedNames
 }
 
 /**
  * Symlinks the prebuilt street-morphology FST into an overlay so that the
  * street-context check doesn't rebuild it from dictionaries.
+ *
+ * @returns Whether the source existed and was linked.
  */
-export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<void> {
-	await linkSoftFeedSibling(
+export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<boolean> {
+	return linkSoftFeedSibling(
 		wofDatabasePath("fst-street-morphology.bin"),
 		destDir("fst-street-morphology.bin"),
 		"the street-context check falls back to the per-process dictionary build."
@@ -539,6 +541,7 @@ export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
 	country: SoftFeedLink
 	streetType: SoftFeedLink | null
+	calibration: SoftFeedLink[]
 }> {
 	const config = await readReleaseConfig()
 	const sources = repoCommittedSoftFeedSources(repoRootPath(), config.softFeed ?? {})
@@ -560,7 +563,14 @@ export async function committedSoftFeedLinks(): Promise<{
 
 	const streetType = link("street-type-lexicon-v3.json", "the street_type channel will resolve OFF in this worktree.")
 
-	return { anchor, country, streetType }
+	// The base graph's confidence calibration tables, committed in en-us and shipped by both Latin bases.
+	const calibration = ["calibration.json", "calibration-per-locale.json"].map((name) => ({
+		source: workspacePathBuilder("neural-weights-en-us", name).toString(),
+		name,
+		consequenceIfMissing: `the weights overlay lacks ${name}, which the package ships.`,
+	}))
+
+	return { anchor, country, streetType, calibration }
 }
 
 /**
@@ -574,20 +584,22 @@ export interface WeightsCard {
 /**
  * Declares what one locale's dev overlay contains. {@link materializeDevOverlay}
  * runs the steps in the order the fields are listed.
+ *
+ * The linker owns the overlay directory: it also writes the workspace's `model-card.json`
+ * and links every evidence lexicon that card declares under `requires.<channel>.lexicon`,
+ * and it removes every entry no step produced.
  */
 export interface DevOverlayManifest {
 	/**
 	 * The overlay's lowercase locale tag.
 	 * The workspace is `neural-weights-<locale>`.
 	 *
-	 * Artifacts go to the data root's `weights/<locale>/` overlay because the binaries are kept out of git.
+	 * Artifacts go to the overlay root's `<locale>/` directory because the binaries are kept out of git.
 	 */
 	locale: string
 
 	/**
 	 * How the overlay gets its model files.
-	 *
-	 * When it is omitted, `link-weights-overlay.ts` in release-kit handles them.
 	 *
 	 * The `link` kind symlinks `model.onnx` and `tokenizer.model` from the
 	 * `release.config.json` weights paths under the data root.
@@ -596,11 +608,12 @@ export interface DevOverlayManifest {
 	 * With `digestCard`, the linked default files must match the `files_md5` of that workspace's card.
 	 * An override skips this check.
 	 *
-	 * The `inherit` kind removes any local pair, because the package declares
-	 * `mailwoman.baseWeights` and a local file would shadow the base.
+	 * The `inherit` kind links no graph, because the package declares `mailwoman.baseWeights`
+	 * and `resolveWeights` reads the base's graph.
+	 * A package that declares `mailwoman.baseWeights` inherits when the field is omitted,
+	 * and any other kind is refused.
 	 *
-	 * The `char` kind links the `charWeights.<family>` model, character vocabulary and model card.
-	 * It removes any tokenizer.
+	 * The `char` kind links the `charWeights.<family>` model and character vocabulary.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }
 
@@ -609,16 +622,6 @@ export interface DevOverlayManifest {
 	 * A missing source prints a warning and the step continues.
 	 */
 	softFeed?: ReadonlyArray<SoftFeedLink>
-
-	/**
-	 * Whether to link the evidence lexicons listed under `requires.<channel>.lexicon`
-	 * in the overlay's model card.
-	 * A card update then changes the linked file too.
-	 *
-	 * The street-type lexicon comes from the repo's `data/gazetteer/`.
-	 * The locality-surface lexicon comes from the data root.
-	 */
-	evidenceLexiconsFromCard?: boolean
 
 	/**
 	 * The PFX1 postcode-prefix scopes to link as `postcode-prefix-<scope>.bin`, such as `["gb-esw"]`.
@@ -648,6 +651,20 @@ export interface DevOverlayManifest {
 	 * Whether to link the shared street-morphology FST.
 	 */
 	streetMorphologyFST?: boolean
+
+	/**
+	 * Whether to copy the workspace's `model-card.json` into the overlay.
+	 *
+	 * @defaultValue true
+	 */
+	writeCard?: boolean
+
+	/**
+	 * Overlay entries the calling script writes itself after this call,
+	 * such as en-gb's card-conditional `postcode-gb.bin`.
+	 * The prune keeps them.
+	 */
+	alsoManages?: readonly string[]
 }
 
 /**
@@ -690,7 +707,12 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | null> {
 	return readLocalJSONFile<WeightsCard>(path)
 }
 
-async function linkCharModel(destDir: PathBuilder, family: string): Promise<void> {
+/**
+ * Links the character-path family's model and vocabulary, each held to the md5 the family's card records.
+ *
+ * @returns The overlay names it linked.
+ */
+async function linkCharModel(destDir: PathBuilder, family: string): Promise<string[]> {
 	const recipe = (await readReleaseConfig()).charWeights?.[family]
 
 	if (!recipe) {
@@ -698,6 +720,8 @@ async function linkCharModel(destDir: PathBuilder, family: string): Promise<void
 	}
 
 	const dataRoot = dataRootPath()
+	const digests = (await readWeightsCard(`neural-weights-${family}`))?.files_md5 ?? {}
+	const names = ["model.onnx", "char-vocab.json"]
 
 	for (const [name, relative] of [
 		["model.onnx", recipe.model],
@@ -709,18 +733,25 @@ async function linkCharModel(destDir: PathBuilder, family: string): Promise<void
 			throw new Error(`missing char-path source ${name} for ${family}: ${source}`)
 		}
 
+		const expected = digests[name]
+		const actual = expected ? await md5File(source) : null
+
+		if (expected && actual !== expected) {
+			throw new Error(
+				`char-path ${name} md5 ${actual} != ${expected}, the digest neural-weights-${family}/model-card.json records — ` +
+					`release.config.json charWeights.${family} and the card name different artifacts.`
+			)
+		}
+
 		await linkForce(source, destDir(name))
 
 		console.log(`linked ${destDir(name)} ← ${source}`)
 	}
 
-	const card = workspacePathBuilder(`neural-weights-${family}`, "model-card.json")
-
-	await linkForce(card, destDir("model-card.json"))
-	await removeIfPresent(destDir("tokenizer.model"))
+	return names
 }
 
-async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null): Promise<void> {
+async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null): Promise<string[]> {
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
@@ -745,38 +776,35 @@ async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null
 
 		const dest = destDir(name)
 
+		// The digest is checked before the link, so a refused graph never replaces the weights overlay's prior graph.
+		if (digestCard && override) {
+			console.error(`  (${label} override active — skipping the #397 default-digest check)`)
+		} else if (digestCard) {
+			const expected = digests?.[name]
+
+			if (!expected) {
+				throw new Error(
+					`#397 guard: ${digestCard}/model-card.json has no files_md5 entry for ${name} — cannot verify the dev pin.`
+				)
+			}
+
+			const actual = await md5File(source)
+
+			if (actual !== expected) {
+				throw new Error(
+					`#397 guard: default ${label} ${source} md5 ${actual} != shipped ${expected} (${digestCard} model-card files_md5). ` +
+						`The dev link has drifted from the shipped default: bump release.config.json weights.${label} and the card's ` +
+						`files_md5 in lockstep.`
+				)
+			}
+		}
+
 		await linkForce(source, dest)
 
-		console.log(`linked ${dest} ← ${source}`)
-
-		if (!digestCard) continue
-
-		if (override) {
-			console.error(`  (${label} override active — skipping the #397 default-digest check)`)
-
-			continue
-		}
-
-		const expected = digests?.[name]
-
-		if (!expected) {
-			throw new Error(
-				`#397 guard: ${digestCard}/model-card.json has no files_md5 entry for ${name} — cannot verify the dev pin.`
-			)
-		}
-
-		const actual = await md5File(dest)
-
-		if (actual !== expected) {
-			throw new Error(
-				`#397 guard: linked default ${label} md5 ${actual} != shipped ${expected} (${digestCard} model-card files_md5). ` +
-					`The dev link has drifted from the shipped default: bump release.config.json weights.${label} and the card's ` +
-					`files_md5 in lockstep.`
-			)
-		}
-
-		console.log(`  ${name} digest ok`)
+		console.log(`linked ${dest} ← ${source}${digestCard && !override ? " (digest ok)" : ""}`)
 	}
+
+	return pair.map(({ name }) => name)
 }
 
 async function buildPostcodeBinary(
@@ -831,69 +859,183 @@ async function buildPostcodeBinary(
 }
 
 /**
+ * Copies the workspace's `model-card.json` into the overlay.
+ *
+ * The card is copied rather than linked, so removing the checkout that ran the linker leaves no
+ * dangling card, and each run replaces whatever card an earlier run or another checkout left.
+ *
+ * @returns Whether the workspace has a card.
+ */
+async function writeOverlayCard(destDir: PathBuilder, locale: string): Promise<boolean> {
+	const source = workspacePathBuilder(`neural-weights-${locale}`, "model-card.json")
+
+	if (!(await pathExists(source))) return false
+
+	await replaceFileAtomically(source, destDir("model-card.json"))
+
+	console.log(`wrote ${destDir("model-card.json")} ← ${source}`)
+
+	return true
+}
+
+/**
+ * The literal filenames in a weights workspace's `package.json` `files` list.
+ *
+ * Globs, negations and the committed documentation and rights files are left out.
+ */
+async function declaredArtifacts(locale: string): Promise<string[]> {
+	const path = workspacePathBuilder(`neural-weights-${locale}`, "package.json")
+
+	if (!(await pathExists(path))) return []
+
+	const { files } = await readLocalJSONFile<{ files?: string[] }>(path)
+	const committed = new Set(["README.md", "LICENSE.md", "PROVENANCE.json"])
+
+	return (files ?? []).filter((name) => !/[*!/]/.test(name) && !committed.has(name))
+}
+
+/**
+ * Whether an overlay entry is another linker's write still in progress:
+ * a {@link linkForce} temporary link or a `replaceFileAtomically` staging file.
+ */
+function isInFlightWrite(name: string): boolean {
+	return name.endsWith(".tmp-link") || name.includes(".staging-")
+}
+
+/**
+ * Removes every overlay entry outside `managed`, dangling links included.
+ *
+ * An entry this run didn't produce is stale, whether an earlier recipe,
+ * another checkout or a CI job wrote it.
+ * After the prune, the weights overlay directory holds only the files this linker wrote.
+ *
+ * @returns The removed entry names.
+ */
+export async function pruneUnmanagedEntries(destDir: PathBuilder, managed: ReadonlySet<string>): Promise<string[]> {
+	const removed: string[] = []
+
+	for (const pattern of ["*", ".*"]) {
+		const names = await Globerator.from(pattern, { cwd: destDir.toString(), onlyFiles: false }).toArray()
+
+		for (const name of names) {
+			if (managed.has(name) || isInFlightWrite(name)) continue
+
+			await removePath(destDir(name))
+
+			removed.push(name)
+
+			console.log(`removed ${destDir(name)} — no step of this linker produces it`)
+		}
+	}
+
+	return removed
+}
+
+/**
  * Materializes one locale's dev weights overlay from its manifest.
+ *
+ * The linker owns the weights overlay directory.
+ * It writes the workspace's card and links every evidence lexicon the card declares.
+ *
+ * It then removes every entry no step produced.
+ * The card and the graph therefore come from the checkout that ran it.
  */
 export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
+	// The self-hosted runners share the lab host's data root with every developer checkout,
+	// so a CI job that wrote its overlay there would leave links into its own `_work` checkout.
+	if ($public.GITHUB_ACTIONS && !$public.MAILWOMAN_WEIGHTS_OVERLAY_ROOT) {
+		throw new Error(
+			`refusing to link the ${manifest.locale} dev overlay into the shared ${weightsOverlayPath(manifest.locale)} ` +
+				`from a CI job: set MAILWOMAN_WEIGHTS_OVERLAY_ROOT to a per-job directory, such as $RUNNER_TEMP/weights-overlay.`
+		)
+	}
+
 	const destDir = weightsOverlayPath(manifest.locale)
 	const cli = workspacePathBuilder("mailwoman", "out", "cli", "main.js")
 	const card = await readWeightsCard(`neural-weights-${manifest.locale}`)
+	const managed = new Set<string>(manifest.alsoManages)
 
 	await makeDirectories(destDir)
 
-	// A package that declares `mailwoman.baseWeights` inherits its graph whatever the manifest lists,
-	// because `resolveWeights` takes the base's graph over a file in the overlay directory.
-	const inherits =
-		manifest.model?.kind === "inherit" || (!manifest.model && (await declaresBaseWeights(manifest.locale)))
-
-	if (inherits) {
-		await removeIfPresent(destDir("model.onnx"))
-		await removeIfPresent(destDir("tokenizer.model"))
-	} else if (manifest.model?.kind === "link") {
-		await linkBaseModelPair(destDir, manifest.model.digestCard ?? null)
-	} else if (manifest.model?.kind === "char") {
-		await linkCharModel(destDir, manifest.model.family)
-	}
-
-	for (const { source, name, consequenceIfMissing } of manifest.softFeed ?? []) {
-		await linkSoftFeedSibling(source, destDir(name), consequenceIfMissing)
-	}
-
-	if (manifest.evidenceLexiconsFromCard) {
-		for (const { channel, source } of EVIDENCE_LEXICON_SOURCES) {
-			const declared = card?.requires?.[channel]?.lexicon
-
-			if (!declared) {
-				console.error(`WARNING: model-card declares no requires.${channel}.lexicon — the ${channel} channel stays OFF.`)
-
-				continue
-			}
-
-			await linkSoftFeedSibling(
-				source(declared),
-				destDir(declared),
-				`the ${channel} channel will resolve OFF in this worktree.`
+	// `resolveWeights` takes the base's graph over a file in the overlay directory,
+	// so a graph linked here would never be read.
+	if (await declaresBaseWeights(manifest.locale)) {
+		if (manifest.model && manifest.model.kind !== "inherit") {
+			throw new Error(
+				`neural-weights-${manifest.locale} declares mailwoman.baseWeights, so its overlay inherits the base's graph; ` +
+					`its manifest asks for model kind "${manifest.model.kind}".`
 			)
+		}
+	} else if (manifest.model?.kind === "link") {
+		for (const name of await linkBaseModelPair(destDir, manifest.model.digestCard ?? null)) {
+			managed.add(name)
+		}
+	} else if (manifest.model?.kind === "char") {
+		for (const name of await linkCharModel(destDir, manifest.model.family)) {
+			managed.add(name)
+		}
+	}
+
+	if (manifest.writeCard !== false && (await writeOverlayCard(destDir, manifest.locale))) {
+		managed.add("model-card.json")
+	}
+
+	const links: SoftFeedLink[] = [...(manifest.softFeed ?? [])]
+
+	for (const { channel, source } of EVIDENCE_LEXICON_SOURCES) {
+		const declared = card?.requires?.[channel]?.lexicon
+
+		if (declared) {
+			links.push({
+				source: source(declared).toString(),
+				name: declared,
+				consequenceIfMissing: `the ${channel} channel will resolve OFF in this worktree.`,
+			})
+		}
+	}
+
+	for (const { source, name, consequenceIfMissing } of links) {
+		if (await linkSoftFeedSibling(source, destDir(name), consequenceIfMissing)) {
+			managed.add(name)
 		}
 	}
 
 	if (manifest.postcodeBinary) {
+		managed.add(`postcode-${manifest.postcodeBinary.country.toLowerCase()}.bin`)
+
 		await buildPostcodeBinary(destDir, cli, manifest.postcodeBinary)
 	}
 
 	if (manifest.pairIndex) {
+		managed.add(`pair-index-${manifest.pairIndex.country}.bin`)
+
 		await buildPairIndexOverlay({ packageDir: `neural-weights-${manifest.locale}`, ...manifest.pairIndex })
 	}
 
-	if (manifest.localeFST) {
-		await linkLocaleFST(destDir, manifest.locale)
+	if (manifest.localeFST && (await linkLocaleFST(destDir, manifest.locale))) {
+		managed.add(`fst-${manifest.locale}.bin`)
 	}
 
-	if (manifest.streetMorphologyFST) {
-		await linkStreetMorphologyFST(destDir)
+	if (manifest.streetMorphologyFST && (await linkStreetMorphologyFST(destDir))) {
+		managed.add("fst-street-morphology.bin")
 	}
 
 	if (manifest.postcodePrefixScopes?.length) {
-		await linkPostcodePrefixIndexes(destDir, manifest.postcodePrefixScopes)
+		for (const name of await linkPostcodePrefixIndexes(destDir, manifest.postcodePrefixScopes)) {
+			managed.add(name)
+		}
+	}
+
+	await pruneUnmanagedEntries(destDir, managed)
+
+	const undelivered = (await declaredArtifacts(manifest.locale)).filter(
+		(name) => !managed.has(name) && !(name === "model-card.json" && manifest.writeCard === false)
+	)
+
+	if (undelivered.length) {
+		console.error(
+			`WARNING: neural-weights-${manifest.locale} ships ${undelivered.join(", ")}, and this overlay holds none of them.`
+		)
 	}
 
 	return { destDir, cli, card }

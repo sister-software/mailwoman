@@ -46,7 +46,6 @@ await materializeDevOverlay({
 	locale: "en-nz",
 	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
-	evidenceLexiconsFromCard: true,
 	pairIndex: {
 		country: "nz",
 		delta: PAIR_INDEX_DELTA,

@@ -32,6 +32,11 @@ const StorageEnvSchema = object({
 		title: "Temporary root",
 		description: "Directory for named temporary outputs and evaluation staging.",
 	}),
+	MAILWOMAN_WEIGHTS_OVERLAY_ROOT: blankAsAbsent(string().optional()).meta({
+		title: "Weights overlay root",
+		description:
+			"Directory that holds the dev weights overlay, one subdirectory per locale. Defaults to the data root's `weights/`. A CI job sets it to a per-job directory so its linkers leave the shared overlay alone.",
+	}),
 })
 
 // #endregion

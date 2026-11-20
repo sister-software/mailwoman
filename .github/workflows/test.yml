@@ -524,6 +524,11 @@ jobs:
           FULL_SCOPE: ${{ needs.scope.outputs.full }}
           # Four runners share the lab host's 16 cores, so each slow suite takes a quarter of them.
           CI_TEST_MAX_WORKERS: "4"
+          # The dev weights linkers that weights.integration.test.ts runs write here rather than into
+          # the shared $MAILWOMAN_DATA_ROOT/weights directory, so no link points into this job's checkout.
+          # The runner empties runner.temp at the start and end of each job. The databases and FSTs
+          # are still read from the shared data root.
+          MAILWOMAN_WEIGHTS_OVERLAY_ROOT: ${{ runner.temp }}/dev-weights
         run: yarn mwops ci-test slow
 
       - name: Upload test results

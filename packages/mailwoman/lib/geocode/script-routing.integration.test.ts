@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -11,8 +11,7 @@ import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
 
 const CANDIDATE_DB = wofDatabasePath("candidate.db")
 
-const haveArtifacts =
-	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))
+const haveArtifacts = (await pathExists(CANDIDATE_DB)) && (await pathExists(weightsOverlayPath("cjk", "model.onnx")))
 
 // Kamiichi's entrance point for the JP board row.
 // The served municipality centroid sits 4.9 km from it.

@@ -116,16 +116,29 @@ export function snapshotSourcePath(source: string, vintage: string, ...segments:
 }
 
 /**
- * The dev-weights overlay for a locale is `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
+ * The dev-weights overlay root, `$MAILWOMAN_WEIGHTS_OVERLAY_ROOT` when set
+ * and `$MAILWOMAN_DATA_ROOT/weights/` otherwise.
  *
- * Multiple `link-dev-weights.ts` scripts write here.
+ * The data root is shared by every checkout on a host, so a CI job points this variable
+ * at a per-job directory and keeps reading the shared databases.
+ */
+export function weightsOverlayRootPath(): PathBuilder {
+	const root = $public.MAILWOMAN_WEIGHTS_OVERLAY_ROOT
+
+	return root ? PathBuilder.from(resolvePath(root)) : dataRootPath("weights")
+}
+
+/**
+ * The dev-weights overlay for a locale, `<overlay root>/<locale>/` (see {@link weightsOverlayRootPath}).
+ *
+ * Each `link-dev-weights.ts` script writes its own locale's directory.
  * `@mailwoman/neural` (`resolveWeights`) reads from this directory.
  *
  * It lives outside git because the data root is shared across local checkouts and never packaged.
  * Weight binaries stay outside the repository.
  */
 export function weightsOverlayPath(locale: string, ...segments: string[]) {
-	return dataRootPath("weights", locale.toLowerCase(), ...segments)
+	return weightsOverlayRootPath()(locale.toLowerCase(), ...segments)
 }
 
 /**

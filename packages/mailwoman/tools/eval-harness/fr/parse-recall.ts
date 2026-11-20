@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -42,7 +42,7 @@ const MAX_REPORTED_FAILURES = 12
 async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
 		...(weightsCache ? [weightsCachePackageDir(weightsCache, "en-us")(fileName)] : []),
-		dataRootPath("weights", "en-us", fileName),
+		weightsOverlayPath("en-us", fileName),
 		workspacePath("neural-weights-en-us", fileName),
 	]
 

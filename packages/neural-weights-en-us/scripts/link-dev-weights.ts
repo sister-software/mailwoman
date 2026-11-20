@@ -40,8 +40,7 @@ const softFeed = await committedSoftFeedLinks()
 await materializeDevOverlay({
 	locale: "en-us",
 	model: { kind: "link", digestCard: "neural-weights-en-us" },
-	softFeed: [softFeed.anchor, softFeed.country],
-	evidenceLexiconsFromCard: true,
+	softFeed: [softFeed.anchor, softFeed.country, ...softFeed.calibration],
 	postcodeBinary: { country: "us", database: wofDatabasePath("postalcode-us.db") },
 	pairIndex: {
 		country: "us",
