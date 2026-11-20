@@ -22,13 +22,6 @@ import { resolveEvidenceLexicon } from "#weights/lexicon"
 export const weightsCacheDir = cacheRootPathBuilder("weights")
 
 /**
- * Returns the data-root overlay root, `$MAILWOMAN_DATA_ROOT/weights`.
- */
-export function weightsOverlayRoot(): PathBuilder {
-	return dataRootPath("weights")
-}
-
-/**
  * Returns the overlay directory for one locale.
  */
 export function weightsOverlayDir(locale: Intl.UnicodeBCP47LocaleIdentifier): PathBuilder {

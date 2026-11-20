@@ -12,7 +12,7 @@
  *   The bogus root must fail at the weights check.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { weightsOverlayRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -61,7 +61,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 			const fstPath = session.session.artifacts.fstPath
 
 			if (fstPath) {
-				const envOverlay = dataRootPath("weights")
+				const envOverlay = weightsOverlayRootPath()
 
 				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}

@@ -36,16 +36,6 @@ export const PublicReleaseEnvSchema = z.object({
 		description:
 			"Set to `0` to publish without a Sigstore provenance attestation; otherwise provenance is enabled in GitHub Actions.",
 	}),
-	/**
-	 * Set by GitHub Actions itself.
-	 *
-	 * Npm can only mint a provenance attestation from a CI provider it supports,
-	 * so this is the predicate for `--provenance` rather than the generic `CI` flag.
-	 */
-	GITHUB_ACTIONS: z.coerce.boolean().default(false).meta({
-		title: "GitHub Actions",
-		description: "Whether the process is running under GitHub Actions; used to determine npm provenance support.",
-	}),
 	RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: z.string().optional().meta({
 		title: "Release workspace path",
 		description: "Workspace path override consumed by the release-it workspaces publish flow.",

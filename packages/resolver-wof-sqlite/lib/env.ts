@@ -43,6 +43,18 @@ export const PublicWOFSQLiteEnvSchema = z.object({
 		title: "Development tokenizer",
 		description: "Path to the tokenizer artifact linked for local neural-weights development.",
 	}),
+	/**
+	 * Set by GitHub Actions itself.
+	 *
+	 * The dev weights linker refuses to write the shared overlay under it.
+	 * Release-kit's view extends this one and uses it as the predicate for npm `--provenance`,
+	 * because npm can only mint an attestation from a CI provider it supports.
+	 */
+	GITHUB_ACTIONS: z.coerce.boolean().default(false).meta({
+		title: "GitHub Actions",
+		description:
+			"Whether the process is running under GitHub Actions. The dev weights linker then requires `MAILWOMAN_WEIGHTS_OVERLAY_ROOT`, and release publication enables npm provenance.",
+	}),
 })
 
 /**

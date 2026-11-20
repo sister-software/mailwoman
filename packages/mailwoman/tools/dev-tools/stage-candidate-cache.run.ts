@@ -6,7 +6,7 @@
  *   and isn't fatal, because the data root legitimately lacks some declared siblings.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { weightsOverlayPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -124,9 +124,7 @@ for (const locale of locales) {
 		const candidateSources: Record<string, PathBuilder> = { "model.onnx": modelPath, "model-card.json": cardPath }
 
 		const source =
-			locale === BASE_LOCALE && name in candidateSources
-				? candidateSources[name]!
-				: dataRootPath("weights", locale, name)
+			locale === BASE_LOCALE && name in candidateSources ? candidateSources[name]! : weightsOverlayPath(locale, name)
 
 		if (!(await pathExists(source))) {
 			missing.push(name)

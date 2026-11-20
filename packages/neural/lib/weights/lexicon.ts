@@ -6,7 +6,7 @@
  *   versions its model card declares.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, readLink, tryStatLink } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -41,6 +41,29 @@ export class LexiconVersionMismatchError extends Error {
 	constructor(message: string) {
 		super(message)
 		this.name = "LexiconVersionMismatchError"
+	}
+}
+
+/**
+ * Thrown when a weights directory holds a symlink whose target is gone,
+ * such as a dev overlay link into a removed checkout.
+ *
+ * The message states the link's path and its target, because the repair is to relink
+ * rather than to change the card or the lexicon.
+ */
+export class DanglingWeightsLinkError extends Error {
+	readonly linkPath: string
+	readonly target: string
+
+	constructor(linkPath: string, target: string) {
+		super(
+			`[resolveWeights] ${linkPath} is a symlink to ${target}, which does not exist. ` +
+				`Re-run the package's \`link-dev-weights.ts\` to relink the overlay.`
+		)
+
+		this.name = "DanglingWeightsLinkError"
+		this.linkPath = linkPath
+		this.target = target
 	}
 }
 
@@ -112,6 +135,10 @@ export async function resolveEvidenceLexicon(
 
 	if (await pathExists(declaredPath)) {
 		return declaredPath
+	}
+
+	if ((await tryStatLink(declaredPath))?.isSymbolicLink()) {
+		throw new DanglingWeightsLinkError(declaredPath, await readLink(declaredPath))
 	}
 
 	const shipped = await shippedLexiconGenerations(packageDir, prefix)

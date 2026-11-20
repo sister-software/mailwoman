@@ -9,7 +9,6 @@ const softFeed = await committedSoftFeedLinks()
 await materializeDevOverlay({
 	locale: "en-au",
 	model: { kind: "inherit" },
-	softFeed: [softFeed.country],
-	evidenceLexiconsFromCard: true,
+	softFeed: [softFeed.anchor, softFeed.country],
 	streetMorphologyFST: true,
 })

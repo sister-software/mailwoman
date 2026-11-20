@@ -10,8 +10,8 @@
  *   One multilingual model serves en-us and en-gb.
  *   The en-gb overlay adds its own retrieval data.
  *
- *   This overlay links the same pair as the base and checks it against en-us's
- *   `model-card.json` `files_md5`, since en-gb's own `files_md5` names only its pair index.
+ *   The package declares `mailwoman.baseWeights`, so this overlay links no graph: `resolveWeights`
+ *   reads the en-us overlay's pair, and en-us's linker checks that pair against its card.
  *
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation
  *   this overlay's card records under `requires.<channel>.lexicon`.
@@ -72,9 +72,8 @@ const softFeed = await committedSoftFeedLinks()
 
 const overlay = await materializeDevOverlay({
 	locale: "en-gb",
-	model: { kind: "link", digestCard: "neural-weights-en-us" },
+	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
-	evidenceLexiconsFromCard: true,
 	pairIndex: {
 		country: "gb",
 		delta: PAIR_INDEX_DELTA,
@@ -92,6 +91,7 @@ const overlay = await materializeDevOverlay({
 	streetMorphologyFST: true,
 	// The Northern Ireland scope stays out: its source is OpenStreetMap under ODbL, tier build-local.
 	postcodePrefixScopes: ["gb-esw"],
+	alsoManages: ["postcode-gb.bin"],
 })
 
 // Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode`
