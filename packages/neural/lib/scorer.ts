@@ -11,13 +11,7 @@ import { z } from "zod"
 import type { AddressSystemTable } from "#address-system"
 import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
 import { NeuralAddressClassifier } from "#classifier"
-import {
-	addressSystemConventionsFor,
-	type ConventionsSetting,
-	gazetteerSuppressionFor,
-	type ModelCardToggle,
-	punctuationBridgingFor,
-} from "#classifier/options"
+import { type ConventionsSetting, declaredClassifierConfig, type ModelCardToggle } from "#classifier/options"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
@@ -537,13 +531,11 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		)
 	}
 
-	const addressSystemConventions = addressSystemConventionsFor(conventionsOverride, declared)
-	const bridgePunctuationGaps = punctuationBridgingFor(overrides.bridge ?? "declared", declared)
-
-	const suppressGazetteerNearPostcode = gazetteerSuppressionFor(
-		overrides.suppressGazetteerNearPostcode ?? "declared",
-		declared
-	)
+	const declaredConfig = declaredClassifierConfig(declared, {
+		addressSystemConventions: conventionsOverride,
+		bridgePunctuationGaps: overrides.bridge ?? "declared",
+		suppressGazetteerNearPostcode: overrides.suppressGazetteerNearPostcode ?? "declared",
+	})
 
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 
@@ -555,15 +547,11 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(await addressSystemsEntry(opts.modelCardPath)),
 		...(declared.code_unit?.required ? { codeUnits: true } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
-		...(declaredSpanMode ? { postcodeAnchorSpanMode: declaredSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
-		suppressGazetteerNearPostcode,
-
-		addressSystemConventions,
-		bridgePunctuationGaps,
+		...declaredConfig,
 	})
 }
 

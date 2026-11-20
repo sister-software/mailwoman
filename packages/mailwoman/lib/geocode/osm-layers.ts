@@ -9,8 +9,14 @@
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { type ArtifactManifest, BuildRecipeName, readLayerManifest, ServingRole } from "@mailwoman/core/layers"
-import type { RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import {
+	type ArtifactManifest,
+	BuildRecipeName,
+	LayerManifestState,
+	probeLayerManifest,
+	ServingRole,
+} from "@mailwoman/core/layers"
+import type { OSMRegionDatabaseProvider } from "@mailwoman/osm/region-database-provider"
 import type { LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
@@ -60,8 +66,16 @@ export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<Landmark
 
 	if (refuse.length) {
 		using db = new DatabaseClient<never>(path, { readOnly: true })
+		const read = await probeLayerManifest(db)
 
-		assertLayerObligationsAccepted(await readLayerManifest(db), path.toString(), refuse)
+		if (read.state === LayerManifestState.Absent) {
+			throw new Error(
+				`MAILWOMAN_REFUSE_OBLIGATIONS is set, and ${path} can't be checked against it: ${read.reason}. ` +
+					"Rebuild the layer, or unset MAILWOMAN_REFUSE_OBLIGATIONS."
+			)
+		}
+
+		assertLayerObligationsAccepted(read.manifest, path.toString(), refuse)
 	}
 
 	const { LandmarkSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite/landmark")
@@ -84,6 +98,9 @@ export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<Landmark
  * the provider throws while it opens, and the error repeats the extract's recorded provenance.
  * The refusal stops the caller rather than leaving the country to read as uncovered.
  *
+ * Under a refusal, an extract without a `layer_manifest` table has no license to check,
+ * so the provider leaves it unattached and lists it in `unreadExtracts` for the caller to report.
+ *
  * @param catalog One reading of the active selection, read from `dataRoot` when omitted.
  * @throws When the package fails to load for a reason other than its absence,
  * when the selection or a selected extract cannot be read, or when the refusal applies.
@@ -91,7 +108,7 @@ export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<Landmark
 export async function openOSMRegionDatabases(
 	dataRoot: PathBuilderLike,
 	catalog?: LayerCatalog
-): Promise<RegionDatabaseProvider | null> {
+): Promise<OSMRegionDatabaseProvider | null> {
 	const imported = await import("@mailwoman/osm/region-database-provider").catch((error: unknown) => {
 		// Only an absent package means "no OSM layer".
 		// Any other failure is a fault to report.

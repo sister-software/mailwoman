@@ -11,7 +11,7 @@
  */
 
 import type { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
-import type { RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import type { OSMRegionDatabaseProvider } from "@mailwoman/osm/region-database-provider"
 import type { PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
@@ -30,7 +30,17 @@ export interface ServingRooftopProviders extends Disposable {
 	/**
 	 * `null` when `@mailwoman/osm` isn't installed.
 	 */
-	osm: RegionDatabaseProvider | null
+	osm: OSMRegionDatabaseProvider | null
+}
+
+/**
+ * One startup line for each layer the providers found on disk and didn't attach,
+ * naming the file and the reason.
+ *
+ * An empty array means every layer on disk was attached.
+ */
+export function unattachedLayerLines(providers: Pick<ServingRooftopProviders, "osm">): string[] {
+	return (providers.osm?.unreadExtracts ?? []).map(({ path, reason }) => `  refused: ${path}, because ${reason}`)
 }
 
 /**
@@ -41,7 +51,7 @@ export interface ServingRooftopProviders extends Disposable {
 export async function openServingRooftopProviders(dataRoot: PathBuilderLike): Promise<ServingRooftopProviders> {
 	const catalog = await LayerCatalog.read(dataRoot)
 	const national = await openBANRegionDatabases(dataRoot, catalog)
-	let osm: RegionDatabaseProvider | null
+	let osm: OSMRegionDatabaseProvider | null
 
 	try {
 		osm = await openOSMRegionDatabases(dataRoot, catalog)

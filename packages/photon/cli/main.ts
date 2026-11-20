@@ -23,7 +23,7 @@ import {
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openServingRooftopProviders } from "mailwoman/geocode/serving-layers"
+import { openServingRooftopProviders, unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 import { titleCase } from "spliterator"
 
@@ -220,7 +220,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		onListen: () => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
 
-			for (const line of gazetteerBannerLines(gazetteer)) {
+			for (const line of [...gazetteerBannerLines(gazetteer), ...unattachedLayerLines(rooftops)]) {
 				console.error(line)
 			}
 

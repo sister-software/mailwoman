@@ -13,13 +13,11 @@ import { type AnchorLookup, BinaryAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier"
 import {
-	addressSystemConventionsFor,
 	type ConventionsSetting,
+	type DeclaredClassifierConfig,
+	declaredClassifierConfig,
 	type DeclaredModelBehavior,
-	gazetteerSuppressionFor,
 	type ModelCardToggle,
-	type NeuralAddressClassifierConfig,
-	punctuationBridgingFor,
 } from "#classifier/options"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
@@ -238,21 +236,21 @@ export interface LoadFromURLsOptions {
 	/**
 	 * Whether to zero the gazetteer channel next to postcode-anchor hits.
 	 *
-	 * The default `"declared"` follows the model card (see {@link gazetteerSuppressionFor}).
+	 * The default `"declared"` follows the model card (see {@link declaredClassifierConfig}).
 	 */
 	suppressGazetteerNearPostcode?: ModelCardToggle
 
 	/**
 	 * The address-system conventions mode.
 	 *
-	 * The default `"declared"` follows the model card (see {@link addressSystemConventionsFor}).
+	 * The default `"declared"` follows the model card (see {@link declaredClassifierConfig}).
 	 */
 	addressSystemConventions?: ConventionsSetting
 
 	/**
 	 * Whether to merge same-tag spans split by punctuation, as in `P.O. Box`.
 	 *
-	 * The default `"declared"` follows the model card (see {@link punctuationBridgingFor}).
+	 * The default `"declared"` follows the model card (see {@link declaredClassifierConfig}).
 	 */
 	bridgePunctuationGaps?: ModelCardToggle
 
@@ -705,22 +703,13 @@ function toBase64(bytes: Uint8Array): string {
 
 /**
  * The model-card-declared behaviors both browser load paths configure,
- * each resolved by the helper the Node loader and the scorer use.
+ * resolved by the function the Node loader and the scorer call.
  */
 function declaredBehavior(
 	opts: LoadFromURLsOptions,
 	modelCard: Record<string, unknown> | null
-): Pick<
-	NeuralAddressClassifierConfig,
-	"suppressGazetteerNearPostcode" | "addressSystemConventions" | "bridgePunctuationGaps"
-> {
-	const declared = (modelCard?.requires ?? null) as DeclaredModelBehavior | null
-
-	return {
-		suppressGazetteerNearPostcode: gazetteerSuppressionFor(opts.suppressGazetteerNearPostcode ?? "declared", declared),
-		addressSystemConventions: addressSystemConventionsFor(opts.addressSystemConventions ?? "declared", declared),
-		bridgePunctuationGaps: punctuationBridgingFor(opts.bridgePunctuationGaps ?? "declared", declared),
-	}
+): DeclaredClassifierConfig {
+	return declaredClassifierConfig((modelCard?.requires ?? null) as DeclaredModelBehavior | null, opts)
 }
 
 async function loadCharClassifierFromURLs(
